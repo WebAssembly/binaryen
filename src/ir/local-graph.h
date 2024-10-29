@@ -232,7 +232,7 @@ struct LazyLocalGraph : public LocalGraphBase {
     return *locations;
   }
 
-  // Query whether a set reaches any gets, under the assumption that a given
+  // Query which gets a set influences (reaches), assuming that a given
   // expression blocks the flow. The obstacle must be of the class
   // obstacleClass that is provided in the constructor (so that we set up our
   // data structures in a way that is ready for any item of that class). For
@@ -243,14 +243,14 @@ struct LazyLocalGraph : public LocalGraphBase {
   //  3. call
   //  4. get
   //
-  // If we use Call as obstacle class, then we can use any call as an obstacle
-  // in a query, such as the call on line #3 here. Then:
+  // If we use Call as obstacleClass, then we can use any call as an obstacle in
+  // a query, such as the call on line #3 here. Then:
   //
   //  getSetInfluencesGivenObstacle(#1, #3) => { #2 }
   //
-  // That is, if the call on line 3 obstructs the set, then it only reaches the
-  // get on line #2, and is prevented from reaching line #4, since line #3 is an
-  // obstacle.
+  // That is, if the call (#3) obstructs the set (#1) then it only reaches the
+  // get on line #2, and is prevented from reaching line #4, since line #3 is in
+  // the way.
   //
   // Obstacle queries are a simple way to check what would happen if code were
   // moved around. In the example above, imagine that we are considering moving
@@ -259,7 +259,7 @@ struct LazyLocalGraph : public LocalGraphBase {
   // can still do so if we moved to location #3 is equivalent to asking if #3
   // blocks us from each the original gets #2 and #4. That is, if #3 blocks us
   // from all our gets then that means that #3 reaches them all (so if were in
-  // the place of that obstacle, so would be). And that would be the case if #2
+  // the place of that obstacle, so would we). And that would be the case if #2
   // did not exist in the first place, but given #2 in the full example, we can
   // see that #2 is still reachable despite the obstacle, showing that moving
   // the set would cause an issue.
