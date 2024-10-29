@@ -497,7 +497,7 @@ struct LocalGraphFlower
             // We ran into the obstacle. Halt this flow.
             break;
           }
-          // TODO: If the action it is one of the gets we are scanning, then
+          // TODO: If the action is one of the gets we are scanning, then
           // either we have processed it already, or will do so later, and we
           // can halt. As an optimization, we could check if we've processed
           // it already and act accordingly.
