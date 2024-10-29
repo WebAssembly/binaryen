@@ -137,6 +137,11 @@ struct TypeRefining : public Pass {
     // that we can avoid wasteful work later if not.
     bool canOptimize = false;
 
+    // We cannot modify public types.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
+
     // We have combined all the information we have about writes to the fields,
     // but we still need to make sure that the new types makes sense. In
     // particular, subtyping cares about things like mutability, and we also
@@ -154,6 +159,14 @@ struct TypeRefining : public Pass {
     }
     while (!work.empty()) {
       auto type = work.pop();
+
+      for (auto subType : subTypes.getImmediateSubTypes(type)) {
+        work.push(subType);
+      }
+
+      if (publicTypesSet.count(type)) {
+        continue;
+      }
 
       // First, find fields that have nothing written to them at all, and set
       // their value to their old type. We must pick some type for the field,
@@ -173,7 +186,14 @@ struct TypeRefining : public Pass {
       if (auto super = type.getDeclaredSuperType()) {
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
-          auto newSuperType = finalInfos[*super][i].getLUB();
+          // The super's new type is either what we propagated, or, if it is
+          // public, unchanged since we cannot optimize it
+          Type newSuperType;
+          if (!publicTypesSet.count(*super)) {
+            newSuperType = finalInfos[*super][i].getLUB();
+          } else {
+            newSuperType = superFields[i].type;
+          }
           auto& info = finalInfos[type][i];
           auto newType = info.getLUB();
           if (!Type::isSubType(newType, newSuperType)) {
@@ -214,10 +234,6 @@ struct TypeRefining : public Pass {
         if (newType != oldType) {
           canOptimize = true;
         }
-      }
-
-      for (auto subType : subTypes.getImmediateSubTypes(type)) {
-        work.push(subType);
       }
     }
 
