@@ -257,8 +257,8 @@ struct LazyLocalGraph : public LocalGraphBase {
   // the set from line #1 to #3, then we can simulate that by the query we just
   // mentioned: originally we can reach both #2 and #4, and asking whether we
   // can still do so if we moved to location #3 is equivalent to asking if #3
-  // blocks us from each the original gets #2 and #4. That is, if #3 blocks us
-  // from all our gets then that means that #3 reaches them all (so if were in
+  // blocks us from each of the original gets #2 & #4. That is, if #3 blocks us
+  // from all our gets then that means that #3 reaches them all (& if we were in
   // the place of that obstacle, so would we). And that would be the case if #2
   // did not exist in the first place, but given #2 in the full example, we can
   // see that #2 is still reachable despite the obstacle, showing that moving
@@ -270,7 +270,7 @@ struct LazyLocalGraph : public LocalGraphBase {
   // way to do that, by reusing the same LocalGraph for all such queries. To do
   // so we must decide which things can play the role of obstacle
   // (obstacleClass), and we then place them in the LocalGraph's internal IR.
-  // A query for a particular obstacle is then easy to do.
+  // A query for a particular obstacle is then easy and cheap.
   SetInfluences getSetInfluencesGivenObstacle(LocalSet* set,
                                               Expression* obstacle);
 
