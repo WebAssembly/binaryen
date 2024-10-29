@@ -35,14 +35,19 @@
   (call $throw)
  )
 
- (func $table.setting (export "table.set")
+ ;; CHECK:      [fuzz-exec] calling table.setting
+ (func $table.setting (export "table.setting")
   (call $table.set
    (i32.const 5)
    (ref.func $table.setting)
   )
  )
 
- (func $table.getting (export "table.get")
+ ;; CHECK:      [fuzz-exec] calling table.getting
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $table.getting (export "table.getting")
   ;; There is a non-null value at 5, and a null at 6.
   (call $log-i32
    (ref.is_null
@@ -66,3 +71,13 @@
 
 ;; CHECK:      [fuzz-exec] calling throwing
 ;; CHECK-NEXT: [exception thrown: __private ()]
+
+;; CHECK:      [fuzz-exec] calling table.setting
+
+;; CHECK:      [fuzz-exec] calling table.getting
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+;; CHECK-NEXT: [fuzz-exec] comparing logging
+;; CHECK-NEXT: [fuzz-exec] comparing table.getting
+;; CHECK-NEXT: [fuzz-exec] comparing table.setting
+;; CHECK-NEXT: [fuzz-exec] comparing throwing
