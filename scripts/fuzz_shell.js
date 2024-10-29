@@ -159,7 +159,9 @@ var imports = {
       if (index >= exports.table.length) {
         throw 'oob';
       }
-      return exports.table[index];
+      // Manually convert an undefined to null, as the JS/wasm conversion rules
+      // would trap on it.
+      return exports.table[index] || null;
     },
     'table-set': (index, value) => {
       if (index >= exports.table.length) {
