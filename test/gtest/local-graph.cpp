@@ -33,6 +33,7 @@ TEST_F(LocalGraphTest, ObstacleBasics) {
   auto* nopA = block->list[0]->cast<Nop>();
   auto* set = block->list[1]->cast<LocalSet>();
   auto* nopB = block->list[2]->cast<Nop>();
+  auto* get = block->list[3]->cast<LocalGet>();
 
   {
     LazyLocalGraph graph(func, &wasm);
@@ -48,6 +49,7 @@ TEST_F(LocalGraphTest, ObstacleBasics) {
     // If the first nop is an obstacle, nothing changes: the path between the
     // set and get does not include it.
     EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 1U);
+    EXPECT_EQ(*graph.getSetInfluencesGivenObstacle(set, nopA).begin(), get);
     // But if the second one is an obstacle, it severs the connection.
     EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 0U);
   }
