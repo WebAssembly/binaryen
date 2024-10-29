@@ -156,6 +156,7 @@ var imports = {
 
     // Table operations.
     'table-get': (index) => {
+      index = index >>> 0;
       if (index >= exports.table.length) {
         throw 'oob';
       }
@@ -164,6 +165,7 @@ var imports = {
       return exports.table[index] || null;
     },
     'table-set': (index, value) => {
+      index = index >>> 0;
       if (index >= exports.table.length) {
         throw 'oob';
       }
