@@ -762,14 +762,16 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportTableGet() {
+  assert(tableGetImportName);
   return builder.makeCall(
     tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
 }
 
 Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
   assert(type == Type::none);
+  assert(tableSetImportName);
   return builder.makeCall(
-    tableGetImportName,
+    tableSetImportName,
     {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
     Type::none);
 }
@@ -2732,8 +2734,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::func: {
-      // Rarely, emit a call to imported table.get (when nullable).
-      if (type.isNullable() && !oneIn(3)) {
+      // Rarely, emit a call to imported table.get (when nullable, and where we
+      // can emit a call).
+      if (type.isNullable() && funcContext && !oneIn(3)) {
         return makeImportTableGet();
       }
       return makeRefFuncConst(type);
