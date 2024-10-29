@@ -767,7 +767,7 @@ Expression* TranslateToFuzzReader::makeImportTableGet() {
 
 Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
   assert(type == Type::none);
-  return builder.makeCall(tableGetImportName, {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))});
+  return builder.makeCall(tableGetImportName, {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))}, Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1528,7 +1528,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::ReferenceTypes, &Self.makeImportTableSet)
+    .add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
     .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)

@@ -45,7 +45,7 @@ private:
 public:
   LoggingExternalInterface(Loggings& loggings, Module& wasm) : loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
-      if (exp.kind == ExternalKind::Table && exp.name == "table") {
+      if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = exp->value;
         break;
       }
@@ -81,9 +81,10 @@ public:
         auto payload = std::make_shared<ExnData>("__private", Literals{});
         throwException(WasmException{Literal(payload)});
       } else if (import->base == "table-get") {
-        return tableLoad(exportedTable, arguments[0]);
+        return {tableLoad(exportedTable, arguments[0].geti32())};
       } else if (import->base == "table-set") {
-        tableStore(exportedTable, arguments[0], arguments[1]);
+        tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
+        return {};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
@@ -124,7 +125,7 @@ struct ExecutionResults {
 
   // get results of execution
   void get(Module& wasm) {
-    LoggingExternalInterface interface(loggings);
+    LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
       // execute all exported methods (that are therefore preserved through
@@ -274,7 +275,7 @@ struct ExecutionResults {
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
   FunctionResult run(Function* func, Module& wasm) {
-    LoggingExternalInterface interface(loggings);
+    LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
       return run(func, wasm, instance);
