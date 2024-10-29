@@ -370,9 +370,10 @@ struct HeapStoreOptimization
     // original local.set reaches a place that, if we optimized that set to the
     // obstacle, it would no longer reach.
 
-    // TODO: reuse!!1
-    LazyLocalGraph graph(getFunction(), getModule(), StructSet::SpecificId);
-    auto gets = graph.getSetInfluencesGivenObstacle(localSet, set);
+    if (!localGraph) {
+      localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
+    }
+    auto gets = localGraph->getSetInfluencesGivenObstacle(localSet, set);
     // It is ok to have a local.get in the struct.set itself: the value is
     // after it. Only subsequent ones matter. TODO example
     if (gets.size() == 0) {
@@ -387,6 +388,10 @@ struct HeapStoreOptimization
   EffectAnalyzer effects(Expression* expr) {
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
+
+private:
+  // A local graph that is constructed the first time we need it.
+  std::optional<LazyLocalGraph> localGraph;
 };
 
 } // anonymous namespace
