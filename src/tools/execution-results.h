@@ -43,7 +43,8 @@ private:
   Name exportedTable;
 
 public:
-  LoggingExternalInterface(Loggings& loggings, Module& wasm) : loggings(loggings), wasm(wasm) {
+  LoggingExternalInterface(Loggings& loggings, Module& wasm)
+    : loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = exp->value;

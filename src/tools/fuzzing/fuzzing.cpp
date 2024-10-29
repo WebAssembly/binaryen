@@ -622,8 +622,8 @@ void TranslateToFuzzReader::addImportTableSupport() {
   }
 
   // Export it.
-  wasm.addExport(builder.makeExport(
-    "table", funcrefTableName, ExternalKind::Table));
+  wasm.addExport(
+    builder.makeExport("table", funcrefTableName, ExternalKind::Table));
 
   // Get from the table.
   {
@@ -762,12 +762,16 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportTableGet() {
-  return builder.makeCall(tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
+  return builder.makeCall(
+    tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
 }
 
 Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
   assert(type == Type::none);
-  return builder.makeCall(tableGetImportName, {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))}, Type::none);
+  return builder.makeCall(
+    tableGetImportName,
+    {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
+    Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
