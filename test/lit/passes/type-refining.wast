@@ -1385,7 +1385,9 @@
 )
 
 ;; We cannot refine the fields of public types. One of $A's children is public
-;; here, $B. That makes $A public as well, preventing ...
+;; here, $B. That makes $A public as well, leaving only $C as theoretically
+;; optimizable, but we cannot refine a mutable field in a way that makes it
+;; differ from the super, so we end up doing nothing here.
 (module
   ;; CHECK:      (type $A (sub (struct (field (mut anyref)))))
   (type $A (sub (struct (field (mut anyref)))))
@@ -1435,6 +1437,72 @@
   ;; CHECK-NEXT: )
   (func $work (param $nn (ref any))
     ;; All the types look refinable, as we write a non-nullable value.
+    (drop
+      (struct.new $A
+        (local.get $nn)
+      )
+    )
+    (drop
+      (struct.new $B
+        (local.get $nn)
+      )
+    )
+    (drop
+      (struct.new $C
+        (local.get $nn)
+      )
+    )
+  )
+)
+
+;; As above, but now the fields are all immutable. This allows us to refine $C,
+;; but nothing else.
+(module
+  ;; CHECK:      (type $A (sub (struct (field anyref))))
+  (type $A (sub (struct (field anyref))))
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $B (sub $A (struct (field anyref))))
+    (type $B (sub $A (struct (field anyref))))
+    ;; CHECK:       (type $brand (struct))
+    (type $brand (struct))
+  )
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $C (sub $A (struct (field (ref any)))))
+    (type $C (sub $A (struct (field anyref))))
+    (type $brand2 (struct))
+    (type $brand3 (struct))
+  )
+
+  ;; CHECK:       (type $4 (func (param (ref any))))
+
+  ;; CHECK:      (global $global (ref null $B) (ref.null none))
+  (global $global (ref null $B) (ref.null $B))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $work (type $4) (param $nn (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.get $nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (local.get $nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (local.get $nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $nn (ref any))
     (drop
       (struct.new $A
         (local.get $nn)

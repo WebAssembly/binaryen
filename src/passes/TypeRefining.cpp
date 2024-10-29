@@ -160,6 +160,10 @@ struct TypeRefining : public Pass {
     while (!work.empty()) {
       auto type = work.pop();
 
+      for (auto subType : subTypes.getImmediateSubTypes(type)) {
+        work.push(subType);
+      }
+
       if (publicTypesSet.count(type)) {
         continue;
       }
@@ -182,7 +186,14 @@ struct TypeRefining : public Pass {
       if (auto super = type.getDeclaredSuperType()) {
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
-          auto newSuperType = finalInfos[*super][i].getLUB();
+          // The super's new type is either what we propagated, or, if it is
+          // public, unchanged since we cannot optimize it
+          Type newSuperType;
+          if (!publicTypesSet.count(*super)) {
+            newSuperType = finalInfos[*super][i].getLUB();
+          } else {
+            newSuperType = superFields[i].type;
+          }
           auto& info = finalInfos[type][i];
           auto newType = info.getLUB();
           if (!Type::isSubType(newType, newSuperType)) {
@@ -223,10 +234,6 @@ struct TypeRefining : public Pass {
         if (newType != oldType) {
           canOptimize = true;
         }
-      }
-
-      for (auto subType : subTypes.getImmediateSubTypes(type)) {
-        work.push(subType);
       }
     }
 
