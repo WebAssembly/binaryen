@@ -10,6 +10,10 @@
 
  (import "fuzzing-support" "throw" (func $throw))
 
+ (table $table 10 20 funcref)
+
+ (export "table" (table $table))
+
  ;; CHECK:      [fuzz-exec] calling logging
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
@@ -27,6 +31,31 @@
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $throwing (export "throwing")
   (call $throw)
+ )
+
+ (func $table.setting (export "table.set")
+  (call $table.set
+   (i32.const 5)
+   (ref.func $table.setting)
+  )
+ )
+
+ (func $table.getting (export "table.get")
+  ;; There is a non-null value at 5, and a null at 6.
+  (call $log-i32
+   (ref.is_null
+    (call $table.get
+     (i32.const 5)
+    )
+   )
+  )
+  (call $log-i32
+   (ref.is_null
+    (call $table.get
+     (i32.const 6)
+    )
+   )
+  )
  )
 )
 ;; CHECK:      [fuzz-exec] calling logging
