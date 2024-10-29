@@ -10,6 +10,9 @@
 
  (import "fuzzing-support" "throw" (func $throw))
 
+ (import "fuzzing-support" "table-set" (func $table.set (param i32 funcref)))
+ (import "fuzzing-support" "table-get" (func $table.get (param i32) (result funcref)))
+
  (table $table 10 20 funcref)
 
  (export "table" (table $table))
@@ -28,7 +31,6 @@
 
  ;; CHECK:      [fuzz-exec] calling throwing
  ;; CHECK-NEXT: [exception thrown: __private ()]
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $throwing (export "throwing")
   (call $throw)
  )
@@ -64,5 +66,3 @@
 
 ;; CHECK:      [fuzz-exec] calling throwing
 ;; CHECK-NEXT: [exception thrown: __private ()]
-;; CHECK-NEXT: [fuzz-exec] comparing logging
-;; CHECK-NEXT: [fuzz-exec] comparing throwing
