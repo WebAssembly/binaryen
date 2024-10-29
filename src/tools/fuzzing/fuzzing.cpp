@@ -178,6 +178,9 @@ void TranslateToFuzzReader::build() {
     setupTags();
     addImportThrowingSupport();
   }
+  if (wasm.features.hasReferenceTypes()) {
+    addImportTableSupport();
+  }
   addImportLoggingSupport();
   modifyInitialFunctions();
   // keep adding functions until we run out of input
@@ -609,6 +612,42 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   wasm.addFunction(std::move(func));
 }
 
+void TranslateToFuzzReader::addImportTableSupport() {
+  // For the table imports to be able to do anything, we must export a table
+  // for them. For simplicity, use the funcref table we use internally, though
+  // we could pick one at random, support non-funcref ones, and even export
+  // multiple ones TODO
+  if (!funcrefTableName) {
+    return;
+  }
+
+  // Export it.
+  wasm.addExport(builder.makeExport(
+    "table", funcrefTableName, ExternalKind::Table));
+
+  // Get from the table.
+  {
+    tableGetImportName = Names::getValidFunctionName(wasm, "table-get");
+    auto func = std::make_unique<Function>();
+    func->name = tableGetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-get";
+    func->type = Signature(Type::none, Type(HeapType::func, Nullable));
+    wasm.addFunction(std::move(func));
+  }
+
+  // Set into the table.
+  {
+    tableSetImportName = Names::getValidFunctionName(wasm, "table-set");
+    auto func = std::make_unique<Function>();
+    func->name = tableSetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-set";
+    func->type = Signature(Type(HeapType::func, Nullable), Type::none);
+    wasm.addFunction(std::move(func));
+  }
+}
+
 void TranslateToFuzzReader::addHashMemorySupport() {
   // Add memory hasher helper (for the hash, see hash.h). The function looks
   // like:
@@ -720,6 +759,15 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
 
   // TODO: This and makeThrow should probably be rare, as they halt the program.
   return builder.makeCall(throwImportName, {}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportTableGet() {
+  return builder.makeCall(tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
+  assert(type == Type::none);
+  return builder.makeCall(tableGetImportName, {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))});
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1480,6 +1528,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
+    .add(FeatureSet::ReferenceTypes, &Self.makeImportTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
     .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
@@ -2679,6 +2728,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::func: {
+      // Rarely, emit a call to imported table.get (when nullable).
+      if (type.isNullable() && !oneIn(3)) {
+        return makeImportTableGet();
+      }
       return makeRefFuncConst(type);
     }
     case HeapType::cont: {

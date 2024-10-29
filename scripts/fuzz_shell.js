@@ -152,7 +152,21 @@ var imports = {
     // Throw an exception from JS.
     'throw': () => {
       throw 'some JS error';
-    }
+    },
+
+    // Table operations.
+    'table-get': (index) => {
+      if (index >= exports.table.length) {
+        throw 'oob';
+      }
+      return exports.table[index];
+    },
+    'table-set': (index, value) => {
+      if (index >= exports.table.length) {
+        throw 'oob';
+      }
+      exports.table[index] = value;
+    },
   },
   // Emscripten support.
   'env': {

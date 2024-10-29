@@ -29,6 +29,7 @@ using Loggings = std::vector<Literal>;
 struct LoggingExternalInterface : public ShellExternalInterface {
 private:
   Loggings& loggings;
+  Module& wasm;
 
   struct State {
     // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
@@ -38,8 +39,18 @@ private:
     uint32_t tempRet0 = 0;
   } state;
 
+  // The name of the table exported by the name 'table.' Imports access it.
+  Name exportedTable;
+
 public:
-  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
+  LoggingExternalInterface(Loggings& loggings, Module& wasm) : loggings(loggings), wasm(wasm) {
+    for (auto& exp : wasm.exports) {
+      if (exp.kind == ExternalKind::Table && exp.name == "table") {
+        exportedTable = exp->value;
+        break;
+      }
+    }
+  }
 
   Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
@@ -69,6 +80,10 @@ public:
         // Throw something. We use a (hopefully) private name here.
         auto payload = std::make_shared<ExnData>("__private", Literals{});
         throwException(WasmException{Literal(payload)});
+      } else if (import->base == "table-get") {
+        return tableLoad(exportedTable, arguments[0]);
+      } else if (import->base == "table-set") {
+        tableStore(exportedTable, arguments[0], arguments[1]);
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
