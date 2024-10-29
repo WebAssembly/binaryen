@@ -53,14 +53,6 @@ template<typename T, size_t N> class SmallVector {
   // flexible additional storage
   std::vector<T> flexible;
 
-#if defined(__aarch64__)
-#pragma GCC diagnostic pop
-#endif
-
-#if defined(__riscv) && __riscv_xlen == 64
-#pragma GCC diagnostic pop
-#endif
-
 public:
   using value_type = T;
 
@@ -285,6 +277,14 @@ struct ZeroInitSmallVector : public SmallVector<T, N> {
     }
   }
 };
+
+#if defined(__aarch64__)
+#pragma GCC diagnostic pop
+#endif
+
+#if defined(__riscv) && __riscv_xlen == 64
+#pragma GCC diagnostic pop
+#endif
 
 } // namespace wasm
 

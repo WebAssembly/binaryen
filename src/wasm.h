@@ -647,7 +647,7 @@ enum StringEqOp {
 
 class Expression {
 public:
-  enum Id : int8_t {
+  enum Id : uint8_t {
     InvalidId = 0,
     BlockId,
     IfId,
@@ -795,8 +795,6 @@ public:
   // Print the expression to stderr. Meant for use while debugging.
   void dump();
 };
-
-static_assert(Expression::NumExpressionIds < 256, "ids must fit in a byte");
 
 const char* getExpressionName(Expression* curr);
 
