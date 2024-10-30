@@ -78,23 +78,11 @@ public:
         std::cout << "]\n";
         return {};
       } else if (import->base == "throw") {
-        // Throw something.
         throwEmptyException();
       } else if (import->base == "table-get") {
-        try {
-          return {tableLoad(exportedTable, arguments[0].geti32())};
-        } catch (const TrapException&) {
-          // Convert a trap to an exception: the JS will only ever throw, not
-          // trap.
-          throwEmptyException();
-        }
+        return {tableLoad(exportedTable, arguments[0].geti32())};
       } else if (import->base == "table-set") {
-        try {
-          tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
-        } catch (const TrapException&) {
-          throwEmptyException();
-        }
-        return {};
+        tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }

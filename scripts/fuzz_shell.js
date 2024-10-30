@@ -158,7 +158,8 @@ var imports = {
     'table-get': (index) => {
       index = index >>> 0;
       if (!exports.table || index >= exports.table.length) {
-        throw 'oob';
+        // Emit a trap, the same as the wasm instruction.
+        throw new WebAssembly.RuntimeError();
       }
       // Manually convert an undefined to null, as the JS/wasm conversion rules
       // would trap on it.
@@ -167,7 +168,7 @@ var imports = {
     'table-set': (index, value) => {
       index = index >>> 0;
       if (!exports.table || index >= exports.table.length) {
-        throw 'oob';
+        throw new WebAssembly.RuntimeError();
       }
       exports.table[index] = value;
     },
