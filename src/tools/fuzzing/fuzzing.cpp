@@ -621,7 +621,13 @@ void TranslateToFuzzReader::addImportTableSupport() {
     return;
   }
 
-  // Export it.
+  // If a "table" export already exists, skip fuzzing these imports, as the
+  // current export may not contain a valid table for it.
+  if (wasm.getExportOrNull("table")) {
+    return;
+  }
+
+  // Export the table.
   wasm.addExport(
     builder.makeExport("table", funcrefTableName, ExternalKind::Table));
 
@@ -1535,7 +1541,6 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
     .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
@@ -1545,6 +1550,9 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
+  if (tableSetImportName) {
+    options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
+  }
   return (this->*pick(options))(Type::none);
 }
 
@@ -2737,7 +2745,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::func: {
       // Rarely, emit a call to imported table.get (when nullable, unshared, and
       // where we can emit a call).
-      if (type.isNullable() && share == Unshared && funcContext && !oneIn(3)) {
+      if (type.isNullable() && share == Unshared && funcContext &&
+          tableGetImportName && !oneIn(3)) {
         return makeImportTableGet();
       }
       return makeRefFuncConst(type);
