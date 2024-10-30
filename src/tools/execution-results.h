@@ -82,9 +82,19 @@ public:
         auto payload = std::make_shared<ExnData>("__private", Literals{});
         throwException(WasmException{Literal(payload)});
       } else if (import->base == "table-get") {
-        return {tableLoad(exportedTable, arguments[0].geti32())};
+        try {
+          return {tableLoad(exportedTable, arguments[0].geti32())};
+        } catch (const TrapException&) {
+          // Convert a trap to an exception: the JS will only ever throw, not
+          // trap.
+          throw WasmException{};
+        }
       } else if (import->base == "table-set") {
-        tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
+        try {
+          tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
+        } catch (const TrapException&) {
+          throw WasmException{};
+        }
         return {};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");

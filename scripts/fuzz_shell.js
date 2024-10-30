@@ -157,7 +157,7 @@ var imports = {
     // Table operations.
     'table-get': (index) => {
       index = index >>> 0;
-      if (index >= exports.table.length) {
+      if (!exports.table || index >= exports.table.length) {
         throw 'oob';
       }
       // Manually convert an undefined to null, as the JS/wasm conversion rules
@@ -166,7 +166,7 @@ var imports = {
     },
     'table-set': (index, value) => {
       index = index >>> 0;
-      if (index >= exports.table.length) {
+      if (!exports.table || index >= exports.table.length) {
         throw 'oob';
       }
       exports.table[index] = value;
