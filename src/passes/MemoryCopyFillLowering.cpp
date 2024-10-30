@@ -12,9 +12,8 @@ struct MemoryCopyFillLowering
   bool needsMemoryFill = false;
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    if (curr->destMemory != curr->sourceMemory) {
-      return; // Throw an error here instead of silently ignoring?
-    }
+    assert(curr->destMemory ==
+           curr->sourceMemory); // multi-memory not supported.
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(
       "__memory_copy", {curr->dest, curr->source, curr->size}, Type::none));
@@ -31,6 +30,9 @@ struct MemoryCopyFillLowering
   void run(Module* module) override {
     if (!module->features.hasBulkMemory()) {
       return;
+    }
+    if (module->features.hasAtomics()) {
+      throw "Don't use this pass with atomics"; // alternatively... just don't unset bulkmem feature if atomics? or do nothing?
     }
     if (module->features.hasMemory64() || module->features.hasMultiMemory()) {
       throw "Memory64 and multi-memory not supported"; // TODO: best way to
@@ -86,7 +88,7 @@ struct MemoryCopyFillLowering
                      b.makeLocalGet(src, Type::i32),
                      b.makeLocalGet(dst, Type::i32)),
         b.makeBlock({
-          b.makeLocalSet(start, b.makeBinary(BinaryOp::SubInt32, b.makeLocalGet(size, Type::i32), b.makeConst(-1U))),
+          b.makeLocalSet(start, b.makeBinary(BinaryOp::SubInt32, b.makeLocalGet(size, Type::i32), b.makeConst(1))),
           b.makeLocalSet(end, b.makeConst(-1U)),
           b.makeLocalSet(step, b.makeConst(-1U)),
         }),
@@ -124,7 +126,14 @@ struct MemoryCopyFillLowering
                                     Type::i32,
                                     memory),
                          Type::i32,
-                         memory)}))));
+                         memory),
+              // i += step
+              b.makeLocalSet(i,
+                             b.makeBinary(BinaryOp::AddInt32,
+                                          b.makeLocalGet(i, Type::i32),
+                                          b.makeLocalGet(step, Type::i32))),
+              // loop
+              b.makeBreak("copy", nullptr)}))));
       module->getFunction("__memory_copy")->body = body;
 
       /*
@@ -177,7 +186,10 @@ struct MemoryCopyFillLowering
           "copy",
           b.makeBlock(
             {// break if size == 0
-             b.makeBreak("out", nullptr, b.makeLocalGet(size, Type::i32)),
+             b.makeBreak(
+               "out",
+               nullptr,
+               b.makeUnary(UnaryOp::EqZInt32, b.makeLocalGet(size, Type::i32))),
              // size--
              b.makeLocalSet(size,
                             b.makeBinary(BinaryOp::SubInt32,
@@ -192,7 +204,8 @@ struct MemoryCopyFillLowering
                                       b.makeLocalGet(size, Type::i32)),
                          b.makeLocalGet(val, Type::i32),
                          Type::i32,
-                         memory)}))));
+                         memory),
+             b.makeBreak("copy", nullptr)}))));
       module->getFunction("__memory_fill")->body = body;
       /*
       if (
