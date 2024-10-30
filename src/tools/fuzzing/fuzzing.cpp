@@ -649,8 +649,8 @@ void TranslateToFuzzReader::addImportTableSupport() {
     func->name = tableSetImportName;
     func->module = "fuzzing-support";
     func->base = "table-set";
-    func->type = Signature({Type::i32, Type(HeapType::func, Nullable)},
-                           Type::none);
+    func->type =
+      Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none);
     wasm.addFunction(std::move(func));
   }
 }
