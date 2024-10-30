@@ -37,7 +37,6 @@
 
  ;; CHECK:      [fuzz-exec] calling table.setting
  ;; CHECK-NEXT: [trap out of bounds table access]
- ;; CHECK-NEXT: [exception thrown: __private ()]
  (func $table.setting (export "table.setting")
   (call $table.set
    (i32.const 5)
@@ -54,7 +53,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  ;; CHECK-NEXT: [trap out of bounds table access]
- ;; CHECK-NEXT: [exception thrown: __private ()]
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $table.getting (export "table.getting")
   ;; There is a non-null value at 5, and a null at 6.
@@ -89,13 +87,11 @@
 
 ;; CHECK:      [fuzz-exec] calling table.setting
 ;; CHECK-NEXT: [trap out of bounds table access]
-;; CHECK-NEXT: [exception thrown: __private ()]
 
 ;; CHECK:      [fuzz-exec] calling table.getting
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [trap out of bounds table access]
-;; CHECK-NEXT: [exception thrown: __private ()]
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting

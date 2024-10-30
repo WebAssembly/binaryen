@@ -83,6 +83,7 @@ public:
         return {tableLoad(exportedTable, arguments[0].geti32())};
       } else if (import->base == "table-set") {
         tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
+        return {};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
