@@ -80,9 +80,25 @@ public:
       } else if (import->base == "throw") {
         throwEmptyException();
       } else if (import->base == "table-get") {
-        return {tableLoad(exportedTable, arguments[0].geti32())};
+        // Check for errors here, duplicating tableLoad(), because that will
+        // trap, and we just want to throw an exception (the same as JS would).
+        if (!exportedTable) {
+          throwEmptyException();
+        }
+        Index index = arguments[0].geti32();
+        if (index >= tables[exportedTable].size()) {
+          throwEmptyException();
+        }
+        return {tableLoad(exportedTable, index)};
       } else if (import->base == "table-set") {
-        tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
+        if (!exportedTable) {
+          throwEmptyException();
+        }
+        Index index = arguments[0].geti32();
+        if (index >= tables[exportedTable].size()) {
+          throwEmptyException();
+        }
+        tableStore(exportedTable, index, arguments[1]);
         return {};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
