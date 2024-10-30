@@ -29,7 +29,6 @@ using Loggings = std::vector<Literal>;
 struct LoggingExternalInterface : public ShellExternalInterface {
 private:
   Loggings& loggings;
-  Module& wasm;
 
   struct State {
     // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
