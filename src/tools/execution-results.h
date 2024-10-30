@@ -78,22 +78,21 @@ public:
         std::cout << "]\n";
         return {};
       } else if (import->base == "throw") {
-        // Throw something. We use a (hopefully) private name here.
-        auto payload = std::make_shared<ExnData>("__private", Literals{});
-        throwException(WasmException{Literal(payload)});
+        // Throw something.
+        throwEmptyException();
       } else if (import->base == "table-get") {
         try {
           return {tableLoad(exportedTable, arguments[0].geti32())};
         } catch (const TrapException&) {
           // Convert a trap to an exception: the JS will only ever throw, not
           // trap.
-          throw WasmException{};
+          throwEmptyException();
         }
       } else if (import->base == "table-set") {
         try {
           tableStore(exportedTable, arguments[0].geti32(), arguments[1]);
         } catch (const TrapException&) {
-          throw WasmException{};
+          throwEmptyException();
         }
         return {};
       } else {
@@ -117,6 +116,12 @@ public:
     std::cerr << "[LoggingExternalInterface ignoring an unknown import "
               << import->module << " . " << import->base << '\n';
     return {};
+  }
+
+  void throwEmptyException() {
+    // Use a hopefully private tag.
+    auto payload = std::make_shared<ExnData>("__private", Literals{});
+    throwException(WasmException{Literal(payload)});
   }
 };
 
