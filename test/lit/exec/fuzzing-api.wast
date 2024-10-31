@@ -18,6 +18,8 @@
 
  (table $table 10 20 funcref)
 
+ ;; Note that the exported table appears first here, but in the binary and in
+ ;; the IR it is actually last, as we always add function exports first.
  (export "table" (table $table))
 
  ;; CHECK:      [fuzz-exec] calling logging
@@ -81,34 +83,29 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling export.calling
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [exception thrown: __private ()]
  (func $export.calling (export "export.calling")
-  ;; At index 1 in the exports we have $logging, so we will do those loggings.
-  (call $call.export
-   (i32.const 1)
-  )
-  ;; At index 0 we have a table, so we will error.
+  ;; At index 0 in the exports we have $logging, so we will do those loggings.
   (call $call.export
    (i32.const 0)
+  )
+  ;; At index 999 we have nothing, so we'll error.
+  (call $call.export
+   (i32.const 999)
   )
  )
 
  ;; CHECK:      [fuzz-exec] calling export.calling.catching
- ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $export.calling.catching (export "export.calling.catching")
-  ;; At index 1 in the exports we have $logging, so we will do those loggings,
+  ;; At index 0 in the exports we have $logging, so we will do those loggings,
   ;; then log a 0 as no exception happens.
-  (call $log-i32
-   (call $call.export.catch
-    (i32.const 1)
-   )
-  )
-  ;; At index 0 we have a table, so we will error, catch it, and log 1.
   (call $log-i32
    (call $call.export.catch
     (i32.const 0)
@@ -138,10 +135,11 @@
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
 ;; CHECK:      [fuzz-exec] calling export.calling
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
 ;; CHECK:      [fuzz-exec] calling export.calling.catching
-;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
