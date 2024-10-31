@@ -1178,10 +1178,11 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
-# given a wasm, find all the exports.
+# given a wasm, find all the exports. for now this supports function and table
+# exports
 def get_exports(wasm):
     wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
-    p = re.compile(r'^ [(]export "(.*[^\\]?)" [(]func')
+    p = re.compile(r'^ [(]export "(.*[^\\]?)" [(](?:func|table)')
     exports = []
     for line in wat.splitlines():
         m = p.match(line)
