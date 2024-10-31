@@ -134,6 +134,28 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
+// Some imports need to access exports by index.
+var exportsList;
+function getExportByIndex(index) {
+  if (!exportsList) {
+    for (var e in exports) {
+      exportsList.push(e);
+    }
+  }
+  return exportsList[index];
+}
+
+// Given a wasm function, call it as best we can from JS, and return the result.
+function callFunc(func) {
+  // Send the function a null for each parameter. Null can be converted without
+  // error to both a number and a reference.
+  var args = [];
+  for (var i = 0; i < func.length; i++) {
+    args.push(null);
+  }
+  return func.apply(null, args);
+}
+
 // Set up the imports.
 var tempRet0;
 var imports = {
@@ -160,6 +182,19 @@ var imports = {
     },
     'table-set': (index, value) => {
       exports.table.set(index >>> 0, value);
+    },
+
+    // Export operations.
+    'call-export': (index) => {
+      callFunc(getExportByIndex(index));
+    },
+    'call-export-catch': (index) => {
+      try {
+        callFunc(getExportByIndex(index));
+        return 0;
+      } catch (e) {
+        return 1;
+      }
     },
   },
   // Emscripten support.
@@ -239,16 +274,10 @@ for (var e of exportsToCall) {
   if (typeof exports[e] !== 'function') {
     continue;
   }
-  // Send the function a null for each parameter. Null can be converted without
-  // error to both a number and a reference.
   var func = exports[e];
-  var args = [];
-  for (var i = 0; i < func.length; i++) {
-    args.push(null);
-  }
   try {
     console.log('[fuzz-exec] calling ' + e);
-    var result = func.apply(null, args);
+    var result = callFunc(func);
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }

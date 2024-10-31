@@ -13,6 +13,9 @@
  (import "fuzzing-support" "table-set" (func $table.set (param i32 funcref)))
  (import "fuzzing-support" "table-get" (func $table.get (param i32) (result funcref)))
 
+ (import "fuzzing-support" "call-export" (func $call.export (param i32)))
+ (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32)))
+
  (table $table 10 20 funcref)
 
  (export "table" (table $table))
@@ -74,6 +77,39 @@
   (drop
    (call $table.get
     (i32.const 9999)
+   )
+  )
+ )
+
+ (func $export.calling (export "export.calling")
+  ;; At index 1 in the exports we have $logging, so we will do those loggings.
+  (call.export
+   (i32.const 1)
+  )
+  ;; At index 0 we have a table, so we will error.
+  (call.export
+   (i32.const 0)
+  )
+ )
+
+ (func $export.calling.catching (export "export.calling.catching")
+  ;; At index 1 in the exports we have $logging, so we will do those loggings,
+  ;; then log a 0 as no exception happens.
+  (call $log-i32
+   (call.export.catch
+    (i32.const 1)
+   )
+  )
+  ;; At index 0 we have a table, so we will error, catch it, and log 1.
+  (call $log-i32
+   (call.export.catch
+    (i32.const 0)
+   )
+  )
+  ;; At index 999 we have nothing, so we'll error, catch it, and log 1.
+  (call $log-i32
+   (call.export.catch
+    (i32.const 999)
    )
   )
  )

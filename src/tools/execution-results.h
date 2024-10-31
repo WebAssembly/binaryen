@@ -40,10 +40,11 @@ private:
 
   // The name of the table exported by the name 'table.' Imports access it.
   Name exportedTable;
+  Module& wasm;
 
 public:
   LoggingExternalInterface(Loggings& loggings, Module& wasm)
-    : loggings(loggings) {
+    : loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = exp->value;
@@ -99,6 +100,16 @@ public:
         }
         tableStore(exportedTable, index, arguments[1]);
         return {};
+      } else if (import->base == "call-export") {
+        callExport(arguments[0].geti32());
+        return {};
+      } else if (import->base == "call-export-catch") {
+        try {
+          callExport(arguments[0].geti32());
+          return Literal(int32_t(0));
+        } catch (const WasmException& e) {
+          return Literal(int32_t(1));
+        }
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
@@ -126,6 +137,29 @@ public:
     // Use a hopefully private tag.
     auto payload = std::make_shared<ExnData>("__private", Literals{});
     throwException(WasmException{Literal(payload)});
+  }
+
+  Literals callExport(Index index) {
+    Index index = arguments[0].geti32();
+    if (index >= wasm.exports.size()) {
+      // No export.
+      throwEmptyException();
+    }
+    if (wasm.exports[index].kind != ExternalKind::Function) {
+      // No callable export
+      throwEmptyException();
+    }
+    auto* func = wasm.getFunction(wasm.exports[index]->value);
+
+    // Send default values as arguments, or trap if we need anything else.
+    Literals arguments;
+    for (const auto& param : func->getParams()) {
+      if (!param.isDefaultable()) {
+        throwEmptyException();
+      }
+      arguments.push_back(Literal::makeZero(param));
+    }
+    return instance.callFunction(func->name, arguments);
   }
 };
 
