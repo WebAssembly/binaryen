@@ -42,6 +42,10 @@ private:
   Name exportedTable;
   Module& wasm;
 
+  // The ModuleRunner and this ExternalInterface end up needing links both ways,
+  // so we cannot init this in the constructor.
+  ModuleRunner* instance = nullptr;
+
 public:
   LoggingExternalInterface(Loggings& loggings, Module& wasm)
     : loggings(loggings), wasm(wasm) {
@@ -106,9 +110,9 @@ public:
       } else if (import->base == "call-export-catch") {
         try {
           callExport(arguments[0].geti32());
-          return Literal(int32_t(0));
+          return {Literal(int32_t(0))};
         } catch (const WasmException& e) {
-          return Literal(int32_t(1));
+          return {Literal(int32_t(1))};
         }
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
@@ -140,16 +144,16 @@ public:
   }
 
   Literals callExport(Index index) {
-    Index index = arguments[0].geti32();
     if (index >= wasm.exports.size()) {
       // No export.
       throwEmptyException();
     }
-    if (wasm.exports[index].kind != ExternalKind::Function) {
+    auto& exp = wasm.exports[index];
+    if (exp->kind != ExternalKind::Function) {
       // No callable export
       throwEmptyException();
     }
-    auto* func = wasm.getFunction(wasm.exports[index]->value);
+    auto* func = wasm.getFunction(exp->value);
 
     // Send default values as arguments, or trap if we need anything else.
     Literals arguments;
@@ -159,7 +163,11 @@ public:
       }
       arguments.push_back(Literal::makeZero(param));
     }
-    return instance.callFunction(func->name, arguments);
+    return instance->callFunction(func->name, arguments);
+  }
+
+  void setModuleRunner(ModuleRunner* instance_) {
+    instance = instance_;
   }
 };
 
@@ -182,6 +190,7 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      interface.setModuleRunner(&instance);
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
@@ -332,6 +341,7 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      interface.setModuleRunner(&instance);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
