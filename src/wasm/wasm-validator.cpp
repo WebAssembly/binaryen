@@ -2454,9 +2454,11 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
 }
 
 void FunctionValidator::visitTableFill(TableFill* curr) {
-  shouldBeTrue(getModule()->features.hasBulkMemory(),
+  shouldBeTrue(getModule()->features.hasBulkMemory() &&
+                 getModule()->features.hasReferenceTypes(),
                curr,
-               "table.fill requires bulk-memory [--enable-bulk-memory]");
+               "table.fill requires bulk-memory [--enable-bulk-memory] and "
+               "reference-types [--enable-reference-types]");
   auto* table = getModule()->getTableOrNull(curr->table);
   if (shouldBeTrue(!!table, curr, "table.fill table must exist")) {
     shouldBeSubType(curr->value->type,
