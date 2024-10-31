@@ -106,6 +106,8 @@ public:
         return {};
       } else if (import->base == "call-export") {
         callExport(arguments[0].geti32());
+        // Return nothing. If we wanted to return a value we'd need to have
+        // multiple such functions, one for each signature.
         return {};
       } else if (import->base == "call-export-catch") {
         try {
@@ -154,6 +156,8 @@ public:
       throwEmptyException();
     }
     auto* func = wasm.getFunction(exp->value);
+
+    // TODO JS traps on some types on the boundary!
 
     // Send default values as arguments, or trap if we need anything else.
     Literals arguments;

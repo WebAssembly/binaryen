@@ -182,6 +182,7 @@ void TranslateToFuzzReader::build() {
     addImportTableSupport();
   }
   addImportLoggingSupport();
+  addImportCallingSupport();
   modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
@@ -598,6 +599,29 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
   }
 }
 
+void TranslateToFuzzReader::addImportCallingSupport() {
+  // Given an export index, call it from JS.
+  {
+    callExportImportName = Names::getValidFunctionName(wasm, "call-export");
+    auto func = std::make_unique<Function>();
+    func->module = "fuzzing-support";
+    func->base = callExportImportName;
+    func->type = Signature({Type::i32}, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+  // Given an export index, call it from JS and catch all exceptions. Return
+  // whether we caught. Exceptions are common (if the index is invalid, in
+  // particular), so a variant that catches is useful to avoid halting.
+  {
+    callExportCatchImportName = Names::getValidFunctionName(wasm, "call-export-catch");
+    auto func = std::make_unique<Function>();
+    func->module = "fuzzing-support";
+    func->base = callExportCatchImportName;
+    func->type = Signature(Type::i32, Type::i32);
+    wasm.addFunction(std::move(func));
+  }
+}
+
 void TranslateToFuzzReader::addImportThrowingSupport() {
   // Throw some kind of exception from JS.
   // TODO: Send an index, which is which exported wasm Tag we should throw, or
@@ -781,6 +805,39 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
     tableSetImportName,
     {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
     Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
+  assert(callExportImportName && callExportCatchImportName);
+
+  // The none-returning variant just does the call. The i32-returning one
+  // catches any errors and returns 1 when it saw an error. Based on the
+  // variant, pick which to call, and the maximum index to call (we add one to
+  // the max index to avoid a corner case of upTo(0) below; also, it is
+  // probably fine since more exports may be added later).
+  Name target;
+  Index maxIndex = wasm.exports.size() + 1;
+  if (type == Type::none) {
+    name = callExportImportName;
+  } else if (type == Type::i32) {
+    name = callExportImportCatchName;
+    // This never traps, so we can be less careful, but we do still want to
+    // avoid trapping a lot as executing code is more interesting.
+    maxIndex *= 2;
+  } else {
+    WASM_UNREACHABLE("bad import.call");
+  }
+
+  // Most of the time, call a valid export index in the range we picked, but
+  // sometimes allow anything at all.
+  Expression* index;
+  if (!allowOOB || !oneIn(10)) {
+    index = builder.makeConst(int32_t(upTo(maxIndex)));
+  } else {
+    index = make(Type::i32);
+  }
+
+  return builder.makeCall(target, {index}, type);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1474,6 +1531,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
   }
   if (type == Type::i32) {
+    options.add(FeatureSet::MVP, &Self::makeImportCallExport);
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
@@ -1538,7 +1596,8 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeCallIndirect,
          &Self::makeDrop,
          &Self::makeNop,
-         &Self::makeGlobalSet)
+         &Self::makeGlobalSet,
+         &Self::makeImportCallExport)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
@@ -1986,7 +2045,7 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
       return makeTrivial(type);
     }
   }
-  // with high probability, make sure the type is valid  otherwise, most are
+  // with high probability, make sure the type is valid - otherwise, most are
   // going to trap
   Expression* target;
   if (!allowOOB || !oneIn(10)) {
@@ -2165,20 +2224,21 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memories[0]->indexType);
-  // with high probability, mask the pointer so it's in a reasonable
+  // With high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
-  // most memory ops will just trap
+  // most memory ops will just trap.
   if (!allowOOB || !oneIn(10)) {
     if (wasm.memories[0]->is64()) {
-      ret = builder.makeBinary(
+      return builder.makeBinary(
         AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
     } else {
-      ret = builder.makeBinary(
+      return builder.makeBinary(
         AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
     }
   }
-  return ret;
+
+  // Otherwise, emit anything at all.
+  return make(wasm.memories[0]->indexType);
 }
 
 Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
