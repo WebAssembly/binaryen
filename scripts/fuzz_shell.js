@@ -186,11 +186,9 @@ var imports = {
 
     // Export operations.
     'call-export': (index) => {
-      s;
       callFunc(getExportByIndex(index));
     },
     'call-export-catch': (index) => {
-      t;
       try {
         callFunc(getExportByIndex(index));
         return 0;
