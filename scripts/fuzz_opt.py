@@ -1178,10 +1178,33 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
+# given a wasm, find all the exports.
+def get_exports(wasm):
+    wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+    p = re.compile(r'^ [(]export "(.*[^\\]?)" [(]func')
+    exports = []
+    for line in wat.splitlines():
+        m = p.match(line)
+        if m:
+            export = m[1]
+            exports.append(export)
+    return exports
+
+
 # given a wasm and a list of exports we want to keep, remove all other exports.
 def filter_exports(wasm, output, keep):
     # based on
     # https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
+
+    # we append to keep; avoid modifying the object that was sent in.
+    keep = keep[:]
+
+    # some exports must always be preserved, if they exist, like the table
+    # (which can be called from JS imports for table operations).
+    existing_exports = set(get_exports(wasm))
+    for export in ['table']:
+        if export in existing_exports:
+            keep.append(export)
 
     # build json to represent the exports we want.
     graph = [{
@@ -1305,17 +1328,9 @@ class CtorEval(TestCaseHandler):
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
         # get the list of exports, so we can tell ctor-eval what to eval.
-        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
-        p = re.compile(r'^ [(]export "(.*[^\\]?)" [(]func')
-        exports = []
-        for line in wat.splitlines():
-            m = p.match(line)
-            if m:
-                export = m[1]
-                exports.append(export)
-        if not exports:
+        ctors = ','.join(get_exports(wasm))
+        if not ctors:
             return
-        ctors = ','.join(exports)
 
         # eval the wasm.
         # we can use --ignore-external-input because the fuzzer passes in 0 to
