@@ -604,8 +604,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   {
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
+    func->name = callExportImportName;
     func->module = "fuzzing-support";
-    func->base = callExportImportName;
+    func->base = "call-export";
     func->type = Signature({Type::i32}, Type::none);
     wasm.addFunction(std::move(func));
   }
@@ -615,8 +616,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   {
     callExportCatchImportName = Names::getValidFunctionName(wasm, "call-export-catch");
     auto func = std::make_unique<Function>();
+    func->name = callExportCatchImportName;
     func->module = "fuzzing-support";
-    func->base = callExportCatchImportName;
+    func->base = "call-export-catch";
     func->type = Signature(Type::i32, Type::i32);
     wasm.addFunction(std::move(func));
   }
