@@ -1178,11 +1178,12 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
-# given a wasm, find all the exports. for now this supports function and table
-# exports
-def get_exports(wasm):
+# given a wasm, find all the exports of particular kinds (for example, kinds
+# can be ['func', 'table'] and then we would find exported functions and
+# tables).
+def get_exports(wasm, kinds):
     wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
-    p = re.compile(r'^ [(]export "(.*[^\\]?)" [(](?:func|table)')
+    p = re.compile(r'^ [(]export "(.*[^\\]?)" [(](?:' + '|'.join(kinds) + ')')
     exports = []
     for line in wat.splitlines():
         m = p.match(line)
@@ -1202,7 +1203,7 @@ def filter_exports(wasm, output, keep):
 
     # some exports must always be preserved, if they exist, like the table
     # (which can be called from JS imports for table operations).
-    existing_exports = set(get_exports(wasm))
+    existing_exports = set(get_exports(wasm, ['func', 'table']))
     for export in ['table']:
         if export in existing_exports:
             keep.append(export)
@@ -1328,8 +1329,8 @@ class CtorEval(TestCaseHandler):
         # get the expected execution results.
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
-        # get the list of exports, so we can tell ctor-eval what to eval.
-        ctors = ','.join(get_exports(wasm))
+        # get the list of func exports, so we can tell ctor-eval what to eval.
+        ctors = ','.join(get_exports(wasm, ['func']))
         if not ctors:
             return
 
