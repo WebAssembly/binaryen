@@ -812,31 +812,27 @@ Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
 
   // The none-returning variant just does the call. The i32-returning one
   // catches any errors and returns 1 when it saw an error. Based on the
-  // variant, pick which to call, and the maximum index to call (we add one to
-  // the max index to avoid a corner case of upTo(0) below; also, it is
-  // probably fine since more exports may be added later).
+  // variant, pick which to call, and the maximum index to call.
   Name target;
-  Index maxIndex = wasm.exports.size() + 1;
+  Index maxIndex = wasm.exports.size();
   if (type == Type::none) {
     target = callExportImportName;
   } else if (type == Type::i32) {
     target = callExportCatchImportName;
     // This never traps, so we can be less careful, but we do still want to
     // avoid trapping a lot as executing code is more interesting.
-    maxIndex *= 2;
+    maxIndex = (maxIndex + 1) * 2;
   } else {
     WASM_UNREACHABLE("bad import.call");
   }
 
   // Most of the time, call a valid export index in the range we picked, but
   // sometimes allow anything at all.
-  Expression* index;
+  auto* index = make(Type::i32);
   if (!allowOOB || !oneIn(10)) {
-    index = builder.makeConst(int32_t(upTo(maxIndex)));
-  } else {
-    index = make(Type::i32);
+    index = builder.makeBinary(
+      RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-
   return builder.makeCall(target, {index}, type);
 }
 
@@ -2224,21 +2220,20 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  // With high probability, mask the pointer so it's in a reasonable
+  auto* ret = make(wasm.memories[0]->indexType);
+  // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
-  // most memory ops will just trap.
+  // most memory ops will just trap
   if (!allowOOB || !oneIn(10)) {
     if (wasm.memories[0]->is64()) {
-      return builder.makeBinary(
+      ret = builder.makeBinary(
         AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
     } else {
-      return builder.makeBinary(
+      ret = builder.makeBinary(
         AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
     }
   }
-
-  // Otherwise, emit anything at all.
-  return make(wasm.memories[0]->indexType);
+  return ret;
 }
 
 Expression* TranslateToFuzzReader::makeNonAtomicLoad(Type type) {
