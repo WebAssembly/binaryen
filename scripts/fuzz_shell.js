@@ -138,11 +138,12 @@ function logValue(x, y) {
 var exportsList;
 function getExportByIndex(index) {
   if (!exportsList) {
+    exportsList = [];
     for (var e in exports) {
       exportsList.push(e);
     }
   }
-  return exportsList[index];
+  return exports[exportsList[index]];
 }
 
 // Given a wasm function, call it as best we can from JS, and return the result.
