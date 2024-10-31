@@ -818,9 +818,9 @@ Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
   Name target;
   Index maxIndex = wasm.exports.size() + 1;
   if (type == Type::none) {
-    name = callExportImportName;
+    target = callExportImportName;
   } else if (type == Type::i32) {
-    name = callExportImportCatchName;
+    target = callExportCatchImportName;
     // This never traps, so we can be less careful, but we do still want to
     // avoid trapping a lot as executing code is more interesting.
     maxIndex *= 2;
