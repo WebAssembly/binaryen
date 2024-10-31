@@ -2818,7 +2818,7 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
   maybePrintImplicitBlock(curr->body);
   decIndent();
   if (full) {
-    o << " ;; end if";
+    o << " ;; end try_table";
   }
   controlFlowDepth--;
 }
