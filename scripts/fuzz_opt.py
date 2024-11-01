@@ -1227,6 +1227,16 @@ def filter_exports(wasm, output, keep):
     run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
 
 
+# Check if a wasm file would notice changes to exports. Normally removing an
+# export that is not called, for example, would not be observable, but if the
+# "call-export*" functions are present then such changes can break us.
+def wasm_notices_export_changes(wasm):
+    # we could be more precise here and disassemble the wasm to look for an
+    # actual import with name "call-export*", but looking for the string should
+    # have practically no false positives.
+    return b'call-export' in open(wasm, 'rb').read()
+
+
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
 # happen mode is that if a trap *does* happen then that is undefined behavior,
 # and the optimizer was free to make changes to observable behavior there. The
@@ -1235,6 +1245,12 @@ class TrapsNeverHappen(TestCaseHandler):
     frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        # if we see a trap, we must remove that export (see below), so the wasm
+        # must not be sensitive to such changes.
+        if wasm_notices_export_changes(before_wasm):
+            note_ignored_vm_run('ctor-eval sees call-export')
+            return
+
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
 
         if before == IGNORE:
@@ -1319,16 +1335,6 @@ class TrapsNeverHappen(TestCaseHandler):
         after = fix_output(ignore_references(after))
 
         compare_between_vms(before, after, 'TrapsNeverHappen')
-
-
-# Check if a wasm file would notice changes to exports. Normally removing an
-# export that is not called, for example, would not be observable, but if the
-# "call-export*" functions are present then such changes can break us.
-def wasm_notices_export_changes(wasm):
-    # we could be more precise here and disassemble the wasm to look for an
-    # actual import with name "call-export*", but looking for the string should
-    # have practically no false positives.
-    return b'call-export' in open(wasm, 'rb').read()
 
 
 # Tests wasm-ctor-eval
