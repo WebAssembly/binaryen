@@ -194,6 +194,20 @@ var imports = {
         callFunc(getExportByIndex(index));
         return 0;
       } catch (e) {
+        var text = e + '';
+        // We must not swallow host limitations here: a host limitation is a
+        // problem that means we must not compare the outcome here to any other
+        // VM.
+        for (var hostIssue of ['requested new array is too large',
+                               'out of memory',
+                               'Maximum call stack size exceeded']) {
+          if (text.includes(hostIssue)) {
+            throw e;
+          }
+        }
+        // Otherwise, this is a normal exception we want to catch (a wasm
+        // exception, or a conversion error on the wasm/JS boundary, etc.).
+        // TODO what about wasm *traps*?
         return 1;
       }
     },
