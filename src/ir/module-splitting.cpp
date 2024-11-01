@@ -157,7 +157,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
     module.getExportOrNull("__indirect_function_table");
   Table* singletonTable =
     module.tables.size() == 1 ? module.tables[0].get() : nullptr;
-  bool emscriptenTableImport =
+  bool emscriptenTableImport = singletonTable &&
     singletonTable->imported() && singletonTable->module == "env" &&
     singletonTable->base == "__indirect_function_table";
 
