@@ -146,10 +146,21 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 }
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
-  if (module.features.hasReferenceTypes()) {
+  Export* emscripten_table_export =
+    module.getExportOrNull("__indirect_function_table");
+  Table* indirect_table =
+    module.tables.size() == 1 ? module.tables[0].get() : nullptr;
+  bool emscripten_import = indirect_table->imported() &&
+                           indirect_table->module == "env" &&
+                           indirect_table->base == "__indirect_function_table";
+
+  if (module.features.hasReferenceTypes() && !emscripten_table_export &&
+      !emscripten_import) {
     // Just create a new table to manage all primary-to-secondary calls lazily.
     // Do not re-use slots for functions that will already be in existing
     // tables, since that is not correct in the face of table mutations.
+    // However, do not do this for emscripten; its loader code (and dynamic
+    // loading in particular) do not support this yet.
     // TODO: Reduce overhead by creating a separate table for each function type
     // if WasmGC is enabled.
     return;
@@ -217,19 +228,15 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  Table* newTable = module.addTable(
+  return module.addTable(
     Builder::makeTable(Names::getValidTableName(module, Name::fromInt(0))));
-  if (Export* e = module.getExportOrNull("__indirect_function_table")) {
-      e->value = newTable->name;
-  }
-  return newTable;
 }
 
 ElementSegment* TableSlotManager::makeElementSegment() {
   return module.addElementSegment(Builder::makeElementSegment(
     Names::getValidElementSegmentName(module, Name::fromInt(0)),
     activeTable->name,
-    Builder(module).makeConst(int32_t(1))));
+    Builder(module).makeConst(int32_t(0))));
 }
 
 TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
@@ -242,8 +249,7 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
   if (activeSegment == nullptr) {
     if (activeTable == nullptr) {
       activeTable = makeTable();
-      std::cout << "allocating\n";
-      activeBase = {activeTable->name, "", 1};
+      activeBase = {activeTable->name, "", 0};
     }
 
     // None of the existing segments should refer to the active table
