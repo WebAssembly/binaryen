@@ -600,8 +600,23 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
-  // Given an export index, call it from JS.
-  {
+  // Only add these some of the time, as they inhibit some fuzzing (things like
+  // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
+  // its own exports, and to care about the indexes of the exports):
+  //
+  //  0 - none
+  //  1 - call-export
+  //  2 - call-export-catch
+  //  3 - call-export & call-export-catch
+  //  4 - none
+  //
+  auto choice = upTo(5);
+  if (choice == 4) {
+    return;
+  }
+
+  if (choice & 1) {
+    // Given an export index, call it from JS.
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
     func->name = callExportImportName;
@@ -610,10 +625,11 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->type = Signature({Type::i32}, Type::none);
     wasm.addFunction(std::move(func));
   }
-  // Given an export index, call it from JS and catch all exceptions. Return
-  // whether we caught. Exceptions are common (if the index is invalid, in
-  // particular), so a variant that catches is useful to avoid halting.
-  {
+
+  if (choice & 2) {
+    // Given an export index, call it from JS and catch all exceptions. Return
+    // whether we caught. Exceptions are common (if the index is invalid, in
+    // particular), so a variant that catches is useful to avoid halting.
     callExportCatchImportName = Names::getValidFunctionName(wasm, "call-export-catch");
     auto func = std::make_unique<Function>();
     func->name = callExportCatchImportName;
@@ -810,8 +826,6 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
-  assert(callExportImportName && callExportCatchImportName);
-
   // The none-returning variant just does the call. The i32-returning one
   // catches any errors and returns 1 when it saw an error. Based on the
   // variant, pick which to call, and the maximum index to call.
@@ -827,6 +841,8 @@ Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
   } else {
     WASM_UNREACHABLE("bad import.call");
   }
+  // We must have set up the target function.
+  assert(target);
 
   // Most of the time, call a valid export index in the range we picked, but
   // sometimes allow anything at all.
@@ -1529,7 +1545,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
   }
   if (type == Type::i32) {
-    options.add(FeatureSet::MVP, &Self::makeImportCallExport);
+    if (callExportCatchImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportCallExport);
+    }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
@@ -1594,8 +1612,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeCallIndirect,
          &Self::makeDrop,
          &Self::makeNop,
-         &Self::makeGlobalSet,
-         &Self::makeImportCallExport)
+         &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
@@ -1609,6 +1626,9 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeArrayBulkMemoryOp);
   if (tableSetImportName) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
+  }
+  if (callExportImportName) {
+    options.add(FeatureSet::MVP, &Self::makeImportCallExport);
   }
   return (this->*pick(options))(Type::none);
 }
