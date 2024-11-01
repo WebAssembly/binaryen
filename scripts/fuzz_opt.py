@@ -1321,19 +1321,24 @@ class TrapsNeverHappen(TestCaseHandler):
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
 
+# Check if a wasm file would notice changes to exports. Normally removing an
+# export that is not called, for example, would not be observable, but if the
+# "call-export*" functions are present then such changes can break us.
+def wasm_notices_export_changes(wasm):
+    # we could be more precise here and disassemble the wasm to look for an
+    # actual import with name "call-export*", but looking for the string should
+    # have practically no false positives.
+    return b'call-export' in open(wasm, 'rb').read()
+
+
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
     frequency = 0.2
 
     def handle(self, wasm):
-        # if exports are called from the wasm then the exports may not be true
-        # "ctors", that is, they are not called once during startup, and ctor-
-        # eval must not run on them.
-        #
-        # we could be more precise here and disassembly the wasm to look for an
-        # actual import with name "call-export*", but looking for the string
-        # should have practically no false positives.
-        if b'call-export' in open(wasm, 'rb').read():
+        # ctor-eval modifies exports, because it assumes they are ctors and so
+        # are only called once. if the wasm might notice that, exit.
+        if wasm_notices_export_changes(wasm):
             note_ignored_vm_run('ctor-eval sees call-export')
             return
 
@@ -1368,6 +1373,12 @@ class Merge(TestCaseHandler):
     frequency = 0.15
 
     def handle(self, wasm):
+        # wasm-merge combines exports, which can alter their indexes and lead to
+        # noticeable differences if the wasm is sensitive to such things.
+        if wasm_notices_export_changes(wasm):
+            note_ignored_vm_run('ctor-eval sees call-export')
+            return
+
         # generate a second wasm file to merge. note that we intentionally pick
         # a smaller size than the main wasm file, so that reduction is
         # effective (i.e., as we reduce the main wasm to small sizes, we also
