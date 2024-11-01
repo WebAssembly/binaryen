@@ -155,11 +155,11 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // if WasmGC is enabled.
   Export* emscriptenTableExport =
     module.getExportOrNull("__indirect_function_table");
-  Table* indirect_table =
+  Table* singletonTable =
     module.tables.size() == 1 ? module.tables[0].get() : nullptr;
   bool emscriptenTableImport =
-    indirect_table->imported() && indirect_table->module == "env" &&
-    indirect_table->base == "__indirect_function_table";
+    singletonTable->imported() && singletonTable->module == "env" &&
+    singletonTable->base == "__indirect_function_table";
 
   if (module.features.hasReferenceTypes() && !emscriptenTableExport &&
       !emscriptenTableImport) {
