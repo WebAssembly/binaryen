@@ -350,7 +350,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                                 targetFunc.toString());
     }
     if (!func->imported()) {
-      return instance.callFunctionInternal(targetFunc, arguments);
+      return instance.callFunction(targetFunc, arguments);
     } else {
       throw FailToEvalException(
         std::string("callTable on imported function: ") +
