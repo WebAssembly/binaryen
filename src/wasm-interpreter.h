@@ -3029,6 +3029,7 @@ public:
       oldScope = parent.scope;
       parent.scope = this;
       parent.callDepth++;
+      parent.functionStack.push_back(function->name);
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3057,6 +3058,7 @@ public:
     ~FunctionScope() {
       parent.scope = oldScope;
       parent.callDepth--;
+      parent.functionStack.pop_back();
     }
 
     // The current delegate target, if delegation of an exception is in
@@ -4325,9 +4327,6 @@ public:
         return externalInterface->callImport(function, arguments);
       }
 
-      auto previousFunctionStackSize = functionStack.size();
-      functionStack.push_back(name);
-
       FunctionScope scope(function, arguments, *self());
 
 #ifdef WASM_INTERPRETER_DEBUG
@@ -4339,11 +4338,6 @@ public:
 
       flow = self()->visit(function->body);
 
-      // if we jumped up the stack, we also need to pop higher frames
-      // TODO can FunctionScope handle this automatically?
-      while (functionStack.size() > previousFunctionStackSize) {
-        functionStack.pop_back();
-      }
 #ifdef WASM_INTERPRETER_DEBUG
       std::cout << "exiting " << function->name << " with " << flow.values
                 << '\n';
