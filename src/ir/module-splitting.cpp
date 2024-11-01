@@ -217,15 +217,19 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  return module.addTable(
+  Table* newTable = module.addTable(
     Builder::makeTable(Names::getValidTableName(module, Name::fromInt(0))));
+  if (Export* e = module.getExportOrNull("__indirect_function_table")) {
+      e->value = newTable->name;
+  }
+  return newTable;
 }
 
 ElementSegment* TableSlotManager::makeElementSegment() {
   return module.addElementSegment(Builder::makeElementSegment(
     Names::getValidElementSegmentName(module, Name::fromInt(0)),
     activeTable->name,
-    Builder(module).makeConst(int32_t(0))));
+    Builder(module).makeConst(int32_t(1))));
 }
 
 TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
@@ -238,7 +242,8 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
   if (activeSegment == nullptr) {
     if (activeTable == nullptr) {
       activeTable = makeTable();
-      activeBase = {activeTable->name, "", 0};
+      std::cout << "allocating\n";
+      activeBase = {activeTable->name, "", 1};
     }
 
     // None of the existing segments should refer to the active table
