@@ -194,6 +194,11 @@ var imports = {
         callFunc(getExportByIndex(index));
         return 0;
       } catch (e) {
+        // We only want to catch exceptions, not wasm traps. Traps should still
+        // halt execution.
+        if (e instanceof WebAssembly.RuntimeError) {
+          throw e;
+        }
         var text = e + '';
         // We must not swallow host limitations here: a host limitation is a
         // problem that means we must not compare the outcome here to any other
@@ -207,7 +212,6 @@ var imports = {
         }
         // Otherwise, this is a normal exception we want to catch (a wasm
         // exception, or a conversion error on the wasm/JS boundary, etc.).
-        // TODO what about wasm *traps*?
         return 1;
       }
     },
