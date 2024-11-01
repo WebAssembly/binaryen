@@ -630,7 +630,8 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     // Given an export index, call it from JS and catch all exceptions. Return
     // whether we caught. Exceptions are common (if the index is invalid, in
     // particular), so a variant that catches is useful to avoid halting.
-    callExportCatchImportName = Names::getValidFunctionName(wasm, "call-export-catch");
+    callExportCatchImportName =
+      Names::getValidFunctionName(wasm, "call-export-catch");
     auto func = std::make_unique<Function>();
     func->name = callExportCatchImportName;
     func->module = "fuzzing-support";

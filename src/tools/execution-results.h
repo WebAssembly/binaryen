@@ -170,9 +170,7 @@ public:
     return instance->callFunction(func->name, arguments);
   }
 
-  void setModuleRunner(ModuleRunner* instance_) {
-    instance = instance_;
-  }
+  void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
 };
 
 // gets execution results from a wasm module. this is useful for fuzzing
