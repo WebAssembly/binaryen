@@ -1326,6 +1326,17 @@ class CtorEval(TestCaseHandler):
     frequency = 0.2
 
     def handle(self, wasm):
+        # if exports are called from the wasm then the exports may not be true
+        # "ctors", that is, they are not called once during startup, and ctor-
+        # eval must not run on them.
+        #
+        # we could be more precise here and disassembly the wasm to look for an
+        # actual import with name "call-export*", but looking for the string
+        # should have practically no false positives.
+        if b'call-export' in open(wasm, 'rb').read():
+            note_ignored_vm_run('ctor-eval sees call-export')
+            return
+
         # get the expected execution results.
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
