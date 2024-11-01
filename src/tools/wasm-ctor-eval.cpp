@@ -1173,7 +1173,6 @@ start_eval:
     // precomputed values for the current return-called function, then we can
     // replace the export with a new function that does less work than the
     // original.
-    // We assume exports called once!!1
     if ((func->imported() || successes < block->list.size()) &&
         (successes > 0 || func->name != funcName ||
          (localExprs.size() && func->getParams() != Type::none))) {
