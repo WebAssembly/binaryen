@@ -1631,7 +1631,7 @@ Importable* Module::getImport(ModuleItemKind kind, Name name) {
 
 Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
   auto doReturn = [](Importable* importable) {
-    return importable->imported() ? importable : nullptr;
+    return importable ? importable->imported() ? importable : nullptr : nullptr;
   };
 
   switch (kind) {
