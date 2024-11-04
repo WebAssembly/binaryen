@@ -748,7 +748,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $mid 0
   ;; CHECK-NEXT:    (struct.new $mid
-  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:     (string.const "bar")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -764,7 +764,7 @@
     (drop
       (struct.get $mid 0
         (struct.new $mid
-          (string.const "foo")
+          (string.const "bar")
         )
       )
     )
@@ -772,7 +772,7 @@
 )
 
 ;; As above, but add another irrelevant field first. We can still optimize the
-;; string, but the new mutable i32 must remain mutable.
+;; string, but the new mutable i32 must remain mutable, as it has a set.
 (module
   (rec
     ;; CHECK:      (rec
@@ -797,7 +797,19 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $mid 0
   ;; CHECK-NEXT:    (struct.new $mid
-  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:     (string.const "bar")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $mid))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new $mid
+  ;; CHECK-NEXT:      (string.const "baz")
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -815,23 +827,32 @@
       (struct.get $mid 1
         (struct.new $mid
           (i32.const 1337)
-          (string.const "foo")
+          (string.const "bar")
         )
       )
+    )
+    ;; A set of the first field.
+    (struct.set $mid 0
+      (struct.new $mid
+        (i32.const 99999)
+        (string.const "baz")
+      )
+      (i32.const 42)
     )
   )
 )
 
-;; As above, but the i32 field is immutable. We can still optimize the string.
+;; As above, but without a set of the first field. Now we can optimize both
+;; fields.
 (module
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct (field i32))))
+    (type $super (sub (struct (field (mut i32)))))
     ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
-    (type $mid (sub $super (struct (field i32) (field (mut (ref string))))))
+    (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
     ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
-    (type $sub (sub $mid (struct (field i32) (field (mut (ref string))))))
+    (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
   )
 
   ;; CHECK:       (type $3 (func (param stringref)))
@@ -847,7 +868,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $mid 0
   ;; CHECK-NEXT:    (struct.new $mid
-  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:     (string.const "bar")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -865,7 +886,7 @@
       (struct.get $mid 1
         (struct.new $mid
           (i32.const 1337)
-          (string.const "foo")
+          (string.const "bar")
         )
       )
     )
