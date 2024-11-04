@@ -699,9 +699,9 @@
     (type $sub (sub $super (struct (field (mut (ref string))))))
   )
 
-  ;; CHECK:       (type $2 (func (param stringref)))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $test (type $2) (param $string stringref)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
   ;; CHECK-NEXT:    (struct.new $sub
@@ -710,7 +710,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $string stringref)
+  (func $test
     ;; Write and read the field.
     (drop
       (struct.get $sub 0
@@ -735,9 +735,9 @@
     (type $sub (sub $mid (struct (field (mut (ref string))))))
   )
 
-  ;; CHECK:       (type $3 (func (param stringref)))
+  ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (func $test (type $3) (param $string stringref)
+  ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
   ;; CHECK-NEXT:    (struct.new $sub
@@ -753,7 +753,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $string stringref)
+  (func $test
     (drop
       (struct.get $sub 0
         (struct.new $sub
@@ -776,45 +776,48 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    ;; CHECK-NEXT:  (type $super (sub (struct (field (mut i32)))))
     (type $super (sub (struct (field (mut i32)))))
-    ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
+    ;; CHECK:       (type $mid (sub $super (struct (field (mut i32)) (field (ref string)))))
     (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
-    ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field (mut i32)) (field (ref string)))))
     (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
   )
 
-  ;; CHECK:       (type $3 (func (param stringref)))
+  ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (func $test (type $3) (param $string stringref)
+  ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:   (struct.get $sub 1
   ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:     (string.const "foo")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $mid 0
+  ;; CHECK-NEXT:   (struct.get $mid 1
   ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:     (string.const "bar")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $super 0
+  ;; CHECK-NEXT:   (struct.new $super
+  ;; CHECK-NEXT:    (i32.const 98765)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref $mid))
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (struct.new $mid
-  ;; CHECK-NEXT:      (string.const "baz")
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (struct.new $super
+  ;; CHECK-NEXT:     (i32.const 999999)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $string stringref)
+  (func $test
     (drop
       (struct.get $sub 1
         (struct.new $sub
@@ -831,13 +834,19 @@
         )
       )
     )
-    ;; A set of the first field.
-    (struct.set $mid 0
-      (struct.new $mid
-        (i32.const 99999)
-        (string.const "baz")
+    ;; A set and get of the first field.
+    (struct.set $super 0
+      (struct.new $super
+        (i32.const 98765)
       )
       (i32.const 42)
+    )
+    (drop
+      (struct.get $super 0
+        (struct.new $super
+          (i32.const 999999)
+        )
+      )
     )
   )
 )
@@ -847,33 +856,42 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    ;; CHECK-NEXT:  (type $super (sub (struct (field i32))))
     (type $super (sub (struct (field (mut i32)))))
-    ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
+    ;; CHECK:       (type $mid (sub $super (struct (field i32) (field (ref string)))))
     (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
-    ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field i32) (field (ref string)))))
     (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
   )
 
-  ;; CHECK:       (type $3 (func (param stringref)))
+  ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (func $test (type $3) (param $string stringref)
+  ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:   (struct.get $sub 1
   ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:     (string.const "foo")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $mid 0
+  ;; CHECK-NEXT:   (struct.get $mid 1
   ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:     (string.const "bar")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (struct.new $super
+  ;; CHECK-NEXT:     (i32.const 999999)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $string stringref)
+  (func $test
     (drop
       (struct.get $sub 1
         (struct.new $sub
@@ -887,6 +905,14 @@
         (struct.new $mid
           (i32.const 1337)
           (string.const "bar")
+        )
+      )
+    )
+    ;; Only a get of the first field.
+    (drop
+      (struct.get $super 0
+        (struct.new $super
+          (i32.const 999999)
         )
       )
     )
