@@ -729,7 +729,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (struct)))
     (type $super (sub (struct)))
-    ;; CHECK:       (type $mid (sub $super (struct)))
+    ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
     (type $mid (sub $super (struct (field (mut (ref string))))))
     ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
     (type $sub (sub $mid (struct (field (mut (ref string))))))
@@ -741,6 +741,13 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
   ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $mid 0
+  ;; CHECK-NEXT:    (struct.new $mid
   ;; CHECK-NEXT:     (string.const "foo")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -771,9 +778,9 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (struct)))
     (type $super (sub (struct (field (mut i32)))))
-    ;; CHECK:       (type $mid (sub $super (struct)))
+    ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
     (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
-    ;; CHECK:       (type $sub (sub $mid (struct (field i32))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
     (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
   )
 
@@ -783,7 +790,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
   ;; CHECK-NEXT:    (struct.new $sub
-  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $mid 0
+  ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (string.const "foo")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -800,6 +814,7 @@
     (drop
       (struct.get $mid 1
         (struct.new $mid
+          (i32.const 1337)
           (string.const "foo")
         )
       )
@@ -813,9 +828,9 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (struct)))
     (type $super (sub (struct (field i32))))
-    ;; CHECK:       (type $mid (sub $super (struct)))
+    ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
     (type $mid (sub $super (struct (field i32) (field (mut (ref string))))))
-    ;; CHECK:       (type $sub (sub $mid (struct (field i32))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
     (type $sub (sub $mid (struct (field i32) (field (mut (ref string))))))
   )
 
@@ -825,7 +840,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $sub 0
   ;; CHECK-NEXT:    (struct.new $sub
-  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $mid 0
+  ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (string.const "foo")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -842,6 +864,7 @@
     (drop
       (struct.get $mid 1
         (struct.new $mid
+          (i32.const 1337)
           (string.const "foo")
         )
       )
