@@ -2401,11 +2401,15 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
         ValueBuilder::makeCall(ABI::wasm2js::TRAP));
     }
 
+    Ref visitContNew(ContNew* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitContBind(ContBind* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitContNew(ContNew* curr) {
+    Ref visitSuspend(Suspend* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2413,7 +2417,11 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitSuspend(Suspend* curr) {
+    Ref visitResumeThrow(ResumeThrow* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStackSwitch(StackSwitch* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

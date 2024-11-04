@@ -1050,6 +1050,10 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->end, Type::i32);
   }
 
+  void visitContNew(ContNew* curr) {
+    note(&curr->func, Type(curr->contType.getContinuation().type, Nullable));
+  }
+
   void visitContBind(ContBind* curr) {
     auto paramsBefore =
       curr->contTypeBefore.getContinuation().type.getSignature().params;
@@ -1064,8 +1068,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->cont, Type(curr->contTypeBefore, Nullable));
   }
 
-  void visitContNew(ContNew* curr) {
-    note(&curr->func, Type(curr->contType.getContinuation().type, Nullable));
+  void visitSuspend(Suspend* curr) {
+    auto params = wasm.getTag(curr->tag)->sig.params;
+    assert(params.size() == curr->operands.size());
+    for (size_t i = 0; i < params.size(); ++i) {
+      note(&curr->operands[i], params[i]);
+    }
   }
 
   void visitResume(Resume* curr) {
@@ -1077,12 +1085,23 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->cont, Type(curr->contType, Nullable));
   }
 
-  void visitSuspend(Suspend* curr) {
+  void visitResumeThrow(ResumeThrow* curr) {
     auto params = wasm.getTag(curr->tag)->sig.params;
     assert(params.size() == curr->operands.size());
     for (size_t i = 0; i < params.size(); ++i) {
       note(&curr->operands[i], params[i]);
     }
+    note(&curr->cont, Type(curr->contType, Nullable));
+  }
+
+  void visitStackSwitch(StackSwitch* curr) {
+    auto params = curr->contType.getContinuation().type.getSignature().params;
+    assert(params.size() >= 1 &&
+           ((params.size() - 1) == curr->operands.size()));
+    for (size_t i = 0; i < params.size() - 1; ++i) {
+      note(&curr->operands[i], params[i]);
+    }
+    note(&curr->cont, Type(curr->contType, Nullable));
   }
 };
 

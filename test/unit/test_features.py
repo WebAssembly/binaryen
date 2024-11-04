@@ -51,10 +51,10 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-gc',
                            ['--enable-reference-types'])
 
-    def check_typed_continuations(self, module, error):
-        # Typed continuations implies function references (which is provided by
+    def check_stack_switching(self, module, error):
+        # Stack switching implies function references (which is provided by
         # gc in binaryen, and implies reference types) and exceptions
-        self.check_feature(module, error, '--enable-typed-continuations',
+        self.check_feature(module, error, '--enable-stack-switching',
                            ['--enable-gc', '--enable-reference-types', '--enable-exception-handling'])
 
     def test_v128_signature(self):
@@ -290,9 +290,9 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (tag $foo (result i32))
         )
         '''
-        self.check_typed_continuations(module,
-                                       'Tags with result types require typed '
-                                       'continuations feature [--enable-typed-continuations]')
+        self.check_stack_switching(module,
+                                   'Tags with result types require stack '
+                                   'switching feature [--enable-stack-switching]')
 
     def test_cont_type(self):
         module = '''
@@ -304,7 +304,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_typed_continuations(module, 'all used types should be allowed')
+        self.check_stack_switching(module, 'all used types should be allowed')
 
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
@@ -424,7 +424,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-extended-const',
             '--enable-strings',
             '--enable-multimemory',
-            '--enable-typed-continuations',
+            '--enable-stack-switching',
             '--enable-shared-everything',
             '--enable-fp16',
         ], p2.stdout.splitlines())

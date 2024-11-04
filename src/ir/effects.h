@@ -1008,13 +1008,21 @@ private:
       // traps when ref is null.
       parent.implicitTrap = true;
     }
+    void visitContNew(ContNew* curr) {
+      // traps when curr->func is null ref.
+      parent.implicitTrap = true;
+    }
     void visitContBind(ContBind* curr) {
       // traps when curr->cont is null ref.
       parent.implicitTrap = true;
     }
-    void visitContNew(ContNew* curr) {
-      // traps when curr->func is null ref.
-      parent.implicitTrap = true;
+    void visitSuspend(Suspend* curr) {
+      // Similar to resume/call: Suspending means that we execute arbitrary
+      // other code before we may resume here.
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
     }
     void visitResume(Resume* curr) {
       // This acts as a kitchen sink effect.
@@ -1028,10 +1036,26 @@ private:
         parent.throws_ = true;
       }
     }
-    void visitSuspend(Suspend* curr) {
-      // Similar to resume/call: Suspending means that we execute arbitrary
-      // other code before we may resume here.
+    void visitResumeThrow(ResumeThrow* curr) {
+      // This acts as a kitchen sink effect.
       parent.calls = true;
+
+      // resume_throw instructions accept nullable continuation
+      // references and trap on null.
+      parent.implicitTrap = true;
+
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitStackSwitch(StackSwitch* curr) {
+      // This acts as a kitchen sink effect.
+      parent.calls = true;
+
+      // switch instructions accept nullable continuation references
+      // and trap on null.
+      parent.implicitTrap = true;
+
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
       }

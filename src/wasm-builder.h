@@ -1168,6 +1168,13 @@ public:
     ret->finalize();
     return ret;
   }
+  ContNew* makeContNew(HeapType contType, Expression* func) {
+    auto* ret = wasm.allocator.alloc<ContNew>();
+    ret->contType = contType;
+    ret->func = func;
+    ret->finalize();
+    return ret;
+  }
   ContBind* makeContBind(HeapType contTypeBefore,
                          HeapType contTypeAfter,
                          const std::vector<Expression*>& operands,
@@ -1180,31 +1187,56 @@ public:
     ret->finalize();
     return ret;
   }
-  ContNew* makeContNew(HeapType contType, Expression* func) {
-    auto* ret = wasm.allocator.alloc<ContNew>();
-    ret->contType = contType;
-    ret->func = func;
-    ret->finalize();
+  Suspend* makeSuspend(Name tag, const std::vector<Expression*>& args) {
+    auto* ret = wasm.allocator.alloc<Suspend>();
+    ret->tag = tag;
+    ret->operands.set(args);
+    ret->finalize(&wasm);
     return ret;
   }
   Resume* makeResume(HeapType contType,
                      const std::vector<Name>& handlerTags,
                      const std::vector<Name>& handlerBlocks,
+                     const std::vector<bool>& onTags,
                      const std::vector<Expression*>& operands,
                      Expression* cont) {
     auto* ret = wasm.allocator.alloc<Resume>();
     ret->contType = contType;
     ret->handlerTags.set(handlerTags);
     ret->handlerBlocks.set(handlerBlocks);
+    ret->onTags.set(onTags);
     ret->operands.set(operands);
     ret->cont = cont;
     ret->finalize(&wasm);
     return ret;
   }
-  Suspend* makeSuspend(Name tag, const std::vector<Expression*>& args) {
-    auto* ret = wasm.allocator.alloc<Suspend>();
+  ResumeThrow* makeResumeThrow(HeapType contType,
+                               Name tag,
+                               const std::vector<Name>& handlerTags,
+                               const std::vector<Name>& handlerBlocks,
+                               const std::vector<bool>& onTags,
+                               const std::vector<Expression*>& operands,
+                               Expression* cont) {
+    auto* ret = wasm.allocator.alloc<ResumeThrow>();
+    ret->contType = contType;
     ret->tag = tag;
-    ret->operands.set(args);
+    ret->handlerTags.set(handlerTags);
+    ret->handlerBlocks.set(handlerBlocks);
+    ret->onTags.set(onTags);
+    ret->operands.set(operands);
+    ret->cont = cont;
+    ret->finalize(&wasm);
+    return ret;
+  }
+  StackSwitch* makeStackSwitch(HeapType contType,
+                               Name tag,
+                               const std::vector<Expression*>& operands,
+                               Expression* cont) {
+    auto* ret = wasm.allocator.alloc<StackSwitch>();
+    ret->contType = contType;
+    ret->tag = tag;
+    ret->operands.set(operands);
+    ret->cont = cont;
     ret->finalize(&wasm);
     return ret;
   }

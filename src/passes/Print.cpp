@@ -302,6 +302,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTry(Try* curr);
   void visitTryTable(TryTable* curr);
   void visitResume(Resume* curr);
+  void visitResumeThrow(ResumeThrow* curr);
+  void visitStackSwitch(StackSwitch* curr);
+
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
   bool maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
   void visitCallRef(CallRef* curr) {
@@ -2427,17 +2430,20 @@ struct PrintExpressionContents
   void visitStringSliceWTF(StringSliceWTF* curr) {
     printMedium(o, "stringview_wtf16.slice");
   }
+  void visitContNew(ContNew* curr) {
+    printMedium(o, "cont.new ");
+    printHeapType(curr->contType);
+  }
   void visitContBind(ContBind* curr) {
     printMedium(o, "cont.bind ");
     printHeapType(curr->contTypeBefore);
     o << ' ';
     printHeapType(curr->contTypeAfter);
   }
-  void visitContNew(ContNew* curr) {
-    printMedium(o, "cont.new ");
-    printHeapType(curr->contType);
+  void visitSuspend(Suspend* curr) {
+    printMedium(o, "suspend ");
+    curr->tag.print(o);
   }
-
   void visitResume(Resume* curr) {
     printMedium(o, "resume");
 
@@ -2449,13 +2455,41 @@ struct PrintExpressionContents
       printMedium(o, "on ");
       curr->handlerTags[i].print(o);
       o << ' ';
-      curr->handlerBlocks[i].print(o);
+      if (curr->onTags[i]) {
+        o << "switch";
+      } else {
+        curr->handlerBlocks[i].print(o);
+      }
       o << ')';
     }
   }
+  void visitResumeThrow(ResumeThrow* curr) {
+    printMedium(o, "resume_throw");
 
-  void visitSuspend(Suspend* curr) {
-    printMedium(o, "suspend ");
+    o << ' ';
+    printHeapType(curr->contType);
+    o << ' ';
+    curr->tag.print(o);
+
+    for (Index i = 0; i < curr->handlerTags.size(); i++) {
+      o << " (";
+      printMedium(o, "on ");
+      curr->handlerTags[i].print(o);
+      o << ' ';
+      if (curr->onTags[i]) {
+        o << "switch";
+      } else {
+        curr->handlerBlocks[i].print(o);
+      }
+      o << ')';
+    }
+  }
+  void visitStackSwitch(StackSwitch* curr) {
+    printMedium(o, "switch");
+
+    o << ' ';
+    printHeapType(curr->contType);
+    o << ' ';
     curr->tag.print(o);
   }
 };
@@ -2749,7 +2783,7 @@ void PrintSExpression::visitLoop(Loop* curr) {
 // The parenthesis wrapping do/catch/catch_all is just a syntax and does not
 // affect nested depths of instructions within.
 //
-// try-delegate is written in the forded format as
+// try-delegate is written in the folded format as
 // (try
 //  (do
 //    ...
@@ -2824,7 +2858,7 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
 }
 
 void PrintSExpression::visitResume(Resume* curr) {
-  controlFlowDepth++;
+  // controlFlowDepth++;
   o << '(';
   printExpressionContents(curr);
 
@@ -2836,7 +2870,41 @@ void PrintSExpression::visitResume(Resume* curr) {
 
   printFullLine(curr->cont);
 
-  controlFlowDepth--;
+  // controlFlowDepth--;
+  decIndent();
+}
+
+void PrintSExpression::visitResumeThrow(ResumeThrow* curr) {
+  // controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+
+  incIndent();
+
+  for (Index i = 0; i < curr->operands.size(); i++) {
+    printFullLine(curr->operands[i]);
+  }
+
+  printFullLine(curr->cont);
+
+  // controlFlowDepth--;
+  decIndent();
+}
+
+void PrintSExpression::visitStackSwitch(StackSwitch* curr) {
+  // controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+
+  incIndent();
+
+  for (Index i = 0; i < curr->operands.size(); i++) {
+    printFullLine(curr->operands[i]);
+  }
+
+  printFullLine(curr->cont);
+
+  // controlFlowDepth--;
   decIndent();
 }
 

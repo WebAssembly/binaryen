@@ -736,10 +736,12 @@ public:
     StringEqId,
     StringWTF16GetId,
     StringSliceWTFId,
-    ContBindId,
     ContNewId,
-    ResumeId,
+    ContBindId,
     SuspendId,
+    ResumeId,
+    ResumeThrowId,
+    StackSwitchId, // Id for the stack switching `switch`
     NumExpressionIds
   };
   Id _id;
@@ -1923,6 +1925,17 @@ public:
   void finalize();
 };
 
+class ContNew : public SpecificExpression<Expression::ContNewId> {
+public:
+  ContNew() = default;
+  ContNew(MixedArena& allocator) {}
+
+  HeapType contType;
+  Expression* func;
+
+  void finalize();
+};
+
 class ContBind : public SpecificExpression<Expression::ContBindId> {
 public:
   ContBind(MixedArena& allocator) : operands(allocator) {}
@@ -1935,26 +1948,31 @@ public:
   void finalize();
 };
 
-class ContNew : public SpecificExpression<Expression::ContNewId> {
+class Suspend : public SpecificExpression<Expression::SuspendId> {
 public:
-  ContNew() = default;
-  ContNew(MixedArena& allocator) {}
+  Suspend(MixedArena& allocator) : operands(allocator) {}
 
-  HeapType contType;
-  Expression* func;
+  Name tag;
+  ExpressionList operands;
 
-  void finalize();
+  // We need access to the module to obtain the signature of the tag,
+  // which determines this node's type.
+  // If no module is given, then the type must have been set already.
+  void finalize(Module* wasm = nullptr);
 };
 
 class Resume : public SpecificExpression<Expression::ResumeId> {
 public:
   Resume(MixedArena& allocator)
-    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
-      sentTypes(allocator) {}
+    : handlerTags(allocator), handlerBlocks(allocator), onTags(allocator),
+      operands(allocator), sentTypes(allocator) {}
 
   HeapType contType;
   ArenaVector<Name> handlerTags;
+  // Empty name (i.e. `Name()`) for switch tags.
   ArenaVector<Name> handlerBlocks;
+  // False if (on $tag $label) and true when (on $tag switch).
+  ArenaVector<bool> onTags;
 
   ExpressionList operands;
   Expression* cont;
@@ -1972,16 +1990,47 @@ public:
   ArenaVector<Type> sentTypes;
 };
 
-class Suspend : public SpecificExpression<Expression::SuspendId> {
+class ResumeThrow : public SpecificExpression<Expression::ResumeThrowId> {
 public:
-  Suspend(MixedArena& allocator) : operands(allocator) {}
+  ResumeThrow(MixedArena& allocator)
+    : handlerTags(allocator), handlerBlocks(allocator), onTags(allocator),
+      operands(allocator), sentTypes(allocator) {}
 
+  HeapType contType;
   Name tag;
-  ExpressionList operands;
+  ArenaVector<Name> handlerTags;
+  // Empty name (i.e. `Name()`) for switch tags.
+  ArenaVector<Name> handlerBlocks;
+  // False if (on $tag $label) and true when (on $tag switch).
+  ArenaVector<bool> onTags;
 
-  // We need access to the module to obtain the signature of the tag,
-  // which determines this node's type.
-  // If no module is given, then the type must have been set already.
+  ExpressionList operands;
+  Expression* cont;
+
+  // When 'Module*' parameter is given, we populate the 'sentTypes' array, so
+  // that the types can be accessed in other analyses without accessing the
+  // module.
+  void finalize(Module* wasm = nullptr);
+
+  // sentTypes[i] contains the type of the values that will be sent to the block
+  // handlerBlocks[i] if suspending with tag handlerTags[i]. Not part of the
+  // instruction's syntax, but stored here for subsequent use.
+  // This information is cached here in order not to query the module
+  // every time we query the sent types.
+  ArenaVector<Type> sentTypes;
+};
+
+class StackSwitch : public SpecificExpression<Expression::StackSwitchId> {
+public:
+  StackSwitch(MixedArena& allocator) : operands(allocator) {}
+
+  HeapType contType;
+  Name tag;
+
+  ExpressionList operands;
+  Expression* cont;
+
+  // We need access to the module to obtain the signature of the tag.
   void finalize(Module* wasm = nullptr);
 };
 
