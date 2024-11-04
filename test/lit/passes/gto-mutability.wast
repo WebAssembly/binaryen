@@ -992,3 +992,15 @@
   )
 )
 
+;; Two mutable fields with a chain of three subtypes. The super is public,
+;; preventing optimization of the field it has (but not the other).
+(module
+  (type $super (sub (struct (field (mut i32)))))
+  (type $mid (sub $super (struct (field (mut i32)) (field (mut f64)))))
+  (type $sub (sub $mid (struct (field (mut i32)) (field (mut f64)))))
+
+  (global $global (ref $super) (struct.new_default $sub))
+
+  (export "global" (global $global))
+)
+
