@@ -210,9 +210,14 @@ struct GlobalTypeOptimization : public Pass {
             // No entry in canBecomeImmutable means nothing in the parent can
             // become immutable, so check for both that and for an entry with
             // "false".
-            if (!canBecomeImmutable.count(*super) ||
-                i >= canBecomeImmutable[*super].size() ||
-                !canBecomeImmutable[*super][i]) {
+            auto iter = canBecomeImmutable.find(*super);
+            if (iter == canBecomeImmutable.end()) {
+              continue;
+            }
+            // The vector is grown only when needed to contain a "true" value,
+            // so |i| being out of bounds indicates "false".
+            auto& superVec = iter->second;
+            if (i >= superVec.size() || !superVec[i]) {
               continue;
             }
           }
