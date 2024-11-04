@@ -194,21 +194,29 @@ var imports = {
         callFunc(getExportByIndex(index));
         return 0;
       } catch (e) {
-        // We only want to catch exceptions, not wasm traps. Traps should still
-        // halt execution. Note that we must check if WebAssembly.RuntimeError
-        // exists, as in wasm2js it will not be present (and it is fine to
-        // assume no traps in wasm2js, which lacks traps on loads and stores,
-        // etc.).
-        if (WebAssembly.RuntimeError && e instanceof WebAssembly.RuntimeError) {
-          throw e;
+        // We only want to catch exceptions, not wasm traps: traps should still
+        // halt execution. Handling this requires different code in wasm2js, so
+        // check for that first (wasm2js does not define RuntimeError, so use
+        // that for the check).
+        var wasm2js = !WebAssembly.RuntimeError;
+        if (!wasm2js) {
+          // When running native wasm, we can detect wasm traps.
+          if (e instanceof WebAssembly.RuntimeError) {
+            throw e;
+          }
         }
         var text = e + '';
         // We must not swallow host limitations here: a host limitation is a
         // problem that means we must not compare the outcome here to any other
         // VM.
-        for (var hostIssue of ['requested new array is too large',
-                               'out of memory',
-                               'Maximum call stack size exceeded']) {
+        var hostIssues = ['requested new array is too large',
+                          'out of memory',
+                          'Maximum call stack size exceeded'];
+        if (wasm2js) {
+          // When wasm2js does trap, it just throws an "abort" error.
+          hostIssues.append('abort');
+        }
+        for (var hostIssue of hostIssues) {
           if (text.includes(hostIssue)) {
             throw e;
           }
