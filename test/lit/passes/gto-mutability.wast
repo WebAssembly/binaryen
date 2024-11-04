@@ -919,3 +919,76 @@
   )
 )
 
+;; The super is public, but we can still optimize the field in the sub.
+(module
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $sub (sub $super (struct (field stringref))))
+  (type $sub (sub $super (struct (field (mut stringref)))))
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (global $global (ref $super) (struct.new_default $super))
+  (global $global (ref $super) (struct.new_default $super))
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Write and read the field.
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; As above, and now the super has the field as well, preventing optimization.
+(module
+  ;; CHECK:      (type $super (sub (struct (field (mut stringref)))))
+  (type $super (sub (struct (field (mut stringref)))))
+
+  ;; CHECK:      (type $sub (sub $super (struct (field (mut stringref)))))
+  (type $sub (sub $super (struct (field (mut stringref)))))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (global $global (ref $super) (struct.new_default $super))
+  (global $global (ref $super) (struct.new_default $super))
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Write and read the field.
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
