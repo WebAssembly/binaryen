@@ -993,14 +993,22 @@
 )
 
 ;; Two mutable fields with a chain of three subtypes. The super is public,
-;; preventing optimization of the field it has (but not the other).
+;; preventing optimization of the field it has (but not the other; the other
+;; is removable anyhow, though, so this just checks for the lack of an error
+;; when deciding not to make the fields immutable or not).
 (module
+  ;; CHECK:      (type $super (sub (struct (field (mut i32)))))
   (type $super (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $mid (sub $super (struct (field (mut i32)))))
   (type $mid (sub $super (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:       (type $sub (sub $mid (struct (field (mut i32)))))
   (type $sub (sub $mid (struct (field (mut i32)) (field (mut f64)))))
 
+  ;; CHECK:      (global $global (ref $super) (struct.new_default $sub))
   (global $global (ref $super) (struct.new_default $sub))
 
+  ;; CHECK:      (export "global" (global $global))
   (export "global" (global $global))
 )
 

@@ -208,11 +208,11 @@ struct GlobalTypeOptimization : public Pass {
           // here if the field does exist in both.
           if (i < super->getStruct().fields.size()) {
             // No entry in canBecomeImmutable means nothing in the parent can
-            // become immutable. We don't need to check the specific field
-            // index, because visibility affects them all equally (i.e., if it
-            // is public then no field can be changed, and if it is private then
-            // this field can be changed, and perhaps more).
-            if (!canBecomeImmutable.count(*super)) {
+            // become immutable, so check for both that and for an entry with
+            // "false".
+            if (!canBecomeImmutable.count(*super) ||
+                i >= canBecomeImmutable[*super].size() ||
+                !canBecomeImmutable[*super][i]) {
               continue;
             }
           }
