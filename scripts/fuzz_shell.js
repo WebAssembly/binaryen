@@ -195,8 +195,11 @@ var imports = {
         return 0;
       } catch (e) {
         // We only want to catch exceptions, not wasm traps. Traps should still
-        // halt execution.
-        if (e instanceof WebAssembly.RuntimeError) {
+        // halt execution. Note that we must check if WebAssembly.RuntimeError
+        // exists, as in wasm2js it will not be present (and it is fine to
+        // assume no traps in wasm2js, which lacks traps on loads and stores,
+        // etc.).
+        if (WebAssembly.RuntimeError && e instanceof WebAssembly.RuntimeError) {
           throw e;
         }
         var text = e + '';
