@@ -688,3 +688,164 @@
   )
 )
 
+;; $sub has a field we can make immutable. That it does not exist in the super
+;; should not confuse us.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+    ;; CHECK:       (type $sub (sub $super (struct (field (ref string)))))
+    (type $sub (sub $super (struct (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $2 (func (param stringref)))
+
+  ;; CHECK:      (func $test (type $2) (param $string stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $string stringref)
+    ;; Write and read the field.
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; As above, but with another type in the middle, $mid, which also contains the
+;; field. We can optimize both $mid and $sub.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+    ;; CHECK:       (type $mid (sub $super (struct)))
+    (type $mid (sub $super (struct (field (mut (ref string))))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
+    (type $sub (sub $mid (struct (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $3 (func (param stringref)))
+
+  ;; CHECK:      (func $test (type $3) (param $string stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $string stringref)
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+    (drop
+      (struct.get $mid 0
+        (struct.new $mid
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; As above, but add another irrelevant field first. We can still optimize the
+;; string, but the new mutable i32 must remain mutable.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct (field (mut i32)))))
+    ;; CHECK:       (type $mid (sub $super (struct)))
+    (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field i32))))
+    (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $3 (func (param stringref)))
+
+  ;; CHECK:      (func $test (type $3) (param $string stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $string stringref)
+    (drop
+      (struct.get $sub 1
+        (struct.new $sub
+          (i32.const 42)
+          (string.const "foo")
+        )
+      )
+    )
+    (drop
+      (struct.get $mid 1
+        (struct.new $mid
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; As above, but the i32 field is immutable. We can still optimize the string.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct (field i32))))
+    ;; CHECK:       (type $mid (sub $super (struct)))
+    (type $mid (sub $super (struct (field i32) (field (mut (ref string))))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field i32))))
+    (type $sub (sub $mid (struct (field i32) (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $3 (func (param stringref)))
+
+  ;; CHECK:      (func $test (type $3) (param $string stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $string stringref)
+    (drop
+      (struct.get $sub 1
+        (struct.new $sub
+          (i32.const 42)
+          (string.const "foo")
+        )
+      )
+    )
+    (drop
+      (struct.get $mid 1
+        (struct.new $mid
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+

@@ -203,13 +203,19 @@ struct GlobalTypeOptimization : public Pass {
         // visibility, so do that here: we can only become immutable if the
         // parent can as well.
         auto super = type.getDeclaredSuperType();
-        if (super && !canBecomeImmutable.count(*super)) {
-          // No entry in canBecomeImmutable means nothing in the parent can
-          // become immutable. We don't need to check the specific field index,
-          // because visibility affects them all equally (i.e., if it is public
-          // then no field can be changed, and if it is private then this field
-          // can be changed, and perhaps more).
-          continue;
+        if (super) {
+          // The super may not contain the field, which is fine, so only check
+          // here if the field does exist in both.
+          if (i < super->getStruct().fields.size()) {
+            // No entry in canBecomeImmutable means nothing in the parent can
+            // become immutable. We don't need to check the specific field
+            // index, because visibility affects them all equally (i.e., if it
+            // is public then no field can be changed, and if it is private then
+            // this field can be changed, and perhaps more).
+            if (!canBecomeImmutable.count(*super)) {
+              continue;
+            }
+          }
         }
 
         // No set exists. Mark it as something we can make immutable.
