@@ -189,8 +189,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // write that value to it, but the reference might actually point to a
     // child instance). If we tracked the types of fields then we might avoid
     // flowing values into places they cannot reside, like when a child field is
-    // a subtype, and so we can ignore things not refined enough for it. GUFA
-    // does a better job at this. For here, just check we do not break
+    // a subtype, and so we could ignore things not refined enough for it (GUFA
+    // does a better job at this). For here, just check we do not break
     // validation, and if we do, then we've inferred the only possible value is
     // an impossible one, making the code unreachable.
     if (!Type::isSubType(value->type, field->type)) {
