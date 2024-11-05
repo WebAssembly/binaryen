@@ -180,7 +180,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
     // Apply packing, if needed.
-    value = Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
+    value =
+      Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
     // Check if the value makes sense. The analysis below flows values around
     // without considering where they are placed, that is, when we see a parent
     // type can contain a value in a field then we assume a child may as well
