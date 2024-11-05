@@ -741,7 +741,8 @@ public:
     SuspendId,
     ResumeId,
     ResumeThrowId,
-    StackSwitchId, // Id for the stack switching `switch`
+    // Id for the stack switching `switch`
+    StackSwitchId,
     NumExpressionIds
   };
   Id _id;
