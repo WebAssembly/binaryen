@@ -214,7 +214,7 @@ var imports = {
                           'Maximum call stack size exceeded'];
         if (wasm2js) {
           // When wasm2js does trap, it just throws an "abort" error.
-          hostIssues.append('abort');
+          hostIssues.push('abort');
         }
         for (var hostIssue of hostIssues) {
           if (text.includes(hostIssue)) {
