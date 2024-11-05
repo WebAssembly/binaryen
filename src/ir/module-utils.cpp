@@ -459,12 +459,19 @@ struct CodeScanner
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       info.note(set->ref->type);
     } else if (auto* contBind = curr->dynCast<ContBind>()) {
-      info.note(contBind->contTypeBefore);
-      info.note(contBind->contTypeAfter);
+      info.note(contBind->sourceType);
+      info.note(contBind->type);
     } else if (auto* contNew = curr->dynCast<ContNew>()) {
-      info.note(contNew->contType);
+      info.note(contNew->type);
     } else if (auto* resume = curr->dynCast<Resume>()) {
       info.note(resume->contType);
+      info.note(resume->type);
+    } else if (auto* resumeThrow = curr->dynCast<ResumeThrow>()) {
+      info.note(resumeThrow->contType);
+      info.note(resumeThrow->type);
+    } else if (auto* switch_ = curr->dynCast<StackSwitch>()) {
+      info.note(switch_->contType);
+      info.note(switch_->type);
     } else if (Properties::isControlFlowStructure(curr)) {
       info.noteControlFlow(Signature(Type::none, curr->type));
     }

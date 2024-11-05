@@ -1930,7 +1930,6 @@ public:
   ContNew() = default;
   ContNew(MixedArena& allocator) {}
 
-  HeapType contType;
   Expression* func;
 
   void finalize();
@@ -1940,8 +1939,9 @@ class ContBind : public SpecificExpression<Expression::ContBindId> {
 public:
   ContBind(MixedArena& allocator) : operands(allocator) {}
 
-  HeapType contTypeBefore;
-  HeapType contTypeAfter;
+  // Syntax: cont.bind $src $dst
+  // We store $src here, and $dst in the inherited `type` member.
+  HeapType sourceType;
   ExpressionList operands;
   Expression* cont;
 

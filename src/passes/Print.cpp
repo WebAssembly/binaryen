@@ -2432,13 +2432,13 @@ struct PrintExpressionContents
   }
   void visitContNew(ContNew* curr) {
     printMedium(o, "cont.new ");
-    printHeapType(curr->contType);
+    printHeapType(curr->type.getHeapType());
   }
   void visitContBind(ContBind* curr) {
     printMedium(o, "cont.bind ");
-    printHeapType(curr->contTypeBefore);
+    printHeapType(curr->sourceType);
     o << ' ';
-    printHeapType(curr->contTypeAfter);
+    printHeapType(curr->type.getHeapType());
   }
   void visitSuspend(Suspend* curr) {
     printMedium(o, "suspend ");

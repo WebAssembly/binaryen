@@ -1371,16 +1371,12 @@ void StringSliceWTF::finalize() {
 void ContNew::finalize() {
   if (func->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = Type(contType, NonNullable);
   }
 }
 
 void ContBind::finalize() {
-  if (cont->type == Type::unreachable) {
+  if (handleUnreachableOperands(this)) {
     type = Type::unreachable;
-  } else if (!handleUnreachableOperands(this)) {
-    type = Type(contTypeAfter, NonNullable);
   }
 }
 

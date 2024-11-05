@@ -1050,22 +1050,20 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->end, Type::i32);
   }
 
-  void visitContNew(ContNew* curr) {
-    note(&curr->func, Type(curr->contType.getContinuation().type, Nullable));
-  }
+  void visitContNew(ContNew* curr) { note(&curr->func, curr->type); }
 
   void visitContBind(ContBind* curr) {
-    auto paramsBefore =
-      curr->contTypeBefore.getContinuation().type.getSignature().params;
-    auto paramsAfter =
-      curr->contTypeAfter.getContinuation().type.getSignature().params;
-    assert(paramsBefore.size() >= paramsAfter.size());
-    auto n = paramsBefore.size() - paramsAfter.size();
+    auto sourceParams =
+      curr->sourceType.getContinuation().type.getSignature().params;
+    auto targetParams =
+      curr->type.getHeapType().getContinuation().type.getSignature().params;
+    assert(sourceParams.size() >= targetParams.size());
+    auto n = sourceParams.size() - targetParams.size();
     assert(curr->operands.size() == n);
     for (size_t i = 0; i < n; ++i) {
-      note(&curr->operands[i], paramsBefore[i]);
+      note(&curr->operands[i], sourceParams[i]);
     }
-    note(&curr->cont, Type(curr->contTypeBefore, Nullable));
+    note(&curr->cont, Type(curr->sourceType, Nullable));
   }
 
   void visitSuspend(Suspend* curr) {

@@ -2632,9 +2632,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeContBind(Index pos,
                         const std::vector<Annotation>& annotations,
-                        HeapType contTypeBefore,
-                        HeapType contTypeAfter) {
-    return withLoc(pos, irBuilder.makeContBind(contTypeBefore, contTypeAfter));
+                        HeapType sourceType,
+                        HeapType targetType) {
+    return withLoc(pos, irBuilder.makeContBind(sourceType, targetType));
   }
 
   Result<>

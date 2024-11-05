@@ -2434,13 +2434,13 @@ makeContNew(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 template<typename Ctx>
 Result<>
 makeContBind(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
-  auto typeBefore = typeidx(ctx);
-  CHECK_ERR(typeBefore);
+  auto sourceType = typeidx(ctx);
+  CHECK_ERR(sourceType);
 
-  auto typeAfter = typeidx(ctx);
-  CHECK_ERR(typeAfter);
+  auto targetType = typeidx(ctx);
+  CHECK_ERR(targetType);
 
-  return ctx.makeContBind(pos, annotations, *typeBefore, *typeAfter);
+  return ctx.makeContBind(pos, annotations, *sourceType, *targetType);
 }
 
 template<typename Ctx>

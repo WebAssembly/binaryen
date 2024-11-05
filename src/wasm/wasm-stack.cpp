@@ -2610,7 +2610,7 @@ void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
 
 void BinaryInstWriter::visitContNew(ContNew* curr) {
   o << int8_t(BinaryConsts::ContNew);
-  parent.writeIndexedHeapType(curr->contType);
+  parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitSuspend(Suspend* curr) {
@@ -2619,8 +2619,8 @@ void BinaryInstWriter::visitSuspend(Suspend* curr) {
 
 void BinaryInstWriter::visitContBind(ContBind* curr) {
   o << int8_t(BinaryConsts::ContBind);
-  parent.writeIndexedHeapType(curr->contTypeBefore);
-  parent.writeIndexedHeapType(curr->contTypeAfter);
+  parent.writeIndexedHeapType(curr->sourceType);
+  parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitResume(Resume* curr) {

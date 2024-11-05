@@ -218,8 +218,7 @@ public:
   [[nodiscard]] Result<> makeStringIterNext();
   [[nodiscard]] Result<> makeStringSliceWTF();
   [[nodiscard]] Result<> makeContNew(HeapType ct);
-  [[nodiscard]] Result<> makeContBind(HeapType contTypeBefore,
-                                      HeapType contTypeAfter);
+  [[nodiscard]] Result<> makeContBind(HeapType sourceType, HeapType targetType);
   [[nodiscard]] Result<> makeSuspend(Name tag);
   [[nodiscard]] Result<> makeResume(HeapType ct,
                                     const std::vector<Name>& tags,

@@ -1897,42 +1897,40 @@ Result<> IRBuilder::makeStringSliceWTF() {
   return Ok{};
 }
 
-Result<> IRBuilder::makeContNew(HeapType ct) {
-  if (!ct.isContinuation()) {
+Result<> IRBuilder::makeContNew(HeapType type) {
+  if (!type.isContinuation()) {
     return Err{"expected continuation type"};
   }
   ContNew curr;
-  curr.contType = ct;
+  curr.type = Type(type, NonNullable);
   CHECK_ERR(visitContNew(&curr));
 
-  push(builder.makeContNew(ct, curr.func));
+  push(builder.makeContNew(type, curr.func));
   return Ok{};
 }
 
-Result<> IRBuilder::makeContBind(HeapType contTypeBefore,
-                                 HeapType contTypeAfter) {
-  if (!contTypeBefore.isContinuation() || !contTypeAfter.isContinuation()) {
+Result<> IRBuilder::makeContBind(HeapType sourceType, HeapType targetType) {
+  if (!sourceType.isContinuation() || !targetType.isContinuation()) {
     return Err{"expected continuation types"};
   }
   ContBind curr(wasm.allocator);
-  curr.contTypeBefore = contTypeBefore;
-  curr.contTypeAfter = contTypeAfter;
-  size_t paramsBefore =
-    contTypeBefore.getContinuation().type.getSignature().params.size();
-  size_t paramsAfter =
-    contTypeAfter.getContinuation().type.getSignature().params.size();
-  if (paramsBefore < paramsAfter) {
+  curr.sourceType = sourceType;
+  curr.type = Type(targetType, NonNullable);
+  size_t sourceParams =
+    sourceType.getContinuation().type.getSignature().params.size();
+  size_t targetParams =
+    targetType.getContinuation().type.getSignature().params.size();
+  if (sourceParams < targetParams) {
     return Err{"incompatible continuation types in cont.bind: source type " +
-               contTypeBefore.toString() +
+               sourceType.toString() +
                " has fewer parameters than destination " +
-               contTypeAfter.toString()};
+               targetType.toString()};
   }
-  curr.operands.resize(paramsBefore - paramsAfter);
+  curr.operands.resize(sourceParams - targetParams);
   CHECK_ERR(visitContBind(&curr));
 
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(
-    builder.makeContBind(contTypeBefore, contTypeAfter, operands, curr.cont));
+  push(builder.makeContBind(sourceType, targetType, operands, curr.cont));
   return Ok{};
 }
 

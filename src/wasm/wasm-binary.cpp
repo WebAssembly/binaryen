@@ -7881,41 +7881,44 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
 
 void WasmBinaryReader::visitContNew(ContNew* curr) {
 
-  curr->contType = getIndexedHeapType();
-  if (!curr->contType.isContinuation()) {
+  auto heaptype = getIndexedHeapType();
+  if (!heaptype.isContinuation()) {
     throwError("non-continuation type in cont.new instruction " +
-               curr->contType.toString());
+               heaptype.toString());
   }
-
+  curr->type = Type(heaptype, NonNullable);
   curr->func = popNonVoidExpression();
   curr->finalize();
 }
 
 void WasmBinaryReader::visitContBind(ContBind* curr) {
 
-  curr->contTypeBefore = getIndexedHeapType();
-  curr->contTypeAfter = getIndexedHeapType();
+  auto sourceType = getIndexedHeapType();
+  auto targetType = getIndexedHeapType();
 
-  for (auto& ct : {curr->contTypeBefore, curr->contTypeAfter}) {
+  for (auto& ct : {sourceType, targetType}) {
     if (!ct.isContinuation()) {
       throwError("non-continuation type in cont.bind instruction " +
                  ct.toString());
     }
   }
 
+  curr->sourceType = sourceType;
+  curr->type = Type(targetType, NonNullable);
+
   curr->cont = popNonVoidExpression();
 
-  size_t paramsBefore =
-    curr->contTypeBefore.getContinuation().type.getSignature().params.size();
-  size_t paramsAfter =
-    curr->contTypeAfter.getContinuation().type.getSignature().params.size();
-  if (paramsBefore < paramsAfter) {
+  size_t sourceParams =
+    sourceType.getContinuation().type.getSignature().params.size();
+  size_t targetParams =
+    targetType.getContinuation().type.getSignature().params.size();
+  if (sourceParams < targetParams) {
     throwError("incompatible continuation types in cont.bind: source type " +
-               curr->contTypeBefore.toString() +
+               sourceType.toString() +
                " has fewer parameters than destination " +
-               curr->contTypeAfter.toString());
+               targetType.toString());
   }
-  size_t numArgs = paramsBefore - paramsAfter;
+  size_t numArgs = sourceParams - targetParams;
   curr->operands.resize(numArgs);
   for (size_t i = 0; i < numArgs; i++) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();

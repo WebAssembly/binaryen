@@ -1168,20 +1168,20 @@ public:
     ret->finalize();
     return ret;
   }
-  ContNew* makeContNew(HeapType contType, Expression* func) {
+  ContNew* makeContNew(HeapType type, Expression* func) {
     auto* ret = wasm.allocator.alloc<ContNew>();
-    ret->contType = contType;
+    ret->type = Type(type, NonNullable);
     ret->func = func;
     ret->finalize();
     return ret;
   }
-  ContBind* makeContBind(HeapType contTypeBefore,
-                         HeapType contTypeAfter,
+  ContBind* makeContBind(HeapType sourceType,
+                         HeapType targetType,
                          const std::vector<Expression*>& operands,
                          Expression* cont) {
     auto* ret = wasm.allocator.alloc<ContBind>();
-    ret->contTypeBefore = contTypeBefore;
-    ret->contTypeAfter = contTypeAfter;
+    ret->sourceType = sourceType;
+    ret->type = Type(targetType, NonNullable);
     ret->operands.set(operands);
     ret->cont = cont;
     ret->finalize();
