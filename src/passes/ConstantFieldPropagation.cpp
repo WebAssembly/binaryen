@@ -179,7 +179,25 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto* value = info.makeExpression(*getModule());
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
-    return Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
+    // Apply packing, if needed.
+    value = Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
+    // Check if the value makes sense. The analysis below flows values around
+    // without considering where they are placed, that is, when we see a parent
+    // type can contain a value in a field then we assume a child may as well
+    // (which in general it can, e.g., using a reference to the parent, we can
+    // write that value to it, but the reference might actually point to a
+    // child instance). If we tracked the types of fields then we might avoid
+    // flowing values into places they cannot reside, like when a child field is
+    // a subtype, and so we can ignore things not refined enough for it. GUFA
+    // does a better job at this. For here, just check we do not break
+    // validation, and if we do, then we've inferred the only possible value is
+    // an impossible one, making the code unreachable.
+    if (!Type::isSubType(value->type, field->type)) {
+      Builder builder(*getModule());
+      value = builder.makeSequence(builder.makeDrop(value),
+                                   builder.makeUnreachable());
+    }
+    return value;
   }
 
   void optimizeUsingRefTest(StructGet* curr) {
