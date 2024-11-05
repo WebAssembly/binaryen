@@ -3535,9 +3535,11 @@ void FunctionValidator::visitResume(Resume* curr) {
 void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
   // TODO implement actual type-checking
   shouldBeTrue(
-    !getModule() || getModule()->features.hasStackSwitching(),
+    !getModule() || (getModule()->features.hasExceptionHandling() &&
+                     getModule()->features.hasStackSwitching()),
     curr,
-    "resume_throw requires stack-switching [--enable-stack-switching]");
+    "resume_throw requires exception handling [--enable-exception-handling] "
+    "and stack-switching [--enable-stack-switching]");
 
   shouldBeTrue(
     curr->sentTypes.size() == curr->handlerBlocks.size(),

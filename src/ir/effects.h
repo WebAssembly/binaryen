@@ -1023,6 +1023,9 @@ private:
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
       }
+
+      // A suspend may go unhandled and therefore trap.
+      parent.implicitTrap = true;
     }
     void visitResume(Resume* curr) {
       // This acts as a kitchen sink effect.

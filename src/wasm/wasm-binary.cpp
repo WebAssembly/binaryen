@@ -7881,8 +7881,7 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
 
 void WasmBinaryReader::visitContNew(ContNew* curr) {
 
-  auto contTypeIndex = getU32LEB();
-  curr->contType = getTypeByIndex(contTypeIndex);
+  curr->contType = getIndexedHeapType();
   if (!curr->contType.isContinuation()) {
     throwError("non-continuation type in cont.new instruction " +
                curr->contType.toString());
@@ -7894,11 +7893,8 @@ void WasmBinaryReader::visitContNew(ContNew* curr) {
 
 void WasmBinaryReader::visitContBind(ContBind* curr) {
 
-  auto contTypeBeforeIndex = getU32LEB();
-  curr->contTypeBefore = getTypeByIndex(contTypeBeforeIndex);
-
-  auto contTypeAfterIndex = getU32LEB();
-  curr->contTypeAfter = getTypeByIndex(contTypeAfterIndex);
+  curr->contTypeBefore = getIndexedHeapType();
+  curr->contTypeAfter = getIndexedHeapType();
 
   for (auto& ct : {curr->contTypeBefore, curr->contTypeAfter}) {
     if (!ct.isContinuation()) {
@@ -7931,14 +7927,12 @@ void WasmBinaryReader::visitContBind(ContBind* curr) {
 void WasmBinaryReader::visitSuspend(Suspend* curr) {
 
   auto tagIndex = getU32LEB();
-  if (tagIndex >= wasm.tags.size()) {
-    throwError("bad tag index");
-  }
-  auto* tag = wasm.tags[tagIndex].get();
-  curr->tag = tag->name;
+  curr->tag = getTagName(tagIndex);
   tagRefs[tagIndex].push_back(&curr->tag);
 
-  auto numArgs = tag->sig.params.size();
+  // The access `tags[tagIndex]` must be in bounds as
+  // `getTagName(tagIndex)` succeeded above.
+  auto numArgs = wasm.tags[tagIndex].get()->sig.params.size();
   curr->operands.resize(numArgs);
   for (size_t i = 0; i < numArgs; i++) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();
@@ -7949,8 +7943,7 @@ void WasmBinaryReader::visitSuspend(Suspend* curr) {
 
 void WasmBinaryReader::visitResume(Resume* curr) {
 
-  auto contTypeIndex = getU32LEB();
-  curr->contType = getTypeByIndex(contTypeIndex);
+  curr->contType = getIndexedHeapType();
   if (!curr->contType.isContinuation()) {
     throwError("non-continuation type in resume instruction " +
                curr->contType.toString());
@@ -8000,15 +7993,13 @@ void WasmBinaryReader::visitResume(Resume* curr) {
 }
 
 void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
-  auto contTypeIndex = getU32LEB();
-  curr->contType = getTypeByIndex(contTypeIndex);
+  curr->contType = getIndexedHeapType();
   if (!curr->contType.isContinuation()) {
     throwError("non-continuation type in resume_throw instruction " +
                curr->contType.toString());
   }
   auto exnTagIndex = getU32LEB();
-  auto* exnTag = wasm.tags[exnTagIndex].get();
-  curr->tag = exnTag->name;
+  curr->tag = getTagName(exnTagIndex);
   tagRefs[exnTagIndex].push_back(&curr->tag);
 
   auto numHandlers = getU32LEB();
@@ -8025,12 +8016,15 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
     auto tagIndex = getU32LEB();
     auto tag = getTagName(tagIndex);
     Name handler;
-    if (code == BinaryConsts::OnLabel) { // expect (on $tag $label)
+    if (code == BinaryConsts::OnLabel) {
+      // expect (on $tag $label)
       auto handlerIndex = getU32LEB();
       handler = getBreakTarget(handlerIndex).name;
-    } else if (code == BinaryConsts::OnSwitch) { // expect (on $tag switch)
+    } else if (code == BinaryConsts::OnSwitch) {
+      // expect (on $tag switch)
       handler = Name();
-    } else { // error
+    } else {
+      // error
       throwError("ON opcode expected");
     }
 
@@ -8044,7 +8038,9 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
 
   curr->cont = popNonVoidExpression();
 
-  auto numArgs = exnTag->sig.params.size();
+  // This `tags[exnTagIndex]` must be in bounds since
+  // `getTagName(exnTagIndex)` succeeded above.
+  auto numArgs = wasm.tags[exnTagIndex].get()->sig.params.size();
   curr->operands.resize(numArgs);
   for (size_t i = 0; i < numArgs; i++) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();
@@ -8054,8 +8050,7 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
 }
 
 void WasmBinaryReader::visitStackSwitch(StackSwitch* curr) {
-  auto contTypeIndex = getU32LEB();
-  curr->contType = getTypeByIndex(contTypeIndex);
+  curr->contType = getIndexedHeapType();
   if (!curr->contType.isContinuation()) {
     throwError("non-continuation type in switch instruction " +
                curr->contType.toString());

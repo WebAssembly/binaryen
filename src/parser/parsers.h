@@ -2464,9 +2464,7 @@ makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   while (ctx.in.takeSExprStart("on"sv)) {
     auto tag = tagidx(ctx);
     CHECK_ERR(tag);
-    auto keyword = ctx.in.peekKeyword();
-    if (keyword == "switch") {
-      ctx.in.takeKeyword();
+    if (ctx.in.takeKeyword("switch")) {
       ctx.appendOnClause(resumetable, ctx.makeOnSwitch(*tag));
     } else {
       auto label = labelidx(ctx);

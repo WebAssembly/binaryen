@@ -1957,14 +1957,12 @@ Result<> IRBuilder::makeResume(HeapType ct,
   Resume curr(wasm.allocator);
   curr.contType = ct;
   curr.operands.resize(ct.getContinuation().type.getSignature().params.size());
-  curr.handlerTags.set(tags);
-  curr.onTags.set(onTags);
   CHECK_ERR(visitResume(&curr));
 
   std::vector<Name> labelNames;
   labelNames.reserve(labels.size());
   for (size_t i = 0; i < labels.size(); i++) {
-    if (curr.onTags[i]) {
+    if (onTags[i]) {
       labelNames.push_back(Name());
     } else {
       auto name = getLabelName(labels[i]);
@@ -1972,7 +1970,7 @@ Result<> IRBuilder::makeResume(HeapType ct,
       labelNames.push_back(*name);
     }
   }
-  curr.handlerBlocks.set(labelNames);
+
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
   push(builder.makeResume(ct, tags, labelNames, onTags, operands, curr.cont));
   return Ok{};
@@ -1990,14 +1988,12 @@ Result<> IRBuilder::makeResumeThrow(HeapType ct,
   curr.contType = ct;
   curr.tag = tag;
   curr.operands.resize(wasm.getTag(tag)->sig.params.size());
-  curr.handlerTags.set(tags);
-  curr.onTags.set(onTags);
   CHECK_ERR(visitResumeThrow(&curr));
 
   std::vector<Name> labelNames;
   labelNames.reserve(labels.size());
   for (size_t i = 0; i < labels.size(); i++) {
-    if (curr.onTags[i]) {
+    if (onTags[i]) {
       labelNames.push_back(Name());
     } else {
       auto name = getLabelName(labels[i]);
@@ -2005,7 +2001,7 @@ Result<> IRBuilder::makeResumeThrow(HeapType ct,
       labelNames.push_back(*name);
     }
   }
-  curr.handlerBlocks.set(labelNames);
+
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
   push(builder.makeResumeThrow(
     ct, tag, tags, labelNames, onTags, operands, curr.cont));
@@ -2024,10 +2020,11 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
     return Err{"arity mismatch: the continuation argument must have, at least, "
                "unary arity"};
   }
-  curr.operands.resize(nparams - 1); // the continuation argument of
-                                     // the continuation is synthetic,
-                                     // i.e. it is provided by the
-                                     // runtime.
+
+  // The continuation argument of the continuation is synthetic,
+  // i.e. it is provided by the runtime.
+  curr.operands.resize(nparams - 1);
+
   CHECK_ERR(visitStackSwitch(&curr));
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
   push(builder.makeStackSwitch(ct, tag, operands, curr.cont));

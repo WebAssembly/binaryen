@@ -804,7 +804,7 @@ DELEGATE_FIELD_NAME_KIND(ResumeThrow, tag, ModuleItemKind::Tag)
 DELEGATE_FIELD_CASE_END(ResumeThrow)
 
 DELEGATE_FIELD_CASE_START(StackSwitch)
-DELEGATE_FIELD_CHILD(Switch, cont)
+DELEGATE_FIELD_CHILD(StackSwitch, cont)
 DELEGATE_FIELD_CHILD_VECTOR(StackSwitch, operands)
 DELEGATE_FIELD_HEAPTYPE(StackSwitch, contType)
 DELEGATE_FIELD_NAME_KIND(StackSwitch, tag, ModuleItemKind::Tag)
