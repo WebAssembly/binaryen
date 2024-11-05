@@ -1404,6 +1404,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   using TagLabelListT = std::vector<std::pair<TagIdxT, LabelIdxT>>;
 
+  struct OnClauseInfo;
+  using OnClauseListT = std::vector<OnClauseInfo>;
+
   Lexer in;
 
   Module& wasm;
@@ -1514,7 +1517,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
   OnClauseInfo makeOnSwitch(Name tag) { return {tag, {}, true}; }
 
-  std::vector<OnClauseInfo> makeOnClauseList() { return {}; }
+  OnClauseListT makeOnClauseList() { return {}; }
   void appendOnClause(std::vector<OnClauseInfo>& list, OnClauseInfo info) {
     list.push_back(info);
   }

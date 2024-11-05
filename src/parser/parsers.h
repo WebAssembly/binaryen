@@ -2452,15 +2452,9 @@ makeSuspend(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   return ctx.makeSuspend(pos, annotations, *tag);
 }
 
-// resume ::= 'resume' typeidx ('(' 'on' tagidx labelidx | 'on' tagidx switch
-// ')')*
+// resumetable ::= ('(' 'on' tagidx labelidx | 'on' tagidx switch ')')*
 template<typename Ctx>
-Result<>
-makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-
-  auto resumetable = ctx.makeOnClauseList();
+Result<> makeResumeTable(Ctx& ctx, typename Ctx::OnClauseListT& resumetable) {
   while (ctx.in.takeSExprStart("on"sv)) {
     auto tag = tagidx(ctx);
     CHECK_ERR(tag);
@@ -2475,6 +2469,19 @@ makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
       return ctx.in.err("expected ')' at end of handler clause");
     }
   }
+  return Ok{};
+}
+
+// resume ::= 'resume' typeidx resumetable
+template<typename Ctx>
+Result<>
+makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto resumetable = ctx.makeOnClauseList();
+  auto ans = makeResumeTable(ctx, resumetable);
+  CHECK_ERR(ans);
 
   return ctx.makeResume(pos, annotations, *type, resumetable);
 }
@@ -2491,22 +2498,8 @@ Result<> makeResumeThrow(Ctx& ctx,
   CHECK_ERR(exnTag);
 
   auto resumetable = ctx.makeOnClauseList();
-  while (ctx.in.takeSExprStart("on"sv)) {
-    auto tag = tagidx(ctx);
-    CHECK_ERR(tag);
-    auto keyword = ctx.in.peekKeyword();
-    if (keyword == "switch") {
-      ctx.in.takeKeyword();
-      ctx.appendOnClause(resumetable, ctx.makeOnSwitch(*tag));
-    } else {
-      auto label = labelidx(ctx);
-      CHECK_ERR(label);
-      ctx.appendOnClause(resumetable, ctx.makeOnLabel(*tag, *label));
-    }
-    if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected ')' at end of handler clause");
-    }
-  }
+  auto ans = makeResumeTable(ctx, resumetable);
+  CHECK_ERR(ans);
 
   return ctx.makeResumeThrow(pos, annotations, *type, *exnTag, resumetable);
 }
