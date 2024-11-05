@@ -2819,7 +2819,8 @@
     ;; cannot refer to anything that is actually created. If we mistakenly
     ;; thought this field can contain the global.get (as we do for the parent
     ;; $A) then we would error here: $B's field contains $Y, but the global is
-    ;; is of a sibling type $Z.
+    ;; is of a sibling type $Z. Instead, we can add an unreachable here, as no
+    ;; valid value is possible.
     (struct.get $B 0
       (local.get $B)
     )
