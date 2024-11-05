@@ -608,6 +608,25 @@ struct Reducer
         // children (which would recreate the current state).
         return;
       }
+    } else if (auto* structNew = curr->dynCast<StructNew>()) {
+      // If all the fields are defaultable, try to replace this with a
+      // struct.new_with_default.
+      if (!structNew->isWithDefault() && structNew->type != Type::unreachable) {
+        auto& fields = structNew->type.getHeapType().getStruct().fields;
+        if (std::all_of(fields.begin(), fields.end(), [&](auto& field) {
+              return field.type.isDefaultable();
+            })) {
+          ExpressionList operands(getModule()->allocator);
+          operands.swap(structNew->operands);
+          assert(structNew->isWithDefault());
+          if (tryToReplaceCurrent(structNew)) {
+            return;
+          } else {
+            operands.swap(structNew->operands);
+            assert(!structNew->isWithDefault());
+          }
+        }
+      }
     }
     // Finally, try to replace with a child.
     for (auto* child : ChildIterator(curr)) {
