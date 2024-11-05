@@ -295,7 +295,7 @@ struct Reducer
       "--simplify-globals",
       "--simplify-locals --vacuum",
       "--strip",
-      "--remove-unused-types",
+      "--remove-unused-types --closed-world",
       "--vacuum"};
     auto oldSize = file_size(working);
     bool more = true;
@@ -612,17 +612,20 @@ struct Reducer
       // If all the fields are defaultable, try to replace this with a
       // struct.new_with_default.
       if (!structNew->isWithDefault() && structNew->type != Type::unreachable) {
+//std::cout << structNew->operands.size() << '\n';
         auto& fields = structNew->type.getHeapType().getStruct().fields;
         if (std::all_of(fields.begin(), fields.end(), [&](auto& field) {
               return field.type.isDefaultable();
             })) {
           ExpressionList operands(getModule()->allocator);
           operands.swap(structNew->operands);
+//std::cout << "swapped " << structNew->operands.size() << " : " << operands.size() << '\n';
           assert(structNew->isWithDefault());
           if (tryToReplaceCurrent(structNew)) {
             return;
           } else {
-            operands.swap(structNew->operands);
+            structNew->operands.swap(operands); // XXX other swap direction bug
+//std::cout << "returned " << structNew->operands.size() << " : " << operands.size() << '\n';
             assert(!structNew->isWithDefault());
           }
         }
