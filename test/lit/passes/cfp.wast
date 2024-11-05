@@ -2737,6 +2737,7 @@
   )
 
   (func $copy (param $C (ref null $C))
+    ;; The struct.get here can be optimized to a global.get.
     (drop
       (struct.new $C
         (struct.get $C 0
@@ -2747,12 +2748,15 @@
   )
 
   (func $get-A (param $A (ref null $A)) (result (ref null $X))
+    ;; This should not be optimized to a global.get.
     (struct.get $A 0
       (local.get $A)
     )
   )
 
   (func $get-B (param $B (ref null $B)) (result (ref null $Y))
+    ;; This should not be optimized to a global.get (in fact, it would error, as
+    ;; $B's field contains $Y, but the global here is of a sibling type $Z).
     (struct.get $B 0
       (local.get $B)
     )
