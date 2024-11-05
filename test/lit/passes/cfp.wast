@@ -2710,3 +2710,51 @@
     )
   )
 )
+
+;; $C is created with two values for its field: a global.get, and a copy from
+;; another $C, which does not expand the set of possible values. We should not
+;; get confused about $A, its parent, or $B, its sibling - we do not create
+;; those at all, and even the copy cannot refer to them.
+(module
+  (rec
+    (type $X (sub (struct)))
+    (type $Y (sub final $X (struct)))
+    (type $Z (sub final $X (struct)))
+
+    (type $A (sub (struct (field (ref null $X)))))
+    (type $B (sub final $A (struct (field (ref null $Y)))))
+    (type $C (sub final $A (struct (field (ref null $Z)))))
+  )
+
+  (global $global (ref null $Z) (struct.new_default $Z))
+
+  (func $new
+    (drop
+      (struct.new $C
+        (global.get $global)
+      )
+    )
+  )
+
+  (func $copy (param $C (ref null $C))
+    (drop
+      (struct.new $C
+        (struct.get $C 0
+          (local.get $C)
+        )
+      )
+    )
+  )
+
+  (func $get-A (param $A (ref null $A)) (result (ref null $X))
+    (struct.get $A 0
+      (local.get $A)
+    )
+  )
+
+  (func $get-B (param $B (ref null $B)) (result (ref null $Y))
+    (struct.get $B 0
+      (local.get $B)
+    )
+  )
+)
