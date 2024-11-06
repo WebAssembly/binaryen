@@ -2957,18 +2957,22 @@ private:
   void initializeMemoryContents() {
     initializeMemorySizes();
 
-    Const zero;
-    zero.value = Literal(uint32_t(0));
-    zero.finalize();
-
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
       auto& segment = wasm.dataSegments[i];
       if (segment->isPassive) {
         continue;
       }
+
+      auto* memory = wasm.getMemory(segment->memory);
+
+      Const zero;
+      zero.value = Literal::makeFromInt32(0, memory->indexType);
+      zero.finalize();
+
       Const size;
-      size.value = Literal(uint32_t(segment->data.size()));
+      size.value =
+        Literal::makeFromInt32(segment->data.size(), memory->indexType);
       size.finalize();
 
       MemoryInit init;
@@ -3136,7 +3140,7 @@ public:
       return target;
     }
 
-    Index index = target.getSingleValue().geti32();
+    Index index = target.getSingleValue().getInteger();
 
     auto info = getTableInstanceInfo(curr->table);
 
@@ -3673,7 +3677,7 @@ public:
       return flow;
     }
     NOTE_EVAL1(flow);
-    Address src(uint32_t(flow.getSingleValue().geti32()));
+    Address src(flow.getSingleValue().getInteger());
     auto info = getMemoryInstanceInfo(curr->memory);
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
@@ -3878,8 +3882,8 @@ public:
     auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
-    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+    Address offsetVal(offset.getSingleValue().getInteger());
+    Address sizeVal(size.getSingleValue().getInteger());
 
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
