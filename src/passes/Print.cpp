@@ -301,9 +301,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitLoop(Loop* curr);
   void visitTry(Try* curr);
   void visitTryTable(TryTable* curr);
-  void visitResume(Resume* curr);
-  void visitResumeThrow(ResumeThrow* curr);
-  void visitStackSwitch(StackSwitch* curr);
 
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
   bool maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
@@ -2855,51 +2852,6 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
     o << " ;; end try_table";
   }
   controlFlowDepth--;
-}
-
-void PrintSExpression::visitResume(Resume* curr) {
-  o << '(';
-  printExpressionContents(curr);
-
-  incIndent();
-
-  for (Index i = 0; i < curr->operands.size(); i++) {
-    printFullLine(curr->operands[i]);
-  }
-
-  printFullLine(curr->cont);
-
-  decIndent();
-}
-
-void PrintSExpression::visitResumeThrow(ResumeThrow* curr) {
-  o << '(';
-  printExpressionContents(curr);
-
-  incIndent();
-
-  for (Index i = 0; i < curr->operands.size(); i++) {
-    printFullLine(curr->operands[i]);
-  }
-
-  printFullLine(curr->cont);
-
-  decIndent();
-}
-
-void PrintSExpression::visitStackSwitch(StackSwitch* curr) {
-  o << '(';
-  printExpressionContents(curr);
-
-  incIndent();
-
-  for (Index i = 0; i < curr->operands.size(); i++) {
-    printFullLine(curr->operands[i]);
-  }
-
-  printFullLine(curr->cont);
-
-  decIndent();
 }
 
 bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
