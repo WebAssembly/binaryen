@@ -2967,8 +2967,10 @@ private:
       if (segment->isPassive) {
         continue;
       }
+
+      auto* memory = wasm.getMemory(segment->memory);
       Const size;
-      size.value = Literal(uint32_t(segment->data.size()));
+      size.value = Literal::makeFromInt32(segment->data.size(), memory->indexType);
       size.finalize();
 
       MemoryInit init;
