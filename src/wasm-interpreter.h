@@ -2955,7 +2955,6 @@ private:
   }
 
   void initializeMemoryContents() {
-std::cout << "a1\n";
     initializeMemorySizes();
 
     // apply active memory segments
@@ -2966,7 +2965,6 @@ std::cout << "a1\n";
       }
 
       auto* memory = wasm.getMemory(segment->memory);
-std::cout << "a2\n";
 
       Const zero;
       zero.value = Literal::makeFromInt32(0, memory->indexType);
@@ -2975,7 +2973,6 @@ std::cout << "a2\n";
       Const size;
       size.value = Literal::makeFromInt32(segment->data.size(), memory->indexType);
       size.finalize();
-std::cout << "a3\n";
 
       MemoryInit init;
       init.memory = segment->memory;
@@ -2989,11 +2986,8 @@ std::cout << "a3\n";
       drop.segment = segment->name;
       drop.finalize();
 
-std::cout << "a3.5\n";
       self()->visit(&init);
-std::cout << "a4\n";
       self()->visit(&drop);
-std::cout << "a5\n";
     }
   }
 
