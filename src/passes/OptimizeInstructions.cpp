@@ -42,6 +42,7 @@
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/stdckdint.h>
 #include <support/threads.h>
 #include <wasm.h>
 
@@ -3501,8 +3502,12 @@ private:
       uint64_t offset64 = offset;
       auto mem = getModule()->getMemory(memory);
       if (mem->is64()) {
-        last->value = Literal(int64_t(value64 + offset64));
-        offset = 0;
+        // Check for a 64-bit overflow.
+        uint64_t sum;
+        if (!std::ckd_add(&sum, value64, offset64)) {
+          last->value = Literal(int64_t(sum));
+          offset = 0;
+        }
       } else {
         // don't do this if it would wrap the pointer
         if (value64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
