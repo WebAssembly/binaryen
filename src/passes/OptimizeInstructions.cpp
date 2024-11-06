@@ -79,6 +79,7 @@ static bool isSignedOp(BinaryOp op) {
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
 
+  Index minBits;
   Index maxBits;
   Index signExtedBits;
 };
@@ -97,10 +98,14 @@ struct LocalScanner : PostWalker<LocalScanner> {
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
+        info.minBits = 0;                                     // worst-case
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
         info.signExtedBits = LocalInfo::kUnknown; // we will never know anything
       } else {
-        info.maxBits = info.signExtedBits = 0; // we are open to learning
+        // we are open to learning
+        info.minBits = getBitsForType(func->getLocalType(i));
+        info.maxBits = 0;
+        info.signExtedBits = 0;
       }
     }
     // walk
@@ -127,6 +132,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     auto* value =
       Properties::getFallthrough(curr->value, passOptions, *getModule());
     auto& info = localInfo[curr->index];
+    info.minBits = std::min(info.minBits, Bits::getMinBits(value, this));
     info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
     if (Properties::getSignExtValue(value)) {
@@ -145,7 +151,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
   }
 
   // define this for the templated getMaxBits method. we know nothing here yet
-  // about locals, so return the maxes
+  // about locals, so return the mins / maxes
+  Index getMinBitsForLocal(LocalGet* get) { return 0; }
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 };
 
@@ -2327,6 +2334,11 @@ struct OptimizeInstructions
     }
   }
 
+  Index getMinBitsForLocal(LocalGet* get) {
+    // check what we know about the local
+    return localInfo[get->index].minBits;
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
@@ -4419,7 +4431,7 @@ private:
         auto type = curr->left->type;
         if (leftMaxBits < getBitsForType(type)) {
           using namespace Abstract;
-          auto rightMinBits = Bits::getMinBits(curr->right);
+          auto rightMinBits = Bits::getMinBits(curr->right, this);
           auto rightIsNegative = rightMinBits == getBitsForType(type);
           if (leftMaxBits < rightMinBits) {
             // There are not enough bits on the left for it to be equal to the
