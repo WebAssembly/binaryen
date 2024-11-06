@@ -416,8 +416,6 @@ def pick_initial_contents():
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
-        # has not been fuzzed in general yet
-        '--disable-memory64',
         # avoid multivalue for now due to bad interactions with gc non-nullable
         # locals in stacky code. for example, this fails to roundtrip as the
         # tuple code ends up creating stacky binary code that needs to spill
