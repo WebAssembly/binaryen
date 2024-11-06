@@ -136,24 +136,12 @@ function logValue(x, y) {
 
 // Table get/set operations need a BigInt if the table has 64-bit indexes. This
 // adds a proper cast as needed.
-function castTableIndex(index) {
-  if (exports.table.length == 0) {
-    // We will trap anyhow on oob, no matter how we cast, and we can't even
-    // check what the right cast is (the code below needs a valid index). Just
-    // throw.
-    throw 'table OOB';
-  }
-
+function toAddressType(table, index) {
   // First, cast to unsigned. We do not support larger indexes anyhow.
   index = index >>> 0;
-  // Use index 0 (which we know is valid) to test for the table index type.
-  try {
-    exports.table.get(0);
-  } catch (e) {
-    // We trapped on not providing a BigInt, so cast to one.
+  if (typeof table.length == 'bigint') {
     return BigInt(index);
   }
-  // No problem, the table is 32-bit
   return index;
 }
 
@@ -179,10 +167,10 @@ var imports = {
 
     // Table operations.
     'table-get': (index) => {
-      return exports.table.get(castTableIndex(index));
+      return exports.table.get(toAddressType(exports.table, index));
     },
     'table-set': (index, value) => {
-      exports.table.set(castTableIndex(index), value);
+      exports.table.set(toAddressType(exports.table, index), value);
     },
   },
   // Emscripten support.
