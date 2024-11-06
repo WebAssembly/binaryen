@@ -7,6 +7,8 @@
 
  (data $0 (i64.const 0) "abcdefg")
 
+ ;; CHECK:      [fuzz-exec] calling load8x8_s
+ ;; CHECK-NEXT: [fuzz-exec] note result: load8x8_s => i32x4 0x00620061 0x00640063 0x00660065 0x00000067
  (func $load8x8_s (export "load8x8_s") (result v128)
   (v128.load8x8_s align=2
    (i64.const 0)
@@ -14,3 +16,6 @@
  )
 )
 
+;; CHECK:      [fuzz-exec] calling load8x8_s
+;; CHECK-NEXT: [fuzz-exec] note result: load8x8_s => i32x4 0x00620061 0x00640063 0x00660065 0x00000067
+;; CHECK-NEXT: [fuzz-exec] comparing load8x8_s
