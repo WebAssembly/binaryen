@@ -898,8 +898,34 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
         if (glb != Type::unreachable && glb != curr->castType) {
           curr->castType = glb;
+          auto oldType = curr->type;
           curr->finalize();
           worked = true;
+
+          // We refined the castType, which may *un*-refine the BrOn itself.
+          // Imagine the castType was nullable before, then nulls would go on
+          // the branch, and so the BrOn could only flow out a non-nullable
+          // value, and that was its type. If we refine the castType to be
+          // non-nullable then nulls no longer go through, making the BrOn
+          // itself nullable. This should not normally happen, but can occur
+          // because we look at the fallthrough of the ref:
+          //
+          //   (br_on_cast
+          //     (local.tee $unrefined
+          //       (refined
+          //
+          // That is, we may see a more refined type for our GLB computation
+          // than the wasm type system does, if a local.tee or such ends up
+          // unrefining the type.
+          //
+          // To check for this and fix it, see if we need a cast in order to be
+          // a subtype of the old type.
+          auto* rep = maybeCast(curr, oldType);
+          if (rep != curr) {
+            replaceCurrent(rep);
+            // Exit after doing so, leaving further work for other cycles.
+            return;
+          }
         }
 
         // Depending on what we know about the cast results, we may be able to

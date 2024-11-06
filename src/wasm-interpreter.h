@@ -3028,6 +3028,8 @@ public:
       : function(function), parent(parent) {
       oldScope = parent.scope;
       parent.scope = this;
+      parent.callDepth++;
+      parent.functionStack.push_back(function->name);
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3053,7 +3055,11 @@ public:
       }
     }
 
-    ~FunctionScope() { parent.scope = oldScope; }
+    ~FunctionScope() {
+      parent.scope = oldScope;
+      parent.callDepth--;
+      parent.functionStack.pop_back();
+    }
 
     // The current delegate target, if delegation of an exception is in
     // progress. If no delegation is in progress, this will be an empty Name.
@@ -3111,7 +3117,7 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
-    Flow ret = callFunctionInternal(target, arguments);
+    Flow ret = callFunction(target, arguments);
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
@@ -3176,7 +3182,7 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
-    Flow ret = callFunctionInternal(targetRef.getFunc(), arguments);
+    Flow ret = callFunction(targetRef.getFunc(), arguments);
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
@@ -4297,18 +4303,7 @@ public:
     return value;
   }
 
-  // Call a function, starting an invocation.
-  Literals callFunction(Name name, const Literals& arguments) {
-    // If the last call ended in a jump up the stack, it might have left stuff
-    // for us to clean up here
-    callDepth = 0;
-    functionStack.clear();
-    return callFunctionInternal(name, arguments);
-  }
-
-  // Internal function call. Must be public so that callTable implementations
-  // can use it (refactor?)
-  Literals callFunctionInternal(Name name, Literals arguments) {
+  Literals callFunction(Name name, Literals arguments) {
     if (callDepth > maxDepth) {
       hostLimit("stack limit");
     }
@@ -4332,11 +4327,6 @@ public:
         return externalInterface->callImport(function, arguments);
       }
 
-      auto previousCallDepth = callDepth;
-      callDepth++;
-      auto previousFunctionStackSize = functionStack.size();
-      functionStack.push_back(name);
-
       FunctionScope scope(function, arguments, *self());
 
 #ifdef WASM_INTERPRETER_DEBUG
@@ -4348,13 +4338,6 @@ public:
 
       flow = self()->visit(function->body);
 
-      // may decrease more than one, if we jumped up the stack
-      callDepth = previousCallDepth;
-      // if we jumped up the stack, we also need to pop higher frames
-      // TODO can FunctionScope handle this automatically?
-      while (functionStack.size() > previousFunctionStackSize) {
-        functionStack.pop_back();
-      }
 #ifdef WASM_INTERPRETER_DEBUG
       std::cout << "exiting " << function->name << " with " << flow.values
                 << '\n';
