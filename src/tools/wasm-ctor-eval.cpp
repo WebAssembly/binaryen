@@ -508,12 +508,13 @@ private:
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
+    auto& memory = wasm->memories[0];
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
       auto curr = builder.makeDataSegment();
-      curr->offset = builder.makeConst(int32_t(0));
+      curr->offset = builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
       curr->setName(Name::fromInt(0), false);
-      curr->memory = wasm->memories[0]->name;
+      curr->memory = memory->name;
       wasm->addDataSegment(std::move(curr));
     }
     auto& segment = wasm->dataSegments[0];
@@ -521,7 +522,7 @@ private:
 
     // Copy the current memory contents after execution into the Module's
     // memory.
-    segment->data = memories[wasm->memories[0]->name];
+    segment->data = memories[memory->name];
   }
 
   // Serializing GC data requires more work than linear memory, because

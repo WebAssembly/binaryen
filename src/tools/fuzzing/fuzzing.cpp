@@ -199,8 +199,16 @@ void TranslateToFuzzReader::build() {
 }
 
 void TranslateToFuzzReader::setupMemory() {
-  // Add memory itself
-  MemoryUtils::ensureExists(&wasm);
+  // Add a memory, if one does not already exist.
+  if (wasm.memories.empty()) {
+    auto memory = Builder::makeMemory("0");
+    memory->initial = memory->max = 1 + upTo(10);
+    if (wasm.features.hasMemory64() && oneIn(2)) { // XXX lower
+      memory->indexType = Type::i64;
+    }
+    wasm.addMemory(std::move(memory));
+  }
+
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
@@ -217,7 +225,7 @@ void TranslateToFuzzReader::setupMemory() {
         segment->data[j] = upTo(512);
       }
       if (!segment->isPassive) {
-        segment->offset = builder.makeConst(int32_t(memCovered));
+        segment->offset = builder.makeConst(Literal::makeFromInt32(memCovered, memory->indexType));
         memCovered += segSize;
         segment->memory = memory->name;
       }
@@ -227,7 +235,7 @@ void TranslateToFuzzReader::setupMemory() {
     // init some data
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
-    segment->offset = builder.makeConst(int32_t(0));
+    segment->offset = builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
     segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
                      false);
     auto num = upTo(USABLE_MEMORY * 2);
