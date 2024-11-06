@@ -212,7 +212,7 @@ void TranslateToFuzzReader::setupMemory() {
     }
     // Fuzz wasm64 when possible, sometimes.
     if (wasm.features.hasMemory64() && oneIn(2)) {
-      memory->indexType = Type::i64;
+      memory->addressType = Type::i64;
     }
     wasm.addMemory(std::move(memory));
   }
@@ -234,7 +234,7 @@ void TranslateToFuzzReader::setupMemory() {
       }
       if (!segment->isPassive) {
         segment->offset = builder.makeConst(
-          Literal::makeFromInt32(memCovered, memory->indexType));
+          Literal::makeFromInt32(memCovered, memory->addressType));
         memCovered += segSize;
         segment->memory = memory->name;
       }
@@ -245,7 +245,7 @@ void TranslateToFuzzReader::setupMemory() {
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
     segment->offset =
-      builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
+      builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
     segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
                      false);
     auto num = upTo(USABLE_MEMORY * 2);
@@ -380,16 +380,16 @@ void TranslateToFuzzReader::setupTables() {
       max = Memory::kUnlimitedSize;
     }
     // Fuzz wasm64 when possible, sometimes.
-    auto indexType = Type::i32;
+    auto addressType = Type::i32;
     if (wasm.features.hasMemory64() && oneIn(2)) {
-      indexType = Type::i64;
+      addressType = Type::i64;
     }
     auto tablePtr =
       builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
                         funcref,
                         initial,
                         max,
-                        indexType);
+                        addressType);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -400,11 +400,11 @@ void TranslateToFuzzReader::setupTables() {
                 [&](auto& segment) {
                   return segment->table.is() && segment->type == funcref;
                 });
-  auto indexType = wasm.getTable(funcrefTableName)->indexType;
+  auto addressType = wasm.getTable(funcrefTableName)->addressType;
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
     auto segment = std::make_unique<ElementSegment>(
-      table->name, builder.makeConst(Literal::makeFromInt32(0, indexType)));
+      table->name, builder.makeConst(Literal::makeFromInt32(0, addressType)));
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
@@ -705,7 +705,7 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   std::vector<Expression*> contents;
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->addressType);
   for (Index i = 0; i < USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
@@ -2025,12 +2025,12 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
   }
   // with high probability, make sure the type is valid  otherwise, most are
   // going to trap
-  auto indexType = wasm.getTable(funcrefTableName)->indexType;
+  auto addressType = wasm.getTable(funcrefTableName)->addressType;
   Expression* target;
   if (!allowOOB || !oneIn(10)) {
-    target = builder.makeConst(Literal::makeFromInt32(i, indexType));
+    target = builder.makeConst(Literal::makeFromInt32(i, addressType));
   } else {
-    target = make(indexType);
+    target = make(addressType);
   }
   std::vector<Expression*> args;
   for (const auto& type : targetFn->getParams()) {
@@ -2203,7 +2203,7 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memories[0]->indexType);
+  auto* ret = make(wasm.memories[0]->addressType);
   // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
   // most memory ops will just trap
@@ -4452,7 +4452,7 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   }
   Expression* dest = makePointer();
   Expression* source = makePointer();
-  Expression* size = make(wasm.memories[0]->indexType);
+  Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryCopy(
     dest, source, size, wasm.memories[0]->name, wasm.memories[0]->name);
 }
@@ -4463,7 +4463,7 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   }
   Expression* dest = makePointer();
   Expression* value = make(Type::i32);
-  Expression* size = make(wasm.memories[0]->indexType);
+  Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
 }
 
