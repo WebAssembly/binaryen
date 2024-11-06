@@ -6,14 +6,14 @@
  (type $i32 (func (result i32)))
 
  (table $table i64 10 funcref)
- (elem $i32)
+ (elem (i64.const 0) $i32)
 
  (func $i32 (result i32)
   (i32.const 42)
  )
 
  ;; CHECK:      [fuzz-exec] calling call
- ;; CHECK-NEXT: [trap uninitialized table element]
+ ;; CHECK-NEXT: [fuzz-exec] note result: call => 42
  (func $call (export "call") (result i32)
   ;; This call succeeds, and calls $i32 which returns 42.
   (call_indirect (type $i32)
@@ -41,7 +41,7 @@
 )
 
 ;; CHECK:      [fuzz-exec] calling call
-;; CHECK-NEXT: [trap uninitialized table element]
+;; CHECK-NEXT: [fuzz-exec] note result: call => 42
 
 ;; CHECK:      [fuzz-exec] calling oob
 ;; CHECK-NEXT: [trap callTable overflow]
