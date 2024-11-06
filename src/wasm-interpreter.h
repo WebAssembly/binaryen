@@ -2955,11 +2955,8 @@ private:
   }
 
   void initializeMemoryContents() {
+std::cout << "a1\n";
     initializeMemorySizes();
-
-    Const zero;
-    zero.value = Literal(uint32_t(0));
-    zero.finalize();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -2969,9 +2966,16 @@ private:
       }
 
       auto* memory = wasm.getMemory(segment->memory);
+std::cout << "a2\n";
+
+      Const zero;
+      zero.value = Literal::makeFromInt32(0, memory->indexType);
+      zero.finalize();
+
       Const size;
       size.value = Literal::makeFromInt32(segment->data.size(), memory->indexType);
       size.finalize();
+std::cout << "a3\n";
 
       MemoryInit init;
       init.memory = segment->memory;
@@ -2985,8 +2989,11 @@ private:
       drop.segment = segment->name;
       drop.finalize();
 
+std::cout << "a3.5\n";
       self()->visit(&init);
+std::cout << "a4\n";
       self()->visit(&drop);
+std::cout << "a5\n";
     }
   }
 
@@ -3880,8 +3887,8 @@ public:
     auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
-    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+    Address offsetVal(offset.getSingleValue().getInteger());
+    Address sizeVal(size.getSingleValue().getInteger());
 
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
