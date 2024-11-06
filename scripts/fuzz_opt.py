@@ -348,11 +348,12 @@ INITIAL_CONTENTS_IGNORE = [
     'multi-memory-lowering-import.wast',
     'multi-memory-lowering-import-error.wast',
     # the fuzzer does not support typed continuations
-    'typed_continuations.wast',
-    'typed_continuations_resume.wast',
-    'typed_continuations_contnew.wast',
-    'typed_continuations_contbind.wast',
-    'typed_continuations_suspend.wast',
+    'stack_switching.wast',
+    'stack_switching_contnew.wast',
+    'stack_switching_contbind.wast',
+    'stack_switching_suspend.wast',
+    'stack_switching_resume.wast',
+    'stack_switching_resume_throw.wast',
 ]
 
 
