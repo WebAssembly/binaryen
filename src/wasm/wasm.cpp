@@ -1387,47 +1387,6 @@ void Suspend::finalize(Module* wasm) {
   }
 }
 
-static void populateResumeSentTypes(Resume* curr, Module* wasm) {
-  if (!wasm) {
-    return;
-  }
-
-  const Signature& contSig =
-    curr->contType.getContinuation().type.getSignature();
-
-  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
-  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction (resume
-  // $ct ... (tag $tag $block) ... ) causes $block to receive values of the
-  // following types when suspending to $tag: tgp* (ref $ct') where ct' = (cont
-  // $ft') and ft' = [tgr*] -> [ctr*].
-  //
-  auto& ctrs = contSig.results;
-  curr->sentTypes.clear();
-  curr->sentTypes.resize(curr->handlerTags.size());
-  for (Index i = 0; i < curr->handlerTags.size(); i++) {
-    auto& tag = curr->handlerTags[i];
-    auto& tagSig = wasm->getTag(tag)->sig;
-
-    auto& tgps = tagSig.params;
-    auto& tgrs = tagSig.results;
-
-    HeapType ftPrime{Signature(tgrs, ctrs)};
-    HeapType ctPrime{Continuation(ftPrime)};
-    Type ctPrimeRef(ctPrime, Nullability::NonNullable);
-
-    if (tgps.size() > 0) {
-      TypeList sentValueTypes;
-      sentValueTypes.reserve(tgps.size() + 1);
-
-      sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
-      sentValueTypes.push_back(ctPrimeRef);
-      curr->sentTypes[i] = Type(sentValueTypes);
-    } else {
-      curr->sentTypes[i] = ctPrimeRef;
-    }
-  }
-}
-
 void Resume::finalize(Module* wasm) {
   if (cont->type == Type::unreachable) {
     type = Type::unreachable;
@@ -1435,49 +1394,6 @@ void Resume::finalize(Module* wasm) {
     const Signature& contSig =
       this->contType.getContinuation().type.getSignature();
     type = contSig.results;
-  }
-
-  populateResumeSentTypes(this, wasm);
-}
-
-static void populateResumeThrowSentTypes(ResumeThrow* curr, Module* wasm) {
-  if (!wasm) {
-    return;
-  }
-
-  const Signature& contSig =
-    curr->contType.getContinuation().type.getSignature();
-
-  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
-  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction (resume
-  // $ct ... (tag $tag $block) ... ) causes $block to receive values of the
-  // following types when suspending to $tag: tgp* (ref $ct') where ct' = (cont
-  // $ft') and ft' = [tgr*] -> [ctr*].
-  //
-  auto& ctrs = contSig.results;
-  curr->sentTypes.clear();
-  curr->sentTypes.resize(curr->handlerTags.size());
-  for (Index i = 0; i < curr->handlerTags.size(); i++) {
-    auto& tag = curr->handlerTags[i];
-    auto& tagSig = wasm->getTag(tag)->sig;
-
-    auto& tgps = tagSig.params;
-    auto& tgrs = tagSig.results;
-
-    HeapType ftPrime{Signature(tgrs, ctrs)};
-    HeapType ctPrime{Continuation(ftPrime)};
-    Type ctPrimeRef(ctPrime, Nullability::NonNullable);
-
-    if (tgps.size() > 0) {
-      TypeList sentValueTypes;
-      sentValueTypes.reserve(tgps.size() + 1);
-
-      sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
-      sentValueTypes.push_back(ctPrimeRef);
-      curr->sentTypes[i] = Type(sentValueTypes);
-    } else {
-      curr->sentTypes[i] = ctPrimeRef;
-    }
   }
 }
 
@@ -1489,12 +1405,12 @@ void ResumeThrow::finalize(Module* wasm) {
       this->contType.getContinuation().type.getSignature();
     type = contSig.results;
   }
-
-  populateResumeThrowSentTypes(this, wasm);
 }
 
 void StackSwitch::finalize(Module* wasm) {
-  if (!handleUnreachableOperands(this) && wasm) {
+  if (cont->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (!handleUnreachableOperands(this) && wasm) {
     type = this->contType.getContinuation().type.getSignature().params;
   }
 }
