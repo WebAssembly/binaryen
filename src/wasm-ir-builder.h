@@ -220,15 +220,15 @@ public:
   [[nodiscard]] Result<> makeContNew(HeapType ct);
   [[nodiscard]] Result<> makeContBind(HeapType sourceType, HeapType targetType);
   [[nodiscard]] Result<> makeSuspend(Name tag);
-  [[nodiscard]] Result<> makeResume(HeapType ct,
-                                    const std::vector<Name>& tags,
-                                    const std::vector<Index>& labels,
-                                    const std::vector<bool>& onTags);
-  [[nodiscard]] Result<> makeResumeThrow(HeapType ct,
-                                         Name tag,
-                                         const std::vector<Name>& tags,
-                                         const std::vector<Index>& labels,
-                                         const std::vector<bool>& onTags);
+  [[nodiscard]] Result<>
+  makeResume(HeapType ct,
+             const std::vector<Name>& tags,
+             const std::vector<std::optional<Index>>& labels);
+  [[nodiscard]] Result<>
+  makeResumeThrow(HeapType ct,
+                  Name tag,
+                  const std::vector<Name>& tags,
+                  const std::vector<std::optional<Index>>& labels);
   [[nodiscard]] Result<> makeStackSwitch(HeapType ct, Name tag);
 
   // Private functions that must be public for technical reasons.

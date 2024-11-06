@@ -7956,17 +7956,18 @@ static void readResumeTable(WasmBinaryReader* reader, ResumeType* curr) {
   // valid until processNames ran.
   curr->handlerTags.resize(numHandlers);
   curr->handlerBlocks.resize(numHandlers);
-  curr->onTags.resize(numHandlers);
 
   for (size_t i = 0; i < numHandlers; i++) {
     uint8_t code = reader->getInt8();
     auto tagIndex = reader->getU32LEB();
     auto tag = reader->getTagName(tagIndex);
     Name handler;
-    if (code == BinaryConsts::OnLabel) { // expect (on $tag $label)
+    if (code == BinaryConsts::OnLabel) {
+      // expect (on $tag $label)
       auto handlerIndex = reader->getU32LEB();
       handler = reader->getBreakTarget(handlerIndex).name;
-    } else if (code == BinaryConsts::OnSwitch) { // expect (on $tag switch)
+    } else if (code == BinaryConsts::OnSwitch) {
+      // expect (on $tag switch)
       handler = Name();
     } else { // error
       reader->throwError("ON opcode expected");
@@ -7974,7 +7975,6 @@ static void readResumeTable(WasmBinaryReader* reader, ResumeType* curr) {
 
     curr->handlerTags[i] = tag;
     curr->handlerBlocks[i] = handler;
-    curr->onTags[i] = static_cast<bool>(code); // 0x00 is false, 0x01 is true
 
     // We don't know the final name yet
     reader->tagRefs[tagIndex].push_back(&curr->handlerTags[i]);

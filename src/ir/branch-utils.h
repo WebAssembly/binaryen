@@ -85,14 +85,14 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* r = expr->dynCast<Resume>()) {
       for (Index i = 0; i < r->handlerTags.size(); i++) {
         auto dest = r->handlerTags[i];
-        if (dest == name && !r->onTags[i]) {
+        if (!dest.isNull() && dest == name) {
           func(name, r->sentTypes[i]);
         }
       }
     } else if (auto* r = expr->dynCast<ResumeThrow>()) {
       for (Index i = 0; i < r->handlerTags.size(); i++) {
         auto dest = r->handlerTags[i];
-        if (dest == name && !r->onTags[i]) {
+        if (!dest.isNull() && dest == name) {
           func(name, r->sentTypes[i]);
         }
       }

@@ -1197,14 +1197,12 @@ public:
   Resume* makeResume(HeapType contType,
                      const std::vector<Name>& handlerTags,
                      const std::vector<Name>& handlerBlocks,
-                     const std::vector<bool>& onTags,
                      const std::vector<Expression*>& operands,
                      Expression* cont) {
     auto* ret = wasm.allocator.alloc<Resume>();
     ret->contType = contType;
     ret->handlerTags.set(handlerTags);
     ret->handlerBlocks.set(handlerBlocks);
-    ret->onTags.set(onTags);
     ret->operands.set(operands);
     ret->cont = cont;
     ret->finalize(&wasm);
@@ -1214,7 +1212,6 @@ public:
                                Name tag,
                                const std::vector<Name>& handlerTags,
                                const std::vector<Name>& handlerBlocks,
-                               const std::vector<bool>& onTags,
                                const std::vector<Expression*>& operands,
                                Expression* cont) {
     auto* ret = wasm.allocator.alloc<ResumeThrow>();
@@ -1222,7 +1219,6 @@ public:
     ret->tag = tag;
     ret->handlerTags.set(handlerTags);
     ret->handlerBlocks.set(handlerBlocks);
-    ret->onTags.set(onTags);
     ret->operands.set(operands);
     ret->cont = cont;
     ret->finalize(&wasm);

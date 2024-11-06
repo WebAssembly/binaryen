@@ -2441,24 +2441,30 @@ struct PrintExpressionContents
     printMedium(o, "suspend ");
     curr->tag.print(o);
   }
-  void visitResume(Resume* curr) {
-    printMedium(o, "resume");
-
-    o << ' ';
-    printHeapType(curr->contType);
-
+  template<typename ResumeType>
+  static void handleResumeTable(std::ostream& o, ResumeType* curr) {
+    static_assert(std::is_base_of<ResumeType, Resume>::value ||
+                  std::is_base_of<ResumeType, ResumeThrow>::value);
     for (Index i = 0; i < curr->handlerTags.size(); i++) {
       o << " (";
       printMedium(o, "on ");
       curr->handlerTags[i].print(o);
       o << ' ';
-      if (curr->onTags[i]) {
+      if (curr->handlerBlocks[i].isNull()) {
         o << "switch";
       } else {
         curr->handlerBlocks[i].print(o);
       }
       o << ')';
     }
+  }
+  void visitResume(Resume* curr) {
+    printMedium(o, "resume");
+
+    o << ' ';
+    printHeapType(curr->contType);
+
+    handleResumeTable(o, curr);
   }
   void visitResumeThrow(ResumeThrow* curr) {
     printMedium(o, "resume_throw");
@@ -2468,18 +2474,7 @@ struct PrintExpressionContents
     o << ' ';
     curr->tag.print(o);
 
-    for (Index i = 0; i < curr->handlerTags.size(); i++) {
-      o << " (";
-      printMedium(o, "on ");
-      curr->handlerTags[i].print(o);
-      o << ' ';
-      if (curr->onTags[i]) {
-        o << "switch";
-      } else {
-        curr->handlerBlocks[i].print(o);
-      }
-      o << ')';
-    }
+    handleResumeTable(o, curr);
   }
   void visitStackSwitch(StackSwitch* curr) {
     printMedium(o, "switch");

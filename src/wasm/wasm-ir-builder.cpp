@@ -1945,10 +1945,10 @@ Result<> IRBuilder::makeSuspend(Name tag) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeResume(HeapType ct,
-                               const std::vector<Name>& tags,
-                               const std::vector<Index>& labels,
-                               const std::vector<bool>& onTags) {
+Result<>
+IRBuilder::makeResume(HeapType ct,
+                      const std::vector<Name>& tags,
+                      const std::vector<std::optional<Index>>& labels) {
   if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
@@ -1960,25 +1960,25 @@ Result<> IRBuilder::makeResume(HeapType ct,
   std::vector<Name> labelNames;
   labelNames.reserve(labels.size());
   for (size_t i = 0; i < labels.size(); i++) {
-    if (onTags[i]) {
-      labelNames.push_back(Name());
-    } else {
-      auto name = getLabelName(labels[i]);
+    if (labels[i].has_value()) {
+      auto name = getLabelName(labels[i].value());
       CHECK_ERR(name);
       labelNames.push_back(*name);
+    } else {
+      labelNames.push_back(Name());
     }
   }
 
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeResume(ct, tags, labelNames, onTags, operands, curr.cont));
+  push(builder.makeResume(ct, tags, labelNames, operands, curr.cont));
   return Ok{};
 }
 
-Result<> IRBuilder::makeResumeThrow(HeapType ct,
-                                    Name tag,
-                                    const std::vector<Name>& tags,
-                                    const std::vector<Index>& labels,
-                                    const std::vector<bool>& onTags) {
+Result<>
+IRBuilder::makeResumeThrow(HeapType ct,
+                           Name tag,
+                           const std::vector<Name>& tags,
+                           const std::vector<std::optional<Index>>& labels) {
   if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
@@ -1991,18 +1991,17 @@ Result<> IRBuilder::makeResumeThrow(HeapType ct,
   std::vector<Name> labelNames;
   labelNames.reserve(labels.size());
   for (size_t i = 0; i < labels.size(); i++) {
-    if (onTags[i]) {
-      labelNames.push_back(Name());
-    } else {
-      auto name = getLabelName(labels[i]);
+    if (labels[i].has_value()) {
+      auto name = getLabelName(labels[i].value());
       CHECK_ERR(name);
       labelNames.push_back(*name);
+    } else {
+      labelNames.push_back(Name());
     }
   }
 
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeResumeThrow(
-    ct, tag, tags, labelNames, onTags, operands, curr.cont));
+  push(builder.makeResumeThrow(ct, tag, tags, labelNames, operands, curr.cont));
   return Ok{};
 }
 

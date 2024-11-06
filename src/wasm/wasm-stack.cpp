@@ -2630,7 +2630,7 @@ void BinaryInstWriter::visitResume(Resume* curr) {
   size_t handlerNum = curr->handlerTags.size();
   o << U32LEB(handlerNum);
   for (size_t i = 0; i < handlerNum; i++) {
-    if (curr->onTags[i]) {
+    if (curr->handlerBlocks[i].isNull()) {
       // on switch
       o << int8_t(BinaryConsts::OnSwitch)
         << U32LEB(parent.getTagIndex(curr->handlerTags[i]));
@@ -2651,10 +2651,12 @@ void BinaryInstWriter::visitResumeThrow(ResumeThrow* curr) {
   size_t handlerNum = curr->handlerTags.size();
   o << U32LEB(handlerNum);
   for (size_t i = 0; i < handlerNum; i++) {
-    if (curr->onTags[i]) { // on switch
+    if (curr->handlerBlocks[i].isNull()) {
+      // on switch
       o << int8_t(BinaryConsts::OnSwitch)
         << U32LEB(parent.getTagIndex(curr->handlerTags[i]));
-    } else { // on label
+    } else {
+      // on label
       o << int8_t(BinaryConsts::OnLabel)
         << U32LEB(parent.getTagIndex(curr->handlerTags[i]))
         << U32LEB(getBreakIndex(curr->handlerBlocks[i]));

@@ -2647,22 +2647,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                       HeapType type,
                       const std::vector<OnClauseInfo>& resumetable) {
     std::vector<Name> tags;
-    std::vector<Index> labels;
-    std::vector<bool> onTags;
+    std::vector<std::optional<Index>> labels;
     tags.reserve(resumetable.size());
     labels.reserve(resumetable.size());
-    onTags.reserve(resumetable.size());
     for (const OnClauseInfo& info : resumetable) {
       tags.push_back(info.tag);
       if (info.isOnSwitch) {
-        labels.push_back(Index());
-        onTags.push_back(true);
+        labels.push_back(std::nullopt);
       } else {
-        labels.push_back(info.label);
-        onTags.push_back(false);
+        labels.push_back(std::optional<Index>(info.label));
       }
     }
-    return withLoc(pos, irBuilder.makeResume(type, tags, labels, onTags));
+    return withLoc(pos, irBuilder.makeResume(type, tags, labels));
   }
 
   Result<> makeResumeThrow(Index pos,
@@ -2671,23 +2667,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                            Name tag,
                            const std::vector<OnClauseInfo>& resumetable) {
     std::vector<Name> tags;
-    std::vector<Index> labels;
-    std::vector<bool> onTags;
+    std::vector<std::optional<Index>> labels;
     tags.reserve(resumetable.size());
     labels.reserve(resumetable.size());
-    onTags.reserve(resumetable.size());
-    for (auto& info : resumetable) {
+    for (const OnClauseInfo& info : resumetable) {
       tags.push_back(info.tag);
       if (info.isOnSwitch) {
-        labels.push_back(Index());
-        onTags.push_back(true);
+        labels.push_back(std::nullopt);
       } else {
-        labels.push_back(info.label);
-        onTags.push_back(false);
+        labels.push_back(std::optional<Index>(info.label));
       }
     }
-    return withLoc(pos,
-                   irBuilder.makeResumeThrow(type, tag, tags, labels, onTags));
+    return withLoc(pos, irBuilder.makeResumeThrow(type, tag, tags, labels));
   }
 
   Result<> makeStackSwitch(Index pos,

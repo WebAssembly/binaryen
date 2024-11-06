@@ -1965,15 +1965,20 @@ public:
 class Resume : public SpecificExpression<Expression::ResumeId> {
 public:
   Resume(MixedArena& allocator)
-    : handlerTags(allocator), handlerBlocks(allocator), onTags(allocator),
-      operands(allocator), sentTypes(allocator) {}
+    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
+      sentTypes(allocator) {}
 
   HeapType contType;
+  // The following two vectors are to be understood together
+  // pointwise. That is, the ith component of each vector together
+  // classifies an on-clause `(on $tag $label)` or `(on $tag
+  // switch)`. The first vector stores reifies the `$tag` bit of the
+  // aforementioned syntax...
   ArenaVector<Name> handlerTags;
-  // Empty name (i.e. `Name()`) for switch tags.
+  // ... whilst this vector reifies the `$label` bit of the
+  // syntax. For `switch` clauses the ith component will be the Empty
+  // name (i.e. `Name()`).
   ArenaVector<Name> handlerBlocks;
-  // False if (on $tag $label) and true when (on $tag switch).
-  ArenaVector<bool> onTags;
 
   ExpressionList operands;
   Expression* cont;
@@ -1994,16 +1999,14 @@ public:
 class ResumeThrow : public SpecificExpression<Expression::ResumeThrowId> {
 public:
   ResumeThrow(MixedArena& allocator)
-    : handlerTags(allocator), handlerBlocks(allocator), onTags(allocator),
-      operands(allocator), sentTypes(allocator) {}
+    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
+      sentTypes(allocator) {}
 
   HeapType contType;
   Name tag;
+  // See the comment on `Resume` above.
   ArenaVector<Name> handlerTags;
-  // Empty name (i.e. `Name()`) for switch tags.
   ArenaVector<Name> handlerBlocks;
-  // False if (on $tag $label) and true when (on $tag switch).
-  ArenaVector<bool> onTags;
 
   ExpressionList operands;
   Expression* cont;
