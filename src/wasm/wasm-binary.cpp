@@ -7944,15 +7944,12 @@ void WasmBinaryReader::visitSuspend(Suspend* curr) {
   curr->finalize(&wasm);
 }
 
-void WasmBinaryReader::visitResume(Resume* curr) {
+template<typename ResumeType>
+static void readResumeTable(WasmBinaryReader* reader, ResumeType* curr) {
+  static_assert(std::is_base_of<Resume, ResumeType>::value ||
+                std::is_base_of<ResumeThrow, ResumeType>::value);
 
-  curr->contType = getIndexedHeapType();
-  if (!curr->contType.isContinuation()) {
-    throwError("non-continuation type in resume instruction " +
-               curr->contType.toString());
-  }
-
-  auto numHandlers = getU32LEB();
+  auto numHandlers = reader->getU32LEB();
 
   // We *must* bring the handlerTags vector to an appropriate size to ensure
   // that we do not invalidate the pointers we add to tagRefs. They need to stay
@@ -7962,17 +7959,17 @@ void WasmBinaryReader::visitResume(Resume* curr) {
   curr->onTags.resize(numHandlers);
 
   for (size_t i = 0; i < numHandlers; i++) {
-    uint8_t code = getInt8();
-    auto tagIndex = getU32LEB();
-    auto tag = getTagName(tagIndex);
+    uint8_t code = reader->getInt8();
+    auto tagIndex = reader->getU32LEB();
+    auto tag = reader->getTagName(tagIndex);
     Name handler;
     if (code == BinaryConsts::OnLabel) { // expect (on $tag $label)
-      auto handlerIndex = getU32LEB();
-      handler = getBreakTarget(handlerIndex).name;
+      auto handlerIndex = reader->getU32LEB();
+      handler = reader->getBreakTarget(handlerIndex).name;
     } else if (code == BinaryConsts::OnSwitch) { // expect (on $tag switch)
       handler = Name();
     } else { // error
-      throwError("ON opcode expected");
+      reader->throwError("ON opcode expected");
     }
 
     curr->handlerTags[i] = tag;
@@ -7980,8 +7977,19 @@ void WasmBinaryReader::visitResume(Resume* curr) {
     curr->onTags[i] = static_cast<bool>(code); // 0x00 is false, 0x01 is true
 
     // We don't know the final name yet
-    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
+    reader->tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
   }
+}
+
+void WasmBinaryReader::visitResume(Resume* curr) {
+
+  curr->contType = getIndexedHeapType();
+  if (!curr->contType.isContinuation()) {
+    throwError("non-continuation type in resume instruction " +
+               curr->contType.toString());
+  }
+
+  readResumeTable<Resume>(this, curr);
 
   curr->cont = popNonVoidExpression();
 
@@ -8005,39 +8013,7 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
   curr->tag = getTagName(exnTagIndex);
   tagRefs[exnTagIndex].push_back(&curr->tag);
 
-  auto numHandlers = getU32LEB();
-
-  // We *must* bring the handlerTags vector to an appropriate size to ensure
-  // that we do not invalidate the pointers we add to tagRefs. They need to stay
-  // valid until processNames ran.
-  curr->handlerTags.resize(numHandlers);
-  curr->handlerBlocks.resize(numHandlers);
-  curr->onTags.resize(numHandlers);
-
-  for (size_t i = 0; i < numHandlers; i++) {
-    uint8_t code = getInt8();
-    auto tagIndex = getU32LEB();
-    auto tag = getTagName(tagIndex);
-    Name handler;
-    if (code == BinaryConsts::OnLabel) {
-      // expect (on $tag $label)
-      auto handlerIndex = getU32LEB();
-      handler = getBreakTarget(handlerIndex).name;
-    } else if (code == BinaryConsts::OnSwitch) {
-      // expect (on $tag switch)
-      handler = Name();
-    } else {
-      // error
-      throwError("ON opcode expected");
-    }
-
-    curr->handlerTags[i] = tag;
-    curr->handlerBlocks[i] = handler;
-    curr->onTags[i] = static_cast<bool>(code); // 0x00 is false, 0x01 is true
-
-    // We don't know the final name yet
-    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
-  }
+  readResumeTable<ResumeThrow>(this, curr);
 
   curr->cont = popNonVoidExpression();
 
