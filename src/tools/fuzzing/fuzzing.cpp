@@ -225,7 +225,8 @@ void TranslateToFuzzReader::setupMemory() {
         segment->data[j] = upTo(512);
       }
       if (!segment->isPassive) {
-        segment->offset = builder.makeConst(Literal::makeFromInt32(memCovered, memory->indexType));
+        segment->offset = builder.makeConst(
+          Literal::makeFromInt32(memCovered, memory->indexType));
         memCovered += segSize;
         segment->memory = memory->name;
       }
@@ -235,7 +236,8 @@ void TranslateToFuzzReader::setupMemory() {
     // init some data
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
-    segment->offset = builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
+    segment->offset =
+      builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
     segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
                      false);
     auto num = upTo(USABLE_MEMORY * 2);

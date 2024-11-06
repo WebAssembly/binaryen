@@ -106,7 +106,8 @@ bool flatten(Module& wasm) {
     }
     std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
   }
-  dataSegments[0]->offset->cast<Const>()->value = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
+  dataSegments[0]->offset->cast<Const>()->value =
+    Literal::makeFromInt32(0, wasm.memories[0]->indexType);
   dataSegments[0]->data.swap(data);
   wasm.removeDataSegments(
     [&](DataSegment* curr) { return curr->name != dataSegments[0]->name; });

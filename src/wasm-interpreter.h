@@ -2971,7 +2971,8 @@ private:
       zero.finalize();
 
       Const size;
-      size.value = Literal::makeFromInt32(segment->data.size(), memory->indexType);
+      size.value =
+        Literal::makeFromInt32(segment->data.size(), memory->indexType);
       size.finalize();
 
       MemoryInit init;

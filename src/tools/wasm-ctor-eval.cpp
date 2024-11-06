@@ -512,7 +512,8 @@ private:
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
       auto curr = builder.makeDataSegment();
-      curr->offset = builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
+      curr->offset =
+        builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
       curr->setName(Name::fromInt(0), false);
       curr->memory = memory->name;
       wasm->addDataSegment(std::move(curr));
