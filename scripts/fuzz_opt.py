@@ -1194,17 +1194,18 @@ def get_exports(wasm, kinds):
 
 
 # given a wasm and a list of exports we want to keep, remove all other exports.
-def filter_exports(wasm, output, keep):
+# we also get a list of default exports to keep, which are kept even without
+# being asked to be kept (unless overridden). for example, the 'table' export
+# must be preserved so that JS imports for table operations keep working.
+def filter_exports(wasm, output, keep, default_to_keep=['table']):
     # based on
     # https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
 
     # we append to keep; avoid modifying the object that was sent in.
     keep = keep[:]
 
-    # some exports must always be preserved, if they exist, like the table
-    # (which can be called from JS imports for table operations).
     existing_exports = set(get_exports(wasm, ['func', 'table']))
-    for export in ['table']:
+    for export in default_to_keep:
         if export in existing_exports:
             keep.append(export)
 
@@ -1368,6 +1369,23 @@ class Merge(TestCaseHandler):
         make_random_input(second_size, second_input)
         second_wasm = abspath('second.wasm')
         run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # the second wasm file must not have an export that can influence our
+        # execution. the JS exports have that behavior, as when "table-set" is
+        # called it will look for the export "table" on which to operate, then
+        # imagine we lack that export in the first module but add it in the
+        # second, then code that failed before will now use the exported table
+        # from the second module (and maybe work). to avoid that, remove the
+        # table export, if it exists (and if the first module doesn't export
+        # it).
+        second_exports = get_exports(second_wasm, ['func', 'table'])
+        wasm_exports = get_exports(wasm, ['table'])
+        if 'table' in second_exports and 'table' not in wasm_exports:
+            filtered = [e for e in second_exports if e != 'table']
+            # note we override the set of default things to keep, as we want to
+            # remove the table export. doing so might change the behavior of
+            # second.wasm, but that is ok.
+            filter_exports(second_wasm, second_wasm, filtered, default_to_keep=[])
 
         # sometimes also optimize the second module
         if random.random() < 0.5:
