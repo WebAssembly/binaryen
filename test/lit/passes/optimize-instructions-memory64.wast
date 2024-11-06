@@ -2,8 +2,19 @@
 ;; RUN: wasm-opt %s --optimize-instructions -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (memory $0 i64 16 17)
  (memory $0 i64 16 17)
 
+ ;; CHECK:      (func $offsets (type $0)
+ ;; CHECK-NEXT:  (i64.store
+ ;; CHECK-NEXT:   (i64.const 10)
+ ;; CHECK-NEXT:   (i64.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.store offset=4
+ ;; CHECK-NEXT:   (i64.const -3)
+ ;; CHECK-NEXT:   (f32.const 3.141590118408203)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $offsets
   ;; It is safe to combine the offset and constant here.
   (i64.store offset=4
