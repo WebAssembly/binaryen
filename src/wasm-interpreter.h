@@ -3139,7 +3139,7 @@ public:
       return target;
     }
 
-    Index index = target.getSingleValue().geti32();
+    Index index = target.getSingleValue().getInteger();
 
     auto info = getTableInstanceInfo(curr->table);
 

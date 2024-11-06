@@ -372,10 +372,11 @@ void TranslateToFuzzReader::setupTables() {
                 [&](auto& segment) {
                   return segment->table.is() && segment->type == funcref;
                 });
+  auto indexType = wasm.getTable(funcrefTableName)->indexType;
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
     auto segment = std::make_unique<ElementSegment>(
-      table->name, builder.makeConst(int32_t(0)));
+      table->name, builder.makeConst(Literal::makeFromInt32(0, indexType)));
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
@@ -1996,11 +1997,12 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
   }
   // with high probability, make sure the type is valid  otherwise, most are
   // going to trap
+  auto indexType = wasm.getTable(funcrefTableName)->indexType;
   Expression* target;
   if (!allowOOB || !oneIn(10)) {
-    target = builder.makeConst(int32_t(i));
+    target = builder.makeConst(Literal::makeFromInt32(i, indexType));
   } else {
-    target = make(Type::i32);
+    target = make(indexType);
   }
   std::vector<Expression*> args;
   for (const auto& type : targetFn->getParams()) {
