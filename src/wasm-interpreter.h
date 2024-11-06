@@ -3882,8 +3882,8 @@ public:
     auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(offset.getSingleValue().getInteger());
-    Address sizeVal(size.getSingleValue().getInteger());
+    Address offsetVal(offset.getSingleValue().getUnsigned());
+    Address sizeVal(size.getSingleValue().getUnsigned());
 
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
