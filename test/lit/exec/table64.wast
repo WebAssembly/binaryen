@@ -12,6 +12,8 @@
   (i32.const 42)
  )
 
+ ;; CHECK:      [fuzz-exec] calling call
+ ;; CHECK-NEXT: [trap uninitialized table element]
  (func $call (export "call") (result i32)
   ;; This call succeeds, and calls $i32 which returns 42.
   (call_indirect (type $i32)
@@ -19,6 +21,8 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling oob
+ ;; CHECK-NEXT: [trap callTable overflow]
  (func $oob (export "oob") (result i32)
   ;; This call traps on oob.
   (call_indirect (type $i32)
@@ -26,6 +30,8 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling null
+ ;; CHECK-NEXT: [trap uninitialized table element]
  (func $null (export "null") (result i32)
   ;; This call traps on null
   (call_indirect (type $i32)
@@ -34,3 +40,14 @@
  )
 )
 
+;; CHECK:      [fuzz-exec] calling call
+;; CHECK-NEXT: [trap uninitialized table element]
+
+;; CHECK:      [fuzz-exec] calling oob
+;; CHECK-NEXT: [trap callTable overflow]
+
+;; CHECK:      [fuzz-exec] calling null
+;; CHECK-NEXT: [trap uninitialized table element]
+;; CHECK-NEXT: [fuzz-exec] comparing call
+;; CHECK-NEXT: [fuzz-exec] comparing null
+;; CHECK-NEXT: [fuzz-exec] comparing oob

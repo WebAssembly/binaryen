@@ -19,4 +19,3 @@
 ;; CHECK:      [fuzz-exec] calling load8x8_s
 ;; CHECK-NEXT: [fuzz-exec] note result: load8x8_s => i32x4 0x00620061 0x00640063 0x00660065 0x00000067
 ;; CHECK-NEXT: [fuzz-exec] comparing load8x8_s
-
