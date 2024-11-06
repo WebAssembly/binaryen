@@ -21,8 +21,9 @@
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
-  // Flatten does not currently have support for multimemory
-  if (wasm.memories.size() > 1) {
+  // Flatten does not currently have support for multimemory, and if there are
+  // no memories then there is nothing to flatten.
+  if (wasm.memories.size() != 1) {
     return false;
   }
   // The presence of any instruction that cares about segment identity is a
@@ -105,7 +106,8 @@ bool flatten(Module& wasm) {
     }
     std::copy(segment->data.begin(), segment->data.end(), data.begin() + start);
   }
-  dataSegments[0]->offset->cast<Const>()->value = Literal(int32_t(0));
+  dataSegments[0]->offset->cast<Const>()->value =
+    Literal::makeFromInt32(0, wasm.memories[0]->indexType);
   dataSegments[0]->data.swap(data);
   wasm.removeDataSegments(
     [&](DataSegment* curr) { return curr->name != dataSegments[0]->name; });
