@@ -3673,7 +3673,7 @@ public:
       return flow;
     }
     NOTE_EVAL1(flow);
-    Address src(uint32_t(flow.getSingleValue().geti32()));
+    Address src(flow.getSingleValue().getInteger());
     auto info = getMemoryInstanceInfo(curr->memory);
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
