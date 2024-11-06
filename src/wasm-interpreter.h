@@ -3678,7 +3678,7 @@ public:
       return flow;
     }
     NOTE_EVAL1(flow);
-    Address src(flow.getSingleValue().getInteger());
+    Address src(flow.getSingleValue().getUnsigned());
     auto info = getMemoryInstanceInfo(curr->memory);
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
