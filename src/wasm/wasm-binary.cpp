@@ -3895,14 +3895,10 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
     uint8_t prefix = getInt8();
 
     bool disallowed = prefix == BinaryConsts::FeatureDisallowed;
-    bool required = prefix == BinaryConsts::FeatureRequired;
     bool used = prefix == BinaryConsts::FeatureUsed;
 
-    if (!disallowed && !required && !used) {
+    if (!disallowed && !used) {
       throwError("Unrecognized feature policy prefix");
-    }
-    if (required) {
-      std::cerr << "warning: required features in feature section are ignored";
     }
 
     Name name = getInlineString();
@@ -3960,7 +3956,7 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
         << "warning: feature " << feature.toString()
         << " was enabled by the user, but disallowed in the features section.";
     }
-    if (required || used) {
+    if (used) {
       wasm.features.enable(feature);
     }
   }

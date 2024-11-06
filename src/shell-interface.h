@@ -191,7 +191,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     if (func->imported()) {
       return callImport(func, arguments);
     } else {
-      return instance.callFunctionInternal(func->name, arguments);
+      return instance.callFunction(func->name, arguments);
     }
   }
 
