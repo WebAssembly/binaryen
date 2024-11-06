@@ -690,6 +690,8 @@ def run_vm(cmd):
             # (https://github.com/WebAssembly/binaryen/pull/6574)
             'expected (ref stringview_wtf16), got nullref',
             'expected type (ref stringview_wtf16), found ref.null of type nullref',
+            # wasm64 memories have a V8 limit
+            'larger than implementation limit',
         ]
         for issue in known_issues:
             if issue in output:
