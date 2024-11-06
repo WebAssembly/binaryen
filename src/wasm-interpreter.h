@@ -3140,13 +3140,14 @@ public:
       return target;
     }
 
-    Index index = target.getSingleValue().getInteger();
+    auto index = target.getSingleValue().getUnsigned();
 
     auto info = getTableInstanceInfo(curr->table);
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
+      // TODO: switch tableLoad index from Index to Address, to support table64.
       auto funcref = info.interface()->tableLoad(info.name, index);
       if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
         trap("cast failure in call_indirect");
