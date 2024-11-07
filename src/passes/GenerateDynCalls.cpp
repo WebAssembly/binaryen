@@ -146,11 +146,12 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
     auto* table = wasm->addTable(Builder::makeTable(Name::fromInt(0)));
     table->module = ENV;
     table->base = "__indirect_function_table";
-    table->indexType = wasm->memories[0]->indexType;
+    table->addressType = wasm->memories[0]->addressType;
   }
   auto& table = wasm->tables[0];
-  namedParams.emplace_back("fptr", table->indexType); // function pointer param
-  params.push_back(table->indexType);
+  namedParams.emplace_back("fptr",
+                           table->addressType); // function pointer param
+  params.push_back(table->addressType);
   int p = 0;
   for (const auto& param : sig.params) {
     namedParams.emplace_back(std::to_string(p++), param);
@@ -159,7 +160,7 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
   auto f = builder.makeFunction(
     name, std::move(namedParams), Signature(Type(params), sig.results), {});
   f->hasExplicitName = true;
-  Expression* fptr = builder.makeLocalGet(0, table->indexType);
+  Expression* fptr = builder.makeLocalGet(0, table->addressType);
   std::vector<Expression*> args;
   Index i = 0;
   for (const auto& param : sig.params) {

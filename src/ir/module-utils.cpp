@@ -175,7 +175,7 @@ Table* copyTable(const Table* table, Module& out) {
 
   ret->initial = table->initial;
   ret->max = table->max;
-  ret->indexType = table->indexType;
+  ret->addressType = table->addressType;
 
   return out.addTable(std::move(ret));
 }
@@ -186,7 +186,7 @@ Memory* copyMemory(const Memory* memory, Module& out) {
   ret->initial = memory->initial;
   ret->max = memory->max;
   ret->shared = memory->shared;
-  ret->indexType = memory->indexType;
+  ret->addressType = memory->addressType;
   ret->module = memory->module;
   ret->base = memory->base;
 

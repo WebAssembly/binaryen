@@ -5088,7 +5088,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   memory->initial = initial;
   memory->max = int32_t(maximum); // Make sure -1 extends.
   memory->shared = shared;
-  memory->indexType = memory64 ? Type::i64 : Type::i32;
+  memory->addressType = memory64 ? Type::i64 : Type::i32;
   if (exportName) {
     auto memoryExport = std::make_unique<Export>();
     memoryExport->name = exportName;

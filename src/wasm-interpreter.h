@@ -2968,12 +2968,12 @@ private:
       auto* memory = wasm.getMemory(segment->memory);
 
       Const zero;
-      zero.value = Literal::makeFromInt32(0, memory->indexType);
+      zero.value = Literal::makeFromInt32(0, memory->addressType);
       zero.finalize();
 
       Const size;
       size.value =
-        Literal::makeFromInt32(segment->data.size(), memory->indexType);
+        Literal::makeFromInt32(segment->data.size(), memory->addressType);
       size.finalize();
 
       MemoryInit init;
@@ -3224,7 +3224,7 @@ public:
     auto info = getTableInstanceInfo(curr->table);
     auto* table = info.instance->wasm.getTable(info.name);
     Index tableSize = info.interface()->tableSize(curr->table);
-    return Literal::makeFromInt64(tableSize, table->indexType);
+    return Literal::makeFromInt64(tableSize, table->addressType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
@@ -3241,8 +3241,8 @@ public:
 
     uint64_t tableSize = info.interface()->tableSize(info.name);
     auto* table = info.instance->wasm.getTable(info.name);
-    Flow ret = Literal::makeFromInt64(tableSize, table->indexType);
-    Flow fail = Literal::makeFromInt64(-1, table->indexType);
+    Flow ret = Literal::makeFromInt64(tableSize, table->addressType);
+    Flow fail = Literal::makeFromInt64(-1, table->addressType);
     uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
 
     uint64_t newSize;
@@ -3818,7 +3818,7 @@ public:
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
-    return Literal::makeFromInt64(memorySize, memory->indexType);
+    return Literal::makeFromInt64(memorySize, memory->addressType);
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
@@ -3829,14 +3829,14 @@ public:
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
-    auto indexType = memory->indexType;
-    auto fail = Literal::makeFromInt64(-1, memory->indexType);
-    Flow ret = Literal::makeFromInt64(memorySize, indexType);
+    auto addressType = memory->addressType;
+    auto fail = Literal::makeFromInt64(-1, memory->addressType);
+    Flow ret = Literal::makeFromInt64(memorySize, addressType);
     uint64_t delta = flow.getSingleValue().getUnsigned();
-    if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
+    if (delta > uint32_t(-1) / Memory::kPageSize && addressType == Type::i32) {
       return fail;
     }
-    if (memorySize >= uint32_t(-1) - delta && indexType == Type::i32) {
+    if (memorySize >= uint32_t(-1) - delta && addressType == Type::i32) {
       return fail;
     }
     auto newSize = memorySize + delta;

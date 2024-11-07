@@ -187,7 +187,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     // we don't want to depend on that specific ordering.
     for (auto& memory : module->memories) {
       if (memory->is64()) {
-        memory->indexType = Type::i32;
+        memory->addressType = Type::i32;
         if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
           memory->max = Memory::kMaxSize32;
         }

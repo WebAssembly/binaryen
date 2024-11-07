@@ -430,7 +430,7 @@ struct MultiMemoryLowering : public Pass {
   Memory& getFirstMemory() { return *wasm->memories[0]; }
 
   void prepCombinedMemory() {
-    pointerType = getFirstMemory().indexType;
+    pointerType = getFirstMemory().addressType;
     memoryInfo = pointerType == Type::i32 ? Builder::MemoryInfo::Memory32
                                           : Builder::MemoryInfo::Memory64;
     isShared = getFirstMemory().shared;
@@ -439,7 +439,7 @@ struct MultiMemoryLowering : public Pass {
       // We are assuming that each memory is configured the same as the first
       // and assert if any of the memories does not match this configuration
       assert(memory->shared == isShared);
-      assert(memory->indexType == pointerType);
+      assert(memory->addressType == pointerType);
 
       // TODO: handle memory import for memories other than the first
       if (memory->name != getFirstMemory().name && memory->imported()) {
@@ -690,7 +690,7 @@ struct MultiMemoryLowering : public Pass {
   void addCombinedMemory() {
     auto memory = Builder::makeMemory(combinedMemory);
     memory->shared = isShared;
-    memory->indexType = pointerType;
+    memory->addressType = pointerType;
     memory->initial = totalInitialPages;
     memory->max = totalMaxPages;
     if (isImported) {
