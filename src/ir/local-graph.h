@@ -253,6 +253,13 @@ struct LazyLocalGraph : public LocalGraphBase {
   // That is, we must decide ahead of time which places we want to query about
   // moving LocalSets to, and can then issue queries on any of those, in an
   // efficient manner.
+  //
+  // This assumes that |to| is in a position dominated by |set|, that is we are
+  // moving the set "forward". (In particular, that implies that the new
+  // position will have monotonically *less* influence than before - we don't
+  // need to scan all possible gets of that index in the entire function, we can
+  // look only on the gets influenced by the set, and see how the new position
+  // behaves regarding them.)
   SetInfluences canMoveSet(LocalSet* set, Expression* to);
 
 private:

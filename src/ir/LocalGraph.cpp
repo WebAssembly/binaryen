@@ -763,7 +763,7 @@ LocalGraphBase::SetInfluences LazyLocalGraph::canMoveSet(LocalSet* set,
   //  4. get
   //
   // The set can still influence the get on line 2, if we consider the call to
-  // be an obstacle. Looking at it another way, and get that is no longer
+  // be an obstacle. Looking at it another way, any get that is no longer
   // influenced, given the obstacle, is a get that is only influenced by the
   // obstacle itself, meaning that moving the set to the obstacle is valid. This
   // is a slight simplification, though, since other sets may be involved:
