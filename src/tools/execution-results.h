@@ -84,7 +84,7 @@ public:
         if (!exportedTable) {
           throwEmptyException();
         }
-        Index index = arguments[0].geti32();
+        auto index = arguments[0].getUnsigned();
         if (index >= tables[exportedTable].size()) {
           throwEmptyException();
         }
@@ -93,7 +93,7 @@ public:
         if (!exportedTable) {
           throwEmptyException();
         }
-        Index index = arguments[0].geti32();
+        auto index = arguments[0].getUnsigned();
         if (index >= tables[exportedTable].size()) {
           throwEmptyException();
         }

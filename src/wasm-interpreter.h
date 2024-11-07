@@ -2598,7 +2598,7 @@ public:
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
-                               Index index,
+                               Address index,
                                HeapType sig,
                                Literals& arguments,
                                Type result,
@@ -2789,10 +2789,11 @@ public:
 
     virtual Index tableSize(Name tableName) = 0;
 
-    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
+    virtual void
+    tableStore(Name tableName, Address index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName, Index index) {
+    virtual Literal tableLoad(Name tableName, Address index) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -3141,13 +3142,11 @@ public:
     }
 
     auto index = target.getSingleValue().getUnsigned();
-
     auto info = getTableInstanceInfo(curr->table);
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      // TODO: switch tableLoad index from Index to Address, to support table64.
       auto funcref = info.interface()->tableLoad(info.name, index);
       if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
         trap("cast failure in call_indirect");
@@ -3201,29 +3200,22 @@ public:
       return index;
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    auto address = table->indexType == Type::i64
-                     ? index.getSingleValue().geti64()
-                     : index.getSingleValue().geti32();
+    auto address = index.getSingleValue().getUnsigned();
     return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow indexFlow = self()->visit(curr->index);
-    if (indexFlow.breaking()) {
-      return indexFlow;
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
     }
-    Flow valueFlow = self()->visit(curr->value);
-    if (valueFlow.breaking()) {
-      return valueFlow;
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    auto address = table->indexType == Type::i64
-                     ? indexFlow.getSingleValue().geti64()
-                     : indexFlow.getSingleValue().geti32();
-    info.interface()->tableStore(
-      info.name, address, valueFlow.getSingleValue());
+    auto address = index.getSingleValue().getUnsigned();
+    info.interface()->tableStore(info.name, address, value.getSingleValue());
     return Flow();
   }
 

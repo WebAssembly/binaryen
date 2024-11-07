@@ -6,18 +6,31 @@
  (type $i32 (func (result i32)))
 
  (table $table i64 10 funcref)
- (elem (i64.const 0) $i32)
+ (elem (i64.const 0) $i32-a $i32-b)
 
- (func $i32 (result i32)
+ (func $i32-a (result i32)
   (i32.const 42)
  )
 
- ;; CHECK:      [fuzz-exec] calling call
- ;; CHECK-NEXT: [fuzz-exec] note result: call => 42
- (func $call (export "call") (result i32)
-  ;; This call succeeds, and calls $i32 which returns 42.
+ (func $i32-b (result i32)
+  (i32.const 1337)
+ )
+
+ ;; CHECK:      [fuzz-exec] calling call-a
+ ;; CHECK-NEXT: [fuzz-exec] note result: call-a => 42
+ (func $call-a (export "call-a") (result i32)
+  ;; This call succeeds, and calls $i32-a which returns 42.
   (call_indirect (type $i32)
    (i64.const 0)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling call-b
+ ;; CHECK-NEXT: [fuzz-exec] note result: call-b => 1337
+ (func $call-b (export "call-b") (result i32)
+  ;; This call succeeds, and calls $i32-b which returns 1337.
+  (call_indirect (type $i32)
+   (i64.const 1)
   )
  )
 
@@ -30,24 +43,46 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling oob-huge
+ ;; CHECK-NEXT: [trap callTable overflow]
+ (func $oob-huge (export "oob-huge") (result i32)
+  ;; This call traps on oob with a value over 32 bits, 2**32 + 1, which if we
+  ;; truncated to 32 bits, would seem in bounds, and end up calling a valid
+  ;; function.
+  (call_indirect (type $i32)
+   (i64.add
+    (i64.const 0x100000000)
+    (i64.const 1)
+   )
+  )
+ )
+
  ;; CHECK:      [fuzz-exec] calling null
  ;; CHECK-NEXT: [trap uninitialized table element]
  (func $null (export "null") (result i32)
   ;; This call traps on null
   (call_indirect (type $i32)
-   (i64.const 1)
+   (i64.const 2)
   )
  )
 )
 
-;; CHECK:      [fuzz-exec] calling call
-;; CHECK-NEXT: [fuzz-exec] note result: call => 42
+;; CHECK:      [fuzz-exec] calling call-a
+;; CHECK-NEXT: [fuzz-exec] note result: call-a => 42
+
+;; CHECK:      [fuzz-exec] calling call-b
+;; CHECK-NEXT: [fuzz-exec] note result: call-b => 1337
 
 ;; CHECK:      [fuzz-exec] calling oob
 ;; CHECK-NEXT: [trap callTable overflow]
 
+;; CHECK:      [fuzz-exec] calling oob-huge
+;; CHECK-NEXT: [trap callTable overflow]
+
 ;; CHECK:      [fuzz-exec] calling null
 ;; CHECK-NEXT: [trap uninitialized table element]
-;; CHECK-NEXT: [fuzz-exec] comparing call
+;; CHECK-NEXT: [fuzz-exec] comparing call-a
+;; CHECK-NEXT: [fuzz-exec] comparing call-b
 ;; CHECK-NEXT: [fuzz-exec] comparing null
 ;; CHECK-NEXT: [fuzz-exec] comparing oob
+;; CHECK-NEXT: [fuzz-exec] comparing oob-huge
