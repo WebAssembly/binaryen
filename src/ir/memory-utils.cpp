@@ -21,8 +21,11 @@
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
-  // Flatten does not currently have support for multimemory, and if there are
-  // no memories then there is nothing to flatten.
+  // If there are no memories then they are already flat, in the empty sense.
+  if (wasm.memories.empty()) {
+    return true;
+  }
+  // Flatten does not currently have support for multimemory
   if (wasm.memories.size() != 1) {
     return false;
   }
