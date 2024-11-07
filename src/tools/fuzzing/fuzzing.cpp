@@ -384,8 +384,12 @@ void TranslateToFuzzReader::setupTables() {
     if (wasm.features.hasMemory64() && oneIn(2)) {
       indexType = Type::i64;
     }
-    auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), funcref, initial, max, indexType);
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
+                        funcref,
+                        initial,
+                        max,
+                        indexType);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
