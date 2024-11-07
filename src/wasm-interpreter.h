@@ -2598,7 +2598,7 @@ public:
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
-                               Index index,
+                               Address index,
                                HeapType sig,
                                Literals& arguments,
                                Type result,
@@ -2789,10 +2789,11 @@ public:
 
     virtual Index tableSize(Name tableName) = 0;
 
-    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
+    virtual void
+    tableStore(Name tableName, Address index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName, Index index) {
+    virtual Literal tableLoad(Name tableName, Address index) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2957,18 +2958,22 @@ private:
   void initializeMemoryContents() {
     initializeMemorySizes();
 
-    Const zero;
-    zero.value = Literal(uint32_t(0));
-    zero.finalize();
-
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
       auto& segment = wasm.dataSegments[i];
       if (segment->isPassive) {
         continue;
       }
+
+      auto* memory = wasm.getMemory(segment->memory);
+
+      Const zero;
+      zero.value = Literal::makeFromInt32(0, memory->indexType);
+      zero.finalize();
+
       Const size;
-      size.value = Literal(uint32_t(segment->data.size()));
+      size.value =
+        Literal::makeFromInt32(segment->data.size(), memory->indexType);
       size.finalize();
 
       MemoryInit init;
@@ -3136,8 +3141,7 @@ public:
       return target;
     }
 
-    Index index = target.getSingleValue().geti32();
-
+    auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
 
     if (curr->isReturn) {
@@ -3196,29 +3200,22 @@ public:
       return index;
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    auto address = table->indexType == Type::i64
-                     ? index.getSingleValue().geti64()
-                     : index.getSingleValue().geti32();
+    auto address = index.getSingleValue().getUnsigned();
     return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow indexFlow = self()->visit(curr->index);
-    if (indexFlow.breaking()) {
-      return indexFlow;
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
     }
-    Flow valueFlow = self()->visit(curr->value);
-    if (valueFlow.breaking()) {
-      return valueFlow;
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    auto address = table->indexType == Type::i64
-                     ? indexFlow.getSingleValue().geti64()
-                     : indexFlow.getSingleValue().geti32();
-    info.interface()->tableStore(
-      info.name, address, valueFlow.getSingleValue());
+    auto address = index.getSingleValue().getUnsigned();
+    info.interface()->tableStore(info.name, address, value.getSingleValue());
     return Flow();
   }
 
@@ -3673,7 +3670,7 @@ public:
       return flow;
     }
     NOTE_EVAL1(flow);
-    Address src(uint32_t(flow.getSingleValue().geti32()));
+    Address src(flow.getSingleValue().getUnsigned());
     auto info = getMemoryInstanceInfo(curr->memory);
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
@@ -3878,8 +3875,8 @@ public:
     auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
-    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+    Address offsetVal(offset.getSingleValue().getUnsigned());
+    Address sizeVal(size.getSingleValue().getUnsigned());
 
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");

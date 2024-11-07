@@ -290,7 +290,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   // We assume the table is not modified FIXME
   Literals callTable(Name tableName,
-                     Index index,
+                     Address index,
                      HeapType sig,
                      Literals& arguments,
                      Type result,
@@ -363,12 +363,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     return wasm->getTableOrNull(tableName)->initial;
   }
 
-  Literal tableLoad(Name tableName, Index index) override {
+  Literal tableLoad(Name tableName, Address index) override {
     throw FailToEvalException("table.get: TODO");
   }
 
   // called during initialization
-  void tableStore(Name tableName, Index index, const Literal& value) override {
+  void
+  tableStore(Name tableName, Address index, const Literal& value) override {
     // We allow stores to the table during initialization, but not after, as we
     // assume the table does not change at runtime.
     // TODO: Allow table changes by updating the table later like we do with the
@@ -508,12 +509,14 @@ private:
   void applyMemoryToModule() {
     // Memory must have already been flattened into the standard form: one
     // segment at offset 0, or none.
+    auto& memory = wasm->memories[0];
     if (wasm->dataSegments.empty()) {
       Builder builder(*wasm);
       auto curr = builder.makeDataSegment();
-      curr->offset = builder.makeConst(int32_t(0));
+      curr->offset =
+        builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
       curr->setName(Name::fromInt(0), false);
-      curr->memory = wasm->memories[0]->name;
+      curr->memory = memory->name;
       wasm->addDataSegment(std::move(curr));
     }
     auto& segment = wasm->dataSegments[0];
@@ -521,7 +524,7 @@ private:
 
     // Copy the current memory contents after execution into the Module's
     // memory.
-    segment->data = memories[wasm->memories[0]->name];
+    segment->data = memories[memory->name];
   }
 
   // Serializing GC data requires more work than linear memory, because
