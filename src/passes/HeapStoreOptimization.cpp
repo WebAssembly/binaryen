@@ -359,30 +359,29 @@ struct HeapStoreOptimization
     }
 
     // We may branch, so do the analysis above. As mentioned above, we must
-    // analyze the state *after* the optimization. We simulate that by using the
-    // struct.set we are trying to optimize way as a obstacle in a LocalGraph.
-    // In the above figures, the struct.set is on line A. If it blocks $x from
-    // progress then the set of $x no longer reaches B at all. That is good, as
-    // it shows that if the local.set were moved to the struct.set then we
-    // would affect B in the same way. However, this blocking is not enough to
-    // stop the set of $x from reaching C and D, because of the dangerous
-    // branch: The branch skips the struct.set (the obstacle), which means the
-    // original local.set reaches a place that, if we optimized that set to the
-    // obstacle, it would no longer reach.
-
+    // analyze the state *after* the optimization, so we query whether it is
+    // valid to move the local.set to where the struct.set is.
     if (!localGraph) {
       localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
     }
-    auto gets = localGraph->getSetInfluencesGivenObstacle(localSet, set);
-    // It is ok to have a local.get in the struct.set itself: the value is
-    // after it. Only subsequent ones matter. TODO example
-    if (gets.size() == 0) {
+    auto badGets = localGraph->canMoveSet(localSet, set);
+    if (badGets.size() == 0) {
+      // No problems at all.
       return false;
     }
-    if (gets.size() >= 2) {
+    // It is ok to have a local.get in the struct.set itself, as if we optimize
+    // then that local.get goes away anyhow, that is,
+    //
+    //   (local.set $x (struct.new X Y Z))
+    //   (struct.set (local.get $x) (X'))
+    //  =>
+    //   (local.set $x (struct.new X' Y Z))
+    //
+    // Both the local.get and the struct.set are removed.
+    if (badGets.size() >= 2) {
       return true;
     }
-    return *gets.begin() != set->ref;
+    return *badGets.begin() != set->ref;
   }
 
   EffectAnalyzer effects(Expression* expr) {
