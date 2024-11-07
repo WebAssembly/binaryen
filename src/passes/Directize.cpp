@@ -130,7 +130,7 @@ private:
       return CallUtils::Unknown{};
     }
 
-    Address index = c->value.getInteger();
+    Address index = c->value.getUnsigned();
 
     // Check if index is invalid, or the type is wrong.
     auto& flatTable = *table.flatTable;
