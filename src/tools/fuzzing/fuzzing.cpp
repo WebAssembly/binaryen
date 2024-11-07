@@ -206,7 +206,7 @@ void TranslateToFuzzReader::setupMemory() {
     memory->initial = 1 + upTo(10);
     // Make the max potentially higher, or unlimited.
     if (oneIn(2)) {
-      memory->max = memory->initial + upTo(10);
+      memory->max = memory->initial + upTo(4);
     } else {
       memory->max = Memory::kUnlimitedSize;
     }
