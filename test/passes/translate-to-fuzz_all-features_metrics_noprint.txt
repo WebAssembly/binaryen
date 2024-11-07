@@ -1,20 +1,13 @@
 Metrics
 total
-<<<<<<< HEAD
  [exports]      : 7       
  [funcs]        : 8       
  [globals]      : 4       
-=======
- [exports]      : 8       
- [funcs]        : 9       
- [globals]      : 26      
->>>>>>> origin/main
  [imports]      : 8       
  [memories]     : 1       
  [memory-data]  : 112     
  [table-data]   : 0       
  [tables]       : 1       
-<<<<<<< HEAD
  [tags]         : 1       
  [total]        : 645     
  [vars]         : 33      
@@ -61,41 +54,3 @@ total
  TupleMake      : 3       
  Unary          : 23      
  Unreachable    : 11      
-=======
- [tags]         : 2       
- [total]        : 487     
- [vars]         : 37      
- ArrayFill      : 1       
- ArrayGet       : 1       
- ArrayLen       : 2       
- ArrayNew       : 7       
- ArrayNewFixed  : 5       
- Binary         : 69      
- Block          : 42      
- Break          : 2       
- Call           : 9       
- Const          : 103     
- Drop           : 3       
- GlobalGet      : 30      
- GlobalSet      : 20      
- If             : 13      
- Load           : 18      
- LocalGet       : 41      
- LocalSet       : 24      
- Loop           : 2       
- Nop            : 1       
- Pop            : 1       
- RefFunc        : 21      
- RefNull        : 5       
- Return         : 5       
- Select         : 2       
- StringConst    : 3       
- StringEq       : 1       
- StructNew      : 27      
- Try            : 1       
- TryTable       : 2       
- TupleExtract   : 1       
- TupleMake      : 4       
- Unary          : 11      
- Unreachable    : 10      
->>>>>>> origin/main
