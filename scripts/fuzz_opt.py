@@ -1248,13 +1248,6 @@ class TrapsNeverHappen(TestCaseHandler):
     frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # If we see a trap, we must remove that export (see below). If the wasm
-        # is sensitive to such changes then we cannot remove the export, and
-        # give up.
-        if wasm_notices_export_changes(before_wasm):
-            note_ignored_vm_run('ctor-eval sees call-export')
-            return
-
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
 
         if before == IGNORE:
@@ -1340,18 +1333,18 @@ class TrapsNeverHappen(TestCaseHandler):
 
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
+    def can_run_on_wasm(self, wasm):
+        # If the wasm is sensitive to changes in exports then we cannot alter
+        # them, but we must remove trapping exports (see above), so we cannot
+        # run in such a case.
+        return not wasm_notices_export_changes(wasm)
+
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
     frequency = 0.2
 
     def handle(self, wasm):
-        # ctor-eval modifies exports, because it assumes they are ctors and so
-        # are only called once. if the wasm might notice that, exit.
-        if wasm_notices_export_changes(wasm):
-            note_ignored_vm_run('ctor-eval sees call-export')
-            return
-
         # get the expected execution results.
         wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
 
@@ -1377,18 +1370,18 @@ class CtorEval(TestCaseHandler):
 
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
 
+    def can_run_on_wasm(self, wasm):
+        # ctor-eval modifies exports, because it assumes they are ctors and so
+        # are only called once (so it it evals them away, they can be
+        # removed). If the wasm might notice that, we cannot run.
+        return not wasm_notices_export_changes(wasm)
+
 
 # Tests wasm-merge
 class Merge(TestCaseHandler):
     frequency = 0.15
 
     def handle(self, wasm):
-        # wasm-merge combines exports, which can alter their indexes and lead to
-        # noticeable differences if the wasm is sensitive to such things.
-        if wasm_notices_export_changes(wasm):
-            note_ignored_vm_run('ctor-eval sees call-export')
-            return
-
         # generate a second wasm file to merge. note that we intentionally pick
         # a smaller size than the main wasm file, so that reduction is
         # effective (i.e., as we reduce the main wasm to small sizes, we also
@@ -1455,6 +1448,12 @@ class Merge(TestCaseHandler):
         merged_output = merged_output[:len(output)]
 
         compare_between_vms(output, merged_output, 'Merge')
+
+    def can_run_on_wasm(self, wasm):
+        # wasm-merge combines exports, which can alter their indexes and lead to
+        # noticeable differences if the wasm is sensitive to such things, which
+        # prevents us from running.
+        return not wasm_notices_export_changes(wasm)
 
 
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
