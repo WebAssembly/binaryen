@@ -26,7 +26,6 @@ high chance for set at start of loop
 */
 
 #include "ir/branch-utils.h"
-#include "ir/memory-utils.h"
 #include "ir/struct-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"

@@ -175,6 +175,7 @@ Table* copyTable(const Table* table, Module& out) {
 
   ret->initial = table->initial;
   ret->max = table->max;
+  ret->indexType = table->indexType;
 
   return out.addTable(std::move(ret));
 }

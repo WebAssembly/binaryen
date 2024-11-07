@@ -157,6 +157,17 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
+// Table get/set operations need a BigInt if the table has 64-bit indexes. This
+// adds a proper cast as needed.
+function toAddressType(table, index) {
+  // First, cast to unsigned. We do not support larger indexes anyhow.
+  index = index >>> 0;
+  if (typeof table.length == 'bigint') {
+    return BigInt(index);
+  }
+  return index;
+}
+
 // Set up the imports.
 var tempRet0;
 var imports = {
@@ -179,10 +190,10 @@ var imports = {
 
     // Table operations.
     'table-get': (index) => {
-      return exports.table.get(index >>> 0);
+      return exports.table.get(toAddressType(exports.table, index));
     },
     'table-set': (index, value) => {
-      exports.table.set(index >>> 0, value);
+      exports.table.set(toAddressType(exports.table, index), value);
     },
 
     // Export operations.

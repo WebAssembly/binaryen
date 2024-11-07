@@ -200,8 +200,24 @@ void TranslateToFuzzReader::build() {
 }
 
 void TranslateToFuzzReader::setupMemory() {
-  // Add memory itself
-  MemoryUtils::ensureExists(&wasm);
+  // Add a memory, if one does not already exist.
+  if (wasm.memories.empty()) {
+    auto memory = Builder::makeMemory("0");
+    // Add at least one page of memory.
+    memory->initial = 1 + upTo(10);
+    // Make the max potentially higher, or unlimited.
+    if (oneIn(2)) {
+      memory->max = memory->initial + upTo(4);
+    } else {
+      memory->max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      memory->indexType = Type::i64;
+    }
+    wasm.addMemory(std::move(memory));
+  }
+
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
@@ -218,7 +234,8 @@ void TranslateToFuzzReader::setupMemory() {
         segment->data[j] = upTo(512);
       }
       if (!segment->isPassive) {
-        segment->offset = builder.makeConst(int32_t(memCovered));
+        segment->offset = builder.makeConst(
+          Literal::makeFromInt32(memCovered, memory->indexType));
         memCovered += segSize;
         segment->memory = memory->name;
       }
@@ -228,7 +245,8 @@ void TranslateToFuzzReader::setupMemory() {
     // init some data
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
-    segment->offset = builder.makeConst(int32_t(0));
+    segment->offset =
+      builder.makeConst(Literal::makeFromInt32(0, memory->indexType));
     segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
                      false);
     auto num = upTo(USABLE_MEMORY * 2);
@@ -353,8 +371,26 @@ void TranslateToFuzzReader::setupTables() {
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
-    auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
+    // Start from a potentially empty table.
+    Address initial = upTo(10);
+    // Make the max potentially higher, or unlimited.
+    Address max;
+    if (oneIn(2)) {
+      max = initial + upTo(4);
+    } else {
+      max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    auto indexType = Type::i32;
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      indexType = Type::i64;
+    }
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
+                        funcref,
+                        initial,
+                        max,
+                        indexType);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -365,10 +401,11 @@ void TranslateToFuzzReader::setupTables() {
                 [&](auto& segment) {
                   return segment->table.is() && segment->type == funcref;
                 });
+  auto indexType = wasm.getTable(funcrefTableName)->indexType;
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
     auto segment = std::make_unique<ElementSegment>(
-      table->name, builder.makeConst(int32_t(0)));
+      table->name, builder.makeConst(Literal::makeFromInt32(0, indexType)));
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
@@ -2066,11 +2103,12 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
   }
   // with high probability, make sure the type is valid - otherwise, most are
   // going to trap
+  auto indexType = wasm.getTable(funcrefTableName)->indexType;
   Expression* target;
   if (!allowOOB || !oneIn(10)) {
-    target = builder.makeConst(int32_t(i));
+    target = builder.makeConst(Literal::makeFromInt32(i, indexType));
   } else {
-    target = make(Type::i32);
+    target = make(indexType);
   }
   std::vector<Expression*> args;
   for (const auto& type : targetFn->getParams()) {
