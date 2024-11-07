@@ -2454,7 +2454,8 @@ makeSuspend(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 
 // resumetable ::= ('(' 'on' tagidx labelidx | 'on' tagidx switch ')')*
 template<typename Ctx>
-Result<> makeResumeTable(Ctx& ctx, typename Ctx::OnClauseListT& resumetable) {
+Result<typename Ctx::OnClauseListT> makeResumeTable(Ctx& ctx) {
+  auto resumetable = ctx.makeOnClauseList();
   while (ctx.in.takeSExprStart("on"sv)) {
     auto tag = tagidx(ctx);
     CHECK_ERR(tag);
@@ -2469,7 +2470,7 @@ Result<> makeResumeTable(Ctx& ctx, typename Ctx::OnClauseListT& resumetable) {
       return ctx.in.err("expected ')' at end of handler clause");
     }
   }
-  return Ok{};
+  return resumetable;
 }
 
 // resume ::= 'resume' typeidx resumetable
@@ -2479,11 +2480,10 @@ makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
 
-  auto resumetable = ctx.makeOnClauseList();
-  auto ans = makeResumeTable(ctx, resumetable);
-  CHECK_ERR(ans);
+  auto resumetable = makeResumeTable(ctx);
+  CHECK_ERR(resumetable);
 
-  return ctx.makeResume(pos, annotations, *type, resumetable);
+  return ctx.makeResume(pos, annotations, *type, *resumetable);
 }
 
 // resume_throw ::= 'resume_throw' typeidx tagidx ('(' 'on' tagidx labelidx |
@@ -2497,11 +2497,10 @@ Result<> makeResumeThrow(Ctx& ctx,
   auto exnTag = tagidx(ctx);
   CHECK_ERR(exnTag);
 
-  auto resumetable = ctx.makeOnClauseList();
-  auto ans = makeResumeTable(ctx, resumetable);
-  CHECK_ERR(ans);
+  auto resumetable = makeResumeTable(ctx);
+  CHECK_ERR(resumetable);
 
-  return ctx.makeResumeThrow(pos, annotations, *type, *exnTag, resumetable);
+  return ctx.makeResumeThrow(pos, annotations, *type, *exnTag, *resumetable);
 }
 
 // switch ::= 'switch' typeidx tagidx
