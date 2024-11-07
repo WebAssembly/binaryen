@@ -370,8 +370,8 @@ void TranslateToFuzzReader::setupTables() {
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
-    // Add at least one page of memory.
-    Address initial = 1 + upTo(10);
+    // Start from a potentially empty table.
+    Address initial = upTo(10);
     // Make the max potentially higher, or unlimited.
     Address max;
     if (oneIn(2)) {
