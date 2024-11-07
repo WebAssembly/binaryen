@@ -151,7 +151,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
   }
 
   Literals callTable(Name tableName,
-                     Index index,
+                     Address index,
                      HeapType sig,
                      Literals& arguments,
                      Type results,
@@ -287,7 +287,8 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     return (Index)tables[tableName].size();
   }
 
-  void tableStore(Name tableName, Index index, const Literal& entry) override {
+  void
+  tableStore(Name tableName, Address index, const Literal& entry) override {
     auto& table = tables[tableName];
     if (index >= table.size()) {
       trap("out of bounds table access");
@@ -296,7 +297,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     }
   }
 
-  Literal tableLoad(Name tableName, Index index) override {
+  Literal tableLoad(Name tableName, Address index) override {
     auto it = tables.find(tableName);
     if (it == tables.end()) {
       trap("tableGet on non-existing table");
