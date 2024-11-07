@@ -646,9 +646,10 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   //  2 - call-export-catch
   //  3 - call-export & call-export-catch
   //  4 - none
+  //  5 - none
   //
-  auto choice = upTo(5);
-  if (choice == 4) {
+  auto choice = upTo(6);
+  if (choice >= 4) {
     return;
   }
 

@@ -152,7 +152,7 @@ public:
     }
     auto& exp = wasm.exports[index];
     if (exp->kind != ExternalKind::Function) {
-      // No callable export
+      // No callable export.
       throwEmptyException();
     }
     auto* func = wasm.getFunction(exp->value);
