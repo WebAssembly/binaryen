@@ -36,14 +36,12 @@
  )
 
  ;; CHECK:      (func $bar-32 (param $x i32) (param $y i32)
- ;; CHECK-NEXT:  (call $foo
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (local.get $y)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $bar-32 (param $x i32) (param $y i32)
   ;; As above, but the constant has 2**32 added to it. If we operate on a 32-bit
-  ;; index, we might think we can optimize here, but we shouldn't.
+  ;; index, we might think we can optimize to a call to $foo. Instead, we should
+  ;; see that this traps, and optimize to that.
   (call_indirect (type $ii)
    (local.get $x)
    (local.get $y)
