@@ -30,6 +30,16 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling oob-huge
+ ;; CHECK-NEXT: [trap callTable overflow]
+ (func $oob-huge (export "oob-huge") (result i32)
+  ;; This call traps on oob with a value over 32 bits, 2**32 + 5, which if we
+  ;; truncated to 32 bits, would seem in bounds.
+  (call_indirect (type $i32)
+   (i64.const 4294967301)
+  )
+ )
+
  ;; CHECK:      [fuzz-exec] calling null
  ;; CHECK-NEXT: [trap uninitialized table element]
  (func $null (export "null") (result i32)
@@ -46,8 +56,12 @@
 ;; CHECK:      [fuzz-exec] calling oob
 ;; CHECK-NEXT: [trap callTable overflow]
 
+;; CHECK:      [fuzz-exec] calling oob-huge
+;; CHECK-NEXT: [trap callTable overflow]
+
 ;; CHECK:      [fuzz-exec] calling null
 ;; CHECK-NEXT: [trap uninitialized table element]
 ;; CHECK-NEXT: [fuzz-exec] comparing call
 ;; CHECK-NEXT: [fuzz-exec] comparing null
 ;; CHECK-NEXT: [fuzz-exec] comparing oob
+;; CHECK-NEXT: [fuzz-exec] comparing oob-huge

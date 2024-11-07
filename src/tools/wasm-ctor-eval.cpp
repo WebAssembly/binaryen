@@ -290,7 +290,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
   // We assume the table is not modified FIXME
   Literals callTable(Name tableName,
-                     Index index,
+                     Address index,
                      HeapType sig,
                      Literals& arguments,
                      Type result,
@@ -363,12 +363,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     return wasm->getTableOrNull(tableName)->initial;
   }
 
-  Literal tableLoad(Name tableName, Index index) override {
+  Literal tableLoad(Name tableName, Address index) override {
     throw FailToEvalException("table.get: TODO");
   }
 
   // called during initialization
-  void tableStore(Name tableName, Index index, const Literal& value) override {
+  void
+  tableStore(Name tableName, Address index, const Literal& value) override {
     // We allow stores to the table during initialization, but not after, as we
     // assume the table does not change at runtime.
     // TODO: Allow table changes by updating the table later like we do with the
