@@ -49,15 +49,15 @@ struct LocalGraphFlower
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
-  std::optional<Expression::Id> obstacleClass;
+  std::optional<Expression::Id> queryClass;
 
   LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
                    LocalGraph::Locations& locations,
                    Function* func,
                    Module* module,
-                   std::optional<Expression::Id> obstacleClass = std::nullopt)
+                   std::optional<Expression::Id> queryClass = std::nullopt)
     : getSetsMap(getSetsMap), locations(locations), func(func),
-      obstacleClass(obstacleClass) {
+      queryClass(queryClass) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
@@ -80,10 +80,10 @@ struct LocalGraphFlower
       return;
     }
 
-    // If this is a relevant action (a get or set, or there is a obstacle class
+    // If this is a relevant action (a get or set, or there is a query class
     // and this is an instance of it) then note it.
     if (curr->is<LocalGet>() || curr->is<LocalSet>() ||
-        (obstacleClass && curr->_id == *obstacleClass)) {
+        (queryClass && curr->_id == *queryClass)) {
       currBasicBlock->contents.actions.emplace_back(curr);
       locations[curr] = getCurrentPointer();
       if (auto* set = curr->dynCast<LocalSet>()) {
@@ -442,10 +442,12 @@ struct LocalGraphFlower
   }
 
   // Given a bunch of gets, see if any of them reach the given set despite the
-  // obstacle expression stopping the flow whenever it is reached.
+  // obstacle expression stopping the flow whenever it is reached. That is, the
+  // obstacle is considered as if it was a set of the same index, which would
+  // trample the value and stop the set from influencing it.
   LocalGraphBase::SetInfluences
-  getSetInfluencesGivenObstacle(const LocalGraphBase::SetInfluences& gets,
-                                LocalSet* set,
+  getSetInfluencesGivenObstacle(LocalSet* set,
+                                const LocalGraphBase::SetInfluences& gets,
                                 Expression* obstacle) {
     LocalGraphBase::SetInfluences ret;
     for (auto* get : gets) {
@@ -624,8 +626,8 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 LazyLocalGraph::LazyLocalGraph(Function* func,
                                Module* module,
-                               std::optional<Expression::Id> obstacleClass)
-  : LocalGraphBase(func, module), obstacleClass(obstacleClass) {}
+                               std::optional<Expression::Id> queryClass)
+  : LocalGraphBase(func, module), queryClass(queryClass) {}
 
 void LazyLocalGraph::makeFlower() const {
   // |locations| is set here and filled in by |flower|.
@@ -633,7 +635,7 @@ void LazyLocalGraph::makeFlower() const {
   locations.emplace();
 
   flower = std::make_unique<LocalGraphFlower>(
-    getSetsMap, *locations, func, module, obstacleClass);
+    getSetsMap, *locations, func, module, queryClass);
 
   flower->prepareLaziness();
 
@@ -735,22 +737,52 @@ void LazyLocalGraph::computeLocations() const {
   }
 }
 
-LocalGraphBase::SetInfluences
-LazyLocalGraph::getSetInfluencesGivenObstacle(LocalSet* set,
-                                              Expression* obstacle) {
-  // We must have been initialized with the proper obstacle class, so that we
+LocalGraphBase::SetInfluences LazyLocalGraph::canMoveSet(LocalSet* set,
+                                                         Expression* to) {
+  // We must have been initialized with the proper query class, so that we
   // prepared the flower (if it was computed before) with that class in the
   // graph.
-  assert(obstacleClass && obstacle->_id == *obstacleClass);
+  assert(queryClass && to->_id == *queryClass);
 
   if (!flower) {
     makeFlower();
   }
 
-  // Compute the gets that the set normally reaches. We will flow back from
-  // those.
-  return flower->getSetInfluencesGivenObstacle(
-    getSetInfluences(set), set, obstacle);
+  // To compute this property, we'll do a flow from the gets that the set
+  // originally reaches. No other get is relevant.
+  auto originalGets = getSetInfluences(set);
+
+  // To see which gets pose a problem, see which gets are still influenced by
+  // the set, if we consider |to| to be another set of that index, that is, an
+  // obstacle on the way, that tramples that local index's value. Any such
+  // influenced get is a problem, for example:
+  //
+  //  1. set
+  //  2. get
+  //  3. call
+  //  4. get
+  //
+  // The set can still influence the get on line 2, if we consider the call to
+  // be an obstacle. Looking at it another way, and get that is no longer
+  // influenced, given the obstacle, is a get that is only influenced by the
+  // obstacle itself, meaning that moving the set to the obstacle is valid. This
+  // is a slight simplification, though, since other sets may be involved:
+  //
+  //  if (..) {
+  //    x = ..;
+  //    a(x)
+  //    b();
+  //    c(x);
+  //  }
+  //  d(x);
+  //
+  // Say we consider moving the set of x to b(). a(x) uses x in a manner that
+  // will notice that, but not c(x) or d(x). c(x) is dominated by the set, but
+  // d(x) is not. That is, moving the set to b() leaves the set's influence
+  // unchanged on c(x), where that influence is full, and also on d(x), where it
+  // is only partial (shared with whatever value is present in x before the if).
+  // (But moving the set to b() does alter the set's influence on a(x)).
+  return flower->getSetInfluencesGivenObstacle(set, originalGets, to);
 }
 
 } // namespace wasm

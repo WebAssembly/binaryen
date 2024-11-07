@@ -178,11 +178,11 @@ private:
 struct LocalGraphFlower;
 
 struct LazyLocalGraph : public LocalGraphBase {
-  // We optionally receive an expression class to consider relevant for obstacle
-  // queries, see below. (Only obstacles of this class can be queried later.)
+  // We optionally receive an expression class to consider relevant for queries,
+  // see below. (Only expressions of this class can be queried later.)
   LazyLocalGraph(Function* func,
                  Module* module = nullptr,
-                 std::optional<Expression::Id> obstacleClass = std::nullopt);
+                 std::optional<Expression::Id> queryClass = std::nullopt);
   ~LazyLocalGraph();
 
   // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
@@ -232,50 +232,31 @@ struct LazyLocalGraph : public LocalGraphBase {
     return *locations;
   }
 
-  // Query which gets a set influences (reaches), assuming that a given
-  // expression blocks the flow. The obstacle must be of the class
-  // obstacleClass that is provided in the constructor (so that we set up our
-  // data structures in a way that is ready for any item of that class). For
-  // example:
+  // Query whether it is valid to move a LocalSet to a new position, that is,
+  // that moving it will not alter observable behavior. That means that no
+  // Localget is able to observe a different value than before. This returns the
+  // set of LocalGets that may do so, that is, the gets for which we detected a
+  // problem, hence if the set is empty, the set is valid to move.
+  //
+  // For example:
   //
   //  1. set
   //  2. get
   //  3. call
   //  4. get
   //
-  // If we use Call as obstacleClass, then we can use any call as an obstacle in
-  // a query, such as the call on line #3 here. Then:
+  // If we move the set to the call, then the get on line 2 could observe a
+  // different value (the pre-existing value in that local, before line 1), and
+  // we'd return that get here.
   //
-  //  getSetInfluencesGivenObstacle(#1, #3) => { #2 }
-  //
-  // That is, if the call (#3) obstructs the set (#1) then it only reaches the
-  // get on line #2, and is prevented from reaching line #4, since line #3 is in
-  // the way.
-  //
-  // Obstacle queries are a simple way to check what would happen if code were
-  // moved around. In the example above, imagine that we are considering moving
-  // the set from line #1 to #3, then we can simulate that by the query we just
-  // mentioned: originally we can reach both #2 and #4, and asking whether we
-  // can still do so if we moved to location #3 is equivalent to asking if #3
-  // blocks us from each of the original gets #2 & #4. That is, if #3 blocks us
-  // from all our gets then that means that #3 reaches them all (& if we were in
-  // the place of that obstacle, so would we). And that would be the case if #2
-  // did not exist in the first place, but given #2 in the full example, we can
-  // see that #2 is still reachable despite the obstacle, showing that moving
-  // the set would cause an issue.
-  //
-  // An alternative to such obstacle queries is to just modify BinaryenIR,
-  // construct a new LocalGraph, and see what gets it has (and whether they
-  // match the original ones). Obstacle queries are basically a more efficient
-  // way to do that, by reusing the same LocalGraph for all such queries. To do
-  // so we must decide which things can play the role of obstacle
-  // (obstacleClass), and we then place them in the LocalGraph's internal IR.
-  // A query for a particular obstacle is then easy and cheap.
-  SetInfluences getSetInfluencesGivenObstacle(LocalSet* set,
-                                              Expression* obstacle);
+  // |to| must be of the class |queryClass| that is defined during construction.
+  // That is, we must decide ahead of time which places we want to query about
+  // moving LocalSets to, and can then issue queries on any of those, in an
+  // efficient manner.
+  SetInfluences canMoveSet(LocalSet* set, Expression* to);
 
 private:
-  std::optional<Expression::Id> obstacleClass;
+  std::optional<Expression::Id> queryClass;
 
   // These data structures are mutable so that we can memoize.
   mutable GetSetsMap getSetsMap;

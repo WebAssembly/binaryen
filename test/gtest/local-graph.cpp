@@ -48,10 +48,10 @@ TEST_F(LocalGraphTest, ObstacleBasics) {
     EXPECT_EQ(graph.getSetInfluences(set).size(), 1U);
     // If the first nop is an obstacle, nothing changes: the path between the
     // set and get does not include it.
-    EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 1U);
-    EXPECT_EQ(*graph.getSetInfluencesGivenObstacle(set, nopA).begin(), get);
+    EXPECT_EQ(graph.canMoveSet(set, nopA).size(), 1U);
+    EXPECT_EQ(*graph.canMoveSet(set, nopA).begin(), get);
     // But if the second one is an obstacle, it severs the connection.
-    EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 0U);
+    EXPECT_EQ(graph.canMoveSet(set, nopB).size(), 0U);
   }
 }
 
@@ -90,10 +90,10 @@ TEST_F(LocalGraphTest, ObstacleMultiblock) {
 
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
   // No matter which if arm is an obstacle, we still connect.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 1U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(set, nopA).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(set, nopB).size(), 1U);
   // But the nop after the if stops us.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopC).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(set, nopC).size(), 0U);
 }
 
 TEST_F(LocalGraphTest, ObstacleUnreachable) {
@@ -123,8 +123,8 @@ TEST_F(LocalGraphTest, ObstacleUnreachable) {
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
   // The get is unreachable, and the set has no gets.
   EXPECT_EQ(graph.getSetInfluences(set).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(set, nopA).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(set, nopB).size(), 0U);
 }
 
 TEST_F(LocalGraphTest, ObstacleMultiGet) {
@@ -160,9 +160,9 @@ TEST_F(LocalGraphTest, ObstacleMultiGet) {
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
   // The first nop blocks them both, but not the second, and the third blocks
   // nothing.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 1U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopC).size(), 2U);
+  EXPECT_EQ(graph.canMoveSet(set, nopA).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(set, nopB).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(set, nopC).size(), 2U);
 }
 
 TEST_F(LocalGraphTest, ObstacleMultiSet) {
@@ -197,8 +197,8 @@ TEST_F(LocalGraphTest, ObstacleMultiSet) {
   EXPECT_EQ(graph.getSetInfluences(setA).size(), 0U);
   EXPECT_EQ(graph.getSetInfluences(setB).size(), 1U);
   // The nop blocks on the second (and the first, but it had none anyhow).
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nop).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nop).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setA, nop).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setB, nop).size(), 0U);
 }
 
 TEST_F(LocalGraphTest, ObstacleMultiSetIndexes) {
@@ -238,14 +238,14 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIndexes) {
 
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
   // The first nop blocks them both.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopA).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopA).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setA, nopA).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setB, nopA).size(), 0U);
   // The second nop only blocks one.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopB).size(), 1U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopB).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setA, nopB).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(setB, nopB).size(), 0U);
   // The last nop blocks nothing.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopC).size(), 1U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopC).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(setA, nopC).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(setB, nopC).size(), 1U);
 }
 
 TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
@@ -290,11 +290,11 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
   EXPECT_EQ(graph.getSetInfluences(setA).size(), 1U);
   EXPECT_EQ(graph.getSetInfluences(setB).size(), 1U);
   // The first nop blocks both.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopA).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopA).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setA, nopA).size(), 0U);
+  EXPECT_EQ(graph.canMoveSet(setB, nopA).size(), 0U);
   // The first nop blocks neither.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopB).size(), 1U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopB).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(setA, nopB).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(setB, nopB).size(), 1U);
 }
 
 TEST_F(LocalGraphTest, ObstacleStructSet) {
@@ -343,5 +343,5 @@ TEST_F(LocalGraphTest, ObstacleStructSet) {
   // The tee has one get.
   EXPECT_EQ(graph.getSetInfluences(tee).size(), 1U);
   // The struct.set blocks one path, but not the path that skips it via the br.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(tee, structSet).size(), 1U);
+  EXPECT_EQ(graph.canMoveSet(tee, structSet).size(), 1U);
 }
