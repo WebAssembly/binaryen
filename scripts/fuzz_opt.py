@@ -1203,7 +1203,7 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
     # we append to keep; avoid modifying the object that was sent in.
     keep = keep[:]
 
-    if not keep_defaults:
+    if keep_defaults:
         # some exports must normally be preserved, if they exist, like the table
         # (which can be called from JS imports for table operations).
         existing_exports = set(get_exports(wasm, ['func', 'table']))
