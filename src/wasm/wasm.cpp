@@ -1494,7 +1494,9 @@ void ResumeThrow::finalize(Module* wasm) {
 }
 
 void StackSwitch::finalize(Module* wasm) {
-  if (!handleUnreachableOperands(this) && wasm) {
+  if (cont->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (!handleUnreachableOperands(this) && wasm) {
     type = this->contType.getContinuation().type.getSignature().params;
   }
 }
