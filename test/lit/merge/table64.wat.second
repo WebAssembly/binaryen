@@ -1,0 +1,6 @@
+;; A module with a wasm64 table. We must copy it properly when we merge.
+(module
+ (table $0 i64 15 15 funcref)
+)
+
+
