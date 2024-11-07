@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -29,9 +45,6 @@ struct MemoryCopyFillLowering
 
   void run(Module* module) override {
     if (!module->features.hasBulkMemory()) {
-      return;
-    }
-    if (module->features.hasAtomics()) {
       return;
     }
     if (module->features.hasMemory64() || module->features.hasMultiMemory()) {
@@ -73,167 +86,143 @@ struct MemoryCopyFillLowering
     Super::run(module);
 
     if (needsMemoryCopy) {
-      Index dst = 0, src = 1, size = 2, start = 3, end = 4, step = 5, i = 6;
-      Name memory = module->memories.front()->name;
-      Block* body = b.makeBlock();
-      // end = memory size in bytes
-      body->list.push_back(
-        b.makeLocalSet(end,
-                       b.makeBinary(BinaryOp::MulInt32,
-                                    b.makeMemorySize(memory),
-                                    b.makeConst(Memory::kPageSize))));
-      // if dst + size > memsize or src + size > memsize, then trap.
-      body->list.push_back(b.makeIf(
-        b.makeBinary(BinaryOp::OrInt32,
-                     b.makeBinary(BinaryOp::GtUInt32,
-                                  b.makeBinary(BinaryOp::AddInt32,
-                                               b.makeLocalGet(dst, Type::i32),
-                                               b.makeLocalGet(size, Type::i32)),
-                                  b.makeLocalGet(end, Type::i32)),
-                     b.makeBinary(BinaryOp::GtUInt32,
-                                  b.makeBinary(BinaryOp::AddInt32,
-                                               b.makeLocalGet(src, Type::i32),
-                                               b.makeLocalGet(size, Type::i32)),
-                                  b.makeLocalGet(end, Type::i32))),
-        b.makeUnreachable()));
-      // if src < dest
-      body->list.push_back(b.makeIf(
-        b.makeBinary(BinaryOp::LtUInt32,
-                     b.makeLocalGet(src, Type::i32),
-                     b.makeLocalGet(dst, Type::i32)),
-        b.makeBlock({
-          b.makeLocalSet(start, b.makeBinary(BinaryOp::SubInt32, b.makeLocalGet(size, Type::i32), b.makeConst(1))),
-          b.makeLocalSet(end, b.makeConst(-1U)),
-          b.makeLocalSet(step, b.makeConst(-1U)),
-        }),
-        b.makeBlock({
-          b.makeLocalSet(start, b.makeConst(0)),
-          b.makeLocalSet(end, b.makeLocalGet(size, Type::i32)),
-          b.makeLocalSet(step, b.makeConst(1)),
-        }))
-      );
-      // i = start
-      body->list.push_back(b.makeLocalSet(i, b.makeLocalGet(start, Type::i32)));
-      body->list.push_back(b.makeBlock(
-        "out",
-        b.makeLoop(
-          "copy",
-          b.makeBlock(
-            {// break if i == end
-             b.makeBreak("out",
-                         nullptr,
-                         b.makeBinary(BinaryOp::EqInt32,
-                                      b.makeLocalGet(i, Type::i32),
-                                      b.makeLocalGet(end, Type::i32))),
-             // dst[i] = src[i]
-             b.makeStore(1,
-                         0,
-                         1,
-                         b.makeBinary(BinaryOp::AddInt32,
-                           b.makeLocalGet(dst, Type::i32), b.makeLocalGet(i, Type::i32)),
-                         b.makeLoad(1,
-                                    false,
-                                    0,
-                                    1,
-                                    b.makeBinary(BinaryOp::AddInt32,
-                                      b.makeLocalGet(src, Type::i32), b.makeLocalGet(i, Type::i32)),
-                                    Type::i32,
-                                    memory),
-                         Type::i32,
-                         memory),
-              // i += step
-              b.makeLocalSet(i,
-                             b.makeBinary(BinaryOp::AddInt32,
-                                          b.makeLocalGet(i, Type::i32),
-                                          b.makeLocalGet(step, Type::i32))),
-              // loop
-              b.makeBreak("copy", nullptr)}))));
-      module->getFunction("__memory_copy")->body = body;
-
-      /*
-      local.set($temp, i32.mul(memory.size 0, i32.const 65536))
-      if (
-        i32.or(
-          i32.ugt(i32.add(local.get $src, local.get $size), local.get $temp),
-          i32.ugt(i32.add(local.get $dst, local.get $size), local.get $temp),
-        )
-      ) then unreachable
-      if (i32.lt(local.get $src), (local.get $dst)))
-      then (
-       local.set($start, i32.sub(local.get $size, i32.const 1)
-       local.set($end, (i32.const -1))
-       local.set($step, i32.const -1)
-       ) else (
-       local.set($start, i32.const 0)
-       local.set($end, local.get $size)
-       local.set($step, i32.const 1)
-      loop (
-       br_if (i32.eq(local.get $end, local.get $i)
-       i32.store8(i32.add((local.get $dst), (local.get $i)), 
-         i32.load8_u(i32.add((local.get $i) (local.get $src)))
-       local.set($dst, i32.add(local.get $i, (local.get $step)))
-      )
-      */
+      CreateMemoryCopyFunc(module);
     } else {
       module->removeFunction("__memory_copy");
     }
 
     if (needsMemoryFill) {
-      Index dst = 0, val = 1, size = 2;
-      Name memory = module->memories.front()->name;
-      Block* body = b.makeBlock();
-
-      // if dst + size > memsize in bytes, then trap.
-      body->list.push_back(
-        b.makeIf(b.makeBinary(BinaryOp::GtUInt32,
-                              b.makeBinary(BinaryOp::AddInt32,
-                                           b.makeLocalGet(dst, Type::i32),
-                                           b.makeLocalGet(size, Type::i32)),
-                              b.makeBinary(BinaryOp::MulInt32,
-                                           b.makeMemorySize(memory),
-                                           b.makeConst(Memory::kPageSize))),
-                 b.makeUnreachable()));
-
-      body->list.push_back(b.makeBlock(
-        "out",
-        b.makeLoop(
-          "copy",
-          b.makeBlock(
-            {// break if size == 0
-             b.makeBreak(
-               "out",
-               nullptr,
-               b.makeUnary(UnaryOp::EqZInt32, b.makeLocalGet(size, Type::i32))),
-             // size--
-             b.makeLocalSet(size,
-                            b.makeBinary(BinaryOp::SubInt32,
-                                         b.makeLocalGet(size, Type::i32),
-                                         b.makeConst(1))),
-             // *(dst+size) = val
-             b.makeStore(1,
-                         0,
-                         1,
-                         b.makeBinary(BinaryOp::AddInt32,
-                                      b.makeLocalGet(dst, Type::i32),
-                                      b.makeLocalGet(size, Type::i32)),
-                         b.makeLocalGet(val, Type::i32),
-                         Type::i32,
-                         memory),
-             b.makeBreak("copy", nullptr)}))));
-      module->getFunction("__memory_fill")->body = body;
-      /*
-      if (
-       i32.ugt(i32.add(local.get $dst, local.get $size))),i32.mul(memory.size 0, i32.const 65536))
-      ) then unreachable
-      loop (
-       local.set($size, i32.sub((local.get $size), (i32.const 1)) br_if (local.get $size))
-       i32.store8((i32.add((local.get $dst), (local.get $size), (local.get$ val))
-      )
-      */
+      CreateMemoryFillFunc(module);
     } else {
       module->removeFunction("__memory_fill");
     }
     module->features.disable(FeatureSet::BulkMemory);
+  }
+
+  void CreateMemoryCopyFunc(Module* module) {
+    Builder b(*module);
+    Index dst = 0, src = 1, size = 2, start = 3, end = 4, step = 5, i = 6;
+    Name memory = module->memories.front()->name;
+    Block* body = b.makeBlock();
+    // end = memory size in bytes
+    body->list.push_back(
+      b.makeLocalSet(end,
+                      b.makeBinary(BinaryOp::MulInt32,
+                                  b.makeMemorySize(memory),
+                                  b.makeConst(Memory::kPageSize))));
+    // if dst + size > memsize or src + size > memsize, then trap.
+    body->list.push_back(b.makeIf(
+      b.makeBinary(BinaryOp::OrInt32,
+                    b.makeBinary(BinaryOp::GtUInt32,
+                                b.makeBinary(BinaryOp::AddInt32,
+                                              b.makeLocalGet(dst, Type::i32),
+                                              b.makeLocalGet(size, Type::i32)),
+                                b.makeLocalGet(end, Type::i32)),
+                    b.makeBinary(BinaryOp::GtUInt32,
+                                b.makeBinary(BinaryOp::AddInt32,
+                                              b.makeLocalGet(src, Type::i32),
+                                              b.makeLocalGet(size, Type::i32)),
+                                b.makeLocalGet(end, Type::i32))),
+      b.makeUnreachable()));
+    // if src < dest
+    body->list.push_back(b.makeIf(
+      b.makeBinary(BinaryOp::LtUInt32,
+                    b.makeLocalGet(src, Type::i32),
+                    b.makeLocalGet(dst, Type::i32)),
+      b.makeBlock({
+        b.makeLocalSet(start, b.makeBinary(BinaryOp::SubInt32, b.makeLocalGet(size, Type::i32), b.makeConst(1))),
+        b.makeLocalSet(end, b.makeConst(-1U)),
+        b.makeLocalSet(step, b.makeConst(-1U)),
+      }),
+      b.makeBlock({
+        b.makeLocalSet(start, b.makeConst(0)),
+        b.makeLocalSet(end, b.makeLocalGet(size, Type::i32)),
+        b.makeLocalSet(step, b.makeConst(1)),
+      }))
+    );
+    // i = start
+    body->list.push_back(b.makeLocalSet(i, b.makeLocalGet(start, Type::i32)));
+    body->list.push_back(b.makeBlock(
+      "out",
+      b.makeLoop(
+        "copy",
+        b.makeBlock(
+          {// break if i == end
+            b.makeBreak("out",
+                        nullptr,
+                        b.makeBinary(BinaryOp::EqInt32,
+                                    b.makeLocalGet(i, Type::i32),
+                                    b.makeLocalGet(end, Type::i32))),
+            // dst[i] = src[i]
+            b.makeStore(1,
+                        0,
+                        1,
+                        b.makeBinary(BinaryOp::AddInt32,
+                          b.makeLocalGet(dst, Type::i32), b.makeLocalGet(i, Type::i32)),
+                        b.makeLoad(1,
+                                  false,
+                                  0,
+                                  1,
+                                  b.makeBinary(BinaryOp::AddInt32,
+                                    b.makeLocalGet(src, Type::i32), b.makeLocalGet(i, Type::i32)),
+                                  Type::i32,
+                                  memory),
+                        Type::i32,
+                        memory),
+            // i += step
+            b.makeLocalSet(i,
+                            b.makeBinary(BinaryOp::AddInt32,
+                                        b.makeLocalGet(i, Type::i32),
+                                        b.makeLocalGet(step, Type::i32))),
+            // loop
+            b.makeBreak("copy", nullptr)}))));
+    module->getFunction("__memory_copy")->body = body;
+  }
+
+  void CreateMemoryFillFunc(Module* module) {
+    Builder b(*module);
+    Index dst = 0, val = 1, size = 2;
+    Name memory = module->memories.front()->name;
+    Block* body = b.makeBlock();
+
+    // if dst + size > memsize in bytes, then trap.
+    body->list.push_back(
+      b.makeIf(b.makeBinary(BinaryOp::GtUInt32,
+                            b.makeBinary(BinaryOp::AddInt32,
+                                          b.makeLocalGet(dst, Type::i32),
+                                          b.makeLocalGet(size, Type::i32)),
+                            b.makeBinary(BinaryOp::MulInt32,
+                                          b.makeMemorySize(memory),
+                                          b.makeConst(Memory::kPageSize))),
+                b.makeUnreachable()));
+
+    body->list.push_back(b.makeBlock(
+      "out",
+      b.makeLoop(
+        "copy",
+        b.makeBlock(
+          {// break if size == 0
+            b.makeBreak(
+              "out",
+              nullptr,
+              b.makeUnary(UnaryOp::EqZInt32, b.makeLocalGet(size, Type::i32))),
+            // size--
+            b.makeLocalSet(size,
+                          b.makeBinary(BinaryOp::SubInt32,
+                                        b.makeLocalGet(size, Type::i32),
+                                        b.makeConst(1))),
+            // *(dst+size) = val
+            b.makeStore(1,
+                        0,
+                        1,
+                        b.makeBinary(BinaryOp::AddInt32,
+                                    b.makeLocalGet(dst, Type::i32),
+                                    b.makeLocalGet(size, Type::i32)),
+                        b.makeLocalGet(val, Type::i32),
+                        Type::i32,
+                        memory),
+            b.makeBreak("copy", nullptr)}))));
+    module->getFunction("__memory_fill")->body = body;
   }
 
   void VisitTableCopy(TableCopy* curr) {
