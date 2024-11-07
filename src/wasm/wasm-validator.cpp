@@ -3521,6 +3521,11 @@ void FunctionValidator::visitResume(Resume* curr) {
                curr,
                "resume requires stack-switching [--enable-stack-switching]");
 
+  shouldBeTrue(
+    curr->sentTypes.size() == curr->handlerBlocks.size(),
+    curr,
+    "sentTypes cache in Resume instruction has not been initialized");
+
   shouldBeTrue((curr->contType.isContinuation() &&
                 curr->contType.getContinuation().type.isSignature()),
                curr,
@@ -3535,6 +3540,11 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "resume_throw requires exception handling [--enable-exception-handling] "
     "and stack-switching [--enable-stack-switching]");
+
+  shouldBeTrue(
+    curr->sentTypes.size() == curr->handlerBlocks.size(),
+    curr,
+    "sentTypes cache in ResumeThrow instruction has not been initialized");
 
   shouldBeTrue((curr->contType.isContinuation() &&
                 curr->contType.getContinuation().type.isSignature()),
