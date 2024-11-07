@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/names.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -26,6 +27,8 @@ struct MemoryCopyFillLowering
   : public WalkerPass<PostWalker<MemoryCopyFillLowering>> {
   bool needsMemoryCopy = false;
   bool needsMemoryFill = false;
+  Name memCopyFuncName;
+  Name memFillFuncName;
 
   void visitMemoryCopy(MemoryCopy* curr) {
     assert(curr->destMemory ==
@@ -69,18 +72,21 @@ struct MemoryCopyFillLowering
     // In order to introduce a call to a function, it must first exist, so
     // create an empty stub.
     Builder b(*module);
-    auto memCpyFunc = b.makeFunction(
-      "__memory_copy",
+
+    memCopyFuncName = Names::getValidFunctionName(*module, "__memory_copy");
+    memFillFuncName = Names::getValidFunctionName(*module, "__memory_fill");
+    auto memCopyFunc = b.makeFunction(
+      memCopyFuncName,
       {{"dst", Type::i32}, {"src", Type::i32}, {"size", Type::i32}},
       Signature({Type::i32, Type::i32, Type::i32}, {Type::none}),
       {{"start", Type::i32},
        {"end", Type::i32},
        {"step", Type::i32},
        {"i", Type::i32}});
-    memCpyFunc->body = b.makeBlock();
-    module->addFunction(memCpyFunc.release());
+    memCopyFunc->body = b.makeBlock();
+    module->addFunction(memCopyFunc.release());
     auto memFillFunc = b.makeFunction(
-      "__memory_fill",
+      memFillFuncName,
       {{"dst", Type::i32}, {"val", Type::i32}, {"size", Type::i32}},
       Signature({Type::i32, Type::i32, Type::i32}, {Type::none}),
       {});
@@ -92,13 +98,13 @@ struct MemoryCopyFillLowering
     if (needsMemoryCopy) {
       CreateMemoryCopyFunc(module);
     } else {
-      module->removeFunction("__memory_copy");
+      module->removeFunction(memCopyFuncName);
     }
 
     if (needsMemoryFill) {
       CreateMemoryFillFunc(module);
     } else {
-      module->removeFunction("__memory_fill");
+      module->removeFunction(memFillFuncName);
     }
     module->features.disable(FeatureSet::BulkMemory);
   }
@@ -184,7 +190,7 @@ struct MemoryCopyFillLowering
                                        b.makeLocalGet(step, Type::i32))),
            // loop
            b.makeBreak("copy", nullptr)}))));
-    module->getFunction("__memory_copy")->body = body;
+    module->getFunction(memCopyFuncName)->body = body;
   }
 
   void CreateMemoryFillFunc(Module* module) {
@@ -230,7 +236,7 @@ struct MemoryCopyFillLowering
                        Type::i32,
                        memory),
            b.makeBreak("copy", nullptr)}))));
-    module->getFunction("__memory_fill")->body = body;
+    module->getFunction(memFillFuncName)->body = body;
   }
 
   void VisitTableCopy(TableCopy* curr) {
