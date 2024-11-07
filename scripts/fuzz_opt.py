@@ -416,8 +416,6 @@ def pick_initial_contents():
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
-        # has not been fuzzed in general yet
-        '--disable-memory64',
         # avoid multivalue for now due to bad interactions with gc non-nullable
         # locals in stacky code. for example, this fails to roundtrip as the
         # tuple code ends up creating stacky binary code that needs to spill
@@ -692,6 +690,8 @@ def run_vm(cmd):
             # (https://github.com/WebAssembly/binaryen/pull/6574)
             'expected (ref stringview_wtf16), got nullref',
             'expected type (ref stringview_wtf16), found ref.null of type nullref',
+            # wasm64 memories have a V8 limit
+            'larger than implementation limit',
         ]
         for issue in known_issues:
             if issue in output:
@@ -1175,7 +1175,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
