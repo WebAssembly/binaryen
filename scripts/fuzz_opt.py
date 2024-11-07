@@ -1248,8 +1248,9 @@ class TrapsNeverHappen(TestCaseHandler):
     frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # if we see a trap, we must remove that export (see below), so the wasm
-        # must not be sensitive to such changes.
+        # If we see a trap, we must remove that export (see below). If the wasm
+        # is sensitive to such changes then we cannot remove the export, and
+        # give up.
         if wasm_notices_export_changes(before_wasm):
             note_ignored_vm_run('ctor-eval sees call-export')
             return
