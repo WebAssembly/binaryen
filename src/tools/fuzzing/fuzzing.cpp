@@ -202,7 +202,15 @@ void TranslateToFuzzReader::setupMemory() {
   // Add a memory, if one does not already exist.
   if (wasm.memories.empty()) {
     auto memory = Builder::makeMemory("0");
-    memory->initial = memory->max = 1 + upTo(10);
+    // Add at least one page of memory.
+    memory->initial = 1 + upTo(10);
+    // Make the max potentially higher, or unlimited.
+    if (oneIn(2)) {
+      memory->max = memory->initial + upTo(10);
+    } else {
+      memory->max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
     if (wasm.features.hasMemory64() && oneIn(2)) {
       memory->indexType = Type::i64;
     }
