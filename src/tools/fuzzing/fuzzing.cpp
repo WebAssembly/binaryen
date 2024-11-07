@@ -203,7 +203,7 @@ void TranslateToFuzzReader::setupMemory() {
   if (wasm.memories.empty()) {
     auto memory = Builder::makeMemory("0");
     memory->initial = memory->max = 1 + upTo(10);
-    if (wasm.features.hasMemory64() && oneIn(2)) { // XXX lower
+    if (wasm.features.hasMemory64() && oneIn(2)) {
       memory->indexType = Type::i64;
     }
     wasm.addMemory(std::move(memory));
