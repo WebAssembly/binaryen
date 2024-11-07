@@ -1175,7 +1175,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
