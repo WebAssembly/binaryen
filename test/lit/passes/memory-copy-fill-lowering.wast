@@ -19,7 +19,7 @@
   (memory.copy (local.get $dst) (local.get $src) (local.get $size))
  )
  ;; CHECK:      (func $memfill (param $dst i32) (param $val i32) (param $size i32)
- ;; CHECK-NEXT:  (memory.fill
+ ;; CHECK-NEXT:  (call $__memory_fill
  ;; CHECK-NEXT:   (local.get $dst)
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:   (local.get $size)
@@ -120,6 +120,47 @@
 ;; CHECK-NEXT:      (local.get $i)
 ;; CHECK-NEXT:      (local.get $step)
 ;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (br $copy)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $__memory_fill (param $dst i32) (param $val i32) (param $size i32)
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.gt_u
+;; CHECK-NEXT:    (i32.add
+;; CHECK-NEXT:     (local.get $dst)
+;; CHECK-NEXT:     (local.get $size)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.mul
+;; CHECK-NEXT:     (memory.size)
+;; CHECK-NEXT:     (i32.const 65536)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (block $out
+;; CHECK-NEXT:   (loop $copy
+;; CHECK-NEXT:    (br_if $out
+;; CHECK-NEXT:     (i32.eqz
+;; CHECK-NEXT:      (local.get $size)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (local.set $size
+;; CHECK-NEXT:     (i32.sub
+;; CHECK-NEXT:      (local.get $size)
+;; CHECK-NEXT:      (i32.const 1)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.store8
+;; CHECK-NEXT:     (i32.add
+;; CHECK-NEXT:      (local.get $dst)
+;; CHECK-NEXT:      (local.get $size)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.get $val)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (br $copy)
 ;; CHECK-NEXT:   )

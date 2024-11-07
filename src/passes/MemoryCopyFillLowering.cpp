@@ -32,12 +32,26 @@ struct MemoryCopyFillLowering
       return;
     }
     if (module->features.hasAtomics()) {
-      throw "Don't use this pass with atomics"; // alternatively... just don't unset bulkmem feature if atomics? or do nothing?
+      return;
     }
     if (module->features.hasMemory64() || module->features.hasMultiMemory()) {
-      throw "Memory64 and multi-memory not supported"; // TODO: best way to
-                                                       // return an error?
+      Fatal() << "Memory64 and multi-memory not supported by memory.copy lowering";
     }
+
+    // Check for the presence of any passive data or table segments.
+    for (auto& segment: module->dataSegments) {
+      if (segment->isPassive) {
+        Fatal() << "memory.copy lowering should only be run on modules with "
+        "no passive segments";
+      }
+    }
+    for (auto& segment: module->elementSegments) {
+      if (!segment->table.is()) {
+        Fatal() << "memory.copy lowering should only be run on modules with"
+        " no passive segments";
+      }
+    }
+
     // In order to introduce a call to a function, it must first exist, so
     // create an empty stub.
     Builder b(*module);
@@ -220,6 +234,15 @@ struct MemoryCopyFillLowering
       module->removeFunction("__memory_fill");
     }
     module->features.disable(FeatureSet::BulkMemory);
+  }
+
+  void VisitTableCopy(TableCopy* curr) {
+    Fatal() << "table.copy instruction found. Memory copy lowering is not "
+      "designed to work on modules with bulk table operations";
+  }
+  void VisitTableFill(TableCopy* curr) {
+    Fatal() << "table.fill instruction found. Memory copy lowering is not "
+    "designed to work on modules with bulk table operations";
   }
 };
 
