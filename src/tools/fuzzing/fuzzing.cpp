@@ -370,8 +370,26 @@ void TranslateToFuzzReader::setupTables() {
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
-    auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
+    // Start from a potentially empty table.
+    Address initial = upTo(10);
+    // Make the max potentially higher, or unlimited.
+    Address max;
+    if (oneIn(2)) {
+      max = initial + upTo(4);
+    } else {
+      max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    auto indexType = Type::i32;
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      indexType = Type::i64;
+    }
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
+                        funcref,
+                        initial,
+                        max,
+                        indexType);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
