@@ -34,4 +34,20 @@
    (i64.const 1)
   )
  )
+
+ ;; CHECK:      (func $bar-32 (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (call $foo
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $bar-32 (param $x i32) (param $y i32)
+  ;; As above, but the constant has 2**32 added to it. If we operate on a 32-bit
+  ;; index, we might think we can optimize here, but we shouldn't.
+  (call_indirect (type $ii)
+   (local.get $x)
+   (local.get $y)
+   (i64.const 4294967297)
+  )
+ )
 )
