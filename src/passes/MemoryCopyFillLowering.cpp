@@ -109,7 +109,6 @@ struct MemoryCopyFillLowering
     module->features.disable(FeatureSet::BulkMemory);
   }
 
-  // clang-format off
   void CreateMemoryCopyFunc(Module* module) {
     Builder b(*module);
     Index dst = 0, src = 1, size = 2, start = 3, end = 4, step = 5, i = 6;
@@ -155,8 +154,10 @@ struct MemoryCopyFillLowering
                })));
     // i = start
     body->list.push_back(b.makeLocalSet(i, b.makeLocalGet(start, Type::i32)));
-    body->list.push_back(b.makeBlock("out",
-      b.makeLoop("copy",
+    body->list.push_back(b.makeBlock(
+      "out",
+      b.makeLoop(
+        "copy",
         b.makeBlock(
           {// break if i == end
            b.makeBreak("out",
@@ -165,11 +166,16 @@ struct MemoryCopyFillLowering
                                     b.makeLocalGet(i, Type::i32),
                                     b.makeLocalGet(end, Type::i32))),
            // dst[i] = src[i]
-           b.makeStore(1, 0, 1,
+           b.makeStore(1,
+                       0,
+                       1,
                        b.makeBinary(BinaryOp::AddInt32,
                                     b.makeLocalGet(dst, Type::i32),
                                     b.makeLocalGet(i, Type::i32)),
-                       b.makeLoad(1, false, 0, 1,
+                       b.makeLoad(1,
+                                  false,
+                                  0,
+                                  1,
                                   b.makeBinary(BinaryOp::AddInt32,
                                                b.makeLocalGet(src, Type::i32),
                                                b.makeLocalGet(i, Type::i32)),
@@ -204,11 +210,14 @@ struct MemoryCopyFillLowering
                                          b.makeConst(Memory::kPageSize))),
                b.makeUnreachable()));
 
-    body->list.push_back(b.makeBlock("out",
-      b.makeLoop("copy",
+    body->list.push_back(b.makeBlock(
+      "out",
+      b.makeLoop(
+        "copy",
         b.makeBlock(
           {// break if size == 0
-           b.makeBreak("out",
+           b.makeBreak(
+             "out",
              nullptr,
              b.makeUnary(UnaryOp::EqZInt32, b.makeLocalGet(size, Type::i32))),
            // size--
@@ -217,7 +226,9 @@ struct MemoryCopyFillLowering
                                        b.makeLocalGet(size, Type::i32),
                                        b.makeConst(1))),
            // *(dst+size) = val
-           b.makeStore(1, 0, 1,
+           b.makeStore(1,
+                       0,
+                       1,
                        b.makeBinary(BinaryOp::AddInt32,
                                     b.makeLocalGet(dst, Type::i32),
                                     b.makeLocalGet(size, Type::i32)),
@@ -227,7 +238,6 @@ struct MemoryCopyFillLowering
            b.makeBreak("copy", nullptr)}))));
     module->getFunction(memFillFuncName)->body = body;
   }
-  // clang-format on
 
   void VisitTableCopy(TableCopy* curr) {
     Fatal() << "table.copy instruction found. Memory copy lowering is not "
