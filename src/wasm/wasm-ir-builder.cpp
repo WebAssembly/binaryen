@@ -1953,8 +1953,9 @@ IRBuilder::makeResume(HeapType ct,
     return Err{"expected continuation type"};
   }
   Resume curr(wasm.allocator);
+  auto contSig = ct.getContinuation().type.getSignature();
   curr.contType = ct;
-  curr.operands.resize(ct.getContinuation().type.getSignature().params.size());
+  curr.operands.resize(contSig.params.size());
   CHECK_ERR(visitResume(&curr));
 
   std::vector<Name> labelNames;
@@ -1979,6 +1980,9 @@ IRBuilder::makeResumeThrow(HeapType ct,
                            Name tag,
                            const std::vector<Name>& tags,
                            const std::vector<std::optional<Index>>& labels) {
+  if (tags.size() != labels.size()) {
+    return Err{"the sizes of tags and labels must be equal"};
+  }
   if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
