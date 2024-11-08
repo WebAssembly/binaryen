@@ -3696,9 +3696,10 @@ public:
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
         auto ptr = Literal::makeFromInt64(src, addressType);
-        lane = loadLane(info.instance->getFinalAddress(
-          curr, ptr, laneBytes, memorySize));
-        src = ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
+        lane = loadLane(
+          info.instance->getFinalAddress(curr, ptr, laneBytes, memorySize));
+        src =
+          ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
       }
       return Literal(lanes);
     };
