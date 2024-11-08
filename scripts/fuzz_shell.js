@@ -134,6 +134,40 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
+// Some imports need to access exports by index.
+var exportsList;
+function getExportByIndex(index) {
+  if (!exportsList) {
+    exportsList = [];
+    for (var e in exports) {
+      exportsList.push(e);
+    }
+  }
+  return exports[exportsList[index]];
+}
+
+// Given a wasm function, call it as best we can from JS, and return the result.
+function callFunc(func) {
+  // Send the function a null for each parameter. Null can be converted without
+  // error to both a number and a reference.
+  var args = [];
+  for (var i = 0; i < func.length; i++) {
+    args.push(null);
+  }
+  return func.apply(null, args);
+}
+
+// Table get/set operations need a BigInt if the table has 64-bit indexes. This
+// adds a proper cast as needed.
+function toAddressType(table, index) {
+  // First, cast to unsigned. We do not support larger indexes anyhow.
+  index = index >>> 0;
+  if (typeof table.length == 'bigint') {
+    return BigInt(index);
+  }
+  return index;
+}
+
 // Set up the imports.
 var tempRet0;
 var imports = {
@@ -152,7 +186,59 @@ var imports = {
     // Throw an exception from JS.
     'throw': () => {
       throw 'some JS error';
-    }
+    },
+
+    // Table operations.
+    'table-get': (index) => {
+      return exports.table.get(toAddressType(exports.table, index));
+    },
+    'table-set': (index, value) => {
+      exports.table.set(toAddressType(exports.table, index), value);
+    },
+
+    // Export operations.
+    'call-export': (index) => {
+      callFunc(getExportByIndex(index));
+    },
+    'call-export-catch': (index) => {
+      try {
+        callFunc(getExportByIndex(index));
+        return 0;
+      } catch (e) {
+        // We only want to catch exceptions, not wasm traps: traps should still
+        // halt execution. Handling this requires different code in wasm2js, so
+        // check for that first (wasm2js does not define RuntimeError, so use
+        // that for the check - when wasm2js is run, we override the entire
+        // WebAssembly object with a polyfill, so we know exactly what it
+        // contains).
+        var wasm2js = !WebAssembly.RuntimeError;
+        if (!wasm2js) {
+          // When running native wasm, we can detect wasm traps.
+          if (e instanceof WebAssembly.RuntimeError) {
+            throw e;
+          }
+        }
+        var text = e + '';
+        // We must not swallow host limitations here: a host limitation is a
+        // problem that means we must not compare the outcome here to any other
+        // VM.
+        var hostIssues = ['requested new array is too large',
+                          'out of memory',
+                          'Maximum call stack size exceeded'];
+        if (wasm2js) {
+          // When wasm2js does trap, it just throws an "abort" error.
+          hostIssues.push('abort');
+        }
+        for (var hostIssue of hostIssues) {
+          if (text.includes(hostIssue)) {
+            throw e;
+          }
+        }
+        // Otherwise, this is a normal exception we want to catch (a wasm
+        // exception, or a conversion error on the wasm/JS boundary, etc.).
+        return 1;
+      }
+    },
   },
   // Emscripten support.
   'env': {
@@ -231,16 +317,10 @@ for (var e of exportsToCall) {
   if (typeof exports[e] !== 'function') {
     continue;
   }
-  // Send the function a null for each parameter. Null can be converted without
-  // error to both a number and a reference.
   var func = exports[e];
-  var args = [];
-  for (var i = 0; i < func.length; i++) {
-    args.push(null);
-  }
   try {
     console.log('[fuzz-exec] calling ' + e);
-    var result = func.apply(null, args);
+    var result = callFunc(func);
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }

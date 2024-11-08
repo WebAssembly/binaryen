@@ -195,7 +195,7 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
     }
   }
 
-  auto ptrType = wasm->memories[0]->indexType;
+  auto ptrType = wasm->memories[0]->addressType;
 
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
