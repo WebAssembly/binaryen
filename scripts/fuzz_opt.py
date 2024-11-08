@@ -1372,7 +1372,7 @@ class CtorEval(TestCaseHandler):
 
     def can_run_on_wasm(self, wasm):
         # ctor-eval modifies exports, because it assumes they are ctors and so
-        # are only called once (so it it evals them away, they can be
+        # are only called once (so if it evals them away, they can be
         # removed). If the wasm might notice that, we cannot run.
         return not wasm_notices_export_changes(wasm)
 
