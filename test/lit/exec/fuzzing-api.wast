@@ -13,8 +13,13 @@
  (import "fuzzing-support" "table-set" (func $table.set (param i32 funcref)))
  (import "fuzzing-support" "table-get" (func $table.get (param i32) (result funcref)))
 
+ (import "fuzzing-support" "call-export" (func $call.export (param i32)))
+ (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32) (result i32)))
+
  (table $table 10 20 funcref)
 
+ ;; Note that the exported table appears first here, but in the binary and in
+ ;; the IR it is actually last, as we always add function exports first.
  (export "table" (table $table))
 
  ;; CHECK:      [fuzz-exec] calling logging
@@ -53,7 +58,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  ;; CHECK-NEXT: [exception thrown: __private ()]
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $table.getting (export "table.getting")
   ;; There is a non-null value at 5, and a null at 6.
   (call $log-i32
@@ -77,6 +81,43 @@
    )
   )
  )
+
+ ;; CHECK:      [fuzz-exec] calling export.calling
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [exception thrown: __private ()]
+ (func $export.calling (export "export.calling")
+  ;; At index 0 in the exports we have $logging, so we will do those loggings.
+  (call $call.export
+   (i32.const 0)
+  )
+  ;; At index 999 we have nothing, so we'll error.
+  (call $call.export
+   (i32.const 999)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling export.calling.catching
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $export.calling.catching (export "export.calling.catching")
+  ;; At index 0 in the exports we have $logging, so we will do those loggings,
+  ;; then log a 0 as no exception happens.
+  (call $log-i32
+   (call $call.export.catch
+    (i32.const 0)
+   )
+  )
+  ;; At index 999 we have nothing, so we'll error, catch it, and log 1.
+  (call $log-i32
+   (call $call.export.catch
+    (i32.const 999)
+   )
+  )
+ )
 )
 ;; CHECK:      [fuzz-exec] calling logging
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -92,6 +133,19 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [exception thrown: __private ()]
+
+;; CHECK:      [fuzz-exec] calling export.calling
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [exception thrown: __private ()]
+
+;; CHECK:      [fuzz-exec] calling export.calling.catching
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+;; CHECK-NEXT: [fuzz-exec] comparing export.calling
+;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
