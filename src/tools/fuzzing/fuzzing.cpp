@@ -178,6 +178,9 @@ void TranslateToFuzzReader::build() {
     setupTags();
     addImportThrowingSupport();
   }
+  if (wasm.features.hasReferenceTypes()) {
+    addImportTableSupport();
+  }
   addImportLoggingSupport();
   modifyInitialFunctions();
   // keep adding functions until we run out of input
@@ -196,8 +199,24 @@ void TranslateToFuzzReader::build() {
 }
 
 void TranslateToFuzzReader::setupMemory() {
-  // Add memory itself
-  MemoryUtils::ensureExists(&wasm);
+  // Add a memory, if one does not already exist.
+  if (wasm.memories.empty()) {
+    auto memory = Builder::makeMemory("0");
+    // Add at least one page of memory.
+    memory->initial = 1 + upTo(10);
+    // Make the max potentially higher, or unlimited.
+    if (oneIn(2)) {
+      memory->max = memory->initial + upTo(4);
+    } else {
+      memory->max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      memory->addressType = Type::i64;
+    }
+    wasm.addMemory(std::move(memory));
+  }
+
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
@@ -214,7 +233,8 @@ void TranslateToFuzzReader::setupMemory() {
         segment->data[j] = upTo(512);
       }
       if (!segment->isPassive) {
-        segment->offset = builder.makeConst(int32_t(memCovered));
+        segment->offset = builder.makeConst(
+          Literal::makeFromInt32(memCovered, memory->addressType));
         memCovered += segSize;
         segment->memory = memory->name;
       }
@@ -224,7 +244,8 @@ void TranslateToFuzzReader::setupMemory() {
     // init some data
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
-    segment->offset = builder.makeConst(int32_t(0));
+    segment->offset =
+      builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
     segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
                      false);
     auto num = upTo(USABLE_MEMORY * 2);
@@ -349,8 +370,26 @@ void TranslateToFuzzReader::setupTables() {
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
-    auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
+    // Start from a potentially empty table.
+    Address initial = upTo(10);
+    // Make the max potentially higher, or unlimited.
+    Address max;
+    if (oneIn(2)) {
+      max = initial + upTo(4);
+    } else {
+      max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    auto addressType = Type::i32;
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      addressType = Type::i64;
+    }
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
+                        funcref,
+                        initial,
+                        max,
+                        addressType);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -361,10 +400,11 @@ void TranslateToFuzzReader::setupTables() {
                 [&](auto& segment) {
                   return segment->table.is() && segment->type == funcref;
                 });
+  auto addressType = wasm.getTable(funcrefTableName)->addressType;
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
     auto segment = std::make_unique<ElementSegment>(
-      table->name, builder.makeConst(int32_t(0)));
+      table->name, builder.makeConst(Literal::makeFromInt32(0, addressType)));
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
@@ -609,6 +649,49 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   wasm.addFunction(std::move(func));
 }
 
+void TranslateToFuzzReader::addImportTableSupport() {
+  // For the table imports to be able to do anything, we must export a table
+  // for them. For simplicity, use the funcref table we use internally, though
+  // we could pick one at random, support non-funcref ones, and even export
+  // multiple ones TODO
+  if (!funcrefTableName) {
+    return;
+  }
+
+  // If a "table" export already exists, skip fuzzing these imports, as the
+  // current export may not contain a valid table for it.
+  if (wasm.getExportOrNull("table")) {
+    return;
+  }
+
+  // Export the table.
+  wasm.addExport(
+    builder.makeExport("table", funcrefTableName, ExternalKind::Table));
+
+  // Get from the table.
+  {
+    tableGetImportName = Names::getValidFunctionName(wasm, "table-get");
+    auto func = std::make_unique<Function>();
+    func->name = tableGetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-get";
+    func->type = Signature({Type::i32}, Type(HeapType::func, Nullable));
+    wasm.addFunction(std::move(func));
+  }
+
+  // Set into the table.
+  {
+    tableSetImportName = Names::getValidFunctionName(wasm, "table-set");
+    auto func = std::make_unique<Function>();
+    func->name = tableSetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-set";
+    func->type =
+      Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+}
+
 void TranslateToFuzzReader::addHashMemorySupport() {
   // Add memory hasher helper (for the hash, see hash.h). The function looks
   // like:
@@ -622,7 +705,7 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   std::vector<Expression*> contents;
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->addressType);
   for (Index i = 0; i < USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
@@ -720,6 +803,21 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
 
   // TODO: This and makeThrow should probably be rare, as they halt the program.
   return builder.makeCall(throwImportName, {}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportTableGet() {
+  assert(tableGetImportName);
+  return builder.makeCall(
+    tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
+  assert(type == Type::none);
+  assert(tableSetImportName);
+  return builder.makeCall(
+    tableSetImportName,
+    {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
+    Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1489,6 +1587,9 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
+  if (tableSetImportName) {
+    options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
+  }
   return (this->*pick(options))(Type::none);
 }
 
@@ -1924,11 +2025,12 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
   }
   // with high probability, make sure the type is valid  otherwise, most are
   // going to trap
+  auto addressType = wasm.getTable(funcrefTableName)->addressType;
   Expression* target;
   if (!allowOOB || !oneIn(10)) {
-    target = builder.makeConst(int32_t(i));
+    target = builder.makeConst(Literal::makeFromInt32(i, addressType));
   } else {
-    target = make(Type::i32);
+    target = make(addressType);
   }
   std::vector<Expression*> args;
   for (const auto& type : targetFn->getParams()) {
@@ -2101,7 +2203,7 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memories[0]->indexType);
+  auto* ret = make(wasm.memories[0]->addressType);
   // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
   // most memory ops will just trap
@@ -2679,6 +2781,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::func: {
+      // Rarely, emit a call to imported table.get (when nullable, unshared, and
+      // where we can emit a call).
+      if (type.isNullable() && share == Unshared && funcContext &&
+          tableGetImportName && !oneIn(3)) {
+        return makeImportTableGet();
+      }
       return makeRefFuncConst(type);
     }
     case HeapType::cont: {
@@ -4344,7 +4452,7 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   }
   Expression* dest = makePointer();
   Expression* source = makePointer();
-  Expression* size = make(wasm.memories[0]->indexType);
+  Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryCopy(
     dest, source, size, wasm.memories[0]->name, wasm.memories[0]->name);
 }
@@ -4355,7 +4463,7 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   }
   Expression* dest = makePointer();
   Expression* value = make(Type::i32);
-  Expression* size = make(wasm.memories[0]->indexType);
+  Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
 }
 

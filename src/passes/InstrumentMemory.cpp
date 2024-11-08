@@ -104,14 +104,14 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     id++;
     Builder builder(*getModule());
     auto mem = getModule()->getMemory(curr->memory);
-    auto indexType = mem->indexType;
-    auto offset = builder.makeConstPtr(curr->offset.addr, indexType);
+    auto addressType = mem->addressType;
+    auto offset = builder.makeConstPtr(curr->offset.addr, addressType);
     curr->ptr = builder.makeCall(load_ptr,
                                  {builder.makeConst(int32_t(id)),
                                   builder.makeConst(int32_t(curr->bytes)),
                                   offset,
                                   curr->ptr},
-                                 indexType);
+                                 addressType);
     Name target;
     switch (curr->type.getBasic()) {
       case Type::i32:
@@ -137,14 +137,14 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     id++;
     Builder builder(*getModule());
     auto mem = getModule()->getMemory(curr->memory);
-    auto indexType = mem->indexType;
-    auto offset = builder.makeConstPtr(curr->offset.addr, indexType);
+    auto addressType = mem->addressType;
+    auto offset = builder.makeConstPtr(curr->offset.addr, addressType);
     curr->ptr = builder.makeCall(store_ptr,
                                  {builder.makeConst(int32_t(id)),
                                   builder.makeConst(int32_t(curr->bytes)),
                                   offset,
                                   curr->ptr},
-                                 indexType);
+                                 addressType);
     Name target;
     switch (curr->value->type.getBasic()) {
       case Type::i32:
@@ -251,20 +251,24 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitModule(Module* curr) {
-    auto indexType =
-      curr->memories.empty() ? Type::i32 : curr->memories[0]->indexType;
+    auto addressType =
+      curr->memories.empty() ? Type::i32 : curr->memories[0]->addressType;
 
     // Load.
-    addImport(
-      curr, load_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
+    addImport(curr,
+              load_ptr,
+              {Type::i32, Type::i32, addressType, addressType},
+              addressType);
     addImport(curr, load_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, load_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, load_val_f32, {Type::i32, Type::f32}, Type::f32);
     addImport(curr, load_val_f64, {Type::i32, Type::f64}, Type::f64);
 
     // Store.
-    addImport(
-      curr, store_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
+    addImport(curr,
+              store_ptr,
+              {Type::i32, Type::i32, addressType, addressType},
+              addressType);
     addImport(curr, store_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, store_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, store_val_f32, {Type::i32, Type::f32}, Type::f32);

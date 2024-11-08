@@ -266,8 +266,6 @@ int main(int argc, const char* argv[]) {
     passRunner.add("legalize-js-interface");
   }
 
-  passRunner.add("strip-target-features");
-
   // If DWARF is unused, strip it out. This avoids us keeping it alive
   // until wasm-opt strips it later.
   if (!DWARF) {

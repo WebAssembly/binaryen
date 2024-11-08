@@ -84,7 +84,7 @@ Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
                                            ImportNames* importNames,
                                            TableType type) {
   auto t = std::make_unique<Table>();
-  t->indexType = type.indexType;
+  t->addressType = type.addressType;
   t->initial = type.limits.initial;
   t->max = type.limits.max ? *type.limits.max : Table::kUnlimitedSize;
   if (name.is()) {
@@ -139,7 +139,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
                                              ImportNames* importNames,
                                              MemType type) {
   auto m = std::make_unique<Memory>();
-  m->indexType = type.indexType;
+  m->addressType = type.addressType;
   m->initial = type.limits.initial;
   m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;
@@ -178,7 +178,7 @@ Result<> ParseDeclsCtx::addImplicitData(DataStringT&& data) {
   auto d = std::make_unique<DataSegment>();
   d->memory = mem.name;
   d->isPassive = false;
-  d->offset = Builder(wasm).makeConstPtr(0, mem.indexType);
+  d->offset = Builder(wasm).makeConstPtr(0, mem.addressType);
   d->data = std::move(data);
   d->name = Names::getValidDataSegmentName(wasm, "implicit-data");
   wasm.addDataSegment(std::move(d));

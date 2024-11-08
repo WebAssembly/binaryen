@@ -12830,4 +12830,5 @@
   )
  )
  ;; custom section "producers", size 172
+ ;; features section: threads, mutable-globals, bulk-memory, sign-ext
 )

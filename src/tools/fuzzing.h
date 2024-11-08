@@ -26,7 +26,6 @@ high chance for set at start of loop
 */
 
 #include "ir/branch-utils.h"
-#include "ir/memory-utils.h"
 #include "ir/struct-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
@@ -107,6 +106,8 @@ private:
   std::unordered_map<Type, Name> logImportNames;
 
   Name throwImportName;
+  Name tableGetImportName;
+  Name tableSetImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -228,12 +229,15 @@ private:
   void addImportLoggingSupport();
   // An import that we call to throw an exception from outside.
   void addImportThrowingSupport();
+  void addImportTableSupport();
   void addHashMemorySupport();
 
   // Special expression makers
   Expression* makeHangLimitCheck();
   Expression* makeImportLogging();
   Expression* makeImportThrowing(Type type);
+  Expression* makeImportTableGet();
+  Expression* makeImportTableSet(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation

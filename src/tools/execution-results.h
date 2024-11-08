@@ -38,8 +38,19 @@ private:
     uint32_t tempRet0 = 0;
   } state;
 
+  // The name of the table exported by the name 'table.' Imports access it.
+  Name exportedTable;
+
 public:
-  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
+  LoggingExternalInterface(Loggings& loggings, Module& wasm)
+    : loggings(loggings) {
+    for (auto& exp : wasm.exports) {
+      if (exp->kind == ExternalKind::Table && exp->name == "table") {
+        exportedTable = exp->value;
+        break;
+      }
+    }
+  }
 
   Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
@@ -66,9 +77,28 @@ public:
         std::cout << "]\n";
         return {};
       } else if (import->base == "throw") {
-        // Throw something. We use a (hopefully) private name here.
-        auto payload = std::make_shared<ExnData>("__private", Literals{});
-        throwException(WasmException{Literal(payload)});
+        throwEmptyException();
+      } else if (import->base == "table-get") {
+        // Check for errors here, duplicating tableLoad(), because that will
+        // trap, and we just want to throw an exception (the same as JS would).
+        if (!exportedTable) {
+          throwEmptyException();
+        }
+        auto index = arguments[0].getUnsigned();
+        if (index >= tables[exportedTable].size()) {
+          throwEmptyException();
+        }
+        return {tableLoad(exportedTable, index)};
+      } else if (import->base == "table-set") {
+        if (!exportedTable) {
+          throwEmptyException();
+        }
+        auto index = arguments[0].getUnsigned();
+        if (index >= tables[exportedTable].size()) {
+          throwEmptyException();
+        }
+        tableStore(exportedTable, index, arguments[1]);
+        return {};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
@@ -91,6 +121,12 @@ public:
               << import->module << " . " << import->base << '\n';
     return {};
   }
+
+  void throwEmptyException() {
+    // Use a hopefully private tag.
+    auto payload = std::make_shared<ExnData>("__private", Literals{});
+    throwException(WasmException{Literal(payload)});
+  }
 };
 
 // gets execution results from a wasm module. this is useful for fuzzing
@@ -109,7 +145,7 @@ struct ExecutionResults {
 
   // get results of execution
   void get(Module& wasm) {
-    LoggingExternalInterface interface(loggings);
+    LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
       // execute all exported methods (that are therefore preserved through
@@ -259,7 +295,7 @@ struct ExecutionResults {
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
   FunctionResult run(Function* func, Module& wasm) {
-    LoggingExternalInterface interface(loggings);
+    LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
       return run(func, wasm, instance);

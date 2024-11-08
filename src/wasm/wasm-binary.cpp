@@ -2246,7 +2246,7 @@ void WasmBinaryReader::readMemories() {
     getResizableLimits(memory->initial,
                        memory->max,
                        memory->shared,
-                       memory->indexType,
+                       memory->addressType,
                        Memory::kUnlimitedSize);
     wasm.addMemory(std::move(memory));
   }
@@ -2491,7 +2491,7 @@ Memory* WasmBinaryReader::getMemory(Index index) {
 void WasmBinaryReader::getResizableLimits(Address& initial,
                                           Address& max,
                                           bool& shared,
-                                          Type& indexType,
+                                          Type& addressType,
                                           Address defaultIfNoMax) {
   auto flags = getU32LEB();
   bool hasMax = (flags & BinaryConsts::HasMaximum) != 0;
@@ -2502,7 +2502,7 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
     throwError("shared memory must have max size");
   }
   shared = isShared;
-  indexType = is64 ? Type::i64 : Type::i32;
+  addressType = is64 ? Type::i64 : Type::i32;
   if (hasMax) {
     max = is64 ? getU64LEB() : getU32LEB();
   } else {
@@ -2552,7 +2552,7 @@ void WasmBinaryReader::readImports() {
         getResizableLimits(table->initial,
                            table->max,
                            is_shared,
-                           table->indexType,
+                           table->addressType,
                            Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
@@ -2568,7 +2568,7 @@ void WasmBinaryReader::readImports() {
         getResizableLimits(memory->initial,
                            memory->max,
                            memory->shared,
-                           memory->indexType,
+                           memory->addressType,
                            Memory::kUnlimitedSize);
         wasm.addMemory(std::move(memory));
         break;
@@ -3393,7 +3393,7 @@ void WasmBinaryReader::readTableDeclarations() {
     getResizableLimits(table->initial,
                        table->max,
                        is_shared,
-                       table->indexType,
+                       table->addressType,
                        Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
@@ -3816,14 +3816,10 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
     uint8_t prefix = getInt8();
 
     bool disallowed = prefix == BinaryConsts::FeatureDisallowed;
-    bool required = prefix == BinaryConsts::FeatureRequired;
     bool used = prefix == BinaryConsts::FeatureUsed;
 
-    if (!disallowed && !required && !used) {
+    if (!disallowed && !used) {
       throwError("Unrecognized feature policy prefix");
-    }
-    if (required) {
-      std::cerr << "warning: required features in feature section are ignored";
     }
 
     Name name = getInlineString();
@@ -3881,7 +3877,7 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
         << "warning: feature " << feature.toString()
         << " was enabled by the user, but disallowed in the features section.";
     }
-    if (required || used) {
+    if (used) {
       wasm.features.enable(feature);
     }
   }
@@ -4710,7 +4706,7 @@ Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
     throwError("Memory index out of range while reading memory alignment.");
   }
   auto* memory = wasm.memories[memIdx].get();
-  offset = memory->indexType == Type::i32 ? getU32LEB() : getU64LEB();
+  offset = memory->addressType == Type::i32 ? getU32LEB() : getU64LEB();
 
   return memIdx;
 }
