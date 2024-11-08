@@ -20,7 +20,9 @@
 #include "wasm.h"
 
 // Replace memory.copy and memory.fill with a call to a function that
-// implements the same semantics.
+// implements the same semantics. This is intended to be used with LLVM output,
+// so anything considered undefined behavior in LLVM is ignored. (In
+// particular, pointer overflow is UB and not handled here).
 
 namespace wasm {
 struct MemoryCopyFillLowering
@@ -96,20 +98,20 @@ struct MemoryCopyFillLowering
     Super::run(module);
 
     if (needsMemoryCopy) {
-      CreateMemoryCopyFunc(module);
+      createMemoryCopyFunc(module);
     } else {
       module->removeFunction(memCopyFuncName);
     }
 
     if (needsMemoryFill) {
-      CreateMemoryFillFunc(module);
+      createMemoryFillFunc(module);
     } else {
       module->removeFunction(memFillFuncName);
     }
     module->features.disable(FeatureSet::BulkMemory);
   }
 
-  void CreateMemoryCopyFunc(Module* module) {
+  void createMemoryCopyFunc(Module* module) {
     Builder b(*module);
     Index dst = 0, src = 1, size = 2, start = 3, end = 4, step = 5, i = 6;
     Name memory = module->memories.front()->name;
@@ -193,7 +195,7 @@ struct MemoryCopyFillLowering
     module->getFunction(memCopyFuncName)->body = body;
   }
 
-  void CreateMemoryFillFunc(Module* module) {
+  void createMemoryFillFunc(Module* module) {
     Builder b(*module);
     Index dst = 0, val = 1, size = 2;
     Name memory = module->memories.front()->name;
