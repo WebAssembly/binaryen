@@ -766,7 +766,7 @@ class TestCaseHandler:
         self.handle(before_wasm)
         self.handle(after_wasm)
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         return True
 
     def increment_runs(self):
@@ -1167,7 +1167,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(wrapper)
         return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         # TODO: properly handle memory growth. right now the wasm2js handler
         # uses --emscripten which assumes the Memory is created before, and
         # wasm2js.js just starts with a size of 1 and no limit. We should switch
@@ -1522,7 +1522,7 @@ class Split(TestCaseHandler):
         if not (NANS and optimized):
             compare_between_vms(output, linked_output, 'Split')
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         # to run the split wasm we use JS, that is, JS links the exports of one
         # to the imports of the other, etc. since we run in JS, the wasm must be
         # valid for JS.
@@ -1623,8 +1623,9 @@ def test_one(random_input, given_wasm):
     bytes += wasm_size
     print('post wasm size:', wasm_size)
 
-    # first, find which handlers can even run here
-    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_feature_opts(FEATURE_OPTS)]
+    # First, find which handlers can even run here. Note that we check a.wasm
+    # and not b.wasm (optimizations do not change fuzzability).
+    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_wasm('a.wasm')]
     if len(relevant_handlers) == 0:
         return 0
     # filter by frequency
@@ -1642,7 +1643,7 @@ def test_one(random_input, given_wasm):
         if testcase_handler in used_handlers:
             continue
         used_handlers.add(testcase_handler)
-        assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
+        assert testcase_handler.can_run_on_wasm('a.wasm')
         print('running testcase handler:', testcase_handler.__class__.__name__)
         testcase_handler.increment_runs()
 
