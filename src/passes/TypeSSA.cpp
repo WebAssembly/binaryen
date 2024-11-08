@@ -92,8 +92,12 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
     // "random" extra item in the rec group that is so outlandish it will
     // surely (?) never collide with anything. We must loop while doing so,
     // until we find a hash that does not collide.
-    auto hashSize = num + 10;
-    size_t random = num;
+    //
+    // Note that we use uint64_t here, and deterministic_hash_combine below, to
+    // ensure our output is fully deterministic - the types we add here are
+    // observable in the output.
+    uint64_t hashSize = num + 10;
+    uint64_t random = num;
     while (1) {
       // Make a builder and add a slot for the hash.
       TypeBuilder builder(num + 1);
@@ -106,7 +110,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
       for (Index i = 0; i < hashSize; i++) {
         // TODO: a denser encoding?
         auto type = (random & 1) ? Type::i32 : Type::f64;
-        hash_combine(random, hashSize + i);
+        deterministic_hash_combine(random, hashSize + i);
         hashStruct.fields.push_back(Field(type, Mutable));
       }
       builder[num] = hashStruct;

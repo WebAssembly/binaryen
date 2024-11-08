@@ -1405,3 +1405,170 @@
     )
   )
 )
+
+;; Public types cannot be optimized. The function type here is public as the
+;; function is exported, and so the entire rec group is public, and cannot be
+;; modified. We cannot even optimize $child3 which is outside of the rec group,
+;; because its parent is inside. However, we can optimize $unrelated which is
+;; unrelated to them (and so we can remove the field there).
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $parent (sub (struct (field (ref func)))))
+    (type $parent (sub (struct (field (ref func)))))
+    ;; CHECK:       (type $child1 (sub $parent (struct (field (ref func)))))
+    (type $child1 (sub $parent (struct (field (ref func)))))
+    ;; CHECK:       (type $child2 (sub $parent (struct (field (ref func)))))
+    (type $child2 (sub $parent (struct (field (ref func)))))
+
+    ;; CHECK:       (type $func (func (param (ref $child2))))
+    (type $func (func (param $child2 (ref $child2))))
+  )
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $unrelated (sub (struct)))
+
+  ;; CHECK:       (type $child3 (sub $parent (struct (field (ref func)))))
+  (type $child3 (sub $parent (struct (field (ref func)))))
+
+  (type $unrelated (sub (struct (field (ref func)))))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $func) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child1
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child2
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child3
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $unrelated)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func") (type $func) (param $child2 (ref $child2))
+    ;; Create all the types. Note that the value here is non-nullable, as is the
+    ;; field, so if we remove the field by mistake in GTO but leave it during
+    ;; TypeUpdater, we'd error (on providing a default value for a non-nullable
+    ;; field).
+    (drop
+      (struct.new $parent
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child1
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child2
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child3
+        (ref.func $func)
+      )
+    )
+    ;; We can optimize this one, and no other.
+    (drop
+      (struct.new $unrelated
+        (ref.func $func)
+      )
+    )
+  )
+)
+
+;; The type $A is public because it is on an exported global. As a result we
+;; cannot remove the unused i32 field from its child or grandchild.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; Use $C so it isn't removed trivially, which also keeps $B alive as its
+  ;; super.
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but now there is an f64 field on $C that can be removed, since it
+;; is not on the parents.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but the f64 field is now on $B as well. We can still remove it.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but now $B is public as well. Now we cannot remove the f64.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (global $globalB (ref $B) (struct.new_default $C))
+  (global $globalB (ref $B) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (export "globalB" (global $globalB))
+  (export "globalB" (global $globalB))
+)
+

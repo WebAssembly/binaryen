@@ -1544,9 +1544,9 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
-    // The only reference types allowed without GC are funcref and externref. We
-    // internally use more refined versions of those types, but we cannot emit
-    // those more refined types.
+    // The only reference types allowed without GC are funcref, externref, and
+    // exnref. We internally use more refined versions of those types, but we
+    // cannot emit those without GC.
     if (!wasm->features.hasGC()) {
       auto ht = type.getHeapType();
       if (ht.isMaybeShared(HeapType::string)) {
@@ -1555,6 +1555,8 @@ void WasmBinaryWriter::writeType(Type type) {
         // string, the stringref feature must be enabled.
         type = Type(HeapTypes::string.getBasic(ht.getShared()), Nullable);
       } else {
+        // Only the top type (func, extern, exn) is available, and only the
+        // nullable version.
         type = Type(type.getHeapType().getTop(), Nullable);
       }
     }
@@ -3814,14 +3816,10 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
     uint8_t prefix = getInt8();
 
     bool disallowed = prefix == BinaryConsts::FeatureDisallowed;
-    bool required = prefix == BinaryConsts::FeatureRequired;
     bool used = prefix == BinaryConsts::FeatureUsed;
 
-    if (!disallowed && !required && !used) {
+    if (!disallowed && !used) {
       throwError("Unrecognized feature policy prefix");
-    }
-    if (required) {
-      std::cerr << "warning: required features in feature section are ignored";
     }
 
     Name name = getInlineString();
@@ -3879,7 +3877,7 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
         << "warning: feature " << feature.toString()
         << " was enabled by the user, but disallowed in the features section.";
     }
-    if (required || used) {
+    if (used) {
       wasm.features.enable(feature);
     }
   }

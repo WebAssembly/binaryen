@@ -20,11 +20,12 @@
 #include <functional>
 #include <unordered_set>
 
-#include <ir/element-utils.h>
-#include <ir/module-utils.h>
-#include <pass.h>
-#include <passes/pass-utils.h>
-#include <wasm.h>
+#include "ir/element-utils.h"
+#include "ir/module-utils.h"
+#include "pass.h"
+#include "passes/pass-utils.h"
+#include "wasm-validator.h"
+#include "wasm.h"
 
 namespace wasm::OptUtils {
 
@@ -42,10 +43,24 @@ inline void addUsefulPassesAfterInlining(PassRunner& runner) {
 inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
+  // In pass-debug mode, validate before and after these optimizations. This
+  // helps catch bugs in the middle of passes like inlining and dae. We do this
+  // at level 2+ and not 1 so that this extra validation is not added to the
+  // timings that level 1 reports.
+  if (PassRunner::getPassDebug() >= 2) {
+    if (!WasmValidator().validate(*module, parentRunner->options)) {
+      Fatal() << "invalid wasm before optimizeAfterInlining";
+    }
+  }
   PassUtils::FilteredPassRunner runner(module, funcs, parentRunner->options);
   runner.setIsNested(true);
   addUsefulPassesAfterInlining(runner);
   runner.run();
+  if (PassRunner::getPassDebug() >= 2) {
+    if (!WasmValidator().validate(*module, parentRunner->options)) {
+      Fatal() << "invalid wasm after optimizeAfterInlining";
+    }
+  }
 }
 
 struct FunctionRefReplacer

@@ -1779,3 +1779,39 @@
   )
  )
 )
+
+;; try_table
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:       (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
+ )
+
+ ;; CHECK:       (type $2 (func (result (ref $super))))
+
+ ;; CHECK:       (type $3 (func (param (ref $sub))))
+
+ ;; CHECK:      (type $4 (func (param (ref $sub))))
+
+ ;; CHECK:      (tag $tag (param (ref $sub)))
+ (tag $tag (param (ref $sub)))
+
+ ;; CHECK:      (func $test (type $2) (result (ref $super))
+ ;; CHECK-NEXT:  (block $label (result (ref $sub))
+ ;; CHECK-NEXT:   (try_table (catch $tag $label)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (result (ref $super))
+  (block $label (result (ref $super))
+   ;; Sending the contents of $tag to $label cause us to require $sub <: $super
+   (try_table (catch $tag $label)
+    (unreachable)
+   )
+  )
+ )
+)

@@ -104,6 +104,12 @@ private:
 
   Name funcrefTableName;
 
+  std::unordered_map<Type, Name> logImportNames;
+
+  Name throwImportName;
+  Name tableGetImportName;
+  Name tableSetImportName;
+
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
   std::unordered_map<Type, std::vector<Name>> immutableGlobalsByType;
@@ -220,12 +226,19 @@ private:
   void finalizeTable();
   void prepareHangLimitSupport();
   void addHangLimitSupport();
+  // Imports that we call to log out values.
   void addImportLoggingSupport();
+  // An import that we call to throw an exception from outside.
+  void addImportThrowingSupport();
+  void addImportTableSupport();
   void addHashMemorySupport();
 
   // Special expression makers
   Expression* makeHangLimitCheck();
-  Expression* makeLogging();
+  Expression* makeImportLogging();
+  Expression* makeImportThrowing(Type type);
+  Expression* makeImportTableGet();
+  Expression* makeImportTableSet(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation
@@ -366,6 +379,7 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeBrOn(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
   // packed.

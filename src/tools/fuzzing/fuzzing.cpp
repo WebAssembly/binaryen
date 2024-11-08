@@ -176,9 +176,13 @@ void TranslateToFuzzReader::build() {
   setupGlobals();
   if (wasm.features.hasExceptionHandling()) {
     setupTags();
+    addImportThrowingSupport();
   }
-  modifyInitialFunctions();
+  if (wasm.features.hasReferenceTypes()) {
+    addImportTableSupport();
+  }
   addImportLoggingSupport();
+  modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
     auto* func = addFunction();
@@ -583,13 +587,71 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
   for (auto type : loggableTypes) {
-    auto* func = new Function;
-    Name name = std::string("log-") + type.toString();
-    func->name = name;
+    auto func = std::make_unique<Function>();
+    Name baseName = std::string("log-") + type.toString();
+    func->name = Names::getValidFunctionName(wasm, baseName);
+    logImportNames[type] = func->name;
     func->module = "fuzzing-support";
-    func->base = name;
+    func->base = baseName;
     func->type = Signature(type, Type::none);
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
+  }
+}
+
+void TranslateToFuzzReader::addImportThrowingSupport() {
+  // Throw some kind of exception from JS.
+  // TODO: Send an index, which is which exported wasm Tag we should throw, or
+  //       something not exported if out of bounds. First we must also export
+  //       tags sometimes.
+  throwImportName = Names::getValidFunctionName(wasm, "throw");
+  auto func = std::make_unique<Function>();
+  func->name = throwImportName;
+  func->module = "fuzzing-support";
+  func->base = "throw";
+  func->type = Signature(Type::none, Type::none);
+  wasm.addFunction(std::move(func));
+}
+
+void TranslateToFuzzReader::addImportTableSupport() {
+  // For the table imports to be able to do anything, we must export a table
+  // for them. For simplicity, use the funcref table we use internally, though
+  // we could pick one at random, support non-funcref ones, and even export
+  // multiple ones TODO
+  if (!funcrefTableName) {
+    return;
+  }
+
+  // If a "table" export already exists, skip fuzzing these imports, as the
+  // current export may not contain a valid table for it.
+  if (wasm.getExportOrNull("table")) {
+    return;
+  }
+
+  // Export the table.
+  wasm.addExport(
+    builder.makeExport("table", funcrefTableName, ExternalKind::Table));
+
+  // Get from the table.
+  {
+    tableGetImportName = Names::getValidFunctionName(wasm, "table-get");
+    auto func = std::make_unique<Function>();
+    func->name = tableGetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-get";
+    func->type = Signature({Type::i32}, Type(HeapType::func, Nullable));
+    wasm.addFunction(std::move(func));
+  }
+
+  // Set into the table.
+  {
+    tableSetImportName = Names::getValidFunctionName(wasm, "table-set");
+    auto func = std::make_unique<Function>();
+    func->name = tableSetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-set";
+    func->type =
+      Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none);
+    wasm.addFunction(std::move(func));
   }
 }
 
@@ -692,21 +754,45 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
                          builder.makeConst(int32_t(1)))));
 }
 
-Expression* TranslateToFuzzReader::makeLogging() {
+Expression* TranslateToFuzzReader::makeImportLogging() {
   auto type = getLoggableType();
+  return builder.makeCall(logImportNames[type], {make(type)}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
+  // We throw from the import, so this call appears to be none and not
+  // unreachable.
+  assert(type == Type::none);
+
+  // TODO: This and makeThrow should probably be rare, as they halt the program.
+  return builder.makeCall(throwImportName, {}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportTableGet() {
+  assert(tableGetImportName);
   return builder.makeCall(
-    std::string("log-") + type.toString(), {make(type)}, Type::none);
+    tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
+  assert(type == Type::none);
+  assert(tableSetImportName);
+  return builder.makeCall(
+    tableSetImportName,
+    {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
+    Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
   auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
-  return builder.makeCall(std::string("log-i32"), {hash}, Type::none);
+  return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
 // TODO: return std::unique_ptr<Function>
 Function* TranslateToFuzzReader::addFunction() {
   LOGGING_PERCENT = upToSquared(100);
-  auto* func = new Function;
+  auto allocation = std::make_unique<Function>();
+  auto* func = allocation.get();
   func->name = Names::getValidFunctionName(wasm, "func");
   FunctionCreationContext context(*this, func);
   assert(funcContext->typeLocals.empty());
@@ -765,7 +851,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
 
   // Add hang limit checks after all other operations on the function body.
-  wasm.addFunction(func);
+  wasm.addFunction(std::move(allocation));
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Only functions
   // with valid params and returns can be exported because the trap fuzzer
@@ -1215,10 +1301,13 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   // the end (currently that is not needed atm, but it might in the future).
   for (Index i = 0; i < wasm.functions.size(); i++) {
     auto* func = wasm.functions[i].get();
+    // We can't allow extra imports, as the fuzzing infrastructure wouldn't
+    // know what to provide. Keep only our own fuzzer imports.
+    if (func->imported() && func->module == "fuzzing-support") {
+      continue;
+    }
     FunctionCreationContext context(*this, func);
     if (func->imported()) {
-      // We can't allow extra imports, as the fuzzing infrastructure wouldn't
-      // know what to provide.
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }
@@ -1261,10 +1350,9 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
 
     void visitDrop(Drop* curr) {
       if (parent.isLoggableType(curr->value->type) && parent.oneIn(2)) {
-        replaceCurrent(parent.builder.makeCall(std::string("log-") +
-                                                 curr->value->type.toString(),
-                                               {curr->value},
-                                               Type::none));
+        auto target = parent.logImportNames[curr->value->type];
+        replaceCurrent(
+          parent.builder.makeCall(target, {curr->value}, Type::none));
       }
     }
   };
@@ -1367,7 +1455,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCallIndirect)
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
       .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
-      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
   }
   if (type.isSingle()) {
     options
@@ -1429,7 +1518,7 @@ Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
     if (choice < LOGGING_PERCENT / 2) {
-      return makeLogging();
+      return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
     }
@@ -1454,11 +1543,16 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+    .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
+  if (tableSetImportName) {
+    options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
+  }
   return (this->*pick(options))(Type::none);
 }
 
@@ -1484,7 +1578,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
 
@@ -2649,6 +2743,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::func: {
+      // Rarely, emit a call to imported table.get (when nullable, unshared, and
+      // where we can emit a call).
+      if (type.isNullable() && share == Unshared && funcContext &&
+          tableGetImportName && !oneIn(3)) {
+        return makeImportTableGet();
+      }
       return makeRefFuncConst(type);
     }
     case HeapType::cont: {
@@ -3942,6 +4042,116 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       WASM_UNREACHABLE("bad case");
   }
   return builder.makeRefCast(make(refType), type);
+}
+
+Expression* TranslateToFuzzReader::makeBrOn(Type type) {
+  if (funcContext->breakableStack.empty()) {
+    return makeTrivial(type);
+  }
+  // We need to find a proper target to break to; try a few times. Finding the
+  // target is harder than flowing out the proper type, so focus on the target,
+  // and fix up the flowing type later. That is, once we find a target to break
+  // to, we can then either drop ourselves or wrap ourselves in a block +
+  // another value, so that we return the proper thing here (which is done below
+  // in fixFlowingType).
+  int tries = TRIES;
+  Name targetName;
+  Type targetType;
+  while (--tries >= 0) {
+    auto* target = pick(funcContext->breakableStack);
+    targetName = getTargetName(target);
+    targetType = getTargetType(target);
+    // We can send any reference type, or no value at all, but nothing else.
+    if (targetType.isRef() || targetType == Type::none) {
+      break;
+    }
+  }
+  if (tries < 0) {
+    return makeTrivial(type);
+  }
+
+  auto fixFlowingType = [&](Expression* brOn) -> Expression* {
+    if (Type::isSubType(brOn->type, type)) {
+      // Already of the proper type.
+      return brOn;
+    }
+    if (type == Type::none) {
+      // We just need to drop whatever it is.
+      return builder.makeDrop(brOn);
+    }
+    // We need to replace the type with something else. Drop the BrOn if we need
+    // to, and append a value with the proper type.
+    if (brOn->type != Type::none) {
+      brOn = builder.makeDrop(brOn);
+    }
+    return builder.makeSequence(brOn, make(type));
+  };
+
+  // We found something to break to. Figure out which BrOn variants we can
+  // send.
+  if (targetType == Type::none) {
+    // BrOnNull is the only variant that sends no value.
+    return fixFlowingType(
+      builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
+  }
+
+  // We are sending a reference type to the target. All other BrOn variants can
+  // do that.
+  assert(targetType.isRef());
+  auto op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  Type castType = Type::none;
+  Type refType;
+  switch (op) {
+    case BrOnNonNull: {
+      // The sent type is the non-nullable version of the reference, so any ref
+      // of that type is ok, nullable or not.
+      refType = Type(targetType.getHeapType(), getNullability());
+      break;
+    }
+    case BrOnCast: {
+      // The sent type is the heap type we cast to, with the input type's
+      // nullability, so the combination of the two must be a subtype of
+      // targetType.
+      castType = getSubType(targetType);
+      // The ref's type must be castable to castType, or we'd not validate. But
+      // it can also be a subtype, which will trivially also succeed (so do that
+      // more rarely). Pick subtypes rarely, as they make the cast trivial.
+      refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
+      if (targetType.isNonNullable()) {
+        // And it must have the right nullability for the target, as mentioned
+        // above: if the target type is non-nullable then either the ref or the
+        // cast types must be.
+        if (!refType.isNonNullable() && !castType.isNonNullable()) {
+          // Pick one to make non-nullable.
+          if (oneIn(2)) {
+            refType = Type(refType.getHeapType(), NonNullable);
+          } else {
+            castType = Type(castType.getHeapType(), NonNullable);
+          }
+        }
+      }
+      break;
+    }
+    case BrOnCastFail: {
+      // The sent type is the ref's type, with adjusted nullability (if the cast
+      // allows nulls then no null can fail the cast, and what is sent is non-
+      // nullable). First, pick a ref type that we can send to the target.
+      refType = getSubType(targetType);
+      // See above on BrOnCast, but flipped.
+      castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
+      // There is no nullability to adjust: if targetType is non-nullable then
+      // both refType and castType are as well, as subtypes of it. But we can
+      // also allow castType to be nullable (it is not sent to the target).
+      if (castType.isNonNullable() && oneIn(2)) {
+        castType = Type(castType.getHeapType(), Nullable);
+      }
+    } break;
+    default: {
+      WASM_UNREACHABLE("bad br_on op");
+    }
+  }
+  return fixFlowingType(
+    builder.makeBrOn(op, targetName, make(refType), castType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {

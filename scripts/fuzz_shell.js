@@ -1,42 +1,53 @@
-// Shell integration.
-if (typeof console === 'undefined') {
-  console = { log: print };
-}
-var tempRet0;
-var binary;
-if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {
-  var args = process.argv.slice(2);
-  binary = require('fs').readFileSync(args[0]);
-  if (!binary.buffer) binary = new Uint8Array(binary);
+// Shell integration: find argv and set up readBinary().
+var argv;
+var readBinary;
+if (typeof process === 'object' && typeof require === 'function') {
+  // Node.js.
+  argv = process.argv.slice(2);
+  readBinary = function(name) {
+    var data = require('fs').readFileSync(name);
+    if (!data.buffer) data = new Uint8Array(data);
+    return data;
+  };
 } else {
-  var args;
+  // A shell like D8.
   if (typeof scriptArgs != 'undefined') {
-    args = scriptArgs;
+    argv = scriptArgs;
   } else if (typeof arguments != 'undefined') {
-    args = arguments;
+    argv = arguments;
   }
-  if (typeof readbuffer === 'function') {
-    binary = new Uint8Array(readbuffer(args[0]));
-  } else {
-    binary = read(args[0], 'binary');
-  }
+  readBinary = function(name) {
+    if (typeof readbuffer === 'function') {
+      return new Uint8Array(readbuffer(name));
+    } else {
+      return read(name, 'binary');
+    }
+  };
+}
+
+// We are given the binary to run as a parameter.
+var binary = readBinary(argv[0]);
+
+// Normally we call all the exports of the given wasm file. But, if we are
+// passed a final parameter in the form of "exports:X,Y,Z" then we call
+// specifically the exports X, Y, and Z.
+var exportsToCall;
+if (argv[argv.length - 1].startsWith('exports:')) {
+  exportsToCall = argv[argv.length - 1].substr('exports:'.length).split(',');
+  argv.pop();
+}
+
+// If a second parameter is given, it is a second binary that we will link in
+// with it.
+var secondBinary;
+if (argv[1]) {
+  secondBinary = readBinary(argv[1]);
 }
 
 // Utilities.
 function assert(x, y) {
   if (!x) throw (y || 'assertion failed');// + new Error().stack;
 }
-
-// Deterministic randomness.
-var detrand = (function() {
-  var hash = 5381; // TODO DET_RAND_SEED;
-  var x = 0;
-  return function() {
-    hash = (((hash << 5) + hash) ^ (x & 0xff)) >>> 0;
-    x = (x + 1) % 256;
-    return (hash % 256) / 256;
-  };
-})();
 
 // Print out a value in a way that works well for fuzzing.
 function printed(x, y) {
@@ -124,8 +135,10 @@ function logValue(x, y) {
 }
 
 // Set up the imports.
+var tempRet0;
 var imports = {
   'fuzzing-support': {
+    // Logging.
     'log-i32': logValue,
     'log-i64': logValue,
     'log-f32': logValue,
@@ -135,7 +148,21 @@ var imports = {
     // we could avoid running JS on code with SIMD in it, but it is useful to
     // fuzz such code as much as we can.)
     'log-v128': logValue,
+
+    // Throw an exception from JS.
+    'throw': () => {
+      throw 'some JS error';
+    },
+
+    // Table operations.
+    'table-get': (index) => {
+      return exports.table.get(index >>> 0);
+    },
+    'table-set': (index, value) => {
+      exports.table.set(index >>> 0, value);
+    },
   },
+  // Emscripten support.
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
     'getTempRet0': function() { return tempRet0 },
@@ -149,6 +176,24 @@ if (typeof WebAssembly.Tag !== 'undefined') {
       'parameters': ['externref']
     }),
   };
+}
+
+// If a second binary will be linked in then set up the imports for
+// placeholders. Any import like  (import "placeholder" "0" (func ..  will be
+// provided by the secondary module, and must be called using an indirection.
+if (secondBinary) {
+  imports['placeholder'] = new Proxy({}, {
+    get(target, prop, receiver) {
+      // Return a function that throws. We could do an indirect call using the
+      // exported table, but as we immediately link in the secondary module,
+      // these stubs will not be called (they are written to the table, and the
+      // secondary module overwrites them). We do need to return something so
+      // the primary module links without erroring, though.
+      return () => {
+        throw 'proxy stub should not be called';
+      }
+    }
+  });
 }
 
 // Create the wasm.
@@ -165,17 +210,32 @@ try {
 // Handle the exports.
 var exports = instance.exports;
 
-var view;
+// Link in a second module, if one was provided.
+if (secondBinary) {
+  var secondModule = new WebAssembly.Module(secondBinary);
 
-// Recreate the view. This is important both initially and after a growth.
-function refreshView() {
-  if (exports.memory) {
-    view = new Int32Array(exports.memory.buffer);
+  // The secondary module just needs to import the primary one: all original
+  // imports it might have needed were exported from there.
+  var secondImports = {'primary': exports};
+  var secondInstance;
+  try {
+    secondInstance = new WebAssembly.Instance(secondModule, secondImports);
+  } catch (e) {
+    console.log('exception thrown: failed to instantiate second module');
+    quit();
   }
 }
 
 // Run the wasm.
-for (var e in exports) {
+if (!exportsToCall) {
+  // We were not told specific exports, so call them all.
+  exportsToCall = [];
+  for (var e in exports) {
+    exportsToCall.push(e);
+  }
+}
+
+for (var e of exportsToCall) {
   if (typeof exports[e] !== 'function') {
     continue;
   }

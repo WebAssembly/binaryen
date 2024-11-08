@@ -504,11 +504,19 @@ std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
 
 DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   std::vector<HeapType> succs;
-  for (auto child : type.getHeapTypeChildren()) {
-    // Both private and public heap type children participate in the DFA and are
-    // eligible to be successors.
-    if (!child.isBasic()) {
-      succs.push_back(getMerged(child));
+  // Both private and public heap type children participate in the DFA and are
+  // eligible to be successors, except that public types are terminal states
+  // that do not have successors. This is sufficient because public types are
+  // always in their own singleton partitions, so they already differentiate
+  // types that reach them without needing to consider their children. In the
+  // other direction, including the children is not necessary to differentiate
+  // types reached by the public types because all such reachable types are also
+  // public and not eligible to be merged.
+  if (privateTypes.count(type)) {
+    for (auto child : type.getHeapTypeChildren()) {
+      if (!child.isBasic()) {
+        succs.push_back(getMerged(child));
+      }
     }
   }
   return {type, std::move(succs)};

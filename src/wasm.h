@@ -647,7 +647,7 @@ enum StringEqOp {
 
 class Expression {
 public:
-  enum Id {
+  enum Id : uint8_t {
     InvalidId = 0,
     BlockId,
     IfId,
@@ -805,9 +805,8 @@ using ExpressionList = ArenaVector<Expression*>;
 
 template<Expression::Id SID> class SpecificExpression : public Expression {
 public:
-  enum {
-    SpecificId = SID // compile-time access to the type for the class
-  };
+  // Compile-time access to the type for the class.
+  static constexpr Id SpecificId = SID;
 
   SpecificExpression() : Expression(SID) {}
 };

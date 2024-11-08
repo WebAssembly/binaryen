@@ -23,6 +23,7 @@
 //
 
 #include "ir/localize.h"
+#include "ir/module-utils.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
@@ -167,13 +168,18 @@ struct GlobalTypeOptimization : public Pass {
     auto dataFromSupersMap = std::move(combinedSetGetInfos);
     propagator.propagateToSubTypes(dataFromSupersMap);
 
+    // Find the public types, which we must not modify.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
+
     // Process the propagated info. We look at supertypes first, as the order of
     // fields in a supertype is a constraint on what subtypes can do. That is,
     // we decide for each supertype what the optimal order is, and consider that
     // fixed, and then subtypes can decide how to sort fields that they append.
     for (auto type :
          HeapTypeOrdering::supertypesFirst(propagator.subTypes.types)) {
-      if (!type.isStruct()) {
+      if (!type.isStruct() || publicTypesSet.count(type)) {
         continue;
       }
       auto& fields = type.getStruct().fields;
@@ -190,6 +196,31 @@ struct GlobalTypeOptimization : public Pass {
         if (dataFromSubsAndSupers[i].hasWrite) {
           // A set exists.
           continue;
+        }
+
+        // The propagation analysis ensures we update immutability in all
+        // supers and subs in concert, but it does not take into account
+        // visibility, so do that here: we can only become immutable if the
+        // parent can as well.
+        auto super = type.getDeclaredSuperType();
+        if (super) {
+          // The super may not contain the field, which is fine, so only check
+          // here if the field does exist in both.
+          if (i < super->getStruct().fields.size()) {
+            // No entry in canBecomeImmutable means nothing in the parent can
+            // become immutable, so check for both that and for an entry with
+            // "false".
+            auto iter = canBecomeImmutable.find(*super);
+            if (iter == canBecomeImmutable.end()) {
+              continue;
+            }
+            // The vector is grown only when needed to contain a "true" value,
+            // so |i| being out of bounds indicates "false".
+            auto& superVec = iter->second;
+            if (i >= superVec.size() || !superVec[i]) {
+              continue;
+            }
+          }
         }
 
         // No set exists. Mark it as something we can make immutable.
@@ -291,8 +322,10 @@ struct GlobalTypeOptimization : public Pass {
                 keptFieldsNotInSuper.push_back(i);
               }
             } else {
-              // The super kept this field, so we must keep it as well.
-              assert(!removableIndexes.count(i));
+              // The super kept this field, so we must keep it as well. This can
+              // happen when we need the field in both, but also in the corner
+              // case where we don't need the field but the super is public.
+
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
               // Update |next| to refer to the next available index. Due to

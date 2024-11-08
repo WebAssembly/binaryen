@@ -652,3 +652,363 @@
     )
   )
 )
+
+;; The parent is public, which prevents us from making any field immutable in
+;; the child.
+(module
+  ;; CHECK:      (type $parent (sub (struct (field (mut i32)))))
+  (type $parent (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $child (sub $parent (struct (field (mut i32)))))
+  (type $child (sub $parent (struct (field (mut i32)))))
+
+  ;; CHECK:      (global $global (ref $parent) (struct.new $parent
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $parent) (struct.new $parent
+    (i32.const 0)
+  ))
+
+  ;; Make the parent public by exporting the global.
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Create the child so the type is used. No sets to the fields exist, so
+    ;; in theory all fields could be immutable.
+    (drop
+      (struct.new_default $child)
+    )
+  )
+)
+
+;; $sub has a field we can make immutable. That it does not exist in the super
+;; should not confuse us.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+    ;; CHECK:       (type $sub (sub $super (struct (field (ref string)))))
+    (type $sub (sub $super (struct (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Write and read the field.
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; As above, but with another type in the middle, $mid, which also contains the
+;; field. We can optimize both $mid and $sub.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+    ;; CHECK:       (type $mid (sub $super (struct (field (ref string)))))
+    (type $mid (sub $super (struct (field (mut (ref string))))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field (ref string)))))
+    (type $sub (sub $mid (struct (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $mid 0
+  ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (string.const "bar")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+    (drop
+      (struct.get $mid 0
+        (struct.new $mid
+          (string.const "bar")
+        )
+      )
+    )
+  )
+)
+
+;; As above, but add another irrelevant field first. We can still optimize the
+;; string, but the new mutable i32 must remain mutable, as it has a set.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct (field (mut i32)))))
+    (type $super (sub (struct (field (mut i32)))))
+    ;; CHECK:       (type $mid (sub $super (struct (field (mut i32)) (field (ref string)))))
+    (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field (mut i32)) (field (ref string)))))
+    (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 1
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $mid 1
+  ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (string.const "bar")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $super 0
+  ;; CHECK-NEXT:   (struct.new $super
+  ;; CHECK-NEXT:    (i32.const 98765)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (struct.new $super
+  ;; CHECK-NEXT:     (i32.const 999999)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.get $sub 1
+        (struct.new $sub
+          (i32.const 42)
+          (string.const "foo")
+        )
+      )
+    )
+    (drop
+      (struct.get $mid 1
+        (struct.new $mid
+          (i32.const 1337)
+          (string.const "bar")
+        )
+      )
+    )
+    ;; A set and get of the first field.
+    (struct.set $super 0
+      (struct.new $super
+        (i32.const 98765)
+      )
+      (i32.const 42)
+    )
+    (drop
+      (struct.get $super 0
+        (struct.new $super
+          (i32.const 999999)
+        )
+      )
+    )
+  )
+)
+
+;; As above, but without a set of the first field. Now we can optimize both
+;; fields.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct (field i32))))
+    (type $super (sub (struct (field (mut i32)))))
+    ;; CHECK:       (type $mid (sub $super (struct (field i32) (field (ref string)))))
+    (type $mid (sub $super (struct (field (mut i32)) (field (mut (ref string))))))
+    ;; CHECK:       (type $sub (sub $mid (struct (field i32) (field (ref string)))))
+    (type $sub (sub $mid (struct (field (mut i32)) (field (mut (ref string))))))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 1
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $mid 1
+  ;; CHECK-NEXT:    (struct.new $mid
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (string.const "bar")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $super 0
+  ;; CHECK-NEXT:    (struct.new $super
+  ;; CHECK-NEXT:     (i32.const 999999)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.get $sub 1
+        (struct.new $sub
+          (i32.const 42)
+          (string.const "foo")
+        )
+      )
+    )
+    (drop
+      (struct.get $mid 1
+        (struct.new $mid
+          (i32.const 1337)
+          (string.const "bar")
+        )
+      )
+    )
+    ;; Only a get of the first field.
+    (drop
+      (struct.get $super 0
+        (struct.new $super
+          (i32.const 999999)
+        )
+      )
+    )
+  )
+)
+
+;; The super is public, but we can still optimize the field in the sub.
+(module
+  ;; CHECK:      (type $super (sub (struct)))
+  (type $super (sub (struct)))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $sub (sub $super (struct (field stringref))))
+  (type $sub (sub $super (struct (field (mut stringref)))))
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (global $global (ref $super) (struct.new_default $super))
+  (global $global (ref $super) (struct.new_default $super))
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Write and read the field.
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; As above, and now the super has the field as well, preventing optimization.
+(module
+  ;; CHECK:      (type $super (sub (struct (field (mut stringref)))))
+  (type $super (sub (struct (field (mut stringref)))))
+
+  ;; CHECK:      (type $sub (sub $super (struct (field (mut stringref)))))
+  (type $sub (sub $super (struct (field (mut stringref)))))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (global $global (ref $super) (struct.new_default $super))
+  (global $global (ref $super) (struct.new_default $super))
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $sub 0
+  ;; CHECK-NEXT:    (struct.new $sub
+  ;; CHECK-NEXT:     (string.const "foo")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Write and read the field.
+    (drop
+      (struct.get $sub 0
+        (struct.new $sub
+          (string.const "foo")
+        )
+      )
+    )
+  )
+)
+
+;; Two mutable fields with a chain of three subtypes. The super is public,
+;; preventing optimization of the field it has (but not the other; the other
+;; is removable anyhow, though, so this just checks for the lack of an error
+;; when deciding not to make the fields immutable or not).
+(module
+  ;; CHECK:      (type $super (sub (struct (field (mut i32)))))
+  (type $super (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $mid (sub $super (struct (field (mut i32)))))
+  (type $mid (sub $super (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:       (type $sub (sub $mid (struct (field (mut i32)))))
+  (type $sub (sub $mid (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $super) (struct.new_default $sub))
+  (global $global (ref $super) (struct.new_default $sub))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
