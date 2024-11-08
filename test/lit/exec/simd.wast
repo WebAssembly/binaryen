@@ -15,6 +15,8 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling load32x2_u
+ ;; CHECK-NEXT: [trap final > memory: 13835058055282163712 > 1048576]
  (func $load32x2_u (export "load32x2_u") (result v128)
   ;; This large 64-bit address is out of bounds, and this should trap.
   (v128.load32x2_u
@@ -25,4 +27,8 @@
 
 ;; CHECK:      [fuzz-exec] calling load8x8_s
 ;; CHECK-NEXT: [fuzz-exec] note result: load8x8_s => i32x4 0x00620061 0x00640063 0x00660065 0x00000067
+
+;; CHECK:      [fuzz-exec] calling load32x2_u
+;; CHECK-NEXT: [trap final > memory: 13835058055282163712 > 1048576]
+;; CHECK-NEXT: [fuzz-exec] comparing load32x2_u
 ;; CHECK-NEXT: [fuzz-exec] comparing load8x8_s
