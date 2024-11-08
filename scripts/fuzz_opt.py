@@ -785,7 +785,7 @@ class FuzzExec(TestCaseHandler):
 
 
 class CompareVMs(TestCaseHandler):
-    frequency = 0.66
+    frequency = 1
 
     def __init__(self):
         super(CompareVMs, self).__init__()
