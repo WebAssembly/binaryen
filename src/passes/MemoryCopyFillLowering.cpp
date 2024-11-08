@@ -136,7 +136,9 @@ struct MemoryCopyFillLowering
                                              b.makeLocalGet(size, Type::i32)),
                                 b.makeLocalGet(end, Type::i32))),
       b.makeUnreachable()));
-    // if src < dest
+    // start and end are the starting and past-the-end indexes
+    // if src < dest: start = size - 1, end = -1, step = -1
+    // else: start = 0, end = size, step = 1
     body->list.push_back(
       b.makeIf(b.makeBinary(BinaryOp::LtUInt32,
                             b.makeLocalGet(src, Type::i32),
