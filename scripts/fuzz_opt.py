@@ -1230,6 +1230,16 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
     run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
 
 
+# Check if a wasm file would notice changes to exports. Normally removing an
+# export that is not called, for example, would not be observable, but if the
+# "call-export*" functions are present then such changes can break us.
+def wasm_notices_export_changes(wasm):
+    # we could be more precise here and disassemble the wasm to look for an
+    # actual import with name "call-export*", but looking for the string should
+    # have practically no false positives.
+    return b'call-export' in open(wasm, 'rb').read()
+
+
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
 # happen mode is that if a trap *does* happen then that is undefined behavior,
 # and the optimizer was free to make changes to observable behavior there. The
@@ -1323,6 +1333,12 @@ class TrapsNeverHappen(TestCaseHandler):
 
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
+    def can_run_on_wasm(self, wasm):
+        # If the wasm is sensitive to changes in exports then we cannot alter
+        # them, but we must remove trapping exports (see above), so we cannot
+        # run in such a case.
+        return not wasm_notices_export_changes(wasm)
+
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
@@ -1353,6 +1369,12 @@ class CtorEval(TestCaseHandler):
         evalled_wasm_exec = run_bynterp(evalled_wasm, ['--fuzz-exec-before'])
 
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
+
+    def can_run_on_wasm(self, wasm):
+        # ctor-eval modifies exports, because it assumes they are ctors and so
+        # are only called once (so if it evals them away, they can be
+        # removed). If the wasm might notice that, we cannot run.
+        return not wasm_notices_export_changes(wasm)
 
 
 # Tests wasm-merge
@@ -1426,6 +1448,12 @@ class Merge(TestCaseHandler):
         merged_output = merged_output[:len(output)]
 
         compare_between_vms(output, merged_output, 'Merge')
+
+    def can_run_on_wasm(self, wasm):
+        # wasm-merge combines exports, which can alter their indexes and lead to
+        # noticeable differences if the wasm is sensitive to such things, which
+        # prevents us from running.
+        return not wasm_notices_export_changes(wasm)
 
 
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
