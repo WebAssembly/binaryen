@@ -3692,11 +3692,13 @@ public:
       WASM_UNREACHABLE("invalid op");
     };
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
+        auto ptr = Literal::makeFromInt64(src, addressType);
         lane = loadLane(info.instance->getFinalAddress(
-          curr, Literal(uint32_t(src)), laneBytes, memorySize));
-        src = Address(uint32_t(src) + laneBytes);
+          curr, ptr, laneBytes, memorySize));
+        src = ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
       }
       return Literal(lanes);
     };

@@ -14,6 +14,13 @@
    (i64.const 0)
   )
  )
+
+ (func $load32x2_u (export "load32x2_u") (result v128)
+  ;; This large 64-bit address is out of bounds, and this should trap.
+  (v128.load32x2_u
+   (i64.const -4611686018427387904)
+  )
+ )
 )
 
 ;; CHECK:      [fuzz-exec] calling load8x8_s
