@@ -450,6 +450,17 @@ struct LocalGraphFlower
                                 const LocalGraphBase::SetInfluences& gets,
                                 Expression* obstacle) {
     LocalGraphBase::SetInfluences ret;
+    // Normally flowing backwards is faster, as we start from actual gets (and
+    // so we avoid flowing past all the gets to large swaths of the program that
+    // we don't care about; and in reverse, we might go all the way to the
+    // entry in a wasteful manner, but most gets have an actual set, and do not
+    // read the default value). The situation here is a bit different, though,
+    // in that we might expect that going forward from the set would quickly
+    // reach the obstacle and stop. Still, a single branch away would cause us
+    // to scan lots of blocks potentially, and might not be that rare in
+    // general, so go backwards. (Many uninteresting branches away, that reach
+    // no relevant gets, are common when exceptions are enabled, as every call
+    // gets a branch.)
     for (auto* get : gets) {
       auto [block, index] = getLocations[get];
       if (!block) {
