@@ -208,7 +208,9 @@ var imports = {
         // We only want to catch exceptions, not wasm traps: traps should still
         // halt execution. Handling this requires different code in wasm2js, so
         // check for that first (wasm2js does not define RuntimeError, so use
-        // that for the check).
+        // that for the check - when wasm2js is run, we override the entire
+        // WebAssembly object with a polyfill, so we know exactly what it
+        // contains).
         var wasm2js = !WebAssembly.RuntimeError;
         if (!wasm2js) {
           // When running native wasm, we can detect wasm traps.
