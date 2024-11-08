@@ -1523,7 +1523,7 @@ public:
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
-                          Type& indexType,
+                          Type& addressType,
                           Address defaultIfNoMax);
   void readImports();
 

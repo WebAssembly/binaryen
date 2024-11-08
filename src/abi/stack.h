@@ -48,7 +48,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   // align the size
   size = stackAlign(size);
   auto pointerType =
-    !wasm.memories.empty() ? wasm.memories[0]->indexType : Type::i32;
+    !wasm.memories.empty() ? wasm.memories[0]->addressType : Type::i32;
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);
   auto* block = builder.makeBlock();
