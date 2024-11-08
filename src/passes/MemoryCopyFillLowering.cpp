@@ -109,6 +109,7 @@ struct MemoryCopyFillLowering
     module->features.disable(FeatureSet::BulkMemory);
   }
 
+  // clang-format off
   void CreateMemoryCopyFunc(Module* module) {
     Builder b(*module);
     Index dst = 0, src = 1, size = 2, start = 3, end = 4, step = 5, i = 6;
@@ -226,6 +227,7 @@ struct MemoryCopyFillLowering
            b.makeBreak("copy", nullptr)}))));
     module->getFunction(memFillFuncName)->body = body;
   }
+  // clang-format on
 
   void VisitTableCopy(TableCopy* curr) {
     Fatal() << "table.copy instruction found. Memory copy lowering is not "
