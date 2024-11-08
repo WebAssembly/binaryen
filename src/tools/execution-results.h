@@ -157,7 +157,9 @@ public:
     }
     auto* func = wasm.getFunction(exp->value);
 
-    // TODO JS traps on some types on the boundary!
+    // TODO JS traps on some types on the boundary, which we should behave the
+    // same on. For now, this is not needed because the fuzzer will prune all
+    // non-JS-compatible exports anyhow.
 
     // Send default values as arguments, or trap if we need anything else.
     Literals arguments;
