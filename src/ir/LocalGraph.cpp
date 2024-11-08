@@ -441,7 +441,7 @@ struct LocalGraphFlower
     }
   }
 
-  // Given a bunch of gets, see if any of them reach the given set despite the
+  // Given a bunch of gets, see if any of them are reached by the given set despite the
   // obstacle expression stopping the flow whenever it is reached. That is, the
   // obstacle is considered as if it was a set of the same index, which would
   // trample the value and stop the set from influencing it.
