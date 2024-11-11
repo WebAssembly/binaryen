@@ -1286,7 +1286,7 @@
   ;; CHECK-NEXT: )
   (func $in-if-arm-yes (param $x i32) (param $y i32) (result i32)
     (local $ref (ref null $struct))
-    ;; As before, but he struct.set at the end is removed, so we can optimize.
+    ;; As before, but the struct.set at the end is removed, so we can optimize.
     (if
       (local.get $x)
       (then
