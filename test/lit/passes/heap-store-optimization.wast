@@ -1493,4 +1493,142 @@
     )
     (i32.const 1337)
   )
+
+  ;; CHECK:      (func $multi-control-flow-in-set-value-sequence-yes (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $out (result i32)
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (br_if $out
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (struct.set $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (br_if $out
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.set $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (br_if $out
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: )
+  (func $multi-control-flow-in-set-value-sequence-yes (result i32)
+    (local $ref (ref null $struct))
+    ;; As above, but now we have multiple br_ifs. We optimize one, but then
+    ;; stop because of the control flow that is now in the struct.new. TODO we
+    ;; could be more precise here.
+    (drop
+      (block $out (result i32)
+        (local.set $ref
+          (struct.new_default $struct)
+        )
+        (struct.set $struct 0
+          (local.get $ref)
+          (br_if $out
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+        (struct.set $struct 0
+          (local.get $ref)
+          (br_if $out
+            (i32.const 3)
+            (i32.const 4)
+          )
+        )
+        (struct.set $struct 0
+          (local.get $ref)
+          (br_if $out
+            (i32.const 5)
+            (i32.const 6)
+          )
+        )
+        (i32.const 42)
+      )
+    )
+    (i32.const 1337)
+  )
+
+  ;; CHECK:      (func $multi-control-flow-in-set-value-sequence-no (type $8) (result anyref)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $out (result i32)
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.set $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (br_if $out
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.set $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (br_if $out
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.set $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (br_if $out
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:      (i32.const 6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $ref)
+  ;; CHECK-NEXT: )
+  (func $multi-control-flow-in-set-value-sequence-no (result anyref)
+    (local $ref (ref null $struct))
+    ;; As above, but now we have a dangerous local.get at the end, stopping us
+    ;; from optimizing.
+    (drop
+      (block $out (result i32)
+        (local.set $ref
+          (struct.new_default $struct)
+        )
+        (struct.set $struct 0
+          (local.get $ref)
+          (br_if $out
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+        (struct.set $struct 0
+          (local.get $ref)
+          (br_if $out
+            (i32.const 3)
+            (i32.const 4)
+          )
+        )
+        (struct.set $struct 0
+          (local.get $ref)
+          (br_if $out
+            (i32.const 5)
+            (i32.const 6)
+          )
+        )
+        (i32.const 42)
+      )
+    )
+    (local.get $ref)
+  )
 )

@@ -304,62 +304,14 @@ struct HeapStoreOptimization
   bool canSkipLocalSet(StructSet* set,
                        const EffectAnalyzer& setValueEffects,
                        LocalSet* localSet) {
-    // To detect the above problem, consider this code in more detail, where the
-    // value being set is a br_if, which can branch:
-    //
-    //  (if
-    //    (..condition..)
-    //    (then
-    //      (block $out
-    //        (local.set $x (struct.new X Y Z))
-    //        (struct.set (local.get $x) (br_if $out)) ;; A
-    //        (struct.set (local.get $x) (..))         ;; B
-    //      )
-    //      (struct.set (local.get $x) (..))           ;; C
-    //    )
-    //  )
-    //  (struct.set (local.get $x) (..))               ;; D
-    //
-    // We annotate the struct.sets here with A, B, C, D. If we optimize, we'd
-    // move the br_if to the struct.new, and comment out A:
-    //
-    //  (if
-    //    (..condition..)
-    //    (then
-    //      (block $out
-    //        (local.set $x (struct.new (br_if $out) Y Z)) ;; br_if moved here
-    //        ;; (struct.set (local.get $x) )              ;; A is commented out
-    //        (struct.set (local.get $x) (..))             ;; B
-    //      )
-    //      (struct.set (local.get $x) (..))               ;; C
-    //    )
-    //  )
-    //  (struct.set (local.get $x) (..))                   ;; D
-    //
-    // No problem occurs on B: if we do not branch then we keep reading from
-    // the struct.new, including the br_if value that was applied to it, and if
-    // we do branch then we skip it anyhow. C, however, is a problem: if we
-    // branch then the optimized version will skip the struct.new entirely,
-    // rather than just skip A. D is also a problem: if we enter the if, then we
-    // hit the same issue as with C.
-    //
-    // To detect this, we can use a LocalGraph on the IR after the optimization:
-    // C and D's local.gets read not only the local.set here, but the value of
-    // that local before the code here. For C, this is because of the branch,
-    // and for D, it was true even before the optimization, because of the if.
-    // It is that mixing of our local.set with another that is a problem here,
-    // since it means we can read the value even if we branch. Note that we must
-    // compute the graph *after* the optimization, as C has no mixing before: it
-    // is the placing of the br_if in the struct.new that causes the mixing.
-
     // First, if the set's value cannot branch at all, then we have no problem.
     if (!setValueEffects.transfersControlFlow()) {
       return false;
     }
 
-    // We may branch, so do the analysis above. As mentioned above, we must
-    // analyze the state *after* the optimization, so we query whether it is
-    // valid to move the local.set to where the struct.set is.
+    // We may branch, so do an analysis using a LocalGraph. We will check
+    // whether it is valid to move the local.set to where the struct.set is, so
+    // we provide StructSet as the query class.
     if (!localGraph) {
       localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
     }
