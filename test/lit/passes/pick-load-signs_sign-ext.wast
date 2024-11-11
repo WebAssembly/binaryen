@@ -5,7 +5,7 @@
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
 
- ;; CHECK:      (func $load (type $0) (result i32)
+ ;; CHECK:      (func $load-other-use (type $0) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (block $label (result i32)
  ;; CHECK-NEXT:   (local.set $temp
@@ -24,7 +24,7 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $load (result i32)
+ (func $load-other-use (result i32)
   (local $temp i32)
   ;; The load here is unsigned, while the value in the local is used in two
   ;; ways: it is sign-extended, and it is sent on a branch by a br_if. We must
@@ -45,6 +45,35 @@
     )
    )
    (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $load-valid (type $1)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (i32.load8_u
+ ;; CHECK-NEXT:    (i32.const 22)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.extend8_s
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load-valid
+  (local $temp i32)
+  ;; As above, but remove the br_if in the middle. Now this is a valid case to
+  ;; optimize, load8_u => load8_s.
+  (local.set $temp
+   (i32.load8_u
+    (i32.const 22)
+   )
+  )
+  (drop
+   (i32.extend8_s
+    (local.get $temp)
+   )
   )
  )
 )

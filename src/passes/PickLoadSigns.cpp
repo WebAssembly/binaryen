@@ -60,12 +60,19 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    // this is a use. check from the context what it is, signed or unsigned,
-    // etc.
+    // This is a use. check from the context what it is, signed or unsigned,
+    // etc. Sign- and zero-extends may have two levels of nesting (x << K >> K)
+    // or one (x & K), so check both.
     auto& usage = usages[curr->index];
     usage.totalUsages++;
-    if (expressionStack.size() >= 2) {
-      auto* parent = expressionStack[expressionStack.size() - 2];
+    for (Index i = 2; i <= 3; i++) {
+      if (expressionStack.size() < i) {
+        // We do not have that many expressions above us. (And if we don't have
+        // 2 then we definitely don't have 3.)
+        break;
+      }
+
+      auto* parent = expressionStack[expressionStack.size() - i];
       if (Properties::getZeroExtValue(parent) == curr) {
         auto bits = Properties::getZeroExtBits(parent);
         if (usage.unsignedUsages == 0) {
@@ -74,17 +81,14 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
           usage.unsignedBits = 0;
         }
         usage.unsignedUsages++;
-      } else if (expressionStack.size() >= 3) {
-        auto* grandparent = expressionStack[expressionStack.size() - 3];
-        if (Properties::getSignExtValue(grandparent) == curr) {
-          auto bits = Properties::getSignExtBits(grandparent);
-          if (usage.signedUsages == 0) {
-            usage.signedBits = bits;
-          } else if (usage.signedBits != bits) {
-            usage.signedBits = 0;
-          }
-          usage.signedUsages++;
+      } else if (Properties::getSignExtValue(grandparent) == curr) {
+        auto bits = Properties::getSignExtBits(grandparent);
+        if (usage.signedUsages == 0) {
+          usage.signedBits = bits;
+        } else if (usage.signedBits != bits) {
+          usage.signedBits = 0;
         }
+        usage.signedUsages++;
       }
     }
   }
