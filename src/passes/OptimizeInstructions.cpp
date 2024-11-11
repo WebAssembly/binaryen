@@ -1006,6 +1006,15 @@ struct OptimizeInstructions
       }
     }
 
+    // Simple sign extends can be removed if the value is already sign-extended.
+    if ((curr->op == ExtendS8Int32 && isSignExted(curr->value, 8)) ||
+        (curr->op == ExtendS16Int32 && isSignExted(curr->value, 16)) ||
+        (curr->op == ExtendS8Int64 && isSignExted(curr->value, 8)) ||
+        (curr->op == ExtendS16Int64 && isSignExted(curr->value, 16)) ||
+        (curr->op == ExtendS32Int64 && isSignExted(curr->value, 32))) {
+      return replaceCurrent(curr->value);
+    }
+
     if (Abstract::hasAnyReinterpret(curr->op)) {
       // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
       // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
