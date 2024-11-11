@@ -380,6 +380,39 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
+  void visitContNew(ContNew* curr) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
+  }
+  void visitContBind(ContBind* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(
+          curr, Type(curr->sourceType, Nullable)) ||
+        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
+  }
+  void visitResume(Resume* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(
+          curr, Type(curr->contType, Nullable)) ||
+        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
+  }
+  void visitResumeThrow(ResumeThrow* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(
+          curr, Type(curr->contType, Nullable)) ||
+        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
+  }
+  void visitStackSwitch(StackSwitch* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(
+          curr, Type(curr->contType, Nullable)) ||
+        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
+  }
 
   // Module-level visitors
   void handleSignature(HeapType curr, Name name = Name());

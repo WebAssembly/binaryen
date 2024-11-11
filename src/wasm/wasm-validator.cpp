@@ -3485,10 +3485,12 @@ void FunctionValidator::visitContNew(ContNew* curr) {
                curr,
                "cont.new requires stack-switching [--enable-stack-switching]");
 
-  shouldBeTrue((curr->type.isContinuation() &&
-                curr->type.getHeapType().getContinuation().type.isSignature()),
-               curr,
-               "invalid type in ContNew expression");
+  shouldBeTrue(
+    (curr->type.isContinuation() &&
+     curr->type.getHeapType().getContinuation().type.isSignature()) ||
+      curr->type == Type::unreachable,
+    curr,
+    "invalid type in ContNew expression");
 }
 
 void FunctionValidator::visitContBind(ContBind* curr) {
@@ -3498,14 +3500,17 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                "cont.bind requires stack-switching [--enable-stack-switching]");
 
   shouldBeTrue((curr->sourceType.isContinuation() &&
-                curr->sourceType.getContinuation().type.isSignature()),
+                curr->sourceType.getContinuation().type.isSignature()) ||
+                 Type(curr->sourceType, Nullable) == Type::unreachable,
                curr,
                "invalid first type in ContBind expression");
 
-  shouldBeTrue((curr->type.isContinuation() &&
-                curr->type.getHeapType().getContinuation().type.isSignature()),
-               curr,
-               "invalid second type in ContBind expression");
+  shouldBeTrue(
+    (curr->type.isContinuation() &&
+     curr->type.getHeapType().getContinuation().type.isSignature()) ||
+      curr->type == Type::unreachable,
+    curr,
+    "invalid second type in ContBind expression");
 }
 
 void FunctionValidator::visitSuspend(Suspend* curr) {

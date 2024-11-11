@@ -21,13 +21,27 @@
 
  ;; CHECK-TEXT:      (elem declare func $g)
 
- ;; CHECK-TEXT:      (func $g (type $ft) (param $0 i32) (result i32)
- ;; CHECK-TEXT-NEXT:  (i32.const 123)
+ ;; CHECK-TEXT:      (func $f (type $2) (result (ref $ct))
+ ;; CHECK-TEXT-NEXT:  (block ;; (replaces unreachable ContNew we can't emit)
+ ;; CHECK-TEXT-NEXT:   (drop
+ ;; CHECK-TEXT-NEXT:    (unreachable)
+ ;; CHECK-TEXT-NEXT:   )
+ ;; CHECK-TEXT-NEXT:   (unreachable)
+ ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (type $2 (func (result (ref $ct))))
 
  ;; CHECK-BIN:      (elem declare func $g)
 
+ ;; CHECK-BIN:      (func $f (type $2) (result (ref $ct))
+ ;; CHECK-BIN-NEXT:  (unreachable)
+ ;; CHECK-BIN-NEXT: )
+ (func $f (result (ref $ct))
+   (cont.new $ct (unreachable)))
+
+ ;; CHECK-TEXT:      (func $g (type $ft) (param $0 i32) (result i32)
+ ;; CHECK-TEXT-NEXT:  (i32.const 123)
+ ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (func $g (type $ft) (param $0 i32) (result i32)
  ;; CHECK-BIN-NEXT:  (i32.const 123)
  ;; CHECK-BIN-NEXT: )
@@ -40,7 +54,7 @@
 
  ;; CHECK-BIN-NODEBUG:      (type $2 (func (result (ref $1))))
 
- ;; CHECK-BIN-NODEBUG:      (elem declare func $0)
+ ;; CHECK-BIN-NODEBUG:      (elem declare func $1)
  (elem declare func $g)
 
  ;; CHECK-TEXT:      (func $h (type $2) (result (ref $ct))
@@ -58,12 +72,16 @@
  )
 
 )
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (result (ref $1))
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $1 (type $0) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $2) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.new $1
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
