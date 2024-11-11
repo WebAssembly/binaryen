@@ -2,8 +2,28 @@
 ;; RUN: wasm-opt %s --pick-load-signs -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
 
+ ;; CHECK:      (func $load (type $0) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (block $label (result i32)
+ ;; CHECK-NEXT:   (local.set $temp
+ ;; CHECK-NEXT:    (i32.load8_u
+ ;; CHECK-NEXT:     (i32.const 22)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.extend8_s
+ ;; CHECK-NEXT:     (br_if $label
+ ;; CHECK-NEXT:      (local.get $temp)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $load (result i32)
   (local $temp i32)
   ;; The load here is unsigned, while the value in the local is used in two
