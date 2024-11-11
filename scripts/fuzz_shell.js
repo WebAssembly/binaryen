@@ -25,8 +25,12 @@ if (typeof process === 'object' && typeof require === 'function') {
   };
 }
 
-// We are given the binary to run as a parameter.
-var binary = readBinary(argv[0]);
+// The binary to be run. This may be set already (by code that runs before this
+// script), and if not, we get the filename from argv.
+var binary;
+if (!binary) {
+  binary = readBinary(argv[0]);
+}
 
 // Normally we call all the exports of the given wasm file. But, if we are
 // passed a final parameter in the form of "exports:X,Y,Z" then we call
