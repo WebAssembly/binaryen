@@ -81,8 +81,8 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
           usage.unsignedBits = 0;
         }
         usage.unsignedUsages++;
-      } else if (Properties::getSignExtValue(grandparent) == curr) {
-        auto bits = Properties::getSignExtBits(grandparent);
+      } else if (Properties::getSignExtValue(parent) == curr) {
+        auto bits = Properties::getSignExtBits(parent);
         if (usage.signedUsages == 0) {
           usage.signedBits = bits;
         } else if (usage.signedBits != bits) {

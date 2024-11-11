@@ -51,7 +51,7 @@
  ;; CHECK:      (func $load-valid (type $1)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (i32.load8_u
+ ;; CHECK-NEXT:   (i32.load8_s
  ;; CHECK-NEXT:    (i32.const 22)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
