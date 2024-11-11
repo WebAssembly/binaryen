@@ -20,10 +20,11 @@
 
 namespace wasm {
 
+//
 // Adjust load signedness based on usage. If a load only has uses that sign or
 // unsign it anyhow, then it could be either, and picking the popular one can
-// help remove the most sign/unsign operations
-// unsigned, then it could be either
+// help remove the most sign/unsign operations.
+//
 
 struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   bool isFunctionParallel() override { return true; }
@@ -65,7 +66,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
     usage.totalUsages++;
     if (expressionStack.size() >= 2) {
       auto* parent = expressionStack[expressionStack.size() - 2];
-      if (Properties::getZeroExtValue(parent)) {
+      if (Properties::getZeroExtValue(parent) == curr) {
         auto bits = Properties::getZeroExtBits(parent);
         if (usage.unsignedUsages == 0) {
           usage.unsignedBits = bits;
@@ -75,7 +76,7 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
         usage.unsignedUsages++;
       } else if (expressionStack.size() >= 3) {
         auto* grandparent = expressionStack[expressionStack.size() - 3];
-        if (Properties::getSignExtValue(grandparent)) {
+        if (Properties::getSignExtValue(grandparent) == curr) {
           auto bits = Properties::getSignExtBits(grandparent);
           if (usage.signedUsages == 0) {
             usage.signedBits = bits;
