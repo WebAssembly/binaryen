@@ -312,6 +312,11 @@ struct HeapStoreOptimization
     // We may branch, so do an analysis using a LocalGraph. We will check
     // whether it is valid to move the local.set to where the struct.set is, so
     // we provide StructSet as the query class.
+    //
+    // It is valid to reuse the LocalGraph many times because the optimization
+    // that we do in this pass does not generate new, dangerous control flow. We
+    // only optimize if moving a LocalSet is valid, and that does not invalidate
+    // any other one.
     if (!localGraph) {
       localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
     }
