@@ -1286,7 +1286,7 @@
   ;; CHECK-NEXT: )
   (func $in-if-arm-yes (param $x i32) (param $y i32) (result i32)
     (local $ref (ref null $struct))
-    ;; As before, but the struct.set at the end is removed, so we can optimize.
+    ;; As before, but the struct.get at the end is removed, so we can optimize.
     (if
       (local.get $x)
       (then
@@ -1307,7 +1307,7 @@
         )
       )
     )
-    (i32.const 1337)
+    (i32.const 1337) ;; this changed
   )
 
   ;; CHECK:      (func $control-flow-in-set-value-sequence (type $4) (result i32)
