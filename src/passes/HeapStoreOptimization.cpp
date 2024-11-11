@@ -250,7 +250,7 @@ struct HeapStoreOptimization
 
     // We must also be careful of branches out from the value that skip the
     // local.set, see below.
-    if (canSkipLocalSet(new_, set, localSet, setValueEffects)) {
+    if (canSkipLocalSet(set, setValueEffects, localSet)) {
       return false;
     }
 
@@ -301,10 +301,9 @@ struct HeapStoreOptimization
   // We are given a struct.set, the computed effects of its value (the caller
   // already has those, so this is an optimization to avoid recomputation), and
   // the local.set.
-  bool canSkipLocalSet(StructNew* new_, // XXX do we use these all?
-                       StructSet* set,
-                       LocalSet* localSet,
-                       const EffectAnalyzer& setValueEffects) {
+  bool canSkipLocalSet(StructSet* set,
+                       const EffectAnalyzer& setValueEffects,
+                       LocalSet* localSet) {
     // To detect the above problem, consider this code in more detail, where the
     // value being set is a br_if, which can branch:
     //
