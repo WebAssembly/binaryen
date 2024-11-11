@@ -535,7 +535,7 @@ void TranslateToFuzzReader::finalizeMemory() {
           // TODO: It would be better to avoid segment overlap so that
           //       MemoryPacking can run.
           segment->offset =
-            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
@@ -579,7 +579,7 @@ void TranslateToFuzzReader::finalizeTable() {
             assert(!wasm.getGlobal(get->name)->imported());
             // TODO: the segments must not overlap...
             segment->offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+              builder.makeConst(Literal::makeFromInt32(0, table->addressType));
           }
         }
         Address maxOffset = segment->data.size();
