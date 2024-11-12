@@ -55,6 +55,13 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
       wasm, read_file<std::vector<char>>(filename, Flags::Binary)) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
+  // Pick random passes to further shape the wasm. This is similar to how we
+  // pick random passes in fuzz_opt.py, but the goal there is to find problems
+  // in the passes, while the goal here is more to shape the wasm, so that
+  // translate-to-fuzz emits interesting outputs (the latter is important for
+  // things like ClusterFuzz, where we are using Binaryen to fuzz other things
+  // than itself). As a result, the list of passes here is different from
+  // fuzz_opt.py.
   while (options.passes.size() < 20 && !random.finished() && !oneIn(3)) {
     switch (upTo(32)) {
       case 0:
@@ -160,8 +167,12 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   if (oneIn(2)) {
     options.passOptions.shrinkLevel = upTo(4);
   }
+  // TODO: if not already closed world because of a pass (add those), maybe add
   std::cout << "opt level: " << options.passOptions.optimizeLevel << '\n';
   std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
+  // TODO: We could in theory run some function-level passes on particular
+  //       functions, but then we'd need to do this after generation, not
+  //       before (and random data no longer remains then).
 }
 
 void TranslateToFuzzReader::build() {

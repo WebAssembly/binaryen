@@ -73,6 +73,7 @@ FUZZER_ARGS = [
     # as noted in fuzz_opt.py.
     '-all',
     '--disable-shared-everything',
+    # TODO --fuzz-passes (half the time?)
 ]
 
 # Returns the file name for fuzz or flags files.
