@@ -111,9 +111,9 @@ def main(argv):
         input_data_file_path = os.path.join(output_dir, '%d.input' % i)
         wasm_file_path = os.path.join(output_dir, '%d.wasm' % i)
 
-        # wasm-opt may fail to run in rare cases (when the fuzzer emits something it
-        # detects as invalid. Just try again in such a case.
-        while True:
+        # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
+        # detects as invalid). Just try again in such a case.
+        for attempt in range(0, 100):
             # Generate random data.
             random_size = random.SystemRandom().randint(1, MAX_RANDOM_SIZE)
             with open(input_data_file_path, 'wb') as file:
@@ -128,6 +128,11 @@ def main(argv):
                 subprocess.call(cmd)
             except subprocess.CalledProcessError:
                 # Try again.
+                print('(oops, retrying wasm-opt)')
+                attempt += 1
+                if attempt == 99:
+                    # Something is very wrong!
+                    raise
                 continue
             # Success, leave the loop.
             break
