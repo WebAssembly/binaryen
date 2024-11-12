@@ -79,7 +79,35 @@
     )
   )
 
-  ;; CHECK:      (func $i32-local-i16-bad (type $0)
+  ;; CHECK:      (func $i32-local-i16-mismatch-bad (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load16_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.extend8_s
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i32-local-i16-mismatch-bad
+    ;; As above with in i8/i16 mismatch. We do not optimize.
+    (local $temp i32)
+    (local.set $temp
+      (i32.load16_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i32.extend8_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i32-local-i16-mismatch-good (type $0)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (i32.load8_s
@@ -87,13 +115,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.extend16_s
-  ;; CHECK-NEXT:    (local.get $temp)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $i32-local-i16-bad
-    ;; As above with in i8/i16 mismatch. We do not optimize.
+  (func $i32-local-i16-mismatch-good
+    ;; As above with in i8/i16 mismatch, but in the direction we can handle.
     (local $temp i32)
     (local.set $temp
       (i32.load8_s
@@ -178,6 +204,162 @@
     )
     (drop
       (i64.extend32_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i64-mismatch-good (type $0)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-mismatch-good
+    (local $temp i64)
+    (local.set $temp
+      (i64.load8_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i64.extend16_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i64-mismatch-good2 (type $0)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.load8_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-mismatch-good2
+    (local $temp i64)
+    (local.set $temp
+      (i64.load8_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i64.extend32_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i64-mismatch-good3 (type $0)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-mismatch-good3
+    (local $temp i64)
+    (local.set $temp
+      (i64.load16_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i64.extend32_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i64-mismatch-bad (type $0)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.load16_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend8_s
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-mismatch-bad
+    (local $temp i64)
+    (local.set $temp
+      (i64.load16_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i64.extend8_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i64-mismatch-bad2 (type $0)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend8_s
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-mismatch-bad2
+    (local $temp i64)
+    (local.set $temp
+      (i64.load32_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i64.extend8_s
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $i64-mismatch-bad3 (type $0)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.load32_s
+  ;; CHECK-NEXT:    (i32.const 22)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.extend16_s
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $i64-mismatch-bad3
+    (local $temp i64)
+    (local.set $temp
+      (i64.load32_s
+        (i32.const 22)
+      )
+    )
+    (drop
+      (i64.extend16_s
         (local.get $temp)
       )
     )
