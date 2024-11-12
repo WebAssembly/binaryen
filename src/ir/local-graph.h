@@ -178,7 +178,11 @@ private:
 struct LocalGraphFlower;
 
 struct LazyLocalGraph : public LocalGraphBase {
-  LazyLocalGraph(Function* func, Module* module = nullptr);
+  // We optionally receive an expression class to consider relevant for queries,
+  // see below. (Only expressions of this class can be queried later.)
+  LazyLocalGraph(Function* func,
+                 Module* module = nullptr,
+                 std::optional<Expression::Id> queryClass = std::nullopt);
   ~LazyLocalGraph();
 
   // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
@@ -228,7 +232,39 @@ struct LazyLocalGraph : public LocalGraphBase {
     return *locations;
   }
 
+  // Query whether it is valid to move a LocalSet to a new position, that is,
+  // that moving it will not alter observable behavior. That means that no
+  // Localget is able to observe a different value than before. This returns the
+  // set of LocalGets that may do so, that is, the gets for which we detected a
+  // problem, hence if the set is empty, the set is valid to move.
+  //
+  // For example:
+  //
+  //  1. set
+  //  2. get
+  //  3. call
+  //  4. get
+  //
+  // If we move the set to the call, then the get on line 2 could observe a
+  // different value (the pre-existing value in that local, before line 1), and
+  // we'd return that get here.
+  //
+  // |to| must be of the class |queryClass| that is defined during construction.
+  // That is, we must decide ahead of time which places we want to query about
+  // moving LocalSets to, and can then issue queries on any of those, in an
+  // efficient manner.
+  //
+  // This assumes that |to| is in a position dominated by |set|, that is we are
+  // moving the set "forward". (In particular, that implies that the new
+  // position will have monotonically *less* influence than before - we don't
+  // need to scan all possible gets of that index in the entire function, we can
+  // look only on the gets influenced by the set, and see how the new position
+  // behaves regarding them.)
+  SetInfluences canMoveSet(LocalSet* set, Expression* to);
+
 private:
+  std::optional<Expression::Id> queryClass;
+
   // These data structures are mutable so that we can memoize.
   mutable GetSetsMap getSetsMap;
 

@@ -47,10 +47,10 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits32(Ctx&);
 template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx>
-Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type indexType);
+Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type addressType);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx>
-Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type indexType);
+Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type addressType);
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 template<typename Ctx> Result<uint32_t> tupleArity(Ctx&);
 
@@ -780,45 +780,46 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
 //  note: the index type 'i32' or 'i64' is already parsed to simplify parsing of
 //  memory abbreviations.
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
-  Type indexType = Type::i32;
+  Type addressType = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
-    indexType = Type::i64;
+    addressType = Type::i64;
   } else {
     ctx.in.takeKeyword("i32"sv);
   }
-  return memtypeContinued(ctx, indexType);
+  return memtypeContinued(ctx, addressType);
 }
 
 template<typename Ctx>
-Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type indexType) {
-  assert(indexType == Type::i32 || indexType == Type::i64);
-  auto limits = indexType == Type::i32 ? limits32(ctx) : limits64(ctx);
+Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
+  assert(addressType == Type::i32 || addressType == Type::i64);
+  auto limits = addressType == Type::i32 ? limits32(ctx) : limits64(ctx);
   CHECK_ERR(limits);
   bool shared = false;
   if (ctx.in.takeKeyword("shared"sv)) {
     shared = true;
   }
-  return ctx.makeMemType(indexType, *limits, shared);
+  return ctx.makeMemType(addressType, *limits, shared);
 }
 
 // tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx& ctx) {
-  Type indexType = Type::i32;
+  Type addressType = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
-    indexType = Type::i64;
+    addressType = Type::i64;
   } else {
     ctx.in.takeKeyword("i32"sv);
   }
-  return tabletypeContinued(ctx, indexType);
+  return tabletypeContinued(ctx, addressType);
 }
 
 template<typename Ctx>
-Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx& ctx, Type indexType) {
-  auto limits = indexType == Type::i32 ? limits32(ctx) : limits64(ctx);
+Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx& ctx,
+                                                    Type addressType) {
+  auto limits = addressType == Type::i32 ? limits32(ctx) : limits64(ctx);
   CHECK_ERR(limits);
   auto type = reftype(ctx);
   CHECK_ERR(type);
-  return ctx.makeTableType(indexType, *limits, *type);
+  return ctx.makeTableType(addressType, *limits, *type);
 }
 
 // globaltype ::= t:valtype               => const t
@@ -3036,9 +3037,9 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  auto indexType = Type::i32;
+  auto addressType = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
-    indexType = Type::i64;
+    addressType = Type::i64;
   } else {
     ctx.in.takeKeyword("i32"sv);
   }
@@ -3077,10 +3078,10 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline elems");
     }
-    ttype = ctx.makeTableType(indexType, ctx.getLimitsFromElems(list), *type);
+    ttype = ctx.makeTableType(addressType, ctx.getLimitsFromElems(list), *type);
     elems = std::move(list);
   } else {
-    auto tabtype = tabletypeContinued(ctx, indexType);
+    auto tabtype = tabletypeContinued(ctx, addressType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
   }
@@ -3119,9 +3120,9 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
 
-  auto indexType = Type::i32;
+  auto addressType = Type::i32;
   if (ctx.in.takeKeyword("i64"sv)) {
-    indexType = Type::i64;
+    addressType = Type::i64;
   } else {
     ctx.in.takeKeyword("i32"sv);
   }
@@ -3137,10 +3138,11 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
-    mtype = ctx.makeMemType(indexType, ctx.getLimitsFromData(*datastr), false);
+    mtype =
+      ctx.makeMemType(addressType, ctx.getLimitsFromData(*datastr), false);
     data = *datastr;
   } else {
-    auto type = memtypeContinued(ctx, indexType);
+    auto type = memtypeContinued(ctx, addressType);
     CHECK_ERR(type);
     mtype = *type;
   }

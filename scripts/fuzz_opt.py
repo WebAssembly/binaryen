@@ -416,8 +416,6 @@ def pick_initial_contents():
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
-        # has not been fuzzed in general yet
-        '--disable-memory64',
         # avoid multivalue for now due to bad interactions with gc non-nullable
         # locals in stacky code. for example, this fails to roundtrip as the
         # tuple code ends up creating stacky binary code that needs to spill
@@ -692,6 +690,8 @@ def run_vm(cmd):
             # (https://github.com/WebAssembly/binaryen/pull/6574)
             'expected (ref stringview_wtf16), got nullref',
             'expected type (ref stringview_wtf16), found ref.null of type nullref',
+            # wasm64 memories have a V8 limit
+            'larger than implementation limit',
         ]
         for issue in known_issues:
             if issue in output:
@@ -766,7 +766,7 @@ class TestCaseHandler:
         self.handle(before_wasm)
         self.handle(after_wasm)
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         return True
 
     def increment_runs(self):
@@ -1167,7 +1167,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(wrapper)
         return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         # TODO: properly handle memory growth. right now the wasm2js handler
         # uses --emscripten which assumes the Memory is created before, and
         # wasm2js.js just starts with a size of 1 and no limit. We should switch
@@ -1175,7 +1175,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
@@ -1228,6 +1228,16 @@ def filter_exports(wasm, output, keep, keep_defaults=True):
 
     # prune the exports
     run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
+
+
+# Check if a wasm file would notice changes to exports. Normally removing an
+# export that is not called, for example, would not be observable, but if the
+# "call-export*" functions are present then such changes can break us.
+def wasm_notices_export_changes(wasm):
+    # we could be more precise here and disassemble the wasm to look for an
+    # actual import with name "call-export*", but looking for the string should
+    # have practically no false positives.
+    return b'call-export' in open(wasm, 'rb').read()
 
 
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
@@ -1323,6 +1333,12 @@ class TrapsNeverHappen(TestCaseHandler):
 
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
+    def can_run_on_wasm(self, wasm):
+        # If the wasm is sensitive to changes in exports then we cannot alter
+        # them, but we must remove trapping exports (see above), so we cannot
+        # run in such a case.
+        return not wasm_notices_export_changes(wasm)
+
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
@@ -1353,6 +1369,12 @@ class CtorEval(TestCaseHandler):
         evalled_wasm_exec = run_bynterp(evalled_wasm, ['--fuzz-exec-before'])
 
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
+
+    def can_run_on_wasm(self, wasm):
+        # ctor-eval modifies exports, because it assumes they are ctors and so
+        # are only called once (so if it evals them away, they can be
+        # removed). If the wasm might notice that, we cannot run.
+        return not wasm_notices_export_changes(wasm)
 
 
 # Tests wasm-merge
@@ -1426,6 +1448,12 @@ class Merge(TestCaseHandler):
         merged_output = merged_output[:len(output)]
 
         compare_between_vms(output, merged_output, 'Merge')
+
+    def can_run_on_wasm(self, wasm):
+        # wasm-merge combines exports, which can alter their indexes and lead to
+        # noticeable differences if the wasm is sensitive to such things, which
+        # prevents us from running.
+        return not wasm_notices_export_changes(wasm)
 
 
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
@@ -1522,7 +1550,7 @@ class Split(TestCaseHandler):
         if not (NANS and optimized):
             compare_between_vms(output, linked_output, 'Split')
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         # to run the split wasm we use JS, that is, JS links the exports of one
         # to the imports of the other, etc. since we run in JS, the wasm must be
         # valid for JS.
@@ -1623,8 +1651,9 @@ def test_one(random_input, given_wasm):
     bytes += wasm_size
     print('post wasm size:', wasm_size)
 
-    # first, find which handlers can even run here
-    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_feature_opts(FEATURE_OPTS)]
+    # First, find which handlers can even run here. Note that we check a.wasm
+    # and not b.wasm (optimizations do not change fuzzability).
+    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_wasm('a.wasm')]
     if len(relevant_handlers) == 0:
         return 0
     # filter by frequency
@@ -1642,7 +1671,7 @@ def test_one(random_input, given_wasm):
         if testcase_handler in used_handlers:
             continue
         used_handlers.add(testcase_handler)
-        assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
+        assert testcase_handler.can_run_on_wasm('a.wasm')
         print('running testcase handler:', testcase_handler.__class__.__name__)
         testcase_handler.increment_runs()
 
