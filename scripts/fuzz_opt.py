@@ -1564,7 +1564,6 @@ class ClusterFuzz(TestCaseHandler):
         # Call run.py(), similarly to how ClusterFuzz does.
         run([sys.executable,
              os.path.join(self.clusterfuzz_dir, 'run.py'),
-             '--input_dir=' + self.clusterfuzz_dir,
              '--output_dir=' + os.getcwd(),
              '--no_of_files=1'])
 

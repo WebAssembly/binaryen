@@ -67,13 +67,12 @@ FUZZER_BINARY_PATH = os.path.join(ROOT_DIR, 'bin', 'wasm-opt')
 JS_SHELL_PATH = os.path.join(ROOT_DIR, 'scripts', 'fuzz_shell.js')
 
 # The arguments we use to wasm-opt to generate wasm files.
-# TODO: Use different combinations of flags like fuzz_opt.py?
 FUZZER_ARGS = [
     '--translate-to-fuzz',
     '--fuzz-passes',
     # Enable all features but disable ones not yet ready for fuzzing. This may
     # be a smaller set than fuzz_opt.py, as that enables a few experimental
-    # flags, while here we just fuzz with --wasm-staging.
+    # flags, while here we just fuzz with d8's --wasm-staging.
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',
