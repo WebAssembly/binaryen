@@ -31,7 +31,8 @@ import subprocess
 import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
-# run V8.
+# run V8. By default we apply all staging flags, but the ClusterFuzz bundler
+# may add more here.
 FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 
 # Maximum size of the random data that we feed into wasm-opt -ttf. This is
@@ -73,7 +74,7 @@ FUZZER_ARGS = [
     # as noted in fuzz_opt.py.
     '-all',
     '--disable-shared-everything',
-    # TODO --fuzz-passes (half the time?)
+    '--fuzz-passes',
 ]
 
 # Returns the file name for fuzz or flags files.

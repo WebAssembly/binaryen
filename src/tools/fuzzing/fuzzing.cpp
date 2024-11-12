@@ -63,15 +63,15 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // than itself). As a result, the list of passes here is different from
   // fuzz_opt.py.
   while (options.passes.size() < 20 && !random.finished() && !oneIn(3)) {
-    switch (upTo(32)) {
+    switch (upTo(42)) {
       case 0:
       case 1:
       case 2:
       case 3:
       case 4: {
-        options.passes.push_back("O");
         options.passOptions.optimizeLevel = upTo(4);
-        options.passOptions.shrinkLevel = upTo(4);
+        options.passOptions.shrinkLevel = upTo(3);
+        options.addDefaultOptPasses();
         break;
       }
       case 5:
@@ -90,7 +90,12 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
         options.passes.push_back("duplicate-function-elimination");
         break;
       case 10:
-        options.passes.push_back("flatten");
+        // Some features do not support flatten yet.
+        if (!wasm.features.hasReferenceTypes() &&
+            !wasm.features.hasExceptionHandling() &&
+            !wasm.features.hasGC()) {
+          options.passes.push_back("flatten");
+        }
         break;
       case 11:
         options.passes.push_back("inlining");
@@ -134,11 +139,9 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 24:
         options.passes.push_back("reorder-locals");
         break;
-      case 25: {
-        options.passes.push_back("flatten");
-        options.passes.push_back("rereloop");
+      case 25:
+        options.passes.push_back("directize");
         break;
-      }
       case 26:
         options.passes.push_back("simplify-locals");
         break;
@@ -157,19 +160,95 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 31:
         options.passes.push_back("vacuum");
         break;
+      case 32:
+        options.passes.push_back("merge-locals");
+        break;
+      case 33:
+        options.passes.push_back("licm");
+        break;
+      case 34:
+        options.passes.push_back("tuple-optimization");
+        break;
+      case 35:
+        options.passes.push_back("rse");
+        break;
+      case 36:
+        options.passes.push_back("monomorphize");
+        break;
+      case 37:
+        options.passes.push_back("monomorphize-always");
+        break;
+      case 38:
+      case 39:
+      case 40:
+      case 41:
+        if (wasm.features.hasGC()) {
+          switch (upTo(xxx)) {
+            case 0:
+              options.passes.push_back("abstract-type-refining");
+              break;
+            case 1:
+              options.passes.push_back("cfp");
+              break;
+            case 2:
+              options.passes.push_back("gsi");
+              break;
+            case 3:
+              options.passes.push_back("gto");
+              break;
+            case 4:
+              options.passes.push_back("heap2local");
+              break;
+            case 5:
+              options.passes.push_back("heap-store-optimization");
+              break;
+            case 6:
+              options.passes.push_back("minimize-rec-groups");
+              break;
+            case 7:
+              options.passes.push_back("remove-unused-types");
+              break;
+            case 8:
+              options.passes.push_back("signature-pruning");
+              break;
+            case 9:
+              options.passes.push_back("signature-refining");
+              break;
+            case 10:
+              options.passes.push_back("type-finalizing");
+              break;
+            case 11:
+              options.passes.push_back("type-refining");
+              break;
+            case 12:
+              options.passes.push_back("type-merging");
+              break;
+            case 13:
+              options.passes.push_back("type-ssa");
+              break;
+            case 14:
+              options.passes.push_back("type-unfinalizing");
+              break;
+            case 15:
+              options.passes.push_back("unsubtyping");
+              break;
+            default:
+              WASM_UNREACHABLE("unexpected value");
+          }
+        }
+        break;
       default:
         WASM_UNREACHABLE("unexpected value");
     }
   }
   if (oneIn(2)) {
+    // We randomize these when we pick -O?, but sometimes do so even without, as
+    // they affect some passes.
     options.passOptions.optimizeLevel = upTo(4);
+    options.passOptions.shrinkLevel = upTo(3);
   }
-  if (oneIn(2)) {
-    options.passOptions.shrinkLevel = upTo(4);
-  }
+
   // TODO: if not already closed world because of a pass (add those), maybe add
-  std::cout << "opt level: " << options.passOptions.optimizeLevel << '\n';
-  std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   // TODO: We could in theory run some function-level passes on particular
   //       functions, but then we'd need to do this after generation, not
   //       before (and random data no longer remains then).
