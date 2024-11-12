@@ -1553,21 +1553,30 @@ class RoundtripText(TestCaseHandler):
 class ClusterFuzz(TestCaseHandler):
     frequency = 1 # XXX reduce
 
-    CLUSTER_FUZZ_RUN_PY = in_binaryen('scripts', 'clusterfuzz', 'run.py')
-
     def __init__(self):
-        # We want to execute run.py() in the same way ClusterFuzz does. That
-        # execution is done from a bundle of run.py + some other files, so we
-        # recreate that bundle here, in a temp dir.
-        self.tempdir = tempfile.TemporaryDirectory()
+        # This will be set up on first use, see below.
+        self.tempdir = None
 
     def handle(self, wasm):
+        self.ensure()
+
         # Call run.py(), similarly to how ClusterFuzz does.
         run([sys.executable,
-             self.CLUSTER_FUZZ_RUN_PY,
+             os.path.join(self.tempdir, 'run.py'),
              '--input_dir=' + self.tempdir,
              '--output_dir=' + self.tempdir,
              '--no_of_files=1'])
+
+    def ensure(self):
+        # The first time we actually run, set things up: make a bundle like the
+        # one ClusterFuzz receives, and unpack it for execution into a temp dir.
+        bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
+        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
+
+        self.tempdir = tempfile.TemporaryDirectory()
+        tar = tarfile.open(bundle, "r:gz")
+        tar.extractall(path=self.tempdir)
+        tar.close()
 
 
 # The global list of all test case handlers
