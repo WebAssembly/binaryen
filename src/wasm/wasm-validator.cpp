@@ -3490,7 +3490,7 @@ void FunctionValidator::visitContNew(ContNew* curr) {
      curr->type.getHeapType().getContinuation().type.isSignature()) ||
       curr->type == Type::unreachable,
     curr,
-    "invalid type in ContNew expression");
+    "cont.new must be annotated with a continuation type");
 }
 
 void FunctionValidator::visitContBind(ContBind* curr) {
@@ -3499,18 +3499,19 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                curr,
                "cont.bind requires stack-switching [--enable-stack-switching]");
 
-  shouldBeTrue((curr->sourceType.isContinuation() &&
-                curr->sourceType.getContinuation().type.isSignature()) ||
-                 Type(curr->sourceType, Nullable) == Type::unreachable,
-               curr,
-               "invalid first type in ContBind expression");
+  shouldBeTrue(
+    (curr->sourceType.isContinuation() &&
+     curr->sourceType.getContinuation().type.isSignature()) ||
+      Type(curr->sourceType, Nullable) == Type::unreachable,
+    curr,
+    "the first type annotation on cont.bind must be a continuation type");
 
   shouldBeTrue(
     (curr->type.isContinuation() &&
      curr->type.getHeapType().getContinuation().type.isSignature()) ||
       curr->type == Type::unreachable,
     curr,
-    "invalid second type in ContBind expression");
+    "the second type annotation on cont.bind must be a continuation type");
 }
 
 void FunctionValidator::visitSuspend(Suspend* curr) {
@@ -3529,12 +3530,13 @@ void FunctionValidator::visitResume(Resume* curr) {
   shouldBeTrue(
     curr->sentTypes.size() == curr->handlerBlocks.size(),
     curr,
-    "sentTypes cache in Resume instruction has not been initialized");
+    "sentTypes cache in resume instruction has not been initialized");
 
   shouldBeTrue((curr->contType.isContinuation() &&
-                curr->contType.getContinuation().type.isSignature()),
+                curr->contType.getContinuation().type.isSignature()) ||
+                 curr->type == Type::unreachable,
                curr,
-               "invalid type in Resume expression");
+               "resume must be annotated with a continuation type");
 }
 
 void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
@@ -3549,12 +3551,18 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
   shouldBeTrue(
     curr->sentTypes.size() == curr->handlerBlocks.size(),
     curr,
-    "sentTypes cache in ResumeThrow instruction has not been initialized");
+    "sentTypes cache in resume_throw instruction has not been initialized");
 
   shouldBeTrue((curr->contType.isContinuation() &&
-                curr->contType.getContinuation().type.isSignature()),
+                curr->contType.getContinuation().type.isSignature()) ||
+                 curr->type == Type::unreachable,
                curr,
-               "invalid type in ResumeThrow expression");
+               "resume_throw must be annotated with a continuation type");
+
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "resume_throw must be annotated with a tag")) {
+    return;
+  }
 }
 
 void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
@@ -3564,9 +3572,15 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
                "switch requires stack-switching [--enable-stack-switching]");
 
   shouldBeTrue((curr->contType.isContinuation() &&
-                curr->contType.getContinuation().type.isSignature()),
+                curr->contType.getContinuation().type.isSignature()) ||
+                 curr->type == Type::unreachable,
                curr,
-               "invalid type in Switch expression");
+               "switch must be annotated with a continuation type");
+
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "switch must be annotated with a tag")) {
+    return;
+  }
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

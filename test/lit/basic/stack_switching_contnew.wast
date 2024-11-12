@@ -19,6 +19,8 @@
 
  ;; CHECK-TEXT:      (type $2 (func (result (ref $ct))))
 
+ ;; CHECK-TEXT:      (type $3 (func (result (ref cont))))
+
  ;; CHECK-TEXT:      (elem declare func $g)
 
  ;; CHECK-TEXT:      (func $f (type $2) (result (ref $ct))
@@ -30,6 +32,8 @@
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (type $2 (func (result (ref $ct))))
+
+ ;; CHECK-BIN:      (type $3 (func (result (ref cont))))
 
  ;; CHECK-BIN:      (elem declare func $g)
 
@@ -54,6 +58,8 @@
 
  ;; CHECK-BIN-NODEBUG:      (type $2 (func (result (ref $1))))
 
+ ;; CHECK-BIN-NODEBUG:      (type $3 (func (result (ref cont))))
+
  ;; CHECK-BIN-NODEBUG:      (elem declare func $1)
  (elem declare func $g)
 
@@ -71,7 +77,22 @@
    (cont.new $ct (ref.func $g))
  )
 
+ (func (result (ref cont))
+   (cont.new $ct (ref.null nofunc)))
+
 )
+;; CHECK-TEXT:      (func $0 (type $3) (result (ref cont))
+;; CHECK-TEXT-NEXT:  (cont.new $ct
+;; CHECK-TEXT-NEXT:   (ref.null nofunc)
+;; CHECK-TEXT-NEXT:  )
+;; CHECK-TEXT-NEXT: )
+
+;; CHECK-BIN:      (func $3 (type $3) (result (ref cont))
+;; CHECK-BIN-NEXT:  (cont.new $ct
+;; CHECK-BIN-NEXT:   (ref.null nofunc)
+;; CHECK-BIN-NEXT:  )
+;; CHECK-BIN-NEXT: )
+
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
@@ -83,5 +104,11 @@
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $3 (type $3) (result (ref cont))
+;; CHECK-BIN-NODEBUG-NEXT:  (cont.new $1
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
