@@ -182,8 +182,9 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 39:
       case 40:
       case 41:
+        // GC specific passes.
         if (wasm.features.hasGC()) {
-          switch (upTo(xxx)) {
+          switch (upTo(16)) {
             case 0:
               options.passes.push_back("abstract-type-refining");
               break;
