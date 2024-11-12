@@ -36,6 +36,7 @@ import subprocess
 import random
 import re
 import sys
+import tarfile
 import tempfile
 import time
 import traceback
@@ -1550,32 +1551,38 @@ class RoundtripText(TestCaseHandler):
 # Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
 # to see that fuzzing that way works properly (it likely won't catch anything
 # the other fuzzers here catch, though it is possible).
+#
+# Note that this is not deterministic like the other fuzzers: it runs run.py
+# like ClusterFuzz does, and that generates its own random data. If a bug is
+# caught here, it must be reduced manually.
 class ClusterFuzz(TestCaseHandler):
     frequency = 1 # XXX reduce
-
-    def __init__(self):
-        # This will be set up on first use, see below.
-        self.tempdir = None
 
     def handle(self, wasm):
         self.ensure()
 
         # Call run.py(), similarly to how ClusterFuzz does.
         run([sys.executable,
-             os.path.join(self.tempdir, 'run.py'),
-             '--input_dir=' + self.tempdir,
-             '--output_dir=' + self.tempdir,
+             os.path.join(self.tempdir.name, 'run.py'),
+             '--input_dir=' + self.tempdir.name,
+             '--output_dir=' + self.tempdir.name,
              '--no_of_files=1'])
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
         # one ClusterFuzz receives, and unpack it for execution into a temp dir.
+        # The temp dir's existence implies we've run already.
+        if hasattr(self, 'tempdir'):
+            return
+
+        # Bundle.
         bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
         run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
+        # Unpack.
         self.tempdir = tempfile.TemporaryDirectory()
         tar = tarfile.open(bundle, "r:gz")
-        tar.extractall(path=self.tempdir)
+        tar.extractall(path=self.tempdir.name)
         tar.close()
 
 
