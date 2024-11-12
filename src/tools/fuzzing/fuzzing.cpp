@@ -184,6 +184,9 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 41:
         // GC specific passes.
         if (wasm.features.hasGC()) {
+          // Most of these depend on closed world, so just set that.
+          options.passOptions.closedWorld = true;
+ 
           switch (upTo(16)) {
             case 0:
               options.passes.push_back("abstract-type-refining");
@@ -242,6 +245,7 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
         WASM_UNREACHABLE("unexpected value");
     }
   }
+
   if (oneIn(2)) {
     // We randomize these when we pick -O?, but sometimes do so even without, as
     // they affect some passes.
@@ -249,8 +253,11 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.shrinkLevel = upTo(3);
   }
 
-  // TODO: if not already closed world because of a pass (add those), maybe add
+  if (!options.passOptions.closedWorld && oneIn(2)) {
+    options.passOptions.closedWorld = true;
+  }
   // TODO: We could in theory run some function-level passes on particular
+
   //       functions, but then we'd need to do this after generation, not
   //       before (and random data no longer remains then).
 }
