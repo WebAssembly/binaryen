@@ -87,11 +87,11 @@ public:
                                                            Nullable),
                                           Address initial = 0,
                                           Address max = Table::kMaxSize,
-                                          Type indexType = Type::i32) {
+                                          Type addressType = Type::i32) {
     auto table = std::make_unique<Table>();
     table->name = name;
     table->type = type;
-    table->indexType = indexType;
+    table->addressType = addressType;
     table->initial = initial;
     table->max = max;
     return table;
@@ -114,13 +114,13 @@ public:
                                             Address initial = 0,
                                             Address max = Memory::kMaxSize32,
                                             bool shared = false,
-                                            Type indexType = Type::i32) {
+                                            Type addressType = Type::i32) {
     auto memory = std::make_unique<Memory>();
     memory->name = name;
     memory->initial = initial;
     memory->max = max;
     memory->shared = shared;
-    memory->indexType = indexType;
+    memory->addressType = addressType;
     return memory;
   }
 
@@ -612,8 +612,8 @@ public:
     ret->finalize();
     return ret;
   }
-  Const* makeConstPtr(uint64_t val, Type indexType) {
-    return makeConst(Literal::makeFromInt64(val, indexType));
+  Const* makeConstPtr(uint64_t val, Type addressType) {
+    return makeConst(Literal::makeFromInt64(val, addressType));
   }
   Binary* makeBinary(BinaryOp op, Expression* left, Expression* right) {
     auto* ret = wasm.allocator.alloc<Binary>();

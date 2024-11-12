@@ -35,10 +35,10 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
       return curr;
     }
     auto mem = getModule()->getMemory(curr->memory);
-    auto indexType = mem->indexType;
+    auto addressType = mem->addressType;
     Builder builder(*getModule());
     assert(curr->type == Type::i32);
-    auto temp = builder.addVar(getFunction(), indexType);
+    auto temp = builder.addVar(getFunction(), addressType);
     Expression* ret;
     if (curr->bytes == 2) {
       ret = builder.makeBinary(
@@ -47,7 +47,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                          false,
                          curr->offset,
                          1,
-                         builder.makeLocalGet(temp, indexType),
+                         builder.makeLocalGet(temp, addressType),
                          Type::i32,
                          curr->memory),
         builder.makeBinary(
@@ -56,7 +56,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                            false,
                            curr->offset + 1,
                            1,
-                           builder.makeLocalGet(temp, indexType),
+                           builder.makeLocalGet(temp, addressType),
                            Type::i32,
                            curr->memory),
           builder.makeConst(int32_t(8))));
@@ -73,7 +73,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              false,
                              curr->offset,
                              1,
-                             builder.makeLocalGet(temp, indexType),
+                             builder.makeLocalGet(temp, addressType),
                              Type::i32,
                              curr->memory),
             builder.makeBinary(
@@ -82,7 +82,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                false,
                                curr->offset + 1,
                                1,
-                               builder.makeLocalGet(temp, indexType),
+                               builder.makeLocalGet(temp, addressType),
                                Type::i32,
                                curr->memory),
               builder.makeConst(int32_t(8)))),
@@ -94,7 +94,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                false,
                                curr->offset + 2,
                                1,
-                               builder.makeLocalGet(temp, indexType),
+                               builder.makeLocalGet(temp, addressType),
                                Type::i32,
                                curr->memory),
               builder.makeConst(int32_t(16))),
@@ -104,7 +104,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                false,
                                curr->offset + 3,
                                1,
-                               builder.makeLocalGet(temp, indexType),
+                               builder.makeLocalGet(temp, addressType),
                                Type::i32,
                                curr->memory),
               builder.makeConst(int32_t(24)))));
@@ -115,7 +115,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                            false,
                            curr->offset,
                            2,
-                           builder.makeLocalGet(temp, indexType),
+                           builder.makeLocalGet(temp, addressType),
                            Type::i32,
                            curr->memory),
           builder.makeBinary(
@@ -124,7 +124,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                              false,
                              curr->offset + 2,
                              2,
-                             builder.makeLocalGet(temp, indexType),
+                             builder.makeLocalGet(temp, addressType),
                              Type::i32,
                              curr->memory),
             builder.makeConst(int32_t(16))));
@@ -145,8 +145,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     Builder builder(*getModule());
     assert(curr->value->type == Type::i32);
     auto mem = getModule()->getMemory(curr->memory);
-    auto indexType = mem->indexType;
-    auto tempPtr = builder.addVar(getFunction(), indexType);
+    auto addressType = mem->addressType;
+    auto tempPtr = builder.addVar(getFunction(), addressType);
     auto tempValue = builder.addVar(getFunction(), Type::i32);
     auto* block =
       builder.makeBlock({builder.makeLocalSet(tempPtr, curr->ptr),
@@ -156,7 +156,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         builder.makeStore(1,
                           curr->offset,
                           1,
-                          builder.makeLocalGet(tempPtr, indexType),
+                          builder.makeLocalGet(tempPtr, addressType),
                           builder.makeLocalGet(tempValue, Type::i32),
                           Type::i32,
                           curr->memory));
@@ -164,7 +164,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         1,
         curr->offset + 1,
         1,
-        builder.makeLocalGet(tempPtr, indexType),
+        builder.makeLocalGet(tempPtr, addressType),
         builder.makeBinary(ShrUInt32,
                            builder.makeLocalGet(tempValue, Type::i32),
                            builder.makeConst(int32_t(8))),
@@ -176,7 +176,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeStore(1,
                             curr->offset,
                             1,
-                            builder.makeLocalGet(tempPtr, indexType),
+                            builder.makeLocalGet(tempPtr, addressType),
                             builder.makeLocalGet(tempValue, Type::i32),
                             Type::i32,
                             curr->memory));
@@ -184,7 +184,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           1,
           curr->offset + 1,
           1,
-          builder.makeLocalGet(tempPtr, indexType),
+          builder.makeLocalGet(tempPtr, addressType),
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(8))),
@@ -194,7 +194,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           1,
           curr->offset + 2,
           1,
-          builder.makeLocalGet(tempPtr, indexType),
+          builder.makeLocalGet(tempPtr, addressType),
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(16))),
@@ -204,7 +204,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           1,
           curr->offset + 3,
           1,
-          builder.makeLocalGet(tempPtr, indexType),
+          builder.makeLocalGet(tempPtr, addressType),
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(24))),
@@ -215,7 +215,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeStore(2,
                             curr->offset,
                             2,
-                            builder.makeLocalGet(tempPtr, indexType),
+                            builder.makeLocalGet(tempPtr, addressType),
                             builder.makeLocalGet(tempValue, Type::i32),
                             Type::i32,
                             curr->memory));
@@ -223,7 +223,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           2,
           curr->offset + 2,
           2,
-          builder.makeLocalGet(tempPtr, indexType),
+          builder.makeLocalGet(tempPtr, addressType),
           builder.makeBinary(ShrUInt32,
                              builder.makeLocalGet(tempValue, Type::i32),
                              builder.makeConst(int32_t(16))),
@@ -275,15 +275,15 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         }
         // Load two 32-bit pieces, and combine them.
         auto mem = getModule()->getMemory(curr->memory);
-        auto indexType = mem->indexType;
-        auto temp = builder.addVar(getFunction(), indexType);
+        auto addressType = mem->addressType;
+        auto temp = builder.addVar(getFunction(), addressType);
         auto* set = builder.makeLocalSet(temp, curr->ptr);
         Expression* low =
           lowerLoadI32(builder.makeLoad(4,
                                         false,
                                         curr->offset,
                                         curr->align,
-                                        builder.makeLocalGet(temp, indexType),
+                                        builder.makeLocalGet(temp, addressType),
                                         Type::i32,
                                         curr->memory));
         low = builder.makeUnary(ExtendUInt32, low);
@@ -296,7 +296,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
                                         false,
                                         curr->offset + 4,
                                         curr->align,
-                                        builder.makeLocalGet(temp, indexType),
+                                        builder.makeLocalGet(temp, addressType),
                                         Type::i32,
                                         curr->memory));
         high = builder.makeUnary(ExtendUInt32, high);
@@ -357,8 +357,8 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
         }
         // Store as two 32-bit pieces.
         auto mem = getModule()->getMemory(curr->memory);
-        auto indexType = mem->indexType;
-        auto tempPtr = builder.addVar(getFunction(), indexType);
+        auto addressType = mem->addressType;
+        auto tempPtr = builder.addVar(getFunction(), addressType);
         auto* setPtr = builder.makeLocalSet(tempPtr, curr->ptr);
         auto tempValue = builder.addVar(getFunction(), Type::i64);
         auto* setValue = builder.makeLocalSet(tempValue, value);
@@ -368,7 +368,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeStore(4,
                             curr->offset,
                             curr->align,
-                            builder.makeLocalGet(tempPtr, indexType),
+                            builder.makeLocalGet(tempPtr, addressType),
                             low,
                             Type::i32,
                             curr->memory));
@@ -385,7 +385,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
           builder.makeStore(4,
                             curr->offset + 4,
                             curr->align,
-                            builder.makeLocalGet(tempPtr, indexType),
+                            builder.makeLocalGet(tempPtr, addressType),
                             high,
                             Type::i32,
                             curr->memory));

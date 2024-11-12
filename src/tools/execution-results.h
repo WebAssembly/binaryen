@@ -40,10 +40,15 @@ private:
 
   // The name of the table exported by the name 'table.' Imports access it.
   Name exportedTable;
+  Module& wasm;
+
+  // The ModuleRunner and this ExternalInterface end up needing links both ways,
+  // so we cannot init this in the constructor.
+  ModuleRunner* instance = nullptr;
 
 public:
   LoggingExternalInterface(Loggings& loggings, Module& wasm)
-    : loggings(loggings) {
+    : loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = exp->value;
@@ -99,6 +104,18 @@ public:
         }
         tableStore(exportedTable, index, arguments[1]);
         return {};
+      } else if (import->base == "call-export") {
+        callExport(arguments[0].geti32());
+        // Return nothing. If we wanted to return a value we'd need to have
+        // multiple such functions, one for each signature.
+        return {};
+      } else if (import->base == "call-export-catch") {
+        try {
+          callExport(arguments[0].geti32());
+          return {Literal(int32_t(0))};
+        } catch (const WasmException& e) {
+          return {Literal(int32_t(1))};
+        }
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
@@ -127,6 +144,35 @@ public:
     auto payload = std::make_shared<ExnData>("__private", Literals{});
     throwException(WasmException{Literal(payload)});
   }
+
+  Literals callExport(Index index) {
+    if (index >= wasm.exports.size()) {
+      // No export.
+      throwEmptyException();
+    }
+    auto& exp = wasm.exports[index];
+    if (exp->kind != ExternalKind::Function) {
+      // No callable export.
+      throwEmptyException();
+    }
+    auto* func = wasm.getFunction(exp->value);
+
+    // TODO JS traps on some types on the boundary, which we should behave the
+    // same on. For now, this is not needed because the fuzzer will prune all
+    // non-JS-compatible exports anyhow.
+
+    // Send default values as arguments, or trap if we need anything else.
+    Literals arguments;
+    for (const auto& param : func->getParams()) {
+      if (!param.isDefaultable()) {
+        throwEmptyException();
+      }
+      arguments.push_back(Literal::makeZero(param));
+    }
+    return instance->callFunction(func->name, arguments);
+  }
+
+  void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
 };
 
 // gets execution results from a wasm module. this is useful for fuzzing
@@ -148,6 +194,7 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      interface.setModuleRunner(&instance);
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
@@ -298,6 +345,7 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      interface.setModuleRunner(&instance);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).
