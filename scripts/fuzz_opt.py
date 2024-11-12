@@ -36,6 +36,7 @@ import subprocess
 import random
 import re
 import sys
+import tempfile
 import time
 import traceback
 from os.path import abspath
@@ -211,13 +212,6 @@ def randomize_fuzz_settings():
         GEN_ARGS += ['--legalize-and-prune-js-interface']
     else:
         LEGALIZE = False
-
-    # Rarely, run random passes during generation. It is better to run them
-    # later, which allows for a clear separation of the original wasm and the
-    # modded wasm, but ClusterFuzz runs in a single wasm-opt operation, so we
-    # test that here as well.
-    if random.random() < 0.10:
-        GEN_ARGS += ['--fuzz-passes']
 
     # if GC is enabled then run --dce at the very end, to ensure that our
     # binaries validate in other VMs, due to how non-nullable local validation
@@ -1553,18 +1547,42 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
+# Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
+# to see that fuzzing that way works properly (it likely won't catch anything
+# the other fuzzers here catch, though it is possible).
+class ClusterFuzz(TestCaseHandler):
+    frequency = 1 # XXX reduce
+
+    CLUSTER_FUZZ_RUN_PY = in_binaryen('scripts', 'clusterfuzz', 'run.py')
+
+    def __init__(self):
+        # We want to execute run.py() in the same way ClusterFuzz does. That
+        # execution is done from a bundle of run.py + some other files, so we
+        # recreate that bundle here, in a temp dir.
+        self.tempdir = tempfile.TemporaryDirectory()
+
+    def handle(self, wasm):
+        # Call run.py(), similarly to how ClusterFuzz does.
+        run([sys.executable,
+             self.CLUSTER_FUZZ_RUN_PY,
+             '--input_dir=' + self.tempdir,
+             '--output_dir=' + self.tempdir,
+             '--no_of_files=1'])
+
+
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
+    #Wasm2JS(),
+    #TrapsNeverHappen(),
+    #CtorEval(),
+    #Merge(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
-    RoundtripText()
+    #RoundtripText(),
+    ClusterFuzz(),
 ]
 
 

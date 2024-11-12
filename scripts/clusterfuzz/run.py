@@ -122,10 +122,9 @@ def main(argv):
                 file.write(os.urandom(random_size))
 
             # Generate wasm from the random data.
-            cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS + [
-                ['-o', wasm_file_path,
-                input_data_file_path
-            ]
+            cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
+            cmd += ['-o', wasm_file_path, input_data_file_path]
+
             try:
                 subprocess.call(cmd)
             except subprocess.CalledProcessError:
