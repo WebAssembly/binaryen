@@ -1584,7 +1584,11 @@ class ClusterFuzz(TestCaseHandler):
         # Run the fuzz_shell.js from the ClusterFuzz bundle, *not* the usual
         # one.
         cmd.append(os.path.abspath(fuzz_file))
-        # No wasm file needs to be provided: it is hardcoded into the JS
+        # No wasm file needs to be provided: it is hardcoded into the JS. Note
+        # that we use run_vm(), which will ignore known issues in our output and
+        # in V8. Those issues may cause V8 to e.g. reject a binary we emit that
+        # is invalid, but that should not be a problem for ClusterFuzz (it isn't
+        # a crash).
         run_vm(cmd)
 
     def ensure(self):
