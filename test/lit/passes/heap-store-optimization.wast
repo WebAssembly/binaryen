@@ -1240,7 +1240,7 @@
       (local.get $x)
       (then
         (block $out
-          ;; We cannot optimize here, as the struct.get outside of the loop can
+          ;; We cannot optimize here, as the struct.get outside of the if can
           ;; read different state if the br_if happens.
           (struct.set $struct 0
             (local.tee $ref
