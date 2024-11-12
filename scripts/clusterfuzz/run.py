@@ -38,7 +38,7 @@ FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 # smaller than fuzz_opt.py's INPUT_SIZE_MAX because that script is tuned for
 # fuzzing large wasm files (to reduce the overhead we have of launching many
 # processes per file), which is less of an issue on ClusterFuzz.
-MAX_DATA_FILE_SIZE = 10 * 1024
+MAX_RANDOM_SIZE = 10 * 1024
 
 # The prefix for fuzz files.
 FUZZ_FILENAME_PREFIX = 'fuzz-'
@@ -65,6 +65,15 @@ FUZZER_BINARY_PATH = os.path.join(ROOT_DIR, 'bin', 'wasm-opt')
 # testcase.
 JS_SHELL_PATH = os.path.join(ROOT_DIR, 'scripts', 'fuzz_shell.js')
 
+# The arguments we use to wasm-opt to generate wasm files.
+# TODO: Use different combinations of flags like fuzz_opt.py?
+FUZZER_ARGS = [
+    '--translate-to-fuzz',
+    # Enable all features but shared-everything, which is not compatible with V8,
+    # as noted in fuzz_opt.py.
+    '-all',
+    '--disable-shared-everything',
+]
 
 # Returns the file name for fuzz or flags files.
 def get_file_name(prefix, index):
@@ -80,63 +89,73 @@ def get_js_file_contents(wasm_contents):
 
     # Prepend the wasm contents, so they are used (rather than the normal
     # mechanism where the wasm file's name is provided in argv).
+    wasm_contents = ','.join([str(c) for c in wasm_contents])
     js = f'var binary = {wasm_contents};\n\n' + js
     return js
 
 
 def main(argv):
-  """Process arguments and start the fuzzer."""
-  output_directory = '.'
-  tests_count = 100
+    # Prepare to emit a fixed number of outputs.
+    output_dir = '.'
+    num = 100
 
-  expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=']
-  optlist, _ = getopt.getopt(argv[1:], '', expected_flags)
-  for option, value in optlist:
-    if option == '--output_dir':
-      output_directory = value
-    elif option == '--no_of_files':
-      tests_count = int(value)
+    expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=']
+    optlist, _ = getopt.getopt(argv[1:], '', expected_flags)
+    for option, value in optlist:
+        if option == '--output_dir':
+            output_dir = value
+        elif option == '--no_of_files':
+            num = int(value)
 
-  fuzzer_binary_path = FUZZER_BINARY_PATH
+    for i in range(1, num + 1):
+        input_data_file_path = os.path.join(output_dir, '%d.input' % i)
+        wasm_file_path = os.path.join(output_dir, '%d.wasm' % i)
 
-  for i in range(1, tests_count + 1):
-    input_data_file_path = os.path.join(output_directory, '%d.input' % i)
-    wasm_file_path = os.path.join(output_directory, '%d.wasm' % i)
+        # wasm-opt may fail to run in rare cases (when the fuzzer emits something it
+        # detects as invalid. Just try again in such a case.
+        while True:
+            # Generate random data.
+            random_size = random.SystemRandom().randint(1, MAX_RANDOM_SIZE)
+            with open(input_data_file_path, 'wb') as file:
+                file.write(os.urandom(random_size))
 
-    data_file_size = random.SystemRandom().randint(1, MAX_DATA_FILE_SIZE)
-    with open(input_data_file_path, 'wb') as file:
-      file.write(os.urandom(data_file_size))
+            # Generate wasm from the random data.
+            cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS + [
+                ['-o', wasm_file_path,
+                input_data_file_path
+            ]
+            try:
+                subprocess.call(cmd)
+            except subprocess.CalledProcessError:
+                # Try again.
+                continue
+            # Success, leave the loop.
+            break
 
-    # enable all but shared-mem?
-    subprocess.call([
-        fuzzer_binary_path, '--translate-to-fuzz', '--fuzz-passes', '--output',
-        wasm_file_path, input_data_file_path
-    ])
+        # Generate a testcase from the wasm
+        with open(wasm_file_path, 'rb') as file:
+            wasm_contents = file.read()
+        testcase_file_path = os.path.join(output_dir,
+                                          get_file_name(FUZZ_FILENAME_PREFIX, i))
+        js_file_contents = get_js_file_contents(wasm_contents)
+        with open(testcase_file_path, 'w') as file:
+            file.write(js_file_contents)
 
-    with open(wasm_file_path, 'rb') as file:
-      wasm_contents = file.read()
+        # Emit a corresponding flags file.
+        flags_file_path = os.path.join(output_dir,
+                                       get_file_name(FLAGS_FILENAME_PREFIX, i))
+        with open(flags_file_path, 'w') as file:
+            file.write(FUZZER_FLAGS_FILE_CONTENTS)
 
-    testcase_file_path = os.path.join(output_directory,
-                                      get_file_name(FUZZ_FILENAME_PREFIX, i))
-    wasm_contents = ','.join([str(c) for c in wasm_contents])
-    js_file_contents = get_js_file_contents(wasm_contents)
-    with open(testcase_file_path, 'w') as file:
-      file.write(js_file_contents)
+        print(f'Created testcase: {testcase_file_path}')
 
-    flags_file_path = os.path.join(output_directory,
-                                   get_file_name(FLAGS_FILENAME_PREFIX, i))
-    with open(flags_file_path, 'w') as file:
-      file.write(FUZZER_FLAGS_FILE_CONTENTS)
+        # Remove temporary files.
+        os.remove(input_data_file_path)
+        os.remove(wasm_file_path)
 
-    print('Created testcase: {}'.format(testcase_file_path))
-
-    # Remove temporary files.
-    os.remove(input_data_file_path)
-    os.remove(wasm_file_path)
-
-  print('Created {} testcases.'.format(tests_count))
+    print(f'Created {num} testcases.')
 
 
 if __name__ == '__main__':
-  main(sys.argv)
+    main(sys.argv)
 
