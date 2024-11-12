@@ -36,7 +36,7 @@ if (!binary) {
 // passed a final parameter in the form of "exports:X,Y,Z" then we call
 // specifically the exports X, Y, and Z.
 var exportsToCall;
-if (argv[argv.length - 1].startsWith('exports:')) {
+if (argv.length > 0 && argv[argv.length - 1].startsWith('exports:')) {
   exportsToCall = argv[argv.length - 1].substr('exports:'.length).split(',');
   argv.pop();
 }

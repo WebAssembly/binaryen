@@ -92,7 +92,7 @@ def get_js_file_contents(wasm_contents):
     # Prepend the wasm contents, so they are used (rather than the normal
     # mechanism where the wasm file's name is provided in argv).
     wasm_contents = ','.join([str(c) for c in wasm_contents])
-    js = f'var binary = {wasm_contents};\n\n' + js
+    js = f'var binary = new Uint8Array([{wasm_contents}]);\n\n' + js
     return js
 
 
