@@ -1575,11 +1575,11 @@ class ClusterFuzz(TestCaseHandler):
         if hasattr(self, 'tempdir'):
             return
 
-        # Bundle.
+        print('Bundling for ClusterFuzz')
         bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
         run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
-        # Unpack.
+        print('Unpacking for ClusterFuzz')
         self.tempdir = tempfile.TemporaryDirectory()
         tar = tarfile.open(bundle, "r:gz")
         tar.extractall(path=self.tempdir.name)
