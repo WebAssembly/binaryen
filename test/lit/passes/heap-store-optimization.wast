@@ -967,6 +967,33 @@
     )
   )
 
+  (func $control-flow-in-set-value-safe-return (result i32)
+    ;; As above, but replace the call with a return in an if. We can still
+    ;; optimize (if the return is taken, we go outside of the function anyhow).
+    (local $ref (ref null $struct))
+    (block $label
+      (struct.set $struct 0
+        (local.tee $ref
+          (struct.new $struct
+            (i32.const 1)
+          )
+        )
+        (if (result i32)
+          (i32.const 1)
+          (then
+            (return (i32.const 42))
+          )
+          (else
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
   ;; CHECK:      (func $control-flow-in-set-value-unsafe-call (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $label
