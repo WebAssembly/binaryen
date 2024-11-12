@@ -127,7 +127,7 @@ def main(argv):
             cmd += ['-o', wasm_file_path, input_data_file_path]
 
             try:
-                subprocess.call(cmd)
+                subprocess.check_call(cmd)
             except subprocess.CalledProcessError:
                 # Try again.
                 print('(oops, retrying wasm-opt)')

@@ -256,8 +256,17 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   if (!options.passOptions.closedWorld && oneIn(2)) {
     options.passOptions.closedWorld = true;
   }
-  // TODO: We could in theory run some function-level passes on particular
 
+  // Often DCE at the very end, to ensure that our binaries validate in other
+  // VMs, due to how non-nullable local validation and unreachable code
+  // interact. See fuzz_opt.py and
+  //   https://github.com/WebAssembly/binaryen/pull/5665
+  //   https://github.com/WebAssembly/binaryen/issues/5599
+  if (wasm.features.hasGC() && oneIn(2)) {
+    options.passes.push_back("dce");
+  }
+
+  // TODO: We could in theory run some function-level passes on particular
   //       functions, but then we'd need to do this after generation, not
   //       before (and random data no longer remains then).
 }
