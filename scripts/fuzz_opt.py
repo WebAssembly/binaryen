@@ -1585,7 +1585,7 @@ class ClusterFuzz(TestCaseHandler):
         # one.
         cmd.append(os.path.abspath(fuzz_file))
         # No wasm file needs to be provided: it is hardcoded into the JS
-        run(cmd)
+        run_vm(cmd)
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
