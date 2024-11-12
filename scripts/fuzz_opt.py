@@ -212,6 +212,13 @@ def randomize_fuzz_settings():
     else:
         LEGALIZE = False
 
+    # Rarely, run random passes during generation. It is better to run them
+    # later, which allows for a clear separation of the original wasm and the
+    # modded wasm, but ClusterFuzz runs in a single wasm-opt operation, so we
+    # test that here as well.
+    if random.random() < 0.10:
+        GEN_ARGS += ['--fuzz-passes']
+
     # if GC is enabled then run --dce at the very end, to ensure that our
     # binaries validate in other VMs, due to how non-nullable local validation
     # and unreachable code interact. see
