@@ -35,9 +35,9 @@ import shutil
 import subprocess
 import random
 import re
+import shutil
 import sys
 import tarfile
-import tempfile
 import time
 import traceback
 from os.path import abspath
@@ -1563,26 +1563,49 @@ class ClusterFuzz(TestCaseHandler):
 
         # Call run.py(), similarly to how ClusterFuzz does.
         run([sys.executable,
-             os.path.join(self.tempdir.name, 'run.py'),
-             '--input_dir=' + self.tempdir.name,
-             '--output_dir=' + self.tempdir.name,
+             os.path.join(self.clusterfuzz_dir, 'run.py'),
+             '--input_dir=' + self.clusterfuzz_dir,
+             '--output_dir=' + os.getcwd(),
              '--no_of_files=1'])
+
+        # We should see two files.
+        fuzz_file = 'fuzz-binaryen-1.js'
+        flags_file = 'flags-binaryen-1.js'
+        assert os.path.exists(fuzz_file)
+        assert os.path.exists(flags_file)
+
+        # Run the testcase, similarly to how ClusterFuzz does.
+        with open(flags_file, 'r') as f:
+            flags = f.read()
+        cmd = [shared.V8]
+        # The flags are given in the flags file - we do *not* use our normal
+        # flags here!
+        cmd += flags.split(' ')
+        # Run the fuzz_shell.js from the ClusterFuzz bundle, *not* the usual
+        # one.
+        cmd.append(os.path.abspath(fuzz_file))
+        # No wasm file needs to be provided: it is hardcoded into the JS
+        run(cmd)
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
-        # one ClusterFuzz receives, and unpack it for execution into a temp dir.
-        # The temp dir's existence implies we've run already.
-        if hasattr(self, 'tempdir'):
+        # one ClusterFuzz receives, and unpack it for execution into a dir. The
+        # existence of that dir shows we've ensured all we need.
+        if hasattr(self, 'clusterfuzz_dir'):
             return
+
+        self.clusterfuzz_dir = 'clusterfuzz'
+        if os.path.exists(self.clusterfuzz_dir):
+            shutil.rmtree(self.clusterfuzz_dir)
+        os.mkdir(self.clusterfuzz_dir)
 
         print('Bundling for ClusterFuzz')
         bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
         run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
         print('Unpacking for ClusterFuzz')
-        self.tempdir = tempfile.TemporaryDirectory()
         tar = tarfile.open(bundle, "r:gz")
-        tar.extractall(path=self.tempdir.name)
+        tar.extractall(path=self.clusterfuzz_dir)
         tar.close()
 
 
