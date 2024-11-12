@@ -70,11 +70,13 @@ JS_SHELL_PATH = os.path.join(ROOT_DIR, 'scripts', 'fuzz_shell.js')
 # TODO: Use different combinations of flags like fuzz_opt.py?
 FUZZER_ARGS = [
     '--translate-to-fuzz',
-    # Enable all features but shared-everything, which is not compatible with V8,
-    # as noted in fuzz_opt.py.
+    '--fuzz-passes',
+    # Enable all features but disable ones not yet ready for fuzzing. This may
+    # be a smaller set than fuzz_opt.py, as that enables a few experimental
+    # flags, while here we just fuzz with --wasm-staging.
     '-all',
     '--disable-shared-everything',
-    '--fuzz-passes',
+    '--disable-fp16',
 ]
 
 # Returns the file name for fuzz or flags files.
