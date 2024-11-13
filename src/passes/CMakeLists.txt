@@ -63,6 +63,7 @@ set(passes_SOURCES
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
   Memory64Lowering.cpp
+  MemoryCopyFillLowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeSimilarFunctions.cpp
