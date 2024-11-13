@@ -1575,13 +1575,13 @@ class ClusterFuzz(TestCaseHandler):
         assert os.path.exists(fuzz_file)
         assert os.path.exists(flags_file)
 
-        # Run the testcase, similarly to how ClusterFuzz does.
-        with open(flags_file, 'r') as f:
-            flags = f.read()
+        # Run the testcase in V8, similarly to how ClusterFuzz does.
         cmd = [shared.V8]
         # The flags are given in the flags file - we do *not* use our normal
         # flags here!
-        cmd += flags.split(' ')
+        with open(flags_file, 'r') as f:
+            flags = f.read()
+        cmd.append(flags + 'foo')
         # Run the fuzz_shell.js from the ClusterFuzz bundle, *not* the usual
         # one.
         cmd.append(os.path.abspath(fuzz_file))

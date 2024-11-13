@@ -17,5 +17,6 @@ class ClusterFuzz(utils.BinaryenTestCase):
 #        self.assertIn('Some VMs may not accept this binary because it has a large number of parameters in function foo.',
 #                      p.stderr)
 
-# TODO test we add more flags than wasm-staging, in the bundle
-# test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times)
+# TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times)
+# TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
+# TODO test default values (without --output-dir etc., 100 funcs, etc.)
