@@ -1614,16 +1614,16 @@ class ClusterFuzz(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
-    #CompareVMs(),
-    #CheckDeterminism(),
-    #Wasm2JS(),
-    #TrapsNeverHappen(),
-    #CtorEval(),
-    #Merge(),
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
-    #RoundtripText(),
+    RoundtripText(),
     ClusterFuzz(),
 ]
 
