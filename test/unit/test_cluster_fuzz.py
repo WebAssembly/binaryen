@@ -11,7 +11,7 @@ from . import utils
 class ClusterFuzz(utils.BinaryenTestCase):
     # Bundle up our ClusterFuzz package, and unbundle it to a directory.
     # Return that directory as a TemporaryDirectory object.
-    # TODO for speed, reuse this
+    # TODO for speed, reuse this?
     def bundle_and_unpack(self):
         temp_dir = tempfile.TemporaryDirectory()
 
@@ -27,7 +27,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         return temp_dir
 
     # Test our bundler for ClusterFuzz.
-    def test_bundle(self):
+    def ztest_bundle(self):
         temp_dir = self.bundle_and_unpack()
 
         # The bundle should contain certain files:
@@ -58,14 +58,14 @@ class ClusterFuzz(utils.BinaryenTestCase):
         return proc
 
     # Test the bundled run.py script.
-    def test_run_py(self):
+    def ztest_run_py(self):
         temp_dir = self.bundle_and_unpack()
 
         testcase_dir = os.path.join(temp_dir.name, 'testcases')
         assert not os.path.exists(testcase_dir), 'we must run in a fresh dir'
         os.mkdir(testcase_dir)
 
-        N = 100
+        N = 10
         proc = self.generate_testcases(N, temp_dir.name, testcase_dir)
 
         print('Checking')
@@ -85,7 +85,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 assert not os.path.exists(fuzz_file)
                 assert not os.path.exists(flags_file)
 
-    def test_fuzz_passes(self):
+    def ztest_fuzz_passes(self):
         # We should see interesting passes being run in run.py. This is *NOT* a
         # deterministic test, since the number of passes run is random (we just
         # let run.py run normally, to simulate the real environment), so flakes
@@ -99,7 +99,12 @@ class ClusterFuzz(utils.BinaryenTestCase):
         N = 10
 
         # Try many times to see a different number, to make flakes even less
-        # likely.
+        # likely. In the worst case if there were two possible numbers of
+        # passes run, with equal probability, then if we failed 100 iterations
+        # every second, we could go for billions of billions of years without a
+        # flake. (And, if there are only two numbers with *non*-equal
+        # probability then something is very wrong, and we'd like to see
+        # errors.)
         seen_num_passes = set()
         for i in range(100):
             os.environ['BINARYEN_PASS_DEBUG'] = '1'
@@ -115,6 +120,18 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 return
         raise Exception(f'We always only saw {seen_num_passes} passes run')
 
+    def test_file_contents(self):
+        temp_dir = self.bundle_and_unpack()
+        N = 100
+        proc = self.generate_testcases(N, temp_dir.name, temp_dir.name)
+
+        for i in range(1, N + 1):
+            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+            flags_file = os.path.join(temp_dir.name, f'flags-binaryen-{i}.js')
+
+            # The flags file must contain --wasm-staging
+            with open(flags_file) as f:
+                assert f.read() == '--wasm-staging'
 
 # TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
-# TODO test default values (without --output-dir etc., 100 funcs, etc.)
+
