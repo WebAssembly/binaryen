@@ -1,5 +1,6 @@
 import os
 import re
+import statistics
 import subprocess
 import sys
 import tarfile
@@ -25,6 +26,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         tar.extractall(path=temp_dir.name)
         tar.close()
 
+        print('Ready')
         return temp_dir
 
     # Test our bundler for ClusterFuzz.
@@ -68,8 +70,6 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         N = 10
         proc = self.generate_testcases(N, temp_dir.name, testcase_dir)
-
-        print('Checking')
 
         # We should have logged the creation of N testcases.
         assert proc.stdout.count('Created testcase:') == N
@@ -130,15 +130,23 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         # To check for interesting wasm file contents, we'll note how many
         # struct.news appear (a signal that we are emitting WasmGC, and also a
-        # non-trivial number of them), and the sizes of the wasm files.
+        # non-trivial number of them), the sizes of the wasm files, and the
+        # exports.
         seen_struct_news = []
         seen_sizes = []
+        seen_exports = []
 
         # The number of struct.news appears in the metrics report like this:
         #
         # StructNew      : 18
         #
         struct_news_regex = re.compile(r'StructNew(\s+):(\s+)(\d+)')
+
+        # The number of exports appears in the metrics report like this:
+        #
+        # [exports]      : 1
+        #
+        exports_regex = re.compile(r'\[exports\](\s+):(\s+)(\d+)')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -166,18 +174,45 @@ class ClusterFuzz(utils.BinaryenTestCase):
             with open(binary_file, 'wb') as f:
                 f.write(bytes(numbers_array))
             metrics = subprocess.check_output(
-                shared.WASM_OPT + ['-all', '--metrics', binary_file], text=True)
+                shared.WASM_OPT + ['-all', '--metrics', binary_file, '-q'], text=True)
+
             # Update with what we see.
             struct_news = re.findall(struct_news_regex, metrics)
             if not struct_news:
                 # No line is emitted when --metrics seens no struct.news.
                 struct_news = [('', '', '0')]
             seen_struct_news.append(int(struct_news[0][2]))
+
             seen_sizes.append(os.path.getsize(binary_file))
 
-        # Check what we've seen sufficiently-interesting data.
-        print(seen_struct_news)
-        print("XXX", seen_sizes)
+            exports = re.findall(exports_regex, metrics)
+            seen_exports.append(int(exports[0][2]))
 
-# TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
+        print()
+
+        # struct.news appear to be distributed as mean 15, stddev 24, median 10,
+        # so over 100 samples we are incredibly likely to see an interesting
+        # number at least once.
+        print(f'mean struct.news:   {statistics.mean(seen_struct_news)}')
+        print(f'stdev struct.news:  {statistics.stdev(seen_struct_news)}')
+        print(f'median struct.news: {statistics.median(seen_struct_news)}')
+        assert max(seen_struct_news) >= 10
+
+        print()
+
+        # sizes appear to be distributed as mean 2933, stddev 2011, median 2510.
+        print(f'mean sizes:   {statistics.mean(seen_sizes)}')
+        print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
+        print(f'median sizes: {statistics.median(seen_sizes)}')
+        assert max(seen_sizes) >= 1000
+
+        print()
+
+        # exports appear to be distributed as mean 9, stddev 6, median 8.
+        print(f'mean exports:   {statistics.mean(seen_exports)}')
+        print(f'stdev exports:  {statistics.stdev(seen_exports)}')
+        print(f'median exports: {statistics.median(seen_exports)}')
+        assert max(seen_exports) >= 8
+
+        print()
 

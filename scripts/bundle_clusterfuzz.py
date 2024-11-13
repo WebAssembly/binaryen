@@ -13,11 +13,12 @@ Before uploading to ClusterFuzz, it is worth doing two things:
 
   1. Run the local fuzzer (scripts/fuzz_opt.py). That includes a ClusterFuzz
      testcase handler, which simulates what ClusterFuzz does.
-  2. Run the unit tests, which include smoke tests for our ClusterFuzz support.
-     You can run
-       ./check.py unit
-     for all unit tests, or you can run the ClusterFuzz ones specifically:
+
+  2. Run the unit tests, which include smoke tests for our ClusterFuzz support:
+
        python -m unittest test/unit/test_cluster_fuzz.py
+
+     Look at the logs for any warnings.
 '''
 
 import os
