@@ -55,12 +55,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
         assert not os.path.exists(testcase_dir), 'we must run in a fresh dir'
         os.mkdir(testcase_dir)
 
-        N = 10
+        N = 100
         run_py = os.path.join(temp_dir.name, 'run.py')
 
         # The ClusterFuzz run.py uses --fuzz-passes to add some interesting
         # changes to the wasm. Make sure that actually runs passes, by using
         # pass-debug mode to scan for the logging as we create N testcases.
+        print('Generating')
         os.environ['BINARYEN_PASS_DEBUG'] = '1'
         try:
             proc = subprocess.run([sys.executable,
@@ -73,6 +74,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         finally:
             del os.environ['BINARYEN_PASS_DEBUG']
         assert proc.returncode == 0
+
+        print('Checking')
 
         # We should have logged the creation of N testcases.
         assert proc.stdout.count('Created testcase:') == N
@@ -88,6 +91,20 @@ class ClusterFuzz(utils.BinaryenTestCase):
             else:
                 assert not os.path.exists(fuzz_file)
                 assert not os.path.exists(flags_file)
+
+        # We should see interesting passes being run in stderr. This is *NOT* a
+        # deterministic test, since the number of passes run is random (we just
+        # let run.py run normally, to simulate the real environment), so flakes
+        # are possible here. However, statistically the risk of them is
+        # negligible:
+        #
+        #  * Running this test 10 times (with N = 100 unchanged), the results
+        #    are 1268,2092,1797,1178,1533,1786,2123,1802,1530,1086.
+        #  * Mean 1619, standard deviation: 346.
+        #  * The chance to go below 4 standard deviations is one in 33,333,
+        #    meaning if we run the tests 10 times a day it would take almost 10
+        #    years to see a single error.
+        print(proc.stderr.count('running pass'))
 
 
 # TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times). can we do this using run.py?
