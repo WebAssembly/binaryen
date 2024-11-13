@@ -1550,13 +1550,15 @@ class RoundtripText(TestCaseHandler):
 
 # Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
 # to see that fuzzing that way works properly (it likely won't catch anything
-# the other fuzzers here catch, though it is possible).
+# the other fuzzers here catch, though it is possible). That is, running this
+# script continuously will give continuous cover that ClusterFuzz should be
+# running ok.
 #
-# Note that this is not deterministic like the other fuzzers: it runs run.py
+# Note that this is *not* deterministic like the other fuzzers: it runs run.py
 # like ClusterFuzz does, and that generates its own random data. If a bug is
 # caught here, it must be reduced manually.
 class ClusterFuzz(TestCaseHandler):
-    frequency = 1 # XXX reduce
+    frequency = 0.1
 
     def handle(self, wasm):
         self.ensure()

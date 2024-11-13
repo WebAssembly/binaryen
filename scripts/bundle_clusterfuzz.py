@@ -16,7 +16,6 @@ This assumes you build wasm-opt into the bin dir, and that it is a static build
 import os
 import sys
 import tarfile
-import time
 
 # Read the output filename first, as importing |shared| changes the directory.
 output_file = os.path.abspath(sys.argv[1])
@@ -40,8 +39,7 @@ with tarfile.open(output_file, "w:gz") as tar:
     # lack of a better way to test, warn the build might not be static if it
     # is too small. (Numbers on one machine: 1.6M dynamic, 23MB static.)
     if os.path.getsize(wasm_opt) < 10 * 1024 * 1024:
-        print('WARNING: wasm-opt size seems small. Is it a static build?')
-        time.sleep(10)
+        print('WARNING: wasm-opt size seems small! Is it a static build?')
 
 print('Done.')
 
