@@ -134,8 +134,6 @@ def main(argv):
                 attempt += 1
                 if attempt == 99:
                     # Something is very wrong!
-                    # One possibility is that wasm-opt is not build statically,
-                    # if so, use cmake -DBUILD_STATIC_LIB=1
                     raise
                 continue
             # Success, leave the loop.
