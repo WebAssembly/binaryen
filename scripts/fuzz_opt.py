@@ -347,13 +347,14 @@ INITIAL_CONTENTS_IGNORE = [
     # the fuzzer does not support imported memories
     'multi-memory-lowering-import.wast',
     'multi-memory-lowering-import-error.wast',
-    # the fuzzer does not support typed continuations
+    # the fuzzer does not support stack switching
     'stack_switching.wast',
     'stack_switching_contnew.wast',
     'stack_switching_contbind.wast',
     'stack_switching_suspend.wast',
     'stack_switching_resume.wast',
     'stack_switching_resume_throw.wast',
+    'stack_switching_switch.wast'
 ]
 
 
