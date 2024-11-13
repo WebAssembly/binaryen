@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -121,9 +122,23 @@ class ClusterFuzz(utils.BinaryenTestCase):
         raise Exception(f'We always only saw {seen_num_passes} passes run')
 
     def test_file_contents(self):
+        # As test_fuzz_passes, this is nondeterministic, but statistically it is
+        # almost impossible to get a flake here.
         temp_dir = self.bundle_and_unpack()
         N = 100
         proc = self.generate_testcases(N, temp_dir.name, temp_dir.name)
+
+        # To check for interesting wasm file contents, we'll note how many
+        # struct.news appear (a signal that we are emitting WasmGC, and also a
+        # non-trivial number of them), and the sizes of the wasm files.
+        seen_struct_news = []
+        seen_sizes = []
+
+        # The number of struct.news appears in the metrics report like this:
+        #
+        # StructNew      : 18
+        #
+        struct_news_regex = re.compile(r'StructNew(\S+):(\S+)(\d+)')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -132,6 +147,37 @@ class ClusterFuzz(utils.BinaryenTestCase):
             # The flags file must contain --wasm-staging
             with open(flags_file) as f:
                 assert f.read() == '--wasm-staging'
+
+            # The fuzz files begin with
+            #
+            #   var binary = new Uint8Array([..binary data as numbers..]);
+            #
+            with open(fuzz_file) as f:
+                first_line = f.readline().strip()
+                start = 'var binary = new Uint8Array(['
+                end = ']);'
+                assert first_line.startswith(start)
+                assert first_line.endswith(end)
+                numbers = first_line[len(start):-len(end)]
+
+            # Convert to binary, and see that it is a valid file.
+            numbers_array = [int(x) for x in numbers.split(',')]
+            binary_file = os.path.join(temp_dir.name, 'file.wasm')
+            with open(binary_file, 'wb') as f:
+                f.write(bytes(numbers_array))
+            metrics = subprocess.check_output(
+                shared.WASM_OPT + ['-all', '--metrics', binary_file], text=True)
+            # Update with what we see.
+            struct_news = re.findall(struct_news_regex, metrics)
+            if not struct_news:
+                # No line is emitted when --metrics seens no struct.news.
+                struct_news = [0]               
+            seen_struct_news.append(struct_news)
+            seen_sizes.append(os.path.getsize(binary_file))
+
+        # Check what we've seen sufficiently-interesting data.
+        print(seen_struct_news)
+        print("XXX", seen_sizes)
 
 # TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
 
