@@ -46,6 +46,6 @@ class ClusterFuzz(utils.BinaryenTestCase):
         assert 'wasm-opt version ' in out
 
 
-# TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times)
+# TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times). can we do this using run.py?
 # TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
 # TODO test default values (without --output-dir etc., 100 funcs, etc.)
