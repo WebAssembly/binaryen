@@ -41,10 +41,10 @@
 ;; CHECK-NEXT:   --initial-fuzz,-if                            Initial wasm content in
 ;; CHECK-NEXT:                                                 translate-to-fuzz (-ttf) mode
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --fuzz-passes,-fp                             Pick a random set of passes to
-;; CHECK-NEXT:                                                 run, useful for fuzzing. this
-;; CHECK-NEXT:                                                 depends on translate-to-fuzz (it
-;; CHECK-NEXT:                                                 picks the passes from the input)
+;; CHECK-NEXT:   --fuzz-passes,-fp                             When doing translate-to-fuzz,
+;; CHECK-NEXT:                                                 pick a set of random passes from
+;; CHECK-NEXT:                                                 the input to further shape the
+;; CHECK-NEXT:                                                 wasm)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-fuzz-memory                              don't emit memory ops when
 ;; CHECK-NEXT:                                                 fuzzing
