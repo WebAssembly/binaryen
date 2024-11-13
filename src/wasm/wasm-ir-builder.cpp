@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "ir/child-typer.h"
+#include "ir/eh-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
@@ -98,7 +99,13 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
 
   auto packageAsBlock = [&](Type type) {
     // Create a block containing the producer of the hoisted value, the final
-    // get of the hoisted value, and everything in between.
+    // get of the hoisted value, and everything in between. If the hoisted value
+    // is a `pop`, then we will have to run a fixup to move it out of the block
+    // later.
+    assert(hoisted.get);
+    if (scope.exprStack[hoisted.valIndex]->cast<LocalSet>()->value->is<Pop>()) {
+      scopeStack[0].setNeedsPopFixup();
+    }
     std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.valIndex,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
@@ -935,7 +942,7 @@ Result<> IRBuilder::visitEnd() {
   if (scope.isNone()) {
     return Err{"unexpected end"};
   }
-  if (auto* func = scope.getFunction(); func) {
+  if (auto* func = scope.getFunction()) {
     if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
       func->epilogLocation.insert(*loc);
     }
@@ -970,6 +977,9 @@ Result<> IRBuilder::visitEnd() {
   if (auto* func = scope.getFunction()) {
     func->body = maybeWrapForLabel(*expr);
     labelDepths.clear();
+    if (scope.needsPopFixup()) {
+      EHUtils::handleBlockNestedPops(func, wasm);
+    }
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;
