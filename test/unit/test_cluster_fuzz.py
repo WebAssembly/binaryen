@@ -41,11 +41,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         # See that we can execute the bundled wasm-opt. It should be able to
         # print out its version.
-        try:
-            out = subprocess.check_output([wasm_opt, '--version'], text=True)
-        except subprocess.CalledProcessError:
-            print('(if this fails because wasm-opt was not built statically, use cmake -DBUILD_STATIC_LIB=1)')
-            raise
+        out = subprocess.check_output([wasm_opt, '--version'], text=True)
         assert 'wasm-opt version ' in out
 
     # Generate N testcases, using run.py from a temp dir, and outputting to a
