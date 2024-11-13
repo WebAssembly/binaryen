@@ -1581,7 +1581,7 @@ class ClusterFuzz(TestCaseHandler):
         # flags here!
         with open(flags_file, 'r') as f:
             flags = f.read()
-        cmd.append(flags + 'foo')
+        cmd.append(flags)
         # Run the fuzz_shell.js from the ClusterFuzz bundle, *not* the usual
         # one.
         cmd.append(os.path.abspath(fuzz_file))
