@@ -1544,28 +1544,35 @@ public:
   Signature getSignatureByTypeIndex(Index index);
   Signature getSignatureByFunctionIndex(Index index);
 
-  // We read functions, globals, etc. before we know their final names, so we
-  // need to backpatch the names later. Map the original names to their indices
-  // so we can find the final names based on index.
-  std::unordered_map<Name, Index> functionIndices;
-  std::unordered_map<Name, Index> tableIndices;
-  std::unordered_map<Name, Index> memoryIndices;
-  std::unordered_map<Name, Index> globalIndices;
-  std::unordered_map<Name, Index> tagIndices;
-  std::unordered_map<Name, Index> dataIndices;
-  std::unordered_map<Name, Index> elemIndices;
+  Name getNextLabel();
+
+  // We read the names section first so we know in advance what names various
+  // elements should have. Store the information for use when building
+  // expressions.
+  std::unordered_map<Index, Name> functionNames;
+  std::unordered_map<Index, std::unordered_map<Index, Name>> localNames;
+  std::unordered_map<Index, Name> typeNames;
+  std::unordered_map<Index, std::unordered_map<Index, Name>> fieldNames;
+  std::unordered_map<Index, Name> tableNames;
+  std::unordered_map<Index, Name> memoryNames;
+  std::unordered_map<Index, Name> globalNames;
+  std::unordered_map<Index, Name> tagNames;
+  std::unordered_map<Index, Name> dataNames;
+  std::unordered_map<Index, Name> elemNames;
 
   Function* currFunction = nullptr;
+  // before we see a function (like global init expressions), there is no end of
+  // function to check
+  Index endOfFunction = -1;
 
-  std::map<Index, Name> elemTables;
+  // Throws a parsing error if we are not in a function context
+  void requireFunctionContext(const char* error);
 
   void readFunctions();
   void readVars();
 
   [[nodiscard]] Result<> readInst();
 
-  std::map<Export*, Index> exportIndices;
-  std::vector<std::unique_ptr<Export>> exportOrder;
   void readExports();
 
   // The strings in the strings section (which are referred to by StringConst).
@@ -1578,12 +1585,13 @@ public:
 
   IRBuilder builder;
 
-  void validateBinary(); // validations that cannot be performed on the Module
-  void processNames();
+  // validations that cannot be performed on the Module
+  void validateBinary();
 
   size_t dataCount = 0;
   bool hasDataCount = false;
 
+  void createDataSegments(Index count);
   void readDataSegments();
   void readDataSegmentCount();
 
@@ -1593,7 +1601,7 @@ public:
   void readTags();
 
   static Name escape(Name name);
-  void readNames(size_t);
+  void findAndReadNames();
   void readFeatures(size_t);
   void readDylink(size_t);
   void readDylink0(size_t);

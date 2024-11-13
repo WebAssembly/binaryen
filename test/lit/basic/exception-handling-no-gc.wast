@@ -7,10 +7,11 @@
 
 (module
  ;; CHECK:      (func $test (result exnref)
- ;; CHECK-NEXT:  (block $label$1 (result exnref)
- ;; CHECK-NEXT:   (try_table (catch_all_ref $label$1)
+ ;; CHECK-NEXT:  (block $block (result exnref)
+ ;; CHECK-NEXT:   (try_table (catch_all_ref $block)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (result exnref)
