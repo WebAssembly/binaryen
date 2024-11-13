@@ -39,7 +39,7 @@ FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 # smaller than fuzz_opt.py's INPUT_SIZE_MAX because that script is tuned for
 # fuzzing large wasm files (to reduce the overhead we have of launching many
 # processes per file), which is less of an issue on ClusterFuzz.
-MAX_RANDOM_SIZE = 10 * 1024
+MAX_RANDOM_SIZE = 15 * 1024
 
 # The prefix for fuzz files.
 FUZZ_FILENAME_PREFIX = 'fuzz-'
