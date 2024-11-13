@@ -44,7 +44,7 @@
 ;; CHECK-NEXT:   --fuzz-passes,-fp                             When doing translate-to-fuzz,
 ;; CHECK-NEXT:                                                 pick a set of random passes from
 ;; CHECK-NEXT:                                                 the input to further shape the
-;; CHECK-NEXT:                                                 wasm)
+;; CHECK-NEXT:                                                 wasm
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --no-fuzz-memory                              don't emit memory ops when
 ;; CHECK-NEXT:                                                 fuzzing

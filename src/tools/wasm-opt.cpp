@@ -162,7 +162,7 @@ int main(int argc, const char* argv[]) {
     .add("--fuzz-passes",
          "-fp",
          "When doing translate-to-fuzz, pick a set of random passes from the "
-         "input to further shape the wasm)",
+         "input to further shape the wasm",
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzPasses = true; })
