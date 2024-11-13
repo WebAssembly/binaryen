@@ -116,6 +116,7 @@ Pass* createOptimizeForJSPass();
 Pass* createOutliningPass();
 #endif
 Pass* createPickLoadSignsPass();
+Pass* createMemoryCopyFillLoweringPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
 Pass* createModAsyncifyNeverUnwindPass();
 Pass* createPoppifyPass();
