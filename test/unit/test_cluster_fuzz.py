@@ -30,7 +30,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         return temp_dir
 
     # Test our bundler for ClusterFuzz.
-    def ztest_bundle(self):
+    def test_bundle(self):
         temp_dir = self.bundle_and_unpack()
 
         # The bundle should contain certain files:
@@ -61,7 +61,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         return proc
 
     # Test the bundled run.py script.
-    def ztest_run_py(self):
+    def test_run_py(self):
         temp_dir = self.bundle_and_unpack()
 
         testcase_dir = os.path.join(temp_dir.name, 'testcases')
@@ -86,7 +86,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 assert not os.path.exists(fuzz_file)
                 assert not os.path.exists(flags_file)
 
-    def ztest_fuzz_passes(self):
+    def test_fuzz_passes(self):
         # We should see interesting passes being run in run.py. This is *NOT* a
         # deterministic test, since the number of passes run is random (we just
         # let run.py run normally, to simulate the real environment), so flakes
