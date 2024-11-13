@@ -263,6 +263,7 @@ private:
     struct NoScope {};
     struct FuncScope {
       Function* func;
+      bool needsPopFixup = false;
     };
     struct BlockScope {
       Block* block;
@@ -372,6 +373,17 @@ private:
         return funcScope->func;
       }
       return nullptr;
+    }
+    void setNeedsPopFixup() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        funcScope->needsPopFixup = true;
+      }
+    }
+    bool needsPopFixup() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        return funcScope->needsPopFixup;
+      }
+      return false;
     }
     Block* getBlock() {
       if (auto* blockScope = std::get_if<BlockScope>(&scope)) {
