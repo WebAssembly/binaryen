@@ -11,6 +11,7 @@ from . import utils
 class ClusterFuzz(utils.BinaryenTestCase):
     # Bundle up our ClusterFuzz package, and unbundle it to a directory.
     # Return that directory as a TemporaryDirectory object.
+    # TODO for speed, reuse this
     def bundle_and_unpack(self):
         temp_dir = tempfile.TemporaryDirectory()
 
@@ -26,7 +27,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         return temp_dir
 
     # Test our bundler for ClusterFuzz.
-    def WAKA___________________________________________________________________________________________________________test_bundle(self):
+    def test_bundle(self):
         temp_dir = self.bundle_and_unpack()
 
         # The bundle should contain certain files:
@@ -61,7 +62,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         return proc
 
     # Test the bundled run.py script.
-    def zzzzzzzzzzzzzzzzzzzztest_run_py(self):
+    def test_run_py(self):
         temp_dir = self.bundle_and_unpack()
 
         testcase_dir = os.path.join(temp_dir.name, 'testcases')
