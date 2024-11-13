@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tarfile
 import tempfile
 
@@ -8,29 +9,38 @@ from . import utils
 
 class ClusterFuzz(utils.BinaryenTestCase):
     # Bundle up our ClusterFuzz package, and unbundle it to a directory.
-    # Return that directory's name.
+    # Return that directory as a TemporaryDirectory object.
     def bundle_and_unpack(self):
-        # Keep the temp dir alive as long as we are.
-        self.bundle_temp_dir = tempfile.TemporaryDirectory()
+        temp_dir = tempfile.TemporaryDirectory()
 
         print('Bundling')
-        bundle = os.path.join(self.bundle_temp_dir.name, 'bundle.tgz')
+        bundle = os.path.join(temp_dir.name, 'bundle.tgz')
         shared.run_process([shared.in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
         print('Unpacking')
         tar = tarfile.open(bundle, "r:gz")
-        tar.extractall(path=self.bundle_temp_dir.name)
+        tar.extractall(path=temp_dir.name)
         tar.close()
 
-        return self.bundle_temp_dir.name
+        return temp_dir
 
     def test_bundle(self):
         temp_dir = self.bundle_and_unpack()
 
-#        p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
-#                               input=module, capture_output=True)
-#        self.assertIn('Some VMs may not accept this binary because it has a large number of parameters in function foo.',
-#                      p.stderr)
+        # The bundle should contain certain files:
+        # 1. run.py, the main entry point.
+        assert os.path.exists(os.path.join(temp_dir.name, 'run.py'))
+        # 2. scripts/fuzz_shell.js, the js testcase shell
+        assert os.path.exists(os.path.join(temp_dir.name, 'scripts', 'fuzz_shell.js'))
+        # 3. bin/wasm-opt, the wasm-opt binary in a static build
+        wasm_opt = os.path.join(temp_dir.name, 'bin', 'wasm-opt')
+        assert os.path.exists(wasm_opt)
+
+        # See that we can execute the bundled wasm-opt. It should be able to
+        # print out its version.
+        out = subprocess.check_output([wasm_opt, '--version'], text=True)
+        assert 'wasm-opt version ' in out
+
 
 # TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times)
 # TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
