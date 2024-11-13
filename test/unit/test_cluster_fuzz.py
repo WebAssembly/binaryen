@@ -10,7 +10,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         pass
 
     def test_run_py_in_tree(self):
-        1/0
+        assert 1 == 2
         pass
 #        p = shared.run_process(shared.WASM_OPT + ['-o', os.devnull],
 #                               input=module, capture_output=True)
