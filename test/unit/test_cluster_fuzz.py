@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import tarfile
 import tempfile
 
@@ -24,7 +25,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         return temp_dir
 
-    def test_bundle(self):
+    # Test our bundler for ClusterFuzz.
+    def WAKA___________________________________________________________________________________________________________test_bundle(self):
         temp_dir = self.bundle_and_unpack()
 
         # The bundle should contain certain files:
@@ -44,6 +46,48 @@ class ClusterFuzz(utils.BinaryenTestCase):
             print('(if this fails because wasm-opt was not built statically, use cmake -DBUILD_STATIC_LIB=1)')
             raise
         assert 'wasm-opt version ' in out
+
+    # Test the bundled run.py script.
+    def test_run_py(self):
+        temp_dir = self.bundle_and_unpack()
+
+        testcase_dir = os.path.join(temp_dir.name, 'testcases')
+        assert not os.path.exists(testcase_dir), 'we must run in a fresh dir'
+        os.mkdir(testcase_dir)
+
+        N = 10
+        run_py = os.path.join(temp_dir.name, 'run.py')
+
+        # The ClusterFuzz run.py uses --fuzz-passes to add some interesting
+        # changes to the wasm. Make sure that actually runs passes, by using
+        # pass-debug mode to scan for the logging as we create N testcases.
+        os.environ['BINARYEN_PASS_DEBUG'] = '1'
+        try:
+            proc = subprocess.run([sys.executable,
+                                   run_py,
+                                   f'--output_dir={testcase_dir}',
+                                   f'--no_of_files={N}'],
+                                   text=True,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        finally:
+            del os.environ['BINARYEN_PASS_DEBUG']
+        assert proc.returncode == 0
+
+        # We should have logged the creation of N testcases.
+        assert proc.stdout.count('Created testcase:') == N
+
+        # We should have actually created them.
+        for i in range(0, N + 2):
+            fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
+            flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
+            # We actually emit the range [1, N], and not 0 or N+1
+            if i >= 1 and i <= N:
+                assert os.path.exists(fuzz_file)
+                assert os.path.exists(flags_file)
+            else:
+                assert not os.path.exists(fuzz_file)
+                assert not os.path.exists(flags_file)
 
 
 # TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times). can we do this using run.py?

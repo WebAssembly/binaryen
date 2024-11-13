@@ -134,8 +134,8 @@ def main(argv):
                 attempt += 1
                 if attempt == 99:
                     # Something is very wrong!
-                    # One possibility is that wasm-opt is not build statically.
-                    # To fix that, use cmake -DBUILD_STATIC_LIB=1
+                    # One possibility is that wasm-opt is not build statically,
+                    # if so, use cmake -DBUILD_STATIC_LIB=1
                     raise
                 continue
             # Success, leave the loop.
@@ -156,7 +156,7 @@ def main(argv):
         with open(flags_file_path, 'w') as file:
             file.write(FUZZER_FLAGS_FILE_CONTENTS)
 
-        print(f'Created testcase: {testcase_file_path}')
+        print(f'Created testcase: {testcase_file_path}, {len(wasm_contents)} bytes')
 
         # Remove temporary files.
         os.remove(input_data_file_path)
