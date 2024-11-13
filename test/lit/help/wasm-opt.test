@@ -248,6 +248,10 @@
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --memory-copy-fill-lowering                   Lower memory.copy and
+;; CHECK-NEXT:                                                 memory.fill to wasm mvp and
+;; CHECK-NEXT:                                                 disable the bulk-memory feature.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --memory-packing                              packs memory into separate
 ;; CHECK-NEXT:                                                 segments, skipping zeros
 ;; CHECK-NEXT:
