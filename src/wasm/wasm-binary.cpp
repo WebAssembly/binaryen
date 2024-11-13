@@ -2269,7 +2269,7 @@ static std::pair<Name, bool>
 getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
               Index i,
               Name name,
-              std::unordered_set<Name> usedNames) {
+              std::unordered_set<Name>& usedNames) {
   if (auto it = nameMap.find(i); it != nameMap.end()) {
     return {it->second, true};
   } else {
@@ -3826,6 +3826,7 @@ void WasmBinaryReader::findAndReadNames() {
     throwError("bad names section position change");
   }
 
+  // Reset the position; we were just reading ahead.
   pos = 0;
 }
 
