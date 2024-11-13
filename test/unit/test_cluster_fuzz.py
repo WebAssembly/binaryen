@@ -138,7 +138,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         #
         # StructNew      : 18
         #
-        struct_news_regex = re.compile(r'StructNew(\S+):(\S+)(\d+)')
+        struct_news_regex = re.compile(r'StructNew(\s+):(\s+)(\d+)')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -171,8 +171,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
             struct_news = re.findall(struct_news_regex, metrics)
             if not struct_news:
                 # No line is emitted when --metrics seens no struct.news.
-                struct_news = [0]               
-            seen_struct_news.append(struct_news)
+                struct_news = [('', '', '0')]
+            seen_struct_news.append(int(struct_news[0][2]))
             seen_sizes.append(os.path.getsize(binary_file))
 
         # Check what we've seen sufficiently-interesting data.
