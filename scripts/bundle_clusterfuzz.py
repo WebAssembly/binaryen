@@ -9,9 +9,6 @@ bundle.py OUTPUT_FILE.tgz
 
 The output file will be a .tgz file.
 
-This assumes you build wasm-opt into the bin dir, and that it is a static build
-(cmake -DBUILD_STATIC_LIB=1).
-
 Before uploading to ClusterFuzz, it is worth doing two things:
 
   1. Run the local fuzzer (scripts/fuzz_opt.py). That includes a ClusterFuzz
@@ -38,18 +35,19 @@ with tarfile.open(output_file, "w:gz") as tar:
     # run.py
     tar.add(os.path.join(shared.options.binaryen_root, 'scripts', 'clusterfuzz', 'run.py'),
             arcname='run.py')
+
     # fuzz_shell.js
     tar.add(os.path.join(shared.options.binaryen_root, 'scripts', 'fuzz_shell.js'),
             arcname='scripts/fuzz_shell.js')
+
     # wasm-opt binary
     wasm_opt = os.path.join(shared.options.binaryen_bin, 'wasm-opt')
     tar.add(wasm_opt, arcname='bin/wasm-opt')
 
-    # Static builds, which we require, are much larger than dynamic ones. For
-    # lack of a better way to test, warn the build might not be static if it
-    # is too small. (Numbers on one machine: 1.6M dynamic, 23MB static.)
-    if os.path.getsize(wasm_opt) < 10 * 1024 * 1024:
-        print('WARNING: wasm-opt size seems small! Is it a static build?')
+    # For a dynamic build we also need libbinaryen.so.
+    libbinaryen_so = os.path.join(shared.options.binaryen_lib, 'libbinaryen.so')
+    if os.path.exists(libbinaryen_so):
+        tar.add(libbinaryen_so, arcname='lib/libbinaryen.so')
 
 print('Done.')
 
