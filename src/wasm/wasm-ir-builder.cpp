@@ -99,13 +99,10 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
 
   auto packageAsBlock = [&](Type type) {
     // Create a block containing the producer of the hoisted value, the final
-    // get of the hoisted value, and everything in between. If the hoisted value
-    // is a `pop`, then we will have to run a fixup to move it out of the block
-    // later.
-    assert(hoisted.get);
-    if (scope.exprStack[hoisted.valIndex]->cast<LocalSet>()->value->is<Pop>()) {
-      scopeStack[0].setNeedsPopFixup();
-    }
+    // get of the hoisted value, and everything in between. Record the fact that
+    // we are synthesizing a block to help us determine later whether we need to
+    // run the nested pop fixup.
+    scopeStack[0].noteSyntheticBlock();
     std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.valIndex,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
@@ -872,9 +869,12 @@ Result<> IRBuilder::visitCatch(Name tag) {
   tryy->catchTags.push_back(tag);
   pushScope(
     ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel));
-  // Push a pop for the exception payload.
+  // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
+    // Note that we have a pop to help determine later whether we need to run
+    // the fixup for pops within blocks.
+    scopeStack[0].notePop();
     push(builder.makePop(params));
   }
   return Ok{};
