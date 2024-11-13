@@ -7981,6 +7981,52 @@ static void readResumeTable(WasmBinaryReader* reader, ResumeType* curr) {
   }
 }
 
+template<typename ResumeOrResumeThrow>
+static void computeResumeTableSentTypes(Module& wasm,
+                                        ResumeOrResumeThrow* curr) {
+  static_assert(std::is_base_of<Resume, ResumeOrResumeThrow>::value ||
+                std::is_base_of<ResumeThrow, ResumeOrResumeThrow>::value);
+  assert(curr->handlerBlocks.size() == curr->handlerTags.size());
+
+  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
+  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction
+  // (resume $ct ... (tag $tag $block) ... ) causes $block to receive values
+  // of the following types when suspending to $tag: tgp* (ref $ct') where ct'
+  // = (cont $ft') and ft' = [tgr*] -> [ctr*].
+  //
+  curr->sentTypes.reserve(curr->handlerTags.size());
+  auto contSig = curr->contType.getContinuation().type.getSignature();
+  auto& ctrs = contSig.params;
+  for (Index i = 0; i < curr->handlerTags.size(); i++) {
+    Type sentType;
+    if (curr->handlerBlocks[i].isNull()) {
+      sentType = Type::none;
+    } else {
+      auto& tag = curr->handlerTags[i];
+      auto& tagSig = wasm.getTag(tag)->sig;
+
+      auto& tgps = tagSig.params;
+      auto& tgrs = tagSig.results;
+
+      HeapType ftPrime{Signature(tgrs, ctrs)};
+      HeapType ctPrime{Continuation(ftPrime)};
+      Type ctPrimeRef(ctPrime, Nullability::NonNullable);
+
+      if (tgps.size() > 0) {
+        TypeList sentValueTypes;
+        sentValueTypes.reserve(tgps.size() + 1);
+
+        sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
+        sentValueTypes.push_back(ctPrimeRef);
+        sentType = Type(sentValueTypes);
+      } else {
+        sentType = ctPrimeRef;
+      }
+    }
+    curr->sentTypes.push_back(sentType);
+  }
+}
+
 void WasmBinaryReader::visitResume(Resume* curr) {
 
   curr->contType = getIndexedHeapType();
@@ -7990,6 +8036,7 @@ void WasmBinaryReader::visitResume(Resume* curr) {
   }
 
   readResumeTable<Resume>(this, curr);
+  computeResumeTableSentTypes<Resume>(wasm, curr);
 
   curr->cont = popNonVoidExpression();
 
@@ -8014,6 +8061,7 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
   tagRefs[exnTagIndex].push_back(&curr->tag);
 
   readResumeTable<ResumeThrow>(this, curr);
+  computeResumeTableSentTypes<ResumeThrow>(wasm, curr);
 
   curr->cont = popNonVoidExpression();
 

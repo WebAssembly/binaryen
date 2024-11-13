@@ -1194,61 +1194,17 @@ public:
     ret->finalize(&wasm);
     return ret;
   }
-  template<typename ResumeOrResumeThrow>
-  std::vector<Type> computeResumeTableSentTypes(ResumeOrResumeThrow* curr) {
-    static_assert(std::is_base_of<Resume, ResumeOrResumeThrow>::value ||
-                  std::is_base_of<ResumeThrow, ResumeOrResumeThrow>::value);
-    assert(curr->handlerBlocks.size() == curr->handlerTags.size());
-
-    // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
-    // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction
-    // (resume $ct ... (tag $tag $block) ... ) causes $block to receive values
-    // of the following types when suspending to $tag: tgp* (ref $ct') where ct'
-    // = (cont $ft') and ft' = [tgr*] -> [ctr*].
-    //
-    std::vector<Type> sentTypes;
-    sentTypes.reserve(curr->handlerTags.size());
-    auto contSig = curr->contType.getContinuation().type.getSignature();
-    auto& ctrs = contSig.params;
-    for (Index i = 0; i < curr->handlerTags.size(); i++) {
-      if (curr->handlerBlocks[i].isNull()) {
-        sentTypes[i] = Type::none;
-        continue;
-      }
-
-      auto& tag = curr->handlerTags[i];
-      auto& tagSig = wasm.getTag(tag)->sig;
-
-      auto& tgps = tagSig.params;
-      auto& tgrs = tagSig.results;
-
-      HeapType ftPrime{Signature(tgrs, ctrs)};
-      HeapType ctPrime{Continuation(ftPrime)};
-      Type ctPrimeRef(ctPrime, Nullability::NonNullable);
-
-      if (tgps.size() > 0) {
-        TypeList sentValueTypes;
-        sentValueTypes.reserve(tgps.size() + 1);
-
-        sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
-        sentValueTypes.push_back(ctPrimeRef);
-        sentTypes[i] = Type(sentValueTypes);
-      } else {
-        sentTypes[i] = ctPrimeRef;
-      }
-    }
-    return sentTypes;
-  }
   Resume* makeResume(HeapType contType,
                      const std::vector<Name>& handlerTags,
                      const std::vector<Name>& handlerBlocks,
+                     const std::vector<Type>& sentTypes,
                      const std::vector<Expression*>& operands,
                      Expression* cont) {
     auto* ret = wasm.allocator.alloc<Resume>();
     ret->contType = contType;
     ret->handlerTags.set(handlerTags);
     ret->handlerBlocks.set(handlerBlocks);
-    ret->sentTypes.set(computeResumeTableSentTypes<Resume>(ret));
+    ret->sentTypes.set(sentTypes);
     ret->operands.set(operands);
     ret->cont = cont;
     ret->finalize(&wasm);
@@ -1258,6 +1214,7 @@ public:
                                Name tag,
                                const std::vector<Name>& handlerTags,
                                const std::vector<Name>& handlerBlocks,
+                               const std::vector<Type>& sentTypes,
                                const std::vector<Expression*>& operands,
                                Expression* cont) {
     auto* ret = wasm.allocator.alloc<ResumeThrow>();
@@ -1265,7 +1222,7 @@ public:
     ret->tag = tag;
     ret->handlerTags.set(handlerTags);
     ret->handlerBlocks.set(handlerBlocks);
-    ret->sentTypes.set(computeResumeTableSentTypes<ResumeThrow>(ret));
+    ret->sentTypes.set(sentTypes);
     ret->operands.set(operands);
     ret->cont = cont;
     ret->finalize(&wasm);
