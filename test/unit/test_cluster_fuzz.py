@@ -47,8 +47,21 @@ class ClusterFuzz(utils.BinaryenTestCase):
             raise
         assert 'wasm-opt version ' in out
 
+    # Generate N testcases, using run.py from a temp dir, and outputting to a
+    # testcase dir.
+    def generate_testcases(self, N, temp_dir, testcase_dir):
+        proc = subprocess.run([sys.executable,
+                               os.path.join(temp_dir, 'run.py'),
+                               f'--output_dir={testcase_dir}',
+                               f'--no_of_files={N}'],
+                               text=True,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+        assert proc.returncode == 0
+        return proc
+
     # Test the bundled run.py script.
-    def test_run_py(self):
+    def zzzzzzzzzzzzzzzzzzzztest_run_py(self):
         temp_dir = self.bundle_and_unpack()
 
         testcase_dir = os.path.join(temp_dir.name, 'testcases')
@@ -56,24 +69,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         os.mkdir(testcase_dir)
 
         N = 100
-        run_py = os.path.join(temp_dir.name, 'run.py')
-
-        # The ClusterFuzz run.py uses --fuzz-passes to add some interesting
-        # changes to the wasm. Make sure that actually runs passes, by using
-        # pass-debug mode to scan for the logging as we create N testcases.
-        print('Generating')
-        os.environ['BINARYEN_PASS_DEBUG'] = '1'
-        try:
-            proc = subprocess.run([sys.executable,
-                                   run_py,
-                                   f'--output_dir={testcase_dir}',
-                                   f'--no_of_files={N}'],
-                                   text=True,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
-        finally:
-            del os.environ['BINARYEN_PASS_DEBUG']
-        assert proc.returncode == 0
+        proc = self.generate_testcases(N, temp_dir.name, testcase_dir)
 
         print('Checking')
 
@@ -84,7 +80,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         for i in range(0, N + 2):
             fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
             flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
-            # We actually emit the range [1, N], and not 0 or N+1
+            # We actually emit the range [1, N], so 0 or N+1 should not exist.
             if i >= 1 and i <= N:
                 assert os.path.exists(fuzz_file)
                 assert os.path.exists(flags_file)
@@ -92,21 +88,36 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 assert not os.path.exists(fuzz_file)
                 assert not os.path.exists(flags_file)
 
-        # We should see interesting passes being run in stderr. This is *NOT* a
+    def test_fuzz_passes(self):
+        # We should see interesting passes being run in run.py. This is *NOT* a
         # deterministic test, since the number of passes run is random (we just
         # let run.py run normally, to simulate the real environment), so flakes
-        # are possible here. However, statistically the risk of them is
-        # negligible:
-        #
-        #  * Running this test 10 times (with N = 100 unchanged), the results
-        #    are 1268,2092,1797,1178,1533,1786,2123,1802,1530,1086.
-        #  * Mean 1619, standard deviation: 346.
-        #  * The chance to go below 4 standard deviations is one in 33,333,
-        #    meaning if we run the tests 10 times a day it would take almost 10
-        #    years to see a single error.
-        print(proc.stderr.count('running pass'))
+        # are possible here. However, we do the check in a way that the
+        # statistical likelihood of a flake is insignificant. Specifically, we
+        # just check that we see a different number of passes run in two
+        # different invocations, which is enough to prove that we are running
+        # different passes each time. And the number of passes is on average
+        # over 100 here (10 testcases, and each runs 0-20 passes or so).
+        temp_dir = self.bundle_and_unpack()
+        N = 10
+
+        # Try many times to see a different number, to make flakes even less
+        # likely.
+        seen_num_passes = set()
+        for i in range(100):
+            os.environ['BINARYEN_PASS_DEBUG'] = '1'
+            try:
+                proc = self.generate_testcases(N, temp_dir.name, temp_dir.name)
+            finally:
+                del os.environ['BINARYEN_PASS_DEBUG']
+
+            num_passes = proc.stderr.count('running pass')
+            print(f'num passes: {num_passes}')
+            seen_num_passes.add(num_passes)
+            if len(seen_num_passes) > 1:
+                return
+        raise Exception(f'We always only saw {seen_num_passes} passes run')
 
 
-# TODO test --fuzz-passes, see that with pass-debug it runs some passes (try 1000 times). can we do this using run.py?
 # TODO check the wasm files are not trivial. min functions called? inspect the actual wasm with --metrics? we should see variety there
 # TODO test default values (without --output-dir etc., 100 funcs, etc.)
