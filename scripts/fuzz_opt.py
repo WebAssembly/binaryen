@@ -35,7 +35,6 @@ import shutil
 import subprocess
 import random
 import re
-import shutil
 import sys
 import tarfile
 import time
