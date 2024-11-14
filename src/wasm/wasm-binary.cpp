@@ -1877,25 +1877,6 @@ void WasmBinaryReader::read() {
     }
   }
 
-  // Set local names for imported and declared functions.
-  for (auto& [index, locals] : localNames) {
-    if (index >= wasm.functions.size()) {
-      std::cerr << "warning: function index out of bounds in name section: "
-                   "locals at index "
-                << index << '\n';
-      continue;
-    }
-    for (auto& [local, name] : locals) {
-      if (local >= wasm.functions[index]->getNumLocals()) {
-        std::cerr << "warning: local index out of bounds in name section: "
-                  << name << " at index " << local << " in function " << index
-                  << '\n';
-        continue;
-      }
-      wasm.functions[index]->setLocalName(local, name);
-    }
-  }
-
   validateBinary();
 }
 
@@ -2627,6 +2608,7 @@ void WasmBinaryReader::readImports() {
         curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
+        setLocalNames(*curr, wasm.functions.size());
         wasm.addFunction(std::move(curr));
         break;
       }
@@ -2717,6 +2699,20 @@ void WasmBinaryReader::readImports() {
   numFuncImports = wasm.functions.size();
 }
 
+void WasmBinaryReader::setLocalNames(Function& func, Index i) {
+  if (auto it = localNames.find(i); it != localNames.end()) {
+    for (auto& [local, name] : it->second) {
+      if (local >= func.getNumLocals()) {
+        std::cerr << "warning: local index out of bounds in name section: "
+                  << name << " at index " << local << " in function " << i
+                  << '\n';
+        continue;
+      }
+      func.setLocalName(local, name);
+    }
+  }
+}
+
 void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   auto numImports = wasm.functions.size();
@@ -2799,6 +2795,7 @@ void WasmBinaryReader::readFunctions() {
     readNextDebugLocation();
 
     readVars();
+    setLocalNames(*func, numFuncImports + i);
 
     func->prologLocation = debugLocation;
     {
