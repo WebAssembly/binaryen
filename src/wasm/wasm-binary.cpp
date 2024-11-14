@@ -2725,6 +2725,15 @@ void WasmBinaryReader::readFunctionSignatures() {
     }
     usedNames.insert(name);
   }
+  // Also check that the function indices in the local names subsection are
+  // in-bounds, even though we don't use them here.
+  for (auto& [index, locals] : localNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: function index out of bounds in name section: "
+                   "locals at index "
+                << index << '\n';
+    }
+  }
   for (size_t i = 0; i < num; i++) {
     auto [name, isExplicit] =
       getOrMakeName(functionNames, numImports + i, makeName("", i), usedNames);
