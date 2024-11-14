@@ -241,11 +241,11 @@
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 (ref $A))
   ;; CHECK-NEXT:  (local $5 i32)
-  ;; CHECK-NEXT:  (local $scratch_16 i32)
+  ;; CHECK-NEXT:  (local $scratch i32)
   ;; CHECK-NEXT:  (local $7 i32)
   ;; CHECK-NEXT:  (local $8 i32)
   ;; CHECK-NEXT:  (local $9 i32)
-  ;; CHECK-NEXT:  (local $scratch (tuple i32 (ref $B) i32))
+  ;; CHECK-NEXT:  (local $scratch_10 (tuple i32 (ref $B) i32))
   ;; CHECK-NEXT:  (local $scratch_11 (ref $B))
   ;; CHECK-NEXT:  (local $scratch_12 i32)
   ;; CHECK-NEXT:  (local $scratch_13 (ref $B))
@@ -256,7 +256,7 @@
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (local.set $scratch_12
   ;; CHECK-NEXT:      (tuple.extract 3 0
-  ;; CHECK-NEXT:       (local.tee $scratch
+  ;; CHECK-NEXT:       (local.tee $scratch_10
   ;; CHECK-NEXT:        (br_if $block
   ;; CHECK-NEXT:         (tuple.make 3
   ;; CHECK-NEXT:          (i32.const -3)
@@ -272,12 +272,12 @@
   ;; CHECK-NEXT:      (block (result (ref $B))
   ;; CHECK-NEXT:       (local.set $scratch_11
   ;; CHECK-NEXT:        (tuple.extract 3 1
-  ;; CHECK-NEXT:         (local.get $scratch)
+  ;; CHECK-NEXT:         (local.get $scratch_10)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (local.set $8
   ;; CHECK-NEXT:        (tuple.extract 3 2
-  ;; CHECK-NEXT:         (local.get $scratch)
+  ;; CHECK-NEXT:         (local.get $scratch_10)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (local.get $scratch_11)
@@ -287,7 +287,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.tee $scratch_16
+  ;; CHECK-NEXT:    (local.tee $scratch
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (local.set $scratch_14
   ;; CHECK-NEXT:       (local.get $9)

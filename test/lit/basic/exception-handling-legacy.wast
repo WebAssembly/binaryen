@@ -130,6 +130,7 @@
   ;; CHECK-BIN-NEXT:  (local $1 i64)
   ;; CHECK-BIN-NEXT:  (local $scratch (tuple i32 i64))
   ;; CHECK-BIN-NEXT:  (local $scratch_3 i32)
+  ;; CHECK-BIN-NEXT:  (local $4 (tuple i32 i64))
   ;; CHECK-BIN-NEXT:  (try
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (throw $e-i32-i64
@@ -138,25 +139,30 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-i32-i64
-  ;; CHECK-BIN-NEXT:    (local.set $x
-  ;; CHECK-BIN-NEXT:     (block (result i32)
-  ;; CHECK-BIN-NEXT:      (local.set $scratch_3
-  ;; CHECK-BIN-NEXT:       (tuple.extract 2 0
-  ;; CHECK-BIN-NEXT:        (local.tee $scratch
-  ;; CHECK-BIN-NEXT:         (pop (tuple i32 i64))
+  ;; CHECK-BIN-NEXT:    (local.set $4
+  ;; CHECK-BIN-NEXT:     (pop (tuple i32 i64))
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (block
+  ;; CHECK-BIN-NEXT:     (local.set $x
+  ;; CHECK-BIN-NEXT:      (block (result i32)
+  ;; CHECK-BIN-NEXT:       (local.set $scratch_3
+  ;; CHECK-BIN-NEXT:        (tuple.extract 2 0
+  ;; CHECK-BIN-NEXT:         (local.tee $scratch
+  ;; CHECK-BIN-NEXT:          (local.get $4)
+  ;; CHECK-BIN-NEXT:         )
   ;; CHECK-BIN-NEXT:        )
   ;; CHECK-BIN-NEXT:       )
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (local.set $1
-  ;; CHECK-BIN-NEXT:       (tuple.extract 2 1
-  ;; CHECK-BIN-NEXT:        (local.get $scratch)
+  ;; CHECK-BIN-NEXT:       (local.set $1
+  ;; CHECK-BIN-NEXT:        (tuple.extract 2 1
+  ;; CHECK-BIN-NEXT:         (local.get $scratch)
+  ;; CHECK-BIN-NEXT:        )
   ;; CHECK-BIN-NEXT:       )
+  ;; CHECK-BIN-NEXT:       (local.get $scratch_3)
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (local.get $scratch_3)
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (local.get $x)
+  ;; CHECK-BIN-NEXT:     (drop
+  ;; CHECK-BIN-NEXT:      (local.get $x)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -1374,6 +1380,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 i64))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_3 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $4 (tuple i32 i64))
 ;; CHECK-BIN-NODEBUG-NEXT:  (try
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$2
@@ -1382,25 +1389,30 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$2
-;; CHECK-BIN-NODEBUG-NEXT:    (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:     (block (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:      (local.set $scratch_3
-;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 2 0
-;; CHECK-BIN-NODEBUG-NEXT:        (local.tee $scratch
-;; CHECK-BIN-NODEBUG-NEXT:         (pop (tuple i32 i64))
+;; CHECK-BIN-NODEBUG-NEXT:    (local.set $4
+;; CHECK-BIN-NODEBUG-NEXT:     (pop (tuple i32 i64))
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (block
+;; CHECK-BIN-NODEBUG-NEXT:     (local.set $0
+;; CHECK-BIN-NODEBUG-NEXT:      (block (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:       (local.set $scratch_3
+;; CHECK-BIN-NODEBUG-NEXT:        (tuple.extract 2 0
+;; CHECK-BIN-NODEBUG-NEXT:         (local.tee $scratch
+;; CHECK-BIN-NODEBUG-NEXT:          (local.get $4)
+;; CHECK-BIN-NODEBUG-NEXT:         )
 ;; CHECK-BIN-NODEBUG-NEXT:        )
 ;; CHECK-BIN-NODEBUG-NEXT:       )
-;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (local.set $1
-;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 2 1
-;; CHECK-BIN-NODEBUG-NEXT:        (local.get $scratch)
+;; CHECK-BIN-NODEBUG-NEXT:       (local.set $1
+;; CHECK-BIN-NODEBUG-NEXT:        (tuple.extract 2 1
+;; CHECK-BIN-NODEBUG-NEXT:         (local.get $scratch)
+;; CHECK-BIN-NODEBUG-NEXT:        )
 ;; CHECK-BIN-NODEBUG-NEXT:       )
+;; CHECK-BIN-NODEBUG-NEXT:       (local.get $scratch_3)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (local.get $scratch_3)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:    )
-;; CHECK-BIN-NODEBUG-NEXT:    (drop
-;; CHECK-BIN-NODEBUG-NEXT:     (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:     (drop
+;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
