@@ -34,6 +34,19 @@ Before uploading to ClusterFuzz, it is worth doing two things:
 
      Look at the logs, which will contain statistics on the wasm files the
      fuzzer emits, and see that they look reasonable.
+
+     You should run the unit tests on the bundle you are about to upload, by
+     setting the proper env var like this (using the same filename as above):
+
+       BINARYEN_CLUSTER_FUZZ_BUNDLE=`pwd`/binaryen_wasm_fuzzer.tgz python -m unittest test/unit/test_cluster_fuzz.py
+
+     Note that you must pass an absolute filename (e.g. using pwd as shown).
+
+     The unittest logs should reflect that that bundle is being used at the
+     very start ("Using existing bundle: PATH" rather than "Making a new
+     bundle"). Note that some of the unittests also create their own bundles, to
+     test the bundling script itself, so later down you will see logging of
+     bundle creation even if you provide a bundle.
 '''
 
 import os

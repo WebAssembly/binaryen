@@ -18,11 +18,15 @@ class ClusterFuzz(utils.BinaryenTestCase):
         cls.temp_dir = tempfile.TemporaryDirectory()
         cls.clusterfuzz_dir = cls.temp_dir.name
 
-        print('Bundling')
-        bundle = os.path.join(cls.clusterfuzz_dir, 'bundle.tgz')
-        shared.run_process([shared.in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
+        bundle = os.environ.get('BINARYEN_CLUSTER_FUZZ_BUNDLE')
+        if bundle:
+            print(f'Using existing bundle: {bundle}')
+        else:
+            print('Making a new bundle')
+            bundle = os.path.join(cls.clusterfuzz_dir, 'bundle.tgz')
+            shared.run_process([shared.in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
-        print('Unpacking')
+        print('Unpacking bundle')
         tar = tarfile.open(bundle, "r:gz")
         tar.extractall(path=cls.clusterfuzz_dir)
         tar.close()
