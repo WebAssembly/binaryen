@@ -8,7 +8,9 @@
 // with code sequences which also implement LLVM's fptoui/fptosi, but which are
 // not semantically equivalent in wasm. This is because out-of-range inputs to
 // these instructions produce poison values. So we need only ensure that there
-// is no trap, but need not ensure any particular result.
+// is no trap, but need not ensure any particular result. The transformation
+// in this pass is the same as the one used by LLVM to lower fptoui/fptosi
+// to wasm trapping instructions.
 
 // For example, if a conversion is guarded by a range check in the source, LLVM
 // can move the conversion before the check (and instead guard the use of the
@@ -65,6 +67,7 @@ struct LLVMNonTrappingFPToIntLowering
 
     Builder builder(*getModule());
     Index v = Builder::addVar(getFunction(), curr->value->type);
+    // if fabs(operand) < INT_MAX then use the trapping operation, else return INT_MIN
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         ltOp,
@@ -102,6 +105,7 @@ struct LLVMNonTrappingFPToIntLowering
 
     Builder builder(*getModule());
     Index v = Builder::addVar(getFunction(), curr->value->type);
+    // if op < INT_MAX and op >= 0 then use the trapping operation, else return 0
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         BinaryOp::AndInt32,
@@ -144,7 +148,7 @@ struct LLVMNonTrappingFPToIntLowering
         replaceUnsigned<double, uint64_t>(curr);
         break;
       default:
-        WASM_UNREACHABLE("Unexpected opcode");
+        break;
     }
   }
 
