@@ -1563,15 +1563,21 @@ class ClusterFuzz(TestCaseHandler):
     def handle(self, wasm):
         self.ensure()
 
+        # run.py() should emit these two files. Delete them to make sure they
+        # are created by run.py() in the next step.
+        fuzz_file = 'fuzz-binaryen-1.js'
+        flags_file = 'flags-binaryen-1.js'
+        for f in [fuzz_file, flags_file]:
+            if os.path.exists(f):
+                os.unlink(f)
+
         # Call run.py(), similarly to how ClusterFuzz does.
         run([sys.executable,
              os.path.join(self.clusterfuzz_dir, 'run.py'),
              '--output_dir=' + os.getcwd(),
              '--no_of_files=1'])
 
-        # We should see two files.
-        fuzz_file = 'fuzz-binaryen-1.js'
-        flags_file = 'flags-binaryen-1.js'
+        # We should see the two files.
         assert os.path.exists(fuzz_file)
         assert os.path.exists(flags_file)
 

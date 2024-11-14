@@ -35,8 +35,7 @@ import subprocess
 import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
-# run V8. By default we apply all staging flags, but the ClusterFuzz bundler
-# may add more here.
+# run V8. By default we apply all staging flags.
 FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 
 # Maximum size of the random data that we feed into wasm-opt -ttf. This is
@@ -55,10 +54,6 @@ FLAGS_FILENAME_PREFIX = 'flags-'
 # FLAGS_FILENAME_PREFIX).
 FUZZER_NAME_PREFIX = 'binaryen-'
 
-# File extensions.
-JS_FILE_EXTENSION = '.js'
-WASM_FILE_EXTENSION = '.wasm'
-
 # The root directory of the bundle this will be in, which is the directory of
 # this very file.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -70,9 +65,11 @@ FUZZER_BINARY_PATH = os.path.join(ROOT_DIR, 'bin', 'wasm-opt')
 # testcase.
 JS_SHELL_PATH = os.path.join(ROOT_DIR, 'scripts', 'fuzz_shell.js')
 
-# The arguments we use to wasm-opt to generate wasm files.
+# The arguments we provide to wasm-opt to generate wasm files.
 FUZZER_ARGS = [
+    # Generate a wasm from random data.
     '--translate-to-fuzz',
+    # Run some random passes, to further shape the random wasm we emit.
     '--fuzz-passes',
     # Enable all features but disable ones not yet ready for fuzzing. This may
     # be a smaller set than fuzz_opt.py, as that enables a few experimental
@@ -84,7 +81,7 @@ FUZZER_ARGS = [
 
 # Returns the file name for fuzz or flags files.
 def get_file_name(prefix, index):
-    return '%s%s%d%s' % (prefix, FUZZER_NAME_PREFIX, index, JS_FILE_EXTENSION)
+    return f'{prefix}{FUZZER_NAME_PREFIX}{index}.js'
 
 
 # Returns the contents of a .js fuzz file, given particular wasm contents that
@@ -129,7 +126,6 @@ def main(argv):
             # Generate wasm from the random data.
             cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
             cmd += ['-o', wasm_file_path, input_data_file_path]
-
             try:
                 subprocess.check_call(cmd)
             except subprocess.CalledProcessError:
