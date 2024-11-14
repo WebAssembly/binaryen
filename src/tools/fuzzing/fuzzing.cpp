@@ -95,6 +95,9 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
             !wasm.features.hasExceptionHandling() &&
             !wasm.features.hasGC()) {
           options.passes.push_back("flatten");
+          if (oneIn(2)) {
+            options.passes.push_back("rereloop");
+          }
         }
         break;
       case 11:
