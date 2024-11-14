@@ -74,6 +74,7 @@ FUZZER_ARGS = [
     '--disable-fp16',
 ]
 
+
 # Returns the file name for fuzz or flags files.
 def get_file_name(prefix, index):
     return f'{prefix}{FUZZER_NAME_PREFIX}{index}.js'
@@ -160,4 +161,3 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv)
-
