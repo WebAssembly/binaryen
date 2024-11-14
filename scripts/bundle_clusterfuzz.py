@@ -85,7 +85,7 @@ if len(sys.argv) >= 3:
     # Delete the argument, as importing |shared| scans it.
     sys.argv.pop()
 
-from test import shared
+from test import shared # noqa
 
 # Pick where to get the builds
 if build_dir:
@@ -125,4 +125,3 @@ with tarfile.open(output_file, "w:gz") as tar:
                 tar.add(path, arcname=f'lib/{name}')
 
 print('Done.')
-
