@@ -1588,15 +1588,19 @@ class ClusterFuzz(TestCaseHandler):
         with open(flags_file, 'r') as f:
             flags = f.read()
         cmd.append(flags)
-        # Run the fuzz_shell.js from the ClusterFuzz bundle, *not* the usual
-        # one.
+        # Run the fuzz file, which contains a modified fuzz_shell.js - we do
+        # *not* run fuzz_shell.js normally.
         cmd.append(os.path.abspath(fuzz_file))
         # No wasm file needs to be provided: it is hardcoded into the JS. Note
         # that we use run_vm(), which will ignore known issues in our output and
         # in V8. Those issues may cause V8 to e.g. reject a binary we emit that
         # is invalid, but that should not be a problem for ClusterFuzz (it isn't
         # a crash).
-        run_vm(cmd)
+        output = run_vm(cmd)
+
+        # Verify that we called something. The fuzzer should always emit at
+        # least one exported function.
+        assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
