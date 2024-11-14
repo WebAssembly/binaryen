@@ -11,35 +11,33 @@ from . import utils
 
 
 class ClusterFuzz(utils.BinaryenTestCase):
-    # Bundle up our ClusterFuzz package, and unbundle it to a directory.
-    # Return that directory as a TemporaryDirectory object.
-    # TODO for speed, reuse this?
-    def bundle_and_unpack(self):
-        temp_dir = tempfile.TemporaryDirectory()
+    @classmethod
+    def setUpClass(cls):
+        # Bundle up our ClusterFuzz package, and unbundle it to a directory.
+        # Keep the directory alive in a class var.
+        cls.temp_dir = tempfile.TemporaryDirectory()
+        cls.clusterfuzz_dir = cls.temp_dir.name
 
         print('Bundling')
-        bundle = os.path.join(temp_dir.name, 'bundle.tgz')
+        bundle = os.path.join(cls.clusterfuzz_dir, 'bundle.tgz')
         shared.run_process([shared.in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
 
         print('Unpacking')
         tar = tarfile.open(bundle, "r:gz")
-        tar.extractall(path=temp_dir.name)
+        tar.extractall(path=cls.clusterfuzz_dir)
         tar.close()
 
         print('Ready')
-        return temp_dir
 
     # Test our bundler for ClusterFuzz.
     def test_bundle(self):
-        temp_dir = self.bundle_and_unpack()
-
         # The bundle should contain certain files:
         # 1. run.py, the main entry point.
-        assert os.path.exists(os.path.join(temp_dir.name, 'run.py'))
+        assert os.path.exists(os.path.join(self.clusterfuzz_dir, 'run.py'))
         # 2. scripts/fuzz_shell.js, the js testcase shell
-        assert os.path.exists(os.path.join(temp_dir.name, 'scripts', 'fuzz_shell.js'))
+        assert os.path.exists(os.path.join(self.clusterfuzz_dir, 'scripts', 'fuzz_shell.js'))
         # 3. bin/wasm-opt, the wasm-opt binary in a static build
-        wasm_opt = os.path.join(temp_dir.name, 'bin', 'wasm-opt')
+        wasm_opt = os.path.join(self.clusterfuzz_dir, 'bin', 'wasm-opt')
         assert os.path.exists(wasm_opt)
 
         # See that we can execute the bundled wasm-opt. It should be able to
@@ -49,9 +47,9 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
     # Generate N testcases, using run.py from a temp dir, and outputting to a
     # testcase dir.
-    def generate_testcases(self, N, temp_dir, testcase_dir):
+    def generate_testcases(self, N, testcase_dir):
         proc = subprocess.run([sys.executable,
-                               os.path.join(temp_dir, 'run.py'),
+                               os.path.join(self.clusterfuzz_dir, 'run.py'),
                                f'--output_dir={testcase_dir}',
                                f'--no_of_files={N}'],
                                text=True,
@@ -62,22 +60,18 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
     # Test the bundled run.py script.
     def test_run_py(self):
-        temp_dir = self.bundle_and_unpack()
-
-        testcase_dir = os.path.join(temp_dir.name, 'testcases')
-        assert not os.path.exists(testcase_dir), 'we must run in a fresh dir'
-        os.mkdir(testcase_dir)
+        temp_dir = tempfile.TemporaryDirectory()
 
         N = 10
-        proc = self.generate_testcases(N, temp_dir.name, testcase_dir)
+        proc = self.generate_testcases(N, temp_dir.name)
 
         # We should have logged the creation of N testcases.
         assert proc.stdout.count('Created testcase:') == N
 
         # We should have actually created them.
         for i in range(0, N + 2):
-            fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
-            flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
+            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+            flags_file = os.path.join(temp_dir.name, f'flags-binaryen-{i}.js')
             # We actually emit the range [1, N], so 0 or N+1 should not exist.
             if i >= 1 and i <= N:
                 assert os.path.exists(fuzz_file)
@@ -96,7 +90,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # different invocations, which is enough to prove that we are running
         # different passes each time. And the number of passes is on average
         # over 100 here (10 testcases, and each runs 0-20 passes or so).
-        temp_dir = self.bundle_and_unpack()
+        temp_dir = tempfile.TemporaryDirectory()
         N = 10
 
         # Try many times to see a different number, to make flakes even less
@@ -110,7 +104,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         for i in range(100):
             os.environ['BINARYEN_PASS_DEBUG'] = '1'
             try:
-                proc = self.generate_testcases(N, temp_dir.name, temp_dir.name)
+                proc = self.generate_testcases(N, temp_dir.name)
             finally:
                 del os.environ['BINARYEN_PASS_DEBUG']
 
@@ -124,9 +118,9 @@ class ClusterFuzz(utils.BinaryenTestCase):
     def test_file_contents(self):
         # As test_fuzz_passes, this is nondeterministic, but statistically it is
         # almost impossible to get a flake here.
-        temp_dir = self.bundle_and_unpack()
+        temp_dir = tempfile.TemporaryDirectory()
         N = 100
-        proc = self.generate_testcases(N, temp_dir.name, temp_dir.name)
+        proc = self.generate_testcases(N, temp_dir.name)
 
         # To check for interesting wasm file contents, we'll note how many
         # struct.news appear (a signal that we are emitting WasmGC, and also a
