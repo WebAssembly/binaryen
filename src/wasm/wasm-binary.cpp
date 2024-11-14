@@ -1825,6 +1825,7 @@ void WasmBinaryReader::read() {
         break;
       case BinaryConsts::Section::Code:
         if (DWARF) {
+          std::cerr << "code section at " << pos << '\n';
           codeSectionLocation = pos;
         }
         readFunctions();
@@ -2773,6 +2774,9 @@ void WasmBinaryReader::readFunctions() {
   numFuncBodies = getU32LEB();
   if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError("invalid function section size, must equal types");
+  }
+  if (DWARF) {
+    builder.setBinaryLocation(&pos, codeSectionLocation);
   }
   for (size_t i = 0; i < numFuncBodies; i++) {
     auto sizePos = pos;

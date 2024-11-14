@@ -64,6 +64,15 @@ public:
   // pushed instruction.
   void setDebugLocation(const std::optional<Function::DebugLocation>&);
 
+  // Give the builder a pointer to the counter tracking the current location in
+  // the binary. If this pointer is non-null, the builder will record the binary
+  // locations relative to the given code section offset for all instructions
+  // and delimiters inside functions.
+  void setBinaryLocation(size_t* binaryPos, size_t codeSectionOffset) {
+    this->binaryPos = binaryPos;
+    this->codeSectionOffset = codeSectionOffset;
+  }
+
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
@@ -240,6 +249,11 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
+
+  // Used for setting DWARF expression locations.
+  size_t* binaryPos = nullptr;
+  size_t lastBinaryPos = 0;
+  size_t codeSectionOffset = 0;
 
   // The location lacks debug info as it was marked as not having it.
   struct NoDebug : public std::monostate {};
@@ -536,6 +550,9 @@ private:
       labelDepths[label].push_back(scopeStack.size() + 1);
     }
     scopeStack.push_back(scope);
+    if (binaryPos) {
+      lastBinaryPos = *binaryPos;
+    }
   }
 
   ScopeCtx& getScope() {

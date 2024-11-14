@@ -150,6 +150,15 @@ void IRBuilder::push(Expression* expr) {
   scope.exprStack.push_back(expr);
 
   applyDebugLoc(expr);
+  if (binaryPos && func) {
+    std::cerr << "recording expression " << ShallowExpression{expr} << " at ["
+              << (lastBinaryPos - codeSectionOffset) << ", "
+              << (*binaryPos - codeSectionOffset) << "]\n";
+    func->expressionLocations[expr] =
+      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
+                            BinaryLocation(*binaryPos - codeSectionOffset)};
+    lastBinaryPos = *binaryPos;
+  }
 
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
@@ -699,6 +708,8 @@ Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
 }
 
 Result<> IRBuilder::visitFunctionStart(Function* func) {
+  std::cerr << "visiting function start at " << (binaryPos ? *binaryPos : 666)
+            << "\n";
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
   }
@@ -708,6 +719,11 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
   this->func = func;
+
+  if (binaryPos) {
+    lastBinaryPos = *binaryPos;
+  }
+
   return Ok{};
 }
 
@@ -840,6 +856,14 @@ Result<> IRBuilder::visitElse() {
   auto expr = finishScope();
   CHECK_ERR(expr);
   iff->ifTrue = *expr;
+
+  if (binaryPos && func) {
+    std::cerr << "recording delimiter for " << ShallowExpression{iff} << " at "
+              << (lastBinaryPos - codeSectionOffset) << '\n';
+    func->delimiterLocations[iff][BinaryLocations::Else] =
+      lastBinaryPos - codeSectionOffset;
+  }
+
   pushScope(ScopeCtx::makeElse(iff, originalLabel, label, labelUsed));
   return Ok{};
 }
@@ -867,6 +891,14 @@ Result<> IRBuilder::visitCatch(Name tag) {
     tryy->catchBodies.push_back(*expr);
   }
   tryy->catchTags.push_back(tag);
+
+  if (binaryPos && func) {
+    std::cerr << "recording delimiter for " << ShallowExpression{tryy} << " at "
+              << (lastBinaryPos - codeSectionOffset) << '\n';
+    auto& delimiterLocs = func->delimiterLocations[tryy];
+    delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+  }
+
   pushScope(
     ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel));
   // Push a pop for the exception payload if necessary.
@@ -877,6 +909,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     scopeStack[0].notePop();
     push(builder.makePop(params));
   }
+
   return Ok{};
 }
 
@@ -902,6 +935,14 @@ Result<> IRBuilder::visitCatchAll() {
   } else {
     tryy->catchBodies.push_back(*expr);
   }
+
+  if (binaryPos && func) {
+    std::cerr << "recording delimiter for " << ShallowExpression{tryy} << " at "
+              << (lastBinaryPos - codeSectionOffset) << '\n';
+    auto& delimiterLocs = func->delimiterLocations[tryy];
+    delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+  }
+
   pushScope(
     ScopeCtx::makeCatchAll(tryy, originalLabel, label, labelUsed, branchLabel));
   return Ok{};
@@ -938,6 +979,7 @@ Result<> IRBuilder::visitDelegate(Index label) {
 }
 
 Result<> IRBuilder::visitEnd() {
+  std::cerr << "visiting end\n";
   auto scope = getScope();
   if (scope.isNone()) {
     return Err{"unexpected end"};
@@ -980,6 +1022,7 @@ Result<> IRBuilder::visitEnd() {
     if (scope.needsPopFixup()) {
       EHUtils::handleBlockNestedPops(func, wasm);
     }
+    this->func = nullptr;
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;
