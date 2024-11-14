@@ -49,6 +49,7 @@ build_dir = None
 if len(sys.argv) >= 3:
     assert sys.argv[2].startswith('--build-dir=')
     build_dir = sys.argv[2].split('=')[1]
+    build_dir = os.path.abspath(build_dir)
 
 from test import shared
 
@@ -57,8 +58,8 @@ if build_dir:
     binaryen_bin = os.path.join(build_dir, 'bin')
     binaryen_lib = os.path.join(build_dir, 'lib')
 else:
-    binaryen_bin = shared.options.bin
-    binaryen_lib = shared.options.lib
+    binaryen_bin = shared.options.binaryen_bin
+    binaryen_lib = shared.options.binaryen_lib
 
 with tarfile.open(output_file, "w:gz") as tar:
     # run.py

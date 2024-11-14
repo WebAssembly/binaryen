@@ -214,3 +214,23 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+    def test_bundle_build_dir(self):
+        cmd = [shared.in_binaryen('scripts', 'bundle_clusterfuzz.py')]
+        cmd.append('bundle.tgz')
+        # Test that we notice the --build-dir flag. Here we pass an invalid
+        # value, so we should error.
+        cmd.append('--build-dir=foo_bar')
+
+        failed = False
+        try:
+            shared.check_call(cmd)
+        except subprocess.CalledProcessError:
+            # Expected error.
+            failed = True
+        assert failed
+
+        # Test with a valid --build-dir.
+        cmd.pop()
+        cmd.append(f'--build-dir={shared.options.binaryen_root}')
+        shared.check_call(cmd)
+
