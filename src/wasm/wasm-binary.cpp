@@ -2714,20 +2714,6 @@ void WasmBinaryReader::setLocalNames(Function& func, Index i) {
   }
 }
 
-void WasmBinaryReader::setLocalNames(Function& func, Index i) {
-  if (auto it = localNames.find(i); it != localNames.end()) {
-    for (auto& [local, name] : it->second) {
-      if (local >= func.getNumLocals()) {
-        std::cerr << "warning: local index out of bounds in name section: "
-                  << name << " at index " << local << " in function " << i
-                  << '\n';
-        continue;
-      }
-      func.setLocalName(local, name);
-    }
-  }
-}
-
 void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   auto numImports = wasm.functions.size();
