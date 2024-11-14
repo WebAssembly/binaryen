@@ -218,7 +218,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-    def test_bundle_build_dir(self):
+    # "zzz" in test name so that this runs last. If it runs first, it can be
+    # confusing as it appears next to the logging of which bundle we use (see
+    # setUpClass).
+    def test_zzz_bundle_build_dir(self):
         cmd = [shared.in_binaryen('scripts', 'bundle_clusterfuzz.py')]
         cmd.append('bundle.tgz')
         # Test that we notice the --build-dir flag. Here we pass an invalid
