@@ -967,6 +967,29 @@
     )
   )
 
+  ;; CHECK:      (func $control-flow-in-set-value-safe-return (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (return
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $control-flow-in-set-value-safe-return (result i32)
     ;; As above, but replace the call with a return in an if. We can still
     ;; optimize (if the return is taken, we go outside of the function anyhow).
