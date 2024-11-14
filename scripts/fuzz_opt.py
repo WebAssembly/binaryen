@@ -1627,8 +1627,10 @@ class ClusterFuzz(TestCaseHandler):
         output = run_vm(cmd)
 
         # Verify that we called something. The fuzzer should always emit at
-        # least one exported function.
-        assert FUZZ_EXEC_CALL_PREFIX in output
+        # least one exported function (unless we've decided to ignore the entire
+        # run).
+        if output != IGNORE:
+            assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
