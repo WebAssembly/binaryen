@@ -726,12 +726,18 @@ def run_bynterp(wasm, args):
 V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 
 
-# default to running with liftoff enabled, because we need to pick either
+# Default to running with liftoff enabled, because we need to pick either
 # liftoff or turbo* for consistency (otherwise running the same command twice
 # may have different results due to NaN nondeterminism), and liftoff is faster
-# for small things
+# for small things.
 def run_d8_js(js, args=[], liftoff=True):
     cmd = [shared.V8] + shared.V8_OPTS
+    # Enable even more staged features than V8_OPTS. Those are the flags we want
+    # to use when testing, and enable all features we test against, while
+    # --future may also enable non-feature things (which we do not require for
+    # testing, but which do make sense to fuzz for V8's sake, so we add them
+    # here in the fuzzer).
+    cmd += ['--future']
     if liftoff:
         cmd += V8_LIFTOFF_ARGS
     cmd += [js]
