@@ -341,6 +341,7 @@
   )
   ;; code offset: 0xa9
   (block $label$1
+   ;; code offset: 0xab
    (block $label$2
     ;; code offset: 0xaf
     (br_if $label$2

@@ -7740,6 +7740,7 @@ file_names[  3]:
     )
     ;; code offset: 0xa1f
     (block $label$17
+     ;; code offset: 0xa21
      (block $label$18
       ;; code offset: 0xa27
       (br_if $label$18
@@ -7927,6 +7928,7 @@ file_names[  3]:
   )
   ;; code offset: 0xaed
   (block $label$1
+   ;; code offset: 0xaef
    (block $label$2
     ;; code offset: 0xaf4
     (br_if $label$2
@@ -8041,6 +8043,7 @@ file_names[  3]:
   )
   ;; code offset: 0xb4a
   (block $label$3
+   ;; code offset: 0xb4c
    (block $label$4
     ;; code offset: 0xb51
     (br_if $label$4
@@ -8914,6 +8917,7 @@ file_names[  3]:
     )
     ;; code offset: 0xefd
     (block $label$7
+     ;; code offset: 0xeff
      (block $label$8
       ;; code offset: 0xf04
       (br_if $label$8
@@ -9818,6 +9822,7 @@ file_names[  3]:
      )
      ;; code offset: 0x1207
      (block $label$17
+      ;; code offset: 0x1209
       (block $label$18
        ;; code offset: 0x120f
        (br_if $label$18

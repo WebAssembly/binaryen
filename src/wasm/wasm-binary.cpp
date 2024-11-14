@@ -4453,13 +4453,21 @@ void WasmBinaryReader::visitBlock(Block* curr) {
   // special-case Block and de-recurse nested blocks in their first position, as
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
+  // Track start positions for all blocks except for the outermost block, which
+  // is already handled in the caller.
+  std::vector<size_t> startPosStack;
+  size_t startPos = -1;
   while (1) {
     curr->type = getType();
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type});
     stack.push_back(curr);
+    if (startPos != size_t(-1)) {
+      startPosStack.push_back(startPos);
+    }
     if (more() && input[pos] == BinaryConsts::Block) {
       // a recursion
+      startPos = pos;
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
       startControlFlow(curr);
@@ -4478,6 +4486,12 @@ void WasmBinaryReader::visitBlock(Block* curr) {
   while (stack.size() > 0) {
     curr = stack.back();
     stack.pop_back();
+    if (startPosStack.empty()) {
+      startPos = -1;
+    } else {
+      startPos = startPosStack.back();
+      startPosStack.pop_back();
+    }
     // everything after this, that is left when we see the marker, is ours
     size_t start = expressionStack.size();
     if (last) {
@@ -4497,6 +4511,12 @@ void WasmBinaryReader::visitBlock(Block* curr) {
                      : Block::NoBreak);
     breakStack.pop_back();
     breakTargetNames.erase(curr->name);
+
+    if (DWARF && currFunction && startPos != size_t(-1)) {
+      currFunction->expressionLocations[curr] =
+        BinaryLocations::Span{BinaryLocation(startPos - codeSectionLocation),
+                              BinaryLocation(pos - codeSectionLocation)};
+    }
   }
 }
 

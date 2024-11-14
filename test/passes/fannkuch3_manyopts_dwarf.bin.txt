@@ -4752,6 +4752,7 @@ file_names[  4]:
   )
   ;; code offset: 0x43
   (block $label$1
+   ;; code offset: 0x45
    (block $label$2
     ;; code offset: 0x4c
     (if
@@ -5886,6 +5887,7 @@ file_names[  4]:
   )
   ;; code offset: 0x39b
   (block $label$1
+   ;; code offset: 0x39d
    (block $label$2
     ;; code offset: 0x3a4
     (if
@@ -6050,7 +6052,9 @@ file_names[  4]:
    )
    ;; code offset: 0x41a
    (block $label$6
+    ;; code offset: 0x41c
     (block $label$7
+     ;; code offset: 0x41e
      (block $label$8
       ;; code offset: 0x425
       (if
