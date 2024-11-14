@@ -92,8 +92,7 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 10:
         // Some features do not support flatten yet.
         if (!wasm.features.hasReferenceTypes() &&
-            !wasm.features.hasExceptionHandling() &&
-            !wasm.features.hasGC()) {
+            !wasm.features.hasExceptionHandling() && !wasm.features.hasGC()) {
           options.passes.push_back("flatten");
           if (oneIn(2)) {
             options.passes.push_back("rereloop");
