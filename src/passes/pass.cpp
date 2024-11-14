@@ -272,6 +272,10 @@ void PassRegistry::registerPasses() {
   registerPass("table64-lowering",
                "lower 64-bit tables 32-bit ones",
                createTable64LoweringPass);
+  registerPass("memory-copy-fill-lowering",
+               "Lower memory.copy and memory.fill to wasm mvp and disable "
+               "the bulk-memory feature.",
+               createMemoryCopyFillLoweringPass);
   registerPass("memory-packing",
                "packs memory into separate segments, skipping zeros",
                createMemoryPackingPass);

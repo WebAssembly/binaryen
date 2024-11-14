@@ -292,6 +292,7 @@ void TranslateToFuzzReader::build() {
     addImportTableSupport();
   }
   addImportLoggingSupport();
+  addImportCallingSupport();
   modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
@@ -644,7 +645,7 @@ void TranslateToFuzzReader::finalizeMemory() {
           // TODO: It would be better to avoid segment overlap so that
           //       MemoryPacking can run.
           segment->offset =
-            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
@@ -688,7 +689,7 @@ void TranslateToFuzzReader::finalizeTable() {
             assert(!wasm.getGlobal(get->name)->imported());
             // TODO: the segments must not overlap...
             segment->offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+              builder.makeConst(Literal::makeFromInt32(0, table->addressType));
           }
         }
         Address maxOffset = segment->data.size();
@@ -741,6 +742,49 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     func->module = "fuzzing-support";
     func->base = baseName;
     func->type = Signature(type, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+}
+
+void TranslateToFuzzReader::addImportCallingSupport() {
+  // Only add these some of the time, as they inhibit some fuzzing (things like
+  // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
+  // its own exports, and to care about the indexes of the exports):
+  //
+  //  0 - none
+  //  1 - call-export
+  //  2 - call-export-catch
+  //  3 - call-export & call-export-catch
+  //  4 - none
+  //  5 - none
+  //
+  auto choice = upTo(6);
+  if (choice >= 4) {
+    return;
+  }
+
+  if (choice & 1) {
+    // Given an export index, call it from JS.
+    callExportImportName = Names::getValidFunctionName(wasm, "call-export");
+    auto func = std::make_unique<Function>();
+    func->name = callExportImportName;
+    func->module = "fuzzing-support";
+    func->base = "call-export";
+    func->type = Signature({Type::i32}, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+
+  if (choice & 2) {
+    // Given an export index, call it from JS and catch all exceptions. Return
+    // whether we caught. Exceptions are common (if the index is invalid, in
+    // particular), so a variant that catches is useful to avoid halting.
+    callExportCatchImportName =
+      Names::getValidFunctionName(wasm, "call-export-catch");
+    auto func = std::make_unique<Function>();
+    func->name = callExportCatchImportName;
+    func->module = "fuzzing-support";
+    func->base = "call-export-catch";
+    func->type = Signature(Type::i32, Type::i32);
     wasm.addFunction(std::move(func));
   }
 }
@@ -928,6 +972,38 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
     tableSetImportName,
     {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
     Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
+  // The none-returning variant just does the call. The i32-returning one
+  // catches any errors and returns 1 when it saw an error. Based on the
+  // variant, pick which to call, and the maximum index to call.
+  Name target;
+  Index maxIndex = wasm.exports.size();
+  if (type == Type::none) {
+    target = callExportImportName;
+  } else if (type == Type::i32) {
+    target = callExportCatchImportName;
+    // This never traps, so we can be less careful, but we do still want to
+    // avoid trapping a lot as executing code is more interesting. (Note that
+    // even though we double here, the risk is not that great: we are still
+    // adding functions as we go, so the first half of functions/exports can
+    // double here and still end up in bounds by the time we've added them all.)
+    maxIndex = (maxIndex + 1) * 2;
+  } else {
+    WASM_UNREACHABLE("bad import.call");
+  }
+  // We must have set up the target function.
+  assert(target);
+
+  // Most of the time, call a valid export index in the range we picked, but
+  // sometimes allow anything at all.
+  auto* index = make(Type::i32);
+  if (!allowOOB || !oneIn(10)) {
+    index = builder.makeBinary(
+      RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
+  }
+  return builder.makeCall(target, {index}, type);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1621,6 +1697,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
   }
   if (type == Type::i32) {
+    if (callExportCatchImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportCallExport);
+    }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
@@ -1699,6 +1778,9 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeArrayBulkMemoryOp);
   if (tableSetImportName) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
+  }
+  if (callExportImportName) {
+    options.add(FeatureSet::MVP, &Self::makeImportCallExport);
   }
   return (this->*pick(options))(Type::none);
 }
@@ -2133,7 +2215,7 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
       return makeTrivial(type);
     }
   }
-  // with high probability, make sure the type is valid  otherwise, most are
+  // with high probability, make sure the type is valid - otherwise, most are
   // going to trap
   auto addressType = wasm.getTable(funcrefTableName)->addressType;
   Expression* target;

@@ -1780,10 +1780,16 @@ void WasmBinaryReader::read() {
     }
   }
 
+  // Skip ahead and read the name section so we know what names to use when we
+  // construct module elements.
+  if (debugInfo) {
+    findAndReadNames();
+  }
+
   readHeader();
   readSourceMapHeader();
 
-  // read sections until the end
+  // Read sections until the end
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
@@ -1793,7 +1799,7 @@ void WasmBinaryReader::read() {
 
     auto oldPos = pos;
 
-    // note the section in the list of seen sections, as almost no sections can
+    // Note the section in the list of seen sections, as almost no sections can
     // appear more than once, and verify those that shouldn't do not.
     if (sectionCode != BinaryConsts::Section::Custom &&
         !seenSections.insert(sectionCode).second) {
@@ -1871,7 +1877,6 @@ void WasmBinaryReader::read() {
   }
 
   validateBinary();
-  processNames();
 }
 
 void WasmBinaryReader::readCustomSection(size_t payloadLen) {
@@ -1883,11 +1888,8 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   }
   payloadLen -= read;
   if (sectionName.equals(BinaryConsts::CustomSections::Name)) {
-    if (debugInfo) {
-      readNames(payloadLen);
-    } else {
-      pos += payloadLen;
-    }
+    // We already read the name section before anything else.
+    pos += payloadLen;
   } else if (sectionName.equals(BinaryConsts::CustomSections::TargetFeatures)) {
     readFeatures(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink)) {
@@ -2233,16 +2235,47 @@ void WasmBinaryReader::readHeader() {
   }
 }
 
-void WasmBinaryReader::readStart() { startIndex = getU32LEB(); }
+void WasmBinaryReader::readStart() {
+  startIndex = getU32LEB();
+  wasm.start = getFunctionName(startIndex);
+}
 
 static Name makeName(std::string prefix, size_t counter) {
   return Name(prefix + std::to_string(counter));
 }
 
+// Look up a name from the names section or use a validated version of the
+// provided name. Return the name and whether it is explicit in the input.
+static std::pair<Name, bool>
+getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
+              Index i,
+              Name name,
+              std::unordered_set<Name>& usedNames) {
+  if (auto it = nameMap.find(i); it != nameMap.end()) {
+    return {it->second, true};
+  } else {
+    auto valid = Names::getValidNameGivenExisting(name, usedNames);
+    usedNames.insert(valid);
+    return {valid, false};
+  }
+}
+
 void WasmBinaryReader::readMemories() {
   auto num = getU32LEB();
+  auto numImports = wasm.memories.size();
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : memoryNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: memory index out of bounds in name section: "
+                << name << " at index " << index << '\n';
+    }
+    usedNames.insert(name);
+  }
   for (size_t i = 0; i < num; i++) {
-    auto memory = Builder::makeMemory(makeName("", i));
+    auto [name, isExplicit] =
+      getOrMakeName(memoryNames, numImports + i, makeName("", i), usedNames);
+    auto memory = Builder::makeMemory(name);
+    memory->hasExplicitName = isExplicit;
     getResizableLimits(memory->initial,
                        memory->max,
                        memory->shared,
@@ -2423,6 +2456,39 @@ void WasmBinaryReader::readTypes() {
   for (Index i = 0; i < types.size(); ++i) {
     wasm.typeIndices.insert({types[i], i});
   }
+
+  // Assign names from the names section.
+  for (auto& [index, name] : typeNames) {
+    if (index >= types.size()) {
+      std::cerr << "warning: type index out of bounds in name section: " << name
+                << " at index " << index << '\n';
+      continue;
+    }
+    wasm.typeNames[types[index]].name = name;
+  }
+  for (auto& [index, fields] : fieldNames) {
+    if (index >= types.size()) {
+      std::cerr
+        << "warning: type index out of bounds in name section: fields at index "
+        << index << '\n';
+      continue;
+    }
+    if (!types[index].isStruct()) {
+      std::cerr << "warning: field names applied to non-struct type at index "
+                << index << '\n';
+      continue;
+    }
+    auto& names = wasm.typeNames[types[index]].fieldNames;
+    for (auto& [field, name] : fields) {
+      if (field >= types[index].getStruct().fields.size()) {
+        std::cerr << "warning: field index out of bounds in name section: "
+                  << name << " at index " << field << " in type " << index
+                  << '\n';
+        continue;
+      }
+      names[field] = name;
+    }
+  }
 }
 
 Name WasmBinaryReader::getFunctionName(Index index) {
@@ -2513,11 +2579,8 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
 void WasmBinaryReader::readImports() {
   size_t num = getU32LEB();
   Builder builder(wasm);
-  size_t tableCounter = 0;
-  size_t memoryCounter = 0;
-  size_t functionCounter = 0;
-  size_t globalCounter = 0;
-  size_t tagCounter = 0;
+  std::unordered_set<Name> usedFunctionNames, usedTableNames, usedMemoryNames,
+    usedGlobalNames, usedTagNames;
   for (size_t i = 0; i < num; i++) {
     auto module = getInlineString();
     auto base = getInlineString();
@@ -2527,7 +2590,11 @@ void WasmBinaryReader::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        Name name = makeName("fimport$", functionCounter++);
+        auto [name, isExplicit] =
+          getOrMakeName(functionNames,
+                        wasm.functions.size(),
+                        makeName("fimport$", wasm.functions.size()),
+                        usedFunctionNames);
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
         auto type = getTypeByIndex(index);
@@ -2537,13 +2604,21 @@ void WasmBinaryReader::readImports() {
                      "'s type must be a signature. Given: " + type.toString());
         }
         auto curr = builder.makeFunction(name, type, {});
+        curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
+        setLocalNames(*curr, wasm.functions.size());
         wasm.addFunction(std::move(curr));
         break;
       }
       case ExternalKind::Table: {
-        auto table = builder.makeTable(makeName("timport$", tableCounter++));
+        auto [name, isExplicit] =
+          getOrMakeName(tableNames,
+                        wasm.tables.size(),
+                        makeName("timport$", wasm.tables.size()),
+                        usedTableNames);
+        auto table = builder.makeTable(name);
+        table->hasExplicitName = isExplicit;
         table->module = module;
         table->base = base;
         table->type = getType();
@@ -2562,7 +2637,13 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Memory: {
-        auto memory = builder.makeMemory(makeName("mimport$", memoryCounter++));
+        auto [name, isExplicit] =
+          getOrMakeName(memoryNames,
+                        wasm.memories.size(),
+                        makeName("mimport$", wasm.memories.size()),
+                        usedMemoryNames);
+        auto memory = builder.makeMemory(name);
+        memory->hasExplicitName = isExplicit;
         memory->module = module;
         memory->base = base;
         getResizableLimits(memory->initial,
@@ -2574,26 +2655,37 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Global: {
+        auto [name, isExplicit] =
+          getOrMakeName(globalNames,
+                        wasm.globals.size(),
+                        makeName("gimport$", wasm.globals.size()),
+                        usedGlobalNames);
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         if (mutable_ & ~1) {
           throwError("Global mutability must be 0 or 1");
         }
         auto curr =
-          builder.makeGlobal(makeName("gimport$", globalCounter++),
+          builder.makeGlobal(name,
                              type,
                              nullptr,
                              mutable_ ? Builder::Mutable : Builder::Immutable);
+        curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
         wasm.addGlobal(std::move(curr));
         break;
       }
       case ExternalKind::Tag: {
-        Name name = makeName("eimport$", tagCounter++);
+        auto [name, isExplicit] =
+          getOrMakeName(tagNames,
+                        wasm.tags.size(),
+                        makeName("eimport$", wasm.tags.size()),
+                        usedTagNames);
         getInt8(); // Reserved 'attribute' field
         auto index = getU32LEB();
         auto curr = builder.makeTag(name, getSignatureByTypeIndex(index));
+        curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
         wasm.addTag(std::move(curr));
@@ -2618,16 +2710,51 @@ void WasmBinaryReader::requireFunctionContext(const char* error) {
   }
 }
 
+void WasmBinaryReader::setLocalNames(Function& func, Index i) {
+  if (auto it = localNames.find(i); it != localNames.end()) {
+    for (auto& [local, name] : it->second) {
+      if (local >= func.getNumLocals()) {
+        std::cerr << "warning: local index out of bounds in name section: "
+                  << name << " at index " << local << " in function " << i
+                  << '\n';
+        continue;
+      }
+      func.setLocalName(local, name);
+    }
+  }
+}
+
 void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
+  auto numImports = wasm.functions.size();
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : functionNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: function index out of bounds in name section: "
+                << name << " at index " << index << '\n';
+    }
+    usedNames.insert(name);
+  }
+  // Also check that the function indices in the local names subsection are
+  // in-bounds, even though we don't use them here.
+  for (auto& [index, locals] : localNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: function index out of bounds in name section: "
+                   "locals at index "
+                << index << '\n';
+    }
+  }
   for (size_t i = 0; i < num; i++) {
+    auto [name, isExplicit] =
+      getOrMakeName(functionNames, numImports + i, makeName("", i), usedNames);
     auto index = getU32LEB();
     HeapType type = getTypeByIndex(index);
     functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
-    wasm.addFunction(
-      Builder(wasm).makeFunction(makeName("", i), type, {}, nullptr));
+    auto func = Builder(wasm).makeFunction(name, type, {}, nullptr);
+    func->hasExplicitName = isExplicit;
+    wasm.addFunction(std::move(func));
   }
 }
 
@@ -2688,6 +2815,7 @@ void WasmBinaryReader::readFunctions() {
     readNextDebugLocation();
 
     readVars();
+    setLocalNames(*func, numFuncImports + i);
 
     func->prologLocation = debugLocation;
     {
@@ -2779,9 +2907,28 @@ void WasmBinaryReader::readExports() {
       throwError("duplicate export name");
     }
     curr->kind = (ExternalKind)getU32LEB();
+    auto* ex = wasm.addExport(std::move(curr));
     auto index = getU32LEB();
-    exportIndices[curr.get()] = index;
-    exportOrder.push_back(std::move(curr));
+    switch (ex->kind) {
+      case ExternalKind::Function:
+        ex->value = getFunctionName(index);
+        continue;
+      case ExternalKind::Table:
+        ex->value = getTableName(index);
+        continue;
+      case ExternalKind::Memory:
+        ex->value = getMemoryName(index);
+        continue;
+      case ExternalKind::Global:
+        ex->value = getGlobalName(index);
+        continue;
+      case ExternalKind::Tag:
+        ex->value = getTagName(index);
+        continue;
+      case ExternalKind::Invalid:
+        break;
+    }
+    throwError("invalid export kind");
   }
 }
 
@@ -3052,18 +3199,28 @@ void WasmBinaryReader::readStrings() {
 
 void WasmBinaryReader::readGlobals() {
   size_t num = getU32LEB();
+  auto numImports = wasm.globals.size();
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : globalNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: global index out of bounds in name section: "
+                << name << " at index " << index << '\n';
+    }
+    usedNames.insert(name);
+  }
   for (size_t i = 0; i < num; i++) {
+    auto [name, isExplicit] = getOrMakeName(
+      globalNames, numImports + i, makeName("global$", i), usedNames);
     auto type = getConcreteType();
     auto mutable_ = getU32LEB();
     if (mutable_ & ~1) {
       throwError("Global mutability must be 0 or 1");
     }
     auto* init = readExpression();
-    wasm.addGlobal(
-      Builder::makeGlobal(makeName("global$", i),
-                          type,
-                          init,
-                          mutable_ ? Builder::Mutable : Builder::Immutable));
+    auto global = Builder::makeGlobal(
+      name, type, init, mutable_ ? Builder::Mutable : Builder::Immutable);
+    global->hasExplicitName = isExplicit;
+    wasm.addGlobal(std::move(global));
   }
 }
 
@@ -3255,77 +3412,22 @@ void WasmBinaryReader::validateBinary() {
   }
 }
 
-void WasmBinaryReader::processNames() {
-  // now that we have names, apply things
-
-  if (startIndex != static_cast<Index>(-1)) {
-    wasm.start = getFunctionName(startIndex);
-  }
-
-  for (auto& curr : exportOrder) {
-    auto index = exportIndices[curr.get()];
-    switch (curr->kind) {
-      case ExternalKind::Function: {
-        curr->value = getFunctionName(index);
-        break;
-      }
-      case ExternalKind::Table:
-        curr->value = getTableName(index);
-        break;
-      case ExternalKind::Memory:
-        curr->value = getMemoryName(index);
-        break;
-      case ExternalKind::Global:
-        curr->value = getGlobalName(index);
-        break;
-      case ExternalKind::Tag:
-        curr->value = getTagName(index);
-        break;
-      default:
-        throwError("bad export kind");
+void WasmBinaryReader::createDataSegments(Index count) {
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : dataNames) {
+    if (index >= count) {
+      std::cerr << "warning: data index out of bounds in name section: " << name
+                << " at index " << index << '\n';
     }
-    wasm.addExport(std::move(curr));
+    usedNames.insert(name);
   }
-
-  for (auto& [index, refs] : functionRefs) {
-    for (auto* ref : refs) {
-      *ref = getFunctionName(index);
-    }
+  for (size_t i = 0; i < count; ++i) {
+    auto [name, isExplicit] =
+      getOrMakeName(dataNames, i, makeName("", i), usedNames);
+    auto curr = Builder::makeDataSegment(name);
+    curr->hasExplicitName = isExplicit;
+    wasm.addDataSegment(std::move(curr));
   }
-  for (auto& [index, refs] : tableRefs) {
-    for (auto* ref : refs) {
-      *ref = getTableName(index);
-    }
-  }
-  for (auto& [index, refs] : memoryRefs) {
-    for (auto ref : refs) {
-      *ref = getMemoryName(index);
-    }
-  }
-  for (auto& [index, refs] : globalRefs) {
-    for (auto* ref : refs) {
-      *ref = getGlobalName(index);
-    }
-  }
-  for (auto& [index, refs] : tagRefs) {
-    for (auto* ref : refs) {
-      *ref = getTagName(index);
-    }
-  }
-  for (auto& [index, refs] : dataRefs) {
-    for (auto* ref : refs) {
-      *ref = getDataName(index);
-    }
-  }
-  for (auto& [index, refs] : elemRefs) {
-    for (auto* ref : refs) {
-      *ref = getElemName(index);
-    }
-  }
-
-  // Everything now has its proper name.
-
-  wasm.updateMaps();
 }
 
 void WasmBinaryReader::readDataSegmentCount() {
@@ -3333,11 +3435,7 @@ void WasmBinaryReader::readDataSegmentCount() {
   dataCount = getU32LEB();
   // Eagerly create the data segments so they are available during parsing of
   // the code section.
-  for (size_t i = 0; i < dataCount; ++i) {
-    auto curr = Builder::makeDataSegment();
-    curr->setName(Name::fromInt(i), false);
-    wasm.addDataSegment(std::move(curr));
-  }
+  createDataSegments(dataCount);
 }
 
 void WasmBinaryReader::readDataSegments() {
@@ -3348,11 +3446,7 @@ void WasmBinaryReader::readDataSegments() {
     }
   } else {
     // We haven't already created the data segments, so create them now.
-    for (size_t i = 0; i < num; ++i) {
-      auto curr = Builder::makeDataSegment();
-      curr->setName(Name::fromInt(i), false);
-      wasm.addDataSegment(std::move(curr));
-    }
+    createDataSegments(num);
   }
   assert(wasm.dataSegments.size() == num);
   for (size_t i = 0; i < num; i++) {
@@ -3371,7 +3465,7 @@ void WasmBinaryReader::readDataSegments() {
       if (flags & BinaryConsts::HasIndex) {
         memIdx = getU32LEB();
       }
-      memoryRefs[memIdx].push_back(&curr->memory);
+      curr->memory = getMemoryName(memIdx);
       curr->offset = readExpression();
     }
     auto size = getU32LEB();
@@ -3381,14 +3475,25 @@ void WasmBinaryReader::readDataSegments() {
 }
 
 void WasmBinaryReader::readTableDeclarations() {
-  auto numTables = getU32LEB();
-
-  for (size_t i = 0; i < numTables; i++) {
+  auto num = getU32LEB();
+  auto numImports = wasm.tables.size();
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : tableNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: table index out of bounds in name section: "
+                << name << " at index " << index << '\n';
+    }
+    usedNames.insert(name);
+  }
+  for (size_t i = 0; i < num; i++) {
+    auto [name, isExplicit] =
+      getOrMakeName(tableNames, numImports + i, makeName("", i), usedNames);
     auto elemType = getType();
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
     }
-    auto table = Builder::makeTable(makeName("", i), elemType);
+    auto table = Builder::makeTable(name, elemType);
+    table->hasExplicitName = isExplicit;
     bool is_shared;
     getResizableLimits(table->initial,
                        table->max,
@@ -3403,11 +3508,21 @@ void WasmBinaryReader::readTableDeclarations() {
 }
 
 void WasmBinaryReader::readElementSegments() {
-  auto numSegments = getU32LEB();
-  if (numSegments >= Table::kMaxSize) {
+  auto num = getU32LEB();
+  if (num >= Table::kMaxSize) {
     throwError("Too many segments");
   }
-  for (size_t i = 0; i < numSegments; i++) {
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : elemNames) {
+    if (index >= num) {
+      std::cerr << "warning: elem index out of bounds in name section: " << name
+                << " at index " << index << '\n';
+    }
+    usedNames.insert(name);
+  }
+  for (size_t i = 0; i < num; i++) {
+    auto [name, isExplicit] =
+      getOrMakeName(elemNames, i, makeName("", i), usedNames);
     auto flags = getU32LEB();
     bool isPassive = (flags & BinaryConsts::IsPassive) != 0;
     bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
@@ -3431,7 +3546,7 @@ void WasmBinaryReader::readElementSegments() {
     }
 
     auto segment = std::make_unique<ElementSegment>();
-    segment->setName(Name::fromInt(i), false);
+    segment->setName(name, isExplicit);
 
     if (!isPassive) {
       Index tableIdx = 0;
@@ -3468,9 +3583,7 @@ void WasmBinaryReader::readElementSegments() {
       for (Index j = 0; j < size; j++) {
         Index index = getU32LEB();
         auto sig = getTypeByFunctionIndex(index);
-        // Use a placeholder name for now
-        auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
-        functionRefs[index].push_back(&refFunc->func);
+        auto* refFunc = Builder(wasm).makeRefFunc(getFunctionName(index), sig);
         segmentData.push_back(refFunc);
       }
     }
@@ -3480,12 +3593,24 @@ void WasmBinaryReader::readElementSegments() {
 }
 
 void WasmBinaryReader::readTags() {
-  size_t numTags = getU32LEB();
-  for (size_t i = 0; i < numTags; i++) {
+  size_t num = getU32LEB();
+  auto numImports = wasm.tags.size();
+  std::unordered_set<Name> usedNames;
+  for (auto& [index, name] : tagNames) {
+    if (index >= num + numImports) {
+      std::cerr << "warning: tag index out of bounds in name section: " << name
+                << " at index " << index << '\n';
+    }
+    usedNames.insert(name);
+  }
+  for (size_t i = 0; i < num; i++) {
     getInt8(); // Reserved 'attribute' field
+    auto [name, isExplicit] =
+      getOrMakeName(tagNames, numImports + i, makeName("tag$", i), usedNames);
     auto typeIndex = getU32LEB();
-    wasm.addTag(Builder::makeTag(makeName("tag$", i),
-                                 getSignatureByTypeIndex(typeIndex)));
+    auto tag = Builder::makeTag(name, getSignatureByTypeIndex(typeIndex));
+    tag->hasExplicitName = isExplicit;
+    wasm.addTag(std::move(tag));
   }
 }
 
@@ -3531,39 +3656,12 @@ namespace {
 
 // Performs necessary processing of names from the name section before using
 // them. Specifically it escapes and deduplicates them.
-//
-// Deduplication is not trivial, since we can't only consider things in the name
-// section itself. The issue is that we have already given everything a
-// temporary name. Consider if we gave these two temp names:
-//
-//  $foo$0
-//  $foo$1
-//
-// and imagine that the first appears in the name section, where it is given the
-// the name $foo$1, and the second does not appear in the name section. In that
-// case, we'd rename the second to the same name as the first. If we left things
-// there that would be invalid, so we need to pick another temp name for the
-// second item to resolve that.
 class NameProcessor {
 public:
   // Returns a unique, escaped name. Notes that name for the items to follow to
   // keep them unique as well.
   Name process(Name name) {
     return deduplicate(WasmBinaryReader::escape(name));
-  }
-
-  // After processing the names section entries, which set explicit names, we
-  // also handle the remaining items here, which handles the corner case
-  // described above.
-  //
-  // TODO: This handles vectors of Named objects; we should also do this for
-  //       local names and type names etc.
-  template<typename T> void deduplicateUnexplicitlyNamed(std::vector<T>& vec) {
-    for (auto& x : vec) {
-      if (!x->hasExplicitName) {
-        x->name = deduplicate(x->name);
-      }
-    }
   }
 
 private:
@@ -3578,8 +3676,33 @@ private:
 
 } // anonymous namespace
 
-void WasmBinaryReader::readNames(size_t payloadLen) {
-  auto sectionPos = pos;
+void WasmBinaryReader::findAndReadNames() {
+  // Find the names section. Skip the magic and version.
+  assert(pos == 0);
+  getInt32();
+  getInt32();
+  Index payloadLen, sectionPos;
+  bool found = false;
+  while (more()) {
+    uint8_t sectionCode = getInt8();
+    payloadLen = getU32LEB();
+    sectionPos = pos;
+    if (sectionCode == BinaryConsts::Section::Custom) {
+      auto sectionName = getInlineString();
+      if (sectionName.equals(BinaryConsts::CustomSections::Name)) {
+        found = true;
+        break;
+      }
+    }
+    pos = sectionPos + payloadLen;
+  }
+  if (!found) {
+    // No names section to read.
+    pos = 0;
+    return;
+  }
+
+  // Read the names.
   uint32_t lastType = 0;
   while (pos < sectionPos + payloadLen) {
     auto nameType = getU32LEB();
@@ -3600,51 +3723,19 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < wasm.functions.size()) {
-          wasm.functions[index]->setExplicitName(name);
-        } else {
-          std::cerr << "warning: function index out of bounds in name section, "
-                       "function subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        functionNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.functions);
     } else if (nameType == Subsection::NameLocal) {
       auto numFuncs = getU32LEB();
       for (size_t i = 0; i < numFuncs; i++) {
         auto funcIndex = getU32LEB();
-        Function* func = nullptr;
-        if (funcIndex < wasm.functions.size()) {
-          func = wasm.functions[funcIndex].get();
-        } else {
-          std::cerr
-            << "warning: function index out of bounds in name section, local "
-               "subsection: "
-            << std::to_string(funcIndex) << std::endl;
-        }
         auto numLocals = getU32LEB();
         NameProcessor processor;
         for (size_t j = 0; j < numLocals; j++) {
           auto localIndex = getU32LEB();
-          auto rawLocalName = getInlineString();
-          if (!func) {
-            continue; // read and discard in case of prior error
-          }
-          auto localName = processor.process(rawLocalName);
-          if (localName.size() == 0) {
-            std::cerr << "warning: empty local name at index "
-                      << std::to_string(localIndex) << " in function "
-                      << std::string(func->name.str) << std::endl;
-          } else if (localIndex < func->getNumLocals()) {
-            func->localNames[localIndex] = localName;
-          } else {
-            std::cerr << "warning: local index out of bounds in name "
-                         "section, local subsection: "
-                      << std::string(rawLocalName.str) << " at index "
-                      << std::to_string(localIndex) << " in function "
-                      << std::string(func->name.str) << std::endl;
-          }
+          auto rawName = getInlineString();
+          auto name = processor.process(rawName);
+          localNames[funcIndex][localIndex] = name;
         }
       }
     } else if (nameType == Subsection::NameType) {
@@ -3654,14 +3745,7 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < types.size()) {
-          wasm.typeNames[types[index]].name = name;
-        } else {
-          std::cerr << "warning: type index out of bounds in name section, "
-                       "type subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        typeNames[index] = name;
       }
     } else if (nameType == Subsection::NameTable) {
       auto num = getU32LEB();
@@ -3670,23 +3754,8 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-
-        if (index < wasm.tables.size()) {
-          auto* table = wasm.tables[index].get();
-          for (auto& segment : wasm.elementSegments) {
-            if (segment->table == table->name) {
-              segment->table = name;
-            }
-          }
-          table->setExplicitName(name);
-        } else {
-          std::cerr << "warning: table index out of bounds in name section, "
-                       "table subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        tableNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.tables);
     } else if (nameType == Subsection::NameElem) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3694,17 +3763,8 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-
-        if (index < wasm.elementSegments.size()) {
-          wasm.elementSegments[index]->setExplicitName(name);
-        } else {
-          std::cerr << "warning: elem index out of bounds in name section, "
-                       "elem subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        elemNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.elementSegments);
     } else if (nameType == Subsection::NameMemory) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3712,16 +3772,8 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < wasm.memories.size()) {
-          wasm.memories[index]->setExplicitName(name);
-        } else {
-          std::cerr << "warning: memory index out of bounds in name section, "
-                       "memory subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        memoryNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.memories);
     } else if (nameType == Subsection::NameData) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3729,16 +3781,8 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < wasm.dataSegments.size()) {
-          wasm.dataSegments[index]->setExplicitName(name);
-        } else {
-          std::cerr << "warning: data index out of bounds in name section, "
-                       "data subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        dataNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.dataSegments);
     } else if (nameType == Subsection::NameGlobal) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3746,16 +3790,8 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < wasm.globals.size()) {
-          wasm.globals[index]->setExplicitName(name);
-        } else {
-          std::cerr << "warning: global index out of bounds in name section, "
-                       "global subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        globalNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.globals);
     } else if (nameType == Subsection::NameField) {
       auto numTypes = getU32LEB();
       for (size_t i = 0; i < numTypes; i++) {
@@ -3771,9 +3807,7 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
           auto fieldIndex = getU32LEB();
           auto rawName = getInlineString();
           auto name = processor.process(rawName);
-          if (validType) {
-            wasm.typeNames[types[typeIndex]].fieldNames[fieldIndex] = name;
-          }
+          fieldNames[typeIndex][fieldIndex] = name;
         }
       }
     } else if (nameType == Subsection::NameTag) {
@@ -3783,16 +3817,8 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
-        if (index < wasm.tags.size()) {
-          wasm.tags[index]->setExplicitName(name);
-        } else {
-          std::cerr << "warning: tag index out of bounds in name section, "
-                       "tag subsection: "
-                    << std::string(rawName.str) << " at index "
-                    << std::to_string(index) << std::endl;
-        }
+        tagNames[index] = name;
       }
-      processor.deduplicateUnexplicitlyNamed(wasm.tags);
     } else {
       std::cerr << "warning: unknown name subsection with id "
                 << std::to_string(nameType) << " at " << pos << std::endl;
@@ -3805,6 +3831,9 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
   if (pos != sectionPos + payloadLen) {
     throwError("bad names section position change");
   }
+
+  // Reset the position; we were just reading ahead.
+  pos = 0;
 }
 
 void WasmBinaryReader::readFeatures(size_t payloadLen) {
@@ -4614,8 +4643,7 @@ void WasmBinaryReader::visitCall(Call* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = sig.results;
-  // We don't know function names yet.
-  functionRefs[index].push_back(&curr->target);
+  curr->target = getFunctionName(index);
   curr->finalize();
 }
 
@@ -4630,8 +4658,7 @@ void WasmBinaryReader::visitCallIndirect(CallIndirect* curr) {
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
+  curr->table = getTableName(tableIdx);
   curr->finalize();
 }
 
@@ -4668,7 +4695,6 @@ void WasmBinaryReader::visitGlobalGet(GlobalGet* curr) {
   auto* global = wasm.globals[index].get();
   curr->name = global->name;
   curr->type = global->type;
-  globalRefs[index].push_back(&curr->name); // we don't know the final name yet
 }
 
 void WasmBinaryReader::visitGlobalSet(GlobalSet* curr) {
@@ -4678,7 +4704,6 @@ void WasmBinaryReader::visitGlobalSet(GlobalSet* curr) {
   }
   curr->name = wasm.globals[index]->name;
   curr->value = popNonVoidExpression();
-  globalRefs[index].push_back(&curr->name); // we don't know the final name yet
   curr->finalize();
 }
 
@@ -4853,7 +4878,7 @@ bool WasmBinaryReader::maybeVisitLoad(
 
   curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -4971,7 +4996,7 @@ bool WasmBinaryReader::maybeVisitStore(
 
   curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
@@ -5031,7 +5056,7 @@ bool WasmBinaryReader::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
 
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->bytes) {
     throwError("Align of AtomicRMW must match size");
   }
@@ -5082,7 +5107,7 @@ bool WasmBinaryReader::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) {
 
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->bytes) {
     throwError("Align of AtomicCpxchg must match size");
   }
@@ -5117,7 +5142,7 @@ bool WasmBinaryReader::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->expectedType.getByteSize()) {
     throwError("Align of AtomicWait must match size");
   }
@@ -5137,7 +5162,7 @@ bool WasmBinaryReader::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->type.getByteSize()) {
     throwError("Align of AtomicNotify must match size");
   }
@@ -5464,9 +5489,9 @@ bool WasmBinaryReader::maybeVisitMemoryInit(Expression*& out, uint32_t code) {
   curr->offset = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
   Index segIdx = getU32LEB();
-  dataRefs[segIdx].push_back(&curr->segment);
+  curr->segment = getDataName(segIdx);
   Index memIdx = getU32LEB();
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->finalize();
   out = curr;
   return true;
@@ -5478,7 +5503,7 @@ bool WasmBinaryReader::maybeVisitDataDrop(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<DataDrop>();
   Index segIdx = getU32LEB();
-  dataRefs[segIdx].push_back(&curr->segment);
+  curr->segment = getDataName(segIdx);
   curr->finalize();
   out = curr;
   return true;
@@ -5495,8 +5520,8 @@ bool WasmBinaryReader::maybeVisitMemoryCopy(Expression*& out, uint32_t code) {
   Index destIdx = getU32LEB();
   Index sourceIdx = getU32LEB();
   curr->finalize();
-  memoryRefs[destIdx].push_back(&curr->destMemory);
-  memoryRefs[sourceIdx].push_back(&curr->sourceMemory);
+  curr->destMemory = getMemoryName(destIdx);
+  curr->sourceMemory = getMemoryName(sourceIdx);
   out = curr;
   return true;
 }
@@ -5511,7 +5536,7 @@ bool WasmBinaryReader::maybeVisitMemoryFill(Expression*& out, uint32_t code) {
   curr->dest = popNonVoidExpression();
   Index memIdx = getU32LEB();
   curr->finalize();
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   out = curr;
   return true;
 }
@@ -5528,9 +5553,8 @@ bool WasmBinaryReader::maybeVisitTableSize(Expression*& out, uint32_t code) {
   if (getTable(tableIdx)->is64()) {
     curr->type = Type::i64;
   }
+  curr->table = getTableName(tableIdx);
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
   return true;
 }
@@ -5549,9 +5573,8 @@ bool WasmBinaryReader::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   if (getTable(tableIdx)->is64()) {
     curr->type = Type::i64;
   }
+  curr->table = getTableName(tableIdx);
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
   return true;
 }
@@ -5568,7 +5591,7 @@ bool WasmBinaryReader::maybeVisitTableFill(Expression*& out, uint32_t code) {
   auto* value = popNonVoidExpression();
   auto* dest = popNonVoidExpression();
   auto* ret = Builder(wasm).makeTableFill(Name(), dest, value, size);
-  tableRefs[tableIdx].push_back(&ret->table);
+  ret->table = getTableName(tableIdx);
   out = ret;
   return true;
 }
@@ -5589,8 +5612,8 @@ bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   auto* source = popNonVoidExpression();
   auto* dest = popNonVoidExpression();
   auto* ret = Builder(wasm).makeTableCopy(dest, source, size, Name(), Name());
-  tableRefs[destTableIdx].push_back(&ret->destTable);
-  tableRefs[sourceTableIdx].push_back(&ret->sourceTable);
+  ret->destTable = getTableName(destTableIdx);
+  ret->sourceTable = getTableName(sourceTableIdx);
   out = ret;
   return true;
 }
@@ -5604,9 +5627,9 @@ bool WasmBinaryReader::maybeVisitTableInit(Expression*& out, uint32_t code) {
   curr->offset = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
   Index segIdx = getU32LEB();
-  elemRefs[segIdx].push_back(&curr->segment);
-  Index memIdx = getU32LEB();
-  tableRefs[memIdx].push_back(&curr->table);
+  curr->segment = getElemName(segIdx);
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
   curr->finalize();
   out = curr;
   return true;
@@ -6620,7 +6643,7 @@ bool WasmBinaryReader::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
   curr->bytes = 16;
   curr->valueType = Type::v128;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->isAtomic = false;
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -6878,7 +6901,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
     curr->type = Type::v128;
     curr->bytes = 16;
     Index memIdx = readMemoryAccess(curr->align, curr->offset);
-    memoryRefs[memIdx].push_back(&curr->memory);
+    curr->memory = getMemoryName(memIdx);
     curr->isAtomic = false;
     curr->ptr = popNonVoidExpression();
     curr->finalize();
@@ -6939,7 +6962,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       return false;
   }
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -6989,7 +7012,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoadStoreLane(Expression*& out,
   auto* curr = allocator.alloc<SIMDLoadStoreLane>();
   curr->op = op;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->index = getLaneIndex(lanes);
   curr->vec = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -7035,8 +7058,8 @@ void WasmBinaryReader::visitMemorySize(MemorySize* curr) {
   if (getMemory(index)->is64()) {
     curr->type = Type::i64;
   }
+  curr->memory = getMemoryName(index);
   curr->finalize();
-  memoryRefs[index].push_back(&curr->memory);
 }
 
 void WasmBinaryReader::visitMemoryGrow(MemoryGrow* curr) {
@@ -7045,7 +7068,7 @@ void WasmBinaryReader::visitMemoryGrow(MemoryGrow* curr) {
   if (getMemory(index)->is64()) {
     curr->type = Type::i64;
   }
-  memoryRefs[index].push_back(&curr->memory);
+  curr->memory = getMemoryName(index);
 }
 
 void WasmBinaryReader::visitNop(Nop* curr) {}
@@ -7068,12 +7091,7 @@ void WasmBinaryReader::visitRefIsNull(RefIsNull* curr) {
 
 void WasmBinaryReader::visitRefFunc(RefFunc* curr) {
   Index index = getU32LEB();
-  // We don't know function names yet, so record this use to be updated later.
-  // Note that we do not need to check that 'index' is in bounds, as that will
-  // be verified in the next line. (Also, note that functionRefs[index] may
-  // write to an odd place in the functionRefs map if index is invalid, but that
-  // is harmless.)
-  functionRefs[index].push_back(&curr->func);
+  curr->func = getFunctionName(index);
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   curr->finalize(Type(getTypeByFunctionIndex(index), NonNullable));
@@ -7092,9 +7110,8 @@ void WasmBinaryReader::visitTableGet(TableGet* curr) {
   }
   curr->index = popNonVoidExpression();
   curr->type = wasm.tables[tableIdx]->type;
+  curr->table = getTableName(tableIdx);
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
 }
 
 void WasmBinaryReader::visitTableSet(TableSet* curr) {
@@ -7104,9 +7121,8 @@ void WasmBinaryReader::visitTableSet(TableSet* curr) {
   }
   curr->value = popNonVoidExpression();
   curr->index = popNonVoidExpression();
+  curr->table = getTableName(tableIdx);
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
 }
 
 void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
@@ -7169,8 +7185,7 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   breakStack.pop_back();
 
   for (Index i = 0; i < tagIndexes.size(); i++) {
-    // We don't know the final name yet.
-    tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
+    curr->catchTags[i] = getTagName(tagIndexes[i]);
   }
 
   if (lastSeparator == BinaryConsts::Delegate) {
@@ -7293,8 +7308,7 @@ void WasmBinaryReader::visitTryTable(TryTable* curr) {
 
   for (Index i = 0; i < tagIndexes.size(); i++) {
     if (curr->catchTags[i]) {
-      // We don't know the final name yet.
-      tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
+      curr->catchTags[i] = getTagName(tagIndexes[i]);
     }
   }
 
@@ -7312,7 +7326,6 @@ void WasmBinaryReader::visitThrow(Throw* curr) {
   }
   auto* tag = wasm.tags[index].get();
   curr->tag = tag->name;
-  tagRefs[index].push_back(&curr->tag); // we don't know the final name yet
   size_t num = tag->sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
@@ -7563,14 +7576,12 @@ bool WasmBinaryReader::maybeVisitArrayNewElem(Expression*& out, uint32_t code) {
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
     if (isData) {
-      auto* curr =
-        Builder(wasm).makeArrayNewData(heapType, Name(), offset, size);
-      dataRefs[segIdx].push_back(&curr->segment);
+      auto* curr = Builder(wasm).makeArrayNewData(
+        heapType, getDataName(segIdx), offset, size);
       out = curr;
     } else {
-      auto* curr =
-        Builder(wasm).makeArrayNewElem(heapType, Name(), offset, size);
-      elemRefs[segIdx].push_back(&curr->segment);
+      auto* curr = Builder(wasm).makeArrayNewElem(
+        heapType, getElemName(segIdx), offset, size);
       out = curr;
     }
     return true;
@@ -7708,14 +7719,12 @@ bool WasmBinaryReader::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
   if (isData) {
-    auto* curr =
-      Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
-    dataRefs[segIdx].push_back(&curr->segment);
+    auto* curr = Builder(wasm).makeArrayInitData(
+      getDataName(segIdx), ref, index, offset, size);
     out = curr;
   } else {
-    auto* curr =
-      Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
-    elemRefs[segIdx].push_back(&curr->segment);
+    auto* curr = Builder(wasm).makeArrayInitElem(
+      getElemName(segIdx), ref, index, offset, size);
     out = curr;
   }
   return true;
@@ -7941,9 +7950,6 @@ void WasmBinaryReader::visitResume(Resume* curr) {
 
     curr->handlerTags[i] = tag;
     curr->handlerBlocks[i] = handler;
-
-    // We don't know the final name yet
-    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
   }
 
   curr->cont = popNonVoidExpression();
@@ -7966,7 +7972,6 @@ void WasmBinaryReader::visitSuspend(Suspend* curr) {
   }
   auto* tag = wasm.tags[tagIndex].get();
   curr->tag = tag->name;
-  tagRefs[tagIndex].push_back(&curr->tag);
 
   auto numArgs = tag->sig.params.size();
   curr->operands.resize(numArgs);

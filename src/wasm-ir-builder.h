@@ -259,6 +259,10 @@ private:
     struct NoScope {};
     struct FuncScope {
       Function* func;
+      // Used to determine whether we need to run a fixup after creating the
+      // function.
+      bool hasSyntheticBlock = false;
+      bool hasPop = false;
     };
     struct BlockScope {
       Block* block;
@@ -368,6 +372,27 @@ private:
         return funcScope->func;
       }
       return nullptr;
+    }
+    void noteSyntheticBlock() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        funcScope->hasSyntheticBlock = true;
+      }
+    }
+    void notePop() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        funcScope->hasPop = true;
+      }
+    }
+    bool needsPopFixup() {
+      // If the function has a synthetic block and it has a pop, then it's
+      // possible that the pop is inside the synthetic block and we should run
+      // the fixup. Determining more precisely that a pop is inside the
+      // synthetic block when it is created would be complicated and expensive,
+      // so we are conservative here.
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        return funcScope->hasSyntheticBlock && funcScope->hasPop;
+      }
+      return false;
     }
     Block* getBlock() {
       if (auto* blockScope = std::get_if<BlockScope>(&scope)) {
