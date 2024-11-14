@@ -15,9 +15,11 @@
 
 '''
 ClusterFuzz run.py script: when run by ClusterFuzz, it uses wasm-opt to generate
-a fixed number of testcases.
+a fixed number of testcases. This is a "blackbox fuzzer", see
 
-This should be bundled up together with the other files it needs:
+https://google.github.io/clusterfuzz/setting-up-fuzzing/blackbox-fuzzing/
+
+This file should be bundled up together with the other files it needs:
 
 run.py                [this script]
 bin/wasm-opt          [main binaryen executable]
@@ -99,10 +101,10 @@ def get_js_file_contents(wasm_contents):
 
 
 def main(argv):
-    # Prepare to emit a fixed number of outputs.
+    # Parse the options. See
+    # https://google.github.io/clusterfuzz/setting-up-fuzzing/blackbox-fuzzing/#uploading-a-fuzzer
     output_dir = '.'
     num = 100
-
     expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=']
     optlist, _ = getopt.getopt(argv[1:], '', expected_flags)
     for option, value in optlist:
