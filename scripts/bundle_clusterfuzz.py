@@ -50,6 +50,8 @@ if len(sys.argv) >= 3:
     assert sys.argv[2].startswith('--build-dir=')
     build_dir = sys.argv[2].split('=')[1]
     build_dir = os.path.abspath(build_dir)
+    # Delete the argument, as importing |shared| scans it.
+    sys.argv.pop()
 
 from test import shared
 

@@ -223,7 +223,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         failed = False
         try:
-            shared.check_call(cmd)
+            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError:
             # Expected error.
             failed = True
@@ -232,5 +232,5 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # Test with a valid --build-dir.
         cmd.pop()
         cmd.append(f'--build-dir={shared.options.binaryen_root}')
-        shared.check_call(cmd)
+        subprocess.check_call(cmd)
 
