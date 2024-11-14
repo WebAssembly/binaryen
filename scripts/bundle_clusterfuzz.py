@@ -66,17 +66,17 @@ else:
 with tarfile.open(output_file, "w:gz") as tar:
     # run.py
     run = os.path.join(shared.options.binaryen_root, 'scripts', 'clusterfuzz', 'run.py')
-    print(f'  .. run: {run}')
+    print(f'  .. run:         {run}')
     tar.add(run, arcname='run.py')
 
     # fuzz_shell.js
     fuzz_shell = os.path.join(shared.options.binaryen_root, 'scripts', 'fuzz_shell.js')
-    print(f'  .. fuzz_shell: {fuzz_shell}')
+    print(f'  .. fuzz_shell:  {fuzz_shell}')
     tar.add(fuzz_shell, arcname='scripts/fuzz_shell.js')
 
     # wasm-opt binary
     wasm_opt = os.path.join(binaryen_bin, 'wasm-opt')
-    print(f'  .. wasm-opt: {wasm_opt}')
+    print(f'  .. wasm-opt:    {wasm_opt}')
     tar.add(wasm_opt, arcname='bin/wasm-opt')
 
     # For a dynamic build we also need libbinaryen.so.
