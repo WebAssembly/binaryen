@@ -186,11 +186,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         # struct.news appear to be distributed as mean 15, stddev 24, median 10,
         # so over 100 samples we are incredibly likely to see an interesting
-        # number at least once.
+        # number at least once. It is also incredibly unlikely for the stdev to
+        # be zero.
         print(f'mean struct.news:   {statistics.mean(seen_struct_news)}')
         print(f'stdev struct.news:  {statistics.stdev(seen_struct_news)}')
         print(f'median struct.news: {statistics.median(seen_struct_news)}')
         assert max(seen_struct_news) >= 10
+        assert statistics.stdev(seen_struct_news) > 0
 
         print()
 
@@ -199,6 +201,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
         print(f'median sizes: {statistics.median(seen_sizes)}')
         assert max(seen_sizes) >= 1000
+        assert statistics.stdev(seen_sizes) > 0
 
         print()
 
@@ -207,6 +210,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'stdev exports:  {statistics.stdev(seen_exports)}')
         print(f'median exports: {statistics.median(seen_exports)}')
         assert max(seen_exports) >= 8
+        assert statistics.stdev(seen_exports) > 0
 
         print()
 
