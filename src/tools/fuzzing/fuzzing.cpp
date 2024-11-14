@@ -186,7 +186,7 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
         if (wasm.features.hasGC()) {
           // Most of these depend on closed world, so just set that.
           options.passOptions.closedWorld = true;
- 
+
           switch (upTo(16)) {
             case 0:
               options.passes.push_back("abstract-type-refining");
@@ -257,12 +257,12 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.closedWorld = true;
   }
 
-  // Often DCE at the very end, to ensure that our binaries validate in other
+  // Usually DCE at the very end, to ensure that our binaries validate in other
   // VMs, due to how non-nullable local validation and unreachable code
   // interact. See fuzz_opt.py and
   //   https://github.com/WebAssembly/binaryen/pull/5665
   //   https://github.com/WebAssembly/binaryen/issues/5599
-  if (wasm.features.hasGC() && oneIn(2)) {
+  if (wasm.features.hasGC() && !oneIn(10)) {
     options.passes.push_back("dce");
   }
 

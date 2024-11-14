@@ -20,8 +20,12 @@ a fixed number of testcases.
 This should be bundled up together with the other files it needs:
 
 run.py                [this script]
-bin/wasm-opt          [static build of the binaryen executable]
+bin/wasm-opt          [main binaryen executable]
 scripts/fuzz_shell.js [copy of that testcase runner shell script]
+
+If wasm-opt was dynamically linked with libbinaryen, then also:
+
+lib/libbinaryen.so    [dynamic library of main binaryen code]
 '''
 
 import os
