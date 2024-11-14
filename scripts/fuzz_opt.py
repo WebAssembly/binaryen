@@ -725,6 +725,11 @@ def run_bynterp(wasm, args):
 
 V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 
+# Enable even more staged features than V8_OPTS. Those are the flags we want to
+# use when testing, and enable all features we test against, while --future may
+# also enable non-feature things (which we do not require for testing, but which
+# do make sense to fuzz for V8's sake, so we add them here in the fuzzer).
+V8_EXTRA_FLAGS = ['--future']
 
 # Default to running with liftoff enabled, because we need to pick either
 # liftoff or turbo* for consistency (otherwise running the same command twice
@@ -732,12 +737,7 @@ V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 # for small things.
 def run_d8_js(js, args=[], liftoff=True):
     cmd = [shared.V8] + shared.V8_OPTS
-    # Enable even more staged features than V8_OPTS. Those are the flags we want
-    # to use when testing, and enable all features we test against, while
-    # --future may also enable non-feature things (which we do not require for
-    # testing, but which do make sense to fuzz for V8's sake, so we add them
-    # here in the fuzzer).
-    cmd += ['--future']
+    cmd += V8_EXTRA_FLAGS
     if liftoff:
         cmd += V8_LIFTOFF_ARGS
     cmd += [js]
@@ -838,7 +838,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
+                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + V8_EXTRA_FLAGS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
