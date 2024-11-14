@@ -56,9 +56,9 @@ class ClusterFuzz(utils.BinaryenTestCase):
                                os.path.join(self.clusterfuzz_dir, 'run.py'),
                                f'--output_dir={testcase_dir}',
                                f'--no_of_files={N}'],
-                               text=True,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
+                              text=True,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
         assert proc.returncode == 0
         return proc
 
@@ -124,7 +124,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # almost impossible to get a flake here.
         temp_dir = tempfile.TemporaryDirectory()
         N = 100
-        proc = self.generate_testcases(N, temp_dir.name)
+        self.generate_testcases(N, temp_dir.name)
 
         # To check for interesting wasm file contents, we'll note how many
         # struct.news appear (a signal that we are emitting WasmGC, and also a
@@ -240,4 +240,3 @@ class ClusterFuzz(utils.BinaryenTestCase):
         cmd.pop()
         cmd.append(f'--build-dir={shared.options.binaryen_root}')
         subprocess.check_call(cmd)
-
