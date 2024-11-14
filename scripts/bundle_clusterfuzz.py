@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 '''
-Bundle files for ClusterFuzz.
+Bundle files for uploading to ClusterFuzz.
 
 Usage:
 
@@ -15,7 +15,7 @@ as you can do
 
   ./emsdk install tot
 
-after which ./upstream/ (from the emsdk dir) will contain fully static builds of
+after which ./upstream/ (from the emsdk dir) will contain portable builds of
 wasm-opt and libbinaryen.so. Thus, the full workflow could be
 
   cd emsdk
@@ -45,7 +45,7 @@ Before uploading to ClusterFuzz, it is worth doing the following:
      Note that you must pass an absolute filename (e.g. using pwd as shown).
 
      The unittest logs should reflect that that bundle is being used at the
-     very start ("Using existing bundle: PATH" rather than "Making a new
+     very start ("Using existing bundle: ..." rather than "Making a new
      bundle"). Note that some of the unittests also create their own bundles, to
      test the bundling script itself, so later down you will see logging of
      bundle creation even if you provide a bundle.
@@ -60,6 +60,9 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
        d8 --wasm-staging testcase.js
 
      properly runs the testcase, emitting logging etc.
+
+  3. Check the stats and crashes page (known crashes should at least be showing
+     up). Note that these may take longer to show up than 1 and 2.
 '''
 
 import os
