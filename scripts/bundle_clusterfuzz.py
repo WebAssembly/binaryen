@@ -23,7 +23,9 @@ wasm-opt and libbinaryen.so. Thus, the full workflow could be
   cd ../binaryen
   python3 scripts/bundle_clusterfuzz.py binaryen_wasm_fuzzer.tgz --build-dir=../emsdk/upstream
 
-Before uploading to ClusterFuzz, it is worth doing two things:
+When using --build-dir in this way, you are responsible for ensuring that the
+
+Before uploading to ClusterFuzz, it is worth doing the following:
 
   1. Run the local fuzzer (scripts/fuzz_opt.py). That includes a ClusterFuzz
      testcase handler, which simulates what ClusterFuzz does.
@@ -47,6 +49,17 @@ Before uploading to ClusterFuzz, it is worth doing two things:
      bundle"). Note that some of the unittests also create their own bundles, to
      test the bundling script itself, so later down you will see logging of
      bundle creation even if you provide a bundle.
+
+After uploading to ClusterFuzz, you can wait a while for it to run, and then:
+
+  1. Inspect the log to see that we generate all the testcases properly, and
+     their sizes look reasonably random, etc.
+
+  2. Inspect the sample testcase and run it locally, to see that
+
+       d8 --wasm-staging testcase.js
+
+     properly runs the testcase, emitting logging etc.
 '''
 
 import os
