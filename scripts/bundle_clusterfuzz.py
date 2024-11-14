@@ -24,6 +24,9 @@ wasm-opt and libbinaryen.so. Thus, the full workflow could be
   python3 scripts/bundle_clusterfuzz.py binaryen_wasm_fuzzer.tgz --build-dir=../emsdk/upstream
 
 When using --build-dir in this way, you are responsible for ensuring that the
+wasm-opt in the build dir is compatible with the scripts in the current dir
+(e.g., if run.py here passes a flag that is only in a new/older version of
+wasm-opt, a problem can happen).
 
 Before uploading to ClusterFuzz, it is worth doing the following:
 
