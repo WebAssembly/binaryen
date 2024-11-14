@@ -1571,6 +1571,7 @@ public:
 
   void readFunctions();
   void readVars();
+  void setLocalNames(Function& func, Index i);
 
   void readExports();
 
