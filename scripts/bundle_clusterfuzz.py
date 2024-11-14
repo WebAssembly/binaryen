@@ -18,7 +18,8 @@ Before uploading to ClusterFuzz, it is worth doing two things:
 
        python -m unittest test/unit/test_cluster_fuzz.py
 
-     Look at the logs for any warnings.
+     Look at the logs, which will contain statistics on the wasm files the
+     fuzzer emits, and see that they look reasonable.
 '''
 
 import os
