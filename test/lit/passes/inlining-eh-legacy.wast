@@ -25,7 +25,6 @@
   ;; CHECK-NEXT:   (block $__inlined_func$callee-with-label
   ;; CHECK-NEXT:    (try $label0
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (catch $tag$0
   ;; CHECK-NEXT:      (drop
@@ -52,7 +51,6 @@
   ;; CHECK:      (func $callee-with-try-delegate (type $0)
   ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
@@ -83,7 +81,6 @@
   ;; CHECK:      (func $caller-with-try-delegate (type $2) (result i32)
   ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
@@ -107,14 +104,14 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$0
   ;; CHECK-NEXT:    (block $__inlined_func$callee-b$2
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (pop i32)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -144,7 +141,6 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$0
   ;; CHECK-NEXT:    (local.set $2
@@ -159,7 +155,8 @@
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

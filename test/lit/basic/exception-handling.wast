@@ -67,10 +67,8 @@
   (tag $e-empty)
 
   ;; CHECK-TEXT:      (func $foo (type $0)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $foo (type $0)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo)
 
@@ -138,7 +136,6 @@
 
   ;; CHECK-TEXT:      (func $catchless-try-table (type $0)
   ;; CHECK-TEXT-NEXT:  (try_table
-  ;; CHECK-TEXT-NEXT:   (nop)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (try_table
   ;; CHECK-TEXT-NEXT:   (throw $e-empty)
@@ -146,7 +143,6 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $catchless-try-table (type $0)
   ;; CHECK-BIN-NEXT:  (try_table
-  ;; CHECK-BIN-NEXT:   (nop)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (try_table
   ;; CHECK-BIN-NEXT:   (throw $e-empty)
@@ -755,7 +751,6 @@
 ;; CHECK-BIN-NODEBUG:      (tag $tag$4)
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $3) (result exnref)
@@ -782,7 +777,6 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try_table
-;; CHECK-BIN-NODEBUG-NEXT:   (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (try_table
 ;; CHECK-BIN-NODEBUG-NEXT:   (throw $tag$4)

@@ -262,7 +262,6 @@
   )
 
   ;; CHECK:      (func $helper (type $8) (param $ref (ref func))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param $ref (ref func))
   )
@@ -491,14 +490,12 @@
   )
 
   ;; CHECK:      (func $use-nn-any (type $15) (param $nn-any (ref any))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $use-nn-any (param $nn-any (ref any))
     ;; Helper function for the above.
   )
 
   ;; CHECK:      (func $use-any (type $7) (param $any anyref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $use-any (param $any anyref)
     ;; Helper function for the above.

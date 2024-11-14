@@ -32,14 +32,12 @@
   )
  )
  ;; CHECK:      (func $help (type $2) (param $3 (ref $\7bi32\7d)) (param $4 i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $help (param $3 (ref $"{i32}")) (param $4 i32)
   (nop)
  )
 
  ;; CHECK:      (func $other (type $1)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $other
  )

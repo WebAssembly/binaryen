@@ -59,7 +59,8 @@
   ;; CHECK-NEXT:    (local.get $w)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $various (param $x i32) (param $y f32) (param $z i64) (param $w f64)
   )
@@ -251,11 +252,9 @@
   ;; CHECK:      (type $2 (func (param f64) (result f64)))
 
   ;; CHECK:      (func $deNan32
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $deNan32)
   ;; CHECK:      (func $deNan64
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $deNan64)
   ;; CHECK:      (func $foo32 (param $x f32) (result f32)

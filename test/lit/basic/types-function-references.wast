@@ -174,13 +174,11 @@
 
   ;; CHECK-TEXT:      (func $type-only-in-tuple-local (type $void)
   ;; CHECK-TEXT-NEXT:  (local $x (tuple i32 (ref null $=>anyref) f64))
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $type-only-in-tuple-local (type $void)
   ;; CHECK-BIN-NEXT:  (local $x i32)
   ;; CHECK-BIN-NEXT:  (local $1 f64)
   ;; CHECK-BIN-NEXT:  (local $2 (ref null $=>anyref))
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $type-only-in-tuple-local
     (local $x (tuple i32 (ref null $=>anyref) f64))
@@ -245,7 +243,6 @@
   ;; CHECK-TEXT-NEXT:  (local $i3 i64)
   ;; CHECK-TEXT-NEXT:  (local $r5 anyref)
   ;; CHECK-TEXT-NEXT:  (local $r6 funcref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $ref-types-first (type $void)
   ;; CHECK-BIN-NEXT:  (local $r1 (ref null $mixed_results))
@@ -257,7 +254,6 @@
   ;; CHECK-BIN-NEXT:  (local $i1 i32)
   ;; CHECK-BIN-NEXT:  (local $i2 i64)
   ;; CHECK-BIN-NEXT:  (local $i3 i64)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $ref-types-first
     ;; 6 reference types and 3 MVP types. The binary format should emit all the
@@ -285,7 +281,6 @@
   ;; CHECK-TEXT-NEXT:  (local $i3 i64)
   ;; CHECK-TEXT-NEXT:  (local $r5 anyref)
   ;; CHECK-TEXT-NEXT:  (local $r6 funcref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $mvp-types-first (type $void)
   ;; CHECK-BIN-NEXT:  (local $i1 i32)
@@ -297,7 +292,6 @@
   ;; CHECK-BIN-NEXT:  (local $r4 anyref)
   ;; CHECK-BIN-NEXT:  (local $r5 anyref)
   ;; CHECK-BIN-NEXT:  (local $r6 funcref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $mvp-types-first
     ;; Reversed from before, now an MVP type appears first, so they should all
@@ -323,7 +317,6 @@
   ;; CHECK-TEXT-NEXT:  (local $i3 i64)
   ;; CHECK-TEXT-NEXT:  (local $r5 anyref)
   ;; CHECK-TEXT-NEXT:  (local $r6 funcref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $mvp-types-first-param (type $10) (param $r0 (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:  (local $i1 i32)
@@ -335,7 +328,6 @@
   ;; CHECK-BIN-NEXT:  (local $r4 anyref)
   ;; CHECK-BIN-NEXT:  (local $r5 anyref)
   ;; CHECK-BIN-NEXT:  (local $r6 funcref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $mvp-types-first-param (param $r0 (ref null $mixed_results))
     ;; As before, but now there is a reference type *parameter*. We should
@@ -427,7 +419,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (ref null $9))
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $8 (type $2)
@@ -475,7 +466,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $6 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $7 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $8 i64)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $10 (type $2)
@@ -488,7 +478,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $6 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $7 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $8 funcref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $11 (type $10) (param $0 (ref null $0))
@@ -501,5 +490,4 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $7 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $8 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $9 funcref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -15,7 +15,6 @@
  (export "main" (func $main))
  (export "__set_stack_limits" (func $__set_stack_limits))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $stackRestore (param $0 i32)
   (local $1 i32)
@@ -81,7 +80,6 @@
   (local.get $1)
  )
  (func $main
-  (nop)
  )
  (func $__set_stack_limits (param $0 i32) (param $1 i32)
   (global.set $__stack_base

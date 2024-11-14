@@ -17,7 +17,7 @@
 
   ;; A once function that just calls another
   ;; CHECK:      (func $clinit-trivial-2_<once>_@Bar (type $0)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $clinit-trivial-1_<once>_@Foo)
   ;; CHECK-NEXT: )
   (func $clinit-trivial-2_<once>_@Bar
     (call $clinit-trivial-1_<once>_@Foo)
@@ -47,6 +47,8 @@
   )
 
   ;; CHECK:      (func $main (type $0)
+  ;; CHECK-NEXT:  (call $clinit-trivial-1_<once>_@Foo)
+  ;; CHECK-NEXT:  (call $clinit-trivial-1_<once>_@Foo)
   ;; CHECK-NEXT:  (call $clinit-non-trivial_<once>_@Zoo)
   ;; CHECK-NEXT: )
   (func $main

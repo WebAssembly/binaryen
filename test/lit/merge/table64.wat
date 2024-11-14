@@ -15,5 +15,4 @@
 ;; CHECK:      (export "table" (table $table))
 
 ;; CHECK:      (func $second (type $0)
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

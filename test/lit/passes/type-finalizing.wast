@@ -78,7 +78,6 @@
   ;; UNFINAL-NEXT:  (local $parent (ref $parent))
   ;; UNFINAL-NEXT:  (local $child-final (ref $child-final))
   ;; UNFINAL-NEXT:  (local $child-open (ref $child-open))
-  ;; UNFINAL-NEXT:  (nop)
   ;; UNFINAL-NEXT: )
   ;; DOFINAL:       (type $3 (func))
 
@@ -86,7 +85,6 @@
   ;; DOFINAL-NEXT:  (local $parent (ref $parent))
   ;; DOFINAL-NEXT:  (local $child-final (ref $child-final))
   ;; DOFINAL-NEXT:  (local $child-open (ref $child-open))
-  ;; DOFINAL-NEXT:  (nop)
   ;; DOFINAL-NEXT: )
   (func $keepalive
     (local $parent (ref $parent))

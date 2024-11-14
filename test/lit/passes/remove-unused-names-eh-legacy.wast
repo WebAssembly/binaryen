@@ -8,7 +8,6 @@
   ;; CHECK:      (func $func0 (type $0)
   ;; CHECK-NEXT:  (try $label$9
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (try $label$8

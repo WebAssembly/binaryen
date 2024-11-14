@@ -6,13 +6,11 @@
    (do
     (try
      (do
-      (nop)
      )
      (delegate $label)
     )
    )
    (catch $tag$0
-    (nop)
    )
   )
  )
@@ -21,7 +19,6 @@
    (do
     (try
      (do
-      (nop)
      )
      (catch $tag$0
       (drop
@@ -29,7 +26,6 @@
       )
       (try
        (do
-        (nop)
        )
        (delegate $label)
       )
@@ -37,7 +33,6 @@
     )
    )
    (catch $tag$0
-    (nop)
    )
   )
  )

@@ -9,13 +9,10 @@
 
 (module
   ;; CHECK:      (func $empty (type $2)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $empty (type $2)
-  ;; RTRIP-NEXT:  (nop)
   ;; RTRIP-NEXT: )
   ;; RRTRP:      (func $empty (type $2)
-  ;; RRTRP-NEXT:  (nop)
   ;; RRTRP-NEXT: )
   (func $empty
     (string.as_wtf16)

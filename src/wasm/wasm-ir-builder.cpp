@@ -150,10 +150,11 @@ void IRBuilder::push(Expression* expr) {
   scope.exprStack.push_back(expr);
 
   applyDebugLoc(expr);
-  if (binaryPos && func) {
-    std::cerr << "recording expression " << ShallowExpression{expr} << " at ["
-              << (lastBinaryPos - codeSectionOffset) << ", "
-              << (*binaryPos - codeSectionOffset) << "]\n";
+  if (binaryPos && func && lastBinaryPos != *binaryPos) {
+    // std::cerr << "recording expression " << ShallowExpression{expr} << " at
+    // ["
+    //           << (lastBinaryPos - codeSectionOffset) << ", "
+    //           << (*binaryPos - codeSectionOffset) << "]\n";
     func->expressionLocations[expr] =
       BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
                             BinaryLocation(*binaryPos - codeSectionOffset)};
@@ -708,8 +709,9 @@ Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
 }
 
 Result<> IRBuilder::visitFunctionStart(Function* func) {
-  std::cerr << "visiting function start at " << (binaryPos ? *binaryPos : 666)
-            << "\n";
+  // std::cerr << "visiting function start at " << (binaryPos ? *binaryPos :
+  // 666)
+  //           << "\n";
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
   }
@@ -813,7 +815,8 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
       block->list.clear();
       ret = block;
     } else {
-      ret = builder.makeNop();
+      // ret = builder.makeNop();
+      ret = builder.makeBlock();
     }
   } else if (scope.exprStack.size() == 1) {
     // We can put our single expression directly into the surrounding scope.
@@ -858,8 +861,9 @@ Result<> IRBuilder::visitElse() {
   iff->ifTrue = *expr;
 
   if (binaryPos && func) {
-    std::cerr << "recording delimiter for " << ShallowExpression{iff} << " at "
-              << (lastBinaryPos - codeSectionOffset) << '\n';
+    // std::cerr << "recording delimiter for " << ShallowExpression{iff} << " at
+    // "
+    //           << (lastBinaryPos - codeSectionOffset) << '\n';
     func->delimiterLocations[iff][BinaryLocations::Else] =
       lastBinaryPos - codeSectionOffset;
   }
@@ -893,8 +897,9 @@ Result<> IRBuilder::visitCatch(Name tag) {
   tryy->catchTags.push_back(tag);
 
   if (binaryPos && func) {
-    std::cerr << "recording delimiter for " << ShallowExpression{tryy} << " at "
-              << (lastBinaryPos - codeSectionOffset) << '\n';
+    // std::cerr << "recording delimiter for " << ShallowExpression{tryy} << "
+    // at "
+    //           << (lastBinaryPos - codeSectionOffset) << '\n';
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
@@ -937,8 +942,9 @@ Result<> IRBuilder::visitCatchAll() {
   }
 
   if (binaryPos && func) {
-    std::cerr << "recording delimiter for " << ShallowExpression{tryy} << " at "
-              << (lastBinaryPos - codeSectionOffset) << '\n';
+    // std::cerr << "recording delimiter for " << ShallowExpression{tryy} << "
+    // at "
+    //           << (lastBinaryPos - codeSectionOffset) << '\n';
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
@@ -979,7 +985,7 @@ Result<> IRBuilder::visitDelegate(Index label) {
 }
 
 Result<> IRBuilder::visitEnd() {
-  std::cerr << "visiting end\n";
+  // std::cerr << "visiting end\n";
   auto scope = getScope();
   if (scope.isNone()) {
     return Err{"unexpected end"};
@@ -1015,6 +1021,10 @@ Result<> IRBuilder::visitEnd() {
     }
     return builder.makeBlock(label, {curr}, blockType);
   };
+
+  // The binary position we record for the block instruction should start at the
+  // beginning of the block, not at the beginning of the `end`.
+  lastBinaryPos = scope.startPos;
 
   if (auto* func = scope.getFunction()) {
     func->body = maybeWrapForLabel(*expr);

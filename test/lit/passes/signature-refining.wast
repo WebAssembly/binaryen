@@ -17,7 +17,6 @@
   (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -49,7 +48,6 @@
   ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -85,7 +83,6 @@
   ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (func $func (type $sig) (param $x eqref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -140,13 +137,11 @@
   )
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1 (type $sig) (param $x anyref)
   )
 
   ;; CHECK:      (func $func-2 (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2 (type $sig) (param $x anyref)
   )
@@ -184,13 +179,11 @@
   (type $struct (struct))
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1 (type $sig) (param $x anyref)
   )
 
   ;; CHECK:      (func $func-2 (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2 (type $sig) (param $x anyref)
   )
@@ -288,7 +281,6 @@
   ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -327,7 +319,6 @@
   ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -356,7 +347,6 @@
   (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -381,13 +371,11 @@
   ;; CHECK:      (elem declare func $func-2)
 
   ;; CHECK:      (func $func-1 (type $sig-1) (param $x structref) (param $y anyref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1 (type $sig-1) (param $x anyref) (param $y anyref)
   )
 
   ;; CHECK:      (func $func-2 (type $sig-2) (param $x eqref) (param $y (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2 (type $sig-2) (param $x anyref) (param $y anyref)
   )
@@ -455,7 +443,6 @@
   ;; CHECK:      (table $0 1 1 anyref)
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -487,7 +474,6 @@
   (type $struct (struct))
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref null $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $sig) (param $x anyref)
   )
@@ -692,7 +678,6 @@
   ;; CHECK:      (export "prevent-opts" (func $func))
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (export "prevent-opts") (type $sig) (param $x anyref)
   )
@@ -1057,7 +1042,6 @@
  )
 
  ;; CHECK:      (func $target (type $5) (param $x (ref $A))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $target (param $x (ref $A))
   ;; Because of the two calls above, this cannot be refined.
@@ -1109,7 +1093,6 @@
  )
 
  ;; CHECK:      (func $target (type $1) (param $x (ref $B))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $target (param $x (ref $A))
   ;; The two calls above both send $B, so we can refine the parameter to $B.
@@ -1142,7 +1125,6 @@
  (export "struct" (global $struct))
 
  ;; CHECK:      (func $func (type $sig) (param $x anyref)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $func (type $sig) (param $x anyref)
  )

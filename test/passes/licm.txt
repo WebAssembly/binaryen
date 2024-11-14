@@ -508,7 +508,6 @@
  )
  (func $after
   (loop $loop
-   (nop)
   )
   (drop
    (i32.const 10)

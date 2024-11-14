@@ -73,6 +73,10 @@ public:
     this->codeSectionOffset = codeSectionOffset;
   }
 
+  // Set the function used to add scratch locals when constructing an isolated
+  // sequence of IR.
+  void setFunction(Function* func) { this->func = func; }
+
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
@@ -339,6 +343,9 @@ private:
     // stack-polymorphic unreachable mode.
     bool unreachable = false;
 
+    // The binary location of the start of the scope, used to set debug info.
+    size_t startPos = 0;
+
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
     ScopeCtx(Scope scope, Name label, bool labelUsed)
@@ -549,10 +556,11 @@ private:
       // Record the original label to handle references to it correctly.
       labelDepths[label].push_back(scopeStack.size() + 1);
     }
-    scopeStack.push_back(scope);
     if (binaryPos) {
+      scope.startPos = lastBinaryPos;
       lastBinaryPos = *binaryPos;
     }
+    scopeStack.push_back(scope);
   }
 
   ScopeCtx& getScope() {

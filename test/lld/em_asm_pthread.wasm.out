@@ -126,7 +126,6 @@
   (call $5)
  )
  (func $1 (param $0 i32)
-  (nop)
  )
  (func $2
   (if
@@ -12103,10 +12102,8 @@
   (i32.const -1)
  )
  (func $67 (param $0 i32)
-  (nop)
  )
  (func $68 (param $0 i32)
-  (nop)
  )
  (func $69 (result i32)
   (call $67
@@ -12412,7 +12409,6 @@
   (i32.const 1)
  )
  (func $76 (param $0 i32)
-  (nop)
  )
  (func $77 (result i32)
   (global.get $global$0)

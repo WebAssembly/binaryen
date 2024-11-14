@@ -30,7 +30,6 @@
   ;; CHECK-NEXT:  (local $3 (ref $bot))
   ;; CHECK-NEXT:  (local $4 (ref $func))
   ;; CHECK-NEXT:  (local $5 (ref $array))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $use-types
     (local (ref $final))
@@ -55,7 +54,6 @@
   ;; CHECK-NEXT:  (local $10 (ref (shared noextern)))
   ;; CHECK-NEXT:  (local $11 (ref (shared nofunc)))
   ;; CHECK-NEXT:  (local $12 (ref (shared noexn)))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $use-basic-types
     (local (ref (shared extern)))

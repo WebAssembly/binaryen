@@ -485,7 +485,6 @@
   )
 
   ;; CHECK:      (func $send-ref (type $5) (param $0 (ref null $struct.A))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $send-ref (param (ref null $struct.A))
   )

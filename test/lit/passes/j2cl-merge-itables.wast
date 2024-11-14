@@ -65,7 +65,6 @@
     (struct.new $Object.vtable))
 
   ;; CHECK:      (func $SubObject.f (type $function)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $SubObject.f
     (type $function)
@@ -180,7 +179,6 @@
     (struct.new_default $Object.itable))
 
   ;; CHECK:      (func $SubObject.f (type $function)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $SubObject.f
     (type $function)

@@ -475,15 +475,12 @@
  (func)
 
  ;; CHECK:      (func $2 (type $0)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
 
  ;; CHECK:      (func $f1 (type $18) (param $0 i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f1 (param i32))
  ;; CHECK:      (func $f2 (type $18) (param $x i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
  ;; CHECK:      (func $f3 (type $1) (result i32)
@@ -496,12 +493,10 @@
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i64)
  ;; CHECK-NEXT:  (local $l f32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f4 (type 18) (local i32 i64) (local $l f32))
 
  ;; CHECK:      (func $"[quoted_name]" (type $0)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $"[quoted_name]")
 
@@ -1138,10 +1133,8 @@
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1336,10 +1329,8 @@
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1507,10 +1498,8 @@
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (else
-;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
@@ -1518,10 +1507,8 @@
 ;; CHECK-NEXT:    (i32.const 0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (else
-;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -1659,7 +1646,6 @@
 
  ;; CHECK:      (func $loop-empty (type $0)
  ;; CHECK-NEXT:  (loop
- ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $loop-empty
@@ -1755,7 +1741,6 @@
 
  ;; CHECK:      (func $loop-folded-empty (type $0)
  ;; CHECK-NEXT:  (loop
- ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $loop-folded-empty
@@ -1839,10 +1824,8 @@
  ;; CHECK:      (func $try-catch (type $0)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1898,10 +1881,8 @@
  ;; CHECK:      (func $try-catch_all (type $0)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch_all
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1914,16 +1895,12 @@
  ;; CHECK:      (func $try-catch-catch_all (type $0)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $eimport$0
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch_all
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1938,7 +1915,6 @@
  ;; CHECK:      (func $try-delegate (type $0)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (delegate 0)
  ;; CHECK-NEXT:  )
@@ -1952,7 +1928,6 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (try
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (delegate 1)
  ;; CHECK-NEXT:   )
@@ -1969,7 +1944,6 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (try
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (delegate 1)
  ;; CHECK-NEXT:   )
@@ -1986,7 +1960,6 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (try
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (delegate 1)
  ;; CHECK-NEXT:   )
@@ -2004,7 +1977,6 @@
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (try
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (delegate $label)
  ;; CHECK-NEXT:    )
@@ -2025,7 +1997,6 @@
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (try
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (delegate $l)
  ;; CHECK-NEXT:    )
@@ -2046,7 +2017,6 @@
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (try
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (delegate $label)
  ;; CHECK-NEXT:    )
@@ -2068,7 +2038,6 @@
  ;; CHECK-NEXT:    (block $l
  ;; CHECK-NEXT:     (try
  ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (delegate $label)
  ;; CHECK-NEXT:     )
@@ -2091,7 +2060,6 @@
  ;; CHECK-NEXT:    (block $l0
  ;; CHECK-NEXT:     (try $l1
  ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (delegate $l)
  ;; CHECK-NEXT:     )
@@ -2113,12 +2081,10 @@
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (try $l0
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (catch $empty
  ;; CHECK-NEXT:      (try $l1
  ;; CHECK-NEXT:       (do
- ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (delegate $l)
  ;; CHECK-NEXT:      )
@@ -2143,12 +2109,10 @@
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (try $l0
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (catch_all
  ;; CHECK-NEXT:      (try $l1
  ;; CHECK-NEXT:       (do
- ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (delegate $l)
  ;; CHECK-NEXT:      )
@@ -2262,7 +2226,6 @@
  ;; CHECK:      (func $try-delegate-folded (type $0)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (delegate 0)
  ;; CHECK-NEXT:  )
@@ -2277,7 +2240,6 @@
  ;; CHECK:      (func $rethrow (type $0)
  ;; CHECK-NEXT:  (try $label
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (rethrow $label)
@@ -2294,7 +2256,6 @@
  ;; CHECK:      (func $rethrow-named (type $0)
  ;; CHECK-NEXT:  (try $l
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (rethrow $l)
@@ -2311,12 +2272,10 @@
  ;; CHECK:      (func $rethrow-nested (type $0)
  ;; CHECK-NEXT:  (try $label
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (try
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (catch $empty
  ;; CHECK-NEXT:      (rethrow $label)
@@ -2340,12 +2299,10 @@
  ;; CHECK:      (func $rethrow-nested-named (type $0)
  ;; CHECK-NEXT:  (try $l
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (try
  ;; CHECK-NEXT:     (do
- ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (catch $empty
  ;; CHECK-NEXT:      (rethrow $l)
@@ -2369,7 +2326,6 @@
  ;; CHECK:      (func $rethrow-try-nested (type $0)
  ;; CHECK-NEXT:  (try $label
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (try
@@ -2396,7 +2352,6 @@
  ;; CHECK:      (func $rethrow-try-nested-named (type $0)
  ;; CHECK-NEXT:  (try $l
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (try
@@ -5035,7 +4990,6 @@
  )
 
  ;; CHECK:      (func $use-types (type $96) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types
   (param (ref $s0))

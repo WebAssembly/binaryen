@@ -242,7 +242,6 @@
   ;; YESTNH-NEXT:  (local $C (ref $C))
   ;; YESTNH-NEXT:  (local $D (ref $E))
   ;; YESTNH-NEXT:  (local $E (ref $E))
-  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $locals (type $6)
   ;; NO_TNH-NEXT:  (local $A (ref $A))
@@ -250,7 +249,6 @@
   ;; NO_TNH-NEXT:  (local $C (ref $C))
   ;; NO_TNH-NEXT:  (local $D (ref $D))
   ;; NO_TNH-NEXT:  (local $E (ref $E))
-  ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
   (func $locals
     ;; Local variable types are also updated.
@@ -799,14 +797,12 @@
   ;; YESTNH-NEXT:  (local $B (ref none))
   ;; YESTNH-NEXT:  (local $C1 (ref none))
   ;; YESTNH-NEXT:  (local $C2 nullref)
-  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $locals (type $1)
   ;; NO_TNH-NEXT:  (local $A (ref none))
   ;; NO_TNH-NEXT:  (local $B (ref none))
   ;; NO_TNH-NEXT:  (local $C1 (ref none))
   ;; NO_TNH-NEXT:  (local $C2 nullref)
-  ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
   (func $locals
     ;; All these locals can become nullable or even non-nullable null types.
@@ -1002,21 +998,17 @@
   ;; YESTNH:       (type $3 (func (param funcref)))
 
   ;; YESTNH:      (func $A (type $A)
-  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:       (type $3 (func (param funcref)))
 
   ;; NO_TNH:      (func $A (type $A)
-  ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
   (func $A (type $A)
   )
 
   ;; YESTNH:      (func $C (type $A)
-  ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $C (type $A)
-  ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
   (func $C (type $A)
   )
