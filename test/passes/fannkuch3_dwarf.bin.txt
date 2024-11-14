@@ -4874,7 +4874,9 @@ file_names[  4]:
   )
   ;; code offset: 0x47
   (block $label$1
+   ;; code offset: 0x49
    (block $label$2
+    ;; code offset: 0x4b
     (block $label$3
      ;; code offset: 0x52
      (br_if $label$3
@@ -6022,7 +6024,9 @@ file_names[  4]:
   )
   ;; code offset: 0x3bd
   (block $label$1
+   ;; code offset: 0x3bf
    (block $label$2
+    ;; code offset: 0x3c1
     (block $label$3
      ;; code offset: 0x3c8
      (br_if $label$3
@@ -6192,8 +6196,11 @@ file_names[  4]:
    )
    ;; code offset: 0x444
    (block $label$6
+    ;; code offset: 0x446
     (block $label$7
+     ;; code offset: 0x448
      (block $label$8
+      ;; code offset: 0x44a
       (block $label$9
        ;; code offset: 0x451
        (br_if $label$9
