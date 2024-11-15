@@ -92,11 +92,11 @@
 ;; ROUNDTRIP-NEXT:  (local $8 f32)
 ;; ROUNDTRIP-NEXT:  (local $9 i32)
 ;; ROUNDTRIP-NEXT:  (local $10 f32)
-;; ROUNDTRIP-NEXT:  (local $11 i32)
+;; ROUNDTRIP-NEXT:  (local $scratch i32)
 ;; ROUNDTRIP-NEXT:  (local $12 f32)
-;; ROUNDTRIP-NEXT:  (local $13 i32)
-;; ROUNDTRIP-NEXT:  (local $14 (tuple i32 f32))
-;; ROUNDTRIP-NEXT:  (local $15 i32)
+;; ROUNDTRIP-NEXT:  (local $scratch_12 i32)
+;; ROUNDTRIP-NEXT:  (local $scratch_14 (tuple i32 f32))
+;; ROUNDTRIP-NEXT:  (local $scratch_15 i32)
 
 ;; We can see that we don't reorder the locals during the process and the
 ;; original list of locals, local $0~$10, is untouched, to NOT invalidate DWARF

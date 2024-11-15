@@ -167,7 +167,7 @@ void IRBuilder::push(Expression* expr) {
 
 Result<Expression*> IRBuilder::build() {
   if (scopeStack.empty()) {
-    return builder.makeNop();
+    return builder.makeBlock();
   }
   if (scopeStack.size() > 1 || !scopeStack.back().isNone()) {
     return Err{"unfinished block context"};
@@ -810,12 +810,12 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
   Expression* ret = nullptr;
   if (scope.exprStack.size() == 0) {
     // No expressions for this scope, but we need something. If we were given a
-    // block, we can empty it out and return it, but otherwise we need a nop.
+    // block, we can empty it out and return it, but otherwise create a new
+    // empty block.
     if (block) {
       block->list.clear();
       ret = block;
     } else {
-      // ret = builder.makeNop();
       ret = builder.makeBlock();
     }
   } else if (scope.exprStack.size() == 1) {
