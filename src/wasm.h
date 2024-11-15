@@ -2204,11 +2204,11 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
-  Type indexType = Type::i32;
+  Type addressType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
 
   bool hasMax() { return max != kUnlimitedSize; }
-  bool is64() { return indexType == Type::i64; }
+  bool is64() { return addressType == Type::i64; }
   void clear() {
     name = "";
     initial = 0;
@@ -2238,16 +2238,16 @@ public:
   Address max = kMaxSize32;
 
   bool shared = false;
-  Type indexType = Type::i32;
+  Type addressType = Type::i32;
 
   bool hasMax() { return max != kUnlimitedSize; }
-  bool is64() { return indexType == Type::i64; }
+  bool is64() { return addressType == Type::i64; }
   void clear() {
     name = "";
     initial = 0;
     max = kMaxSize32;
     shared = false;
-    indexType = Type::i32;
+    addressType = Type::i32;
   }
 };
 

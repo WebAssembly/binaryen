@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "ir/child-typer.h"
+#include "ir/eh-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
@@ -98,7 +99,10 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
 
   auto packageAsBlock = [&](Type type) {
     // Create a block containing the producer of the hoisted value, the final
-    // get of the hoisted value, and everything in between.
+    // get of the hoisted value, and everything in between. Record the fact that
+    // we are synthesizing a block to help us determine later whether we need to
+    // run the nested pop fixup.
+    scopeStack[0].noteSyntheticBlock();
     std::vector<Expression*> exprs(scope.exprStack.begin() + hoisted.valIndex,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
@@ -865,9 +869,12 @@ Result<> IRBuilder::visitCatch(Name tag) {
   tryy->catchTags.push_back(tag);
   pushScope(
     ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel));
-  // Push a pop for the exception payload.
+  // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
+    // Note that we have a pop to help determine later whether we need to run
+    // the fixup for pops within blocks.
+    scopeStack[0].notePop();
     push(builder.makePop(params));
   }
   return Ok{};
@@ -935,7 +942,7 @@ Result<> IRBuilder::visitEnd() {
   if (scope.isNone()) {
     return Err{"unexpected end"};
   }
-  if (auto* func = scope.getFunction(); func) {
+  if (auto* func = scope.getFunction()) {
     if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
       func->epilogLocation.insert(*loc);
     }
@@ -970,6 +977,9 @@ Result<> IRBuilder::visitEnd() {
   if (auto* func = scope.getFunction()) {
     func->body = maybeWrapForLabel(*expr);
     labelDepths.clear();
+    if (scope.needsPopFixup()) {
+      EHUtils::handleBlockNestedPops(func, wasm);
+    }
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;

@@ -2598,7 +2598,7 @@ public:
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
-                               Index index,
+                               Address index,
                                HeapType sig,
                                Literals& arguments,
                                Type result,
@@ -2789,10 +2789,11 @@ public:
 
     virtual Index tableSize(Name tableName) = 0;
 
-    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
+    virtual void
+    tableStore(Name tableName, Address index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName, Index index) {
+    virtual Literal tableLoad(Name tableName, Address index) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2957,18 +2958,22 @@ private:
   void initializeMemoryContents() {
     initializeMemorySizes();
 
-    Const zero;
-    zero.value = Literal(uint32_t(0));
-    zero.finalize();
-
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
       auto& segment = wasm.dataSegments[i];
       if (segment->isPassive) {
         continue;
       }
+
+      auto* memory = wasm.getMemory(segment->memory);
+
+      Const zero;
+      zero.value = Literal::makeFromInt32(0, memory->addressType);
+      zero.finalize();
+
       Const size;
-      size.value = Literal(uint32_t(segment->data.size()));
+      size.value =
+        Literal::makeFromInt32(segment->data.size(), memory->addressType);
       size.finalize();
 
       MemoryInit init;
@@ -3136,8 +3141,7 @@ public:
       return target;
     }
 
-    Index index = target.getSingleValue().geti32();
-
+    auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
 
     if (curr->isReturn) {
@@ -3196,29 +3200,22 @@ public:
       return index;
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    auto address = table->indexType == Type::i64
-                     ? index.getSingleValue().geti64()
-                     : index.getSingleValue().geti32();
+    auto address = index.getSingleValue().getUnsigned();
     return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow indexFlow = self()->visit(curr->index);
-    if (indexFlow.breaking()) {
-      return indexFlow;
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
     }
-    Flow valueFlow = self()->visit(curr->value);
-    if (valueFlow.breaking()) {
-      return valueFlow;
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto* table = info.instance->wasm.getTable(info.name);
-    auto address = table->indexType == Type::i64
-                     ? indexFlow.getSingleValue().geti64()
-                     : indexFlow.getSingleValue().geti32();
-    info.interface()->tableStore(
-      info.name, address, valueFlow.getSingleValue());
+    auto address = index.getSingleValue().getUnsigned();
+    info.interface()->tableStore(info.name, address, value.getSingleValue());
     return Flow();
   }
 
@@ -3227,7 +3224,7 @@ public:
     auto info = getTableInstanceInfo(curr->table);
     auto* table = info.instance->wasm.getTable(info.name);
     Index tableSize = info.interface()->tableSize(curr->table);
-    return Literal::makeFromInt64(tableSize, table->indexType);
+    return Literal::makeFromInt64(tableSize, table->addressType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
@@ -3244,8 +3241,8 @@ public:
 
     uint64_t tableSize = info.interface()->tableSize(info.name);
     auto* table = info.instance->wasm.getTable(info.name);
-    Flow ret = Literal::makeFromInt64(tableSize, table->indexType);
-    Flow fail = Literal::makeFromInt64(-1, table->indexType);
+    Flow ret = Literal::makeFromInt64(tableSize, table->addressType);
+    Flow fail = Literal::makeFromInt64(-1, table->addressType);
     uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
 
     uint64_t newSize;
@@ -3673,7 +3670,7 @@ public:
       return flow;
     }
     NOTE_EVAL1(flow);
-    Address src(uint32_t(flow.getSingleValue().geti32()));
+    Address src(flow.getSingleValue().getUnsigned());
     auto info = getMemoryInstanceInfo(curr->memory);
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
@@ -3695,11 +3692,14 @@ public:
       WASM_UNREACHABLE("invalid op");
     };
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
-        lane = loadLane(info.instance->getFinalAddress(
-          curr, Literal(uint32_t(src)), laneBytes, memorySize));
-        src = Address(uint32_t(src) + laneBytes);
+        auto ptr = Literal::makeFromInt64(src, addressType);
+        lane = loadLane(
+          info.instance->getFinalAddress(curr, ptr, laneBytes, memorySize));
+        src =
+          ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
       }
       return Literal(lanes);
     };
@@ -3821,7 +3821,7 @@ public:
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
-    return Literal::makeFromInt64(memorySize, memory->indexType);
+    return Literal::makeFromInt64(memorySize, memory->addressType);
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
@@ -3832,14 +3832,14 @@ public:
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
-    auto indexType = memory->indexType;
-    auto fail = Literal::makeFromInt64(-1, memory->indexType);
-    Flow ret = Literal::makeFromInt64(memorySize, indexType);
+    auto addressType = memory->addressType;
+    auto fail = Literal::makeFromInt64(-1, memory->addressType);
+    Flow ret = Literal::makeFromInt64(memorySize, addressType);
     uint64_t delta = flow.getSingleValue().getUnsigned();
-    if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
+    if (delta > uint32_t(-1) / Memory::kPageSize && addressType == Type::i32) {
       return fail;
     }
-    if (memorySize >= uint32_t(-1) - delta && indexType == Type::i32) {
+    if (memorySize >= uint32_t(-1) - delta && addressType == Type::i32) {
       return fail;
     }
     auto newSize = memorySize + delta;
@@ -3878,8 +3878,8 @@ public:
     auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
-    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+    Address offsetVal(offset.getSingleValue().getUnsigned());
+    Address sizeVal(size.getSingleValue().getUnsigned());
 
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");

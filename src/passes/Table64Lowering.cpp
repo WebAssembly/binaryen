@@ -144,7 +144,7 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
     // we don't want to depend on that specific ordering.
     for (auto& table : module->tables) {
       if (table->is64()) {
-        table->indexType = Type::i32;
+        table->addressType = Type::i32;
       }
     }
   }

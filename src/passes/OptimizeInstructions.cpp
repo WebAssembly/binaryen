@@ -42,6 +42,7 @@
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/stdckdint.h>
 #include <support/threads.h>
 #include <wasm.h>
 
@@ -79,8 +80,8 @@ static bool isSignedOp(BinaryOp op) {
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
 
-  Index maxBits;
-  Index signExtedBits;
+  Index maxBits = -1;
+  Index signExtBits = 0;
 };
 
 struct LocalScanner : PostWalker<LocalScanner> {
@@ -98,9 +99,9 @@ struct LocalScanner : PostWalker<LocalScanner> {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
-        info.signExtedBits = LocalInfo::kUnknown; // we will never know anything
+        info.signExtBits = LocalInfo::kUnknown; // we will never know anything
       } else {
-        info.maxBits = info.signExtedBits = 0; // we are open to learning
+        info.maxBits = info.signExtBits = 0; // we are open to learning
       }
     }
     // walk
@@ -108,8 +109,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
     // finalize
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
-      if (info.signExtedBits == LocalInfo::kUnknown) {
-        info.signExtedBits = 0;
+      if (info.signExtBits == LocalInfo::kUnknown) {
+        info.signExtBits = 0;
       }
     }
   }
@@ -136,11 +137,11 @@ struct LocalScanner : PostWalker<LocalScanner> {
         signExtBits = load->bytes * 8;
       }
     }
-    if (info.signExtedBits == 0) {
-      info.signExtedBits = signExtBits; // first info we see
-    } else if (info.signExtedBits != signExtBits) {
+    if (info.signExtBits == 0) {
+      info.signExtBits = signExtBits; // first info we see
+    } else if (info.signExtBits != signExtBits) {
       // contradictory information, give up
-      info.signExtedBits = LocalInfo::kUnknown;
+      info.signExtBits = LocalInfo::kUnknown;
     }
   }
 
@@ -1002,6 +1003,22 @@ struct OptimizeInstructions
           load->type = Type::i64;
           return replaceCurrent(load);
         }
+      }
+    }
+
+    // Simple sign extends can be removed if the value is already sign-extended.
+    auto signExtBits = getSignExtBits(curr->value);
+    if (signExtBits > 0) {
+      // Note that we can handle the case of |curr| having a larger sign-extend:
+      // if we have an 8-bit value in 32-bit, then there are 24 sign bits, and
+      // doing a sign-extend to 16 will only affect 16 of those 24, and the
+      // effect is to leave them as they are.
+      if ((curr->op == ExtendS8Int32 && signExtBits <= 8) ||
+          (curr->op == ExtendS16Int32 && signExtBits <= 16) ||
+          (curr->op == ExtendS8Int64 && signExtBits <= 8) ||
+          (curr->op == ExtendS16Int64 && signExtBits <= 16) ||
+          (curr->op == ExtendS32Int64 && signExtBits <= 32)) {
+        return replaceCurrent(curr->value);
       }
     }
 
@@ -3501,8 +3518,12 @@ private:
       uint64_t offset64 = offset;
       auto mem = getModule()->getMemory(memory);
       if (mem->is64()) {
-        last->value = Literal(int64_t(value64 + offset64));
-        offset = 0;
+        // Check for a 64-bit overflow.
+        uint64_t sum;
+        if (!std::ckd_add(&sum, value64, offset64)) {
+          last->value = Literal(int64_t(sum));
+          offset = 0;
+        }
       } else {
         // don't do this if it would wrap the pointer
         if (value64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
@@ -3606,16 +3627,22 @@ private:
     return inner;
   }
 
-  // check if an expression is already sign-extended
+  // Check if an expression is already sign-extended to an exact number of bits.
   bool isSignExted(Expression* curr, Index bits) {
+    return getSignExtBits(curr) == bits;
+  }
+
+  // Returns the number of bits an expression is sign-extended (or 0 if it is
+  // not).
+  Index getSignExtBits(Expression* curr) {
     if (Properties::getSignExtValue(curr)) {
-      return Properties::getSignExtBits(curr) == bits;
+      return Properties::getSignExtBits(curr);
     }
     if (auto* get = curr->dynCast<LocalGet>()) {
-      // check what we know about the local
-      return localInfo[get->index].signExtedBits == bits;
+      // Check what we know about the local.
+      return localInfo[get->index].signExtBits;
     }
-    return false;
+    return 0;
   }
 
   // optimize trivial math operations, given that the right side of a binary
