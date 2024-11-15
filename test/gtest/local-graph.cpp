@@ -25,7 +25,7 @@ TEST_F(LocalGraphTest, ObstacleBasics) {
   )wasm";
 
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
 
   // Get access to the contents of the wasm.
   auto* func = wasm.functions[0].get();
@@ -79,7 +79,7 @@ TEST_F(LocalGraphTest, ObstacleMultiblock) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* block = func->body->cast<Block>();
   auto* set = block->list[0]->cast<LocalSet>();
@@ -113,7 +113,7 @@ TEST_F(LocalGraphTest, ObstacleUnreachable) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* block = func->body->cast<Block>();
   auto* set = block->list[0]->cast<LocalSet>();
@@ -149,7 +149,7 @@ TEST_F(LocalGraphTest, ObstacleMultiGet) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* block = func->body->cast<Block>();
   auto* set = block->list[0]->cast<LocalSet>();
@@ -185,7 +185,7 @@ TEST_F(LocalGraphTest, ObstacleMultiSet) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* block = func->body->cast<Block>();
   auto* setA = block->list[0]->cast<LocalSet>();
@@ -227,7 +227,7 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIndexes) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* block = func->body->cast<Block>();
   auto* setA = block->list[0]->cast<LocalSet>();
@@ -276,7 +276,7 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* block = func->body->cast<Block>();
   auto* iff = block->list[0]->cast<If>();
@@ -332,7 +332,7 @@ TEST_F(LocalGraphTest, ObstacleStructSet) {
     )
   )wasm";
   Module wasm;
-  WATParser::parseModule(wasm, moduleText);
+  ASSERT_FALSE(WATParser::parseModule(wasm, moduleText).getErr());
   auto* func = wasm.functions[0].get();
   auto* outerBlock = func->body->cast<Block>();
   auto* block = outerBlock->list[0]->cast<Block>();
