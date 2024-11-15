@@ -24,7 +24,11 @@ class ClusterFuzz(utils.BinaryenTestCase):
         else:
             print('Making a new bundle')
             bundle = os.path.join(cls.clusterfuzz_dir, 'bundle.tgz')
-            shared.run_process([shared.in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
+            cmd = [shared.in_binaryen('scripts', 'bundle_clusterfuzz.py')]
+            cmd.append(bundle)
+            build_dir = os.path.dirname(shared.options.binaryen_bin)
+            cmd.append(f'--build-dir={build_dir}')
+            shared.run_process(cmd)
 
         print('Unpacking bundle')
         tar = tarfile.open(bundle, "r:gz")
