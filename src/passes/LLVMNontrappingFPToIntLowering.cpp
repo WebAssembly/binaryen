@@ -73,7 +73,8 @@ struct LLVMNonTrappingFPToIntLoweringImpl
 
     Builder builder(*getModule());
     Index v = Builder::addVar(getFunction(), curr->value->type);
-    // if fabs(operand) < INT_MAX then use the trapping operation, else return INT_MIN
+    // if fabs(operand) < INT_MAX then use the trapping operation, else return
+    // INT_MIN
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         ltOp,
@@ -111,7 +112,8 @@ struct LLVMNonTrappingFPToIntLoweringImpl
 
     Builder builder(*getModule());
     Index v = Builder::addVar(getFunction(), curr->value->type);
-    // if op < INT_MAX and op >= 0 then use the trapping operation, else return 0
+    // if op < INT_MAX and op >= 0 then use the trapping operation, else return
+    // 0
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         BinaryOp::AndInt32,
@@ -158,9 +160,7 @@ struct LLVMNonTrappingFPToIntLoweringImpl
     }
   }
 
-  void doWalkFunction(Function* func) {
-    Super::doWalkFunction(func);
-  }
+  void doWalkFunction(Function* func) { Super::doWalkFunction(func); }
 };
 
 struct LLVMNonTrappingFPToIntLowering : public Pass {
