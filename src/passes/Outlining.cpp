@@ -42,8 +42,8 @@ namespace wasm {
 struct ReconstructStringifyWalker
   : public StringifyWalker<ReconstructStringifyWalker> {
 
-  ReconstructStringifyWalker(Module* wasm)
-    : existingBuilder(*wasm), outlinedBuilder(*wasm) {
+  ReconstructStringifyWalker(Module* wasm, Function* func)
+    : existingBuilder(*wasm), outlinedBuilder(*wasm), func(func) {
     this->setModule(wasm);
     DBG(std::cerr << "\nexistingBuilder: " << &existingBuilder
                   << " outlinedBuilder: " << &outlinedBuilder << "\n");
@@ -77,6 +77,9 @@ struct ReconstructStringifyWalker
   // contain repeat sequences found in the program.
   IRBuilder outlinedBuilder;
 
+  // The function we are outlining from.
+  Function* func;
+
   void addUniqueSymbol(SeparatorReason reason) {
     if (auto curr = reason.getFuncStart()) {
       startExistingFunction(curr->func);
@@ -108,6 +111,8 @@ struct ReconstructStringifyWalker
       DBG(desc = "Loop Start at ");
     } else if (reason.getEnd()) {
       ASSERT_OK(existingBuilder.visitEnd());
+      // Reset the function in case we just ended the function scope.
+      existingBuilder.setFunction(func);
       // Outlining performs an unnested walk of the Wasm module, visiting
       // each scope one at a time. IRBuilder, in contrast, expects to
       // visit several nested scopes at a time. Thus, calling end() finalizes
@@ -346,15 +351,16 @@ struct Outlining : public Pass {
 
   void outline(Module* module, Sequences seqByFunc) {
     // TODO: Make this a function-parallel sub-pass.
-    ReconstructStringifyWalker reconstruct(module);
     std::vector<Name> keys(seqByFunc.size());
     std::transform(seqByFunc.begin(),
                    seqByFunc.end(),
                    keys.begin(),
                    [](auto pair) { return pair.first; });
-    for (auto func : keys) {
-      reconstruct.sequences = std::move(seqByFunc[func]);
-      reconstruct.doWalkFunction(module->getFunction(func));
+    for (auto funcName : keys) {
+      auto* func = module->getFunction(funcName);
+      ReconstructStringifyWalker reconstruct(module, func);
+      reconstruct.sequences = std::move(seqByFunc[funcName]);
+      reconstruct.doWalkFunction(func);
     }
   }
 

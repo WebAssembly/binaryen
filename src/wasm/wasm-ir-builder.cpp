@@ -981,6 +981,7 @@ Result<> IRBuilder::visitEnd() {
     if (scope.needsPopFixup()) {
       EHUtils::handleBlockNestedPops(func, wasm);
     }
+    this->func = nullptr;
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;

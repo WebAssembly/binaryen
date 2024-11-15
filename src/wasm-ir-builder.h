@@ -40,8 +40,7 @@ namespace wasm {
 // globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
-  IRBuilder(Module& wasm, Function* func = nullptr)
-    : wasm(wasm), func(func), builder(wasm) {}
+  IRBuilder(Module& wasm) : wasm(wasm), builder(wasm) {}
 
   // Get the valid Binaryen IR expression representing the sequence of visited
   // instructions. The IRBuilder is reset and can be used with a fresh sequence
@@ -59,6 +58,10 @@ public:
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
   void setDebugLocation(const std::optional<Function::DebugLocation>&);
+
+  // Set the function used to add scratch locals when constructing an isolated
+  // sequence of IR.
+  void setFunction(Function* func) { this->func = func; }
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -234,7 +237,7 @@ public:
 
 private:
   Module& wasm;
-  Function* func;
+  Function* func = nullptr;
   Builder builder;
 
   // The location lacks debug info as it was marked as not having it.
