@@ -112,16 +112,18 @@ with tarfile.open(output_file, "w:gz") as tar:
     tar.add(wasm_opt, arcname='bin/wasm-opt')
 
     # For a dynamic build we also need libbinaryen.so and possibly other files.
-    libbinaryen = os.path.join(binaryen_lib, 'libbinaryen.so')
-    if os.path.exists(libbinaryen):
-        print(f'  .. libbinaryen: {libbinaryen}')
-        tar.add(libbinaryen, arcname='lib/libbinaryen.so')
+    # Try both .so and .dylib suffixes for more OS coverage.
+    for suffix in ['.so', '.dylib']:
+        libbinaryen = os.path.join(binaryen_lib, f'libbinaryen{suffix}')
+        if os.path.exists(libbinaryen):
+            print(f'  .. libbinaryen: {libbinaryen}')
+            tar.add(libbinaryen, arcname=f'lib/libbinaryen{suffix}')
 
-        # The emsdk build also includes some more necessary files.
-        for name in ['libc++.so', 'libc++.so.2', 'libc++.so.2.0']:
-            path = os.path.join(binaryen_lib, name)
-            if os.path.exists(path):
-                print(f'  ......... : {path}')
-                tar.add(path, arcname=f'lib/{name}')
+            # The emsdk build also includes some more necessary files.
+            for name in [f'libc++{suffix}', f'libc++{suffix}.2', f'libc++{suffix}.2.0']:
+                path = os.path.join(binaryen_lib, name)
+                if os.path.exists(path):
+                    print(f'  ......... : {path}')
+                    tar.add(path, arcname=f'lib/{name}')
 
 print('Done.')
