@@ -26,7 +26,9 @@ class ClusterFuzz(utils.BinaryenTestCase):
             bundle = os.path.join(cls.clusterfuzz_dir, 'bundle.tgz')
             cmd = [shared.in_binaryen('scripts', 'bundle_clusterfuzz.py')]
             cmd.append(bundle)
-            build_dir = os.path.dirname(shared.options.binaryen_bin)
+            # wasm-opt is in the bin/ dir, and the build dir is one above it,
+            # and contains bin/ and lib/.
+            build_dir = os.path.dirname(os.path.dirname(shared.WASM_OPT[0]))
             cmd.append(f'--build-dir={build_dir}')
             shared.run_process(cmd)
 
