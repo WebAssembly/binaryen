@@ -366,7 +366,7 @@ struct IRBuilder::ChildPopper
   ChildPopper(IRBuilder& builder) : builder(builder) {}
 
 private:
-  [[nodiscard]] Result<> popConstrainedChildren(std::vector<Child>& children) {
+  Result<> popConstrainedChildren(std::vector<Child>& children) {
     auto& scope = builder.getScope();
 
     // Two-part indices into the stack of available expressions and the vector
