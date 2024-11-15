@@ -28,7 +28,6 @@
  ;; CHECK-NEXT:  (local $b' (ref null $B'))
  ;; CHECK-NEXT:  (local $c (ref null $C))
  ;; CHECK-NEXT:  (local $c' (ref null $C'))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
   (local $a (ref null $A))
@@ -64,7 +63,6 @@
  ;; CHECK-NEXT:  (local $b' (ref null $B))
  ;; CHECK-NEXT:  (local $c (ref null $C))
  ;; CHECK-NEXT:  (local $c' (ref null $C))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
   (local $a (ref null $A))
@@ -90,7 +88,6 @@
  ;; CHECK:      (func $foo (type $2)
  ;; CHECK-NEXT:  (local $a (ref null $A))
  ;; CHECK-NEXT:  (local $a' (ref null $A'))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
   (local $a (ref null $A))

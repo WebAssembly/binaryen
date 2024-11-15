@@ -15,13 +15,13 @@
   ;; $foo should not be removed after being inlined, because there is 'ref.func'
   ;; instruction that refers to it
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
   ;; CHECK:      (func $ref_func_test (type $1) (result funcref)
   ;; CHECK-NEXT:  (block $__inlined_func$foo
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: )
@@ -160,7 +160,8 @@
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-with-pop-twice

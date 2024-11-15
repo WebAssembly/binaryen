@@ -11,7 +11,6 @@
  (elem $0 (global.get $from_segment_2) $table_func)
  (export "wasm_func" (func $a_wasm_func))
  (func $table_func (type $0)
-  (nop)
  )
  (func $a_wasm_func (type $0)
   (call $a_js_func)

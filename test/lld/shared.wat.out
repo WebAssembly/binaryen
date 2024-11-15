@@ -19,7 +19,6 @@
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $__wasm_apply_data_relocs
   (i32.store

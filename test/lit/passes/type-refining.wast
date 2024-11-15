@@ -168,7 +168,6 @@
 
   ;; CHECK:      (func $keepalive (type $4)
   ;; CHECK-NEXT:  (local $temp (ref null $child-B))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $keepalive
    ;; Add a reference to $child-B just to keep it alive in the output for easier

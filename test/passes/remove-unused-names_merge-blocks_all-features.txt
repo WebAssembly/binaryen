@@ -1657,7 +1657,6 @@
  (type $1 (func (param i32)))
  (tag $e (param i32))
  (func $foo (type $0)
-  (nop)
  )
  (func $throw (type $0)
   (nop)

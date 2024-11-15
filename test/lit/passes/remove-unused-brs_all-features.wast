@@ -115,7 +115,6 @@
   (unreachable)
  )
  ;; CHECK:      (func $i32_=>_none (type $2) (param $0 i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $i32_=>_none (param i32)
  )

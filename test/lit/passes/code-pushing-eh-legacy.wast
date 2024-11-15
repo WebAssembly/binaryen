@@ -17,7 +17,6 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -53,7 +52,6 @@
   )
 
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
@@ -166,7 +164,6 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -224,7 +221,6 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch_all
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop

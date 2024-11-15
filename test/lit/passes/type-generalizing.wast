@@ -54,7 +54,6 @@
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
  ;; CHECK-NEXT:  (local $z (tuple anyref i32))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $unconstrained
   ;; This non-ref local should be unmodified

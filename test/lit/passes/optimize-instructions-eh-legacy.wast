@@ -6,7 +6,6 @@
   ;; CHECK:      (tag $e (param i32))
 
   ;; CHECK:      (func $dummy (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $dummy)
   (tag $e (param i32))
@@ -164,7 +163,6 @@
   ;; CHECK-NEXT:       (call $dummy)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (catch_all
-  ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 1)
@@ -209,7 +207,6 @@
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (try
   ;; CHECK-NEXT:      (do
-  ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (catch_all
   ;; CHECK-NEXT:       (call $dummy)

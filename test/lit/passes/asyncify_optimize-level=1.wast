@@ -1425,7 +1425,6 @@
     (call $import)
   )
   ;; CHECK:      (func $boring
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $boring)
   ;; CHECK:      (func $calls-mix-deep

@@ -149,7 +149,7 @@ TEST_F(CFGTest, Empty) {
 ;; entry
 ;; exit
 0:
-  0: nop
+  0: block
 )cfg";
 
   Module wasm;

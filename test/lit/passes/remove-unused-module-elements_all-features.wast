@@ -186,7 +186,6 @@
   ;; CHECK:      (elem $1 (i32.const 0) $f)
 
   ;; CHECK:      (func $f (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $f)
 )
@@ -227,7 +226,6 @@
   ;; CHECK:      (elem $0 (i32.const 0) $waka)
 
   ;; CHECK:      (func $waka (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $waka)
 )
@@ -459,7 +457,6 @@
   ;; CHECK:      (elem $0 (global.get $tableBase) $waka)
 
   ;; CHECK:      (func $waka (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $waka) ;; used in table
 )
@@ -819,7 +816,6 @@
   )
 
   ;; CHECK:      (func $internal (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $internal
   )

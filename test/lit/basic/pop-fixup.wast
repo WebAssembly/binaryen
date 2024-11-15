@@ -12,7 +12,6 @@
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
  ;; CHECK-NEXT:    (local.set $1
@@ -43,7 +42,6 @@
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e
  ;; CHECK-NEXT:    (local.set $1
@@ -78,7 +76,6 @@
  ;; CHECK-NEXT:  (local $2 (tuple i32 i32))
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
  ;; CHECK-NEXT:    (local.set $2
@@ -118,7 +115,6 @@
  ;; CHECK-NEXT:  (local $2 (tuple i32 i32))
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
  ;; CHECK-NEXT:    (local.set $2
@@ -164,7 +160,6 @@
  ;; CHECK-NEXT:  (local $3 (tuple i32 i32))
  ;; CHECK-NEXT:  (try
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $e2
  ;; CHECK-NEXT:    (local.set $3

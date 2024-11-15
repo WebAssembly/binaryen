@@ -9,7 +9,6 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
   ;; CHECK-NEXT:    (local.set $x

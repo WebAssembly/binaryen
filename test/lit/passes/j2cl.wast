@@ -212,7 +212,6 @@
 
 
   ;; CHECK:      (func $notOnceFunction@Zoo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $notOnceFunction@Zoo
   )
@@ -225,7 +224,6 @@
   )
 
   ;; CHECK:      (func $empty_<once>_@Zoo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $empty_<once>_@Zoo
   )
@@ -255,7 +253,8 @@
 
   ;; CHECK:      (func $caller_@Zoo (type $1) (result i32)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $notOnceFunction@Zoo)
   ;; CHECK-NEXT:  (global.set $$var2@Zoo
   ;; CHECK-NEXT:   (i32.const 3)

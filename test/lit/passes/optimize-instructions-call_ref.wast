@@ -189,7 +189,6 @@
 
  ;; Helper function for the above test.
  ;; CHECK:      (func $return-nothing (type $none_=>_none)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $return-nothing)
 

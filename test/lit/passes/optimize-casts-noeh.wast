@@ -63,7 +63,6 @@
   )
 
   ;; CHECK:      (func $none (type $2)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $none
     ;; Helper for the above.

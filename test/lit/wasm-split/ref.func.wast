@@ -89,7 +89,6 @@
  )
 
  ;; PRIMARY:      (func $in-table (type $0)
- ;; PRIMARY-NEXT:  (nop)
  ;; PRIMARY-NEXT: )
  (func $in-table
   ;; This empty function is in the table. Just being present in the table is not
@@ -98,7 +97,6 @@
  )
 
  ;; SECONDARY:      (func $second-in-table (type $0)
- ;; SECONDARY-NEXT:  (nop)
  ;; SECONDARY-NEXT: )
  (func $second-in-table
   ;; As above, but in the secondary module. We still don't need a trampoline

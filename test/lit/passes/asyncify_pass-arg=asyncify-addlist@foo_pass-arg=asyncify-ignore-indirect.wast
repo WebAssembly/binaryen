@@ -155,7 +155,6 @@
     (call_indirect (type $t) (i32.const 0))
   )
   ;; CHECK:      (func $nothing
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $nothing
   )

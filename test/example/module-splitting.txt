@@ -585,7 +585,6 @@ Before:
  (elem $0 (global.get $base) $null $foo)
  (export "foo" (func $foo))
  (func $null (type $0)
-  (nop)
  )
  (func $foo (type $1) (param $0 i32) (result i32)
   (local.get $0)
@@ -607,7 +606,6 @@ After:
  (export "%table_2" (table $0))
  (export "%global" (global $base))
  (func $null (type $0)
-  (nop)
  )
  (func $foo (type $1) (param $0 i32) (result i32)
   (call_indirect $0 (type $1)
@@ -1144,7 +1142,6 @@ Before:
  (export "foo1" (func $foo))
  (export "foo2" (func $foo))
  (func $foo (type $0)
-  (nop)
  )
 )
 Keeping: <none>
@@ -1169,7 +1166,6 @@ Secondary:
  (import "primary" "%table" (table $0 1 funcref))
  (elem $0 (i32.const 0) $foo)
  (func $foo (type $0)
-  (nop)
  )
 )
 
