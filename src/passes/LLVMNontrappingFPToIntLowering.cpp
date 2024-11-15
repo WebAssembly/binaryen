@@ -2,6 +2,7 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 #include <limits>
+#include <memory>
 
 // By default LLVM emits nontrapping float-to-int instructions to implement its
 // fptoui/fptosi conversion instructions. This pass replaces these instructions
@@ -21,8 +22,13 @@
 // semantics.
 
 namespace wasm {
-struct LLVMNonTrappingFPToIntLowering
-  : public WalkerPass<PostWalker<LLVMNonTrappingFPToIntLowering>> {
+struct LLVMNonTrappingFPToIntLoweringImpl
+  : public WalkerPass<PostWalker<LLVMNonTrappingFPToIntLoweringImpl>> {
+  bool isFunctionParallel() override { return true; }
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<LLVMNonTrappingFPToIntLoweringImpl>();
+  }
 
   UnaryOp getReplacementOp(UnaryOp op) {
     switch (op) {
@@ -152,11 +158,22 @@ struct LLVMNonTrappingFPToIntLowering
     }
   }
 
+  void doWalkFunction(Function* func) {
+    Super::doWalkFunction(func);
+  }
+};
+
+struct LLVMNonTrappingFPToIntLowering : public Pass {
   void run(Module* module) override {
     if (!module->features.hasTruncSat()) {
       return;
     }
-    Super::run(module);
+    PassRunner runner(module);
+    // Run the Impl pass as an inner pass in parallel. This pass updates the
+    // module features, so it can't be parallel.
+    runner.add(std::make_unique<LLVMNonTrappingFPToIntLoweringImpl>());
+    runner.setIsNested(true);
+    runner.run();
     module->features.disable(FeatureSet::TruncSat);
   }
 };
