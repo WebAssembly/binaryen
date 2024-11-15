@@ -11,7 +11,6 @@
   ;; CHECK:      (func $ref-cast-statically-removed (type $2)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
   ;; CHECK-NEXT:    (throw $e

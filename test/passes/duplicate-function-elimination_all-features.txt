@@ -16,7 +16,6 @@
  (export "memory" (memory $foo))
  (export "global" (global $bar))
  (func $bar (type $0)
-  (nop)
  )
 )
 (module

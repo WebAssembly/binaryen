@@ -11,13 +11,10 @@
  (export "__data_end" (global $global))
  (export "dynCall_v" (func $dynCall_v))
  (func $__stdio_write
-  (nop)
  )
  (func $other
-  (nop)
  )
  (func $stuff
-  (nop)
  )
  (func $dynCall_v (param $fptr i32)
   (call_indirect (type $0)

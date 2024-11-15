@@ -308,7 +308,6 @@
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
     ;; Use nothing at all: all params can be removed.
@@ -394,7 +393,6 @@
 
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
     ;; This function does not use the parameter. It also has no calls, but that
@@ -416,7 +414,6 @@
   ;; CHECK:      (memory $0 1 1)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -431,7 +428,6 @@
   ;; CHECK:      (memory $0 1 1)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -469,7 +465,6 @@
 
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -505,14 +500,12 @@
 
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
 
   ;; CHECK:      (func $bar (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bar (type $sig) (param $i32 i32)
     ;; As above, but the second function also does not use the parameter, and
@@ -574,7 +567,6 @@
   ;; CHECK:      (table $0 1 1 anyref)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -593,13 +585,11 @@
   ;; CHECK:      (export "bar" (func $bar))
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (export "foo") (type $sig) (param $i32 i32)
   )
 
   ;; CHECK:      (func $bar (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bar (export "bar") (type $sig) (param $i32 i32)
   )
@@ -632,14 +622,12 @@
 
   ;; CHECK:      (func $foo1 (type $sig1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo1 (type $sig1) (param $i32 i32)
   )
 
   ;; CHECK:      (func $foo2 (type $sig2)
   ;; CHECK-NEXT:  (local $0 f64)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo2 (type $sig2) (param $f64 f64)
   )
@@ -1174,13 +1162,11 @@
   ;; CHECK:      (export "exported" (func $exported))
 
   ;; CHECK:      (func $exported (type $none)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $exported (export "exported") (type $none)
   )
 
   ;; CHECK:      (func $unused-param (type $much) (param $param i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-param (type $much) (param $param i32)
   )
@@ -1219,14 +1205,12 @@
   ;; CHECK:      (export "exported" (func $exported))
 
   ;; CHECK:      (func $exported (type $none)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $exported (export "exported") (type $none)
     ;; This makes the rec group public.
   )
 
   ;; CHECK:      (func $unused-param (type $much) (param $param i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-param (type $much) (param $param i32)
   )

@@ -12,7 +12,6 @@
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (type $1) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
   )
@@ -328,23 +327,18 @@
   )
 
   ;; CHECK:      (func $func-0 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-0)
   ;; CHECK:      (func $func-1 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1)
   ;; CHECK:      (func $func-2 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2)
   ;; CHECK:      (func $func-3 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-3)
   ;; CHECK:      (func $func-4 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-4)
 )
@@ -1254,7 +1248,6 @@
   ;; CHECK:      (type $2 (func (param (ref $B))))
 
   ;; CHECK:      (func $func (type $2) (param $x (ref $B))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $B))
     ;; Use $B in a param to keep it alive, and lead us to process it and $A.
@@ -1273,7 +1266,6 @@
   ;; CHECK:       (type $2 (func (param (ref $B))))
 
   ;; CHECK:      (func $func (type $2) (param $x (ref $B))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $B))
   )

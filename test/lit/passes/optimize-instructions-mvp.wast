@@ -15688,7 +15688,6 @@
     )
   )
   ;; CHECK:      (func $send-i32 (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $send-i32 (param i32))
   ;; CHECK:      (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)

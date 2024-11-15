@@ -5,9 +5,7 @@
  (type $0 (func))
  (import "env" "foo" (func $Foo))
  (func $bar
-  (nop)
  )
  (func $baz
-  (nop)
  )
 )

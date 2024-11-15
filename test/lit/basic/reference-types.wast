@@ -80,7 +80,6 @@
   ;; CHECK-TEXT:      (export "export_global" (global $import_global))
 
   ;; CHECK-TEXT:      (func $take_eqref (type $sig_eqref) (param $0 eqref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (global $global_eqref (mut eqref) (ref.null none))
 
@@ -105,31 +104,24 @@
   ;; CHECK-BIN:      (export "export_global" (global $import_global))
 
   ;; CHECK-BIN:      (func $take_eqref (type $sig_eqref) (param $0 eqref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $take_eqref (param eqref))
 
   ;; CHECK-TEXT:      (func $take_funcref (type $sig_funcref) (param $0 funcref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $take_funcref (type $sig_funcref) (param $0 funcref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $take_funcref (param funcref))
 
   ;; CHECK-TEXT:      (func $take_anyref (type $sig_anyref) (param $0 anyref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $take_anyref (type $sig_anyref) (param $0 anyref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $take_anyref (param anyref))
 
   ;; CHECK-TEXT:      (func $foo (type $5)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $foo (type $3)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo)
 
@@ -2092,10 +2084,8 @@
   )
 
   ;; CHECK-TEXT:      (func $ref-taken-but-not-in-table (type $5)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $ref-taken-but-not-in-table (type $3)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $ref-taken-but-not-in-table)
 )
@@ -2106,19 +2096,15 @@
 ;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 eqref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $2) (param $0 funcref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $1) (param $0 anyref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $3 (type $3)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $4 (type $3)
@@ -2817,5 +2803,4 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $23 (type $3)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

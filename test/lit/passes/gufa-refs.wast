@@ -1917,7 +1917,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $nothing
   ;; CHECK-NEXT:    (local.set $0
@@ -1943,7 +1942,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $something
   ;; CHECK-NEXT:    (drop
@@ -2146,7 +2144,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (local.set $0
@@ -2164,7 +2161,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
@@ -2393,7 +2389,6 @@
   )
 
   ;; CHECK:      (func $foo (type $1)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 )

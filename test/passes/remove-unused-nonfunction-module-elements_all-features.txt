@@ -111,7 +111,6 @@
  (data $0 (i32.const 1) "hello, world!")
  (elem $0 (i32.const 0) $waka)
  (func $waka (type $0)
-  (nop)
  )
 )
 (module
@@ -228,7 +227,6 @@
  (data $0 (global.get $memoryBase) "hello, world!")
  (elem $0 (global.get $tableBase) $waka)
  (func $waka (type $0)
-  (nop)
  )
 )
 (module
@@ -347,6 +345,5 @@
  (tag $e1 (param i64))
  (export "e1" (tag $e1))
  (func $f (type $0) (param $0 i32)
-  (nop)
  )
 )

@@ -114,7 +114,6 @@
     (call $nothing)
   )
   ;; CHECK:      (func $nothing
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $nothing
   )

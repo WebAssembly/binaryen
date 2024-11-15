@@ -1398,7 +1398,6 @@
   )
 
   ;; CHECK:      (func $void (type $void)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $void
     ;; Helper for the above.

@@ -509,7 +509,6 @@
   )
 
   ;; CHECK:      (func $callee (type $2) (param $x i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $callee (param $x i32)
   )

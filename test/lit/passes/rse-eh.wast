@@ -14,7 +14,6 @@
   (tag $e-empty)
 
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
@@ -23,7 +22,6 @@
   ;; CHECK-NEXT:  (block $outer
   ;; CHECK-NEXT:   (block $catch_all
   ;; CHECK-NEXT:    (try_table (catch_all $catch_all)
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br $outer)
   ;; CHECK-NEXT:   )

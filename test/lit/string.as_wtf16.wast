@@ -9,7 +9,6 @@
 
 (module
   ;; CHECK:      (func $empty (type $2)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $empty (type $2)
   ;; RTRIP-NEXT: )

@@ -34,7 +34,6 @@
  ;; CHECK:      (type $type (func (param (ref $type_1) (ref $reasonable-name) (ref $lintable-name) (ref $unlintable-name_7) (ref $unlintable-name) (ref $onelintable-name) (ref $onelintable-name_8))))
 
  ;; CHECK:      (func $foo (type $type) (param $x (ref $type_1)) (param $y (ref $reasonable-name)) (param $z (ref $lintable-name)) (param $w (ref $unlintable-name_7)) (param $t (ref $unlintable-name)) (param $a (ref $onelintable-name)) (param $b (ref $onelintable-name_8))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
   ;; Use the types to keep them alive.

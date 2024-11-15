@@ -13,12 +13,10 @@
   ;; CHECK-TEXT:      (type $0 (func))
 
   ;; CHECK-TEXT:      (func $foo\20\28.bar\29 (type $0)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (type $0 (func))
 
   ;; CHECK-BIN:      (func $foo\20\28.bar\29 (type $0)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo\20\28.bar\29)
 
@@ -34,7 +32,6 @@
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
