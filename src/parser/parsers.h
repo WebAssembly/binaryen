@@ -1143,7 +1143,7 @@ ifelse(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
     ctx.setSrcLoc(annotations);
   }
 
-  ctx.makeIf(pos, annotations, label, *type);
+  CHECK_ERR(ctx.makeIf(pos, annotations, label, *type));
 
   if (folded && !ctx.in.takeSExprStart("then"sv)) {
     return ctx.in.err("expected 'then' before if instructions");
