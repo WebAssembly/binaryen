@@ -1019,7 +1019,12 @@ Result<> IRBuilder::visitEnd() {
       block->type = blockType;
       return block;
     }
-    return builder.makeBlock(label, {curr}, blockType);
+    auto* block = builder.makeBlock();
+    block->name = label;
+    block->list.push_back(curr);
+    block->finalize(blockType,
+                    scope.labelUsed ? Block::HasBreak : Block::NoBreak);
+    return block;
   };
 
   // The binary position we record for the block instruction should start at the
@@ -1036,9 +1041,8 @@ Result<> IRBuilder::visitEnd() {
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;
-    // TODO: Track branches so we can know whether this block is a target and
-    // finalize more efficiently.
-    block->finalize(block->type);
+    block->finalize(block->type,
+                    scope.labelUsed ? Block::HasBreak : Block::NoBreak);
     push(block);
   } else if (auto* loop = scope.getLoop()) {
     loop->body = *expr;
