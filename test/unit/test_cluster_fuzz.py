@@ -144,13 +144,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
         #
         # StructNew      : 18
         #
-        struct_news_regex = re.compile(r'StructNew(\s+):(\s+)(\d+)')
+        struct_news_regex = re.compile(r'StructNew\s+:\s+(\d+)')
 
         # The number of exports appears in the metrics report like this:
         #
         # [exports]      : 1
         #
-        exports_regex = re.compile(r'\[exports\](\s+):(\s+)(\d+)')
+        exports_regex = re.compile(r'\[exports\]\s+:\s+(\d+)')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -184,13 +184,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
             struct_news = re.findall(struct_news_regex, metrics)
             if not struct_news:
                 # No line is emitted when --metrics seens no struct.news.
-                struct_news = [('', '', '0')]
-            seen_struct_news.append(int(struct_news[0][2]))
+                struct_news = ['0']
+            seen_struct_news.append(int(struct_news[0]))
 
             seen_sizes.append(os.path.getsize(binary_file))
 
             exports = re.findall(exports_regex, metrics)
-            seen_exports.append(int(exports[0][2]))
+            seen_exports.append(int(exports[0]))
 
         print()
 
