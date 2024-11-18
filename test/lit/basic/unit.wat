@@ -749,76 +749,76 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $switcher (type $6) (param $x i32) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $block2 (result i32)
+  ;; CHECK-BIN-NEXT:  (block $block3 (result i32)
   ;; CHECK-BIN-NEXT:   (block
-  ;; CHECK-BIN-NEXT:    (block $block1
-  ;; CHECK-BIN-NEXT:     (block $block0
+  ;; CHECK-BIN-NEXT:    (block $block2
+  ;; CHECK-BIN-NEXT:     (block $block1
   ;; CHECK-BIN-NEXT:      (block $block
-  ;; CHECK-BIN-NEXT:       (br_table $block $block0 $block1
+  ;; CHECK-BIN-NEXT:       (br_table $block $block1 $block2
   ;; CHECK-BIN-NEXT:        (i32.sub
   ;; CHECK-BIN-NEXT:         (local.get $x)
   ;; CHECK-BIN-NEXT:         (i32.const 1)
   ;; CHECK-BIN-NEXT:        )
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (br $block2
+  ;; CHECK-BIN-NEXT:      (br $block3
   ;; CHECK-BIN-NEXT:       (i32.const 1)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (br $block2
+  ;; CHECK-BIN-NEXT:     (br $block3
   ;; CHECK-BIN-NEXT:      (i32.const 2)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (block
-  ;; CHECK-BIN-NEXT:    (block $block4
-  ;; CHECK-BIN-NEXT:     (block $block3
-  ;; CHECK-BIN-NEXT:      (block $block5
-  ;; CHECK-BIN-NEXT:       (br_table $block3 $block4 $block4 $block4 $block4 $block4 $block4 $block5 $block4
+  ;; CHECK-BIN-NEXT:    (block $block5
+  ;; CHECK-BIN-NEXT:     (block $block4
+  ;; CHECK-BIN-NEXT:      (block $block6
+  ;; CHECK-BIN-NEXT:       (br_table $block4 $block5 $block5 $block5 $block5 $block5 $block5 $block6 $block5
   ;; CHECK-BIN-NEXT:        (i32.sub
   ;; CHECK-BIN-NEXT:         (local.get $x)
   ;; CHECK-BIN-NEXT:         (i32.const 5)
   ;; CHECK-BIN-NEXT:        )
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (br $block2
+  ;; CHECK-BIN-NEXT:      (br $block3
   ;; CHECK-BIN-NEXT:       (i32.const 121)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (br $block2
+  ;; CHECK-BIN-NEXT:     (br $block3
   ;; CHECK-BIN-NEXT:      (i32.const 51)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (block $block11
-  ;; CHECK-BIN-NEXT:    (block $block7
-  ;; CHECK-BIN-NEXT:     (block $block6
-  ;; CHECK-BIN-NEXT:      (block $block8
-  ;; CHECK-BIN-NEXT:       (block $block9
-  ;; CHECK-BIN-NEXT:        (block $block10
-  ;; CHECK-BIN-NEXT:         (br_table $block6 $block7 $block7 $block8 $block7 $block7 $block7 $block7 $block9 $block7 $block10 $block7
+  ;; CHECK-BIN-NEXT:   (block $block12
+  ;; CHECK-BIN-NEXT:    (block $block8
+  ;; CHECK-BIN-NEXT:     (block $block7
+  ;; CHECK-BIN-NEXT:      (block $block9
+  ;; CHECK-BIN-NEXT:       (block $block10
+  ;; CHECK-BIN-NEXT:        (block $block11
+  ;; CHECK-BIN-NEXT:         (br_table $block7 $block8 $block8 $block9 $block8 $block8 $block8 $block8 $block10 $block8 $block11 $block8
   ;; CHECK-BIN-NEXT:          (i32.sub
   ;; CHECK-BIN-NEXT:           (local.get $x)
   ;; CHECK-BIN-NEXT:           (i32.const 2)
   ;; CHECK-BIN-NEXT:          )
   ;; CHECK-BIN-NEXT:         )
   ;; CHECK-BIN-NEXT:        )
-  ;; CHECK-BIN-NEXT:        (br $block11)
-  ;; CHECK-BIN-NEXT:       )
-  ;; CHECK-BIN-NEXT:       (br $block11)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (block $block12
-  ;; CHECK-BIN-NEXT:       (loop
   ;; CHECK-BIN-NEXT:        (br $block12)
+  ;; CHECK-BIN-NEXT:       )
+  ;; CHECK-BIN-NEXT:       (br $block12)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (block $block13
+  ;; CHECK-BIN-NEXT:       (loop
+  ;; CHECK-BIN-NEXT:        (br $block13)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:       (unreachable)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (block
   ;; CHECK-BIN-NEXT:      (loop
-  ;; CHECK-BIN-NEXT:       (br $block11)
+  ;; CHECK-BIN-NEXT:       (br $block12)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:      (unreachable)
   ;; CHECK-BIN-NEXT:     )
@@ -2051,76 +2051,76 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $7 (type $6) (param $0 i32) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $block2 (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block3 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block
-;; CHECK-BIN-NODEBUG-NEXT:    (block $block1
-;; CHECK-BIN-NODEBUG-NEXT:     (block $block0
+;; CHECK-BIN-NODEBUG-NEXT:    (block $block2
+;; CHECK-BIN-NODEBUG-NEXT:     (block $block1
 ;; CHECK-BIN-NODEBUG-NEXT:      (block $block
-;; CHECK-BIN-NODEBUG-NEXT:       (br_table $block $block0 $block1
+;; CHECK-BIN-NODEBUG-NEXT:       (br_table $block $block1 $block2
 ;; CHECK-BIN-NODEBUG-NEXT:        (i32.sub
 ;; CHECK-BIN-NODEBUG-NEXT:         (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:         (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:        )
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (br $block2
+;; CHECK-BIN-NODEBUG-NEXT:      (br $block3
 ;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:     (br $block2
+;; CHECK-BIN-NODEBUG-NEXT:     (br $block3
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 2)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (block
-;; CHECK-BIN-NODEBUG-NEXT:    (block $block4
-;; CHECK-BIN-NODEBUG-NEXT:     (block $block3
-;; CHECK-BIN-NODEBUG-NEXT:      (block $block5
-;; CHECK-BIN-NODEBUG-NEXT:       (br_table $block3 $block4 $block4 $block4 $block4 $block4 $block4 $block5 $block4
+;; CHECK-BIN-NODEBUG-NEXT:    (block $block5
+;; CHECK-BIN-NODEBUG-NEXT:     (block $block4
+;; CHECK-BIN-NODEBUG-NEXT:      (block $block6
+;; CHECK-BIN-NODEBUG-NEXT:       (br_table $block4 $block5 $block5 $block5 $block5 $block5 $block5 $block6 $block5
 ;; CHECK-BIN-NODEBUG-NEXT:        (i32.sub
 ;; CHECK-BIN-NODEBUG-NEXT:         (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:         (i32.const 5)
 ;; CHECK-BIN-NODEBUG-NEXT:        )
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (br $block2
+;; CHECK-BIN-NODEBUG-NEXT:      (br $block3
 ;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 121)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:     (br $block2
+;; CHECK-BIN-NODEBUG-NEXT:     (br $block3
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 51)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:   (block $block11
-;; CHECK-BIN-NODEBUG-NEXT:    (block $block7
-;; CHECK-BIN-NODEBUG-NEXT:     (block $block6
-;; CHECK-BIN-NODEBUG-NEXT:      (block $block8
-;; CHECK-BIN-NODEBUG-NEXT:       (block $block9
-;; CHECK-BIN-NODEBUG-NEXT:        (block $block10
-;; CHECK-BIN-NODEBUG-NEXT:         (br_table $block6 $block7 $block7 $block8 $block7 $block7 $block7 $block7 $block9 $block7 $block10 $block7
+;; CHECK-BIN-NODEBUG-NEXT:   (block $block12
+;; CHECK-BIN-NODEBUG-NEXT:    (block $block8
+;; CHECK-BIN-NODEBUG-NEXT:     (block $block7
+;; CHECK-BIN-NODEBUG-NEXT:      (block $block9
+;; CHECK-BIN-NODEBUG-NEXT:       (block $block10
+;; CHECK-BIN-NODEBUG-NEXT:        (block $block11
+;; CHECK-BIN-NODEBUG-NEXT:         (br_table $block7 $block8 $block8 $block9 $block8 $block8 $block8 $block8 $block10 $block8 $block11 $block8
 ;; CHECK-BIN-NODEBUG-NEXT:          (i32.sub
 ;; CHECK-BIN-NODEBUG-NEXT:           (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:           (i32.const 2)
 ;; CHECK-BIN-NODEBUG-NEXT:          )
 ;; CHECK-BIN-NODEBUG-NEXT:         )
 ;; CHECK-BIN-NODEBUG-NEXT:        )
-;; CHECK-BIN-NODEBUG-NEXT:        (br $block11)
-;; CHECK-BIN-NODEBUG-NEXT:       )
-;; CHECK-BIN-NODEBUG-NEXT:       (br $block11)
-;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (block $block12
-;; CHECK-BIN-NODEBUG-NEXT:       (loop
 ;; CHECK-BIN-NODEBUG-NEXT:        (br $block12)
+;; CHECK-BIN-NODEBUG-NEXT:       )
+;; CHECK-BIN-NODEBUG-NEXT:       (br $block12)
+;; CHECK-BIN-NODEBUG-NEXT:      )
+;; CHECK-BIN-NODEBUG-NEXT:      (block $block13
+;; CHECK-BIN-NODEBUG-NEXT:       (loop
+;; CHECK-BIN-NODEBUG-NEXT:        (br $block13)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:       (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (block
 ;; CHECK-BIN-NODEBUG-NEXT:      (loop
-;; CHECK-BIN-NODEBUG-NEXT:       (br $block11)
+;; CHECK-BIN-NODEBUG-NEXT:       (br $block12)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:     )

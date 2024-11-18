@@ -127,21 +127,21 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $littleswitch (type $2) (param $x i32) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $block1 (result i32)
-  ;; CHECK-BIN-NEXT:   (block $block0
+  ;; CHECK-BIN-NEXT:  (block $block2 (result i32)
+  ;; CHECK-BIN-NEXT:   (block $block1
   ;; CHECK-BIN-NEXT:    (block $block
-  ;; CHECK-BIN-NEXT:     (br_table $block $block0 $block
+  ;; CHECK-BIN-NEXT:     (br_table $block $block1 $block
   ;; CHECK-BIN-NEXT:      (i32.sub
   ;; CHECK-BIN-NEXT:       (local.get $x)
   ;; CHECK-BIN-NEXT:       (i32.const 1)
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (br $block1
+  ;; CHECK-BIN-NEXT:    (br $block2
   ;; CHECK-BIN-NEXT:     (i32.const 1)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (br $block1
+  ;; CHECK-BIN-NEXT:   (br $block2
   ;; CHECK-BIN-NEXT:    (i32.const 2)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -210,21 +210,21 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 i32) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $block1 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:   (block $block0
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block2 (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:   (block $block1
 ;; CHECK-BIN-NODEBUG-NEXT:    (block $block
-;; CHECK-BIN-NODEBUG-NEXT:     (br_table $block $block0 $block
+;; CHECK-BIN-NODEBUG-NEXT:     (br_table $block $block1 $block
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.sub
 ;; CHECK-BIN-NODEBUG-NEXT:       (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
-;; CHECK-BIN-NODEBUG-NEXT:    (br $block1
+;; CHECK-BIN-NODEBUG-NEXT:    (br $block2
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:   (br $block1
+;; CHECK-BIN-NODEBUG-NEXT:   (br $block2
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )

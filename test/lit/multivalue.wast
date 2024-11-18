@@ -482,8 +482,8 @@
 
  ;; CHECK:      (func $mv-switch (type $0) (result i32 i64)
  ;; CHECK-NEXT:  (block $block (type $0) (result i32 i64)
- ;; CHECK-NEXT:   (block $block0 (type $0) (result i32 i64)
- ;; CHECK-NEXT:    (br_table $block $block0
+ ;; CHECK-NEXT:   (block $block1 (type $0) (result i32 i64)
+ ;; CHECK-NEXT:    (br_table $block $block1
  ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (i32.const 42)
  ;; CHECK-NEXT:      (i64.const 42)

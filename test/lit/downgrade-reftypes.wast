@@ -20,22 +20,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block0 (result funcref)
-  ;; CHECK-NEXT:    (br $block0
+  ;; CHECK-NEXT:   (block $block1 (result funcref)
+  ;; CHECK-NEXT:    (br $block1
   ;; CHECK-NEXT:     (ref.null nofunc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block1 (result externref)
-  ;; CHECK-NEXT:    (br $block1
+  ;; CHECK-NEXT:   (block $block2 (result externref)
+  ;; CHECK-NEXT:    (br $block2
   ;; CHECK-NEXT:     (ref.null noextern)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block2 (result stringref)
-  ;; CHECK-NEXT:    (br $block2
+  ;; CHECK-NEXT:   (block $block3 (result stringref)
+  ;; CHECK-NEXT:    (br $block3
   ;; CHECK-NEXT:     (string.const "hello world")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

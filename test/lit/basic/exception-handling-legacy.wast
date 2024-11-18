@@ -1084,14 +1084,14 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label0
+  ;; CHECK-BIN-NEXT:  (try $label1
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
   ;; CHECK-BIN-NEXT:    (try
   ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (rethrow $label0)
+  ;; CHECK-BIN-NEXT:      (rethrow $label1)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
   ;; CHECK-BIN-NEXT:     )
@@ -1713,14 +1713,14 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label0
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label1
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
 ;; CHECK-BIN-NODEBUG-NEXT:    (try
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
-;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label0)
+;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label1)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
 ;; CHECK-BIN-NODEBUG-NEXT:     )

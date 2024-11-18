@@ -67,8 +67,8 @@
     )
    )
   )
-  (loop $label0
-   (br_if $label0
+  (loop $label1
+   (br_if $label1
     (f64.ne
      (f64.sub
       (f64.sub

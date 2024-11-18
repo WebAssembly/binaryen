@@ -122,7 +122,7 @@
     (local.get $15)
    )
   )
-  (block $block0
+  (block $block1
    (block $block
     (br_if $block
      (local.get $16)
@@ -135,7 +135,7 @@
     (local.set $18
      (local.get $17)
     )
-    (br $block0)
+    (br $block1)
    )
    (local.set $19
     (i32.const -2147483648)
@@ -340,7 +340,7 @@
    )
   )
   ;; code offset: 0xa9
-  (block $block0
+  (block $block1
    ;; code offset: 0xab
    (block $block
     ;; code offset: 0xaf
@@ -362,7 +362,7 @@
      (local.get $17)
     )
     ;; code offset: 0xba
-    (br $block0)
+    (br $block1)
    )
    ;; code offset: 0xc3
    (local.set $19
@@ -516,7 +516,7 @@
     (local.get $7)
    )
   )
-  (block $block0
+  (block $block1
    (block $block
     (br_if $block
      (local.get $8)
@@ -529,7 +529,7 @@
     (local.set $10
      (local.get $9)
     )
-    (br $block0)
+    (br $block1)
    )
    (local.set $11
     (i32.const -2147483648)
@@ -671,7 +671,7 @@
     (local.get $7)
    )
   )
-  (block $block0
+  (block $block1
    (block $block
     (br_if $block
      (local.get $8)
@@ -684,7 +684,7 @@
     (local.set $10
      (local.get $9)
     )
-    (br $block0)
+    (br $block1)
    )
    (local.set $11
     (i32.const -2147483648)
