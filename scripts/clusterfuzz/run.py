@@ -108,8 +108,8 @@ def main(argv):
             num = int(value)
 
     for i in range(1, num + 1):
-        input_data_file_path = os.path.join(output_dir, '%d.input' % i)
-        wasm_file_path = os.path.join(output_dir, '%d.wasm' % i)
+        input_data_file_path = os.path.join(output_dir, f'{i}.input')
+        wasm_file_path = os.path.join(output_dir, f'{i}.wasm')
 
         # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
         # detects as invalid). Just try again in such a case.
