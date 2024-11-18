@@ -387,28 +387,28 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void visitContBind(ContBind* curr) {
     if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->sourceType, Nullable)) ||
+          curr, Type(curr->sourceType, Nullable)) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResume(Resume* curr) {
     if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->contType, Nullable)) ||
+          curr, Type(curr->contType, Nullable)) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResumeThrow(ResumeThrow* curr) {
     if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->contType, Nullable)) ||
+          curr, Type(curr->contType, Nullable)) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitStackSwitch(StackSwitch* curr) {
     if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->contType, Nullable)) ||
+          curr, Type(curr->contType, Nullable)) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
