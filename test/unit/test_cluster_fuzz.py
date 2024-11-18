@@ -185,11 +185,15 @@ class ClusterFuzz(utils.BinaryenTestCase):
             if not struct_news:
                 # No line is emitted when --metrics seens no struct.news.
                 struct_news = ['0']
+            # Metrics should contain one line for StructNews.
+            self.assertEqual(len(struct_news), 1)
             seen_struct_news.append(int(struct_news[0]))
 
             seen_sizes.append(os.path.getsize(binary_file))
 
             exports = re.findall(exports_regex, metrics)
+            # Metrics should contain one line for exports.
+            self.assertEqual(len(exports), 1)
             seen_exports.append(int(exports[0]))
 
         print()
