@@ -43,17 +43,17 @@ class ClusterFuzz(utils.BinaryenTestCase):
     def test_bundle(self):
         # The bundle should contain certain files:
         # 1. run.py, the main entry point.
-        assert os.path.exists(os.path.join(self.clusterfuzz_dir, 'run.py'))
+        self.assertTrue(os.path.exists(os.path.join(self.clusterfuzz_dir, 'run.py')))
         # 2. scripts/fuzz_shell.js, the js testcase shell
-        assert os.path.exists(os.path.join(self.clusterfuzz_dir, 'scripts', 'fuzz_shell.js'))
+        self.assertTrue(os.path.exists(os.path.join(self.clusterfuzz_dir, 'scripts', 'fuzz_shell.js')))
         # 3. bin/wasm-opt, the wasm-opt binary in a static build
         wasm_opt = os.path.join(self.clusterfuzz_dir, 'bin', 'wasm-opt')
-        assert os.path.exists(wasm_opt)
+        self.assertTrue(os.path.exists(wasm_opt))
 
         # See that we can execute the bundled wasm-opt. It should be able to
         # print out its version.
         out = subprocess.check_output([wasm_opt, '--version'], text=True)
-        assert 'wasm-opt version ' in out
+        self.assertIn('wasm-opt version ', out)
 
     # Generate N testcases, using run.py from a temp dir, and outputting to a
     # testcase dir.
@@ -65,7 +65,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                               text=True,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
-        assert proc.returncode == 0
+        self.assertEqual(proc.returncode, 0)
         return proc
 
     # Test the bundled run.py script.
@@ -76,7 +76,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         proc = self.generate_testcases(N, temp_dir.name)
 
         # We should have logged the creation of N testcases.
-        assert proc.stdout.count('Created testcase:') == N
+        self.assertEqual(proc.stdout.count('Created testcase:'), N)
 
         # We should have actually created them.
         for i in range(0, N + 2):
@@ -84,11 +84,11 @@ class ClusterFuzz(utils.BinaryenTestCase):
             flags_file = os.path.join(temp_dir.name, f'flags-binaryen-{i}.js')
             # We actually emit the range [1, N], so 0 or N+1 should not exist.
             if i >= 1 and i <= N:
-                assert os.path.exists(fuzz_file)
-                assert os.path.exists(flags_file)
+                self.assertTrue(os.path.exists(fuzz_file))
+                self.assertTrue(os.path.exists(flags_file))
             else:
-                assert not os.path.exists(fuzz_file)
-                assert not os.path.exists(flags_file)
+                self.assertTrue(not os.path.exists(fuzz_file))
+                self.assertTrue(not os.path.exists(flags_file))
 
     def test_fuzz_passes(self):
         # We should see interesting passes being run in run.py. This is *NOT* a
@@ -158,7 +158,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
             # The flags file must contain --wasm-staging
             with open(flags_file) as f:
-                assert f.read() == '--wasm-staging'
+                self.assertEqual(f.read(), '--wasm-staging')
 
             # The fuzz files begin with
             #
@@ -168,8 +168,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 first_line = f.readline().strip()
                 start = 'var binary = new Uint8Array(['
                 end = ']);'
-                assert first_line.startswith(start)
-                assert first_line.endswith(end)
+                self.assertTrue(first_line.startswith(start))
+                self.assertTrue(first_line.endswith(end))
                 numbers = first_line[len(start):-len(end)]
 
             # Convert to binary, and see that it is a valid file.
@@ -201,8 +201,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'mean struct.news:   {statistics.mean(seen_struct_news)}')
         print(f'stdev struct.news:  {statistics.stdev(seen_struct_news)}')
         print(f'median struct.news: {statistics.median(seen_struct_news)}')
-        assert max(seen_struct_news) >= 10
-        assert statistics.stdev(seen_struct_news) > 0
+        self.assertGreaterEqual(max(seen_struct_news), 10)
+        self.assertGreater(statistics.stdev(seen_struct_news), 0)
 
         print()
 
@@ -210,8 +210,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'mean sizes:   {statistics.mean(seen_sizes)}')
         print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
         print(f'median sizes: {statistics.median(seen_sizes)}')
-        assert max(seen_sizes) >= 1000
-        assert statistics.stdev(seen_sizes) > 0
+        self.assertGreaterEqual(max(seen_sizes), 1000)
+        self.assertGreater(statistics.stdev(seen_sizes), 0)
 
         print()
 
@@ -219,8 +219,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'mean exports:   {statistics.mean(seen_exports)}')
         print(f'stdev exports:  {statistics.stdev(seen_exports)}')
         print(f'median exports: {statistics.median(seen_exports)}')
-        assert max(seen_exports) >= 8
-        assert statistics.stdev(seen_exports) > 0
+        self.assertGreaterEqual(max(seen_exports), 8)
+        self.assertGreater(statistics.stdev(seen_exports), 0)
 
         print()
 
@@ -240,7 +240,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         except subprocess.CalledProcessError:
             # Expected error.
             failed = True
-        assert failed
+        self.assertTrue(failed)
 
         # Test with a valid --build-dir.
         cmd.pop()
