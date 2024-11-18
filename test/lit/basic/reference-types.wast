@@ -361,25 +361,17 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block0 (result eqref)
-  ;; CHECK-TEXT-NEXT:    (br_if $block0
+  ;; CHECK-TEXT-NEXT:   (block $block1 (result eqref)
+  ;; CHECK-TEXT-NEXT:    (br_if $block1
   ;; CHECK-TEXT-NEXT:     (global.get $global_eqref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block1 (result eqref)
-  ;; CHECK-TEXT-NEXT:    (br_if $block1
-  ;; CHECK-TEXT-NEXT:     (ref.null none)
-  ;; CHECK-TEXT-NEXT:     (i32.const 1)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block2 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (block $block2 (result eqref)
   ;; CHECK-TEXT-NEXT:    (br_if $block2
-  ;; CHECK-TEXT-NEXT:     (local.get $local_funcref)
+  ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -387,7 +379,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block3 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block3
-  ;; CHECK-TEXT-NEXT:     (global.get $global_funcref)
+  ;; CHECK-TEXT-NEXT:     (local.get $local_funcref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -395,7 +387,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block4 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block4
-  ;; CHECK-TEXT-NEXT:     (ref.null nofunc)
+  ;; CHECK-TEXT-NEXT:     (global.get $global_funcref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -403,15 +395,15 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block5 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block5
-  ;; CHECK-TEXT-NEXT:     (ref.func $foo)
+  ;; CHECK-TEXT-NEXT:     (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block6 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (block $block6 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block6
-  ;; CHECK-TEXT-NEXT:     (local.get $local_anyref)
+  ;; CHECK-TEXT-NEXT:     (ref.func $foo)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -419,7 +411,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block7 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block7
-  ;; CHECK-TEXT-NEXT:     (global.get $global_anyref)
+  ;; CHECK-TEXT-NEXT:     (local.get $local_anyref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -427,7 +419,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block8 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block8
-  ;; CHECK-TEXT-NEXT:     (ref.null none)
+  ;; CHECK-TEXT-NEXT:     (global.get $global_anyref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -435,7 +427,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block9 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block9
-  ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
+  ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -443,6 +435,14 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block10 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block10
+  ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
+  ;; CHECK-TEXT-NEXT:     (i32.const 1)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:   (block $block11 (result anyref)
+  ;; CHECK-TEXT-NEXT:    (br_if $block11
   ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
