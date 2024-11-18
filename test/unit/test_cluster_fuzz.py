@@ -183,7 +183,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
             # Update with what we see.
             struct_news = re.findall(struct_news_regex, metrics)
             if not struct_news:
-                # No line is emitted when --metrics seens no struct.news.
+                # No line is emitted when --metrics sees no struct.news.
                 struct_news = ['0']
             # Metrics should contain one line for StructNews.
             self.assertEqual(len(struct_news), 1)
