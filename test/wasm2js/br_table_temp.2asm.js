@@ -115,7 +115,7 @@ function asmFunc(imports) {
  function $11($0_1) {
   $0_1 = $0_1 | 0;
   var $2_1 = 0, $4_1 = 0, $3_1 = 0;
-  block0 : {
+  block1 : {
    block : {
     $2_1 = 33;
     $3_1 = $2_1;
@@ -124,7 +124,7 @@ function asmFunc(imports) {
     case 0:
      break block;
     default:
-     break block0;
+     break block1;
     };
    }
    $4_1 = 32;
@@ -134,7 +134,7 @@ function asmFunc(imports) {
  
  function $12($0_1) {
   $0_1 = $0_1 | 0;
-  block3 : {
+  block4 : {
    switch ($0_1 | 0) {
    case 3:
     return 100 | 0;
@@ -145,7 +145,7 @@ function asmFunc(imports) {
    case 0:
     return 103 | 0;
    default:
-    break block3;
+    break block4;
    };
   }
   return 104 | 0;
@@ -154,11 +154,11 @@ function asmFunc(imports) {
  function $13($0_1) {
   $0_1 = $0_1 | 0;
   var $1_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0, $6_1 = 0, $7_1 = 0, $8_1 = 0;
-  block3 : {
+  block4 : {
    block : {
-    block0 : {
-     block1 : {
-      block2 : {
+    block1 : {
+     block2 : {
+      block3 : {
        $3_1 = 200;
        $4_1 = $3_1;
        $5_1 = $3_1;
@@ -169,13 +169,13 @@ function asmFunc(imports) {
        case 0:
         break block;
        case 1:
-        break block0;
-       case 2:
         break block1;
-       case 3:
+       case 2:
         break block2;
-       default:
+       case 3:
         break block3;
+       default:
+        break block4;
        };
       }
       $1_1 = $7_1;
@@ -196,7 +196,7 @@ function asmFunc(imports) {
  
  function $14($0_1) {
   $0_1 = $0_1 | 0;
-  block0 : {
+  block1 : {
    switch ($0_1 | 0) {
    case 0:
    case 2:
@@ -12508,7 +12508,7 @@ function asmFunc(imports) {
    case 24614:
     return 0 | 0;
    default:
-    break block0;
+    break block1;
    };
   }
   return 1 | 0;
@@ -13052,8 +13052,8 @@ function asmFunc(imports) {
  function $58($0_1) {
   $0_1 = $0_1 | 0;
   var $2_1 = 0, $4_1 = 0, $5_1 = 0, $3_1 = 0;
-  block1 : {
-   block0 : {
+  block2 : {
+   block1 : {
     block : {
      $2_1 = 16;
      $3_1 = $2_1;
@@ -13063,9 +13063,9 @@ function asmFunc(imports) {
      case 0:
       break block;
      case 1:
-      break block0;
-     default:
       break block1;
+     default:
+      break block2;
      };
     }
     $4_1 = 2 + $3_1 | 0;
@@ -13079,8 +13079,8 @@ function asmFunc(imports) {
   $0_1 = $0_1 | 0;
   var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
   block : {
-   block0 : {
-    block1 : {
+   block1 : {
+    block2 : {
      $2_1 = 8;
      $3_1 = $2_1;
      $4_1 = $2_1;
@@ -13089,9 +13089,9 @@ function asmFunc(imports) {
      case 0:
       break block;
      case 1:
-      break block0;
-     default:
       break block1;
+     default:
+      break block2;
      };
     }
     $4_1 = 16;
@@ -13104,8 +13104,8 @@ function asmFunc(imports) {
  function $60($0_1) {
   $0_1 = $0_1 | 0;
   var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
-  block1 : {
-   block0 : {
+  block2 : {
+   block1 : {
     block : {
      $2_1 = 8;
      $3_1 = $2_1;
@@ -13115,9 +13115,9 @@ function asmFunc(imports) {
      case 0:
       break block;
      case 1:
-      break block0;
-     default:
       break block1;
+     default:
+      break block2;
      };
     }
     $4_1 = 16;
@@ -13130,14 +13130,14 @@ function asmFunc(imports) {
  function $61($0_1) {
   $0_1 = $0_1 | 0;
   var $3_1 = 0, $2_1 = 0, $4_1 = 0;
-  block0 : {
+  block1 : {
    block : {
     $2_1 = 8;
     $3_1 = $2_1;
     $4_1 = $2_1;
     switch ($0_1 | 0) {
     case 1:
-     break block0;
+     break block1;
     default:
      break block;
     };
@@ -13150,8 +13150,8 @@ function asmFunc(imports) {
  function $62($0_1) {
   $0_1 = $0_1 | 0;
   var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
-  block1 : {
-   block0 : {
+  block2 : {
+   block1 : {
     block : {
      $2_1 = 8;
      $3_1 = $2_1;
@@ -13161,9 +13161,9 @@ function asmFunc(imports) {
      case 0:
       break block;
      case 1:
-      break block0;
-     default:
       break block1;
+     default:
+      break block2;
      };
     }
     $4_1 = 16;
@@ -13176,14 +13176,14 @@ function asmFunc(imports) {
  function $63($0_1) {
   $0_1 = $0_1 | 0;
   var $3_1 = 0, $2_1 = 0, $4_1 = 0;
-  block0 : {
+  block1 : {
    block : {
     $2_1 = 8;
     $3_1 = $2_1;
     $4_1 = $2_1;
     switch ($0_1 | 0) {
     case 1:
-     break block0;
+     break block1;
     default:
      break block;
     };

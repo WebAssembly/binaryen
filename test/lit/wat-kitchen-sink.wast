@@ -2570,14 +2570,14 @@
  )
 
  ;; CHECK:      (func $label-index (type $0)
- ;; CHECK-NEXT:  (block $block1
+ ;; CHECK-NEXT:  (block $block2
  ;; CHECK-NEXT:   (block $block
- ;; CHECK-NEXT:    (block $block0
+ ;; CHECK-NEXT:    (block $block1
  ;; CHECK-NEXT:     (block $l
  ;; CHECK-NEXT:      (br $block)
- ;; CHECK-NEXT:      (br $block0)
- ;; CHECK-NEXT:      (br $l)
  ;; CHECK-NEXT:      (br $block1)
+ ;; CHECK-NEXT:      (br $l)
+ ;; CHECK-NEXT:      (br $block2)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2844,9 +2844,9 @@
  ;; CHECK:      (func $br-table-index (type $0)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (block $l
- ;; CHECK-NEXT:    (block $block1
- ;; CHECK-NEXT:     (block $block0
- ;; CHECK-NEXT:      (br_table $block $l $block0 $block1
+ ;; CHECK-NEXT:    (block $block2
+ ;; CHECK-NEXT:     (block $block1
+ ;; CHECK-NEXT:      (br_table $block $l $block1 $block2
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -4821,9 +4821,9 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block $block (result (ref $to-f32-cont))
  ;; CHECK-NEXT:     (tuple.drop 3
- ;; CHECK-NEXT:      (block $block0 (type $34) (result i32 i64 (ref null $simple-cont))
+ ;; CHECK-NEXT:      (block $block1 (type $34) (result i32 i64 (ref null $simple-cont))
  ;; CHECK-NEXT:       (local.set $f
- ;; CHECK-NEXT:        (resume $simple-cont (on $empty $block) (on $tag-pair-to-pair $block0)
+ ;; CHECK-NEXT:        (resume $simple-cont (on $empty $block) (on $tag-pair-to-pair $block1)
  ;; CHECK-NEXT:         (i32.const 0)
  ;; CHECK-NEXT:         (i64.const 1)
  ;; CHECK-NEXT:         (local.get $ct)

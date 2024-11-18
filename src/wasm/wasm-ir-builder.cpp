@@ -1038,6 +1038,8 @@ Result<> IRBuilder::visitEnd() {
       EHUtils::handleBlockNestedPops(func, wasm);
     }
     this->func = nullptr;
+    blockHint = 0;
+    labelHint = 0;
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;
@@ -1124,9 +1126,9 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
   if (!scopeLabel) {
     // The scope does not already have a name, so we need to create one.
     if ((*scope)->getBlock()) {
-      scopeLabel = makeFresh("block");
+      scopeLabel = makeFresh("block", blockHint++);
     } else {
-      scopeLabel = makeFresh("label");
+      scopeLabel = makeFresh("label", labelHint++);
     }
   }
   if (!forDelegate) {

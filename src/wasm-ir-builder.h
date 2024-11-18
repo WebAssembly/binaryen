@@ -528,15 +528,18 @@ private:
   // its stack.
   std::unordered_map<Name, std::vector<Index>> labelDepths;
 
-  Name makeFresh(Name label) {
+  Name makeFresh(Name label, Index hint = 0) {
     return Names::getValidName(
       label,
       [&](Name candidate) {
         return labelDepths.insert({candidate, {}}).second;
       },
-      0,
+      hint,
       "");
   }
+
+  Index blockHint = 0;
+  Index labelHint = 0;
 
   void pushScope(ScopeCtx scope) {
     if (auto label = scope.getOriginalLabel()) {
