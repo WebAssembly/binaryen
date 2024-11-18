@@ -143,10 +143,6 @@ function asmFunc(imports) {
    break label;
   }
   i = i + 1 | 0;
-  label0 : {
-   break label0;
-  }
-  i = i + 1 | 0;
   label1 : {
    break label1;
   }
@@ -157,6 +153,10 @@ function asmFunc(imports) {
   i = i + 1 | 0;
   label3 : {
    break label3;
+  }
+  i = i + 1 | 0;
+  label4 : {
+   break label4;
   }
   i = i + 1 | 0;
   return i | 0;

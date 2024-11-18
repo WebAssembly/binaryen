@@ -675,8 +675,8 @@
   ;; CHECK:      (func $a (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (block $block0
-  ;; CHECK-NEXT:    (br_table $block $block0
+  ;; CHECK-NEXT:   (block $block1
+  ;; CHECK-NEXT:    (br_table $block $block1
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return
