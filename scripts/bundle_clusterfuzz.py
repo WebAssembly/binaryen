@@ -15,8 +15,10 @@ as you can do
 
   ./emsdk install tot
 
-after which ./upstream/ (from the emsdk dir) will contain portable builds of
-wasm-opt and libbinaryen.so. Thus, the full workflow could be
+after which ./upstream/ (from the emsdk dir) will contain builds of wasm-opt and
+libbinaryen.so (that do not depend on system libc details, etc., which is the
+benefit of using emsdk binaries as opposed to a normal local build). Thus, the
+full workflow could be
 
   cd emsdk
   ./emsdk install tot
