@@ -93,7 +93,9 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $anyref-both-dupe (export "anyref-both-dupe") (param $x anyref) (result anyref)
-    ;; Here we must fix up both the param and the result.
+    ;; Identical to the above function, and should be fixed up in the same
+    ;; manner. In theory we could use the same stub for both, but we leave that
+    ;; for the optimizer.
     (unreachable)
   )
 
@@ -106,7 +108,6 @@
   )
 )
 
-;; Export a function that needs fixups twice. We should reuse a single stub.
 ;; CHECK:      (func $stub$anyref-param (type $2) (param $0 externref)
 ;; CHECK-NEXT:  (call $anyref-param
 ;; CHECK-NEXT:   (ref.cast anyref
@@ -164,6 +165,9 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
+  ;; Two exports of a single function that needs fixups. We should reuse a
+  ;; single stub.
+
   (export "a" (func $anyref-both))
 
   (export "b" (func $anyref-both))
