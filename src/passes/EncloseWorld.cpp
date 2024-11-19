@@ -79,9 +79,7 @@ struct EncloseWorld : public Pass {
 private:
   // Whether a type is a declared type, i.e., a reference that is not a basic
   // type. Any such declared type is an issue for closed-world mode.
-  bool isDeclaredType(Type t) {
-    return t.isRef() && !t.isBasic();
-  }
+  bool isDeclaredType(Type t) { return t.isRef() && !t.isBasic(); }
 
   // Whether a function causes types to be open.
   bool opensTypes(Function* func) {
@@ -113,7 +111,8 @@ private:
     }
 
     // Pick a valid name for the stub we are about to create.
-    auto stubName = Names::getValidFunctionName(*module, std::string("stub$") + func->name.toString());
+    auto stubName = Names::getValidFunctionName(
+      *module, std::string("stub$") + func->name.toString());
 
     // Create the stub.
     Builder builder(*module);
@@ -148,8 +147,7 @@ private:
 
     // Generate the stub's type.
     auto oldResults = func->getResults();
-    Type resultsType =
-      isDeclaredType(oldResults) ? externref ? oldResults;
+    Type resultsType = isDeclaredType(oldResults) ? externref ? oldResults;
     stub->type = Signature(Type(stubParams), resultsType);
 
     // Handle the results.
@@ -165,6 +163,8 @@ private:
 
 } // anonymous namespace
 
-Pass* createEncloseWorldPass() { return new EncloseWorld(); }
+Pass* createEncloseWorldPass() {
+  return new EncloseWorld();
+}
 
-} // namespace wasm
+} // namespace
