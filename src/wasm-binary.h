@@ -1572,7 +1572,7 @@ public:
   void readVars();
   void setLocalNames(Function& func, Index i);
 
-  [[nodiscard]] Result<> readInst();
+  Result<> readInst();
 
   void readExports();
 

@@ -1825,7 +1825,6 @@ void WasmBinaryReader::read() {
         break;
       case BinaryConsts::Section::Code:
         if (DWARF) {
-          // std::cerr << "code section at " << pos << '\n';
           codeSectionLocation = pos;
         }
         readFunctions();
@@ -2799,11 +2798,6 @@ void WasmBinaryReader::readFunctions() {
     currFunction = func.get();
 
     if (DWARF) {
-      // std::cerr << "function location " <<
-      //     (sizePos - codeSectionLocation) << ", " <<
-      //     (pos - codeSectionLocation) << ", " <<
-      //     (pos - codeSectionLocation + size) << "\n";
-
       func->funcLocation = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos - codeSectionLocation),
         BinaryLocation(pos - codeSectionLocation),
