@@ -725,10 +725,10 @@ def run_bynterp(wasm, args):
 
 V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 
-# Enable even more staged features than V8_OPTS. Those are the flags we want to
+# Enable even more staged things than V8_OPTS. V8_OPTS are the flags we want to
 # use when testing, and enable all features we test against, while --future may
-# also enable non-feature things (which we do not require for testing, but which
-# do make sense to fuzz for V8's sake, so we add them here in the fuzzer).
+# also enable non-feature things like new JITs and such (which are never needed
+# for our normal tests, but do make sense to fuzz for V8's sake).
 V8_EXTRA_FLAGS = ['--future']
 
 # Default to running with liftoff enabled, because we need to pick either
