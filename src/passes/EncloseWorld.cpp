@@ -113,6 +113,7 @@ private:
     // Pick a valid name for the stub we are about to create.
     auto stubName = Names::getValidFunctionName(
       *module, std::string("stub$") + func->name.toString());
+    stubExportsMap[func->name] = stubName;
 
     // Create the stub.
     Builder builder(*module);
