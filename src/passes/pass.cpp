@@ -159,6 +159,9 @@ void PassRegistry::registerPasses() {
   registerPass("emit-target-features",
                "emit the target features section in the output",
                createEmitTargetFeaturesPass);
+  registerPass("enclose-world",
+               "modify the wasm (destructively) for closed-world",
+               createEncloseWorldPass);
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);

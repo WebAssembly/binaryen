@@ -225,6 +225,11 @@ def randomize_fuzz_settings():
         # optimizations we use to create any other wasm file.
         FUZZ_OPTS += ['--dce']
 
+    # Enclose the world much of the time when fuzzing closed-world, so that many
+    # types are private and hence optimizable.
+    if CLOSED_WORLD and random.random() < 0.5:
+        GEN_ARGS += ['--enclose-world']
+
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
@@ -1790,6 +1795,7 @@ opt_choices = [
     ("--dce",),
     ("--directize",),
     ("--discard-global-effects",),
+    ("--enclose-world",),
     ("--flatten", "--dfo",),
     ("--duplicate-function-elimination",),
     ("--flatten",),
