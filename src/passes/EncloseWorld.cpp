@@ -138,9 +138,12 @@ private:
         stubParams.push_back(param);
       } else {
         // A declared type, that we receive as an externref and then internalize
-        // before sending to the original function.
+        // and cast before sending to the original function.
         auto* get = builder.makeLocalGet(stubParams.size(), externref);
-        call->operands.push_back(builder.makeRefAs(AnyConvertExtern, get));
+        auto* interned = builder.makeRefAs(AnyConvertExtern, get);
+        // This cast may be trivial, but we leave it to the optimizer to remove.
+        auto* cast = builder.makeRefCast(interned, param);
+        call->operands.push_back(cast);
         stubParams.push_back(externref);
       }
     }
