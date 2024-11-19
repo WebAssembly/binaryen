@@ -36,6 +36,7 @@ import subprocess
 import random
 import re
 import sys
+import tarfile
 import time
 import traceback
 from os.path import abspath
@@ -1574,6 +1575,84 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
+# Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
+# to see that fuzzing that way works properly (it likely won't catch anything
+# the other fuzzers here catch, though it is possible). That is, running this
+# script continuously will give continuous cover that ClusterFuzz should be
+# running ok.
+#
+# Note that this is *not* deterministic like the other fuzzers: it runs run.py
+# like ClusterFuzz does, and that generates its own random data. If a bug is
+# caught here, it must be reduced manually.
+class ClusterFuzz(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        self.ensure()
+
+        # run.py() should emit these two files. Delete them to make sure they
+        # are created by run.py() in the next step.
+        fuzz_file = 'fuzz-binaryen-1.js'
+        flags_file = 'flags-binaryen-1.js'
+        for f in [fuzz_file, flags_file]:
+            if os.path.exists(f):
+                os.unlink(f)
+
+        # Call run.py(), similarly to how ClusterFuzz does.
+        run([sys.executable,
+             os.path.join(self.clusterfuzz_dir, 'run.py'),
+             '--output_dir=' + os.getcwd(),
+             '--no_of_files=1'])
+
+        # We should see the two files.
+        assert os.path.exists(fuzz_file)
+        assert os.path.exists(flags_file)
+
+        # Run the testcase in V8, similarly to how ClusterFuzz does.
+        cmd = [shared.V8]
+        # The flags are given in the flags file - we do *not* use our normal
+        # flags here!
+        with open(flags_file, 'r') as f:
+            flags = f.read()
+        cmd.append(flags)
+        # Run the fuzz file, which contains a modified fuzz_shell.js - we do
+        # *not* run fuzz_shell.js normally.
+        cmd.append(os.path.abspath(fuzz_file))
+        # No wasm file needs to be provided: it is hardcoded into the JS. Note
+        # that we use run_vm(), which will ignore known issues in our output and
+        # in V8. Those issues may cause V8 to e.g. reject a binary we emit that
+        # is invalid, but that should not be a problem for ClusterFuzz (it isn't
+        # a crash).
+        output = run_vm(cmd)
+
+        # Verify that we called something. The fuzzer should always emit at
+        # least one exported function (unless we've decided to ignore the entire
+        # run).
+        if output != IGNORE:
+            assert FUZZ_EXEC_CALL_PREFIX in output
+
+    def ensure(self):
+        # The first time we actually run, set things up: make a bundle like the
+        # one ClusterFuzz receives, and unpack it for execution into a dir. The
+        # existence of that dir shows we've ensured all we need.
+        if hasattr(self, 'clusterfuzz_dir'):
+            return
+
+        self.clusterfuzz_dir = 'clusterfuzz'
+        if os.path.exists(self.clusterfuzz_dir):
+            shutil.rmtree(self.clusterfuzz_dir)
+        os.mkdir(self.clusterfuzz_dir)
+
+        print('Bundling for ClusterFuzz')
+        bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
+        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
+
+        print('Unpacking for ClusterFuzz')
+        tar = tarfile.open(bundle, "r:gz")
+        tar.extractall(path=self.clusterfuzz_dir)
+        tar.close()
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -1585,7 +1664,8 @@ testcase_handlers = [
     Merge(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
-    RoundtripText()
+    RoundtripText(),
+    ClusterFuzz(),
 ]
 
 
