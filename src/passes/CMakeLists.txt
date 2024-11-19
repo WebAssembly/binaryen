@@ -76,6 +76,7 @@ set(passes_SOURCES
   NameList.cpp
   NameTypes.cpp
   NoInline.cpp
+  LLVMNontrappingFPToIntLowering.cpp
   OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeCasts.cpp

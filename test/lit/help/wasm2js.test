@@ -197,6 +197,11 @@
 ;; CHECK-NEXT:                                                 memory.fill to wasm mvp and
 ;; CHECK-NEXT:                                                 disable the bulk-memory feature.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --llvm-nontrapping-fptoint-lowering           lower nontrapping float-to-int
+;; CHECK-NEXT:                                                 operations to wasm mvp and
+;; CHECK-NEXT:                                                 disable the nontrapping fptoint
+;; CHECK-NEXT:                                                 feature
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks
 ;; CHECK-NEXT:
