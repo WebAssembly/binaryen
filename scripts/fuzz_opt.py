@@ -229,7 +229,6 @@ def randomize_fuzz_settings():
     # types are private and hence optimizable.
     if CLOSED_WORLD and random.random() < 0.5:
         GEN_ARGS += ['--enclose-world']
-        # TODO: similar in fuzz-passes, after the ClusterFuzz PR lands
 
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
