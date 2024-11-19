@@ -966,29 +966,14 @@ Function* TranslateToFuzzReader::addFunction() {
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(std::move(allocation));
   // Export some functions, but not all (to allow inlining etc.). Try to export
-  // at least one, though, to keep each testcase interesting. Only functions
-  // with valid params and returns can be exported because the trap fuzzer
-  // depends on that (TODO: fix this).
-  auto validExportType = [](Type t) {
-    if (!t.isRef()) {
-      return true;
-    }
-    auto heapType = t.getHeapType();
-    return heapType == HeapType::ext || heapType == HeapType::func ||
-           heapType == HeapType::string;
-  };
+  // at least one, though, to keep each testcase interesting. Avoid non-
+  // nullable params, as those cannot be constructed by the fuzzer on the
+  // outside.
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
-      return validExportType(t) && t.isDefaultable();
+      return t.isDefaultable();
     });
-  // Note: spec discussions around JS API integration are still ongoing, and it
-  // is not clear if we should allow nondefaultable types in exports or not
-  // (in imports, we cannot allow them in the fuzzer anyhow, since it can't
-  // construct such values in JS to send over to the wasm from the fuzzer
-  // harness).
-  bool validExportResults =
-    std::all_of(resultType.begin(), resultType.end(), validExportType);
-  if (validExportParams && validExportResults &&
+  if (validExportParams &&
       (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
