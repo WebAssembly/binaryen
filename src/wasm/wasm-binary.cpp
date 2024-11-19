@@ -3097,11 +3097,7 @@ Result<> WasmBinaryReader::readInst() {
       UNARY_FLOAT(Abs);
       UNARY_FLOAT(Ceil);
       UNARY_FLOAT(Floor);
-    // UNARY_FLOAT(NearestInt);
-    case BinaryConsts::F32NearestInt:
-      return builder.makeUnary(NearestFloat32);
-    case BinaryConsts::F64NearestInt:
-      return builder.makeUnary(NearestFloat64);
+      UNARY_FLOAT(Nearest);
       UNARY_FLOAT(Sqrt);
 
     case BinaryConsts::F32UConvertI32:

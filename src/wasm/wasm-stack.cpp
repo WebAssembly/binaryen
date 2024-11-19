@@ -902,7 +902,7 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::F32Trunc);
       break;
     case NearestFloat32:
-      o << int8_t(BinaryConsts::F32NearestInt);
+      o << int8_t(BinaryConsts::F32Nearest);
       break;
     case SqrtFloat32:
       o << int8_t(BinaryConsts::F32Sqrt);
@@ -923,7 +923,7 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::F64Trunc);
       break;
     case NearestFloat64:
-      o << int8_t(BinaryConsts::F64NearestInt);
+      o << int8_t(BinaryConsts::F64Nearest);
       break;
     case SqrtFloat64:
       o << int8_t(BinaryConsts::F64Sqrt);
