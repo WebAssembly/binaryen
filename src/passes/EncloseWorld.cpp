@@ -98,15 +98,10 @@ private:
 
     // Create the stub.
     Builder builder(*module);
-    auto* stub = new Function();
-    stub->name = stubName;
-    stub->hasExplicitName = true;
 
     // The stub's body is just a call to the original function, but with some
     // conversions to/from externref.
-    auto* call = module->allocator.alloc<Call>();
-    call->target = func->name;
-    call->type = func->getResults();
+    std::vector<Expression*> params;
 
     auto externref = Type(HeapType::ext, Nullable);
 
@@ -116,7 +111,7 @@ private:
       if (!isOpenRef(param)) {
         // A normal parameter. Just pass it to the original function.
         auto* get = builder.makeLocalGet(stubParams.size(), param);
-        call->operands.push_back(get);
+        params.push_back(get);
         stubParams.push_back(param);
       } else {
         // A type we must fix up: receive as an externref and then internalize
@@ -125,25 +120,31 @@ private:
         auto* interned = builder.makeRefAs(AnyConvertExtern, get);
         // This cast may be trivial, but we leave it to the optimizer to remove.
         auto* cast = builder.makeRefCast(interned, param);
-        call->operands.push_back(cast);
+        params.push_back(cast);
         stubParams.push_back(externref);
       }
     }
 
+    auto* call = builder.makeCall(func->name, params, func->getResults());
+
     // Generate the stub's type.
     auto oldResults = func->getResults();
     Type resultsType = isOpenRef(oldResults) ? externref : oldResults;
-    stub->type = Signature(Type(stubParams), resultsType);
+    auto type = Signature(Type(stubParams), resultsType);
 
-    // Handle the results.
+    // Handle the results and make the body.
+    Expression* body;
     if (!isOpenRef(oldResults)) {
       // Just use the call.
-      stub->body = call;
+      body = call;
     } else {
       // Fix up the call's result.
-      stub->body = builder.makeRefAs(ExternConvertAny, call);
+      body = builder.makeRefAs(ExternConvertAny, call);
     }
-    return module->addFunction(stub)->name;
+
+    module->addFunction(builder.makeFunction(stubName, type, {}, body));
+
+    return stubName;
   }
 };
 
