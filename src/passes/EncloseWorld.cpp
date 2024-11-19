@@ -74,7 +74,7 @@ private:
   bool isOpenRef(Type t) {
     // Only externref keeps things closed, and we must ignore things that
     // cannot be converted to/from it (like funcrefs), so we can just check for
-    // the bottom type being any.
+    // the top type being any.
     return t.isRef() && t.getHeapType().getTop() == HeapType::any;
   }
 
@@ -119,7 +119,7 @@ private:
         call->operands.push_back(get);
         stubParams.push_back(param);
       } else {
-        // A declared type, that we receive as an externref and then internalize
+        // A type we must fix up: receive as an externref and then internalize
         // and cast before sending to the original function.
         auto* get = builder.makeLocalGet(stubParams.size(), externref);
         auto* interned = builder.makeRefAs(AnyConvertExtern, get);
