@@ -1093,8 +1093,7 @@ Function* TranslateToFuzzReader::addFunction() {
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
       return t.isDefaultable();
     });
-  if (validExportParams &&
-      (numAddedFunctions == 0 || oneIn(2)) &&
+  if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
     export_->name = func->name;
