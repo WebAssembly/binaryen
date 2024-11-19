@@ -46,11 +46,6 @@ namespace wasm {
 namespace {
 
 struct EncloseWorld : public Pass {
-  // Adds calls to new imports.
-  bool addsEffects() override { return true; }
-
-  EncloseWorld() {}
-
   void run(Module* module) override {
     // Handle exports.
     // TODO: Non-function exports.
