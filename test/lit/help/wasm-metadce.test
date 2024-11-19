@@ -231,9 +231,9 @@
 ;; CHECK-NEXT:                                                 within web limits
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --llvm-nontrapping-fptoint-lowering           lower nontrapping float-to-int
-;; CHECK-NEXT:                                                 operations to wasm mvp
-;; CHECK-NEXT:                                                 anddisable the nontrapping
-;; CHECK-NEXT:                                                 fptoint feature
+;; CHECK-NEXT:                                                 operations to wasm mvp and
+;; CHECK-NEXT:                                                 disable the nontrapping fptoint
+;; CHECK-NEXT:                                                 feature
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks

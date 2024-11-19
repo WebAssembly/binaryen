@@ -33,21 +33,21 @@ struct LLVMNonTrappingFPToIntLoweringImpl
   UnaryOp getReplacementOp(UnaryOp op) {
     switch (op) {
       case TruncSatSFloat32ToInt32:
-        return UnaryOp::TruncSFloat32ToInt32;
+        return TruncSFloat32ToInt32;
       case TruncSatUFloat32ToInt32:
-        return UnaryOp::TruncUFloat32ToInt32;
+        return TruncUFloat32ToInt32;
       case TruncSatSFloat64ToInt32:
-        return UnaryOp::TruncSFloat64ToInt32;
+        return TruncSFloat64ToInt32;
       case TruncSatUFloat64ToInt32:
-        return UnaryOp::TruncUFloat64ToInt32;
+        return TruncUFloat64ToInt32;
       case TruncSatSFloat32ToInt64:
-        return UnaryOp::TruncSFloat32ToInt64;
+        return TruncSFloat32ToInt64;
       case TruncSatUFloat32ToInt64:
-        return UnaryOp::TruncUFloat32ToInt64;
+        return TruncUFloat32ToInt64;
       case TruncSatSFloat64ToInt64:
-        return UnaryOp::TruncSFloat64ToInt64;
+        return TruncSFloat64ToInt64;
       case TruncSatUFloat64ToInt64:
-        return UnaryOp::TruncUFloat64ToInt64;
+        return TruncUFloat64ToInt64;
       default:
         WASM_UNREACHABLE("Unexpected opcode");
     }
@@ -59,13 +59,13 @@ struct LLVMNonTrappingFPToIntLoweringImpl
     switch (curr->op) {
       case TruncSatSFloat32ToInt32:
       case TruncSatSFloat32ToInt64:
-        ltOp = BinaryOp::LtFloat32;
-        absOp = UnaryOp::AbsFloat32;
+        ltOp = LtFloat32;
+        absOp = AbsFloat32;
         break;
       case TruncSatSFloat64ToInt32:
       case TruncSatSFloat64ToInt64:
-        ltOp = BinaryOp::LtFloat64;
-        absOp = UnaryOp::AbsFloat64;
+        ltOp = LtFloat64;
+        absOp = AbsFloat64;
         break;
       default:
         WASM_UNREACHABLE("Unexpected opcode");
@@ -91,20 +91,14 @@ struct LLVMNonTrappingFPToIntLoweringImpl
 
     switch (curr->op) {
       case TruncSatUFloat32ToInt32:
-        ltOp = BinaryOp::LtFloat32;
-        geOp = BinaryOp::GeFloat32;
+      case TruncSatUFloat32ToInt64:
+        ltOp = LtFloat32;
+        geOp = GeFloat32;
         break;
       case TruncSatUFloat64ToInt32:
-        ltOp = BinaryOp::LtFloat64;
-        geOp = BinaryOp::GeFloat64;
-        break;
-      case TruncSatUFloat32ToInt64:
-        ltOp = BinaryOp::LtFloat32;
-        geOp = BinaryOp::GeFloat32;
-        break;
       case TruncSatUFloat64ToInt64:
-        ltOp = BinaryOp::LtFloat64;
-        geOp = BinaryOp::GeFloat64;
+        ltOp = LtFloat64;
+        geOp = GeFloat64;
         break;
       default:
         WASM_UNREACHABLE("Unexpected opcode");
@@ -116,7 +110,7 @@ struct LLVMNonTrappingFPToIntLoweringImpl
     // 0
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
-        BinaryOp::AndInt32,
+        AndInt32,
         builder.makeBinary(
           ltOp,
           builder.makeLocalTee(v, curr->value, curr->value->type),
