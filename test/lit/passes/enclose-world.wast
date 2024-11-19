@@ -36,7 +36,7 @@
     (unreachable)
   )
 
-  (func $anyref-both-dupe (export "anyref-both") (param $x anyref) (result anyref)
+  (func $anyref-both-dupe (export "anyref-both-dupe") (param $x anyref) (result anyref)
     ;; Here we must fix up both the param and the result.
     (unreachable)
   )

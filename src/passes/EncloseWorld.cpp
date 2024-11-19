@@ -73,19 +73,23 @@ struct EncloseWorld : public Pass {
   }
 
 private:
-  // Whether a type is a declared type, i.e., a reference that is not a basic
-  // type. Any such declared type is an issue for closed-world mode.
-  bool isDeclaredType(Type t) { return t.isRef() && !t.isBasic(); }
+  // Whether a type is an "open" ref, that is, a type that closed-world would
+  // consider to keep things public and prevent some amount of closed-world
+  // optimizations.
+  bool isOpenRef(Type t) {
+    // Only externref keeps things closed.
+    return t.isRef() && !t.getHeapType().isMaybeShared(HeapType::ext);
+  }
 
   // Whether a function causes types to be open.
   bool opensTypes(Function* func) {
     for (const auto& param : func->getParams()) {
-      if (isDeclaredType(param)) {
+      if (isOpenRef(param)) {
         return true;
       }
     }
     // TODO: Handle tuple results.
-    return isDeclaredType(func->getResults());
+    return isOpenRef(func->getResults());
   }
 
   // A function may be exported more than once (under different external names).
@@ -127,14 +131,15 @@ private:
     // Handle params.
     std::vector<Type> stubParams;
     for (const auto& param : func->getParams()) {
-      auto* get = builder.makeLocalGet(stubParams.size(), param);
-      if (!isDeclaredType(param)) {
+      if (!isOpenRef(param)) {
         // A normal parameter. Just pass it to the original function.
+        auto* get = builder.makeLocalGet(stubParams.size(), param);
         call->operands.push_back(get);
         stubParams.push_back(param);
       } else {
-        // A declared type, that we must internalize before sending to the
-        // original function.
+        // A declared type, that we receive as an externref and then internalize
+        // before sending to the original function.
+        auto* get = builder.makeLocalGet(stubParams.size(), externref);
         call->operands.push_back(builder.makeRefAs(AnyConvertExtern, get));
         stubParams.push_back(externref);
       }
@@ -142,11 +147,11 @@ private:
 
     // Generate the stub's type.
     auto oldResults = func->getResults();
-    Type resultsType = isDeclaredType(oldResults) ? externref : oldResults;
+    Type resultsType = isOpenRef(oldResults) ? externref : oldResults;
     stub->type = Signature(Type(stubParams), resultsType);
 
     // Handle the results.
-    if (!isDeclaredType(oldResults)) {
+    if (!isOpenRef(oldResults)) {
       // Just use the call.
       stub->body = call;
     } else {
