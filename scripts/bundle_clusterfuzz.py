@@ -16,9 +16,9 @@ as you can do
   ./emsdk install tot
 
 after which ./upstream/ (from the emsdk dir) will contain builds of wasm-opt and
-libbinaryen.so (that do not depend on system libc details, etc., which is the
-benefit of using emsdk binaries as opposed to a normal local build). Thus, the
-full workflow could be
+libbinaryen.so (that are designed to run on as many systems as possible, by not
+depending on newer libc symbols, etc., as opposed to a normal local build).
+Thus, the full workflow could be
 
   cd emsdk
   ./emsdk install tot
@@ -129,3 +129,7 @@ with tarfile.open(output_file, "w:gz") as tar:
                     tar.add(path, arcname=f'lib/{name}')
 
 print('Done.')
+print('To run the tests on this bundle, do:')
+print()
+print(f'BINARYEN_CLUSTER_FUZZ_BUNDLE={output_file} python -m unittest test/unit/test_cluster_fuzz.py')
+print()
