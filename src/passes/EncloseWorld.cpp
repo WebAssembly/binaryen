@@ -24,7 +24,7 @@
 // The fixup we do is to find references sent out/received in, and to
 // externalize / internalize them. For example, this export:
 //
-//  (func $refs ("export "refs") (param $x (ref $X)) (result (ref $Y))
+//  (func $refs (export "refs") (param $x (ref $X)) (result (ref $Y))
 //
 // would have the following function exported in its place:
 //
