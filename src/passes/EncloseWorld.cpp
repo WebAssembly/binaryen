@@ -77,8 +77,10 @@ private:
   // consider to keep things public and prevent some amount of closed-world
   // optimizations.
   bool isOpenRef(Type t) {
-    // Only externref keeps things closed.
-    return t.isRef() && !t.getHeapType().isMaybeShared(HeapType::ext);
+    // Only externref keeps things closed, and we must ignore things that
+    // cannot be converted to/from it (like funcrefs), so we can just check for
+    // the bottom type being any.
+    return t.isRef() && t.getHeapType().getTop() == HeapType::any;
   }
 
   // Whether a function causes types to be open.

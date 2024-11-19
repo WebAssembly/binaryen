@@ -26,7 +26,11 @@
 
   ;; CHECK:      (type $10 (func (param (ref $A) (ref null $B)) (result (ref $C))))
 
-  ;; CHECK:      (type $11 (func (param externref externref) (result externref)))
+  ;; CHECK:      (type $11 (func (param i32 (ref $A) funcref)))
+
+  ;; CHECK:      (type $12 (func (param externref externref) (result externref)))
+
+  ;; CHECK:      (type $13 (func (param i32 externref funcref)))
 
   ;; CHECK:      (export "normal" (func $normal))
 
@@ -43,6 +47,8 @@
   ;; CHECK:      (export "anyref-both-dupe" (func $stub$anyref-both-dupe))
 
   ;; CHECK:      (export "many" (func $stub$many))
+
+  ;; CHECK:      (export "mixed" (func $stub$mixed))
 
   ;; CHECK:      (func $normal (type $7) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (f64.const 3.14159)
@@ -106,6 +112,13 @@
     ;; Various declared types are used, and must be fixed up.
     (unreachable)
   )
+
+  ;; CHECK:      (func $mixed (type $11) (param $a i32) (param $b (ref $A)) (param $c funcref)
+  ;; CHECK-NEXT: )
+  (func $mixed (export "mixed") (param $a i32) (param $b (ref $A)) (param $c funcref)
+    ;; One param needs to be fixed, two others do not: we can ignore i32 and
+    ;; funcref.
+  )
 )
 
 ;; CHECK:      (func $stub$anyref-param (type $2) (param $0 externref)
@@ -148,7 +161,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $stub$many (type $11) (param $0 externref) (param $1 externref) (result externref)
+;; CHECK:      (func $stub$many (type $12) (param $0 externref) (param $1 externref) (result externref)
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (call $many
 ;; CHECK-NEXT:    (ref.cast (ref $A)
@@ -162,6 +175,18 @@
 ;; CHECK-NEXT:     )
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $stub$mixed (type $13) (param $0 i32) (param $1 externref) (param $2 funcref)
+;; CHECK-NEXT:  (call $mixed
+;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:   (ref.cast (ref $A)
+;; CHECK-NEXT:    (any.convert_extern
+;; CHECK-NEXT:     (local.get $1)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
