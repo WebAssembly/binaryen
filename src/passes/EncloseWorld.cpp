@@ -36,12 +36,8 @@
 //            (local.get $x))))))
 //
 
-// TODO whiches?
-#include "ir/import-utils.h"
-#include "ir/literal-utils.h"
-#include "ir/utils.h"
+#include "ir/names.h"
 #include "pass.h"
-#include "shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -83,13 +79,13 @@ private:
 
   // Whether a function causes types to be open.
   bool opensTypes(Function* func) {
-    for (const auto& param : t->getParams()) {
+    for (const auto& param : func->getParams()) {
       if (isDeclaredType(param)) {
         return true;
       }
     }
     // TODO: Handle tuple results.
-    return isDeclaredType(t->getResults());
+    return isDeclaredType(func->getResults());
   }
 
   // A function may be exported more than once (under different external names).
@@ -139,7 +135,6 @@ private:
       } else {
         // A declared type, that we must internalize before sending to the
         // original function.
-        auto* fixed = ;
         call->operands.push_back(builder.makeRefAs(AnyConvertExtern, get));
         stubParams.push_back(externref);
       }
@@ -147,11 +142,11 @@ private:
 
     // Generate the stub's type.
     auto oldResults = func->getResults();
-    Type resultsType = isDeclaredType(oldResults) ? externref ? oldResults;
+    Type resultsType = isDeclaredType(oldResults) ? externref : oldResults;
     stub->type = Signature(Type(stubParams), resultsType);
 
     // Handle the results.
-    if (!isDeclaredType(oldResults) {
+    if (!isDeclaredType(oldResults)) {
       // Just use the call.
       stub->body = call;
     } else {
@@ -160,11 +155,10 @@ private:
     }
     return module->addFunction(stub)->name;
   }
+};
 
 } // anonymous namespace
 
-Pass* createEncloseWorldPass() {
-  return new EncloseWorld();
-}
+Pass* createEncloseWorldPass() { return new EncloseWorld(); }
 
-} // namespace
+} // namespace wasm
