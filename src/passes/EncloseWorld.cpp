@@ -28,7 +28,7 @@
 //
 // would have the following function exported in its place:
 //
-//  (func $refs-closed ("export "refs") (param $x externref) (result externref)
+//  (func $refs-closed (export "refs") (param $x externref) (result externref)
 //    (extern.convert_any
 //      (call $refs
 //        (ref.cast (ref $X)
