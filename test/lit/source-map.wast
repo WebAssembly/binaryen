@@ -49,7 +49,6 @@
         (local.get $y)
       )
       (then
-        ;; For the new parser
         ;;@ src.cpp:50:1
         (return)
       )
