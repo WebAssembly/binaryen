@@ -265,8 +265,18 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
   void visitRethrow(Rethrow* curr) {}
   void visitThrowRef(ThrowRef* curr) {}
-  void visitTupleMake(TupleMake* curr) {}
-  void visitTupleExtract(TupleExtract* curr) {}
+  void visitTupleMake(TupleMake* curr) {
+    if (curr->type != Type::unreachable) {
+      for (Index i = 0, size = curr->type.size(); i < size; ++i) {
+        self()->noteSubtype(curr->operands[i], curr->type[i]);
+      }
+    }
+  }
+  void visitTupleExtract(TupleExtract* curr) {
+    if (curr->type != Type::unreachable) {
+      self()->noteSubtype(curr->tuple->type[curr->index], curr->type);
+    }
+  }
   void visitRefI31(RefI31* curr) {}
   void visitI31Get(I31Get* curr) {
     // This could be |noteNonFlowSubtype| but as there are no subtypes of i31
