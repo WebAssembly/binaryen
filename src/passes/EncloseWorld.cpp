@@ -22,7 +22,18 @@
 // running this pass makes as many as we can fully private).
 //
 // The fixup we do is to find references sent out/received in, and to
-// externalize / internalize them.
+// externalize / internalize them. For example, this export:
+//
+//  (func $refs ("export "refs") (param $x (ref $X)) (result (ref $Y))
+//
+// would have the following function exported in its place:
+//
+//  (func $refs-closed ("export "refs") (param $x externref) (result externref)
+//    (extern.convert_any
+//      (call $refs
+//        (ref.cast (ref $X)
+//          (any.convert_extern
+//            (local.get $x))))))
 //
 
 // TODO whiches?
@@ -53,8 +64,8 @@ struct EncloseWorld : public Pass {
         auto* func = module->getFunction(ex->value);
         // If this opens up types, replace it with an enclosed stub.
         if (opensTypes(func)) {
-          auto enclosedName = makeEnclosedStubForExport(func, module);
-          ex->value = enclosedName;
+          auto stubName = makeStubStubForExport(func, module);
+          ex->value = stubName;
         }
       }
     }
@@ -62,313 +73,98 @@ struct EncloseWorld : public Pass {
       module->addExport(std::move(ex));
     }
 
-    // Avoid iterator invalidation later, as we will be adding functions.
-    std::vector<Function*> originalFunctions;
-    for (auto& func : module->functions) {
-      originalFunctions.push_back(func.get());
-    }
-    // Handle imports.
-    // TODO: Non-function imports.
-    for (auto* im : originalFunctions) {
-      if (im->imported() && opensTypes(im)) {
-        auto funcName = makeEnclosedStubForImport(im, module);
-        openImportsToEnclosed[im->name] = funcName;
-      }
-    }
-    if (!openImportsToEnclosed.empty()) {
-      // Every call or ref.func of the imports we are enclosing must be fixed
-      // up, so that we call the stub.
-      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
-        bool isFunctionParallel() override { return true; }
-
-        std::unique_ptr<Pass> create() override {
-          return std::make_unique<Fixer>(openImportsToEnclosed);
-        }
-
-        std::map<Name, Name>& openImportsToEnclosed;
-
-        Fixer(std::map<Name, Name>* openImportsToEnclosed)
-          : openImportsToEnclosed(openImportsToEnclosed) {}
-
-        void visitCall(Call* curr) {
-          auto iter = openImportsToEnclosed.find(curr->target);
-          if (iter == openImportsToEnclosed.end()) {
-            return;
-          }
-
-          replaceCurrent(
-            Builder(*getModule())
-              .makeCall(
-                iter->second, curr->operands, curr->type, curr->isReturn));
-        }
-
-        void visitRefFunc(RefFunc* curr) {
-          auto iter = openImportsToEnclosed.find(curr->func);
-          if (iter == openImportsToEnclosed.end()) {
-            return;
-          }
-
-          curr->func = iter->second;
-        }
-      } fixer(openImportsToEnclosed);
-      fixer.run(getPassRunner(), module);
-      fixer.runOnModuleCode(getPassRunner(), module);
-
-      // Finally we can remove all the now-unused illegal imports
-      for (const auto& pair : openImportsToEnclosed) {
-        module->removeFunction(pair.first);
-      }
-    }
+    // TODO: Handle imports.
   }
 
 private:
-  // map of illegal to legal names for imports
-  std::map<Name, Name> openImportsToEnclosed;
-  bool exportedHelpers = false;
-  Function* getTempRet0 = nullptr;
-  Function* setTempRet0 = nullptr;
+  // Whether a type is a declared type, i.e., a reference that is not a basic
+  // type. Any such declared type is an issue for closed-world mode.
+  bool isDeclaredType(Type t) {
+    return t.isRef() && !t.isBasic();
+  }
 
-  template<typename T> bool opensTypes(T* t) {
+  // Whether a function causes types to be open.
+  bool opensTypes(Function* func) {
     for (const auto& param : t->getParams()) {
-      if (param == Type::i64) {
+      if (isDeclaredType(param)) {
         return true;
       }
     }
-    return t->getResults() == Type::i64;
+    // TODO: Handle tuple results.
+    return isDeclaredType(t->getResults());
   }
 
-  bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
+  // A function may be exported more than once (under different external names).
+  // After we fix up one export, we add it to this map, by doing
+  //
+  //  stubExportsMap[originalFuncName] = stubFuncName;
+  //
+  // That is, we map the original function name to the "enclosed" stub that
+  // handles closed-world better, and wraps around the original.
+  std::unordered_map<Name, Name> stubExportsMap;
 
-  Function* tempSetter(Module* module) {
-    if (!setTempRet0) {
-      if (exportedHelpers) {
-        auto* ex = module->getExport(SET_TEMP_RET_EXPORT);
-        setTempRet0 = module->getFunction(ex->value);
-      } else {
-        setTempRet0 = getFunctionOrImport(
-          module, SET_TEMP_RET_IMPORT, Type::i32, Type::none);
-      }
-    }
-    return setTempRet0;
-  }
-
-  Function* tempGetter(Module* module) {
-    if (!getTempRet0) {
-      if (exportedHelpers) {
-        auto* ex = module->getExport(GET_TEMP_RET_EXPORT);
-        getTempRet0 = module->getFunction(ex->value);
-      } else {
-        getTempRet0 = getFunctionOrImport(
-          module, GET_TEMP_RET_IMPORT, Type::none, Type::i32);
-      }
-    }
-    return getTempRet0;
-  }
-
-  // JS calls the export, so it must call a legal stub that calls the actual
-  // wasm function
-  Name makeEnclosedStubForExport(Function* func, Module* module) {
-    Name legalName(std::string("enclosed$") + func->name.toString());
-
-    // a method may be exported multiple times
-    if (module->getFunctionOrNull(legalName)) {
-      return legalName;
+  // Make an enclosed stub function for an exported function, and return its
+  // name.
+  Name makeStubStubForExport(Function* func, Module* module) {
+    auto iter = stubExportsMap.find(func->name);
+    if (iter != stubExportsMap.end()) {
+      // We've already generated a stub; reuse it.
+      return iter->second;
     }
 
+    // Pick a valid name for the stub we are about to create.
+    auto stubName = Names::getValidFunctionName(*module, std::string("stub$") + func->name.toString());
+
+    // Create the stub.
     Builder builder(*module);
-    auto* legal = new Function();
-    legal->name = legalName;
-    legal->hasExplicitName = true;
+    auto* stub = new Function();
+    stub->name = stubName;
+    stub->hasExplicitName = true;
 
+    // The stub's body is just a call to the original function, but with some
+    // conversions to/from externref.
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
     call->type = func->getResults();
 
-    std::vector<Type> legalParams;
+    auto externref = Type(HeapType::ext, Nullable);
+
+    // Handle params.
+    std::vector<Type> stubParams;
     for (const auto& param : func->getParams()) {
-      if (param == Type::i64) {
-        call->operands.push_back(I64Utilities::recreateI64(
-          builder, legalParams.size(), legalParams.size() + 1));
-        legalParams.push_back(Type::i32);
-        legalParams.push_back(Type::i32);
+      auto* get = builder.makeLocalGet(stubParams.size(), param);
+      if (!isDeclaredType(param)) {
+        // A normal parameter. Just pass it to the original function.
+        call->operands.push_back(get);
+        stubParams.push_back(param);
       } else {
-        call->operands.push_back(
-          builder.makeLocalGet(legalParams.size(), param));
-        legalParams.push_back(param);
+        // A declared type, that we must internalize before sending to the
+        // original function.
+        auto* fixed = ;
+        call->operands.push_back(builder.makeRefAs(AnyConvertExtern, get));
+        stubParams.push_back(externref);
       }
     }
+
+    // Generate the stub's type.
+    auto oldResults = func->getResults();
     Type resultsType =
-      func->getResults() == Type::i64 ? Type::i32 : func->getResults();
-    legal->type = Signature(Type(legalParams), resultsType);
-    if (func->getResults() == Type::i64) {
-      auto index = Builder::addVar(legal, Name(), Type::i64);
-      auto* block = builder.makeBlock();
-      block->list.push_back(builder.makeLocalSet(index, call));
-      block->list.push_back(
-        builder.makeCall(tempSetter(module)->name,
-                         {I64Utilities::getI64High(builder, index)},
-                         Type::none));
-      block->list.push_back(I64Utilities::getI64Low(builder, index));
-      block->finalize();
-      legal->body = block;
-    } else {
-      legal->body = call;
-    }
-    return module->addFunction(legal)->name;
-  }
+      isDeclaredType(oldResults) ? externref ? oldResults;
+    stub->type = Signature(Type(stubParams), resultsType);
 
-  // wasm calls the import, so it must call a stub that calls the actual legal
-  // JS import
-  Name makeEnclosedStubForImport(Function* im, Module* module) {
-    Builder builder(*module);
-    auto legalIm = std::make_unique<Function>();
-    legalIm->name = Name(std::string("legalimport$") + im->name.toString());
-    legalIm->module = im->module;
-    legalIm->base = im->base;
-    legalIm->hasExplicitName = true;
-    auto stub = std::make_unique<Function>();
-    stub->name = Name(std::string("legalfunc$") + im->name.toString());
-    stub->type = im->type;
-    stub->hasExplicitName = true;
-
-    auto* call = module->allocator.alloc<Call>();
-    call->target = legalIm->name;
-
-    std::vector<Type> params;
-    Index i = 0;
-    for (const auto& param : im->getParams()) {
-      if (param == Type::i64) {
-        call->operands.push_back(I64Utilities::getI64Low(builder, i));
-        call->operands.push_back(I64Utilities::getI64High(builder, i));
-        params.push_back(Type::i32);
-        params.push_back(Type::i32);
-      } else {
-        call->operands.push_back(builder.makeLocalGet(i, param));
-        params.push_back(param);
-      }
-      ++i;
-    }
-
-    if (im->getResults() == Type::i64) {
-      call->type = Type::i32;
-      Expression* get =
-        builder.makeCall(tempGetter(module)->name, {}, call->type);
-      stub->body = I64Utilities::recreateI64(builder, call, get);
-    } else {
-      call->type = im->getResults();
+    // Handle the results.
+    if (!isDeclaredType(oldResults) {
+      // Just use the call.
       stub->body = call;
+    } else {
+      // Fix up the call's result.
+      stub->body = builder.makeRefAs(ExternConvertAny, call);
     }
-    legalIm->type = Signature(Type(params), call->type);
-
-    const auto& stubName = stub->name;
-    if (!module->getFunctionOrNull(stubName)) {
-      module->addFunction(std::move(stub));
-    }
-    if (!module->getFunctionOrNull(legalIm->name)) {
-      module->addFunction(std::move(legalIm));
-    }
-    return stubName;
+    return module->addFunction(stub)->name;
   }
-
-  static Function*
-  getFunctionOrImport(Module* module, Name name, Type params, Type results) {
-    // First look for the function by name
-    if (Function* f = module->getFunctionOrNull(name)) {
-      return f;
-    }
-    // Then see if its already imported
-    ImportInfo info(*module);
-    if (Function* f = info.getImportedFunction(ENV, name)) {
-      return f;
-    }
-    // Failing that create a new function import.
-    auto import = Builder::makeFunction(name, Signature(params, results), {});
-    import->module = ENV;
-    import->base = name;
-    auto* ret = import.get();
-    module->addFunction(std::move(import));
-    return ret;
-  }
-};
-
-struct LegalizeAndPruneJSInterface : public EncloseWorld {
-  // Legalize and add pruning on top.
-  LegalizeAndPruneJSInterface() : EncloseWorld() {}
-
-  void run(Module* module) override {
-    EncloseWorld::run(module);
-
-    prune(module);
-  }
-
-  void prune(Module* module) {
-    // For each function name, the exported id it is exported with. For
-    // example,
-    //
-    //   (func $foo (export "bar")
-    //
-    // Would have exportedFunctions["foo"] = "bar";
-    std::unordered_map<Name, Name> exportedFunctions;
-    for (auto& exp : module->exports) {
-      if (exp->kind == ExternalKind::Function) {
-        exportedFunctions[exp->value] = exp->name;
-      }
-    }
-
-    for (auto& func : module->functions) {
-      // If the function is neither exported nor imported, no problem.
-      auto imported = func->imported();
-      auto exported = exportedFunctions.count(func->name);
-      if (!imported && !exported) {
-        continue;
-      }
-
-      // The params are allowed to be multivalue, but not the results. Otherwise
-      // look for SIMD.
-      auto sig = func->type.getSignature();
-      auto illegal = opensTypes(sig.results);
-      illegal =
-        illegal || std::any_of(sig.params.begin(),
-                               sig.params.end(),
-                               [&](const Type& t) { return opensTypes(t); });
-      if (!illegal) {
-        continue;
-      }
-
-      // Prune an import by implementing it in a trivial manner.
-      if (imported) {
-        func->module = func->base = Name();
-
-        Builder builder(*module);
-        if (sig.results == Type::none) {
-          func->body = builder.makeNop();
-        } else {
-          func->body =
-            builder.makeConstantExpression(Literal::makeZeros(sig.results));
-        }
-      }
-
-      // Prune an export by just removing it.
-      if (exported) {
-        module->removeExport(exportedFunctions[func->name]);
-      }
-    }
-
-    // TODO: globals etc.
-  }
-
-  bool opensTypes(Type type) {
-    auto features = type.getFeatures();
-    return features.hasSIMD() || features.hasMultivalue();
-  }
-};
 
 } // anonymous namespace
 
 Pass* createEncloseWorldPass() { return new EncloseWorld(); }
-
-Pass* createLegalizeAndPruneJSInterfacePass() {
-  return new LegalizeAndPruneJSInterface();
-}
 
 } // namespace wasm

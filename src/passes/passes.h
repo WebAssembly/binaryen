@@ -46,6 +46,7 @@ Pass* createDWARFDumpPass();
 Pass* createDuplicateImportEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createEmitTargetFeaturesPass();
+Pass* createEncloseWorldPass();
 Pass* createExtractFunctionPass();
 Pass* createExtractFunctionIndexPass();
 Pass* createFlattenPass();
