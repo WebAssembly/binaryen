@@ -1,10 +1,12 @@
 import os
+import platform
 import re
 import statistics
 import subprocess
 import sys
 import tarfile
 import tempfile
+import unittest
 
 from scripts.test import shared
 from . import utils
@@ -16,6 +18,8 @@ def get_build_dir():
     return os.path.dirname(os.path.dirname(shared.WASM_OPT[0]))
 
 
+# Windows is not yet supported.
+@unittest.skipIf(platform.system() == 'Windows', "showing class skipping")
 class ClusterFuzz(utils.BinaryenTestCase):
     @classmethod
     def setUpClass(cls):
