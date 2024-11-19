@@ -165,29 +165,41 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
-  ;; Two exports of a single function that needs fixups. We should reuse a
-  ;; single stub.
+  ;; Two exports of a single function that needs fixups. We could reuse a
+  ;; single stub, but we leave that for the optimizer.
 
   (export "a" (func $anyref-both))
 
   (export "b" (func $anyref-both))
 
-  ;; CHECK:      (type $0 (func (param anyref) (result anyref)))
+  ;; CHECK:      (type $0 (func (param externref) (result externref)))
 
-  ;; CHECK:      (type $1 (func (param externref) (result externref)))
+  ;; CHECK:      (type $1 (func (param anyref) (result anyref)))
 
   ;; CHECK:      (export "a" (func $stub$anyref-both))
 
-  ;; CHECK:      (export "b" (func $stub$anyref-both))
+  ;; CHECK:      (export "b" (func $stub$anyref-both_2))
 
-  ;; CHECK:      (func $anyref-both (type $0) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $anyref-both (type $1) (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $anyref-both (param $x anyref) (result anyref)
     (unreachable)
   )
 )
-;; CHECK:      (func $stub$anyref-both (type $1) (param $0 externref) (result externref)
+;; CHECK:      (func $stub$anyref-both (type $0) (param $0 externref) (result externref)
+;; CHECK-NEXT:  (extern.convert_any
+;; CHECK-NEXT:   (call $anyref-both
+;; CHECK-NEXT:    (ref.cast anyref
+;; CHECK-NEXT:     (any.convert_extern
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $stub$anyref-both_2 (type $0) (param $0 externref) (result externref)
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (call $anyref-both
 ;; CHECK-NEXT:    (ref.cast anyref

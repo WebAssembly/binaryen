@@ -92,28 +92,12 @@ private:
     return isOpenRef(func->getResults());
   }
 
-  // A function may be exported more than once (under different external names).
-  // After we fix up one export, we add it to this map, by doing
-  //
-  //  stubExportsMap[originalFuncName] = stubFuncName;
-  //
-  // That is, we map the original function name to the "enclosed" stub that
-  // handles closed-world better, and wraps around the original.
-  std::unordered_map<Name, Name> stubExportsMap;
-
   // Make an enclosed stub function for an exported function, and return its
   // name.
   Name makeStubStubForExport(Function* func, Module* module) {
-    auto iter = stubExportsMap.find(func->name);
-    if (iter != stubExportsMap.end()) {
-      // We've already generated a stub; reuse it.
-      return iter->second;
-    }
-
     // Pick a valid name for the stub we are about to create.
     auto stubName = Names::getValidFunctionName(
       *module, std::string("stub$") + func->name.toString());
-    stubExportsMap[func->name] = stubName;
 
     // Create the stub.
     Builder builder(*module);
