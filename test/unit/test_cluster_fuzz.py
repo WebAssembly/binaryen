@@ -97,6 +97,9 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 self.assertTrue(not os.path.exists(fuzz_file))
                 self.assertTrue(not os.path.exists(flags_file))
 
+        # Run.py should report no errors or warnings to stderr.
+        self.assertEqual(proc.stderr, '')
+
     def test_fuzz_passes(self):
         # We should see interesting passes being run in run.py. This is *NOT* a
         # deterministic test, since the number of passes run is random (we just
