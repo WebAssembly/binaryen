@@ -10,6 +10,12 @@ from scripts.test import shared
 from . import utils
 
 
+def get_build_dir():
+    # wasm-opt is in the bin/ dir, and the build dir is one above it,
+    # and contains bin/ and lib/.
+    return os.path.dirname(os.path.dirname(shared.WASM_OPT[0]))
+
+
 class ClusterFuzz(utils.BinaryenTestCase):
     @classmethod
     def setUpClass(cls):
@@ -26,10 +32,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
             bundle = os.path.join(cls.clusterfuzz_dir, 'bundle.tgz')
             cmd = [shared.in_binaryen('scripts', 'bundle_clusterfuzz.py')]
             cmd.append(bundle)
-            # wasm-opt is in the bin/ dir, and the build dir is one above it,
-            # and contains bin/ and lib/.
-            build_dir = os.path.dirname(os.path.dirname(shared.WASM_OPT[0]))
-            cmd.append(f'--build-dir={build_dir}')
+            cmd.append(f'--build-dir={get_build_dir()}')
             shared.run_process(cmd)
 
         print('Unpacking bundle')
@@ -248,5 +251,5 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         # Test with a valid --build-dir.
         cmd.pop()
-        cmd.append(f'--build-dir={shared.options.binaryen_root}')
+        cmd.append(f'--build-dir={get_build_dir()}')
         subprocess.check_call(cmd)
