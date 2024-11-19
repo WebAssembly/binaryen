@@ -155,15 +155,12 @@
 
  ;; Helper functions so we have something to take the reference of.
  ;; CHECK:      (func $a (type $0)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $a)
  ;; CHECK:      (func $b (type $0)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $b)
  ;; CHECK:      (func $c (type $0)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $c)
 )

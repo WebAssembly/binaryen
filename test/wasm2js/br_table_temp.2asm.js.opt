@@ -60,7 +60,7 @@ function asmFunc(imports) {
  
  function $12($0) {
   $0 = $0 | 0;
-  block3 : {
+  block4 : {
    switch ($0 | 0) {
    case 3:
     return 100;
@@ -71,7 +71,7 @@ function asmFunc(imports) {
    case 0:
     return 103;
    default:
-    break block3;
+    break block4;
    };
   }
   return 104;
@@ -79,7 +79,7 @@ function asmFunc(imports) {
  
  function $13($0) {
   $0 = $0 | 0;
-  block3 : {
+  block4 : {
    switch ($0 | 0) {
    case 3:
     return 210;
@@ -90,7 +90,7 @@ function asmFunc(imports) {
    case 0:
     return 213;
    default:
-    break block3;
+    break block4;
    };
   }
   return 214;
@@ -98,7 +98,7 @@ function asmFunc(imports) {
  
  function $14($0) {
   $0 = $0 | 0;
-  block0 : {
+  block1 : {
    switch ($0 | 0) {
    case 0:
    case 2:
@@ -12410,7 +12410,7 @@ function asmFunc(imports) {
    case 24614:
     return 0;
    default:
-    break block0;
+    break block1;
    };
   }
   return 1;
@@ -12554,7 +12554,7 @@ function asmFunc(imports) {
   $0 = $0 | 0;
   var $1 = 0;
   $1 = 16;
-  block1 : {
+  block2 : {
    switch ($0 | 0) {
    case 0:
     $1 = 18;
@@ -12562,7 +12562,7 @@ function asmFunc(imports) {
     $1 = $1 + 1 | 0;
     break;
    default:
-    break block1;
+    break block2;
    };
   }
   return $1 | 0;
@@ -12590,7 +12590,7 @@ function asmFunc(imports) {
   $0 = $0 | 0;
   var $1 = 0;
   $1 = 8;
-  block1 : {
+  block2 : {
    switch ($0 | 0) {
    case 0:
     $1 = 16;
@@ -12598,7 +12598,7 @@ function asmFunc(imports) {
     $1 = $1 + 1 | 0;
     break;
    default:
-    break block1;
+    break block2;
    };
   }
   return $1 | 0;

@@ -13,7 +13,6 @@
  ;; CHECK:      (func $test (type $3)
  ;; CHECK-NEXT:  (local $single (ref func))
  ;; CHECK-NEXT:  (local $tuple (tuple (ref any) (ref any)))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $test
   ;; A non-nullable local. The pass should ignore it (as we cannot optimize

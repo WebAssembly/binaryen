@@ -57,7 +57,6 @@
   )
 
   ;; CHECK:      (func $target (type $1) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
   )
@@ -105,7 +104,6 @@
   )
 
   ;; CHECK:      (func $target (type $1) (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
   )

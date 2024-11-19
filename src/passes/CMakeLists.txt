@@ -58,12 +58,12 @@ set(passes_SOURCES
   JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
+  LLVMMemoryCopyFillLowering.cpp
   LocalCSE.cpp
   LocalSubtyping.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
   Memory64Lowering.cpp
-  MemoryCopyFillLowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeSimilarFunctions.cpp

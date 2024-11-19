@@ -201,7 +201,6 @@
   )
 
   ;; CHECK:      (func $caller-empty (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $caller-empty
     ;; A tiny function with nothing at all, just to verify we do not crash on
@@ -1481,7 +1480,6 @@
   )
 
   ;; CHECK:      (func $bad-B (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bad-B
   )
@@ -2022,7 +2020,6 @@
   )
 
   ;; CHECK:      (func $other (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $other
   )

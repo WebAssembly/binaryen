@@ -31,7 +31,6 @@
     (i64.const 0)
   )
   ;; CHECK:      (func $__set_temp_ret (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $__set_temp_ret (param i32))
   ;; CHECK:      (func $__get_temp_ret (result i32)

@@ -1099,7 +1099,7 @@ block(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
   auto type = blocktype(ctx);
   CHECK_ERR(type);
 
-  ctx.makeBlock(pos, annotations, label, *type);
+  CHECK_ERR(ctx.makeBlock(pos, annotations, label, *type));
 
   CHECK_ERR(instrs(ctx));
 
@@ -1143,7 +1143,7 @@ ifelse(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
     ctx.setSrcLoc(annotations);
   }
 
-  ctx.makeIf(pos, annotations, label, *type);
+  CHECK_ERR(ctx.makeIf(pos, annotations, label, *type));
 
   if (folded && !ctx.in.takeSExprStart("then"sv)) {
     return ctx.in.err("expected 'then' before if instructions");
@@ -1162,7 +1162,7 @@ ifelse(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
       return ctx.in.err("else label does not match if label");
     }
 
-    ctx.visitElse();
+    CHECK_ERR(ctx.visitElse());
 
     CHECK_ERR(instrs(ctx));
 
@@ -1205,7 +1205,7 @@ loop(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
   auto type = blocktype(ctx);
   CHECK_ERR(type);
 
-  ctx.makeLoop(pos, annotations, label, *type);
+  CHECK_ERR(ctx.makeLoop(pos, annotations, label, *type));
 
   CHECK_ERR(instrs(ctx));
 

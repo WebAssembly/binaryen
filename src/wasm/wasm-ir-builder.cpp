@@ -157,7 +157,7 @@ void IRBuilder::push(Expression* expr) {
 
 Result<Expression*> IRBuilder::build() {
   if (scopeStack.empty()) {
-    return builder.makeNop();
+    return builder.makeBlock();
   }
   if (scopeStack.size() > 1 || !scopeStack.back().isNone()) {
     return Err{"unfinished block context"};
@@ -366,7 +366,7 @@ struct IRBuilder::ChildPopper
   ChildPopper(IRBuilder& builder) : builder(builder) {}
 
 private:
-  [[nodiscard]] Result<> popConstrainedChildren(std::vector<Child>& children) {
+  Result<> popConstrainedChildren(std::vector<Child>& children) {
     auto& scope = builder.getScope();
 
     // Two-part indices into the stack of available expressions and the vector
@@ -792,12 +792,13 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
   Expression* ret = nullptr;
   if (scope.exprStack.size() == 0) {
     // No expressions for this scope, but we need something. If we were given a
-    // block, we can empty it out and return it, but otherwise we need a nop.
+    // block, we can empty it out and return it, but otherwise create a new
+    // empty block.
     if (block) {
       block->list.clear();
       ret = block;
     } else {
-      ret = builder.makeNop();
+      ret = builder.makeBlock();
     }
   } else if (scope.exprStack.size() == 1) {
     // We can put our single expression directly into the surrounding scope.
@@ -971,7 +972,12 @@ Result<> IRBuilder::visitEnd() {
       block->type = blockType;
       return block;
     }
-    return builder.makeBlock(label, {curr}, blockType);
+    auto* block = builder.makeBlock();
+    block->name = label;
+    block->list.push_back(curr);
+    block->finalize(blockType,
+                    scope.labelUsed ? Block::HasBreak : Block::NoBreak);
+    return block;
   };
 
   if (auto* func = scope.getFunction()) {
@@ -980,12 +986,14 @@ Result<> IRBuilder::visitEnd() {
     if (scope.needsPopFixup()) {
       EHUtils::handleBlockNestedPops(func, wasm);
     }
+    this->func = nullptr;
+    blockHint = 0;
+    labelHint = 0;
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     block->name = scope.label;
-    // TODO: Track branches so we can know whether this block is a target and
-    // finalize more efficiently.
-    block->finalize(block->type);
+    block->finalize(block->type,
+                    scope.labelUsed ? Block::HasBreak : Block::NoBreak);
     push(block);
   } else if (auto* loop = scope.getLoop()) {
     loop->body = *expr;
@@ -1067,9 +1075,9 @@ Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
   if (!scopeLabel) {
     // The scope does not already have a name, so we need to create one.
     if ((*scope)->getBlock()) {
-      scopeLabel = makeFresh("block");
+      scopeLabel = makeFresh("block", blockHint++);
     } else {
-      scopeLabel = makeFresh("label");
+      scopeLabel = makeFresh("label", labelHint++);
     }
   }
   if (!forDelegate) {

@@ -80,6 +80,7 @@ Pass* createIntrinsicLoweringPass();
 Pass* createTraceCallsPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
+Pass* createLLVMMemoryCopyFillLoweringPass();
 Pass* createLoopInvariantCodeMotionPass();
 Pass* createMemory64LoweringPass();
 Pass* createMemoryPackingPass();
@@ -116,7 +117,6 @@ Pass* createOptimizeForJSPass();
 Pass* createOutliningPass();
 #endif
 Pass* createPickLoadSignsPass();
-Pass* createMemoryCopyFillLoweringPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
 Pass* createModAsyncifyNeverUnwindPass();
 Pass* createLLVMNonTrappingFPToIntLoweringPass();

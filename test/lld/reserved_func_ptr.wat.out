@@ -17,13 +17,10 @@
  (export "__main_argc_argv" (func $main))
  (export "dynCall_viii" (func $dynCall_viii))
  (func $__wasm_call_ctors
-  (nop)
  )
  (func $address_taken_func\28int\2c\20int\2c\20int\29 (param $0 i32) (param $1 i32) (param $2 i32)
-  (nop)
  )
  (func $address_taken_func2\28int\2c\20int\2c\20int\29 (param $0 i32) (param $1 i32) (param $2 i32)
-  (nop)
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)

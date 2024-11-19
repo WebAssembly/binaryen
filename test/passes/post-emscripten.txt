@@ -43,10 +43,8 @@
   )
  )
  (func $other_safe (param $0 i32) (param $1 f32)
-  (nop)
  )
  (func $other_unsafe (param $0 i32) (param $1 f32)
-  (nop)
  )
  (func $deep_safe (param $0 i32) (param $1 f32)
   (call $other_safe
@@ -84,7 +82,6 @@
   )
  )
  (func $other_safe (param $0 i32) (param $1 f32)
-  (nop)
  )
 )
 (module

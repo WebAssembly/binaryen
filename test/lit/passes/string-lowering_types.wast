@@ -65,7 +65,6 @@
 
   ;; CHECK:      (func $export (type $4)
   ;; CHECK-NEXT:  (local $0 (ref $private))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $export (export "export")
     ;; Keep the private type alive.

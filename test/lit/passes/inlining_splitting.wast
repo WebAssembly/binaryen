@@ -856,7 +856,6 @@
   )
 
   ;; CHECK:      (func $byn-split-outlined-A$colliding-name (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $byn-split-outlined-A$colliding-name
     ;; This function's name might collide with the split function we create for

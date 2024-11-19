@@ -46,15 +46,12 @@
   (ref.func $helper-3))
 
  ;; CHECK:      (func $helper-1 (type $v1)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $helper-1 (type $v1))
  ;; CHECK:      (func $helper-2 (type $v2)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $helper-2 (type $v2))
  ;; CHECK:      (func $helper-3 (type $v3)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $helper-3 (type $v3))
 

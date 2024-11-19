@@ -40,7 +40,7 @@ struct Err {
   }
 
 // Represent a result of type T or an error message.
-template<typename T = Ok> struct Result {
+template<typename T = Ok> struct [[nodiscard]] Result {
   std::variant<T, Err> val;
 
   Result(Result<T>& other) = default;
@@ -56,7 +56,7 @@ template<typename T = Ok> struct Result {
 };
 
 // Represent an optional result of type T or an error message.
-template<typename T = Ok> struct MaybeResult {
+template<typename T = Ok> struct [[nodiscard]] MaybeResult {
   std::variant<T, None, Err> val;
 
   MaybeResult() : val(None{}) {}

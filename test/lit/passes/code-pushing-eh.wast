@@ -118,7 +118,6 @@
   )
 
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 

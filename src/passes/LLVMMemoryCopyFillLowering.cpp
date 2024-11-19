@@ -25,8 +25,8 @@
 // particular, pointer overflow is UB and not handled here).
 
 namespace wasm {
-struct MemoryCopyFillLowering
-  : public WalkerPass<PostWalker<MemoryCopyFillLowering>> {
+struct LLVMMemoryCopyFillLowering
+  : public WalkerPass<PostWalker<LLVMMemoryCopyFillLowering>> {
   bool needsMemoryCopy = false;
   bool needsMemoryFill = false;
   Name memCopyFuncName;
@@ -253,8 +253,8 @@ struct MemoryCopyFillLowering
   }
 };
 
-Pass* createMemoryCopyFillLoweringPass() {
-  return new MemoryCopyFillLowering();
+Pass* createLLVMMemoryCopyFillLoweringPass() {
+  return new LLVMMemoryCopyFillLowering();
 }
 
 } // namespace wasm

@@ -316,7 +316,6 @@
 
  ;; CHECK:      (func $unused-and-refinable (type $2)
  ;; CHECK-NEXT:  (local $0 structref)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $unused-and-refinable (param $0 structref)
   ;; This function does not use $0. It is called with $"{}", so it is also

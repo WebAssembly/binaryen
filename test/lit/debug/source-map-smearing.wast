@@ -11,7 +11,7 @@
 ;; Check that the debug locations do not smear beyond a function
 ;; epilogue to the next function. The encoded segment 'C' means that
 ;; the previous segment is indeed one-byte long.
-;; CHECK: {"version":3,"sources":["foo"],"names":[],"mappings":"yBAAC,C,GACC"}
+;; CHECK: {"version":3,"sources":["foo"],"names":[],"mappings":"wBAAC,C,EACC"}
 (module
   (func $0
     ;;@ foo:1:1

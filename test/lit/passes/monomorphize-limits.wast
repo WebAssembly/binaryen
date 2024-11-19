@@ -112,7 +112,6 @@
   )
 
   ;; ALWAYS:      (func $many-params (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $many-params (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
   ;; CAREFUL-NEXT:  (nop)
@@ -227,7 +226,8 @@
 ;; ALWAYS-NEXT:  (local.set $24
 ;; ALWAYS-NEXT:   (i32.const 25)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $many-params_3 (type $0)
@@ -353,7 +353,6 @@
   )
 
   ;; ALWAYS:      (func $target (type $3) (param $array (ref $array))
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $3) (param $0 (ref $array))
   ;; CAREFUL-NEXT:  (nop)
@@ -392,7 +391,8 @@
 ;; ALWAYS-NEXT:    (i32.const 25)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $target_3 (type $1)

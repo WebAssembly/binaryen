@@ -50,7 +50,6 @@
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $any
   ;; CHECK-NEXT:    (drop

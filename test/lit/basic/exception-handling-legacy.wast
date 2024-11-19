@@ -47,18 +47,14 @@
   (tag $e-empty)
 
   ;; CHECK-TEXT:      (func $foo (type $0)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $foo (type $0)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo)
 
   ;; CHECK-TEXT:      (func $bar (type $0)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $bar (type $0)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $bar)
 
@@ -223,7 +219,6 @@
   ;; CHECK-TEXT:      (func $empty-try-body (type $0)
   ;; CHECK-TEXT-NEXT:  (try
   ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch $e-i32
   ;; CHECK-TEXT-NEXT:    (drop
@@ -235,7 +230,6 @@
   ;; CHECK-BIN:      (func $empty-try-body (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$3
   ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-i32
   ;; CHECK-BIN-NEXT:    (drop
@@ -357,7 +351,6 @@
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
@@ -369,7 +362,6 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -461,7 +453,6 @@
   ;; CHECK-TEXT-NEXT:      )
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -483,7 +474,6 @@
   ;; CHECK-TEXT-NEXT:      )
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -504,7 +494,6 @@
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -526,7 +515,6 @@
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -605,7 +593,6 @@
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
@@ -628,7 +615,6 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -674,7 +660,6 @@
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (catch_all
-  ;; CHECK-TEXT-NEXT:     (nop)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
@@ -703,7 +688,6 @@
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (catch_all
-  ;; CHECK-BIN-NEXT:     (nop)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -780,20 +764,16 @@
   ;; CHECK-TEXT:      (func $empty-catch-body (type $0)
   ;; CHECK-TEXT-NEXT:  (try
   ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch $e-empty
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $empty-catch-body (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$3
   ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-empty
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -1068,7 +1048,6 @@
   ;; CHECK-TEXT-NEXT:      (rethrow $l0)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -1083,7 +1062,6 @@
   ;; CHECK-TEXT-NEXT:      (rethrow $l00)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -1100,7 +1078,6 @@
   ;; CHECK-BIN-NEXT:      (rethrow $label$6)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -1115,7 +1092,6 @@
   ;; CHECK-BIN-NEXT:      (rethrow $label$12)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -1154,7 +1130,6 @@
   ;; CHECK-TEXT:      (func $pop-within-if-condition (type $0)
   ;; CHECK-TEXT-NEXT:  (try
   ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch $e-i32
   ;; CHECK-TEXT-NEXT:    (throw $e-i32
@@ -1174,7 +1149,6 @@
   ;; CHECK-BIN:      (func $pop-within-if-condition (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$5
   ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-i32
   ;; CHECK-BIN-NEXT:    (throw $e-i32
@@ -1214,7 +1188,6 @@
   ;; CHECK-TEXT:      (func $pop-can-be-supertype (type $0)
   ;; CHECK-TEXT-NEXT:  (try
   ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch $e-eqref
   ;; CHECK-TEXT-NEXT:    (drop
@@ -1226,7 +1199,6 @@
   ;; CHECK-BIN:      (func $pop-can-be-supertype (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$3
   ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-eqref
   ;; CHECK-BIN-NEXT:    (drop
@@ -1297,7 +1269,6 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (try
   ;; CHECK-TEXT-NEXT:    (do
-  ;; CHECK-TEXT-NEXT:     (nop)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (delegate 1)
   ;; CHECK-TEXT-NEXT:   )
@@ -1310,7 +1281,6 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (try $label$5
   ;; CHECK-BIN-NEXT:    (do
-  ;; CHECK-BIN-NEXT:     (nop)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (delegate 1)
   ;; CHECK-BIN-NEXT:   )
@@ -1351,11 +1321,9 @@
 ;; CHECK-BIN-NODEBUG:      (tag $tag$4)
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
@@ -1430,7 +1398,6 @@
 ;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
@@ -1484,7 +1451,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
@@ -1528,7 +1494,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:      (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1550,7 +1515,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:      (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1586,7 +1550,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
@@ -1615,7 +1578,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:     (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -1640,10 +1602,8 @@
 ;; CHECK-BIN-NODEBUG:      (func $15 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$4
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
@@ -1745,7 +1705,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$6)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:      (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1760,7 +1719,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$12)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:      (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1770,7 +1728,6 @@
 ;; CHECK-BIN-NODEBUG:      (func $21 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$5
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
@@ -1791,7 +1748,6 @@
 ;; CHECK-BIN-NODEBUG:      (func $22 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$3
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
@@ -1824,7 +1780,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (try $label$5
 ;; CHECK-BIN-NODEBUG-NEXT:    (do
-;; CHECK-BIN-NODEBUG-NEXT:     (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (delegate 1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )

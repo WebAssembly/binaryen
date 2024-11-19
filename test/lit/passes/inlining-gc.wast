@@ -8,7 +8,8 @@
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (ref.null nofunc)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-nullable
@@ -27,7 +28,8 @@
  ;; CHECK:      (func $caller-non-nullable (type $0)
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (block $__inlined_func$target-non-nullable$1
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-non-nullable
