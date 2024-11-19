@@ -304,6 +304,14 @@ struct Outlining : public Pass {
     // Position the outlined functions first in the functions vector to make
     // the outlining lit tests far more readable.
     moveOutlinedFunctions(module, substrings.size());
+
+    // Because we visit control flow in stringified order rather than normal
+    // postorder, IRBuilder is not able to properly track branches, so it may
+    // not have finalized blocks with the correct types. ReFinalize now to fix
+    // any issues.
+    PassRunner runner(getPassRunner());
+    runner.add(std::make_unique<ReFinalize>());
+    runner.run();
   }
 
   Name addOutlinedFunction(Module* module,
