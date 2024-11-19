@@ -62,6 +62,17 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // things like ClusterFuzz, where we are using Binaryen to fuzz other things
   // than itself). As a result, the list of passes here is different from
   // fuzz_opt.py.
+
+  // Enclose the world, some of the time. We do this before picking any other
+  // passes so that we make the initial fuzz contents more optimizable by
+  // closed-world passes later. Note that we do this regardless of whether we
+  // are in closed-world mode or not, as it is good to get this variety
+  // regardless.
+  if (oneIn(2)) {
+    options.passes.push_back("enclose-world");
+  }
+
+  // Main selection of passes.
   while (options.passes.size() < 20 && !random.finished() && !oneIn(3)) {
     switch (upTo(42)) {
       case 0:
