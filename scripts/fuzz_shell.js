@@ -288,7 +288,9 @@ function build(binary) {
   // Update the exports. Note that this adds onto |exports|, |exportNames|,
   // which is intentional: if we build another wasm, or build this one more
   // than once, we want to be able to call them all, so we unify all their
-  // exports.
+  // exports. (We do trample in |exports| when keys are equal - basically this
+  // is a single global namespace - but |exportNames| is appended to, so we do
+  // keep the ability to call anything that was ever exported.)
   for (var e in instance.exports) {
     exports[e] = instance.exports[e];
     exportNames.push(e);
