@@ -239,7 +239,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     }
     if (acted) {
       reFinalize();
-      assert(curr->type == Type::none);
+      assert(curr->type == Type::none || curr->type == Type::unreachable);
     }
   }
 
