@@ -138,17 +138,10 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
-// Some imports need to access exports by index.
-var exportsList;
-function getExportByIndex(index) {
-  if (!exportsList) {
-    exportsList = [];
-    for (var e in exports) {
-      exportsList.push(e);
-    }
-  }
-  return exports[exportsList[index]];
-}
+// Track the exports in a map, and also in a list, as some imports need to
+// access by index.
+var exports = {};
+var exportsList = [];
 
 // Given a wasm function, call it as best we can from JS, and return the result.
 function callFunc(func) {
@@ -202,11 +195,11 @@ var imports = {
 
     // Export operations.
     'call-export': (index) => {
-      callFunc(getExportByIndex(index));
+      callFunc(exportsList[index]);
     },
     'call-export-catch': (index) => {
       try {
-        callFunc(getExportByIndex(index));
+        callFunc(exportsList[index]);
         return 0;
       } catch (e) {
         // We only want to catch exceptions, not wasm traps: traps should still
@@ -278,57 +271,58 @@ if (secondBinary) {
   });
 }
 
-// Create the wasm.
-var module = new WebAssembly.Module(binary);
+// Compile and instantiate a wasm file.
+function build(binary) {
+  var module = new WebAssembly.Module(binary);
 
-var instance;
-try {
-  instance = new WebAssembly.Instance(module, imports);
-} catch (e) {
-  console.log('exception thrown: failed to instantiate module');
-  quit();
-}
-
-// Handle the exports.
-var exports = instance.exports;
-
-// Link in a second module, if one was provided.
-if (secondBinary) {
-  var secondModule = new WebAssembly.Module(secondBinary);
-
-  // The secondary module just needs to import the primary one: all original
-  // imports it might have needed were exported from there.
-  var secondImports = {'primary': exports};
-  var secondInstance;
+  var instance;
   try {
-    secondInstance = new WebAssembly.Instance(secondModule, secondImports);
+    instance = new WebAssembly.Instance(module, imports);
   } catch (e) {
-    console.log('exception thrown: failed to instantiate second module');
+    console.log('exception thrown: failed to instantiate module');
     quit();
   }
-}
 
-// Run the wasm.
-if (!exportsToCall) {
-  // We were not told specific exports, so call them all.
-  exportsToCall = [];
-  for (var e in exports) {
-    exportsToCall.push(e);
+  // Update the exports. Note that this adds onto |exports|, |exportsList|,
+  // which is intentional: if we build another wasm, or build this one more
+  // than once, we want to be able to call them all, so we unify all their
+  // exports.
+  for (var e in instance.exports) {
+    exports[e] = instance.exports[e];
+    exportsList.push(e);
   }
 }
 
-for (var e of exportsToCall) {
-  if (typeof exports[e] !== 'function') {
-    continue;
-  }
-  var func = exports[e];
-  try {
-    console.log('[fuzz-exec] calling ' + e);
-    var result = callFunc(func);
-    if (typeof result !== 'undefined') {
-      console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
+// Run the code by calling exports.
+function callExports() {
+  // Call the exports we were told, or if we were not given an explicit list,
+  // call them all.
+  var relevantExports = exportsToCall || exportsList;
+
+  for (var e of relevantExports) {
+    if (typeof exports[e] !== 'function') {
+      continue;
     }
-  } catch (e) {
-    console.log('exception thrown: ' + e);
+    var func = exports[e];
+    try {
+      console.log('[fuzz-exec] calling ' + e);
+      var result = callFunc(func);
+      if (typeof result !== 'undefined') {
+        console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
+      }
+    } catch (e) {
+      console.log('exception thrown: ' + e);
+    }
   }
 }
+
+// Build the main wasm.
+build(binary);
+
+// Build the second wasm, if one was provided.
+if (secondBinary) {
+  build(secondBinary);
+}
+
+// Run.
+callExports();
