@@ -44,7 +44,7 @@ MAX_RANDOM_SIZE = 15 * 1024
 # Max and mean amount of extra JS operations we append, like extra compiles or
 # runs of the wasm. We allow a high max here, but the mean is far lower, so that
 # typical testcases are not long-running.
-MAX_EXTRA_JS_OPERATIONS = 100
+MAX_EXTRA_JS_OPERATIONS = 40
 MEAN_EXTRA_JS_OPERATIONS = 4
 
 # The prefix for fuzz files.
@@ -124,7 +124,13 @@ def get_js_file_contents(wasm_contents):
     num = math.floor(x * MAX_EXTRA_JS_OPERATIONS)
     assert num >= 0 and num <= MAX_EXTRA_JS_OPERATIONS
     for i in range(num):
-        
+        js += system_random.choice([
+            # Compile and link the wasm again. Each link adds more to the total
+            # exports that we can call.
+            'build(binary);\n',
+            # Run all the exports we've accumulated.
+            'callExports();\n',
+        ])
 
     return js
 
