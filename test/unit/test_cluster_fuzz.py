@@ -260,18 +260,17 @@ class ClusterFuzz(utils.BinaryenTestCase):
             seen_calls.append(js.count('callExports();'))
 
         # There is always one build and one call (those are in the default
-        # fuzz_shell.js), and we add on average 4 operations, each with equal
+        # fuzz_shell.js), and we add a couple of operations, each with equal
         # probability to be a build or a call, so over the 100 testcases here we
         # have an overwhelming probability to see at least one extra build and
         # one extra call.
         #
-        # Empirically, they are distributed as mean 5, stddev 5, median 2. Note
-        # that the mean is 5 because we start with 1 and add 4, as mentioned
-        # before. Thus, checking that the max is at least 2 proves we've added
-        # at least 1.
+        # builds and calls are distributed as mean 4, stddev 5, median 2.
         print(f'mean JS builds:   {statistics.mean(seen_builds)}')
         print(f'stdev JS builds:  {statistics.stdev(seen_builds)}')
         print(f'median JS builds: {statistics.median(seen_builds)}')
+        # Assert on at least 2, which means we added at least one to the default
+        # one that always exists, as mentioned before.
         self.assertGreaterEqual(max(seen_builds), 2)
         self.assertGreater(statistics.stdev(seen_builds), 0)
 

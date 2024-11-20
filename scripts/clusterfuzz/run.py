@@ -45,7 +45,7 @@ MAX_RANDOM_SIZE = 15 * 1024
 # runs of the wasm. We allow a high max here, but the mean is far lower, so that
 # typical testcases are not long-running.
 MAX_EXTRA_JS_OPERATIONS = 40
-MEAN_EXTRA_JS_OPERATIONS = 4
+MEAN_EXTRA_JS_OPERATIONS = 2
 
 # The prefix for fuzz files.
 FUZZ_FILENAME_PREFIX = 'fuzz-'
