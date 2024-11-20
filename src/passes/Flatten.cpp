@@ -159,10 +159,12 @@ struct Flatten
           if (iff->ifFalse->type.isConcrete()) {
             iff->ifFalse = builder.makeLocalSet(temp, iff->ifFalse);
           }
-          // the whole if (+any preludes from the condition) is now a prelude
-          prelude = rep;
-          // and we leave just a get of the value
-          rep = builder.makeLocalGet(temp, type);
+          if (curr->type.isConcrete()) {
+            // the whole if (+any preludes from the condition) is now a prelude
+            prelude = rep;
+            // and we leave just a get of the value
+            rep = builder.makeLocalGet(temp, type);
+          }
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
         if (iff->ifFalse) {
