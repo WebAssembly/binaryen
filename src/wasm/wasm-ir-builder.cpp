@@ -759,13 +759,24 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
   auto type = scope.getResultType();
 
   if (scope.unreachable) {
-    // Drop everything before the last unreachable.
+    // Drop everything before the last unreachable expression.
     bool sawUnreachable = false;
     for (int i = scope.exprStack.size() - 1; i >= 0; --i) {
       if (sawUnreachable) {
         scope.exprStack[i] = builder.dropIfConcretelyTyped(scope.exprStack[i]);
       } else if (scope.exprStack[i]->type == Type::unreachable) {
         sawUnreachable = true;
+      } else {
+        // As a special case, look for unreachable if conditions, since they may
+        // not make their ifs unreachable.
+        for (auto* curr = scope.exprStack[i]->dynCast<If>();
+             curr;
+             curr = curr->condition->dynCast<If>()) {
+          if (curr->condition->type == Type::unreachable) {
+            sawUnreachable = true;
+            break;
+          }
+        }
       }
     }
   }
