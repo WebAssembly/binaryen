@@ -769,8 +769,7 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
       } else {
         // As a special case, look for unreachable if conditions, since they may
         // not make their ifs unreachable.
-        for (auto* curr = scope.exprStack[i]->dynCast<If>();
-             curr;
+        for (auto* curr = scope.exprStack[i]->dynCast<If>(); curr;
              curr = curr->condition->dynCast<If>()) {
           if (curr->condition->type == Type::unreachable) {
             sawUnreachable = true;
