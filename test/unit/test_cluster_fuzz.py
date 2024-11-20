@@ -247,6 +247,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+        # To check for interesting JS file contents, we'll note how many times
+        # we build and run the wasm.
+        # TODO: count number of callExports(); and build(binary);
+
     # "zzz" in test name so that this runs last. If it runs first, it can be
     # confusing as it appears next to the logging of which bundle we use (see
     # setUpClass).
