@@ -138,10 +138,10 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
-// Track the exports in a map, and also in a list, as some imports need to
-// access by index.
+// Track the exports in a map (similar to the Exports object from wasm) and also
+// in a list of names, as some imports need to access by index.
 var exports = {};
-var exportsList = [];
+var exportNames = [];
 
 // Given a wasm function, call it as best we can from JS, and return the result.
 function callFunc(func) {
@@ -195,11 +195,11 @@ var imports = {
 
     // Export operations.
     'call-export': (index) => {
-      callFunc(exportsList[index]);
+      callFunc(exports[exportNames[index]]);
     },
     'call-export-catch': (index) => {
       try {
-        callFunc(exportsList[index]);
+        callFunc(exports[exportNames[index]]);
         return 0;
       } catch (e) {
         // We only want to catch exceptions, not wasm traps: traps should still
@@ -283,13 +283,13 @@ function build(binary) {
     quit();
   }
 
-  // Update the exports. Note that this adds onto |exports|, |exportsList|,
+  // Update the exports. Note that this adds onto |exports|, |exportNames|,
   // which is intentional: if we build another wasm, or build this one more
   // than once, we want to be able to call them all, so we unify all their
   // exports.
   for (var e in instance.exports) {
     exports[e] = instance.exports[e];
-    exportsList.push(e);
+    exportNames.push(e);
   }
 }
 
@@ -297,13 +297,13 @@ function build(binary) {
 function callExports() {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
-  var relevantExports = exportsToCall || exportsList;
+  var relevantExports = exportsToCall || exportNames;
 
   for (var e of relevantExports) {
-    if (typeof exports[e] !== 'function') {
+    var func = exports[e];
+    if (typeof func !== 'function') {
       continue;
     }
-    var func = exports[e];
     try {
       console.log('[fuzz-exec] calling ' + e);
       var result = callFunc(func);
