@@ -1815,3 +1815,43 @@
   )
  )
 )
+
+;; Regression test for a crash on ifs with unreachable conditions and tuple arms.
+(module
+ ;; CHECK:      (type $0 (func (result i32 i64)))
+
+ ;; CHECK:      (func $test (type $0) (result i32 i64)
+ ;; CHECK-NEXT:  (if (type $0) (result i32 i64)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (tuple.make 2
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (i64.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (tuple.make 2
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:     (i64.const 3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (result i32 i64)
+  (if (result i32 i64)
+   (unreachable)
+   (then
+    (tuple.make 2
+     (i32.const 0)
+     (i64.const 1)
+    )
+   )
+   (else
+    (tuple.make 2
+     (i32.const 2)
+     (i64.const 3)
+    )
+   )
+  )
+ )
+)
