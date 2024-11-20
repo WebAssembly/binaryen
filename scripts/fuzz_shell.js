@@ -138,9 +138,11 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
-// Track the exports in a map (similar to the Exports object from wasm) and also
-// in a list of names, as some imports need to access by index.
+// Track the exports in a map (similar to the Exports object from wasm, i.e.,
+// whose keys are strings and whose values are the corresponding exports).
 var exports = {};
+
+// Also track exports in a list of names, to allow access by index.
 var exportNames = [];
 
 // Given a wasm function, call it as best we can from JS, and return the result.
