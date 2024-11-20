@@ -270,6 +270,13 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.closedWorld = true;
   }
 
+  // Prune things that error in JS if we call them (like SIMD), some of the
+  // time. This alters the wasm/JS boundary quite a lot, so testing both forms
+  // is useful.
+  if (oneIn(2)) {
+    options.passes.push_back("legalize-and-prune-js-interface");
+  }
+
   // Usually DCE at the very end, to ensure that our binaries validate in other
   // VMs, due to how non-nullable local validation and unreachable code
   // interact. See fuzz_opt.py and
