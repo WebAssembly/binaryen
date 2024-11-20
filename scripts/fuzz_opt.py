@@ -729,7 +729,7 @@ def run_bynterp(wasm, args):
 # for our normal tests, but do make sense to fuzz for V8's sake). We do this
 # randomly for more variety.
 def get_v8_extra_flags():
-    return ['--future']if random.random() < 0.5 else []
+    return ['--future'] if random.random() < 0.5 else []
 
 
 V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
