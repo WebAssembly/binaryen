@@ -1805,7 +1805,6 @@ opt_choices = [
     ("--dce",),
     ("--directize",),
     ("--discard-global-effects",),
-    ("--enclose-world",),
     ("--flatten", "--dfo",),
     ("--duplicate-function-elimination",),
     ("--flatten",),
