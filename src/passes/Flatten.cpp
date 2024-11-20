@@ -147,14 +147,16 @@ struct Flatten
         // arm preludes go in the arms. we must also remove an if value
         auto* originalIfTrue = iff->ifTrue;
         auto* originalIfFalse = iff->ifFalse;
-        auto type = iff->type;
+        auto type = iff->ifFalse ? Type::getLeastUpperBound(iff->ifTrue->type,
+                                                            iff->ifFalse->type)
+                                 : Type::none;
         Expression* prelude = nullptr;
         if (type.isConcrete()) {
           Index temp = builder.addVar(getFunction(), type);
           if (iff->ifTrue->type.isConcrete()) {
             iff->ifTrue = builder.makeLocalSet(temp, iff->ifTrue);
           }
-          if (iff->ifFalse && iff->ifFalse->type.isConcrete()) {
+          if (iff->ifFalse->type.isConcrete()) {
             iff->ifFalse = builder.makeLocalSet(temp, iff->ifFalse);
           }
           // the whole if (+any preludes from the condition) is now a prelude
