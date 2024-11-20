@@ -12676,7 +12676,7 @@ function asmFunc(imports) {
  }
  
  function $30() {
-  var $1_1 = 0, $2_1 = 0;
+  var $1_1 = 0;
   block : {
    $1_1 = 2;
    switch (0 | 0) {

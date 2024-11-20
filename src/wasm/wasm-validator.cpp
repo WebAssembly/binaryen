@@ -866,7 +866,16 @@ void FunctionValidator::visitIf(If* curr) {
                       curr,
                       "returning if-else's false must have right type");
     } else {
-      if (curr->condition->type != Type::unreachable) {
+      if (curr->condition->type == Type::unreachable) {
+        shouldBeTrue(
+          curr->ifTrue->type == Type::unreachable ||
+            curr->ifFalse->type == Type::unreachable ||
+            (curr->ifTrue->type == Type::none &&
+             curr->ifFalse->type == Type::none) ||
+            Type::hasLeastUpperBound(curr->ifTrue->type, curr->ifFalse->type),
+          curr,
+          "arms of unreachable if-else must have compatible types");
+      } else {
         shouldBeEqual(curr->ifTrue->type,
                       Type(Type::unreachable),
                       curr,
@@ -876,18 +885,6 @@ void FunctionValidator::visitIf(If* curr) {
                       curr,
                       "unreachable if-else must have unreachable false");
       }
-    }
-    if (curr->ifTrue->type.isConcrete()) {
-      shouldBeSubType(curr->ifTrue->type,
-                      curr->type,
-                      curr,
-                      "if type must match concrete ifTrue");
-    }
-    if (curr->ifFalse->type.isConcrete()) {
-      shouldBeSubType(curr->ifFalse->type,
-                      curr->type,
-                      curr,
-                      "if type must match concrete ifFalse");
     }
   }
 }
