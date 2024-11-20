@@ -8,7 +8,7 @@
 
 ;; Build to a binary wasm.
 ;;
-;; RUN: wasm-opt %s -o %t.wasm
+;; RUN: wasm-opt %s -o %t.wasm -q
 
 ;; Run in node.
 ;;
