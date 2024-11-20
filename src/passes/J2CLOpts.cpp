@@ -43,6 +43,7 @@ Expression* getTrivialFunctionBody(Function* func) {
   // Only consider trivial the following instructions which can be safely
   // inlined and note that their size is at most 2.
   if (body->is<Nop>() || body->is<GlobalGet>() || body->is<Const>() ||
+      (body->is<Block>() && body->cast<Block>()->list.empty()) ||
       // Call with no arguments.
       (body->is<Call>() && body->dynCast<Call>()->operands.size() == 0) ||
       // Simple global.set with a constant.

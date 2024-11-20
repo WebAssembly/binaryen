@@ -159,6 +159,9 @@ void PassRegistry::registerPasses() {
   registerPass("emit-target-features",
                "emit the target features section in the output",
                createEmitTargetFeaturesPass);
+  registerPass("enclose-world",
+               "modify the wasm (destructively) for closed-world",
+               createEncloseWorldPass);
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);
@@ -272,6 +275,10 @@ void PassRegistry::registerPasses() {
   registerPass("table64-lowering",
                "lower 64-bit tables 32-bit ones",
                createTable64LoweringPass);
+  registerPass("llvm-memory-copy-fill-lowering",
+               "Lower memory.copy and memory.fill to wasm mvp and disable "
+               "the bulk-memory feature.",
+               createLLVMMemoryCopyFillLoweringPass);
   registerPass("memory-packing",
                "packs memory into separate segments, skipping zeros",
                createMemoryPackingPass);
@@ -330,6 +337,10 @@ void PassRegistry::registerPasses() {
   registerPass("no-partial-inline",
                "mark functions as no-inline (for partial inlining only)",
                createNoPartialInlinePass);
+  registerPass("llvm-nontrapping-fptoint-lowering",
+               "lower nontrapping float-to-int operations to wasm mvp and "
+               "disable the nontrapping fptoint feature",
+               createLLVMNonTrappingFPToIntLoweringPass);
   registerPass("once-reduction",
                "reduces calls to code that only runs once",
                createOnceReductionPass);

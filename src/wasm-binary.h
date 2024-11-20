@@ -1161,11 +1161,7 @@ enum MemoryAccess {
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
-enum FeaturePrefix {
-  FeatureUsed = '+',
-  FeatureRequired = '=',
-  FeatureDisallowed = '-'
-};
+enum FeaturePrefix { FeatureUsed = '+', FeatureDisallowed = '-' };
 
 } // namespace BinaryConsts
 
@@ -1532,7 +1528,7 @@ public:
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
-                          Type& indexType,
+                          Type& addressType,
                           Address defaultIfNoMax);
   void readImports();
 
@@ -1556,44 +1552,32 @@ public:
 
   Name getNextLabel();
 
-  // We read functions and globals before we know their names, so we need to
-  // backpatch the names later
+  // We read the names section first so we know in advance what names various
+  // elements should have. Store the information for use when building
+  // expressions.
+  std::unordered_map<Index, Name> functionNames;
+  std::unordered_map<Index, std::unordered_map<Index, Name>> localNames;
+  std::unordered_map<Index, Name> typeNames;
+  std::unordered_map<Index, std::unordered_map<Index, Name>> fieldNames;
+  std::unordered_map<Index, Name> tableNames;
+  std::unordered_map<Index, Name> memoryNames;
+  std::unordered_map<Index, Name> globalNames;
+  std::unordered_map<Index, Name> tagNames;
+  std::unordered_map<Index, Name> dataNames;
+  std::unordered_map<Index, Name> elemNames;
 
-  // at index i we have all refs to the function i
-  std::map<Index, std::vector<Name*>> functionRefs;
   Function* currFunction = nullptr;
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
-
-  // at index i we have all references to the table i
-  std::map<Index, std::vector<Name*>> tableRefs;
-
-  std::map<Index, Name> elemTables;
-
-  // at index i we have all references to the memory i
-  std::map<Index, std::vector<wasm::Name*>> memoryRefs;
-
-  // at index i we have all refs to the global i
-  std::map<Index, std::vector<Name*>> globalRefs;
-
-  // at index i we have all refs to the tag i
-  std::map<Index, std::vector<Name*>> tagRefs;
-
-  // at index i we have all refs to the data segment i
-  std::map<Index, std::vector<Name*>> dataRefs;
-
-  // at index i we have all refs to the element segment i
-  std::map<Index, std::vector<Name*>> elemRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
 
   void readFunctions();
   void readVars();
+  void setLocalNames(Function& func, Index i);
 
-  std::map<Export*, Index> exportIndices;
-  std::vector<std::unique_ptr<Export>> exportOrder;
   void readExports();
 
   // The strings in the strings section (which are referred to by StringConst).
@@ -1656,12 +1640,13 @@ public:
   Expression* popTuple(size_t numElems);
   Expression* popTypedExpression(Type type);
 
-  void validateBinary(); // validations that cannot be performed on the Module
-  void processNames();
+  // validations that cannot be performed on the Module
+  void validateBinary();
 
   size_t dataCount = 0;
   bool hasDataCount = false;
 
+  void createDataSegments(Index count);
   void readDataSegments();
   void readDataSegmentCount();
 
@@ -1671,7 +1656,7 @@ public:
   void readTags();
 
   static Name escape(Name name);
-  void readNames(size_t);
+  void findAndReadNames();
   void readFeatures(size_t);
   void readDylink(size_t);
   void readDylink0(size_t);

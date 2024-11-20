@@ -15,7 +15,6 @@
 
   ;; CHECK:      (func $no-uses (type $0)
   ;; CHECK-NEXT:  (local $x (ref func))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $no-uses
     ;; A local with no uses validates.
@@ -171,7 +170,6 @@
   )
 
   ;; CHECK:      (func $helper (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper)
 

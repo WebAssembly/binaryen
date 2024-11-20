@@ -46,7 +46,7 @@ struct Limits {
 };
 
 struct MemType {
-  Type indexType;
+  Type addressType;
   Limits limits;
   bool shared;
 };
@@ -57,7 +57,7 @@ struct Memarg {
 };
 
 struct TableType {
-  Type indexType;
+  Type addressType;
   Limits limits;
 };
 
@@ -982,8 +982,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   Limits getLimitsFromElems(Index elems) { return {elems, elems}; }
 
-  TableType makeTableType(Type indexType, Limits limits, TypeT) {
-    return {indexType, limits};
+  TableType makeTableType(Type addressType, Limits limits, TypeT) {
+    return {addressType, limits};
   }
 
   std::vector<char> makeDataString() { return {}; }
@@ -996,8 +996,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return {size, size};
   }
 
-  MemType makeMemType(Type indexType, Limits limits, bool shared) {
-    return {indexType, limits, shared};
+  MemType makeMemType(Type addressType, Limits limits, bool shared) {
+    return {addressType, limits, shared};
   }
 
   Result<TypeUseT>
@@ -1290,7 +1290,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   LimitsT getLimitsFromElems(ElemListT) { return Ok{}; }
 
-  Type makeTableType(Type indexType, LimitsT, Type type) { return type; }
+  Type makeTableType(Type addressType, LimitsT, Type type) { return type; }
 
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }

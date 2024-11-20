@@ -78,7 +78,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void notePointer(Expression** ptrp, Name mem) {
-    note(ptrp, wasm.getMemory(mem)->indexType);
+    note(ptrp, wasm.getMemory(mem)->addressType);
   }
 
   void noteAny(Expression** childp) { self().noteAnyType(childp); }
@@ -270,8 +270,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitDataDrop(DataDrop* curr) {}
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    assert(wasm.getMemory(curr->destMemory)->indexType ==
-           wasm.getMemory(curr->sourceMemory)->indexType);
+    assert(wasm.getMemory(curr->destMemory)->addressType ==
+           wasm.getMemory(curr->sourceMemory)->addressType);
     notePointer(&curr->dest, curr->destMemory);
     notePointer(&curr->source, curr->sourceMemory);
     notePointer(&curr->size, curr->destMemory);
@@ -762,7 +762,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitTableInit(TableInit* curr) {
-    note(&curr->dest, wasm.getTable(curr->table)->indexType);
+    note(&curr->dest, wasm.getTable(curr->table)->addressType);
     note(&curr->offset, Type::i32);
     note(&curr->size, Type::i32);
   }

@@ -6,6 +6,5 @@
  (export "__stdio_write" (func $__stdio_write))
  (export "__data_end" (global $global))
  (func $__stdio_write
-  (nop)
  )
 )

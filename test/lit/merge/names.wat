@@ -89,7 +89,6 @@
    ;; CHECK:      (export "func2" (func $5))
 
    ;; CHECK:      (func $func0 (type $0)
-   ;; CHECK-NEXT:  (nop)
    ;; CHECK-NEXT: )
    (func $func0 (export "f0"))
    (func (export "f1"))
@@ -117,21 +116,16 @@
    (func (export "func") (param $x (ref $t)))
 )
 ;; CHECK:      (func $1 (type $0)
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $2 (type $3) (param $x (ref $t))
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $func2 (type $0)
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $4 (type $0)
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $5 (type $4) (param $0 (ref $u))
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

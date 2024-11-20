@@ -529,7 +529,6 @@
    )
   )
   (loop $in2
-   (nop)
   )
   (loop $in3
    (block $out2

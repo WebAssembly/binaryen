@@ -36,6 +36,7 @@ import subprocess
 import random
 import re
 import sys
+import tarfile
 import time
 import traceback
 from os.path import abspath
@@ -223,6 +224,11 @@ def randomize_fuzz_settings():
         # Add --dce not only when generating the original wasm but to the
         # optimizations we use to create any other wasm file.
         FUZZ_OPTS += ['--dce']
+
+    # Enclose the world much of the time when fuzzing closed-world, so that many
+    # types are private and hence optimizable.
+    if CLOSED_WORLD and random.random() < 0.5:
+        GEN_ARGS += ['--enclose-world']
 
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
@@ -418,8 +424,6 @@ def pick_initial_contents():
 
     global FEATURE_OPTS
     FEATURE_OPTS += [
-        # has not been fuzzed in general yet
-        '--disable-memory64',
         # avoid multivalue for now due to bad interactions with gc non-nullable
         # locals in stacky code. for example, this fails to roundtrip as the
         # tuple code ends up creating stacky binary code that needs to spill
@@ -694,6 +698,8 @@ def run_vm(cmd):
             # (https://github.com/WebAssembly/binaryen/pull/6574)
             'expected (ref stringview_wtf16), got nullref',
             'expected type (ref stringview_wtf16), found ref.null of type nullref',
+            # wasm64 memories have a V8 limit
+            'larger than implementation limit',
         ]
         for issue in known_issues:
             if issue in output:
@@ -768,7 +774,7 @@ class TestCaseHandler:
         self.handle(before_wasm)
         self.handle(after_wasm)
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         return True
 
     def increment_runs(self):
@@ -1169,7 +1175,7 @@ class Wasm2JS(TestCaseHandler):
             f.write(wrapper)
         return run_vm([shared.NODEJS, js_file, abspath('a.wasm')])
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         # TODO: properly handle memory growth. right now the wasm2js handler
         # uses --emscripten which assumes the Memory is created before, and
         # wasm2js.js just starts with a size of 1 and no limit. We should switch
@@ -1177,7 +1183,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
@@ -1196,19 +1202,22 @@ def get_exports(wasm, kinds):
 
 
 # given a wasm and a list of exports we want to keep, remove all other exports.
-def filter_exports(wasm, output, keep):
+# we also keep a list of default exports, unless that is overridden (overriding
+# it may lead to changes in behavior).
+def filter_exports(wasm, output, keep, keep_defaults=True):
     # based on
     # https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
 
     # we append to keep; avoid modifying the object that was sent in.
     keep = keep[:]
 
-    # some exports must always be preserved, if they exist, like the table
-    # (which can be called from JS imports for table operations).
-    existing_exports = set(get_exports(wasm, ['func', 'table']))
-    for export in ['table']:
-        if export in existing_exports:
-            keep.append(export)
+    if keep_defaults:
+        # some exports must normally be preserved, if they exist, like the table
+        # (which can be called from JS imports for table operations).
+        existing_exports = set(get_exports(wasm, ['func', 'table']))
+        for export in ['table']:
+            if export in existing_exports:
+                keep.append(export)
 
     # build json to represent the exports we want.
     graph = [{
@@ -1227,6 +1236,16 @@ def filter_exports(wasm, output, keep):
 
     # prune the exports
     run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
+
+
+# Check if a wasm file would notice changes to exports. Normally removing an
+# export that is not called, for example, would not be observable, but if the
+# "call-export*" functions are present then such changes can break us.
+def wasm_notices_export_changes(wasm):
+    # we could be more precise here and disassemble the wasm to look for an
+    # actual import with name "call-export*", but looking for the string should
+    # have practically no false positives.
+    return b'call-export' in open(wasm, 'rb').read()
 
 
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
@@ -1322,6 +1341,12 @@ class TrapsNeverHappen(TestCaseHandler):
 
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
+    def can_run_on_wasm(self, wasm):
+        # If the wasm is sensitive to changes in exports then we cannot alter
+        # them, but we must remove trapping exports (see above), so we cannot
+        # run in such a case.
+        return not wasm_notices_export_changes(wasm)
+
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
@@ -1353,6 +1378,12 @@ class CtorEval(TestCaseHandler):
 
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
 
+    def can_run_on_wasm(self, wasm):
+        # ctor-eval modifies exports, because it assumes they are ctors and so
+        # are only called once (so if it evals them away, they can be
+        # removed). If the wasm might notice that, we cannot run.
+        return not wasm_notices_export_changes(wasm)
+
 
 # Tests wasm-merge
 class Merge(TestCaseHandler):
@@ -1370,6 +1401,23 @@ class Merge(TestCaseHandler):
         make_random_input(second_size, second_input)
         second_wasm = abspath('second.wasm')
         run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # the second wasm file must not have an export that can influence our
+        # execution. the JS exports have that behavior, as when "table-set" is
+        # called it will look for the export "table" on which to operate, then
+        # imagine we lack that export in the first module but add it in the
+        # second, then code that failed before will now use the exported table
+        # from the second module (and maybe work). to avoid that, remove the
+        # table export, if it exists (and if the first module doesn't export
+        # it).
+        second_exports = get_exports(second_wasm, ['func', 'table'])
+        wasm_exports = get_exports(wasm, ['table'])
+        if 'table' in second_exports and 'table' not in wasm_exports:
+            filtered = [e for e in second_exports if e != 'table']
+            # note we override the set of default things to keep, as we want to
+            # remove the table export. doing so might change the behavior of
+            # second.wasm, but that is ok.
+            filter_exports(second_wasm, second_wasm, filtered, keep_defaults=False)
 
         # sometimes also optimize the second module
         if random.random() < 0.5:
@@ -1408,6 +1456,12 @@ class Merge(TestCaseHandler):
         merged_output = merged_output[:len(output)]
 
         compare_between_vms(output, merged_output, 'Merge')
+
+    def can_run_on_wasm(self, wasm):
+        # wasm-merge combines exports, which can alter their indexes and lead to
+        # noticeable differences if the wasm is sensitive to such things, which
+        # prevents us from running.
+        return not wasm_notices_export_changes(wasm)
 
 
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
@@ -1504,7 +1558,7 @@ class Split(TestCaseHandler):
         if not (NANS and optimized):
             compare_between_vms(output, linked_output, 'Split')
 
-    def can_run_on_feature_opts(self, feature_opts):
+    def can_run_on_wasm(self, wasm):
         # to run the split wasm we use JS, that is, JS links the exports of one
         # to the imports of the other, etc. since we run in JS, the wasm must be
         # valid for JS.
@@ -1528,6 +1582,84 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
+# Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
+# to see that fuzzing that way works properly (it likely won't catch anything
+# the other fuzzers here catch, though it is possible). That is, running this
+# script continuously will give continuous cover that ClusterFuzz should be
+# running ok.
+#
+# Note that this is *not* deterministic like the other fuzzers: it runs run.py
+# like ClusterFuzz does, and that generates its own random data. If a bug is
+# caught here, it must be reduced manually.
+class ClusterFuzz(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        self.ensure()
+
+        # run.py() should emit these two files. Delete them to make sure they
+        # are created by run.py() in the next step.
+        fuzz_file = 'fuzz-binaryen-1.js'
+        flags_file = 'flags-binaryen-1.js'
+        for f in [fuzz_file, flags_file]:
+            if os.path.exists(f):
+                os.unlink(f)
+
+        # Call run.py(), similarly to how ClusterFuzz does.
+        run([sys.executable,
+             os.path.join(self.clusterfuzz_dir, 'run.py'),
+             '--output_dir=' + os.getcwd(),
+             '--no_of_files=1'])
+
+        # We should see the two files.
+        assert os.path.exists(fuzz_file)
+        assert os.path.exists(flags_file)
+
+        # Run the testcase in V8, similarly to how ClusterFuzz does.
+        cmd = [shared.V8]
+        # The flags are given in the flags file - we do *not* use our normal
+        # flags here!
+        with open(flags_file, 'r') as f:
+            flags = f.read()
+        cmd.append(flags)
+        # Run the fuzz file, which contains a modified fuzz_shell.js - we do
+        # *not* run fuzz_shell.js normally.
+        cmd.append(os.path.abspath(fuzz_file))
+        # No wasm file needs to be provided: it is hardcoded into the JS. Note
+        # that we use run_vm(), which will ignore known issues in our output and
+        # in V8. Those issues may cause V8 to e.g. reject a binary we emit that
+        # is invalid, but that should not be a problem for ClusterFuzz (it isn't
+        # a crash).
+        output = run_vm(cmd)
+
+        # Verify that we called something. The fuzzer should always emit at
+        # least one exported function (unless we've decided to ignore the entire
+        # run).
+        if output != IGNORE:
+            assert FUZZ_EXEC_CALL_PREFIX in output
+
+    def ensure(self):
+        # The first time we actually run, set things up: make a bundle like the
+        # one ClusterFuzz receives, and unpack it for execution into a dir. The
+        # existence of that dir shows we've ensured all we need.
+        if hasattr(self, 'clusterfuzz_dir'):
+            return
+
+        self.clusterfuzz_dir = 'clusterfuzz'
+        if os.path.exists(self.clusterfuzz_dir):
+            shutil.rmtree(self.clusterfuzz_dir)
+        os.mkdir(self.clusterfuzz_dir)
+
+        print('Bundling for ClusterFuzz')
+        bundle = 'fuzz_opt_clusterfuzz_bundle.tgz'
+        run([in_binaryen('scripts', 'bundle_clusterfuzz.py'), bundle])
+
+        print('Unpacking for ClusterFuzz')
+        tar = tarfile.open(bundle, "r:gz")
+        tar.extractall(path=self.clusterfuzz_dir)
+        tar.close()
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -1539,7 +1671,8 @@ testcase_handlers = [
     Merge(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
-    RoundtripText()
+    RoundtripText(),
+    ClusterFuzz(),
 ]
 
 
@@ -1605,8 +1738,9 @@ def test_one(random_input, given_wasm):
     bytes += wasm_size
     print('post wasm size:', wasm_size)
 
-    # first, find which handlers can even run here
-    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_feature_opts(FEATURE_OPTS)]
+    # First, find which handlers can even run here. Note that we check a.wasm
+    # and not b.wasm (optimizations do not change fuzzability).
+    relevant_handlers = [handler for handler in testcase_handlers if not hasattr(handler, 'get_commands') and handler.can_run_on_wasm('a.wasm')]
     if len(relevant_handlers) == 0:
         return 0
     # filter by frequency
@@ -1624,7 +1758,7 @@ def test_one(random_input, given_wasm):
         if testcase_handler in used_handlers:
             continue
         used_handlers.add(testcase_handler)
-        assert testcase_handler.can_run_on_feature_opts(FEATURE_OPTS)
+        assert testcase_handler.can_run_on_wasm('a.wasm')
         print('running testcase handler:', testcase_handler.__class__.__name__)
         testcase_handler.increment_runs()
 
@@ -1663,6 +1797,7 @@ opt_choices = [
     ("--dce",),
     ("--directize",),
     ("--discard-global-effects",),
+    ("--enclose-world",),
     ("--flatten", "--dfo",),
     ("--duplicate-function-elimination",),
     ("--flatten",),

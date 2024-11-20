@@ -25,7 +25,6 @@
   (tag $e-eqref (param (ref null eq)))
 
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
@@ -35,7 +34,6 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $foo)
@@ -53,7 +51,6 @@
   ;; CHECK:      (func $catch_unreachable (type $0)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (unreachable)
@@ -96,7 +93,6 @@
   ;; CHECK:      (func $rethrow (type $0)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
   ;; CHECK-NEXT:    (drop

@@ -12,7 +12,6 @@
  (table $0 1 1 funcref)
  (elem $0 (i32.const 0))
  (func $nothing
-  (nop)
  )
  (func $not-alive
   (local $x i32)
@@ -698,7 +697,6 @@
   (global.get $stack_ptr)
  )
  (func $nothing
-  (nop)
  )
  (func $not-alive
   (local $x i32)

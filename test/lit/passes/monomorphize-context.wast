@@ -177,7 +177,6 @@
   )
 
   ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 anyref) (param $11 funcref) (param $12 i32) (param $13 f64) (param $14 i32) (param $15 anyref) (param $16 anyref)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 anyref) (param $11 funcref) (param $12 i32) (param $13 f64) (param $14 i32) (param $15 anyref) (param $16 anyref)
   ;; CAREFUL-NEXT:  (nop)
@@ -285,7 +284,8 @@
 ;; ALWAYS-NEXT:  (local.set $22
 ;; ALWAYS-NEXT:   (struct.new_default $struct)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
@@ -1333,7 +1333,6 @@
   )
 
   ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32)
   ;; CAREFUL-NEXT:  (nop)
@@ -1353,7 +1352,8 @@
 ;; ALWAYS-NEXT:    (i32.const 0)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 (module
   (memory 10 20)
@@ -1414,7 +1414,6 @@
   )
 
   ;; ALWAYS:      (func $target (type $0) (param $0 i32)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 i32)
   ;; CAREFUL-NEXT:  (nop)
@@ -1432,7 +1431,8 @@
 ;; ALWAYS-NEXT:    (i32.const 1)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 (module
   ;; ALWAYS:      (type $0 (func))
@@ -1551,7 +1551,6 @@
   )
 
   ;; ALWAYS:      (func $target (type $2) (param $0 anyref)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 anyref)
   ;; CAREFUL-NEXT:  (nop)
@@ -1569,7 +1568,8 @@
 ;; ALWAYS-NEXT:    (local.get $1)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
 ;; ALWAYS:      (func $target_4 (type $4) (param $0 i32)
@@ -1582,7 +1582,8 @@
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $target_3 (type $2) (param $0 i32) (param $1 i32)
@@ -1719,7 +1720,6 @@
   )
 
   ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
   ;; CAREFUL-NEXT:  (nop)
@@ -1756,7 +1756,8 @@
 ;; ALWAYS-NEXT:    (i32.const 0)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 (module
   ;; ALWAYS:      (type $0 (func))
@@ -1795,10 +1796,8 @@
   )
 
   ;; ALWAYS:      (func $target (type $1) (param $0 f32)
-  ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 f32)
-  ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $target (param $0 f32)
   )

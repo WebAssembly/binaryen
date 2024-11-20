@@ -293,7 +293,9 @@ file_names[  1]:
   (local.set $4
    ;; code offset: 0x89
    (block $label$1 (result i32)
+    ;; code offset: 0x8b
     (block $label$2
+     ;; code offset: 0x8d
      (block $label$3
       ;; code offset: 0xa5
       (if
@@ -1387,6 +1389,7 @@ file_names[  1]:
   (block $label$1
    ;; code offset: 0x43a
    (if
+    ;; code offset: 0x412
     (block $label$2 (result i32)
      ;; code offset: 0x41c
      (if
@@ -2102,6 +2105,7 @@ file_names[  1]:
   )
   ;; code offset: 0x65a
   (block $label$1
+   ;; code offset: 0x65c
    (block $label$2
     ;; code offset: 0x664
     (br_if $label$2

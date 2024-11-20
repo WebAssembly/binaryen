@@ -9,7 +9,6 @@
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (try $label$7
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (catch $tag
   ;; CHECK-NEXT:      (drop
@@ -17,7 +16,6 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (try $label$6
   ;; CHECK-NEXT:       (do
-  ;; CHECK-NEXT:        (nop)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (delegate 2)
   ;; CHECK-NEXT:      )

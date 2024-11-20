@@ -61,7 +61,6 @@
   ;; CHECK-NEXT:  (block $l0
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $e-i32
   ;; CHECK-NEXT:     (local.set $1

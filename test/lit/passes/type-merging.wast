@@ -95,7 +95,6 @@
   ;; CHECK-NEXT:  (local $e (ref null $D))
   ;; CHECK-NEXT:  (local $f (ref null $D))
   ;; CHECK-NEXT:  (local $g (ref null $D))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     (local $a (ref null $A))
@@ -139,7 +138,6 @@
   ;; CHECK-NEXT:  (local $e (ref null $D))
   ;; CHECK-NEXT:  (local $f (ref null $D))
   ;; CHECK-NEXT:  (local $g (ref null $D))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     (local $a (ref null $A))
@@ -169,7 +167,6 @@
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $C))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; B can be merged into A even though it refines A's field because that
@@ -192,7 +189,6 @@
   ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; A recursive subtype can be merged even though its field is a refinement
@@ -220,7 +216,6 @@
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; Two mutually referential chains, A->B and X->Y, can be merged into a pair
@@ -249,7 +244,6 @@
   ;; CHECK-NEXT:  (local $b (ref null $X))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; As above, but now the A->B and X->Y chains are not differentiated by the
@@ -278,7 +272,6 @@
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; As above with the differentiated chains, but now the types are top-level
@@ -306,7 +299,6 @@
   ;; CHECK-NEXT:  (local $b (ref null $X))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; As above, but with all the types merging into a single type.
@@ -429,7 +421,6 @@
   ;; CHECK-NEXT:  (local $l' (ref null $L))
   ;; CHECK-NEXT:  (local $m (ref null $M))
   ;; CHECK-NEXT:  (local $m' (ref null $M))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     (local $a  (ref null $A))
@@ -479,7 +470,6 @@
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $B))
   ;; CHECK-NEXT:  (local $c (ref null $B))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; B and C cannot be merged into A because they refine A's field, but B and
@@ -506,7 +496,6 @@
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $B))
   ;; CHECK-NEXT:  (local $c (ref null $B))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; This is the same as above, but now B and C refine A such that they have a
@@ -537,7 +526,6 @@
   ;; CHECK-NEXT:  (local $c (ref null $A))
   ;; CHECK-NEXT:  (local $d (ref null $D))
   ;; CHECK-NEXT:  (local $e (ref null $D))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; D and E should be mergeable because they have identical shapes and will
@@ -587,7 +575,6 @@
   ;; CHECK-NEXT:  (local $c' (ref null $C))
   ;; CHECK-NEXT:  (local $d (ref null $D))
   ;; CHECK-NEXT:  (local $d' (ref null $D))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     (local $a (ref null $A))
@@ -696,7 +683,6 @@
   ;; CHECK:      (func $foo (type $3)
   ;; CHECK-NEXT:  (local $a (ref null $intarray))
   ;; CHECK-NEXT:  (local $b (ref null $intarray))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; $A will remain the same.
@@ -709,7 +695,6 @@
   ;; CHECK-NEXT:  (local $a (ref null $refarray))
   ;; CHECK-NEXT:  (local $b (ref null $refarray))
   ;; CHECK-NEXT:  (local $c (ref null $sub-refarray-nn))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bar
     (local $a (ref null $refarray))
@@ -735,7 +720,6 @@
   ;; CHECK-NEXT:  (local $a (ref null $func))
   ;; CHECK-NEXT:  (local $b (ref null $func))
   ;; CHECK-NEXT:  (local $c (ref null $sub-func-refined))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; $func will remain the same.
@@ -830,7 +814,6 @@
  ;; CHECK:      (func $foo (type $3)
  ;; CHECK-NEXT:  (local $b (ref null $A'))
  ;; CHECK-NEXT:  (local $x (ref null $X))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
    (local $b (ref null $A'))

@@ -178,10 +178,8 @@
   (global $gglo (ref null $ct2) (ref.null $ct2))
 
   ;; CHECK-TEXT:      (func $fglo (type $f1)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $fglo (type $f1)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $fglo)
   ;; CHECK-BIN-NODEBUG:      (type $0 (func))
@@ -477,7 +475,6 @@
   ;; CHECK-TEXT-NEXT: )
 
   ;; CHECK-TEXT:      (func $r0 (type $f1)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $14 (type $f1)
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
@@ -493,7 +490,6 @@
   ;; CHECK-BIN-NEXT: )
 
   ;; CHECK-BIN:      (func $r0 (type $f1)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $r0)
 
@@ -763,7 +759,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
@@ -873,7 +868,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $15 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $16 (type $0)

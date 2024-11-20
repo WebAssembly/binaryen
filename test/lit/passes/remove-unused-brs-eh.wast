@@ -313,7 +313,6 @@
   ;; CHECK-NEXT:   (block $middle
   ;; CHECK-NEXT:    (block $inner
   ;; CHECK-NEXT:     (try_table (catch $e $outer) (catch $f $outer) (catch_all $outer)
-  ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -340,7 +339,6 @@
   ;; CHECK-NEXT:   (block $middle
   ;; CHECK-NEXT:    (block $inner
   ;; CHECK-NEXT:     (try_table (catch $e $outer) (catch $f $middle) (catch_all $outer)
-  ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br $outer)
