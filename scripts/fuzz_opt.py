@@ -723,13 +723,16 @@ def run_bynterp(wasm, args):
         del os.environ['BINARYEN_MAX_INTERPRETER_DEPTH']
 
 
-V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
-
 # Enable even more staged things than V8_OPTS. V8_OPTS are the flags we want to
 # use when testing, and enable all features we test against, while --future may
 # also enable non-feature things like new JITs and such (which are never needed
-# for our normal tests, but do make sense to fuzz for V8's sake).
-V8_EXTRA_FLAGS = ['--future']
+# for our normal tests, but do make sense to fuzz for V8's sake). We do this
+# randomly for more variety.
+def get_v8_extra_flags():
+    return ['--future']if random.random() < 0.5 else []
+
+
+V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 
 
 # Default to running with liftoff enabled, because we need to pick either
@@ -738,7 +741,7 @@ V8_EXTRA_FLAGS = ['--future']
 # for small things.
 def run_d8_js(js, args=[], liftoff=True):
     cmd = [shared.V8] + shared.V8_OPTS
-    cmd += V8_EXTRA_FLAGS
+    cmd += get_v8_extra_flags()
     if liftoff:
         cmd += V8_LIFTOFF_ARGS
     cmd += [js]
@@ -839,7 +842,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + V8_EXTRA_FLAGS + extra_d8_flags + ['--', wasm])
+                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
