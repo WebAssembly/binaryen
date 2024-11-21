@@ -250,8 +250,8 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // so this must be a net savings
       markAsModified(curr);
       auto* ifTrue = curr->ifTrue;
-      if (curr->type == Type::unreachable && curr->ifTrue->type.isConcrete()) {
-        ifTrue = builder.makeDrop(ifTrue);
+      if (curr->type == Type::unreachable) {
+        ifTrue = builder.dropIfConcretelyTyped(ifTrue);
       }
       auto* ret =
         builder.makeSequence(builder.makeDrop(curr->condition), ifTrue);
