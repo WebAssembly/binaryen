@@ -7974,77 +7974,47 @@ static void readResumeTable(WasmBinaryReader* reader, ResumeType* curr) {
                 std::is_base_of<ResumeThrow, ResumeType>::value);
 
   auto numHandlers = reader->getU32LEB();
-
-  // We *must* bring the handlerTags vector to an appropriate size to ensure
-  // that we do not invalidate the pointers we add to tagRefs. They need to stay
-  // valid until processNames ran.
   curr->handlerTags.resize(numHandlers);
   curr->handlerBlocks.resize(numHandlers);
+  curr->sentTypes.resize(numHandlers);
 
   for (size_t i = 0; i < numHandlers; i++) {
     uint8_t code = reader->getInt8();
     auto tagIndex = reader->getU32LEB();
     auto tag = reader->getTagName(tagIndex);
     Name handler;
+    Type sentType;
     if (code == BinaryConsts::OnLabel) {
       // expect (on $tag $label)
       auto handlerIndex = reader->getU32LEB();
-      handler = reader->getBreakTarget(handlerIndex).name;
+      auto target = reader->getBreakTarget(handlerIndex);
+      handler = target.name;
+      if (target.type.isContinuation()) {
+        sentType = target.type;
+      } else if (target.type.isTuple() &&
+                 target.type.getTuple().back().isContinuation()) {
+        // The continuation type is expected to be the last element of
+        // a multi-valued block.
+        sentType = target.type;
+      } else {
+        if constexpr (std::is_base_of<Resume, ResumeType>::value) {
+          reader->throwError("non-continuation type on resume branch target");
+        } else {
+          reader->throwError(
+            "non-continuation type on resume_throw branch target");
+        }
+      }
     } else if (code == BinaryConsts::OnSwitch) {
       // expect (on $tag switch)
       handler = Name();
+      sentType = Type::none;
     } else { // error
       reader->throwError("ON opcode expected");
     }
 
     curr->handlerTags[i] = tag;
     curr->handlerBlocks[i] = handler;
-  }
-}
-
-template<typename ResumeOrResumeThrow>
-static void computeResumeTableSentTypes(Module& wasm,
-                                        ResumeOrResumeThrow* curr) {
-  static_assert(std::is_base_of<Resume, ResumeOrResumeThrow>::value ||
-                std::is_base_of<ResumeThrow, ResumeOrResumeThrow>::value);
-  assert(curr->handlerBlocks.size() == curr->handlerTags.size());
-
-  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
-  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction
-  // (resume $ct ... (tag $tag $block) ... ) causes $block to receive values
-  // of the following types when suspending to $tag: tgp* (ref $ct') where ct'
-  // = (cont $ft') and ft' = [tgr*] -> [ctr*].
-  //
-  curr->sentTypes.reserve(curr->handlerTags.size());
-  auto contSig = curr->contType.getContinuation().type.getSignature();
-  auto& ctrs = contSig.params;
-  for (Index i = 0; i < curr->handlerTags.size(); i++) {
-    Type sentType;
-    if (curr->handlerBlocks[i].isNull()) {
-      sentType = Type::none;
-    } else {
-      auto& tag = curr->handlerTags[i];
-      auto& tagSig = wasm.getTag(tag)->sig;
-
-      auto& tgps = tagSig.params;
-      auto& tgrs = tagSig.results;
-
-      HeapType ftPrime{Signature(tgrs, ctrs)};
-      HeapType ctPrime{Continuation(ftPrime)};
-      Type ctPrimeRef(ctPrime, Nullability::NonNullable);
-
-      if (tgps.size() > 0) {
-        TypeList sentValueTypes;
-        sentValueTypes.reserve(tgps.size() + 1);
-
-        sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
-        sentValueTypes.push_back(ctPrimeRef);
-        sentType = Type(sentValueTypes);
-      } else {
-        sentType = ctPrimeRef;
-      }
-    }
-    curr->sentTypes.push_back(sentType);
+    curr->sentTypes[i] = sentType;
   }
 }
 
@@ -8057,7 +8027,6 @@ void WasmBinaryReader::visitResume(Resume* curr) {
   }
 
   readResumeTable<Resume>(this, curr);
-  computeResumeTableSentTypes<Resume>(wasm, curr);
 
   curr->cont = popNonVoidExpression();
 
@@ -8081,7 +8050,6 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
   curr->tag = getTagName(exnTagIndex);
 
   readResumeTable<ResumeThrow>(this, curr);
-  computeResumeTableSentTypes<ResumeThrow>(wasm, curr);
 
   curr->cont = popNonVoidExpression();
 

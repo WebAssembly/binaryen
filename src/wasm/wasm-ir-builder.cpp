@@ -1963,53 +1963,52 @@ Result<> IRBuilder::makeSuspend(Name tag) {
   return Ok{};
 }
 
-static std::vector<Type>
-computeResumeTableSentTypes(Module& wasm,
-                            const Signature& contSig,
-                            const std::vector<Name>& handlerTags,
-                            const std::vector<Name> handlerBlocks) {
-  assert(handlerBlocks.size() == handlerTags.size());
-
-  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
-  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction
-  // (resume $ct ... (tag $tag $block) ... ) causes $block to receive values
-  // of the following types when suspending to $tag: tgp* (ref $ct') where ct'
-  // = (cont $ft') and ft' = [tgr*] -> [ctr*].
-  //
+struct ResumeTable {
+  std::vector<Name> targets;
   std::vector<Type> sentTypes;
-  sentTypes.reserve(handlerTags.size());
-  auto& ctrs = contSig.params;
-  for (Index i = 0; i < handlerTags.size(); i++) {
+};
+
+static Result<ResumeTable>
+makeResumeTable(const std::vector<std::optional<Index>>& labels,
+                std::function<Result<Name>(Index)> getLabelName,
+                std::function<Result<Type>(Index)> getLabelType) {
+  std::vector<Name> targets;
+  targets.reserve(labels.size());
+
+  std::vector<Type> sentTypes;
+  sentTypes.reserve(sentTypes.size());
+
+  for (Index i = 0; i < labels.size(); i++) {
+    Name target;
     Type sentType;
-    if (handlerBlocks[i].isNull()) {
-      sentType = Type::none;
-    } else {
-      auto& tag = handlerTags[i];
-      auto& tagSig = wasm.getTag(tag)->sig;
+    if (labels[i].has_value()) {
+      // (on $tag $label) clause
+      Index labelIndex = labels[i].value();
+      Result<Name> name = getLabelName(labelIndex);
+      CHECK_ERR(name);
+      target = *name;
 
-      auto& tgps = tagSig.params;
-      auto& tgrs = tagSig.results;
-
-      HeapType ftPrime{Signature(tgrs, ctrs)};
-      HeapType ctPrime{Continuation(ftPrime)};
-      Type ctPrimeRef(ctPrime, Nullability::NonNullable);
-
-      if (tgps.size() > 0) {
-        TypeList sentValueTypes;
-        sentValueTypes.reserve(tgps.size() + 1);
-
-        sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
-        sentValueTypes.push_back(ctPrimeRef);
-        sentType = Type(sentValueTypes);
+      Result<Type> targetType = getLabelType(labelIndex);
+      CHECK_ERR(targetType);
+      if (targetType->isContinuation()) {
+        sentType = *targetType;
+      } else if (targetType->isTuple() &&
+                 targetType->getTuple().back().isContinuation()) {
+        // The continuation type is expected to be the last element of
+        // a multi-valued block.
+        sentType = *targetType;
       } else {
-        sentType = ctPrimeRef;
+        return Err{"expected continuation type"};
       }
+    } else {
+      // (on $tag switch) clause
+      target = Name();
+      sentType = Type::none;
     }
+    targets.push_back(target);
     sentTypes.push_back(sentType);
   }
-  assert(sentTypes.size() == handlerTags.size() &&
-         sentTypes.size() == handlerBlocks.size());
-  return sentTypes;
+  return ResumeTable{std::move(targets), std::move(sentTypes)};
 }
 
 Result<>
@@ -2025,24 +2024,18 @@ IRBuilder::makeResume(HeapType ct,
   curr.operands.resize(contSig.params.size());
   CHECK_ERR(visitResume(&curr));
 
-  std::vector<Name> labelNames;
-  labelNames.reserve(labels.size());
-  for (size_t i = 0; i < labels.size(); i++) {
-    if (labels[i].has_value()) {
-      auto name = getLabelName(labels[i].value());
-      CHECK_ERR(name);
-      labelNames.push_back(*name);
-    } else {
-      labelNames.push_back(Name());
-    }
-  }
-  std::vector<Type> sentTypes =
-    computeResumeTableSentTypes(wasm, contSig, tags, labelNames);
-  curr.sentTypes.resize(sentTypes.size());
-  assert(sentTypes.size() == labelNames.size());
+  Result<ResumeTable> resumetable = std::move(makeResumeTable(
+    labels,
+    [this](Index i) { return this->getLabelName(i); },
+    [this](Index i) { return this->getLabelType(i); }));
+  CHECK_ERR(resumetable);
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(
-    builder.makeResume(ct, tags, labelNames, sentTypes, operands, curr.cont));
+  push(builder.makeResume(ct,
+                          tags,
+                          resumetable->targets,
+                          resumetable->sentTypes,
+                          operands,
+                          curr.cont));
   return Ok{};
 }
 
@@ -2058,29 +2051,25 @@ IRBuilder::makeResumeThrow(HeapType ct,
     return Err{"expected continuation type"};
   }
   ResumeThrow curr(wasm.allocator);
-  auto contSig = ct.getContinuation().type.getSignature();
   curr.contType = ct;
   curr.tag = tag;
   curr.operands.resize(wasm.getTag(tag)->sig.params.size());
   CHECK_ERR(visitResumeThrow(&curr));
 
-  std::vector<Name> labelNames;
-  labelNames.reserve(labels.size());
-  for (size_t i = 0; i < labels.size(); i++) {
-    if (labels[i].has_value()) {
-      auto name = getLabelName(labels[i].value());
-      CHECK_ERR(name);
-      labelNames.push_back(*name);
-    } else {
-      labelNames.push_back(Name());
-    }
-  }
-  std::vector<Type> sentTypes =
-    computeResumeTableSentTypes(wasm, contSig, tags, labelNames);
+  Result<ResumeTable> resumetable = std::move(makeResumeTable(
+    labels,
+    [this](Index i) { return this->getLabelName(i); },
+    [this](Index i) { return this->getLabelType(i); }));
+  CHECK_ERR(resumetable);
 
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeResumeThrow(
-    ct, tag, tags, labelNames, sentTypes, operands, curr.cont));
+  push(builder.makeResumeThrow(ct,
+                               tag,
+                               tags,
+                               resumetable->targets,
+                               resumetable->sentTypes,
+                               operands,
+                               curr.cont));
   return Ok{};
 }
 
