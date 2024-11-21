@@ -247,6 +247,43 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+        # To check for interesting JS file contents, we'll note how many times
+        # we build and run the wasm.
+        seen_builds = []
+        seen_calls = []
+
+        for i in range(1, N + 1):
+            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+            with open(fuzz_file) as f:
+                js = f.read()
+            seen_builds.append(js.count('build(binary);'))
+            seen_calls.append(js.count('callExports();'))
+
+        # There is always one build and one call (those are in the default
+        # fuzz_shell.js), and we add a couple of operations, each with equal
+        # probability to be a build or a call, so over the 100 testcases here we
+        # have an overwhelming probability to see at least one extra build and
+        # one extra call.
+        #
+        # builds and calls are distributed as mean 4, stddev 5, median 2.
+        print(f'mean JS builds:   {statistics.mean(seen_builds)}')
+        print(f'stdev JS builds:  {statistics.stdev(seen_builds)}')
+        print(f'median JS builds: {statistics.median(seen_builds)}')
+        # Assert on at least 2, which means we added at least one to the default
+        # one that always exists, as mentioned before.
+        self.assertGreaterEqual(max(seen_builds), 2)
+        self.assertGreater(statistics.stdev(seen_builds), 0)
+
+        print()
+
+        print(f'mean JS calls:   {statistics.mean(seen_calls)}')
+        print(f'stdev JS calls:  {statistics.stdev(seen_calls)}')
+        print(f'median JS calls: {statistics.median(seen_calls)}')
+        self.assertGreaterEqual(max(seen_calls), 2)
+        self.assertGreater(statistics.stdev(seen_calls), 0)
+
+        print()
+
     # "zzz" in test name so that this runs last. If it runs first, it can be
     # confusing as it appears next to the logging of which bundle we use (see
     # setUpClass).
