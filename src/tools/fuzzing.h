@@ -358,7 +358,7 @@ private:
   Expression* makeUnary(Type type);
   Expression* buildBinary(const BinaryArgs& args);
   Expression* makeBinary(Type type);
-  Expression* buildSelect(const ThreeArgs& args, Type type);
+  Expression* buildSelect(const ThreeArgs& args);
   Expression* makeSelect(Type type);
   Expression* makeSwitch(Type type);
   Expression* makeDrop(Type type);

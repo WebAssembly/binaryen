@@ -1420,7 +1420,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         return Builder(*getModule())
-          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse, iff->type);
+          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
       }
 
       void visitLocalSet(LocalSet* curr) {
