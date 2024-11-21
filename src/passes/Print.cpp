@@ -2226,7 +2226,15 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast ");
         curr->name.print(o);
         o << ' ';
-        printType(curr->ref->type);
+        if (curr->ref->type == Type::unreachable) {
+          // Need to print some reference type in the correct hierarchy rather
+          // than unreachable, and the bottom type is valid in the most
+          // contexts.
+          printType(
+            Type(curr->castType.getHeapType().getBottom(), NonNullable));
+        } else {
+          printType(curr->ref->type);
+        }
         o << ' ';
         printType(curr->castType);
         return;
@@ -2234,7 +2242,12 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast_fail ");
         curr->name.print(o);
         o << ' ';
-        printType(curr->ref->type);
+        if (curr->ref->type == Type::unreachable) {
+          printType(
+            Type(curr->castType.getHeapType().getBottom(), NonNullable));
+        } else {
+          printType(curr->ref->type);
+        }
         o << ' ';
         printType(curr->castType);
         return;
