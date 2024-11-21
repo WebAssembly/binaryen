@@ -7042,6 +7042,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoadStoreLane(Expression*& out,
 }
 
 void WasmBinaryReader::visitSelect(Select* curr, uint8_t code) {
+  Type annotated = Type::none;
   if (code == BinaryConsts::SelectWithType) {
     size_t numTypes = getU32LEB();
     std::vector<Type> types;
@@ -7052,15 +7053,15 @@ void WasmBinaryReader::visitSelect(Select* curr, uint8_t code) {
       }
       types.push_back(t);
     }
-    curr->type = Type(types);
+    annotated = Type(types);
   }
   curr->condition = popNonVoidExpression();
   curr->ifFalse = popNonVoidExpression();
   curr->ifTrue = popNonVoidExpression();
-  if (code == BinaryConsts::SelectWithType) {
-    curr->finalize(curr->type);
-  } else {
-    curr->finalize();
+  curr->finalize();
+  if (code == BinaryConsts::SelectWithType &&
+      !Type::isSubType(curr->type, annotated)) {
+    throwError("select type does not match annotation");
   }
 }
 
