@@ -180,6 +180,8 @@ def get_js_file_contents(i, output_dir):
             'callExports();\n',
         ])
 
+    print(f'Created {wasm_contents.count(",")} wasm bytes')
+
     return js
 
 
@@ -211,7 +213,7 @@ def main(argv):
         with open(flags_file_path, 'w') as file:
             file.write(FUZZER_FLAGS_FILE_CONTENTS)
 
-        print(f'Created testcase: {testcase_file_path}, {len(wasm_contents)} bytes')
+        print(f'Created testcase: {testcase_file_path}')
 
     print(f'Created {num} testcases.')
 
