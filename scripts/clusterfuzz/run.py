@@ -41,11 +41,11 @@ FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 # processes per file), which is less of an issue on ClusterFuzz.
 MAX_RANDOM_SIZE = 15 * 1024
 
-# Max and mean amount of extra JS operations we append, like extra compiles or
-# runs of the wasm. We allow a high max here, but the mean is far lower, so that
+# Max and median amount of extra JS operations we append, like extra compiles or
+# runs of the wasm. We allow a high max, but the median is far lower, so that
 # typical testcases are not long-running.
 MAX_EXTRA_JS_OPERATIONS = 40
-MEAN_EXTRA_JS_OPERATIONS = 2
+MEDIAN_EXTRA_JS_OPERATIONS = 2
 
 # The prefix for fuzz files.
 FUZZ_FILENAME_PREFIX = 'fuzz-'
@@ -108,17 +108,18 @@ def get_js_file_contents(wasm_contents):
     # The default JS builds and runs the wasm. Append some random additional
     # operations as well, as more compiles and executions can find things. To
     # approximate a number in the range [0, MAX_EXTRA_JS_OPERATIONS) but with a
-    # mean of MEAN_EXTRA_JS_OPERATIONS, start with a number in [0, 1) and then
+    # median of MEDIAN_EXTRA_JS_OPERATIONS, start in the range [0, 1) and then
     # raise it to the proper power, as multiplying by itself keeps the range
-    # unchanged, but lowers the mean. Specifically, the mean begins at 0.5, so
+    # unchanged, but lowers the median. Specifically, the median begins at 0.5,
+    # so
     #
-    #   0.5^power = MEAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS
+    #   0.5^power = MEDIAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS
     #
     # is what we want, and if we take log2 of each side, gives us
     #
-    #   power =  log2(MEAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS) / log2(0.5)
-    #         = -log2(MEAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS)
-    power = -math.log2(float(MEAN_EXTRA_JS_OPERATIONS) / MAX_EXTRA_JS_OPERATIONS)
+    #   power =  log2(MEDIAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS) / log2(0.5)
+    #         = -log2(MEDIAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS)
+    power = -math.log2(float(MEDIAN_EXTRA_JS_OPERATIONS) / MAX_EXTRA_JS_OPERATIONS)
     x = system_random.random()
     x = math.pow(x, power)
     num = math.floor(x * MAX_EXTRA_JS_OPERATIONS)
