@@ -2070,8 +2070,8 @@
      (i32.const 2)
     )
    )
-   (local.set $x
-    (if (result i32)
+   (local.tee $x
+    (if
      (local.get $p)
      (then
       (br $out)
@@ -2094,7 +2094,7 @@
       (block $label$4 (result i64)
        (block $label$5
         (block $label$6
-         (local.set $var$1
+         (local.tee $var$1
           (if (result f64)
            (unreachable)
            (then
