@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - BinaryenSelect no longer takes a type parameter.
+
 v120
 ----
 

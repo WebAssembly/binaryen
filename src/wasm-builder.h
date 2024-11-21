@@ -632,17 +632,6 @@ public:
     ret->finalize();
     return ret;
   }
-  Select* makeSelect(Expression* condition,
-                     Expression* ifTrue,
-                     Expression* ifFalse,
-                     Type type) {
-    auto* ret = wasm.allocator.alloc<Select>();
-    ret->condition = condition;
-    ret->ifTrue = ifTrue;
-    ret->ifFalse = ifFalse;
-    ret->finalize(type);
-    return ret;
-  }
   Return* makeReturn(Expression* value = nullptr) {
     auto* ret = wasm.allocator.alloc<Return>();
     ret->value = value;
@@ -1381,21 +1370,23 @@ public:
   // Returns a replacement with the precise same type, and with minimal contents
   // as best we can. As a replacement, this may reuse the input node.
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
+    auto type = curr->type;
+    // Anything that would otherwise have a more refined type than the original
+    // expression needs to be wrapped in a block with the original type.
+    auto maybeWrap = [&](Expression* expr) -> Expression* {
+      return expr->type == type ? expr : makeBlock({expr}, type);
+    };
     if (curr->type.isTuple() && curr->type.isDefaultable()) {
-      return makeConstantExpression(Literal::makeZeros(curr->type));
+      return maybeWrap(makeConstantExpression(Literal::makeZeros(curr->type)));
     }
-    if (curr->type.isNullable() && curr->type.isNull()) {
-      return ExpressionManipulator::refNull(curr, curr->type);
+    if (curr->type.isNullable()) {
+      return maybeWrap(ExpressionManipulator::refNull(
+        curr, Type(curr->type.getHeapType().getBottom(), Nullable)));
     }
     if (curr->type.isRef() &&
         curr->type.getHeapType().isMaybeShared(HeapType::i31)) {
-      Expression* ret =
-        makeRefI31(makeConst(0), curr->type.getHeapType().getShared());
-      if (curr->type.isNullable()) {
-        // To keep the type identical, wrap it in a block that adds nullability.
-        ret = makeBlock({ret}, curr->type);
-      }
-      return ret;
+      return maybeWrap(
+        makeRefI31(makeConst(0), curr->type.getHeapType().getShared()));
     }
     if (!curr->type.isBasic()) {
       // We can't do any better, keep the original.

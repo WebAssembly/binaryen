@@ -200,6 +200,7 @@ struct TypeSSA : public Pass {
 
     // Finally, refinalize to propagate the new types to parents.
     ReFinalize().run(getPassRunner(), module);
+    ReFinalize().runOnModuleCode(getPassRunner(), module);
   }
 
   News newsToModify;
