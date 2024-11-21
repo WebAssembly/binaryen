@@ -229,7 +229,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('sizes are distributed as ~mean 2933, stddev 2011, median 2510')
+        print('sizes are distributed as ~ mean 2933, stddev 2011, median 2510')
         print(f'mean sizes:   {statistics.mean(seen_sizes)}')
         print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
         print(f'median sizes: {statistics.median(seen_sizes)}')
