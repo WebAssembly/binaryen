@@ -58,4 +58,20 @@
    (unreachable)
   )
  )
+
+ ;; CHECK:      (func $null-tuple (type $4) (result funcref)
+ ;; CHECK-NEXT:  (local $tuple (tuple i32 funcref))
+ ;; CHECK-NEXT:  (tuple.extract 2 1
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $null-tuple (result funcref)
+  (local $tuple (tuple i32 funcref))
+  (tuple.extract 2 1
+   (local.get $tuple)
+  )
+ )
 )
