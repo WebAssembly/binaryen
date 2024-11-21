@@ -114,7 +114,7 @@ def get_js_file_contents(wasm_contents):
     #
     #   0.5^power = MEAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS
     #
-    # is what we, and if we take log2 of each side, gives us
+    # is what we want, and if we take log2 of each side, gives us
     #
     #   power =  log2(MEAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS) / log2(0.5)
     #         = -log2(MEAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS)
