@@ -106,6 +106,9 @@
 ;; CHECK-NEXT:   --emit-target-features                        emit the target features section
 ;; CHECK-NEXT:                                                 in the output
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enclose-world                               modify the wasm (destructively)
+;; CHECK-NEXT:                                                 for closed-world
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --extract-function                            leaves just one function (useful
 ;; CHECK-NEXT:                                                 for debugging)
 ;; CHECK-NEXT:
@@ -196,6 +199,11 @@
 ;; CHECK-NEXT:   --llvm-memory-copy-fill-lowering              Lower memory.copy and
 ;; CHECK-NEXT:                                                 memory.fill to wasm mvp and
 ;; CHECK-NEXT:                                                 disable the bulk-memory feature.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --llvm-nontrapping-fptoint-lowering           lower nontrapping float-to-int
+;; CHECK-NEXT:                                                 operations to wasm mvp and
+;; CHECK-NEXT:                                                 disable the nontrapping fptoint
+;; CHECK-NEXT:                                                 feature
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks
