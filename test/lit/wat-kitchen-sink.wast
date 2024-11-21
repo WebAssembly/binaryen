@@ -4064,6 +4064,31 @@
   drop
  )
 
+ ;; CHECK:      (func $br-on-cast-unreachable (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result i31ref)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref any))
+ ;; CHECK-NEXT:      (br_on_cast $block (ref none) i31ref
+ ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-unreachable
+  block (result i31ref)
+   block (result (ref any))
+    unreachable
+    br_on_cast 1 anyref i31ref
+   end
+   unreachable
+  end
+  drop
+ )
+
  ;; CHECK:      (func $br-on-cast-fail (type $9) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref any))
@@ -4082,6 +4107,31 @@
   block (result (ref any))
    block (result i31ref)
     local.get 0
+    br_on_cast_fail 1 anyref i31ref
+   end
+   unreachable
+  end
+  drop
+ )
+
+ ;; CHECK:      (func $br-on-cast-fail-unreachable (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref any))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i31ref)
+ ;; CHECK-NEXT:      (br_on_cast_fail $block (ref none) i31ref
+ ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-fail-unreachable
+  block (result (ref any))
+   block (result i31ref)
+    unreachable
     br_on_cast_fail 1 anyref i31ref
    end
    unreachable
