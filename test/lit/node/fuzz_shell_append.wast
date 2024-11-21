@@ -1,5 +1,5 @@
 ;; Test that appending more build and run operations, as the ClusterFuzz run.py
-;; does, works properly. g a wasm file in fuzz_shell.js.
+;; does, works properly.
 
 (module
   (import "fuzzing-support" "log-i32" (func $log (param i32)))
