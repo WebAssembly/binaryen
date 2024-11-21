@@ -120,7 +120,7 @@
 ;; APPENDED: [LoggingExternalInterface logging 0]
 
 ;; "call0" from the second module to the first makes the first module's "errors"
-;; report 1, and the then we report 0 from the second module.
+;; report 1, and then we report 0 from the second module.
 ;; APPENDED: [fuzz-exec] calling call0
 ;; APPENDED: [LoggingExternalInterface logging 1]
 ;; APPENDED: [LoggingExternalInterface logging 0]
