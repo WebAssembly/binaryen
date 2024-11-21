@@ -25,9 +25,11 @@ bundle_clusterfuzz.py.
 
 import os
 import getopt
+import math
 import random
 import subprocess
 import sys
+
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
@@ -38,6 +40,12 @@ FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 # fuzzing large wasm files (to reduce the overhead we have of launching many
 # processes per file), which is less of an issue on ClusterFuzz.
 MAX_RANDOM_SIZE = 15 * 1024
+
+# Max and median amount of extra JS operations we append, like extra compiles or
+# runs of the wasm. We allow a high max, but the median is far lower, so that
+# typical testcases are not long-running.
+MAX_EXTRA_JS_OPERATIONS = 40
+MEDIAN_EXTRA_JS_OPERATIONS = 2
 
 # The prefix for fuzz files.
 FUZZ_FILENAME_PREFIX = 'fuzz-'
@@ -80,6 +88,11 @@ def get_file_name(prefix, index):
     return f'{prefix}{FUZZER_NAME_PREFIX}{index}.js'
 
 
+# We should only use the system's random number generation, which is the best.
+# (We also use urandom below, which uses this under the hood.)
+system_random = random.SystemRandom()
+
+
 # Returns the contents of a .js fuzz file, given particular wasm contents that
 # we want to be executed.
 def get_js_file_contents(wasm_contents):
@@ -91,6 +104,35 @@ def get_js_file_contents(wasm_contents):
     # mechanism where the wasm file's name is provided in argv).
     wasm_contents = ','.join([str(c) for c in wasm_contents])
     js = f'var binary = new Uint8Array([{wasm_contents}]);\n\n' + js
+
+    # The default JS builds and runs the wasm. Append some random additional
+    # operations as well, as more compiles and executions can find things. To
+    # approximate a number in the range [0, MAX_EXTRA_JS_OPERATIONS) but with a
+    # median of MEDIAN_EXTRA_JS_OPERATIONS, start in the range [0, 1) and then
+    # raise it to the proper power, as multiplying by itself keeps the range
+    # unchanged, but lowers the median. Specifically, the median begins at 0.5,
+    # so
+    #
+    #   0.5^power = MEDIAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS
+    #
+    # is what we want, and if we take log2 of each side, gives us
+    #
+    #   power =  log2(MEDIAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS) / log2(0.5)
+    #         = -log2(MEDIAN_EXTRA_JS_OPERATIONS / MAX_EXTRA_JS_OPERATIONS)
+    power = -math.log2(float(MEDIAN_EXTRA_JS_OPERATIONS) / MAX_EXTRA_JS_OPERATIONS)
+    x = system_random.random()
+    x = math.pow(x, power)
+    num = math.floor(x * MAX_EXTRA_JS_OPERATIONS)
+    assert num >= 0 and num <= MAX_EXTRA_JS_OPERATIONS
+    for i in range(num):
+        js += system_random.choice([
+            # Compile and link the wasm again. Each link adds more to the total
+            # exports that we can call.
+            'build(binary);\n',
+            # Run all the exports we've accumulated.
+            'callExports();\n',
+        ])
+
     return js
 
 
@@ -115,7 +157,7 @@ def main(argv):
         # detects as invalid). Just try again in such a case.
         for attempt in range(0, 100):
             # Generate random data.
-            random_size = random.SystemRandom().randint(1, MAX_RANDOM_SIZE)
+            random_size = system_random.randint(1, MAX_RANDOM_SIZE)
             with open(input_data_file_path, 'wb') as file:
                 file.write(os.urandom(random_size))
 
