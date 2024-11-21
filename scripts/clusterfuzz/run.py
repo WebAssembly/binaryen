@@ -93,17 +93,64 @@ def get_file_name(prefix, index):
 system_random = random.SystemRandom()
 
 
-# Returns the contents of a .js fuzz file, given particular wasm contents that
-# we want to be executed.
-def get_js_file_contents(wasm_contents):
+# Generate a random wasm file, and return a string that creates a typed array of
+# those bytes, suitable for use in a JS file, in the form
+#
+#   new Uint8Array([..wasm_contents..])
+#
+# Receives the testcase index and the output dir.
+def get_wasm_contents(i, output_dir):
+    input_data_file_path = os.path.join(output_dir, f'{i}.input')
+    wasm_file_path = os.path.join(output_dir, f'{i}.wasm')
+
+    # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
+    # detects as invalid). Just try again in such a case.
+    for attempt in range(0, 100):
+        # Generate random data.
+        random_size = system_random.randint(1, MAX_RANDOM_SIZE)
+        with open(input_data_file_path, 'wb') as file:
+            file.write(os.urandom(random_size))
+
+        # Generate wasm from the random data.
+        cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
+        cmd += ['-o', wasm_file_path, input_data_file_path]
+        try:
+            subprocess.check_call(cmd)
+        except subprocess.CalledProcessError:
+            # Try again.
+            print('(oops, retrying wasm-opt)')
+            attempt += 1
+            if attempt == 99:
+                # Something is very wrong!
+                raise
+            continue
+        # Success, leave the loop.
+        break
+
+    # Generate a testcase from the wasm
+    with open(wasm_file_path, 'rb') as file:
+        wasm_contents = file.read()
+
+    # Clean up temp files.
+    os.remove(wasm_file_path)
+    os.remove(input_data_file_path)
+
+    # Convert to a string, and wrap into a typed array.
+    wasm_contents = ','.join([str(c) for c in wasm_contents])
+    return f'new Uint8Array([{wasm_contents}])'
+
+
+# Returns the contents of a .js fuzz file, given the index of the testcase and
+# the output dir.
+def get_js_file_contents(i, output_dir):
     # Start with the standard JS shell.
     with open(JS_SHELL_PATH) as file:
         js = file.read()
 
     # Prepend the wasm contents, so they are used (rather than the normal
     # mechanism where the wasm file's name is provided in argv).
-    wasm_contents = ','.join([str(c) for c in wasm_contents])
-    js = f'var binary = new Uint8Array([{wasm_contents}]);\n\n' + js
+    wasm_contents = get_wasm_contents(i, output_dir)
+    js = f'var binary = {wasm_contents};\n\n' + js
 
     # The default JS builds and runs the wasm. Append some random additional
     # operations as well, as more compiles and executions can find things. To
@@ -133,6 +180,8 @@ def get_js_file_contents(wasm_contents):
             'callExports();\n',
         ])
 
+    print(f'Created {wasm_contents.count(",")} wasm bytes')
+
     return js
 
 
@@ -150,39 +199,11 @@ def main(argv):
             num = int(value)
 
     for i in range(1, num + 1):
-        input_data_file_path = os.path.join(output_dir, f'{i}.input')
-        wasm_file_path = os.path.join(output_dir, f'{i}.wasm')
-
-        # wasm-opt may fail to run in rare cases (when the fuzzer emits code it
-        # detects as invalid). Just try again in such a case.
-        for attempt in range(0, 100):
-            # Generate random data.
-            random_size = system_random.randint(1, MAX_RANDOM_SIZE)
-            with open(input_data_file_path, 'wb') as file:
-                file.write(os.urandom(random_size))
-
-            # Generate wasm from the random data.
-            cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
-            cmd += ['-o', wasm_file_path, input_data_file_path]
-            try:
-                subprocess.check_call(cmd)
-            except subprocess.CalledProcessError:
-                # Try again.
-                print('(oops, retrying wasm-opt)')
-                attempt += 1
-                if attempt == 99:
-                    # Something is very wrong!
-                    raise
-                continue
-            # Success, leave the loop.
-            break
-
-        # Generate a testcase from the wasm
-        with open(wasm_file_path, 'rb') as file:
-            wasm_contents = file.read()
         testcase_file_path = os.path.join(output_dir,
                                           get_file_name(FUZZ_FILENAME_PREFIX, i))
-        js_file_contents = get_js_file_contents(wasm_contents)
+
+        # Emit the JS file.
+        js_file_contents = get_js_file_contents(i, output_dir)
         with open(testcase_file_path, 'w') as file:
             file.write(js_file_contents)
 
@@ -192,11 +213,7 @@ def main(argv):
         with open(flags_file_path, 'w') as file:
             file.write(FUZZER_FLAGS_FILE_CONTENTS)
 
-        print(f'Created testcase: {testcase_file_path}, {len(wasm_contents)} bytes')
-
-        # Remove temporary files.
-        os.remove(input_data_file_path)
-        os.remove(wasm_file_path)
+        print(f'Created testcase: {testcase_file_path}')
 
     print(f'Created {num} testcases.')
 
