@@ -96,7 +96,7 @@ system_random = random.SystemRandom()
 # Generate a random wasm file, and return a string that creates a typed array of
 # those bytes, suitable for use in a JS file, in the form
 #
-#   new Uint8Array([{wasm_contents}])
+#   new Uint8Array([..wasm_contents..])
 #
 # Receives the testcase index and the output dir.
 def get_wasm_contents(i, output_dir):
