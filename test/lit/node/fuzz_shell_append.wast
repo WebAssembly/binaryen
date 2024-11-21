@@ -68,7 +68,7 @@
 ;; CHECK: [fuzz-exec] calling errors
 ;; CHECK: [LoggingExternalInterface logging 0]
 
-;; "call0" calls "errors", which logs 0, and also logs 0.
+;; "call0" calls "errors", which logs 0 twice.
 ;; CHECK: [fuzz-exec] calling call0
 ;; CHECK: [LoggingExternalInterface logging 0]
 ;; CHECK: [LoggingExternalInterface logging 0]
