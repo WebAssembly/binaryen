@@ -5,65 +5,129 @@
   (import "fuzzing-support" "log-i32" (func $log (param i32)))
   (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32) (result i32)))
 
-  (func $number (export "number")
+  (global $errors (mut i32)
+    (i32.const 0)
+  )
+
+  (func $errors (export "errors")
+    ;; Log the number of errors we've seen.
     (call $log
-      (i32.const 42)
+      (global.get $errors)
     )
   )
 
-  (func $call (export "call") (result i32)
-    ;; Call export #2. There is no such export initially, just
-    ;;
-    ;;  0: $number
-    ;;  1: $call
-    ;;
-    ;; but after we append commands to build the wasm again, its exports
-    ;; accumulate, so we have
-    ;;
-    ;;  0: $number
-    ;;  1: $call
-    ;;  2: $number
-    ;;  3: $call
-    ;;
-    ;; and then the call will succeed (by calling $number and returning 42).
-    (call $call.export.catch
-      (i32.const 2)
+  (func $do-call (param $x i32)
+    ;; Given an index $x, call the export of that index, and note an error if
+    ;; we see one.
+    (if
+      (call $call.export.catch
+        (local.get $x)
+      )
+      (then
+        ;; Log that an error right now, and then increment the total.
+        (call $log
+          (i32.const -1)
+        )
+        (global.set $errors
+          (i32.add
+            (global.get $errors)
+            (i32.const 1)
+          )
+        )
+      )
+    )
+    ;; Log the total number of errors so far.
+    (call $log
+      (global.get $errors)
+    )
+  )
+
+  (func $call-0 (export "call0")
+    ;; This calls "errors".
+    (call $do-call
+      (i32.const 0)
+    )
+  )
+
+  (func $call-3 (export "call3")
+    ;; The first time we try this, there is no export at index 3, since we just
+    ;; have ["errors", "call0", "call3"]. After we build the module a second
+    ;; time, we will have "errors" from the second module there.
+    (call $do-call
+      (i32.const 3)
     )
   )
 )
 
-;; Running normally executes the first export ok, and the second traps (so it
-;; returns 1).
+;; Run normally.
 ;;
 ;; RUN: wasm-opt %s -o %t.wasm -q
 ;; RUN: node %S/../../../scripts/fuzz_shell.js %t.wasm | filecheck %s
 ;;
-;; CHECK: [fuzz-exec] calling number
-;; CHECK: [LoggingExternalInterface logging 42]
-;; CHECK: [fuzz-exec] calling call
-;; CHECK: [fuzz-exec] note result: call => 1
+;; "errors" reports we've seen no errors.
+;; CHECK: [fuzz-exec] calling errors
+;; CHECK: [LoggingExternalInterface logging 0]
 
-;; Append another build + run. We repeat the exact output from before, and then
-;; call the final 4 exports, and the second and fourth of them do not trap (so
-;; they return 0, and they log out 42).
+;; "call0" calls "errors", which logs 0, and also logs 0.
+;; CHECK: [fuzz-exec] calling call0
+;; CHECK: [LoggingExternalInterface logging 0]
+;; CHECK: [LoggingExternalInterface logging 0]
+
+;; "call3" calls an invalid index, and logs -1 as an error, and 1 as the total
+;; errors so far.
+;; CHECK: [fuzz-exec] calling call3
+;; CHECK: [LoggingExternalInterface logging -1]
+;; CHECK: [LoggingExternalInterface logging 1]
+
+;; Append another build + run.
 ;;
 ;; RUN: cp %S/../../../scripts/fuzz_shell.js %t.js
 ;; RUN: echo "build(binary);" >> %t.js
 ;; RUN: echo "callExports();" >> %t.js
 ;; RUN: node %t.js %t.wasm | filecheck %s --check-prefix=CHECK-APPENDED
 ;;
-;; CHECK-APPENDED: [fuzz-exec] calling number
-;; CHECK-APPENDED: [LoggingExternalInterface logging 42]
-;; CHECK-APPENDED: [fuzz-exec] calling call
-;; CHECK-APPENDED: [fuzz-exec] note result: call => 1
-;; CHECK-APPENDED: [fuzz-exec] calling number
-;; CHECK-APPENDED: [LoggingExternalInterface logging 42]
-;; CHECK-APPENDED: [fuzz-exec] calling call
-;; CHECK-APPENDED: [LoggingExternalInterface logging 42]
-;; CHECK-APPENDED: [fuzz-exec] note result: call => 0
-;; CHECK-APPENDED: [fuzz-exec] calling number
-;; CHECK-APPENDED: [LoggingExternalInterface logging 42]
-;; CHECK-APPENDED: [fuzz-exec] calling call
-;; CHECK-APPENDED: [LoggingExternalInterface logging 42]
-;; CHECK-APPENDED: [fuzz-exec] note result: call => 0
+;; The first part is unchanged from before.
+;; CHECK: [fuzz-exec] calling errors
+;; CHECK: [LoggingExternalInterface logging 0]
+;; CHECK: [fuzz-exec] calling call0
+;; CHECK: [LoggingExternalInterface logging 0]
+;; CHECK: [LoggingExternalInterface logging 0]
+;; CHECK: [fuzz-exec] calling call3
+;; CHECK: [LoggingExternalInterface logging -1]
+;; CHECK: [LoggingExternalInterface logging 1]
+
+;; Next, we build the module again, append its exports, and call them all.
+
+;; "errors" from the first module recalls that we errored before.
+;; CHECK: [fuzz-exec] calling errors
+;; CHECK: [LoggingExternalInterface logging 1]
+
+;; "call0" calls "errors", and they both log 1.
+;; CHECK: [fuzz-exec] calling call0
+;; CHECK: [LoggingExternalInterface logging 1]
+;; CHECK: [LoggingExternalInterface logging 1]
+
+;; "call3" does *not* error like before, as the later exports provide something
+;; at index 3: the second module's "errors". That reports that the second module
+;; has seen no errors, and then call3 from the first module reports that that
+;; module has seen 1 error.
+;; CHECK: [fuzz-exec] calling call3
+;; CHECK: [LoggingExternalInterface logging 0]
+;; CHECK: [LoggingExternalInterface logging 1]
+
+;; "errors" from the second module reports no errors.
+;; CHECK: [fuzz-exec] calling errors
+;; CHECK: [LoggingExternalInterface logging 0]
+
+;; "call0" from the second module to the first makes the first module's "errors"
+;; report 1, and the then we report 0 from the second module.
+;; CHECK: [fuzz-exec] calling call0
+;; CHECK: [LoggingExternalInterface logging 1]
+;; CHECK: [LoggingExternalInterface logging 0]
+
+;; "call3" from the second module calls "errors" in the second module, and they
+;; both report 0 errors.
+;; CHECK: [fuzz-exec] calling call3
+;; CHECK: [LoggingExternalInterface logging 0]
+;; CHECK: [LoggingExternalInterface logging 0]
 
