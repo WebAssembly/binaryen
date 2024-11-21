@@ -131,3 +131,5 @@
 ;; APPENDED: [LoggingExternalInterface logging 0]
 ;; APPENDED: [LoggingExternalInterface logging 0]
 
+;; Overall, we have seen each module call the other, showing calls work both
+;; ways.
