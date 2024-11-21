@@ -142,8 +142,12 @@ function logValue(x, y) {
 // whose keys are strings and whose values are the corresponding exports).
 var exports = {};
 
-// Also track exports in a list of names, to allow access by index.
-var exportNames = [];
+// Also track exports in a list, to allow access by index. Each entry here will
+// be in the form of { name: .., value: .. }. That allows us to log the name of
+// the function and also to call it. This is important because different
+// functions may have the same name, if they were exported by different
+// Instances under the same export names.
+var exportList = [];
 
 // Given a wasm function, call it as best we can from JS, and return the result.
 function callFunc(func) {
@@ -197,11 +201,11 @@ var imports = {
 
     // Export operations.
     'call-export': (index) => {
-      callFunc(exports[exportNames[index]]);
+      callFunc(exportList[index].value);
     },
     'call-export-catch': (index) => {
       try {
-        callFunc(exports[exportNames[index]]);
+        callFunc(exportList[index].value);
         return 0;
       } catch (e) {
         // We only want to catch exceptions, not wasm traps: traps should still
@@ -285,15 +289,16 @@ function build(binary) {
     quit();
   }
 
-  // Update the exports. Note that this adds onto |exports|, |exportNames|,
+  // Update the exports. Note that this adds onto |exports|, |exportList|,
   // which is intentional: if we build another wasm, or build this one more
   // than once, we want to be able to call them all, so we unify all their
   // exports. (We do trample in |exports| when keys are equal - basically this
-  // is a single global namespace - but |exportNames| is appended to, so we do
+  // is a single global namespace - but |exportList| is appended to, so we do
   // keep the ability to call anything that was ever exported.)
-  for (var e in instance.exports) {
-    exports[e] = instance.exports[e];
-    exportNames.push(e);
+  for (var key in instance.exports) {
+    var value = instance.exports[key];
+    exports[key] = value;
+    exportList.push({ name: key, value: value });
   }
 }
 
@@ -301,18 +306,30 @@ function build(binary) {
 function callExports() {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
-  var relevantExports = exportsToCall || exportNames;
+  var relevantExports = exportsToCall || exportList;
 
   for (var e of relevantExports) {
-    var func = exports[e];
-    if (typeof func !== 'function') {
+    var name, value;
+    if (typeof e === 'string') {
+      // We are given a string name to call. Look it up in the global namespace.
+      name = e;
+      value = exports[e];
+    } else {
+      // We are given an object form exportList, which bas both a name and a
+      // value.
+      name = e.name;
+      value = e.value;
+    }
+
+    if (typeof value !== 'function') {
       continue;
     }
+
     try {
-      console.log('[fuzz-exec] calling ' + e);
-      var result = callFunc(func);
+      console.log('[fuzz-exec] calling ' + name);
+      var result = callFunc(value);
       if (typeof result !== 'undefined') {
-        console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
+        console.log('[fuzz-exec] note result: ' + name + ' => ' + printed(result));
       }
     } catch (e) {
       console.log('exception thrown: ' + e);
