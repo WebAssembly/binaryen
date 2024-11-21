@@ -84,50 +84,50 @@
 ;; RUN: cp %S/../../../scripts/fuzz_shell.js %t.js
 ;; RUN: echo "build(binary);" >> %t.js
 ;; RUN: echo "callExports();" >> %t.js
-;; RUN: node %t.js %t.wasm | filecheck %s --check-prefix=CHECK-APPENDED
+;; RUN: node %t.js %t.wasm | filecheck %s --check-prefix=APPENDED
 ;;
 ;; The first part is unchanged from before.
-;; CHECK: [fuzz-exec] calling errors
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [fuzz-exec] calling call0
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [fuzz-exec] calling call3
-;; CHECK: [LoggingExternalInterface logging -1]
-;; CHECK: [LoggingExternalInterface logging 1]
+;; APPENDED: [fuzz-exec] calling errors
+;; APPENDED: [LoggingExternalInterface logging 0]
+;; APPENDED: [fuzz-exec] calling call0
+;; APPENDED: [LoggingExternalInterface logging 0]
+;; APPENDED: [LoggingExternalInterface logging 0]
+;; APPENDED: [fuzz-exec] calling call3
+;; APPENDED: [LoggingExternalInterface logging -1]
+;; APPENDED: [LoggingExternalInterface logging 1]
 
 ;; Next, we build the module again, append its exports, and call them all.
 
 ;; "errors" from the first module recalls that we errored before.
-;; CHECK: [fuzz-exec] calling errors
-;; CHECK: [LoggingExternalInterface logging 1]
+;; APPENDED: [fuzz-exec] calling errors
+;; APPENDED: [LoggingExternalInterface logging 1]
 
 ;; "call0" calls "errors", and they both log 1.
-;; CHECK: [fuzz-exec] calling call0
-;; CHECK: [LoggingExternalInterface logging 1]
-;; CHECK: [LoggingExternalInterface logging 1]
+;; APPENDED: [fuzz-exec] calling call0
+;; APPENDED: [LoggingExternalInterface logging 1]
+;; APPENDED: [LoggingExternalInterface logging 1]
 
 ;; "call3" does *not* error like before, as the later exports provide something
 ;; at index 3: the second module's "errors". That reports that the second module
 ;; has seen no errors, and then call3 from the first module reports that that
 ;; module has seen 1 error.
-;; CHECK: [fuzz-exec] calling call3
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [LoggingExternalInterface logging 1]
+;; APPENDED: [fuzz-exec] calling call3
+;; APPENDED: [LoggingExternalInterface logging 0]
+;; APPENDED: [LoggingExternalInterface logging 1]
 
 ;; "errors" from the second module reports no errors.
-;; CHECK: [fuzz-exec] calling errors
-;; CHECK: [LoggingExternalInterface logging 0]
+;; APPENDED: [fuzz-exec] calling errors
+;; APPENDED: [LoggingExternalInterface logging 0]
 
 ;; "call0" from the second module to the first makes the first module's "errors"
 ;; report 1, and the then we report 0 from the second module.
-;; CHECK: [fuzz-exec] calling call0
-;; CHECK: [LoggingExternalInterface logging 1]
-;; CHECK: [LoggingExternalInterface logging 0]
+;; APPENDED: [fuzz-exec] calling call0
+;; APPENDED: [LoggingExternalInterface logging 1]
+;; APPENDED: [LoggingExternalInterface logging 0]
 
 ;; "call3" from the second module calls "errors" in the second module, and they
 ;; both report 0 errors.
-;; CHECK: [fuzz-exec] calling call3
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [LoggingExternalInterface logging 0]
+;; APPENDED: [fuzz-exec] calling call3
+;; APPENDED: [LoggingExternalInterface logging 0]
+;; APPENDED: [LoggingExternalInterface logging 0]
 
