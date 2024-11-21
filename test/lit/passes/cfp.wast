@@ -2332,9 +2332,11 @@
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (select (result (ref null $A))
   ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (struct.new $B
-  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:    (block (result (ref null $A))
+  ;; CHECK-NEXT:     (local.tee $B
+  ;; CHECK-NEXT:      (struct.new $B
+  ;; CHECK-NEXT:       (i32.const 20)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
@@ -2361,10 +2363,12 @@
       ;; This select is used to keep the type that reaches the struct.set $A,
       ;; and not $B, so it looks like a perfect copy of $A->$A.
       (select (result (ref null $A))
-        (ref.null $A)
-        (local.tee $B
-          (struct.new $B
-            (i32.const 20)
+        (ref.null none)
+        (block (result (ref null $A))
+          (local.tee $B
+            (struct.new $B
+              (i32.const 20)
+            )
           )
         )
         (i32.const 0)

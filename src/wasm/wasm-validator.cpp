@@ -3671,10 +3671,10 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
-      // It's ok for types to be further refinable, but they must admit a
-      // superset of the values allowed by the most precise possible type, i.e.
-      // they must not be strict subtypes of or unrelated to the refined type.
-      if (!Type::isSubType(newType, oldType)) {
+      // It's ok for control flow structures to be further refinable, but all
+      // other instructions must have the most-precise possible types.
+      if (oldType != newType && !(Properties::isControlFlowStructure(curr) &&
+                                  Type::isSubType(newType, oldType))) {
         std::ostringstream ss;
         ss << "stale type found in " << scope << " on " << curr
            << "\n(marked as " << oldType << ", should be " << newType << ")\n";

@@ -119,7 +119,7 @@
  (func $i32_=>_none (param i32)
  )
  ;; CHECK:      (func $selectify (type $6) (param $x i32) (result funcref)
- ;; CHECK-NEXT:  (select (result funcref)
+ ;; CHECK-NEXT:  (select (result (ref func))
  ;; CHECK-NEXT:   (ref.func $none_=>_i32)
  ;; CHECK-NEXT:   (ref.func $i32_=>_none)
  ;; CHECK-NEXT:   (local.get $x)
