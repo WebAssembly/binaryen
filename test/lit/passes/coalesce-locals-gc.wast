@@ -165,8 +165,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $unreachable-get-null
-  ;; Check that we don't replace the local.get $null with a ref.null, which
-  ;; would have a more precise type.
+  ;; Check that we don't replace the local.get $null with just a ref.null, which
+  ;; would have a more precise type. We wrap the ref.null in a block instead.
   (local $null-any anyref)
   (local $null-i31 i31ref)
   (unreachable)
