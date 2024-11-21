@@ -249,8 +249,12 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // remove if (4 bytes), remove one arm, add drop (1), add block (3),
       // so this must be a net savings
       markAsModified(curr);
+      auto* ifTrue = curr->ifTrue;
+      if (curr->type == Type::unreachable) {
+        ifTrue = builder.dropIfConcretelyTyped(ifTrue);
+      }
       auto* ret =
-        builder.makeSequence(builder.makeDrop(curr->condition), curr->ifTrue);
+        builder.makeSequence(builder.makeDrop(curr->condition), ifTrue);
       // we must ensure we present the same type as the if had
       ret->finalize(curr->type);
       replaceCurrent(ret);
