@@ -24,7 +24,7 @@
         (local.get $x)
       )
       (then
-        ;; Log that an error right now, and then increment the total.
+        ;; Log that we errored right now, and then increment the total.
         (call $log
           (i32.const -1)
         )
