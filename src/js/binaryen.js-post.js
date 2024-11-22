@@ -2674,9 +2674,6 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(passes.map(strToStack)), passes.length)
     );
   };
-  self['autoDrop'] = function() {
-    return Module['_BinaryenModuleAutoDrop'](module);
-  };
   self['dispose'] = function() {
     Module['_BinaryenModuleDispose'](module);
   };

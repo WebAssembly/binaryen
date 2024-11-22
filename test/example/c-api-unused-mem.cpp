@@ -14,7 +14,6 @@ int main() {
   RelooperRef the_relooper = NULL;
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
-  BinaryenModuleAutoDrop(the_module);
   {
     const char* segmentNames[] = {"0"};
     const char* segmentDatas[] = {0};
