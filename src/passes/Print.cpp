@@ -2221,10 +2221,9 @@ struct PrintExpressionContents
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
           // Need to print some reference type in the correct hierarchy rather
-          // than unreachable, and the bottom type is valid in the most
-          // contexts.
-          printType(
-            Type(curr->castType.getHeapType().getBottom(), NonNullable));
+          // than unreachable, and the cast type itself is the best possible
+          // option.
+          printType(curr->castType);
         } else {
           printType(curr->ref->type);
         }
@@ -2236,8 +2235,7 @@ struct PrintExpressionContents
         curr->name.print(o);
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
-          printType(
-            Type(curr->castType.getHeapType().getBottom(), NonNullable));
+          printType(curr->castType);
         } else {
           printType(curr->ref->type);
         }
