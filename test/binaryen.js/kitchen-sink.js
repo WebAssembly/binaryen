@@ -559,7 +559,7 @@ function test_core() {
     // All the rest
     module.block('', []), // block with no name
     module.if(temp1, temp2, temp3),
-    module.if(temp4, temp5),
+    module.if(temp4, module.drop(temp5)),
     module.loop("in", makeInt32(0)),
     module.loop(null, makeInt32(0)),
     module.break("the-value", temp6, temp7),
@@ -686,6 +686,14 @@ function test_core() {
   console.log("getExpressionInfo=" + JSON.stringify(cleanInfo(binaryen.getExpressionInfo(valueList[3]))));
   console.log(binaryen.emitText(valueList[3])); // test printing a standalone expression
 
+  // Add drops of concrete expressions, except the last.
+  for (var i = 0; i < valueList.length - 1; i++) {
+    var type = binaryen.Expression.getType(valueList[i]);
+    if (type != binaryen.none && type != binaryen.unreachable) {
+      valueList[i] = module.drop(valueList[i]);
+    }
+  }
+
   console.log("getExpressionInfo(i32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i32.const(5))));
   console.log("getExpressionInfo(i64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i64.const(6, 7))));
   console.log("getExpressionInfo(f32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f32.const(8.5))));
@@ -698,10 +706,10 @@ function test_core() {
   }
 
   // Make the main body of the function. and one block with a return value, one without
-  var value = module.block("the-value", valueList);
+  var value = module.block("the-value", valueList, binaryen.i32);
   var droppedValue = module.drop(value);
   var nothing = module.block("the-nothing", [ droppedValue ]);
-  var body = module.block("the-body", [ nothing, makeInt32(42) ]);
+  var body = module.block("the-body", [ nothing, makeInt32(42) ], binaryen.i32);
 
   // Create the function
   var sinker = module.addFunction("kitchen()sinker", iIfF, binaryen.i32, [ binaryen.i32 ], body);
@@ -749,13 +757,9 @@ function test_core() {
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
   module.setStart(starter);
 
-  // A bunch of our code needs drop, auto-add it
-  module.autoDrop();
-
   var features = binaryen.Features.All;
   module.setFeatures(features);
   assert(module.getFeatures() == features);
-  console.log(module.emitText());
 
   // Verify it validates
   assert(module.validate());

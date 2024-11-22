@@ -52,13 +52,13 @@ function asmFunc(imports) {
  
  function funcref_temps($0, $1) {
   $1 = +$1;
-  var $2 = null, $3 = null, wasm2js_funcref$0 = null, wasm2js_funcref$1 = null, wasm2js_i32$0 = 0;
+  var $2 = null, $3 = null;
   $2 = $0;
   loop : while (1) {
    $3 = funcref_temps;
    break loop;
   };
-  funcref_temps(funcref_temps, +(+((wasm2js_funcref$0 = $2, wasm2js_funcref$1 = $3 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js_funcref$0 : wasm2js_funcref$1) == null | 0)));
+  funcref_temps(funcref_temps, +(+((0 ? $2 : $3) == null | 0)));
  }
  
  function named_type_temps() {
