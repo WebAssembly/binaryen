@@ -4086,7 +4086,7 @@
  ;; CHECK-NEXT:   (block $block (result i31ref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result (ref any))
- ;; CHECK-NEXT:      (br_on_cast $block (ref none) i31ref
+ ;; CHECK-NEXT:      (br_on_cast $block i31ref i31ref
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -4136,7 +4136,7 @@
  ;; CHECK-NEXT:   (block $block (result (ref any))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i31ref)
- ;; CHECK-NEXT:      (br_on_cast_fail $block (ref none) i31ref
+ ;; CHECK-NEXT:      (br_on_cast_fail $block i31ref i31ref
  ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
