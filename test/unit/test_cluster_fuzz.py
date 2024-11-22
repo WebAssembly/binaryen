@@ -217,10 +217,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        # struct.news appear to be distributed as mean 15, stddev 24, median 10,
-        # so over 100 samples we are incredibly likely to see an interesting
-        # number at least once. It is also incredibly unlikely for the stdev to
-        # be zero.
+        print('struct.news are distributed as ~ mean 15, stddev 24, median 10')
+        # Given that, with 100 samples we are incredibly likely to see an
+        # interesting number at least once. It is also incredibly unlikely for
+        # the stdev to be zero.
         print(f'mean struct.news:   {statistics.mean(seen_struct_news)}')
         print(f'stdev struct.news:  {statistics.stdev(seen_struct_news)}')
         print(f'median struct.news: {statistics.median(seen_struct_news)}')
@@ -229,7 +229,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        # sizes appear to be distributed as mean 2933, stddev 2011, median 2510.
+        print('sizes are distributed as ~ mean 2933, stddev 2011, median 2510')
         print(f'mean sizes:   {statistics.mean(seen_sizes)}')
         print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
         print(f'median sizes: {statistics.median(seen_sizes)}')
@@ -238,7 +238,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        # exports appear to be distributed as mean 9, stddev 6, median 8.
+        print('exports are distributed as ~ mean 9, stddev 6, median 8')
         print(f'mean exports:   {statistics.mean(seen_exports)}')
         print(f'stdev exports:  {statistics.stdev(seen_exports)}')
         print(f'median exports: {statistics.median(seen_exports)}')
@@ -264,8 +264,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # probability to be a build or a call, so over the 100 testcases here we
         # have an overwhelming probability to see at least one extra build and
         # one extra call.
-        #
-        # builds and calls are distributed as mean 4, stddev 5, median 2.
+        print('JS builds are distributed as ~ mean 4, stddev 5, median 2')
         print(f'mean JS builds:   {statistics.mean(seen_builds)}')
         print(f'stdev JS builds:  {statistics.stdev(seen_builds)}')
         print(f'median JS builds: {statistics.median(seen_builds)}')
@@ -276,6 +275,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+        print('JS calls are distributed as ~ mean 4, stddev 5, median 2')
         print(f'mean JS calls:   {statistics.mean(seen_calls)}')
         print(f'stdev JS calls:  {statistics.stdev(seen_calls)}')
         print(f'median JS calls: {statistics.median(seen_calls)}')
