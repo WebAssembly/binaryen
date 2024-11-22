@@ -1421,7 +1421,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         auto* select = Builder(*getModule())
-          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
+                         .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
         if (select->type != iff->type) {
           // If the select is more refined than the if it replaces, we must
           // propagate that outwards.
