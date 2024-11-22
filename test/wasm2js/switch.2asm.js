@@ -16,7 +16,7 @@ function asmFunc(imports) {
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(i) {
   i = i | 0;
-  var j = 0;
+  var j = 0, $7 = 0;
   j = 100;
   switch_ : {
    $7 : {
@@ -49,7 +49,7 @@ function asmFunc(imports) {
  function $1(i, i$hi) {
   i = i | 0;
   i$hi = i$hi | 0;
-  var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7 = 0, $7$hi = 0, j = 0, j$hi = 0;
+  var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7 = 0, $7$hi = 0, j = 0, j$hi = 0, $10$hi = 0, $10 = 0;
   j = 100;
   j$hi = 0;
   switch_ : {

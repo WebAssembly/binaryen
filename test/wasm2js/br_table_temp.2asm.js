@@ -196,6 +196,7 @@ function asmFunc(imports) {
  
  function $14($0_1) {
   $0_1 = $0_1 | 0;
+  var $2_1 = 0;
   block1 : {
    switch ($0_1 | 0) {
    case 0:
@@ -12577,7 +12578,7 @@ function asmFunc(imports) {
  }
  
  function $21() {
-  var $1_1 = 0;
+  var $1_1 = 0, $4_1 = 0, $2_1 = 0;
   label : {
    dummy();
    $1_1 = 5;

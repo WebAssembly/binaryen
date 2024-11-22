@@ -3045,11 +3045,6 @@ BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,
                                           const char** passes,
                                           BinaryenIndex numPasses);
 
-// Auto-generate drop() operations where needed. This lets you generate code
-// without worrying about where they are needed. (It is more efficient to do it
-// yourself, but simpler to use autodrop).
-BINARYEN_API void BinaryenModuleAutoDrop(BinaryenModuleRef module);
-
 // Serialize a module into binary form. Uses the currently set global debugInfo
 // option.
 // @return how many bytes were written. This will be less than or equal to

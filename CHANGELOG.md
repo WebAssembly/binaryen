@@ -16,6 +16,7 @@ Current Trunk
 -------------
 
  - BinaryenSelect no longer takes a type parameter.
+ - AutoDrop APIs have been removed.
 
 v120
 ----
