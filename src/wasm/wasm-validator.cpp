@@ -720,8 +720,7 @@ void FunctionValidator::validateNormalBlockElements(Block* curr) {
       if (!shouldBeTrue(
             !curr->list[i]->type.isConcrete(),
             curr,
-            "non-final block elements returning a value must be drop()ed "
-            "(binaryen's autodrop option might help you)") &&
+            "non-final block elements returning a value must be dropped") &&
           !info.quiet) {
         getStream() << "(on index " << i << ":\n"
                     << curr->list[i] << "\n), type: " << curr->list[i]->type
