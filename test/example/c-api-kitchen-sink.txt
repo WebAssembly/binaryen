@@ -1964,15 +1964,13 @@ BinaryenFeatureAll: 524287
       )
       (block
       )
-      (if
-       (i32.const 1)
-       (then
-        (drop
+      (drop
+       (if (result i32)
+        (i32.const 1)
+        (then
          (i32.const 2)
         )
-       )
-       (else
-        (drop
+        (else
          (i32.const 3)
         )
        )
