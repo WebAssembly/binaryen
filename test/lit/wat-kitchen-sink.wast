@@ -3171,6 +3171,23 @@
   drop
  )
 
+ ;; CHECK:      (func $load-v128-unreachable (type $0)
+ ;; CHECK-NEXT:  (v128.load $mimport$0
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i64.load $mimport$0 align=8
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $load-v128-unreachable
+  unreachable
+  v128.load align=16
+  unreachable
+  v128.load align=8
+  unreachable
+ )
+
  ;; CHECK:      (func $store (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (i32.store $mimport$0 offset=42 align=1
  ;; CHECK-NEXT:   (local.get $0)
@@ -3660,7 +3677,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 161
+  ref.func 162
   drop
  )
 
