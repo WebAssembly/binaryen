@@ -26,13 +26,19 @@
    )
   )
   (drop
-   (block (result i32)
-    (drop
-     (i32.const 0)
+   (if (result i32)
+    (i32.const 0)
+    (then
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
-    (i32.add
-     (i32.const 1)
-     (i32.const 2)
+    (else
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
    )
   )
@@ -218,54 +224,61 @@
    (unreachable)
   )
   (drop
-   (block (result i32)
-    (if
-     (i32.const 2)
-     (then
-      (drop
-       (i32.const -1234)
-      )
-      (drop
-       (i32.const -1000)
-      )
-     )
-     (else
-      (drop
-       (i32.const 999)
-      )
-     )
-    )
-    (drop
-     (i32.const 1)
-    )
-    (nop)
-    (unreachable)
+   (if (result i32)
     (i32.const 2)
+    (then
+     (drop
+      (i32.const -1234)
+     )
+     (drop
+      (i32.const -1000)
+     )
+     (drop
+      (i32.const 1)
+     )
+     (nop)
+     (unreachable)
+     (i32.const 2)
+    )
+    (else
+     (drop
+      (i32.const 999)
+     )
+     (drop
+      (i32.const 1)
+     )
+     (nop)
+     (unreachable)
+     (i32.const 2)
+    )
    )
   )
   (drop
-   (block (result i32)
-    (if
-     (i32.const 3)
-     (then
-      (drop
-       (i32.const -1234)
-      )
-      (drop
-       (i32.const -1000)
-      )
+   (if (result i32)
+    (i32.const 3)
+    (then
+     (drop
+      (i32.const -1234)
      )
-     (else
-      (drop
-       (i32.const 999)
-      )
+     (drop
+      (i32.const -1000)
      )
+     (drop
+      (i32.const 1)
+     )
+     (nop)
+     (i32.const 2)
     )
-    (drop
-     (i32.const 1)
+    (else
+     (drop
+      (i32.const 999)
+     )
+     (drop
+      (i32.const 1)
+     )
+     (nop)
+     (i32.const 2)
     )
-    (nop)
-    (i32.const 2)
    )
   )
  )
@@ -388,28 +401,28 @@
     )
     (drop
      (block (result i32)
-      (block (result i32)
-       (if
-        (i32.const 9999)
-        (then
-         (drop
-          (i32.const -51234)
-         )
-         (drop
-          (i32.const -51000)
-         )
+      (if (result i32)
+       (i32.const 9999)
+       (then
+        (drop
+         (i32.const -51234)
         )
-        (else
-         (drop
-          (i32.const 5999)
-         )
-         (drop
-          (i32.const 51)
-         )
+        (drop
+         (i32.const -51000)
         )
+        (unreachable)
+        (i32.const 10)
        )
-       (unreachable)
-       (i32.const 10)
+       (else
+        (drop
+         (i32.const 5999)
+        )
+        (drop
+         (i32.const 51)
+        )
+        (unreachable)
+        (i32.const 10)
+       )
       )
      )
     )
@@ -1523,16 +1536,18 @@
   )
   (nop)
   (drop
-   (block
-    (drop
-     (unreachable)
+   (if (result i32)
+    (unreachable)
+    (then
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
-    (drop
-     (block (result i32)
-      (i32.add
-       (i32.const 1)
-       (i32.const 2)
-      )
+    (else
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
      )
     )
    )
@@ -1876,20 +1891,19 @@
     (i32.const 1)
    )
   )
-  (block (result i32)
-   (if
-    (local.get $x)
-    (then
-    )
-    (else
-     (drop
-      (call $if-suffix
-       (i32.const -2)
-      )
+  (if (result i32)
+   (local.get $x)
+   (then
+    (i32.const 2)
+   )
+   (else
+    (drop
+     (call $if-suffix
+      (i32.const -2)
      )
     )
+    (i32.const 2)
    )
-   (i32.const 2)
   )
  )
 )
