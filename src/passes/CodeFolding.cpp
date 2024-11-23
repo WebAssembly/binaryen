@@ -155,6 +155,14 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     }
   }
 
+  void visitBrOn(BrOn* curr) {
+    // TODO: Handle folding br_on* instructions. br_on_null could be folded with
+    // other kinds of branches and br_on_non_null, br_on_cast, and
+    // br_on_cast_fail instructions could be folded with other copies of
+    // themselves.
+    unoptimizables.insert(curr->name);
+  }
+
   void visitSwitch(Switch* curr) {
     for (auto target : curr->targets) {
       unoptimizables.insert(target);
