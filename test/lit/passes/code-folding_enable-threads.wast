@@ -83,11 +83,18 @@
   )
  )
  ;; CHECK:      (func $negative-zero-b (result f32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (if (result f32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $label$0 (result f32)
- ;; CHECK-NEXT:   (f32.const -0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (block $label$0 (result f32)
+ ;; CHECK-NEXT:     (f32.const -0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (block $label$1 (result f32)
+ ;; CHECK-NEXT:     (f32.const -0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $negative-zero-b (result f32)
@@ -106,11 +113,18 @@
   )
  )
  ;; CHECK:      (func $negative-zero-c (result f32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (if (result f32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $label$0 (result f32)
- ;; CHECK-NEXT:   (f32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (block $label$0 (result f32)
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (block $label$1 (result f32)
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $negative-zero-c (result f32)
@@ -480,5 +494,36 @@
     )
     (unreachable)
   )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (func $unreachable-if-concrete-arms
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $unreachable-if-concrete-arms
+  (if (result i32)
+   (unreachable)
+   (then
+    (i32.const 1)
+   )
+   (else
+    (nop)
+    (i32.const 1)
+   )
+  )
+  (unreachable)
  )
 )
