@@ -243,6 +243,10 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     if (!curr->ifFalse) {
       return;
     }
+    if (curr->ifTrue->type.isConcrete()) {
+      // We don't support folding tails that produce values.
+      return;
+    }
     // if both sides are identical, this is easy to fold
     if (ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
       Builder builder(*getModule());
