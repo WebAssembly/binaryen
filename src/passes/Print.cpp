@@ -106,6 +106,14 @@ static Type forceConcrete(Type type) {
   return type.isConcrete() ? type : Type::i32;
 }
 
+// Whatever type we print must be valid for the alignment.
+static Type forceConcrete(Type type, Index align) {
+  return type.isConcrete() ? type
+         : align >= 16     ? Type::v128
+         : align >= 8      ? Type::i64
+                           : Type::i32;
+}
+
 struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
@@ -545,7 +553,7 @@ struct PrintExpressionContents
     curr->name.print(o);
   }
   void visitLoad(Load* curr) {
-    prepareColor(o) << forceConcrete(curr->type);
+    prepareColor(o) << forceConcrete(curr->type, curr->align);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -2228,10 +2236,9 @@ struct PrintExpressionContents
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
           // Need to print some reference type in the correct hierarchy rather
-          // than unreachable, and the bottom type is valid in the most
-          // contexts.
-          printType(
-            Type(curr->castType.getHeapType().getBottom(), NonNullable));
+          // than unreachable, and the cast type itself is the best possible
+          // option.
+          printType(curr->castType);
         } else {
           printType(curr->ref->type);
         }
@@ -2243,8 +2250,7 @@ struct PrintExpressionContents
         curr->name.print(o);
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
-          printType(
-            Type(curr->castType.getHeapType().getBottom(), NonNullable));
+          printType(curr->castType);
         } else {
           printType(curr->ref->type);
         }
