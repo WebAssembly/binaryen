@@ -1146,6 +1146,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       PassOptions& passOptions;
 
       bool needUniqify = false;
+      bool refinalize = false;
 
       FinalOptimizer(PassOptions& passOptions) : passOptions(passOptions) {}
 
@@ -1419,8 +1420,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
           return nullptr;
         }
-        return Builder(*getModule())
-          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
+        auto* select = Builder(*getModule())
+                         .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
+        if (select->type != iff->type) {
+          // If the select is more refined than the if it replaces, we must
+          // propagate that outwards.
+          refinalize = true;
+        }
+        return select;
       }
 
       void visitLocalSet(LocalSet* curr) {
@@ -1792,6 +1799,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     finalOptimizer.walkFunction(func);
     if (finalOptimizer.needUniqify) {
       wasm::UniqueNameMapper::uniquify(func->body);
+    }
+    if (finalOptimizer.refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
     }
   }
 };
