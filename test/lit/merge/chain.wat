@@ -16,7 +16,6 @@
 ;; CHECK:      (export "h" (func $0_2))
 
 ;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $0_2 (type $0)

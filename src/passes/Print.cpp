@@ -106,6 +106,14 @@ static Type forceConcrete(Type type) {
   return type.isConcrete() ? type : Type::i32;
 }
 
+// Whatever type we print must be valid for the alignment.
+static Type forceConcrete(Type type, Index align) {
+  return type.isConcrete() ? type
+         : align >= 16     ? Type::v128
+         : align >= 8      ? Type::i64
+                           : Type::i32;
+}
+
 struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
@@ -382,7 +390,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
 
   // Module-level visitors
-  void handleSignature(HeapType curr, Name name = Name());
+  void handleSignature(Function* curr, bool printImplicitNames = false);
   void visitExport(Export* curr);
   void emitImportHeader(Importable* curr);
   void visitGlobal(Global* curr);
@@ -538,7 +546,7 @@ struct PrintExpressionContents
     curr->name.print(o);
   }
   void visitLoad(Load* curr) {
-    prepareColor(o) << forceConcrete(curr->type);
+    prepareColor(o) << forceConcrete(curr->type, curr->align);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -2219,7 +2227,14 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast ");
         curr->name.print(o);
         o << ' ';
-        printType(curr->ref->type);
+        if (curr->ref->type == Type::unreachable) {
+          // Need to print some reference type in the correct hierarchy rather
+          // than unreachable, and the cast type itself is the best possible
+          // option.
+          printType(curr->castType);
+        } else {
+          printType(curr->ref->type);
+        }
         o << ' ';
         printType(curr->castType);
         return;
@@ -2227,7 +2242,11 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast_fail ");
         curr->name.print(o);
         o << ' ';
-        printType(curr->ref->type);
+        if (curr->ref->type == Type::unreachable) {
+          printType(curr->castType);
+        } else {
+          printType(curr->ref->type);
+        }
         o << ' ';
         printType(curr->castType);
         return;
@@ -2883,41 +2902,51 @@ static bool requiresExplicitFuncType(HeapType type) {
   return type.isOpen() || type.isShared() || type.getRecGroup().size() > 1;
 }
 
-void PrintSExpression::handleSignature(HeapType curr, Name name) {
-  Signature sig = curr.getSignature();
-  o << "(func";
-  if (name.is()) {
-    o << ' ';
-    name.print(o);
-    if ((currModule && currModule->features.hasGC()) ||
-        requiresExplicitFuncType(curr)) {
-      o << " (type ";
-      printHeapType(curr) << ')';
-    }
+void PrintSExpression::handleSignature(Function* curr,
+                                       bool printImplicitNames) {
+  o << '(';
+  printMajor(o, "func ");
+  curr->name.print(o);
+  if ((currModule && currModule->features.hasGC()) ||
+      requiresExplicitFuncType(curr->type)) {
+    o << " (type ";
+    printHeapType(curr->type) << ')';
   }
-  if (sig.params.size() > 0) {
-    o << maybeSpace;
-    o << "(param ";
-    auto sep = "";
-    for (auto type : sig.params) {
-      o << sep;
-      printType(type);
-      sep = " ";
+  bool inParam = false;
+  Index i = 0;
+  for (const auto& param : curr->getParams()) {
+    auto hasName = printImplicitNames || curr->hasLocalName(i);
+    if (hasName && inParam) {
+      o << ')' << maybeSpace;
+      inParam = false;
+    } else if (inParam) {
+      o << ' ';
+    } else {
+      o << maybeSpace;
     }
+    if (!inParam) {
+      o << '(';
+      printMinor(o, "param ");
+      inParam = true;
+    }
+    if (hasName) {
+      printLocal(i, currFunction, o);
+      o << ' ';
+    }
+    printType(param);
+    if (hasName) {
+      o << ')';
+      inParam = false;
+    }
+    ++i;
+  }
+  if (inParam) {
     o << ')';
   }
-  if (sig.results.size() > 0) {
+  if (curr->getResults() != Type::none) {
     o << maybeSpace;
-    o << "(result ";
-    auto sep = "";
-    for (auto type : sig.results) {
-      o << sep;
-      printType(type);
-      sep = " ";
-    }
-    o << ')';
+    printResultType(curr->getResults());
   }
-  o << ")";
 }
 
 void PrintSExpression::visitExport(Export* curr) {
@@ -3014,8 +3043,8 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   lastPrintedLocation = std::nullopt;
   o << '(';
   emitImportHeader(curr);
-  handleSignature(curr->type, curr->name);
-  o << ')';
+  handleSignature(curr);
+  o << "))";
   o << maybeNewLine;
 }
 
@@ -3027,30 +3056,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   if (currFunction->prologLocation.size()) {
     printDebugLocation(*currFunction->prologLocation.begin());
   }
-  o << '(';
-  printMajor(o, "func ");
-  curr->name.print(o);
-  if ((currModule && currModule->features.hasGC()) ||
-      requiresExplicitFuncType(curr->type)) {
-    o << " (type ";
-    printHeapType(curr->type) << ')';
-  }
-  if (curr->getParams().size() > 0) {
-    Index i = 0;
-    for (const auto& param : curr->getParams()) {
-      o << maybeSpace;
-      o << '(';
-      printMinor(o, "param ");
-      printLocal(i, currFunction, o);
-      o << ' ';
-      printType(param) << ')';
-      ++i;
-    }
-  }
-  if (curr->getResults() != Type::none) {
-    o << maybeSpace;
-    printResultType(curr->getResults());
-  }
+  handleSignature(curr, true);
   incIndent();
   for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
     doIndent(o, indent);

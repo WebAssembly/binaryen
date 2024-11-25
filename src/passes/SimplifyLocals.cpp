@@ -1088,15 +1088,15 @@ struct SimplifyLocals
             }
 
             auto bestType = func->getLocalType(best);
-            auto indexType = func->getLocalType(index);
-            if (!Type::isSubType(indexType, bestType)) {
+            auto addressType = func->getLocalType(index);
+            if (!Type::isSubType(addressType, bestType)) {
               // This is less refined than the current best; ignore.
               continue;
             }
 
             // This is better if it has a more refined type, or if it has more
             // uses.
-            if (indexType != bestType ||
+            if (addressType != bestType ||
                 getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
               best = index;
             }

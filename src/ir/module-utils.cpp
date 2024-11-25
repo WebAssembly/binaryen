@@ -175,6 +175,7 @@ Table* copyTable(const Table* table, Module& out) {
 
   ret->initial = table->initial;
   ret->max = table->max;
+  ret->addressType = table->addressType;
 
   return out.addTable(std::move(ret));
 }
@@ -185,7 +186,7 @@ Memory* copyMemory(const Memory* memory, Module& out) {
   ret->initial = memory->initial;
   ret->max = memory->max;
   ret->shared = memory->shared;
-  ret->indexType = memory->indexType;
+  ret->addressType = memory->addressType;
   ret->module = memory->module;
   ret->base = memory->base;
 
@@ -597,26 +598,23 @@ void classifyTypeVisibility(Module& wasm,
   // We will need to traverse the types used by public types and mark them
   // public as well.
   std::vector<HeapType> workList;
+  std::unordered_set<RecGroup> publicGroups;
 
   auto notePublic = [&](HeapType type) {
     if (type.isBasic()) {
-      return false;
+      return;
     }
-    // All the rec group members are public as well.
-    bool inserted = false;
+    auto group = type.getRecGroup();
+    if (!publicGroups.insert(group).second) {
+      // The groups in this type have already been marked public.
+      return;
+    }
     for (auto member : type.getRecGroup()) {
       if (auto it = types.find(member); it != types.end()) {
-        if (it->second.visibility == Visibility::Public) {
-          // Since we mark all elements of a group public at once, if there is a
-          // member that is already public, all members must already be public.
-          break;
-        }
         it->second.visibility = Visibility::Public;
-        workList.push_back(member);
-        inserted = true;
       }
+      workList.push_back(member);
     }
-    return inserted;
   };
 
   // TODO: Consider Tags as well, but they should store HeapTypes instead of

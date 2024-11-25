@@ -141,7 +141,6 @@
   ;; CHECK:      (func $uses (type $3) (param $array (ref $array))
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $foo
   ;; CHECK-NEXT:    (drop
@@ -151,7 +150,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $bar
   ;; CHECK-NEXT:    (drop
@@ -323,7 +321,6 @@
 ;; CHECK:      (func $uses.second (type $3) (param $array (ref $array))
 ;; CHECK-NEXT:  (try
 ;; CHECK-NEXT:   (do
-;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (catch $foo_2
 ;; CHECK-NEXT:    (drop
@@ -333,7 +330,6 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (try
 ;; CHECK-NEXT:   (do
-;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (catch $other
 ;; CHECK-NEXT:    (drop

@@ -193,7 +193,6 @@
     (call $stuff) ;; do some more work
   )
   ;; CHECK:      (func $stuff
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func  $stuff)
   ;; the first event called from the main event loop: just call into $work
@@ -2484,7 +2483,6 @@
     (call $import)
   )
   ;; CHECK:      (func $boring
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $boring)
   ;; CHECK:      (func $calls-mix-deep

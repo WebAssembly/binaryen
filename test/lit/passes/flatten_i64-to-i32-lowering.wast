@@ -480,7 +480,6 @@
  ;; CHECK:      (export "unreach" (func $unreach))
 
  ;; CHECK:      (func $call (type $1) (param $0 i32) (param $0$hi i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call (param i64))
  ;; CHECK:      (func $exp (type $0)
@@ -586,7 +585,6 @@
  ;; CHECK:      (export "exp" (func $exp))
 
  ;; CHECK:      (func $call (type $0) (param $0 i32) (param $0$hi i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call (param i64))
  ;; CHECK:      (func $exp (type $1)

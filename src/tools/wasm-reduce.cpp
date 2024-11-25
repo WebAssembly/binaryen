@@ -275,6 +275,7 @@ struct Reducer
       "--dae-optimizing",
       "--dce",
       "--duplicate-function-elimination",
+      "--enclose-world",
       "--gto",
       "--inlining",
       "--inlining-optimizing",

@@ -22,6 +22,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
+#include "ir/local-graph.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -90,7 +91,7 @@ struct HeapStoreOptimization
     //
     if (auto* tee = curr->ref->dynCast<LocalSet>()) {
       if (auto* new_ = tee->value->dynCast<StructNew>()) {
-        if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
+        if (optimizeSubsequentStructSet(new_, curr, tee)) {
           // Success, so we do not need the struct.set any more, and the tee
           // can just be a set instead of us.
           tee->makeSet();
@@ -147,7 +148,7 @@ struct HeapStoreOptimization
         }
 
         // The pattern matches, try to optimize.
-        if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
+        if (!optimizeSubsequentStructSet(new_, structSet, localSet)) {
           break;
         } else {
           // Success. Replace the set with a nop, and continue to perhaps
@@ -209,7 +210,7 @@ struct HeapStoreOptimization
   // Returns true if we succeeded.
   bool optimizeSubsequentStructSet(StructNew* new_,
                                    StructSet* set,
-                                   Index refLocalIndex) {
+                                   LocalSet* localSet) {
     // Leave unreachable code for DCE, to avoid updating types here.
     if (new_->type == Type::unreachable || set->type == Type::unreachable) {
       return false;
@@ -217,6 +218,7 @@ struct HeapStoreOptimization
 
     auto index = set->index;
     auto& operands = new_->operands;
+    auto refLocalIndex = localSet->index;
 
     // Check for effects that prevent us moving the struct.set's value (X' in
     // the function comment) into its new position in the struct.new. First, it
@@ -246,6 +248,12 @@ struct HeapStoreOptimization
       }
     }
 
+    // We must also be careful of branches out from the value that skip the
+    // local.set, see below.
+    if (canSkipLocalSet(set, setValueEffects, localSet)) {
+      return false;
+    }
+
     // We can optimize here!
     Builder builder(*getModule());
 
@@ -271,9 +279,74 @@ struct HeapStoreOptimization
     return true;
   }
 
+  // We must be careful of branches that skip the local.set. For example:
+  //
+  //  (block $out
+  //    (local.set $x (struct.new X Y Z))
+  //    (struct.set (local.get $x) (..br $out..))  ;; X' here has a br
+  //  )
+  //  ..local.get $x..
+  //
+  // Note how we do the local.set first. Imagine we optimized to this:
+  //
+  //  (block $out
+  //    (local.set $x (struct.new (..br $out..) Y Z))
+  //  )
+  //  ..local.get $x..
+  //
+  // Now the br happens first, skipping the local.set entirely, and the use
+  // later down will not get the proper value. This is the problem we must
+  // detect here.
+  //
+  // We are given a struct.set, the computed effects of its value (the caller
+  // already has those, so this is an optimization to avoid recomputation), and
+  // the local.set.
+  bool canSkipLocalSet(StructSet* set,
+                       const EffectAnalyzer& setValueEffects,
+                       LocalSet* localSet) {
+    // First, if the set's value cannot branch at all, then we have no problem.
+    if (!setValueEffects.transfersControlFlow()) {
+      return false;
+    }
+
+    // We may branch, so do an analysis using a LocalGraph. We will check
+    // whether it is valid to move the local.set to where the struct.set is, so
+    // we provide StructSet as the query class.
+    //
+    // It is valid to reuse the LocalGraph many times because the optimization
+    // that we do in this pass does not generate new, dangerous control flow. We
+    // only optimize if moving a LocalSet is valid, and that does not invalidate
+    // any other one.
+    if (!localGraph) {
+      localGraph.emplace(getFunction(), getModule(), StructSet::SpecificId);
+    }
+    auto badGets = localGraph->canMoveSet(localSet, set);
+    if (badGets.size() == 0) {
+      // No problems at all.
+      return false;
+    }
+    // It is ok to have a local.get in the struct.set itself, as if we optimize
+    // then that local.get goes away anyhow, that is,
+    //
+    //   (local.set $x (struct.new X Y Z))
+    //   (struct.set (local.get $x) (X'))
+    //  =>
+    //   (local.set $x (struct.new X' Y Z))
+    //
+    // Both the local.get and the struct.set are removed.
+    if (badGets.size() >= 2) {
+      return true;
+    }
+    return *badGets.begin() != set->ref;
+  }
+
   EffectAnalyzer effects(Expression* expr) {
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
+
+private:
+  // A local graph that is constructed the first time we need it.
+  std::optional<LazyLocalGraph> localGraph;
 };
 
 } // anonymous namespace

@@ -35,6 +35,7 @@ set(passes_SOURCES
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
+  EncloseWorld.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
@@ -58,6 +59,7 @@ set(passes_SOURCES
   JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
+  LLVMMemoryCopyFillLowering.cpp
   LocalCSE.cpp
   LocalSubtyping.cpp
   LogExecution.cpp
@@ -75,6 +77,7 @@ set(passes_SOURCES
   NameList.cpp
   NameTypes.cpp
   NoInline.cpp
+  LLVMNontrappingFPToIntLowering.cpp
   OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeCasts.cpp

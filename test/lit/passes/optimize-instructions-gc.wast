@@ -472,7 +472,6 @@
   )
 
   ;; CHECK:      (func $nothing (type $5)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $nothing)
 

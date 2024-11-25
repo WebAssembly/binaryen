@@ -105,7 +105,6 @@
   )
 
   ;; CHECK:      (func $nothing (type $1)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $nothing)
 

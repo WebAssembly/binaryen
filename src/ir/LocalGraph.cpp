@@ -16,10 +16,11 @@
 
 #include <iterator>
 
-#include <cfg/cfg-traversal.h>
-#include <ir/find_all.h>
-#include <ir/local-graph.h>
-#include <wasm-builder.h>
+#include "cfg/cfg-traversal.h"
+#include "ir/find_all.h"
+#include "ir/local-graph.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -42,21 +43,27 @@ struct Info {
 // flow helper class. flows the gets to their sets
 
 struct LocalGraphFlower
-  : public CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info> {
+  : public CFGWalker<LocalGraphFlower,
+                     UnifiedExpressionVisitor<LocalGraphFlower>,
+                     Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
+  std::optional<Expression::Id> queryClass;
 
   LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
                    LocalGraph::Locations& locations,
                    Function* func,
-                   Module* module)
-    : getSetsMap(getSetsMap), locations(locations), func(func) {
+                   Module* module,
+                   std::optional<Expression::Id> queryClass = std::nullopt)
+    : getSetsMap(getSetsMap), locations(locations), func(func),
+      queryClass(queryClass) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
-    CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info>::
-      doWalkFunction(func);
+    CFGWalker<LocalGraphFlower,
+              UnifiedExpressionVisitor<LocalGraphFlower>,
+              Info>::doWalkFunction(func);
   }
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -67,25 +74,22 @@ struct LocalGraphFlower
 
   // cfg traversal work
 
-  static void doVisitLocalGet(LocalGraphFlower* self, Expression** currp) {
-    auto* curr = (*currp)->cast<LocalGet>();
-    // if in unreachable code, skip
-    if (!self->currBasicBlock) {
+  void visitExpression(Expression* curr) {
+    // If in unreachable code, skip.
+    if (!currBasicBlock) {
       return;
     }
-    self->currBasicBlock->contents.actions.emplace_back(curr);
-    self->locations[curr] = currp;
-  }
 
-  static void doVisitLocalSet(LocalGraphFlower* self, Expression** currp) {
-    auto* curr = (*currp)->cast<LocalSet>();
-    // if in unreachable code, skip
-    if (!self->currBasicBlock) {
-      return;
+    // If this is a relevant action (a get or set, or there is a query class
+    // and this is an instance of it) then note it.
+    if (curr->is<LocalGet>() || curr->is<LocalSet>() ||
+        (queryClass && curr->_id == *queryClass)) {
+      currBasicBlock->contents.actions.emplace_back(curr);
+      locations[curr] = getCurrentPointer();
+      if (auto* set = curr->dynCast<LocalSet>()) {
+        currBasicBlock->contents.lastSets[set->index] = set;
+      }
     }
-    self->currBasicBlock->contents.actions.emplace_back(curr);
-    self->currBasicBlock->contents.lastSets[curr->index] = curr;
-    self->locations[curr] = currp;
   }
 
   // Each time we flow a get (or set of gets) to find its sets, we mark a
@@ -203,9 +207,8 @@ struct LocalGraphFlower
         auto* action = actions[i];
         if (auto* get = action->dynCast<LocalGet>()) {
           allGets[get->index].push_back(get);
-        } else {
+        } else if (auto* set = action->dynCast<LocalSet>()) {
           // This set is the only set for all those gets.
-          auto* set = action->cast<LocalSet>();
           auto& gets = allGets[set->index];
           for (auto* get : gets) {
             getSetsMap[get].insert(set);
@@ -302,12 +305,8 @@ struct LocalGraphFlower
   // initially, but instead fill in these data structures that let us do so
   // later for individual gets. Specifically we need to find the location of a
   // local.get in the CFG.
-  struct BlockLocation {
-    // The basic block an item is in.
-    FlowBlock* block = nullptr;
-    // The index in that block that the item is at.
-    Index index;
-  };
+  using BlockLocation = std::pair<FlowBlock*, Index>;
+
   std::unordered_map<LocalGet*, BlockLocation> getLocations;
 
   // In lazy mode we also need to categorize gets and sets by their index.
@@ -331,8 +330,6 @@ struct LocalGraphFlower
           getsByIndex[get->index].push_back(get);
         } else if (auto* set = actions[i]->dynCast<LocalSet>()) {
           setsByIndex[set->index].push_back(set);
-        } else {
-          WASM_UNREACHABLE("bad action");
         }
       }
     }
@@ -391,9 +388,8 @@ struct LocalGraphFlower
           // It will have the same sets as us.
           gets.push_back(otherGet);
         }
-      } else {
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
         // This is a set.
-        auto* set = curr->cast<LocalSet>();
         if (set->index == index) {
           // This is the only set writing to our gets.
           for (auto* get : gets) {
@@ -443,6 +439,86 @@ struct LocalGraphFlower
         setInfluences[set].insert(get);
       }
     }
+  }
+
+  // Given a bunch of gets, see if any of them are reached by the given set
+  // despite the obstacle expression stopping the flow whenever it is reached.
+  // That is, the obstacle is considered as if it was a set of the same index,
+  // which would trample the value and stop the set from influencing it.
+  LocalGraphBase::SetInfluences
+  getSetInfluencesGivenObstacle(LocalSet* set,
+                                const LocalGraphBase::SetInfluences& gets,
+                                Expression* obstacle) {
+    LocalGraphBase::SetInfluences ret;
+    // Normally flowing backwards is faster, as we start from actual gets (and
+    // so we avoid flowing past all the gets to large swaths of the program that
+    // we don't care about; and in reverse, we might go all the way to the
+    // entry in a wasteful manner, but most gets have an actual set, and do not
+    // read the default value). The situation here is a bit different, though,
+    // in that we might expect that going forward from the set would quickly
+    // reach the obstacle and stop. Still, a single branch away would cause us
+    // to scan lots of blocks potentially, and might not be that rare in
+    // general, so go backwards. (Many uninteresting branches away, that reach
+    // no relevant gets, are common when exceptions are enabled, as every call
+    // gets a branch.)
+    for (auto* get : gets) {
+      auto [block, index] = getLocations[get];
+      if (!block) {
+        // We did not find location info for this get, which means it is
+        // unreachable.
+        continue;
+      }
+
+      // Use a work queue of block locations to scan backwards from.
+      // Specifically we must scan the first index above it (i.e., the original
+      // location has a local.get there, so we start one before it).
+      UniqueNonrepeatingDeferredQueue<BlockLocation> work;
+      work.push(BlockLocation{block, index});
+      auto foundSet = false;
+      // Flow while there is stuff to flow, and while we haven't found the set
+      // (once we find it, we add the get and can move on to the next get).
+      while (!work.empty() && !foundSet) {
+        auto [block, index] = work.pop();
+
+        // Scan backwards through this block.
+        while (1) {
+          // If we finished scanning this block (we reached the top), flow to
+          // predecessors.
+          if (index == 0) {
+            for (auto* pred : block->in) {
+              // We will scan pred from its very end.
+              work.push(BlockLocation{pred, Index(pred->actions.size())});
+            }
+            break;
+          }
+
+          // Continue onwards.
+          index--;
+          auto* action = block->actions[index];
+          if (auto* otherSet = action->dynCast<LocalSet>()) {
+            if (otherSet == set) {
+              // We arrived at the set: add this get and stop flowing it.
+              ret.insert(get);
+              foundSet = true;
+              break;
+            }
+            if (otherSet->index == set->index) {
+              // This is another set of the same index, which halts the flow.
+              break;
+            }
+          } else if (action == obstacle) {
+            // We ran into the obstacle. Halt this flow.
+            break;
+          }
+          // TODO: If the action is one of the gets we are scanning, then
+          // either we have processed it already, or will do so later, and we
+          // can halt. As an optimization, we could check if we've processed
+          // it already and act accordingly.
+        }
+      }
+    }
+
+    return ret;
   }
 };
 
@@ -559,16 +635,18 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 // LazyLocalGraph
 
-LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
-  : LocalGraphBase(func, module) {}
+LazyLocalGraph::LazyLocalGraph(Function* func,
+                               Module* module,
+                               std::optional<Expression::Id> queryClass)
+  : LocalGraphBase(func, module), queryClass(queryClass) {}
 
 void LazyLocalGraph::makeFlower() const {
   // |locations| is set here and filled in by |flower|.
   assert(!locations);
   locations.emplace();
 
-  flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module);
+  flower = std::make_unique<LocalGraphFlower>(
+    getSetsMap, *locations, func, module, queryClass);
 
   flower->prepareLaziness();
 
@@ -668,6 +746,54 @@ void LazyLocalGraph::computeLocations() const {
   if (!flower) {
     makeFlower();
   }
+}
+
+LocalGraphBase::SetInfluences LazyLocalGraph::canMoveSet(LocalSet* set,
+                                                         Expression* to) {
+  // We must have been initialized with the proper query class, so that we
+  // prepared the flower (if it was computed before) with that class in the
+  // graph.
+  assert(queryClass && to->_id == *queryClass);
+
+  if (!flower) {
+    makeFlower();
+  }
+
+  // To compute this property, we'll do a flow from the gets that the set
+  // originally reaches. No other get is relevant.
+  auto originalGets = getSetInfluences(set);
+
+  // To see which gets pose a problem, see which gets are still influenced by
+  // the set, if we consider |to| to be another set of that index, that is, an
+  // obstacle on the way, that tramples that local index's value. Any such
+  // influenced get is a problem, for example:
+  //
+  //  1. set
+  //  2. get
+  //  3. call
+  //  4. get
+  //
+  // The set can still influence the get on line 2, if we consider the call to
+  // be an obstacle. Looking at it another way, any get that is no longer
+  // influenced, given the obstacle, is a get that is only influenced by the
+  // obstacle itself, meaning that moving the set to the obstacle is valid. This
+  // is a slight simplification, though, since other sets may be involved:
+  //
+  //  if (..) {
+  //    x = ..;
+  //    a(x)
+  //    b();
+  //    c(x);
+  //  }
+  //  d(x);
+  //
+  // Say we consider moving the set of x to b(). a(x) uses x in a manner that
+  // will notice that, but not c(x) or d(x). c(x) is dominated by the set, but
+  // d(x) is not. That is, moving the set to b() leaves the set's influence
+  // unchanged on c(x), where that influence is full, and also on d(x), where it
+  // is only partial (shared with whatever value is present in x before the if).
+  // (But moving the set to b() does alter the set's influence on a(x)).
+  return flower->getSetInfluencesGivenObstacle(set, originalGets, to);
 }
 
 } // namespace wasm

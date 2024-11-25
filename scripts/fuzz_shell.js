@@ -25,14 +25,18 @@ if (typeof process === 'object' && typeof require === 'function') {
   };
 }
 
-// We are given the binary to run as a parameter.
-var binary = readBinary(argv[0]);
+// The binary to be run. This may be set already (by code that runs before this
+// script), and if not, we get the filename from argv.
+var binary;
+if (!binary) {
+  binary = readBinary(argv[0]);
+}
 
 // Normally we call all the exports of the given wasm file. But, if we are
 // passed a final parameter in the form of "exports:X,Y,Z" then we call
 // specifically the exports X, Y, and Z.
 var exportsToCall;
-if (argv[argv.length - 1].startsWith('exports:')) {
+if (argv.length > 0 && argv[argv.length - 1].startsWith('exports:')) {
   exportsToCall = argv[argv.length - 1].substr('exports:'.length).split(',');
   argv.pop();
 }
@@ -134,6 +138,39 @@ function logValue(x, y) {
   console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
+// Track the exports in a map (similar to the Exports object from wasm, i.e.,
+// whose keys are strings and whose values are the corresponding exports).
+var exports = {};
+
+// Also track exports in a list, to allow access by index. Each entry here will
+// be in the form of { name: .., value: .. }. That allows us to log the name of
+// the function and also to call it. This is important because different
+// functions may have the same name, if they were exported by different
+// Instances under the same export names.
+var exportList = [];
+
+// Given a wasm function, call it as best we can from JS, and return the result.
+function callFunc(func) {
+  // Send the function a null for each parameter. Null can be converted without
+  // error to both a number and a reference.
+  var args = [];
+  for (var i = 0; i < func.length; i++) {
+    args.push(null);
+  }
+  return func.apply(null, args);
+}
+
+// Table get/set operations need a BigInt if the table has 64-bit indexes. This
+// adds a proper cast as needed.
+function toAddressType(table, index) {
+  // First, cast to unsigned. We do not support larger indexes anyhow.
+  index = index >>> 0;
+  if (typeof table.length == 'bigint') {
+    return BigInt(index);
+  }
+  return index;
+}
+
 // Set up the imports.
 var tempRet0;
 var imports = {
@@ -156,10 +193,54 @@ var imports = {
 
     // Table operations.
     'table-get': (index) => {
-      return exports.table.get(index >>> 0);
+      return exports.table.get(toAddressType(exports.table, index));
     },
     'table-set': (index, value) => {
-      exports.table.set(index >>> 0, value);
+      exports.table.set(toAddressType(exports.table, index), value);
+    },
+
+    // Export operations.
+    'call-export': (index) => {
+      callFunc(exportList[index].value);
+    },
+    'call-export-catch': (index) => {
+      try {
+        callFunc(exportList[index].value);
+        return 0;
+      } catch (e) {
+        // We only want to catch exceptions, not wasm traps: traps should still
+        // halt execution. Handling this requires different code in wasm2js, so
+        // check for that first (wasm2js does not define RuntimeError, so use
+        // that for the check - when wasm2js is run, we override the entire
+        // WebAssembly object with a polyfill, so we know exactly what it
+        // contains).
+        var wasm2js = !WebAssembly.RuntimeError;
+        if (!wasm2js) {
+          // When running native wasm, we can detect wasm traps.
+          if (e instanceof WebAssembly.RuntimeError) {
+            throw e;
+          }
+        }
+        var text = e + '';
+        // We must not swallow host limitations here: a host limitation is a
+        // problem that means we must not compare the outcome here to any other
+        // VM.
+        var hostIssues = ['requested new array is too large',
+                          'out of memory',
+                          'Maximum call stack size exceeded'];
+        if (wasm2js) {
+          // When wasm2js does trap, it just throws an "abort" error.
+          hostIssues.push('abort');
+        }
+        for (var hostIssue of hostIssues) {
+          if (text.includes(hostIssue)) {
+            throw e;
+          }
+        }
+        // Otherwise, this is a normal exception we want to catch (a wasm
+        // exception, or a conversion error on the wasm/JS boundary, etc.).
+        return 1;
+      }
     },
   },
   // Emscripten support.
@@ -196,63 +277,73 @@ if (secondBinary) {
   });
 }
 
-// Create the wasm.
-var module = new WebAssembly.Module(binary);
+// Compile and instantiate a wasm file.
+function build(binary) {
+  var module = new WebAssembly.Module(binary);
 
-var instance;
-try {
-  instance = new WebAssembly.Instance(module, imports);
-} catch (e) {
-  console.log('exception thrown: failed to instantiate module');
-  quit();
-}
-
-// Handle the exports.
-var exports = instance.exports;
-
-// Link in a second module, if one was provided.
-if (secondBinary) {
-  var secondModule = new WebAssembly.Module(secondBinary);
-
-  // The secondary module just needs to import the primary one: all original
-  // imports it might have needed were exported from there.
-  var secondImports = {'primary': exports};
-  var secondInstance;
+  var instance;
   try {
-    secondInstance = new WebAssembly.Instance(secondModule, secondImports);
+    instance = new WebAssembly.Instance(module, imports);
   } catch (e) {
-    console.log('exception thrown: failed to instantiate second module');
+    console.log('exception thrown: failed to instantiate module');
     quit();
   }
+
+  // Update the exports. Note that this adds onto |exports|, |exportList|,
+  // which is intentional: if we build another wasm, or build this one more
+  // than once, we want to be able to call them all, so we unify all their
+  // exports. (We do trample in |exports| when keys are equal - basically this
+  // is a single global namespace - but |exportList| is appended to, so we do
+  // keep the ability to call anything that was ever exported.)
+  for (var key in instance.exports) {
+    var value = instance.exports[key];
+    exports[key] = value;
+    exportList.push({ name: key, value: value });
+  }
 }
 
-// Run the wasm.
-if (!exportsToCall) {
-  // We were not told specific exports, so call them all.
-  exportsToCall = [];
-  for (var e in exports) {
-    exportsToCall.push(e);
-  }
-}
+// Run the code by calling exports.
+function callExports() {
+  // Call the exports we were told, or if we were not given an explicit list,
+  // call them all.
+  var relevantExports = exportsToCall || exportList;
 
-for (var e of exportsToCall) {
-  if (typeof exports[e] !== 'function') {
-    continue;
-  }
-  // Send the function a null for each parameter. Null can be converted without
-  // error to both a number and a reference.
-  var func = exports[e];
-  var args = [];
-  for (var i = 0; i < func.length; i++) {
-    args.push(null);
-  }
-  try {
-    console.log('[fuzz-exec] calling ' + e);
-    var result = func.apply(null, args);
-    if (typeof result !== 'undefined') {
-      console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
+  for (var e of relevantExports) {
+    var name, value;
+    if (typeof e === 'string') {
+      // We are given a string name to call. Look it up in the global namespace.
+      name = e;
+      value = exports[e];
+    } else {
+      // We are given an object form exportList, which bas both a name and a
+      // value.
+      name = e.name;
+      value = e.value;
     }
-  } catch (e) {
-    console.log('exception thrown: ' + e);
+
+    if (typeof value !== 'function') {
+      continue;
+    }
+
+    try {
+      console.log('[fuzz-exec] calling ' + name);
+      var result = callFunc(value);
+      if (typeof result !== 'undefined') {
+        console.log('[fuzz-exec] note result: ' + name + ' => ' + printed(result));
+      }
+    } catch (e) {
+      console.log('exception thrown: ' + e);
+    }
   }
 }
+
+// Build the main wasm.
+build(binary);
+
+// Build the second wasm, if one was provided.
+if (secondBinary) {
+  build(secondBinary);
+}
+
+// Run.
+callExports();

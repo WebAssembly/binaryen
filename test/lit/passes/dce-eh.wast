@@ -11,7 +11,6 @@
   (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 

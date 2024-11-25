@@ -720,8 +720,7 @@ void FunctionValidator::validateNormalBlockElements(Block* curr) {
       if (!shouldBeTrue(
             !curr->list[i]->type.isConcrete(),
             curr,
-            "non-final block elements returning a value must be drop()ed "
-            "(binaryen's autodrop option might help you)") &&
+            "non-final block elements returning a value must be dropped") &&
           !info.quiet) {
         getStream() << "(on index " << i << ":\n"
                     << curr->list[i] << "\n), type: " << curr->list[i]->type
@@ -993,7 +992,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     if (shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
       shouldBeEqualOrFirstIsUnreachable(
         curr->target->type,
-        table->indexType,
+        table->addressType,
         curr,
         "call-indirect call target must match the table index type");
       shouldBeTrue(!!table, curr, "call-indirect table must exist");
@@ -1095,7 +1094,7 @@ void FunctionValidator::visitLoad(Load* curr) {
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "load pointer type must match memory index type");
   if (curr->isAtomic) {
@@ -1128,7 +1127,7 @@ void FunctionValidator::visitStore(Store* curr) {
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "store pointer must match memory index type");
   shouldBeUnequal(curr->value->type,
@@ -1152,7 +1151,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "AtomicRMW pointer type must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->type,
@@ -1172,7 +1171,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "cmpxchg pointer must match memory index type");
   if (curr->expected->type != Type::unreachable &&
@@ -1206,7 +1205,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "AtomicWait pointer must match memory index type");
   shouldBeIntOrUnreachable(
@@ -1232,7 +1231,7 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "AtomicNotify pointer must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1408,7 +1407,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     curr->type, Type(Type::v128), curr, "load_splat must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "load_splat address must match memory index type");
   Type memAlignType = Type::none;
@@ -1450,7 +1449,7 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   }
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "loadX_lane or storeX_lane address must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1500,7 +1499,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
     curr->type, Type(Type::none), curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "memory.init dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
@@ -1542,22 +1541,22 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
   shouldBeTrue(!!sourceMemory, curr, "memory.copy sourceMemory must exist");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    destMemory->indexType,
+    destMemory->addressType,
     curr,
     "memory.copy dest must match destMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->source->type,
-    sourceMemory->indexType,
+    sourceMemory->addressType,
     curr,
     "memory.copy source must match sourceMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    destMemory->indexType,
+    destMemory->addressType,
     curr,
     "memory.copy size must match destMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    sourceMemory->indexType,
+    sourceMemory->addressType,
     curr,
     "memory.copy size must match destMemory index type");
 }
@@ -1572,7 +1571,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "memory.fill dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type,
@@ -1581,7 +1580,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
                                     "memory.fill value must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    memory->indexType,
+    memory->addressType,
     curr,
     "memory.fill size must match memory index type");
   shouldBeTrue(!!memory, curr, "memory.fill memory must exist");
@@ -2257,7 +2256,7 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.grow memory must exist");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
-                                    memory->indexType,
+                                    memory->addressType,
                                     curr,
                                     "memory.grow must match memory index type");
 }
@@ -2399,7 +2398,7 @@ void FunctionValidator::visitTableGet(TableGet* curr) {
     }
     shouldBeEqualOrFirstIsUnreachable(
       curr->index->type,
-      table->indexType,
+      table->addressType,
       curr,
       "table.get index must match the table index type.");
   }
@@ -2419,7 +2418,7 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
     }
     shouldBeEqualOrFirstIsUnreachable(
       curr->index->type,
-      table->indexType,
+      table->addressType,
       curr,
       "table.set index must match the table index type.");
   }
@@ -2447,7 +2446,7 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
                     curr,
                     "table.grow value must have right type");
     shouldBeEqual(curr->delta->type,
-                  table->indexType,
+                  table->addressType,
                   curr,
                   "table.grow must match table index type");
   }
@@ -2467,12 +2466,12 @@ void FunctionValidator::visitTableFill(TableFill* curr) {
                     "table.fill value must have right type");
     shouldBeEqualOrFirstIsUnreachable(
       curr->dest->type,
-      table->indexType,
+      table->addressType,
       curr,
       "table.fill dest must match table index type");
     shouldBeEqualOrFirstIsUnreachable(
       curr->size->type,
-      table->indexType,
+      table->addressType,
       curr,
       "table.fill size must match table index type");
   }
@@ -2492,11 +2491,11 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
                     "table.copy source must have right type for dest");
   }
   shouldBeEqualOrFirstIsUnreachable(curr->dest->type,
-                                    destTable->indexType,
+                                    destTable->addressType,
                                     curr,
                                     "table.copy dest must be valid");
   shouldBeEqualOrFirstIsUnreachable(curr->source->type,
-                                    sourceTable->indexType,
+                                    sourceTable->addressType,
                                     curr,
                                     "table.copy source must be valid");
   Type sizeType =
@@ -2518,8 +2517,10 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
                     curr,
                     "table.init source must have right type for dest");
   }
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, table->indexType, curr, "table.init dest must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->dest->type,
+                                    table->addressType,
+                                    curr,
+                                    "table.init dest must be valid");
   shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
                                     Type(Type::i32),
                                     curr,
@@ -3669,10 +3670,10 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
-      // It's ok for types to be further refinable, but they must admit a
-      // superset of the values allowed by the most precise possible type, i.e.
-      // they must not be strict subtypes of or unrelated to the refined type.
-      if (!Type::isSubType(newType, oldType)) {
+      // It's ok for control flow structures to be further refinable, but all
+      // other instructions must have the most-precise possible types.
+      if (oldType != newType && !(Properties::isControlFlowStructure(curr) &&
+                                  Type::isSubType(newType, oldType))) {
         std::ostringstream ss;
         ss << "stale type found in " << scope << " on " << curr
            << "\n(marked as " << oldType << ", should be " << newType << ")\n";
@@ -3905,7 +3906,7 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
         continue;
       }
       info.shouldBeEqual(segment->offset->type,
-                         memory->indexType,
+                         memory->addressType,
                          segment->offset,
                          "segment offset must match memory index type");
       info.shouldBeTrue(
@@ -4000,7 +4001,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(
         !!segment->offset, "elem", "table segment offset must have an offset");
       info.shouldBeEqual(segment->offset->type,
-                         table->indexType,
+                         table->addressType,
                          segment->offset,
                          "element segment offset must match table index type");
       info.shouldBeTrue(

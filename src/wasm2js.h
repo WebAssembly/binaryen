@@ -361,7 +361,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // First, do the lowering to a JS-friendly subset.
   {
     PassRunner runner(wasm, options);
-    runner.add(std::make_unique<AutoDrop>());
     // TODO: only legalize if necessary - emscripten would already do so, and
     //       likely other toolchains. but spec test suite needs that.
     runner.add("legalize-js-interface");
@@ -1181,6 +1180,11 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
 
     Ref visitLoop(Loop* curr) {
       Name asmLabel = curr->name;
+      if (!asmLabel) {
+        // This loop has no label, so it cannot be continued to. We can just
+        // emit the body.
+        return visit(curr->body, result);
+      }
       continueLabels.insert(asmLabel);
       Ref body = visit(curr->body, result);
       // if we can reach the end of the block, we must leave the while (1) loop
@@ -1779,7 +1783,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           return ret;
         }
         default: {
-          Fatal() << "Unhandled type in unary: " << curr;
+          Fatal() << "Unhandled type in unary: " << *curr;
         }
       }
     }
@@ -1949,7 +1953,7 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
           }
           return ret;
         default:
-          Fatal() << "Unhandled type in binary: " << curr;
+          Fatal() << "Unhandled type in binary: " << *curr;
       }
       return makeJsCoercion(ret, wasmToJsType(curr->type));
     }

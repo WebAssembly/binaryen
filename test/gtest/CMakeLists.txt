@@ -8,6 +8,7 @@ set(unittest_SOURCES
   disjoint_sets.cpp
   json.cpp
   lattices.cpp
+  local-graph.cpp
   possible-contents.cpp
   printing.cpp
   scc.cpp

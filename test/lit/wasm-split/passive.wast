@@ -26,7 +26,6 @@
  ;; PRIMARY:      (export "table_1" (table $1))
 
  ;; PRIMARY:      (func $in-table (type $0)
- ;; PRIMARY-NEXT:  (nop)
  ;; PRIMARY-NEXT: )
  (func $in-table
   ;; This is in a passive segment, but it is in the main module so we need no
@@ -40,7 +39,6 @@
  ;; SECONDARY:      (elem $0 (i32.const 0) $second-in-table)
 
  ;; SECONDARY:      (func $second-in-table (type $0)
- ;; SECONDARY-NEXT:  (nop)
  ;; SECONDARY-NEXT: )
  (func $second-in-table
   ;; This is in a passive segment, and it is in the secondary module, so we will

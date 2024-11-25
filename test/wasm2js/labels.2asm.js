@@ -20,7 +20,7 @@ function asmFunc(imports) {
  }
  
  function $1() {
-  var i = 0, $6_1 = 0;
+  var i = 0, $6_1 = 0, $9_1 = 0, $7_1 = 0;
   i = 0;
   exit : {
    cont : while (1) {
@@ -36,7 +36,7 @@ function asmFunc(imports) {
  }
  
  function $2() {
-  var i = 0, $8_1 = 0;
+  var i = 0, $8_1 = 0, $13_1 = 0, $11_1 = 0;
   i = 0;
   exit : {
    cont : while (1) {
@@ -74,7 +74,7 @@ function asmFunc(imports) {
  
  function $4(max) {
   max = max | 0;
-  var i = 0, $9_1 = 0;
+  var i = 0, $9_1 = 0, $12_1 = 0, $10_1 = 0;
   i = 1;
   exit : {
    cont : while (1) {
@@ -143,10 +143,6 @@ function asmFunc(imports) {
    break label;
   }
   i = i + 1 | 0;
-  label0 : {
-   break label0;
-  }
-  i = i + 1 | 0;
   label1 : {
    break label1;
   }
@@ -157,6 +153,10 @@ function asmFunc(imports) {
   i = i + 1 | 0;
   label3 : {
    break label3;
+  }
+  i = i + 1 | 0;
+  label4 : {
+   break label4;
   }
   i = i + 1 | 0;
   return i | 0;

@@ -80,7 +80,6 @@
   ;; CHECK-TEXT:      (export "export_global" (global $import_global))
 
   ;; CHECK-TEXT:      (func $take_eqref (type $sig_eqref) (param $0 eqref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (global $global_eqref (mut eqref) (ref.null none))
 
@@ -105,31 +104,24 @@
   ;; CHECK-BIN:      (export "export_global" (global $import_global))
 
   ;; CHECK-BIN:      (func $take_eqref (type $sig_eqref) (param $0 eqref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $take_eqref (param eqref))
 
   ;; CHECK-TEXT:      (func $take_funcref (type $sig_funcref) (param $0 funcref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $take_funcref (type $sig_funcref) (param $0 funcref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $take_funcref (param funcref))
 
   ;; CHECK-TEXT:      (func $take_anyref (type $sig_anyref) (param $0 anyref)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $take_anyref (type $sig_anyref) (param $0 anyref)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $take_anyref (param anyref))
 
   ;; CHECK-TEXT:      (func $foo (type $5)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $foo (type $3)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo)
 
@@ -369,25 +361,17 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block0 (result eqref)
-  ;; CHECK-TEXT-NEXT:    (br_if $block0
+  ;; CHECK-TEXT-NEXT:   (block $block1 (result eqref)
+  ;; CHECK-TEXT-NEXT:    (br_if $block1
   ;; CHECK-TEXT-NEXT:     (global.get $global_eqref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block1 (result eqref)
-  ;; CHECK-TEXT-NEXT:    (br_if $block1
-  ;; CHECK-TEXT-NEXT:     (ref.null none)
-  ;; CHECK-TEXT-NEXT:     (i32.const 1)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block2 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (block $block2 (result eqref)
   ;; CHECK-TEXT-NEXT:    (br_if $block2
-  ;; CHECK-TEXT-NEXT:     (local.get $local_funcref)
+  ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -395,7 +379,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block3 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block3
-  ;; CHECK-TEXT-NEXT:     (global.get $global_funcref)
+  ;; CHECK-TEXT-NEXT:     (local.get $local_funcref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -403,7 +387,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block4 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block4
-  ;; CHECK-TEXT-NEXT:     (ref.null nofunc)
+  ;; CHECK-TEXT-NEXT:     (global.get $global_funcref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -411,15 +395,15 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block5 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block5
-  ;; CHECK-TEXT-NEXT:     (ref.func $foo)
+  ;; CHECK-TEXT-NEXT:     (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $block6 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (block $block6 (result funcref)
   ;; CHECK-TEXT-NEXT:    (br_if $block6
-  ;; CHECK-TEXT-NEXT:     (local.get $local_anyref)
+  ;; CHECK-TEXT-NEXT:     (ref.func $foo)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -427,7 +411,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block7 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block7
-  ;; CHECK-TEXT-NEXT:     (global.get $global_anyref)
+  ;; CHECK-TEXT-NEXT:     (local.get $local_anyref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -435,7 +419,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block8 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block8
-  ;; CHECK-TEXT-NEXT:     (ref.null none)
+  ;; CHECK-TEXT-NEXT:     (global.get $global_anyref)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -443,7 +427,7 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block9 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block9
-  ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
+  ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -451,6 +435,14 @@
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $block10 (result anyref)
   ;; CHECK-TEXT-NEXT:    (br_if $block10
+  ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
+  ;; CHECK-TEXT-NEXT:     (i32.const 1)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:   (block $block11 (result anyref)
+  ;; CHECK-TEXT-NEXT:    (br_if $block11
   ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
@@ -719,7 +711,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (select (result anyref)
+  ;; CHECK-TEXT-NEXT:   (select (result eqref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:    (ref.i31
   ;; CHECK-TEXT-NEXT:     (i32.const 0)
@@ -1322,7 +1314,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (select (result anyref)
+  ;; CHECK-BIN-NEXT:   (select (result eqref)
   ;; CHECK-BIN-NEXT:    (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:    (ref.i31
   ;; CHECK-BIN-NEXT:     (i32.const 0)
@@ -2092,10 +2084,8 @@
   )
 
   ;; CHECK-TEXT:      (func $ref-taken-but-not-in-table (type $5)
-  ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $ref-taken-but-not-in-table (type $3)
-  ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $ref-taken-but-not-in-table)
 )
@@ -2106,19 +2096,15 @@
 ;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 eqref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $2) (param $0 funcref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $1) (param $0 anyref)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $3 (type $3)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $4 (type $3)
@@ -2665,7 +2651,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (select (result anyref)
+;; CHECK-BIN-NODEBUG-NEXT:   (select (result eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.i31
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
@@ -2817,5 +2803,4 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $23 (type $3)
-;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

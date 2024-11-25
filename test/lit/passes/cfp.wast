@@ -2332,9 +2332,11 @@
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (select (result (ref null $A))
   ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (struct.new $B
-  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:    (block (result (ref null $A))
+  ;; CHECK-NEXT:     (local.tee $B
+  ;; CHECK-NEXT:      (struct.new $B
+  ;; CHECK-NEXT:       (i32.const 20)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
@@ -2361,10 +2363,12 @@
       ;; This select is used to keep the type that reaches the struct.set $A,
       ;; and not $B, so it looks like a perfect copy of $A->$A.
       (select (result (ref null $A))
-        (ref.null $A)
-        (local.tee $B
-          (struct.new $B
-            (i32.const 20)
+        (ref.null none)
+        (block (result (ref null $A))
+          (local.tee $B
+            (struct.new $B
+              (i32.const 20)
+            )
           )
         )
         (i32.const 0)
@@ -2707,6 +2711,122 @@
       (struct.get $B2 0
         (local.get $B2)
       )
+    )
+  )
+)
+
+;; $C is created with two values for its field: a global.get, and a copy from
+;; another $C, which does not expand the set of possible values. We should not
+;; get confused about $B, its sibling, which is never created, and whose field
+;; has an incompatible type.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
+    (type $X (sub (struct)))
+    ;; CHECK:       (type $Y (sub final $X (struct)))
+    (type $Y (sub final $X (struct)))
+    ;; CHECK:       (type $Z (sub final $X (struct)))
+    (type $Z (sub final $X (struct)))
+
+    ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
+    (type $A (sub (struct (field (ref null $X)))))
+    ;; CHECK:       (type $B (sub final $A (struct (field (ref null $Y)))))
+    (type $B (sub final $A (struct (field (ref null $Y)))))
+    ;; CHECK:       (type $C (sub final $A (struct (field (ref null $Z)))))
+    (type $C (sub final $A (struct (field (ref null $Z)))))
+  )
+
+  ;; CHECK:      (type $6 (func))
+
+  ;; CHECK:      (type $7 (func (param (ref null $C))))
+
+  ;; CHECK:      (type $8 (func (param (ref null $A)) (result (ref null $X))))
+
+  ;; CHECK:      (type $9 (func (param (ref null $B)) (result (ref null $Y))))
+
+  ;; CHECK:      (global $global (ref null $Z) (struct.new_default $Z))
+  (global $global (ref null $Z) (struct.new_default $Z))
+
+  ;; CHECK:      (func $new (type $6)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new
+    (drop
+      (struct.new $C
+        (global.get $global)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $copy (type $7) (param $C (ref null $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (block (result (ref null $Z))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $copy (param $C (ref null $C))
+    ;; The struct.get here can be optimized to a global.get.
+    (drop
+      (struct.new $C
+        (struct.get $C 0
+          (local.get $C)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-A (type $8) (param $A (ref null $A)) (result (ref null $X))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.get $global)
+  ;; CHECK-NEXT: )
+  (func $get-A (param $A (ref null $A)) (result (ref null $X))
+    ;; The struct.get here can be optimized to a global.get. While we never
+    ;; create an $A, a $C might be referred to by an $A reference, and the
+    ;; global.get is the only possible value.
+    (struct.get $A 0
+      (local.get $A)
+    )
+  )
+
+  ;; CHECK:      (func $get-B (type $9) (param $B (ref null $B)) (result (ref null $Y))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-B (param $B (ref null $B)) (result (ref null $Y))
+    ;; This should not be optimized to a global.get: no $B is created, and we
+    ;; cannot refer to anything that is actually created. If we mistakenly
+    ;; thought this field can contain the global.get (as we do for the parent
+    ;; $A) then we would error here: $B's field contains $Y, but the global is
+    ;; is of a sibling type $Z. Instead, we can add an unreachable here, as no
+    ;; valid value is possible.
+    (struct.get $B 0
+      (local.get $B)
     )
   )
 )

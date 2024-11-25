@@ -12,7 +12,6 @@
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (try
   ;; CHECK-NEXT:      (do
-  ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (catch $e-i32
   ;; CHECK-NEXT:       (drop
@@ -112,7 +111,6 @@
 
 
   ;; CHECK:      (func $foo (type $1)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 

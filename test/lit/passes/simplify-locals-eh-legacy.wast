@@ -5,14 +5,12 @@
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
   ;; CHECK:      (func $foo (type $3) (param $0 i32) (param $1 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (param i32 i32))
   ;; CHECK:      (func $pop-cannot-be-sinked (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-i32
   ;; CHECK-NEXT:    (local.set $0
@@ -44,7 +42,6 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (nop)
