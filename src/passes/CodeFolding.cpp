@@ -84,7 +84,9 @@ struct ExpressionMarker
   void visitExpression(Expression* expr) { marked.insert(expr); }
 };
 
-struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
+struct CodeFolding
+  : public WalkerPass<
+      ControlFlowWalker<CodeFolding, UnifiedExpressionVisitor<CodeFolding>>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -138,6 +140,17 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
 
   // walking
 
+  void visitExpression(Expression* curr) {
+    // For any branching instruction not explicitly handled by this pass, mark
+    // the labels it branches to unoptimizable.
+    // TODO: Handle folding br_on* instructions. br_on_null could be folded with
+    // other kinds of branches and br_on_non_null, br_on_cast, and
+    // br_on_cast_fail instructions could be folded with other copies of
+    // themselves.
+    BranchUtils::operateOnScopeNameUses(
+      curr, [&](Name label) { unoptimizables.insert(label); });
+  }
+
   void visitBreak(Break* curr) {
     if (curr->condition || curr->value) {
       unoptimizables.insert(curr->name);
@@ -153,13 +166,6 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
         unoptimizables.insert(curr->name);
       }
     }
-  }
-
-  void visitSwitch(Switch* curr) {
-    for (auto target : curr->targets) {
-      unoptimizables.insert(target);
-    }
-    unoptimizables.insert(curr->default_);
   }
 
   void visitUnreachable(Unreachable* curr) {
