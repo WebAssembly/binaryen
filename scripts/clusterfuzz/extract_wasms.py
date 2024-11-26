@@ -63,7 +63,7 @@ def repl(text):
     numbers = [int(n) for n in numbers]
     with open(get_wasm_filename(), 'wb') as f:
         f.write(bytes(numbers))
-    
+
     # Replace it with nothing.
     return ''
 

@@ -318,8 +318,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'mean JS second builds:   {statistics.mean(seen_second_builds)}')
         print(f'stdev JS second builds:  {statistics.stdev(seen_second_builds)}')
         print(f'median JS second builds: {statistics.median(seen_second_builds)}')
-        self.assertGreaterEqual(max(seen_builds), 2)
-        self.assertGreater(statistics.stdev(seen_builds), 0)
+        self.assertGreaterEqual(max(seen_second_builds), 2)
+        self.assertGreater(statistics.stdev(seen_second_builds), 0)
 
         print()
 
