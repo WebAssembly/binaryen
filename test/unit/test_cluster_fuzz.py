@@ -288,7 +288,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         # Second wasm files are more rarely added, only 1/3 of the time or so,
         # but over 100 samples we are still overwhelmingly likely to see one.
-        print('JS second builds are distributed as ~ mean 2, stddev 2, median 1')
+        print('JS second builds are distributed as ~ mean 1.8, stddev 2.2, median 1')
         print(f'mean JS second builds:   {statistics.mean(seen_second_builds)}')
         print(f'stdev JS second builds:  {statistics.stdev(seen_second_builds)}')
         print(f'median JS second builds: {statistics.median(seen_second_builds)}')
