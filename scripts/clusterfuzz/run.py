@@ -150,7 +150,18 @@ def get_js_file_contents(i, output_dir):
     # Prepend the wasm contents, so they are used (rather than the normal
     # mechanism where the wasm file's name is provided in argv).
     wasm_contents = get_wasm_contents(i, output_dir)
-    js = f'var binary = {wasm_contents};\n\n' + js
+    pre = f'var binary = {wasm_contents};\n'
+    bytes = wasm_contents.count(',')
+
+    # Sometimes add a second wasm file as well.
+    has_second = False
+    if system_random.random() < 0.333:
+        has_second = True
+        wasm_contents = get_wasm_contents(i, output_dir)
+        pre += f'var secondBinary = {wasm_contents};\n'
+        bytes += wasm_contents.count(',')
+
+    js = pre + '\n' + js
 
     # The default JS builds and runs the wasm. Append some random additional
     # operations as well, as more compiles and executions can find things. To
@@ -171,16 +182,23 @@ def get_js_file_contents(i, output_dir):
     x = math.pow(x, power)
     num = math.floor(x * MAX_EXTRA_JS_OPERATIONS)
     assert num >= 0 and num <= MAX_EXTRA_JS_OPERATIONS
-    for i in range(num):
-        js += system_random.choice([
-            # Compile and link the wasm again. Each link adds more to the total
-            # exports that we can call.
-            'build(binary);\n',
-            # Run all the exports we've accumulated.
-            'callExports();\n',
-        ])
 
-    print(f'Created {wasm_contents.count(",")} wasm bytes')
+    extra_js_operations = [
+        # Compile and link the wasm again. Each link adds more to the total
+        # exports that we can call.
+        'build(binary);\n',
+        # Run all the exports we've accumulated.
+        'callExports();\n',
+    ]
+    if has_second:
+        extra_js_operations += [
+            'build(secondBinary);\n',
+        ]
+
+    for i in range(num):
+        js += system_random.choice(extra_js_operations)
+
+    print(f'Created {bytes} wasm bytes')
 
     return js
 

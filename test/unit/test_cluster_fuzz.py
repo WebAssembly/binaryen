@@ -251,6 +251,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # we build and run the wasm.
         seen_builds = []
         seen_calls = []
+        seen_second_builds = []
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -258,6 +259,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
             seen_calls.append(js.count('callExports();'))
+            seen_second_builds.append(js.count('build(secondBinary);'))
 
         # There is always one build and one call (those are in the default
         # fuzz_shell.js), and we add a couple of operations, each with equal
@@ -281,6 +283,17 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'median JS calls: {statistics.median(seen_calls)}')
         self.assertGreaterEqual(max(seen_calls), 2)
         self.assertGreater(statistics.stdev(seen_calls), 0)
+
+        print()
+
+        # Second wasm files are more rarely added, only 1/3 of the time or so,
+        # but over 100 samples we are still overwhelmingly likely to see one.
+        print('JS second builds are distributed as ~ mean 2, stddev 2, median 1')
+        print(f'mean JS second builds:   {statistics.mean(seen_second_builds)}')
+        print(f'stdev JS second builds:  {statistics.stdev(seen_second_builds)}')
+        print(f'median JS second builds: {statistics.median(seen_second_builds)}')
+        self.assertGreaterEqual(max(seen_builds), 2)
+        self.assertGreater(statistics.stdev(seen_builds), 0)
 
         print()
 
