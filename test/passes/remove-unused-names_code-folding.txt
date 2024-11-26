@@ -10,11 +10,14 @@
     (nop)
    )
   )
-  (block
-   (drop
-    (i32.const 0)
+  (if
+   (i32.const 0)
+   (then
+    (nop)
    )
-   (nop)
+   (else
+    (nop)
+   )
   )
   (if
    (i32.const 0)
@@ -65,9 +68,7 @@
    (drop
     (i32.const 0)
    )
-   (block
-    (nop)
-   )
+   (nop)
   )
   (block
    (if
@@ -117,12 +118,10 @@
    (drop
     (i32.const 0)
    )
-   (block
-    (drop
-     (i32.add
-      (i32.const 1)
-      (i32.const 2)
-     )
+   (drop
+    (i32.add
+     (i32.const 1)
+     (i32.const 2)
     )
    )
   )
@@ -224,61 +223,54 @@
    (unreachable)
   )
   (drop
-   (if (result i32)
+   (block (result i32)
+    (if
+     (i32.const 2)
+     (then
+      (drop
+       (i32.const -1234)
+      )
+      (drop
+       (i32.const -1000)
+      )
+     )
+     (else
+      (drop
+       (i32.const 999)
+      )
+     )
+    )
+    (drop
+     (i32.const 1)
+    )
+    (nop)
+    (unreachable)
     (i32.const 2)
-    (then
-     (drop
-      (i32.const -1234)
-     )
-     (drop
-      (i32.const -1000)
-     )
-     (drop
-      (i32.const 1)
-     )
-     (nop)
-     (unreachable)
-     (i32.const 2)
-    )
-    (else
-     (drop
-      (i32.const 999)
-     )
-     (drop
-      (i32.const 1)
-     )
-     (nop)
-     (unreachable)
-     (i32.const 2)
-    )
    )
   )
   (drop
-   (if (result i32)
-    (i32.const 3)
-    (then
-     (drop
-      (i32.const -1234)
+   (block (result i32)
+    (if
+     (i32.const 3)
+     (then
+      (drop
+       (i32.const -1234)
+      )
+      (drop
+       (i32.const -1000)
+      )
      )
-     (drop
-      (i32.const -1000)
+     (else
+      (drop
+       (i32.const 999)
+      )
      )
-     (drop
-      (i32.const 1)
-     )
-     (nop)
-     (i32.const 2)
     )
-    (else
-     (drop
-      (i32.const 999)
-     )
-     (drop
-      (i32.const 1)
-     )
-     (nop)
-     (i32.const 2)
+    (drop
+     (i32.const 1)
     )
+    (nop)
+    (i32.const 2)
    )
   )
  )
@@ -401,28 +393,28 @@
     )
     (drop
      (block (result i32)
-      (if (result i32)
-       (i32.const 9999)
-       (then
-        (drop
-         (i32.const -51234)
+      (block (result i32)
+       (if
+        (i32.const 9999)
+        (then
+         (drop
+          (i32.const -51234)
+         )
+         (drop
+          (i32.const -51000)
+         )
         )
-        (drop
-         (i32.const -51000)
+        (else
+         (drop
+          (i32.const 5999)
+         )
+         (drop
+          (i32.const 51)
+         )
         )
-        (unreachable)
-        (i32.const 10)
        )
-       (else
-        (drop
-         (i32.const 5999)
-        )
-        (drop
-         (i32.const 51)
-        )
-        (unreachable)
-        (i32.const 10)
-       )
+       (unreachable)
+       (i32.const 10)
       )
      )
     )
@@ -515,12 +507,10 @@
      (drop
       (local.get $x)
      )
-     (block
-      (br_if $out
-       (local.get $y)
-      )
-      (nop)
+     (br_if $out
+      (local.get $y)
      )
+     (nop)
     )
     (block
      (if
@@ -708,18 +698,16 @@
     (drop
      (i32.const 1)
     )
-    (block
-     (drop
-      (i32.const 2)
-     )
-     (nop)
-     (nop)
-     (nop)
-     (nop)
-     (nop)
-     (nop)
-     (br $out)
+    (drop
+     (i32.const 2)
     )
+    (nop)
+    (nop)
+    (nop)
+    (nop)
+    (nop)
+    (nop)
+    (br $out)
    )
   )
   (block $out2
@@ -758,17 +746,13 @@
      (drop
       (i32.const 1)
      )
-     (block
-      (br $out3)
-     )
+     (br $out3)
     )
     (block
      (drop
       (i32.const 1)
      )
-     (block
-      (br $out3)
-     )
+     (br $out3)
     )
     (br $out3)
    )
@@ -801,20 +785,15 @@
    )
   )
   (drop
-   (block $y (result i32)
-    (if
-     (i32.const 0)
-     (then
-      (drop
-       (i32.const 1)
-      )
-      (drop
-       (i32.const 2)
-      )
-      (br $y
-       (i32.const 3)
+   (block (result i32)
+    (block $y
+     (if
+      (i32.const 0)
+      (then
+       (br $y)
       )
      )
+     (br $y)
     )
     (drop
      (i32.const 1)
@@ -822,9 +801,7 @@
     (drop
      (i32.const 2)
     )
-    (br $y
-     (i32.const 3)
-    )
+    (i32.const 3)
    )
   )
   (drop
@@ -1521,9 +1498,7 @@
    (drop
     (i32.const 0)
    )
-   (block
-    (nop)
-   )
+   (nop)
   )
   (if
    (i32.const 0)
@@ -1891,19 +1866,20 @@
     (i32.const 1)
    )
   )
-  (if (result i32)
-   (local.get $x)
-   (then
-    (i32.const 2)
-   )
-   (else
-    (drop
-     (call $if-suffix
-      (i32.const -2)
+  (block (result i32)
+   (if
+    (local.get $x)
+    (then
+    )
+    (else
+     (drop
+      (call $if-suffix
+       (i32.const -2)
+      )
      )
     )
-    (i32.const 2)
    )
+   (i32.const 2)
   )
  )
 )
