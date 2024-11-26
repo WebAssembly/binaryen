@@ -81,9 +81,9 @@ def test_wasm2js_output():
                                         '--disable-exception-handling']
                 if opt:
                     cmd += ['-O']
-                if 'emscripten' in t:
+                if 'emscripten' in basename:
                     cmd += ['--emscripten']
-                if 'deterministic' in t:
+                if 'deterministic' in basename:
                     cmd += ['--deterministic']
                 js = support.run_command(cmd)
                 all_js.append(js)
