@@ -1,8 +1,6 @@
 ;; Test that the fuzz_shell.js file will run a second wasm file that is
 ;; provided, and call its exports as well as the first module's.
 
-;; Test running a wasm file in fuzz_shell.js.
-
 (module
   (func $first (export "first") (result i32)
     (i32.const 42)
