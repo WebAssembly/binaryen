@@ -623,7 +623,7 @@ struct Reducer
           if (tryToReplaceCurrent(structNew)) {
             return;
           } else {
-            structNew->operands.swap(operands); // XXX other swap direction bug
+            structNew->operands.swap(operands);
             assert(!structNew->isWithDefault());
           }
         }
