@@ -788,20 +788,15 @@
    )
   )
   (drop
-   (block $y (result i32)
-    (if
-     (i32.const 0)
-     (then
-      (drop
-       (i32.const 1)
-      )
-      (drop
-       (i32.const 2)
-      )
-      (br $y
-       (i32.const 3)
+   (block (result i32)
+    (block $y
+     (if
+      (i32.const 0)
+      (then
+       (br $y)
       )
      )
+     (br $y)
     )
     (drop
      (i32.const 1)
@@ -809,9 +804,7 @@
     (drop
      (i32.const 2)
     )
-    (br $y
-     (i32.const 3)
-    )
+    (i32.const 3)
    )
   )
   (drop
