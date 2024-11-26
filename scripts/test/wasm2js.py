@@ -162,10 +162,11 @@ def update_wasm2js_tests():
             if not wasm.endswith('.wast'):
                 continue
 
-            if os.path.basename(wasm) in wasm2js_skipped_tests:
+            basename = os.path.basename(wasm)
+            if basename in wasm2js_skipped_tests:
                 continue
 
-            asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
+            asm = basename.replace('.wast', '.2asm.js')
             expected_file = os.path.join(shared.get_test_dir('wasm2js'), asm)
             if opt:
                 expected_file += '.opt'
@@ -192,9 +193,9 @@ def update_wasm2js_tests():
                                         '--disable-exception-handling']
                 if opt:
                     cmd += ['-O']
-                if 'emscripten' in wasm:
+                if 'emscripten' in basename:
                     cmd += ['--emscripten']
-                if 'deterministic' in t:
+                if 'deterministic' in basename:
                     cmd += ['--deterministic']
                 out = support.run_command(cmd)
                 all_out.append(out)
