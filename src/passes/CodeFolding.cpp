@@ -235,46 +235,34 @@ struct CodeFolding
     if (!curr->ifFalse) {
       return;
     }
-    // if both sides are identical, this is easy to fold
-    if (ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
+    // If both are blocks, look for a tail we can merge.
+    auto* left = curr->ifTrue->dynCast<Block>();
+    auto* right = curr->ifFalse->dynCast<Block>();
+    // If one is a block and the other isn't, and the non-block is a tail of the
+    // other, we can fold that - for our convenience, we just add a block and
+    // run the rest of the optimization mormally.
+    auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
+      // If other is a suffix of the block, wrap it in a block.
+      if (block->list.empty() ||
+          !ExpressionAnalyzer::equal(other, block->list.back())) {
+        return nullptr;
+      }
+      // Do it, assign to the out param `other`, and return the block.
       Builder builder(*getModule());
-      // remove if (4 bytes), remove one arm, add drop (1), add block (3),
-      // so this must be a net savings
-      markAsModified(curr);
-      auto* ret = builder.makeSequence(
-        builder.makeDrop(curr->condition), curr->ifTrue, curr->ifTrue->type);
-      replaceCurrent(ret);
-      needEHFixups = true;
-    } else {
-      // if both are blocks, look for a tail we can merge
-      auto* left = curr->ifTrue->dynCast<Block>();
-      auto* right = curr->ifFalse->dynCast<Block>();
-      // If one is a block and the other isn't, and the non-block is a tail
-      // of the other, we can fold that - for our convenience, we just add
-      // a block and run the rest of the optimization mormally.
-      auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
-        // if other is a suffix of the block, wrap it in a block
-        if (block->list.empty() ||
-            !ExpressionAnalyzer::equal(other, block->list.back())) {
-          return nullptr;
-        }
-        // do it, assign to the out param `other`, and return the block
-        Builder builder(*getModule());
-        auto* ret = builder.makeBlock(other);
-        other = ret;
-        return ret;
-      };
-      if (left && !right) {
-        right = maybeAddBlock(left, curr->ifFalse);
-      } else if (!left && right) {
-        left = maybeAddBlock(right, curr->ifTrue);
-      }
-      // we need nameless blocks, as if there is a name, someone might branch
-      // to the end, skipping the code we want to merge
-      if (left && right && !left->name.is() && !right->name.is()) {
-        std::vector<Tail> tails = {Tail(left), Tail(right)};
-        optimizeExpressionTails(tails, curr);
-      }
+      auto* ret = builder.makeBlock(other);
+      other = ret;
+      return ret;
+    };
+    if (left && !right) {
+      right = maybeAddBlock(left, curr->ifFalse);
+    } else if (!left && right) {
+      left = maybeAddBlock(right, curr->ifTrue);
+    }
+    // We need nameless blocks, as if there is a name, someone might branch to
+    // the end, skipping the code we want to merge.
+    if (left && right && !left->name.is() && !right->name.is()) {
+      std::vector<Tail> tails = {Tail(left), Tail(right)};
+      optimizeExpressionTails(tails, curr);
     }
   }
 

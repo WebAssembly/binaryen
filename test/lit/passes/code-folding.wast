@@ -10,10 +10,12 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
+ ;; CHECK:      (type $3 (func (result anyref)))
+
  ;; CHECK:      (type $13 (func (param f32)))
  (type $13 (func (param f32)))
  (table 282 282 funcref)
- ;; CHECK:      (type $4 (func (param i32)))
+ ;; CHECK:      (type $5 (func (param i32)))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
 
@@ -69,14 +71,10 @@
  ;; CHECK-NEXT:  (if (result f32)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (block $label$0 (result f32)
- ;; CHECK-NEXT:     (f32.const 0)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (f32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:    (block $label$1 (result f32)
- ;; CHECK-NEXT:     (f32.const -0)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (f32.const -0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -84,12 +82,12 @@
   (if (result f32)
    (i32.const 0)
    (then
-    (block $label$0 (result f32)
+    (block (result f32)
      (f32.const 0)
     )
    )
    (else
-    (block $label$1 (result f32)
+    (block (result f32)
      (f32.const -0)
     )
    )
@@ -97,23 +95,25 @@
  )
 
  ;; CHECK:      (func $negative-zero-b (type $1) (result f32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $label$0 (result f32)
- ;; CHECK-NEXT:   (f32.const -0)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.const -0)
  ;; CHECK-NEXT: )
  (func $negative-zero-b (result f32)
   (if (result f32)
    (i32.const 0)
    (then
-    (block $label$0 (result f32)
+    (block (result f32)
      (f32.const -0)
     )
    )
    (else
-    (block $label$1 (result f32)
+    (block (result f32)
      (f32.const -0)
     )
    )
@@ -121,12 +121,19 @@
  )
 
  ;; CHECK:      (func $positive-zero (type $1) (result f32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (if (result f32)
  ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (f32.const 0)
  ;; CHECK-NEXT: )
  (func $positive-zero (result f32)
+  ;; This doesn't get optimized because we only look at Ifs with block arms.
+  ;; This simpler case will be optimized by OptimizeInstructions.
   (if (result f32)
    (i32.const 0)
    (then
@@ -134,6 +141,39 @@
    )
    (else
     (f32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $positive-zero-names (type $1) (result f32)
+ ;; CHECK-NEXT:  (if (result f32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (block $l1 (result f32)
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (block $l2 (result f32)
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $positive-zero-names (result f32)
+  ;; This one has block arms, but doesn't get optimized because the blocks have
+  ;; names.
+  (if (result f32)
+   (i32.const 0)
+   (then
+    (block $l1 (result f32)
+     (f32.const 0)
+    )
+   )
+   (else
+    (block $l2 (result f32)
+     (f32.const 0)
+    )
    )
   )
  )
@@ -513,7 +553,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $careful-of-the-switch (type $4) (param $0 i32)
+ ;; CHECK:      (func $careful-of-the-switch (type $5) (param $0 i32)
  ;; CHECK-NEXT:  (block $label$1
  ;; CHECK-NEXT:   (block $label$3
  ;; CHECK-NEXT:    (block $label$5
@@ -707,9 +747,14 @@
  )
 
  ;; CHECK:      (func $unreachable-if (type $0)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -718,11 +763,13 @@
   (if
    (unreachable)
    (then
+    (nop)
     (drop
      (i32.const 1)
     )
    )
    (else
+    (nop)
     (drop
      (i32.const 1)
     )
@@ -822,6 +869,75 @@
     )
    )
    (call $br-on-null)
+  )
+ )
+
+ ;; CHECK:      (func $refined-type (type $3) (result anyref)
+ ;; CHECK-NEXT:  (select (result anyref)
+ ;; CHECK-NEXT:   (if (result anyref)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $refined-type (result anyref)
+  (select (result anyref)
+   ;; If we fold the identical arms, the select will have a stale type.
+   (if (result anyref)
+    (i32.const 0)
+    (then
+     (ref.null none)
+    )
+    (else
+     (ref.null none)
+    )
+   )
+   (ref.null none)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $refined-type-blocks (type $3) (result anyref)
+ ;; CHECK-NEXT:  (select (result anyref)
+ ;; CHECK-NEXT:   (block (result anyref)
+ ;; CHECK-NEXT:    (if
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (else
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $refined-type-blocks (result anyref)
+  (select (result anyref)
+   ;; Same, but now the arms are blocks, so they have the stale types (which is
+   ;; allowed) and the select is ok.
+   (if (result anyref)
+    (i32.const 0)
+    (then
+     (nop)
+     (ref.null none)
+    )
+    (else
+     (nop)
+     (ref.null none)
+    )
+   )
+   (ref.null none)
+   (i32.const 0)
   )
  )
 )

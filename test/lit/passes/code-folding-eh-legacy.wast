@@ -352,9 +352,14 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (else
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (i32.eqz
   ;; CHECK-NEXT:        (i32.const 1)
@@ -377,6 +382,7 @@
         (if
           (pop i32)
           (then
+            (nop)
             (drop
               (i32.eqz
                 (i32.const 1)
@@ -384,6 +390,7 @@
             )
           )
           (else
+            (nop)
             (drop
               (i32.eqz
                 (i32.const 1)
