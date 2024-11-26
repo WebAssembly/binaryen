@@ -263,12 +263,9 @@ public:
   void operator=(SubType& other) { set(other); }
 
   void swap(SubType& other) {
-    data = other.data;
-    usedElements = other.usedElements;
-    allocatedElements = other.allocatedElements;
-
-    other.data = nullptr;
-    other.usedElements = other.allocatedElements = 0;
+    std::swap(data, other.data);
+    std::swap(usedElements, other.usedElements);
+    std::swap(allocatedElements, other.allocatedElements);
   }
 
   // iteration

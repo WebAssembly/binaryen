@@ -38,6 +38,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/dfa_minimization.h"
 #include "support/small_set.h"
@@ -229,14 +230,24 @@ void TypeMerging::run(Module* module_) {
   // Merging can unlock more sibling merging opportunities because two identical
   // types cannot be merged until their respective identical parents have been
   // merged in a previous step, making them siblings.
+  //
+  // If we merge siblings, we also need to refinalize because the LUB of merged
+  // siblings is the merged type rather than their common supertype after the
+  // merge.
+  bool refinalize = false;
   merge(Supertypes);
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
     if (!merge(Siblings)) {
       break;
     }
+    refinalize = true;
   }
 
   applyMerges();
+
+  if (refinalize) {
+    ReFinalize().run(getPassRunner(), module);
+  }
 }
 
 bool TypeMerging::merge(MergeKind kind) {

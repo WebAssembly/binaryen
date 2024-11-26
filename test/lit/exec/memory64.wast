@@ -28,6 +28,14 @@
    (i32.const 10)
   )
  )
+
+ ;; CHECK:      [fuzz-exec] calling memory.grow.fail
+ ;; CHECK-NEXT: [fuzz-exec] note result: memory.grow.fail => -1
+ (func $memory.grow.fail (export "memory.grow.fail") (result i64)
+  (memory.grow
+   (i64.const -1)
+  )
+ )
 )
 
 ;; CHECK:      [fuzz-exec] calling memory.init.trap
@@ -35,5 +43,9 @@
 
 ;; CHECK:      [fuzz-exec] calling memory.init.trap2
 ;; CHECK-NEXT: [trap out of bounds segment access in memory.init]
+
+;; CHECK:      [fuzz-exec] calling memory.grow.fail
+;; CHECK-NEXT: [fuzz-exec] note result: memory.grow.fail => -1
+;; CHECK-NEXT: [fuzz-exec] comparing memory.grow.fail
 ;; CHECK-NEXT: [fuzz-exec] comparing memory.init.trap
 ;; CHECK-NEXT: [fuzz-exec] comparing memory.init.trap2
