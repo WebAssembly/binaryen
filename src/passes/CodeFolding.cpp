@@ -105,8 +105,7 @@ struct CodeFolding
     Tail(Block* block) : expr(nullptr), block(block), pointer(nullptr) {}
     // For a break
     Tail(Expression* expr, Block* block)
-      : expr(expr), block(block), pointer(nullptr) {
-    }
+      : expr(expr), block(block), pointer(nullptr) {}
     Tail(Expression* expr, Expression** pointer)
       : expr(expr), block(nullptr), pointer(pointer) {}
 
@@ -486,7 +485,20 @@ private:
     // make a block with curr + the merged code
     Builder builder(*getModule());
     auto* block = builder.makeBlock();
-    block->list.push_back(curr);
+    if constexpr (T::SpecificId == Expression::IfId) {
+      // If we've moved all the contents out of both arms of the If, then we can
+      // simplify the output by replacing it entirely with just a drop of the
+      // condition.
+      auto* iff = curr->template cast<If>();
+      if (iff->ifTrue->template cast<Block>()->list.empty() &&
+          iff->ifFalse->template cast<Block>()->list.empty()) {
+        block->list.push_back(builder.makeDrop(iff->condition));
+      } else {
+        block->list.push_back(curr);
+      }
+    } else {
+      block->list.push_back(curr);
+    }
     while (!mergeable.empty()) {
       block->list.push_back(mergeable.back());
       mergeable.pop_back();

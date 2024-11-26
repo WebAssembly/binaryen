@@ -95,12 +95,8 @@
  )
 
  ;; CHECK:      (func $negative-zero-b (type $1) (result f32)
- ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (f32.const -0)
  ;; CHECK-NEXT: )
@@ -747,12 +743,8 @@
  )
 
  ;; CHECK:      (func $unreachable-if (type $0)
- ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
@@ -907,12 +899,8 @@
  ;; CHECK:      (func $refined-type-blocks (type $3) (result anyref)
  ;; CHECK-NEXT:  (select (result anyref)
  ;; CHECK-NEXT:   (block (result anyref)
- ;; CHECK-NEXT:    (if
+ ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (else
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (ref.null none)
