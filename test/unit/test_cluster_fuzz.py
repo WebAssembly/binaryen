@@ -257,10 +257,11 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        # Second files appear in 1/3 of testcases, so we should have ~33 of
-        # them, which is enough to see some variation at least.
-        print('sizes are distributed as ~ mean 2933, stddev 2011, median 2510')
+        # Second files appear in ~ 1/3 of testcases.
+        print('number of second wasms should be around 33 +- 8')
+        print(f'number of second wasms: {len(seen_second_sizes)}')
         assert seen_second_sizes, 'must see at least one second wasm'
+        print('second sizes are distributed as ~ mean 2933, stddev 2011, median 2510')
         print(f'mean sizes:   {statistics.mean(seen_second_sizes)}')
         print(f'stdev sizes:  {statistics.stdev(seen_second_sizes)}')
         print(f'median sizes: {statistics.median(seen_second_sizes)}')
