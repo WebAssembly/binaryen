@@ -65,7 +65,15 @@ def test_wasm2js_output():
                 expected_file += '.opt'
 
             if not os.path.exists(expected_file):
-                continue
+                # It is ok to skip tests from other test suites that we also
+                # test on wasm2js (the basic and spec tests). When such files
+                # pass in wasm2js, we add expected files for them, so lacking
+                # such a file just means we should ignore it. But lacking an
+                # expected file for an explicit wasm2js test is an error.
+                if t in basic_tests or t in spec_tests:
+                    continue
+                else:
+                    raise Exception(f'missing expected file {expected_file}')
 
             print('..', os.path.basename(t))
 
