@@ -24,4 +24,16 @@ TEST_F(ArenaTest, Swap) {
 
   EXPECT_EQ(a.size(), 2U);
   EXPECT_EQ(b.size(), 0U);
+
+  // Now reverse a and b. The swap should be the same.
+
+  b.swap(a);
+
+  EXPECT_EQ(a.size(), 0U);
+  EXPECT_EQ(b.size(), 2U);
+
+  b.swap(a);
+
+  EXPECT_EQ(a.size(), 2U);
+  EXPECT_EQ(b.size(), 0U);
 }
