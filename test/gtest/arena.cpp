@@ -19,4 +19,9 @@ TEST_F(ArenaTest, Swap) {
 
   EXPECT_EQ(a.size(), 0U);
   EXPECT_EQ(b.size(), 2U);
+
+  a.swap(b);
+
+  EXPECT_EQ(a.size(), 2U);
+  EXPECT_EQ(b.size(), 0U);
 }
