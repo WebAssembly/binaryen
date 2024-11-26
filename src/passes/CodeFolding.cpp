@@ -249,8 +249,11 @@ struct CodeFolding
     if (!curr->ifFalse) {
       return;
     }
-    if (curr->ifTrue->type.isConcrete()) {
-      // We don't support folding tails that produce values.
+    if (curr->condition->type == Type::unreachable) {
+      // If the arms are foldable and concrete, we would be replacing an
+      // unreachable If with a concrete block, which may or may not be valid,
+      // depending on the context. Leave this for DCE rather than trying to
+      // handle that.
       return;
     }
     // if both sides are identical, this is easy to fold
