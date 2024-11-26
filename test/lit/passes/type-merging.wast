@@ -877,7 +877,6 @@
 ;; leading to a failure to build new types.
 ;; TODO: Store a heap type on control flow structures to avoid creating
 ;; standalone function types for them.
-;; TODO: Investigate why the rec group contains two of the same type below.
 (module
  (rec
   ;; CHECK:      (rec
@@ -985,6 +984,67 @@
 
   ;; CHECK:      (export "public" (global $public))
   (export "public" (global $public))
+)
+
+;; Regression test that produces invalid IR if we do not refinalize after
+;; merging siblings.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct)))
+  (type $super (sub (struct)))
+  ;; CHECK:       (type $subA (sub $super (struct (field i32))))
+  (type $subA (sub $super (struct (field i32))))
+  (type $subB (sub $super (struct (field i32))))
+ )
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (func $test (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select (result (ref $subA))
+ ;; CHECK-NEXT:    (struct.new_default $subA)
+ ;; CHECK-NEXT:    (struct.new_default $subA)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test
+  (drop
+   (select (result (ref $super))
+    (struct.new_default $subA)
+    (struct.new_default $subB)
+    (i32.const 0)
+   )
+  )
+ )
+)
+
+;; TODO: We should be able to merge $sub into $public here, but we currently do
+;; not encode the successors of public types in their DFA states, so we
+;; currently fail to do this merge. See issue #7120.
+(module
+ ;; CHECK:      (type $public (sub (struct (field (ref null $public)))))
+ (type $public (sub (struct (field (ref null $public)))))
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $sub (sub $public (struct (field (ref null $public)))))
+ (type $sub (sub $public (struct (field (ref null $public)))))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (global $g (ref null $public) (ref.null none))
+ (global $g (export "g") (ref null $public) (ref.null none))
+
+ ;; CHECK:      (export "g" (global $g))
+
+ ;; CHECK:      (func $test (type $2)
+ ;; CHECK-NEXT:  (local $0 (ref $public))
+ ;; CHECK-NEXT:  (local $1 (ref $sub))
+ ;; CHECK-NEXT: )
+ (func $test
+  (local (ref $public))
+  (local (ref $sub))
+ )
 )
 
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
