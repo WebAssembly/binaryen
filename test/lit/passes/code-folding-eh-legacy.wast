@@ -352,12 +352,8 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:       (then
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (else
-  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:      (drop

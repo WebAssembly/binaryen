@@ -65,12 +65,8 @@
  )
  (func $ifs-blocks
   (block
-   (if
+   (drop
     (i32.const 0)
-    (then
-    )
-    (else
-    )
    )
    (nop)
   )
@@ -119,12 +115,8 @@
  )
  (func $ifs-blocks-big
   (block
-   (if
+   (drop
     (i32.const 0)
-    (then
-    )
-    (else
-    )
    )
    (drop
     (i32.add
@@ -512,12 +504,8 @@
   (block $out
    (block $out2
     (block
-     (if
+     (drop
       (local.get $x)
-      (then
-      )
-      (else
-      )
      )
      (br_if $out
       (local.get $y)
@@ -707,12 +695,8 @@
  (func $mixture
   (block $out
    (block
-    (if
+    (drop
      (i32.const 1)
-     (then
-     )
-     (else
-     )
     )
     (drop
      (i32.const 2)
@@ -759,22 +743,14 @@
   (block
    (block $out3
     (block
-     (if
+     (drop
       (i32.const 1)
-      (then
-      )
-      (else
-      )
      )
      (br $out3)
     )
     (block
-     (if
+     (drop
       (i32.const 1)
-      (then
-      )
-      (else
-      )
      )
      (br $out3)
     )
@@ -1519,12 +1495,8 @@
    )
   )
   (block
-   (if
+   (drop
     (i32.const 0)
-    (then
-    )
-    (else
-    )
    )
    (nop)
   )
