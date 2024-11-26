@@ -31,9 +31,7 @@ script can be run as
 That is, the embedded file can now be provided as a filename argument.
 '''
 
-import os
 import re
-import subprocess
 import sys
 
 file_counter = 0
@@ -74,4 +72,3 @@ js = re.sub(r'var \w+ = new Uint8Array\(\[([\d,]+)\]\);', repl, js)
 # Write out the new JS.
 with open(f'{out}.js', 'w') as f:
     f.write(js)
-
