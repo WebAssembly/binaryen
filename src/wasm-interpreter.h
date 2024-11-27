@@ -4023,7 +4023,7 @@ public:
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
     auto end = offset + size * elemBytes;
-    if ((size != 0ull && droppedDataSegments.count(curr->segment)) ||
+    if ((offset + size > 0 && droppedDataSegments.count(curr->segment)) ||
         end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }

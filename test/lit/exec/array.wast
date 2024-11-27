@@ -13,6 +13,8 @@
 
  (elem $passive $func)
 
+ (data $data "a")
+
  ;; CHECK:      [fuzz-exec] calling func
  ;; CHECK-NEXT: [fuzz-exec] note result: func => 1
  (func $func (export "func") (result i32)
@@ -98,6 +100,21 @@
    (i32.const 0)
   )
  )
+
+ ;; CHECK:      [fuzz-exec] calling drop_array.new_data
+ ;; CHECK-NEXT: [trap out of bounds segment access in array.new_data]
+ (func $drop_array.new_data (export "drop_array.new_data")
+  ;; Dropping the data segment causes the next instruction to trap, even though
+  ;; the size there is 0, because the offset is > 0.
+  (data.drop $data)
+  (drop
+   (array.new_data $array $data
+    (i32.const 1)
+    (i32.const 0)
+   )
+  )
+ )
+
 )
 ;; CHECK:      [fuzz-exec] calling func
 ;; CHECK-NEXT: [fuzz-exec] note result: func => 1
@@ -115,6 +132,10 @@
 ;; CHECK:      [fuzz-exec] calling init_active_in_bounds
 
 ;; CHECK:      [fuzz-exec] calling init_passive
+
+;; CHECK:      [fuzz-exec] calling drop_array.new_data
+;; CHECK-NEXT: [trap out of bounds segment access in array.new_data]
+;; CHECK-NEXT: [fuzz-exec] comparing drop_array.new_data
 ;; CHECK-NEXT: [fuzz-exec] comparing func
 ;; CHECK-NEXT: [fuzz-exec] comparing init_active
 ;; CHECK-NEXT: [fuzz-exec] comparing init_active_in_bounds
