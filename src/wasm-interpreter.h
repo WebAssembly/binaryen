@@ -4022,10 +4022,14 @@ public:
 
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
-    auto end = offset + size * elemBytes;
-    if ((offset + size > 0 && droppedDataSegments.count(curr->segment)) ||
-        end > seg.data.size()) {
+    uint64_t end;
+    if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
+    }
+    uint64_t sum;
+    if (std::ckd_add(&sum, offset, size) ||
+        (sum > 0 && droppedDataSegments.count(curr->segment))) {
+      trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
     for (Index i = offset; i < end; i += elemBytes) {
