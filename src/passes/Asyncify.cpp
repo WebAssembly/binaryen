@@ -1648,14 +1648,26 @@ struct Asyncify : public Pass {
     auto propagateAddList = hasArgument("asyncify-propagate-addlist");
 
     // Ensure there is a memory, as we need it.
+
     if (secondaryMemory) {
       auto secondaryMemorySizeString =
         getArgumentOrDefault("asyncify-secondary-memory-size", "1");
       Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
       asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
     } else {
-      MemoryUtils::ensureExists(module);
-      asyncifyMemory = module->memories[0]->name;
+      if (module->memories.size() == 1) {
+        MemoryUtils::ensureExists(module);
+        asyncifyMemory = module->memories[0]->name;
+      } else {
+        auto asyncifyMemoryValue =
+          getArgumentOrDefault("asyncify-memory", "memory");
+        for (auto& export : module->exports) {
+          if (export->kind == ExternalKind::Memory &&
+              export->name == asyncifyMemoryValue) {
+            asyncifyMemory = export->value;
+          }
+        }
+      }
     }
     pointerType =
       module->getMemory(asyncifyMemory)->is64() ? Type::i64 : Type::i32;
