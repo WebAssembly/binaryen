@@ -105,13 +105,25 @@ public:
         tableStore(exportedTable, index, arguments[1]);
         return {};
       } else if (import->base == "call-export") {
-        callExport(arguments[0].geti32());
+        callExportAsJS(arguments[0].geti32());
         // Return nothing. If we wanted to return a value we'd need to have
         // multiple such functions, one for each signature.
         return {};
       } else if (import->base == "call-export-catch") {
         try {
-          callExport(arguments[0].geti32());
+          callExportAsJS(arguments[0].geti32());
+          return {Literal(int32_t(0))};
+        } catch (const WasmException& e) {
+          return {Literal(int32_t(1))};
+        }
+      } else if (import->base == "call-ref") {
+        callRefAsJS(arguments[0]);
+        // Return nothing. If we wanted to return a value we'd need to have
+        // multiple such functions, one for each signature.
+        return {};
+      } else if (import->base == "call-ref-catch") {
+        try {
+          callRefAsJS(arguments[0]);
           return {Literal(int32_t(0))};
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
@@ -145,7 +157,7 @@ public:
     throwException(WasmException{Literal(payload)});
   }
 
-  Literals callExport(Index index) {
+  Literals callExportAsJS(Index index) {
     if (index >= wasm.exports.size()) {
       // No export.
       throwEmptyException();
@@ -155,7 +167,18 @@ public:
       // No callable export.
       throwEmptyException();
     }
-    auto* func = wasm.getFunction(exp->value);
+    return callFunctionAsJS(exp->value);
+  }
+
+  Literals callRefAsJS(Literal ref) {
+    assert(ref.isFunc());
+    return callFunctionAsJS(ref.getFunc());
+  }
+
+  // Call a function in a "JS-ey" manner, adding arguments as needed, the same
+  // way JS does.
+  Literals callFunctionAsJS(Name name) {
+    auto* func = wasm.getFunction(name);
 
     // TODO JS traps on some types on the boundary, which we should behave the
     // same on. For now, this is not needed because the fuzzer will prune all
