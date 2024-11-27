@@ -1511,13 +1511,19 @@
   )
   (nop)
   (drop
-   (block (result i32)
-    (drop
-     (unreachable)
+   (if (result i32)
+    (unreachable)
+    (then
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
-    (i32.add
-     (i32.const 1)
-     (i32.const 2)
+    (else
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
    )
   )

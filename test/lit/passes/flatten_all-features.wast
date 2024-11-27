@@ -620,7 +620,6 @@
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
- ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (block $x
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (local.set $0
@@ -646,18 +645,13 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $3
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $1
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $4
+ ;; CHECK-NEXT:  (local.set $3
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (local.get $4)
+ ;; CHECK-NEXT:   (local.get $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $a13 (result i32)

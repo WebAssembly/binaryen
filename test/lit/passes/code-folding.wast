@@ -743,12 +743,20 @@
  )
 
  ;; CHECK:      (func $unreachable-if (type $0)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $unreachable-if
@@ -773,13 +781,16 @@
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (else
  ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $unreachable-if-suffix
@@ -800,16 +811,13 @@
  )
 
  ;; CHECK:      (func $unreachable-if-concrete-arms (type $0)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (else
- ;; CHECK-NEXT:      (nop)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

@@ -460,9 +460,16 @@ struct PrintExpressionContents
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
-    if (curr->type.isConcrete()) {
+    // Ifs are unreachable if their condition is unreachable, but in that case
+    // the arms might have some concrete type we have to account for to produce
+    // valid wat.
+    auto type = curr->type;
+    if (curr->condition->type == Type::unreachable && curr->ifFalse) {
+      type = Type::getLeastUpperBound(curr->ifTrue->type, curr->ifFalse->type);
+    }
+    if (type.isConcrete()) {
       o << ' ';
-      printBlockType(Signature(Type::none, curr->type));
+      printBlockType(Signature(Type::none, type));
     }
   }
   void visitLoop(Loop* curr) {

@@ -1280,6 +1280,67 @@
   end
  )
 
+ ;; CHECK:      (func $if-else-unreachable (type $1) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-unreachable (result i32)
+  i32.const 0 ;; This will be dropped
+  unreachable
+  if (result i32)
+   i32.const 1
+  else
+   i32.const 2
+  end
+ )
+
+ ;; CHECK:      (func $if-else-nested-unreachable (type $1) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-nested-unreachable (result i32)
+   i32.const 0 ;; This will be dropped
+   unreachable
+   if (result i32)
+    i32.const 1
+   else
+    i32.const 2
+   end
+   if (result i32)
+    i32.const 3
+   else
+    i32.const 4
+   end
+  )
+
  ;; CHECK:      (func $if-else-labeled-result (type $1) (result i32)
  ;; CHECK-NEXT:  (block $l (result i32)
  ;; CHECK-NEXT:   (if (result i32)
@@ -1607,7 +1668,7 @@
 
  ;; CHECK:      (func $if-else-brs-i32 (type $1) (result i32)
  ;; CHECK-NEXT:  (block $label (result i32)
- ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (br $label
@@ -3677,7 +3738,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 162
+  ref.func 164
   drop
  )
 

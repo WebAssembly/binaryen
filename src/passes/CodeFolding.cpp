@@ -234,6 +234,13 @@ struct CodeFolding
     if (!curr->ifFalse) {
       return;
     }
+    if (curr->condition->type == Type::unreachable) {
+      // If the arms are foldable and concrete, we would be replacing an
+      // unreachable If with a concrete block, which may or may not be valid,
+      // depending on the context. Leave this for DCE rather than trying to
+      // handle that.
+      return;
+    }
     // If both are blocks, look for a tail we can merge.
     auto* left = curr->ifTrue->dynCast<Block>();
     auto* right = curr->ifFalse->dynCast<Block>();
