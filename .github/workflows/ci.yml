@@ -367,8 +367,8 @@ jobs:
     # Make sure we can still build on older Ubuntu
     runs-on: ubuntu-20.04
     env:
-      CC: "gcc-14"
-      CXX: "g++-14"
+      CC: "gcc"
+      CXX: "g++"
     steps:
     - uses: actions/setup-python@v5
       with:
