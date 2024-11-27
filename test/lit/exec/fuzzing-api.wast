@@ -16,6 +16,9 @@
  (import "fuzzing-support" "call-export" (func $call.export (param i32)))
  (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32) (result i32)))
 
+ (import "fuzzing-support" "call-ref" (func $call.ref (param funcref)))
+ (import "fuzzing-support" "call-ref-catch" (func $call.ref.catch (param funcref) (result i32)))
+
  (table $table 10 20 funcref)
 
  ;; Note that the exported table appears first here, but in the binary and in
@@ -102,7 +105,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $export.calling.catching (export "export.calling.catching")
   ;; At index 0 in the exports we have $logging, so we will do those loggings,
   ;; then log a 0 as no exception happens.
@@ -115,6 +117,42 @@
   (call $log-i32
    (call $call.export.catch
     (i32.const 999)
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [exception thrown: __private ()]
+ (func $ref.calling (export "ref.calling")
+  ;; This will emit some logging.
+  (call $call.ref
+   (ref.func $logging)
+  )
+  ;; This will trap.
+  (call $call.ref
+   (ref.null func)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.catching
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $ref.calling.catching (export "ref.calling.catching")
+  ;; This will emit some logging, then log 0 as we do not error.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $logging)
+   )
+  )
+  ;; The trap here is caught, and we'll log 1.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.null func)
    )
   )
  )
@@ -144,9 +182,22 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [exception thrown: __private ()]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.catching
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing

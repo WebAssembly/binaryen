@@ -171,7 +171,10 @@ public:
   }
 
   Literals callRefAsJS(Literal ref) {
-    assert(ref.isFunction());
+    if (!ref.isFunction()) {
+      // Not a callable ref.
+      throwEmptyException();
+    }
     return callFunctionAsJS(ref.getFunc());
   }
 

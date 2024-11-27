@@ -819,7 +819,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->name = callRefCatchImportName;
       func->module = "fuzzing-support";
       func->base = "call-ref-catch";
-      func->type = Signature(Type::i32, Type::i32);
+      func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
       wasm.addFunction(std::move(func));
     }
   }
