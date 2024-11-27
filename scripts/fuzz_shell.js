@@ -160,6 +160,49 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
+// Calls a given function in a try-catch, swallowing JS exceptions, and return 1
+// if we did in fact swallow an exception. Wasm traps are not swallowed (see
+// details below).
+function tryCall(func) {
+  try {
+    func();
+    return 0;
+  } catch (e) {
+    // We only want to catch exceptions, not wasm traps: traps should still
+    // halt execution. Handling this requires different code in wasm2js, so
+    // check for that first (wasm2js does not define RuntimeError, so use
+    // that for the check - when wasm2js is run, we override the entire
+    // WebAssembly object with a polyfill, so we know exactly what it
+    // contains).
+    var wasm2js = !WebAssembly.RuntimeError;
+    if (!wasm2js) {
+      // When running native wasm, we can detect wasm traps.
+      if (e instanceof WebAssembly.RuntimeError) {
+        throw e;
+      }
+    }
+    var text = e + '';
+    // We must not swallow host limitations here: a host limitation is a
+    // problem that means we must not compare the outcome here to any other
+    // VM.
+    var hostIssues = ['requested new array is too large',
+                      'out of memory',
+                      'Maximum call stack size exceeded'];
+    if (wasm2js) {
+      // When wasm2js does trap, it just throws an "abort" error.
+      hostIssues.push('abort');
+    }
+    for (var hostIssue of hostIssues) {
+      if (text.includes(hostIssue)) {
+        throw e;
+      }
+    }
+    // Otherwise, this is a normal exception we want to catch (a wasm
+    // exception, or a conversion error on the wasm/JS boundary, etc.).
+    return 1;
+  }
+}
+
 // Table get/set operations need a BigInt if the table has 64-bit indexes. This
 // adds a proper cast as needed.
 function toAddressType(table, index) {
@@ -204,43 +247,15 @@ var imports = {
       callFunc(exportList[index].value);
     },
     'call-export-catch': (index) => {
-      try {
-        callFunc(exportList[index].value);
-        return 0;
-      } catch (e) {
-        // We only want to catch exceptions, not wasm traps: traps should still
-        // halt execution. Handling this requires different code in wasm2js, so
-        // check for that first (wasm2js does not define RuntimeError, so use
-        // that for the check - when wasm2js is run, we override the entire
-        // WebAssembly object with a polyfill, so we know exactly what it
-        // contains).
-        var wasm2js = !WebAssembly.RuntimeError;
-        if (!wasm2js) {
-          // When running native wasm, we can detect wasm traps.
-          if (e instanceof WebAssembly.RuntimeError) {
-            throw e;
-          }
-        }
-        var text = e + '';
-        // We must not swallow host limitations here: a host limitation is a
-        // problem that means we must not compare the outcome here to any other
-        // VM.
-        var hostIssues = ['requested new array is too large',
-                          'out of memory',
-                          'Maximum call stack size exceeded'];
-        if (wasm2js) {
-          // When wasm2js does trap, it just throws an "abort" error.
-          hostIssues.push('abort');
-        }
-        for (var hostIssue of hostIssues) {
-          if (text.includes(hostIssue)) {
-            throw e;
-          }
-        }
-        // Otherwise, this is a normal exception we want to catch (a wasm
-        // exception, or a conversion error on the wasm/JS boundary, etc.).
-        return 1;
-      }
+      return tryCall(() => callFunc(exportList[index].value));
+    },
+
+    // Funcref operations.
+    'call-ref': (ref) => {
+      callFunc(ref);
+    },
+    'call-ref-catch': (ref) => {
+      return tryCall(() => callFunc(ref));
     },
   },
   // Emscripten support.

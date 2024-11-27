@@ -766,19 +766,12 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 void TranslateToFuzzReader::addImportCallingSupport() {
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
-  // its own exports, and to care about the indexes of the exports):
-  //
-  //  0 - none
-  //  1 - call-export
-  //  2 - call-export-catch
-  //  3 - call-export & call-export-catch
-  //  4 - none
-  //  5 - none
-  //
-  auto choice = upTo(6);
-  if (choice >= 4) {
+  // its own exports, and to care about the indexes of the exports).
+  if (oneIn(2)) {
     return;
   }
+
+  auto choice = upTo(16);
 
   if (choice & 1) {
     // Given an export index, call it from JS.
@@ -801,6 +794,30 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->name = callExportCatchImportName;
     func->module = "fuzzing-support";
     func->base = "call-export-catch";
+    func->type = Signature(Type::i32, Type::i32);
+    wasm.addFunction(std::move(func));
+  }
+
+  if (choice & 4) {
+    // Given an funcref, call it from JS.
+    callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
+    auto func = std::make_unique<Function>();
+    func->name = callRefImportName;
+    func->module = "fuzzing-support";
+    func->base = "call-ref";
+    func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+
+  if (choice & 8) {
+    // Given an funcref, call it from JS and catch all exceptions (similar to
+    // callExportCatch), return 1 if we caught).
+    callRefCatchImportName =
+      Names::getValidFunctionName(wasm, "call-ref-catch");
+    auto func = std::make_unique<Function>();
+    func->name = callRefCatchImportName;
+    func->module = "fuzzing-support";
+    func->base = "call-ref-catch";
     func->type = Signature(Type::i32, Type::i32);
     wasm.addFunction(std::move(func));
   }
@@ -1021,6 +1038,17 @@ Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
   return builder.makeCall(target, {index}, type);
+}
+
+Expression* TranslateToFuzzReader::makeImportCallRef(Type type) {
+  // The none-returning variant just does the call. The i32-returning one
+  // catches any errors and returns 1 when it saw an error. Based on the
+  // variant, pick which to call.
+  auto target = type == Type::none ? callExportImportName : target = callExportCatchImportName;
+
+  // Most of the time make a non-nullable funcref, to avoid trapping.
+  auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+  return builder.makeCall(target, {make(refType)}, type);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {

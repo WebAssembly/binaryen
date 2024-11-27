@@ -109,6 +109,8 @@ private:
   Name tableSetImportName;
   Name callExportImportName;
   Name callExportCatchImportName;
+  Name callRefImportName;
+  Name callRefCatchImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -239,6 +241,7 @@ private:
   Expression* makeImportTableGet();
   Expression* makeImportTableSet(Type type);
   Expression* makeImportCallExport(Type type);
+  Expression* makeImportCallRef(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation
