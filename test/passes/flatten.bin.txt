@@ -100,10 +100,120 @@
   (local $6 i64)
   (local $7 f32)
   (local $8 f64)
-  (block $label$1
+  (local $9 f32)
+  (local $10 f32)
+  (local $11 f64)
+  (local $12 f64)
+  (local $13 i32)
+  (local $14 i32)
+  (local $15 i32)
+  (local $16 i32)
+  (local $17 f32)
+  (local $18 f32)
+  (local $19 i64)
+  (local $20 i32)
+  (local $21 i64)
+  (local $22 i32)
+  (local $23 f64)
+  (local $24 f64)
+  (block
    (nop)
    (unreachable)
+   (i64.eqz
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
    (unreachable)
+   (local.set $9
+    (local.get $1)
+   )
+   (local.set $10
+    (f32.neg
+     (local.get $9)
+    )
+   )
+   (drop
+    (local.get $10)
+   )
+   (local.set $11
+    (local.get $2)
+   )
+   (local.set $12
+    (f64.neg
+     (local.get $11)
+    )
+   )
+   (drop
+    (local.get $12)
+   )
+   (local.set $13
+    (local.get $3)
+   )
+   (local.set $14
+    (i32.eqz
+     (local.get $13)
+    )
+   )
+   (drop
+    (local.get $14)
+   )
+   (local.set $15
+    (local.get $4)
+   )
+   (local.set $16
+    (i32.eqz
+     (local.get $15)
+    )
+   )
+   (drop
+    (local.get $16)
+   )
+   (local.set $17
+    (local.get $7)
+   )
+   (local.set $18
+    (f32.neg
+     (local.get $17)
+    )
+   )
+   (drop
+    (local.get $18)
+   )
+   (local.set $19
+    (local.get $5)
+   )
+   (local.set $20
+    (i64.eqz
+     (local.get $19)
+    )
+   )
+   (drop
+    (local.get $20)
+   )
+   (local.set $21
+    (local.get $6)
+   )
+   (local.set $22
+    (i64.eqz
+     (local.get $21)
+    )
+   )
+   (drop
+    (local.get $22)
+   )
+   (local.set $23
+    (local.get $8)
+   )
+   (local.set $24
+    (f64.neg
+     (local.get $23)
+    )
+   )
+   (drop
+    (local.get $24)
+   )
   )
   (unreachable)
  )
@@ -138,7 +248,7 @@
   (local $32 f64)
   (local $33 f64)
   (local $34 f64)
-  (block $label$1
+  (block
    (local.set $7
     (f32.const 5.5)
    )

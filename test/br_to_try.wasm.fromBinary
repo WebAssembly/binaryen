@@ -3,15 +3,15 @@
  (type $1 (func))
  (tag $tag$0 (param i32))
  (func $0
-  (try $label$3
-   (do
-    (block $label$1
-     (br $label$1)
+  (block $label
+   (try
+    (do
+     (br $label)
     )
-   )
-   (catch $tag$0
-    (drop
-     (pop i32)
+    (catch $tag$0
+     (drop
+      (pop i32)
+     )
     )
    )
   )

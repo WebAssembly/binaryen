@@ -35,9 +35,9 @@
    )
    (then
     ;; code offset: 0x12
-    (loop $label$2
+    (loop $label
      ;; code offset: 0x2e
-     (br_if $label$2
+     (br_if $label
       ;; code offset: 0x2d
       (i32.ne
        ;; code offset: 0x2a
@@ -167,9 +167,9 @@
    )
    (then
     ;; code offset: 0x12
-    (loop $label$2
+    (loop $label
      ;; code offset: 0x2e
-     (br_if $label$2
+     (br_if $label
       ;; code offset: 0x2d
       (i32.ne
        ;; code offset: 0x2a
