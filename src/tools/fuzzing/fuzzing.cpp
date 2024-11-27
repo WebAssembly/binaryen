@@ -798,28 +798,30 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     wasm.addFunction(std::move(func));
   }
 
-  if (choice & 4) {
-    // Given an funcref, call it from JS.
-    callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
-    auto func = std::make_unique<Function>();
-    func->name = callRefImportName;
-    func->module = "fuzzing-support";
-    func->base = "call-ref";
-    func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
-    wasm.addFunction(std::move(func));
-  }
+  if (wasm.features.hasReferenceTypes()) {
+    if (choice & 4) {
+      // Given an funcref, call it from JS.
+      callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
+      auto func = std::make_unique<Function>();
+      func->name = callRefImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref";
+      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      wasm.addFunction(std::move(func));
+    }
 
-  if (choice & 8) {
-    // Given an funcref, call it from JS and catch all exceptions (similar to
-    // callExportCatch), return 1 if we caught).
-    callRefCatchImportName =
-      Names::getValidFunctionName(wasm, "call-ref-catch");
-    auto func = std::make_unique<Function>();
-    func->name = callRefCatchImportName;
-    func->module = "fuzzing-support";
-    func->base = "call-ref-catch";
-    func->type = Signature(Type::i32, Type::i32);
-    wasm.addFunction(std::move(func));
+    if (choice & 8) {
+      // Given an funcref, call it from JS and catch all exceptions (similar to
+      // callExportCatch), return 1 if we caught).
+      callRefCatchImportName =
+        Names::getValidFunctionName(wasm, "call-ref-catch");
+      auto func = std::make_unique<Function>();
+      func->name = callRefCatchImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref-catch";
+      func->type = Signature(Type::i32, Type::i32);
+      wasm.addFunction(std::move(func));
+    }
   }
 }
 
