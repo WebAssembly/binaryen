@@ -4026,9 +4026,7 @@ public:
     if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
-    uint64_t sum;
-    if (std::ckd_add(&sum, offset, size) ||
-        (sum > 0 && droppedDataSegments.count(curr->segment))) {
+    if (droppedDataSegments.count(curr->segment) && end > 0) {
       trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
