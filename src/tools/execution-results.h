@@ -171,7 +171,7 @@ public:
   }
 
   Literals callRefAsJS(Literal ref) {
-    assert(ref.isFunc());
+    assert(ref.isFunction());
     return callFunctionAsJS(ref.getFunc());
   }
 

@@ -1046,10 +1046,10 @@ Expression* TranslateToFuzzReader::makeImportCallRef(Type type) {
   // The none-returning variant just does the call. The i32-returning one
   // catches any errors and returns 1 when it saw an error. Based on the
   // variant, pick which to call.
-  auto target = type == Type::none ? callRefImportName : target = callRefCatchImportName;
+  auto target = type == Type::none ? callRefImportName : callRefCatchImportName;
 
   // Most of the time make a non-nullable funcref, to avoid trapping.
-  auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+  auto refType = Type(HeapType::func, oneIn(20) ? Nullable : NonNullable);
   return builder.makeCall(target, {make(refType)}, type);
 }
 
