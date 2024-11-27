@@ -1044,7 +1044,7 @@ Expression* TranslateToFuzzReader::makeImportCallRef(Type type) {
   // The none-returning variant just does the call. The i32-returning one
   // catches any errors and returns 1 when it saw an error. Based on the
   // variant, pick which to call.
-  auto target = type == Type::none ? callExportImportName : target = callExportCatchImportName;
+  auto target = type == Type::none ? callRefImportName : target = callRefCatchImportName;
 
   // Most of the time make a non-nullable funcref, to avoid trapping.
   auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
@@ -1729,6 +1729,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (callExportCatchImportName) {
       options.add(FeatureSet::MVP, &Self::makeImportCallExport);
     }
+    if (callRefCatchImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportCallRef);
+    }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
@@ -1810,6 +1813,10 @@ Expression* TranslateToFuzzReader::_makenone() {
   }
   if (callExportImportName) {
     options.add(FeatureSet::MVP, &Self::makeImportCallExport);
+  }
+  if (callRefImportName) {
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                &Self::makeImportCallRef);
   }
   return (this->*pick(options))(Type::none);
 }
