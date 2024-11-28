@@ -156,6 +156,25 @@
   )
  )
 
+ (func $legal (param $x i32) (result i32)
+  ;; Helper for the function below.
+  (call $log-i32
+   (i32.const 1234)
+  )
+  (i32.const 5678)
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.legal
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1234]
+ (func $ref.calling.legal (export "ref.calling.legal")
+  ;; It is fine to call-ref a function with params and results. The params get
+  ;; default values, and the results are ignored. All we will see here is the
+  ;; logging from the function, "1234".
+  (call $call.ref
+   (ref.func $legal)
+  )
+ )
+
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal (export "ref.calling.illegal") (param $x i64)
@@ -218,6 +237,9 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
+;; CHECK:      [fuzz-exec] calling ref.calling.legal
+;; CHECK-NEXT: [LoggingExternalInterface logging 1234]
+
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
@@ -231,6 +253,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal2
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing
