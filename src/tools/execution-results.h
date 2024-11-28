@@ -199,10 +199,13 @@ public:
       trapOnNonJSTypes(param);
       arguments.push_back(Literal::makeZero(param));
     }
+
+    // Call the function, then check if the results force a trap.
+    auto ret = instance->callFunction(func->name, arguments);
     for (const auto& result : func->getResults()) {
       trapOnNonJSTypes(result);
     }
-    return instance->callFunction(func->name, arguments);
+    return ret;
   }
 
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
