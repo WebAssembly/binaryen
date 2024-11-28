@@ -141,7 +141,6 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $ref.calling.catching (export "ref.calling.catching")
   ;; This will emit some logging, then log 0 as we do not error.
   (call $log-i32
@@ -155,6 +154,31 @@
     (ref.null func)
    )
   )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ (func $ref.calling.illegal (export "ref.calling.illegal") (param $x i64)
+  ;; The i64 param causes an error here, so we will log 1 as a trap.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $ref.calling.illegal)
+   )
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal2
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ ;; CHECK-NEXT: [fuzz-exec] note result: ref.calling.illegal2 => i32x4 0x00000001 0x00000002 0x00000003 0x00000004
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $ref.calling.illegal2 (export "ref.calling.illegal2") (result v128)
+  ;; The v128 result causes an error here, so we will log 1 as a trap.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $ref.calling.illegal2)
+   )
+  )
+  (v128.const i32x4 1 2 3 4)
  )
 )
 ;; CHECK:      [fuzz-exec] calling logging
@@ -193,11 +217,20 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal2
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+;; CHECK-NEXT: [fuzz-exec] note result: ref.calling.illegal2 => i32x4 0x00000001 0x00000002 0x00000003 0x00000004
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal2
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing

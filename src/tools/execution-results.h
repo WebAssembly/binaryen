@@ -183,9 +183,12 @@ public:
   Literals callFunctionAsJS(Name name) {
     auto* func = wasm.getFunction(name);
 
-    // TODO JS traps on some types on the boundary, which we should behave the
-    // same on. For now, this is not needed because the fuzzer will prune all
-    // non-JS-compatible exports anyhow.
+    // Some types trap on the JS boundary.
+    auto trapOnNonJSTypes = [&](Type type) {
+      if (type == Type::i64 || type == Type::v128) {
+        throwEmptyException();
+      }
+    };
 
     // Send default values as arguments, or trap if we need anything else.
     Literals arguments;
@@ -193,7 +196,11 @@ public:
       if (!param.isDefaultable()) {
         throwEmptyException();
       }
+      trapOnNonJSTypes(param);
       arguments.push_back(Literal::makeZero(param));
+    }
+    for (const auto& result : func->getResults()) {
+      trapOnNonJSTypes(result);
     }
     return instance->callFunction(func->name, arguments);
   }
