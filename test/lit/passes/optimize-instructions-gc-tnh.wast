@@ -497,16 +497,13 @@
   )
 
   ;; TNH:      (func $null.arm.null.effects (type $void)
-  ;; TNH-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; TNH-NEXT:  (block
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (select
   ;; TNH-NEXT:     (unreachable)
   ;; TNH-NEXT:     (ref.null none)
   ;; TNH-NEXT:     (call $get-i32)
   ;; TNH-NEXT:    )
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:   (drop
-  ;; TNH-NEXT:    (i32.const 1)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
@@ -523,16 +520,13 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $null.arm.null.effects (type $void)
-  ;; NO_TNH-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; NO_TNH-NEXT:  (block
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (select
   ;; NO_TNH-NEXT:     (unreachable)
   ;; NO_TNH-NEXT:     (ref.null none)
   ;; NO_TNH-NEXT:     (call $get-i32)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (drop
-  ;; NO_TNH-NEXT:    (i32.const 1)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (unreachable)
   ;; NO_TNH-NEXT:  )

@@ -196,6 +196,7 @@ function asmFunc(imports) {
  
  function $14($0_1) {
   $0_1 = $0_1 | 0;
+  var $2_1 = 0;
   block1 : {
    switch ($0_1 | 0) {
    case 0:
@@ -12554,12 +12555,10 @@ function asmFunc(imports) {
  function $19() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
   label : {
-   $null_Name_ : while (1) {
-    $1_1 = 3;
-    switch (0 | 0) {
-    default:
-     break label;
-    };
+   $1_1 = 3;
+   switch (0 | 0) {
+   default:
+    break label;
    };
   }
   return $1_1 | 0;
@@ -12568,28 +12567,24 @@ function asmFunc(imports) {
  function $20() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
   label : {
-   $null_Name_ : while (1) {
-    dummy();
-    $1_1 = 4;
-    switch (-1 | 0) {
-    default:
-     break label;
-    };
+   dummy();
+   $1_1 = 4;
+   switch (-1 | 0) {
+   default:
+    break label;
    };
   }
   return $1_1 | 0;
  }
  
  function $21() {
-  var $1_1 = 0;
+  var $1_1 = 0, $4_1 = 0, $2_1 = 0;
   label : {
-   $null_Name_ : while (1) {
-    dummy();
-    $1_1 = 5;
-    switch (1 | 0) {
-    default:
-     break label;
-    };
+   dummy();
+   $1_1 = 5;
+   switch (1 | 0) {
+   default:
+    break label;
    };
   }
   return $1_1 | 0;
@@ -12676,7 +12671,7 @@ function asmFunc(imports) {
  }
  
  function $30() {
-  var $1_1 = 0, $2_1 = 0;
+  var $1_1 = 0;
   block : {
    $1_1 = 2;
    switch (0 | 0) {

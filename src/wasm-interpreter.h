@@ -3842,10 +3842,15 @@ public:
     auto fail = Literal::makeFromInt64(-1, memory->addressType);
     Flow ret = Literal::makeFromInt64(memorySize, addressType);
     uint64_t delta = flow.getSingleValue().getUnsigned();
-    if (delta > uint32_t(-1) / Memory::kPageSize && addressType == Type::i32) {
+    uint64_t maxAddr = addressType == Type::i32
+                         ? std::numeric_limits<uint32_t>::max()
+                         : std::numeric_limits<uint64_t>::max();
+    if (delta > maxAddr / Memory::kPageSize) {
+      // Impossible to grow this much.
       return fail;
     }
-    if (memorySize >= uint32_t(-1) - delta && addressType == Type::i32) {
+    if (memorySize >= maxAddr - delta) {
+      // Overflow.
       return fail;
     }
     auto newSize = memorySize + delta;

@@ -1280,6 +1280,67 @@
   end
  )
 
+ ;; CHECK:      (func $if-else-unreachable (type $1) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-unreachable (result i32)
+  i32.const 0 ;; This will be dropped
+  unreachable
+  if (result i32)
+   i32.const 1
+  else
+   i32.const 2
+  end
+ )
+
+ ;; CHECK:      (func $if-else-nested-unreachable (type $1) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 4)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-nested-unreachable (result i32)
+   i32.const 0 ;; This will be dropped
+   unreachable
+   if (result i32)
+    i32.const 1
+   else
+    i32.const 2
+   end
+   if (result i32)
+    i32.const 3
+   else
+    i32.const 4
+   end
+  )
+
  ;; CHECK:      (func $if-else-labeled-result (type $1) (result i32)
  ;; CHECK-NEXT:  (block $l (result i32)
  ;; CHECK-NEXT:   (if (result i32)
@@ -1607,7 +1668,7 @@
 
  ;; CHECK:      (func $if-else-brs-i32 (type $1) (result i32)
  ;; CHECK-NEXT:  (block $label (result i32)
- ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (br $label
@@ -3171,6 +3232,23 @@
   drop
  )
 
+ ;; CHECK:      (func $load-v128-unreachable (type $0)
+ ;; CHECK-NEXT:  (v128.load $mimport$0
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i64.load $mimport$0 align=8
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $load-v128-unreachable
+  unreachable
+  v128.load align=16
+  unreachable
+  v128.load align=8
+  unreachable
+ )
+
  ;; CHECK:      (func $store (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (i32.store $mimport$0 offset=42 align=1
  ;; CHECK-NEXT:   (local.get $0)
@@ -3660,7 +3738,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 161
+  ref.func 164
   drop
  )
 
@@ -4064,6 +4142,31 @@
   drop
  )
 
+ ;; CHECK:      (func $br-on-cast-unreachable (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result i31ref)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref any))
+ ;; CHECK-NEXT:      (br_on_cast $block i31ref i31ref
+ ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-unreachable
+  block (result i31ref)
+   block (result (ref any))
+    unreachable
+    br_on_cast 1 anyref i31ref
+   end
+   unreachable
+  end
+  drop
+ )
+
  ;; CHECK:      (func $br-on-cast-fail (type $9) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref any))
@@ -4082,6 +4185,31 @@
   block (result (ref any))
    block (result i31ref)
     local.get 0
+    br_on_cast_fail 1 anyref i31ref
+   end
+   unreachable
+  end
+  drop
+ )
+
+ ;; CHECK:      (func $br-on-cast-fail-unreachable (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref any))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i31ref)
+ ;; CHECK-NEXT:      (br_on_cast_fail $block i31ref i31ref
+ ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-fail-unreachable
+  block (result (ref any))
+   block (result i31ref)
+    unreachable
     br_on_cast_fail 1 anyref i31ref
    end
    unreachable

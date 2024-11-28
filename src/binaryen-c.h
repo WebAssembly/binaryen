@@ -821,8 +821,7 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenSelect(BinaryenModuleRef module,
                BinaryenExpressionRef condition,
                BinaryenExpressionRef ifTrue,
-               BinaryenExpressionRef ifFalse,
-               BinaryenType type);
+               BinaryenExpressionRef ifFalse);
 BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
                                                 BinaryenExpressionRef value);
 // Return: value can be NULL
@@ -3045,11 +3044,6 @@ BINARYEN_API void BinaryenSetAllowInliningFunctionsWithLoops(bool enabled);
 BINARYEN_API void BinaryenModuleRunPasses(BinaryenModuleRef module,
                                           const char** passes,
                                           BinaryenIndex numPasses);
-
-// Auto-generate drop() operations where needed. This lets you generate code
-// without worrying about where they are needed. (It is more efficient to do it
-// yourself, but simpler to use autodrop).
-BINARYEN_API void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 
 // Serialize a module into binary form. Uses the currently set global debugInfo
 // option.

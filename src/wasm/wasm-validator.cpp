@@ -722,8 +722,7 @@ void FunctionValidator::validateNormalBlockElements(Block* curr) {
       if (!shouldBeTrue(
             !curr->list[i]->type.isConcrete(),
             curr,
-            "non-final block elements returning a value must be drop()ed "
-            "(binaryen's autodrop option might help you)") &&
+            "non-final block elements returning a value must be dropped") &&
           !info.quiet) {
         getStream() << "(on index " << i << ":\n"
                     << curr->list[i] << "\n), type: " << curr->list[i]->type
@@ -868,7 +867,16 @@ void FunctionValidator::visitIf(If* curr) {
                       curr,
                       "returning if-else's false must have right type");
     } else {
-      if (curr->condition->type != Type::unreachable) {
+      if (curr->condition->type == Type::unreachable) {
+        shouldBeTrue(
+          curr->ifTrue->type == Type::unreachable ||
+            curr->ifFalse->type == Type::unreachable ||
+            (curr->ifTrue->type == Type::none &&
+             curr->ifFalse->type == Type::none) ||
+            Type::hasLeastUpperBound(curr->ifTrue->type, curr->ifFalse->type),
+          curr,
+          "arms of unreachable if-else must have compatible types");
+      } else {
         shouldBeEqual(curr->ifTrue->type,
                       Type(Type::unreachable),
                       curr,
@@ -878,18 +886,6 @@ void FunctionValidator::visitIf(If* curr) {
                       curr,
                       "unreachable if-else must have unreachable false");
       }
-    }
-    if (curr->ifTrue->type.isConcrete()) {
-      shouldBeSubType(curr->ifTrue->type,
-                      curr->type,
-                      curr,
-                      "if type must match concrete ifTrue");
-    }
-    if (curr->ifFalse->type.isConcrete()) {
-      shouldBeSubType(curr->ifFalse->type,
-                      curr->type,
-                      curr,
-                      "if type must match concrete ifFalse");
     }
   }
 }
@@ -3723,10 +3719,10 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
-      // It's ok for types to be further refinable, but they must admit a
-      // superset of the values allowed by the most precise possible type, i.e.
-      // they must not be strict subtypes of or unrelated to the refined type.
-      if (!Type::isSubType(newType, oldType)) {
+      // It's ok for control flow structures to be further refinable, but all
+      // other instructions must have the most-precise possible types.
+      if (oldType != newType && !(Properties::isControlFlowStructure(curr) &&
+                                  Type::isSubType(newType, oldType))) {
         std::ostringstream ss;
         ss << "stale type found in " << scope << " on " << curr
            << "\n(marked as " << oldType << ", should be " << newType << ")\n";

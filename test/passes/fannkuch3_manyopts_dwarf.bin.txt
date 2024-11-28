@@ -4710,8 +4710,8 @@ file_names[  4]:
   (local $14 i32)
   (local $15 i32)
   (local $16 i32)
-  (local $17 i32)
-  (local $18 i32)
+  (local $scratch i32)
+  (local $scratch_18 i32)
   ;; code offset: 0x35
   (local.set $3
    ;; code offset: 0x33
@@ -4751,9 +4751,9 @@ file_names[  4]:
    )
   )
   ;; code offset: 0x43
-  (block $label$1
+  (block $block2
    ;; code offset: 0x45
-   (block $label$2
+   (block $block
     ;; code offset: 0x4c
     (if
      ;; code offset: 0x4b
@@ -4765,7 +4765,7 @@ file_names[  4]:
      )
      (then
       ;; code offset: 0x4e
-      (loop $label$4
+      (loop $label
        ;; code offset: 0x5a
        (i32.store
         ;; code offset: 0x57
@@ -4784,7 +4784,7 @@ file_names[  4]:
         (local.get $1)
        )
        ;; code offset: 0x67
-       (br_if $label$4
+       (br_if $label
         ;; code offset: 0x66
         (i32.ne
          ;; code offset: 0x62
@@ -4854,7 +4854,7 @@ file_names[  4]:
        (local.get $1)
       )
       ;; code offset: 0x95
-      (br_if $label$2
+      (br_if $block
        ;; code offset: 0x94
        (i32.le_s
         ;; code offset: 0x90
@@ -4864,7 +4864,7 @@ file_names[  4]:
        )
       )
       ;; code offset: 0x97
-      (loop $label$5
+      (loop $label5
        ;; code offset: 0x9e
        (if
         ;; code offset: 0x9d
@@ -4876,7 +4876,7 @@ file_names[  4]:
         )
         (then
          ;; code offset: 0xa0
-         (loop $label$7
+         (loop $label1
           ;; code offset: 0xb1
           (i32.store
            ;; code offset: 0xae
@@ -4902,10 +4902,9 @@ file_names[  4]:
            ;; code offset: 0xaf
            (local.get $2)
           )
-          ;; code offset: 0xbd
-          (br_if $label$7
+          (br_if $label1
            (block (result i32)
-            (local.set $17
+            (local.set $scratch
              ;; code offset: 0xb8
              (i32.gt_s
               ;; code offset: 0xb4
@@ -4919,16 +4918,17 @@ file_names[  4]:
              ;; code offset: 0xb9
              (local.get $1)
             )
-            (local.get $17)
+            ;; code offset: 0xbd
+            (local.get $scratch)
            )
           )
          )
         )
        )
        ;; code offset: 0xc1
-       (block $label$8
+       (block $block1
         ;; code offset: 0xcb
-        (br_if $label$8
+        (br_if $block1
          ;; code offset: 0xca
          (i32.eqz
           ;; code offset: 0xc8
@@ -4942,7 +4942,7 @@ file_names[  4]:
          )
         )
         ;; code offset: 0xd5
-        (br_if $label$8
+        (br_if $block1
          ;; code offset: 0xd4
          (i32.eq
           ;; code offset: 0xcf
@@ -4978,7 +4978,7 @@ file_names[  4]:
          (i32.const 0)
         )
         ;; code offset: 0xea
-        (loop $label$9
+        (loop $label3
          ;; code offset: 0xee
          (local.set $16
           ;; code offset: 0xec
@@ -5010,7 +5010,7 @@ file_names[  4]:
             (i32.const 1)
            )
            ;; code offset: 0x102
-           (loop $label$11
+           (loop $label2
             ;; code offset: 0x111
             (local.set $15
              ;; code offset: 0x10e
@@ -5063,7 +5063,7 @@ file_names[  4]:
              (local.get $15)
             )
             ;; code offset: 0x13b
-            (br_if $label$11
+            (br_if $label2
              ;; code offset: 0x13a
              (i32.lt_s
               ;; code offset: 0x131
@@ -5135,7 +5135,7 @@ file_names[  4]:
           (local.get $1)
          )
          ;; code offset: 0x162
-         (br_if $label$9
+         (br_if $label3
           ;; code offset: 0x160
           (local.get $1)
          )
@@ -5159,7 +5159,7 @@ file_names[  4]:
         )
        )
        ;; code offset: 0x177
-       (br_if $label$1
+       (br_if $block2
         ;; code offset: 0x176
         (i32.ge_s
          ;; code offset: 0x172
@@ -5169,7 +5169,7 @@ file_names[  4]:
         )
        )
        ;; code offset: 0x179
-       (loop $label$12
+       (loop $label6
         ;; code offset: 0x17d
         (local.set $1
          ;; code offset: 0x17b
@@ -5186,7 +5186,7 @@ file_names[  4]:
          )
          (then
           ;; code offset: 0x186
-          (loop $label$14
+          (loop $label4
            ;; code offset: 0x1a0
            (i32.store
             ;; code offset: 0x18f
@@ -5226,7 +5226,7 @@ file_names[  4]:
             )
            )
            ;; code offset: 0x1a8
-           (br_if $label$14
+           (br_if $label4
             ;; code offset: 0x1a7
             (i32.ne
              ;; code offset: 0x1a3
@@ -5292,7 +5292,7 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x1d9
-        (br_if $label$5
+        (br_if $label5
          ;; code offset: 0x1d8
          (i32.gt_s
           ;; code offset: 0x1d4
@@ -5302,7 +5302,7 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x1e5
-        (br_if $label$1
+        (br_if $block2
          ;; code offset: 0x1e4
          (i32.eq
           ;; code offset: 0x1e0
@@ -5328,9 +5328,13 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x1ee
-        (br $label$12)
+        (br $label6)
        )
+       ;; code offset: 0x1f1
+       (unreachable)
       )
+      ;; code offset: 0x1f3
+      (unreachable)
      )
     )
     ;; code offset: 0x209
@@ -5386,7 +5390,7 @@ file_names[  4]:
     )
    )
    ;; code offset: 0x21c
-   (loop $label$15
+   (loop $label11
     ;; code offset: 0x223
     (if
      ;; code offset: 0x222
@@ -5398,7 +5402,7 @@ file_names[  4]:
      )
      (then
       ;; code offset: 0x225
-      (loop $label$17
+      (loop $label7
        ;; code offset: 0x236
        (i32.store
         ;; code offset: 0x233
@@ -5424,10 +5428,9 @@ file_names[  4]:
         ;; code offset: 0x234
         (local.get $2)
        )
-       ;; code offset: 0x242
-       (br_if $label$17
+       (br_if $label7
         (block (result i32)
-         (local.set $18
+         (local.set $scratch_18
           ;; code offset: 0x23d
           (i32.gt_s
            ;; code offset: 0x239
@@ -5441,16 +5444,17 @@ file_names[  4]:
           ;; code offset: 0x23e
           (local.get $1)
          )
-         (local.get $18)
+         ;; code offset: 0x242
+         (local.get $scratch_18)
         )
        )
       )
      )
     )
     ;; code offset: 0x246
-    (block $label$18
+    (block $block3
      ;; code offset: 0x250
-     (br_if $label$18
+     (br_if $block3
       ;; code offset: 0x24f
       (i32.eqz
        ;; code offset: 0x24d
@@ -5464,7 +5468,7 @@ file_names[  4]:
       )
      )
      ;; code offset: 0x25a
-     (br_if $label$18
+     (br_if $block3
       ;; code offset: 0x259
       (i32.eq
        ;; code offset: 0x254
@@ -5490,7 +5494,7 @@ file_names[  4]:
       (i32.const 0)
      )
      ;; code offset: 0x267
-     (loop $label$19
+     (loop $label9
       ;; code offset: 0x26b
       (local.set $10
        ;; code offset: 0x269
@@ -5522,7 +5526,7 @@ file_names[  4]:
          (i32.const 1)
         )
         ;; code offset: 0x27f
-        (loop $label$21
+        (loop $label8
          ;; code offset: 0x28e
          (local.set $14
           ;; code offset: 0x28b
@@ -5575,7 +5579,7 @@ file_names[  4]:
           (local.get $14)
          )
          ;; code offset: 0x2b8
-         (br_if $label$21
+         (br_if $label8
           ;; code offset: 0x2b7
           (i32.lt_s
            ;; code offset: 0x2ae
@@ -5647,7 +5651,7 @@ file_names[  4]:
        (local.get $1)
       )
       ;; code offset: 0x2df
-      (br_if $label$19
+      (br_if $label9
        ;; code offset: 0x2dd
        (local.get $1)
       )
@@ -5671,7 +5675,7 @@ file_names[  4]:
      )
     )
     ;; code offset: 0x2f4
-    (br_if $label$1
+    (br_if $block2
      ;; code offset: 0x2f3
      (i32.ge_s
       ;; code offset: 0x2ef
@@ -5681,7 +5685,7 @@ file_names[  4]:
      )
     )
     ;; code offset: 0x2f6
-    (loop $label$22
+    (loop $label12
      ;; code offset: 0x2fa
      (local.set $1
       ;; code offset: 0x2f8
@@ -5698,7 +5702,7 @@ file_names[  4]:
       )
       (then
        ;; code offset: 0x303
-       (loop $label$24
+       (loop $label10
         ;; code offset: 0x31d
         (i32.store
          ;; code offset: 0x30c
@@ -5738,7 +5742,7 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x325
-        (br_if $label$24
+        (br_if $label10
          ;; code offset: 0x324
          (i32.ne
           ;; code offset: 0x320
@@ -5804,7 +5808,7 @@ file_names[  4]:
       )
      )
      ;; code offset: 0x356
-     (br_if $label$15
+     (br_if $label11
       ;; code offset: 0x355
       (i32.gt_s
        ;; code offset: 0x351
@@ -5814,7 +5818,7 @@ file_names[  4]:
       )
      )
      ;; code offset: 0x362
-     (br_if $label$1
+     (br_if $block2
       ;; code offset: 0x361
       (i32.eq
        ;; code offset: 0x35d
@@ -5840,9 +5844,13 @@ file_names[  4]:
       )
      )
      ;; code offset: 0x36b
-     (br $label$22)
+     (br $label12)
     )
+    ;; code offset: 0x36e
+    (unreachable)
    )
+   ;; code offset: 0x370
+   (unreachable)
   )
   ;; code offset: 0x374
   (call $free
@@ -5870,8 +5878,8 @@ file_names[  4]:
   (local $6 i32)
   (local $7 i32)
   (local $8 i32)
-  (local $9 i32)
-  (local $10 i32)
+  (local $scratch i32)
+  (local $scratch_10 i32)
   ;; code offset: 0x399
   (global.set $global$0
    ;; code offset: 0x397
@@ -5886,9 +5894,9 @@ file_names[  4]:
    )
   )
   ;; code offset: 0x39b
-  (block $label$1
+  (block $block1
    ;; code offset: 0x39d
-   (block $label$2
+   (block $block
     ;; code offset: 0x3a4
     (if
      ;; code offset: 0x3a3
@@ -5900,7 +5908,7 @@ file_names[  4]:
      )
      (then
       ;; code offset: 0x3b2
-      (br_if $label$2
+      (br_if $block
        ;; code offset: 0x3b1
        (i32.gt_s
         ;; code offset: 0x3ad
@@ -5934,7 +5942,7 @@ file_names[  4]:
      (i32.const 1)
     )
     ;; code offset: 0x3bf
-    (br $label$1)
+    (br $block1)
    )
    ;; code offset: 0x3c7
    (if
@@ -5967,7 +5975,7 @@ file_names[  4]:
       (i32.const 0)
      )
      ;; code offset: 0x3d8
-     (loop $label$5
+     (loop $label
       ;; code offset: 0x3e2
       (i32.store offset=8
        ;; code offset: 0x3de
@@ -6001,7 +6009,7 @@ file_names[  4]:
        (local.get $4)
       )
       ;; code offset: 0x401
-      (br_if $label$5
+      (br_if $label
        ;; code offset: 0x400
        (i32.ne
         ;; code offset: 0x3fc
@@ -6051,11 +6059,11 @@ file_names[  4]:
     )
    )
    ;; code offset: 0x41a
-   (block $label$6
+   (block $block4
     ;; code offset: 0x41c
-    (block $label$7
+    (block $block3
      ;; code offset: 0x41e
-     (block $label$8
+     (block $block2
       ;; code offset: 0x425
       (if
        ;; code offset: 0x424
@@ -6067,7 +6075,7 @@ file_names[  4]:
        )
        (then
         ;; code offset: 0x427
-        (loop $label$10
+        (loop $label1
          ;; code offset: 0x433
          (i32.store
           ;; code offset: 0x430
@@ -6086,7 +6094,7 @@ file_names[  4]:
           (local.get $0)
          )
          ;; code offset: 0x440
-         (br_if $label$10
+         (br_if $label1
           ;; code offset: 0x43f
           (i32.ne
            ;; code offset: 0x43b
@@ -6115,7 +6123,7 @@ file_names[  4]:
          (local.get $3)
         )
         ;; code offset: 0x44b
-        (br $label$8)
+        (br $block2)
        )
       )
       ;; code offset: 0x450
@@ -6129,17 +6137,17 @@ file_names[  4]:
        (local.get $3)
       )
       ;; code offset: 0x456
-      (br $label$7)
+      (br $block3)
      )
      ;; code offset: 0x459
-     (loop $label$11
+     (loop $label6
       ;; code offset: 0x45d
       (local.set $0
        ;; code offset: 0x45b
        (i32.const 0)
       )
       ;; code offset: 0x45f
-      (loop $label$12
+      (loop $label2
        ;; code offset: 0x471
        (i32.store offset=16
         ;; code offset: 0x461
@@ -6181,7 +6189,7 @@ file_names[  4]:
         )
        )
        ;; code offset: 0x489
-       (br_if $label$12
+       (br_if $label2
         ;; code offset: 0x488
         (i32.ne
          ;; code offset: 0x484
@@ -6218,7 +6226,7 @@ file_names[  4]:
        )
        (then
         ;; code offset: 0x498
-        (loop $label$14
+        (loop $label3
          ;; code offset: 0x4a9
          (i32.store
           ;; code offset: 0x4a6
@@ -6244,10 +6252,9 @@ file_names[  4]:
           ;; code offset: 0x4a7
           (local.get $2)
          )
-         ;; code offset: 0x4b5
-         (br_if $label$14
+         (br_if $label3
           (block (result i32)
-           (local.set $9
+           (local.set $scratch
             ;; code offset: 0x4b0
             (i32.gt_s
              ;; code offset: 0x4ac
@@ -6261,14 +6268,15 @@ file_names[  4]:
             ;; code offset: 0x4b1
             (local.get $0)
            )
-           (local.get $9)
+           ;; code offset: 0x4b5
+           (local.get $scratch)
           )
          )
         )
        )
       )
       ;; code offset: 0x4be
-      (br_if $label$6
+      (br_if $block4
        ;; code offset: 0x4bd
        (i32.eq
         ;; code offset: 0x4b9
@@ -6288,7 +6296,7 @@ file_names[  4]:
        )
       )
       ;; code offset: 0x4c7
-      (loop $label$15
+      (loop $label5
        ;; code offset: 0x4cb
        (local.set $0
         ;; code offset: 0x4c9
@@ -6313,7 +6321,7 @@ file_names[  4]:
         )
         (then
          ;; code offset: 0x4db
-         (loop $label$17
+         (loop $label4
           ;; code offset: 0x4f5
           (i32.store
            ;; code offset: 0x4e4
@@ -6353,7 +6361,7 @@ file_names[  4]:
            )
           )
           ;; code offset: 0x4fd
-          (br_if $label$17
+          (br_if $label4
            ;; code offset: 0x4fc
            (i32.ne
             ;; code offset: 0x4f8
@@ -6429,7 +6437,7 @@ file_names[  4]:
         )
         (then
          ;; code offset: 0x53a
-         (br_if $label$15
+         (br_if $label5
           ;; code offset: 0x539
           (i32.ne
            ;; code offset: 0x535
@@ -6447,21 +6455,21 @@ file_names[  4]:
           )
          )
          ;; code offset: 0x53c
-         (br $label$6)
+         (br $block4)
         )
        )
       )
       ;; code offset: 0x542
-      (br_if $label$11
+      (br_if $label6
        ;; code offset: 0x540
        (local.get $6)
       )
      )
      ;; code offset: 0x545
-     (br $label$6)
+     (br $block4)
     )
     ;; code offset: 0x548
-    (loop $label$19
+    (loop $label10
      ;; code offset: 0x54e
      (drop
       ;; code offset: 0x54c
@@ -6481,7 +6489,7 @@ file_names[  4]:
       )
       (then
        ;; code offset: 0x556
-       (loop $label$21
+       (loop $label7
         ;; code offset: 0x567
         (i32.store
          ;; code offset: 0x564
@@ -6507,10 +6515,9 @@ file_names[  4]:
          ;; code offset: 0x565
          (local.get $2)
         )
-        ;; code offset: 0x573
-        (br_if $label$21
+        (br_if $label7
          (block (result i32)
-          (local.set $10
+          (local.set $scratch_10
            ;; code offset: 0x56e
            (i32.gt_s
             ;; code offset: 0x56a
@@ -6524,14 +6531,15 @@ file_names[  4]:
            ;; code offset: 0x56f
            (local.get $0)
           )
-          (local.get $10)
+          ;; code offset: 0x573
+          (local.get $scratch_10)
          )
         )
        )
       )
      )
      ;; code offset: 0x57c
-     (br_if $label$6
+     (br_if $block4
       ;; code offset: 0x57b
       (i32.eq
        ;; code offset: 0x577
@@ -6551,7 +6559,7 @@ file_names[  4]:
       )
      )
      ;; code offset: 0x585
-     (loop $label$22
+     (loop $label9
       ;; code offset: 0x58c
       (local.set $7
        ;; code offset: 0x589
@@ -6576,7 +6584,7 @@ file_names[  4]:
        )
        (then
         ;; code offset: 0x599
-        (loop $label$24
+        (loop $label8
          ;; code offset: 0x5b3
          (i32.store
           ;; code offset: 0x5a2
@@ -6616,7 +6624,7 @@ file_names[  4]:
           )
          )
          ;; code offset: 0x5bb
-         (br_if $label$24
+         (br_if $label8
           ;; code offset: 0x5ba
           (i32.ne
            ;; code offset: 0x5b6
@@ -6692,7 +6700,7 @@ file_names[  4]:
        )
        (then
         ;; code offset: 0x5f8
-        (br_if $label$22
+        (br_if $label9
          ;; code offset: 0x5f7
          (i32.ne
           ;; code offset: 0x5f3
@@ -6710,12 +6718,12 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x5fa
-        (br $label$6)
+        (br $block4)
        )
       )
      )
      ;; code offset: 0x600
-     (br_if $label$19
+     (br_if $label10
       ;; code offset: 0x5fe
       (local.get $6)
      )
@@ -6747,7 +6755,7 @@ file_names[  4]:
     (local.get $4)
     (then
      ;; code offset: 0x618
-     (loop $label$27
+     (loop $label11
       ;; code offset: 0x61e
       (local.set $1
        ;; code offset: 0x61c
@@ -6792,7 +6800,7 @@ file_names[  4]:
        (local.get $2)
       )
       ;; code offset: 0x63d
-      (br_if $label$27
+      (br_if $label11
        ;; code offset: 0x63b
        (local.get $2)
       )

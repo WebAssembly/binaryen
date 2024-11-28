@@ -150,6 +150,12 @@ void IRBuilder::push(Expression* expr) {
   scope.exprStack.push_back(expr);
 
   applyDebugLoc(expr);
+  if (binaryPos && func && lastBinaryPos != *binaryPos) {
+    func->expressionLocations[expr] =
+      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
+                            BinaryLocation(*binaryPos - codeSectionOffset)};
+    lastBinaryPos = *binaryPos;
+  }
 
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
@@ -708,6 +714,11 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
   this->func = func;
+
+  if (binaryPos) {
+    lastBinaryPos = *binaryPos;
+  }
+
   return Ok{};
 }
 
@@ -841,6 +852,12 @@ Result<> IRBuilder::visitElse() {
   auto expr = finishScope();
   CHECK_ERR(expr);
   iff->ifTrue = *expr;
+
+  if (binaryPos && func) {
+    func->delimiterLocations[iff][BinaryLocations::Else] =
+      lastBinaryPos - codeSectionOffset;
+  }
+
   pushScope(ScopeCtx::makeElse(iff, originalLabel, label, labelUsed));
   return Ok{};
 }
@@ -868,6 +885,12 @@ Result<> IRBuilder::visitCatch(Name tag) {
     tryy->catchBodies.push_back(*expr);
   }
   tryy->catchTags.push_back(tag);
+
+  if (binaryPos && func) {
+    auto& delimiterLocs = func->delimiterLocations[tryy];
+    delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+  }
+
   pushScope(
     ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel));
   // Push a pop for the exception payload if necessary.
@@ -878,6 +901,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     scopeStack[0].notePop();
     push(builder.makePop(params));
   }
+
   return Ok{};
 }
 
@@ -903,6 +927,12 @@ Result<> IRBuilder::visitCatchAll() {
   } else {
     tryy->catchBodies.push_back(*expr);
   }
+
+  if (binaryPos && func) {
+    auto& delimiterLocs = func->delimiterLocations[tryy];
+    delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+  }
+
   pushScope(
     ScopeCtx::makeCatchAll(tryy, originalLabel, label, labelUsed, branchLabel));
   return Ok{};
@@ -979,6 +1009,10 @@ Result<> IRBuilder::visitEnd() {
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
     return block;
   };
+
+  // The binary position we record for the block instruction should start at the
+  // beginning of the block, not at the beginning of the `end`.
+  lastBinaryPos = scope.startPos;
 
   if (auto* func = scope.getFunction()) {
     func->body = maybeWrapForLabel(*expr);
@@ -1412,9 +1446,7 @@ Result<> IRBuilder::makeBinary(BinaryOp op) {
 Result<> IRBuilder::makeSelect(std::optional<Type> type) {
   Select curr;
   CHECK_ERR(visitSelect(&curr));
-  auto* built =
-    type ? builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse, *type)
-         : builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse);
+  auto* built = builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse);
   if (type && !Type::isSubType(built->type, *type)) {
     return Err{"select type does not match expected type"};
   }

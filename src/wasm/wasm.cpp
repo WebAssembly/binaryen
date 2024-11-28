@@ -215,28 +215,20 @@ void Block::finalize(std::optional<Type> type_, Breakability breakability) {
 }
 
 void If::finalize(std::optional<Type> type_) {
-  if (type_) {
-    type = *type_;
-    if (type == Type::none && (condition->type == Type::unreachable ||
-                               (ifFalse && ifTrue->type == Type::unreachable &&
-                                ifFalse->type == Type::unreachable))) {
-      type = Type::unreachable;
-    }
+  // The If is unreachable if the condition is unreachable or both arms are
+  // unreachable.
+  if (condition->type == Type::unreachable ||
+      (ifFalse && ifTrue->type == Type::unreachable &&
+       ifFalse->type == Type::unreachable)) {
+    type = Type::unreachable;
     return;
   }
 
-  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
-                 : Type::none;
-  // if the arms return a value, leave it even if the condition
-  // is unreachable, we still mark ourselves as having that type, e.g.
-  // (if (result i32)
-  //  (unreachable)
-  //  (i32.const 10)
-  //  (i32.const 20)
-  // )
-  // otherwise, if the condition is unreachable, so is the if
-  if (type == Type::none && condition->type == Type::unreachable) {
-    type = Type::unreachable;
+  if (type_) {
+    type = *type_;
+  } else {
+    type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                   : Type::none;
   }
 }
 
@@ -774,16 +766,6 @@ void Binary::finalize() {
     type = Type::i32;
   } else {
     type = left->type;
-  }
-}
-
-void Select::finalize(Type type_) {
-  assert(ifTrue && ifFalse);
-  if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||
-      condition->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = type_;
   }
 }
 

@@ -106,6 +106,14 @@ static Type forceConcrete(Type type) {
   return type.isConcrete() ? type : Type::i32;
 }
 
+// Whatever type we print must be valid for the alignment.
+static Type forceConcrete(Type type, Index align) {
+  return type.isConcrete() ? type
+         : align >= 16     ? Type::v128
+         : align >= 8      ? Type::i64
+                           : Type::i32;
+}
+
 struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
@@ -481,9 +489,16 @@ struct PrintExpressionContents
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
-    if (curr->type.isConcrete()) {
+    // Ifs are unreachable if their condition is unreachable, but in that case
+    // the arms might have some concrete type we have to account for to produce
+    // valid wat.
+    auto type = curr->type;
+    if (curr->condition->type == Type::unreachable && curr->ifFalse) {
+      type = Type::getLeastUpperBound(curr->ifTrue->type, curr->ifFalse->type);
+    }
+    if (type.isConcrete()) {
       o << ' ';
-      printBlockType(Signature(Type::none, curr->type));
+      printBlockType(Signature(Type::none, type));
     }
   }
   void visitLoop(Loop* curr) {
@@ -567,7 +582,7 @@ struct PrintExpressionContents
     curr->name.print(o);
   }
   void visitLoad(Load* curr) {
-    prepareColor(o) << forceConcrete(curr->type);
+    prepareColor(o) << forceConcrete(curr->type, curr->align);
     if (curr->isAtomic) {
       o << ".atomic";
     }
@@ -2248,7 +2263,14 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast ");
         curr->name.print(o);
         o << ' ';
-        printType(curr->ref->type);
+        if (curr->ref->type == Type::unreachable) {
+          // Need to print some reference type in the correct hierarchy rather
+          // than unreachable, and the cast type itself is the best possible
+          // option.
+          printType(curr->castType);
+        } else {
+          printType(curr->ref->type);
+        }
         o << ' ';
         printType(curr->castType);
         return;
@@ -2256,7 +2278,11 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast_fail ");
         curr->name.print(o);
         o << ' ';
-        printType(curr->ref->type);
+        if (curr->ref->type == Type::unreachable) {
+          printType(curr->castType);
+        } else {
+          printType(curr->ref->type);
+        }
         o << ' ';
         printType(curr->castType);
         return;

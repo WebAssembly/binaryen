@@ -637,9 +637,9 @@ file_names[  1]:
    (i32.const 1)
   )
   ;; code offset: 0x12
-  (block $label$1
+  (block $block
    ;; code offset: 0x19
-   (br_if $label$1
+   (br_if $block
     ;; code offset: 0x18
     (i32.lt_s
      ;; code offset: 0x14
@@ -659,7 +659,7 @@ file_names[  1]:
     (i32.const 0)
    )
    ;; code offset: 0x23
-   (loop $label$2
+   (loop $label
     ;; code offset: 0x2c
     (local.set $1
      ;; code offset: 0x2b
@@ -679,7 +679,7 @@ file_names[  1]:
      (local.get $4)
     )
     ;; code offset: 0x3c
-    (br_if $label$2
+    (br_if $label
      ;; code offset: 0x3b
      (i32.ne
       ;; code offset: 0x37

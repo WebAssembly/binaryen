@@ -122,7 +122,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
   }
   void visitIf(If* curr) {
-    if (curr->ifFalse) {
+    if (curr->ifFalse && curr->type != Type::unreachable) {
       self()->noteSubtype(curr->ifTrue, curr);
       self()->noteSubtype(curr->ifFalse, curr);
     }

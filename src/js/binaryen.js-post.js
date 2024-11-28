@@ -2331,8 +2331,8 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['select'] = function(condition, ifTrue, ifFalse, type) {
-    return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse, typeof type !== 'undefined' ? type : Module['auto']);
+  self['select'] = function(condition, ifTrue, ifFalse) {
+    return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
   };
   self['drop'] = function(value) {
     return Module['_BinaryenDrop'](module, value);
@@ -2673,9 +2673,6 @@ function wrapModule(module, self = {}) {
     return preserveStack(() =>
       Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(passes.map(strToStack)), passes.length)
     );
-  };
-  self['autoDrop'] = function() {
-    return Module['_BinaryenModuleAutoDrop'](module);
   };
   self['dispose'] = function() {
     Module['_BinaryenModuleDispose'](module);

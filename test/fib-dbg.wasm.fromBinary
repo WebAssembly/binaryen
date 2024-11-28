@@ -50,7 +50,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (func $stackAlloc (param $0 i32) (result i32)
   (local $1 i32)
-  (block $label$1
+  (block
    (local.set $1
     (global.get $global$3)
    )
@@ -72,7 +72,9 @@
    (return
     (local.get $1)
    )
+   (unreachable)
   )
+  (unreachable)
  )
  (func $stackSave (result i32)
   (return
@@ -85,13 +87,11 @@
   )
  )
  (func $establishStackSpace (param $0 i32) (param $1 i32)
-  (block $label$1
-   (global.set $global$3
-    (local.get $0)
-   )
-   (global.set $global$4
-    (local.get $1)
-   )
+  (global.set $global$3
+   (local.get $0)
+  )
+  (global.set $global$4
+   (local.get $1)
   )
  )
  (func $setThrew (param $0 i32) (param $1 i32)
@@ -122,7 +122,7 @@
   (local $9 i32)
   (local $10 i32)
   (local $11 i32)
-  (block $label$1
+  (block
    (local.set $11
     (global.get $global$3)
    )
@@ -158,8 +158,8 @@
     )
    )
    ;;@ fib.c:8:0
-   (loop $label$4
-    (block $label$5
+   (loop $label
+    (block $block
      ;;@ fib.c:4:0
      (local.set $3
       (i32.add
@@ -188,7 +188,7 @@
        (local.set $4
         (local.get $3)
        )
-       (br $label$5)
+       (br $block)
       )
       (else
        (local.set $2
@@ -206,14 +206,20 @@
       )
      )
      ;;@ fib.c:3:0
-     (br $label$4)
+     (br $label)
     )
    )
    ;;@ fib.c:8:0
    (return
     (local.get $4)
    )
+   ;;@ fib.c:8:0
+   (unreachable)
+   ;;@ fib.c:8:0
+   (unreachable)
   )
+  ;;@ fib.c:8:0
+  (unreachable)
   ;;@ fib.c:8:0
  )
  (func $runPostSets

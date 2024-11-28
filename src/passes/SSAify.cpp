@@ -150,7 +150,7 @@ struct SSAify : public Pass {
               LiteralUtils::makeZero(get->type, *module);
             // If we replace a local.get with a null then we are refining the
             // type that the parent receives to a bottom type.
-            if (get->type.isRef()) {
+            if (get->type.hasRef()) {
               refinalize = true;
             }
           } else {

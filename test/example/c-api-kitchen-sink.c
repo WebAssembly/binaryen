@@ -973,7 +973,7 @@ void test_core() {
     // All the rest
     BinaryenBlock(module, NULL, NULL, 0, -1), // block with no name and no type
     BinaryenIf(module, temp1, temp2, temp3),
-    BinaryenIf(module, temp4, temp5, NULL),
+    BinaryenIf(module, temp4, BinaryenDrop(module, temp5), NULL),
     BinaryenLoop(module, "in", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, makeInt32(module, 0)),
     BinaryenBreak(module, "the-value", temp6, temp7),
@@ -1021,7 +1021,7 @@ void test_core() {
       module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9), "0"),
     BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32(), "0"),
     BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64(), "0"),
-    BinaryenSelect(module, temp10, temp11, temp12, BinaryenTypeAuto()),
+    BinaryenSelect(module, temp10, temp11, temp12),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // Tail call
     BinaryenReturnCall(
@@ -1040,8 +1040,7 @@ void test_core() {
       module,
       temp10,
       BinaryenRefNull(module, BinaryenTypeNullFuncref()),
-      BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref()),
-      BinaryenTypeFuncref()),
+      BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref())),
     // GC
     BinaryenRefEq(module,
                   BinaryenRefNull(module, BinaryenTypeNullref()),
@@ -1233,6 +1232,14 @@ void test_core() {
   BinaryenExpressionPrint(
     valueList[3]); // test printing a standalone expression
 
+  // Add drops of concrete expressions
+  for (int i = 0; i < sizeof(valueList) / sizeof(valueList[0]); ++i) {
+    BinaryenType type = BinaryenExpressionGetType(valueList[i]);
+    if (type != BinaryenTypeNone() && type != BinaryenTypeUnreachable()) {
+      valueList[i] = BinaryenDrop(module, valueList[i]);
+    }
+  }
+
   // Make the main body of the function. and one block with a return value, one
   // without
   BinaryenExpressionRef value =
@@ -1360,9 +1367,6 @@ void test_core() {
                                                     0,
                                                     BinaryenNop(module));
   BinaryenSetStart(module, starter);
-
-  // A bunch of our code needs drop(), auto-add it
-  BinaryenModuleAutoDrop(module);
 
   BinaryenFeatures features = BinaryenFeatureAll();
   BinaryenModuleSetFeatures(module, features);

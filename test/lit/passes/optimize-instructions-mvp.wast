@@ -5754,15 +5754,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.tee $0
   ;; CHECK-NEXT:      (local.get $1)
@@ -5775,7 +5773,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (i32.add
@@ -15718,23 +15716,21 @@
       )
     )
   )
-  ;; CHECK:      (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
-  ;; CHECK-NEXT:  (if (result i32)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (return
+  ;; CHECK:      (func $if-unreachable-return-identical (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (else
-  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (local.get $z)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
-    ;; if we move the returns outside, we'd become unreachable; avoid that.
+  (func $if-unreachable-return-identical (param $x i32) (param $y i32) (param $z i32) (result i32)
+    ;; We can move the returns outside because we are already unreachable.
     (if (result i32)
       (local.get $x)
       (then

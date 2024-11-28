@@ -864,4 +864,33 @@
    )
   )
  )
+
+ ;; CHECK:      (func $select-refinalize (type $13) (param $param (ref $struct)) (result (ref struct))
+ ;; CHECK-NEXT:  (select (result (ref $struct))
+ ;; CHECK-NEXT:   (select (result (ref $struct))
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $select-refinalize (param $param (ref $struct)) (result (ref struct))
+  ;; The inner if can turn into a select. The type then changes, allowing the
+  ;; outer select to be refined, which will error if we do not refinalize.
+  (select (result (ref struct))
+   (if (result (ref struct))
+    (i32.const 0)
+    (then
+     (struct.new_default $struct)
+    )
+    (else
+     (struct.new_default $struct)
+    )
+   )
+   (local.get $param)
+   (i32.const 0)
+  )
+ )
 )

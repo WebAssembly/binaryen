@@ -47,6 +47,10 @@ public:
   // of instructions after this is called.
   Result<Expression*> build();
 
+  // If the IRBuilder is empty, then it's ready to parse a new self-contained
+  // sequence of instructions.
+  [[nodiscard]] bool empty() { return scopeStack.empty(); }
+
   // Call visit() on an existing Expression with its non-child fields
   // initialized to initialize the child fields and refinalize it.
   Result<> visit(Expression*);
@@ -58,6 +62,15 @@ public:
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
   void setDebugLocation(const std::optional<Function::DebugLocation>&);
+
+  // Give the builder a pointer to the counter tracking the current location in
+  // the binary. If this pointer is non-null, the builder will record the binary
+  // locations relative to the given code section offset for all instructions
+  // and delimiters inside functions.
+  void setBinaryLocation(size_t* binaryPos, size_t codeSectionOffset) {
+    this->binaryPos = binaryPos;
+    this->codeSectionOffset = codeSectionOffset;
+  }
 
   // Set the function used to add scratch locals when constructing an isolated
   // sequence of IR.
@@ -237,6 +250,11 @@ private:
   Function* func = nullptr;
   Builder builder;
 
+  // Used for setting DWARF expression locations.
+  size_t* binaryPos = nullptr;
+  size_t lastBinaryPos = 0;
+  size_t codeSectionOffset = 0;
+
   // The location lacks debug info as it was marked as not having it.
   struct NoDebug : public std::monostate {};
   // The location lacks debug info, but was not marked as not having
@@ -320,6 +338,9 @@ private:
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.
     bool unreachable = false;
+
+    // The binary location of the start of the scope, used to set debug info.
+    size_t startPos = 0;
 
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
@@ -533,6 +554,10 @@ private:
       }
       // Record the original label to handle references to it correctly.
       labelDepths[label].push_back(scopeStack.size() + 1);
+    }
+    if (binaryPos) {
+      scope.startPos = lastBinaryPos;
+      lastBinaryPos = *binaryPos;
     }
     scopeStack.push_back(scope);
   }

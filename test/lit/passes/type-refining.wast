@@ -1519,3 +1519,58 @@
     )
   )
 )
+
+;; Regression test for a bug (#7103) in which the set of public types was
+;; computed incorrectly, leading to an assertion failure.
+(module
+ ;; CHECK:      (type $1 (sub (struct (field (mut (ref null $1))))))
+ (type $1 (sub (struct (field (mut (ref null $1))))))
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $7 (sub (struct (field (ref $1)))))
+
+  ;; CHECK:       (type $8 (sub (func)))
+
+  ;; CHECK:      (type $3 (func (result (ref null $8))))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $5 (sub (struct (field (ref $3)))))
+  (type $5 (sub (struct (field (ref func)))))
+  ;; CHECK:       (type $6 (sub $1 (struct (field (mut (ref null $1))))))
+  (type $6 (sub $1 (struct (field (mut (ref null $1))))))
+ )
+ (rec
+  (type $7 (sub (struct (field (ref $1)))))
+  (type $8 (sub (func)))
+ )
+ ;; CHECK:       (type $9 (sub $6 (struct (field (mut (ref null $1))))))
+ (type $9 (sub $6 (struct (field (mut (ref null $1))))))
+
+ ;; CHECK:      (elem declare func $1)
+
+ ;; CHECK:      (export "func" (func $1))
+ (export "func" (func $1))
+
+ ;; CHECK:      (func $1 (type $3) (result (ref null $8))
+ ;; CHECK-NEXT:  (local $l (ref $9))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $5 0
+ ;; CHECK-NEXT:    (struct.new $5
+ ;; CHECK-NEXT:     (ref.func $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null nofunc)
+ ;; CHECK-NEXT: )
+ (func $1 (result (ref null $8))
+  (local $l (ref $9))
+  (drop
+   (struct.get $5 0
+    (struct.new $5
+     (ref.func $1)
+    )
+   )
+  )
+  (ref.null $8)
+ )
+)

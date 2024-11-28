@@ -270,6 +270,13 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
     options.passOptions.closedWorld = true;
   }
 
+  // Prune things that error in JS if we call them (like SIMD), some of the
+  // time. This alters the wasm/JS boundary quite a lot, so testing both forms
+  // is useful.
+  if (oneIn(2)) {
+    options.passes.push_back("legalize-and-prune-js-interface");
+  }
+
   // Usually DCE at the very end, to ensure that our binaries validate in other
   // VMs, due to how non-nullable local validation and unreachable code
   // interact. See fuzz_opt.py and
@@ -3801,15 +3808,14 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
   WASM_UNREACHABLE("invalid type");
 }
 
-Expression* TranslateToFuzzReader::buildSelect(const ThreeArgs& args,
-                                               Type type) {
-  return builder.makeSelect(args.a, args.b, args.c, type);
+Expression* TranslateToFuzzReader::buildSelect(const ThreeArgs& args) {
+  return builder.makeSelect(args.a, args.b, args.c);
 }
 
 Expression* TranslateToFuzzReader::makeSelect(Type type) {
   Type subType1 = getSubType(type);
   Type subType2 = getSubType(type);
-  return buildSelect({make(Type::i32), make(subType1), make(subType2)}, type);
+  return buildSelect({make(Type::i32), make(subType1), make(subType2)});
 }
 
 Expression* TranslateToFuzzReader::makeSwitch(Type type) {
