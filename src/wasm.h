@@ -1983,10 +1983,7 @@ public:
   ExpressionList operands;
   Expression* cont;
 
-  // When 'Module*' parameter is given, we populate the 'sentTypes' array, so
-  // that the types can be accessed in other analyses without accessing the
-  // module.
-  void finalize(Module* wasm = nullptr);
+  void finalize();
 
   // sentTypes[i] contains the type of the values that will be sent to the block
   // handlerBlocks[i] if suspending with tag handlerTags[i]. Not part of the
@@ -2011,10 +2008,7 @@ public:
   ExpressionList operands;
   Expression* cont;
 
-  // When 'Module*' parameter is given, we populate the 'sentTypes' array, so
-  // that the types can be accessed in other analyses without accessing the
-  // module.
-  void finalize(Module* wasm = nullptr);
+  void finalize();
 
   // sentTypes[i] contains the type of the values that will be sent to the block
   // handlerBlocks[i] if suspending with tag handlerTags[i]. Not part of the
@@ -2035,7 +2029,7 @@ public:
   Expression* cont;
 
   // We need access to the module to obtain the signature of the tag.
-  void finalize(Module* wasm = nullptr);
+  void finalize();
 };
 
 // Globals

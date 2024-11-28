@@ -8019,7 +8019,6 @@ static void readResumeTable(WasmBinaryReader* reader, ResumeType* curr) {
 }
 
 void WasmBinaryReader::visitResume(Resume* curr) {
-
   curr->contType = getIndexedHeapType();
   if (!curr->contType.isContinuation()) {
     throwError("non-continuation type in resume instruction " +
@@ -8037,7 +8036,7 @@ void WasmBinaryReader::visitResume(Resume* curr) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();
   }
 
-  curr->finalize(&wasm);
+  curr->finalize();
 }
 
 void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
@@ -8061,7 +8060,7 @@ void WasmBinaryReader::visitResumeThrow(ResumeThrow* curr) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();
   }
 
-  curr->finalize(&wasm);
+  curr->finalize();
 }
 
 void WasmBinaryReader::visitStackSwitch(StackSwitch* curr) {
@@ -8086,7 +8085,7 @@ void WasmBinaryReader::visitStackSwitch(StackSwitch* curr) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();
   }
 
-  curr->finalize(&wasm);
+  curr->finalize();
 }
 
 void WasmBinaryReader::throwError(std::string text) {

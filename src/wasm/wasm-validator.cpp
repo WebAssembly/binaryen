@@ -3502,9 +3502,9 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                "cont.bind requires stack-switching [--enable-stack-switching]");
 
   shouldBeTrue(
-    (curr->sourceType.isContinuation() &&
-     curr->sourceType.getContinuation().type.isSignature()) ||
-      Type(curr->sourceType, Nullable) == Type::unreachable,
+    (curr->cont->type.isContinuation() &&
+     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
+      curr->cont->type == Type::unreachable,
     curr,
     "the first type annotation on cont.bind must be a continuation type");
 
@@ -3534,11 +3534,12 @@ void FunctionValidator::visitResume(Resume* curr) {
     curr,
     "sentTypes cache in resume instruction has not been initialized");
 
-  shouldBeTrue((curr->contType.isContinuation() &&
-                curr->contType.getContinuation().type.isSignature()) ||
-                 curr->type == Type::unreachable,
-               curr,
-               "resume must be annotated with a continuation type");
+  shouldBeTrue(
+    (curr->cont->type.isContinuation() &&
+     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
+      curr->type == Type::unreachable,
+    curr,
+    "resume must be annotated with a continuation type");
 }
 
 void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
@@ -3555,11 +3556,12 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "sentTypes cache in resume_throw instruction has not been initialized");
 
-  shouldBeTrue((curr->contType.isContinuation() &&
-                curr->contType.getContinuation().type.isSignature()) ||
-                 curr->type == Type::unreachable,
-               curr,
-               "resume_throw must be annotated with a continuation type");
+  shouldBeTrue(
+    (curr->cont->type.isContinuation() &&
+     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
+      curr->type == Type::unreachable,
+    curr,
+    "resume_throw must be annotated with a continuation type");
 
   auto* tag = getModule()->getTagOrNull(curr->tag);
   if (!shouldBeTrue(!!tag, curr, "resume_throw must be annotated with a tag")) {
@@ -3573,11 +3575,12 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
                curr,
                "switch requires stack-switching [--enable-stack-switching]");
 
-  shouldBeTrue((curr->contType.isContinuation() &&
-                curr->contType.getContinuation().type.isSignature()) ||
-                 curr->type == Type::unreachable,
-               curr,
-               "switch must be annotated with a continuation type");
+  shouldBeTrue(
+    (curr->cont->type.isContinuation() &&
+     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
+      curr->type == Type::unreachable,
+    curr,
+    "switch must be annotated with a continuation type");
 
   auto* tag = getModule()->getTagOrNull(curr->tag);
   if (!shouldBeTrue(!!tag, curr, "switch must be annotated with a tag")) {

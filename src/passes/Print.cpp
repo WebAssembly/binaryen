@@ -386,29 +386,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void visitContBind(ContBind* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->sourceType, Nullable)) &&
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResume(Resume* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->contType, Nullable)) &&
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResumeThrow(ResumeThrow* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->contType, Nullable)) &&
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitStackSwitch(StackSwitch* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(
-          curr, Type(curr->contType, Nullable)) &&
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
         !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
@@ -2461,12 +2457,14 @@ struct PrintExpressionContents
     printMedium(o, "stringview_wtf16.slice");
   }
   void visitContNew(ContNew* curr) {
+    assert(curr->type.isContinuation());
     printMedium(o, "cont.new ");
     printHeapType(curr->type.getHeapType());
   }
   void visitContBind(ContBind* curr) {
+    assert(curr->cont->type.isContinuation() && curr->type.isContinuation());
     printMedium(o, "cont.bind ");
-    printHeapType(curr->sourceType);
+    printHeapType(curr->cont->type.getHeapType());
     o << ' ';
     printHeapType(curr->type.getHeapType());
   }
@@ -2492,28 +2490,31 @@ struct PrintExpressionContents
     }
   }
   void visitResume(Resume* curr) {
+    assert(curr->cont->type.isContinuation());
     printMedium(o, "resume");
 
     o << ' ';
-    printHeapType(curr->contType);
+    printHeapType(curr->cont->type.getHeapType());
 
     handleResumeTable(o, curr);
   }
   void visitResumeThrow(ResumeThrow* curr) {
+    assert(curr->cont->type.isContinuation());
     printMedium(o, "resume_throw");
 
     o << ' ';
-    printHeapType(curr->contType);
+    printHeapType(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
 
     handleResumeTable(o, curr);
   }
   void visitStackSwitch(StackSwitch* curr) {
+    assert(curr->cont->type.isContinuation());
     printMedium(o, "switch");
 
     o << ' ';
-    printHeapType(curr->contType);
+    printHeapType(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
   }

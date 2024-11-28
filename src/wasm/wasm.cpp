@@ -1375,8 +1375,12 @@ void ContNew::finalize() {
 }
 
 void ContBind::finalize() {
-  if (handleUnreachableOperands(this)) {
+  if (cont->type == Type::unreachable) {
     type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
   }
 }
 
@@ -1387,32 +1391,45 @@ void Suspend::finalize(Module* wasm) {
   }
 }
 
-void Resume::finalize(Module* wasm) {
+void Resume::finalize() {
   if (cont->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!handleUnreachableOperands(this)) {
-    const Signature& contSig =
-      this->contType.getContinuation().type.getSignature();
-    type = contSig.results;
+    return;
   }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+
+  const Signature& contSig =
+    this->cont->type.getHeapType().getContinuation().type.getSignature();
+  type = contSig.results;
 }
 
-void ResumeThrow::finalize(Module* wasm) {
+void ResumeThrow::finalize() {
   if (cont->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!handleUnreachableOperands(this)) {
-    const Signature& contSig =
-      this->contType.getContinuation().type.getSignature();
-    type = contSig.results;
+    return;
   }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+
+  const Signature& contSig =
+    this->cont->type.getHeapType().getContinuation().type.getSignature();
+  type = contSig.results;
 }
 
-void StackSwitch::finalize(Module* wasm) {
+void StackSwitch::finalize() {
   if (cont->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!handleUnreachableOperands(this) && wasm) {
-    type = this->contType.getContinuation().type.getSignature().params;
+    return;
   }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+
+  type =
+    this->cont->type.getHeapType().getContinuation().type.getSignature().params;
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

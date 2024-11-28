@@ -76,7 +76,10 @@
  )
 
  ;; CHECK-TEXT:      (func $k (type $6) (result (ref $ct1))
- ;; CHECK-TEXT-NEXT:  (cont.bind $ct1 $ct1
+ ;; CHECK-TEXT-NEXT:  (block ;; (replaces unreachable ContBind we can't emit)
+ ;; CHECK-TEXT-NEXT:   (drop
+ ;; CHECK-TEXT-NEXT:    (unreachable)
+ ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:   (unreachable)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )

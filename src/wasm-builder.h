@@ -1207,7 +1207,7 @@ public:
     ret->sentTypes.set(sentTypes);
     ret->operands.set(operands);
     ret->cont = cont;
-    ret->finalize(&wasm);
+    ret->finalize();
     return ret;
   }
   ResumeThrow* makeResumeThrow(HeapType contType,
@@ -1225,7 +1225,7 @@ public:
     ret->sentTypes.set(sentTypes);
     ret->operands.set(operands);
     ret->cont = cont;
-    ret->finalize(&wasm);
+    ret->finalize();
     return ret;
   }
   StackSwitch* makeStackSwitch(HeapType contType,
@@ -1237,7 +1237,7 @@ public:
     ret->tag = tag;
     ret->operands.set(operands);
     ret->cont = cont;
-    ret->finalize(&wasm);
+    ret->finalize();
     return ret;
   }
 
