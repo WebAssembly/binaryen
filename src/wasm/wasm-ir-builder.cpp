@@ -2056,10 +2056,10 @@ IRBuilder::makeResume(HeapType ct,
   curr.operands.resize(contSig.params.size());
   CHECK_ERR(visitResume(&curr));
 
-  Result<ResumeTable> resumetable = std::move(makeResumeTable(
+  Result<ResumeTable> resumetable = makeResumeTable(
     labels,
     [this](Index i) { return this->getLabelName(i); },
-    [this](Index i) { return this->getLabelType(i); }));
+    [this](Index i) { return this->getLabelType(i); });
   CHECK_ERR(resumetable);
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
   push(builder.makeResume(ct,
@@ -2088,10 +2088,10 @@ IRBuilder::makeResumeThrow(HeapType ct,
   curr.operands.resize(wasm.getTag(tag)->sig.params.size());
   CHECK_ERR(visitResumeThrow(&curr));
 
-  Result<ResumeTable> resumetable = std::move(makeResumeTable(
+  Result<ResumeTable> resumetable = makeResumeTable(
     labels,
     [this](Index i) { return this->getLabelName(i); },
-    [this](Index i) { return this->getLabelType(i); }));
+    [this](Index i) { return this->getLabelType(i); });
   CHECK_ERR(resumetable);
 
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
