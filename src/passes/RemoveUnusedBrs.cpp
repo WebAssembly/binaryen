@@ -757,6 +757,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             replaceCurrent(loop);
             worked = true;
           } else if (auto* iff = curr->list[0]->dynCast<If>()) {
+            if (iff->condition->type == Type::unreachable) {
+              // The block result type may not be compatible with the arm result
+              // types since the unreachable If can satisfy any type of block.
+              // Just leave this for DCE.
+              return;
+            }
             // The label can't be used in the condition.
             if (BranchUtils::BranchSeeker::count(iff->condition, curr->name) ==
                 0) {
