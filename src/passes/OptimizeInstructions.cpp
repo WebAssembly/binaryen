@@ -253,7 +253,9 @@ struct OptimizeInstructions
 
     // Some patterns create blocks that can interfere 'catch' and 'pop', nesting
     // the 'pop' into a block making it invalid.
-    EHUtils::handleBlockNestedPops(func, *getModule());
+    if (getModule()->features.hasExceptionHandling()) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
+    }
   }
 
   // Set to true when one of the visitors makes a change (either replacing the

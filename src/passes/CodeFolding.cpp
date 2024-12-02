@@ -525,7 +525,9 @@ private:
     // ensure the replacement has the same type, so the outside is not surprised
     block->finalize(oldType);
     replaceCurrent(block);
-    needEHFixups = true;
+    if (getModule()->features.hasExceptionHandling()) {
+      needEHFixups = true;
+    }
   }
 
   // optimize tails that terminate control flow in this function, so we
@@ -780,7 +782,9 @@ private:
     // ensure the replacement has the same type, so the outside is not surprised
     outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
-    needEHFixups = true;
+    if (getModule()->features.hasExceptionHandling()) {
+      needEHFixups = true;
+    }
     return true;
   }
 

@@ -1236,8 +1236,10 @@ struct Inlining : public Pass {
       std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
 #endif
 
-      for (auto* func : inlinedInto) {
-        EHUtils::handleBlockNestedPops(func, *module);
+      if (module->features.hasExceptionHandling()) {
+        for (auto* func : inlinedInto) {
+          EHUtils::handleBlockNestedPops(func, *module);
+        }
       }
 
       for (auto* func : inlinedInto) {

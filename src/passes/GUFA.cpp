@@ -320,7 +320,9 @@ struct GUFAOptimizer
     }
 
     // We may add blocks around pops, which we must fix up.
-    EHUtils::handleBlockNestedPops(func, *getModule());
+    if (getModule()->features.hasExceptionHandling()) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
+    }
 
     // If we are in "optimizing" mode, we'll also run some more passes on this
     // function that we just optimized. If not, leave now.

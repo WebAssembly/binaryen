@@ -320,7 +320,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
     bool optimized = false;
 
     void visitFunction(Function* curr) {
-      if (optimized) {
+      if (optimized && getModule()->features.hasExceptionHandling()) {
         // Localization can add blocks, which might move pops.
         EHUtils::handleBlockNestedPops(curr, *getModule());
       }
@@ -373,7 +373,7 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
     bool optimized = false;
 
     void visitFunction(Function* curr) {
-      if (optimized) {
+      if (optimized && getModule()->features.hasExceptionHandling()) {
         EHUtils::handleBlockNestedPops(curr, *getModule());
       }
     }

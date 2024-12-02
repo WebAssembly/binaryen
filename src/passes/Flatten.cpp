@@ -379,7 +379,9 @@ struct Flatten
 
     // Flatten can generate blocks within 'catch', making pops invalid. Fix them
     // up.
-    EHUtils::handleBlockNestedPops(curr, *getModule());
+    if (getModule()->features.hasExceptionHandling()) {
+      EHUtils::handleBlockNestedPops(curr, *getModule());
+    }
   }
 
 private:
