@@ -240,8 +240,9 @@ private:
   Expression* makeImportThrowing(Type type);
   Expression* makeImportTableGet();
   Expression* makeImportTableSet(Type type);
-  Expression* makeImportCallExport(Type type);
-  Expression* makeImportCallRef(Type type);
+  // Call either an export or a ref. We do this from a single function to better
+  // control the frequency of each.
+  Expression* makeImportCallCode(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation

@@ -1010,7 +1010,24 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
     Type::none);
 }
 
-Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
+Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
+  // Call code: either an export or a ref. We want to call an export more often,
+  // as refs are more likely to trap.
+  if (oneIn(4)) {
+    // Try to do a call to a ref.
+
+    // The none-returning variant just does the call. The i32-returning one
+    // catches any errors and returns 1 when it saw an error. Based on the
+    // variant, pick which to call.
+    auto target = type == Type::none ? callRefImportName : callRefCatchImportName;
+
+    if (target) {
+      // Most of the time make a non-nullable funcref, to avoid trapping.
+      auto refType = Type(HeapType::func, oneIn(20) ? Nullable : NonNullable);
+      return builder.makeCall(target, {make(refType)}, type);
+    }
+  }
+
   // The none-returning variant just does the call. The i32-returning one
   // catches any errors and returns 1 when it saw an error. Based on the
   // variant, pick which to call, and the maximum index to call.
@@ -1040,17 +1057,6 @@ Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
   return builder.makeCall(target, {index}, type);
-}
-
-Expression* TranslateToFuzzReader::makeImportCallRef(Type type) {
-  // The none-returning variant just does the call. The i32-returning one
-  // catches any errors and returns 1 when it saw an error. Based on the
-  // variant, pick which to call.
-  auto target = type == Type::none ? callRefImportName : callRefCatchImportName;
-
-  // Most of the time make a non-nullable funcref, to avoid trapping.
-  auto refType = Type(HeapType::func, oneIn(20) ? Nullable : NonNullable);
-  return builder.makeCall(target, {make(refType)}, type);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1728,11 +1734,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
   }
   if (type == Type::i32) {
-    if (callExportCatchImportName) {
-      options.add(FeatureSet::MVP, &Self::makeImportCallExport);
-    }
-    if (callRefCatchImportName) {
-      options.add(FeatureSet::MVP, &Self::makeImportCallRef);
+    if (callExportCatchImportName || callRefCatchImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportCallCode);
     }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
@@ -1813,12 +1816,8 @@ Expression* TranslateToFuzzReader::_makenone() {
   if (tableSetImportName) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
   }
-  if (callExportImportName) {
-    options.add(FeatureSet::MVP, &Self::makeImportCallExport);
-  }
-  if (callRefImportName) {
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                &Self::makeImportCallRef);
+  if (callExportImportName || callRefImportName) {
+    options.add(FeatureSet::MVP, &Self::makeImportCallCode);
   }
   return (this->*pick(options))(Type::none);
 }
