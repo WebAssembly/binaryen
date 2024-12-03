@@ -32,8 +32,9 @@ namespace {
 } // anonymous namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::vector<char>&& input)
-  : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
+                                             std::vector<char>&& input,
+                                             bool closedWorld)
+  : wasm(wasm), closedWorld(closedWorld), builder(wasm), random(std::move(input), wasm.features) {
 
   // Half the time add no unreachable code so that we'll execute the most code
   // as possible with no early exits.
@@ -50,9 +51,10 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::string& filename)
+                                             std::string& filename,
+                                             bool closedWorld)
   : TranslateToFuzzReader(
-      wasm, read_file<std::vector<char>>(filename, Flags::Binary)) {}
+      wasm, read_file<std::vector<char>>(filename, Flags::Binary), closedWorld) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we
@@ -197,8 +199,11 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 41:
         // GC specific passes.
         if (wasm.features.hasGC()) {
-          // Most of these depend on closed world, so just set that.
+          // Most of these depend on closed world, so just set that. Set it both
+          // on the global pass options, and in the internal state of this
+          // TranslateToFuzzReader instance.
           options.passOptions.closedWorld = true;
+          closedWorld = true;
 
           switch (upTo(16)) {
             case 0:
@@ -798,7 +803,11 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     wasm.addFunction(std::move(func));
   }
 
-  if (wasm.features.hasReferenceTypes()) {
+  // If the wasm will be used for closed-world testing, we cannot use the
+  // call-ref variants: calling a function reference outside is disallowed in
+  // that mode (optimizations can change the reference in ways that would be
+  // noticeable, and look like breakage).
+  if (wasm.features.hasReferenceTypes() && !closedWorld) {
     if (choice & 4) {
       // Given an funcref, call it from JS.
       callRefImportName = Names::getValidFunctionName(wasm, "call-ref");

@@ -303,7 +303,7 @@ int main(int argc, const char* argv[]) {
     }
   }
   if (translateToFuzz) {
-    TranslateToFuzzReader reader(wasm, options.extra["infile"]);
+    TranslateToFuzzReader reader(wasm, options.extra["infile"], options.passOptions.closedWorld);
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
