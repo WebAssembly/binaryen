@@ -1503,8 +1503,8 @@ void Function::clearNames() { localNames.clear(); }
 void Function::clearDebugInfo() {
   localIndices.clear();
   debugLocations.clear();
-  prologLocation.clear();
-  epilogLocation.clear();
+  prologLocation.reset();
+  epilogLocation.reset();
 }
 
 template<typename Map>
