@@ -1018,7 +1018,10 @@ Result<> IRBuilder::visitEnd() {
     func->body = maybeWrapForLabel(*expr);
     labelDepths.clear();
     if (scope.needsPopFixup()) {
-      EHUtils::handleBlockNestedPops(func, wasm);
+      // We may be in the binary parser, where pops need to be fixed up before
+      // we know that EH will be enabled.
+      EHUtils::handleBlockNestedPops(
+        func, wasm, EHUtils::FeaturePolicy::RunIfNoEH);
     }
     this->func = nullptr;
     blockHint = 0;

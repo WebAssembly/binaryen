@@ -148,8 +148,9 @@ void handleBlockNestedPop(Try* try_, Function* func, Module& wasm) {
   }
 }
 
-void handleBlockNestedPops(Function* func, Module& wasm) {
-  if (!wasm.features.hasExceptionHandling()) {
+void handleBlockNestedPops(Function* func, Module& wasm, FeaturePolicy policy) {
+  if (policy == FeaturePolicy::SkipIfNoEH &&
+      !wasm.features.hasExceptionHandling()) {
     return;
   }
   FindAll<Try> trys(func->body);
