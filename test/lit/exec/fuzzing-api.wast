@@ -176,7 +176,8 @@
  )
 
  (func $illegal (param $x i64)
-  ;; Helper for the function below. The param, an i64, is illegal for JS.
+  ;; Helper for the function below. The param, an i64, causes a problem: when we
+  ;; call from JS we provide 0, but 0 traps when it tries to convert to BigInt.
   (call $log-i32
    (i32.const 56)
   )
@@ -184,11 +185,29 @@
 
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- (func $ref.calling.illegal (export "ref.calling.illegal") (param $x i64)
+ (func $ref.calling.illegal (export "ref.calling.illegal")
   ;; The i64 param causes an error here, so we will only log 1 as a trap.
   (call $log-i32
    (call $call.ref.catch
     (ref.func $illegal)
+   )
+  )
+ )
+
+ (func $illegal-v128 (param $x v128)
+  ;; Helper for the function below.
+  (call $log-i32
+   (i32.const 56)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ (func $ref.calling.illegal-v128 (export "ref.calling.illegal-v128")
+  ;; As above, we trap on the v128 param, and log 1.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $illegal-v128)
    )
   )
  )
@@ -201,16 +220,36 @@
   (v128.const i32x4 1 2 3 4)
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.illegal2
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
- (func $ref.calling.illegal2 (export "ref.calling.illegal2")
+ (func $ref.calling.illegal-result (export "ref.calling.illegal-result")
   ;; The v128 result causes an error here, so we will log 1 as a trap. The JS
   ;; semantics determine that we do that check *before* the call, so the logging
   ;; of 910 does not go through.
   (call $log-i32
    (call $call.ref.catch
     (ref.func $illegal-result)
+   )
+  )
+ )
+
+ (func $legal-result (result i64)
+  ;; Helper for the function below.
+  (call $log-i32
+   (i32.const 910)
+  )
+  (i64.const 90)
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $ref.calling.legal-result (export "ref.calling.legal-result")
+  ;; Unlike v128, i64 is legal in a result. The JS VM just returns a BigInt.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $legal-result)
    )
   )
  )
@@ -258,16 +297,25 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling ref.calling.illegal2
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
+;; CHECK-NEXT: [LoggingExternalInterface logging 910]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
-;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal2
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing

@@ -183,27 +183,27 @@ public:
   Literals callFunctionAsJS(Name name) {
     auto* func = wasm.getFunction(name);
 
-    // Some types trap on the JS boundary.
-    auto trapOnNonJSTypes = [&](Type type) {
-      if (type == Type::i64 || type == Type::v128) {
-        throwEmptyException();
-      }
-    };
-
     // Send default values as arguments, or trap if we need anything else.
     Literals arguments;
     for (const auto& param : func->getParams()) {
+      // An i64 param can work from JS, but fuzz_shell provides 0, which traps
+      // on attempts to convert it to BigInt. v128 cannot work at all.
+      if (param == Type::i64 || param == Type::v128) {
+        throwEmptyException();
+      }
       if (!param.isDefaultable()) {
         throwEmptyException();
       }
-      trapOnNonJSTypes(param);
       arguments.push_back(Literal::makeZero(param));
     }
 
     // Trap on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
     for (const auto& result : func->getResults()) {
-      trapOnNonJSTypes(result);
+      // An i64 result is fine: a BigInt will be provided. But v128 still traps.
+      if (result == Type::v128) {
+        throwEmptyException();
+      }
     }
 
     // Call the function.
