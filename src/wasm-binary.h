@@ -1419,7 +1419,6 @@ class WasmBinaryReader {
 
   // Internal state.
 
-  size_t pos = 0;
   Index startIndex = -1;
   size_t codeSectionLocation;
   std::unordered_set<uint8_t> seenSections;
@@ -1442,67 +1441,58 @@ public:
     skipFunctionBodies = skipFunctionBodies_;
   }
   void read();
-  void readCustomSection(size_t payloadLen);
+  void readCustomSection(size_t& pos, size_t payloadLen);
 
-  bool more() { return pos < input.size(); }
+  bool more(size_t& pos) { return pos < input.size(); }
 
-  std::string_view getByteView(size_t size);
-  uint8_t getInt8();
-  uint16_t getInt16();
-  uint32_t getInt32();
-  uint64_t getInt64();
-  uint8_t getLaneIndex(size_t lanes);
+  std::string_view getByteView(size_t& pos, size_t size);
+  uint8_t getInt8(size_t& pos);
+  uint16_t getInt16(size_t& pos);
+  uint32_t getInt32(size_t& pos);
+  uint64_t getInt64(size_t& pos);
+  uint8_t getLaneIndex(size_t& pos, size_t lanes);
   // it is unsafe to return a float directly, due to ABI issues with the
   // signalling bit
-  Literal getFloat32Literal();
-  Literal getFloat64Literal();
-  Literal getVec128Literal();
-  uint32_t getU32LEB();
-  uint64_t getU64LEB();
-  int32_t getS32LEB();
-  int64_t getS64LEB();
-  uint64_t getUPtrLEB();
+  Literal getFloat32Literal(size_t& pos);
+  Literal getFloat64Literal(size_t& pos);
+  Literal getVec128Literal(size_t& pos);
+  uint32_t getU32LEB(size_t& pos);
+  uint64_t getU64LEB(size_t& pos);
+  int32_t getS32LEB(size_t& pos);
+  int64_t getS64LEB(size_t& pos);
 
-  bool getBasicType(int32_t code, Type& out);
-  bool getBasicHeapType(int64_t code, HeapType& out);
+  bool getBasicType(size_t& pos, int32_t code, Type& out);
+  bool getBasicHeapType(size_t& pos, int64_t code, HeapType& out);
   // Read a value and get a type for it.
-  Type getType();
+  Type getType(size_t& pos);
   // Get a type given the initial S32LEB has already been read, and is provided.
-  Type getType(int initial);
-  HeapType getHeapType();
-  HeapType getIndexedHeapType();
+  Type getType(size_t& pos, int initial);
+  HeapType getHeapType(size_t& pos);
+  HeapType getIndexedHeapType(size_t& pos);
 
-  Type getConcreteType();
-  Name getInlineString(bool requireValid = true);
-  void verifyInt8(int8_t x);
-  void verifyInt16(int16_t x);
-  void verifyInt32(int32_t x);
-  void verifyInt64(int64_t x);
-  void readHeader();
-  void readStart();
-  void readMemories();
-  void readTypes();
+  Type getConcreteType(size_t& pos);
+  Name getInlineString(size_t& pos, bool requireValid = true);
+  void readHeader(size_t& pos);
+  void readStart(size_t& pos);
+  void readMemories(size_t& pos);
+  void readTypes(size_t& pos);
 
   // gets a name in the combined import+defined space
-  Name getFunctionName(Index index);
-  Name getTableName(Index index);
-  Name getMemoryName(Index index);
-  Name getGlobalName(Index index);
-  Name getTagName(Index index);
-  Name getDataName(Index index);
-  Name getElemName(Index index);
+  Name getFunctionName(size_t& pos, Index index);
+  Name getTableName(size_t& pos, Index index);
+  Name getMemoryName(size_t& pos, Index index);
+  Name getGlobalName(size_t& pos, Index index);
+  Name getTagName(size_t& pos, Index index);
+  Name getDataName(size_t& pos, Index index);
+  Name getElemName(size_t& pos, Index index);
 
-  // gets a memory in the combined import+defined space
-  Memory* getMemory(Index index);
-  // gets a table in the combined import+defined space
-  Table* getTable(Index index);
-
-  void getResizableLimits(Address& initial,
+  void getResizableLimits(size_t& pos,
+                          Address& initial,
                           Address& max,
                           bool& shared,
                           Type& addressType,
                           Address defaultIfNoMax);
-  void readImports();
+  void readImports(size_t& pos);
 
   // The signatures of each function, including imported functions, given in the
   // import and function sections. Store HeapTypes instead of Signatures because
@@ -1514,13 +1504,11 @@ public:
   Index numFuncImports = 0;
   Index numFuncBodies = 0;
 
-  void readFunctionSignatures();
-  HeapType getTypeByIndex(Index index);
-  HeapType getTypeByFunctionIndex(Index index);
-  Signature getSignatureByTypeIndex(Index index);
-  Signature getSignatureByFunctionIndex(Index index);
-
-  Name getNextLabel();
+  void readFunctionSignatures(size_t& pos);
+  HeapType getTypeByIndex(size_t& pos, Index index);
+  HeapType getTypeByFunctionIndex(size_t& pos, Index index);
+  Signature getSignatureByTypeIndex(size_t& pos, Index index);
+  Signature getSignatureByFunctionIndex(size_t& pos, Index index);
 
   // We read the names section first so we know in advance what names various
   // elements should have. Store the information for use when building
@@ -1541,50 +1529,47 @@ public:
   // function to check
   Index endOfFunction = -1;
 
-  // Throws a parsing error if we are not in a function context
-  void requireFunctionContext(const char* error);
-
-  void readFunctions();
-  void readVars();
+  void readFunctions(size_t& pos);
+  void readVars(size_t& pos);
   void setLocalNames(Function& func, Index i);
 
-  Result<> readInst();
+  Result<> readInst(size_t& pos);
 
-  void readExports();
+  void readExports(size_t& pos);
 
   // The strings in the strings section (which are referred to by StringConst).
   std::vector<Name> strings;
-  void readStrings();
-  Name getIndexedString();
+  void readStrings(size_t& pos);
+  Name getIndexedString(size_t& pos);
 
-  Expression* readExpression();
-  void readGlobals();
+  Expression* readExpression(size_t& pos);
+  void readGlobals(size_t& pos);
 
   // validations that cannot be performed on the Module
-  void validateBinary();
+  void validateBinary(size_t& pos);
 
   size_t dataCount = 0;
   bool hasDataCount = false;
 
   void createDataSegments(Index count);
-  void readDataSegments();
-  void readDataSegmentCount();
+  void readDataSegments(size_t& pos);
+  void readDataSegmentCount(size_t& pos);
 
-  void readTableDeclarations();
-  void readElementSegments();
+  void readTableDeclarations(size_t& pos);
+  void readElementSegments(size_t& pos);
 
-  void readTags();
+  void readTags(size_t& pos);
 
   static Name escape(Name name);
   void findAndReadNames();
-  void readFeatures(size_t);
-  void readDylink(size_t);
-  void readDylink0(size_t);
+  void readFeatures(size_t& pos, size_t payloadLen);
+  void readDylink(size_t& pos, size_t payloadLen);
+  void readDylink0(size_t& pos, size_t payloadLen);
 
-  Index readMemoryAccess(Address& alignment, Address& offset);
-  std::tuple<Name, Address, Address> getMemarg();
+  Index readMemoryAccess(size_t& pos, Address& alignment, Address& offset);
+  std::tuple<Name, Address, Address> getMemarg(size_t& pos);
 
-  [[noreturn]] void throwError(std::string text) {
+  [[noreturn]] void throwError(size_t pos, std::string text) {
     throw ParseException(text, 0, pos);
   }
 
