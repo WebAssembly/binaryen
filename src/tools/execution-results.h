@@ -200,12 +200,14 @@ public:
       arguments.push_back(Literal::makeZero(param));
     }
 
-    // Call the function, then check if the results force a trap.
-    auto ret = instance->callFunction(func->name, arguments);
+    // Trap on illegal results. Note that this happens, as per JS semantics,
+    // *before* the call.
     for (const auto& result : func->getResults()) {
       trapOnNonJSTypes(result);
     }
-    return ret;
+
+    // Call the function.
+    return instance->callFunction(func->name, arguments);
   }
 
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }

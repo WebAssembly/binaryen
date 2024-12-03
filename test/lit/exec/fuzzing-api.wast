@@ -202,12 +202,12 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal2
- ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $ref.calling.illegal2 (export "ref.calling.illegal2")
-  ;; The v128 result causes an error here, so we will log 1 as a trap. But the
-  ;; error happens *after* the call, so the first logging (910) goes through.
+  ;; The v128 result causes an error here, so we will log 1 as a trap. The JS
+  ;; semantics determine that we do that check *before* the call, so the logging
+  ;; of 910 does not go through.
   (call $log-i32
    (call $call.ref.catch
     (ref.func $illegal-result)
@@ -259,7 +259,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal2
-;; CHECK-NEXT: [LoggingExternalInterface logging 910]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
