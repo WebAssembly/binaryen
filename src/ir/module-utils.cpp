@@ -26,32 +26,20 @@ namespace wasm::ModuleUtils {
 
 // Update the file name indices when moving a set of debug locations from one
 // module to another.
-static void updateLocationSet(std::set<Function::DebugLocation>& locations,
-                              std::vector<Index>& fileIndexMap) {
-  std::set<Function::DebugLocation> updatedLocations;
-
-  for (auto iter : locations) {
-    iter.fileIndex = fileIndexMap[iter.fileIndex];
-    updatedLocations.insert(iter);
+static void updateLocation(std::optional<Function::DebugLocation>& location,
+                           std::vector<Index>& fileIndexMap) {
+  if (location) {
+    location->fileIndex = fileIndexMap[location->fileIndex];
   }
-  locations.clear();
-  std::swap(locations, updatedLocations);
 }
 
 // Update the symbol name indices when moving a set of debug locations from one
 // module to another.
-static void updateSymbolSet(std::set<Function::DebugLocation>& locations,
-                            std::vector<Index>& symbolIndexMap) {
-  std::set<Function::DebugLocation> updatedLocations;
-
-  for (auto iter : locations) {
-    if (iter.symbolNameIndex) {
-      iter.symbolNameIndex = symbolIndexMap[*iter.symbolNameIndex];
-    }
-    updatedLocations.insert(iter);
+static void updateSymbol(std::optional<Function::DebugLocation>& location,
+                         std::vector<Index>& symbolIndexMap) {
+  if (location && location->symbolNameIndex) {
+    location->symbolNameIndex = symbolIndexMap[*location->symbolNameIndex];
   }
-  locations.clear();
-  std::swap(locations, updatedLocations);
 }
 
 // Copies a function into a module. If newName is provided it is used as the
@@ -94,8 +82,8 @@ copyFunctionWithoutAdd(Function* func,
         iter.second->fileIndex = (*fileIndexMap)[iter.second->fileIndex];
       }
     }
-    updateLocationSet(ret->prologLocation, *fileIndexMap);
-    updateLocationSet(ret->epilogLocation, *fileIndexMap);
+    updateLocation(ret->prologLocation, *fileIndexMap);
+    updateLocation(ret->epilogLocation, *fileIndexMap);
   }
   if (symbolNameIndexMap) {
     for (auto& iter : ret->debugLocations) {
@@ -105,8 +93,8 @@ copyFunctionWithoutAdd(Function* func,
             (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
         }
       }
-      updateSymbolSet(ret->prologLocation, *symbolNameIndexMap);
-      updateSymbolSet(ret->epilogLocation, *symbolNameIndexMap);
+      updateSymbol(ret->prologLocation, *symbolNameIndexMap);
+      updateSymbol(ret->epilogLocation, *symbolNameIndexMap);
     }
   }
   ret->module = func->module;

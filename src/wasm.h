@@ -2095,8 +2095,8 @@ public:
   // One can explicitly set the debug location of an expression to
   // nullopt to stop the propagation of debug locations.
   std::unordered_map<Expression*, std::optional<DebugLocation>> debugLocations;
-  std::set<DebugLocation> prologLocation;
-  std::set<DebugLocation> epilogLocation;
+  std::optional<DebugLocation> prologLocation;
+  std::optional<DebugLocation> epilogLocation;
 
   // General debugging info support: track instructions and the function itself.
   std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;

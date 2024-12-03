@@ -3060,8 +3060,8 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   currFunction = curr;
   lastPrintedLocation = std::nullopt;
   lastPrintIndent = 0;
-  if (currFunction->prologLocation.size()) {
-    printDebugLocation(*currFunction->prologLocation.begin());
+  if (currFunction->prologLocation) {
+    printDebugLocation(*currFunction->prologLocation);
   }
   handleSignature(curr, true);
   incIndent();
@@ -3095,14 +3095,14 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     }
     assert(controlFlowDepth == 0);
   }
-  if (currFunction->epilogLocation.size()) {
+  if (currFunction->epilogLocation) {
     // Print last debug location: mix of decIndent and printDebugLocation
     // logic.
     doIndent(o, indent);
     if (!minify) {
       indent--;
     }
-    printDebugLocation(*currFunction->epilogLocation.begin());
+    printDebugLocation(*currFunction->epilogLocation);
     o << ')';
   } else {
     decIndent();
