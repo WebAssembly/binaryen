@@ -38,7 +38,7 @@ class SourceMapReader {
   size_t pos = 0;
 
   // The location in the binary the next debug location will correspond to. 0
-  // iff there are not more debug locations.
+  // iff there are no more debug locations.
   size_t location = 0;
 
   // The file index, line, column, and symbol index the next debug location will
