@@ -1011,44 +1011,34 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
-  // Call code: either an export or a ref. We want to call an export more often,
-  // as refs are more likely to trap.
-  if (oneIn(4)) {
-    // Try to do a call to a ref.
+  // Call code: either an export or a ref. Each has a catching and non-catching
+  // variant. The catching variants return i32, the others none.
+  assert(type == Type::none || type == Type::i32);
+  auto exportTarget =
+    type == Type::none ? callExportImportName : callExportCatchImportName;
+  auto refTarget =
+    type == Type::none ? callRefImportName : callRefCatchImportName;
 
-    // The none-returning variant just does the call. The i32-returning one
-    // catches any errors and returns 1 when it saw an error. Based on the
-    // variant, pick which to call.
-    auto target =
-      type == Type::none ? callRefImportName : callRefCatchImportName;
-
-    if (target) {
-      // Most of the time make a non-nullable funcref, to avoid trapping.
-      auto refType = Type(HeapType::func, oneIn(20) ? Nullable : NonNullable);
-      return builder.makeCall(target, {make(refType)}, type);
-    }
+  // We want to call a ref rarely, as refs are more likely to trap.
+  if (refTarget && (!exportTarget || oneIn(4))) {
+    // Most of the time make a non-nullable funcref, to avoid trapping.
+    auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+    return builder.makeCall(refTarget, {make(refType)}, type);
   }
 
-  // The none-returning variant just does the call. The i32-returning one
-  // catches any errors and returns 1 when it saw an error. Based on the
-  // variant, pick which to call, and the maximum index to call.
-  Name target;
+  // Call an export.
+  assert(exportTarget);
+
+  // Pick the maximum export index to call.
   Index maxIndex = wasm.exports.size();
-  if (type == Type::none) {
-    target = callExportImportName;
-  } else if (type == Type::i32) {
-    target = callExportCatchImportName;
+  if (type == Type::i32) {
     // This never traps, so we can be less careful, but we do still want to
     // avoid trapping a lot as executing code is more interesting. (Note that
     // even though we double here, the risk is not that great: we are still
     // adding functions as we go, so the first half of functions/exports can
     // double here and still end up in bounds by the time we've added them all.)
     maxIndex = (maxIndex + 1) * 2;
-  } else {
-    WASM_UNREACHABLE("bad import.call");
   }
-  // We must have set up the target function.
-  assert(target);
 
   // Most of the time, call a valid export index in the range we picked, but
   // sometimes allow anything at all.
@@ -1057,7 +1047,7 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     index = builder.makeBinary(
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-  return builder.makeCall(target, {index}, type);
+  return builder.makeCall(exportTarget, {index}, type);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
