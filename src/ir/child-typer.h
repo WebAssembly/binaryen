@@ -1052,18 +1052,24 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitContNew(ContNew* curr) { note(&curr->func, curr->type); }
 
-  void visitContBind(ContBind* curr) {
-    auto sourceParams =
-      curr->sourceType.getContinuation().type.getSignature().params;
-    auto targetParams =
-      curr->type.getHeapType().getContinuation().type.getSignature().params;
+  void visitContBind(ContBind* curr,
+                     std::optional<HeapType> src = std::nullopt,
+                     std::optional<HeapType> dest = std::nullopt) {
+    if (!src.has_value()) {
+      src = curr->cont->type.getHeapType();
+    }
+    if (!dest.has_value()) {
+      dest = curr->type.getHeapType();
+    }
+    auto sourceParams = src->getContinuation().type.getSignature().params;
+    auto targetParams = dest->getContinuation().type.getSignature().params;
     assert(sourceParams.size() >= targetParams.size());
     auto n = sourceParams.size() - targetParams.size();
     assert(curr->operands.size() == n);
     for (size_t i = 0; i < n; ++i) {
       note(&curr->operands[i], sourceParams[i]);
     }
-    note(&curr->cont, Type(curr->sourceType, Nullable));
+    note(&curr->cont, Type(*src, Nullable));
   }
 
   void visitSuspend(Suspend* curr) {
@@ -1074,32 +1080,46 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
   }
 
-  void visitResume(Resume* curr) {
-    auto params = curr->contType.getContinuation().type.getSignature().params;
+  void visitResume(Resume* curr, std::optional<HeapType> ct = std::nullopt) {
+    if (!ct.has_value()) {
+      ct = curr->cont->type.getHeapType();
+    }
+    assert(ct->isContinuation());
+    auto params = ct->getContinuation().type.getSignature().params;
     assert(params.size() == curr->operands.size());
     for (size_t i = 0; i < params.size(); ++i) {
       note(&curr->operands[i], params[i]);
     }
-    note(&curr->cont, Type(curr->contType, Nullable));
+    note(&curr->cont, Type(*ct, Nullable));
   }
 
-  void visitResumeThrow(ResumeThrow* curr) {
+  void visitResumeThrow(ResumeThrow* curr,
+                        std::optional<HeapType> ct = std::nullopt) {
+    if (!ct.has_value()) {
+      ct = curr->cont->type.getHeapType();
+    }
+    assert(ct->isContinuation());
     auto params = wasm.getTag(curr->tag)->sig.params;
     assert(params.size() == curr->operands.size());
     for (size_t i = 0; i < params.size(); ++i) {
       note(&curr->operands[i], params[i]);
     }
-    note(&curr->cont, Type(curr->contType, Nullable));
+    note(&curr->cont, Type(*ct, Nullable));
   }
 
-  void visitStackSwitch(StackSwitch* curr) {
-    auto params = curr->contType.getContinuation().type.getSignature().params;
+  void visitStackSwitch(StackSwitch* curr,
+                        std::optional<HeapType> ct = std::nullopt) {
+    if (!ct.has_value()) {
+      ct = curr->cont->type.getHeapType();
+    }
+    assert(ct->isContinuation());
+    auto params = ct->getContinuation().type.getSignature().params;
     assert(params.size() >= 1 &&
            ((params.size() - 1) == curr->operands.size()));
     for (size_t i = 0; i < params.size() - 1; ++i) {
       note(&curr->operands[i], params[i]);
     }
-    note(&curr->cont, Type(curr->contType, Nullable));
+    note(&curr->cont, Type(*ct, Nullable));
   }
 };
 

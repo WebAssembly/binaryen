@@ -1939,9 +1939,6 @@ class ContBind : public SpecificExpression<Expression::ContBindId> {
 public:
   ContBind(MixedArena& allocator) : operands(allocator) {}
 
-  // Syntax: cont.bind $src $dst
-  // We store $src here, and $dst in the inherited `type` member.
-  HeapType sourceType;
   ExpressionList operands;
   Expression* cont;
 
@@ -1967,7 +1964,6 @@ public:
     : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
       sentTypes(allocator) {}
 
-  HeapType contType;
   // The following two vectors are to be understood together
   // pointwise. That is, the ith component of each vector together
   // classifies an on-clause `(on $tag $label)` or `(on $tag
@@ -1998,7 +1994,6 @@ public:
     : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
       sentTypes(allocator) {}
 
-  HeapType contType;
   Name tag;
   // See the comment on `Resume` above.
   ArenaVector<Name> handlerTags;
@@ -2021,7 +2016,6 @@ class StackSwitch : public SpecificExpression<Expression::StackSwitchId> {
 public:
   StackSwitch(MixedArena& allocator) : operands(allocator) {}
 
-  HeapType contType;
   Name tag;
 
   ExpressionList operands;

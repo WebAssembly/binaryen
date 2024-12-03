@@ -460,7 +460,7 @@ struct CodeScanner
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       info.note(set->ref->type);
     } else if (auto* contBind = curr->dynCast<ContBind>()) {
-      info.note(contBind->sourceType);
+      info.note(contBind->cont->type);
       info.note(contBind->type);
     } else if (auto* contNew = curr->dynCast<ContNew>()) {
       info.note(contNew->type);

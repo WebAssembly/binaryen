@@ -1382,6 +1382,7 @@ void Resume::finalize() {
     return;
   }
 
+  assert(this->cont->type.isContinuation());
   const Signature& contSig =
     this->cont->type.getHeapType().getContinuation().type.getSignature();
   type = contSig.results;
@@ -1396,6 +1397,7 @@ void ResumeThrow::finalize() {
     return;
   }
 
+  assert(this->cont->type.isContinuation());
   const Signature& contSig =
     this->cont->type.getHeapType().getContinuation().type.getSignature();
   type = contSig.results;
@@ -1410,6 +1412,7 @@ void StackSwitch::finalize() {
     return;
   }
 
+  assert(this->cont->type.isContinuation());
   type =
     this->cont->type.getHeapType().getContinuation().type.getSignature().params;
 }

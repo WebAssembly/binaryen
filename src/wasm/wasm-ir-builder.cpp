@@ -648,6 +648,35 @@ public:
     ConstraintCollector{builder, children}.visitTupleExtract(curr, arity);
     return popConstrainedChildren(children);
   }
+
+  Result<> visitContBind(ContBind* curr,
+                         std::optional<HeapType> src = std::nullopt,
+                         std::optional<HeapType> dest = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitContBind(curr, src, dest);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitResume(Resume* curr,
+                       std::optional<HeapType> ct = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitResume(curr, ct);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitResumeThrow(ResumeThrow* curr,
+                            std::optional<HeapType> ct = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitResumeThrow(curr, ct);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitStackSwitch(StackSwitch* curr,
+                            std::optional<HeapType> ct = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStackSwitch(curr, ct);
+    return popConstrainedChildren(children);
+  }
 };
 
 Result<> IRBuilder::visit(Expression* curr) {
@@ -1964,7 +1993,7 @@ Result<> IRBuilder::makeContBind(HeapType sourceType, HeapType targetType) {
     return Err{"expected continuation types"};
   }
   ContBind curr(wasm.allocator);
-  curr.sourceType = sourceType;
+
   curr.type = Type(targetType, NonNullable);
   size_t sourceParams =
     sourceType.getContinuation().type.getSignature().params.size();
@@ -1972,15 +2001,15 @@ Result<> IRBuilder::makeContBind(HeapType sourceType, HeapType targetType) {
     targetType.getContinuation().type.getSignature().params.size();
   if (sourceParams < targetParams) {
     return Err{"incompatible continuation types in cont.bind: source type " +
-               sourceType.toString() +
-               " has fewer parameters than destination " +
+               sourceType.toString() + " has fewer parameters than target " +
                targetType.toString()};
   }
   curr.operands.resize(sourceParams - targetParams);
-  CHECK_ERR(visitContBind(&curr));
+  CHECK_ERR(ChildPopper{*this}.visitContBind(&curr, sourceType, targetType));
+  CHECK_ERR(validateTypeAnnotation(sourceType, curr.cont));
+  CHECK_ERR(validateTypeAnnotation(targetType, &curr));
 
-  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeContBind(sourceType, targetType, operands, curr.cont));
+  push(builder.makeContBind(targetType, std::move(curr.operands), curr.cont));
   return Ok{};
 }
 
@@ -2047,27 +2076,31 @@ Result<>
 IRBuilder::makeResume(HeapType ct,
                       const std::vector<Name>& tags,
                       const std::vector<std::optional<Index>>& labels) {
+  if (tags.size() != labels.size()) {
+    return Err{"the sizes of tags and labels must be equal"};
+  }
   if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
+
   Resume curr(wasm.allocator);
   auto contSig = ct.getContinuation().type.getSignature();
-  curr.contType = ct;
   curr.operands.resize(contSig.params.size());
-  CHECK_ERR(visitResume(&curr));
 
   Result<ResumeTable> resumetable = makeResumeTable(
     labels,
     [this](Index i) { return this->getLabelName(i); },
     [this](Index i) { return this->getLabelType(i); });
   CHECK_ERR(resumetable);
-  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeResume(ct,
-                          tags,
+  CHECK_ERR(ChildPopper{*this}.visitResume(&curr, ct));
+  CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
+
+  push(builder.makeResume(tags,
                           resumetable->targets,
                           resumetable->sentTypes,
-                          operands,
+                          std::move(curr.operands),
                           curr.cont));
+
   return Ok{};
 }
 
@@ -2082,25 +2115,24 @@ IRBuilder::makeResumeThrow(HeapType ct,
   if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
+
   ResumeThrow curr(wasm.allocator);
-  curr.contType = ct;
   curr.tag = tag;
   curr.operands.resize(wasm.getTag(tag)->sig.params.size());
-  CHECK_ERR(visitResumeThrow(&curr));
 
   Result<ResumeTable> resumetable = makeResumeTable(
     labels,
     [this](Index i) { return this->getLabelName(i); },
     [this](Index i) { return this->getLabelType(i); });
   CHECK_ERR(resumetable);
+  CHECK_ERR(ChildPopper{*this}.visitResumeThrow(&curr, ct));
+  CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
 
-  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeResumeThrow(ct,
-                               tag,
+  push(builder.makeResumeThrow(tag,
                                tags,
                                resumetable->targets,
                                resumetable->sentTypes,
-                               operands,
+                               std::move(curr.operands),
                                curr.cont));
   return Ok{};
 }
@@ -2110,7 +2142,6 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
     return Err{"expected continuation type"};
   }
   StackSwitch curr(wasm.allocator);
-  curr.contType = ct;
   curr.tag = tag;
   auto nparams = ct.getContinuation().type.getSignature().params.size();
   if (nparams < 1) {
@@ -2122,9 +2153,10 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   // i.e. it is provided by the runtime.
   curr.operands.resize(nparams - 1);
 
-  CHECK_ERR(visitStackSwitch(&curr));
-  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
-  push(builder.makeStackSwitch(ct, tag, operands, curr.cont));
+  CHECK_ERR(ChildPopper{*this}.visitStackSwitch(&curr, ct));
+  CHECK_ERR(validateTypeAnnotation(ct, curr.cont));
+
+  push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont));
   return Ok{};
 }
 
