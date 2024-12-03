@@ -1019,7 +1019,8 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     // The none-returning variant just does the call. The i32-returning one
     // catches any errors and returns 1 when it saw an error. Based on the
     // variant, pick which to call.
-    auto target = type == Type::none ? callRefImportName : callRefCatchImportName;
+    auto target =
+      type == Type::none ? callRefImportName : callRefCatchImportName;
 
     if (target) {
       // Most of the time make a non-nullable funcref, to avoid trapping.
