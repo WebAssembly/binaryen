@@ -19,6 +19,8 @@
 
 namespace wasm {
 
+std::vector<char> defaultEmptySourceMap;
+
 void MapParseException::dump(std::ostream& o) const {
   Colors::magenta(o);
   o << "[";

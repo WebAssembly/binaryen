@@ -1404,6 +1404,8 @@ private:
   void prepare();
 };
 
+extern std::vector<char> defaultEmptySourceMap;
+
 class WasmBinaryReader {
   Module& wasm;
   MixedArena& allocator;
@@ -1432,7 +1434,7 @@ public:
   WasmBinaryReader(Module& wasm,
                    FeatureSet features,
                    const std::vector<char>& input,
-                   const std::vector<char>& sourceMap = {});
+                   const std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
