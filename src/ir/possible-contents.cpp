@@ -502,8 +502,10 @@ struct CollectedFuncInfo {
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
 
-  // All functions that might be called from the outside. And RefFunc suggests
-  // that, in open world.
+  // All functions that might be called from the outside. Any RefFunc suggests
+  // that, in open world. (We could be more precise and use our flow analysis to
+  // see which, in fact, flow outside, but it is unclear how useful that would
+  // be. Anyhow, closed-world is more important to optimize, and avoids this.)
   std::unordered_set<Name> calledFromOutside;
 };
 
