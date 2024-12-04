@@ -807,29 +807,43 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   // call-ref variants: calling a function reference outside is disallowed in
   // that mode (optimizations can change the reference in ways that would be
   // noticeable, and look like breakage).
-  if (wasm.features.hasReferenceTypes() && !closedWorld) {
-    if (choice & 4) {
-      // Given an funcref, call it from JS.
-      callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
-      auto func = std::make_unique<Function>();
-      func->name = callRefImportName;
-      func->module = "fuzzing-support";
-      func->base = "call-ref";
-      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
-      wasm.addFunction(std::move(func));
-    }
+  if (wasm.features.hasReferenceTypes()) {
+    if (closedWorld) {
+      // We are in closed world. Remove the call-ref* imports, if they exist.
+      for (auto& func : wasm.functions) {
+        if (func->imported() && func->module == "fuzzing-support" &&
+            func->base.startsWith("call-ref")) {
+          // Make it non-imported, and with a simple body.
+          func->module = func->base = Name();
+          auto results = func->getResults();
+          func->body = results.isConcrete() ? makeConst(results) : makeNop(Type::none);
+        }
+      }
+    } else {
+      // We are in open world. Add the call-ref* imports, sometimes.
+      if (choice & 4) {
+        // Given an funcref, call it from JS.
+        callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
+        auto func = std::make_unique<Function>();
+        func->name = callRefImportName;
+        func->module = "fuzzing-support";
+        func->base = "call-ref";
+        func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+        wasm.addFunction(std::move(func));
+      }
 
-    if (choice & 8) {
-      // Given an funcref, call it from JS and catch all exceptions (similar to
-      // callExportCatch), return 1 if we caught).
-      callRefCatchImportName =
-        Names::getValidFunctionName(wasm, "call-ref-catch");
-      auto func = std::make_unique<Function>();
-      func->name = callRefCatchImportName;
-      func->module = "fuzzing-support";
-      func->base = "call-ref-catch";
-      func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
-      wasm.addFunction(std::move(func));
+      if (choice & 8) {
+        // Given an funcref, call it from JS and catch all exceptions (similar
+        // to callExportCatch), return 1 if we caught).
+        callRefCatchImportName =
+          Names::getValidFunctionName(wasm, "call-ref-catch");
+        auto func = std::make_unique<Function>();
+        func->name = callRefCatchImportName;
+        func->module = "fuzzing-support";
+        func->base = "call-ref-catch";
+        func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
+        wasm.addFunction(std::move(func));
+      }
     }
   }
 }
