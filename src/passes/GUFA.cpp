@@ -409,6 +409,10 @@ struct GUFAPass : public Pass {
     : optimizing(optimizing), castAll(castAll) {}
 
   void run(Module* module) override {
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "GUFA requires --closed-world";
+    }
+
     ContentOracle oracle(*module, getPassOptions());
     GUFAOptimizer(oracle, optimizing, castAll).run(getPassRunner(), module);
   }
