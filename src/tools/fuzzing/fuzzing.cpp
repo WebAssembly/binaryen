@@ -1055,7 +1055,7 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     // This matters a lot more in the variants that do *not* catch (in the
     // catching ones, we just get a result of 1, but when not caught it halts
     // execution).
-    if ((catching && (!exportTarget || oneIn(2)) ||
+    if ((catching && (!exportTarget || oneIn(2))) ||
         (!catching && oneIn(4))) {
       // Most of the time make a non-nullable funcref, to avoid trapping.
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
