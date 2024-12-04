@@ -38,4 +38,9 @@ RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
 ;; CHECK-NEXT:    (i32.const 10)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (func $2
+;; CHECK-NEXT:   (drop
+;; CHECK-NEXT:    (i32.const 30)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

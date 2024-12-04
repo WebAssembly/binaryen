@@ -1524,16 +1524,15 @@ public:
   std::unordered_map<Index, Name> dataNames;
   std::unordered_map<Index, Name> elemNames;
 
-  Function* currFunction = nullptr;
-  // before we see a function (like global init expressions), there is no end of
-  // function to check
-  Index endOfFunction = -1;
-
   void readFunctions(size_t& pos);
-  void readVars(size_t& pos);
-  void setLocalNames(Function& func, Index i);
+  void readVars(size_t& pos, Function* func);
+  void setLocalNames(Function* func, Index i);
 
-  Result<> readInst(size_t& pos);
+  Result<>
+  readInst(size_t& pos, IRBuilder& builder, SourceMapReader& sourceMapReader);
+  Result<> readInst(size_t& pos) {
+    return readInst(pos, builder, sourceMapReader);
+  }
 
   void readExports(size_t& pos);
 
