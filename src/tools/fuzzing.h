@@ -65,8 +65,12 @@ struct BinaryArgs {
 
 class TranslateToFuzzReader {
 public:
-  TranslateToFuzzReader(Module& wasm, std::vector<char>&& input, bool closedWorld = false);
-  TranslateToFuzzReader(Module& wasm, std::string& filename, bool closedWorld = false);
+  TranslateToFuzzReader(Module& wasm,
+                        std::vector<char>&& input,
+                        bool closedWorld = false);
+  TranslateToFuzzReader(Module& wasm,
+                        std::string& filename,
+                        bool closedWorld = false);
 
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }

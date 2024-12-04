@@ -34,7 +34,8 @@ namespace {
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
-  : wasm(wasm), closedWorld(closedWorld), builder(wasm), random(std::move(input), wasm.features) {
+  : wasm(wasm), closedWorld(closedWorld), builder(wasm),
+    random(std::move(input), wasm.features) {
 
   // Half the time add no unreachable code so that we'll execute the most code
   // as possible with no early exits.
@@ -53,8 +54,9 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::string& filename,
                                              bool closedWorld)
-  : TranslateToFuzzReader(
-      wasm, read_file<std::vector<char>>(filename, Flags::Binary), closedWorld) {}
+  : TranslateToFuzzReader(wasm,
+                          read_file<std::vector<char>>(filename, Flags::Binary),
+                          closedWorld) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we
@@ -816,7 +818,8 @@ void TranslateToFuzzReader::addImportCallingSupport() {
           // Make it non-imported, and with a simple body.
           func->module = func->base = Name();
           auto results = func->getResults();
-          func->body = results.isConcrete() ? makeConst(results) : makeNop(Type::none);
+          func->body =
+            results.isConcrete() ? makeConst(results) : makeNop(Type::none);
         }
       }
     } else {
