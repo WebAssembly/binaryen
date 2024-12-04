@@ -1040,20 +1040,34 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
   // Call code: either an export or a ref. Each has a catching and non-catching
   // variant. The catching variants return i32, the others none.
   assert(type == Type::none || type == Type::i32);
+  auto catching = type == Type::i32;
   auto exportTarget =
-    type == Type::none ? callExportImportName : callExportCatchImportName;
-  auto refTarget =
-    type == Type::none ? callRefImportName : callRefCatchImportName;
+    catching ? callExportCatchImportName : callExportImportName;
+  auto refTarget = catching ? callRefCatchImportName : callRefImportName;
 
-  // We want to call a ref rarely, as refs are more likely to trap.
-  if (refTarget && (!exportTarget || oneIn(4))) {
-    // Most of the time make a non-nullable funcref, to avoid trapping.
-    auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-    return builder.makeCall(refTarget, {make(refType)}, type);
+  // We want to call a ref less often, as refs are more likely to trap (a
+  // function reference can have arbitrary params and results, including things
+  // that trap on the JS boundary; an export is already filtered for such
+  // things in some cases - when we legalize the boundary - and even if not, we
+  // emit lots of void(void) functions - all the invoke_foo functions - that are
+  // safe to call).
+  if (refTarget) {
+    // This matters a lot more in the variants that do *not* catch (in the
+    // catching ones, we just get a result of 1, but when not caught it halts
+    // execution).
+    if ((catching && (!exportTarget || oneIn(2)) ||
+        (!catching && oneIn(4))) {
+      // Most of the time make a non-nullable funcref, to avoid trapping.
+      auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+      return builder.makeCall(refTarget, {make(refType)}, type);
+    }
   }
 
-  // Call an export.
-  assert(exportTarget);
+  if (!exportTarget) {
+    // We decided not to emit a call-ref here, due to fear of trapping, and
+    // there is no call-export, so just emit something trivial.
+    return makeTrivial(type);
+  }
 
   // Pick the maximum export index to call.
   Index maxIndex = wasm.exports.size();
