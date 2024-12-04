@@ -452,7 +452,7 @@ public:
   // This method is used to create instances per function for a
   // function-parallel pass. You may need to override this if you subclass a
   // Walker, as otherwise this will create the parent class.
-  virtual std::unique_ptr<Pass> create() { WASM_UNREACHABLE("unimplenented"); }
+  virtual std::unique_ptr<Pass> create() { WASM_UNREACHABLE("unimplemented"); }
 
   // Whether this pass modifies the Binaryen IR in the module. This is true for
   // most passes, except for passes that have no side effects, or passes that

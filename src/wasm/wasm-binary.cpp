@@ -2583,7 +2583,7 @@ void WasmBinaryReader::readImports(size_t& pos) {
         curr->hasExplicitName = isExplicit;
         curr->module = module;
         curr->base = base;
-        setLocalNames(*curr, wasm.functions.size());
+        setLocalNames(curr.get(), wasm.functions.size());
         wasm.addFunction(std::move(curr));
         break;
       }
@@ -2676,16 +2676,16 @@ void WasmBinaryReader::readImports(size_t& pos) {
   numFuncImports = wasm.functions.size();
 }
 
-void WasmBinaryReader::setLocalNames(Function& func, Index i) {
+void WasmBinaryReader::setLocalNames(Function* func, Index i) {
   if (auto it = localNames.find(i); it != localNames.end()) {
     for (auto& [local, name] : it->second) {
-      if (local >= func.getNumLocals()) {
+      if (local >= func->getNumLocals()) {
         std::cerr << "warning: local index out of bounds in name section: "
                   << name << " at index " << local << " in function " << i
                   << '\n';
         continue;
       }
-      func.setLocalName(local, name);
+      func->setLocalName(local, name);
     }
   }
 }
@@ -2762,74 +2762,106 @@ void WasmBinaryReader::readFunctions(size_t& pos) {
   if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError(pos, "invalid function section size, must equal types");
   }
-  if (DWARF) {
-    builder.setBinaryLocation(&pos, codeSectionLocation);
-  }
-  for (size_t i = 0; i < numFuncBodies; i++) {
-    auto sizePos = pos;
+
+  using FuncPositions =
+    std::unordered_map<Function*,
+                       std::tuple<Index, size_t, size_t, SourceMapReader>>;
+  FuncPositions funcPositions;
+
+  for (Index i = 0; i < numFuncBodies; i++) {
+    auto funcIndex = numFuncImports + i;
+    auto start = pos;
     size_t size = getU32LEB(pos);
     if (size == 0) {
       throwError(pos, "empty function size");
     }
-    Index endOfFunction = pos + size;
+    auto end = pos + size;
 
-    auto& func = wasm.functions[numFuncImports + i];
-    currFunction = func.get();
+    auto* func = wasm.functions[funcIndex].get();
 
     if (DWARF) {
       func->funcLocation = BinaryLocations::FunctionLocations{
-        BinaryLocation(sizePos - codeSectionLocation),
+        BinaryLocation(start - codeSectionLocation),
         BinaryLocation(pos - codeSectionLocation),
         BinaryLocation(pos - codeSectionLocation + size)};
     }
 
     func->prologLocation = sourceMapReader.readDebugLocationAt(pos);
 
-    readVars(pos);
-    setLocalNames(*func, numFuncImports + i);
-    {
-      // Process the function body. Even if we are skipping function bodies we
-      // need to not skip the start function. That contains important code for
-      // wasm-emscripten-finalize in the form of pthread-related segment
-      // initializations. As this is just one function, it doesn't add
-      // significant time, so the optimization of skipping bodies is still very
-      // useful.
-      auto currFunctionIndex = wasm.functions.size();
-      bool isStart = startIndex == currFunctionIndex;
-      if (skipFunctionBodies && !isStart) {
-        // When skipping the function body we need to put something valid in
-        // their place so we validate. An unreachable is always acceptable
-        // there.
-        func->body = Builder(wasm).makeUnreachable();
-        // Skip reading the contents.
-        pos = endOfFunction;
-      } else {
-        auto start = builder.visitFunctionStart(func.get());
-        if (auto* err = start.getErr()) {
-          throwError(pos, err->msg);
+    funcPositions.insert({func, {funcIndex, pos, end, sourceMapReader}});
+    pos = end;
+    sourceMapReader.finishFunction();
+  }
+
+  // Parse the function bodies in parallel. This obviously modifies the IR, but
+  // we say it's Immutable because we don't need to perform any cleanup actions
+  // after parsing the IR.
+  ModuleUtils::ParallelFunctionAnalysis<std::optional<ParseException>,
+                                        Immutable,
+                                        InsertOrderedMap>
+    bodyParser(wasm, [&](Function* func, std::optional<ParseException>& error) {
+      if (func->imported()) {
+        return;
+      }
+      auto [funcIndex, pos, end, sourceMapReader] =
+        funcPositions.find(func)->second;
+
+      IRBuilder builder(wasm);
+      if (DWARF) {
+        builder.setBinaryLocation(&pos, codeSectionLocation);
+      }
+
+      try {
+        readVars(pos, func);
+        setLocalNames(func, funcIndex);
+
+        // Process the function body. Even if we are skipping function bodies we
+        // need to not skip the start function. That contains important code for
+        // wasm-emscripten-finalize in the form of pthread-related segment
+        // initializations. As this is just one function, it doesn't add
+        // significant time, so the optimization of skipping bodies is still
+        // very useful.
+        if (skipFunctionBodies && startIndex != funcIndex) {
+          func->body = Builder(wasm).makeUnreachable();
+          return;
         }
-        while (pos < endOfFunction) {
-          auto inst = readInst(pos);
+
+        auto start = builder.visitFunctionStart(func);
+        if (auto* err = start.getErr()) {
+          error = ParseException(err->msg, 0, pos);
+          return;
+        }
+        while (pos < end) {
+          auto inst = readInst(pos, builder, sourceMapReader);
           if (auto* err = inst.getErr()) {
-            throwError(pos, err->msg);
+            error = ParseException(err->msg, 0, pos);
+            return;
           }
         }
-        if (pos != endOfFunction) {
-          throwError(pos, "function overflowed its bounds");
-        }
-        if (!builder.empty()) {
-          throwError(pos, "expected function end");
-        }
+      } catch (ParseException e) {
+        error = e;
+        return;
       }
-    }
 
-    sourceMapReader.finishFunction();
-    TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
-    currFunction = nullptr;
+      if (pos != end) {
+        error = ParseException("function overflowed its bounds", 0, pos);
+        return;
+      }
+      if (!builder.empty()) {
+        error = ParseException("expected function end", 0, pos);
+        return;
+      }
+      TypeUpdating::handleNonDefaultableLocals(func, wasm);
+    });
+
+  for (auto& [_, err] : bodyParser.map) {
+    if (err) {
+      throw *err;
+    }
   }
 }
 
-void WasmBinaryReader::readVars(size_t& pos) {
+void WasmBinaryReader::readVars(size_t& pos, Function* func) {
   uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB(pos);
   // Use a SmallVector as in the common (MVP) case there are only 4 possible
@@ -2844,16 +2876,18 @@ void WasmBinaryReader::readVars(size_t& pos) {
     auto type = getConcreteType(pos);
     decodedVars.emplace_back(num, type);
   }
-  currFunction->vars.reserve(totalVars);
+  func->vars.reserve(totalVars);
   for (auto [num, type] : decodedVars) {
     while (num > 0) {
-      currFunction->vars.push_back(type);
+      func->vars.push_back(type);
       num--;
     }
   }
 }
 
-Result<> WasmBinaryReader::readInst(size_t& pos) {
+Result<> WasmBinaryReader::readInst(size_t& pos,
+                                    IRBuilder& builder,
+                                    SourceMapReader& sourceMapReader) {
   if (auto loc = sourceMapReader.readDebugLocationAt(pos)) {
     builder.setDebugLocation(loc);
   }
