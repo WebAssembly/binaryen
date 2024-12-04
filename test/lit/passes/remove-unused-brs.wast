@@ -594,4 +594,34 @@
       )
     )
   )
+
+  ;; CHECK:      (func $unreachable-if (type $1)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (br $block)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable-if
+    ;; Regression test for a problem where blocks were sunk into ifs with
+    ;; unreachable conditions, causing validation errors when the block type was
+    ;; incompatible with the if type.
+    (block $block
+      (if (result i32)
+        (unreachable)
+        (then
+          (i32.const 0)
+        )
+        (else
+          (br $block)
+        )
+      )
+    )
+  )
 )

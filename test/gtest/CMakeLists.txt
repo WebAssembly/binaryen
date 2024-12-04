@@ -3,7 +3,7 @@ include_directories(../../src/wasm)
 
 set(unittest_SOURCES
   arena.cpp
-  binary-reader.cpp
+  source-map.cpp
   cfg.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp

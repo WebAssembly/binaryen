@@ -18,6 +18,7 @@
 // wasm2asm console tool
 //
 
+#include "source-map.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-io.h"

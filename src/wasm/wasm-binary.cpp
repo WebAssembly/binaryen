@@ -1737,10 +1737,10 @@ void WasmBinaryWriter::writeField(const Field& field) {
 
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
-                                   const std::vector<char>& input)
-  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-    nextDebugPos(0), nextDebugLocation{0, 0, 0, std::nullopt},
-    nextDebugLocationHasDebugInfo(false), debugLocation(), builder(wasm) {
+                                   const std::vector<char>& input,
+                                   const std::vector<char>& sourceMap)
+  : wasm(wasm), allocator(wasm.allocator), input(input), builder(wasm),
+    sourceMapReader(sourceMap) {
   wasm.features = features;
 }
 
@@ -1788,7 +1788,7 @@ void WasmBinaryReader::read() {
   }
 
   readHeader();
-  readSourceMapHeader();
+  sourceMapReader.readHeader(wasm);
 
   // Read sections until the end
   while (more()) {
@@ -2804,12 +2804,10 @@ void WasmBinaryReader::readFunctions() {
         BinaryLocation(pos - codeSectionLocation + size)};
     }
 
-    readNextDebugLocation();
+    func->prologLocation = sourceMapReader.readDebugLocationAt(pos);
 
     readVars();
     setLocalNames(*func, numFuncImports + i);
-
-    func->prologLocation = debugLocation;
     {
       // Process the function body. Even if we are skipping function bodies we
       // need to not skip the start function. That contains important code for
@@ -2846,11 +2844,9 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
+    sourceMapReader.finishFunction();
     TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
-
-    std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
-    debugLocation.clear();
   }
 }
 
@@ -2879,9 +2875,8 @@ void WasmBinaryReader::readVars() {
 }
 
 Result<> WasmBinaryReader::readInst() {
-  readNextDebugLocation();
-  if (debugLocation.size()) {
-    builder.setDebugLocation(*debugLocation.begin());
+  if (auto loc = sourceMapReader.readDebugLocationAt(pos)) {
+    builder.setDebugLocation(loc);
   }
   uint8_t code = getInt8();
   switch (code) {
@@ -4270,242 +4265,6 @@ void WasmBinaryReader::readExports() {
         break;
     }
     throwError("invalid export kind");
-  }
-}
-
-static int32_t readBase64VLQ(std::istream& in) {
-  uint32_t value = 0;
-  uint32_t shift = 0;
-  while (1) {
-    auto ch = in.get();
-    if (ch == EOF) {
-      throw MapParseException("unexpected EOF in the middle of VLQ");
-    }
-    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch < 'g')) {
-      // last number digit
-      uint32_t digit = ch < 'a' ? ch - 'A' : ch - 'a' + 26;
-      value |= digit << shift;
-      break;
-    }
-    if (!(ch >= 'g' && ch <= 'z') && !(ch >= '0' && ch <= '9') && ch != '+' &&
-        ch != '/') {
-      throw MapParseException("invalid VLQ digit");
-    }
-    uint32_t digit =
-      ch > '9' ? ch - 'g' : (ch >= '0' ? ch - '0' + 20 : (ch == '+' ? 30 : 31));
-    value |= digit << shift;
-    shift += 5;
-  }
-  return value & 1 ? -int32_t(value >> 1) : int32_t(value >> 1);
-}
-
-void WasmBinaryReader::readSourceMapHeader() {
-  if (!sourceMap) {
-    return;
-  }
-
-  auto skipWhitespace = [&]() {
-    while (sourceMap->peek() == ' ' || sourceMap->peek() == '\n') {
-      sourceMap->get();
-    }
-  };
-
-  auto maybeReadChar = [&](char expected) {
-    if (sourceMap->peek() != expected) {
-      return false;
-    }
-    sourceMap->get();
-    return true;
-  };
-
-  auto mustReadChar = [&](char expected) {
-    char c = sourceMap->get();
-    if (c != expected) {
-      throw MapParseException(std::string("Unexpected char: expected '") +
-                              expected + "' got '" + c + "'");
-    }
-  };
-
-  auto findField = [&](const char* name) {
-    bool matching = false;
-    size_t len = strlen(name);
-    size_t pos;
-    while (1) {
-      int ch = sourceMap->get();
-      if (ch == EOF) {
-        return false;
-      }
-      if (ch == '\"') {
-        if (matching) {
-          // we matched a terminating quote.
-          if (pos == len) {
-            break;
-          }
-          matching = false;
-        } else {
-          matching = true;
-          pos = 0;
-        }
-      } else if (matching && name[pos] == ch) {
-        ++pos;
-      } else if (matching) {
-        matching = false;
-      }
-    }
-    skipWhitespace();
-    mustReadChar(':');
-    skipWhitespace();
-    return true;
-  };
-
-  auto readString = [&](std::string& str) {
-    std::vector<char> vec;
-    skipWhitespace();
-    mustReadChar('\"');
-    if (!maybeReadChar('\"')) {
-      while (1) {
-        int ch = sourceMap->get();
-        if (ch == EOF) {
-          throw MapParseException("unexpected EOF in the middle of string");
-        }
-        if (ch == '\"') {
-          break;
-        }
-        vec.push_back(ch);
-      }
-    }
-    skipWhitespace();
-    str = std::string(vec.begin(), vec.end());
-  };
-
-  if (!findField("sources")) {
-    throw MapParseException("cannot find the 'sources' field in map");
-  }
-
-  skipWhitespace();
-  mustReadChar('[');
-  if (!maybeReadChar(']')) {
-    do {
-      std::string file;
-      readString(file);
-      Index index = wasm.debugInfoFileNames.size();
-      wasm.debugInfoFileNames.push_back(file);
-      debugInfoFileIndices[file] = index;
-    } while (maybeReadChar(','));
-    mustReadChar(']');
-  }
-
-  if (findField("names")) {
-    skipWhitespace();
-    mustReadChar('[');
-    if (!maybeReadChar(']')) {
-      do {
-        std::string symbol;
-        readString(symbol);
-        Index index = wasm.debugInfoSymbolNames.size();
-        wasm.debugInfoSymbolNames.push_back(symbol);
-        debugInfoSymbolNameIndices[symbol] = index;
-      } while (maybeReadChar(','));
-      mustReadChar(']');
-    }
-  }
-
-  if (!findField("mappings")) {
-    throw MapParseException("cannot find the 'mappings' field in map");
-  }
-
-  mustReadChar('\"');
-  if (maybeReadChar('\"')) { // empty mappings
-    nextDebugPos = 0;
-    return;
-  }
-  // read first debug location
-  // TODO: Handle the case where the very first one has only a position but not
-  //       debug info. In practice that does not happen, which needs
-  //       investigation (if it does, it will assert in readBase64VLQ, so it
-  //       would not be a silent error at least).
-  uint32_t position = readBase64VLQ(*sourceMap);
-  nextDebugPos = position;
-
-  auto peek = sourceMap->peek();
-  if (peek == ',' || peek == '\"') {
-    // This is a 1-length entry, so the next location has no debug info.
-    nextDebugLocationHasDebugInfo = false;
-  } else {
-    uint32_t fileIndex = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber =
-      readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
-    uint32_t columnNumber = readBase64VLQ(*sourceMap);
-    std::optional<BinaryLocation> symbolNameIndex;
-    peek = sourceMap->peek();
-    if (!(peek == ',' || peek == '\"')) {
-      symbolNameIndex = readBase64VLQ(*sourceMap);
-    }
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
-    nextDebugLocationHasDebugInfo = true;
-  }
-}
-
-void WasmBinaryReader::readNextDebugLocation() {
-  if (!sourceMap) {
-    return;
-  }
-
-  if (nextDebugPos == 0) {
-    // We reached the end of the source map; nothing left to read.
-    return;
-  }
-
-  while (nextDebugPos && nextDebugPos <= pos) {
-    debugLocation.clear();
-    // use debugLocation only for function expressions
-    if (currFunction) {
-      if (nextDebugLocationHasDebugInfo) {
-        debugLocation.insert(nextDebugLocation);
-      } else {
-        debugLocation.clear();
-      }
-    }
-
-    char ch;
-    *sourceMap >> ch;
-    if (ch == '\"') { // end of records
-      nextDebugPos = 0;
-      break;
-    }
-    if (ch != ',') {
-      throw MapParseException("Unexpected delimiter");
-    }
-
-    int32_t positionDelta = readBase64VLQ(*sourceMap);
-    uint32_t position = nextDebugPos + positionDelta;
-
-    nextDebugPos = position;
-
-    auto peek = sourceMap->peek();
-    if (peek == ',' || peek == '\"') {
-      // This is a 1-length entry, so the next location has no debug info.
-      nextDebugLocationHasDebugInfo = false;
-      break;
-    }
-
-    int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
-    uint32_t fileIndex = nextDebugLocation.fileIndex + fileIndexDelta;
-    int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber = nextDebugLocation.lineNumber + lineNumberDelta;
-    int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
-
-    std::optional<BinaryLocation> symbolNameIndex;
-    peek = sourceMap->peek();
-    if (!(peek == ',' || peek == '\"')) {
-      int32_t symbolNameIndexDelta = readBase64VLQ(*sourceMap);
-      symbolNameIndex =
-        nextDebugLocation.symbolNameIndex.value_or(0) + symbolNameIndexDelta;
-    }
-
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
-    nextDebugLocationHasDebugInfo = true;
   }
 }
 

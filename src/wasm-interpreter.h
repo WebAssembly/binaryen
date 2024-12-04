@@ -4022,16 +4022,25 @@ public:
 
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
-    auto end = offset + size * elemBytes;
-    if ((size != 0ull && droppedDataSegments.count(curr->segment)) ||
-        end > seg.data.size()) {
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+    uint64_t end;
+    if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
+    }
+    if (droppedDataSegments.count(curr->segment) && end > 0) {
+      trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
     for (Index i = offset; i < end; i += elemBytes) {
       auto addr = (void*)&seg.data[i];
       contents.push_back(this->makeFromMemory(addr, element));
     }
+
+#pragma GCC diagnostic pop
+
     return self()->makeGCData(std::move(contents), curr->type);
   }
   Flow visitArrayNewElem(ArrayNewElem* curr) {

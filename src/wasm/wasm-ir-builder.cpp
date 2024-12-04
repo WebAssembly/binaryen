@@ -709,7 +709,7 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
     return Err{"unexpected start of function"};
   }
   if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
-    func->prologLocation.insert(*loc);
+    func->prologLocation = *loc;
   }
   debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
@@ -975,7 +975,7 @@ Result<> IRBuilder::visitEnd() {
   }
   if (auto* func = scope.getFunction()) {
     if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
-      func->epilogLocation.insert(*loc);
+      func->epilogLocation = *loc;
     }
   }
   debugLoc = CanReceiveDebug();
@@ -1018,7 +1018,10 @@ Result<> IRBuilder::visitEnd() {
     func->body = maybeWrapForLabel(*expr);
     labelDepths.clear();
     if (scope.needsPopFixup()) {
-      EHUtils::handleBlockNestedPops(func, wasm);
+      // We may be in the binary parser, where pops need to be fixed up before
+      // we know that EH will be enabled.
+      EHUtils::handleBlockNestedPops(
+        func, wasm, EHUtils::FeaturePolicy::RunIfNoEH);
     }
     this->func = nullptr;
     blockHint = 0;
