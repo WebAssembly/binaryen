@@ -501,6 +501,10 @@ struct CollectedFuncInfo {
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
+
+  // All functions that might be called from the outside. And RefFunc suggests
+  // that, in open world.
+  std::unordered_set<Name> calledFromOutside;
 };
 
 // Does a walk while maintaining a map of names of branch targets to those
@@ -528,8 +532,9 @@ struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
 struct InfoCollector
   : public BreakTargetWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
   CollectedFuncInfo& info;
+  const PassOptions& options;
 
-  InfoCollector(CollectedFuncInfo& info) : info(info) {}
+  InfoCollector(CollectedFuncInfo& info, const PassOptions& options) : info(info), options(options) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -664,6 +669,10 @@ struct InfoCollector
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
         {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
+    }
+
+    if (!options.closedWorld) {
+      info.calledFromOutside.insert(curr->func);
     }
   }
   void visitRefEq(RefEq* curr) {
@@ -2092,7 +2101,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // First, collect information from each function.
   ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
     wasm, [&](Function* func, CollectedFuncInfo& info) {
-      InfoCollector finder(info);
+      InfoCollector finder(info, options);
 
       if (func->imported()) {
         // Imports return unknown values.
@@ -2114,7 +2123,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
-  InfoCollector finder(globalInfo);
+  InfoCollector finder(globalInfo, options);
   finder.walkModuleCode(&wasm);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -2153,6 +2162,16 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // above.
   InsertOrderedMap<Location, PossibleContents> roots;
 
+  // Any function that may be called from the outside, like an export, is a
+  // root, since they can be called with unknown parameters.
+  auto calledFromOutside = [&](Name funcName) {
+    auto* func = wasm.getFunction(funcName);
+    auto params = func->getParams();
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
+    }
+  };
+
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
       links.insert(getIndexes(link));
@@ -2171,6 +2190,10 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
     }
+
+    for (auto func : info.calledFromOutside) {
+      calledFromOutside(func);
+    }
   }
 
   // We no longer need the function-level info.
@@ -2180,16 +2203,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "external phase\n";
 #endif
 
-  // Parameters of exported functions are roots, since exports can have callers
-  // that we can't see, so anything might arrive there.
-  auto calledFromOutside = [&](Name funcName) {
-    auto* func = wasm.getFunction(funcName);
-    auto params = func->getParams();
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
-    }
-  };
-
+  // Exports can be modified from the outside.
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
       calledFromOutside(ex->value);
