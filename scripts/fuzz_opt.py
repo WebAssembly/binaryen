@@ -363,11 +363,6 @@ INITIAL_CONTENTS_IGNORE = [
     'typed_continuations_suspend.wast',
 ]
 
-INITIAL_CONTENTS_IGNORE_CLOSED_WORLD = [
-    # call-ref* fuzzer APIs assume an open world
-    'fuzzing-api.wast',
-]
-
 
 def pick_initial_contents():
     # if we use an initial wasm file's contents as the basis for the
@@ -391,17 +386,14 @@ def pick_initial_contents():
         # no longer exist, and we should just skip it.
         if not os.path.exists(test_name):
             return
-    basename = os.path.basename(test_name)
-    if basename in INITIAL_CONTENTS_IGNORE:
-        return
-    if CLOSED_WORLD and basename in INITIAL_CONTENTS_IGNORE_CLOSED_WORLD:
+    if os.path.basename(test_name) in INITIAL_CONTENTS_IGNORE:
         return
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
     if '.fail.' in test_name:
         print('initial contents is just a .fail test')
         return
-    if basename in [
+    if os.path.basename(test_name) in [
         # contains too many segments to run in a wasm VM
         'limit-segments_disable-bulk-memory.wast',
         # https://github.com/WebAssembly/binaryen/issues/3203
