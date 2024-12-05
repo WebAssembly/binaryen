@@ -1678,11 +1678,17 @@ class Two(TestCaseHandler):
     frequency = 1 # XXX
 
     def handle(self, wasm):
-        # Generate a second wasm file.
-        second_input = abspath('second_input.dat')
-        make_random_input(random_size(), second_input)
+        # Generate a second wasm file, unless we were given one (useful during
+        # reduction).
         second_wasm = abspath('second.wasm')
-        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+        given = os.environ.get('BINARYEN_SECOND_WASM')
+        if given:
+            shutil.copyfile(given, second_wasm)
+        else:
+            second_input = abspath('second_input.dat')
+            make_random_input(random_size(), second_input)
+            args = [second_input, '-ttf', '-o', second_wasm]
+            run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
 
         # The binaryen interpreter only supports a single file, so we run them
         # from JS using fuzz_shell.js's support for two files.
@@ -2189,6 +2195,9 @@ echo "  " $?
 #   bash %(reduce_sh)s
 #
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
+#
+# If the testcase handler uses a second wasm file, you may be able to reduce it
+# using BINARYEN_SECOND_WASM.
 #
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
                          'bin': shared.options.binaryen_bin,
