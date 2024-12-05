@@ -1683,6 +1683,7 @@ class Two(TestCaseHandler):
         second_wasm = abspath('second.wasm')
         given = os.environ.get('BINARYEN_SECOND_WASM')
         if given:
+            # TODO: should we de-nan this etc. as with the primary?
             shutil.copyfile(given, second_wasm)
         else:
             second_input = abspath('second_input.dat')
