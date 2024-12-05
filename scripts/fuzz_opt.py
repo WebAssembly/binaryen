@@ -1579,59 +1579,6 @@ class Split(TestCaseHandler):
         return all_disallowed(['shared-everything'])
 
 
-# Tests linking two wasm files at runtime, and that optimizations do not break
-# anything.
-class Two(TestCaseHandler):
-    frequency = 1 # XXX
-
-    def handle(self, wasm):
-        # Generate a second wasm file.
-        second_input = abspath('second_input.dat')
-        make_random_input(random_size(), second_input)
-        second_wasm = abspath('second.wasm')
-        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
-
-        # The binaryen interpreter only supports a single file, so we run them
-        # from JS using fuzz_shell.js's support for two files.
-        output = run_d8_wasm(wasm, args=[second_wasm])
-
-        if output == IGNORE:
-            # There is no point to continue since we can't compare this output
-            # to anything.
-            return
-
-        # Make sure that fuzz_shell.js actually executed all exports from both
-        # wasm files.
-        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
-
-        output = fix_output(output)
-
-        # Optimize at least one of the two.
-        # TODO: Use other optimizations here. See comment in Split().
-        opts = ['-O3']
-
-        wasms = [wasm, second_wasm]
-
-        for i in range(random.randint(1, 2)):
-            wasm_index = random.randint(0, 1)
-            name = wasms[wasm_index]
-            new_name = name + f'.opt{i}.wasm'
-            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
-            wasms[wasm_index] = new_name
-
-        # Run again, and compare the output
-        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
-        optimized_output = fix_output(optimized_output)
-
-        compare(output, optimized_output, 'Two')
-
-    def can_run_on_wasm(self, wasm):
-        # We cannot optimize wasm files we are going to link in closed world
-        # mode. We also cannot run shared-everything code in d8 yet.
-        return not CLOSED_WORLD and all_disallowed(['shared-everything'])
-
-
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1721,6 +1668,67 @@ class ClusterFuzz(TestCaseHandler):
         tar = tarfile.open(bundle, "r:gz")
         tar.extractall(path=self.clusterfuzz_dir)
         tar.close()
+
+
+# Tests linking two wasm files at runtime, and that optimizations do not break
+# anything. This also tests that fuzz_shell.js properly executes two wasm
+# files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
+# files in that way).
+class Two(TestCaseHandler):
+    frequency = 1 # XXX
+
+    def handle(self, wasm):
+        # Generate a second wasm file.
+        second_input = abspath('second_input.dat')
+        make_random_input(random_size(), second_input)
+        second_wasm = abspath('second.wasm')
+        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # The binaryen interpreter only supports a single file, so we run them
+        # from JS using fuzz_shell.js's support for two files.
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        if output == IGNORE:
+            # There is no point to continue since we can't compare this output
+            # to anything.
+            return
+
+        if output.strip() == 'exception thrown: failed to instantiate module':
+            # We may fail to instantiate the module for reasonable reasons, such
+            # as an active segment being out of bounds. There is no point to
+            # continue in such cases.
+            return
+
+        # Make sure that fuzz_shell.js actually executed all exports from both
+        # wasm files.
+        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
+
+        output = fix_output(output)
+
+        # Optimize at least one of the two.
+        # TODO: Use other optimizations here. See comment in Split().
+        opts = ['-O3']
+
+        wasms = [wasm, second_wasm]
+
+        for i in range(random.randint(1, 2)):
+            wasm_index = random.randint(0, 1)
+            name = wasms[wasm_index]
+            new_name = name + f'.opt{i}.wasm'
+            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
+            wasms[wasm_index] = new_name
+
+        # Run again, and compare the output
+        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
+        optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two')
+
+    def can_run_on_wasm(self, wasm):
+        # We cannot optimize wasm files we are going to link in closed world
+        # mode. We also cannot run shared-everything code in d8 yet.
+        return not CLOSED_WORLD and all_disallowed(['shared-everything'])
 
 
 # The global list of all test case handlers
