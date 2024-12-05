@@ -83,6 +83,8 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::TruncSat, "nontrapping float-to-int operations")
       .addFeature(FeatureSet::SIMD, "SIMD operations and types")
       .addFeature(FeatureSet::BulkMemory, "bulk memory operations")
+      .addFeature(FeatureSet::BulkMemoryOpt, "memory.copy and memory.fill")
+      .addFeature(FeatureSet::CallIndirectOverlong, "(ignored for compatibility)")
       .addFeature(FeatureSet::ExceptionHandling,
                   "exception handling operations")
       .addFeature(FeatureSet::TailCall, "tail call operations")
@@ -225,6 +227,10 @@ struct ToolOptions : public Options {
   }
 
   void applyOptionsBeforeParse(Module& module) const {
+    if (enabledFeatures & FeatureSet::BulkMemory) {
+      // Enable this subfeature for backward compatibility.
+      module.features.enable(FeatureSet::BulkMemoryOpt);
+    }
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
   }

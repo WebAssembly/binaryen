@@ -1275,7 +1275,7 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    assert(getModule()->features.hasBulkMemory());
+    assert(getModule()->features.hasBulkMemoryOpt());
     if (auto* ret = optimizeMemoryCopy(curr)) {
       return replaceCurrent(ret);
     }
@@ -1285,7 +1285,7 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    assert(getModule()->features.hasBulkMemory());
+    assert(getModule()->features.hasBulkMemoryOpt());
     if (auto* ret = optimizeMemoryFill(curr)) {
       return replaceCurrent(ret);
     }
