@@ -771,6 +771,24 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
+  if (wasm.features.hasReferenceTypes() && closedWorld) {
+    // In closed world mode we must *remove* the call-ref* imports, if they
+    // exist in the initial content. These are not valid to call in closed-world
+    // mode as they call function references. (Another solution here would be to
+    // make closed-world issue validation errors on these imports, but that
+    // would require changes to the general-purpose validator.)
+    for (auto& func : wasm.functions) {
+      if (func->imported() && func->module == "fuzzing-support" &&
+          func->base.startsWith("call-ref")) {
+        // Make it non-imported, and with a simple body.
+        func->module = func->base = Name();
+        auto results = func->getResults();
+        func->body =
+          results.isConcrete() ? makeConst(results) : makeNop(Type::none);
+      }
+    }
+  }
+
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
   // its own exports, and to care about the indexes of the exports).
@@ -810,43 +828,29 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   // that mode (optimizations can change the reference in ways that would be
   // noticeable, and look like breakage).
   if (wasm.features.hasReferenceTypes()) {
-    if (closedWorld) {
-      // We are in closed world. Remove the call-ref* imports, if they exist.
-      for (auto& func : wasm.functions) {
-        if (func->imported() && func->module == "fuzzing-support" &&
-            func->base.startsWith("call-ref")) {
-          // Make it non-imported, and with a simple body.
-          func->module = func->base = Name();
-          auto results = func->getResults();
-          func->body =
-            results.isConcrete() ? makeConst(results) : makeNop(Type::none);
-        }
-      }
-    } else {
-      // We are in open world. Add the call-ref* imports, sometimes.
-      if (choice & 4) {
-        // Given an funcref, call it from JS.
-        callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
-        auto func = std::make_unique<Function>();
-        func->name = callRefImportName;
-        func->module = "fuzzing-support";
-        func->base = "call-ref";
-        func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
-        wasm.addFunction(std::move(func));
-      }
+    // We are in open world. Add the call-ref* imports, sometimes.
+    if (choice & 4) {
+      // Given an funcref, call it from JS.
+      callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
+      auto func = std::make_unique<Function>();
+      func->name = callRefImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref";
+      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      wasm.addFunction(std::move(func));
+    }
 
-      if (choice & 8) {
-        // Given an funcref, call it from JS and catch all exceptions (similar
-        // to callExportCatch), return 1 if we caught).
-        callRefCatchImportName =
-          Names::getValidFunctionName(wasm, "call-ref-catch");
-        auto func = std::make_unique<Function>();
-        func->name = callRefCatchImportName;
-        func->module = "fuzzing-support";
-        func->base = "call-ref-catch";
-        func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
-        wasm.addFunction(std::move(func));
-      }
+    if (choice & 8) {
+      // Given an funcref, call it from JS and catch all exceptions (similar
+      // to callExportCatch), return 1 if we caught).
+      callRefCatchImportName =
+        Names::getValidFunctionName(wasm, "call-ref-catch");
+      auto func = std::make_unique<Function>();
+      func->name = callRefCatchImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref-catch";
+      func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
+      wasm.addFunction(std::move(func));
     }
   }
 }
