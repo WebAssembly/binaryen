@@ -271,7 +271,7 @@ struct TypeRefining : public Pass {
         }
 
         Type newFieldType;
-        if (curr->ref->type.isNull()) {
+        if (!curr->ref->type.isNull()) {
           auto oldType = curr->ref->type.getHeapType();
           newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
         }
