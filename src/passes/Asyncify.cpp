@@ -1669,6 +1669,7 @@ struct Asyncify : public Pass {
               export->name == asyncifyMemoryValue) {
             asyncifyMemory = export->value;
             break;
+            break;
           }
         }
       }
