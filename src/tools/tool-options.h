@@ -84,7 +84,8 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::SIMD, "SIMD operations and types")
       .addFeature(FeatureSet::BulkMemory, "bulk memory operations")
       .addFeature(FeatureSet::BulkMemoryOpt, "memory.copy and memory.fill")
-      .addFeature(FeatureSet::CallIndirectOverlong, "(ignored for compatibility)")
+      .addFeature(FeatureSet::CallIndirectOverlong,
+                  "(ignored for compatibility)")
       .addFeature(FeatureSet::ExceptionHandling,
                   "exception handling operations")
       .addFeature(FeatureSet::TailCall, "tail call operations")
