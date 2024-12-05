@@ -1727,8 +1727,10 @@ class Two(TestCaseHandler):
 
     def can_run_on_wasm(self, wasm):
         # We cannot optimize wasm files we are going to link in closed world
-        # mode. We also cannot run shared-everything code in d8 yet.
-        return not CLOSED_WORLD and all_disallowed(['shared-everything'])
+        # mode. We also cannot run shared-everything code in d8 yet. We also
+        # cannot compare if there are NaNs (as optimizations can lead to
+        # different outputs)
+        return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
 
 
 # The global list of all test case handlers
