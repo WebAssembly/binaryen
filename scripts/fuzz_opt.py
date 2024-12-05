@@ -1623,8 +1623,8 @@ class Two(TestCaseHandler):
 
     def can_run_on_wasm(self, wasm):
         # We cannot optimize wasm files we are going to link in closed world
-        # mode.
-        return not CLOSED_WORLD
+        # mode. We also cannot run shared-everything code in d8 yet.
+        return not CLOSED_WORLD and all_disallowed(['shared-everything'])
 
 
 # Check that the text format round-trips without error.
