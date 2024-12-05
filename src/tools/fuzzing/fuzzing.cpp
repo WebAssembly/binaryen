@@ -827,8 +827,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   // call-ref variants: calling a function reference outside is disallowed in
   // that mode (optimizations can change the reference in ways that would be
   // noticeable, and look like breakage).
-  if (wasm.features.hasReferenceTypes()) {
-    // We are in open world. Add the call-ref* imports, sometimes.
+  if (wasm.features.hasReferenceTypes() && !closedWorld) {
     if (choice & 4) {
       // Given an funcref, call it from JS.
       callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
