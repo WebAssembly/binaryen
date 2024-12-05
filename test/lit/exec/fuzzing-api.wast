@@ -169,7 +169,7 @@
  (func $ref.calling.legal (export "ref.calling.legal")
   ;; It is fine to call-ref a function with params and results. The params get
   ;; default values, and the results are ignored. All we will see here is the
-  ;; logging from the function, "1234".
+  ;; logging from the function, "12".
   (call $call.ref
    (ref.func $legal)
   )

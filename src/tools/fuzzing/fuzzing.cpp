@@ -824,9 +824,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   }
 
   // If the wasm will be used for closed-world testing, we cannot use the
-  // call-ref variants: calling a function reference outside is disallowed in
-  // that mode (optimizations can change the reference in ways that would be
-  // noticeable, and look like breakage).
+  // call-ref variants, as mentioned before.
   if (wasm.features.hasReferenceTypes() && !closedWorld) {
     if (choice & 4) {
       // Given an funcref, call it from JS.
