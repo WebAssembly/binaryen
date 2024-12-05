@@ -1595,6 +1595,11 @@ class Two(TestCaseHandler):
         # from JS using fuzz_shell.js's support for two files.
         output = run_d8_wasm(wasm, args=[second_wasm])
 
+        if output == IGNORE:
+            # There is no point to continue since we can't compare this output
+            # to anything.
+            return
+
         # Make sure that fuzz_shell.js actually executed all exports from both
         # wasm files.
         exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
