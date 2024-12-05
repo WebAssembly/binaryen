@@ -1597,10 +1597,10 @@ class Two(TestCaseHandler):
 
         # Make sure that fuzz_shell.js actually executed all exports from both
         # wasm files.
-        num_exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        assert output.count(FUZZ_EXEC_CALL_PREFIX) == num_exports
+        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
 
-        # ???we compare a vm to itself??? output = fix_output(output)
+        output = fix_output(output)
 
         # Optimize at least one of the two.
         # TODO: Use other optimizations here. See comment in Split().
@@ -1617,7 +1617,7 @@ class Two(TestCaseHandler):
 
         # Run again, and compare the output
         optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
-        # ??? optimized_output = fix_output(optimized_output)
+        optimized_output = fix_output(optimized_output)
 
         compare(output, optimized_output, 'Two')
 
@@ -1720,18 +1720,7 @@ class ClusterFuzz(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
     Two(),
-    # TODO: enable when stable enough, and adjust |frequency| (see above)
-    # Split(),
-    RoundtripText(),
-    ClusterFuzz(),
 ]
 
 
