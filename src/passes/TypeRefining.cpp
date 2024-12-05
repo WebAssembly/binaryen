@@ -276,8 +276,7 @@ struct TypeRefining : public Pass {
           newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
         }
 
-        if (curr->ref->type.isNull() ||
-            newFieldType == Type::unreachable ||
+        if (curr->ref->type.isNull() || newFieldType == Type::unreachable ||
             !Type::isSubType(newFieldType, curr->type)) {
           // This get will trap, or cannot be reached: either the ref is null,
           // or the field is never written any contents, or the contents we see
