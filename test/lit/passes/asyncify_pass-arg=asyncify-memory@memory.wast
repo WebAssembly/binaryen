@@ -4,20 +4,24 @@
 
 ;; This test checks that the asyncify-memory argument can pick which memory to use in asyncify.
 (module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (func (result i32)))
+
+  ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $mem 1 1)
   (memory $mem (export "memory") 1 1)
+  ;; CHECK:      (memory $ignore 1 1)
   (memory $ignore (export "unused") 1 1)
 )
-;; CHECK:      (type $0 (func (param i32)))
+;; CHECK:      (export "memory" (memory $mem))
 
-;; CHECK:      (type $1 (func))
-
-;; CHECK:      (type $2 (func (result i32)))
-
-;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
-
-;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))
-
-;; CHECK:      (memory $0 1 1)
+;; CHECK:      (export "unused" (memory $ignore))
 
 ;; CHECK:      (export "asyncify_start_unwind" (func $asyncify_start_unwind))
 
@@ -38,16 +42,14 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $0
+;; CHECK-NEXT:    (i32.load $mem
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $0 offset=4
+;; CHECK-NEXT:    (i32.load $mem offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (unreachable)
-;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (unreachable)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -57,16 +59,14 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $0
+;; CHECK-NEXT:    (i32.load $mem
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $0 offset=4
+;; CHECK-NEXT:    (i32.load $mem offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (unreachable)
-;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (unreachable)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -79,16 +79,14 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $0
+;; CHECK-NEXT:    (i32.load $mem
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $0 offset=4
+;; CHECK-NEXT:    (i32.load $mem offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (unreachable)
-;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (unreachable)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -98,16 +96,14 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $0
+;; CHECK-NEXT:    (i32.load $mem
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $0 offset=4
+;; CHECK-NEXT:    (i32.load $mem offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (unreachable)
-;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (unreachable)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
