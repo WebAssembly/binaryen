@@ -139,7 +139,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_bulk_mem_opt(module,
-                            'memory.copy operations require bulk memory [--enable-bulk-memory-opt]')
+                                'memory.copy operations require bulk memory [--enable-bulk-memory-opt]')
         # Test that enabling bulk-memory also enables bulk-memory-opt
         self.check_bulk_mem(module,
                             'memory.copy operations require bulk memory [--enable-bulk-memory-opt]')
@@ -317,16 +317,18 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         module = '''
         (module)
         '''
+
         def check_nop(flag):
-          p = shared.run_process(
-            shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
-            [flag],
-            input=module,
-            check=False,
-            capture_output=True)
-          self.assertEqual(p.returncode, 0)
+            p = shared.run_process(
+                shared.WASM_OPT + ['--mvp-features', '--print', '-o', os.devnull] +
+                [flag],
+                input=module,
+                check=False,
+                capture_output=True)
+            self.assertEqual(p.returncode, 0)
         check_nop('--enable-call-indirect-overlong')
         check_nop('--disable-call-indirect-overlong')
+
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_atomics(self):
