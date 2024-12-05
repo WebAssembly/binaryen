@@ -26,11 +26,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 2
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -435,11 +432,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -975,18 +969,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.tee $a
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $A)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.tee $a
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1029,13 +1017,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $A)
-  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:   (if (result (ref $A))
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (then
-  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:     (struct.get $A 0
   ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (unreachable)
@@ -1043,22 +1030,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (if
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $A)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (else
-  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (if (result (ref $A))
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (local.get $A)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1116,7 +1099,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (ref.null none)
@@ -1164,23 +1147,14 @@
   ;; CHECK:       (type $2 (func (result (ref $A))))
 
   ;; CHECK:      (func $0 (type $2) (result (ref $A))
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (struct.new $A
-  ;; CHECK-NEXT:         (struct.new_default $B)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:  (struct.new $A
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (struct.new_default $B)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0 (result (ref $A))
@@ -1219,13 +1193,10 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:      (block
   ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (block
-  ;; CHECK-NEXT:         (drop
-  ;; CHECK-NEXT:          (struct.new_default $B)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (unreachable)
+  ;; CHECK-NEXT:        (struct.get $B 0
+  ;; CHECK-NEXT:         (struct.new_default $B)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (unreachable)
@@ -1286,14 +1257,13 @@
   ;; CHECK-NEXT:   (ref.cast (ref noextern)
   ;; CHECK-NEXT:    (try (result externref)
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:      (struct.get $A 0
   ;; CHECK-NEXT:       (struct.new $A
   ;; CHECK-NEXT:        (ref.as_non_null
   ;; CHECK-NEXT:         (ref.null noextern)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (catch $tag
   ;; CHECK-NEXT:      (local.get $extern)
@@ -1339,14 +1309,13 @@
   ;; CHECK-NEXT:   (ref.cast (ref noextern)
   ;; CHECK-NEXT:    (try (result externref)
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:      (struct.get $A 0
   ;; CHECK-NEXT:       (struct.new $A
   ;; CHECK-NEXT:        (ref.as_non_null
   ;; CHECK-NEXT:         (ref.null noextern)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (catch $tag
   ;; CHECK-NEXT:      (local.get $extern)
@@ -1585,13 +1554,10 @@
  ;; CHECK:      (func $1 (type $3) (result (ref null $8))
  ;; CHECK-NEXT:  (local $l (ref $9))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (struct.new $5
- ;; CHECK-NEXT:      (ref.func $1)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:   (struct.get $5 0
+ ;; CHECK-NEXT:    (struct.new $5
+ ;; CHECK-NEXT:     (ref.func $1)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.null nofunc)

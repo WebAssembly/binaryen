@@ -50,7 +50,7 @@
   ;; CHECK:      (export "main" (func $main))
 
   ;; CHECK:      (func $main (type $0) (result i32)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $main (type $2) (result i32)
   ;; OPEN_WORLD-NEXT:  (struct.get $struct 1
