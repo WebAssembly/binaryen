@@ -1579,6 +1579,54 @@ class Split(TestCaseHandler):
         return all_disallowed(['shared-everything'])
 
 
+# Tests linking two wasm files at runtime, and that optimizations do not break
+# anything.
+class Two(TestCaseHandler):
+    frequency = 1 # XXX
+
+    def handle(self, wasm):
+        # Generate a second wasm file.
+        second_input = abspath('second_input.dat')
+        make_random_input(random_size(), second_input)
+        second_wasm = abspath('second.wasm')
+        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
+
+        # The binaryen interpreter only supports a single file, so we run them
+        # from JS using fuzz_shell.js's support for two files.
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        # Make sure that fuzz_shell.js actually executed all exports from both
+        # wasm files.
+        num_exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        assert output.count(FUZZ_EXEC_CALL_PREFIX) == num_exports
+
+        # ???we compare a vm to itself??? output = fix_output(output)
+
+        # Optimize at least one of the two.
+        # TODO: Use other optimizations here. See comment in Split().
+        opts = ['-O3']
+
+        wasms = [wasm, second_wasm]
+
+        for i in range(random.randint(1, 2)):
+            wasm_index = random.randint(0, 1)
+            name = wasms[wasm_index]
+            new_name = name + f'.opt{i}.wasm'
+            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
+            wasms[wasm_index] = new_name
+
+        # Run again, and compare the output
+        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
+        # ??? optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two')
+
+    def can_run_on_wasm(self, wasm):
+        # We cannot optimize wasm files we are going to link in closed world
+        # mode.
+        return not CLOSED_WORLD
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1679,6 +1727,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
+    Two(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
     RoundtripText(),
