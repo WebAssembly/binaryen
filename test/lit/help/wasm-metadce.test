@@ -520,7 +520,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --table64-lowering                            lower 64-bit tables 32-bit ones
+;; CHECK-NEXT:   --table64-lowering                            alias for memory64-lowering
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trace-calls                                 instrument the build with code
 ;; CHECK-NEXT:                                                 to intercept specific function
