@@ -192,7 +192,7 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal (export "ref.calling.illegal")
-  ;; The i64 param causes an error here, so we will only log 1 as a trap.
+  ;; The i64 param causes an error here, so we will only log 1 because we catch an exception.
   (call $log-i32
    (call $call.ref.catch
     (ref.func $illegal)
