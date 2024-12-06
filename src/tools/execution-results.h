@@ -186,7 +186,7 @@ public:
     // Send default values as arguments, or trap if we need anything else.
     Literals arguments;
     for (const auto& param : func->getParams()) {
-      // An i64 param can work from JS, but fuzz_shell provides 0, which traps
+      // An i64 param can work from JS, but fuzz_shell provides 0, which errors
       // on attempts to convert it to BigInt. v128 cannot work at all.
       if (param == Type::i64 || param == Type::v128) {
         throwEmptyException();
