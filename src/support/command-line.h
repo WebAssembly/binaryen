@@ -52,7 +52,7 @@ public:
   std::map<std::string, std::string> extra;
 
   Options(const std::string& command, const std::string& description);
-  virtual ~Options();
+  ~Options();
   Options& add(const std::string& longName,
                const std::string& shortName,
                const std::string& description,
@@ -63,7 +63,7 @@ public:
   Options& add_positional(const std::string& name,
                           Arguments arguments,
                           const Action& action);
-  virtual void parse(int argc, const char* argv[]);
+  void parse(int argc, const char* argv[]);
 
 private:
   struct Option {

@@ -30,7 +30,7 @@ struct OptimizationOptions : public ToolOptions {
   // levels, but users can disallow it as well.
   bool allowStackIR = true;
 
-  void parse(int argc, const char* argv[]) override {
+  void parse(int argc, const char* argv[]) {
     ToolOptions::parse(argc, argv);
 
     // After parsing the arguments, update defaults based on the optimize/shrink

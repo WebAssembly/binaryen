@@ -4799,7 +4799,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::Atomics;
     } else if (name == BinaryConsts::CustomSections::BulkMemoryFeature) {
       feature = FeatureSet::BulkMemory;
-      if (used) { // For backward compatibility, enable this dependent feature.
+      if (used) {
+        // For backward compatibility, enable this dependent feature.
         feature |= FeatureSet::BulkMemoryOpt;
       }
     } else if (name == BinaryConsts::CustomSections::BulkMemoryOptFeature) {

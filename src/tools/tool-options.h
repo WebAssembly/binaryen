@@ -82,8 +82,13 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::MutableGlobals, "mutable globals")
       .addFeature(FeatureSet::TruncSat, "nontrapping float-to-int operations")
       .addFeature(FeatureSet::SIMD, "SIMD operations and types")
-      .addFeature(FeatureSet::BulkMemory, "bulk memory operations")
-      .addFeature(FeatureSet::BulkMemoryOpt, "memory.copy and memory.fill")
+      .addFeature(FeatureSet::BulkMemory,
+                  "bulk memory operations",
+                  FeatureSet(FeatureSet::BulkMemoryOpt))
+      .addFeature(FeatureSet::BulkMemoryOpt,
+                  "memory.copy and memory.fill",
+                  FeatureSet::None,
+                  FeatureSet(FeatureSet::BulkMemoryOpt))
       .addFeature(FeatureSet::CallIndirectOverlong,
                   "(ignored for compatibility)")
       .addFeature(FeatureSet::ExceptionHandling,
@@ -203,16 +208,18 @@ struct ToolOptions : public Options {
   }
 
   ToolOptions& addFeature(FeatureSet::Feature feature,
-                          const std::string& description) {
+                          const std::string& description,
+                          FeatureSet impliedEnable = FeatureSet::None,
+                          FeatureSet impliedDisable = FeatureSet::None) {
     (*this)
       .add(std::string("--enable-") + FeatureSet::toString(feature),
            "",
            std::string("Enable ") + description,
            ToolOptionsCategory,
            Arguments::Zero,
-           [this, feature](Options*, const std::string&) {
-             enabledFeatures.set(feature, true);
-             disabledFeatures.set(feature, false);
+           [this, feature, impliedEnable](Options*, const std::string&) {
+             enabledFeatures.set(feature | impliedEnable, true);
+             disabledFeatures.set(feature | impliedEnable, false);
            })
 
       .add(std::string("--disable-") + FeatureSet::toString(feature),
@@ -220,9 +227,9 @@ struct ToolOptions : public Options {
            std::string("Disable ") + description,
            ToolOptionsCategory,
            Arguments::Zero,
-           [this, feature](Options*, const std::string&) {
-             enabledFeatures.set(feature, false);
-             disabledFeatures.set(feature, true);
+           [this, feature, impliedDisable](Options*, const std::string&) {
+             enabledFeatures.set(feature | impliedDisable, false);
+             disabledFeatures.set(feature | impliedDisable, true);
            });
     return *this;
   }
@@ -240,15 +247,6 @@ struct ToolOptions : public Options {
 
   virtual void addPassArg(const std::string& key, const std::string& value) {
     passOptions.arguments[key] = value;
-  }
-
-  void parse(int argc, const char* argv[]) override {
-    Options::parse(argc, argv);
-    if (enabledFeatures & FeatureSet::BulkMemory) {
-      // Enable this subfeature for backward compatibility.
-      enabledFeatures.setBulkMemoryOpt();
-      disabledFeatures.setBulkMemoryOpt(false);
-    }
   }
 
   virtual ~ToolOptions() = default;
