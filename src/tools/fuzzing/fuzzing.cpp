@@ -1046,9 +1046,9 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     catching ? callExportCatchImportName : callExportImportName;
   auto refTarget = catching ? callRefCatchImportName : callRefImportName;
 
-  // We want to call a ref less often, as refs are more likely to trap (a
+  // We want to call a ref less often, as refs are more likely to error (a
   // function reference can have arbitrary params and results, including things
-  // that trap on the JS boundary; an export is already filtered for such
+  // that error on the JS boundary; an export is already filtered for such
   // things in some cases - when we legalize the boundary - and even if not, we
   // emit lots of void(void) functions - all the invoke_foo functions - that are
   // safe to call).
@@ -1057,14 +1057,14 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     // catching ones, we just get a result of 1, but when not caught it halts
     // execution).
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
-      // Most of the time make a non-nullable funcref, to avoid trapping.
+      // Most of the time make a non-nullable funcref, to avoid errors.
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
       return builder.makeCall(refTarget, {make(refType)}, type);
     }
   }
 
   if (!exportTarget) {
-    // We decided not to emit a call-ref here, due to fear of trapping, and
+    // We decided not to emit a call-ref here, due to fear of erroring, and
     // there is no call-export, so just emit something trivial.
     return makeTrivial(type);
   }
@@ -1072,7 +1072,7 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
   // Pick the maximum export index to call.
   Index maxIndex = wasm.exports.size();
   if (type == Type::i32) {
-    // This swallows traps, so we can be less careful, but we do still want to
+    // This swallows errors, so we can be less careful, but we do still want to
     // avoid swallowing a lot as executing code is more interesting. (Note that
     // even though we double here, the risk is not that great: we are still
     // adding functions as we go, so the first half of functions/exports can
