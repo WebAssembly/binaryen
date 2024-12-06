@@ -229,7 +229,7 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal-result (export "ref.calling.illegal-result")
-  ;; The v128 result causes an error here, so we will log 1 as a trap. The JS
+  ;; The v128 result causes an error here, so we will log 1 as an exception. The JS
   ;; semantics determine that we do that check *before* the call, so the logging
   ;; of 910 does not go through.
   (call $log-i32
