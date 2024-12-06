@@ -200,9 +200,13 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable (ignored for compatibility)
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable (ignored for compatibility)
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
 ;; CHECK-NEXT:

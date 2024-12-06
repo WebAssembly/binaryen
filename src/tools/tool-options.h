@@ -88,9 +88,9 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::BulkMemoryOpt,
                   "memory.copy and memory.fill",
                   FeatureSet::None,
-                  FeatureSet(FeatureSet::BulkMemoryOpt))
+                  FeatureSet(FeatureSet::BulkMemory))
       .addFeature(FeatureSet::CallIndirectOverlong,
-                  "(ignored for compatibility)")
+                  "LEB encoding of call-indirect (Ignored for compatibility as it has no effect on Binaryen)")
       .addFeature(FeatureSet::ExceptionHandling,
                   "exception handling operations")
       .addFeature(FeatureSet::TailCall, "tail call operations")
