@@ -130,7 +130,7 @@
   (call $call.ref
    (ref.func $logging)
   )
-  ;; This will trap.
+  ;; This will throw.
   (call $call.ref
    (ref.null func)
   )
@@ -161,11 +161,17 @@
   (call $log-i32
    (i32.const 12)
   )
+  ;; Also log the param to show it is 0, which is what $call.ref does for all
+  ;; params.
+  (call $log-i32
+   (local.get $x)
+  )
   (i32.const 34)
  )
 
  ;; CHECK:      [fuzz-exec] calling ref.calling.legal
  ;; CHECK-NEXT: [LoggingExternalInterface logging 12]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  (func $ref.calling.legal (export "ref.calling.legal")
   ;; It is fine to call-ref a function with params and results. The params get
   ;; default values, and the results are ignored. All we will see here is the
@@ -293,6 +299,7 @@
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.legal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 12]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
