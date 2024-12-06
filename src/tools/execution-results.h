@@ -178,12 +178,12 @@ public:
     return callFunctionAsJS(ref.getFunc());
   }
 
-  // Call a function in a "JS-ey" manner, adding arguments as needed, the same
-  // way JS does.
+  // Call a function in a "JS-ey" manner, adding arguments as needed, and
+  // throwing if necessary, the same way JS does.
   Literals callFunctionAsJS(Name name) {
     auto* func = wasm.getFunction(name);
 
-    // Send default values as arguments, or trap if we need anything else.
+    // Send default values as arguments, or error if we need anything else.
     Literals arguments;
     for (const auto& param : func->getParams()) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
@@ -197,10 +197,11 @@ public:
       arguments.push_back(Literal::makeZero(param));
     }
 
-    // Trap on illegal results. Note that this happens, as per JS semantics,
+    // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
     for (const auto& result : func->getResults()) {
-      // An i64 result is fine: a BigInt will be provided. But v128 still traps.
+      // An i64 result is fine: a BigInt will be provided. But v128 still
+      // errors.
       if (result == Type::v128) {
         throwEmptyException();
       }
