@@ -183,7 +183,7 @@
 
  (func $illegal (param $x i64)
   ;; Helper for the function below. The param, an i64, causes a problem: when we
-  ;; call from JS we provide 0, but 0 traps when it tries to convert to BigInt.
+  ;; call from JS we provide 0, but 0 throws when it tries to convert to BigInt.
   (call $log-i32
    (i32.const 56)
   )
