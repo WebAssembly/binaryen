@@ -139,10 +139,10 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_bulk_mem_opt(module,
-                                'memory.copy operations require bulk memory [--enable-bulk-memory-opt]')
+                                'memory.copy operations require bulk memory operations [--enable-bulk-memory-opt]')
         # Test that enabling bulk-memory also enables bulk-memory-opt
         self.check_bulk_mem(module,
-                            'memory.copy operations require bulk memory [--enable-bulk-memory-opt]')
+                            'memory.copy operations require bulk memory operations [--enable-bulk-memory-opt]')
 
     def test_bulk_mem_segment(self):
         module = '''

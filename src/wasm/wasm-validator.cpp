@@ -1529,7 +1529,7 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
   shouldBeTrue(
     getModule()->features.hasBulkMemoryOpt(),
     curr,
-    "memory.copy operations require bulk memory [--enable-bulk-memory-opt]");
+    "memory.copy operations require bulk memory operations [--enable-bulk-memory-opt]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   auto* destMemory = getModule()->getMemoryOrNull(curr->destMemory);
