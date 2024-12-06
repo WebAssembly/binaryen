@@ -4730,11 +4730,6 @@ void WasmBinaryReader::findAndReadNames() {
       auto numTypes = getU32LEB();
       for (size_t i = 0; i < numTypes; i++) {
         auto typeIndex = getU32LEB();
-        bool validType =
-          typeIndex < types.size() && types[typeIndex].isStruct();
-        if (!validType) {
-          std::cerr << "warning: invalid field index in name field section\n";
-        }
         auto numFields = getU32LEB();
         NameProcessor processor;
         for (size_t i = 0; i < numFields; i++) {
