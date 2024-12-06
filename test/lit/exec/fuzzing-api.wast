@@ -148,7 +148,7 @@
     (ref.func $logging)
    )
   )
-  ;; The trap here is caught, and we'll log 1.
+  ;; The exception here is caught, and we'll log 1.
   (call $log-i32
    (call $call.ref.catch
     (ref.null func)
