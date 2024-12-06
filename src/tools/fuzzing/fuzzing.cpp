@@ -1072,8 +1072,8 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
   // Pick the maximum export index to call.
   Index maxIndex = wasm.exports.size();
   if (type == Type::i32) {
-    // This never traps, so we can be less careful, but we do still want to
-    // avoid trapping a lot as executing code is more interesting. (Note that
+    // This swallows traps, so we can be less careful, but we do still want to
+    // avoid swallowing a lot as executing code is more interesting. (Note that
     // even though we double here, the risk is not that great: we are still
     // adding functions as we go, so the first half of functions/exports can
     // double here and still end up in bounds by the time we've added them all.)
