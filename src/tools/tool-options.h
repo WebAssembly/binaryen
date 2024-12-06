@@ -228,10 +228,6 @@ struct ToolOptions : public Options {
   }
 
   void applyOptionsBeforeParse(Module& module) const {
-    if (enabledFeatures & FeatureSet::BulkMemory) {
-      // Enable this subfeature for backward compatibility.
-      module.features.enable(FeatureSet::BulkMemoryOpt);
-    }
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
   }
@@ -244,6 +240,15 @@ struct ToolOptions : public Options {
 
   virtual void addPassArg(const std::string& key, const std::string& value) {
     passOptions.arguments[key] = value;
+  }
+
+  void parse(int argc, const char* argv[]) override {
+    Options::parse(argc, argv);
+    if (enabledFeatures & FeatureSet::BulkMemory) {
+      // Enable this subfeature for backward compatibility.
+      enabledFeatures.setBulkMemoryOpt();
+      disabledFeatures.setBulkMemoryOpt(false);
+    }
   }
 
   virtual ~ToolOptions() = default;

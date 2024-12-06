@@ -157,7 +157,7 @@ struct FeatureSet {
   }
   bool hasFP16() const { return (features & FP16) != 0; }
   bool hasBulkMemoryOpt() const {
-    bool has = (features & (BulkMemoryOpt)) != 0;
+    bool has = (features & BulkMemoryOpt) != 0;
     assert(has || !hasBulkMemory());
     return has;
   }
