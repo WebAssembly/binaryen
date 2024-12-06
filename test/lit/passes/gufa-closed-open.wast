@@ -12,15 +12,15 @@
 
  ;; OPEND:      (type $2 (func (param i32)))
 
- ;; OPEND:      (import "fuzzing-support" "call-ref-catch" (func $external-caller (type $0) (param funcref)))
+ ;; OPEND:      (import "outside" "call-ref-catch" (func $external-caller (type $0) (param funcref)))
  ;; CLOSE:      (type $0 (func (param funcref)))
 
  ;; CLOSE:      (type $1 (func))
 
  ;; CLOSE:      (type $2 (func (param i32)))
 
- ;; CLOSE:      (import "fuzzing-support" "call-ref-catch" (func $external-caller (type $0) (param funcref)))
- (import "fuzzing-support" "call-ref-catch" (func $external-caller (param funcref)))
+ ;; CLOSE:      (import "outside" "call-ref-catch" (func $external-caller (type $0) (param funcref)))
+ (import "outside" "call-ref-catch" (func $external-caller (param funcref)))
 
  ;; OPEND:      (elem declare func $func)
 
