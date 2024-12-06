@@ -396,6 +396,8 @@ extern const char* MultiMemoryFeature;
 extern const char* TypedContinuationsFeature;
 extern const char* SharedEverythingFeature;
 extern const char* FP16Feature;
+extern const char* BulkMemoryOptFeature;
+extern const char* CallIndirectOverlongFeature;
 
 enum Subsection {
   NameModule = 0,

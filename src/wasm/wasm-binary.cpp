@@ -1354,6 +1354,10 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::SharedEverythingFeature;
       case FeatureSet::FP16:
         return BinaryConsts::CustomSections::FP16Feature;
+      case FeatureSet::BulkMemoryOpt:
+        return BinaryConsts::CustomSections::BulkMemoryOptFeature;
+      case FeatureSet::CallIndirectOverlong:
+        return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -4790,6 +4794,12 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::Atomics;
     } else if (name == BinaryConsts::CustomSections::BulkMemoryFeature) {
       feature = FeatureSet::BulkMemory;
+      if (used) {
+        // For backward compatibility, enable this dependent feature.
+        feature |= FeatureSet::BulkMemoryOpt;
+      }
+    } else if (name == BinaryConsts::CustomSections::BulkMemoryOptFeature) {
+      feature = FeatureSet::BulkMemoryOpt;
     } else if (name == BinaryConsts::CustomSections::ExceptionHandlingFeature) {
       feature = FeatureSet::ExceptionHandling;
     } else if (name == BinaryConsts::CustomSections::MutableGlobalsFeature) {

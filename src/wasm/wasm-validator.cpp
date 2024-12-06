@@ -1526,10 +1526,10 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(
-    getModule()->features.hasBulkMemory(),
-    curr,
-    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+  shouldBeTrue(getModule()->features.hasBulkMemoryOpt(),
+               curr,
+               "memory.copy operations require bulk memory operations "
+               "[--enable-bulk-memory-opt]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   auto* destMemory = getModule()->getMemoryOrNull(curr->destMemory);
@@ -1561,9 +1561,9 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(
-    getModule()->features.hasBulkMemory(),
+    getModule()->features.hasBulkMemoryOpt(),
     curr,
-    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+    "memory.fill operations require bulk memory [--enable-bulk-memory-opt]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(

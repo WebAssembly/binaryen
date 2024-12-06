@@ -57,6 +57,8 @@ const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
 const char* SharedEverythingFeature = "shared-everything";
 const char* FP16Feature = "fp16";
+const char* BulkMemoryOptFeature = "bulk-memory-opt";
+const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 } // namespace CustomSections
 } // namespace BinaryConsts
 

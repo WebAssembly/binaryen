@@ -708,6 +708,22 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-bulk-memory                         Disable bulk memory operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory-opt                      Enable memory.copy and
+;; CHECK-NEXT:                                                 memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory-opt                     Disable memory.copy and
+;; CHECK-NEXT:                                                 memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-call-indirect-overlong               Enable LEB encoding of
+;; CHECK-NEXT:                                                 call-indirect (Ignored for
+;; CHECK-NEXT:                                                 compatibility as it has no
+;; CHECK-NEXT:                                                 effect on Binaryen)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-call-indirect-overlong              Disable LEB encoding of
+;; CHECK-NEXT:                                                 call-indirect (Ignored for
+;; CHECK-NEXT:                                                 compatibility as it has no
+;; CHECK-NEXT:                                                 effect on Binaryen)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-exception-handling                   Enable exception handling
 ;; CHECK-NEXT:                                                 operations
 ;; CHECK-NEXT:

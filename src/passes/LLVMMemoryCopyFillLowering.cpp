@@ -49,7 +49,7 @@ struct LLVMMemoryCopyFillLowering
   }
 
   void run(Module* module) override {
-    if (!module->features.hasBulkMemory()) {
+    if (!module->features.hasBulkMemoryOpt()) {
       return;
     }
     if (module->features.hasMemory64() || module->features.hasMultiMemory()) {
@@ -108,7 +108,7 @@ struct LLVMMemoryCopyFillLowering
     } else {
       module->removeFunction(memFillFuncName);
     }
-    module->features.disable(FeatureSet::BulkMemory);
+    module->features.setBulkMemoryOpt(false);
   }
 
   void createMemoryCopyFunc(Module* module) {
