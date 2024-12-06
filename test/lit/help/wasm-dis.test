@@ -57,6 +57,14 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable (ignored for compatibility)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable (ignored for compatibility)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-exception-handling         Disable exception handling operations
