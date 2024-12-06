@@ -27,6 +27,8 @@ namespace wasm {
 
 struct FeatureSet {
   enum Feature : uint32_t {
+    // These features are intended to those documented in tool-conventions:
+    // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#target-features-section
     None = 0,
     Atomics = 1 << 0,
     MutableGlobals = 1 << 1,
