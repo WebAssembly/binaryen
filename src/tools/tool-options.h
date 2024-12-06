@@ -90,7 +90,8 @@ struct ToolOptions : public Options {
                   FeatureSet::None,
                   FeatureSet(FeatureSet::BulkMemory))
       .addFeature(FeatureSet::CallIndirectOverlong,
-                  "LEB encoding of call-indirect (Ignored for compatibility as it has no effect on Binaryen)")
+                  "LEB encoding of call-indirect (Ignored for compatibility as "
+                  "it has no effect on Binaryen)")
       .addFeature(FeatureSet::ExceptionHandling,
                   "exception handling operations")
       .addFeature(FeatureSet::TailCall, "tail call operations")
