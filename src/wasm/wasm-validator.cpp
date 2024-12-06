@@ -1526,10 +1526,10 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(
-    getModule()->features.hasBulkMemoryOpt(),
-    curr,
-    "memory.copy operations require bulk memory operations [--enable-bulk-memory-opt]");
+  shouldBeTrue(getModule()->features.hasBulkMemoryOpt(),
+               curr,
+               "memory.copy operations require bulk memory operations "
+               "[--enable-bulk-memory-opt]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   auto* destMemory = getModule()->getMemoryOrNull(curr->destMemory);
