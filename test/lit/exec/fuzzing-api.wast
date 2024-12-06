@@ -250,12 +250,29 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
  ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $ref.calling.legal-result (export "ref.calling.legal-result")
   ;; Unlike v128, i64 is legal in a result. The JS VM just returns a BigInt.
   (call $log-i32
    (call $call.ref.catch
     (ref.func $legal-result)
+   )
+  )
+ )
+
+ (func $trap
+  ;; Helper for the function below.
+  (unreachable)
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.trap
+ ;; CHECK-NEXT: [trap unreachable]
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $ref.calling.trap (export "ref.calling.trap")
+  ;; We try to catch an exception here, but the target function traps, which is
+  ;; not something we can catch. We will trap here, and not log at all.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $trap)
    )
   )
  )
@@ -313,6 +330,9 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.legal-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 910]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.trap
+;; CHECK-NEXT: [trap unreachable]
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
@@ -323,6 +343,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.trap
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing
