@@ -210,7 +210,7 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
  (func $ref.calling.illegal-v128 (export "ref.calling.illegal-v128")
-  ;; As above, we trap on the v128 param, and log 1.
+  ;; As above, we throw on the v128 param, and log 1.
   (call $log-i32
    (call $call.ref.catch
     (ref.func $illegal-v128)
