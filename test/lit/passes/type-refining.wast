@@ -1574,3 +1574,70 @@
   (ref.null $8)
  )
 )
+
+;; Test for a bug where we made a struct.get unreachable because it was reading
+;; a field that had no writes, but in a situation where it is invalid for the
+;; struct.get to be unreachable.
+(module
+ ;; CHECK:      (type $never (sub (struct (field i32))))
+ (type $never (sub (struct (field i32))))
+
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $optimizable (struct (field (mut nullfuncref))))
+ (type $optimizable (struct (field (mut (ref null func)))))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (type $3 (func (result (ref $never))))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $setup (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.new $optimizable
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref none))
+ ;; CHECK-NEXT:      (ref.as_non_null
+ ;; CHECK-NEXT:       (ref.null none)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $setup
+  ;; A struct.new, so that we have a field to refine.
+  (drop
+   (struct.new $optimizable
+    (ref.null func)
+   )
+  )
+  ;; A struct.get that reads a $never, but the actual fallthrough value is none.
+  ;; We never create this type, so the field has no possible content, and we can
+  ;; replace this with an unreachable.
+  (drop
+   (struct.get $never 0
+    (block (result (ref $never))
+     (ref.as_non_null
+      (ref.null none)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $export (type $3) (result (ref $never))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (result (ref $never))
+  ;; Make the type $never public (if it were private, we'd optimize in a
+  ;; different way that avoids the bug that this tests for).
+  (unreachable)
+ )
+)
