@@ -1588,9 +1588,14 @@
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (type $3 (func (result (ref $never))))
+ ;; CHECK:      (global $never (ref null $never) (ref.null none))
+ (global $never (export "never") (ref null $never)
+   ;; Make the type $never public (if it were private, we'd optimize in a
+   ;; different way that avoids the bug that this tests for).
+   (ref.null $never)
+ )
 
- ;; CHECK:      (export "export" (func $export))
+ ;; CHECK:      (export "never" (global $never))
 
  ;; CHECK:      (func $setup (type $2)
  ;; CHECK-NEXT:  (drop
@@ -1612,7 +1617,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $setup
-  ;; A struct.new, so that we have a field to refine.
+  ;; A struct.new, so that we have a field to refine (which avoids the pass
+  ;; early-exiting).
   (drop
    (struct.new $optimizable
     (ref.null func)
@@ -1630,14 +1636,5 @@
     )
    )
   )
- )
-
- ;; CHECK:      (func $export (type $3) (result (ref $never))
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
- (func $export (export "export") (result (ref $never))
-  ;; Make the type $never public (if it were private, we'd optimize in a
-  ;; different way that avoids the bug that this tests for).
-  (unreachable)
  )
 )
