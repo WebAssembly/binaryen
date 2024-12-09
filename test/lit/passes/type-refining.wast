@@ -1638,3 +1638,69 @@
   )
  )
 )
+
+;; Test that we note default values.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
+  (type $A (sub (struct (field i32))))
+  ;; CHECK:       (type $B (sub (struct (field i32))))
+  (type $B (sub (struct (field i32))))
+ )
+ ;; CHECK:      (type $2 (func (param (ref null $A) (ref null $B))))
+
+ ;; CHECK:      (type $optimizable (sub (struct (field (ref $2)))))
+ (type $optimizable (sub (struct (field funcref))))
+
+ ;; CHECK:      (elem declare func $test)
+
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $test (type $2) (param $x (ref null $A)) (param $y (ref null $B))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.new $optimizable
+ ;; CHECK-NEXT:    (ref.func $test)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $A 0
+ ;; CHECK-NEXT:    (struct.new $A
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $B 0
+ ;; CHECK-NEXT:    (struct.new_default $B)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test") (param $x (ref null $A)) (param $y (ref null $B))
+  ;; Use $A, $B as params of this export, so they are public.
+
+  ;; Make something for the pass to do, to avoid early-exit.
+  (drop
+   (struct.new $optimizable
+    (ref.func $test)
+   )
+  )
+
+  ;; Get from a struct.new. We have nothing to optimize here. (In particular, we
+  ;; cannot make this unreachable, as there is a value in the field, 0.)
+  (drop
+   (struct.get $A 0
+    (struct.new $A
+     (i32.const 0)
+    )
+   )
+  )
+
+  ;; As above. Now the value in the field comes from a default value.
+  (drop
+   (struct.get $B 0
+    (struct.new_default $B)
+   )
+  )
+ )
+)

@@ -58,11 +58,13 @@ struct FieldInfoScanner
 
   void
   noteDefault(Type fieldType, HeapType type, Index index, FieldInfo& info) {
-    // Default values do not affect what the heap type of a field can be turned
-    // into. Note them, however, as they force us to keep the type nullable.
+    // Default values must be noted, so that we know there is content there.
     if (fieldType.isRef()) {
-      info.note(Type(fieldType.getHeapType().getBottom(), Nullable));
+      // All we need to note here is nullability (the field must remain
+      // nullable), but not anything else about the type.
+      fieldType = Type(fieldType.getHeapType().getBottom(), Nullable);
     }
+    info.note(fieldType);
   }
 
   void noteCopy(HeapType type, Index index, FieldInfo& info) {
