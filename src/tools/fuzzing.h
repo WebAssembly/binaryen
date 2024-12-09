@@ -115,6 +115,8 @@ private:
   Name tableSetImportName;
   Name callExportImportName;
   Name callExportCatchImportName;
+  Name callRefImportName;
+  Name callRefCatchImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -244,7 +246,9 @@ private:
   Expression* makeImportThrowing(Type type);
   Expression* makeImportTableGet();
   Expression* makeImportTableSet(Type type);
-  Expression* makeImportCallExport(Type type);
+  // Call either an export or a ref. We do this from a single function to better
+  // control the frequency of each.
+  Expression* makeImportCallCode(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation
