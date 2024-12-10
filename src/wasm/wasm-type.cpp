@@ -332,10 +332,7 @@ private:
   }
 };
 
-// A type graph walker base class that still does no useful work, but at least
-// knows to scan each HeapType and Type only once.
-// A type graph walker that calls `noteChild` on each each direct HeapType child
-// of the root.
+// A type graph walker that scans each each direct HeapType child of the root.
 template<typename Self> struct HeapTypeChildWalker : TypeGraphWalkerBase<Self> {
   void scanType(Type* type) {
     isTopLevel = false;
@@ -357,7 +354,6 @@ template<typename Self> struct HeapTypeChildWalker : TypeGraphWalkerBase<Self> {
 
 private:
   bool isTopLevel = true;
-  std::unordered_set<HeapType> seen;
 };
 
 struct HeapTypeChildCollector : HeapTypeChildWalker<HeapTypeChildCollector> {
