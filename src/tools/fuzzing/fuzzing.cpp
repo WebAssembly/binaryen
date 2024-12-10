@@ -1113,7 +1113,7 @@ Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
   // Sleep for some ms, and return a given id.
   auto* ms = make(Type::i32);
   auto id = make(Type::i32);
-  builder.makeCall(sleepImportName, {ms, id}, Type::i32);
+  return builder.makeCall(sleepImportName, {ms, id}, Type::i32);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {

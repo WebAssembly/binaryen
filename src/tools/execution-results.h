@@ -128,6 +128,9 @@ public:
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
         }
+      } else if (import->base == "sleep") {
+        // Do not actually sleep, just return the id.
+        return arguments[1];
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }

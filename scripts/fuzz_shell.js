@@ -261,8 +261,8 @@ var imports = {
     // Sleep a given amount of ms, and return a given id after that.
     'sleep': (ms, id) => {
       // Ensure the ms are a reasonable amount to wait.
-      // TODO: is this deterministic enough? what about ties?
-      ms = (ms >>> 0) % 4;
+      // TODO: is this deterministic enough once we interleave?
+      ms = (ms >>> 0) % 3;
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           resolve(id);

@@ -19,6 +19,8 @@
  (import "fuzzing-support" "call-ref" (func $call.ref (param funcref)))
  (import "fuzzing-support" "call-ref-catch" (func $call.ref.catch (param funcref) (result i32)))
 
+ (import "fuzzing-support" "sleep" (func $sleep (param i32 i32) (result i32)))
+
  (table $table 10 20 funcref)
 
  ;; Note that the exported table appears first here, but in the binary and in
@@ -274,6 +276,14 @@
    (call $call.ref.catch
     (ref.func $trap)
    )
+  )
+ )
+
+ (func $do-sleep (export "do-sleep") (result i32)
+  (call $sleep
+   ;; A ridiculous amount of ms, but in the interpreter it is ignored anyhow.
+   (i32.const -1)
+   ;; An id, that is returned back to us.
   )
  )
 )
