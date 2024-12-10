@@ -1360,7 +1360,7 @@ class TrapsNeverHappen(TestCaseHandler):
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
-    frequency = 0.2
+    frequency = 0.1
 
     def handle(self, wasm):
         # get the expected execution results.
@@ -1674,9 +1674,9 @@ class ClusterFuzz(TestCaseHandler):
 
 # Tests linking two wasm files at runtime, and that optimizations do not break
 # anything. This is similar to Split(), but rather than split a wasm file into
-# two and link them at runtime, this starts with two separate wasm files
+# two and link them at runtime, this starts with two separate wasm files.
 class Two(TestCaseHandler):
-    frequency = 1 # XXX
+    frequency = 0.2
 
     def handle(self, wasm):
         # Generate a second wasm file, unless we were given one (useful during
@@ -1734,7 +1734,7 @@ class Two(TestCaseHandler):
         # We cannot optimize wasm files we are going to link in closed world
         # mode. We also cannot run shared-everything code in d8 yet. We also
         # cannot compare if there are NaNs (as optimizations can lead to
-        # different outputs)
+        # different outputs).
         return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
 
 
