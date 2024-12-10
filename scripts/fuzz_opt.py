@@ -1702,9 +1702,9 @@ class Two(TestCaseHandler):
             return
 
         if output.strip() == 'exception thrown: failed to instantiate module':
-            # We may fail to instantiate the module for reasonable reasons, such
-            # as an active segment being out of bounds. There is no point to
-            # continue in such cases.
+            # We may fail to instantiate the modules for valid reasons, such as
+            # an active segment being out of bounds. There is no point to
+            # continue in such cases, as no exports are called.
             return
 
         # Make sure that fuzz_shell.js actually executed all exports from both
