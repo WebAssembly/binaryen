@@ -1110,13 +1110,8 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
-  // Emit a very small number of milliseconds, most of the time.
-  const Index maxMS = 10;
+  // Sleep for some ms, and return a given id.
   auto* ms = make(Type::i32);
-  if (!oneIn(10)) {
-    ms = builder.makeBinary(
-      RemUInt32, ms, builder.makeConst(int32_t(maxMS)));
-  }
   auto id = make(Type::i32);
   builder.makeCall(sleepImportName, {ms, id}, Type::i32);
 }

@@ -257,6 +257,18 @@ var imports = {
     'call-ref-catch': (ref) => {
       return tryCall(() => callFunc(ref));
     },
+
+    // Sleep a given amount of ms, and return a given id after that.
+    'sleep': (ms, id) => {
+      // Ensure the ms are a reasonable amount to wait.
+      // TODO: is this deterministic enough? what about ties?
+      ms = (ms >>> 0) % 4;
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(id);
+        }, ms);
+      };
+    },
   },
   // Emscripten support.
   'env': {
@@ -272,6 +284,12 @@ if (typeof WebAssembly.Tag !== 'undefined') {
       'parameters': ['externref']
     }),
   };
+}
+
+// If JSPI is available, wrap the sleep import. TODO: only sometimes
+if (typeof WebAssembly.Suspending !== 'undefined') {
+  imports['fuzzing-support']['sleep'] =
+    new WebAssembly.Suspending(imports['fuzzing-support']['sleep']);
 }
 
 // If a second binary will be linked in then set up the imports for
@@ -312,6 +330,12 @@ function build(binary) {
   // keep the ability to call anything that was ever exported.)
   for (var key in instance.exports) {
     var value = instance.exports[key];
+
+    // If JSPI is available, wrap the sleep import. TODO: only sometimes
+    if (typeof WebAssembly.promising !== 'undefined') {
+      value = WebAssembly.promising(value);
+    }
+
     exports[key] = value;
     exportList.push({ name: key, value: value });
   }
