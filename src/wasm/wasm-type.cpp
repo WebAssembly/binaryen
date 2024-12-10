@@ -239,7 +239,10 @@ bool isTemp(HeapType type) {
 // long as the Walker because they are referenced by address. This base class
 // only has logic for traversing type graphs; figuring out when to stop
 // traversing the graph and doing useful work during the traversal is left to
-// subclasses.
+// subclasses, which should override `scanType` and/or `scanHeapType`. Edges
+// from reference types to the referenced heap types are not walked, so
+// subclasses should handle referenced heap types when their reference types are
+// visited.
 template<typename Self> struct TypeGraphWalkerBase {
   void walkRoot(Type* type) {
     assert(taskList.empty());
@@ -256,13 +259,7 @@ template<typename Self> struct TypeGraphWalkerBase {
 protected:
   Self& self() { return *static_cast<Self*>(this); }
 
-  // This base walker does not know when to stop scanning, so at least one of
-  // these needs to be overridden with a method that calls the base scanning
-  // method only if some end condition isn't met.
   void scanType(Type* type) {
-    // Basic types do not have children and the heap types in reference types
-    // cannot be scanned because they are bit-packed and not addressable, so we
-    // only scan tuples here.
     if (type->isTuple()) {
       auto& types = const_cast<Tuple&>(type->getTuple());
       for (auto it = types.rbegin(); it != types.rend(); ++it) {
