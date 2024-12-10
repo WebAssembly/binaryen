@@ -267,7 +267,7 @@ var imports = {
         setTimeout(() => {
           resolve(id);
         }, ms);
-      };
+      });
     },
   },
   // Emscripten support.
@@ -332,7 +332,8 @@ function build(binary) {
     var value = instance.exports[key];
 
     // If JSPI is available, wrap the sleep import. TODO: only sometimes
-    if (typeof WebAssembly.promising !== 'undefined') {
+    if (typeof WebAssembly.promising !== 'undefined' &&
+        typeof value === 'function') {
       value = WebAssembly.promising(value);
     }
 
