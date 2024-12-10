@@ -1477,7 +1477,9 @@ class Merge(TestCaseHandler):
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
 
 
-# Tests wasm-split
+# Tests wasm-split. This also tests that fuzz_shell.js properly executes 2 wasm
+# files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
+# files in that way).
 class Split(TestCaseHandler):
     frequency = 1  # TODO: adjust lower when we actually enable this
 
@@ -1671,9 +1673,8 @@ class ClusterFuzz(TestCaseHandler):
 
 
 # Tests linking two wasm files at runtime, and that optimizations do not break
-# anything. This also tests that fuzz_shell.js properly executes two wasm
-# files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
-# files in that way).
+# anything. This is similar to Split(), but rather than split a wasm file into
+# two and link them at runtime, this starts with two separate wasm files
 class Two(TestCaseHandler):
     frequency = 1 # XXX
 
@@ -1714,15 +1715,12 @@ class Two(TestCaseHandler):
         output = fix_output(output)
 
         # Optimize at least one of the two.
-        # TODO: Use other optimizations here. See comment in Split().
-        opts = ['-O3']
-
         wasms = [wasm, second_wasm]
-
         for i in range(random.randint(1, 2)):
             wasm_index = random.randint(0, 1)
             name = wasms[wasm_index]
             new_name = name + f'.opt{i}.wasm'
+            opts = get_random_opts()
             run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
             wasms[wasm_index] = new_name
 
