@@ -130,7 +130,7 @@ public:
         }
       } else if (import->base == "sleep") {
         // Do not actually sleep, just return the id.
-        return arguments[1];
+        return {arguments[1]};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
