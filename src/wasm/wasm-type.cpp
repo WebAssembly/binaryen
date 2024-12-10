@@ -400,7 +400,6 @@ template<typename Self> struct HeapTypeChildWalker : TypeGraphWalkerBase<Self> {
 
 private:
   bool isTopLevel = true;
-  std::unordered_set<HeapType> seen;
 };
 
 struct HeapTypeChildCollector : HeapTypeChildWalker<HeapTypeChildCollector> {
