@@ -318,7 +318,10 @@ function build(binary) {
 }
 
 // Run the code by calling exports.
-function callExports() {
+//
+// This function is async so that we can await calls to callFunc, which may
+// return a promise.
+async function callExports() {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
   var relevantExports = exportsToCall || exportList;
@@ -342,7 +345,7 @@ function callExports() {
 
     try {
       console.log('[fuzz-exec] calling ' + name);
-      var result = callFunc(value);
+      var result = await callFunc(value);
       if (typeof result !== 'undefined') {
         console.log('[fuzz-exec] note result: ' + name + ' => ' + printed(result));
       }
