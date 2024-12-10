@@ -1694,6 +1694,12 @@ class Two(TestCaseHandler):
 
         # The binaryen interpreter only supports a single file, so we run them
         # from JS using fuzz_shell.js's support for two files.
+        #
+        # Note that we *cannot* run each wasm file separately and compare those
+        # to the combined output, as fuzz_shell.js intentionally allows calls
+        # *between* the wasm files, through JS APIs like call-export*. So all we
+        # do here is see the combined, linked behavior, and then later below we
+        # see that that behavior remains even after optimizations.
         output = run_d8_wasm(wasm, args=[second_wasm])
 
         if output == IGNORE:
