@@ -345,9 +345,6 @@ function build(binary) {
 }
 
 // Run the code by calling exports.
-//
-// This function is async so that we can await calls to callFunc, which may
-// return a promise.
 async function callExports() {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
