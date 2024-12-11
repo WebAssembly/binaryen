@@ -1216,6 +1216,10 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
+        # We run in node, which lacks JSPI support, and also we need wasm2js to
+        # implement wasm suspending using JS async/await.
+        if JSPI:
+            return False
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
 
