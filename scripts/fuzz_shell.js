@@ -272,8 +272,11 @@ var imports = {
       return tryCall(/* async */ () => /* await */ callFunc(ref));
     },
 
-    // Sleep a given amount of ms, and return a given id after that.
+    // Sleep a given amount of ms (when JSPI) and return a given id after that.
     'sleep': (ms, id) => {
+      if (!JSPI) {
+        return id;
+      }
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           resolve(id);
@@ -307,8 +310,7 @@ if (JSPI) {
   }
 
   wrapExport = (value) => {
-    if (typeof WebAssembly.promising !== 'undefined' &&
-        typeof value === 'function') {
+    if (typeof value === 'function') {
       value = WebAssembly.promising(value);
     }
     return value;
