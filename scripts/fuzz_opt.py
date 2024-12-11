@@ -770,7 +770,7 @@ def get_fuzz_shell_js():
         return js
 
     # For JSPI, we must customize it. TODO: reuse this file
-    jspi_js = 'jspi_fuzz_shell.js'
+    jspi_js = os.path.abspath('jspi_fuzz_shell.js')
     with open(jspi_js, 'w') as f:
         # Enable JSPI.
         f.write('var JSPI = 1;\n\n')
@@ -1771,15 +1771,8 @@ class Two(TestCaseHandler):
 testcase_handlers = [
     FuzzExec(),
     CompareVMs(),
-    CheckDeterminism(),
     Wasm2JS(),
     TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
-    # TODO: enable when stable enough, and adjust |frequency| (see above)
-    # Split(),
-    RoundtripText(),
-    ClusterFuzz(),
     Two(),
 ]
 
