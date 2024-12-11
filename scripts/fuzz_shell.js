@@ -243,8 +243,8 @@ var imports = {
     },
 
     // Export operations.
-    'call-export': (index) => {
-      callFunc(exportList[index].value);
+    'call-export': async (index) => {
+      throw await callFunc(exportList[index].value);
     },
     'call-export-catch': (index) => {
       return tryCall(() => callFunc(exportList[index].value));
@@ -288,8 +288,10 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 
 // If JSPI is available, wrap the sleep import. TODO: only sometimes
 if (typeof WebAssembly.Suspending !== 'undefined') {
-  imports['fuzzing-support']['sleep'] =
-    new WebAssembly.Suspending(imports['fuzzing-support']['sleep']);
+  for (var name of ['sleep', 'call-export']) { // TODO moar, but does all this not affect normal fuzzing?
+    imports['fuzzing-support'][name] =
+      new WebAssembly.Suspending(imports['fuzzing-support'][name]);
+  }
 }
 
 // If a second binary will be linked in then set up the imports for
