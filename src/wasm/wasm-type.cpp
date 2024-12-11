@@ -143,7 +143,6 @@ struct RecGroupHasher {
   size_t topLevelHash(HeapType type) const;
   size_t hash(Type type) const;
   size_t hash(HeapType type) const;
-  size_t hash(const TypeInfo& info) const;
   size_t hash(const HeapTypeInfo& info) const;
   size_t hash(const Tuple& tuple) const;
   size_t hash(const Field& field) const;
@@ -170,7 +169,6 @@ struct RecGroupEquator {
   bool topLevelEq(HeapType a, HeapType b) const;
   bool eq(Type a, Type b) const;
   bool eq(HeapType a, HeapType b) const;
-  bool eq(const TypeInfo& a, const TypeInfo& b) const;
   bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const;
   bool eq(const Tuple& a, const Tuple& b) const;
   bool eq(const Field& a, const Field& b) const;
@@ -204,11 +202,6 @@ public:
   }
 };
 
-template<> class hash<wasm::TypeInfo> {
-public:
-  size_t operator()(const wasm::TypeInfo& info) const;
-};
-
 template<typename T> class hash<reference_wrapper<const T>> {
 public:
   size_t operator()(const reference_wrapper<const T>& ref) const {
@@ -236,17 +229,6 @@ HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
   return HeapType(uintptr_t(info.get()));
-}
-
-Type markTemp(Type type) {
-  if (!type.isBasic()) {
-    Type::getTypeInfo(type)->isTemp = true;
-  }
-  return type;
-}
-
-bool isTemp(Type type) {
-  return !type.isBasic() && Type::getTypeInfo(type)->isTemp;
 }
 
 bool isTemp(HeapType type) {
@@ -350,35 +332,7 @@ private:
   }
 };
 
-// A type graph walker base class that still does no useful work, but at least
-// knows to scan each HeapType and Type only once.
-template<typename Self> struct TypeGraphWalker : TypeGraphWalkerBase<Self> {
-  // Override these.
-  void noteType(Type type) {}
-  void noteHeapType(HeapType ht) {}
-
-  void scanType(Type* type) {
-    if (scannedTypes.insert(*type).second) {
-      static_cast<Self*>(this)->noteType(*type);
-      TypeGraphWalkerBase<Self>::scanType(type);
-    }
-  }
-  void scanHeapType(HeapType* ht) {
-    if (scannedHeapTypes.insert(*ht).second) {
-      static_cast<Self*>(this)->noteHeapType(*ht);
-      TypeGraphWalkerBase<Self>::scanHeapType(ht);
-    }
-  }
-
-private:
-  std::unordered_set<HeapType> scannedHeapTypes;
-  std::unordered_set<Type> scannedTypes;
-};
-
-// A type graph walker base class that still does no useful work, but at least
-// knows to scan each HeapType and Type only once.
-// A type graph walker that calls `noteChild` on each each direct HeapType child
-// of the root.
+// A type graph walker that scans each each direct HeapType child of the root.
 template<typename Self> struct HeapTypeChildWalker : TypeGraphWalkerBase<Self> {
   void scanType(Type* type) {
     isTopLevel = false;
@@ -496,59 +450,6 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
 
 } // anonymous namespace
 
-TypeInfo::TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
-
-TypeInfo::TypeInfo(const TypeInfo& other) {
-  kind = other.kind;
-  switch (kind) {
-    case TupleKind:
-      new (&tuple) auto(other.tuple);
-      return;
-    case RefKind:
-      new (&ref) auto(other.ref);
-      return;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-TypeInfo::~TypeInfo() {
-  switch (kind) {
-    case TupleKind:
-      tuple.~Tuple();
-      return;
-    case RefKind:
-      ref.~Ref();
-      return;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-std::optional<Type> TypeInfo::getCanonical() const {
-  if (isTuple()) {
-    if (tuple.size() == 0) {
-      return Type::none;
-    }
-    if (tuple.size() == 1) {
-      return tuple[0];
-    }
-  }
-  return {};
-}
-
-bool TypeInfo::operator==(const TypeInfo& other) const {
-  if (kind != other.kind) {
-    return false;
-  }
-  switch (kind) {
-    case TupleKind:
-      return tuple == other.tuple;
-    case RefKind:
-      return ref.nullability == other.ref.nullability &&
-             ref.heapType == other.ref.heapType;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
 HeapTypeInfo::~HeapTypeInfo() {
   switch (kind) {
     case HeapTypeKind::Func:
@@ -571,81 +472,74 @@ HeapTypeInfo::~HeapTypeInfo() {
 
 namespace {
 
-struct TypeStore {
+struct TupleStore {
   std::recursive_mutex mutex;
 
-  // Track unique_ptrs for constructed types to avoid leaks.
-  std::vector<std::unique_ptr<TypeInfo>> constructedTypes;
+  // Track unique_ptrs for constructed tuples to avoid leaks.
+  std::vector<std::unique_ptr<Tuple>> constructedTuples;
 
-  // Maps from constructed types to their canonical Type IDs.
-  std::unordered_map<std::reference_wrapper<const TypeInfo>, uintptr_t> typeIDs;
+  // Maps from constructed tuples to their canonical Type IDs.
+  std::unordered_map<std::reference_wrapper<const Tuple>, uintptr_t> typeIDs;
 
-#ifndef NDEBUG
-  bool isGlobalStore();
-#endif
-
-  Type insert(const TypeInfo& info) { return doInsert(info); }
-  Type insert(std::unique_ptr<TypeInfo>&& info) { return doInsert(info); }
-  bool hasCanonical(const TypeInfo& info, Type& canonical);
+  Type insert(const Tuple& info) { return doInsert(info); }
+  Type insert(std::unique_ptr<Tuple>&& info) { return doInsert(info); }
+  bool hasCanonical(const Tuple& info, Tuple& canonical);
 
   void clear() {
     typeIDs.clear();
-    constructedTypes.clear();
+    constructedTuples.clear();
   }
 
 private:
-  template<typename Ref> Type doInsert(Ref& infoRef) {
-    const TypeInfo& info = [&]() {
-      if constexpr (std::is_same_v<Ref, const TypeInfo>) {
-        return infoRef;
-      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<TypeInfo>>) {
-        infoRef->isTemp = false;
-        return *infoRef;
+  template<typename Ref> Type doInsert(Ref& tupleRef) {
+    const Tuple& tuple = [&]() {
+      if constexpr (std::is_same_v<Ref, const Tuple>) {
+        return tupleRef;
+      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<Tuple>>) {
+        return *tupleRef;
       }
     }();
 
-    auto getPtr = [&]() -> std::unique_ptr<TypeInfo> {
-      if constexpr (std::is_same_v<Ref, const TypeInfo>) {
-        return std::make_unique<TypeInfo>(infoRef);
-      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<TypeInfo>>) {
-        return std::move(infoRef);
+    auto getPtr = [&]() -> std::unique_ptr<Tuple> {
+      if constexpr (std::is_same_v<Ref, const Tuple>) {
+        return std::make_unique<Tuple>(tupleRef);
+      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<Tuple>>) {
+        return std::move(tupleRef);
       }
     };
 
     auto insertNew = [&]() {
-      assert((!isGlobalStore() || !info.isTemp) && "Leaking temporary type!");
       auto ptr = getPtr();
-      TypeID id = uintptr_t(ptr.get());
+      TypeID id = uintptr_t(ptr.get()) | 1;
       assert(id > Type::_last_basic_type);
       typeIDs.insert({*ptr, id});
-      constructedTypes.emplace_back(std::move(ptr));
+      constructedTuples.emplace_back(std::move(ptr));
       return Type(id);
     };
 
     // Turn e.g. singleton tuple into non-tuple.
-    if (auto canonical = info.getCanonical()) {
-      return *canonical;
+    if (tuple.size() == 0) {
+      return Type::none;
+    }
+    if (tuple.size() == 1) {
+      return tuple[0];
     }
 
     std::lock_guard<std::recursive_mutex> lock(mutex);
-    // Check whether we already have a type for this structural Info.
-    auto indexIt = typeIDs.find(std::cref(info));
+    // Check whether we already have a type for this tuple.
+    auto indexIt = typeIDs.find(std::cref(tuple));
     if (indexIt != typeIDs.end()) {
       return Type(indexIt->second);
     }
-    // We do not have a type for this Info already. Create one.
+    // We do not have a type for this tuple already. Create one.
     return insertNew();
   }
 };
 
-static TypeStore globalTypeStore;
+static TupleStore globalTupleStore;
 
 static std::vector<std::unique_ptr<HeapTypeInfo>> globalHeapTypeStore;
 static std::recursive_mutex globalHeapTypeStoreMutex;
-
-#ifndef NDEBUG
-bool TypeStore::isGlobalStore() { return this == &globalTypeStore; }
-#endif
 
 // Keep track of the constructed recursion groups.
 struct RecGroupStore {
@@ -708,7 +602,7 @@ void validateTuple(const Tuple& tuple) {
 } // anonymous namespace
 
 void destroyAllTypesForTestingPurposesOnly() {
-  globalTypeStore.clear();
+  globalTupleStore.clear();
   globalHeapTypeStore.clear();
   globalRecGroupStore.clear();
 }
@@ -717,35 +611,12 @@ Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
 Type::Type(const Tuple& tuple) {
   validateTuple(tuple);
-#ifndef NDEBUG
-  for (auto type : tuple) {
-    assert(!isTemp(type) && "Leaking temporary type!");
-  }
-#endif
-  new (this) Type(globalTypeStore.insert(tuple));
+  new (this) Type(globalTupleStore.insert(tuple));
 }
 
 Type::Type(Tuple&& tuple) {
-#ifndef NDEBUG
-  for (auto type : tuple) {
-    assert(!isTemp(type) && "Leaking temporary type!");
-  }
-#endif
-  new (this) Type(globalTypeStore.insert(std::move(tuple)));
+  new (this) Type(globalTupleStore.insert(std::move(tuple)));
 }
-
-Type::Type(HeapType heapType, Nullability nullable) {
-  assert(!isTemp(heapType) && "Leaking temporary type!");
-  new (this) Type(globalTypeStore.insert(TypeInfo(heapType, nullable)));
-}
-
-bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
-
-bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
-
-bool Type::isExn() const { return isRef() && getHeapType().isExn(); }
-
-bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
 bool Type::isDefaultable() const {
   // A variable can get a default value if its type is concrete (unreachable
@@ -760,10 +631,6 @@ bool Type::isDefaultable() const {
     return true;
   }
   return isConcrete() && !isNonNullable();
-}
-
-Nullability Type::getNullability() const {
-  return isNullable() ? Nullable : NonNullable;
 }
 
 unsigned Type::getByteSize() const {
@@ -958,61 +825,36 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   return Type(heapType, nullability);
 }
 
-size_t Type::size() const {
-  if (isTuple()) {
-    return getTypeInfo(*this)->tuple.size();
-  } else {
-    // TODO: unreachable is special and expands to {unreachable} currently.
-    // see also: https://github.com/WebAssembly/binaryen/issues/3062
-    return size_t(id != Type::none);
-  }
-}
-
 const Type& Type::Iterator::operator*() const {
   if (parent->isTuple()) {
-    return getTypeInfo(*parent)->tuple[index];
+    return parent->getTuple()[index];
   } else {
-    // TODO: see comment in Type::size()
-    assert(index == 0 && parent->id != Type::none && "Index out of bounds");
+    assert(index == 0 && *parent != Type::none && "Index out of bounds");
     return *parent;
   }
 }
 
 HeapType::HeapType(Signature sig) {
-  assert(!isTemp(sig.params) && "Leaking temporary type!");
-  assert(!isTemp(sig.results) && "Leaking temporary type!");
   new (this)
     HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
 }
 
 HeapType::HeapType(Continuation continuation) {
-  assert(!isTemp(continuation.type) && "Leaking temporary type!");
   new (this) HeapType(
     globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(continuation)));
 }
 
 HeapType::HeapType(const Struct& struct_) {
-#ifndef NDEBUG
-  for (const auto& field : struct_.fields) {
-    assert(!isTemp(field.type) && "Leaking temporary type!");
-  }
-#endif
   new (this) HeapType(
     globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
 }
 
 HeapType::HeapType(Struct&& struct_) {
-#ifndef NDEBUG
-  for (const auto& field : struct_.fields) {
-    assert(!isTemp(field.type) && "Leaking temporary type!");
-  }
-#endif
   new (this) HeapType(globalRecGroupStore.insert(
     std::make_unique<HeapTypeInfo>(std::move(struct_))));
 }
 
 HeapType::HeapType(Array array) {
-  assert(!isTemp(array.element.type) && "Leaking temporary type!");
   new (this)
     HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
 }
@@ -1059,7 +901,7 @@ bool HeapType::isOpen() const {
 
 Shareability HeapType::getShared() const {
   if (isBasic()) {
-    return (id & 1) != 0 ? Shared : Unshared;
+    return (id & 4) != 0 ? Shared : Unshared;
   } else {
     return getHeapTypeInfo(*this)->share;
   }
@@ -1764,9 +1606,6 @@ std::ostream& TypePrinter::print(Type type) {
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
-  if (isTemp(type)) {
-    os << "(; temp ;) ";
-  }
   if (type.isTuple()) {
     print(type.getTuple());
   } else if (type.isRef()) {
@@ -2029,9 +1868,16 @@ size_t RecGroupHasher::hash(Type type) const {
   size_t digest = wasm::hash(type.isBasic());
   if (type.isBasic()) {
     wasm::rehash(digest, type.getID());
-  } else {
-    hash_combine(digest, hash(*Type::getTypeInfo(type)));
+    return digest;
   }
+  wasm::rehash(digest, type.isTuple());
+  if (type.isTuple()) {
+    hash_combine(digest, hash(type.getTuple()));
+    return digest;
+  }
+  assert(type.isRef());
+  rehash(digest, type.getNullability());
+  rehash(digest, hash(type.getHeapType()));
   return digest;
 }
 
@@ -2051,20 +1897,6 @@ size_t RecGroupHasher::hash(HeapType type) const {
     wasm::rehash(digest, currGroup.getID());
   }
   return digest;
-}
-
-size_t RecGroupHasher::hash(const TypeInfo& info) const {
-  size_t digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case TypeInfo::TupleKind:
-      hash_combine(digest, hash(info.tuple));
-      return digest;
-    case TypeInfo::RefKind:
-      rehash(digest, info.ref.nullability);
-      hash_combine(digest, hash(info.ref.heapType));
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
 }
 
 size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
@@ -2162,7 +1994,14 @@ bool RecGroupEquator::eq(Type a, Type b) const {
   if (a.isBasic() || b.isBasic()) {
     return a == b;
   }
-  return eq(*Type::getTypeInfo(a), *Type::getTypeInfo(b));
+  if (a.isTuple() && b.isTuple()) {
+    return eq(a.getTuple(), b.getTuple());
+  }
+  if (a.isRef() && b.isRef()) {
+    return a.getNullability() == b.getNullability() &&
+           eq(a.getHeapType(), b.getHeapType());
+  }
+  return false;
 }
 
 bool RecGroupEquator::eq(HeapType a, HeapType b) const {
@@ -2182,20 +2021,6 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   bool selfRefA = groupA == newGroup;
   bool selfRefB = groupB == otherGroup;
   return (selfRefA && selfRefB) || (!selfRefA && !selfRefB && groupA == groupB);
-}
-
-bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
-  if (a.kind != b.kind) {
-    return false;
-  }
-  switch (a.kind) {
-    case TypeInfo::TupleKind:
-      return eq(a.tuple, b.tuple);
-    case TypeInfo::RefKind:
-      return a.ref.nullability == b.ref.nullability &&
-             eq(a.ref.heapType, b.ref.heapType);
-  }
-  WASM_UNREACHABLE("unexpected kind");
 }
 
 bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
@@ -2268,9 +2093,9 @@ bool RecGroupEquator::eq(const Array& a, const Array& b) const {
 } // anonymous namespace
 
 struct TypeBuilder::Impl {
-  // Store of temporary Types. Types that need to be canonicalized will be
-  // copied into the global TypeStore.
-  TypeStore typeStore;
+  // Store of temporary tuples. Tuples that need to be canonicalized will be
+  // copied into the global TupleStore.
+  TupleStore tupleStore;
 
   // Store of temporary recursion groups, which will be moved to the global
   // collection of recursion groups as part of building.
@@ -2361,17 +2186,11 @@ HeapType TypeBuilder::getTempHeapType(size_t i) {
 }
 
 Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
-  Type ret = impl->typeStore.insert(tuple);
-  if (tuple.size() > 1) {
-    return markTemp(ret);
-  } else {
-    // No new tuple was created, so the result might not be temporary.
-    return ret;
-  }
+  return impl->tupleStore.insert(tuple);
 }
 
 Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
-  return markTemp(impl->typeStore.insert(TypeInfo(type, nullable)));
+  return Type(type, nullable);
 }
 
 void TypeBuilder::setSubType(size_t i, std::optional<HeapType> super) {
@@ -2490,8 +2309,7 @@ void updateReferencedHeapTypes(
   std::unique_ptr<HeapTypeInfo>& info,
   const std::unordered_map<HeapType, HeapType>& canonicalized) {
   // Update the reference types that refer to canonicalized heap types to be
-  // their canonical versions. Update the Types rather than the HeapTypes so
-  // that the validation of supertypes sees canonical types.
+  // their canonical versions.
   struct ChildUpdater : TypeGraphWalkerBase<ChildUpdater> {
     const std::unordered_map<HeapType, HeapType>& canonicalized;
     bool isTopLevel = true;
@@ -2505,8 +2323,6 @@ void updateReferencedHeapTypes(
         auto ht = type->getHeapType();
         if (auto it = canonicalized.find(ht); it != canonicalized.end()) {
           *type = Type(it->second, type->getNullability());
-        } else if (isTemp(*type) && !isTemp(ht)) {
-          *type = Type(ht, type->getNullability());
         }
       } else if (type->isTuple()) {
         TypeGraphWalkerBase<ChildUpdater>::scanType(type);
@@ -2603,39 +2419,29 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
 
   std::vector<HeapType> results(group.begin(), group.end());
 
-  // We need to make the Types canonical as well, but right now there is no way
-  // to move them to their global store, so we have to create new types and
-  // replace the old ones. TODO simplify this.
-  struct Locations : TypeGraphWalker<Locations> {
-    std::unordered_map<Type, std::unordered_set<Type*>> types;
+  // We need to make the tuples canonical as well, but right now there is no way
+  // to move them to their global store, so we have to create new tuples and
+  // replace the old ones.
+  struct TupleUpdater : TypeGraphWalkerBase<TupleUpdater> {
+    bool isTopLevel = true;
+    void scanHeapType(HeapType* type) {
+      // Only scan top-level heap types. Heap type children will either be
+      // scanned separately or are already canonical.
+      if (isTopLevel) {
+        TypeGraphWalkerBase<TupleUpdater>::scanHeapType(type);
+        isTopLevel = false;
+      }
+    }
     void scanType(Type* type) {
-      if (isTemp(*type)) {
-        types[*type].insert(type);
+      if (type->isTuple()) {
+        *type = globalTupleStore.insert(type->getTuple());
       }
-      TypeGraphWalker<Locations>::scanType(type);
     }
   };
 
-  Locations locations;
   for (auto& type : results) {
-    locations.walkRoot(&type);
+    TupleUpdater().walkRoot(&type);
   }
-
-  // Canonicalize non-tuple Types (which never directly refer to other Types)
-  // before tuple Types to avoid canonicalizing a tuple that still contains
-  // non-canonical Types.
-  auto canonicalizeTypes = [&](bool tuples) {
-    for (auto& [original, uses] : locations.types) {
-      if (original.isTuple() == tuples) {
-        Type canonical = globalTypeStore.insert(*Type::getTypeInfo(original));
-        for (Type* use : uses) {
-          *use = canonical;
-        }
-      }
-    }
-  };
-  canonicalizeTypes(false);
-  canonicalizeTypes(true);
 
   return {results};
 }
@@ -2793,20 +2599,6 @@ size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
 
 size_t hash<wasm::RecGroup>::operator()(const wasm::RecGroup& group) const {
   return wasm::hash(group.getID());
-}
-
-size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
-  auto digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case wasm::TypeInfo::TupleKind:
-      wasm::rehash(digest, info.tuple);
-      return digest;
-    case wasm::TypeInfo::RefKind:
-      wasm::rehash(digest, info.ref.nullability);
-      wasm::rehash(digest, info.ref.heapType);
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
 }
 
 } // namespace std

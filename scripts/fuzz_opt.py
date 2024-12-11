@@ -1360,7 +1360,7 @@ class TrapsNeverHappen(TestCaseHandler):
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
-    frequency = 0.2
+    frequency = 0.1
 
     def handle(self, wasm):
         # get the expected execution results.
@@ -1477,7 +1477,9 @@ class Merge(TestCaseHandler):
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
 
 
-# Tests wasm-split
+# Tests wasm-split. This also tests that fuzz_shell.js properly executes 2 wasm
+# files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
+# files in that way).
 class Split(TestCaseHandler):
     frequency = 1  # TODO: adjust lower when we actually enable this
 
@@ -1670,6 +1672,78 @@ class ClusterFuzz(TestCaseHandler):
         tar.close()
 
 
+# Tests linking two wasm files at runtime, and that optimizations do not break
+# anything. This is similar to Split(), but rather than split a wasm file into
+# two and link them at runtime, this starts with two separate wasm files.
+class Two(TestCaseHandler):
+    frequency = 0.2
+
+    def handle(self, wasm):
+        # Generate a second wasm file, unless we were given one (useful during
+        # reduction).
+        second_wasm = abspath('second.wasm')
+        given = os.environ.get('BINARYEN_SECOND_WASM')
+        if given:
+            # TODO: should we de-nan this etc. as with the primary?
+            shutil.copyfile(given, second_wasm)
+        else:
+            second_input = abspath('second_input.dat')
+            make_random_input(random_size(), second_input)
+            args = [second_input, '-ttf', '-o', second_wasm]
+            run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
+
+        # The binaryen interpreter only supports a single file, so we run them
+        # from JS using fuzz_shell.js's support for two files.
+        #
+        # Note that we *cannot* run each wasm file separately and compare those
+        # to the combined output, as fuzz_shell.js intentionally allows calls
+        # *between* the wasm files, through JS APIs like call-export*. So all we
+        # do here is see the combined, linked behavior, and then later below we
+        # see that that behavior remains even after optimizations.
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        if output == IGNORE:
+            # There is no point to continue since we can't compare this output
+            # to anything.
+            return
+
+        if output.strip() == 'exception thrown: failed to instantiate module':
+            # We may fail to instantiate the modules for valid reasons, such as
+            # an active segment being out of bounds. There is no point to
+            # continue in such cases, as no exports are called.
+            return
+
+        # Make sure that fuzz_shell.js actually executed all exports from both
+        # wasm files.
+        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
+
+        output = fix_output(output)
+
+        # Optimize at least one of the two.
+        wasms = [wasm, second_wasm]
+        for i in range(random.randint(1, 2)):
+            wasm_index = random.randint(0, 1)
+            name = wasms[wasm_index]
+            new_name = name + f'.opt{i}.wasm'
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
+            wasms[wasm_index] = new_name
+
+        # Run again, and compare the output
+        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
+        optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two')
+
+    def can_run_on_wasm(self, wasm):
+        # We cannot optimize wasm files we are going to link in closed world
+        # mode. We also cannot run shared-everything code in d8 yet. We also
+        # cannot compare if there are NaNs (as optimizations can lead to
+        # different outputs).
+        return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -1683,6 +1757,7 @@ testcase_handlers = [
     # Split(),
     RoundtripText(),
     ClusterFuzz(),
+    Two(),
 ]
 
 
@@ -2136,6 +2211,9 @@ echo "  " $?
 #   bash %(reduce_sh)s
 #
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
+#
+# If the testcase handler uses a second wasm file, you may be able to reduce it
+# using BINARYEN_SECOND_WASM.
 #
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
                          'bin': shared.options.binaryen_bin,
