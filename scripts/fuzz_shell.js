@@ -173,9 +173,9 @@ function callFunc(func) {
 // Calls a given function in a try-catch, swallowing JS exceptions, and return 1
 // if we did in fact swallow an exception. Wasm traps are not swallowed (see
 // details below).
-function tryCall(func) {
+/* async */ function tryCall(func) {
   try {
-    func();
+    /* await */ func();
     return 0;
   } catch (e) {
     // We only want to catch exceptions, not wasm traps: traps should still
