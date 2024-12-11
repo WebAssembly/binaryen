@@ -258,7 +258,7 @@ var imports = {
 
     // Export operations.
     'call-export': /* async */ (index) => {
-      throw /* await */ callFunc(exportList[index].value);
+      /* await */ callFunc(exportList[index].value);
     },
     'call-export-catch': /* async */ (index) => {
       return tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
