@@ -246,16 +246,16 @@ var imports = {
     'call-export': async (index) => {
       throw await callFunc(exportList[index].value);
     },
-    'call-export-catch': (index) => {
-      return tryCall(() => callFunc(exportList[index].value));
+    'call-export-catch': async (index) => {
+      return tryCall(async () => await callFunc(exportList[index].value));
     },
 
     // Funcref operations.
-    'call-ref': (ref) => {
-      callFunc(ref);
+    'call-ref': async (ref) => {
+      await callFunc(ref);
     },
-    'call-ref-catch': (ref) => {
-      return tryCall(() => callFunc(ref));
+    'call-ref-catch': async (ref) => {
+      return tryCall(async () => await callFunc(ref));
     },
 
     // Sleep a given amount of ms, and return a given id after that.
@@ -288,7 +288,7 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 
 // If JSPI is available, wrap the sleep import. TODO: only sometimes
 if (typeof WebAssembly.Suspending !== 'undefined') {
-  for (var name of ['sleep', 'call-export']) { // TODO moar, but does all this not affect normal fuzzing?
+  for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref', 'call-ref-catch']) {
     imports['fuzzing-support'][name] =
       new WebAssembly.Suspending(imports['fuzzing-support'][name]);
   }
