@@ -274,13 +274,10 @@ var imports = {
 
     // Sleep a given amount of ms, and return a given id after that.
     'sleep': (ms, id) => {
-      // Ensure the ms are a reasonable amount to wait.
-      // TODO: is this deterministic enough once we interleave?
-      ms = (ms >>> 0) % 3;
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           resolve(id);
-        }, ms);
+        }, 0); // TODO: use the ms in some reasonable, deterministic manner
       });
     },
   },
