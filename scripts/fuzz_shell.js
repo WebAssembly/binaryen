@@ -1,3 +1,17 @@
+// This script can be customized by setting the following variables in code that
+// runs before this script.
+//
+// The binary to be run. (If not set, we get the filename from argv and read
+// from it.)
+var binary;
+// A second binary to be linked in and run as well. (Can also be read from
+// argv.)
+var secondBinary;
+// Whether we are fuzzing JSPI. In addition to this being set, the "async" and
+// "await" keywords must be taken out of the /* KEYWORD */ comments that (which
+// they are normally in, to not affect normal fuzzing).
+var JSPI;
+
 // Shell integration: find argv and set up readBinary().
 var argv;
 var readBinary;
@@ -25,9 +39,6 @@ if (typeof process === 'object' && typeof require === 'function') {
   };
 }
 
-// The binary to be run. This may be set already (by code that runs before this
-// script), and if not, we get the filename from argv.
-var binary;
 if (!binary) {
   binary = readBinary(argv[0]);
 }
@@ -43,7 +54,6 @@ if (argv.length > 0 && argv[argv.length - 1].startsWith('exports:')) {
 
 // If a second parameter is given, it is a second binary that we will link in
 // with it.
-var secondBinary;
 if (argv[1]) {
   secondBinary = readBinary(argv[1]);
 }
@@ -214,6 +224,10 @@ function toAddressType(table, index) {
   return index;
 }
 
+// JSPI support: by default we put the "async" and "await" keywords in
+// /* KEYWORD */ comments, to avoid changing how normal fuzzing works. Certain
+// fuzzers uncomment them in order to fuzz JSAPI specifically.
+
 // Set up the imports.
 var tempRet0;
 var imports = {
@@ -243,19 +257,19 @@ var imports = {
     },
 
     // Export operations.
-    'call-export': async (index) => {
-      throw await callFunc(exportList[index].value);
+    'call-export': /* async */ (index) => {
+      throw /* await */ callFunc(exportList[index].value);
     },
-    'call-export-catch': async (index) => {
-      return tryCall(async () => await callFunc(exportList[index].value));
+    'call-export-catch': /* async */ (index) => {
+      return tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
     },
 
     // Funcref operations.
-    'call-ref': async (ref) => {
-      await callFunc(ref);
+    'call-ref': /* async */ (ref) => {
+      /* await */ callFunc(ref);
     },
-    'call-ref-catch': async (ref) => {
-      return tryCall(async () => await callFunc(ref));
+    'call-ref-catch': /* async */ (ref) => {
+      return tryCall(/* async */ () => /* await */ callFunc(ref));
     },
 
     // Sleep a given amount of ms, and return a given id after that.
@@ -286,11 +300,21 @@ if (typeof WebAssembly.Tag !== 'undefined') {
   };
 }
 
-// If JSPI is available, wrap the sleep import. TODO: only sometimes
-if (typeof WebAssembly.Suspending !== 'undefined') {
-  for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref', 'call-ref-catch']) {
+// If JSPI is available, wrap the imports and exports.
+var wrapExport;
+if (JSPI) {
+  for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
+                    'call-ref-catch']) {
     imports['fuzzing-support'][name] =
       new WebAssembly.Suspending(imports['fuzzing-support'][name]);
+  }
+
+  wrapExport = (value) => {
+    if (typeof WebAssembly.promising !== 'undefined' &&
+        typeof value === 'function') {
+      value = WebAssembly.promising(value);
+    }
+    return value;
   }
 }
 
@@ -332,20 +356,16 @@ function build(binary) {
   // keep the ability to call anything that was ever exported.)
   for (var key in instance.exports) {
     var value = instance.exports[key];
-
-    // If JSPI is available, wrap the sleep import. TODO: only sometimes
-    if (typeof WebAssembly.promising !== 'undefined' &&
-        typeof value === 'function') {
-      value = WebAssembly.promising(value);
+    if (wrapExport) {
+      value = wrapExport(value);
     }
-
     exports[key] = value;
     exportList.push({ name: key, value: value });
   }
 }
 
 // Run the code by calling exports.
-async function callExports() {
+/* async */ function callExports() {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
   var relevantExports = exportsToCall || exportList;
@@ -369,7 +389,7 @@ async function callExports() {
 
     try {
       console.log('[fuzz-exec] calling ' + name);
-      var result = await callFunc(value);
+      var result = /* await */ callFunc(value);
       if (typeof result !== 'undefined') {
         console.log('[fuzz-exec] note result: ' + name + ' => ' + printed(result));
       }
