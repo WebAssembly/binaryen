@@ -288,7 +288,8 @@ var imports = {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           resolve(id);
-        }, 0); // TODO: use the ms in some reasonable, deterministic manner
+        }, 0); // TODO: Use the ms in some reasonable, deterministic manner, but
+               //       the d8 shell ignores this anyhow.
       });
     },
   },
