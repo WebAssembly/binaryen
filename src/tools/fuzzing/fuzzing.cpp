@@ -924,8 +924,7 @@ void TranslateToFuzzReader::addImportSleepSupport() {
   func->name = sleepImportName;
   func->module = "fuzzing-support";
   func->base = "sleep";
-  func->type =
-    Signature({Type::i32, Type::i32}, Type::i32);
+  func->type = Signature({Type::i32, Type::i32}, Type::i32);
   wasm.addFunction(std::move(func));
 }
 
