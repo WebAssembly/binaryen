@@ -336,7 +336,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print()
 
         # JSPI is done 1/4 of the time or so.
-        print('JS second builds are distributed as ~ mean 0.25')
+        print('JSPIs are distributed as ~ mean 0.25')
         print(f'mean JSPIs: {statistics.mean(seen_JSPIs)}')
         self.assertEqual(min(seen_JSPIs), 0)
         self.assertEqual(max(seen_JSPIs), 1)
