@@ -232,7 +232,7 @@ def randomize_fuzz_settings():
         if random.random() < 0.5:
             GEN_ARGS += ['--enclose-world']
 
-    # Test JSPI sometimes.
+    # Test JSPI somewhat rarely, as it may be slower.
     global JSPI
     JSPI = random.random() < 0.25
 

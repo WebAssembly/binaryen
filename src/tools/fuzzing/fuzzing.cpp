@@ -913,6 +913,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
 void TranslateToFuzzReader::addImportSleepSupport() {
   if (!oneIn(4)) {
     // Fuzz this somewhat rarely, as it may be slow.
+    return;
   }
 
   // An import that sleeps for a given number of milliseconds, and also receives
