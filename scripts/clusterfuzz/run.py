@@ -200,6 +200,15 @@ def get_js_file_contents(i, output_dir):
 
     print(f'Created {bytes} wasm bytes')
 
+    # Some of the time, fuzz JSPI (similar to fuzz_opt.py, see details there).
+    if system_random.random() < 0.25:
+        # Prepend the flag to enable JSPI.
+        js = 'var JSPI = 1;\n\n' + js
+
+        # Un-comment the async and await keywords.
+        js = js.replace('/* async */', 'async')
+        js = js.replace('/* await */', 'await')
+
     return js
 
 
