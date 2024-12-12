@@ -187,8 +187,8 @@ public:
     Literals arguments;
     for (const auto& param : func->getParams()) {
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
-      // on attempts to convert it to BigInt. v128 cannot work at all.
-      if (param == Type::i64 || param == Type::v128) {
+      // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
+      if (param == Type::i64 || param == Type::v128 || param.isExn()) {
         throwEmptyException();
       }
       if (!param.isDefaultable()) {
@@ -200,9 +200,9 @@ public:
     // Error on illegal results. Note that this happens, as per JS semantics,
     // *before* the call.
     for (const auto& result : func->getResults()) {
-      // An i64 result is fine: a BigInt will be provided. But v128 still
-      // errors.
-      if (result == Type::v128) {
+      // An i64 result is fine: a BigInt will be provided. But v128 and exnref
+      // still error.
+      if (result == Type::v128 || result.isExn()) {
         throwEmptyException();
       }
     }
