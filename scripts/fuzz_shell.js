@@ -8,8 +8,8 @@ var binary;
 // argv.)
 var secondBinary;
 // Whether we are fuzzing JSPI. In addition to this being set, the "async" and
-// "await" keywords must be taken out of the /* KEYWORD */ comments that (which
-// they are normally in, to not affect normal fuzzing).
+// "await" keywords must be taken out of the /* KEYWORD */ comments (which they
+// are normally in, so as not to affect normal fuzzing).
 var JSPI;
 
 // Shell integration: find argv and set up readBinary().
