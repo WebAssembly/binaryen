@@ -762,6 +762,11 @@ def run_d8_js(js, args=[], liftoff=True):
     return run_vm(cmd)
 
 
+# For JSPI, we must customize fuzz_shell.js. We do so the first time we need
+# it, and save the filename here.
+JSPI_JS_FILE = None
+
+
 def get_fuzz_shell_js():
     js = in_binaryen('scripts', 'fuzz_shell.js')
 
@@ -769,9 +774,13 @@ def get_fuzz_shell_js():
         # Just use the normal fuzz shell script.
         return js
 
-    # For JSPI, we must customize it. TODO: reuse this file
-    jspi_js = os.path.abspath('jspi_fuzz_shell.js')
-    with open(jspi_js, 'w') as f:
+    global JSPI_JS_FILE
+    if JSPI_JS_FILE:
+        # Use the customized file we've already created.
+        return JSPI_JS_FILE
+
+    JSPI_JS_FILE = os.path.abspath('jspi_fuzz_shell.js')
+    with open(JSPI_JS_FILE, 'w') as f:
         # Enable JSPI.
         f.write('var JSPI = 1;\n\n')
 
@@ -781,7 +790,7 @@ def get_fuzz_shell_js():
         code = code.replace('/* async */', 'async')
         code = code.replace('/* await */', 'await')
         f.write(code);
-    return jspi_js
+    return JSPI_JS_FILE
 
 
 def run_d8_wasm(wasm, liftoff=True, args=[]):
