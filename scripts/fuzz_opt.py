@@ -789,7 +789,7 @@ def get_fuzz_shell_js():
             code = g.read()
         code = code.replace('/* async */', 'async')
         code = code.replace('/* await */', 'await')
-        f.write(code);
+        f.write(code)
     return JSPI_JS_FILE
 
 
