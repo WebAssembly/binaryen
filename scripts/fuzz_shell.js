@@ -224,10 +224,6 @@ function toAddressType(table, index) {
   return index;
 }
 
-// JSPI support: by default we put the "async" and "await" keywords in
-// /* KEYWORD */ comments, to avoid changing how normal fuzzing works. Certain
-// fuzzers uncomment them in order to fuzz JSAPI specifically.
-
 // Set up the imports.
 var tempRet0;
 var imports = {
