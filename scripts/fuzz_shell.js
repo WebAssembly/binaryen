@@ -262,17 +262,13 @@ var imports = {
 
     // Funcref operations.
     'call-ref': /* async */ (ref) => {
-      if (JSPI) {
-        // This is a direct function reference, and just like an export, it must
-        // be wrapped for JSPI.
-        ref = wrapExportForJSPI(ref);
-      }
+      // This is a direct function reference, and just like an export, it must
+      // be wrapped for JSPI.
+      ref = wrapExportForJSPI(ref);
       /* await */ callFunc(ref);
     },
     'call-ref-catch': /* async */ (ref) => {
-      if (JSPI) {
-        ref = wrapExportForJSPI(ref);
-      }
+      ref = wrapExportForJSPI(ref);
       return tryCall(/* async */ () => /* await */ callFunc(ref));
     },
 
@@ -306,20 +302,19 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 }
 
 // If JSPI is available, wrap the imports and exports.
-var wrapExportForJSPI;
 if (JSPI) {
   for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
                     'call-ref-catch']) {
     imports['fuzzing-support'][name] =
       new WebAssembly.Suspending(imports['fuzzing-support'][name]);
   }
+}
 
-  wrapExportForJSPI = (value) => {
-    if (typeof value === 'function') {
-      value = WebAssembly.promising(value);
-    }
-    return value;
+function wrapExportForJSPI(value) {
+  if (JSPI && typeof value === 'function') {
+    value = WebAssembly.promising(value);
   }
+  return value;
 }
 
 // If a second binary will be linked in then set up the imports for
@@ -360,9 +355,7 @@ function build(binary) {
   // keep the ability to call anything that was ever exported.)
   for (var key in instance.exports) {
     var value = instance.exports[key];
-    if (JSPI) {
-      value = wrapExportForJSPI(value);
-    }
+    value = wrapExportForJSPI(value);
     exports[key] = value;
     exportList.push({ name: key, value: value });
   }
