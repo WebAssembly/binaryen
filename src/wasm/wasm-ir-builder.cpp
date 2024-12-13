@@ -679,9 +679,8 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 Result<Type> IRBuilder::getLabelType(Index label) {
   auto scope = getScope(label);
   CHECK_ERR(scope);
-  // Loops would receive their input type rather than their output type, if we
-  // supported that.
-  return (*scope)->getLoop() ? Type::none : (*scope)->getResultType();
+  // Loops receive their input type rather than their output type.
+  return (*scope)->getLoop() ? (*scope)->inputType : (*scope)->getResultType();
 }
 
 Result<Type> IRBuilder::getLabelType(Name labelName) {
@@ -722,35 +721,31 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   return Ok{};
 }
 
-Result<> IRBuilder::visitBlockStart(Block* curr) {
+Result<> IRBuilder::visitBlockStart(Block* curr, Type inputType) {
   applyDebugLoc(curr);
-  pushScope(ScopeCtx::makeBlock(curr));
-  return Ok{};
+  return pushScope(ScopeCtx::makeBlock(curr, inputType));
 }
 
-Result<> IRBuilder::visitIfStart(If* iff, Name label) {
+Result<> IRBuilder::visitIfStart(If* iff, Name label, Type inputType) {
   applyDebugLoc(iff);
   CHECK_ERR(visitIf(iff));
-  pushScope(ScopeCtx::makeIf(iff, label));
-  return Ok{};
+  return pushScope(ScopeCtx::makeIf(iff, label, inputType));
 }
 
-Result<> IRBuilder::visitLoopStart(Loop* loop) {
+Result<> IRBuilder::visitLoopStart(Loop* loop, Type inputType) {
   applyDebugLoc(loop);
-  pushScope(ScopeCtx::makeLoop(loop));
-  return Ok{};
+  return pushScope(ScopeCtx::makeLoop(loop, inputType));
 }
 
-Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
+Result<> IRBuilder::visitTryStart(Try* tryy, Name label, Type inputType) {
   applyDebugLoc(tryy);
-  pushScope(ScopeCtx::makeTry(tryy, label));
-  return Ok{};
+  return pushScope(ScopeCtx::makeTry(tryy, label, inputType));
 }
 
-Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
+Result<>
+IRBuilder::visitTryTableStart(TryTable* trytable, Name label, Type inputType) {
   applyDebugLoc(trytable);
-  pushScope(ScopeCtx::makeTryTable(trytable, label));
-  return Ok{};
+  return pushScope(ScopeCtx::makeTryTable(trytable, label, inputType));
 }
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
@@ -849,6 +844,8 @@ Result<> IRBuilder::visitElse() {
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
   auto labelUsed = scope.labelUsed;
+  auto inputType = scope.inputType;
+  auto inputLocal = scope.inputLocal;
   auto expr = finishScope();
   CHECK_ERR(expr);
   iff->ifTrue = *expr;
@@ -858,8 +855,8 @@ Result<> IRBuilder::visitElse() {
       lastBinaryPos - codeSectionOffset;
   }
 
-  pushScope(ScopeCtx::makeElse(iff, originalLabel, label, labelUsed));
-  return Ok{};
+  return pushScope(ScopeCtx::makeElse(
+    iff, originalLabel, label, labelUsed, inputType, inputLocal));
 }
 
 Result<> IRBuilder::visitCatch(Name tag) {
@@ -891,8 +888,8 @@ Result<> IRBuilder::visitCatch(Name tag) {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  pushScope(
-    ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel));
+  CHECK_ERR(pushScope(
+    ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel)));
   // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
@@ -933,9 +930,8 @@ Result<> IRBuilder::visitCatchAll() {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  pushScope(
+  return pushScope(
     ScopeCtx::makeCatchAll(tryy, originalLabel, label, labelUsed, branchLabel));
-  return Ok{};
 }
 
 Result<> IRBuilder::visitDelegate(Index label) {
@@ -1035,11 +1031,24 @@ Result<> IRBuilder::visitEnd() {
   } else if (auto* loop = scope.getLoop()) {
     loop->body = *expr;
     loop->name = scope.label;
+    if (scope.inputType != Type::none && scope.labelUsed) {
+      // Branches to this loop carry values, but Binaryen IR does not support
+      // that. Fix this by trampolining the branches through new code that sets
+      // the branch value to the appropriate scratch local.
+      fixLoopWithInput(loop, scope.inputType, scope.inputLocal);
+    }
     loop->finalize(loop->type);
     push(loop);
   } else if (auto* iff = scope.getIf()) {
     iff->ifTrue = *expr;
-    iff->ifFalse = nullptr;
+    if (scope.inputType != Type::none) {
+      // Normally an if without an else must have type none, but if there is an
+      // input parameter, the empty else arm must propagate its value.
+      // Synthesize an else arm that loads the value from the scratch local.
+      iff->ifFalse = builder.makeLocalGet(scope.inputLocal, scope.inputType);
+    } else {
+      iff->ifFalse = nullptr;
+    }
     iff->finalize(iff->type);
     push(maybeWrapForLabel(iff));
   } else if (auto* iff = scope.getElse()) {
@@ -1065,6 +1074,46 @@ Result<> IRBuilder::visitEnd() {
     WASM_UNREACHABLE("unexpected scope kind");
   }
   return Ok{};
+}
+
+// Branches to this loop need to be trampolined through code that sets the value
+// carried by the branch to the appropriate scratch local before branching to
+// the loop. Transform this:
+//
+//   (loop $l (param t1) (result t2) ...)
+//
+// to this:
+//
+//  (loop $l0 (result t2)
+//    (block $l1 (result t2)
+//      (local.set $scratch ;; set the branch values to the scratch local
+//        (block $l (result t1)
+//          (br $l1 ;; exit the loop with the fallthrough value, if any.
+//            ...   ;; contains branches to $l
+//          )
+//        )
+//      )
+//      (br $l0) ;; continue the loop
+//    )
+//  )
+void IRBuilder::fixLoopWithInput(Loop* loop, Type inputType, Index scratch) {
+  auto l = loop->name;
+  auto l0 = makeFresh(l, 0);
+  auto l1 = makeFresh(l, 1);
+
+  Block* inner =
+    loop->type == Type::none
+      ? builder.blockifyWithName(
+          loop->body, l, builder.makeBreak(l1), inputType)
+      : builder.makeBlock(l, {builder.makeBreak(l1, loop->body)}, inputType);
+
+  Block* outer = builder.makeBlock(
+    l1,
+    {builder.makeLocalSet(scratch, inner), builder.makeBreak(l0)},
+    loop->type);
+
+  loop->body = outer;
+  loop->name = l0;
 }
 
 Result<Index> IRBuilder::getLabelIndex(Name label, bool inDelegate) {
@@ -1128,24 +1177,24 @@ Result<> IRBuilder::makeNop() {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBlock(Name label, Type type) {
+Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   auto* block = wasm.allocator.alloc<Block>();
   block->name = label;
-  block->type = type;
-  return visitBlockStart(block);
+  block->type = sig.results;
+  return visitBlockStart(block, sig.params);
 }
 
-Result<> IRBuilder::makeIf(Name label, Type type) {
+Result<> IRBuilder::makeIf(Name label, Signature sig) {
   auto* iff = wasm.allocator.alloc<If>();
-  iff->type = type;
-  return visitIfStart(iff, label);
+  iff->type = sig.results;
+  return visitIfStart(iff, label, sig.params);
 }
 
-Result<> IRBuilder::makeLoop(Name label, Type type) {
+Result<> IRBuilder::makeLoop(Name label, Signature sig) {
   auto* loop = wasm.allocator.alloc<Loop>();
   loop->name = label;
-  loop->type = type;
-  return visitLoopStart(loop);
+  loop->type = sig.results;
+  return visitLoopStart(loop, sig.params);
 }
 
 Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
@@ -1584,19 +1633,19 @@ Result<> IRBuilder::makeTableInit(Name elem, Name table) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeTry(Name label, Type type) {
+Result<> IRBuilder::makeTry(Name label, Signature sig) {
   auto* tryy = wasm.allocator.alloc<Try>();
-  tryy->type = type;
-  return visitTryStart(tryy, label);
+  tryy->type = sig.results;
+  return visitTryStart(tryy, label, sig.params);
 }
 
 Result<> IRBuilder::makeTryTable(Name label,
-                                 Type type,
+                                 Signature sig,
                                  const std::vector<Name>& tags,
                                  const std::vector<Index>& labels,
                                  const std::vector<bool>& isRefs) {
   auto* trytable = wasm.allocator.alloc<TryTable>();
-  trytable->type = type;
+  trytable->type = sig.results;
   trytable->catchTags.set(tags);
   trytable->catchRefs.set(isRefs);
   trytable->catchDests.reserve(labels.size());
@@ -1605,7 +1654,7 @@ Result<> IRBuilder::makeTryTable(Name label,
     CHECK_ERR(name);
     trytable->catchDests.push_back(*name);
   }
-  return visitTryTableStart(trytable, label);
+  return visitTryTableStart(trytable, label, sig.params);
 }
 
 Result<> IRBuilder::makeThrow(Name tag) {

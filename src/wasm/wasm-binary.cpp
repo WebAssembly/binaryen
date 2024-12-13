@@ -2121,30 +2121,30 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
   }
 }
 
-Type WasmBinaryReader::getType(int initial) {
-  // Single value types are negative; signature indices are non-negative
-  if (initial >= 0) {
-    // TODO: Handle block input types properly.
-    auto sig = getSignatureByTypeIndex(initial);
-    if (sig.params != Type::none) {
-      throwError("control flow inputs are not supported yet");
-    }
-    return sig.results;
+Signature WasmBinaryReader::getBlockType() {
+  // Single value types are negative; signature indices are non-negative.
+  auto code = getS32LEB();
+  if (code >= 0) {
+    return getSignatureByTypeIndex(code);
   }
+  if (code == BinaryConsts::EncodedType::Empty) {
+    return Signature();
+  }
+  return Signature(Type::none, getType(code));
+}
+
+Type WasmBinaryReader::getType(int code) {
   Type type;
-  if (getBasicType(initial, type)) {
+  if (getBasicType(code, type)) {
     return type;
   }
-  switch (initial) {
-    // None only used for block signatures. TODO: Separate out?
-    case BinaryConsts::EncodedType::Empty:
-      return Type::none;
+  switch (code) {
     case BinaryConsts::EncodedType::nullable:
       return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::nonnullable:
       return Type(getHeapType(), NonNullable);
     default:
-      throwError("invalid wasm type: " + std::to_string(initial));
+      throwError("invalid wasm type: " + std::to_string(code));
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -2885,11 +2885,11 @@ Result<> WasmBinaryReader::readInst() {
   uint8_t code = getInt8();
   switch (code) {
     case BinaryConsts::Block:
-      return builder.makeBlock(Name(), getType());
+      return builder.makeBlock(Name(), getBlockType());
     case BinaryConsts::If:
-      return builder.makeIf(Name(), getType());
+      return builder.makeIf(Name(), getBlockType());
     case BinaryConsts::Loop:
-      return builder.makeLoop(Name(), getType());
+      return builder.makeLoop(Name(), getBlockType());
     case BinaryConsts::Br:
       return builder.makeBreak(getU32LEB(), false);
     case BinaryConsts::BrIf:
@@ -2974,9 +2974,9 @@ Result<> WasmBinaryReader::readInst() {
     case BinaryConsts::TableSet:
       return builder.makeTableSet(getTableName(getU32LEB()));
     case BinaryConsts::Try:
-      return builder.makeTry(Name(), getType());
+      return builder.makeTry(Name(), getBlockType());
     case BinaryConsts::TryTable: {
-      auto type = getType();
+      auto type = getBlockType();
       std::vector<Name> tags;
       std::vector<Index> labels;
       std::vector<bool> isRefs;
