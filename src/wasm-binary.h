@@ -1467,7 +1467,7 @@ public:
 
   bool getBasicType(int32_t code, Type& out);
   bool getBasicHeapType(int64_t code, HeapType& out);
-  // Get the signature of control flow structure.
+  // Get the signature of a control flow structure.
   Signature getBlockType();
   // Read a value and get a type for it.
   Type getType();
