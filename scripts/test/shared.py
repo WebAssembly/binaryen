@@ -416,7 +416,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
     'align.wast',    # Alignment bit 6 used by multi-memory
     'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
-    'block.wast',    # Requires block parameters
     'bulk.wast',     # Requires table.init abbreviation with implicit table
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
@@ -425,22 +424,19 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'elem.wast',    # Requires table.init abbreviation with implicit table
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
-    'fac.wast',     # Requires block parameters (on a loop)
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
     'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
     'global.wast',  # Globals allowed to refer to previous globals by GC
-    'if.wast',      # Requires block parameters (on an if)
+    'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Requires wast `register` support
     'linking.wast',  # Requires wast `register` support
-    'loop.wast',     # Requires block parameters (on a loop)
     'memory.wast',   # Multiple memories now allowed
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
     'throw.wast',    # Requires try_table interpretation
     'try_catch.wast',  # Requires wast `register` support
     'tag.wast',      # Non-empty tag results allowed by stack switching
-    'throw_ref.wast',  # Requires block parameters (on an if)
     'try_table.wast',  # Requires try_table interpretation
     'br_on_non_null.wast',  # Requires sending values on br_on_non_null
     'br_on_null.wast',      # Requires sending values on br_on_null
