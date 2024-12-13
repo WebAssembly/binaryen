@@ -220,6 +220,24 @@
   )
  )
 
+ (func $illegal-exnref (param $x exnref)
+  ;; Helper for the function below.
+  (call $log-i32
+   (i32.const 57)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+ (func $ref.calling.illegal-exnref (export "ref.calling.illegal-exnref")
+  ;; As above, we throw on the exnref param, and log 1.
+  (call $log-i32
+   (call $call.ref.catch
+    (ref.func $illegal-exnref)
+   )
+  )
+ )
+
  (func $illegal-result (result v128)
   ;; Helper for the function below. The result is illegal for JS.
   (call $log-i32
@@ -337,6 +355,9 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-v128
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
+;; CHECK:      [fuzz-exec] calling ref.calling.illegal-exnref
+;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+
 ;; CHECK:      [fuzz-exec] calling ref.calling.illegal-result
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
@@ -356,6 +377,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-exnref
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
