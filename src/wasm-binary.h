@@ -1467,10 +1467,12 @@ public:
 
   bool getBasicType(int32_t code, Type& out);
   bool getBasicHeapType(int64_t code, HeapType& out);
+  // Get the signature of control flow structure.
+  Signature getBlockType();
   // Read a value and get a type for it.
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
-  Type getType(int initial);
+  Type getType(int code);
   HeapType getHeapType();
   HeapType getIndexedHeapType();
 

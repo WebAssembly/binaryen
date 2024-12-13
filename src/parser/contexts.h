@@ -1447,11 +1447,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
     assert(type.isSignature());
-    if (type.getSignature().params != Type::none) {
-      return in.err(pos, "block parameters not yet supported");
-    }
-    // TODO: Once we support block parameters, return an error here if any of
-    // them are named.
+    // TODO: Error if block parameters are named
     return type;
   }
 
@@ -1822,9 +1818,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
-    return withLoc(pos,
-                   irBuilder.makeBlock(label ? *label : Name{},
-                                       type.getSignature().results));
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
+    return withLoc(
+      pos, irBuilder.makeBlock(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeIf(Index pos,
@@ -1832,10 +1830,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                   std::optional<Name> label,
                   HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeIf(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeIf(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
@@ -1845,10 +1844,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     std::optional<Name> label,
                     HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeLoop(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeTry(Index pos,
@@ -1856,10 +1856,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    std::optional<Name> label,
                    HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeTry(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeTryTable(Index pos,
@@ -1875,12 +1876,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       labels.push_back(info.label);
       isRefs.push_back(info.isRef);
     }
-    return withLoc(pos,
-                   irBuilder.makeTryTable(label ? *label : Name{},
-                                          type.getSignature().results,
-                                          tags,
-                                          labels,
-                                          isRefs));
+    return withLoc(
+      pos,
+      irBuilder.makeTryTable(
+        label ? *label : Name{}, type.getSignature(), tags, labels, isRefs));
   }
 
   Result<> visitCatch(Index pos, Name tag) {
