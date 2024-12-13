@@ -866,31 +866,6 @@ HeapTypeKind HeapType::getKind() const {
   return getHeapTypeInfo(*this)->kind;
 }
 
-bool HeapType::isBottom() const {
-  if (isBasic()) {
-    switch (getBasic(Unshared)) {
-      case ext:
-      case func:
-      case cont:
-      case any:
-      case eq:
-      case i31:
-      case struct_:
-      case array:
-      case exn:
-      case string:
-        return false;
-      case none:
-      case noext:
-      case nofunc:
-      case nocont:
-      case noexn:
-        return true;
-    }
-  }
-  return false;
-}
-
 bool HeapType::isOpen() const {
   if (isBasic()) {
     return false;

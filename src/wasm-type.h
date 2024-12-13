@@ -870,6 +870,33 @@ std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
 std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
 
+// Inline some nontrivial methods here for performance reasons.
+
+inline bool HeapType::isBottom() const {
+  if (isBasic()) {
+    switch (getBasic(Unshared)) {
+      case ext:
+      case func:
+      case cont:
+      case any:
+      case eq:
+      case i31:
+      case struct_:
+      case array:
+      case exn:
+      case string:
+        return false;
+      case none:
+      case noext:
+      case nofunc:
+      case nocont:
+      case noexn:
+        return true;
+    }
+  }
+  return false;
+}
+
 } // namespace wasm
 
 namespace std {
