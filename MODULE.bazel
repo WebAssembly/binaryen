@@ -1,0 +1,10 @@
+module(
+    name = "com_google_binaryen",
+    version = "114.0.0",
+    compatibility_level = 114,
+
+)
+
+bazel_dep(name = "rules_python", version = "0.23.1")
+bazel_dep(name = "abseil-py", version = "1.4.0", repo_name="absl_py")
+bazel_dep(name = "rules_license", version = "0.0.7")
