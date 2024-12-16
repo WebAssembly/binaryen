@@ -234,6 +234,11 @@ ProgramResult expected;
 // case we may try again but much later.
 static std::unordered_set<Name> functionsWeTriedToRemove;
 
+// The index of the working file we save, when saveAllWorkingFiles. We must
+// store this globally so that the difference instances of Reducer do not
+// overlap.
+static size_t workingFileIndex = 0;
+
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
@@ -337,8 +342,6 @@ struct Reducer
       std::cerr << "|    done with passes for now\n";
     }
   }
-
-  size_t workingFileIndex = 0;
 
   // Apply the test file to the working file, after we saw that it successfully
   // reduced the testcase.
