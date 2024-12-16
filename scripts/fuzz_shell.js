@@ -280,8 +280,11 @@ var imports = {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           resolve(id);
-        }, 0); // TODO: Use the ms in some reasonable, deterministic manner, but
-               //       the d8 shell ignores this anyhow.
+        }, 0); // TODO: Use the ms in some reasonable, deterministic manner.
+               //       Rather than actually setTimeout on them we could manage
+               //       a queue of pending sleeps manually, and order them based
+               //       on the "ms" (which would not be literal ms, but just
+               //       how many time units to wait).
       });
     },
   },
