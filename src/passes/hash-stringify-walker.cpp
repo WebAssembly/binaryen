@@ -159,7 +159,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::removeOverlaps(
     for (auto startIdx : substring.StartIndices) {
       auto interval =
         Interval(startIdx,
-                 startIdx + substring.Length,
+                 startIdx + substring.Length - 1,
                  substring.Length * substring.StartIndices.size());
       intervals.push_back(interval);
       intervalMap[std::move(interval)] = i;
