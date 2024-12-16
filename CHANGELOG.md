@@ -18,7 +18,7 @@ Current Trunk
  - BinaryenSelect no longer takes a type parameter.
  - AutoDrop APIs have been removed.
  - Binaryen now supports parsing control flow structures with parameter types by
-   lowering them away in the parsers..
+   lowering them away in the parsers.
 
 v120
 ----
