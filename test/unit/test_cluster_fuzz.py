@@ -274,10 +274,11 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print()
 
         # To check for interesting JS file contents, we'll note how many times
-        # we build and run the wasm.
+        # we build and run the wasm, and other things like JSPI.
         seen_builds = []
         seen_calls = []
         seen_second_builds = []
+        seen_JSPIs = []
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -286,6 +287,17 @@ class ClusterFuzz(utils.BinaryenTestCase):
             seen_builds.append(js.count('build(binary);'))
             seen_calls.append(js.count('callExports();'))
             seen_second_builds.append(js.count('build(secondBinary);'))
+
+            # If JSPI is enabled, the async and await keywords should be
+            # enabled (uncommented).
+            if 'JSPI = 1' in js:
+                seen_JSPIs.append(1)
+                assert '/* async */' not in js
+                assert '/* await */' not in js
+            else:
+                seen_JSPIs.append(0)
+                assert '/* async */' in js
+                assert '/* await */' in js
 
         # There is always one build and one call (those are in the default
         # fuzz_shell.js), and we add a couple of operations, each with equal
@@ -320,6 +332,14 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'median JS second builds: {statistics.median(seen_second_builds)}')
         self.assertGreaterEqual(max(seen_second_builds), 2)
         self.assertGreater(statistics.stdev(seen_second_builds), 0)
+
+        print()
+
+        # JSPI is done 1/4 of the time or so.
+        print('JSPIs are distributed as ~ mean 0.25')
+        print(f'mean JSPIs: {statistics.mean(seen_JSPIs)}')
+        self.assertEqual(min(seen_JSPIs), 0)
+        self.assertEqual(max(seen_JSPIs), 1)
 
         print()
 

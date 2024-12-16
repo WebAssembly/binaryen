@@ -317,6 +317,7 @@ void TranslateToFuzzReader::build() {
   }
   addImportLoggingSupport();
   addImportCallingSupport();
+  addImportSleepSupport();
   modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
@@ -909,6 +910,24 @@ void TranslateToFuzzReader::addImportTableSupport() {
   }
 }
 
+void TranslateToFuzzReader::addImportSleepSupport() {
+  if (!oneIn(4)) {
+    // Fuzz this somewhat rarely, as it may be slow.
+    return;
+  }
+
+  // An import that sleeps for a given number of milliseconds, and also receives
+  // an integer id. It returns that integer id (useful for tracking separate
+  // sleeps).
+  sleepImportName = Names::getValidFunctionName(wasm, "sleep");
+  auto func = std::make_unique<Function>();
+  func->name = sleepImportName;
+  func->module = "fuzzing-support";
+  func->base = "sleep";
+  func->type = Signature({Type::i32, Type::i32}, Type::i32);
+  wasm.addFunction(std::move(func));
+}
+
 void TranslateToFuzzReader::addHashMemorySupport() {
   // Add memory hasher helper (for the hash, see hash.h). The function looks
   // like:
@@ -1088,6 +1107,13 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
   return builder.makeCall(exportTarget, {index}, type);
+}
+
+Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
+  // Sleep for some ms, and return a given id.
+  auto* ms = make(Type::i32);
+  auto id = make(Type::i32);
+  return builder.makeCall(sleepImportName, {ms, id}, Type::i32);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1767,6 +1793,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type == Type::i32) {
     if (callExportCatchImportName || callRefCatchImportName) {
       options.add(FeatureSet::MVP, &Self::makeImportCallCode);
+    }
+    if (sleepImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportSleep);
     }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,

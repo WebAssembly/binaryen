@@ -117,6 +117,7 @@ private:
   Name callExportCatchImportName;
   Name callRefImportName;
   Name callRefCatchImportName;
+  Name sleepImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -238,6 +239,7 @@ private:
   void addImportCallingSupport();
   void addImportThrowingSupport();
   void addImportTableSupport();
+  void addImportSleepSupport();
   void addHashMemorySupport();
 
   // Special expression makers
@@ -249,6 +251,7 @@ private:
   // Call either an export or a ref. We do this from a single function to better
   // control the frequency of each.
   Expression* makeImportCallCode(Type type);
+  Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation

@@ -232,7 +232,11 @@ def randomize_fuzz_settings():
         if random.random() < 0.5:
             GEN_ARGS += ['--enclose-world']
 
-    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
+    # Test JSPI somewhat rarely, as it may be slower.
+    global JSPI
+    JSPI = random.random() < 0.25
+
+    print('randomized settings (NaNs, OOB, legalize, JSPI):', NANS, OOB, LEGALIZE, JSPI)
 
 
 def init_important_initial_contents():
@@ -758,11 +762,39 @@ def run_d8_js(js, args=[], liftoff=True):
     return run_vm(cmd)
 
 
-FUZZ_SHELL_JS = in_binaryen('scripts', 'fuzz_shell.js')
+# For JSPI, we must customize fuzz_shell.js. We do so the first time we need
+# it, and save the filename here.
+JSPI_JS_FILE = None
+
+
+def get_fuzz_shell_js():
+    js = in_binaryen('scripts', 'fuzz_shell.js')
+
+    if not JSPI:
+        # Just use the normal fuzz shell script.
+        return js
+
+    global JSPI_JS_FILE
+    if JSPI_JS_FILE:
+        # Use the customized file we've already created.
+        return JSPI_JS_FILE
+
+    JSPI_JS_FILE = os.path.abspath('jspi_fuzz_shell.js')
+    with open(JSPI_JS_FILE, 'w') as f:
+        # Enable JSPI.
+        f.write('var JSPI = 1;\n\n')
+
+        # Un-comment the async and await keywords.
+        with open(js) as g:
+            code = g.read()
+        code = code.replace('/* async */', 'async')
+        code = code.replace('/* await */', 'await')
+        f.write(code)
+    return JSPI_JS_FILE
 
 
 def run_d8_wasm(wasm, liftoff=True, args=[]):
-    return run_d8_js(FUZZ_SHELL_JS, [wasm] + args, liftoff=liftoff)
+    return run_d8_js(get_fuzz_shell_js(), [wasm] + args, liftoff=liftoff)
 
 
 def all_disallowed(features):
@@ -850,7 +882,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
+                return run_vm([shared.V8, get_fuzz_shell_js()] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
@@ -1160,7 +1192,7 @@ class Wasm2JS(TestCaseHandler):
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
-        with open(FUZZ_SHELL_JS) as f:
+        with open(get_fuzz_shell_js()) as f:
             wrapper = f.read()
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
         # avoid optimizations if we have nans, as we don't handle them with
@@ -1192,6 +1224,10 @@ class Wasm2JS(TestCaseHandler):
         # to non-emscripten mode or adding memory information, or check
         # specifically for growth here
         if INITIAL_CONTENTS:
+            return False
+        # We run in node, which lacks JSPI support, and also we need wasm2js to
+        # implement wasm suspending using JS async/await.
+        if JSPI:
             return False
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
