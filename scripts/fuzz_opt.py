@@ -1662,7 +1662,7 @@ class ClusterFuzz(TestCaseHandler):
         # We should not see any mention of a wasm-opt error that caused a
         # retry. On production ClusterFuzz this is not an error, but we do want
         # to know about such issues, as they may be real bugs in wasm-opt.
-        assert not 'retry' in out, out
+        assert 'retry' not in out, out
 
         # We should see the two files.
         assert os.path.exists(fuzz_file)
