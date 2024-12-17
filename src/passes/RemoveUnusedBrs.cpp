@@ -621,9 +621,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             block->finalize();
             return true;
           }
-        } else {
-          // this is already an if-else. if one side is a dead end, we can
-          // append to the other, if there is no returned value to concern us
+        } else if (iff->condition->type != Type::unreachable) {
+          // This is already an if-else. If one side is a dead end, we can
+          // append to the other, if there is no returned value to concern us.
+          // Note that we skip ifs with unreachable conditions, as they are dead
+          // code that DCE can remove, and modifying them can lead to errors
+          // (one of the arms may still be concrete, in which case appending to
+          // it would be invalid).
 
           // can't be, since in the middle of a block
           assert(!iff->type.isConcrete());
