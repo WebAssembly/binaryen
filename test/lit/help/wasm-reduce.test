@@ -51,6 +51,9 @@
 ;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
 ;; CHECK-NEXT:                                        --enable-all)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --save-all-working,-saw              Save all intermediate working files, as
+;; CHECK-NEXT:                                        $WORKING.0, .1, .2 etc
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------
