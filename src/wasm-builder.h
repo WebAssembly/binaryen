@@ -936,21 +936,29 @@ public:
     ret->finalize();
     return ret;
   }
-  StructGet*
-  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
+  StructGet* makeStructGet(Index index,
+                           Expression* ref,
+                           Type type,
+                           bool signed_ = false,
+                           MemoryOrder order = MemoryOrder::Unordered) {
     auto* ret = wasm.allocator.alloc<StructGet>();
     ret->index = index;
     ret->ref = ref;
     ret->type = type;
     ret->signed_ = signed_;
+    ret->order = order;
     ret->finalize();
     return ret;
   }
-  StructSet* makeStructSet(Index index, Expression* ref, Expression* value) {
+  StructSet* makeStructSet(Index index,
+                           Expression* ref,
+                           Expression* value,
+                           MemoryOrder order = MemoryOrder::Unordered) {
     auto* ret = wasm.allocator.alloc<StructSet>();
     ret->index = index;
     ret->ref = ref;
     ret->value = value;
+    ret->order = order;
     ret->finalize();
     return ret;
   }

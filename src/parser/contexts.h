@@ -735,13 +735,20 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeStructGet(
-    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, bool) {
+  Result<> makeStructGet(Index,
+                         const std::vector<Annotation>&,
+                         HeapTypeT,
+                         FieldIdxT,
+                         bool,
+                         MemoryOrder = MemoryOrder::Unordered) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<>
-  makeStructSet(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
+  Result<> makeStructSet(Index,
+                         const std::vector<Annotation>&,
+                         HeapTypeT,
+                         FieldIdxT,
+                         MemoryOrder = MemoryOrder::Unordered) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -2448,15 +2455,17 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                          const std::vector<Annotation>& annotations,
                          HeapType type,
                          Index field,
-                         bool signed_) {
-    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_));
+                         bool signed_,
+                         MemoryOrder order = MemoryOrder::Unordered) {
+    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_, order));
   }
 
   Result<> makeStructSet(Index pos,
                          const std::vector<Annotation>& annotations,
                          HeapType type,
-                         Index field) {
-    return withLoc(pos, irBuilder.makeStructSet(type, field));
+                         Index field,
+                         MemoryOrder order = MemoryOrder::Unordered) {
+    return withLoc(pos, irBuilder.makeStructSet(type, field, order));
   }
 
   Result<> makeArrayNew(Index pos,

@@ -2279,21 +2279,49 @@ struct PrintExpressionContents
   void visitStructGet(StructGet* curr) {
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
+    printMedium(o, "struct");
+    if (curr->order != MemoryOrder::Unordered) {
+      printMedium(o, ".atomic");
+    }
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, "struct.get_s ");
+        printMedium(o, ".get_s ");
       } else {
-        printMedium(o, "struct.get_u ");
+        printMedium(o, ".get_u ");
       }
     } else {
-      printMedium(o, "struct.get ");
+      printMedium(o, ".get ");
+    }
+    switch (curr->order) {
+      case MemoryOrder::Unordered:
+        break;
+      case MemoryOrder::SeqCst:
+        o << "seqcst ";
+        break;
+      case MemoryOrder::AcqRel:
+        o << "acqrel ";
+        break;
     }
     printHeapType(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
-    printMedium(o, "struct.set ");
+    if (curr->order == MemoryOrder::Unordered) {
+      printMedium(o, "struct.set ");
+    } else {
+      printMedium(o, "struct.atomic.set ");
+    }
+    switch (curr->order) {
+      case MemoryOrder::Unordered:
+        break;
+      case MemoryOrder::SeqCst:
+        o << "seqcst ";
+        break;
+      case MemoryOrder::AcqRel:
+        o << "acqrel ";
+        break;
+    }
     auto heapType = curr->ref->type.getHeapType();
     printHeapType(heapType);
     o << ' ';

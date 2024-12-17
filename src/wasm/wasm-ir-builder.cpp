@@ -1792,21 +1792,26 @@ Result<> IRBuilder::makeStructNewDefault(HeapType type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructGet(HeapType type, Index field, bool signed_) {
+Result<> IRBuilder::makeStructGet(HeapType type,
+                                  Index field,
+                                  bool signed_,
+                                  MemoryOrder order) {
   const auto& fields = type.getStruct().fields;
   StructGet curr;
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(builder.makeStructGet(field, curr.ref, fields[field].type, signed_));
+  push(
+    builder.makeStructGet(field, curr.ref, fields[field].type, signed_, order));
   return Ok{};
 }
 
-Result<> IRBuilder::makeStructSet(HeapType type, Index field) {
+Result<>
+IRBuilder::makeStructSet(HeapType type, Index field, MemoryOrder order) {
   StructSet curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructSet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(builder.makeStructSet(field, curr.ref, curr.value));
+  push(builder.makeStructSet(field, curr.ref, curr.value, order));
   return Ok{};
 }
 
