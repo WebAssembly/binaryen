@@ -1654,10 +1654,14 @@ class ClusterFuzz(TestCaseHandler):
                 os.unlink(f)
 
         # Call run.py(), similarly to how ClusterFuzz does.
-        run([sys.executable,
-             os.path.join(self.clusterfuzz_dir, 'run.py'),
-             '--output_dir=' + os.getcwd(),
-             '--no_of_files=1'])
+        out = run([sys.executable,
+                   os.path.join(self.clusterfuzz_dir, 'run.py'),
+                   '--output_dir=' + os.getcwd(),
+                   '--no_of_files=1'])
+
+        # We should not see any mention of a wasm-opt error that caused a
+        # retry
+        assert not 'retry' in out, out
 
         # We should see the two files.
         assert os.path.exists(fuzz_file)
