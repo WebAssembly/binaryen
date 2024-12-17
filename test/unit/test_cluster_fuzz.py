@@ -78,9 +78,6 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # We should have logged the creation of N testcases.
         self.assertEqual(proc.stdout.count('Created testcase:'), N)
 
-        # We should never hit a wasm-opt error that causes us to retry.
-        self.assertNotIn(proc.stdout, 'retry')
-
         # We should have actually created them.
         for i in range(0, N + 2):
             fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
