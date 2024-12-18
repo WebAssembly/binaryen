@@ -89,6 +89,7 @@ if len(sys.argv) >= 3:
     sys.argv.pop()
 
 from test import shared # noqa
+from test import support # noqa
 
 # Pick where to get the builds
 if build_dir:
@@ -128,7 +129,7 @@ with tarfile.open(output_file, "w:gz") as tar:
         libbinaryen = os.path.join(binaryen_lib, f'libbinaryen{suffix}')
         if os.path.exists(libbinaryen):
             print(f'  .. libbinaryen: {libbinaryen}')
-            # XXX tar.add(libbinaryen, arcname=f'lib/libbinaryen{suffix}')
+            tar.add(libbinaryen, arcname=f'lib/libbinaryen{suffix}')
 
             # The emsdk build also includes some more necessary files.
             for name in [f'libc++{suffix}', f'libc++{suffix}.2', f'libc++{suffix}.2.0']:
@@ -143,19 +144,24 @@ with tarfile.open(output_file, "w:gz") as tar:
     temp_wasm = 'temp.wasm'
     index = 0
     for test in shared.get_all_tests():
-        # TODO: split wast!
-        # If the file is not valid for our features, skip it.
-        cmd = shared.WASM_OPT + ['-q', test, '-o', temp_wasm] + features
-        #print(cmd)
-        if subprocess.run(cmd, stderr=subprocess.PIPE).returncode:
-            print('x', end='', flush=True)
-            continue
+        for wast, asserts in support.split_wast(test):
+            if not wast:
+                continue
+            support.write_wast(temp_wasm, wast)
+            # If the file is not valid for our features, skip it. In the same
+            # operation, also convert to binary if this was text
+            cmd = shared.WASM_OPT + ['-q', temp_wasm, '-o', temp_wasm] + features
+            if subprocess.run(cmd, stderr=subprocess.PIPE).returncode:
+                print('x', end='', flush=True)
+                continue
 
-        # Looks good.
-        print('.', end='', flush=True)
-        tar.add(temp_wasm, arcname=f'initial/{index}.wasm')
-        index += 1
-    print()
+            # Looks good.
+            print('.', end='', flush=True)
+            tar.add(temp_wasm, arcname=f'initial/{index}.wasm')
+            index += 1
+    print(f' (num: {index}')
+    #  TODO write num file
+
 
 print('Done.')
 print('To run the tests on this bundle, do:')
