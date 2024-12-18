@@ -378,6 +378,25 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
+        # Execute the files in V8. Almost all should execute properly (some
+        # small number may trap during startup, say on a segment out of bounds).
+        valid_executions = 0
+        for i in range(1, N + 1):
+            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+
+            cmd = [shared.V8, '--wasm-staging', fuzz_file]
+            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if proc.returncode == 0:
+                valid_executions += 1
+
+        print('Valid executions are distributed as ~ mean 0.9')
+        print(f'mean valid executions: {valid_executions/N}')
+        # Assert on having at least half execute properly. Given the true mean
+        # is 0.9, for half of 100 to fail is incredibly unlikely.
+        self.assertGreater(valid_executions, N/2)
+
+        print()
+
     # "zzz" in test name so that this runs last. If it runs first, it can be
     # confusing as it appears next to the logging of which bundle we use (see
     # setUpClass).
