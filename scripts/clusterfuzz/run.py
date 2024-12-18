@@ -166,7 +166,7 @@ def get_wasm_contents(i, output_dir):
     wasm_contents = ','.join([str(c) for c in wasm_contents])
     js = f'new Uint8Array([{wasm_contents}])'
     if initial_content:
-        js = f'{js} /* using initial content {initial_content} */')
+        js = f'{js} /* using initial content {initial_content} */'
     return js
 
 
