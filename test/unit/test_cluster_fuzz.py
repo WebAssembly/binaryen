@@ -355,6 +355,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         self.assertEqual(min(seen_JSPIs), 0)
         self.assertEqual(max(seen_JSPIs), 1)
 
+        print()
+
         # Initial content appear 50% of the time for each wasm file. Each
         # testcase has 1.333 wasm files on average.
         #
