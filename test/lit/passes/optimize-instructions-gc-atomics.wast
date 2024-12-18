@@ -32,7 +32,7 @@
   )
 
   ;; CHECK:      (func $get-seqcst-unshared (type $2) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get seqcst $unshared 0
+  ;; CHECK-NEXT:  (struct.atomic.get $unshared 0
   ;; CHECK-NEXT:   (struct.new_default $unshared)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -43,7 +43,7 @@
   )
 
   ;; CHECK:      (func $get-seqcst-shared (type $2) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get seqcst $shared 0
+  ;; CHECK-NEXT:  (struct.atomic.get $shared 0
   ;; CHECK-NEXT:   (struct.new_default $shared)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -103,7 +103,7 @@
   )
 
   ;; CHECK:      (func $set-seqcst-unshared (type $3)
-  ;; CHECK-NEXT:  (struct.atomic.set seqcst $unshared 0
+  ;; CHECK-NEXT:  (struct.atomic.set $unshared 0
   ;; CHECK-NEXT:   (struct.new_default $unshared)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -116,7 +116,7 @@
   )
 
   ;; CHECK:      (func $set-seqcst-shared (type $3)
-  ;; CHECK-NEXT:  (struct.atomic.set seqcst $shared 0
+  ;; CHECK-NEXT:  (struct.atomic.set $shared 0
   ;; CHECK-NEXT:   (struct.new_default $shared)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )

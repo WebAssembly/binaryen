@@ -2276,6 +2276,19 @@ struct PrintExpressionContents
       o << index;
     }
   }
+  void printMemoryOrder(MemoryOrder order) {
+    switch (order) {
+      // Unordered should have a different base instruction, so there is nothing
+      // to print. We could be explicit and print seqcst, but we choose not to
+      // for more concise output.
+      case MemoryOrder::Unordered:
+      case MemoryOrder::SeqCst:
+        break;
+      case MemoryOrder::AcqRel:
+        o << "acqrel ";
+        break;
+    }
+  }
   void visitStructGet(StructGet* curr) {
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
@@ -2292,16 +2305,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, ".get ");
     }
-    switch (curr->order) {
-      case MemoryOrder::Unordered:
-        break;
-      case MemoryOrder::SeqCst:
-        o << "seqcst ";
-        break;
-      case MemoryOrder::AcqRel:
-        o << "acqrel ";
-        break;
-    }
+    printMemoryOrder(curr->order);
     printHeapType(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
@@ -2312,16 +2316,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.atomic.set ");
     }
-    switch (curr->order) {
-      case MemoryOrder::Unordered:
-        break;
-      case MemoryOrder::SeqCst:
-        o << "seqcst ";
-        break;
-      case MemoryOrder::AcqRel:
-        o << "acqrel ";
-        break;
-    }
+    printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapType(heapType);
     o << ' ';

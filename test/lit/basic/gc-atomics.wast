@@ -10,7 +10,7 @@
   (type $packed (struct (field (mut i8))))
 
   ;; CHECK:      (func $get (type $3) (param $0 (ref null $struct)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get seqcst $struct 0
+  ;; CHECK-NEXT:  (struct.atomic.get $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -21,7 +21,7 @@
   )
 
   ;; CHECK:      (func $get-seqcst (type $3) (param $0 (ref null $struct)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get seqcst $struct 0
+  ;; CHECK-NEXT:  (struct.atomic.get $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -43,7 +43,7 @@
   )
 
   ;; CHECK:      (func $get-s (type $2) (param $0 (ref null $packed)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get_s seqcst $packed 0
+  ;; CHECK-NEXT:  (struct.atomic.get_s $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -54,7 +54,7 @@
   )
 
   ;; CHECK:      (func $get-s-seqcst (type $2) (param $0 (ref null $packed)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get_s seqcst $packed 0
+  ;; CHECK-NEXT:  (struct.atomic.get_s $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -76,7 +76,7 @@
   )
 
   ;; CHECK:      (func $get-u (type $2) (param $0 (ref null $packed)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get_u seqcst $packed 0
+  ;; CHECK-NEXT:  (struct.atomic.get_u $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -87,7 +87,7 @@
   )
 
   ;; CHECK:      (func $get-u-seqcst (type $2) (param $0 (ref null $packed)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.get_u seqcst $packed 0
+  ;; CHECK-NEXT:  (struct.atomic.get_u $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -109,7 +109,7 @@
   )
 
   ;; CHECK:      (func $set (type $4) (param $0 (ref null $struct))
-  ;; CHECK-NEXT:  (struct.atomic.set seqcst $struct 0
+  ;; CHECK-NEXT:  (struct.atomic.set $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -122,7 +122,7 @@
   )
 
   ;; CHECK:      (func $set-seqcst (type $4) (param $0 (ref null $struct))
-  ;; CHECK-NEXT:  (struct.atomic.set seqcst $struct 0
+  ;; CHECK-NEXT:  (struct.atomic.set $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
