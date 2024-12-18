@@ -135,7 +135,10 @@ def get_wasm_contents(i, output_dir):
 
         # Sometimes use a file from the initial content testcases.
         if system_random.random() < 0.5:
-            cmd += ['--initial-fuzz=' + get_random_initial_content()]
+            initial_content = get_random_initial_content()
+            cmd += ['--initial-fuzz=' + initial_content]
+        else:
+            initial_content = None
 
         # Generate wasm from the random data.
         try:
@@ -161,7 +164,10 @@ def get_wasm_contents(i, output_dir):
 
     # Convert to a string, and wrap into a typed array.
     wasm_contents = ','.join([str(c) for c in wasm_contents])
-    return f'new Uint8Array([{wasm_contents}])'
+    js = f'new Uint8Array([{wasm_contents}])'
+    if initial_content:
+        js = f'{js} /* using initial content {initial_content} */')
+    return js
 
 
 # Returns the contents of a .js fuzz file, given the index of the testcase and
