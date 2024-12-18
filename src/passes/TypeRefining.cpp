@@ -52,6 +52,7 @@ struct FieldInfoScanner
   void noteExpression(Expression* expr,
                       HeapType type,
                       Index index,
+                      MemoryOrder order,
                       FieldInfo& info) {
     info.note(expr->type);
   }
@@ -67,12 +68,14 @@ struct FieldInfoScanner
     info.note(fieldType);
   }
 
-  void noteCopy(HeapType type, Index index, FieldInfo& info) {
+  void
+  noteCopy(HeapType type, Index index, MemoryOrder order, FieldInfo& info) {
     // Copies do not add any type requirements at all: the type will always be
     // read and written to a place with the same type.
   }
 
-  void noteRead(HeapType type, Index index, FieldInfo& info) {
+  void
+  noteRead(HeapType type, Index index, MemoryOrder order, FieldInfo& info) {
     // Nothing to do for a read, we just care about written values.
   }
 

@@ -2830,3 +2830,242 @@
     )
   )
 )
+
+;; Atomic accesses require special handling
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $acquire-get (shared (struct (field (mut i32)))))
+    (type $acquire-get (shared (struct (mut i32))))
+    ;; CHECK:       (type $release-set (shared (struct (field (mut i32)))))
+    (type $release-set (shared (struct (mut i32))))
+    ;; CHECK:       (type $acquire-copy (shared (struct (field (mut i32)))))
+    (type $acquire-copy (shared (struct (mut i32))))
+    ;; CHECK:       (type $release-copy (shared (struct (field (mut i32)))))
+    (type $release-copy (shared (struct (mut i32))))
+    ;; CHECK:       (type $seqcst (shared (struct (field (mut i32)))))
+    (type $seqcst (shared (struct (mut i32))))
+    ;; CHECK:       (type $unwritten-acqrel (shared (struct (field (mut i32)))))
+    (type $unwritten-acqrel (shared (struct (mut i32))))
+    ;; CHECK:       (type $unwritten-seqcst (shared (struct (field (mut i32)))))
+    (type $unwritten-seqcst (shared (struct (mut i32))))
+  )
+
+  ;; CHECK:      (type $7 (func))
+
+  ;; CHECK:      (type $8 (func (param (ref $acquire-get)) (result i32)))
+
+  ;; CHECK:      (type $9 (func (param (ref $release-set)) (result i32)))
+
+  ;; CHECK:      (type $10 (func (param (ref $acquire-copy))))
+
+  ;; CHECK:      (type $11 (func (param (ref $release-copy))))
+
+  ;; CHECK:      (type $12 (func (param (ref $seqcst)) (result i32)))
+
+  ;; CHECK:      (type $13 (func (param (ref $unwritten-acqrel)) (result i32)))
+
+  ;; CHECK:      (type $14 (func (param (ref $unwritten-seqcst)) (result i32)))
+
+  ;; CHECK:      (func $init (type $7)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $acquire-get)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $release-set)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $acquire-copy)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $release-copy)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $seqcst)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $init
+    (drop
+      (struct.new_default $acquire-get)
+    )
+    (drop
+      (struct.new_default $release-set)
+    )
+    (drop
+      (struct.new_default $acquire-copy)
+    )
+    (drop
+      (struct.new_default $release-copy)
+    )
+    (drop
+      (struct.new_default $seqcst)
+    )
+  )
+
+  ;; CHECK:      (func $acquire-get (type $8) (param $0 (ref $acquire-get)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.get acqrel $acquire-get 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $acquire-get (param (ref $acquire-get)) (result i32)
+    ;; This inhibits optimization because we wouldn't want to replace it with a
+    ;; stronger acquire fence.
+    (struct.atomic.get acqrel $acquire-get 0
+      (local.get 0)
+    )
+  )
+
+  ;; CHECK:      (func $release-set (type $9) (param $0 (ref $release-set)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.set acqrel $release-set 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $release-set (param (ref $release-set)) (result i32)
+    (struct.atomic.set acqrel $release-set 0
+      (local.get 0)
+      (i32.const 0)
+    )
+    ;; We can optimize this because release writes do not inhibit optimization.
+    (struct.get $release-set 0
+      (local.get 0)
+    )
+  )
+
+  ;; CHECK:      (func $acquire-copy (type $10) (param $0 (ref $acquire-copy))
+  ;; CHECK-NEXT:  (struct.set $acquire-copy 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $acquire-copy 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $acquire-copy (param (ref $acquire-copy))
+    (struct.set $acquire-copy 0
+      (local.get 0)
+      ;; This inhibits optimization just like the non-copy acquire get.
+      (struct.atomic.get acqrel $acquire-copy 0
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $release-copy (type $11) (param $0 (ref $release-copy))
+  ;; CHECK-NEXT:  (struct.atomic.set acqrel $release-copy 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $release-copy (param (ref $release-copy))
+    ;; This does not inhibit optimization, just like the non-copy release set.
+    (struct.atomic.set acqrel $release-copy 0
+      (local.get 0)
+      (struct.get $release-copy 0
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $seqcst (type $12) (param $0 (ref $seqcst)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.set $seqcst 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.atomic.set $seqcst 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (atomic.fence)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (atomic.fence)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $seqcst (param (ref $seqcst)) (result i32)
+    ;; Optimization is always allowed for seqcst operations, but the removed
+    ;; gets have to have fences in their places.
+    (struct.atomic.set $seqcst 0
+      (local.get 0)
+      (i32.const 0)
+    )
+    (struct.atomic.set $seqcst 0
+      (local.get 0)
+      (struct.atomic.get $seqcst 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get $seqcst 0
+        (local.get 0)
+      )
+    )
+    ;; Non-atomic accesses do not need fences.
+    (struct.get $seqcst 0
+      (local.get 0)
+    )
+  )
+
+  ;; CHECK:      (func $unwritten-acqrel (type $13) (param $0 (ref $unwritten-acqrel)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.get acqrel $unwritten-acqrel 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unwritten-acqrel (param (ref $unwritten-acqrel)) (result i32)
+    ;; In principle we could optimize this since we know the struct does not
+    ;; exist, but we currently inhibit optimization instead.
+    (struct.atomic.get acqrel $unwritten-acqrel 0
+      (local.get 0)
+    )
+  )
+
+  ;; CHECK:      (func $unwritten-seqcst (type $14) (param $0 (ref $unwritten-seqcst)) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $unwritten-seqcst (param (ref $unwritten-seqcst)) (result i32)
+    ;; This is optimizable and does not require a fence because trapping
+    ;; accesses do not synchronize.
+    (struct.atomic.get $unwritten-seqcst 0
+      (local.get 0)
+    )
+  )
+)

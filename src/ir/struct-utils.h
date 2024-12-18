@@ -112,7 +112,8 @@ struct FunctionStructValuesMap
 //
 // * Note an expression written into a field.
 //
-//   void noteExpression(Expression* expr, HeapType type, Index index, T& info);
+//   void noteExpression(Expression* expr, HeapType type, Index index,
+//                       MemoryOrder order, T& info);
 //
 // * Note a default value written during creation.
 //
@@ -123,11 +124,11 @@ struct FunctionStructValuesMap
 //   from, and written to) are identical; allowing subtyping is possible, but
 //   would add complexity amid diminishing returns.
 //
-//   void noteCopy(HeapType type, Index index, T& info);
+//   void noteCopy(HeapType type, Index index, MemoryOrder order, T& info);
 //
 // * Note a read
 //
-//   void noteRead(HeapType type, Index index, T& info);
+//   void noteRead(HeapType type, Index index, MemoryOrder order, T& info);
 //
 // We track information from struct.new and struct.set/struct.get separately,
 // because in struct.new we know more about the type - we know the actual exact
@@ -160,7 +161,8 @@ struct StructScanner
         static_cast<SubType*>(this)->noteDefault(
           fields[i].type, heapType, i, infos[i]);
       } else {
-        noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
+        noteExpressionOrCopy(
+          curr->operands[i], heapType, i, MemoryOrder::Unordered, infos[i]);
       }
     }
   }
@@ -175,6 +177,7 @@ struct StructScanner
     noteExpressionOrCopy(curr->value,
                          type.getHeapType(),
                          curr->index,
+                         curr->order,
                          functionSetGetInfos[this->getFunction()]
                                             [type.getHeapType()][curr->index]);
   }
@@ -190,11 +193,12 @@ struct StructScanner
     static_cast<SubType*>(this)->noteRead(
       heapType,
       index,
+      curr->order,
       functionSetGetInfos[this->getFunction()][heapType][index]);
   }
 
-  void
-  noteExpressionOrCopy(Expression* expr, HeapType type, Index index, T& info) {
+  void noteExpressionOrCopy(
+    Expression* expr, HeapType type, Index index, MemoryOrder order, T& info) {
     // Look at the value falling through, if it has the exact same type
     // (otherwise, we'd need to consider both the type actually written and the
     // type of the fallthrough, somehow).
@@ -209,11 +213,11 @@ struct StructScanner
     if (auto* get = expr->dynCast<StructGet>()) {
       if (get->index == index && get->ref->type != Type::unreachable &&
           get->ref->type.getHeapType() == type) {
-        static_cast<SubType*>(this)->noteCopy(type, index, info);
+        static_cast<SubType*>(this)->noteCopy(type, index, order, info);
         return;
       }
     }
-    static_cast<SubType*>(this)->noteExpression(expr, type, index, info);
+    static_cast<SubType*>(this)->noteExpression(expr, type, index, order, info);
   }
 
   Properties::FallthroughBehavior getFallthroughBehavior() {
