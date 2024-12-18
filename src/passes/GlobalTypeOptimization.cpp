@@ -78,7 +78,6 @@ struct FieldInfoScanner
   void noteExpression(Expression* expr,
                       HeapType type,
                       Index index,
-                      MemoryOrder order,
                       FieldInfo& info) {
     info.noteWrite();
   }
@@ -88,13 +87,11 @@ struct FieldInfoScanner
     info.noteWrite();
   }
 
-  void
-  noteCopy(HeapType type, Index index, MemoryOrder order, FieldInfo& info) {
+  void noteCopy(HeapType type, Index index, FieldInfo& info) {
     info.noteWrite();
   }
 
-  void
-  noteRead(HeapType type, Index index, MemoryOrder order, FieldInfo& info) {
+  void noteRead(HeapType type, Index index, FieldInfo& info) {
     info.noteRead();
   }
 };

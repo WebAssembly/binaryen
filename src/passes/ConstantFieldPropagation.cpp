@@ -153,6 +153,14 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
+    if (curr->order == MemoryOrder::AcqRel) {
+      // Removing an acquire get and preserving its synchronization properties
+      // would require inserting an acquire fence, but the fence would have
+      // stronger synchronization properties so might be more expensive.
+      // Instead, just skip the optimization.
+      return;
+    }
+
     // If the value is not a constant, then it is unknown and we must give up
     // on simply applying a constant. However, we can try to use a ref.test, if
     // that is allowed.
@@ -415,7 +423,6 @@ struct PCVScanner
   void noteExpression(Expression* expr,
                       HeapType type,
                       Index index,
-                      MemoryOrder order,
                       PossibleConstantValues& info) {
     info.note(expr, *getModule());
   }
@@ -427,27 +434,14 @@ struct PCVScanner
     info.note(Literal::makeZero(fieldType));
   }
 
-  void noteCopy(HeapType type,
-                Index index,
-                MemoryOrder order,
-                PossibleConstantValues& info) {
+  void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
     // Note copies, as they must be considered later. See the comment on the
     // propagation of values below.
     functionCopyInfos[getFunction()][type][index] = true;
   }
 
-  void noteRead(HeapType type,
-                Index index,
-                MemoryOrder order,
-                PossibleConstantValues& info) {
-    // Reads do not interest us, except that acquire reads should prohibit
-    // optimization. If we optimized fields with acquire reads, we would have to
-    // replace the gets with acquire fences, which are potentially more
-    // expensive than the original acquire reads because acquire fences are
-    // stronger than acquire reads.
-    if (order == MemoryOrder::AcqRel) {
-      info.noteUnknown();
-    }
+  void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
+    // Reads do not interest us.
   }
 
   BoolFunctionStructValuesMap& functionCopyInfos;
