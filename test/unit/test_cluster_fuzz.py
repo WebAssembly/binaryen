@@ -288,6 +288,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         #
         # /* using initial content 42.wasm */
         #
+        # Note that we may see more than one in a file, as we may have more than
+        # one wasm in each testcase: each wasm has a chance.
         initial_content_regex = re.compile(r'[/][*] using initial content ([^ ]+) [*][/]')
 
         for i in range(1, N + 1):
@@ -352,6 +354,25 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'mean JSPIs: {statistics.mean(seen_JSPIs)}')
         self.assertEqual(min(seen_JSPIs), 0)
         self.assertEqual(max(seen_JSPIs), 1)
+
+        # Initial content appear 50% of the time for each wasm file. Each
+        # testcase has 1.333 wasm files on average.
+        #
+        # Flatten the data to help some of the below, from
+        #  [['a.wasm', 'b.wasm'], ['c.wasm']]
+        # into
+        #  ['a.wasm', 'b.wasm', 'c.wasm']
+        flat_initial_contents = [item for items in seen_initial_contents for item in items]
+        print('Initial contents are distributed as ~ mean 0.68')
+        print(f'mean initial contents: {len(flat_initial_contents)/N}')
+        # We saw more than one unique initial contents.
+        self.assertGreater(len(set(flat_initial_contents)), 1)
+        # Not all testcases have initial contents.
+        num_initial_contents = [len(items) for items in seen_initial_contents]
+        self.assertEqual(min(num_initial_contents), 0)
+        # Some do (this is redundant given that the set of unique initial
+        # contents was asserted on before, so this just confirms/checks that).
+        self.assertGreaterEqual(max(num_initial_contents), 1)
 
         print()
 
