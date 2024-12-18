@@ -282,6 +282,13 @@ class ClusterFuzz(utils.BinaryenTestCase):
         seen_calls = []
         seen_second_builds = []
         seen_JSPIs = []
+        seen_initial_contents = []
+
+        # Initial contents are noted in comments like this:
+        #
+        # /* using initial content 42.wasm */
+        #
+        initial_content_regex = re.compile(r'[/][*] using initial content ([^ ]+) [*][/]')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -301,6 +308,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 seen_JSPIs.append(0)
                 assert '/* async */' in js
                 assert '/* await */' in js
+
+            seen_initial_contents.append(re.findall(initial_content_regex, js))
 
         # There is always one build and one call (those are in the default
         # fuzz_shell.js), and we add a couple of operations, each with equal
