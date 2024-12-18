@@ -52,6 +52,8 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $get-acqrel-unshared (result i32)
+    ;; We can optimize this because acquire-release on unshared data does not
+    ;; synchronize with anything.
     (struct.atomic.get acqrel $unshared 0
       (struct.new_default $unshared)
     )
