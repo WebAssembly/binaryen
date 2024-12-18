@@ -140,10 +140,11 @@ with tarfile.open(output_file, "w:gz") as tar:
 
     # Add tests we will use as initial content under initial/. We put all the
     # tests from the test suite there.
-    print('  .. initial content: ', end='')
+    print('  .. initial content: ')
     temp_wasm = 'temp.wasm'
     index = 0
-    for test in shared.get_all_tests():
+    all_tests = shared.get_all_tests()
+    for i, test in enumerate(all_tests):
         for wast, asserts in support.split_wast(test):
             if not wast:
                 continue
@@ -152,14 +153,13 @@ with tarfile.open(output_file, "w:gz") as tar:
             # operation, also convert to binary if this was text
             cmd = shared.WASM_OPT + ['-q', temp_wasm, '-o', temp_wasm] + features
             if subprocess.run(cmd, stderr=subprocess.PIPE).returncode:
-                print('x', end='', flush=True)
                 continue
 
             # Looks good.
-            print('.', end='', flush=True)
             tar.add(temp_wasm, arcname=f'initial/{index}.wasm')
             index += 1
-    print(f' (num: {index}')
+        print(f'\r        {100*i/len(all_tests):.2f}%', end='', flush=True)
+    print(f'        (num: {index})')
     #  TODO write num file
 
 
