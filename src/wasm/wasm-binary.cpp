@@ -1737,6 +1737,20 @@ void WasmBinaryWriter::writeField(const Field& field) {
   o << U32LEB(field.mutable_);
 }
 
+void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order) {
+  switch (order) {
+    case MemoryOrder::Unordered:
+      break;
+    case MemoryOrder::SeqCst:
+      o << uint8_t(BinaryConsts::OrderSeqCst);
+      return;
+    case MemoryOrder::AcqRel:
+      o << uint8_t(BinaryConsts::OrderAcqRel);
+      return;
+  }
+  WASM_UNREACHABLE("unexpected memory order");
+}
+
 // reader
 
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
@@ -3406,6 +3420,21 @@ Result<> WasmBinaryReader::readInst() {
             return Err{"expected 0x00 byte immediate on atomic.fence"};
           }
           return builder.makeAtomicFence();
+        case BinaryConsts::StructAtomicGet:
+        case BinaryConsts::StructAtomicGetS:
+        case BinaryConsts::StructAtomicGetU: {
+          auto order = getMemoryOrder();
+          auto type = getIndexedHeapType();
+          auto field = getU32LEB();
+          bool signed_ = op == BinaryConsts::StructAtomicGetS;
+          return builder.makeStructGet(type, field, signed_, order);
+        }
+        case BinaryConsts::StructAtomicSet: {
+          auto order = getMemoryOrder();
+          auto type = getIndexedHeapType();
+          auto field = getU32LEB();
+          return builder.makeStructSet(type, field, order);
+        }
       }
       return Err{"unknown atomic operation"};
     }
@@ -4950,6 +4979,17 @@ std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
   Address alignment, offset;
   auto memIdx = readMemoryAccess(alignment, offset);
   return {getMemoryName(memIdx), alignment, offset};
+}
+
+MemoryOrder WasmBinaryReader::getMemoryOrder() {
+  auto code = getInt8();
+  switch (code) {
+    case BinaryConsts::OrderSeqCst:
+      return MemoryOrder::SeqCst;
+    case BinaryConsts::OrderAcqRel:
+      return MemoryOrder::AcqRel;
+  }
+  throwError("Unrecognized memory order code " + std::to_string(code));
 }
 
 } // namespace wasm

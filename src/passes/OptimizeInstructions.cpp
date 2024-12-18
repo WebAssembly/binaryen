@@ -1831,6 +1831,12 @@ struct OptimizeInstructions
   void visitStructGet(StructGet* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
+    // Relax acquire loads of unshared fields to unordered because they cannot
+    // synchronize with other threads.
+    if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
+        !curr->ref->type.getHeapType().isShared()) {
+      curr->order = MemoryOrder::Unordered;
+    }
   }
 
   void visitStructSet(StructSet* curr) {
@@ -1846,6 +1852,13 @@ struct OptimizeInstructions
         const auto& fields = heapType.getStruct().fields;
         optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
       }
+    }
+
+    // Relax release stores of unshared fields to unordered because they cannot
+    // synchronize with other threads.
+    if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
+        !curr->ref->type.getHeapType().isShared()) {
+      curr->order = MemoryOrder::Unordered;
     }
   }
 

@@ -1125,6 +1125,15 @@ enum ASTNodes {
   I31GetU = 0x1e,
   RefI31Shared = 0x1f,
 
+  // Shared GC Opcodes
+
+  OrderSeqCst = 0x0,
+  OrderAcqRel = 0x1,
+  StructAtomicGet = 0x5c,
+  StructAtomicGetS = 0x5d,
+  StructAtomicGetU = 0x5e,
+  StructAtomicSet = 0x5f,
+
   // stringref opcodes
 
   StringConst = 0x82,
@@ -1351,6 +1360,8 @@ public:
   void writeIndexedHeapType(HeapType type);
 
   void writeField(const Field& field);
+
+  void writeMemoryOrder(MemoryOrder order);
 
 private:
   Module* wasm;
@@ -1587,6 +1598,7 @@ public:
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
+  MemoryOrder getMemoryOrder();
 
   [[noreturn]] void throwError(std::string text) {
     throw ParseException(text, 0, pos);

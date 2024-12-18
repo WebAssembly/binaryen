@@ -65,6 +65,12 @@ struct Address {
   }
 };
 
+enum class MemoryOrder {
+  Unordered,
+  SeqCst,
+  AcqRel,
+};
+
 enum class IRProfile { Normal, Poppy };
 
 // Operators
@@ -1652,6 +1658,7 @@ public:
   Expression* ref;
   // Packed fields have a sign.
   bool signed_ = false;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };
@@ -1664,6 +1671,7 @@ public:
   Index index;
   Expression* ref;
   Expression* value;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };

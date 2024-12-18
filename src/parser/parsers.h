@@ -48,6 +48,7 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type addressType);
+template<typename Ctx> Result<MemoryOrder> memorder(Ctx&);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type addressType);
@@ -246,7 +247,14 @@ Result<> makeStructGet(Ctx&,
                        const std::vector<Annotation>&,
                        bool signed_ = false);
 template<typename Ctx>
+Result<> makeAtomicStructGet(Ctx&,
+                             Index,
+                             const std::vector<Annotation>&,
+                             bool signed_ = false);
+template<typename Ctx>
 Result<> makeStructSet(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeAtomicStructSet(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<>
 makeArrayNew(Ctx&, Index, const std::vector<Annotation>&, bool default_);
@@ -799,6 +807,17 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
     shared = true;
   }
   return ctx.makeMemType(addressType, *limits, shared);
+}
+
+// memorder ::= '' | 'seqcst' | 'acqrel'
+template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
+  if (ctx.in.takeKeyword("seqcst"sv)) {
+    return MemoryOrder::SeqCst;
+  }
+  if (ctx.in.takeKeyword("acqrel"sv)) {
+    return MemoryOrder::AcqRel;
+  }
+  return MemoryOrder::SeqCst;
 }
 
 // tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
@@ -2225,6 +2244,20 @@ Result<> makeStructGet(Ctx& ctx,
 }
 
 template<typename Ctx>
+Result<> makeAtomicStructGet(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations,
+                             bool signed_) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructGet(pos, annotations, *type, *field, signed_, *order);
+}
+
+template<typename Ctx>
 Result<>
 makeStructSet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto type = typeidx(ctx);
@@ -2232,6 +2265,19 @@ makeStructSet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto field = fieldidx(ctx, *type);
   CHECK_ERR(field);
   return ctx.makeStructSet(pos, annotations, *type, *field);
+}
+
+template<typename Ctx>
+Result<> makeAtomicStructSet(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructSet(pos, annotations, *type, *field, *order);
 }
 
 template<typename Ctx>

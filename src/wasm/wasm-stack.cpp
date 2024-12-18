@@ -2327,15 +2327,20 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   }
   const auto& heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getStruct().fields[curr->index];
+  bool atomic = curr->order != MemoryOrder::Unordered;
   int8_t op;
   if (field.type != Type::i32 || field.packedType == Field::not_packed) {
-    op = BinaryConsts::StructGet;
+    op = atomic ? BinaryConsts::StructAtomicGet : BinaryConsts::StructGet;
   } else if (curr->signed_) {
-    op = BinaryConsts::StructGetS;
+    op = atomic ? BinaryConsts::StructAtomicGetS : BinaryConsts::StructGetS;
   } else {
-    op = BinaryConsts::StructGetU;
+    op = atomic ? BinaryConsts::StructAtomicGetU : BinaryConsts::StructGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  auto prefix = atomic ? BinaryConsts::AtomicPrefix : BinaryConsts::GCPrefix;
+  o << int8_t(prefix) << U32LEB(op);
+  if (atomic) {
+    parent.writeMemoryOrder(curr->order);
+  }
   parent.writeIndexedHeapType(heapType);
   o << U32LEB(curr->index);
 }
@@ -2345,7 +2350,13 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
     emitUnreachable();
     return;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  if (curr->order == MemoryOrder::Unordered) {
+    o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  } else {
+    o << int8_t(BinaryConsts::AtomicPrefix)
+      << U32LEB(BinaryConsts::StructAtomicSet);
+    parent.writeMemoryOrder(curr->order);
+  }
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }

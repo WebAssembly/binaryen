@@ -5013,6 +5013,45 @@ switch (buf[0]) {
           }
           case 'u': {
             switch (buf[7]) {
+              case 'a': {
+                switch (buf[14]) {
+                  case 'g': {
+                    switch (buf[17]) {
+                      case '\0':
+                        if (op == "struct.atomic.get"sv) {
+                          CHECK_ERR(makeAtomicStructGet(ctx, pos, annotations));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '_': {
+                        switch (buf[18]) {
+                          case 's':
+                            if (op == "struct.atomic.get_s"sv) {
+                              CHECK_ERR(makeAtomicStructGet(ctx, pos, annotations, true));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          case 'u':
+                            if (op == "struct.atomic.get_u"sv) {
+                              CHECK_ERR(makeAtomicStructGet(ctx, pos, annotations, false));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 's':
+                    if (op == "struct.atomic.set"sv) {
+                      CHECK_ERR(makeAtomicStructSet(ctx, pos, annotations));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'g': {
                 switch (buf[10]) {
                   case '\0':

@@ -2989,6 +2989,11 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc [--enable-gc]");
+  shouldBeTrue(curr->order == MemoryOrder::Unordered ||
+                 getModule()->features.hasSharedEverything(),
+               curr,
+               "struct.atomic.get requires shared-everything "
+               "[--enable-shared-everything]");
   if (curr->type == Type::unreachable || curr->ref->type.isNull()) {
     return;
   }
@@ -3016,6 +3021,11 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.set requires gc [--enable-gc]");
+  shouldBeTrue(curr->order == MemoryOrder::Unordered ||
+                 getModule()->features.hasSharedEverything(),
+               curr,
+               "struct.atomic.set requires shared-everything "
+               "[--enable-shared-everything]");
   if (curr->ref->type == Type::unreachable) {
     return;
   }
