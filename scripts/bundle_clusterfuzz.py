@@ -160,7 +160,11 @@ with tarfile.open(output_file, "w:gz") as tar:
             index += 1
         print(f'\r        {100*i/len(all_tests):.2f}%', end='', flush=True)
     print(f'        (num: {index})')
-    #  TODO write num file
+
+    # Write initial/num.txt which contains the number of testcases in that
+    # directory (saves run.py from needing to listdir each time).
+    with open('num.txt', 'w') as f:
+        f.write(f'{index}')
 
 
 print('Done.')
