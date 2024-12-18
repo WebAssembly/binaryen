@@ -1361,7 +1361,7 @@ public:
 
   void writeField(const Field& field);
 
-  void writeMemorder(MemoryOrder order);
+  void writeMemoryOrder(MemoryOrder order);
 
 private:
   Module* wasm;
@@ -1598,7 +1598,7 @@ public:
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
-  MemoryOrder getMemorder();
+  MemoryOrder getMemoryOrder();
 
   [[noreturn]] void throwError(std::string text) {
     throw ParseException(text, 0, pos);

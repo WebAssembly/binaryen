@@ -2339,7 +2339,7 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   auto prefix = atomic ? BinaryConsts::AtomicPrefix : BinaryConsts::GCPrefix;
   o << int8_t(prefix) << U32LEB(op);
   if (atomic) {
-    parent.writeMemorder(curr->order);
+    parent.writeMemoryOrder(curr->order);
   }
   parent.writeIndexedHeapType(heapType);
   o << U32LEB(curr->index);
@@ -2355,7 +2355,7 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix)
       << U32LEB(BinaryConsts::StructAtomicSet);
-    parent.writeMemorder(curr->order);
+    parent.writeMemoryOrder(curr->order);
   }
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);

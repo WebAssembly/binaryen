@@ -1737,7 +1737,7 @@ void WasmBinaryWriter::writeField(const Field& field) {
   o << U32LEB(field.mutable_);
 }
 
-void WasmBinaryWriter::writeMemorder(MemoryOrder order) {
+void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order) {
   switch (order) {
     case MemoryOrder::Unordered:
       break;
@@ -3423,14 +3423,14 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::StructAtomicGet:
         case BinaryConsts::StructAtomicGetS:
         case BinaryConsts::StructAtomicGetU: {
-          auto order = getMemorder();
+          auto order = getMemoryOrder();
           auto type = getIndexedHeapType();
           auto field = getU32LEB();
           bool signed_ = op == BinaryConsts::StructAtomicGetS;
           return builder.makeStructGet(type, field, signed_, order);
         }
         case BinaryConsts::StructAtomicSet: {
-          auto order = getMemorder();
+          auto order = getMemoryOrder();
           auto type = getIndexedHeapType();
           auto field = getU32LEB();
           return builder.makeStructSet(type, field, order);
@@ -4981,7 +4981,7 @@ std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
   return {getMemoryName(memIdx), alignment, offset};
 }
 
-MemoryOrder WasmBinaryReader::getMemorder() {
+MemoryOrder WasmBinaryReader::getMemoryOrder() {
   auto code = getInt8();
   switch (code) {
     case BinaryConsts::OrderSeqCst:
