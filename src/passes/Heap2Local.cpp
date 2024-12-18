@@ -845,7 +845,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // This struct.set cannot possibly synchronize with other threads via the
     // read value, since the struct never escapes this function. But if the set
-    // is sequentially consistent, it stlil participates in the global order of
+    // is sequentially consistent, it still participates in the global order of
     // sequentially consistent operations. Preserve this effect on the global
     // ordering by inserting a fence.
     if (curr->order == MemoryOrder::SeqCst) {
