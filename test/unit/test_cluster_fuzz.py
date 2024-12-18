@@ -74,6 +74,22 @@ class ClusterFuzz(utils.BinaryenTestCase):
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         self.assertEqual(proc.returncode, 0)
+
+        # We should have logged the creation of N testcases.
+        self.assertEqual(proc.stdout.count('Created testcase:'), N)
+
+        # We should have actually created them.
+        for i in range(0, N + 2):
+            fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
+            flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
+            # We actually emit the range [1, N], so 0 or N+1 should not exist.
+            if i >= 1 and i <= N:
+                self.assertTrue(os.path.exists(fuzz_file))
+                self.assertTrue(os.path.exists(flags_file))
+            else:
+                self.assertTrue(not os.path.exists(fuzz_file))
+                self.assertTrue(not os.path.exists(flags_file))
+
         return proc
 
     # Test the bundled run.py script.
@@ -83,23 +99,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
         N = 10
         proc = self.generate_testcases(N, temp_dir.name)
 
-        # We should have logged the creation of N testcases.
-        self.assertEqual(proc.stdout.count('Created testcase:'), N)
-
-        # We should have actually created them.
-        for i in range(0, N + 2):
-            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
-            flags_file = os.path.join(temp_dir.name, f'flags-binaryen-{i}.js')
-            # We actually emit the range [1, N], so 0 or N+1 should not exist.
-            if i >= 1 and i <= N:
-                self.assertTrue(os.path.exists(fuzz_file))
-                self.assertTrue(os.path.exists(flags_file))
-            else:
-                self.assertTrue(not os.path.exists(fuzz_file))
-                self.assertTrue(not os.path.exists(flags_file))
-
         # Run.py should report no errors or warnings to stderr, except from
-        # those we know are safe.
+        # those we know are safe (we cannot test this in generate_testcases,
+        # because the caller could do something like set BINARYEN_PASS_DEBUG,
+        # which generates intentional stderr warnings).
         SAFE_WARNINGS = [
             # When we randomly pick no passes to run, this is shown.
             'warning: no passes specified, not doing any work',
