@@ -107,7 +107,7 @@ with open(INITIAL_CONTENT_NUM_PATH) as f:
 
 def get_random_initial_content():
     index = system_random.randint(0, num_initial_contents - 1)
-    return os.path.join(INITIAL_CONTENT_PATH, f'{index}.wasmZ')
+    return os.path.join(INITIAL_CONTENT_PATH, f'{index}.wasm')
 
 
 # Generate a random wasm file, and return a string that creates a typed array of

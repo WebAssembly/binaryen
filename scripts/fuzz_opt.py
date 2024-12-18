@@ -385,9 +385,6 @@ def pick_initial_contents():
         test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
     else:
         test_name = random.choice(all_tests)
-        print('picked', test_name)
-        1/0
-
     print('initial contents:', test_name)
     if shared.options.auto_initial_contents:
         # when using auto initial contents, we look through the git history to

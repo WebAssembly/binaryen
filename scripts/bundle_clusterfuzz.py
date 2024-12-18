@@ -145,6 +145,8 @@ with tarfile.open(output_file, "w:gz") as tar:
     index = 0
     all_tests = shared.get_all_tests()
     for i, test in enumerate(all_tests):
+        if index > 10:
+            break # XXX
         for wast, asserts in support.split_wast(test):
             if not wast:
                 continue
@@ -164,8 +166,10 @@ with tarfile.open(output_file, "w:gz") as tar:
 
     # Write initial/num.txt which contains the number of testcases in that
     # directory (saves run.py from needing to listdir each time).
-    with open('num.txt', 'w') as f:
+    num_txt = 'num.txt'
+    with open(num_txt, 'w') as f:
         f.write(f'{index}')
+    tar.add(num_txt, arcname=f'initial/num.txt')
 
 
 print('Done.')
