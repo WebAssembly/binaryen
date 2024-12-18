@@ -145,8 +145,6 @@ with tarfile.open(output_file, "w:gz") as tar:
     index = 0
     all_tests = shared.get_all_tests()
     for i, test in enumerate(all_tests):
-        if index > 10:
-            break # XXX
         for wast, asserts in support.split_wast(test):
             if not wast:
                 continue
