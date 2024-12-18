@@ -389,7 +389,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
             if proc.returncode == 0:
                 valid_executions += 1
 
-        print('Valid executions are distributed as ~ mean 0.9')
+        print('Valid executions are distributed as ~ mean 0.99')
         print(f'mean valid executions: {valid_executions/N}')
         # Assert on having at least half execute properly. Given the true mean
         # is 0.9, for half of 100 to fail is incredibly unlikely.
