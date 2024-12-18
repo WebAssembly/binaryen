@@ -839,9 +839,19 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // Drop the ref (leaving it to other opts to remove, when possible), and
     // write the data to the local instead of the heap allocation.
-    replaceCurrent(builder.makeSequence(
+    auto* replacement = builder.makeSequence(
       builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+      builder.makeLocalSet(localIndexes[curr->index], curr->value));
+
+    // This struct.set cannot possibly synchronize with other threads via the
+    // read value, since the struct never escapes this function. But if the set
+    // is sequentially consistent, it stlil participates in the global order of
+    // sequentially consistent operations. Preserve this effect on the global
+    // ordering by inserting a fence.
+    if (curr->order == MemoryOrder::SeqCst) {
+      replacement = builder.blockify(replacement, builder.makeAtomicFence());
+    }
+    replaceCurrent(replacement);
   }
 
   void visitStructGet(StructGet* curr) {
@@ -873,7 +883,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // general. However, signed gets make that more complicated, so leave this
     // for other opts to handle.
     value = Bits::makePackedFieldGet(value, field, curr->signed_, wasm);
-    replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref), value));
+    auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
+    // See the note on seqcst struct.set. It is ok to insert the fence before
+    // the value here since we know the value is just a local.get.
+    if (curr->order == MemoryOrder::SeqCst) {
+      replacement = builder.blockify(replacement, builder.makeAtomicFence());
+    }
+    replaceCurrent(builder.blockify(replacement, value));
   }
 };
 
