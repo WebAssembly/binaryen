@@ -97,12 +97,21 @@ else:
     binaryen_bin = shared.options.binaryen_bin
     binaryen_lib = shared.options.binaryen_lib
 
+# ClusterFuzz's run.py uses these features. Keep this in sync with that, so that
+# we only bundle initial content that makes sense for it.
+features = [
+    '-all',
+    '--disable-shared-everything',
+    '--disable-fp16',
+]
+
 with tarfile.open(output_file, "w:gz") as tar:
     # run.py
     run = os.path.join(shared.options.binaryen_root, 'scripts', 'clusterfuzz', 'run.py')
     print(f'  .. run:         {run}')
     tar.add(run, arcname='run.py')
 
+    print(type(shared))
     # fuzz_shell.js
     fuzz_shell = os.path.join(shared.options.binaryen_root, 'scripts', 'fuzz_shell.js')
     print(f'  .. fuzz_shell:  {fuzz_shell}')
@@ -127,6 +136,14 @@ with tarfile.open(output_file, "w:gz") as tar:
                 if os.path.exists(path):
                     print(f'  ......... : {path}')
                     tar.add(path, arcname=f'lib/{name}')
+
+    # Add tests we will use as initial content under initial/. We put all the
+    # tests from the test suite there.
+    print(type(shared))
+    for test in shared.get_all_tests():
+        # TODO: split wast!
+        print(test)
+        1/0
 
 print('Done.')
 print('To run the tests on this bundle, do:')

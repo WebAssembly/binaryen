@@ -242,7 +242,7 @@ def randomize_fuzz_settings():
 def init_important_initial_contents():
     # Fuzz dir contents are always important to us.
     fuzz_dir = os.path.join(shared.options.binaryen_root, 'fuzz')
-    fuzz_cases = shared.get_tests(fuzz_dir, test_suffixes, recursive=True)
+    fuzz_cases = shared.get_tests(fuzz_dir, shared.test_suffixes, recursive=True)
     FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
 
     # If auto_initial_contents is set we'll also grab all test files that are
@@ -305,6 +305,8 @@ def init_important_initial_contents():
     global IMPORTANT_INITIAL_CONTENTS
     IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
+
+all_tests = shared.get_all_tests()
 
 INITIAL_CONTENTS_IGNORE = [
     # Float16 is still experimental.
@@ -383,6 +385,9 @@ def pick_initial_contents():
         test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
     else:
         test_name = random.choice(all_tests)
+        print('picked', test_name)
+        1/0
+
     print('initial contents:', test_name)
     if shared.options.auto_initial_contents:
         # when using auto initial contents, we look through the git history to
@@ -1800,18 +1805,6 @@ testcase_handlers = [
     ClusterFuzz(),
     Two(),
 ]
-
-
-test_suffixes = ['*.wasm', '*.wast', '*.wat']
-
-core_tests = shared.get_tests(shared.get_test_dir('.'), test_suffixes)
-passes_tests = shared.get_tests(shared.get_test_dir('passes'), test_suffixes)
-spec_tests = shared.get_tests(shared.get_test_dir('spec'), test_suffixes)
-wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), test_suffixes)
-lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
-unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
-lit_tests = shared.get_tests(shared.get_test_dir('lit'), test_suffixes, recursive=True)
-all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
