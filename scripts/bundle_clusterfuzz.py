@@ -150,7 +150,8 @@ with tarfile.open(output_file, "w:gz") as tar:
                 continue
             support.write_wast(temp_wasm, wast)
             # If the file is not valid for our features, skip it. In the same
-            # operation, also convert to binary if this was text
+            # operation, also convert to binary if this was text (binary is more
+            # compact).
             cmd = shared.WASM_OPT + ['-q', temp_wasm, '-o', temp_wasm] + features
             if subprocess.run(cmd, stderr=subprocess.PIPE).returncode:
                 continue

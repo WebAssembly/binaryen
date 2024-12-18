@@ -68,6 +68,12 @@ FUZZER_BINARY_PATH = os.path.join(ROOT_DIR, 'bin', 'wasm-opt')
 # testcase.
 JS_SHELL_PATH = os.path.join(ROOT_DIR, 'scripts', 'fuzz_shell.js')
 
+# The path to the directory with initial contents.
+INITIAL_CONTENT_PATH = os.path.join(ROOT_DIR, 'initial')
+
+# The file that contains the number of initial contents
+INITIAL_CONTENT_NUM_PATH = os.path.join(ROOT_DIR, 'initial', 'num.txt')
+
 # The arguments we provide to wasm-opt to generate wasm files.
 FUZZER_ARGS = [
     # Generate a wasm from random data.
@@ -93,6 +99,16 @@ def get_file_name(prefix, index):
 # (We also use urandom below, which uses this under the hood.)
 system_random = random.SystemRandom()
 
+# The number of initial content testcases that were bundled for us, in the
+# "initial/" subdir.
+with open(INITIAL_CONTENT_NUM_PATH) as f:
+    num_initial_contents = int(f.read())
+
+
+def get_random_initial_content():
+    index = system_random.randint(0, num_initial_contents - 1)
+    return os.path.join(INITIAL_CONTENT_PATH, f'{index}.wasmZ')
+
 
 # Generate a random wasm file, and return a string that creates a typed array of
 # those bytes, suitable for use in a JS file, in the form
@@ -112,9 +128,16 @@ def get_wasm_contents(i, output_dir):
         with open(input_data_file_path, 'wb') as file:
             file.write(os.urandom(random_size))
 
-        # Generate wasm from the random data.
+        # Generate a command to use wasm-opt with the proper args to generate
+        # wasm content from the input data.
         cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
         cmd += ['-o', wasm_file_path, input_data_file_path]
+
+        # Sometimes use a file from the initial content testcases.
+        if system_random.random() < 0.5:
+            cmd += ['--initial-fuzz=' + get_random_initial_content()]
+
+        # Generate wasm from the random data.
         try:
             subprocess.check_call(cmd)
         except subprocess.CalledProcessError:
