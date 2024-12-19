@@ -1687,8 +1687,10 @@ class ClusterFuzz(TestCaseHandler):
 
         # Verify that we called something. The fuzzer should always emit at
         # least one exported function (unless we've decided to ignore the entire
-        # run).
-        if output != IGNORE:
+        # run, or if the wasm errored during instantiation, which can happen due
+        # to a testcase with a segment out of bounds, say).
+        if output != IGNORE and not output.startswith('exception thrown: failed to instantiate module'):
+
             assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
@@ -1748,7 +1750,7 @@ class Two(TestCaseHandler):
             # to anything.
             return
 
-        if output.strip() == 'exception thrown: failed to instantiate module':
+        if output.startswith('exception thrown: failed to instantiate module'):
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.

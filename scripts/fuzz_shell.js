@@ -346,7 +346,7 @@ function build(binary) {
   try {
     instance = new WebAssembly.Instance(module, imports);
   } catch (e) {
-    console.log('exception thrown: failed to instantiate module');
+    console.log('exception thrown: failed to instantiate module: ' + e);
     quit();
   }
 
