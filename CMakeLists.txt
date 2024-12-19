@@ -337,6 +337,8 @@ if(EMSCRIPTEN)
   option(ENABLE_BIGINT "Enable wasm BigInt support" OFF)
   if(ENABLE_BIGINT)
     add_link_flag("-sWASM_BIGINT")
+   else()
+    add_link_flag("-sWASM_BIGINT=0")
   endif()
 
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
