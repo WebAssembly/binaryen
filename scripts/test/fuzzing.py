@@ -74,4 +74,3 @@ unfuzzable_tests = [
     'typed_continuations_contbind.wast',
     'typed_continuations_suspend.wast',
 ]
-
