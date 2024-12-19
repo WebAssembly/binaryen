@@ -1630,6 +1630,10 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
+# The error shown when a module fails to instantiate.
+INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
+
+
 # Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
 # to see that fuzzing that way works properly (it likely won't catch anything
 # the other fuzzers here catch, though it is possible). That is, running this
@@ -1689,7 +1693,7 @@ class ClusterFuzz(TestCaseHandler):
         # least one exported function (unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say).
-        if output != IGNORE and not output.startswith('exception thrown: failed to instantiate module'):
+        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
 
             assert FUZZ_EXEC_CALL_PREFIX in output
 
@@ -1750,7 +1754,7 @@ class Two(TestCaseHandler):
             # to anything.
             return
 
-        if output.startswith('exception thrown: failed to instantiate module'):
+        if output.startswith(INSTANTIATE_ERROR):
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.
