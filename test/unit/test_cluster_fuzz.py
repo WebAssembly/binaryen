@@ -393,7 +393,6 @@ class ClusterFuzz(utils.BinaryenTestCase):
             # they are actually unuseful).
             if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
                 valid_executions += 1
-            # TODO: see we have a fuzz exec line too!
 
         print('Valid executions are distributed as ~ mean 0.99')
         print(f'mean valid executions: {valid_executions/N}')
