@@ -2830,3 +2830,126 @@
     )
   )
 )
+
+;; Atomic accesses require special handling
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $shared (shared (struct (field (mut i32)))))
+    (type $shared (shared (struct (mut i32))))
+    ;; CHECK:       (type $unwritten (shared (struct (field (mut i32)))))
+    (type $unwritten (shared (struct (mut i32))))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref $shared))))
+
+  ;; CHECK:      (type $4 (func (param (ref $unwritten))))
+
+  ;; CHECK:      (func $init (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $shared)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $init
+    (drop
+      (struct.new_default $shared)
+    )
+  )
+
+  ;; CHECK:      (func $gets (type $3) (param $0 (ref $shared))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (atomic.fence)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gets (param (ref $shared))
+    (drop
+      (struct.get $shared 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This is not optimized because we wouldn't want to replace it with a
+      ;; stronger acquire fence.
+      (struct.atomic.get acqrel $shared 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This can be optimized, but requires a seqcst fence.
+      (struct.atomic.get $shared 0
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $traps (type $4) (param $0 (ref $unwritten))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $traps (param (ref $unwritten))
+    ;; This are all optimizable because they are known to trap. No fences are
+    ;; necessary.
+    (drop
+      (struct.get $unwritten 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get acqrel $unwritten 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get $unwritten 0
+        (local.get 0)
+      )
+    )
+  )
+)
