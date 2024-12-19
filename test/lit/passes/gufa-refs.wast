@@ -6137,3 +6137,56 @@
     )
   )
 )
+
+;; Atomic accesses require special handling
+(module
+  ;; CHECK:      (type $A (shared (struct (field i32))))
+  (type $A (shared (struct (field i32))))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (func $gets (type $1)
+  ;; CHECK-NEXT:  (local $0 (ref $A))
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $A 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get $A 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gets
+    (local (ref $A))
+    (local.set 0
+      (struct.new_default $A)
+    )
+    (drop
+      ;; This is optmizable.
+      ;; TODO: Should it not be optimizable since it reads from shared memory?
+      (struct.get $A 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; We do not (yet) optimize atomic gets.
+      (struct.atomic.get acqrel $A 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; We do not (yet) optimize atomic gets.
+      (struct.atomic.get $A 0
+        (local.get 0)
+      )
+    )
+  )
+)
