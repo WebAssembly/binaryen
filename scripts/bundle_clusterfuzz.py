@@ -88,6 +88,7 @@ if len(sys.argv) >= 3:
     # Delete the argument, as importing |shared| scans it.
     sys.argv.pop()
 
+from test import fuzzing # noqa
 from test import shared # noqa
 from test import support # noqa
 
@@ -145,6 +146,8 @@ with tarfile.open(output_file, "w:gz") as tar:
     index = 0
     all_tests = shared.get_all_tests() # XXX not bad-fuzz ones! share with fuzz_opt
     for i, test in enumerate(all_tests):
+        if os.path.basename(test) in fuzzing.unfuzzable_tests:
+            continue
         for wast, asserts in support.split_wast(test):
             if not wast:
                 continue
