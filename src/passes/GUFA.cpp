@@ -150,20 +150,15 @@ struct GUFAOptimizer
       return;
     }
 
-    if (contents.isNull() && curr->type.isNullable()) {
-      // Null values are all identical, so just fix up the type here if we need
-      // to (the null's type might not fit in this expression, if it passed
-      // through casts).
-      if (!Type::isSubType(contents.getType(), curr->type)) {
-        contents = PossibleContents::literal(
-          Literal::makeNull(curr->type.getHeapType()));
-      }
-
-      // Note that if curr's type is *not* nullable, then the code will trap at
-      // runtime (the null must arrive through a cast that will trap). We handle
-      // that below, so we don't need to think about it here.
-
-      // TODO: would emitting a more specific null be useful when valid?
+    auto order = Properties::getSynchronization(curr);
+    if (order != MemoryOrder::Unordered) {
+      // This load might synchronize with some store, and if we replaced the
+      // load with a constant or with a load from a global, it would not
+      // synchronize with that store anymore. Since we know what value the store
+      // must write, and we know it is the same as every other store to the same
+      // location, it's possible that optimizing here would be allowable, but
+      // for now be conservative and do not optimize.
+      return;
     }
 
     auto* c = contents.makeExpression(wasm);

@@ -486,6 +486,30 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
+// If this instruction accesses memory or the heap, or otherwise participates in
+// shared memory synchronization, return the memory order corresponding to the
+// kind of synchronization it does. Return MemoryOrder::Unordered if there is no
+// synchronization. Does not look at children.
+inline MemoryOrder getSynchronization(Expression* curr) {
+  if (auto* get = curr->dynCast<StructGet>()) {
+    return get->order;
+  }
+  if (auto* set = curr->dynCast<StructSet>()) {
+    return set->order;
+  }
+  if (auto* load = curr->dynCast<Load>()) {
+    return load->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
+  }
+  if (auto* store = curr->dynCast<Store>()) {
+    return store->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
+  }
+  if (curr->is<AtomicRMW>() || curr->is<AtomicWait>() ||
+      curr->is<AtomicNotify>() || curr->is<AtomicFence>()) {
+    return MemoryOrder::SeqCst;
+  }
+  return MemoryOrder::Unordered;
+}
+
 // A "generative" expression is one that can generate different results for the
 // same inputs, and that difference is *not* explained by other expressions that
 // interact with this one. This is an intrinsic/internal property of the
