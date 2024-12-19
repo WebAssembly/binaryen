@@ -6170,8 +6170,8 @@
       (struct.new_default $A)
     )
     (drop
-      ;; This is optmizable.
-      ;; TODO: Should it not be optimizable since it reads from shared memory?
+      ;; This is optimizable. It reads from shared memory, but there is only one
+      ;; possible value that can be read.
       (struct.get $A 0
         (local.get 0)
       )

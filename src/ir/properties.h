@@ -490,7 +490,7 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // shared memory synchronization, return the memory order corresponding to the
 // kind of synchronization it does. Return MemoryOrder::Unordered if there is no
 // synchronization. Does not look at children.
-inline MemoryOrder getSynchronization(Expression* curr) {
+inline MemoryOrder getMemoryOrder(Expression* curr) {
   if (auto* get = curr->dynCast<StructGet>()) {
     return get->order;
   }

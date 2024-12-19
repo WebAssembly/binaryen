@@ -150,8 +150,7 @@ struct GUFAOptimizer
       return;
     }
 
-    auto order = Properties::getSynchronization(curr);
-    if (order != MemoryOrder::Unordered) {
+    if (Properties::getMemoryOrder(curr) != MemoryOrder::Unordered) {
       // This load might synchronize with some store, and if we replaced the
       // load with a constant or with a load from a global, it would not
       // synchronize with that store anymore. Since we know what value the store
