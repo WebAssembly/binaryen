@@ -143,7 +143,7 @@ with tarfile.open(output_file, "w:gz") as tar:
     print('  .. initial content: ')
     temp_wasm = 'temp.wasm'
     index = 0
-    all_tests = shared.get_all_tests()
+    all_tests = shared.get_all_tests() # XXX not bad-fuzz ones! share with fuzz_opt
     for i, test in enumerate(all_tests):
         for wast, asserts in support.split_wast(test):
             if not wast:
