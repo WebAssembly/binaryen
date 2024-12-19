@@ -357,18 +357,21 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        # Initial content appear 50% of the time for each wasm file. Each
-        # testcase has 1.333 wasm files on average.
-        #
         # Flatten the data to help some of the below, from
         #  [['a.wasm', 'b.wasm'], ['c.wasm']]
         # into
         #  ['a.wasm', 'b.wasm', 'c.wasm']
         flat_initial_contents = [item for items in seen_initial_contents for item in items]
+
+        # Initial content appear 50% of the time for each wasm file. Each
+        # testcase has 1.333 wasm files on average.
         print('Initial contents are distributed as ~ mean 0.68')
         print(f'mean initial contents: {len(flat_initial_contents)/N}')
-        # We saw more than one unique initial contents.
-        self.assertGreater(len(set(flat_initial_contents)), 1)
+        # Initial contents should be mostly unique (we have many, many testcases
+        # and we pick just 100 or so). And we must see more than one unique one.
+        unique_initial_contents = set(flat_initial_contents)
+        print(f'unique initial contents: {len(unique_initial_contents)} should be almost equal to {len(flat_initial_contents)}')
+        self.assertGreater(len(unique_initial_contents), 1)
         # Not all testcases have initial contents.
         num_initial_contents = [len(items) for items in seen_initial_contents]
         self.assertEqual(min(num_initial_contents), 0)
