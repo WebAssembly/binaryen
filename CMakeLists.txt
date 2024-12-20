@@ -61,6 +61,8 @@ option(EMSCRIPTEN_ENABLE_PTHREADS "Enable pthreads in emscripten build" OFF)
 # This is useful for debugging, performance analysis, and other testing.
 option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" ON)
 
+option(BUILD_WASM_VALIDATE_REFINEMENT "Build the wasm-validate-refinement tool" OFF)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -460,6 +462,7 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
+
 target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
 if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen
