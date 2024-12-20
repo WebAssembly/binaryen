@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 
 # Tests that the fuzzers should not operate on.
 unfuzzable = [
