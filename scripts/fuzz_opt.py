@@ -309,8 +309,6 @@ def init_important_initial_contents():
 
 all_tests = shared.get_all_tests()
 
-INITIAL_CONTENTS_IGNORE = fuzzing.unfuzzable_tests
-
 
 def pick_initial_contents():
     # if we use an initial wasm file's contents as the basis for the
@@ -334,25 +332,9 @@ def pick_initial_contents():
         # no longer exist, and we should just skip it.
         if not os.path.exists(test_name):
             return
-    if os.path.basename(test_name) in INITIAL_CONTENTS_IGNORE:
+    if not fuzzing.is_fuzzable(test_name):
         return
     assert os.path.exists(test_name)
-    # tests that check validation errors are not helpful for us
-    if '.fail.' in test_name:
-        print('initial contents is just a .fail test')
-        return
-    if os.path.basename(test_name) in [
-        # contains too many segments to run in a wasm VM
-        'limit-segments_disable-bulk-memory.wast',
-        # https://github.com/WebAssembly/binaryen/issues/3203
-        'simd.wast',
-        # corner cases of escaping of names is not interesting
-        'names.wast',
-        # huge amount of locals that make it extremely slow
-        'too_much_for_liveness.wasm'
-    ]:
-        print('initial contents is disallowed')
-        return
 
     if test_name.endswith('.wast'):
         # this can contain multiple modules, pick one
