@@ -1801,7 +1801,7 @@ Result<> IRBuilder::makeStructGet(HeapType type,
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(
-    builder.makeStructGet(field, curr.ref, fields[field].type, signed_, order));
+    builder.makeStructGet(field, curr.ref, order, fields[field].type, signed_));
   return Ok{};
 }
 
