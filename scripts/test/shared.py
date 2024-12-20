@@ -315,7 +315,7 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
 
 
 def run_process(cmd, check=True, input=None, capture_output=False, decode_output=True, *args, **kw):
-    if input and type(input) == str:
+    if input and type(input) is str:
         input = bytes(input, 'utf-8')
     if capture_output:
         kw['stdout'] = subprocess.PIPE
@@ -358,7 +358,7 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-    binary = expected_file.endswith(".wasm") or type(actual) == bytes
+    binary = expected_file.endswith(".wasm") or type(actual) is bytes
     with open(expected_file, 'rb' if binary else 'r') as f:
         fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 

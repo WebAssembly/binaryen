@@ -67,7 +67,7 @@ def port_test(args, test):
     run_line = (f';; RUN: foreach %s %t wasm-opt {" ".join(opts)} -S -o -'
                 ' | filecheck %s')
 
-    notice = (f';; NOTE: This test was ported using'
+    notice = (';; NOTE: This test was ported using'
               ' port_passes_tests_to_lit.py and could be cleaned up.')
 
     with open(test, 'r') as src_file:

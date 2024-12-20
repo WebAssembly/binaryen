@@ -152,7 +152,8 @@ std::optional<uint32_t> takeWTF8CodePoint(std::string_view& str) {
 
   uint8_t leading = str[0];
   size_t trailingBytes;
-  uint32_t u;
+  // Initialized only to avoid spurious compiler warnings.
+  uint32_t u = 0;
   if ((leading & 0b10000000) == 0b00000000) {
     // 0xxxxxxx
     trailingBytes = 0;

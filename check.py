@@ -32,8 +32,8 @@ from scripts.test import wasm_opt
 def get_changelog_version():
     with open(os.path.join(shared.options.binaryen_root, 'CHANGELOG.md')) as f:
         lines = f.readlines()
-    lines = [l for l in lines if len(l.split()) == 1]
-    lines = [l for l in lines if l.startswith('v')]
+    lines = [line for line in lines if len(line.split()) == 1]
+    lines = [line for line in lines if line.startswith('v')]
     version = lines[0][1:]
     print("Parsed CHANGELOG.md version: %s" % version)
     return int(version)
