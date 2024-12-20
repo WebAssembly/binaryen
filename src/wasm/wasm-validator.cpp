@@ -487,6 +487,8 @@ public:
   void visitStructNew(StructNew* curr);
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
+  void visitStructRMW(StructRMW* curr);
+  void visitStructCmpxchg(StructCmpxchg* curr);
   void visitArrayNew(ArrayNew* curr);
   template<typename ArrayNew> void visitArrayNew(ArrayNew* curr);
   void visitArrayNewData(ArrayNewData* curr);
@@ -2265,7 +2267,7 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   auto feats = curr->type.getFeatures();
   if (!shouldBeTrue(!getFunction() || feats <= getModule()->features,
                     curr,
-                    "ref.null requires additional features")) {
+                    "ref.null requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
   }
   if (!shouldBeTrue(
@@ -3043,14 +3045,99 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
     return;
   }
   const auto& fields = type.getStruct().fields;
-  shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+  if (!shouldBeTrue(
+        curr->index < fields.size(), curr, "bad struct.get field")) {
+    return;
+  }
   auto& field = fields[curr->index];
   shouldBeSubType(curr->value->type,
                   field.type,
                   curr,
-                  "struct.set must have the proper type");
+                  "struct.set value must have the proper type");
   shouldBeEqual(
     field.mutable_, Mutable, curr, "struct.set field must be mutable");
+}
+
+void FunctionValidator::visitStructRMW(StructRMW* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "struct.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "struct.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isStruct(), curr->ref, "struct.atomic.rmw ref must be a struct")) {
+    return;
+  }
+  const auto& fields = type.getStruct().fields;
+  if (!shouldBeTrue(
+        curr->index < fields.size(), curr, "bad struct.atomic.rmw field")) {
+    return;
+  }
+  auto& field = fields[curr->index];
+  shouldBeSubType(curr->value->type,
+                  field.type,
+                  curr,
+                  "struct.atomic.rmw value must have the proper type");
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
+}
+
+void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "struct.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "struct.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isStruct(), curr->ref, "struct.atomic.rmw ref must be a struct")) {
+    return;
+  }
+  const auto& fields = type.getStruct().fields;
+  if (!shouldBeTrue(
+        curr->index < fields.size(), curr, "bad struct.atomic.rmw field")) {
+    return;
+  }
+  auto& field = fields[curr->index];
+  shouldBeSubType(
+    curr->expected->type,
+    field.type,
+    curr,
+    "struct.atomic.rmw.cmpxchg expected value must have the proper type");
+  shouldBeSubType(
+    curr->replacement->type,
+    field.type,
+    curr,
+    "struct.atomic.rmw.cmpxchg replacement value must have the proper type");
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
@@ -3968,7 +4055,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
     if (!info.shouldBeTrue(table->type == funcref ||
                              typeFeats <= module.features,
                            "table",
-                           "table type requires additional features")) {
+                           "table type requires additional features ")) {
       info.getStream(nullptr)
         << getMissingFeaturesList(module, typeFeats) << '\n';
     }
@@ -3991,7 +4078,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
     if (!info.shouldBeTrue(
           segment->type == funcref || typeFeats <= module.features,
           "elem",
-          "element segment type requires additional features")) {
+          "element segment type requires additional features ")) {
       info.getStream(nullptr)
         << getMissingFeaturesList(module, typeFeats) << '\n';
     }

@@ -207,6 +207,9 @@ public:
   Result<>
   makeStructGet(HeapType type, Index field, bool signed_, MemoryOrder order);
   Result<> makeStructSet(HeapType type, Index field, MemoryOrder order);
+  Result<>
+  makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
+  Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);

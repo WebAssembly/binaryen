@@ -558,6 +558,20 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitStructRMW(StructRMW* curr,
+                          std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStructRMW(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitStructCmpxchg(StructCmpxchg* curr,
+                              std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitStructCmpxchg(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitArrayGet(ArrayGet* curr,
                          std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -1821,6 +1835,29 @@ IRBuilder::makeStructSet(HeapType type, Index field, MemoryOrder order) {
   CHECK_ERR(ChildPopper{*this}.visitStructSet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeStructSet(field, curr.ref, curr.value, order));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeStructRMW(AtomicRMWOp op,
+                                  HeapType type,
+                                  Index field,
+                                  MemoryOrder order) {
+  StructRMW curr;
+  curr.index = field;
+  CHECK_ERR(ChildPopper{*this}.visitStructRMW(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeStructRMW(op, field, curr.ref, curr.value, order));
+  return Ok{};
+}
+
+Result<>
+IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
+  StructCmpxchg curr;
+  curr.index = field;
+  CHECK_ERR(ChildPopper{*this}.visitStructCmpxchg(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeStructCmpxchg(
+    field, curr.ref, curr.expected, curr.replacement, order));
   return Ok{};
 }
 

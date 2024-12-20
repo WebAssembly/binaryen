@@ -1164,6 +1164,33 @@ void StructSet::finalize() {
   }
 }
 
+void StructRMW::finalize() {
+  if (ref->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // See comment on CallRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
+void StructCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // See comment on CallRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {

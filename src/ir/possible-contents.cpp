@@ -1016,6 +1016,23 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitStructRMW(StructRMW* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // Similar to visitStructSet.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->value, curr);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // Similar to visitStructSet.
+    addChildParentLink(curr->ref, curr);
+    addChildParentLink(curr->expected, curr);
+    addChildParentLink(curr->replacement, curr);
+  }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
