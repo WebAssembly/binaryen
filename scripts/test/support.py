@@ -170,7 +170,7 @@ def split_wast(wastFile):
 # write a split wast from split_wast. the wast may be binary if the original
 # file was binary
 def write_wast(filename, wast, asserts=[]):
-    if wast is bytes:
+    if type(wast) is bytes:
         assert not asserts
         with open(filename, 'wb') as o:
             o.write(wast)
