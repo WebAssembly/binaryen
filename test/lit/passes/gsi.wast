@@ -144,16 +144,16 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test1 (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2))
-    ;; We can infer that this get must reference $global1 and make the reference
-    ;; point to that. Note that we do not infer the value of 42 here, but leave
-    ;; it for other passes to do.
+    ;; Even though the value here is not known at compile time - it reads an
+    ;; imported global - we can still infer that we are reading from $global1.
     (drop
       (struct.get $struct1 0
         (local.get $struct1)
       )
     )
-    ;; Even though the value here is not known at compile time - it reads an
-    ;; imported global - we can still infer that we are reading from $global2.
+    ;; We can infer that this get must reference $global2 and make the reference
+    ;; point to that. Note that we do not infer the value of 42 here, but leave
+    ;; it for other passes to do.
     (drop
       (struct.get $struct2 0
         (local.get $struct2)
@@ -1941,6 +1941,224 @@
     ;; values are truncated into i8.
     (struct.get_u $struct 0
      (global.get $A)
+    )
+  )
+)
+
+;; Test atomic gets.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $one (shared (struct (field i32))))
+    (type $one (shared (struct (field i32))))
+    ;; CHECK:       (type $two (shared (struct (field i32))))
+    (type $two (shared (struct (field i32))))
+    ;; CHECK:       (type $two-same (shared (struct (field i32))))
+    (type $two-same (shared (struct (field i32))))
+  )
+
+  ;; CHECK:      (type $3 (func (param (ref $one))))
+
+  ;; CHECK:      (type $4 (func (param (ref $two))))
+
+  ;; CHECK:      (type $5 (func (param (ref $two-same))))
+
+  ;; CHECK:      (global $one (ref $one) (struct.new $one
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $one (ref $one) (struct.new $one (i32.const 42)))
+
+  ;; CHECK:      (global $two-a (ref $two) (struct.new $two
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $two-a (ref $two) (struct.new $two (i32.const 42)))
+
+  ;; CHECK:      (global $two-b (ref $two) (struct.new $two
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $two-b (ref $two) (struct.new $two (i32.const 1337)))
+
+  ;; CHECK:      (global $two-same-a (ref $two-same) (struct.new $two-same
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $two-same-a (ref $two-same) (struct.new $two-same (i32.const 42)))
+
+  ;; CHECK:      (global $two-same-b (ref $two-same) (struct.new $two-same
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $two-same-b (ref $two-same) (struct.new $two-same (i32.const 42)))
+
+  ;; CHECK:      (func $one (type $3) (param $0 (ref $one))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $one 0
+  ;; CHECK-NEXT:    (block (result (ref $one))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $one)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $one 0
+  ;; CHECK-NEXT:    (block (result (ref $one))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $one)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get $one 0
+  ;; CHECK-NEXT:    (block (result (ref $one))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $one)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $one (param (ref $one))
+    (drop
+      (struct.get $one 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get acqrel $one 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get $one 0
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $two (type $4) (param $0 (ref $two))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $two-a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $two-a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result (ref $two))
+  ;; CHECK-NEXT:      (atomic.fence)
+  ;; CHECK-NEXT:      (global.get $two-a)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two (param (ref $two))
+    (drop
+      (struct.get $two 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This is optimized normally because there cannot be any writes it
+      ;; synchronizes with.
+      (struct.atomic.get acqrel $two 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This requires a fence to maintain its effect on the global order of
+      ;; seqcst operations.
+      (struct.atomic.get $two 0
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $two-same (type $5) (param $0 (ref $two-same))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (atomic.fence)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two-same (param (ref $two-same))
+    (drop
+      (struct.get $two-same 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This is optimized normally because there cannot be any writes it
+      ;; synchronizes with.
+      (struct.atomic.get acqrel $two-same 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This requires a fence to maintain its effect on the global order of
+      ;; seqcst operations.
+      (struct.atomic.get $two-same 0
+        (local.get 0)
+      )
     )
   )
 )

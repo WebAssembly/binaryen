@@ -359,6 +359,11 @@ struct GlobalStructInference : public Pass {
             // refined, which could change the struct.get's type.
             refinalize = true;
           }
+          // No need to worry about atomic gets here. We will still read from
+          // the same memory location as before and preserve all side effects
+          // (including synchronization) that were previously present. The
+          // memory location is immutable anyway, so there cannot be any writes
+          // to synchronize with in the first place.
           curr->ref = builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
             builder.makeGlobalGet(global, globalType));
@@ -457,10 +462,18 @@ struct GlobalStructInference : public Pass {
         // the early return above) so that only leaves 1 and 2.
         if (values.size() == 1) {
           // The case of 1 value is simple: trap if the ref is null, and
-          // otherwise return the value.
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            getReadValue(values[0])));
+          // otherwise return the value. We must also fence if the get was
+          // seqcst. No additional work is necessary for a acquire get because
+          // there cannot have been any writes to this immutable field that it
+          // would synchronize with.
+          Expression* replacement =
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref));
+          if (curr->order == MemoryOrder::SeqCst) {
+            replacement =
+              builder.blockify(replacement, builder.makeAtomicFence());
+          }
+          replaceCurrent(
+            builder.blockify(replacement, getReadValue(values[0])));
           return;
         }
         assert(values.size() == 2);
@@ -486,11 +499,19 @@ struct GlobalStructInference : public Pass {
         // of their execution matters (they may note globals for un-nesting).
         auto* left = getReadValue(values[0]);
         auto* right = getReadValue(values[1]);
-        // Note that we must trap on null, so add a ref.as_non_null here.
+        // Note that we must trap on null, so add a ref.as_non_null here. We
+        // must also add a fence if this get is seqcst. As before, no extra work
+        // is necessary for an acquire get because there cannot be a write is
+        // synchronizes with.
+        Expression* getGlobal =
+          builder.makeGlobalGet(checkGlobal, wasm.getGlobal(checkGlobal)->type);
+        if (curr->order == MemoryOrder::SeqCst) {
+          getGlobal =
+            builder.makeSequence(builder.makeAtomicFence(), getGlobal);
+        }
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
-                            builder.makeGlobalGet(
-                              checkGlobal, wasm.getGlobal(checkGlobal)->type)),
+                            getGlobal),
           left,
           right));
       }
