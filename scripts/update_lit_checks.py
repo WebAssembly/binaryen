@@ -88,7 +88,7 @@ def itertests(args):
 
 
 def find_run_lines(test, lines):
-    line_matches = [RUN_LINE_RE.match(l) for l in lines]
+    line_matches = [RUN_LINE_RE.match(line) for line in lines]
     matches = [match.group(1) for match in line_matches if match]
     if not matches:
         warn(f'No RUN lines found in {test}. Ignoring.')
