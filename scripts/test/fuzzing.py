@@ -77,12 +77,10 @@ unfuzzable = [
     'typed_continuations_suspend.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
-    # https://github.com/WebAssembly/binaryen/issues/3203
-    'simd.wast',
-    # corner cases of escaping of names is not interesting
+    # https://github.com/WebAssembly/binaryen/issues/7176
     'names.wast',
     # huge amount of locals that make it extremely slow
-    'too_much_for_liveness.wasm'
+    'too_much_for_liveness.wasm',
 ]
 
 
