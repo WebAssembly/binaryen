@@ -170,7 +170,7 @@ def split_wast(wastFile):
 # write a split wast from split_wast. the wast may be binary if the original
 # file was binary
 def write_wast(filename, wast, asserts=[]):
-    if type(wast) == bytes:
+    if wast is bytes:
         assert not asserts
         with open(filename, 'wb') as o:
             o.write(wast)
@@ -182,7 +182,7 @@ def write_wast(filename, wast, asserts=[]):
 def run_command(cmd, expected_status=0, stderr=None,
                 expected_err=None, err_contains=False, err_ignore=None):
     if expected_err is not None:
-        assert stderr == subprocess.PIPE or stderr is None,\
+        assert stderr == subprocess.PIPE or stderr is None, \
             "Can't redirect stderr if using expected_err"
         stderr = subprocess.PIPE
     print('executing: ', ' '.join(cmd))
