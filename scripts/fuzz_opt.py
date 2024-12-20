@@ -972,7 +972,7 @@ class CompareVMs(TestCaseHandler):
                     print('(ignored, so not running other VMs)')
 
                     # the ignoring should have been noted during run_vms()
-                    assert(ignored_vm_runs > ignored_before)
+                    assert ignored_vm_runs > ignored_before
 
                     return vm_results
 
