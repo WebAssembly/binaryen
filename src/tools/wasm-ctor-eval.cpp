@@ -478,8 +478,14 @@ private:
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // do a memcpy to avoid undefined behavior if unaligned
-    struct __attribute__((aligned(1))) Unaligned {
+    // Make UBSan happy with unaligned stores. MSVC does not support
+    // __attribute__((aligned...)), but it also doesn't have UBSan.
+
+    struct
+#ifndef _MSC_VER
+      __attribute__((aligned(1)))
+#endif
+      Unaligned {
       T val;
     };
     Unaligned unaligned{value};
