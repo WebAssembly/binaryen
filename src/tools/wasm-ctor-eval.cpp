@@ -462,7 +462,7 @@ private:
   const size_t MaximumMemory = 100 * 1024 * 1024;
 
   // TODO: handle unaligned too, see shell-interface
-  template<typename T> T* getMemory(Address address, Name memoryName) {
+  void* getMemory(Address address, Name memoryName) {
     auto it = memories.find(memoryName);
     assert(it != memories.end());
     auto& memory = it->second;
@@ -478,24 +478,14 @@ private:
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // Make UBSan happy with unaligned stores. MSVC does not support
-    // __attribute__((aligned...)), but it also doesn't have UBSan.
-
-    struct
-#ifndef _MSC_VER
-      __attribute__((aligned(1)))
-#endif
-      Unaligned {
-      T val;
-    };
-    Unaligned unaligned{value};
-    memcpy(getMemory<T>(address, memoryName), &unaligned, sizeof(T));
+    // Use memcpy to avoid UB if unaligned.
+    memcpy(getMemory(address, memoryName), &value, sizeof(T));
   }
 
   template<typename T> T doLoad(Address address, Name memoryName) {
-    // do a memcpy to avoid undefined behavior if unaligned
+    // Use memcpy to avoid UB if unaligned.
     T ret;
-    memcpy(&ret, getMemory<T>(address, memoryName), sizeof(T));
+    memcpy(&ret, getMemory(address, memoryName), sizeof(T));
     return ret;
   }
 
