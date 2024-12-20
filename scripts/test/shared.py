@@ -561,3 +561,19 @@ def skip_if_on_windows(name):
         print('skipping test "%s" on windows' % name)
         return True
     return False
+
+
+test_suffixes = ['*.wasm', '*.wast', '*.wat']
+
+
+# return a list of all the tests in the entire test suite
+def get_all_tests():
+    core_tests = get_tests(get_test_dir('.'), test_suffixes)
+    passes_tests = get_tests(get_test_dir('passes'), test_suffixes)
+    spec_tests = get_tests(get_test_dir('spec'), test_suffixes)
+    wasm2js_tests = get_tests(get_test_dir('wasm2js'), test_suffixes)
+    lld_tests = get_tests(get_test_dir('lld'), test_suffixes)
+    unit_tests = get_tests(get_test_dir(os.path.join('unit', 'input')), test_suffixes)
+    lit_tests = get_tests(get_test_dir('lit'), test_suffixes, recursive=True)
+
+    return core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
