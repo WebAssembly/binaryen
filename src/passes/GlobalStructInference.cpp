@@ -463,7 +463,7 @@ struct GlobalStructInference : public Pass {
         if (values.size() == 1) {
           // The case of 1 value is simple: trap if the ref is null, and
           // otherwise return the value. We must also fence if the get was
-          // seqcst. No additional work is necessary for a acquire get because
+          // seqcst. No additional work is necessary for an acquire get because
           // there cannot have been any writes to this immutable field that it
           // would synchronize with.
           Expression* replacement =
@@ -501,7 +501,7 @@ struct GlobalStructInference : public Pass {
         auto* right = getReadValue(values[1]);
         // Note that we must trap on null, so add a ref.as_non_null here. We
         // must also add a fence if this get is seqcst. As before, no extra work
-        // is necessary for an acquire get because there cannot be a write is
+        // is necessary for an acquire get because there cannot be a write it
         // synchronizes with.
         Expression* getGlobal =
           builder.makeGlobalGet(checkGlobal, wasm.getGlobal(checkGlobal)->type);
