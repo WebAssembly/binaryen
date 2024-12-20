@@ -28,7 +28,7 @@ jobs:
         fetch-depth: 0
     - name: install tools
       run: |
-        sudo pip3 install -r requirements-dev.txt
+        pip3 install -r requirements-dev.txt
         sudo apt install lsb-release wget software-properties-common gnupg
         wget https://apt.llvm.org/llvm.sh
         sudo chmod +x llvm.sh
