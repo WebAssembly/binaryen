@@ -462,30 +462,30 @@ private:
   const size_t MaximumMemory = 100 * 1024 * 1024;
 
   // TODO: handle unaligned too, see shell-interface
-  template<typename T> T* getMemory(Address address, Name memoryName) {
+  void* getMemory(Address address, Name memoryName, size_t size) {
     auto it = memories.find(memoryName);
     assert(it != memories.end());
     auto& memory = it->second;
     // resize the memory buffer as needed.
-    auto max = address + sizeof(T);
+    auto max = address + size;
     if (max > memory.size()) {
       if (max > MaximumMemory) {
         throw FailToEvalException("excessively high memory address accessed");
       }
       memory.resize(max);
     }
-    return (T*)(&memory[address]);
+    return &memory[address];
   }
 
   template<typename T> void doStore(Address address, T value, Name memoryName) {
-    // do a memcpy to avoid undefined behavior if unaligned
-    memcpy(getMemory<T>(address, memoryName), &value, sizeof(T));
+    // Use memcpy to avoid UB if unaligned.
+    memcpy(getMemory(address, memoryName, sizeof(T)), &value, sizeof(T));
   }
 
   template<typename T> T doLoad(Address address, Name memoryName) {
-    // do a memcpy to avoid undefined behavior if unaligned
+    // Use memcpy to avoid UB if unaligned.
     T ret;
-    memcpy(&ret, getMemory<T>(address, memoryName), sizeof(T));
+    memcpy(&ret, getMemory(address, memoryName, sizeof(T)), sizeof(T));
     return ret;
   }
 
