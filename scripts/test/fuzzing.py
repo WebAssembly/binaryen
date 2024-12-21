@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 
 # Tests that the fuzzers should not operate on.
-unfuzzable_tests = [
+unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
     # not all relaxed SIMD instructions are implemented in the interpreter
@@ -73,4 +75,20 @@ unfuzzable_tests = [
     'typed_continuations_contnew.wast',
     'typed_continuations_contbind.wast',
     'typed_continuations_suspend.wast',
+    # contains too many segments to run in a wasm VM
+    'limit-segments_disable-bulk-memory.wast',
+    # https://github.com/WebAssembly/binaryen/issues/7176
+    'names.wast',
+    # huge amount of locals that make it extremely slow
+    'too_much_for_liveness.wasm',
 ]
+
+
+def is_fuzzable(name):
+    name = os.path.basename(name)
+
+    # It makes no sense to fuzz things that check validation errors.
+    if '.fail.' in name:
+        return False
+
+    return name not in unfuzzable
