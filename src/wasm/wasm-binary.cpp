@@ -4172,13 +4172,15 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::StructGetU: {
           auto type = getIndexedHeapType();
           auto field = getU32LEB();
-          return builder.makeStructGet(
-            type, field, op == BinaryConsts::StructGetS);
+          return builder.makeStructGet(type,
+                                       field,
+                                       op == BinaryConsts::StructGetS,
+                                       MemoryOrder::Unordered);
         }
         case BinaryConsts::StructSet: {
           auto type = getIndexedHeapType();
           auto field = getU32LEB();
-          return builder.makeStructSet(type, field);
+          return builder.makeStructSet(type, field, MemoryOrder::Unordered);
         }
         case BinaryConsts::ArrayNew:
           return builder.makeArrayNew(getIndexedHeapType());

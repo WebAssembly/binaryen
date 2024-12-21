@@ -740,15 +740,12 @@ struct NullInstrParserCtx {
                          HeapTypeT,
                          FieldIdxT,
                          bool,
-                         MemoryOrder = MemoryOrder::Unordered) {
+                         MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeStructSet(Index,
-                         const std::vector<Annotation>&,
-                         HeapTypeT,
-                         FieldIdxT,
-                         MemoryOrder = MemoryOrder::Unordered) {
+  Result<> makeStructSet(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>

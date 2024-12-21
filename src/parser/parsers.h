@@ -2240,7 +2240,8 @@ Result<> makeStructGet(Ctx& ctx,
   CHECK_ERR(type);
   auto field = fieldidx(ctx, *type);
   CHECK_ERR(field);
-  return ctx.makeStructGet(pos, annotations, *type, *field, signed_);
+  return ctx.makeStructGet(
+    pos, annotations, *type, *field, signed_, MemoryOrder::Unordered);
 }
 
 template<typename Ctx>
@@ -2264,7 +2265,8 @@ makeStructSet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   CHECK_ERR(type);
   auto field = fieldidx(ctx, *type);
   CHECK_ERR(field);
-  return ctx.makeStructSet(pos, annotations, *type, *field);
+  return ctx.makeStructSet(
+    pos, annotations, *type, *field, MemoryOrder::Unordered);
 }
 
 template<typename Ctx>

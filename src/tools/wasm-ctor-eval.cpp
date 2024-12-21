@@ -957,7 +957,8 @@ public:
 
     Expression* set;
     if (global.type.isStruct()) {
-      set = builder.makeStructSet(index, getGlobal, value);
+      set =
+        builder.makeStructSet(index, getGlobal, value, MemoryOrder::Unordered);
     } else {
       set = builder.makeArraySet(
         getGlobal, builder.makeConst(int32_t(index)), value);

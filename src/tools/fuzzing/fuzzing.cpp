@@ -4493,7 +4493,8 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto [structType, fieldIndex] = pick(structFields);
   auto* ref = makeTrappingRefUse(structType);
   auto signed_ = maybeSignedGet(structType.getStruct().fields[fieldIndex]);
-  return builder.makeStructGet(fieldIndex, ref, type, signed_);
+  return builder.makeStructGet(
+    fieldIndex, ref, MemoryOrder::Unordered, type, signed_);
 }
 
 Expression* TranslateToFuzzReader::makeStructSet(Type type) {
@@ -4505,7 +4506,7 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
   auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
-  return builder.makeStructSet(fieldIndex, ref, value);
+  return builder.makeStructSet(fieldIndex, ref, value, MemoryOrder::Unordered);
 }
 
 // Make a bounds check for an array operation, given a ref + index. An optional
