@@ -1672,6 +1672,9 @@ struct Asyncify : public Pass {
             break;
           }
         }
+        if (!asyncifyMemory) {
+          Fatal() << "Please specify which of the multiple memories to use, with --pass-arg=asyncify-memory@memory";
+        }
       }
     }
     pointerType =

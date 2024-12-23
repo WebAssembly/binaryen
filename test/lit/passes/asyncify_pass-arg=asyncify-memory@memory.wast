@@ -13,12 +13,16 @@
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))
+
+  ;; CHECK:      (memory $unused0 1 1)
   (memory $unused0 (export "unused0") 1 1)
   ;; CHECK:      (memory $mem 1 1)
   (memory $mem (export "memory") 1 1)
   ;; CHECK:      (memory $ignore 1 1)
   (memory $ignore (export "unused") 1 1)
 )
+;; CHECK:      (export "unused0" (memory $unused0))
+
 ;; CHECK:      (export "memory" (memory $mem))
 
 ;; CHECK:      (export "unused" (memory $ignore))
@@ -42,10 +46,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $mem
+;; CHECK-NEXT:    (i32.load $unused0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $mem offset=4
+;; CHECK-NEXT:    (i32.load $unused0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -59,10 +63,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $mem
+;; CHECK-NEXT:    (i32.load $unused0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $mem offset=4
+;; CHECK-NEXT:    (i32.load $unused0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -79,10 +83,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $mem
+;; CHECK-NEXT:    (i32.load $unused0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $mem offset=4
+;; CHECK-NEXT:    (i32.load $unused0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
@@ -96,10 +100,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.gt_u
-;; CHECK-NEXT:    (i32.load $mem
+;; CHECK-NEXT:    (i32.load $unused0
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.load $mem offset=4
+;; CHECK-NEXT:    (i32.load $unused0 offset=4
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
