@@ -13,7 +13,7 @@
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))
-
+  (memory $unused0 (export "unused0") 1 1)
   ;; CHECK:      (memory $mem 1 1)
   (memory $mem (export "memory") 1 1)
   ;; CHECK:      (memory $ignore 1 1)

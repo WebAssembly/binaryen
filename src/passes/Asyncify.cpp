@@ -243,9 +243,10 @@
 //
 //      Logs out instrumentation decisions to the console. This can help figure
 //      out why a certain function was instrumented.
+//
 //   --pass-arg=asyncify-memory@memory
-//      Sets the exported memory of the module to store and load data from and
-//      to, if said module contains multiple memories
+//      Picks which exported memory of the module to store and load data from and
+//      to (useful if the module contains multiple memories).
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
@@ -1668,7 +1669,6 @@ struct Asyncify : public Pass {
           if (export->kind == ExternalKind::Memory &&
               export->name == asyncifyMemoryValue) {
             asyncifyMemory = export->value;
-            break;
             break;
           }
         }
