@@ -1259,6 +1259,9 @@ Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
 }
 
 Result<> IRBuilder::makeLocalGet(Index local) {
+  if(!func || local > func->getNumLocals()){
+    return Err{"local.get out of scope or bounds"};
+  };
   push(builder.makeLocalGet(local, func->getLocalType(local)));
   return Ok{};
 }
@@ -1267,6 +1270,9 @@ Result<> IRBuilder::makeLocalSet(Index local) {
   LocalSet curr;
   curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
+  if (!func || local > func->getNumLocals()){
+    return Err{"local.set out of scope or bounds"};
+  };
   push(builder.makeLocalSet(local, curr.value));
   return Ok{};
 }
