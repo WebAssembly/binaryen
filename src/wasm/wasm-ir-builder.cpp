@@ -1060,7 +1060,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try * tryy;
+  } else if (Try* tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     tryy->catchBodies.push_back(*expr);
     tryy->name = scope.label;
@@ -1259,7 +1259,7 @@ Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
 }
 
 Result<> IRBuilder::makeLocalGet(Index local) {
-  if(!func || local > func->getNumLocals()){
+  if (!func || local > func->getNumLocals()) {
     return Err{"local.get out of scope or bounds"};
   };
   push(builder.makeLocalGet(local, func->getLocalType(local)));
@@ -1270,7 +1270,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
   LocalSet curr;
   curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
-  if (!func || local > func->getNumLocals()){
+  if (!func || local > func->getNumLocals()) {
     return Err{"local.set out of scope or bounds"};
   };
   push(builder.makeLocalSet(local, curr.value));
