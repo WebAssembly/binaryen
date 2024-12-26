@@ -261,8 +261,14 @@ struct Value {
     if (*curr == '"') {
       // String
       curr++;
-      char* close = strchr(curr, '"');
-      assert(close);
+      char* close = curr;
+      while (*close && *close != '"') {
+        if (*close == '\\' && *(close + 1)) {
+          close++; // Skip escaped character
+        }
+        close++;
+      }
+      assert(*close == '"');
       *close = 0; // end this string, and reuse it straight from the input
       setString(curr);
       curr = close + 1;
@@ -305,20 +311,40 @@ struct Value {
       skip();
       setObject();
       while (*curr != '}') {
-        assert(*curr == '"');
-        curr++;
-        char* close = strchr(curr, '"');
-        assert(close);
-        *close = 0; // end this string, and reuse it straight from the input
-        IString key(curr);
-        curr = close + 1;
-        skip();
-        assert(*curr == ':');
-        curr++;
-        skip();
-        Ref value = Ref(new Value());
-        curr = value->parse(curr);
-        (*obj)[key] = value;
+        if (*curr == '"') {
+          curr++;
+          char* close = curr;
+          while (*close && *close != '"') {
+            if (*close == '\\' && *(close + 1)) {
+              close++; // Skip escaped character
+            }
+            close++;
+          }
+          assert(*close == '"');
+          *close = 0; // end this string, and reuse it straight from the input
+          IString key(curr);
+          curr = close + 1;
+          skip();
+          assert(*curr == ':');
+          curr++;
+          skip();
+          Ref value = Ref(new Value());
+          curr = value->parse(curr);
+          (*obj)[key] = value;
+        } else {
+          // Unquoted key
+          char* start = curr;
+          while (*curr && *curr != ':' && !is_json_space(*curr)) {
+            curr++;
+          }
+          assert(*curr == ':');
+          IString key(std::string(start, curr - start).c_str());
+          curr++;
+          skip();
+          Ref value = Ref(new Value());
+          curr = value->parse(curr);
+          (*obj)[key] = value;
+        }
         skip();
         if (*curr == '}') {
           break;
