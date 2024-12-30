@@ -257,18 +257,25 @@ struct Value {
     while (*curr && is_json_space(*curr))                                      \
       curr++;                                                                  \
   }
+#define skip_escaped_characters(ptr)\
+    while (*ptr && *ptr != '"') {\
+      if (*ptr == '\\' && *(ptr + 1)) {\
+        ptr++;\
+      }\
+      ptr++;\
+    }
+#define RUNTIME_ASSERT(condition)\
+  if (!(condition)) {\
+      std::cerr << "Assertion failed: " #condition << " at " << __FILE__ << ":" << __LINE__ << "\n";\
+      std::terminate();\
+  }
     skip();
     if (*curr == '"') {
       // String
       curr++;
       char* close = curr;
-      while (*close && *close != '"') {
-        if (*close == '\\' && *(close + 1)) {
-          close++; // Skip escaped character
-        }
-        close++;
-      }
-      assert(*close == '"');
+      skip_escaped_characters(close);
+      RUNTIME_ASSERT(*close == '"');
       *close = 0; // end this string, and reuse it straight from the input
       setString(curr);
       curr = close + 1;
@@ -314,13 +321,8 @@ struct Value {
         if (*curr == '"') {
           curr++;
           char* close = curr;
-          while (*close && *close != '"') {
-            if (*close == '\\' && *(close + 1)) {
-              close++; // Skip escaped character
-            }
-            close++;
-          }
-          assert(*close == '"');
+          skip_escaped_characters(close);
+          RUNTIME_ASSERT(*close == '"');
           *close = 0; // end this string, and reuse it straight from the input
           IString key(curr);
           curr = close + 1;
