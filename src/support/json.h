@@ -257,17 +257,18 @@ struct Value {
     while (*curr && is_json_space(*curr))                                      \
       curr++;                                                                  \
   }
-#define skip_escaped_characters(ptr)\
-    while (*ptr && *ptr != '"') {\
-      if (*ptr == '\\' && *(ptr + 1)) {\
-        ptr++;\
-      }\
-      ptr++;\
-    }
-#define RUNTIME_ASSERT(condition)\
-  if (!(condition)) {\
-      std::cerr << "Assertion failed: " #condition << " at " << __FILE__ << ":" << __LINE__ << "\n";\
-      std::terminate();\
+#define skip_escaped_characters(ptr)                                           \
+  while (*ptr && *ptr != '"') {                                                \
+    if (*ptr == '\\' && *(ptr + 1)) {                                          \
+      ptr++;                                                                   \
+    }                                                                          \
+    ptr++;                                                                     \
+  }
+#define RUNTIME_ASSERT(condition)                                              \
+  if (!(condition)) {                                                          \
+    std::cerr << "Assertion failed: " #condition << " at " << __FILE__ << ":"  \
+              << __LINE__ << "\n";                                             \
+    std::terminate();                                                          \
   }
     skip();
     if (*curr == '"') {
