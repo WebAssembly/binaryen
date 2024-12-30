@@ -39,6 +39,7 @@
 
 #include "support/istring.h"
 #include "support/safe_integer.h"
+#include "support/utilities.h"
 
 namespace json {
 
@@ -264,19 +265,15 @@ struct Value {
     }                                                                          \
     ptr++;                                                                     \
   }
-#define RUNTIME_ASSERT(condition)                                              \
-  if (!(condition)) {                                                          \
-    std::cerr << "Assertion failed: " #condition << " at " << __FILE__ << ":"  \
-              << __LINE__ << "\n";                                             \
-    std::terminate();                                                          \
-  }
     skip();
     if (*curr == '"') {
       // String
       curr++;
       char* close = curr;
       skip_escaped_characters(close);
-      RUNTIME_ASSERT(*close == '"');
+      if (!(*close == '"')) {
+        wasm::Fatal() << "Assertion failed (close == '\"') ";
+      }
       *close = 0; // end this string, and reuse it straight from the input
       setString(curr);
       curr = close + 1;
@@ -323,7 +320,9 @@ struct Value {
           curr++;
           char* close = curr;
           skip_escaped_characters(close);
-          RUNTIME_ASSERT(*close == '"');
+          if (!(*close == '"')) {
+            wasm::Fatal() << "Assertion failed (close == '\"') ";
+          }
           *close = 0; // end this string, and reuse it straight from the input
           IString key(curr);
           curr = close + 1;
