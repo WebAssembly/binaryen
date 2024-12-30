@@ -235,6 +235,7 @@ def main(argv):
         elif option == '--no_of_files':
             num = int(value)
         elif option == '--no_retry':
+            global retry
             retry = False
 
     for i in range(1, num + 1):
