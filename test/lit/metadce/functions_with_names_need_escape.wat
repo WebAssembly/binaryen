@@ -10,14 +10,14 @@
   ;;@ a:1:2
   ;; TXT:      (type $0 (func))
 
-  ;; TXT:      (export "f~!@#$%^&*()_+`-={}|[]\\:\";'<>?,./" (func $f))
+  ;; TXT:      (export "f" (func $f))
 
   ;; TXT:      (func $f
   ;; TXT-NEXT:  ;;@ a:7:8:someSymbol
   ;; TXT-NEXT:  (nop)
   ;; TXT-NEXT:  ;;@ a:9:10
   ;; TXT-NEXT: )
-  (func $f (export "f~!@#$%^&*()_+`-={}|[]\\:\";'<>?,./")
+  (func $f (export "f")
      ;;@ a:7:8:someSymbol
      (nop)
      ;;@ a:9:10
