@@ -1583,7 +1583,10 @@ class ClusterFuzz(TestCaseHandler):
         out = run([sys.executable,
                    os.path.join(self.clusterfuzz_dir, 'run.py'),
                    '--output_dir=' + os.getcwd(),
-                   '--no_of_files=1'])
+                   '--no_of_files=1',
+                   # Do not retry on wasm-opt errors: we want to investigate
+                   # them.
+                   '--no_retry'])
 
         # We should not see any mention of a wasm-opt error that caused a
         # retry. On production ClusterFuzz this is not an error, but we do want
