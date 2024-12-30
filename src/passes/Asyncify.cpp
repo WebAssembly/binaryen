@@ -1665,10 +1665,10 @@ struct Asyncify : public Pass {
       } else {
         auto asyncifyMemoryValue =
           getArgumentOrDefault("asyncify-memory", "memory");
-        for (auto& export : module->exports) {
-          if (export->kind == ExternalKind::Memory &&
-              export->name == asyncifyMemoryValue) {
-            asyncifyMemory = export->value;
+        for (auto& theExport : module->exports) {
+          if (theExport->kind == ExternalKind::Memory &&
+              theExport->name == asyncifyMemoryValue) {
+            asyncifyMemory = theExport->value;
             break;
           }
         }
