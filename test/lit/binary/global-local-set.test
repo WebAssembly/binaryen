@@ -1,0 +1,5 @@
+RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
+
+;; Check that we get the expected error.
+
+;; CHECK: local.set is only valid in a function context
