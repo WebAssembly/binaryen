@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - `struct.atomic.get`/`struct.atomic.set` now require the threads feature,
+   `--enable-threads`. (#7185)
+
 v121
 ----
 
