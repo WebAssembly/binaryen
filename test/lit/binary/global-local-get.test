@@ -1,0 +1,10 @@
+RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
+
+;; Check that we get the expected error for an input binary that looks like
+;; this:
+;;
+;;  (module
+;;    (global $g i32 (local.get 0))
+;;  )
+
+;; CHECK: local.get is only valid in a function context
