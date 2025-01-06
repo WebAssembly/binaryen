@@ -98,10 +98,6 @@ struct CoalesceLocals
     interferences.set(low, high, true);
   }
 
-  void unInterfere(Index i, Index j) {
-    interferences.set(std::min(i, j), std::max(i, j), false);
-  }
-
   bool interferes(Index i, Index j) {
     return interferences.get(std::min(i, j), std::max(i, j));
   }
