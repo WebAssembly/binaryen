@@ -978,8 +978,14 @@ Literal Literal::neg() const {
 Literal Literal::abs() const {
   switch (type.getBasic()) {
     case Type::i32:
+      if (i32 == std::numeric_limits<int32_t>::min()) {
+        return *this;
+      }
       return Literal(std::abs(i32));
     case Type::i64:
+      if (i64 == std::numeric_limits<int64_t>::min()) {
+        return *this;
+      }
       return Literal(std::abs(i64));
     case Type::f32:
       return Literal(i32 & 0x7fffffff).castToF32();

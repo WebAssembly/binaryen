@@ -204,13 +204,9 @@ public:
   makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
   Result<> makeStructNew(HeapType type);
   Result<> makeStructNewDefault(HeapType type);
-  Result<> makeStructGet(HeapType type,
-                         Index field,
-                         bool signed_,
-                         MemoryOrder order = MemoryOrder::Unordered);
-  Result<> makeStructSet(HeapType type,
-                         Index field,
-                         MemoryOrder order = MemoryOrder::Unordered);
+  Result<>
+  makeStructGet(HeapType type, Index field, bool signed_, MemoryOrder order);
+  Result<> makeStructSet(HeapType type, Index field, MemoryOrder order);
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);

@@ -110,6 +110,13 @@ def get_random_initial_content():
     return os.path.join(INITIAL_CONTENT_PATH, f'{index}.wasm')
 
 
+# In production ClusterFuzz we retry whenever we see a wasm-opt error. We are
+# not looking for wasm-opt issues there, and just use it to generate testcases
+# for VMs. For local testing, however, we may want to disable retrying, which
+# allows us to debug any such failures that we run into.
+retry = True
+
+
 # Generate a random wasm file, and return a string that creates a typed array of
 # those bytes, suitable for use in a JS file, in the form
 #
@@ -144,6 +151,11 @@ def get_wasm_contents(i, output_dir):
         try:
             subprocess.check_call(cmd)
         except subprocess.CalledProcessError:
+            if not retry:
+                print('error in running wasm-opt')
+                print(' '.join(cmd))
+                raise
+
             # Try again.
             print('(oops, retrying wasm-opt)')
             attempt += 1
@@ -247,13 +259,16 @@ def main(argv):
     # https://google.github.io/clusterfuzz/setting-up-fuzzing/blackbox-fuzzing/#uploading-a-fuzzer
     output_dir = '.'
     num = 100
-    expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=']
+    expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=', 'no_retry']
     optlist, _ = getopt.getopt(argv[1:], '', expected_flags)
     for option, value in optlist:
         if option == '--output_dir':
             output_dir = value
         elif option == '--no_of_files':
             num = int(value)
+        elif option == '--no_retry':
+            global retry
+            retry = False
 
     for i in range(1, num + 1):
         testcase_file_path = os.path.join(output_dir,

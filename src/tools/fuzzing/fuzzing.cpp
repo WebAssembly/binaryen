@@ -3243,14 +3243,19 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // which is not ideal.
   if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
     // If we have a function context then we can at least emit a local.get,
-    // perhaps, which is less bad. Note that we need to check typeLocals
+    // sometimes, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
     // to us, if there is no local).
     // TODO: we could also look for locals containing subtypes
-    if (funcContext && !funcContext->typeLocals[type].empty()) {
-      return makeLocalGet(type);
+    if (funcContext) {
+      if (!funcContext->typeLocals[type].empty()) {
+        return makeLocalGet(type);
+      }
+      // No local, but we are in a function context so RefAsNonNull is valid.
+      return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
     }
-    return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
+    // No function context, so we are in quite the pickle. Continue onwards, as
+    // we may succeed to emit something more complex (like a struct.new).
   }
 
   // When we make children, they must be trivial if we are not in a function
@@ -4493,7 +4498,8 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto [structType, fieldIndex] = pick(structFields);
   auto* ref = makeTrappingRefUse(structType);
   auto signed_ = maybeSignedGet(structType.getStruct().fields[fieldIndex]);
-  return builder.makeStructGet(fieldIndex, ref, type, signed_);
+  return builder.makeStructGet(
+    fieldIndex, ref, MemoryOrder::Unordered, type, signed_);
 }
 
 Expression* TranslateToFuzzReader::makeStructSet(Type type) {
@@ -4505,7 +4511,7 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
   auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
-  return builder.makeStructSet(fieldIndex, ref, value);
+  return builder.makeStructSet(fieldIndex, ref, value, MemoryOrder::Unordered);
 }
 
 // Make a bounds check for an array operation, given a ref + index. An optional

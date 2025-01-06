@@ -1259,11 +1259,17 @@ Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
 }
 
 Result<> IRBuilder::makeLocalGet(Index local) {
+  if (!func) {
+    return Err{"local.get is only valid in a function context"};
+  }
   push(builder.makeLocalGet(local, func->getLocalType(local)));
   return Ok{};
 }
 
 Result<> IRBuilder::makeLocalSet(Index local) {
+  if (!func) {
+    return Err{"local.set is only valid in a function context"};
+  }
   LocalSet curr;
   curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
@@ -1272,6 +1278,9 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 }
 
 Result<> IRBuilder::makeLocalTee(Index local) {
+  if (!func) {
+    return Err{"local.tee is only valid in a function context"};
+  }
   LocalSet curr;
   curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
@@ -1801,7 +1810,7 @@ Result<> IRBuilder::makeStructGet(HeapType type,
   CHECK_ERR(ChildPopper{*this}.visitStructGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(
-    builder.makeStructGet(field, curr.ref, fields[field].type, signed_, order));
+    builder.makeStructGet(field, curr.ref, order, fields[field].type, signed_));
   return Ok{};
 }
 

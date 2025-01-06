@@ -1752,7 +1752,8 @@ BinaryenExpressionRef BinaryenStructGet(BinaryenModuleRef module,
                                         bool signed_) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStructGet(index, (Expression*)ref, Type(type), signed_));
+      .makeStructGet(
+        index, (Expression*)ref, MemoryOrder::Unordered, Type(type), signed_));
 }
 BinaryenExpressionRef BinaryenStructSet(BinaryenModuleRef module,
                                         BinaryenIndex index,
@@ -1760,7 +1761,8 @@ BinaryenExpressionRef BinaryenStructSet(BinaryenModuleRef module,
                                         BinaryenExpressionRef value) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStructSet(index, (Expression*)ref, (Expression*)value));
+      .makeStructSet(
+        index, (Expression*)ref, (Expression*)value, MemoryOrder::Unordered));
 }
 BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                        BinaryenHeapType type,

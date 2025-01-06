@@ -280,6 +280,7 @@ struct J2CLItableMerging : public Pass {
         replaceCurrent(builder.makeStructGet(
           0,
           curr->ref,
+          MemoryOrder::Unordered,
           parent.structInfoByITableType[curr->type.getHeapType()]
             ->javaClass.getStruct()
             .fields[0]

@@ -938,9 +938,9 @@ public:
   }
   StructGet* makeStructGet(Index index,
                            Expression* ref,
+                           MemoryOrder order,
                            Type type,
-                           bool signed_ = false,
-                           MemoryOrder order = MemoryOrder::Unordered) {
+                           bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<StructGet>();
     ret->index = index;
     ret->ref = ref;
@@ -953,7 +953,7 @@ public:
   StructSet* makeStructSet(Index index,
                            Expression* ref,
                            Expression* value,
-                           MemoryOrder order = MemoryOrder::Unordered) {
+                           MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<StructSet>();
     ret->index = index;
     ret->ref = ref;
