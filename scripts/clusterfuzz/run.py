@@ -98,6 +98,7 @@ system_random = random.SystemRandom()
 # allows us to debug any such failures that we run into.
 retry = True
 
+
 # Generate a random wasm file, and return a string that creates a typed array of
 # those bytes, suitable for use in a JS file, in the form
 #
