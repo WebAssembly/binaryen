@@ -282,6 +282,15 @@ class ClusterFuzz(utils.BinaryenTestCase):
         seen_calls = []
         seen_second_builds = []
         seen_JSPIs = []
+        seen_initial_contents = []
+
+        # Initial contents are noted in comments like this:
+        #
+        # /* using initial content 42.wasm */
+        #
+        # Note that we may see more than one in a file, as we may have more than
+        # one wasm in each testcase: each wasm has a chance.
+        initial_content_regex = re.compile(r'[/][*] using initial content ([^ ]+) [*][/]')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
@@ -301,6 +310,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 seen_JSPIs.append(0)
                 assert '/* async */' in js
                 assert '/* await */' in js
+
+            seen_initial_contents.append(re.findall(initial_content_regex, js))
 
         # There is always one build and one call (those are in the default
         # fuzz_shell.js), and we add a couple of operations, each with equal
@@ -343,6 +354,55 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'mean JSPIs: {statistics.mean(seen_JSPIs)}')
         self.assertEqual(min(seen_JSPIs), 0)
         self.assertEqual(max(seen_JSPIs), 1)
+
+        print()
+
+        # Flatten the data to help some of the below, from
+        #  [['a.wasm', 'b.wasm'], ['c.wasm']]
+        # into
+        #  ['a.wasm', 'b.wasm', 'c.wasm']
+        flat_initial_contents = [item for items in seen_initial_contents for item in items]
+
+        # Initial content appear 50% of the time for each wasm file. Each
+        # testcase has 1.333 wasm files on average.
+        print('Initial contents are distributed as ~ mean 0.68')
+        print(f'mean initial contents: {len(flat_initial_contents) / N}')
+        # Initial contents should be mostly unique (we have many, many testcases
+        # and we pick just 100 or so). And we must see more than one unique one.
+        unique_initial_contents = set(flat_initial_contents)
+        print(f'unique initial contents: {len(unique_initial_contents)} should be almost equal to {len(flat_initial_contents)}')
+        self.assertGreater(len(unique_initial_contents), 1)
+        # Not all testcases have initial contents.
+        num_initial_contents = [len(items) for items in seen_initial_contents]
+        self.assertEqual(min(num_initial_contents), 0)
+        # Some do (this is redundant given that the set of unique initial
+        # contents was asserted on before, so this just confirms/checks that).
+        self.assertGreaterEqual(max(num_initial_contents), 1)
+
+        print()
+
+        # Execute the files in V8. Almost all should execute properly (some
+        # small number may trap during startup, say on a segment out of bounds).
+        if shared.V8:
+            valid_executions = 0
+            for i in range(1, N + 1):
+                fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+
+                cmd = [shared.V8, '--wasm-staging', fuzz_file]
+                proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+
+                # An execution is valid if we exited without error, and if we
+                # managed to run some code before exiting (modules with no
+                # exports will be considered "invalid" here, but that is very
+                # rare, and in a sense they are actually unuseful).
+                if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
+                    valid_executions += 1
+
+            print('Valid executions are distributed as ~ mean 0.99')
+            print(f'mean valid executions: {valid_executions / N}')
+            # Assert on having at least half execute properly. Given the true mean
+            # is 0.9, for half of 100 to fail is incredibly unlikely.
+            self.assertGreater(valid_executions, N / 2)
 
         print()
 

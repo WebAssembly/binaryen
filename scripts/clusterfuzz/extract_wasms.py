@@ -67,7 +67,7 @@ def repl(text):
 
 
 # Replace the wasm files and write them out.
-js = re.sub(r'var \w+ = new Uint8Array\(\[([\d,]+)\]\);', repl, js)
+js = re.sub(r'var \w+ = new Uint8Array\(\[([\d,]+)\]\)', repl, js)
 
 # Write out the new JS.
 with open(f'{out}.js', 'w') as f:
