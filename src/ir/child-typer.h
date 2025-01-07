@@ -91,6 +91,18 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     self().noteAnyTupleType(childp, arity);
   }
 
+  // Used only for string.new_lossy_utf8_array to work around a missing type
+  // annotation in the stringref spec.
+  void noteAnyI8ArrayReferenceType(Expression** childp) {
+    self().noteAnyI8ArrayReferenceType(childp);
+  }
+
+  // Used only for string.new_wtf16_array to work around a missing type
+  // annotation in the stringref spec.
+  void noteAnyI16ArrayReferenceType(Expression** childp) {
+    self().noteAnyI16ArrayReferenceType(childp);
+  }
+
   Type getLabelType(Name label) { return self().getLabelType(label); }
 
   void visitNop(Nop* curr) {}
@@ -992,15 +1004,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     WASM_UNREACHABLE("unexpected op");
   }
 
-  void visitStringNew(StringNew* curr,
-                      std::optional<HeapType> ht = std::nullopt) {
+  void visitStringNew(StringNew* curr) {
     switch (curr->op) {
       case StringNewLossyUTF8Array:
+        noteAnyI8ArrayReferenceType(&curr->ref);
+        note(&curr->start, Type::i32);
+        note(&curr->end, Type::i32);
+        return;
       case StringNewWTF16Array:
-        if (!ht) {
-          ht = curr->ref->type.getHeapType();
-        }
-        note(&curr->ref, Type(*ht, Nullable));
+        noteAnyI16ArrayReferenceType(&curr->ref);
         note(&curr->start, Type::i32);
         note(&curr->end, Type::i32);
         return;
