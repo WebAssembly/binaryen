@@ -391,7 +391,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
             proc = subprocess.run(cmd, stdout=subprocess.PIPE)
 
             # An execution is valid if we exited without error, and if we
-            # managed to run some code before (modules with no exports will be
+            # managed to run some code before exiting (modules with no exports will be
             # considered "invalid" here, but that is very rare, and in a sense
             # they are actually unuseful).
             if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
