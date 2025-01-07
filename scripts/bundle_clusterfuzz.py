@@ -162,7 +162,7 @@ with tarfile.open(output_file, "w:gz") as tar:
             # Looks good.
             tar.add(temp_wasm, arcname=f'initial/{index}.wasm')
             index += 1
-        print(f'\r        {100*i/len(all_tests):.2f}%', end='', flush=True)
+        print(f'\r        {100 * i / len(all_tests):.2f}%', end='', flush=True)
     print(f'        (num: {index})')
 
     # Write initial/num.txt which contains the number of testcases in that
@@ -170,7 +170,7 @@ with tarfile.open(output_file, "w:gz") as tar:
     num_txt = 'num.txt'
     with open(num_txt, 'w') as f:
         f.write(f'{index}')
-    tar.add(num_txt, arcname=f'initial/num.txt')
+    tar.add(num_txt, arcname='initial/num.txt')
 
 
 print('Done.')

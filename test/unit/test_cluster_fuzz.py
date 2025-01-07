@@ -366,7 +366,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # Initial content appear 50% of the time for each wasm file. Each
         # testcase has 1.333 wasm files on average.
         print('Initial contents are distributed as ~ mean 0.68')
-        print(f'mean initial contents: {len(flat_initial_contents)/N}')
+        print(f'mean initial contents: {len(flat_initial_contents) / N}')
         # Initial contents should be mostly unique (we have many, many testcases
         # and we pick just 100 or so). And we must see more than one unique one.
         unique_initial_contents = set(flat_initial_contents)
@@ -398,10 +398,10 @@ class ClusterFuzz(utils.BinaryenTestCase):
                 valid_executions += 1
 
         print('Valid executions are distributed as ~ mean 0.99')
-        print(f'mean valid executions: {valid_executions/N}')
+        print(f'mean valid executions: {valid_executions / N}')
         # Assert on having at least half execute properly. Given the true mean
         # is 0.9, for half of 100 to fail is incredibly unlikely.
-        self.assertGreater(valid_executions, N/2)
+        self.assertGreater(valid_executions, N / 2)
 
         print()
 
