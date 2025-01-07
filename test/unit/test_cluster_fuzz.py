@@ -383,25 +383,26 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         # Execute the files in V8. Almost all should execute properly (some
         # small number may trap during startup, say on a segment out of bounds).
-        valid_executions = 0
-        for i in range(1, N + 1):
-            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+        if shared.V8:
+            valid_executions = 0
+            for i in range(1, N + 1):
+                fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
 
-            cmd = [shared.V8, '--wasm-staging', fuzz_file]
-            proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+                cmd = [shared.V8, '--wasm-staging', fuzz_file]
+                proc = subprocess.run(cmd, stdout=subprocess.PIPE)
 
-            # An execution is valid if we exited without error, and if we
-            # managed to run some code before exiting (modules with no exports will be
-            # considered "invalid" here, but that is very rare, and in a sense
-            # they are actually unuseful).
-            if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
-                valid_executions += 1
+                # An execution is valid if we exited without error, and if we
+                # managed to run some code before exiting (modules with no
+                # exports will be considered "invalid" here, but that is very
+                # rare, and in a sense they are actually unuseful).
+                if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
+                    valid_executions += 1
 
-        print('Valid executions are distributed as ~ mean 0.99')
-        print(f'mean valid executions: {valid_executions / N}')
-        # Assert on having at least half execute properly. Given the true mean
-        # is 0.9, for half of 100 to fail is incredibly unlikely.
-        self.assertGreater(valid_executions, N / 2)
+            print('Valid executions are distributed as ~ mean 0.99')
+            print(f'mean valid executions: {valid_executions / N}')
+            # Assert on having at least half execute properly. Given the true mean
+            # is 0.9, for half of 100 to fail is incredibly unlikely.
+            self.assertGreater(valid_executions, N / 2)
 
         print()
 
