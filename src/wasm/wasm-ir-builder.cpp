@@ -482,7 +482,9 @@ private:
           bool isI8Array =
             type.isRef() && type.getHeapType().isArray() &&
             type.getHeapType().getArray().element.packedType == Field::i8;
-          if (!isI8Array && type != Type::unreachable) {
+          bool isNone =
+            type.isRef() && type.getHeapType().isMaybeShared(HeapType::none);
+          if (!isI8Array && !isNone && type != Type::unreachable) {
             needUnreachableFallback = true;
             break;
           }
@@ -490,7 +492,9 @@ private:
           bool isI16Array =
             type.isRef() && type.getHeapType().isArray() &&
             type.getHeapType().getArray().element.packedType == Field::i16;
-          if (!isI16Array && type != Type::unreachable) {
+          bool isNone =
+            type.isRef() && type.getHeapType().isMaybeShared(HeapType::none);
+          if (!isI16Array && !isNone && type != Type::unreachable) {
             needUnreachableFallback = true;
             break;
           }
