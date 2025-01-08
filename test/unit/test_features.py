@@ -252,7 +252,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_multivalue(module, 'Multivalue block type require multivalue [--enable-multivalue]')
+        self.check_multivalue(module, 'Block type requires additional features')
 
     def test_i31_global(self):
         module = '''

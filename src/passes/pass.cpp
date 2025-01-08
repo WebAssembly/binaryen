@@ -411,8 +411,12 @@ void PassRegistry::registerPasses() {
   registerPass("remove-imports",
                "removes imports and replaces them with nops",
                createRemoveImportsPass);
-  registerPass(
-    "remove-memory", "removes memory segments", createRemoveMemoryPass);
+  registerPass("remove-memory-init",
+               "removes memory initialization",
+               createRemoveMemoryInitPass);
+  registerPass("remove-memory",
+               "removes memory init (legacy name)",
+               createRemoveMemoryInitPass);
   registerPass("remove-unused-brs",
                "removes breaks from locations that are not needed",
                createRemoveUnusedBrsPass);
