@@ -16,8 +16,8 @@
 
 //
 // Removes memory segments, leaving only code in the module. It also removes
-// the start function, which is only used for initializing the memory.
-//
+// the start function, which (in LLVM use cases) is only used for initializing
+// the memory.
 
 #include <pass.h>
 #include <wasm.h>
