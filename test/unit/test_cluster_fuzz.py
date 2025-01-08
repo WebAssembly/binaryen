@@ -352,7 +352,6 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # callExports behave deterministically, so we can compare to
         # wasm-opt --fuzz-exec etc.), and all subsequent ones must have a seed.
         seeds = []
-        print('wAKA', seen_calls)
         for calls in seen_calls:
             if calls:
                 self.assertEqual(calls[0], '')
@@ -365,7 +364,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # avoid extremely rare errors.
         num_seeds = len(seeds)
         num_unique_seeds = len(set(seeds))
-        self.assertGreatererEqual(num_unique_seeds / num_seeds, 0.95)
+        print(f'unique JS call seeds: {num_unique_seeds} (should be almost {num_seeds})')
+        self.assertGreaterEqual(num_unique_seeds / num_seeds, 0.95)
 
         print()
 
