@@ -106,6 +106,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
         SAFE_WARNINGS = [
             # When we randomly pick no passes to run, this is shown.
             'warning: no passes specified, not doing any work',
+            # MemoryPacking warns on some things.
+            'warning: active memory segments have overlap, which prevents some optimizations.',
         ]
         stderr = proc.stderr
         for safe in SAFE_WARNINGS:
