@@ -292,7 +292,16 @@ struct IRBuilder::ChildPopper
     size_t arity;
   };
 
-  struct Constraint : std::variant<Subtype, AnyType, AnyReference, AnyTuple> {
+  struct AnyI8ArrayReference {};
+
+  struct AnyI16ArrayReference {};
+
+  struct Constraint : std::variant<Subtype,
+                                   AnyType,
+                                   AnyReference,
+                                   AnyTuple,
+                                   AnyI8ArrayReference,
+                                   AnyI16ArrayReference> {
     std::optional<Type> getSubtype() const {
       if (auto* subtype = std::get_if<Subtype>(this)) {
         return subtype->bound;
@@ -301,6 +310,12 @@ struct IRBuilder::ChildPopper
     }
     bool isAnyType() const { return std::get_if<AnyType>(this); }
     bool isAnyReference() const { return std::get_if<AnyReference>(this); }
+    bool isAnyI8ArrayReference() const {
+      return std::get_if<AnyI8ArrayReference>(this);
+    }
+    bool isAnyI16ArrayReference() const {
+      return std::get_if<AnyI16ArrayReference>(this);
+    }
     std::optional<size_t> getAnyTuple() const {
       if (auto* tuple = std::get_if<AnyTuple>(this)) {
         return tuple->arity;
@@ -354,6 +369,14 @@ struct IRBuilder::ChildPopper
 
     void noteAnyTupleType(Expression** childp, size_t arity) {
       children.push_back({childp, {AnyTuple{arity}}});
+    }
+
+    void noteAnyI8ArrayReferenceType(Expression** childp) {
+      children.push_back({childp, {AnyI8ArrayReference{}}});
+    }
+
+    void noteAnyI16ArrayReferenceType(Expression** childp) {
+      children.push_back({childp, {AnyI16ArrayReference{}}});
     }
 
     Type getLabelType(Name label) {
@@ -452,6 +475,26 @@ private:
           }
         } else if (auto bound = constraint.getSubtype()) {
           if (!Type::isSubType(type, *bound)) {
+            needUnreachableFallback = true;
+            break;
+          }
+        } else if (constraint.isAnyI8ArrayReference()) {
+          bool isI8Array =
+            type.isRef() && type.getHeapType().isArray() &&
+            type.getHeapType().getArray().element.packedType == Field::i8;
+          bool isNone =
+            type.isRef() && type.getHeapType().isMaybeShared(HeapType::none);
+          if (!isI8Array && !isNone && type != Type::unreachable) {
+            needUnreachableFallback = true;
+            break;
+          }
+        } else if (constraint.isAnyI16ArrayReference()) {
+          bool isI16Array =
+            type.isRef() && type.getHeapType().isArray() &&
+            type.getHeapType().getArray().element.packedType == Field::i16;
+          bool isNone =
+            type.isRef() && type.getHeapType().isMaybeShared(HeapType::none);
+          if (!isI16Array && !isNone && type != Type::unreachable) {
             needUnreachableFallback = true;
             break;
           }
@@ -612,13 +655,6 @@ public:
                               std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitArrayInitElem(curr, ht);
-    return popConstrainedChildren(children);
-  }
-
-  Result<> visitStringNew(StringNew* curr,
-                          std::optional<HeapType> ht = std::nullopt) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitStringNew(curr, ht);
     return popConstrainedChildren(children);
   }
 
@@ -1988,11 +2024,7 @@ Result<> IRBuilder::makeStringNew(StringNewOp op) {
     push(builder.makeStringNew(op, curr.ref));
     return Ok{};
   }
-  // There's no type annotation on these instructions due to a bug in the
-  // stringref proposal, so we just fudge it and pass `array` instead of a
-  // defined heap type. This will allow us to pop a child with an invalid
-  // array type, but that's just too bad.
-  CHECK_ERR(ChildPopper{*this}.visitStringNew(&curr, HeapType::array));
+  CHECK_ERR(visitStringNew(&curr));
   push(builder.makeStringNew(op, curr.ref, curr.start, curr.end));
   return Ok{};
 }

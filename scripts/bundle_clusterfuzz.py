@@ -71,6 +71,7 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
 '''
 
 import os
+import subprocess
 import sys
 import tarfile
 
@@ -87,7 +88,9 @@ if len(sys.argv) >= 3:
     # Delete the argument, as importing |shared| scans it.
     sys.argv.pop()
 
+from test import fuzzing # noqa
 from test import shared # noqa
+from test import support # noqa
 
 # Pick where to get the builds
 if build_dir:
@@ -96,6 +99,14 @@ if build_dir:
 else:
     binaryen_bin = shared.options.binaryen_bin
     binaryen_lib = shared.options.binaryen_lib
+
+# ClusterFuzz's run.py uses these features. Keep this in sync with that, so that
+# we only bundle initial content that makes sense for it.
+features = [
+    '-all',
+    '--disable-shared-everything',
+    '--disable-fp16',
+]
 
 with tarfile.open(output_file, "w:gz") as tar:
     # run.py
@@ -127,6 +138,40 @@ with tarfile.open(output_file, "w:gz") as tar:
                 if os.path.exists(path):
                     print(f'  ......... : {path}')
                     tar.add(path, arcname=f'lib/{name}')
+
+    # Add tests we will use as initial content under initial/. We put all the
+    # tests from the test suite there.
+    print('  .. initial content: ')
+    temp_wasm = 'temp.wasm'
+    index = 0
+    all_tests = shared.get_all_tests()
+    for i, test in enumerate(all_tests):
+        if not fuzzing.is_fuzzable(test):
+            continue
+        for wast, asserts in support.split_wast(test):
+            if not wast:
+                continue
+            support.write_wast(temp_wasm, wast)
+            # If the file is not valid for our features, skip it. In the same
+            # operation, also convert to binary if this was text (binary is more
+            # compact).
+            cmd = shared.WASM_OPT + ['-q', temp_wasm, '-o', temp_wasm] + features
+            if subprocess.run(cmd, stderr=subprocess.PIPE).returncode:
+                continue
+
+            # Looks good.
+            tar.add(temp_wasm, arcname=f'initial/{index}.wasm')
+            index += 1
+        print(f'\r        {100 * i / len(all_tests):.2f}%', end='', flush=True)
+    print(f'        (num: {index})')
+
+    # Write initial/num.txt which contains the number of testcases in that
+    # directory (saves run.py from needing to listdir each time).
+    num_txt = 'num.txt'
+    with open(num_txt, 'w') as f:
+        f.write(f'{index}')
+    tar.add(num_txt, arcname='initial/num.txt')
+
 
 print('Done.')
 print('To run the tests on this bundle, do:')

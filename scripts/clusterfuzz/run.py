@@ -68,6 +68,12 @@ FUZZER_BINARY_PATH = os.path.join(ROOT_DIR, 'bin', 'wasm-opt')
 # testcase.
 JS_SHELL_PATH = os.path.join(ROOT_DIR, 'scripts', 'fuzz_shell.js')
 
+# The path to the directory with initial contents.
+INITIAL_CONTENT_PATH = os.path.join(ROOT_DIR, 'initial')
+
+# The file that contains the number of initial contents
+INITIAL_CONTENT_NUM_PATH = os.path.join(ROOT_DIR, 'initial', 'num.txt')
+
 # The arguments we provide to wasm-opt to generate wasm files.
 FUZZER_ARGS = [
     # Generate a wasm from random data.
@@ -76,7 +82,8 @@ FUZZER_ARGS = [
     '--fuzz-passes',
     # Enable all features but disable ones not yet ready for fuzzing. This may
     # be a smaller set than fuzz_opt.py, as that enables a few experimental
-    # flags, while here we just fuzz with d8's --wasm-staging.
+    # flags, while here we just fuzz with d8's --wasm-staging. This should be
+    # synchonized with bundle_clusterfuzz.
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',
@@ -91,6 +98,23 @@ def get_file_name(prefix, index):
 # We should only use the system's random number generation, which is the best.
 # (We also use urandom below, which uses this under the hood.)
 system_random = random.SystemRandom()
+
+# The number of initial content testcases that were bundled for us, in the
+# "initial/" subdir.
+with open(INITIAL_CONTENT_NUM_PATH) as f:
+    num_initial_contents = int(f.read())
+
+
+def get_random_initial_content():
+    index = system_random.randint(0, num_initial_contents - 1)
+    return os.path.join(INITIAL_CONTENT_PATH, f'{index}.wasm')
+
+
+# In production ClusterFuzz we retry whenever we see a wasm-opt error. We are
+# not looking for wasm-opt issues there, and just use it to generate testcases
+# for VMs. For local testing, however, we may want to disable retrying, which
+# allows us to debug any such failures that we run into.
+retry = True
 
 
 # Generate a random wasm file, and return a string that creates a typed array of
@@ -111,12 +135,27 @@ def get_wasm_contents(i, output_dir):
         with open(input_data_file_path, 'wb') as file:
             file.write(os.urandom(random_size))
 
-        # Generate wasm from the random data.
+        # Generate a command to use wasm-opt with the proper args to generate
+        # wasm content from the input data.
         cmd = [FUZZER_BINARY_PATH] + FUZZER_ARGS
         cmd += ['-o', wasm_file_path, input_data_file_path]
+
+        # Sometimes use a file from the initial content testcases.
+        if system_random.random() < 0.5:
+            initial_content = get_random_initial_content()
+            cmd += ['--initial-fuzz=' + initial_content]
+        else:
+            initial_content = None
+
+        # Generate wasm from the random data.
         try:
             subprocess.check_call(cmd)
         except subprocess.CalledProcessError:
+            if not retry:
+                print('error in running wasm-opt')
+                print(' '.join(cmd))
+                raise
+
             # Try again.
             print('(oops, retrying wasm-opt)')
             attempt += 1
@@ -137,7 +176,10 @@ def get_wasm_contents(i, output_dir):
 
     # Convert to a string, and wrap into a typed array.
     wasm_contents = ','.join([str(c) for c in wasm_contents])
-    return f'new Uint8Array([{wasm_contents}])'
+    js = f'new Uint8Array([{wasm_contents}])'
+    if initial_content:
+        js = f'{js} /* using initial content {os.path.basename(initial_content)} */'
+    return js
 
 
 # Returns the contents of a .js fuzz file, given the index of the testcase and
@@ -217,13 +259,16 @@ def main(argv):
     # https://google.github.io/clusterfuzz/setting-up-fuzzing/blackbox-fuzzing/#uploading-a-fuzzer
     output_dir = '.'
     num = 100
-    expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=']
+    expected_flags = ['input_dir=', 'output_dir=', 'no_of_files=', 'no_retry']
     optlist, _ = getopt.getopt(argv[1:], '', expected_flags)
     for option, value in optlist:
         if option == '--output_dir':
             output_dir = value
         elif option == '--no_of_files':
             num = int(value)
+        elif option == '--no_retry':
+            global retry
+            retry = False
 
     for i in range(1, num + 1):
         testcase_file_path = os.path.join(output_dir,

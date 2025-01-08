@@ -1556,6 +1556,10 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
+# The error shown when a module fails to instantiate.
+INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
+
+
 # Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
 # to see that fuzzing that way works properly (it likely won't catch anything
 # the other fuzzers here catch, though it is possible). That is, running this
@@ -1580,15 +1584,13 @@ class ClusterFuzz(TestCaseHandler):
                 os.unlink(f)
 
         # Call run.py(), similarly to how ClusterFuzz does.
-        out = run([sys.executable,
-                   os.path.join(self.clusterfuzz_dir, 'run.py'),
-                   '--output_dir=' + os.getcwd(),
-                   '--no_of_files=1'])
-
-        # We should not see any mention of a wasm-opt error that caused a
-        # retry. On production ClusterFuzz this is not an error, but we do want
-        # to know about such issues, as they may be real bugs in wasm-opt.
-        assert 'retry' not in out, out
+        run([sys.executable,
+             os.path.join(self.clusterfuzz_dir, 'run.py'),
+             '--output_dir=' + os.getcwd(),
+             '--no_of_files=1',
+             # Do not retry on wasm-opt errors: we want to investigate
+             # them.
+             '--no_retry'])
 
         # We should see the two files.
         assert os.path.exists(fuzz_file)
@@ -1613,8 +1615,10 @@ class ClusterFuzz(TestCaseHandler):
 
         # Verify that we called something. The fuzzer should always emit at
         # least one exported function (unless we've decided to ignore the entire
-        # run).
-        if output != IGNORE:
+        # run, or if the wasm errored during instantiation, which can happen due
+        # to a testcase with a segment out of bounds, say).
+        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+
             assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
@@ -1674,7 +1678,7 @@ class Two(TestCaseHandler):
             # to anything.
             return
 
-        if output.strip() == 'exception thrown: failed to instantiate module':
+        if output.startswith(INSTANTIATE_ERROR):
             # We may fail to instantiate the modules for valid reasons, such as
             # an active segment being out of bounds. There is no point to
             # continue in such cases, as no exports are called.
