@@ -228,17 +228,24 @@ def get_js_file_contents(i, output_dir):
     extra_js_operations = [
         # Compile and link the wasm again. Each link adds more to the total
         # exports that we can call.
-        'build(binary);\n',
-        # Run all the exports we've accumulated.
-        'callExports();\n',
+        'build(binary)',
+        # Run all the exports we've accumulated. This is a placeholder, as we
+        # must pick a random seed for each (the placeholder would cause a JS
+        # error at runtime if we had a bug and did not replace it properly).
+        'CALL_EXPORTS',
     ]
     if has_second:
         extra_js_operations += [
-            'build(secondBinary);\n',
+            'build(secondBinary)',
         ]
 
     for i in range(num):
-        js += system_random.choice(extra_js_operations)
+        choice = system_random.choice(extra_js_operations)
+        if choice == 'CALL_EXPORTS':
+            # The random seed can be any unsigned 32-bit number.
+            seed = system_random.randint(0, 0xffffffff)
+            choice = f'callExports({seed})'
+        js += choice + ';\n'
 
     print(f'Created {bytes} wasm bytes')
 
