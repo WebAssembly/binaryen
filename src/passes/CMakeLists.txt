@@ -102,7 +102,7 @@ set(passes_SOURCES
   TraceCalls.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
-  RemoveMemory.cpp
+  RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
