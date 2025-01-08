@@ -304,8 +304,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
             with open(fuzz_file) as f:
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
-            for call in re.findall(call_exports_regex, js):
-                seen_calls.append(call)
+            seen_calls.append(re.findall(call_exports_regex, js))
             seen_second_builds.append(js.count('build(secondBinary);'))
 
             # If JSPI is enabled, the async and await keywords should be
@@ -353,6 +352,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         # callExports behave deterministically, so we can compare to
         # wasm-opt --fuzz-exec etc.), and all subsequent ones must have a seed.
         seeds = []
+        print('wAKA', seen_calls)
         for calls in seen_calls:
             if calls:
                 self.assertEqual(calls[0], '')
