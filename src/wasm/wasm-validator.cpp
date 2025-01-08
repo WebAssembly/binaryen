@@ -675,11 +675,11 @@ void FunctionValidator::validatePoppyExpression(Expression* curr) {
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
-  if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(
-      !curr->type.isTuple(),
-      curr,
-      "Multivalue block type require multivalue [--enable-multivalue]");
+  auto feats = curr->type.getFeatures();
+  if (!shouldBeTrue(feats <= getModule()->features,
+                    curr,
+                    "Block type requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
   }
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
@@ -3861,7 +3861,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     auto globalFeats = g->type.getFeatures();
     if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
       info.getStream(nullptr)
-        << "global type requires additional features "
+        << "global type requires additional features"
         << getMissingFeaturesList(module, globalFeats) << '\n';
     }
   }
