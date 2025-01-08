@@ -341,7 +341,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
         #  [['11', '22'], [], ['99']]
         # into
         #  [2, 0, 1]
-        num_seen_calls = [len(x) for x in seen_calls
+        num_seen_calls = [len(x) for x in seen_calls]
         print('Num JS calls are distributed as ~ mean 4, stddev 5, median 2')
         print(f'mean JS calls:   {statistics.mean(num_seen_calls)}')
         print(f'stdev JS calls:  {statistics.stdev(num_seen_calls)}')
