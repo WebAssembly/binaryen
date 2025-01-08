@@ -3861,7 +3861,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     auto globalFeats = g->type.getFeatures();
     if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
       info.getStream(nullptr)
-        << "global type requires additional features"
+        << "global type requires additional features "
         << getMissingFeaturesList(module, globalFeats) << '\n';
     }
   }
