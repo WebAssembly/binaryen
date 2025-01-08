@@ -2772,14 +2772,6 @@ void Wasm2JSGlue::emitPostES6() {
       default:
         continue;
     }
-    std::ostringstream export_name;
-    for (char c : exp->name.str) {
-      if (c == '-') {
-        export_name << '_';
-      } else {
-        export_name << c;
-      }
-    }
     out << "export var " << asmangle(exp->name.toString()) << " = ret"
         << moduleName << "." << asmangle(exp->name.toString()) << ";\n";
   }
