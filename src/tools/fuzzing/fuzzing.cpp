@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
 #include "ir/iteration.h"
@@ -332,6 +334,7 @@ void TranslateToFuzzReader::build() {
     addHashMemorySupport();
   }
   finalizeTable();
+  shuffleExports();
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -744,6 +747,38 @@ void TranslateToFuzzReader::finalizeTable() {
     // Avoid an imported table (which the fuzz harness would need to handle).
     table->module = table->base = Name();
   }
+}
+
+void TranslateToFuzzReader::shuffleExports() {
+  // Randomly ordering the exports is useful for a few reasons. First, initial
+  // content may have a natural order in which to execute things (an "init"
+  // export first, for example), and changing that order may lead to very
+  // different execution. Second, even in the fuzzer's own random content there
+  // is a "direction", since we generate as we go (e.g. no function calls a
+  // later function that does not exist yet / will be created later), and also
+  // we emit invokes for a function right after it (so we end up calling the
+  // same code several times in succession, but interleaving it with others may
+  // find more things). But we also keep a good chance for the natural order
+  // here, as it may help some initial content.
+  if (oneIn(2)) {
+    return;
+  }
+
+  struct RNG {
+    TranslateToFuzzReader& parent;
+    RNG(TranslateToFuzzReader& parent) : parent(parent) {}
+
+    using result_type = Index;
+
+    static constexpr result_type min() { return std::numeric_limits<result_type>::min(); }
+    static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
+
+    result_type operator()() {
+      return parent.upTo(max());
+    }
+  };
+
+  std::shuffle(wasm.exports.begin(), wasm.exports.end(), RNG(*this));
 }
 
 void TranslateToFuzzReader::prepareHangLimitSupport() {
