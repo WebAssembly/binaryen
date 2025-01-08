@@ -397,7 +397,10 @@
 ;; CHECK-NEXT:   --remove-imports                              removes imports and replaces
 ;; CHECK-NEXT:                                                 them with nops
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --remove-memory                               removes memory segments
+;; CHECK-NEXT:   --remove-memory                               removes memory init (legacy
+;; CHECK-NEXT:                                                 name)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --remove-memory-init                          removes memory initialization
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --remove-non-js-ops                           removes operations incompatible
 ;; CHECK-NEXT:                                                 with js

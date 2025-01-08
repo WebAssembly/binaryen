@@ -15,7 +15,8 @@
  */
 
 //
-// Removeds memory segments, leaving only code in the module.
+// Removes memory segments, leaving only code in the module. It also removes
+// the start function, which is only used for initializing the memory.
 //
 
 #include <pass.h>
@@ -23,12 +24,16 @@
 
 namespace wasm {
 
-struct RemoveMemory : public Pass {
+struct RemoveMemoryInit : public Pass {
   void run(Module* module) override {
     module->removeDataSegments([&](DataSegment* curr) { return true; });
+    if (module->start) {
+      module->removeFunction(module->start);
+      module->start = Name();
+    }
   }
 };
 
-Pass* createRemoveMemoryPass() { return new RemoveMemory(); }
+Pass* createRemoveMemoryInitPass() { return new RemoveMemoryInit(); }
 
 } // namespace wasm
