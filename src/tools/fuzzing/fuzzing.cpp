@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <algorithm>
-
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
 #include "ir/iteration.h"
@@ -760,25 +758,24 @@ void TranslateToFuzzReader::shuffleExports() {
   // same code several times in succession, but interleaving it with others may
   // find more things). But we also keep a good chance for the natural order
   // here, as it may help some initial content.
-  if (oneIn(2)) {
+  if (wasm.exports.empty() || oneIn(2)) {
     return;
   }
 
-  struct RNG {
-    TranslateToFuzzReader& parent;
-    RNG(TranslateToFuzzReader& parent) : parent(parent) {}
+  // Sort the exports in the simple Fisher-Yates manner.
+  // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+  for (Index i = 0; i < wasm.exports.size() - 1; i++) {
+    // Pick the index of the item to place at index |i|. The number of items to
+    // pick from begins at the full length, then decreases with i.
+    auto j = i + upTo(wasm.exports.size() - i);
 
-    using result_type = Index;
-
-    static constexpr result_type min() { return std::numeric_limits<result_type>::min(); }
-    static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
-
-    result_type operator()() {
-      return parent.upTo(max());
+    // Swap the item over here.
+    if (j != i) {
+      std::swap(wasm.exports[i], wasm.exports[j]);
     }
-  };
+  }
 
-  std::shuffle(wasm.exports.begin(), wasm.exports.end(), RNG(*this));
+  wasm.updateMaps();
 }
 
 void TranslateToFuzzReader::prepareHangLimitSupport() {
