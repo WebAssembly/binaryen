@@ -385,7 +385,7 @@ function hashCombine(seed, value) {
   if (ordering !== undefined) {
     // Copy the list, and sort it in the simple Fisher-Yates manner.
     // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
-    var relevantExports = relevantExports.slice(0);
+    relevantExports = relevantExports.slice(0);
     for (var i = 0; i < relevantExports.length - 1; i++) {
       // Pick the index of the item to place at index |i|.
       ordering = hashCombine(ordering, i);
