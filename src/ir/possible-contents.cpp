@@ -1020,18 +1020,17 @@ struct InfoCollector
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // Similar to visitStructSet.
-    addChildParentLink(curr->ref, curr);
-    addChildParentLink(curr->value, curr);
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
   }
   void visitStructCmpxchg(StructCmpxchg* curr) {
     if (curr->ref->type == Type::unreachable) {
       return;
     }
-    // Similar to visitStructSet.
-    addChildParentLink(curr->ref, curr);
-    addChildParentLink(curr->expected, curr);
-    addChildParentLink(curr->replacement, curr);
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
   }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
