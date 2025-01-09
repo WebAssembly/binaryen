@@ -1648,6 +1648,20 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       //       them.
     }
   }
+
+  // Add invocations, which can help execute the code here even if the function
+  // was not exported (or was exported but with a signature that traps
+  // immediately, like receiving a non-nullable ref, that the fuzzer can't
+  // provide from JS). Note we need to use a temp vector for iteration, as
+  // addInvocations modifies wasm.functions.
+  std::vector<Function*> funcs;
+  for (auto& func : wasm.functions) {
+    funcs.push_back(func.get());
+  }
+  for (auto* func : funcs) {
+    addInvocations(func);
+  }
+
   // Remove a start function - the fuzzing harness expects code to run only
   // from exports.
   wasm.start = Name();
