@@ -715,8 +715,7 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 Result<Type> IRBuilder::getLabelType(Index label) {
   auto scope = getScope(label);
   CHECK_ERR(scope);
-  // Loops receive their input type rather than their output type.
-  return (*scope)->getLoop() ? (*scope)->inputType : (*scope)->getResultType();
+  return (*scope)->getLabelType();
 }
 
 Result<Type> IRBuilder::getLabelType(Name labelName) {
@@ -1014,22 +1013,21 @@ Result<> IRBuilder::visitEnd() {
   auto expr = finishScope(scope.getBlock());
   CHECK_ERR(expr);
 
+  bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
+  auto& label = isTry ? scope.branchLabel : scope.label;
+  auto blockType = scope.getResultType();
+
+  *expr = fixExtraOutput(scope, label, *expr);
+
   // If the scope expression cannot be directly labeled, we may need to wrap it
-  // in a block. It's possible that the scope expression becomes typed
-  // unreachable when it is finalized, but if the wrapper block is targeted by
-  // any branches, the target block needs to have the original non-unreachable
-  // type of the scope expression.
-  auto originalScopeType = scope.getResultType();
+  // in a block.
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
-    bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
-    auto& label = isTry ? scope.branchLabel : scope.label;
     if (!label) {
       return curr;
     }
-    auto blockType =
-      scope.labelUsed ? originalScopeType : scope.getResultType();
     // We can re-use unnamed blocks instead of wrapping them.
-    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+    if (auto* block = curr->dynCast<Block>();
+        block && (!block->name || block->name == label)) {
       block->name = label;
       block->type = blockType;
       return block;
@@ -1058,8 +1056,8 @@ Result<> IRBuilder::visitEnd() {
     this->func = nullptr;
     blockHint = 0;
     labelHint = 0;
-  } else if (auto* block = scope.getBlock()) {
-    assert(*expr == block);
+  } else if (scope.getBlock()) {
+    auto* block = (*expr)->cast<Block>();
     block->name = scope.label;
     block->finalize(block->type,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
@@ -1096,7 +1094,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try * tryy;
+  } else if (Try* tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     tryy->catchBodies.push_back(*expr);
     tryy->name = scope.label;
@@ -1110,6 +1108,93 @@ Result<> IRBuilder::visitEnd() {
     WASM_UNREACHABLE("unexpected scope kind");
   }
   return Ok{};
+}
+
+Result<std::pair<Index, Name>>
+IRBuilder::getExtraOutputLocalAndLabel(Index label, size_t extraArity) {
+  auto scope = getScope(label);
+  CHECK_ERR(scope);
+  auto& s = **scope;
+  auto i = extraArity - 1;
+  if (s.outputLabels.size() < extraArity) {
+    s.outputLocals.resize(extraArity);
+    s.outputLabels.resize(extraArity);
+  }
+  if (!s.outputLabels[i]) {
+    auto labelType = s.getLabelType();
+    auto it = labelType.begin();
+    Type extraType = Tuple(it, it + extraArity);
+    auto local = addScratchLocal(extraType);
+    CHECK_ERR(local);
+    auto name = getLabelName(label);
+    s.outputLocals[i] = *local;
+    s.outputLabels[i] = makeFresh(*name);
+  }
+
+  return std::make_pair(s.outputLocals[i], s.outputLabels[i]);
+}
+
+// If there are branches to this scope that carried extra values in scratch
+// locals, we need to set up the trampolines those branches will go to. The
+// trampolines get the values out of the scratch locals and onto the stack in
+// the correct order.
+Expression*
+IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
+  auto labelType = scope.getLabelType();
+  for (Index i = 0; i < scope.outputLabels.size(); ++i) {
+    auto extraLabel = scope.outputLabels[i];
+    if (!extraLabel) {
+      continue;
+    }
+    auto extraLocal = scope.outputLocals[i];
+    auto extraType = func->getLocalType(extraLocal);
+    Type receivedType =
+      Tuple(labelType.begin() + extraType.size(), labelType.end());
+    // Add the trampoline branch target. Reuse unnamed blocks.
+    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+      block->name = extraLabel;
+      block->list.back() = builder.makeBreak(label, block->list.back());
+      block->type = receivedType;
+    } else {
+      curr = builder.makeBlock(
+        extraLabel, {builder.makeBreak(label, curr)}, receivedType);
+    }
+
+    // If all the received values are in the scratch local, just fetch them out.
+    if (receivedType == Type::none) {
+      assert(extraType == labelType);
+      curr = builder.makeSequence(
+        curr, builder.makeLocalGet(extraLocal, extraType), extraType);
+      continue;
+    }
+
+    // Otherwise, we have to reorder the received values past the extra values
+    // from the scratch local using an additional scratch local.
+    auto receivedLocal = *addScratchLocal(receivedType);
+    curr = builder.makeLocalSet(receivedLocal, curr);
+
+    // Concatenate the extra values and received values into a tuple.
+    std::vector<Expression*> elems;
+    if (extraType.isSingle()) {
+      elems.push_back(builder.makeLocalGet(extraLocal, extraType));
+    } else {
+      for (Index j = 0; j < extraType.size(); ++j) {
+        elems.push_back(builder.makeTupleExtract(
+          builder.makeLocalGet(extraLocal, extraType), j));
+      }
+    }
+    if (receivedType.isSingle()) {
+      elems.push_back(builder.makeLocalGet(receivedLocal, receivedType));
+    } else {
+      for (Index j = 0; j < receivedType.size(); ++j) {
+        elems.push_back(builder.makeTupleExtract(
+          builder.makeLocalGet(receivedLocal, receivedType), j));
+      }
+    }
+
+    curr = builder.makeSequence(curr, builder.makeTupleMake(elems), labelType);
+  }
+  return curr;
 }
 
 // Branches to this loop need to be trampolined through code that sets the value
@@ -1816,9 +1901,103 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
       return Err{"expected input to match input type annotation"};
     }
   }
-  auto name = getLabelName(label);
-  CHECK_ERR(name);
-  push(builder.makeBrOn(op, *name, curr.ref, out));
+
+  // Extra values need to be sent in a scratch local.
+  auto labelType = getLabelType(label);
+  CHECK_ERR(labelType);
+  auto extraArity = labelType->size();
+  switch (op) {
+    case BrOnNull:
+      // Modeled as sending no values.
+      break;
+    case BrOnNonNull:
+    case BrOnCast:
+    case BrOnCastFail:
+      // Modeled as sending one value.
+      extraArity -= 1;
+      break;
+  }
+
+  // Before we can put the extra values into the output scratch local, we need
+  // to stash the value under test in another scratch local. Find the type of
+  // that local.
+  Type testType;
+  switch (op) {
+    case BrOnNull:
+    case BrOnNonNull:
+      testType = curr.ref->type;
+      break;
+    case BrOnCast:
+    case BrOnCastFail:
+      testType = in;
+      break;
+  }
+
+  // If the value under test is unreachable, then we can proceed without putting
+  // anything in locals since the branch will never be taken. The extra values
+  // will just be dropped.
+  if (!extraArity || testType == Type::unreachable) {
+    auto name = getLabelName(label);
+    CHECK_ERR(name);
+
+    push(builder.makeBrOn(op, *name, curr.ref, out));
+    return Ok{};
+  }
+
+  auto testLocal = addScratchLocal(testType);
+  CHECK_ERR(testLocal);
+
+  // Put the value under test back on the stack and stash it.
+  getScope().exprStack.push_back(curr.ref);
+  CHECK_ERR(makeLocalSet(*testLocal));
+
+  // Now we can stash the extra values.
+  auto info = getExtraOutputLocalAndLabel(label, extraArity);
+  CHECK_ERR(info);
+  auto [extraLocal, extraLabel] = *info;
+  CHECK_ERR(makeLocalSet(extraLocal));
+
+  // Restore the test value.
+  CHECK_ERR(makeLocalGet(*testLocal));
+
+  // Perform the branch.
+  CHECK_ERR(visitBrOn(&curr));
+  push(builder.makeBrOn(op, extraLabel, curr.ref, out));
+
+  // If the branch wasn't taken, we need to leave the extra values on the
+  // stack. For all instructions except br_on_non_null the extra values need
+  // to be under the result value. br_on_non_null does not have a result
+  // value, so it is simpler.
+  if (op == BrOnNonNull) {
+    CHECK_ERR(makeLocalGet(extraLocal));
+    return Ok{};
+  }
+
+  Type resultType;
+  switch (op) {
+    case BrOnNull:
+      resultType = Type(testType.getHeapType(), NonNullable);
+      break;
+    case BrOnNonNull:
+      WASM_UNREACHABLE("unexpected op");
+    case BrOnCast:
+      if (out.isNullable()) {
+        resultType = Type(testType.getHeapType(), NonNullable);
+      } else {
+        resultType = testType;
+      }
+      break;
+    case BrOnCastFail:
+      resultType = testType;
+      break;
+  }
+
+  auto resultLocal = addScratchLocal(resultType);
+  CHECK_ERR(resultLocal);
+
+  CHECK_ERR(makeLocalSet(*resultLocal));
+  CHECK_ERR(makeLocalGet(extraLocal));
+  CHECK_ERR(makeLocalGet(*resultLocal));
   return Ok{};
 }
 

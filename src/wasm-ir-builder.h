@@ -339,6 +339,16 @@ private:
     Type inputType;
     Index inputLocal = -1;
 
+    // If there are br_on_*, try_table, or resume branches that target this
+    // scope and carry additional values, we need to use a scratch local to
+    // deliver those additional values because the IR does not support them. We
+    // may need scratch locals of different arities for the same branch target.
+    // For each arity we also need a trampoline label to branch to. TODO:
+    // Support additional values on any branch once we have better multivalue
+    // optimization support.
+    std::vector<Index> outputLocals;
+    std::vector<Name> outputLabels;
+
     // The stack of instructions being built in this scope.
     std::vector<Expression*> exprStack;
 
@@ -511,6 +521,10 @@ private:
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
+    Type getLabelType() {
+      // Loops receive their input type rather than their output type.
+      return getLoop() ? inputType : getResultType();
+    }
     Name getOriginalLabel() {
       if (std::get_if<NoScope>(&scope) || getFunction()) {
         return Name{};
@@ -648,6 +662,9 @@ private:
   Result<Type> getLabelType(Index label);
   Result<Type> getLabelType(Name labelName);
 
+  Result<std::pair<Index, Name>> getExtraOutputLocalAndLabel(Index label,
+                                                             size_t extraArity);
+  Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
   void dump();
