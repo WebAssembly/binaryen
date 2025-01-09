@@ -1090,6 +1090,7 @@ class Wasm2JS(TestCaseHandler):
             # the names in the test suite. Fix those up.
             x = x.replace('log-', 'log_')
             x = x.replace('call-', 'call_')
+            x = x.replace('export-', 'export_')
 
             # check if a number is 0 or a subnormal, which is basically zero
             def is_basically_zero(x):
