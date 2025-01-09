@@ -35,7 +35,7 @@
 ;; RUN: echo "callExports(1337);" >> %t.js
 ;; RUN: node %t.js %t.wasm | filecheck %s --check-prefix=APPENDED
 ;;
-;; The original orde: a,b,c
+;; The original order: a,b,c
 ;; APPENDED: [fuzz-exec] calling a
 ;; APPENDED: [fuzz-exec] note result: a => 10
 ;; APPENDED: [fuzz-exec] calling b
