@@ -1086,6 +1086,10 @@ class Wasm2JS(TestCaseHandler):
             # fuzzer can notice.
             x = re.sub(r' null', ' 0', x)
 
+            # wasm2js converts exports to valid JS forms, which affects some of
+            # the names in the test suite. Fix those up.
+            x = x.replace('log-', 'log_')
+
             # check if a number is 0 or a subnormal, which is basically zero
             def is_basically_zero(x):
                 # to check if something is a subnormal, compare it to the largest one
