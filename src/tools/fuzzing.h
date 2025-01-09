@@ -233,6 +233,7 @@ private:
   void addTag();
   void finalizeMemory();
   void finalizeTable();
+  void shuffleExports();
   void prepareHangLimitSupport();
   void addHangLimitSupport();
   void addImportLoggingSupport();
