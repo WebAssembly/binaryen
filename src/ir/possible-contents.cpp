@@ -1569,6 +1569,10 @@ void TNHOracle::scan(Function* func,
 
     void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
     void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
+    void visitStructRMW(StructRMW* curr) { notePossibleTrap(curr->ref); }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      notePossibleTrap(curr->ref);
+    }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
@@ -2371,7 +2375,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // we must only combine the filtered contents (e.g. if 0xff arrives which
       // as a signed read is truly 0xffffffff then we cannot first combine the
       // existing 0xffffffff with the new 0xff, as they are different, and the
-      // result will no longer be a constant).
+      // result will no longer be a constant). There is no need to filter atomic
+      // RMW operations here because they always do unsigned reads.
       filterPackedDataReads(newContents, *exprLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  pre-filtered packed read contents:\n";

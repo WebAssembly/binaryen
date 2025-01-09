@@ -2387,7 +2387,7 @@ void BinaryInstWriter::visitStructRMW(StructRMW* curr) {
       o << U32LEB(BinaryConsts::StructAtomicRMWXchg);
       break;
   }
-  parent.writeMemoryOrder(curr->order, true);
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }
@@ -2399,7 +2399,7 @@ void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
   }
   o << int8_t(BinaryConsts::AtomicPrefix)
     << U32LEB(BinaryConsts::StructAtomicRMWCmpxchg);
-  parent.writeMemoryOrder(curr->order, true);
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }
