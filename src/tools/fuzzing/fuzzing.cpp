@@ -1650,7 +1650,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
               return false;
             }
             auto* child = controlFlowStack[i + 1];
-            return child == tryy->body;
+            return child != tryy->body;
           }
         }
         if (i == 0) {
