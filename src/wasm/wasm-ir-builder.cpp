@@ -1140,24 +1140,53 @@ IRBuilder::getExtraOutputLocalAndLabel(Index label, size_t extraArity) {
 // the correct order.
 Expression*
 IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
+  // Add a trampoline branch target. Reuse unnamed blocks.
+  auto addTrampoline = [&](Type receivedType,
+                           Name trampolineLabel,
+                           Name skipLabel) {
+    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+      block->name = trampolineLabel;
+      if (block->list.back()->type == Type::none) {
+        block->list.push_back(builder.makeBreak(skipLabel));
+      } else {
+        block->list.back() = builder.makeBreak(skipLabel, block->list.back());
+      }
+      block->type = receivedType;
+    } else {
+      if (curr->type == Type::none) {
+        assert(false && "c");
+        curr = builder.makeBlock(
+          trampolineLabel, {curr, builder.makeBreak(skipLabel)}, receivedType);
+      } else {
+        assert(false && "d");
+        curr = builder.makeBlock(
+          trampolineLabel, {builder.makeBreak(skipLabel, curr)}, receivedType);
+      }
+    }
+  };
+
   auto labelType = scope.getLabelType();
+  Name fallthroughLabel;
   for (Index i = 0; i < scope.outputLabels.size(); ++i) {
     auto extraLabel = scope.outputLabels[i];
     if (!extraLabel) {
       continue;
     }
+
     auto extraLocal = scope.outputLocals[i];
     auto extraType = func->getLocalType(extraLocal);
     Type receivedType =
       Tuple(labelType.begin() + extraType.size(), labelType.end());
-    // Add the trampoline branch target. Reuse unnamed blocks.
-    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
-      block->name = extraLabel;
-      block->list.back() = builder.makeBreak(label, block->list.back());
-      block->type = receivedType;
+
+    // For normal blocks, the original fallthrough values can be sent to the
+    // scope label and they will end up in the right place, but for loops, the
+    // fallthrough values should _not_ go to the scope label. We will add a new
+    // branch target at the end to send the fallthrough values to.
+    if (scope.getLoop() && !fallthroughLabel) {
+      fallthroughLabel = makeFresh(label);
+      addTrampoline(receivedType, extraLabel, fallthroughLabel);
     } else {
-      curr = builder.makeBlock(
-        extraLabel, {builder.makeBreak(label, curr)}, receivedType);
+      addTrampoline(receivedType, extraLabel, label);
     }
 
     // If all the received values are in the scratch local, just fetch them out.
@@ -1193,6 +1222,11 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
     }
 
     curr = builder.makeSequence(curr, builder.makeTupleMake(elems), labelType);
+  }
+
+  if (fallthroughLabel) {
+    // The loop fallthrough values need to propagate to one final trampoline.
+    addTrampoline(scope.getResultType(), fallthroughLabel, label);
   }
   return curr;
 }
@@ -1982,13 +2016,17 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
       WASM_UNREACHABLE("unexpected op");
     case BrOnCast:
       if (out.isNullable()) {
-        resultType = Type(testType.getHeapType(), NonNullable);
+        resultType = Type(in.getHeapType(), NonNullable);
       } else {
-        resultType = testType;
+        resultType = in;
       }
       break;
     case BrOnCastFail:
-      resultType = testType;
+      if (in.isNonNullable()) {
+        resultType = Type(out.getHeapType(), NonNullable);
+      } else {
+        resultType = out;
+      }
       break;
   }
 
