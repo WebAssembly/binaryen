@@ -441,8 +441,9 @@ function hashCombine(seed, value) {
     }
 
     // When we are changing up the order, in JSPI we can also leave some
-    // Promises unresolved until later, which lets us interleave them.
-    if (JSPI && ordering !== undefined) {
+    // Promises unresolved until later, which lets us interleave them. Note we
+    // never defer a task more than once (which would be pointless).
+    if (JSPI && ordering !== undefined && !task.deferred) {
       if (result && typeof result == 'object' &&
           typeof result.then === 'function') {
         // Hash with -1 here, just to get something different than the hashing a
@@ -453,11 +454,12 @@ function hashCombine(seed, value) {
           result = /* await */ result;
         } else {
           // Defer it for later. Reuse the existing task for simplicity.
-          console.log(`(defer ${task.name})`);
+          console.log(`(jspi: defer ${task.name})`);
           task.func = /* async */ () => {
-            console.log(`(finish ${task.name})`);
-            return /* await */ result
+            console.log(`(jspi: finish ${task.name})`);
+            return /* await */ result;
           };
+          task.deferred = true;
           tasks.push(task);
           continue;
         }
