@@ -1136,14 +1136,9 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
       }
       block->type = receivedType;
     } else {
-      if (curr->type == Type::none) {
-        assert(false && "c");
-        curr = builder.makeBlock(
-          trampolineLabel, {curr, builder.makeBreak(skipLabel)}, receivedType);
-      } else {
-        curr = builder.makeBlock(
-          trampolineLabel, {builder.makeBreak(skipLabel, curr)}, receivedType);
-      }
+      assert(curr->type != Type::none);
+      curr = builder.makeBlock(
+        trampolineLabel, {builder.makeBreak(skipLabel, curr)}, receivedType);
     }
   };
 
