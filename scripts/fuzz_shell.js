@@ -350,13 +350,20 @@ function build(binary) {
     quit();
   }
 
-  // Update the exports. Note that this adds onto |exports|, |exportList|,
+  // Update the exports. Note that this adds onto |exports| and |exportList|,
   // which is intentional: if we build another wasm, or build this one more
   // than once, we want to be able to call them all, so we unify all their
   // exports. (We do trample in |exports| when keys are equal - basically this
   // is a single global namespace - but |exportList| is appended to, so we do
   // keep the ability to call anything that was ever exported.)
-  for (var key in instance.exports) {
+  //
+  // Note we do not iterate on instance.exports: the order there is not
+  // necessarily the order in the wasm (which is what wasm-opt --fuzz-exec uses,
+  // for example), because of JS object iteration rules (numbers are considered
+  // "array indexes" and appear first,
+  // https://tc39.es/ecma262/#sec-ordinaryownpropertykeys).
+  for (var e of WebAssembly.Module.exports(module)) {
+    var key = e.name;
     var value = instance.exports[key];
     value = wrapExportForJSPI(value);
     exports[key] = value;
