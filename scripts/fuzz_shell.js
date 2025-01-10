@@ -433,32 +433,39 @@ function hashCombine(seed, value) {
     // Execute the task.
     let result;
     try {
-      console.log('[fuzz-exec] calling ' + task.name);
       result = task.func();
     } catch (e) {
+      console.log('[fuzz-exec] calling ' + task.name);
       console.log('exception thrown: ' + e);
       continue;
     }
 
-    if (JSPI) {
-      if (result && (typeof result.then === 'function')) {
-        // The task returned a Promise. We can either await it right now to get
-        // the full result, or defer it for later. (Note we hash with -1 here,
-        // just to get something different than the hashing a few lines above.)
+    // When we are changing up the order, in JSPI we can also leave some
+    // Promises unresolved until later, which lets us interleave them.
+    if (JSPI && ordering !== undefined) {
+      if (result && typeof result == 'object' &&
+          typeof result.then === 'function') {
+        // Hash with -1 here, just to get something different than the hashing a
+        // few lines above.
         ordering = hashCombine(ordering, -1);
         if (ordering & 1) {
           // Await it right now.
           result = /* await */ result;
         } else {
           // Defer it for later. Reuse the existing task for simplicity.
-          task.func = /* async */ () => { /* await */ result };
-          tasks.push(task); // XXX chak without, see errar
+          console.log(`(defer ${task.name})`);
+          task.func = /* async */ () => {
+            console.log(`(finish ${task.name})`);
+            return /* await */ result
+          };
+          tasks.push(task);
           continue;
         }
       }
     }
 
     // Log the result.
+    console.log('[fuzz-exec] calling ' + task.name);
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: ' + task.name + ' => ' + printed(result));
     }
