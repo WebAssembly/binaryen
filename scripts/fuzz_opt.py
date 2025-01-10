@@ -1048,24 +1048,6 @@ class Wasm2JS(TestCaseHandler):
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
             return
-        # we also cannot compare if the wasm hits a trap, as wasm2js does not
-        # trap on many things wasm would, and in those cases it can do weird
-        # undefined things. in such a case, at least compare up until before
-        # the trap, which lets us compare at least some results in some cases.
-        # (this is why wasm2js is not in CompareVMs, which does full
-        # comparisons - we need to limit the comparison in a special way here)
-        interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
-        if TRAP_PREFIX in interpreter:
-            trap_index = interpreter.index(TRAP_PREFIX)
-            # we can't test this function, which the trap is in the middle of.
-            # erase everything from this function's output and onward, so we
-            # only compare the previous trap-free code
-            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
-            call_end = interpreter.index('\n', call_start)
-            call_line = interpreter[call_start:call_end]
-            before = before[:before.index(call_line)]
-            after = after[:after.index(call_line)]
-            interpreter = interpreter[:interpreter.index(call_line)]
 
         def fix_output_for_js(x):
             # start with the normal output fixes that all VMs need
@@ -1117,6 +1099,28 @@ class Wasm2JS(TestCaseHandler):
 
         before = fix_output_for_js(before)
         after = fix_output_for_js(after)
+
+        # we must not compare if the wasm hits a trap, as wasm2js does not
+        # trap on many things wasm would, and in those cases it can do weird
+        # undefined things. in such a case, at least compare up until before
+        # the trap, which lets us compare at least some results in some cases.
+        # (this is why wasm2js is not in CompareVMs, which does full
+        # comparisons - we need to limit the comparison in a special way here)
+        interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter:
+            trap_index = interpreter.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of.
+            # erase everything from this function's output and onward, so we
+            # only compare the previous trap-free code
+            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter.index('\n', call_start)
+            call_line = interpreter[call_start:call_end]
+            # fix up the call line so it matches the JS
+            fixed_call_line = fix_output_for_js(call_line)
+            before = before[:before.index(fixed_call_line)]
+            after = after[:after.index(fixed_call_line)]
+            interpreter = interpreter[:interpreter.index(call_line)]
+
         if compare_before_to_after:
             compare_between_vms(before, after, 'Wasm2JS (before/after)')
             if compare_to_interpreter:
