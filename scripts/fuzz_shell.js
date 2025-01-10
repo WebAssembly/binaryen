@@ -433,9 +433,9 @@ function hashCombine(seed, value) {
     // Execute the task.
     let result;
     try {
+      console.log('[fuzz-exec] calling ' + task.name);
       result = task.func();
     } catch (e) {
-      console.log('[fuzz-exec] calling ' + task.name);
       console.log('exception thrown: ' + e);
       continue;
     }
@@ -467,7 +467,6 @@ function hashCombine(seed, value) {
     }
 
     // Log the result.
-    console.log('[fuzz-exec] calling ' + task.name);
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: ' + task.name + ' => ' + printed(result));
     }
