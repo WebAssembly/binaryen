@@ -379,14 +379,10 @@ private:
     static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType) {
       return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
-    static ScopeCtx makeElse(If* iff,
-                             Name originalLabel,
-                             Name label,
-                             bool labelUsed,
-                             Type inputType,
-                             Index inputLocal) {
-      return ScopeCtx(
-        ElseScope{iff, originalLabel}, label, labelUsed, inputType, inputLocal);
+    static ScopeCtx makeElse(ScopeCtx&& scope) {
+      scope.scope = ElseScope{scope.getIf(), scope.getOriginalLabel()};
+      scope.resetForDelimiter();
+      return scope;
     }
     static ScopeCtx makeLoop(Loop* loop, Type inputType) {
       return ScopeCtx(LoopScope{loop}, inputType);
@@ -415,6 +411,10 @@ private:
       return ScopeCtx(TryTableScope{trytable, originalLabel}, inputType);
     }
 
+    void resetForDelimiter() {
+      exprStack.clear();
+      unreachable = false;
+    }
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Function* getFunction() {
       if (auto* funcScope = std::get_if<FuncScope>(&scope)) {

@@ -871,16 +871,11 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
 }
 
 Result<> IRBuilder::visitElse() {
-  auto& scope = getScope();
+  auto scope = getScope();
   auto* iff = scope.getIf();
   if (!iff) {
     return Err{"unexpected else"};
   }
-  auto originalLabel = scope.getOriginalLabel();
-  auto label = scope.label;
-  auto labelUsed = scope.labelUsed;
-  auto inputType = scope.inputType;
-  auto inputLocal = scope.inputLocal;
   auto expr = finishScope();
   CHECK_ERR(expr);
   iff->ifTrue = *expr;
@@ -890,8 +885,7 @@ Result<> IRBuilder::visitElse() {
       lastBinaryPos - codeSectionOffset;
   }
 
-  return pushScope(ScopeCtx::makeElse(
-    iff, originalLabel, label, labelUsed, inputType, inputLocal));
+  return pushScope(ScopeCtx::makeElse(std::move(scope)));
 }
 
 Result<> IRBuilder::visitCatch(Name tag) {
@@ -1017,14 +1011,13 @@ Result<> IRBuilder::visitEnd() {
   auto& label = isTry ? scope.branchLabel : scope.label;
   auto blockType = scope.getResultType();
 
-  *expr = fixExtraOutput(scope, label, *expr);
-
   // If the scope expression cannot be directly labeled, we may need to wrap it
   // in a block.
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
     if (!label) {
       return curr;
     }
+    curr = fixExtraOutput(scope, label, curr);
     // We can re-use unnamed blocks instead of wrapping them.
     if (auto* block = curr->dynCast<Block>();
         block && (!block->name || block->name == label)) {
@@ -1057,13 +1050,13 @@ Result<> IRBuilder::visitEnd() {
     blockHint = 0;
     labelHint = 0;
   } else if (scope.getBlock()) {
-    auto* block = (*expr)->cast<Block>();
-    block->name = scope.label;
+    auto* block = fixExtraOutput(scope, label, *expr)->cast<Block>();
+    block->name = label;
     block->finalize(block->type,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
     push(block);
   } else if (auto* loop = scope.getLoop()) {
-    loop->body = *expr;
+    loop->body = fixExtraOutput(scope, label, *expr);
     loop->name = scope.label;
     if (scope.inputType != Type::none && scope.labelUsed) {
       // Branches to this loop carry values, but Binaryen IR does not support
@@ -1158,7 +1151,6 @@ IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
         curr = builder.makeBlock(
           trampolineLabel, {curr, builder.makeBreak(skipLabel)}, receivedType);
       } else {
-        assert(false && "d");
         curr = builder.makeBlock(
           trampolineLabel, {builder.makeBreak(skipLabel, curr)}, receivedType);
       }
