@@ -235,7 +235,7 @@ def randomize_fuzz_settings():
 
     # Test JSPI somewhat rarely, as it may be slower.
     global JSPI
-    JSPI = random.random() < 0.25
+    JSPI = random.random() < 0.5 # XXX 0.25
 
     print('randomized settings (NaNs, OOB, legalize, JSPI):', NANS, OOB, LEGALIZE, JSPI)
 
