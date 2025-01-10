@@ -1627,6 +1627,39 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         i--;
       }
     }
+
+    void visitRethrow(Rethrow* curr) {
+      if (!isValidRethrow(curr->target)) {
+        replace();
+      }
+    }
+
+    bool isValidRethrow(Name target) {
+      if (controlFlowStack.empty()) {
+        return false;
+      }
+      Index i = controlFlowStack.size() - 1;
+      while (1) {
+        auto* curr = controlFlowStack[i];
+        if (auto* tryy = curr->dynCast<Try>()) {
+          // The rethrow must target a try, and must be nested in a catch of
+          // that try (not the body). Look at the child above us to check, when
+          // we find the proper try.
+          if (tryy->name == target) {
+            if (i + 1 >= controlFlowStack.size()) {
+              return false;
+            }
+            auto* child = controlFlowStack[i + 1];
+            return child == tryy->body;
+          }
+        }
+        if (i == 0) {
+          // We never found our try.
+          return false;
+        }
+        i--;
+      }
+    }
   };
   Fixer fixer(wasm, *this);
   fixer.walk(func->body);
