@@ -1108,6 +1108,7 @@ class Wasm2JS(TestCaseHandler):
         # comparisons - we need to limit the comparison in a special way here)
         interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
         if TRAP_PREFIX in interpreter:
+            interpreter = fix_output_for_js(interpreter)
             trap_index = interpreter.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of.
             # erase everything from this function's output and onward, so we
