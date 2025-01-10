@@ -415,7 +415,7 @@ function hashCombine(seed, value) {
 
   // Reverse the array, so the first task is at the end, for efficient
   // popping in the common case.
-  tasks.reverse(); // TODO chak without, see errar
+  tasks.reverse();
 
   // Execute tasks while they remain.
   while (tasks.length) {
