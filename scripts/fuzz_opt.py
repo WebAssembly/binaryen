@@ -1116,9 +1116,9 @@ class Wasm2JS(TestCaseHandler):
             call_end = interpreter.index('\n', call_start)
             call_line = interpreter[call_start:call_end]
             # fix up the call line so it matches the JS
-            call_line = fix_output_for_js(call_line)
-            before = before[:before.index(call_line)]
-            after = after[:after.index(call_line)]
+            fixed_call_line = fix_output_for_js(call_line)
+            before = before[:before.index(fixed_call_line)]
+            after = after[:after.index(fixed_call_line)]
             interpreter = interpreter[:interpreter.index(call_line)]
 
         if compare_before_to_after:
