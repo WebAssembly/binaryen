@@ -381,7 +381,7 @@ private:
     }
     static ScopeCtx makeElse(ScopeCtx&& scope) {
       scope.scope = ElseScope{scope.getIf(), scope.getOriginalLabel()};
-      scope.resetForDelimiter();
+      scope.resetForDelimiter(/*keepInput=*/true);
       return scope;
     }
     static ScopeCtx makeLoop(Loop* loop, Type inputType) {
@@ -390,30 +390,27 @@ private:
     static ScopeCtx makeTry(Try* tryy, Name originalLabel, Type inputType) {
       return ScopeCtx(TryScope{tryy, originalLabel}, inputType);
     }
-    static ScopeCtx makeCatch(Try* tryy,
-                              Name originalLabel,
-                              Name label,
-                              bool labelUsed,
-                              Name branchLabel) {
-      return ScopeCtx(
-        CatchScope{tryy, originalLabel}, label, labelUsed, branchLabel);
+    static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
-    static ScopeCtx makeCatchAll(Try* tryy,
-                                 Name originalLabel,
-                                 Name label,
-                                 bool labelUsed,
-                                 Name branchLabel) {
-      return ScopeCtx(
-        CatchAllScope{tryy, originalLabel}, label, labelUsed, branchLabel);
+    static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
     static ScopeCtx
     makeTryTable(TryTable* trytable, Name originalLabel, Type inputType) {
       return ScopeCtx(TryTableScope{trytable, originalLabel}, inputType);
     }
-
-    void resetForDelimiter() {
+    void resetForDelimiter(bool keepInput) {
       exprStack.clear();
       unreachable = false;
+      if (!keepInput) {
+        inputType = Type::none;
+        inputLocal = -1;
+      }
     }
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Function* getFunction() {

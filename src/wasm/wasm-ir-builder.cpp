@@ -889,7 +889,7 @@ Result<> IRBuilder::visitElse() {
 }
 
 Result<> IRBuilder::visitCatch(Name tag) {
-  auto& scope = getScope();
+  auto scope = getScope();
   bool wasTry = true;
   auto* tryy = scope.getTry();
   if (!tryy) {
@@ -899,10 +899,6 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (!tryy) {
     return Err{"unexpected catch"};
   }
-  auto originalLabel = scope.getOriginalLabel();
-  auto label = scope.label;
-  auto labelUsed = scope.labelUsed;
-  auto branchLabel = scope.branchLabel;
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
@@ -917,8 +913,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  CHECK_ERR(pushScope(
-    ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel)));
+  CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
   // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
@@ -932,7 +927,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
 }
 
 Result<> IRBuilder::visitCatchAll() {
-  auto& scope = getScope();
+  auto scope = getScope();
   bool wasTry = true;
   auto* tryy = scope.getTry();
   if (!tryy) {
@@ -942,10 +937,6 @@ Result<> IRBuilder::visitCatchAll() {
   if (!tryy) {
     return Err{"unexpected catch"};
   }
-  auto originalLabel = scope.getOriginalLabel();
-  auto label = scope.label;
-  auto labelUsed = scope.labelUsed;
-  auto branchLabel = scope.branchLabel;
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
@@ -959,8 +950,7 @@ Result<> IRBuilder::visitCatchAll() {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  return pushScope(
-    ScopeCtx::makeCatchAll(tryy, originalLabel, label, labelUsed, branchLabel));
+  return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy));
 }
 
 Result<> IRBuilder::visitDelegate(Index label) {
