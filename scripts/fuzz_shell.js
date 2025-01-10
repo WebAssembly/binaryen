@@ -434,15 +434,15 @@ function hashCombine(seed, value) {
     let result;
     try {
       console.log('[fuzz-exec] calling ' + task.name);
-      result = func();
+      result = task.func();
     } catch (e) {
       console.log('exception thrown: ' + e);
       continue;
     }
 
     if (JSPI) {
-      if (result?.then === 'function') {
-        // The task returned a promise. We can either await it right now to get
+      if (result && (typeof result.then === 'function')) {
+        // The task returned a Promise. We can either await it right now to get
         // the full result, or defer it for later. (Note we hash with -1 here,
         // just to get something different than the hashing a few lines above.)
         ordering = hashCombine(ordering, -1);
