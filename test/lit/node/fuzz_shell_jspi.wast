@@ -24,11 +24,14 @@
 
 ;; Apply JSPI: prepend JSPI = 1 and remove comments around async and await.
 ;; RUN: echo "JSPI = 1;" > %t.js
-;; RUN: node -e "process.stdout.write(require('fs').readFileSync(process.stdin.fd, 'utf-8').replaceAll('/* async */', 'async').replaceAll('/* await */', 'await'))"
+;; RUN: node -e "process.stdout.write(require('fs').readFileSync('%S/../../../scripts/fuzz_shell.js', 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
 
 ;; Append another run with a random seed, so we reorder and delay execution.
 ;; RUN: echo "callExports(42);" >> %t.js
-;; RUN: node %t.js %t.wasm | filecheck %s
+
+;; Run that JS shell with our wasm.
+;; RUN: wasm-opt %s -o %t.wasm -q
+;; RUN: d8 --wasm-staging %t.js -- %t.wasm | filecheck %s
 ;;
 ;; The first part is unchanged from before.
 ;; CHECK: [fuzz-exec] calling errors
