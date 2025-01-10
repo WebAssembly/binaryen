@@ -431,9 +431,9 @@ function hashCombine(seed, value) {
     }
 
     // Execute the task.
+    console.log('[fuzz-exec] calling ' + task.name);
     let result;
     try {
-      console.log('[fuzz-exec] calling ' + task.name);
       result = task.func();
     } catch (e) {
       console.log('exception thrown: ' + e);
@@ -465,7 +465,12 @@ function hashCombine(seed, value) {
       }
 
       // Await it right now.
-      result = /* await */ result;
+      try {
+        result = /* await */ result;
+      } catch (e) {
+        console.log('exception thrown: ' + e);
+        continue;
+      }
     }
 
     // Log the result.
