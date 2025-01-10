@@ -489,4 +489,5 @@ if (secondBinary) {
 }
 
 // Run.
-callExports(); // XXX this needs to be awaited, but can't at the top level :(
+callExports();
+
