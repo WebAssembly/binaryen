@@ -67,6 +67,15 @@ var WebAssembly = {
     info['env']['__tempMemory__'] = 0; // risky!
     // This will be replaced by the actual wasm2js code.
     var exports = instantiate(info, wasmMemory);
+
+    // Save the exports on the module object, so that
+    // WebAssembly.Module.exports() works. Ideally we would do this in
+    // WebAssembly.Module(), but we don't know the exports at that point - all
+    // the actual work happens in Instance(), here. In practice this is enough
+    // as calls to WebAssembly.Module.exports() from the fuzzer happen after
+    // instantiation.
+    module.exports = exports;
+
     return {
       'exports': exports
     };
@@ -81,6 +90,15 @@ var WebAssembly = {
       }
     };
   }
+};
+
+// Add the exports() API on top of the Module constructor.
+WebAssembly.Module.exports = (module) => {
+  var ret = [];
+  for (var key in module.exports) {
+    ret.push({ name: key });
+  }
+  return ret;
 };
 
 var tempRet0 = 0;

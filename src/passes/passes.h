@@ -132,7 +132,7 @@ Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();
-Pass* createRemoveMemoryPass();
+Pass* createRemoveMemoryInitPass();
 Pass* createRemoveUnusedBrsPass();
 Pass* createRemoveUnusedModuleElementsPass();
 Pass* createRemoveUnusedNonFunctionModuleElementsPass();

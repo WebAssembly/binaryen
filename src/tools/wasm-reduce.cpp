@@ -294,7 +294,7 @@ struct Reducer
       "--optimize-instructions",
       "--precompute",
       "--remove-imports",
-      "--remove-memory",
+      "--remove-memory-init",
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
       "--remove-unused-nonfunction-module-elements",

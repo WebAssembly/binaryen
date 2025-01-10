@@ -350,13 +350,20 @@ function build(binary) {
     quit();
   }
 
-  // Update the exports. Note that this adds onto |exports|, |exportList|,
+  // Update the exports. Note that this adds onto |exports| and |exportList|,
   // which is intentional: if we build another wasm, or build this one more
   // than once, we want to be able to call them all, so we unify all their
   // exports. (We do trample in |exports| when keys are equal - basically this
   // is a single global namespace - but |exportList| is appended to, so we do
   // keep the ability to call anything that was ever exported.)
-  for (var key in instance.exports) {
+  //
+  // Note we do not iterate on instance.exports: the order there is not
+  // necessarily the order in the wasm (which is what wasm-opt --fuzz-exec uses,
+  // for example), because of JS object iteration rules (numbers are considered
+  // "array indexes" and appear first,
+  // https://tc39.es/ecma262/#sec-ordinaryownpropertykeys).
+  for (var e of WebAssembly.Module.exports(module)) {
+    var key = e.name;
     var value = instance.exports[key];
     value = wrapExportForJSPI(value);
     exports[key] = value;
@@ -364,11 +371,40 @@ function build(binary) {
   }
 }
 
-// Run the code by calling exports.
-/* async */ function callExports() {
+// Simple deterministic hashing, on an unsigned 32-bit seed. See e.g.
+// https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
+function hashCombine(seed, value) {
+  seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >>> 2);
+  return seed >>> 0;
+}
+
+// Run the code by calling exports. The optional |ordering| parameter indicates
+// howe we should order the calls to the exports: if it is not provided, we call
+// them in the natural order, which allows our output to be compared to other
+// executions of the wasm (e.g. from wasm-opt --fuzz-exec). If |ordering| is
+// provided, it is a random seed we use to make deterministic choices on
+// the order of calls.
+/* async */ function callExports(ordering) {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
   var relevantExports = exportsToCall || exportList;
+
+  if (ordering !== undefined) {
+    // Copy the list, and sort it in the simple Fisher-Yates manner.
+    // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+    relevantExports = relevantExports.slice(0);
+    for (var i = 0; i < relevantExports.length - 1; i++) {
+      // Pick the index of the item to place at index |i|.
+      ordering = hashCombine(ordering, i);
+      // The number of items to pick from begins at the full length, then
+      // decreases with i.
+      var j = i + (ordering % (relevantExports.length - i));
+      // Swap the item over here.
+      var t = relevantExports[j];
+      relevantExports[j] = relevantExports[i];
+      relevantExports[i] = t;
+    }
+  }
 
   for (var e of relevantExports) {
     var name, value;
@@ -377,7 +413,7 @@ function build(binary) {
       name = e;
       value = exports[e];
     } else {
-      // We are given an object form exportList, which bas both a name and a
+      // We are given an object form exportList, which has both a name and a
       // value.
       name = e.name;
       value = e.value;
@@ -389,6 +425,8 @@ function build(binary) {
 
     try {
       console.log('[fuzz-exec] calling ' + name);
+      // TODO: Based on |ordering|, do not always await, leaving a promise
+      //       for later, so we interleave stacks.
       var result = /* await */ callFunc(value);
       if (typeof result !== 'undefined') {
         console.log('[fuzz-exec] note result: ' + name + ' => ' + printed(result));
