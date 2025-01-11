@@ -891,6 +891,29 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->value, fields[curr->index].type);
   }
 
+  void visitStructRMW(StructRMW* curr,
+                      std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      ht = curr->ref->type.getHeapType();
+    }
+    const auto& fields = ht->getStruct().fields;
+    assert(curr->index < fields.size());
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->value, fields[curr->index].type);
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr,
+                          std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      ht = curr->ref->type.getHeapType();
+    }
+    const auto& fields = ht->getStruct().fields;
+    assert(curr->index < fields.size());
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->expected, fields[curr->index].type);
+    note(&curr->replacement, fields[curr->index].type);
+  }
+
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->isWithDefault()) {
       note(&curr->init, curr->type.getHeapType().getArray().element.type);

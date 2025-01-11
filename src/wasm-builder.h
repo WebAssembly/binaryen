@@ -962,6 +962,34 @@ public:
     ret->finalize();
     return ret;
   }
+  StructRMW* makeStructRMW(AtomicRMWOp op,
+                           Index index,
+                           Expression* ref,
+                           Expression* value,
+                           MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<StructRMW>();
+    ret->op = op;
+    ret->index = index;
+    ret->ref = ref;
+    ret->value = value;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  StructCmpxchg* makeStructCmpxchg(Index index,
+                                   Expression* ref,
+                                   Expression* expected,
+                                   Expression* replacement,
+                                   MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<StructCmpxchg>();
+    ret->index = index;
+    ret->ref = ref;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
   ArrayNew*
   makeArrayNew(HeapType type, Expression* size, Expression* init = nullptr) {
     auto* ret = wasm.allocator.alloc<ArrayNew>();

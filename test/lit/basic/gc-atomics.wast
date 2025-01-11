@@ -9,7 +9,7 @@
   ;; CHECK:      (type $packed (struct (field (mut i8))))
   (type $packed (struct (field (mut i8))))
 
-  ;; CHECK:      (func $get (type $3) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK:      (func $get (type $1) (param $0 (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -20,7 +20,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-seqcst (type $3) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK:      (func $get-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -31,7 +31,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-acqrel (type $3) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK:      (func $get-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -42,7 +42,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-s (type $2) (param $0 (ref null $packed)) (result i32)
+  ;; CHECK:      (func $get-s (type $3) (param $0 (ref null $packed)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get_s $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -53,7 +53,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-s-seqcst (type $2) (param $0 (ref null $packed)) (result i32)
+  ;; CHECK:      (func $get-s-seqcst (type $3) (param $0 (ref null $packed)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get_s $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -64,7 +64,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-s-acqrel (type $2) (param $0 (ref null $packed)) (result i32)
+  ;; CHECK:      (func $get-s-acqrel (type $3) (param $0 (ref null $packed)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get_s acqrel $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -75,7 +75,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-u (type $2) (param $0 (ref null $packed)) (result i32)
+  ;; CHECK:      (func $get-u (type $3) (param $0 (ref null $packed)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get_u $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -86,7 +86,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-u-seqcst (type $2) (param $0 (ref null $packed)) (result i32)
+  ;; CHECK:      (func $get-u-seqcst (type $3) (param $0 (ref null $packed)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get_u $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -97,7 +97,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-u-acqrel (type $2) (param $0 (ref null $packed)) (result i32)
+  ;; CHECK:      (func $get-u-acqrel (type $3) (param $0 (ref null $packed)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get_u acqrel $packed 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -144,6 +144,285 @@
     (struct.atomic.set acqrel $struct 0
       (local.get 0)
       (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-add (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.add $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-add (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.add $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-add-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.add $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-add-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.add seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-add-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.add acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-add-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.add acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-sub (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.sub $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-sub (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.sub $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-sub-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.sub $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-sub-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.sub seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-sub-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.sub acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-sub-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.sub acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-and (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.and $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-and (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.and $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-and-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.and $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-and-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.and seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-and-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.and acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-and-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.and acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-or (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.or $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-or (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.or $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-or-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.or $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-or-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.or seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-or-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.or acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-or-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.or acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-xor (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xor $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-xor (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.xor $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-xor-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xor $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-xor-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.xor seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-xor-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xor acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-xor-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.xor acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-xchg (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-xchg (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.xchg $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-xchg-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-xchg-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.xchg seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-xchg-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-xchg-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.xchg acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-cmpxchg (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-cmpxchg (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.cmpxchg $struct 0
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-cmpxchg-seqcst (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-cmpxchg-seqcst (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.cmpxchg seqcst seqcst $struct 0
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $rmw-cmpxchg-acqrel (type $1) (param $0 (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $rmw-cmpxchg-acqrel (param (ref null $struct)) (result i32)
+    (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
     )
   )
 )

@@ -899,6 +899,32 @@ private:
         parent.isAtomic = true;
       }
     }
+    void visitStructRMW(StructRMW* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsMutableStruct = true;
+      parent.writesStruct = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsMutableStruct = true;
+      parent.writesStruct = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped

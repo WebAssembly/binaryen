@@ -327,12 +327,22 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
+  void visitStructGet(StructGet* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
+  }
   void visitStructSet(StructSet* curr) {
     if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
       visitExpression(curr);
     }
   }
-  void visitStructGet(StructGet* curr) {
+  void visitStructRMW(StructRMW* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
     if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
       visitExpression(curr);
     }
@@ -631,29 +641,33 @@ struct PrintExpressionContents
     }
     o << '.';
   }
+  void printAtomicRMWOp(AtomicRMWOp op) {
+    switch (op) {
+      case RMWAdd:
+        o << "add";
+        return;
+      case RMWSub:
+        o << "sub";
+        return;
+      case RMWAnd:
+        o << "and";
+        return;
+      case RMWOr:
+        o << "or";
+        return;
+      case RMWXor:
+        o << "xor";
+        return;
+      case RMWXchg:
+        o << "xchg";
+        return;
+    }
+    WASM_UNREACHABLE("unexpected rmw op");
+  }
   void visitAtomicRMW(AtomicRMW* curr) {
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
-    switch (curr->op) {
-      case RMWAdd:
-        o << "add";
-        break;
-      case RMWSub:
-        o << "sub";
-        break;
-      case RMWAnd:
-        o << "and";
-        break;
-      case RMWOr:
-        o << "or";
-        break;
-      case RMWXor:
-        o << "xor";
-        break;
-      case RMWXchg:
-        o << "xchg";
-        break;
-    }
+    printAtomicRMWOp(curr->op);
     if (curr->type != Type::unreachable &&
         curr->bytes != curr->type.getByteSize()) {
       o << "_u";
@@ -2316,6 +2330,30 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.atomic.set ");
     }
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapType(heapType);
+    o << ' ';
+    printFieldName(heapType, curr->index);
+  }
+  void visitStructRMW(StructRMW* curr) {
+    prepareColor(o);
+    o << "struct.atomic.rmw.";
+    printAtomicRMWOp(curr->op);
+    restoreNormalColor(o);
+    o << ' ';
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapType(heapType);
+    o << ' ';
+    printFieldName(heapType, curr->index);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    prepareColor(o);
+    o << "struct.atomic.rmw.cmpxchg ";
+    restoreNormalColor(o);
+    printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapType(heapType);

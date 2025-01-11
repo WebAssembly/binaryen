@@ -722,6 +722,8 @@ public:
     StructNewId,
     StructGetId,
     StructSetId,
+    StructRMWId,
+    StructCmpxchgId,
     ArrayNewId,
     ArrayNewDataId,
     ArrayNewElemId,
@@ -1672,6 +1674,34 @@ public:
   Expression* ref;
   Expression* value;
   MemoryOrder order = MemoryOrder::Unordered;
+
+  void finalize();
+};
+
+class StructRMW : public SpecificExpression<Expression::StructRMWId> {
+public:
+  StructRMW() = default;
+  StructRMW(MixedArena& allocator) {}
+
+  AtomicRMWOp op;
+  Index index;
+  Expression* ref;
+  Expression* value;
+  MemoryOrder order;
+
+  void finalize();
+};
+
+class StructCmpxchg : public SpecificExpression<Expression::StructCmpxchgId> {
+public:
+  StructCmpxchg() = default;
+  StructCmpxchg(MixedArena& allocator) {}
+
+  Index index;
+  Expression* ref;
+  Expression* expected;
+  Expression* replacement;
+  MemoryOrder order;
 
   void finalize();
 };

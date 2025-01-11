@@ -324,6 +324,21 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     self()->noteSubtype(curr->value, fields[curr->index].type);
   }
+  void visitStructRMW(StructRMW* curr) {
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    self()->noteSubtype(curr->value, fields[curr->index].type);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    self()->noteSubtype(curr->expected, fields[curr->index].type);
+    self()->noteSubtype(curr->replacement, fields[curr->index].type);
+  }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;
