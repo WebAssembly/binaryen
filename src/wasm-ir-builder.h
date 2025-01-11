@@ -342,6 +342,16 @@ private:
     Type inputType;
     Index inputLocal = -1;
 
+    // If there are br_on_*, try_table, or resume branches that target this
+    // scope and carry additional values, we need to use a scratch local to
+    // deliver those additional values because the IR does not support them. We
+    // may need scratch locals of different arities for the same branch target.
+    // For each arity we also need a trampoline label to branch to. TODO:
+    // Support additional values on any branch once we have better multivalue
+    // optimization support.
+    std::vector<Index> outputLocals;
+    std::vector<Name> outputLabels;
+
     // The stack of instructions being built in this scope.
     std::vector<Expression*> exprStack;
 
@@ -372,14 +382,10 @@ private:
     static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType) {
       return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
-    static ScopeCtx makeElse(If* iff,
-                             Name originalLabel,
-                             Name label,
-                             bool labelUsed,
-                             Type inputType,
-                             Index inputLocal) {
-      return ScopeCtx(
-        ElseScope{iff, originalLabel}, label, labelUsed, inputType, inputLocal);
+    static ScopeCtx makeElse(ScopeCtx&& scope) {
+      scope.scope = ElseScope{scope.getIf(), scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/true);
+      return scope;
     }
     static ScopeCtx makeLoop(Loop* loop, Type inputType) {
       return ScopeCtx(LoopScope{loop}, inputType);
@@ -387,27 +393,32 @@ private:
     static ScopeCtx makeTry(Try* tryy, Name originalLabel, Type inputType) {
       return ScopeCtx(TryScope{tryy, originalLabel}, inputType);
     }
-    static ScopeCtx makeCatch(Try* tryy,
-                              Name originalLabel,
-                              Name label,
-                              bool labelUsed,
-                              Name branchLabel) {
-      return ScopeCtx(
-        CatchScope{tryy, originalLabel}, label, labelUsed, branchLabel);
+    static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
-    static ScopeCtx makeCatchAll(Try* tryy,
-                                 Name originalLabel,
-                                 Name label,
-                                 bool labelUsed,
-                                 Name branchLabel) {
-      return ScopeCtx(
-        CatchAllScope{tryy, originalLabel}, label, labelUsed, branchLabel);
+    static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
     static ScopeCtx
     makeTryTable(TryTable* trytable, Name originalLabel, Type inputType) {
       return ScopeCtx(TryTableScope{trytable, originalLabel}, inputType);
     }
-
+    // When transitioning to a new scope for a delimiter like `else` or catch,
+    // most of the scope context is preserved, but some parts need to be reset.
+    // `keepInput` means that control flow parameters are available at the
+    // begninning of the scope after the delimiter.
+    void resetForDelimiter(bool keepInput) {
+      exprStack.clear();
+      unreachable = false;
+      if (!keepInput) {
+        inputType = Type::none;
+        inputLocal = -1;
+      }
+    }
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Function* getFunction() {
       if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
@@ -513,6 +524,10 @@ private:
         return trytable->type;
       }
       WASM_UNREACHABLE("unexpected scope kind");
+    }
+    Type getLabelType() {
+      // Loops receive their input type rather than their output type.
+      return getLoop() ? inputType : getResultType();
     }
     Name getOriginalLabel() {
       if (std::get_if<NoScope>(&scope) || getFunction()) {
@@ -651,6 +666,9 @@ private:
   Result<Type> getLabelType(Index label);
   Result<Type> getLabelType(Name labelName);
 
+  Result<std::pair<Index, Name>> getExtraOutputLocalAndLabel(Index label,
+                                                             size_t extraArity);
+  Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
   void dump();
