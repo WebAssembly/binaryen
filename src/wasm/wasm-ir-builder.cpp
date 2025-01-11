@@ -1091,7 +1091,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try* tryy;
+  } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     tryy->catchBodies.push_back(*expr);
     tryy->name = scope.label;
@@ -1138,23 +1138,22 @@ IRBuilder::getExtraOutputLocalAndLabel(Index label, size_t extraArity) {
 Expression*
 IRBuilder::fixExtraOutput(ScopeCtx& scope, Name label, Expression* curr) {
   // Add a trampoline branch target. Reuse unnamed blocks.
-  auto addTrampoline = [&](Type receivedType,
-                           Name trampolineLabel,
-                           Name skipLabel) {
-    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
-      block->name = trampolineLabel;
-      if (block->list.back()->type == Type::none) {
-        block->list.push_back(builder.makeBreak(skipLabel));
+  auto addTrampoline =
+    [&](Type receivedType, Name trampolineLabel, Name skipLabel) {
+      if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+        block->name = trampolineLabel;
+        if (block->list.back()->type == Type::none) {
+          block->list.push_back(builder.makeBreak(skipLabel));
+        } else {
+          block->list.back() = builder.makeBreak(skipLabel, block->list.back());
+        }
+        block->type = receivedType;
       } else {
-        block->list.back() = builder.makeBreak(skipLabel, block->list.back());
+        assert(curr->type != Type::none);
+        curr = builder.makeBlock(
+          trampolineLabel, {builder.makeBreak(skipLabel, curr)}, receivedType);
       }
-      block->type = receivedType;
-    } else {
-      assert(curr->type != Type::none);
-      curr = builder.makeBlock(
-        trampolineLabel, {builder.makeBreak(skipLabel, curr)}, receivedType);
-    }
-  };
+    };
 
   auto labelType = scope.getLabelType();
   Name fallthroughLabel;
