@@ -1009,8 +1009,7 @@ Result<> IRBuilder::visitEnd() {
     }
     curr = fixExtraOutput(scope, label, curr);
     // We can re-use unnamed blocks instead of wrapping them.
-    if (auto* block = curr->dynCast<Block>();
-        block && (!block->name || block->name == label)) {
+    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
       block->name = label;
       block->type = blockType;
       return block;
@@ -1039,8 +1038,9 @@ Result<> IRBuilder::visitEnd() {
     this->func = nullptr;
     blockHint = 0;
     labelHint = 0;
-  } else if (scope.getBlock()) {
-    auto* block = fixExtraOutput(scope, label, *expr)->cast<Block>();
+  } else if (auto* block = scope.getBlock()) {
+    assert(*expr == block);
+    block = fixExtraOutput(scope, label, block)->cast<Block>();
     block->name = label;
     block->finalize(block->type,
                     scope.labelUsed ? Block::HasBreak : Block::NoBreak);
@@ -1946,7 +1946,9 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
 
   // If the value under test is unreachable, then we can proceed without putting
   // anything in locals since the branch will never be taken. The extra values
-  // will just be dropped.
+  // will just be dropped. We can't leave this optimization to DCE because we
+  // wouldn't know what type to use for the scratch local if we tried to
+  // continue.
   if (!extraArity || testType == Type::unreachable) {
     auto name = getLabelName(label);
     CHECK_ERR(name);
