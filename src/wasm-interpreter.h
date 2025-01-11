@@ -1701,6 +1701,10 @@ public:
     return Flow();
   }
 
+  Flow visitStructRMW(StructRMW* curr) { WASM_UNREACHABLE("TODO"); }
+
+  Flow visitStructCmpxchg(StructCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
+
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not

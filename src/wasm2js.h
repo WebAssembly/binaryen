@@ -2320,6 +2320,14 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitStructRMW(StructRMW* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStructCmpxchg(StructCmpxchg* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitArrayNew(ArrayNew* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

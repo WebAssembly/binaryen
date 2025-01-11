@@ -1737,18 +1737,24 @@ void WasmBinaryWriter::writeField(const Field& field) {
   o << U32LEB(field.mutable_);
 }
 
-void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order) {
+void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
+  uint8_t code = 0;
   switch (order) {
     case MemoryOrder::Unordered:
-      break;
+      // Non-atomic get or set does not need a memory order.
+      return;
     case MemoryOrder::SeqCst:
-      o << uint8_t(BinaryConsts::OrderSeqCst);
-      return;
+      code = BinaryConsts::OrderSeqCst;
+      break;
     case MemoryOrder::AcqRel:
-      o << uint8_t(BinaryConsts::OrderAcqRel);
-      return;
+      code = BinaryConsts::OrderAcqRel;
+      break;
   }
-  WASM_UNREACHABLE("unexpected memory order");
+  if (isRMW) {
+    o << uint8_t((code << 4) | code);
+  } else {
+    o << code;
+  }
 }
 
 // reader
@@ -3435,6 +3441,28 @@ Result<> WasmBinaryReader::readInst() {
           auto field = getU32LEB();
           return builder.makeStructSet(type, field, order);
         }
+
+#define STRUCT_RMW(op)                                                         \
+  case BinaryConsts::StructAtomicRMW##op: {                                    \
+    auto order = getMemoryOrder(true);                                         \
+    auto type = getIndexedHeapType();                                          \
+    auto field = getU32LEB();                                                  \
+    return builder.makeStructRMW(RMW##op, type, field, order);                 \
+  }
+
+          STRUCT_RMW(Add)
+          STRUCT_RMW(Sub)
+          STRUCT_RMW(And)
+          STRUCT_RMW(Or)
+          STRUCT_RMW(Xor)
+          STRUCT_RMW(Xchg)
+
+        case BinaryConsts::StructAtomicRMWCmpxchg: {
+          auto order = getMemoryOrder(true);
+          auto type = getIndexedHeapType();
+          auto field = getU32LEB();
+          return builder.makeStructCmpxchg(type, field, order);
+        }
       }
       return Err{"unknown atomic operation"};
     }
@@ -4983,13 +5011,22 @@ std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
   return {getMemoryName(memIdx), alignment, offset};
 }
 
-MemoryOrder WasmBinaryReader::getMemoryOrder() {
+MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {
   auto code = getInt8();
   switch (code) {
     case BinaryConsts::OrderSeqCst:
+      // Covers the RMW case as well because (0 << 4 ) | 0 == 0.
       return MemoryOrder::SeqCst;
     case BinaryConsts::OrderAcqRel:
-      return MemoryOrder::AcqRel;
+      if (!isRMW) {
+        return MemoryOrder::AcqRel;
+      }
+      throwError("RMW memory orders must match");
+    case ((BinaryConsts::OrderAcqRel << 4) | BinaryConsts::OrderAcqRel):
+      if (isRMW) {
+        return MemoryOrder::AcqRel;
+      }
+      break;
   }
   throwError("Unrecognized memory order code " + std::to_string(code));
 }
