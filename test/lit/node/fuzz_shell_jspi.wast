@@ -33,13 +33,43 @@
 ;; RUN: wasm-opt %s -o %t.wasm -q
 ;; RUN: d8 --wasm-staging %t.js -- %t.wasm | filecheck %s
 ;;
-;; The first part is unchanged from before.
-;; CHECK: [fuzz-exec] calling errors
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [fuzz-exec] calling call0
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [LoggingExternalInterface logging 0]
-;; CHECK: [fuzz-exec] calling call3
-;; CHECK: [LoggingExternalInterface logging -1]
-;; CHECK: [LoggingExternalInterface logging 1]
+;; The output here looks a little out of order, in particular because we do not
+;; |await| the toplevel callExports() calls. That |await| is only valid if we
+;; pass --module, which we do not fuzz with. As a result, the first await
+;; operation in the first callExports() leaves that function and continues to
+;; the next, but we do get around to executing all the things we need. In
+;; particular, the output here should contain two "node result" lines for each
+;; of the 5 functions (one from each callExports()). The important thing is that
+;; we get a random-like ordering, which includes some defers (each of which has
+;; a later finish), showing that we interleave stacks.
+;;
+;; CHECK: [fuzz-exec] calling a
+;; CHECK: [fuzz-exec] calling b
+;; CHECK: [fuzz-exec] note result: a => 10
+;; CHECK: [fuzz-exec] calling b
+;; CHECK: [fuzz-exec] note result: b => 20
+;; CHECK: [fuzz-exec] calling a
+;; CHECK: (jspi: defer a)
+;; CHECK: [fuzz-exec] calling d
+;; CHECK: (jspi: defer d)
+;; CHECK: [fuzz-exec] calling e
+;; CHECK: [fuzz-exec] note result: b => 20
+;; CHECK: [fuzz-exec] calling c
+;; CHECK: [fuzz-exec] note result: e => 50
+;; CHECK: [fuzz-exec] calling c
+;; CHECK: (jspi: defer c)
+;; CHECK: [fuzz-exec] calling c
+;; CHECK: (jspi: finish c)
+;; CHECK: [fuzz-exec] note result: c => 30
+;; CHECK: [fuzz-exec] calling d
+;; CHECK: [fuzz-exec] note result: c => 30
+;; CHECK: [fuzz-exec] calling d
+;; CHECK: (jspi: finish d)
+;; CHECK: [fuzz-exec] note result: d => 40
+;; CHECK: [fuzz-exec] calling e
+;; CHECK: [fuzz-exec] note result: d => 40
+;; CHECK: [fuzz-exec] calling a
+;; CHECK: (jspi: finish a)
+;; CHECK: [fuzz-exec] note result: a => 10
+;; CHECK: [fuzz-exec] note result: e => 50
 
