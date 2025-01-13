@@ -1606,10 +1606,13 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
 
     bool hasBreakTarget(Name name) {
-      if (expressionStack.empty()) {
+      // The break must be on top.
+      assert(!expressionStack.empty());
+      if (expressionStack.size() < 2) {
+        // There must be a scope for this break to be valid.
         return false;
       }
-      Index i = expressionStack.size() - 1;
+      Index i = expressionStack.size() - 2;
       while (1) {
         auto* curr = expressionStack[i];
         bool has = false;
