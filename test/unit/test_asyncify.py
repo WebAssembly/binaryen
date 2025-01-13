@@ -104,7 +104,6 @@ class AsyncifyTest(utils.BinaryenTestCase):
         with open(temp, 'w') as f:
             f.write('(module\n')
             f.write(' (import "env" "foo" (func $import))\n')
-            f.write(' (memory $mem (export "memory") 1 1)\n')
             f.write(' (func $many-locals\n')
             for i in range(65 * 1024):
                 f.write(f'  (local $x{i} i32)\n')

@@ -1659,7 +1659,7 @@ struct Asyncify : public Pass {
       Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
       asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
     } else {
-      if (module->memories.size() == 1) {
+      if (module->memories.size() <= 1) {
         MemoryUtils::ensureExists(module);
         asyncifyMemory = module->memories[0]->name;
       } else {
