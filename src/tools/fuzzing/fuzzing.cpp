@@ -1635,10 +1635,14 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     }
 
     bool isValidRethrow(Name target) {
-      if (controlFlowStack.empty()) {
+      // The rethrow must be on top.
+      assert(!controlFlowStack.empty());
+      assert(controlFlowStack.back()->is<Rethrow>());
+      if (controlFlowStack.size() < 2) {
+        // There must be a try for this rethrow to be valid.
         return false;
       }
-      Index i = controlFlowStack.size() - 1;
+      Index i = controlFlowStack.size() - 2;
       while (1) {
         auto* curr = controlFlowStack[i];
         if (auto* tryy = curr->dynCast<Try>()) {
