@@ -1666,7 +1666,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
         }
         i--;
       }
-    } 
+    }
   };
   Fixer fixer(wasm, *this);
   fixer.walk(func->body);
