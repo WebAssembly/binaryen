@@ -1054,6 +1054,7 @@ Result<> IRBuilder::visitEnd() {
     labelHint = 0;
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
+    block->name = Name();
     block = fixExtraOutput(scope, label, block)->cast<Block>();
     block->name = label;
     block->finalize(block->type,
