@@ -55,6 +55,9 @@ unfuzzable = [
     'strip-dwarf.wasm',
     'ignore_missing_func_dwarf.wasm',
     'print.wasm',
+    # ignore linking section as it causes us to warn about it not being fully
+    # supported
+    'strip-target-features.wasm',
     # TODO fuzzer support for multimemory
     'multi-memories-atomics64.wast',
     'multi-memories-basics.wast',
