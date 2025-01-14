@@ -70,21 +70,6 @@ unfuzzable = [
     # the fuzzer does not support imported memories
     'multi-memory-lowering-import.wast',
     'multi-memory-lowering-import-error.wast',
-    # the fuzzer does not support struct RMW ops
-    'gc-atomics.wast',
-    'gc-atomics-null-refs.wast',
-    'shared-structs.wast',
-    'heap2local-rmw.wast',
-    'optimize-instructions-struct-rmw.wast',
-    'gto-removals-rmw.wast',
-    'type-refining-rmw.wast',
-    'type-ssa-exact-rmw.wast',
-    'cfp-rmw.wast',
-    'unsubtyping-cmpxchg.wast',
-    'struct-atomic-threads.wast',
-    'type-refining-gufa-rmw.wast',
-    'struct-cmpxchg-shared-expected.wast',
-    'precompute-gc-atomics-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176

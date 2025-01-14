@@ -540,6 +540,8 @@ private:
   bool maybeSignedGet(const Field& field);
 
   Expression* makeStructGet(Type type);
+  Expression* makeStructRMW(Type type);
+  Expression* makeStructCmpxchg(Type type);
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
