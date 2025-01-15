@@ -2298,6 +2298,7 @@ public:
 class Tag : public Importable {
 public:
   HeapType type;
+
   Type params() { return type.getSignature().params; }
   Type results() { return type.getSignature().results; }
 };
