@@ -1,5 +1,5 @@
-;; NOTE: These assertions have been manually generated, and cannot be updated by update_lit_checks.py
-;; because of the assertion at the end (update_lit_checks.py ignores the features section because it's
+;; NOTE: These assertions have been manually generated because of the assertion
+;; at the end (update_lit_checks.py ignores the features section because it's
 ;; not semantically part of the module.)
 
 ;; RUN: wasm-opt --enable-bulk-memory %s --llvm-memory-copy-fill-lowering --emit-target-features -S -o - | filecheck %s
