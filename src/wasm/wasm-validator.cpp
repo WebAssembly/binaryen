@@ -3096,12 +3096,26 @@ void FunctionValidator::visitStructRMW(StructRMW* curr) {
     return;
   }
   auto& field = fields[curr->index];
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
+  shouldBeFalse(
+    field.isPacked(), curr, "struct.atomic.rmw field must not be packed");
+  bool isAny =
+    field.type.isRef() &&
+    Type::isSubType(
+      field.type,
+      Type(HeapTypes::any.getBasic(field.type.getHeapType().getShared()),
+           Nullable));
+  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 ||
+                      (isAny && curr->op == RMWXchg),
+                    curr,
+                    "struct.atomic.rmw field type invalid for operation")) {
+    return;
+  }
   shouldBeSubType(curr->value->type,
                   field.type,
                   curr,
                   "struct.atomic.rmw value must have the proper type");
-  shouldBeEqual(
-    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
 }
 
 void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
@@ -3134,6 +3148,21 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
     return;
   }
   auto& field = fields[curr->index];
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
+  shouldBeFalse(
+    field.isPacked(), curr, "struct.atomic.rmw field must not be packed");
+  bool isEq =
+    field.type.isRef() &&
+    Type::isSubType(
+      field.type,
+      Type(HeapTypes::eq.getBasic(field.type.getHeapType().getShared()),
+           Nullable));
+  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 || isEq,
+                    curr,
+                    "struct.atomic.rmw field type invalid for operation")) {
+    return;
+  }
   shouldBeSubType(
     curr->expected->type,
     field.type,
@@ -3144,8 +3173,6 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
     field.type,
     curr,
     "struct.atomic.rmw.cmpxchg replacement value must have the proper type");
-  shouldBeEqual(
-    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {

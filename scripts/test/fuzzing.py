@@ -81,6 +81,7 @@ unfuzzable = [
     # the fuzzer does not support struct RMW ops
     'gc-atomics.wast',
     'gc-atomics-null-refs.wast',
+    'shared-structs.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176
