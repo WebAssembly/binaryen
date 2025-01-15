@@ -47,7 +47,7 @@
 
 ;; CHECK:      (type $3 (func))
 
-;; CHECK:      (tag $tag$0 (param (ref null $0) (ref null $1)))
+;; CHECK:      (tag $tag$0 (type $2) (param (ref null $0) (ref null $1)))
 
 ;; CHECK:      (func $0 (type $3)
 ;; CHECK-NEXT:  (local $0 (ref null $0))

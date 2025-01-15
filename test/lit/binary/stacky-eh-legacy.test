@@ -41,7 +41,7 @@
 
 ;; CHECK:      (type $1 (func))
 
-;; CHECK:      (tag $tag$0 (param i32))
+;; CHECK:      (tag $tag$0 (type $0) (param i32))
 
 ;; CHECK:      (func $0
 ;; CHECK-NEXT:  (local $0 i32)
