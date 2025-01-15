@@ -1372,7 +1372,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!use.type.isSignature()) {
       return in.err(pos, "tag type must be a signature");
     }
-    t->sig = use.type.getSignature();
+    t->type = use.type;
     return Ok{};
   }
 };

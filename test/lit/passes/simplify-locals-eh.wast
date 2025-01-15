@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --simplify-locals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $0) (param i32))
   (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $bar (type $1) (result i32)

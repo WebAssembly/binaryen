@@ -24,13 +24,11 @@
 
   ;; CHECK:       (type $4 (func (param (ref $struct))))
 
-  ;; CHECK:      (type $5 (func (param (ref $struct))))
-
   ;; CHECK:      (table $0 0 funcref)
 
   ;; CHECK:      (elem declare func $func-two-params)
 
-  ;; CHECK:      (tag $tag (param (ref $struct)))
+  ;; CHECK:      (tag $tag (type $4) (param (ref $struct)))
   (tag $tag (param (ref $struct)))
 
   ;; CHECK:      (func $func (type $4) (param $x (ref $struct))

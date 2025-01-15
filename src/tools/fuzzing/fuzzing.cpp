@@ -2177,7 +2177,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     // Catch bodies (aside from a catch-all) begin with a pop.
     Expression* prefix = nullptr;
     if (i < numTags) {
-      auto tagType = wasm.getTag(catchTags[i])->sig.params;
+      auto tagType = wasm.getTag(catchTags[i])->params();
       if (tagType != Type::none) {
         auto* pop = builder.makePop(tagType);
         // Capture the pop in a local, so that it can be used later.
@@ -2223,7 +2223,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       // Look for a specific tag.
       auto& tag = pick(wasm.tags);
       tagName = tag->name;
-      tagType = tag->sig.params;
+      tagType = tag->params();
     } else {
       // Add a catch_all at the end, some of the time (but all of the time if we
       // have nothing else).
@@ -4793,7 +4793,7 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     addTag();
   }
   auto* tag = pick(wasm.tags).get();
-  auto tagType = tag->sig.params;
+  auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
     operands.push_back(make(t));

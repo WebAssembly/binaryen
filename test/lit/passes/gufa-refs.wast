@@ -1904,13 +1904,13 @@
   ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
-  ;; CHECK:      (tag $nothing (param anyref))
+  ;; CHECK:      (tag $nothing (type $1) (param anyref))
   (tag $nothing (param (ref null any)))
 
-  ;; CHECK:      (tag $something (param anyref))
+  ;; CHECK:      (tag $something (type $1) (param anyref))
   (tag $something (param (ref null any)))
 
-  ;; CHECK:      (tag $empty)
+  ;; CHECK:      (tag $empty (type $0))
   (tag $empty (param))
 
   ;; CHECK:      (func $func (type $0)
@@ -2136,7 +2136,7 @@
   ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
-  ;; CHECK:      (tag $tag (param anyref anyref))
+  ;; CHECK:      (tag $tag (type $0) (param anyref anyref))
   (tag $tag (param (ref null any)) (param (ref null any)))
 
   ;; CHECK:      (func $func (type $1)
@@ -3859,7 +3859,7 @@
 
   ;; CHECK:      (table $t 0 externref)
 
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $2) (param i32))
   (tag $e-i32 (param i32))
 
   (memory $0 10)

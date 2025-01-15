@@ -2585,14 +2585,14 @@ void FunctionValidator::visitTry(Try* curr) {
     auto* tag = getModule()->getTagOrNull(tagName);
     if (!shouldBeTrue(tag != nullptr, curr, "")) {
       getStream() << "tag name is invalid: " << tagName << "\n";
-    } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+    } else if (!shouldBeEqual(tag->results(), Type(Type::none), curr, "")) {
       getStream()
         << "catch's tag (" << tagName
         << ") has result values, which is not allowed for exception handling";
     } else {
       auto* catchBody = curr->catchBodies[i];
       auto pops = EHUtils::findPops(catchBody);
-      if (tag->sig.params == Type::none) {
+      if (tag->params() == Type::none) {
         if (!shouldBeTrue(pops.empty(), curr, "")) {
           getStream() << "catch's tag (" << tagName
                       << ") doesn't have any params, but there are pops";
@@ -2600,7 +2600,7 @@ void FunctionValidator::visitTry(Try* curr) {
       } else {
         if (shouldBeTrue(pops.size() == 1, curr, "")) {
           auto* pop = *pops.begin();
-          if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
+          if (!shouldBeSubType(tag->params(), pop->type, curr, "")) {
             getStream()
               << "catch's tag (" << tagName
               << ")'s pop doesn't have the same type as the tag's params";
@@ -2672,7 +2672,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
       auto* tag = getModule()->getTagOrNull(tagName);
       if (!shouldBeTrue(tag != nullptr, curr, "")) {
         getStream() << "catch's tag name is invalid: " << tagName << "\n";
-      } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+      } else if (!shouldBeEqual(tag->results(), Type(Type::none), curr, "")) {
         getStream()
           << "catch's tag (" << tagName
           << ") has result values, which is not allowed for exception handling";
@@ -2680,7 +2680,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
 
       // tagType and sentType should be the same (except for the possible exnref
       // at the end of sentType)
-      auto tagType = tag->sig.params;
+      auto tagType = tag->params();
       tagTypeSize = tagType.size();
       for (Index j = 0; j < tagType.size(); j++) {
         shouldBeEqual(tagType[j], sentType[j], curr, invalidSentTypeMsg);
@@ -2722,18 +2722,18 @@ void FunctionValidator::visitThrow(Throw* curr) {
     return;
   }
   shouldBeEqual(
-    tag->sig.results,
+    tag->results(),
     Type(Type::none),
     curr,
     "tags with result types must not be used for exception handling");
   if (!shouldBeEqual(curr->operands.size(),
-                     tag->sig.params.size(),
+                     tag->params().size(),
                      curr,
                      "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
-  for (const auto& param : tag->sig.params) {
+  for (const auto& param : tag->params()) {
     if (!shouldBeSubType(curr->operands[i]->type,
                          param,
                          curr->operands[i],
@@ -4164,20 +4164,20 @@ static void validateTags(Module& module, ValidationInfo& info) {
       "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
-    if (curr->sig.results != Type(Type::none)) {
+    if (curr->results() != Type::none) {
       info.shouldBeTrue(module.features.hasTypedContinuations(),
                         curr->name,
                         "Tags with result types require typed continuations "
                         "feature [--enable-typed-continuations]");
     }
-    if (curr->sig.params.isTuple()) {
+    if (curr->params().isTuple()) {
       info.shouldBeTrue(
         module.features.hasMultivalue(),
         curr->name,
         "Multivalue tag type requires multivalue [--enable-multivalue]");
     }
     FeatureSet features;
-    for (const auto& param : curr->sig.params) {
+    for (const auto& param : curr->params()) {
       features |= param.getFeatures();
       info.shouldBeTrue(param.isConcrete(),
                         curr->name,

@@ -9,7 +9,7 @@
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $0) (param i32))
   (tag $e (param i32))
 
   ;; CHECK:      (func $try_table-target-block-is-not-unreachable (type $1) (result i32)

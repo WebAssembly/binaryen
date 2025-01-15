@@ -1151,7 +1151,7 @@ struct InfoCollector
       auto tag = curr->catchTags[tagIndex];
       auto* body = curr->catchBodies[tagIndex];
 
-      auto params = getModule()->getTag(tag)->sig.params;
+      auto params = getModule()->getTag(tag)->params();
       if (params.size() == 0) {
         continue;
       }
@@ -1189,7 +1189,7 @@ struct InfoCollector
 
       Index exnrefIndex = 0;
       if (tag.is()) {
-        auto params = getModule()->getTag(tag)->sig.params;
+        auto params = getModule()->getTag(tag)->params();
 
         for (Index i = 0; i < params.size(); i++) {
           if (isRelevant(params[i])) {

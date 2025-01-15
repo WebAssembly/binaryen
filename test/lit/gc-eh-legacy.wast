@@ -10,7 +10,7 @@
     (field (mut i32))
   ))
 
-  ;; CHECK:      (tag $tagA (param (ref $A)))
+  ;; CHECK:      (tag $tagA (type $1) (param (ref $A)))
   (tag $tagA (param (ref $A)))
 
   ;; CHECK:      (func $foo (type $2) (result (ref null $A))

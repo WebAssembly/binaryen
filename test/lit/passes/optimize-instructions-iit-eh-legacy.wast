@@ -5,7 +5,7 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; CHECK:      (tag $e (param (ref null $struct.A)))
+  ;; CHECK:      (tag $e (type $1) (param (ref null $struct.A)))
   (tag $e (param (ref null $struct.A)))
 
   ;; CHECK:      (func $ref-cast-statically-removed (type $2)

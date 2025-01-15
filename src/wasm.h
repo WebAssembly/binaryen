@@ -2297,7 +2297,9 @@ public:
 
 class Tag : public Importable {
 public:
-  Signature sig;
+  HeapType type;
+  Type params() { return type.getSignature().params; }
+  Type results() { return type.getSignature().results; }
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

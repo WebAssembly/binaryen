@@ -1,6 +1,6 @@
 (module
  (type $0 (func))
- (tag $tag$0)
+ (tag $tag$0 (type $0))
  (func $0
   (try $label
    (do

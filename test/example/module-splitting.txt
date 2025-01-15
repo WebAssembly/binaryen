@@ -16,7 +16,7 @@ Before:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem 3 42 shared)
  (table $tab 3 42 funcref)
- (tag $e (param i32))
+ (tag $e (type $0) (param i32))
 )
 Keeping: <none>
 After:
@@ -25,7 +25,7 @@ After:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem 3 42 shared)
  (table $tab 3 42 funcref)
- (tag $e (param i32))
+ (tag $e (type $0) (param i32))
  (export "%memory" (memory $mem))
  (export "%table" (table $tab))
  (export "%global" (global $glob))
@@ -42,7 +42,7 @@ Before:
  (import "env" "mem" (memory $mem 3 42 shared))
  (import "env" "tab" (table $tab 3 42 funcref))
  (import "env" "glob" (global $glob (mut i32)))
- (import "env" "e" (tag $e (param i32)))
+ (import "env" "e" (tag $e (type $0) (param i32)))
 )
 Keeping: <none>
 After:
@@ -51,7 +51,7 @@ After:
  (import "env" "mem" (memory $mem 3 42 shared))
  (import "env" "tab" (table $tab 3 42 funcref))
  (import "env" "glob" (global $glob (mut i32)))
- (import "env" "e" (tag $e (param i32)))
+ (import "env" "e" (tag $e (type $0) (param i32)))
  (export "%memory" (memory $mem))
  (export "%table" (table $tab))
  (export "%global" (global $glob))
@@ -68,7 +68,7 @@ Before:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem 3 42 shared)
  (table $tab 3 42 funcref)
- (tag $e (param i32))
+ (tag $e (type $0) (param i32))
  (export "mem" (memory $mem))
  (export "tab" (table $tab))
  (export "glob" (global $glob))
@@ -81,7 +81,7 @@ After:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem 3 42 shared)
  (table $tab 3 42 funcref)
- (tag $e (param i32))
+ (tag $e (type $0) (param i32))
  (export "mem" (memory $mem))
  (export "tab" (table $tab))
  (export "glob" (global $glob))

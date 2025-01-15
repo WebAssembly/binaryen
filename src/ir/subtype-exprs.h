@@ -257,7 +257,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
   }
   void visitThrow(Throw* curr) {
-    Type params = self()->getModule()->getTag(curr->tag)->sig.params;
+    Type params = self()->getModule()->getTag(curr->tag)->params();
     assert(params.size() == curr->operands.size());
     for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
       self()->noteSubtype(curr->operands[i], params[i]);

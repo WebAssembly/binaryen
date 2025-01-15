@@ -18,7 +18,7 @@
 
   ;; CHECK:      (type $6 (func (param i32 i64)))
 
-  ;; CHECK:      (tag $e-empty)
+  ;; CHECK:      (tag $e-empty (type $1))
   ;; STACKIR-OPT:      (type $0 (func (result i32 i64)))
 
   ;; STACKIR-OPT:      (type $1 (func))
@@ -33,13 +33,13 @@
 
   ;; STACKIR-OPT:      (type $6 (func (param i32 i64)))
 
-  ;; STACKIR-OPT:      (tag $e-empty)
+  ;; STACKIR-OPT:      (tag $e-empty (type $1))
   (tag $e-empty)
-  ;; CHECK:      (tag $e-i32 (param i32))
-  ;; STACKIR-OPT:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $5) (param i32))
+  ;; STACKIR-OPT:      (tag $e-i32 (type $5) (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK:      (tag $e-i32-i64 (param i32 i64))
-  ;; STACKIR-OPT:      (tag $e-i32-i64 (param i32 i64))
+  ;; CHECK:      (tag $e-i32-i64 (type $6) (param i32 i64))
+  ;; STACKIR-OPT:      (tag $e-i32-i64 (type $6) (param i32 i64))
   (tag $e-i32-i64 (param i32 i64))
 
   ;; CHECK:      (func $foo (type $1)
