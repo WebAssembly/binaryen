@@ -926,7 +926,7 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
     auto tagName = curr->catchTags[i];
     std::vector<Type> sentType;
     if (tagName) {
-      for (auto t : wasm->getTag(tagName)->sig.params) {
+      for (auto t : wasm->getTag(tagName)->params()) {
         sentType.push_back(t);
       }
     }
@@ -1412,11 +1412,10 @@ static void populateResumeSentTypes(Resume* curr, Module* wasm) {
   curr->sentTypes.clear();
   curr->sentTypes.resize(curr->handlerTags.size());
   for (Index i = 0; i < curr->handlerTags.size(); i++) {
-    auto& tag = curr->handlerTags[i];
-    auto& tagSig = wasm->getTag(tag)->sig;
+    auto tag = wasm->getTag(curr->handlerTags[i]);
 
-    auto& tgps = tagSig.params;
-    auto& tgrs = tagSig.results;
+    auto tgps = tag->params();
+    auto tgrs = tag->results();
 
     HeapType ftPrime{Signature(tgrs, ctrs)};
     HeapType ctPrime{Continuation(ftPrime)};
@@ -1450,7 +1449,7 @@ void Resume::finalize(Module* wasm) {
 void Suspend::finalize(Module* wasm) {
   if (!handleUnreachableOperands(this) && wasm) {
     auto tag = wasm->getTag(this->tag);
-    type = tag->sig.results;
+    type = tag->results();
   }
 }
 

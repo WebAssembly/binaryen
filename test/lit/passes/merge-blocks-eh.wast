@@ -5,13 +5,13 @@
   ;; CHECK:      (import "a" "b" (func $import (type $0)))
   (import "a" "b" (func $import))
 
-  ;; CHECK:      (tag $empty)
+  ;; CHECK:      (tag $empty (type $0))
   (tag $empty)
 
-  ;; CHECK:      (tag $i32 (param i32))
+  ;; CHECK:      (tag $i32 (type $3) (param i32))
   (tag $i32 (param i32))
 
-  ;; CHECK:      (tag $exnref (param exnref))
+  ;; CHECK:      (tag $exnref (type $4) (param exnref))
   (tag $exnref (param exnref))
 
   ;; CHECK:      (func $drop-block-try_catch_all_ref (type $0)

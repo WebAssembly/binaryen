@@ -73,7 +73,7 @@
 
   ;; CHECK-TEXT:      (elem declare func $foo $ref-taken-but-not-in-table)
 
-  ;; CHECK-TEXT:      (tag $e-i32 (param i32))
+  ;; CHECK-TEXT:      (tag $e-i32 (type $7) (param i32))
 
   ;; CHECK-TEXT:      (export "export_func" (func $import_func))
 
@@ -97,7 +97,7 @@
 
   ;; CHECK-BIN:      (elem declare func $foo $ref-taken-but-not-in-table)
 
-  ;; CHECK-BIN:      (tag $e-i32 (param i32))
+  ;; CHECK-BIN:      (tag $e-i32 (type $7) (param i32))
 
   ;; CHECK-BIN:      (export "export_func" (func $import_func))
 
@@ -2089,7 +2089,7 @@
   ;; CHECK-BIN-NEXT: )
   (func $ref-taken-but-not-in-table)
 )
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $7) (param i32))
 
 ;; CHECK-BIN-NODEBUG:      (export "export_func" (func $fimport$0))
 

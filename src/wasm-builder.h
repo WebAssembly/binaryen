@@ -162,10 +162,10 @@ public:
     return glob;
   }
 
-  static std::unique_ptr<Tag> makeTag(Name name, Signature sig) {
+  static std::unique_ptr<Tag> makeTag(Name name, HeapType type) {
     auto tag = std::make_unique<Tag>();
     tag->name = name;
-    tag->sig = sig;
+    tag->type = type;
     return tag;
   }
 

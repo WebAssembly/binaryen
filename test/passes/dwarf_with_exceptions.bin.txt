@@ -8,7 +8,7 @@
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
- (tag $tag$0 (param i32))
+ (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )
@@ -414,7 +414,7 @@ file_names[  1]:
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
  (global $__stack_pointer (mut i32) (i32.const 66560))
  (memory $0 2)
- (tag $tag$0 (param i32))
+ (tag $tag$0 (type $1) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
  )

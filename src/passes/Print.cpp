@@ -413,6 +413,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTag(Tag* curr);
   void visitImportedTag(Tag* curr);
   void visitDefinedTag(Tag* curr);
+  void printTagType(HeapType type);
   void printTableHeader(Table* curr);
   void visitTable(Table* curr);
   void visitElementSegment(ElementSegment* curr);
@@ -3185,16 +3186,9 @@ void PrintSExpression::visitImportedTag(Tag* curr) {
   emitImportHeader(curr);
   o << "(tag ";
   curr->name.print(o);
-  if (curr->sig.params != Type::none) {
-    o << maybeSpace;
-    printParamType(curr->sig.params);
-  }
-  if (curr->sig.results != Type::none) {
-    o << maybeSpace;
-    printResultType(curr->sig.results);
-  }
-  o << "))";
-  o << maybeNewLine;
+  o << maybeSpace;
+  printTagType(curr->type);
+  o << "))" << maybeNewLine;
 }
 
 void PrintSExpression::visitDefinedTag(Tag* curr) {
@@ -3202,15 +3196,31 @@ void PrintSExpression::visitDefinedTag(Tag* curr) {
   o << '(';
   printMedium(o, "tag ");
   curr->name.print(o);
-  if (curr->sig.params != Type::none) {
-    o << maybeSpace;
-    printParamType(curr->sig.params);
+  o << maybeSpace;
+  printTagType(curr->type);
+  o << ')' << maybeNewLine;
+}
+
+void PrintSExpression::printTagType(HeapType type) {
+  o << "(type ";
+  printHeapType(type);
+  o << ')';
+  if (auto params = type.getSignature().params; params != Type::none) {
+    o << maybeSpace << "(param";
+    for (auto t : params) {
+      o << ' ';
+      printType(t);
+    }
+    o << ')';
   }
-  if (curr->sig.results != Type::none) {
-    o << maybeSpace;
-    printResultType(curr->sig.results);
+  if (auto results = type.getSignature().results; results != Type::none) {
+    o << maybeSpace << "(result";
+    for (auto t : results) {
+      o << ' ';
+      printType(t);
+    }
+    o << ')';
   }
-  o << ")" << maybeNewLine;
 }
 
 void PrintSExpression::printTableHeader(Table* curr) {

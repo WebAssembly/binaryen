@@ -929,7 +929,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
 
   CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
   // Push a pop for the exception payload if necessary.
-  auto params = wasm.getTag(tag)->sig.params;
+  auto params = wasm.getTag(tag)->params();
   if (params != Type::none) {
     // Note that we have a pop to help determine later whether we need to run
     // the fixup for pops within blocks.
@@ -1815,7 +1815,7 @@ Result<> IRBuilder::makeTryTable(Name label,
 Result<> IRBuilder::makeThrow(Name tag) {
   Throw curr(wasm.allocator);
   curr.tag = tag;
-  curr.operands.resize(wasm.getTag(tag)->sig.params.size());
+  curr.operands.resize(wasm.getTag(tag)->params().size());
   CHECK_ERR(visitThrow(&curr));
   push(builder.makeThrow(tag, curr.operands));
   return Ok{};
@@ -2343,7 +2343,7 @@ Result<> IRBuilder::makeResume(HeapType ct,
 Result<> IRBuilder::makeSuspend(Name tag) {
   Suspend curr(wasm.allocator);
   curr.tag = tag;
-  curr.operands.resize(wasm.getTag(tag)->sig.params.size());
+  curr.operands.resize(wasm.getTag(tag)->params().size());
   CHECK_ERR(visitSuspend(&curr));
 
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());

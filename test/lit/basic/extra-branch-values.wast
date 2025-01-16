@@ -27,11 +27,11 @@
   ;; OPT_O:      (import "env" "use-i32-any" (func $use-i32-any (type $15) (param i32 (ref any))))
   (import "env" "use-i32-any" (func $use-i32-any (param i32 (ref any))))
 
-  ;; CHECK:      (tag $e (param i32))
-  ;; OPT_O:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $7) (param i32))
+  ;; OPT_O:      (tag $e (type $5) (param i32))
   (tag $e (param i32))
-  ;; CHECK:      (tag $e2 (param i32))
-  ;; OPT_O:      (tag $e2 (param i32))
+  ;; CHECK:      (tag $e2 (type $7) (param i32))
+  ;; OPT_O:      (tag $e2 (type $5) (param i32))
   (tag $e2 (param i32))
 
   ;; CHECK:      (func $br_on_null-one (type $8) (param $0 i32) (param $1 anyref) (result i32)

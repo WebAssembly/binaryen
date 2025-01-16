@@ -11,7 +11,7 @@
 (module
   (type $id (func (param i32) (result i32)))
 
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $3) (param i32))
   (tag $e (param i32))
 
   ;; CHECK:      (func $block (type $0) (result i32)

@@ -24,7 +24,7 @@
   ;; CHECK:      (import "out" "i64" (func $i64 (type $4) (result i64)))
   (import "out" "i64" (func $i64 (result i64)))
 
-  ;; CHECK:      (tag $e-anyref (param anyref))
+  ;; CHECK:      (tag $e-anyref (type $7) (param anyref))
   (tag $e-anyref (param anyref))
 
   ;; Refinalization can find a more specific type, where the declared type was
