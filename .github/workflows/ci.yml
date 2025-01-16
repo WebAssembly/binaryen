@@ -370,6 +370,9 @@ jobs:
         submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
     - name: install Python dev dependencies
       run: pip3 install -r requirements-dev.txt
     - name: cmake
