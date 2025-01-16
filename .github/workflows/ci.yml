@@ -370,6 +370,7 @@ jobs:
         submodules: true
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install v8
       run: |
         npm install jsvu -g
         jsvu --os=default --engines=v8
