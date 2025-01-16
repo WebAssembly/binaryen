@@ -91,7 +91,7 @@ BinaryenFeatureAll: 2097151
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func $"kitchen()sinker")
  (elem $passive func $"kitchen()sinker")
- (tag $a-tag (param i32))
+ (tag $a-tag (type $4) (param i32))
  (export "mem" (memory $0))
  (export "kitchen_sinker" (func $"kitchen()sinker"))
  (start $starter)

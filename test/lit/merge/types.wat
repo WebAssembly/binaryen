@@ -17,8 +17,8 @@
 ;; CHECK-NEXT: Type mismatch when importing global g2 from module env ($bad3): export type eqref is different from import type i31ref.
 ;; CHECK-NEXT: Type mismatch when importing global g2 from module env ($bad4): export type eqref is different from import type anyref.
 ;; CHECK-NEXT: Type mismatch when importing global g1 from module env ($bad5): type eqref is not a subtype of i31ref.
-;; CHECK-NEXT: Type mismatch when importing tag t from module env ($bad1): export type (func (param eqref)) is different from import type (func (param anyref)).
-;; CHECK-NEXT: Type mismatch when importing tag t from module env ($bad2): export type (func (param eqref)) is different from import type (func (param i31ref)).
+;; CHECK-NEXT: Type mismatch when importing tag t from module env ($bad1): export type (type $func.0 (func (param eqref))) is different from import type (type $func.0 (func (param anyref))).
+;; CHECK-NEXT: Type mismatch when importing tag t from module env ($bad2): export type (type $func.0 (func (param eqref))) is different from import type (type $func.0 (func (param i31ref))).
 ;; CHECK-NEXT: Fatal: import/export mismatches
 
 (module

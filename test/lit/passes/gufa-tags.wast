@@ -11,9 +11,9 @@
 
   ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (tag $tag$i32 (param i32))
+  ;; CHECK:      (tag $tag$i32 (type $0) (param i32))
   (tag $tag$i32 (param i32))
-  ;; CHECK:      (tag $tag$f32 (param f32))
+  ;; CHECK:      (tag $tag$f32 (type $1) (param f32))
   (tag $tag$f32 (param f32))
 
   ;; CHECK:      (func $test (type $2)

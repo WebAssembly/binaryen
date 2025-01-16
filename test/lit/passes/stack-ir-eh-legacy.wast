@@ -3,7 +3,7 @@
 ;; RUN:   -all --print-stack-ir | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e0 (param i32))
+  ;; CHECK:      (tag $e0 (type $0) (param i32))
   (tag $e0 (param i32))
 
   ;; CHECK:      (func $eh (type $1)

@@ -32,7 +32,7 @@
 
   ;; CHECK:      (memory $second.mem 2)
 
-  ;; CHECK:      (tag $exn)
+  ;; CHECK:      (tag $exn (type $0))
 
   ;; CHECK:      (export "foo" (func $first.foo))
 

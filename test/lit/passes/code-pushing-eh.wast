@@ -4,7 +4,7 @@
 ;; The tests in this file test EffectAnalyzer, which is used by CodePushing.
 
 (module
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $1) (param i32))
   (tag $e (param i32))
 
   ;; CHECK:      (func $cannot-push-past-call (type $0)

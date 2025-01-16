@@ -1247,9 +1247,7 @@
 
   ;; CHECK:       (type $5 (func (param (ref noextern))))
 
-  ;; CHECK:      (type $6 (func))
-
-  ;; CHECK:      (tag $tag)
+  ;; CHECK:      (tag $tag (type $1))
   (tag $tag)
 
   ;; CHECK:      (func $struct.new (type $2) (param $extern externref) (result anyref)

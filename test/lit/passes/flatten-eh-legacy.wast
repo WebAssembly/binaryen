@@ -2,9 +2,9 @@
 ;; RUN: wasm-opt %s -all --flatten -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $2) (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK:      (tag $e-f32 (param f32))
+  ;; CHECK:      (tag $e-f32 (type $3) (param f32))
   (tag $e-f32 (param f32))
 
   ;; CHECK:      (func $try_catch (type $1)

@@ -2,11 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt -all --remove-unused-brs -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e)
+  ;; CHECK:      (tag $e (type $0))
   (tag $e)
-  ;; CHECK:      (tag $f)
+  ;; CHECK:      (tag $f (type $0))
   (tag $f)
-  ;; CHECK:      (tag $g)
+  ;; CHECK:      (tag $g (type $0))
   (tag $g)
 
   ;; CHECK:      (func $throw-caught-all (type $0)
@@ -368,10 +368,10 @@
   ;; CHECK:      (import "a" "b" (func $effect (type $2) (result i32)))
   (import "a" "b" (func $effect (result i32)))
 
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $1) (param i32))
   (tag $e (param i32))
 
-  ;; CHECK:      (tag $multi (param i32 f64))
+  ;; CHECK:      (tag $multi (type $3) (param i32 f64))
   (tag $multi (param i32 f64))
 
   ;; CHECK:      (func $throw-caught-all (type $1) (param $x i32)

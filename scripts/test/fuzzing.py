@@ -55,6 +55,9 @@ unfuzzable = [
     'strip-dwarf.wasm',
     'ignore_missing_func_dwarf.wasm',
     'print.wasm',
+    # ignore linking section as it causes us to warn about it not being fully
+    # supported
+    'strip-target-features.wasm',
     # TODO fuzzer support for multimemory
     'multi-memories-atomics64.wast',
     'multi-memories-basics.wast',
@@ -75,6 +78,11 @@ unfuzzable = [
     'typed_continuations_contnew.wast',
     'typed_continuations_contbind.wast',
     'typed_continuations_suspend.wast',
+    # the fuzzer does not support struct RMW ops
+    'gc-atomics.wast',
+    'gc-atomics-null-refs.wast',
+    'shared-structs.wast',
+    'heap2local-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176

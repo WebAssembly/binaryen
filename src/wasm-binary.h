@@ -1133,6 +1133,13 @@ enum ASTNodes {
   StructAtomicGetS = 0x5d,
   StructAtomicGetU = 0x5e,
   StructAtomicSet = 0x5f,
+  StructAtomicRMWAdd = 0x60,
+  StructAtomicRMWSub = 0x61,
+  StructAtomicRMWAnd = 0x62,
+  StructAtomicRMWOr = 0x63,
+  StructAtomicRMWXor = 0x64,
+  StructAtomicRMWXchg = 0x65,
+  StructAtomicRMWCmpxchg = 0x66,
 
   // stringref opcodes
 
@@ -1361,7 +1368,7 @@ public:
 
   void writeField(const Field& field);
 
-  void writeMemoryOrder(MemoryOrder order);
+  void writeMemoryOrder(MemoryOrder order, bool isRMW = false);
 
 private:
   Module* wasm;
@@ -1598,7 +1605,7 @@ public:
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
-  MemoryOrder getMemoryOrder();
+  MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {
     throw ParseException(text, 0, pos);

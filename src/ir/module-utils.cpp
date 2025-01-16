@@ -125,7 +125,7 @@ Tag* copyTag(Tag* tag, Module& out) {
   auto* ret = new Tag();
   ret->name = tag->name;
   ret->hasExplicitName = tag->hasExplicitName;
-  ret->sig = tag->sig;
+  ret->type = tag->type;
   ret->module = tag->module;
   ret->base = tag->base;
   out.addTag(ret);
@@ -474,7 +474,7 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
     info.note(curr->type);
   }
   for (auto& curr : wasm.tags) {
-    info.note(curr->sig);
+    info.note(curr->type);
   }
   for (auto& curr : wasm.tables) {
     info.note(curr->type);

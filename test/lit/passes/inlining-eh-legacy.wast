@@ -5,7 +5,7 @@
   ;; ---------------------------------------------------------------------------
   ;; CHECK:      (import "a" "b" (func $foo (type $2) (result i32)))
   (import "a" "b" (func $foo (result i32)))
-  ;; CHECK:      (tag $tag$0 (param i32))
+  ;; CHECK:      (tag $tag$0 (type $1) (param i32))
   (tag $tag$0 (param i32))
   (func $callee-with-label
     (try $label
