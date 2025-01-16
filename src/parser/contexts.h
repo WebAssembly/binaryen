@@ -749,6 +749,20 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<> makeStructRMW(Index,
+                         const std::vector<Annotation>&,
+                         AtomicRMWOp,
+                         HeapTypeT,
+                         FieldIdxT,
+                         MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeStructCmpxchg(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<> makeArrayNew(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
@@ -1358,7 +1372,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!use.type.isSignature()) {
       return in.err(pos, "tag type must be a signature");
     }
-    t->sig = use.type.getSignature();
+    t->type = use.type;
     return Ok{};
   }
 };
@@ -2453,7 +2467,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                          HeapType type,
                          Index field,
                          bool signed_,
-                         MemoryOrder order = MemoryOrder::Unordered) {
+                         MemoryOrder order) {
     return withLoc(pos, irBuilder.makeStructGet(type, field, signed_, order));
   }
 
@@ -2461,8 +2475,25 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                          const std::vector<Annotation>& annotations,
                          HeapType type,
                          Index field,
-                         MemoryOrder order = MemoryOrder::Unordered) {
+                         MemoryOrder order) {
     return withLoc(pos, irBuilder.makeStructSet(type, field, order));
+  }
+
+  Result<> makeStructRMW(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         AtomicRMWOp op,
+                         HeapType type,
+                         Index field,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructRMW(op, type, field, order));
+  }
+
+  Result<> makeStructCmpxchg(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             Index field,
+                             MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructCmpxchg(type, field, order));
   }
 
   Result<> makeArrayNew(Index pos,

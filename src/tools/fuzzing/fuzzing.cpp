@@ -1568,7 +1568,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   struct Fixer
-    : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
+    : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
 
@@ -1606,12 +1606,15 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
 
     bool hasBreakTarget(Name name) {
-      if (controlFlowStack.empty()) {
+      // The break must be on top.
+      assert(!expressionStack.empty());
+      if (expressionStack.size() < 2) {
+        // There must be a scope for this break to be valid.
         return false;
       }
-      Index i = controlFlowStack.size() - 1;
+      Index i = expressionStack.size() - 2;
       while (1) {
-        auto* curr = controlFlowStack[i];
+        auto* curr = expressionStack[i];
         bool has = false;
         BranchUtils::operateOnScopeNameDefs(curr, [&](Name& def) {
           if (def == name) {
@@ -1622,6 +1625,43 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           return true;
         }
         if (i == 0) {
+          return false;
+        }
+        i--;
+      }
+    }
+
+    void visitRethrow(Rethrow* curr) {
+      if (!isValidRethrow(curr->target)) {
+        replace();
+      }
+    }
+
+    bool isValidRethrow(Name target) {
+      // The rethrow must be on top.
+      assert(!expressionStack.empty());
+      assert(expressionStack.back()->is<Rethrow>());
+      if (expressionStack.size() < 2) {
+        // There must be a try for this rethrow to be valid.
+        return false;
+      }
+      Index i = expressionStack.size() - 2;
+      while (1) {
+        auto* curr = expressionStack[i];
+        if (auto* tryy = curr->dynCast<Try>()) {
+          // The rethrow must target a try, and must be nested in a catch of
+          // that try (not the body). Look at the child above us to check, when
+          // we find the proper try.
+          if (tryy->name == target) {
+            if (i + 1 >= expressionStack.size()) {
+              return false;
+            }
+            auto* child = expressionStack[i + 1];
+            return child != tryy->body;
+          }
+        }
+        if (i == 0) {
+          // We never found our try.
           return false;
         }
         i--;
@@ -2137,7 +2177,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     // Catch bodies (aside from a catch-all) begin with a pop.
     Expression* prefix = nullptr;
     if (i < numTags) {
-      auto tagType = wasm.getTag(catchTags[i])->sig.params;
+      auto tagType = wasm.getTag(catchTags[i])->params();
       if (tagType != Type::none) {
         auto* pop = builder.makePop(tagType);
         // Capture the pop in a local, so that it can be used later.
@@ -2183,7 +2223,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       // Look for a specific tag.
       auto& tag = pick(wasm.tags);
       tagName = tag->name;
-      tagType = tag->sig.params;
+      tagType = tag->params();
     } else {
       // Add a catch_all at the end, some of the time (but all of the time if we
       // have nothing else).
@@ -4753,7 +4793,7 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     addTag();
   }
   auto* tag = pick(wasm.tags).get();
-  auto tagType = tag->sig.params;
+  auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
     operands.push_back(make(t));

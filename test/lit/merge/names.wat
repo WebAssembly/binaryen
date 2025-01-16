@@ -36,13 +36,13 @@
 
    ;; CHECK:      (table $3 1 funcref)
 
-   ;; CHECK:      (tag $tag0)
+   ;; CHECK:      (tag $tag0 (type $0))
 
-   ;; CHECK:      (tag $tag$1)
+   ;; CHECK:      (tag $tag$1 (type $0))
 
-   ;; CHECK:      (tag $tag2)
+   ;; CHECK:      (tag $tag2 (type $0))
 
-   ;; CHECK:      (tag $tag$3)
+   ;; CHECK:      (tag $tag$3 (type $0))
 
    ;; CHECK:      (export "f0" (func $func0))
 

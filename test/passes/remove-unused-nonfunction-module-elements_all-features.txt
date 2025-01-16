@@ -342,7 +342,7 @@
 (module
  (type $1 (func (param i64)))
  (type $0 (func (param i32)))
- (tag $e1 (param i64))
+ (tag $e1 (type $1) (param i64))
  (export "e1" (tag $e1))
  (func $f (type $0) (param $0 i32)
  )

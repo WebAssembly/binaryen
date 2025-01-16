@@ -31,10 +31,10 @@
 
   ;; WITHOUT:      (elem declare func $throw)
 
-  ;; WITHOUT:      (tag $tag)
+  ;; WITHOUT:      (tag $tag (type $void))
   ;; INCLUDE:      (elem declare func $throw)
 
-  ;; INCLUDE:      (tag $tag)
+  ;; INCLUDE:      (tag $tag (type $void))
   (tag $tag)
 
   ;; WITHOUT:      (func $main (type $void)

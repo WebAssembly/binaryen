@@ -1701,6 +1701,72 @@ public:
     return Flow();
   }
 
+  Flow visitStructRMW(StructRMW* curr) {
+    NOTE_ENTER("StructRMW");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    auto oldVal = field;
+    auto newVal = value.getSingleValue();
+    switch (curr->op) {
+      case RMWAdd:
+        field = field.add(newVal);
+        break;
+      case RMWSub:
+        field = field.sub(newVal);
+        break;
+      case RMWAnd:
+        field = field.and_(newVal);
+        break;
+      case RMWOr:
+        field = field.or_(newVal);
+        break;
+      case RMWXor:
+        field = field.xor_(newVal);
+        break;
+      case RMWXchg:
+        field = newVal;
+        break;
+    }
+    return oldVal;
+  }
+
+  Flow visitStructCmpxchg(StructCmpxchg* curr) {
+    NOTE_ENTER("StructCmpxchg");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow expected = self()->visit(curr->expected);
+    if (expected.breaking()) {
+      return expected;
+    }
+    Flow replacement = self()->visit(curr->replacement);
+    if (replacement.breaking()) {
+      return replacement;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    auto oldVal = field;
+    if (field == expected.getSingleValue()) {
+      field = replacement.getSingleValue();
+    }
+    return oldVal;
+  }
+
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not

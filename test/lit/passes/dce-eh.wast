@@ -4,10 +4,10 @@
 ;; If either try_table body or any of catch handler is reachable, the whole
 ;; try_table construct is reachable.
 (module
-  ;; CHECK:      (tag $e)
+  ;; CHECK:      (tag $e (type $0))
   (tag $e)
 
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $1) (param i32))
   (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $foo (type $0)

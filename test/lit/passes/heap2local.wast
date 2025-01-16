@@ -4497,7 +4497,7 @@
 
   ;; CHECK:      (type $2 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $1) (param i32))
   (tag $tag (param i32))
 
   ;; CHECK:      (func $struct-with-pop (type $0)

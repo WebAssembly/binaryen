@@ -300,11 +300,11 @@
 
  ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $5) (result i32 i64)))
 
- ;; CHECK:      (import "mod" "t0" (tag $imported (param i32 i64)))
+ ;; CHECK:      (import "mod" "t0" (tag $imported (type $7) (param i32 i64)))
 
- ;; CHECK:      (import "mod" "t1" (tag $eimport$0))
+ ;; CHECK:      (import "mod" "t1" (tag $eimport$0 (type $0)))
 
- ;; CHECK:      (import "mod" "imported-tag" (tag $eimport$1))
+ ;; CHECK:      (import "mod" "imported-tag" (tag $eimport$1 (type $0)))
 
  ;; CHECK:      (global $global$2 (mut i32) (i32.const 0))
 
@@ -413,18 +413,18 @@
  ;; tags
  (tag)
 
- ;; CHECK:      (tag $tag$2)
+ ;; CHECK:      (tag $tag$2 (type $0))
 
- ;; CHECK:      (tag $empty)
+ ;; CHECK:      (tag $empty (type $0))
  (tag $empty)
 
- ;; CHECK:      (tag $tag-i32 (param i32))
+ ;; CHECK:      (tag $tag-i32 (type $18) (param i32))
  (tag $tag-i32 (param $x i32))
 
- ;; CHECK:      (tag $tag-pair (param i32 i64))
+ ;; CHECK:      (tag $tag-pair (type $7) (param i32 i64))
  (tag $tag-pair (param i32 i64))
 
- ;; CHECK:      (tag $tag-pair-to-pair (param i32 i64) (result i32 i64))
+ ;; CHECK:      (tag $tag-pair-to-pair (type $21) (param i32 i64) (result i32 i64))
  (tag $tag-pair-to-pair (param i32 i64) (result i32 i64))
 
  ;; explicit exports

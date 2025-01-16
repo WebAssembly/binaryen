@@ -21,7 +21,7 @@
 
   ;; CHECK:      (type $6 (func (param f32)))
 
-  ;; CHECK:      (import "elsewhere" "some.tag" (tag $imported (param f64)))
+  ;; CHECK:      (import "elsewhere" "some.tag" (tag $imported (type $2) (param f64)))
 
   ;; CHECK:      (global $foo i32 (i32.const 1))
   (global $foo i32 (i32.const 1))
@@ -83,17 +83,17 @@
 
   ;; CHECK:      (elem $bar_2 func $other $foo_3)
 
-  ;; CHECK:      (tag $foo (param i32))
+  ;; CHECK:      (tag $foo (type $4) (param i32))
   (tag $foo (param i32))
 
-  ;; CHECK:      (tag $bar (param i64))
+  ;; CHECK:      (tag $bar (type $5) (param i64))
   (tag $bar (param i64))
 
   ;; This export has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
-  ;; CHECK:      (tag $foo_2 (param f32))
+  ;; CHECK:      (tag $foo_2 (type $6) (param f32))
 
-  ;; CHECK:      (tag $other (param f64))
+  ;; CHECK:      (tag $other (type $2) (param f64))
 
   ;; CHECK:      (export "foo" (func $foo))
   (export "foo" (func $foo))
