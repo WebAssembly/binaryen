@@ -1343,6 +1343,11 @@ class CtorEval(TestCaseHandler):
         if not ctors:
             return
 
+        # Fix escaping of the names, as we will be passing them as commandline
+        # parameters below (e.g. we want --ctors=foo\28bar and not
+        # --ctors=foo\\28bar; that extra escaping \ would cause an error).
+        ctors = bytes(ctors, 'utf-8').decode('unicode_escape')
+
         # eval the wasm.
         # we can use --ignore-external-input because the fuzzer passes in 0 to
         # all params, which is the same as ctor-eval assumes in this mode.
