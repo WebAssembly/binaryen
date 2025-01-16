@@ -910,7 +910,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    auto& field = fields[curr->index];
+    [[maybe_unused]] auto& field = fields[curr->index];
     auto type = curr->type;
     assert(type == field.type);
     assert(!field.isPacked());
@@ -985,7 +985,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    auto& field = fields[curr->index];
+    [[maybe_unused]] auto& field = fields[curr->index];
     auto type = curr->type;
     assert(type == field.type);
     assert(!field.isPacked());
