@@ -1,7 +1,7 @@
 (module
  (type $0 (func (param i32)))
  (type $1 (func))
- (tag $tag$0 (param i32))
+ (tag $tag$0 (type $0) (param i32))
  (func $0
   (block $label
    (try

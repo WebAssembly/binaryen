@@ -789,7 +789,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitTryTable(TryTable* curr) { note(&curr->body, curr->type); }
 
   void visitThrow(Throw* curr) {
-    auto type = wasm.getTag(curr->tag)->sig.params;
+    auto type = wasm.getTag(curr->tag)->params();
     assert(curr->operands.size() == type.size());
     for (size_t i = 0; i < type.size(); ++i) {
       note(&curr->operands[i], type[i]);
@@ -889,6 +889,29 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     assert(curr->index < fields.size());
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->value, fields[curr->index].type);
+  }
+
+  void visitStructRMW(StructRMW* curr,
+                      std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      ht = curr->ref->type.getHeapType();
+    }
+    const auto& fields = ht->getStruct().fields;
+    assert(curr->index < fields.size());
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->value, fields[curr->index].type);
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr,
+                          std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      ht = curr->ref->type.getHeapType();
+    }
+    const auto& fields = ht->getStruct().fields;
+    assert(curr->index < fields.size());
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->expected, fields[curr->index].type);
+    note(&curr->replacement, fields[curr->index].type);
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -1090,7 +1113,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitSuspend(Suspend* curr) {
-    auto params = wasm.getTag(curr->tag)->sig.params;
+    auto params = wasm.getTag(curr->tag)->params();
     assert(params.size() == curr->operands.size());
     for (size_t i = 0; i < params.size(); ++i) {
       note(&curr->operands[i], params[i]);

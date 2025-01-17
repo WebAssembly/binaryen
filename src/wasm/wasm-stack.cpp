@@ -2361,6 +2361,49 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
   o << U32LEB(curr->index);
 }
 
+void BinaryInstWriter::visitStructRMW(StructRMW* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->op) {
+    case RMWAdd:
+      o << U32LEB(BinaryConsts::StructAtomicRMWAdd);
+      break;
+    case RMWSub:
+      o << U32LEB(BinaryConsts::StructAtomicRMWSub);
+      break;
+    case RMWAnd:
+      o << U32LEB(BinaryConsts::StructAtomicRMWAnd);
+      break;
+    case RMWOr:
+      o << U32LEB(BinaryConsts::StructAtomicRMWOr);
+      break;
+    case RMWXor:
+      o << U32LEB(BinaryConsts::StructAtomicRMWXor);
+      break;
+    case RMWXchg:
+      o << U32LEB(BinaryConsts::StructAtomicRMWXchg);
+      break;
+  }
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
+}
+
+void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::StructAtomicRMWCmpxchg);
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
+}
+
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->isWithDefault()) {

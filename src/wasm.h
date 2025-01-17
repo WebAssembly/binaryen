@@ -722,6 +722,8 @@ public:
     StructNewId,
     StructGetId,
     StructSetId,
+    StructRMWId,
+    StructCmpxchgId,
     ArrayNewId,
     ArrayNewDataId,
     ArrayNewElemId,
@@ -1676,6 +1678,34 @@ public:
   void finalize();
 };
 
+class StructRMW : public SpecificExpression<Expression::StructRMWId> {
+public:
+  StructRMW() = default;
+  StructRMW(MixedArena& allocator) {}
+
+  AtomicRMWOp op;
+  Index index;
+  Expression* ref;
+  Expression* value;
+  MemoryOrder order;
+
+  void finalize();
+};
+
+class StructCmpxchg : public SpecificExpression<Expression::StructCmpxchgId> {
+public:
+  StructCmpxchg() = default;
+  StructCmpxchg(MixedArena& allocator) {}
+
+  Index index;
+  Expression* ref;
+  Expression* expected;
+  Expression* replacement;
+  MemoryOrder order;
+
+  void finalize();
+};
+
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew() = default;
@@ -2267,7 +2297,10 @@ public:
 
 class Tag : public Importable {
 public:
-  Signature sig;
+  HeapType type;
+
+  Type params() { return type.getSignature().params; }
+  Type results() { return type.getSignature().results; }
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

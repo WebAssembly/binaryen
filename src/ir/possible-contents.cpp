@@ -1016,6 +1016,22 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitStructRMW(StructRMW* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -1135,7 +1151,7 @@ struct InfoCollector
       auto tag = curr->catchTags[tagIndex];
       auto* body = curr->catchBodies[tagIndex];
 
-      auto params = getModule()->getTag(tag)->sig.params;
+      auto params = getModule()->getTag(tag)->params();
       if (params.size() == 0) {
         continue;
       }
@@ -1173,7 +1189,7 @@ struct InfoCollector
 
       Index exnrefIndex = 0;
       if (tag.is()) {
-        auto params = getModule()->getTag(tag)->sig.params;
+        auto params = getModule()->getTag(tag)->params();
 
         for (Index i = 0; i < params.size(); i++) {
           if (isRelevant(params[i])) {
@@ -1552,6 +1568,10 @@ void TNHOracle::scan(Function* func,
 
     void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
     void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
+    void visitStructRMW(StructRMW* curr) { notePossibleTrap(curr->ref); }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      notePossibleTrap(curr->ref);
+    }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
@@ -2354,7 +2374,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // we must only combine the filtered contents (e.g. if 0xff arrives which
       // as a signed read is truly 0xffffffff then we cannot first combine the
       // existing 0xffffffff with the new 0xff, as they are different, and the
-      // result will no longer be a constant).
+      // result will no longer be a constant). There is no need to filter atomic
+      // RMW operations here because they always do unsigned reads.
       filterPackedDataReads(newContents, *exprLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  pre-filtered packed read contents:\n";

@@ -2,9 +2,9 @@
 ;; RUN: wasm-opt %s --rse -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $1) (param i32))
   (tag $e (param i32))
-  ;; CHECK:      (tag $e2)
+  ;; CHECK:      (tag $e2 (type $0))
   (tag $e2)
 
   ;; CHECK:      (func $try1 (type $0)

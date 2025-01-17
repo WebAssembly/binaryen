@@ -8,9 +8,9 @@
   ;; CHECK:      (table $t 0 funcref)
   (table $t 0 funcref)
 
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $1) (param i32))
   (tag $e (param i32))
-  ;; CHECK:      (tag $e2 (param i32))
+  ;; CHECK:      (tag $e2 (type $1) (param i32))
   (tag $e2 (param i32))
 
   ;; CHECK:      (func $try-test (type $void)

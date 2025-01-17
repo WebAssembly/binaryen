@@ -922,16 +922,14 @@
  ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $2 (func (param (ref $super))))
 
- ;; CHECK:       (type $3 (func (param (ref $super))))
+ ;; CHECK:       (type $3 (func))
 
- ;; CHECK:      (type $4 (func (param (ref $super))))
-
- ;; CHECK:      (tag $t (param (ref $super)))
+ ;; CHECK:      (tag $t (type $2) (param (ref $super)))
  (tag $t (param (ref $super)))
 
- ;; CHECK:      (func $throw (type $2)
+ ;; CHECK:      (func $throw (type $3)
  ;; CHECK-NEXT:  (throw $t
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
@@ -1790,16 +1788,14 @@
   (type $sub (sub $super (func)))
  )
 
- ;; CHECK:       (type $2 (func (result (ref $super))))
+ ;; CHECK:       (type $2 (func (param (ref $sub))))
 
- ;; CHECK:       (type $3 (func (param (ref $sub))))
+ ;; CHECK:       (type $3 (func (result (ref $super))))
 
- ;; CHECK:      (type $4 (func (param (ref $sub))))
-
- ;; CHECK:      (tag $tag (param (ref $sub)))
+ ;; CHECK:      (tag $tag (type $2) (param (ref $sub)))
  (tag $tag (param (ref $sub)))
 
- ;; CHECK:      (func $test (type $2) (result (ref $super))
+ ;; CHECK:      (func $test (type $3) (result (ref $super))
  ;; CHECK-NEXT:  (block $label (result (ref $sub))
  ;; CHECK-NEXT:   (try_table (catch $tag $label)
  ;; CHECK-NEXT:    (unreachable)

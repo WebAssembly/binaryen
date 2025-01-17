@@ -1194,7 +1194,7 @@
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $1) (param i32))
   (tag $tag (param i32))
 
   (global $once (mut i32) (i32.const 0))

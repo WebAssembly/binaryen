@@ -438,8 +438,8 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'try_catch.wast',  # Requires wast `register` support
     'tag.wast',      # Non-empty tag results allowed by stack switching
     'try_table.wast',  # Requires try_table interpretation
-    'br_on_non_null.wast',  # Requires sending values on br_on_non_null
-    'br_on_null.wast',      # Requires sending values on br_on_null
+    # 'br_on_non_null.wast',  # Requires sending values on br_on_non_null
+    # 'br_on_null.wast',      # Requires sending values on br_on_null
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
     'ref_is_null.wast',  # Requires ref.null wast constants
@@ -452,8 +452,8 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'array.wast',  # Requires support for table default elements
     'array_init_elem.wast',  # Requires support for elem.drop
     'br_if.wast',  # Requires more precise branch validation
-    'br_on_cast.wast',  # Requires sending values on br_on_cast
-    'br_on_cast_fail.wast',  # Requires sending values on br_on_cast_fail
+    'br_on_cast.wast',  # Requires host references to not be externalized i31refs
+    'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
     'extern.wast',    # Requires ref.host wast constants
     'i31.wast',       # Requires support for table default elements
     'ref_cast.wast',  # Requires host references to not be externalized i31refs

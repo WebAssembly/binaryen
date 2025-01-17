@@ -26,4 +26,37 @@ for tool in ('not', 'foreach'):
     python = sys.executable.replace('\\', '/')
     config.substitutions.append((tool, python + ' ' + tool_file))
 
-# likely we need to enable d8 here for v8, if only v8 exists. also on ci
+# Finds the given executable 'program' in PATH.
+# Operates like the Unix tool 'which'.
+# This is similar to script/test/shared.py, but does not use binaryen_root, and
+# instead is tuned to jsvu's install dir.
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        # Prefer the path, or jsvu's install dir.
+        paths = os.environ['PATH'].split(os.pathsep) + [
+          os.path.expanduser('~/.jsvu/bin'),
+        ]
+        for path in paths:
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+            if '.' not in fname:
+                if is_exe(exe_file + '.exe'):
+                    return exe_file + '.exe'
+                if is_exe(exe_file + '.cmd'):
+                    return exe_file + '.cmd'
+                if is_exe(exe_file + '.bat'):
+                    return exe_file + '.bat'
+
+# v8 may be provided by jsvu, or it may be "d8". It may also not exist at all,
+# in which case the relevant lit tests should be skipped.
+V8 = os.environ.get('V8') or which('v8') or which('d8')
+if V8:
+    config.substitutions.append(('v8', V8))

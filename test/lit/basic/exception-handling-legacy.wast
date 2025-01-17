@@ -20,7 +20,7 @@
 
   ;; CHECK-TEXT:      (type $4 (func (param eqref)))
 
-  ;; CHECK-TEXT:      (tag $e-i32 (param i32))
+  ;; CHECK-TEXT:      (tag $e-i32 (type $1) (param i32))
   ;; CHECK-BIN:      (type $0 (func))
 
   ;; CHECK-BIN:      (type $1 (func (param i32)))
@@ -31,19 +31,19 @@
 
   ;; CHECK-BIN:      (type $4 (func (param eqref)))
 
-  ;; CHECK-BIN:      (tag $e-i32 (param i32))
+  ;; CHECK-BIN:      (tag $e-i32 (type $1) (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK-TEXT:      (tag $e-i64 (param i64))
-  ;; CHECK-BIN:      (tag $e-i64 (param i64))
+  ;; CHECK-TEXT:      (tag $e-i64 (type $2) (param i64))
+  ;; CHECK-BIN:      (tag $e-i64 (type $2) (param i64))
   (tag $e-i64 (param i64))
-  ;; CHECK-TEXT:      (tag $e-i32-i64 (param i32 i64))
-  ;; CHECK-BIN:      (tag $e-i32-i64 (param i32 i64))
+  ;; CHECK-TEXT:      (tag $e-i32-i64 (type $3) (param i32 i64))
+  ;; CHECK-BIN:      (tag $e-i32-i64 (type $3) (param i32 i64))
   (tag $e-i32-i64 (param i32 i64))
-  ;; CHECK-TEXT:      (tag $e-eqref (param eqref))
-  ;; CHECK-BIN:      (tag $e-eqref (param eqref))
+  ;; CHECK-TEXT:      (tag $e-eqref (type $4) (param eqref))
+  ;; CHECK-BIN:      (tag $e-eqref (type $4) (param eqref))
   (tag $e-eqref (param (ref null eq)))
-  ;; CHECK-TEXT:      (tag $e-empty)
-  ;; CHECK-BIN:      (tag $e-empty)
+  ;; CHECK-TEXT:      (tag $e-empty (type $0))
+  ;; CHECK-BIN:      (tag $e-empty (type $0))
   (tag $e-empty)
 
   ;; CHECK-TEXT:      (func $foo (type $0)
@@ -1312,15 +1312,15 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $4 (func (param eqref)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $1) (param i32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$1 (param i64))
+;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $2) (param i64))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$2 (param i32 i64))
+;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $3) (param i32 i64))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$3 (param eqref))
+;; CHECK-BIN-NODEBUG:      (tag $tag$3 (type $4) (param eqref))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$4)
+;; CHECK-BIN-NODEBUG:      (tag $tag$4 (type $0))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
