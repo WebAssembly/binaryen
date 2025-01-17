@@ -55,7 +55,8 @@ def which(program):
                 if is_exe(exe_file + '.bat'):
                     return exe_file + '.bat'
 
-# v8 may be provided by jsvu, or it may be "d8".
+# v8 may be provided by jsvu, or it may be "d8". It may also not exist at all,
+# in which case the relevant lit tests should be skipped.
 V8 = os.environ.get('V8') or which('v8') or which('d8')
-config.substitutions.append(('v8', V8))
-
+if V8:
+    config.substitutions.append(('v8', V8))
