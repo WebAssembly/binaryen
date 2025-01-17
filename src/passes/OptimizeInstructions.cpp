@@ -1874,12 +1874,12 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
-    // Even when the access to shared memory, we can optimize out the modify and
-    // write parts if we know that the modified value is the same as the
-    // original value. This is valid because reads from writes that don't change
-    // the in-memory value can be considered to be reads from the previous write
-    // to the same location instead. That means there is no read that
-    // necessarily synchronizes with the write.
+    // Even when the RMW access is to shared memory, we can optimize out the
+    // modify and write parts if we know that the modified value is the same as
+    // the original value. This is valid because reads from writes that don't
+    // change the in-memory value can be considered to be reads from the
+    // previous write to the same location instead. That means there is no read
+    // that necessarily synchronizes with the write.
     auto* value =
       Properties::getFallthrough(curr->value, getPassOptions(), *getModule());
     if (Properties::isSingleConstantExpression(value)) {
@@ -1918,6 +1918,9 @@ struct OptimizeInstructions
     // thread can observe an intermediate state in the unshared memory. This
     // initially increases code size, but the more basic operations may be
     // more optimizable than the original RMW.
+    // TODO: Experiment to determine whether this is worthwhile on real code.
+    // Maybe we should do this optimization only when optimizing for speed over
+    // size.
     auto ref = builder.addVar(getFunction(), curr->ref->type);
     auto val = builder.addVar(getFunction(), curr->type);
     auto result = builder.addVar(getFunction(), curr->type);
