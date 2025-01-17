@@ -39,9 +39,5 @@ jobs:
       run: |
         ./alpine.sh npm install jsvu -g
         ./alpine.sh jsvu --os=default --engines=v8
-
-    - name: check v8
-      run: |
         ./alpine.sh file ~/.jsvu/engines/v8/v8
-
 
