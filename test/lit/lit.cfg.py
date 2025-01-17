@@ -26,6 +26,7 @@ for tool in ('not', 'foreach'):
     python = sys.executable.replace('\\', '/')
     config.substitutions.append((tool, python + ' ' + tool_file))
 
+'''
 # Finds the given executable 'program' in PATH.
 # Operates like the Unix tool 'which'.
 # This is similar to script/test/shared.py, but does not use binaryen_root, and
@@ -58,3 +59,4 @@ def which(program):
 # v8 may be provided by jsvu, or it may be "d8".
 V8 = os.environ.get('V8') or which('v8') or which('d8')
 config.substitutions.append(('v8', V8))
+'''
