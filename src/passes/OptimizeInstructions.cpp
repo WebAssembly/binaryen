@@ -1862,6 +1862,191 @@ struct OptimizeInstructions
     }
   }
 
+  void visitStructRMW(StructRMW* curr) {
+    skipNonNullCast(curr->ref, curr);
+    if (trapOnNull(curr, curr->ref)) {
+      return;
+    }
+
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    // Even when the access to shared memory, we can optimize out the modify and
+    // write parts if we know that the modified value is the same as the
+    // original value. This is valid because reads from writes that don't change
+    // the in-memory value can be considered to be reads from the previous write
+    // to the same location instead. That means there is no read that
+    // necessarily synchronizes with the write.
+    auto* value =
+      Properties::getFallthrough(curr->value, getPassOptions(), *getModule());
+    if (Properties::isSingleConstantExpression(value)) {
+      auto val = Properties::getLiteral(value);
+      bool canOptimize = false;
+      switch (curr->op) {
+        case RMWAdd:
+        case RMWSub:
+        case RMWOr:
+        case RMWXor:
+          canOptimize = val.getInteger() == 0;
+          break;
+        case RMWAnd:
+          canOptimize = val == Literal::makeNegOne(val.type);
+          break;
+        case RMWXchg:
+          canOptimize = false;
+          break;
+      }
+      if (canOptimize) {
+        replaceCurrent(builder.makeStructGet(
+          curr->index,
+          getResultOfFirst(curr->ref, builder.makeDrop(curr->value)),
+          curr->order,
+          curr->type));
+        return;
+      }
+    }
+
+    if (curr->ref->type.getHeapType().isShared()) {
+      return;
+    }
+
+    // Lower the RMW to its more basic operations. Breaking the atomic
+    // operation into several non-atomic operations is safe because no other
+    // thread can observe an intermediate state in the unshared memory. This
+    // initially increases code size, but the more basic operations may be
+    // more optimizable than the original RMW.
+    auto ref = builder.addVar(getFunction(), curr->ref->type);
+    auto val = builder.addVar(getFunction(), curr->type);
+    auto result = builder.addVar(getFunction(), curr->type);
+    auto* block = builder.makeBlock(
+      {builder.makeLocalSet(ref, curr->ref),
+       builder.makeLocalSet(val, curr->value),
+       builder.makeLocalSet(
+         result,
+         builder.makeStructGet(curr->index,
+                               builder.makeLocalGet(ref, curr->ref->type),
+                               MemoryOrder::Unordered,
+                               curr->type))});
+    Expression* newVal = nullptr;
+    if (curr->op == RMWXchg) {
+      newVal = builder.makeLocalGet(val, curr->type);
+    } else {
+      Abstract::Op binop = Abstract::Add;
+      switch (curr->op) {
+        case RMWAdd:
+          binop = Abstract::Add;
+          break;
+        case RMWSub:
+          binop = Abstract::Sub;
+          break;
+        case RMWAnd:
+          binop = Abstract::And;
+          break;
+        case RMWOr:
+          binop = Abstract::Or;
+          break;
+        case RMWXor:
+          binop = Abstract::Xor;
+          break;
+        case RMWXchg:
+          WASM_UNREACHABLE("unexpected op");
+      }
+      newVal = builder.makeBinary(Abstract::getBinary(curr->type, binop),
+                                  builder.makeLocalGet(result, curr->type),
+                                  builder.makeLocalGet(val, curr->type));
+    }
+    block->list.push_back(
+      builder.makeStructSet(curr->index,
+                            builder.makeLocalGet(ref, curr->ref->type),
+                            newVal,
+                            MemoryOrder::Unordered));
+
+    // We must maintain this operation's effect on the global order of seqcst
+    // operations.
+    if (curr->order == MemoryOrder::SeqCst) {
+      block->list.push_back(builder.makeAtomicFence());
+    }
+
+    block->list.push_back(builder.makeLocalGet(result, curr->type));
+    block->type = curr->type;
+    replaceCurrent(block);
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    skipNonNullCast(curr->ref, curr);
+    if (trapOnNull(curr, curr->ref)) {
+      return;
+    }
+
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    // Just like other RMW operations, cmpxchg can be optimized to just a read
+    // if it is known not to change the in-memory value. This is the case when
+    // `expected` and `replacement` are known to be the same.
+    if (areConsecutiveInputsEqual(curr->expected, curr->replacement)) {
+      auto* ref = getResultOfFirst(
+        curr->ref,
+        builder.makeSequence(builder.makeDrop(curr->expected),
+                             builder.makeDrop(curr->replacement)));
+      replaceCurrent(
+        builder.makeStructGet(curr->index, ref, curr->order, curr->type));
+      return;
+    }
+
+    if (curr->ref->type.getHeapType().isShared()) {
+      return;
+    }
+
+    // Just like other RMW operations, lower to basic operations when operating
+    // on unshared memory.
+    auto ref = builder.addVar(getFunction(), curr->ref->type);
+    auto expected = builder.addVar(getFunction(), curr->type);
+    auto replacement = builder.addVar(getFunction(), curr->type);
+    auto result = builder.addVar(getFunction(), curr->type);
+    auto* block =
+      builder.makeBlock({builder.makeLocalSet(ref, curr->ref),
+                         builder.makeLocalSet(expected, curr->expected),
+                         builder.makeLocalSet(replacement, curr->replacement)});
+    auto* lhs = builder.makeLocalTee(
+      result,
+      builder.makeStructGet(curr->index,
+                            builder.makeLocalGet(ref, curr->ref->type),
+                            MemoryOrder::Unordered,
+                            curr->type),
+      curr->type);
+    auto* rhs = builder.makeLocalGet(expected, curr->type);
+    Expression* pred = nullptr;
+    if (curr->type.isRef()) {
+      pred = builder.makeRefEq(lhs, rhs);
+    } else {
+      pred = builder.makeBinary(
+        Abstract::getBinary(curr->type, Abstract::Eq), lhs, rhs);
+    }
+    block->list.push_back(builder.makeIf(
+      pred,
+      builder.makeStructSet(curr->index,
+                            builder.makeLocalGet(ref, curr->ref->type),
+                            builder.makeLocalGet(replacement, curr->type),
+                            MemoryOrder::Unordered)));
+
+    // We must maintain this operation's effect on the global order of seqcst
+    // operations.
+    if (curr->order == MemoryOrder::SeqCst) {
+      block->list.push_back(builder.makeAtomicFence());
+    }
+
+    block->list.push_back(builder.makeLocalGet(result, curr->type));
+    block->type = curr->type;
+    replaceCurrent(block);
+  }
+
   void visitArrayNew(ArrayNew* curr) {
     // If a value is provided, we can optimize in some cases.
     if (curr->type == Type::unreachable || curr->isWithDefault()) {
