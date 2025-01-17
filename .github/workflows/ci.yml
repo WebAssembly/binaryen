@@ -51,6 +51,6 @@ jobs:
         ./alpine.sh ninja install
 
     - name: test
-      run: ./alpine.sh python3 ./check.py
+      run: ./alpine.sh python3 ./check.py lit
 
 
