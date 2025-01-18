@@ -547,7 +547,9 @@ private:
       if (scope.unreachable) {
         return builder.builder.makeUnreachable();
       }
-      return Err{"popping from empty stack"};
+      std::stringstream ss;
+      ss << this;
+      return Err{"popping from empty stack" + ss.str()};
     }
 
     CHECK_ERR(builder.packageHoistedValue(*hoisted, size));
@@ -829,7 +831,9 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
     if (!hoisted) {
-      return Err{"popping from empty stack"};
+      std::stringstream ss;
+      ss << this;
+      return Err{"popping from empty stack" + ss.str()};
     }
 
     if (type.isTuple()) {

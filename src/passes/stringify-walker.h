@@ -27,6 +27,8 @@
 #include "wasm-traversal.h"
 #include <queue>
 
+#define OUTLINING_DEBUG 1
+
 namespace wasm {
 
 /*
@@ -254,9 +256,27 @@ struct OutliningSequence {
   unsigned startIdx;
   unsigned endIdx;
   Name func;
+#if OUTLINING_DEBUG
+  unsigned originalIdx;
+  unsigned length;
+#endif
 
-  OutliningSequence(unsigned startIdx, unsigned endIdx, Name func)
-    : startIdx(startIdx), endIdx(endIdx), func(func) {}
+  OutliningSequence(unsigned startIdx,
+                    unsigned endIdx,
+                    Name func
+#if OUTLINING_DEBUG
+                    ,
+                    unsigned originalIdx,
+                    unsigned length
+#endif
+                    )
+    : startIdx(startIdx), endIdx(endIdx), func(func)
+#if OUTLINING_DEBUG
+      ,
+      originalIdx(originalIdx), length(length)
+#endif
+  {
+  }
 };
 
 using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
