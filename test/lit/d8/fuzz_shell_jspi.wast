@@ -24,7 +24,7 @@
 
 ;; Apply JSPI: prepend JSPI = 1 and remove comments around async and await.
 ;; RUN: echo "JSPI = 1;" > %t.js
-;; RUN: node -e "process.stdout.write(require('fs').readFileSync('%S/../../../scripts/fuzz_shell.js', 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
+;; RUN: node -e "process.stdout.write(require('fs').readFileSync(path.join('%S', '..', '..', '..', 'scripts', 'fuzz_shell.js'), 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
 
 ;; Append another run with a random seed, so we reorder and delay execution.
 ;; RUN: echo "callExports(42);" >> %t.js
