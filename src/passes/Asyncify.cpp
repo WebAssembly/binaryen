@@ -245,8 +245,8 @@
 //      out why a certain function was instrumented.
 //
 //   --pass-arg=asyncify-memory@memory
-//      Picks which exported memory of the module to store and load data from and
-//      to (useful if the module contains multiple memories).
+//      Picks which exported memory of the module to store and load data from
+//      and to (useful if the module contains multiple memories).
 //
 // For manual fine-tuning of the list of instrumented functions, there are lists
 // that you can set. These must be used carefully, as misuse can break your
@@ -1673,7 +1673,8 @@ struct Asyncify : public Pass {
           }
         }
         if (!asyncifyMemory) {
-          Fatal() << "Please specify which of the multiple memories to use, with --pass-arg=asyncify-memory@memory";
+          Fatal() << "Please specify which of the multiple memories to use, "
+                     "with --pass-arg=asyncify-memory@memory";
         }
       }
     }
