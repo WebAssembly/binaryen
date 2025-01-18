@@ -31,7 +31,7 @@
 
 ;; Run that JS shell with our wasm.
 ;; RUN: wasm-opt %s -o %t.wasm -q
-;; RUN: d8 --wasm-staging %t.js -- %t.wasm | filecheck %s
+;; RUN: v8 --wasm-staging %t.js -- %t.wasm | filecheck %s
 ;;
 ;; The output here looks a little out of order, in particular because we do not
 ;; |await| the toplevel callExports() calls. That |await| is only valid if we
