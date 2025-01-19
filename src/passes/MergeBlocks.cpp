@@ -144,7 +144,7 @@ struct ProblemFinder
           //       make more sense in TupleOptimization though as it would need
           //       to track uses of parts of a tuple.
           if (!tryy->catchTags[i] ||
-              getModule()->getTag(tryy->catchTags[i])->sig.params.size() == 0) {
+              getModule()->getTag(tryy->catchTags[i])->params().size() == 0) {
             // There must be a ref here, otherwise there is no value being sent
             // at all, and we should not be running ProblemFinder at all.
             assert(tryy->catchRefs[i]);

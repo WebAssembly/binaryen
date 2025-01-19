@@ -735,13 +735,31 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeStructGet(
-    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, bool) {
+  Result<> makeStructGet(Index,
+                         const std::vector<Annotation>&,
+                         HeapTypeT,
+                         FieldIdxT,
+                         bool,
+                         MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<>
-  makeStructSet(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
+  Result<> makeStructSet(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeStructRMW(Index,
+                         const std::vector<Annotation>&,
+                         AtomicRMWOp,
+                         HeapTypeT,
+                         FieldIdxT,
+                         MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeStructCmpxchg(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -1354,7 +1372,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!use.type.isSignature()) {
       return in.err(pos, "tag type must be a signature");
     }
-    t->sig = use.type.getSignature();
+    t->type = use.type;
     return Ok{};
   }
 };
@@ -1447,11 +1465,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
     assert(type.isSignature());
-    if (type.getSignature().params != Type::none) {
-      return in.err(pos, "block parameters not yet supported");
-    }
-    // TODO: Once we support block parameters, return an error here if any of
-    // them are named.
+    // TODO: Error if block parameters are named
     return type;
   }
 
@@ -1822,9 +1836,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
-    return withLoc(pos,
-                   irBuilder.makeBlock(label ? *label : Name{},
-                                       type.getSignature().results));
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
+    return withLoc(
+      pos, irBuilder.makeBlock(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeIf(Index pos,
@@ -1832,10 +1848,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                   std::optional<Name> label,
                   HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeIf(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeIf(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
@@ -1845,10 +1862,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     std::optional<Name> label,
                     HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeLoop(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeTry(Index pos,
@@ -1856,10 +1874,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    std::optional<Name> label,
                    HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeTry(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeTryTable(Index pos,
@@ -1875,12 +1894,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       labels.push_back(info.label);
       isRefs.push_back(info.isRef);
     }
-    return withLoc(pos,
-                   irBuilder.makeTryTable(label ? *label : Name{},
-                                          type.getSignature().results,
-                                          tags,
-                                          labels,
-                                          isRefs));
+    return withLoc(
+      pos,
+      irBuilder.makeTryTable(
+        label ? *label : Name{}, type.getSignature(), tags, labels, isRefs));
   }
 
   Result<> visitCatch(Index pos, Name tag) {
@@ -2449,15 +2466,34 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                          const std::vector<Annotation>& annotations,
                          HeapType type,
                          Index field,
-                         bool signed_) {
-    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_));
+                         bool signed_,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_, order));
   }
 
   Result<> makeStructSet(Index pos,
                          const std::vector<Annotation>& annotations,
                          HeapType type,
-                         Index field) {
-    return withLoc(pos, irBuilder.makeStructSet(type, field));
+                         Index field,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructSet(type, field, order));
+  }
+
+  Result<> makeStructRMW(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         AtomicRMWOp op,
+                         HeapType type,
+                         Index field,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructRMW(op, type, field, order));
+  }
+
+  Result<> makeStructCmpxchg(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             Index field,
+                             MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructCmpxchg(type, field, order));
   }
 
   Result<> makeArrayNew(Index pos,

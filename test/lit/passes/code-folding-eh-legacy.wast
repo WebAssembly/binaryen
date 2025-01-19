@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $2) (param i32))
   (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $pop-test (type $1)

@@ -5013,6 +5013,102 @@ switch (buf[0]) {
           }
           case 'u': {
             switch (buf[7]) {
+              case 'a': {
+                switch (buf[14]) {
+                  case 'g': {
+                    switch (buf[17]) {
+                      case '\0':
+                        if (op == "struct.atomic.get"sv) {
+                          CHECK_ERR(makeAtomicStructGet(ctx, pos, annotations));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '_': {
+                        switch (buf[18]) {
+                          case 's':
+                            if (op == "struct.atomic.get_s"sv) {
+                              CHECK_ERR(makeAtomicStructGet(ctx, pos, annotations, true));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          case 'u':
+                            if (op == "struct.atomic.get_u"sv) {
+                              CHECK_ERR(makeAtomicStructGet(ctx, pos, annotations, false));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'r': {
+                    switch (buf[18]) {
+                      case 'a': {
+                        switch (buf[19]) {
+                          case 'd':
+                            if (op == "struct.atomic.rmw.add"sv) {
+                              CHECK_ERR(makeStructRMW(ctx, pos, annotations, RMWAdd));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          case 'n':
+                            if (op == "struct.atomic.rmw.and"sv) {
+                              CHECK_ERR(makeStructRMW(ctx, pos, annotations, RMWAnd));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'c':
+                        if (op == "struct.atomic.rmw.cmpxchg"sv) {
+                          CHECK_ERR(makeStructCmpxchg(ctx, pos, annotations));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'o':
+                        if (op == "struct.atomic.rmw.or"sv) {
+                          CHECK_ERR(makeStructRMW(ctx, pos, annotations, RMWOr));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 's':
+                        if (op == "struct.atomic.rmw.sub"sv) {
+                          CHECK_ERR(makeStructRMW(ctx, pos, annotations, RMWSub));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'x': {
+                        switch (buf[19]) {
+                          case 'c':
+                            if (op == "struct.atomic.rmw.xchg"sv) {
+                              CHECK_ERR(makeStructRMW(ctx, pos, annotations, RMWXchg));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          case 'o':
+                            if (op == "struct.atomic.rmw.xor"sv) {
+                              CHECK_ERR(makeStructRMW(ctx, pos, annotations, RMWXor));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      default: goto parse_error;
+                    }
+                  }
+                  case 's':
+                    if (op == "struct.atomic.set"sv) {
+                      CHECK_ERR(makeAtomicStructSet(ctx, pos, annotations));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'g': {
                 switch (buf[10]) {
                   case '\0':

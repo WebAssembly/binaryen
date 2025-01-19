@@ -872,6 +872,18 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
+      switch (curr->order) {
+        case MemoryOrder::Unordered:
+          break;
+        case MemoryOrder::SeqCst:
+          // Synchronizes with other threads.
+          parent.isAtomic = true;
+          break;
+        case MemoryOrder::AcqRel:
+          // Only synchronizes if other threads can read the field.
+          parent.isAtomic = curr->ref->type.getHeapType().isShared();
+          break;
+      }
     }
     void visitStructSet(StructSet* curr) {
       if (curr->ref->type.isNull()) {
@@ -883,6 +895,35 @@ private:
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
+      if (curr->order != MemoryOrder::Unordered) {
+        parent.isAtomic = true;
+      }
+    }
+    void visitStructRMW(StructRMW* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsMutableStruct = true;
+      parent.writesStruct = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsMutableStruct = true;
+      parent.writesStruct = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {

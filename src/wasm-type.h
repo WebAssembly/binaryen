@@ -96,26 +96,27 @@ class HeapType {
   uintptr_t id;
 
 public:
-  // Bit zero indicates whether the type is `shared`, so we need to leave it
-  // free.
+  // Bits 0 and 1 are used by the Type representation, so need to be left free.
+  // Bit 2 determines whether the basic heap type is shared (1) or unshared (0).
   enum BasicHeapType : uint32_t {
-    ext = 0 << 1,
-    func = 1 << 1,
-    cont = 2 << 1,
-    any = 3 << 1,
-    eq = 4 << 1,
-    i31 = 5 << 1,
-    struct_ = 6 << 1,
-    array = 7 << 1,
-    exn = 8 << 1,
-    string = 9 << 1,
-    none = 10 << 1,
-    noext = 11 << 1,
-    nofunc = 12 << 1,
-    nocont = 13 << 1,
-    noexn = 14 << 1,
+    ext = 1 << 3,
+    func = 2 << 3,
+    cont = 3 << 3,
+    any = 4 << 3,
+    eq = 5 << 3,
+    i31 = 6 << 3,
+    struct_ = 7 << 3,
+    array = 8 << 3,
+    exn = 9 << 3,
+    string = 10 << 3,
+    none = 11 << 3,
+    noext = 12 << 3,
+    nofunc = 13 << 3,
+    nocont = 14 << 3,
+    noexn = 15 << 3,
   };
-  static constexpr BasicHeapType _last_basic_type = BasicHeapType(noexn + 1);
+  static constexpr BasicHeapType _last_basic_type =
+    BasicHeapType(noexn + (1 << 2));
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -213,7 +214,7 @@ public:
   // Get the shared or unshared version of this basic heap type.
   constexpr BasicHeapType getBasic(Shareability share) const {
     assert(isBasic());
-    return BasicHeapType(share == Shared ? (id | 1) : (id & ~1));
+    return BasicHeapType(share == Shared ? (id | 4) : (id & ~4));
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
@@ -261,49 +262,15 @@ public:
   std::string toString() const;
 };
 
-// Internal only.
-struct TypeInfo {
-  using type_t = Type;
-  // Used in assertions to ensure that temporary types don't leak into the
-  // global store.
-  bool isTemp = false;
-  enum Kind {
-    TupleKind,
-    RefKind,
-  } kind;
-  struct Ref {
-    HeapType heapType;
-    Nullability nullability;
-  };
-  union {
-    Tuple tuple;
-    Ref ref;
-  };
-
-  TypeInfo(const Tuple& tuple);
-  TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
-  TypeInfo(HeapType heapType, Nullability nullable)
-    : kind(RefKind), ref{heapType, nullable} {}
-  TypeInfo(const TypeInfo& other);
-  ~TypeInfo();
-
-  constexpr bool isTuple() const { return kind == TupleKind; }
-  constexpr bool isRef() const { return kind == RefKind; }
-
-  // If this TypeInfo represents a Type that can be represented more simply,
-  // return that simpler Type. For example, this handles eliminating singleton
-  // tuple types.
-  std::optional<Type> getCanonical() const;
-
-  bool operator==(const TypeInfo& other) const;
-  bool operator!=(const TypeInfo& other) const { return !(*this == other); }
-};
-
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
-  // comparison of the ids. For basic types the `id` is just the `BasicType`
-  // enum value below, and for constructed types the `id` is the address of the
-  // canonical representation of the type, making lookups cheap for all types.
+  // comparison of the ids. The basic types are packed at the bottom of the
+  // expressible range, and after that tuple types are distinguished by having
+  // bit 0 set. When that bit is masked off, they are pointers to the underlying
+  // vectors of types. Otherwise, the type is a reference type, and is
+  // represented as a heap type with bit 1 set iff the reference type is
+  // nullable.
+  //
   // Since `Type` is really just a single integer, it should be passed by value.
   // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
   // 32-bit platforms.
@@ -311,13 +278,13 @@ class Type {
 
 public:
   enum BasicType : uint32_t {
-    none,
-    unreachable,
-    i32,
-    i64,
-    f32,
-    f64,
-    v128,
+    none = 0,
+    unreachable = 1,
+    i32 = 2,
+    i64 = 3,
+    f32 = 4,
+    f64 = 5,
+    v128 = 6,
   };
   static constexpr BasicType _last_basic_type = v128;
 
@@ -338,7 +305,8 @@ public:
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType, Nullability nullable);
+  Type(HeapType heapType, Nullability nullable)
+    : Type(heapType.getID() | (nullable == Nullable ? 2 : 0)) {}
 
   // Predicates
   //                 Compound Concrete
@@ -376,74 +344,37 @@ public:
   // Tuples, refs, etc. are quickly handled using isBasic(), leaving the non-
   // basic case for the underlying implementation.
 
-  bool isTuple() const {
-    if (isBasic()) {
-      return false;
-    } else {
-      return getTypeInfo(*this)->isTuple();
-    }
+  // TODO: Experiment with leaving bit 0 free in basic types.
+  bool isTuple() const { return !isBasic() && (id & 1); }
+  const Tuple& getTuple() const {
+    assert(isTuple());
+    return *(Tuple*)(id & ~1);
   }
 
-  bool isRef() const {
-    if (isBasic()) {
-      return false;
-    } else {
-      return getTypeInfo(*this)->isRef();
-    }
+  bool isRef() const { return !isBasic() && !(id & 1); }
+  bool isNullable() const { return isRef() && (id & 2); }
+  bool isNonNullable() const { return isRef() && !(id & 2); }
+  HeapType getHeapType() const {
+    assert(isRef());
+    return HeapType(id & ~2);
   }
 
-  bool isFunction() const {
-    if (isBasic()) {
-      return false;
-    } else {
-      auto* info = getTypeInfo(*this);
-      return info->isRef() && info->ref.heapType.isFunction();
-    }
-  }
-
-  bool isData() const {
-    if (isBasic()) {
-      return false;
-    } else {
-      auto* info = getTypeInfo(*this);
-      return info->isRef() && info->ref.heapType.isData();
-    }
-  }
-
-  // Checks whether a type is a reference and is nullable. This returns false
-  // for a value that is not a reference, that is, for which nullability is
-  // irrelevant.
-  bool isNullable() const {
-    if (isRef()) {
-      return getTypeInfo(*this)->ref.nullability == Nullable;
-    } else {
-      return false;
-    }
-  }
-
-  // Checks whether a type is a reference and is non-nullable. This returns
-  // false for a value that is not a reference, that is, for which nullability
-  // is irrelevant. (For that reason, this is only the negation of isNullable()
-  // on references, but both return false on non-references.)
-  bool isNonNullable() const {
-    if (isRef()) {
-      return getTypeInfo(*this)->ref.nullability == NonNullable;
-    } else {
-      return false;
-    }
-  }
-
+  bool isFunction() const { return isRef() && getHeapType().isFunction(); }
   bool isSignature() const { return isRef() && getHeapType().isSignature(); }
+  bool isData() const { return isRef() && getHeapType().isData(); }
 
   // Whether this type is only inhabited by null values.
-  bool isNull() const;
-  bool isStruct() const;
-  bool isArray() const;
-  bool isExn() const;
-  bool isString() const;
+  bool isNull() const { return isRef() && getHeapType().isBottom(); }
+  bool isStruct() const { return isRef() && getHeapType().isStruct(); }
+  bool isArray() const { return isRef() && getHeapType().isArray(); }
+  bool isExn() const { return isRef() && getHeapType().isExn(); }
+  bool isString() const { return isRef() && getHeapType().isString(); }
   bool isDefaultable() const;
 
-  Nullability getNullability() const;
+  // TODO: Allow this only for reference types.
+  Nullability getNullability() const {
+    return isNullable() ? Nullable : NonNullable;
+  }
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -488,20 +419,6 @@ public:
 
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
-
-  // Returns the tuple, assuming that this is a tuple type. Note that it is
-  // normally simpler to use operator[] and size() on the Type directly.
-  HeapType getHeapType() const {
-    assert(isRef());
-    return getTypeInfo(*this)->ref.heapType;
-  }
-
-  // Gets the heap type corresponding to this type, assuming that it is a
-  // reference type.
-  const Tuple& getTuple() const {
-    assert(isTuple());
-    return getTypeInfo(*this)->tuple;
-  }
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -565,7 +482,9 @@ public:
 
   std::string toString() const;
 
-  size_t size() const;
+  size_t size() const {
+    return isTuple() ? getTuple().size() : size_t(id != Type::none);
+  }
 
   struct Iterator : ParentIndexIterator<const Type*, Iterator> {
     using value_type = Type;
@@ -583,14 +502,7 @@ public:
     return std::make_reverse_iterator(begin());
   }
   const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
-
-  static TypeInfo* getTypeInfo(Type type) {
-    assert(!type.isBasic());
-    return (TypeInfo*)type.getID();
-  }
 };
-
-inline bool Type::isNull() const { return isRef() && getHeapType().isBottom(); }
 
 namespace HeapTypes {
 
@@ -957,6 +869,33 @@ std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
 std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
+
+// Inline some nontrivial methods here for performance reasons.
+
+inline bool HeapType::isBottom() const {
+  if (isBasic()) {
+    switch (getBasic(Unshared)) {
+      case ext:
+      case func:
+      case cont:
+      case any:
+      case eq:
+      case i31:
+      case struct_:
+      case array:
+      case exn:
+      case string:
+        return false;
+      case none:
+      case noext:
+      case nofunc:
+      case nocont:
+      case noexn:
+        return true;
+    }
+  }
+  return false;
+}
 
 } // namespace wasm
 

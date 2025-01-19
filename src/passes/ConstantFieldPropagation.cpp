@@ -139,15 +139,25 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
-      // this location in the code. (Unless we are in an open-world
-      // situation, which we assume we are not in.) Replace this get with a
-      // trap. Note that we do not need to care about the nullability of the
-      // reference, as if it should have trapped, we are replacing it with
-      // another trap, which we allow to reorder (but we do need to care about
-      // side effects in the reference, so keep it around).
+      // this location in the code. (Unless we are in an open-world situation,
+      // which we assume we are not in.) Replace this get with a trap. Note that
+      // we do not need to care about the nullability of the reference, as if it
+      // should have trapped, we are replacing it with another trap, which we
+      // allow to reorder (but we do need to care about side effects in the
+      // reference, so keep it around). We also do not need to care about
+      // synchronization since trapping accesses do not synchronize with other
+      // accesses.
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeUnreachable()));
       changed = true;
+      return;
+    }
+
+    if (curr->order == MemoryOrder::AcqRel) {
+      // Removing an acquire get and preserving its synchronization properties
+      // would require inserting an acquire fence, but the fence would have
+      // stronger synchronization properties so might be more expensive.
+      // Instead, just skip the optimization.
       return;
     }
 
@@ -166,8 +176,17 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     auto* value = makeExpression(info, heapType, curr);
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
+    auto* replacement = builder.blockify(
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
+    // If this get is sequentially consistent, then it synchronizes with other
+    // threads at least by participating in the global order of sequentially
+    // consistent operations. Preserve that effect by replacing the access with
+    // a fence.
+    assert(curr->order != MemoryOrder::AcqRel);
+    if (curr->order == MemoryOrder::SeqCst) {
+      replacement = builder.blockify(replacement, builder.makeAtomicFence());
+    }
+    replaceCurrent(builder.blockify(replacement, value));
     changed = true;
   }
 

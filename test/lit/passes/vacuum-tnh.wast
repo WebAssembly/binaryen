@@ -8,10 +8,10 @@
 (module
   ;; YESTNH:      (type $struct (struct (field (mut i32))))
 
-  ;; YESTNH:      (tag $tag (param i32))
+  ;; YESTNH:      (tag $tag (type $1) (param i32))
   ;; NO_TNH:      (type $struct (struct (field (mut i32))))
 
-  ;; NO_TNH:      (tag $tag (param i32))
+  ;; NO_TNH:      (tag $tag (type $2) (param i32))
   (tag $tag (param i32))
 
   (memory 1 1)

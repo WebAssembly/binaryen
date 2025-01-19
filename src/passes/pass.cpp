@@ -273,8 +273,8 @@ void PassRegistry::registerPasses() {
                "32-bit one",
                createMemory64LoweringPass);
   registerPass("table64-lowering",
-               "lower 64-bit tables 32-bit ones",
-               createTable64LoweringPass);
+               "alias for memory64-lowering",
+               createMemory64LoweringPass);
   registerPass("llvm-memory-copy-fill-lowering",
                "Lower memory.copy and memory.fill to wasm mvp and disable "
                "the bulk-memory feature.",
@@ -411,8 +411,12 @@ void PassRegistry::registerPasses() {
   registerPass("remove-imports",
                "removes imports and replaces them with nops",
                createRemoveImportsPass);
-  registerPass(
-    "remove-memory", "removes memory segments", createRemoveMemoryPass);
+  registerPass("remove-memory-init",
+               "removes memory initialization",
+               createRemoveMemoryInitPass);
+  registerPass("remove-memory",
+               "removes memory init (legacy name)",
+               createRemoveMemoryInitPass);
   registerPass("remove-unused-brs",
                "removes breaks from locations that are not needed",
                createRemoveUnusedBrsPass);

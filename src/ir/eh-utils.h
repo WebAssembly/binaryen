@@ -38,8 +38,14 @@ bool containsValidDanglingPop(Expression* catchBody);
 // '(local.get $new)' where the 'pop' used to be.
 void handleBlockNestedPop(Try* try_, Function* func, Module& wasm);
 
-// Calls handleBlockNestedPop for each 'Try's in a given function.
-void handleBlockNestedPops(Function* func, Module& wasm);
+enum class FeaturePolicy { SkipIfNoEH, RunIfNoEH };
+
+// Calls handleBlockNestedPop for each 'Try's in a given function. By default,
+// does no work if EH is not enabled, but this can be overridden with the
+// RunIfNoEH policy.
+void handleBlockNestedPops(Function* func,
+                           Module& wasm,
+                           FeaturePolicy policy = FeaturePolicy::SkipIfNoEH);
 
 // Given a catch body, find the pop corresponding to the catch. There might be
 // pops nested inside a try inside this catch, and we must ignore them, like

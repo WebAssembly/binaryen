@@ -83,6 +83,9 @@ static size_t timeout = 2;
 // default of enabling all features should work in most cases.
 static std::string extraFlags = "-all";
 
+// Whether to save all intermediate working files as we go.
+static bool saveAllWorkingFiles = false;
+
 struct ProgramResult {
   int code;
   std::string output;
@@ -231,6 +234,11 @@ ProgramResult expected;
 // case we may try again but much later.
 static std::unordered_set<Name> functionsWeTriedToRemove;
 
+// The index of the working file we save, when saveAllWorkingFiles. We must
+// store this globally so that the difference instances of Reducer do not
+// overlap.
+static size_t workingFileIndex = 0;
+
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
@@ -286,7 +294,7 @@ struct Reducer
       "--optimize-instructions",
       "--precompute",
       "--remove-imports",
-      "--remove-memory",
+      "--remove-memory-init",
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
       "--remove-unused-nonfunction-module-elements",
@@ -296,7 +304,7 @@ struct Reducer
       "--simplify-globals",
       "--simplify-locals --vacuum",
       "--strip",
-      "--remove-unused-types",
+      "--remove-unused-types --closed-world",
       "--vacuum"};
     auto oldSize = file_size(working);
     bool more = true;
@@ -322,7 +330,7 @@ struct Reducer
             if (ProgramResult(command) == expected) {
               std::cerr << "|    command \"" << currCommand
                         << "\" succeeded, reduced size to " << newSize << '\n';
-              copy_file(test, working);
+              applyTestToWorking();
               more = true;
               oldSize = newSize;
             }
@@ -332,6 +340,16 @@ struct Reducer
     }
     if (verbose) {
       std::cerr << "|    done with passes for now\n";
+    }
+  }
+
+  // Apply the test file to the working file, after we saw that it successfully
+  // reduced the testcase.
+  void applyTestToWorking() {
+    copy_file(test, working);
+
+    if (saveAllWorkingFiles) {
+      copy_file(working, working + '.' + std::to_string(workingFileIndex++));
     }
   }
 
@@ -471,7 +489,7 @@ struct Reducer
 
   void noteReduction(size_t amount = 1) {
     reduced += amount;
-    copy_file(test, working);
+    applyTestToWorking();
   }
 
   // tests a reduction on an arbitrary child
@@ -608,6 +626,25 @@ struct Reducer
         // here to avoid reaching the code below that tries to add a drop on
         // children (which would recreate the current state).
         return;
+      }
+    } else if (auto* structNew = curr->dynCast<StructNew>()) {
+      // If all the fields are defaultable, try to replace this with a
+      // struct.new_with_default.
+      if (!structNew->isWithDefault() && structNew->type != Type::unreachable) {
+        auto& fields = structNew->type.getHeapType().getStruct().fields;
+        if (std::all_of(fields.begin(), fields.end(), [&](auto& field) {
+              return field.type.isDefaultable();
+            })) {
+          ExpressionList operands(getModule()->allocator);
+          operands.swap(structNew->operands);
+          assert(structNew->isWithDefault());
+          if (tryToReplaceCurrent(structNew)) {
+            return;
+          } else {
+            structNew->operands.swap(operands);
+            assert(!structNew->isWithDefault());
+          }
+        }
       }
     }
     // Finally, try to replace with a child.
@@ -1301,6 +1338,15 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& argument) {
            extraFlags = argument;
            std::cout << "|applying extraFlags: " << extraFlags << "\n";
+         })
+    .add("--save-all-working",
+         "-saw",
+         "Save all intermediate working files, as $WORKING.0, .1, .2 etc",
+         WasmReduceOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           saveAllWorkingFiles = true;
+           std::cout << "|saving all intermediate working files\n";
          })
     .add_positional(
       "INFILE",

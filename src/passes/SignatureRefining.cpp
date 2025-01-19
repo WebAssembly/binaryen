@@ -154,6 +154,13 @@ struct SignatureRefining : public Pass {
       }
     }
 
+    // Also skip modifying types used in tags, even private tags, since we don't
+    // analyze exception handling or stack switching instructions. TODO: Analyze
+    // and optimize exception handling and stack switching instructions.
+    for (auto& tag : module->tags) {
+      allInfo[tag->type].canModify = false;
+    }
+
     // For now, do not optimize types that have subtypes. When we modify such a
     // type we need to modify subtypes as well, similar to the analysis in
     // TypeRefining, and perhaps we can unify this pass with that. TODO

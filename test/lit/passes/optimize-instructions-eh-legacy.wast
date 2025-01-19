@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $1) (param i32))
 
   ;; CHECK:      (func $dummy (type $0)
   ;; CHECK-NEXT: )

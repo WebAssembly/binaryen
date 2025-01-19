@@ -1247,9 +1247,7 @@
 
   ;; CHECK:       (type $5 (func (param (ref noextern))))
 
-  ;; CHECK:      (type $6 (func))
-
-  ;; CHECK:      (tag $tag)
+  ;; CHECK:      (tag $tag (type $1))
   (tag $tag)
 
   ;; CHECK:      (func $struct.new (type $2) (param $extern externref) (result anyref)
@@ -1572,5 +1570,135 @@
    )
   )
   (ref.null $8)
+ )
+)
+
+;; Test for a bug where we made a struct.get unreachable because it was reading
+;; a field that had no writes, but in a situation where it is invalid for the
+;; struct.get to be unreachable.
+(module
+ ;; CHECK:      (type $never (sub (struct (field i32))))
+ (type $never (sub (struct (field i32))))
+
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $optimizable (struct (field (mut nullfuncref))))
+ (type $optimizable (struct (field (mut (ref null func)))))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (global $never (ref null $never) (ref.null none))
+ (global $never (export "never") (ref null $never)
+   ;; Make the type $never public (if it were private, we'd optimize in a
+   ;; different way that avoids the bug that this tests for).
+   (ref.null $never)
+ )
+
+ ;; CHECK:      (export "never" (global $never))
+
+ ;; CHECK:      (func $setup (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.new $optimizable
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref none))
+ ;; CHECK-NEXT:      (ref.as_non_null
+ ;; CHECK-NEXT:       (ref.null none)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $setup
+  ;; A struct.new, so that we have a field to refine (which avoids the pass
+  ;; early-exiting).
+  (drop
+   (struct.new $optimizable
+    (ref.null func)
+   )
+  )
+  ;; A struct.get that reads a $never, but the actual fallthrough value is none.
+  ;; We never create this type, so the field has no possible content, and we can
+  ;; replace this with an unreachable.
+  (drop
+   (struct.get $never 0
+    (block (result (ref $never))
+     (ref.as_non_null
+      (ref.null none)
+     )
+    )
+   )
+  )
+ )
+)
+
+;; Test that we note default values.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
+  (type $A (sub (struct (field i32))))
+  ;; CHECK:       (type $B (sub (struct (field i32))))
+  (type $B (sub (struct (field i32))))
+ )
+ ;; CHECK:      (type $2 (func (param (ref null $A) (ref null $B))))
+
+ ;; CHECK:      (type $optimizable (sub (struct (field (ref $2)))))
+ (type $optimizable (sub (struct (field funcref))))
+
+ ;; CHECK:      (elem declare func $test)
+
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $test (type $2) (param $x (ref null $A)) (param $y (ref null $B))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.new $optimizable
+ ;; CHECK-NEXT:    (ref.func $test)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $A 0
+ ;; CHECK-NEXT:    (struct.new $A
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $B 0
+ ;; CHECK-NEXT:    (struct.new_default $B)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test") (param $x (ref null $A)) (param $y (ref null $B))
+  ;; Use $A, $B as params of this export, so they are public.
+
+  ;; Make something for the pass to do, to avoid early-exit.
+  (drop
+   (struct.new $optimizable
+    (ref.func $test)
+   )
+  )
+
+  ;; Get from a struct.new. We have nothing to optimize here. (In particular, we
+  ;; cannot make this unreachable, as there is a value in the field, 0.)
+  (drop
+   (struct.get $A 0
+    (struct.new $A
+     (i32.const 0)
+    )
+   )
+  )
+
+  ;; As above. Now the value in the field comes from a default value.
+  (drop
+   (struct.get $B 0
+    (struct.new_default $B)
+   )
+  )
  )
 )

@@ -17,11 +17,11 @@
   ;; CHECK:      (type $struct (struct (field (mut eqref))))
   (type $struct (struct (field (mut (ref null eq)))))
 
-  ;; CHECK:      (tag $e)
+  ;; CHECK:      (tag $e (type $0))
   (tag $e)
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $1) (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK:      (tag $e-eqref (param eqref))
+  ;; CHECK:      (tag $e-eqref (type $2) (param eqref))
   (tag $e-eqref (param (ref null eq)))
 
   ;; CHECK:      (func $foo (type $0)

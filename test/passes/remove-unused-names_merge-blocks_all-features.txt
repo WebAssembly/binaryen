@@ -1655,7 +1655,7 @@
 (module
  (type $0 (func))
  (type $1 (func (param i32)))
- (tag $e (param i32))
+ (tag $e (type $1) (param i32))
  (func $foo (type $0)
  )
  (func $throw (type $0)

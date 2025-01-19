@@ -31,31 +31,56 @@ namespace wasm {
 static Name MEMORY_BASE("__memory_base");
 static Name MEMORY_BASE32("__memory_base32");
 
+static Name TABLE_BASE("__table_base");
+static Name TABLE_BASE32("__table_base32");
+
 struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
-  void wrapAddress64(Expression*& ptr, Name memoryName) {
+  void wrapAddress64(Expression*& ptr,
+                     Name memoryOrTableName,
+                     bool isTable = false) {
     if (ptr->type == Type::unreachable) {
       return;
     }
     auto& module = *getModule();
-    auto* memory = module.getMemory(memoryName);
-    if (memory->is64()) {
+    bool is64 = false;
+    if (isTable) {
+      is64 = module.getTable(memoryOrTableName)->is64();
+    } else {
+      is64 = module.getMemory(memoryOrTableName)->is64();
+    }
+    if (is64) {
       assert(ptr->type == Type::i64);
       ptr = Builder(module).makeUnary(UnaryOp::WrapInt64, ptr);
     }
   }
 
-  void extendAddress64(Expression*& ptr, Name memoryName) {
+  void extendAddress64(Expression*& ptr,
+                       Name memoryOrTableName,
+                       bool isTable = false) {
     if (ptr->type == Type::unreachable) {
       return;
     }
     auto& module = *getModule();
-    auto* memory = module.getMemory(memoryName);
-    if (memory->is64()) {
+    bool is64 = false;
+    if (isTable) {
+      is64 = module.getTable(memoryOrTableName)->is64();
+    } else {
+      is64 = module.getMemory(memoryOrTableName)->is64();
+    }
+    if (is64) {
       assert(ptr->type == Type::i64);
       ptr->type = Type::i32;
       ptr = Builder(module).makeUnary(UnaryOp::ExtendUInt32, ptr);
     }
+  }
+
+  void wrapTableAddress64(Expression*& ptr, Name tableName) {
+    return wrapAddress64(ptr, tableName, true);
+  }
+
+  void extendTableAddress64(Expression*& ptr, Name tableName) {
+    return extendAddress64(ptr, tableName, true);
   }
 
   void visitLoad(Load* curr) { wrapAddress64(curr->ptr, curr->memory); }
@@ -177,20 +202,103 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     }
   }
 
+  void visitTableSize(TableSize* curr) {
+    auto& module = *getModule();
+    auto* table = module.getTable(curr->table);
+    if (table->is64()) {
+      auto* size = static_cast<Expression*>(curr);
+      extendTableAddress64(size, curr->table);
+      replaceCurrent(size);
+    }
+  }
+
+  void visitTableGrow(TableGrow* curr) {
+    auto& module = *getModule();
+    auto* table = module.getTable(curr->table);
+    if (table->is64()) {
+      wrapTableAddress64(curr->delta, curr->table);
+      auto* size = static_cast<Expression*>(curr);
+      extendTableAddress64(size, curr->table);
+      replaceCurrent(size);
+    }
+  }
+
+  void visitTableFill(TableFill* curr) {
+    wrapTableAddress64(curr->dest, curr->table);
+    wrapTableAddress64(curr->size, curr->table);
+  }
+
+  void visitTableCopy(TableCopy* curr) {
+    wrapTableAddress64(curr->dest, curr->destTable);
+    wrapTableAddress64(curr->source, curr->sourceTable);
+    wrapTableAddress64(curr->size, curr->destTable);
+  }
+
+  void visitTableInit(TableInit* curr) {
+    wrapTableAddress64(curr->dest, curr->table);
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    wrapTableAddress64(curr->target, curr->table);
+  }
+
+  void visitElementSegment(ElementSegment* segment) {
+    auto& module = *getModule();
+
+    // Passive segments don't have any offset to update.
+    if (segment->table.isNull() || !module.getTable(segment->table)->is64()) {
+      return;
+    }
+
+    if (auto* c = segment->offset->dynCast<Const>()) {
+      c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
+      c->type = Type::i32;
+    } else if (auto* get = segment->offset->dynCast<GlobalGet>()) {
+      auto* g = module.getGlobal(get->name);
+      if (g->imported() && g->base == TABLE_BASE) {
+        ImportInfo info(module);
+        auto* memoryBase32 = info.getImportedGlobal(g->module, TABLE_BASE32);
+        if (!memoryBase32) {
+          Builder builder(module);
+          memoryBase32 = builder
+                           .makeGlobal(TABLE_BASE32,
+                                       Type::i32,
+                                       builder.makeConst(int32_t(0)),
+                                       Builder::Immutable)
+                           .release();
+          memoryBase32->module = g->module;
+          memoryBase32->base = TABLE_BASE32;
+          module.addGlobal(memoryBase32);
+        }
+        // Use this alternative import when initializing the segment.
+        assert(memoryBase32);
+        get->type = Type::i32;
+        get->name = memoryBase32->name;
+      }
+    } else {
+      WASM_UNREACHABLE("unexpected elem offset");
+    }
+  }
+
   void run(Module* module) override {
     if (!module->features.has(FeatureSet::Memory64)) {
       return;
     }
     Super::run(module);
-    // Don't modify the memories themselves until after the traversal since we
-    // that would require memories to be the last thing that get visited, and
-    // we don't want to depend on that specific ordering.
+    // Don't modify the memories or tables themselves until after the traversal
+    // since we that would require memories to be the last thing that get
+    // visited, and we don't want to depend on that specific ordering.
     for (auto& memory : module->memories) {
       if (memory->is64()) {
         memory->addressType = Type::i32;
         if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
           memory->max = Memory::kMaxSize32;
         }
+      }
+    }
+    for (auto& table : module->tables) {
+      if (table->is64()) {
+        table->addressType = Type::i32;
       }
     }
     module->features.disable(FeatureSet::Memory64);

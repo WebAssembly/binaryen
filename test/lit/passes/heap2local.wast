@@ -4497,7 +4497,7 @@
 
   ;; CHECK:      (type $2 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $1) (param i32))
   (tag $tag (param i32))
 
   ;; CHECK:      (func $struct-with-pop (type $0)
@@ -4605,6 +4605,109 @@
           )
         )
       )
+    )
+  )
+)
+
+;; Atomic accesses need special handling
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $struct (shared (struct (field (mut i32)))))
+  (type $struct (shared (struct (field (mut i32)))))
+
+  ;; CHECK:      (func $acqrel (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $acqrel
+    (local (ref null $struct))
+    (local.set 0
+      (struct.new_default $struct)
+    )
+    ;; acqrel accesses to non-escaping structs cannot synchronize with other
+    ;; threads, so we can optimize normally.
+    (drop
+      (struct.atomic.get acqrel $struct 0
+        (local.get 0)
+      )
+    )
+    (struct.atomic.set acqrel $struct 0
+      (local.get 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $seqcst (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null (shared none)))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null (shared none))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (atomic.fence)
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null (shared none))
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (atomic.fence)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $seqcst
+    (local (ref null $struct))
+    (local.set 0
+      (struct.new_default $struct)
+    )
+    ;; seqcst accesses participate in the global ordering of seqcst operations,
+    ;; so they need to be replaced with a seqcst fence to maintain that
+    ;; ordering.
+    (drop
+      (struct.atomic.get $struct 0
+        (local.get 0)
+      )
+    )
+    (struct.atomic.set $struct 0
+      (local.get 0)
+      (i32.const 0)
     )
   )
 )

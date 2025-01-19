@@ -80,15 +80,18 @@ public:
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
   Result<> visitFunctionStart(Function* func);
-  Result<> visitBlockStart(Block* block);
-  Result<> visitIfStart(If* iff, Name label = {});
+  Result<> visitBlockStart(Block* block, Type inputType = Type::none);
+  Result<> visitIfStart(If* iff, Name label = {}, Type inputType = Type::none);
   Result<> visitElse();
-  Result<> visitLoopStart(Loop* iff);
-  Result<> visitTryStart(Try* tryy, Name label = {});
+  Result<> visitLoopStart(Loop* iff, Type inputType = Type::none);
+  Result<>
+  visitTryStart(Try* tryy, Name label = {}, Type inputType = Type::none);
   Result<> visitCatch(Name tag);
   Result<> visitCatchAll();
   Result<> visitDelegate(Index label);
-  Result<> visitTryTableStart(TryTable* trytable, Name label = {});
+  Result<> visitTryTableStart(TryTable* trytable,
+                              Name label = {},
+                              Type inputType = Type::none);
   Result<> visitEnd();
 
   // Used to visit break nodes when traversing a single block without its
@@ -113,9 +116,9 @@ public:
   // nodes. This is generally safer than calling `visit` because the function
   // signatures ensure that there are no missing fields.
   Result<> makeNop();
-  Result<> makeBlock(Name label, Type type);
-  Result<> makeIf(Name label, Type type);
-  Result<> makeLoop(Name label, Type type);
+  Result<> makeBlock(Name label, Signature sig);
+  Result<> makeIf(Name label, Signature sig);
+  Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label, bool isConditional);
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
@@ -180,9 +183,9 @@ public:
   Result<> makeTableFill(Name table);
   Result<> makeTableCopy(Name destTable, Name srcTable);
   Result<> makeTableInit(Name elem, Name table);
-  Result<> makeTry(Name label, Type type);
+  Result<> makeTry(Name label, Signature sig);
   Result<> makeTryTable(Name label,
-                        Type type,
+                        Signature sig,
                         const std::vector<Name>& tags,
                         const std::vector<Index>& labels,
                         const std::vector<bool>& isRefs);
@@ -201,8 +204,12 @@ public:
   makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
   Result<> makeStructNew(HeapType type);
   Result<> makeStructNewDefault(HeapType type);
-  Result<> makeStructGet(HeapType type, Index field, bool signed_);
-  Result<> makeStructSet(HeapType type, Index field);
+  Result<>
+  makeStructGet(HeapType type, Index field, bool signed_, MemoryOrder order);
+  Result<> makeStructSet(HeapType type, Index field, MemoryOrder order);
+  Result<>
+  makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
+  Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
   Result<> makeArrayNew(HeapType type);
   Result<> makeArrayNewDefault(HeapType type);
   Result<> makeArrayNewData(HeapType type, Name data);
@@ -323,13 +330,31 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+
     // For Try/Catch/CatchAll scopes, we need to separately track a label used
     // for branches, since the normal label is only used for delegates.
     Name branchLabel;
 
     bool labelUsed = false;
 
+    // If the control flow scope has an input type, we need to lower it using a
+    // scratch local because we cannot represent control flow input in the IR.
+    Type inputType;
+    Index inputLocal = -1;
+
+    // If there are br_on_*, try_table, or resume branches that target this
+    // scope and carry additional values, we need to use a scratch local to
+    // deliver those additional values because the IR does not support them. We
+    // may need scratch locals of different arities for the same branch target.
+    // For each arity we also need a trampoline label to branch to. TODO:
+    // Support additional values on any branch once we have better multivalue
+    // optimization support.
+    std::vector<Index> outputLocals;
+    std::vector<Name> outputLabels;
+
+    // The stack of instructions being built in this scope.
     std::vector<Expression*> exprStack;
+
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.
     bool unreachable = false;
@@ -338,50 +363,62 @@ private:
     size_t startPos = 0;
 
     ScopeCtx() : scope(NoScope{}) {}
-    ScopeCtx(Scope scope) : scope(scope) {}
-    ScopeCtx(Scope scope, Name label, bool labelUsed)
-      : scope(scope), label(label), labelUsed(labelUsed) {}
+    ScopeCtx(Scope scope, Type inputType)
+      : scope(scope), inputType(inputType) {}
+    ScopeCtx(
+      Scope scope, Name label, bool labelUsed, Type inputType, Index inputLocal)
+      : scope(scope), label(label), labelUsed(labelUsed), inputType(inputType),
+        inputLocal(inputLocal) {}
     ScopeCtx(Scope scope, Name label, bool labelUsed, Name branchLabel)
       : scope(scope), label(label), branchLabel(branchLabel),
         labelUsed(labelUsed) {}
 
     static ScopeCtx makeFunc(Function* func) {
-      return ScopeCtx(FuncScope{func});
+      return ScopeCtx(FuncScope{func}, Type::none);
     }
-    static ScopeCtx makeBlock(Block* block) {
-      return ScopeCtx(BlockScope{block});
+    static ScopeCtx makeBlock(Block* block, Type inputType) {
+      return ScopeCtx(BlockScope{block}, inputType);
     }
-    static ScopeCtx makeIf(If* iff, Name originalLabel = {}) {
-      return ScopeCtx(IfScope{iff, originalLabel});
+    static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType) {
+      return ScopeCtx(IfScope{iff, originalLabel}, inputType);
+    }
+    static ScopeCtx makeElse(ScopeCtx&& scope) {
+      scope.scope = ElseScope{scope.getIf(), scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/true);
+      return scope;
+    }
+    static ScopeCtx makeLoop(Loop* loop, Type inputType) {
+      return ScopeCtx(LoopScope{loop}, inputType);
+    }
+    static ScopeCtx makeTry(Try* tryy, Name originalLabel, Type inputType) {
+      return ScopeCtx(TryScope{tryy, originalLabel}, inputType);
+    }
+    static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
+    }
+    static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
     static ScopeCtx
-    makeElse(If* iff, Name originalLabel, Name label, bool labelUsed) {
-      return ScopeCtx(ElseScope{iff, originalLabel}, label, labelUsed);
+    makeTryTable(TryTable* trytable, Name originalLabel, Type inputType) {
+      return ScopeCtx(TryTableScope{trytable, originalLabel}, inputType);
     }
-    static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
-    static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
-      return ScopeCtx(TryScope{tryy, originalLabel});
+    // When transitioning to a new scope for a delimiter like `else` or catch,
+    // most of the scope context is preserved, but some parts need to be reset.
+    // `keepInput` means that control flow parameters are available at the
+    // begninning of the scope after the delimiter.
+    void resetForDelimiter(bool keepInput) {
+      exprStack.clear();
+      unreachable = false;
+      if (!keepInput) {
+        inputType = Type::none;
+        inputLocal = -1;
+      }
     }
-    static ScopeCtx makeCatch(Try* tryy,
-                              Name originalLabel,
-                              Name label,
-                              bool labelUsed,
-                              Name branchLabel) {
-      return ScopeCtx(
-        CatchScope{tryy, originalLabel}, label, labelUsed, branchLabel);
-    }
-    static ScopeCtx makeCatchAll(Try* tryy,
-                                 Name originalLabel,
-                                 Name label,
-                                 bool labelUsed,
-                                 Name branchLabel) {
-      return ScopeCtx(
-        CatchAllScope{tryy, originalLabel}, label, labelUsed, branchLabel);
-    }
-    static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
-      return ScopeCtx(TryTableScope{trytable, originalLabel});
-    }
-
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Function* getFunction() {
       if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
@@ -488,6 +525,10 @@ private:
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
+    Type getLabelType() {
+      // Loops receive their input type rather than their output type.
+      return getLoop() ? inputType : getResultType();
+    }
     Name getOriginalLabel() {
       if (std::get_if<NoScope>(&scope) || getFunction()) {
         return Name{};
@@ -518,6 +559,7 @@ private:
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
+    bool isDelimiter() { return getElse() || getCatch() || getCatchAll(); }
   };
 
   // The stack of block contexts currently being parsed.
@@ -541,7 +583,7 @@ private:
   Index blockHint = 0;
   Index labelHint = 0;
 
-  void pushScope(ScopeCtx scope) {
+  Result<> pushScope(ScopeCtx&& scope) {
     if (auto label = scope.getOriginalLabel()) {
       // Assign a fresh label to the scope, if necessary.
       if (!scope.label) {
@@ -554,7 +596,21 @@ private:
       scope.startPos = lastBinaryPos;
       lastBinaryPos = *binaryPos;
     }
-    scopeStack.push_back(scope);
+    bool hasInput = scope.inputType != Type::none;
+    Index inputLocal = scope.inputLocal;
+    if (hasInput && !scope.isDelimiter()) {
+      if (inputLocal == Index(-1)) {
+        auto scratch = addScratchLocal(scope.inputType);
+        CHECK_ERR(scratch);
+        inputLocal = scope.inputLocal = *scratch;
+      }
+      CHECK_ERR(makeLocalSet(inputLocal));
+    }
+    scopeStack.emplace_back(std::move(scope));
+    if (hasInput) {
+      CHECK_ERR(makeLocalGet(inputLocal));
+    }
+    return Ok{};
   }
 
   ScopeCtx& getScope() {
@@ -609,6 +665,11 @@ private:
 
   Result<Type> getLabelType(Index label);
   Result<Type> getLabelType(Name labelName);
+
+  Result<std::pair<Index, Name>> getExtraOutputLocalAndLabel(Index label,
+                                                             size_t extraArity);
+  Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
+  void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
   void dump();
 };

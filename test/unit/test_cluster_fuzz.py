@@ -74,6 +74,22 @@ class ClusterFuzz(utils.BinaryenTestCase):
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE)
         self.assertEqual(proc.returncode, 0)
+
+        # We should have logged the creation of N testcases.
+        self.assertEqual(proc.stdout.count('Created testcase:'), N)
+
+        # We should have actually created them.
+        for i in range(0, N + 2):
+            fuzz_file = os.path.join(testcase_dir, f'fuzz-binaryen-{i}.js')
+            flags_file = os.path.join(testcase_dir, f'flags-binaryen-{i}.js')
+            # We actually emit the range [1, N], so 0 or N+1 should not exist.
+            if i >= 1 and i <= N:
+                self.assertTrue(os.path.exists(fuzz_file))
+                self.assertTrue(os.path.exists(flags_file))
+            else:
+                self.assertTrue(not os.path.exists(fuzz_file))
+                self.assertTrue(not os.path.exists(flags_file))
+
         return proc
 
     # Test the bundled run.py script.
@@ -83,26 +99,15 @@ class ClusterFuzz(utils.BinaryenTestCase):
         N = 10
         proc = self.generate_testcases(N, temp_dir.name)
 
-        # We should have logged the creation of N testcases.
-        self.assertEqual(proc.stdout.count('Created testcase:'), N)
-
-        # We should have actually created them.
-        for i in range(0, N + 2):
-            fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
-            flags_file = os.path.join(temp_dir.name, f'flags-binaryen-{i}.js')
-            # We actually emit the range [1, N], so 0 or N+1 should not exist.
-            if i >= 1 and i <= N:
-                self.assertTrue(os.path.exists(fuzz_file))
-                self.assertTrue(os.path.exists(flags_file))
-            else:
-                self.assertTrue(not os.path.exists(fuzz_file))
-                self.assertTrue(not os.path.exists(flags_file))
-
         # Run.py should report no errors or warnings to stderr, except from
-        # those we know are safe.
+        # those we know are safe (we cannot test this in generate_testcases,
+        # because the caller could do something like set BINARYEN_PASS_DEBUG,
+        # which generates intentional stderr warnings).
         SAFE_WARNINGS = [
             # When we randomly pick no passes to run, this is shown.
             'warning: no passes specified, not doing any work',
+            # MemoryPacking warns on some things.
+            'warning: active memory segments have overlap, which prevents some optimizations.',
         ]
         stderr = proc.stderr
         for safe in SAFE_WARNINGS:
@@ -274,18 +279,48 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print()
 
         # To check for interesting JS file contents, we'll note how many times
-        # we build and run the wasm.
+        # we build and run the wasm, and other things like JSPI.
         seen_builds = []
         seen_calls = []
         seen_second_builds = []
+        seen_JSPIs = []
+        seen_initial_contents = []
+
+        # Initial contents are noted in comments like this:
+        #
+        # /* using initial content 42.wasm */
+        #
+        # Note that we may see more than one in a file, as we may have more than
+        # one wasm in each testcase: each wasm has a chance.
+        initial_content_regex = re.compile(r'[/][*] using initial content ([^ ]+) [*][/]')
+
+        # Some calls to callExports come with a random seed, so we have either
+        #
+        #  callExports();
+        #  callExports(123456);
+        #
+        call_exports_regex = re.compile(r'callExports[(](\d*)[)]')
 
         for i in range(1, N + 1):
             fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
             with open(fuzz_file) as f:
                 js = f.read()
             seen_builds.append(js.count('build(binary);'))
-            seen_calls.append(js.count('callExports();'))
+            seen_calls.append(re.findall(call_exports_regex, js))
             seen_second_builds.append(js.count('build(secondBinary);'))
+
+            # If JSPI is enabled, the async and await keywords should be
+            # enabled (uncommented).
+            if 'JSPI = 1' in js:
+                seen_JSPIs.append(1)
+                assert '/* async */' not in js
+                assert '/* await */' not in js
+            else:
+                seen_JSPIs.append(0)
+                assert '/* async */' in js
+                assert '/* await */' in js
+
+            seen_initial_contents.append(re.findall(initial_content_regex, js))
 
         # There is always one build and one call (those are in the default
         # fuzz_shell.js), and we add a couple of operations, each with equal
@@ -303,12 +338,36 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('JS calls are distributed as ~ mean 4, stddev 5, median 2')
-        print(f'mean JS calls:   {statistics.mean(seen_calls)}')
-        print(f'stdev JS calls:  {statistics.stdev(seen_calls)}')
-        print(f'median JS calls: {statistics.median(seen_calls)}')
-        self.assertGreaterEqual(max(seen_calls), 2)
-        self.assertGreater(statistics.stdev(seen_calls), 0)
+        # Generate the counts of seen calls, for convenience. We convert
+        #  [['11', '22'], [], ['99']]
+        # into
+        #  [2, 0, 1]
+        num_seen_calls = [len(x) for x in seen_calls]
+        print('Num JS calls are distributed as ~ mean 4, stddev 5, median 2')
+        print(f'mean JS calls:   {statistics.mean(num_seen_calls)}')
+        print(f'stdev JS calls:  {statistics.stdev(num_seen_calls)}')
+        print(f'median JS calls: {statistics.median(num_seen_calls)}')
+        self.assertGreaterEqual(max(num_seen_calls), 2)
+        self.assertGreater(statistics.stdev(num_seen_calls), 0)
+
+        # The initial callExports have no seed (that makes the first, default,
+        # callExports behave deterministically, so we can compare to
+        # wasm-opt --fuzz-exec etc.), and all subsequent ones must have a seed.
+        seeds = []
+        for calls in seen_calls:
+            if calls:
+                self.assertEqual(calls[0], '')
+                for other in calls[1:]:
+                    self.assertNotEqual(other, '')
+                    seeds.append(int(other))
+
+        # The seeds are random numbers in 0..2^32-1, so overlap between them
+        # should be incredibly unlikely. Allow a few % of such overlap just to
+        # avoid extremely rare errors.
+        num_seeds = len(seeds)
+        num_unique_seeds = len(set(seeds))
+        print(f'unique JS call seeds: {num_unique_seeds} (should be almost {num_seeds})')
+        self.assertGreaterEqual(num_unique_seeds / num_seeds, 0.95)
 
         print()
 
@@ -320,6 +379,63 @@ class ClusterFuzz(utils.BinaryenTestCase):
         print(f'median JS second builds: {statistics.median(seen_second_builds)}')
         self.assertGreaterEqual(max(seen_second_builds), 2)
         self.assertGreater(statistics.stdev(seen_second_builds), 0)
+
+        print()
+
+        # JSPI is done 1/4 of the time or so.
+        print('JSPIs are distributed as ~ mean 0.25')
+        print(f'mean JSPIs: {statistics.mean(seen_JSPIs)}')
+        self.assertEqual(min(seen_JSPIs), 0)
+        self.assertEqual(max(seen_JSPIs), 1)
+
+        print()
+
+        # Flatten the data to help some of the below, from
+        #  [['a.wasm', 'b.wasm'], ['c.wasm']]
+        # into
+        #  ['a.wasm', 'b.wasm', 'c.wasm']
+        flat_initial_contents = [item for items in seen_initial_contents for item in items]
+
+        # Initial content appear 50% of the time for each wasm file. Each
+        # testcase has 1.333 wasm files on average.
+        print('Initial contents are distributed as ~ mean 0.68')
+        print(f'mean initial contents: {len(flat_initial_contents) / N}')
+        # Initial contents should be mostly unique (we have many, many testcases
+        # and we pick just 100 or so). And we must see more than one unique one.
+        unique_initial_contents = set(flat_initial_contents)
+        print(f'unique initial contents: {len(unique_initial_contents)} should be almost equal to {len(flat_initial_contents)}')
+        self.assertGreater(len(unique_initial_contents), 1)
+        # Not all testcases have initial contents.
+        num_initial_contents = [len(items) for items in seen_initial_contents]
+        self.assertEqual(min(num_initial_contents), 0)
+        # Some do (this is redundant given that the set of unique initial
+        # contents was asserted on before, so this just confirms/checks that).
+        self.assertGreaterEqual(max(num_initial_contents), 1)
+
+        print()
+
+        # Execute the files in V8. Almost all should execute properly (some
+        # small number may trap during startup, say on a segment out of bounds).
+        if shared.V8:
+            valid_executions = 0
+            for i in range(1, N + 1):
+                fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
+
+                cmd = [shared.V8, '--wasm-staging', fuzz_file]
+                proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+
+                # An execution is valid if we exited without error, and if we
+                # managed to run some code before exiting (modules with no
+                # exports will be considered "invalid" here, but that is very
+                # rare, and in a sense they are actually unuseful).
+                if proc.returncode == 0 and b'[fuzz-exec] calling ' in proc.stdout:
+                    valid_executions += 1
+
+            print('Valid executions are distributed as ~ mean 0.99')
+            print(f'mean valid executions: {valid_executions / N}')
+            # Assert on having at least half execute properly. Given the true mean
+            # is 0.9, for half of 100 to fail is incredibly unlikely.
+            self.assertGreater(valid_executions, N / 2)
 
         print()
 

@@ -525,10 +525,10 @@ void fuseImportsAndExports() {
       kindModuleExportMaps[ExternalKind::Tag][import->module][import->base];
     if (internalName.is()) {
       auto* export_ = merged.getTag(internalName);
-      if (HeapType(export_->sig) != HeapType(import->sig)) {
+      if (export_->type != import->type) {
         reportTypeMismatch(valid, "tag", import);
-        std::cerr << "export type " << export_->sig
-                  << " is different from import type " << import->sig << ".\n";
+        std::cerr << "export type " << export_->type
+                  << " is different from import type " << import->type << ".\n";
       }
     }
   });

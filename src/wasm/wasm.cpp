@@ -57,6 +57,8 @@ const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
 const char* SharedEverythingFeature = "shared-everything";
 const char* FP16Feature = "fp16";
+const char* BulkMemoryOptFeature = "bulk-memory-opt";
+const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -924,7 +926,7 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
     auto tagName = curr->catchTags[i];
     std::vector<Type> sentType;
     if (tagName) {
-      for (auto t : wasm->getTag(tagName)->sig.params) {
+      for (auto t : wasm->getTag(tagName)->params()) {
         sentType.push_back(t);
       }
     }
@@ -1162,6 +1164,32 @@ void StructSet::finalize() {
   }
 }
 
+void StructRMW::finalize() {
+  if (ref->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // We have no struct type to read the field off of, but the most precise
+    // possible option is the type of the value we are using to make the
+    // modification.
+    type = value->type;
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
+void StructCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // Like StructRMW, but the most precise possible field type is the LUB of
+    // the expected and replacement values.
+    type = Type::getLeastUpperBound(expected->type, replacement->type);
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
 void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
@@ -1384,11 +1412,10 @@ static void populateResumeSentTypes(Resume* curr, Module* wasm) {
   curr->sentTypes.clear();
   curr->sentTypes.resize(curr->handlerTags.size());
   for (Index i = 0; i < curr->handlerTags.size(); i++) {
-    auto& tag = curr->handlerTags[i];
-    auto& tagSig = wasm->getTag(tag)->sig;
+    auto tag = wasm->getTag(curr->handlerTags[i]);
 
-    auto& tgps = tagSig.params;
-    auto& tgrs = tagSig.results;
+    auto tgps = tag->params();
+    auto tgrs = tag->results();
 
     HeapType ftPrime{Signature(tgrs, ctrs)};
     HeapType ctPrime{Continuation(ftPrime)};
@@ -1422,7 +1449,7 @@ void Resume::finalize(Module* wasm) {
 void Suspend::finalize(Module* wasm) {
   if (!handleUnreachableOperands(this) && wasm) {
     auto tag = wasm->getTag(this->tag);
-    type = tag->sig.results;
+    type = tag->results();
   }
 }
 
@@ -1503,8 +1530,8 @@ void Function::clearNames() { localNames.clear(); }
 void Function::clearDebugInfo() {
   localIndices.clear();
   debugLocations.clear();
-  prologLocation.clear();
-  epilogLocation.clear();
+  prologLocation.reset();
+  epilogLocation.reset();
 }
 
 template<typename Map>

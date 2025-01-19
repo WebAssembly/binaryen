@@ -48,6 +48,7 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type addressType);
+template<typename Ctx> Result<MemoryOrder> memorder(Ctx&);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type addressType);
@@ -246,7 +247,18 @@ Result<> makeStructGet(Ctx&,
                        const std::vector<Annotation>&,
                        bool signed_ = false);
 template<typename Ctx>
+Result<> makeAtomicStructGet(Ctx&,
+                             Index,
+                             const std::vector<Annotation>&,
+                             bool signed_ = false);
+template<typename Ctx>
 Result<> makeStructSet(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeAtomicStructSet(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeStructRMW(AtomicRMWOp, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeStructCmpxchg(Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<>
 makeArrayNew(Ctx&, Index, const std::vector<Annotation>&, bool default_);
@@ -799,6 +811,17 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
     shared = true;
   }
   return ctx.makeMemType(addressType, *limits, shared);
+}
+
+// memorder ::= '' | 'seqcst' | 'acqrel'
+template<typename Ctx> Result<MemoryOrder> memorder(Ctx& ctx) {
+  if (ctx.in.takeKeyword("seqcst"sv)) {
+    return MemoryOrder::SeqCst;
+  }
+  if (ctx.in.takeKeyword("acqrel"sv)) {
+    return MemoryOrder::AcqRel;
+  }
+  return MemoryOrder::SeqCst;
 }
 
 // tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
@@ -2221,7 +2244,22 @@ Result<> makeStructGet(Ctx& ctx,
   CHECK_ERR(type);
   auto field = fieldidx(ctx, *type);
   CHECK_ERR(field);
-  return ctx.makeStructGet(pos, annotations, *type, *field, signed_);
+  return ctx.makeStructGet(
+    pos, annotations, *type, *field, signed_, MemoryOrder::Unordered);
+}
+
+template<typename Ctx>
+Result<> makeAtomicStructGet(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations,
+                             bool signed_) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructGet(pos, annotations, *type, *field, signed_, *order);
 }
 
 template<typename Ctx>
@@ -2231,7 +2269,58 @@ makeStructSet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   CHECK_ERR(type);
   auto field = fieldidx(ctx, *type);
   CHECK_ERR(field);
-  return ctx.makeStructSet(pos, annotations, *type, *field);
+  return ctx.makeStructSet(
+    pos, annotations, *type, *field, MemoryOrder::Unordered);
+}
+
+template<typename Ctx>
+Result<> makeAtomicStructSet(Ctx& ctx,
+                             Index pos,
+                             const std::vector<Annotation>& annotations) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructSet(pos, annotations, *type, *field, *order);
+}
+
+template<typename Ctx>
+Result<> makeStructRMW(Ctx& ctx,
+                       Index pos,
+                       const std::vector<Annotation>& annotations,
+                       AtomicRMWOp op) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "struct.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructRMW(pos, annotations, op, *type, *field, *order1);
+}
+
+template<typename Ctx>
+Result<> makeStructCmpxchg(Ctx& ctx,
+                           Index pos,
+                           const std::vector<Annotation>& annotations) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "struct.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeStructCmpxchg(pos, annotations, *type, *field, *order1);
 }
 
 template<typename Ctx>

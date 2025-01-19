@@ -12,7 +12,7 @@
 
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (tag $tag)
+  ;; CHECK:      (tag $tag (type $1))
   (tag $tag)
 
   (type $struct (struct (field (mut i32))))

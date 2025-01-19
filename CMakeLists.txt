@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 120)
+project(binaryen LANGUAGES C CXX VERSION 121)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -337,6 +337,8 @@ if(EMSCRIPTEN)
   option(ENABLE_BIGINT "Enable wasm BigInt support" OFF)
   if(ENABLE_BIGINT)
     add_link_flag("-sWASM_BIGINT")
+   else()
+    add_link_flag("-sWASM_BIGINT=0")
   endif()
 
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release")

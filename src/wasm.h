@@ -65,6 +65,12 @@ struct Address {
   }
 };
 
+enum class MemoryOrder {
+  Unordered,
+  SeqCst,
+  AcqRel,
+};
+
 enum class IRProfile { Normal, Poppy };
 
 // Operators
@@ -716,6 +722,8 @@ public:
     StructNewId,
     StructGetId,
     StructSetId,
+    StructRMWId,
+    StructCmpxchgId,
     ArrayNewId,
     ArrayNewDataId,
     ArrayNewElemId,
@@ -1652,6 +1660,7 @@ public:
   Expression* ref;
   // Packed fields have a sign.
   bool signed_ = false;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };
@@ -1664,6 +1673,35 @@ public:
   Index index;
   Expression* ref;
   Expression* value;
+  MemoryOrder order = MemoryOrder::Unordered;
+
+  void finalize();
+};
+
+class StructRMW : public SpecificExpression<Expression::StructRMWId> {
+public:
+  StructRMW() = default;
+  StructRMW(MixedArena& allocator) {}
+
+  AtomicRMWOp op;
+  Index index;
+  Expression* ref;
+  Expression* value;
+  MemoryOrder order;
+
+  void finalize();
+};
+
+class StructCmpxchg : public SpecificExpression<Expression::StructCmpxchgId> {
+public:
+  StructCmpxchg() = default;
+  StructCmpxchg(MixedArena& allocator) {}
+
+  Index index;
+  Expression* ref;
+  Expression* expected;
+  Expression* replacement;
+  MemoryOrder order;
 
   void finalize();
 };
@@ -2095,8 +2133,8 @@ public:
   // One can explicitly set the debug location of an expression to
   // nullopt to stop the propagation of debug locations.
   std::unordered_map<Expression*, std::optional<DebugLocation>> debugLocations;
-  std::set<DebugLocation> prologLocation;
-  std::set<DebugLocation> epilogLocation;
+  std::optional<DebugLocation> prologLocation;
+  std::optional<DebugLocation> epilogLocation;
 
   // General debugging info support: track instructions and the function itself.
   std::unordered_map<Expression*, BinaryLocations::Span> expressionLocations;
@@ -2259,7 +2297,10 @@ public:
 
 class Tag : public Importable {
 public:
-  Signature sig;
+  HeapType type;
+
+  Type params() { return type.getSignature().params; }
+  Type results() { return type.getSignature().results; }
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.

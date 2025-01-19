@@ -102,7 +102,7 @@ set(passes_SOURCES
   TraceCalls.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
-  RemoveMemory.cpp
+  RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
@@ -112,7 +112,6 @@ set(passes_SOURCES
   ReorderGlobals.cpp
   ReorderLocals.cpp
   ReReloop.cpp
-  Table64Lowering.cpp
   TrapMode.cpp
   TypeGeneralizing.cpp
   TypeRefining.cpp

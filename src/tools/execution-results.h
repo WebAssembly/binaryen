@@ -105,17 +105,32 @@ public:
         tableStore(exportedTable, index, arguments[1]);
         return {};
       } else if (import->base == "call-export") {
-        callExport(arguments[0].geti32());
+        callExportAsJS(arguments[0].geti32());
         // Return nothing. If we wanted to return a value we'd need to have
         // multiple such functions, one for each signature.
         return {};
       } else if (import->base == "call-export-catch") {
         try {
-          callExport(arguments[0].geti32());
+          callExportAsJS(arguments[0].geti32());
           return {Literal(int32_t(0))};
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
         }
+      } else if (import->base == "call-ref") {
+        callRefAsJS(arguments[0]);
+        // Return nothing. If we wanted to return a value we'd need to have
+        // multiple such functions, one for each signature.
+        return {};
+      } else if (import->base == "call-ref-catch") {
+        try {
+          callRefAsJS(arguments[0]);
+          return {Literal(int32_t(0))};
+        } catch (const WasmException& e) {
+          return {Literal(int32_t(1))};
+        }
+      } else if (import->base == "sleep") {
+        // Do not actually sleep, just return the id.
+        return {arguments[1]};
       } else {
         WASM_UNREACHABLE("unknown fuzzer import");
       }
@@ -145,7 +160,7 @@ public:
     throwException(WasmException{Literal(payload)});
   }
 
-  Literals callExport(Index index) {
+  Literals callExportAsJS(Index index) {
     if (index >= wasm.exports.size()) {
       // No export.
       throwEmptyException();
@@ -155,20 +170,47 @@ public:
       // No callable export.
       throwEmptyException();
     }
-    auto* func = wasm.getFunction(exp->value);
+    return callFunctionAsJS(exp->value);
+  }
 
-    // TODO JS traps on some types on the boundary, which we should behave the
-    // same on. For now, this is not needed because the fuzzer will prune all
-    // non-JS-compatible exports anyhow.
+  Literals callRefAsJS(Literal ref) {
+    if (!ref.isFunction()) {
+      // Not a callable ref.
+      throwEmptyException();
+    }
+    return callFunctionAsJS(ref.getFunc());
+  }
 
-    // Send default values as arguments, or trap if we need anything else.
+  // Call a function in a "JS-ey" manner, adding arguments as needed, and
+  // throwing if necessary, the same way JS does.
+  Literals callFunctionAsJS(Name name) {
+    auto* func = wasm.getFunction(name);
+
+    // Send default values as arguments, or error if we need anything else.
     Literals arguments;
     for (const auto& param : func->getParams()) {
+      // An i64 param can work from JS, but fuzz_shell provides 0, which errors
+      // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
+      if (param == Type::i64 || param == Type::v128 || param.isExn()) {
+        throwEmptyException();
+      }
       if (!param.isDefaultable()) {
         throwEmptyException();
       }
       arguments.push_back(Literal::makeZero(param));
     }
+
+    // Error on illegal results. Note that this happens, as per JS semantics,
+    // *before* the call.
+    for (const auto& result : func->getResults()) {
+      // An i64 result is fine: a BigInt will be provided. But v128 and exnref
+      // still error.
+      if (result == Type::v128 || result.isExn()) {
+        throwEmptyException();
+      }
+    }
+
+    // Call the function.
     return instance->callFunction(func->name, arguments);
   }
 

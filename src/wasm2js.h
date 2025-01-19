@@ -2320,6 +2320,14 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitStructRMW(StructRMW* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitStructCmpxchg(StructCmpxchg* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitArrayNew(ArrayNew* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2771,14 +2779,6 @@ void Wasm2JSGlue::emitPostES6() {
       // Exported globals and function tables aren't supported yet
       default:
         continue;
-    }
-    std::ostringstream export_name;
-    for (char c : exp->name.str) {
-      if (c == '-') {
-        export_name << '_';
-      } else {
-        export_name << c;
-      }
     }
     out << "export var " << asmangle(exp->name.toString()) << " = ret"
         << moduleName << "." << asmangle(exp->name.toString()) << ";\n";
