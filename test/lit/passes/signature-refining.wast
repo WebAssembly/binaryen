@@ -1126,8 +1126,7 @@
 
  ;; CHECK:      (func $func (type $sig) (param $x anyref)
  ;; CHECK-NEXT: )
- (func $func (type $sig) (param $x anyref)
- )
+ (func $func (type $sig) (param $x anyref))
 
  ;; CHECK:      (func $caller (type $2)
  ;; CHECK-NEXT:  (call $func
@@ -1141,3 +1140,43 @@
  )
 )
 
+;; Tags: The type we'd like to refine, $sig, is used by a tag, so do not
+;; optimize.
+(module
+  ;; CHECK:      (type $sig (func (param anyref)))
+  (type $sig (func (param anyref)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (tag $e (type $sig) (param anyref))
+  (tag $e (type $sig))
+
+  ;; CHECK:      (func $optimizable (type $sig) (param $0 anyref)
+  ;; CHECK-NEXT:  (call $optimizable
+  ;; CHECK-NEXT:   (ref.cast eqref
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimizable (type $sig) (param anyref)
+    (call $optimizable
+      (ref.cast eqref
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $throw (type $1)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (throw $e
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw
+    (local anyref)
+    ;; This would be invalid if we optimized $sig.
+    (throw $e
+      (local.get 0)
+    )
+  )
+)

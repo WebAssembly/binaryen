@@ -1239,3 +1239,34 @@
   )
 )
 
+;; Test that we do not prune parameters from types used in tags.
+(module
+  ;; CHECK:      (type $sig (func (param anyref)))
+  (type $sig (func (param anyref)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (tag $e (type $sig) (param anyref))
+  (tag $e (type $sig))
+
+  ;; CHECK:      (func $unused-param (type $sig) (param $0 anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $sig) (param anyref)
+    (nop)
+  )
+
+  ;; CHECK:      (func $throw (type $1)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (throw $e
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw
+    (local anyref)
+    ;; This would be invalid if we optimized $sig.
+    (throw $e
+      (local.get 0)
+    )
+  )
+)
