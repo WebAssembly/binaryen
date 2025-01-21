@@ -23,12 +23,11 @@
 )
 
 ;; Apply JSPI: prepend JSPI = 1 and remove comments around async and await.
+
 ;; RUN: echo "JSPI = 1;" > %t.js
+
 ;; Use |echo| here to avoid quoting issues on windows paths.
 ;; RUN: echo %S | node -e "process.stdout.write(require('fs').readFileSync(path.join(require('fs').readFileSync(0, 'utf-8'), '..', '..', '..', 'scripts', 'fuzz_shell.js'), 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
-
-;; echo "foo" | node -e "console.log(require('fs').readFileSync(0, 'utf-8'))"
-
 
 ;; Append another run with a random seed, so we reorder and delay execution.
 ;; RUN: echo "callExports(42);" >> %t.js
