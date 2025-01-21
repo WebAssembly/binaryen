@@ -54,4 +54,31 @@
   (global $other-1 (ref null $other-1) (ref.null none))
   (global $other-2 (ref null $other-2) (ref.null none))
 )
+
+;; Neither imported nor exported tag. Now the tag type is private.
 ;; CHECK:      (export "" (tag $exported))
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $other-2 (struct (field i8)))
+
+  ;; CHECK:       (type $other-1 (struct))
+
+  ;; CHECK:       (type $tag-type (func))
+  (type $tag-type (func))
+  (type $other-1 (struct))
+  (type $other-2 (struct (field i8)))
+
+  ;; CHECK:      (global $tag-type (ref null $tag-type) (ref.null nofunc))
+
+  ;; CHECK:      (global $other-1 (ref null $other-1) (ref.null none))
+
+  ;; CHECK:      (global $other-2 (ref null $other-2) (ref.null none))
+
+  ;; CHECK:      (tag $exported (type $tag-type))
+  (tag $exported (type $tag-type))
+
+  ;; Use all the types.
+  (global $tag-type (ref null $tag-type) (ref.null nofunc))
+  (global $other-1 (ref null $other-1) (ref.null none))
+  (global $other-2 (ref null $other-2) (ref.null none))
+)
