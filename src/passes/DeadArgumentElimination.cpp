@@ -388,7 +388,12 @@ struct DAE : public Pass {
         if (!allDropped) {
           continue;
         }
-        removeReturnValue(func.get(), calls, module);
+        if (removeReturnValue(func.get(), calls, module)) {
+          // We should optimize the callers.
+          for (auto* call : calls) {
+            worthOptimizing.insert(module->getFunction(expressionFuncs[call]));
+          }
+        }
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
         worthOptimizing.insert(func.get());
@@ -413,8 +418,17 @@ struct DAE : public Pass {
 private:
   std::unordered_map<Call*, Expression**> allDroppedCalls;
 
-  void
+  // Returns `true` if the caller should be optimized.
+  bool
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
+    // If the result type is uninhabitable, then the caller knows the call will
+    // never return. That useful information would be lost if we did nothing
+    // else when removing the return value, but we will insert an `unreachable`
+    // after the call in the caller to preserve the optimization effect. TODO:
+    // Do this for more complicated uninhabitable types such as non-nullable
+    // references to structs with non-nullable reference cycles.
+    bool wasReturnUninhabitable =
+      func->getResults().isNull() && func->getResults().isNonNullable();
     func->setResults(Type::none);
     // Remove the drops on the calls. Note that we must do this before updating
     // returns in ReturnUpdater, as there may be recursive calls of this
@@ -425,7 +439,12 @@ private:
       auto iter = allDroppedCalls.find(call);
       assert(iter != allDroppedCalls.end());
       Expression** location = iter->second;
-      *location = call;
+      if (wasReturnUninhabitable) {
+        Builder builder(*module);
+        *location = builder.makeSequence(call, builder.makeUnreachable());
+      } else {
+        *location = call;
+      }
       // Update the call's type.
       if (call->type != Type::unreachable) {
         call->type = Type::none;
@@ -433,6 +452,9 @@ private:
     }
     // Remove any return values.
     ReturnUtils::removeReturns(func, *module);
+    // It's definitely worth optimizing the caller after inserting the
+    // unreachable.
+    return wasReturnUninhabitable;
   }
 
   // Given a function and all the calls to it, see if we can refine the type of
