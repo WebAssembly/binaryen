@@ -468,6 +468,12 @@ namespace wasm {
 
 namespace {
 
+// Information that is shared with InfoCollector.
+struct SharedInfo {
+  // The names of tables that are imported or exported.
+  std::unordered_set<Name> publicTables;
+};
+
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct CollectedFuncInfo {
@@ -533,11 +539,12 @@ struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
 // main flow will begin.
 struct InfoCollector
   : public BreakTargetWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
+  SharedInfo& shared;
   CollectedFuncInfo& info;
   const PassOptions& options;
 
-  InfoCollector(CollectedFuncInfo& info, const PassOptions& options)
-    : info(info), options(options) {}
+  InfoCollector(SharedInfo& shared, CollectedFuncInfo& info, const PassOptions& options)
+    : shared(shared), info(info), options(options) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -831,6 +838,7 @@ struct InfoCollector
       assert(targetType.isBottom());
       return;
     }
+
     handleCall(
       curr,
       [&](Index i) {
@@ -888,9 +896,16 @@ struct InfoCollector
     curr->operands.push_back(target);
   }
   void visitCallIndirect(CallIndirect* curr) {
-    // TODO: the table identity could also be used here
     // TODO: optimize the call target like CallRef
     handleIndirectCall(curr, curr->heapType);
+
+    // If this goes to a public table, then we must root the output, as the
+    // table could contain anything at all, and calling functions there could
+    // return anything at all.
+    if (shared.publicTables.count(curr->table)) {
+//      addRoot(curr);
+    }
+    // TODO: the table identity could also be used here in more ways
   }
   void visitCallRef(CallRef* curr) {
     handleIndirectCall(curr, curr->target->type);
@@ -2121,10 +2136,26 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "parallel phase\n";
 #endif
 
-  // First, collect information from each function.
+  // Compare shared info that we need for the main pass over each function, such
+  // as the imported/exported tables.
+  SharedInfo shared;
+
+  for (auto& table : wasm.tables) {
+    if (table->imported()) {
+      shared.publicTables.insert(table->name);
+    }
+  }
+
+  for (auto& ex : wasm.exports) {
+    if (ex->kind == ExternalKind::Table) {
+      shared.publicTables.insert(ex->value);
+    }
+  }
+
+  // Collect information from each function.
   ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
     wasm, [&](Function* func, CollectedFuncInfo& info) {
-      InfoCollector finder(info, options);
+      InfoCollector finder(shared, info, options);
 
       if (func->imported()) {
         // Imports return unknown values.
