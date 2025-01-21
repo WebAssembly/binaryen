@@ -50,7 +50,7 @@ jobs:
         jsvu --os=default --engines=v8
 
     - name: DEBUGDEBUGDEBUG
-      run: node -e "process.stdout.write(require('fs').readFileSync(path.join('D:\a\binaryen\binaryen\test\lit\d8', '..', '..', '..', 'scripts', 'fuzz_shell.js'), 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))"
+      run: node -e "process.stdout.write(require('fs').readFileSync(path.join('D:\a\binaryen\binaryen', 'scripts', 'fuzz_shell.js'), 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))"
 
     - name: mkdir
       run: mkdir -p out
