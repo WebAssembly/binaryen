@@ -543,7 +543,9 @@ struct InfoCollector
   CollectedFuncInfo& info;
   const PassOptions& options;
 
-  InfoCollector(SharedInfo& shared, CollectedFuncInfo& info, const PassOptions& options)
+  InfoCollector(SharedInfo& shared,
+                CollectedFuncInfo& info,
+                const PassOptions& options)
     : shared(shared), info(info), options(options) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
