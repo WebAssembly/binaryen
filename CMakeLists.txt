@@ -464,7 +464,7 @@ if(EMSCRIPTEN)
   # binaryen.js WebAssembly variant
   add_executable(binaryen_wasm
                  ${binaryen_SOURCES})
-  target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support analysis parser interpreter wasm)
+  target_link_libraries(binaryen_wasm binaryen)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
@@ -494,7 +494,7 @@ if(EMSCRIPTEN)
   # binaryen.js JavaScript variant
   add_executable(binaryen_js
                  ${binaryen_SOURCES})
-  target_link_libraries(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support analysis parser interpreter wasm)
+  target_link_libraries(binaryen_js binaryen)
   target_link_libraries(binaryen_js "-sWASM=0")
   target_link_libraries(binaryen_js "-sWASM_ASYNC_COMPILATION=0")
   if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
