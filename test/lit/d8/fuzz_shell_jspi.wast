@@ -27,11 +27,11 @@
 ;; RUN: echo "JSPI = 1;" > %t.js
 
 ;; Copy fuzz_shell to a temp file that we will modify.
-;; RUN: cat %S/../../../scripts/fuzz_shell.js > %t.0.js
+;; RUN: cat  > %t.0.js
 
 ;; Read that temp file and remove comments around async and await. (use |echo|
 ;; here to avoid quoting issues on windows paths)
-;; RUN: cat %t.0.js | node -e "process.stdout.write(require('fs').readFileSync(0, 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
+;; RUN: cat %S/../../../scripts/fuzz_shell.js | node -e "process.stdout.write(require('fs').readFileSync(0, 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
 
 ;; Append another run with a random seed, so we reorder and delay execution.
 ;; RUN: echo "callExports(42);" >> %t.js
