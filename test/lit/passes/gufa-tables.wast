@@ -66,3 +66,29 @@
  )
 )
 
+;; Test a tuple-returning call_indirect. There is nothing to optimize here, but
+;; we should not error while marking the call_indirect as returning a tuple of
+;; unknown values (unknown, since the table is exported).
+(module
+ (type $5 (func (result f64 i32)))
+
+ (table $table 44 funcref)
+
+ (elem $elem (i32.const 0) $make)
+
+ (export "table" (table $table))
+
+ (func $make (type $5) (result f64 i32)
+  (tuple.make 2
+   (f64.const 3.14159)
+   (i32.const 42)
+  )
+ )
+
+ (func $call (result f64 i32)
+  (call_indirect $table (type $5)
+   (i32.const 0)
+  )
+ )
+)
+

@@ -1391,7 +1391,15 @@ struct InfoCollector
       if (contents.isMany()) {
         contents = PossibleContents::fromType(curr->type);
       }
-      addRoot(ExpressionLocation{curr, 0}, contents);
+
+      if (!curr->type.isTuple()) {
+        addRoot(ExpressionLocation{curr, 0}, contents);
+      } else {
+        // For a tuple, we create a root for each tuple index. We
+        for (Index i = 0; i < curr->type.size(); i++) {
+          addRoot(ExpressionLocation{curr, i}, contents.getTupleItem(i));
+        }
+      }
     }
   }
 
@@ -2976,8 +2984,8 @@ void Flower::dump(Location location) {
     std::cout << "  globalloc " << loc->name << '\n';
   } else if (std::get_if<SignatureParamLocation>(&location)) {
     std::cout << "  sigparamloc " << '\n';
-  } else if (std::get_if<SignatureResultLocation>(&location)) {
-    std::cout << "  sigresultloc " << '\n';
+  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
+    std::cout << "  sigresultloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
   } else {
