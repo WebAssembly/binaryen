@@ -8,6 +8,7 @@ set(unittest_SOURCES
   cfg.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
+  interpreter.cpp
   json.cpp
   lattices.cpp
   local-graph.cpp
