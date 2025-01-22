@@ -1,6 +1,6 @@
-# Version set according the the cmake versions available in Ubuntu/Bionic:
-# https://packages.ubuntu.com/bionic/cmake
-cmake_minimum_required(VERSION 3.10.2)
+# Version set according the the cmake versions available in Ubuntu/Focal:
+# https://packages.ubuntu.com/focal/cmake
+cmake_minimum_required(VERSION 3.16.3)
 
 # Needed for C++17 (std::variant)
 # TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
@@ -82,41 +82,35 @@ configure_file(config.h.in config.h)
 
 # Support functionality.
 
+# Use a property to emulate a global variable.
+set_property(GLOBAL PROPERTY binaryen_1p_targets binaryen)
+
 function(add_compile_flag value)
   message(STATUS "Building with ${value}")
-  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-    set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  endforeach(variable)
-endfunction()
-
-function(add_cxx_flag value)
-  message(STATUS "Building with ${value}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
+  get_property(targets GLOBAL PROPERTY binaryen_1p_targets)
+  foreach(target ${targets})
+    target_compile_options(${target} PRIVATE ${value})
+  endforeach()
 endfunction()
 
 function(add_debug_compile_flag value)
   if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-    message(STATUS "Building with ${value}")
+    add_compile_flag(${value})
   endif()
-  foreach(variable CMAKE_C_FLAGS_DEBUG CMAKE_CXX_FLAGS_DEBUG)
-    set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  endforeach(variable)
 endfunction()
 
 function(add_nondebug_compile_flag value)
   if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-    message(STATUS "Building with ${value}")
+    add_compile_flag(${value})
   endif()
-  foreach(variable CMAKE_C_FLAGS_RELEASE CMAKE_CXX_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_C_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_MINSIZEREL)
-    set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  endforeach(variable)
 endfunction()
 
 function(add_link_flag value)
   message(STATUS "Linking with ${value}")
-  foreach(variable CMAKE_EXE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
-    set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  endforeach(variable)
+  get_property(targets GLOBAL PROPERTY binaryen_1p_targets)
+  foreach(target ${targets})
+    target_link_options(${target} PRIVATE ${value})
+  endforeach()
 endfunction()
 
 function(binaryen_setup_rpath name)
@@ -149,7 +143,64 @@ function(binaryen_add_executable name sources)
   target_link_libraries(${name} binaryen)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+  set_property(GLOBAL APPEND PROPERTY binaryen_1p_targets ${name})
 endfunction()
+
+# Declare libbinaryen
+
+if(BUILD_STATIC_LIB)
+  message(STATUS "Building libbinaryen as statically linked library.")
+  add_library(binaryen STATIC)
+  add_definitions(-DBUILD_STATIC_LIBRARY)
+else()
+  message(STATUS "Building libbinaryen as shared library.")
+  add_library(binaryen SHARED)
+endif()
+
+# Set include paths
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
+if(BUILD_LLVM_DWARF)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+endif()
+
+# Add output directory to include path so config.h can be found
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+# Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
+foreach(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/bin")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
+endforeach()
+
+# Add sources and declare executable targets
+
+add_subdirectory(src/ir)
+add_subdirectory(src/asmjs)
+add_subdirectory(src/cfg)
+add_subdirectory(src/emscripten-optimizer)
+add_subdirectory(src/passes)
+add_subdirectory(src/parser)
+add_subdirectory(src/support)
+add_subdirectory(src/wasm)
+add_subdirectory(src/analysis)
+
+if(BUILD_TOOLS)
+  # Build binaryen tools
+  add_subdirectory(src/tools)
+endif()
+
+add_subdirectory(third_party)
+
+# Configure lit tests
+add_subdirectory(test/lit)
+
+if(BUILD_TESTS)
+  # Configure GTest unit tests
+  add_subdirectory(test/gtest)
+endif()
 
 # Options
 
@@ -173,22 +224,6 @@ if(NOT EMSCRIPTEN)
 endif()
 
 # Compiler setup.
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
-if(BUILD_LLVM_DWARF)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
-endif()
-
-# Add output directory to include path so config.h can be found
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-# Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
-foreach(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/bin")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
-endforeach()
 
 option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO)
@@ -310,8 +345,6 @@ else()
     else()
       add_link_flag("-Wl,--stack,8388608")
     endif()
-  elseif(NOT EMSCRIPTEN)
-    add_compile_flag("-fPIC")
   endif()
   add_debug_compile_flag("-g3")
   if(BYN_ENABLE_ASSERTIONS)
@@ -400,51 +433,6 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
-# Static libraries
-# Current (partial) dependency structure is as follows:
-# tools -> passes -> wasm -> asmjs -> support
-# TODO: It's odd that wasm should depend on asmjs, maybe we should fix that.
-add_subdirectory(src/ir)
-add_subdirectory(src/asmjs)
-add_subdirectory(src/cfg)
-add_subdirectory(src/emscripten-optimizer)
-add_subdirectory(src/passes)
-add_subdirectory(src/parser)
-add_subdirectory(src/support)
-add_subdirectory(src/wasm)
-add_subdirectory(src/analysis)
-
-if(BUILD_TOOLS)
-  # Build binaryen tools
-  add_subdirectory(src/tools)
-endif()
-
-add_subdirectory(third_party)
-
-# Configure lit tests
-add_subdirectory(test/lit)
-
-if(BUILD_TESTS)
-  # Configure GTest unit tests
-  add_subdirectory(test/gtest)
-endif()
-
-# Object files
-set(binaryen_objs
-    $<TARGET_OBJECTS:passes>
-    $<TARGET_OBJECTS:wasm>
-    $<TARGET_OBJECTS:asmjs>
-    $<TARGET_OBJECTS:emscripten-optimizer>
-    $<TARGET_OBJECTS:ir>
-    $<TARGET_OBJECTS:cfg>
-    $<TARGET_OBJECTS:support>
-    $<TARGET_OBJECTS:analysis>
-    $<TARGET_OBJECTS:parser>)
-
-if(BUILD_LLVM_DWARF)
-  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
-endif()
-
 # Sources.
 
 file(GLOB binaryen_HEADERS src/*.h)
@@ -452,14 +440,7 @@ set(binaryen_SOURCES
   src/binaryen-c.cpp
   ${binaryen_HEADERS}
 )
-if(BUILD_STATIC_LIB)
-  message(STATUS "Building libbinaryen as statically linked library.")
-  add_library(binaryen STATIC ${binaryen_SOURCES} ${binaryen_objs})
-  add_definitions(-DBUILD_STATIC_LIBRARY)
-else()
-  message(STATUS "Building libbinaryen as shared library.")
-  add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
-endif()
+target_sources(binaryen PRIVATE ${binaryen_SOURCES})
 target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
 if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen

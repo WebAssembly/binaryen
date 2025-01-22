@@ -19,6 +19,6 @@ set(wasm_SOURCES
 )
 # wasm-debug.cpp includes LLVM header using std::iterator (deprecated in C++17)
 if (NOT MSVC)
-  set_source_files_properties(wasm-debug.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+  set_source_files_properties(wasm-debug.cpp TARGET_DIRECTORY binaryen PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
-add_library(wasm OBJECT ${wasm_SOURCES})
+target_sources(binaryen PRIVATE ${wasm_SOURCES})

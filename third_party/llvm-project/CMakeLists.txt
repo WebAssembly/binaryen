@@ -63,7 +63,7 @@ SET(llvm_dwarf_SOURCES
   raw_ostream.cpp
   ScopedPrinter.cpp
   SmallVector.cpp
-  SourceMgr.cpp 
+  SourceMgr.cpp
   StringMap.cpp
   StringRef.cpp
   SymbolicFile.cpp
@@ -73,4 +73,8 @@ SET(llvm_dwarf_SOURCES
   YAMLParser.cpp # XXX needed?
   YAMLTraits.cpp
 )
-ADD_LIBRARY(llvm_dwarf OBJECT ${llvm_dwarf_SOURCES})
+add_library(llvm_dwarf OBJECT ${llvm_dwarf_SOURCES})
+if(NOT BUILD_STATIC_LIB)
+  set_property(TARGET llvm_dwarf PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif()
+target_sources(binaryen PRIVATE $<TARGET_OBJECTS:llvm_dwarf>)
