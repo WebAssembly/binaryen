@@ -70,14 +70,24 @@
 ;; we should not error while marking the call_indirect as returning a tuple of
 ;; unknown values (unknown, since the table is exported).
 (module
+ ;; CHECK:      (type $5 (func (result f64 i32)))
  (type $5 (func (result f64 i32)))
 
+ ;; CHECK:      (table $table 44 funcref)
  (table $table 44 funcref)
 
+ ;; CHECK:      (elem $elem (i32.const 0) $make)
  (elem $elem (i32.const 0) $make)
 
+ ;; CHECK:      (export "table" (table $table))
  (export "table" (table $table))
 
+ ;; CHECK:      (func $make (type $5) (result f64 i32)
+ ;; CHECK-NEXT:  (tuple.make 2
+ ;; CHECK-NEXT:   (f64.const 3.14159)
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $make (type $5) (result f64 i32)
   (tuple.make 2
    (f64.const 3.14159)
@@ -85,6 +95,11 @@
   )
  )
 
+ ;; CHECK:      (func $call (type $5) (result f64 i32)
+ ;; CHECK-NEXT:  (call_indirect $table (type $5)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $call (result f64 i32)
   (call_indirect $table (type $5)
    (i32.const 0)

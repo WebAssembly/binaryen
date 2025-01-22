@@ -1395,7 +1395,7 @@ struct InfoCollector
       if (!curr->type.isTuple()) {
         addRoot(ExpressionLocation{curr, 0}, contents);
       } else {
-        // For a tuple, we create a root for each tuple index. We
+        // For a tuple, we create a root for each index.
         for (Index i = 0; i < curr->type.size(); i++) {
           addRoot(ExpressionLocation{curr, i}, contents.getTupleItem(i));
         }
