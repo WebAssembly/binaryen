@@ -903,7 +903,7 @@ struct InfoCollector
     // table could contain anything at all, and calling functions there could
     // return anything at all.
     if (shared.publicTables.count(curr->table)) {
-//      addRoot(curr);
+      addRoot(curr);
     }
     // TODO: the table identity could also be used here in more ways
   }
@@ -2177,7 +2177,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
-  InfoCollector finder(globalInfo, options);
+  InfoCollector finder(shared, globalInfo, options);
   finder.walkModuleCode(&wasm);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
