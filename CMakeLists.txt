@@ -37,11 +37,22 @@ option(BUILD_TESTS "Build GTest-based tests" ON)
 # Turn this off to build only the library.
 option(BUILD_TOOLS "Build tools" ON)
 
-# Turn this off to install only tools and not static/dynamic libs
-option(INSTALL_LIBS "Install libraries" ON)
-
 # Turn this on to build only the subset of tools needed for emscripten
 option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
+
+# Build LLVM's DWARF support. This is unconditionally disabled when building with Emscripten.
+option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
+
+option(BUILD_STATIC_LIB "Build as a static library" OFF)
+if(MSVC)
+  # We don't have dllexport declarations set up for windows yet.
+  set(BUILD_STATIC_LIB ON)
+endif()
+
+option(BYN_ENABLE_LTO "Build with LTO" Off)
+
+# Turn this off to install only tools and not static/dynamic libs
+option(INSTALL_LIBS "Install libraries" ON)
 
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
@@ -203,16 +214,8 @@ endif()
 
 # Options
 
-option(BUILD_STATIC_LIB "Build as a static library" OFF)
-if(MSVC)
-  # We don't have dllexport declarations set up for windows yet.
-  set(BUILD_STATIC_LIB ON)
-endif()
-
 # For now, don't include full DWARF support in JS builds, for size.
 if(NOT EMSCRIPTEN)
-  option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
-
   if(BUILD_LLVM_DWARF)
     if(MSVC)
       ADD_COMPILE_FLAG("/DBUILD_LLVM_DWARF")
@@ -224,7 +227,6 @@ endif()
 
 # Compiler setup.
 
-option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "ThinLTO is only supported by clang")
