@@ -301,6 +301,25 @@ public:
     }
   }
 
+  // For possible contents of a tuple type, get one of the items.
+  PossibleContents getTupleItem(Index i) {
+    auto type = getType();
+    assert(type.isTuple());
+    if (std::get_if<Literal>(&value)) {
+      WASM_UNREACHABLE("TODO: use Literals");
+    } else if (std::get_if<GlobalInfo>(&value)) {
+      WASM_UNREACHABLE("TODO");
+    } else if (auto* cone = std::get_if<ConeType>(&value)) {
+      // Return a full cone of the appropriate type, as we lack depth info for
+      // the separate items in the tuple (tuples themselves have no subtyping,
+      // so the tuple's depth must be 0, i.e., an exact type).
+      assert(cone->depth == 0);
+      return fullConeType(type[i]);
+    } else {
+      WASM_UNREACHABLE("not a tuple");
+    }
+  }
+
   size_t hash() const {
     // First hash the index of the variant, then add the internals for each.
     size_t ret = std::hash<size_t>()(value.index());
