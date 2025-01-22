@@ -146,6 +146,16 @@ function(binaryen_add_executable name sources)
   set_property(GLOBAL APPEND PROPERTY binaryen_1p_targets ${name})
 endfunction()
 
+# Set include paths
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
+if(BUILD_LLVM_DWARF)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+endif()
+# Add output directory to include path so config.h can be found
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 # Declare libbinaryen
 
 if(BUILD_STATIC_LIB)
@@ -156,17 +166,6 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED)
 endif()
-
-# Set include paths
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
-if(BUILD_LLVM_DWARF)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
-endif()
-
-# Add output directory to include path so config.h can be found
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
 foreach(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
