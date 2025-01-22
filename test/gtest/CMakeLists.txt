@@ -1,4 +1,5 @@
 include_directories(../../third_party/googletest/googletest/include)
+include_directories(../../third_party/llvm-project/include)
 include_directories(../../src/wasm)
 
 set(unittest_SOURCES
