@@ -22,15 +22,14 @@
   )
 )
 
-;; Apply JSPI: first, prepend JSPI = 1
+;; Apply JSPI: first, prepend JSPI = 1.
 
 ;; RUN: echo "JSPI = 1;" > %t.js
 
-;; Copy fuzz_shell to a temp file that we will modify.
-;; RUN: cat  > %t.0.js
+;; Second, remove comments around async and await: feed fuzz_shell.js into node
+;; as stdin, so all node needs to do is read stdin, do the replacements, and
+;; write to stdout.
 
-;; Read that temp file and remove comments around async and await. (use |echo|
-;; here to avoid quoting issues on windows paths)
 ;; RUN: cat %S/../../../scripts/fuzz_shell.js | node -e "process.stdout.write(require('fs').readFileSync(0, 'utf-8').replace(/[/][*] async [*][/]/g, 'async').replace(/[/][*] await [*][/]/g, 'await'))" >> %t.js
 
 ;; Append another run with a random seed, so we reorder and delay execution.
