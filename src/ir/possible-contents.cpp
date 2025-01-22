@@ -838,7 +838,6 @@ struct InfoCollector
       assert(targetType.isBottom());
       return;
     }
-
     handleCall(
       curr,
       [&](Index i) {
