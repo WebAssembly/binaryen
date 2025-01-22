@@ -2137,7 +2137,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "parallel phase\n";
 #endif
 
-  // Compare shared info that we need for the main pass over each function, such
+  // Compute shared info that we need for the main pass over each function, such
   // as the imported/exported tables.
   SharedInfo shared;
 
