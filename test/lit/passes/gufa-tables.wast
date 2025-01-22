@@ -4,16 +4,47 @@
 ;; Non-private tables can contain anything, so we cannot assume anything about
 ;; the results of a call to them.
 (module
+ ;; CHECK:      (type $type (func (result f64)))
  (type $type (func (result f64)))
 
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (import "a" "b" (table $imported 30 40 funcref))
  (import "a" "b" (table $imported 30 40 funcref))
 
+ ;; CHECK:      (table $exported 10 20 funcref)
  (table $exported 10 20 funcref)
 
+ ;; CHECK:      (table $private 50 60 funcref)
  (table $private  50 60 funcref)
 
- (export "table" (table $table))
+ ;; CHECK:      (export "func" (func $func))
 
+ ;; CHECK:      (export "table" (table $exported))
+ (export "table" (table $exported))
+
+ ;; CHECK:      (func $func (type $1)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_indirect $exported (type $type)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_indirect $imported (type $type)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (call_indirect $private (type $type)
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $func (export "func")
   ;; We cannot optimize anything with the exported or imported table.
   (drop
