@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "interpreter.h"
-#include "expression-iterator.h"
-#include "store.h"
+#include "interpreter/interpreter.h"
+#include "interpreter/expression-iterator.h"
+#include "interpreter/store.h"
 #include "wasm-traversal.h"
 
 namespace wasm {

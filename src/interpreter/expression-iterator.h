@@ -26,8 +26,9 @@
 namespace wasm::interpreter {
 
 // TODO: This is a quick and dirty hack. We should implement a proper iterator
-// in ir/iteration.h that keeps only a vector of (Expression*, index) pairs to
-// find the current location in the epxression tree.
+// in ir/iteration.h that keeps only a vector of (Expression*, index) pairs or
+// alternatively a stack of ChildIterators to find the current location in the
+// expression tree.
 struct ExpressionIterator {
   using difference_type = std::ptrdiff_t;
   using value_type = Expression*;

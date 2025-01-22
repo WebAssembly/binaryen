@@ -25,6 +25,7 @@
 
 namespace wasm::interpreter {
 
+// A frame of execution for a function call.
 struct Frame {
   // TODO: Reference to current instance to find referenced functions, globals,
   // tables, memories, etc.
@@ -35,6 +36,7 @@ struct Frame {
 
   // TODO: Map loops to ExpressionIterators so we can branch backwards.
 
+  // Helpers to push and pop the current value stack.
   Literal pop() {
     assert(valueStack.size());
     Literal val = valueStack.back();
@@ -45,6 +47,8 @@ struct Frame {
   void push(Literal val) { valueStack.push_back(val); }
 };
 
+// The WebAssembly store, which maintains the state for a universe of linked
+// WebAssembly instances.
 // TODO: generalize this so different users can override memory loads and
 // stores, etc.
 struct WasmStore {
@@ -53,10 +57,11 @@ struct WasmStore {
   std::vector<Frame> callStack;
 
   Frame& getFrame() {
-    assert(callStack.size());
+    assert(!callStack.empty());
     return callStack.back();
   }
 
+  // Helpers to push and pop the current value stack.
   Literal pop() { return getFrame().pop(); }
   void push(Literal val) { getFrame().push(val); }
 };
