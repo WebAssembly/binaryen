@@ -357,6 +357,8 @@ if(EMSCRIPTEN)
     add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
     add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
   endif()
+  # TODO: only for binaryen.js?
+  add_compile_flag("-DEMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0")
   if(EMSCRIPTEN_ENABLE_PTHREADS)
     add_compile_flag("-pthread")
     add_link_flag("-pthread")

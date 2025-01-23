@@ -57,7 +57,6 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("isSignature", &Type::isSignature)
     .function("isStruct", &Type::isStruct)
     .function("isArray", &Type::isArray)
-    .function("isException", &Type::isException)
     .function("isString", &Type::isString)
     .function("isDefaultable", &Type::isDefaultable)
     .function("getHeapType", &Type::getHeapType)

@@ -46,14 +46,14 @@ binaryenFactory().then((binaryen) => {
 
   // Check the function prints out ok.
   normEqual(binaryen.stringify(module),
-            `
-             (module
-              (type $0 (func (param i32) (result i32)))
-              (func $foo (param $0 i32) (result i32)
-               (nop)
-              )
-             )
-            `);
+          `
+           (module
+            (type $0 (func (param i32) (result i32)))
+            (func $foo (param $0 i32) (result i32)
+             (nop)
+            )
+           )
+          `);
 
   // Clean up. XXX new HeapType etc. are all unneeded and also leaked!
   module.delete();
