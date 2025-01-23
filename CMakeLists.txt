@@ -37,6 +37,18 @@ option(BUILD_TESTS "Build GTest-based tests" ON)
 # Turn this off to build only the library.
 option(BUILD_TOOLS "Build tools" ON)
 
+option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
+if(EMSCRIPTEN)
+  # Save size by skipping this.
+  set(BUILD_LLVM_DWARF OFF)
+endif()
+
+option(BUILD_STATIC_LIB "Build as a static library" OFF)
+if(MSVC)
+  # We don't have dllexport declarations set up for windows yet.
+  set(BUILD_STATIC_LIB ON)
+endif()
+
 # Turn this off to install only tools and not static/dynamic libs
 option(INSTALL_LIBS "Install libraries" ON)
 
@@ -61,6 +73,8 @@ option(EMSCRIPTEN_ENABLE_PTHREADS "Enable pthreads in emscripten build" OFF)
 # This is useful for debugging, performance analysis, and other testing.
 option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" ON)
 
+option(ENABLE_WERROR "Enable -Werror" ON)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -80,6 +94,11 @@ endif()
 
 configure_file(config.h.in config.h)
 
+# Configure threads
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 # Support functionality.
 
 function(add_compile_flag value)
@@ -87,11 +106,6 @@ function(add_compile_flag value)
   foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
   endforeach(variable)
-endfunction()
-
-function(add_cxx_flag value)
-  message(STATUS "Building with ${value}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
 endfunction()
 
 function(add_debug_compile_flag value)
@@ -145,32 +159,11 @@ endfunction()
 
 function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})
-  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} Threads::Threads)
   target_link_libraries(${name} binaryen)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endfunction()
-
-# Options
-
-option(BUILD_STATIC_LIB "Build as a static library" OFF)
-if(MSVC)
-  # We don't have dllexport declarations set up for windows yet.
-  set(BUILD_STATIC_LIB ON)
-endif()
-
-# For now, don't include full DWARF support in JS builds, for size.
-if(NOT EMSCRIPTEN)
-  option(BUILD_LLVM_DWARF "Enable full DWARF support" ON)
-
-  if(BUILD_LLVM_DWARF)
-    if(MSVC)
-      ADD_COMPILE_FLAG("/DBUILD_LLVM_DWARF")
-    else()
-      ADD_COMPILE_FLAG("-DBUILD_LLVM_DWARF")
-    endif()
-  endif()
-endif()
 
 # Compiler setup. Use SYSTEM to avoid warnings and errors from third-party headers.
 
@@ -183,12 +176,38 @@ endif()
 # Add output directory to include path so config.h can be found
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+# Configure output locations.
+
 # Force output to bin/ and lib/. This is to suppress CMake multigenerator output paths and avoid bin/Debug, bin/Release/ and so on, which is CMake default.
 foreach(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/bin")
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 endforeach()
+
+if(NOT MSVC AND NOT EMSCRIPTEN)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+    # wasm doesn't allow for x87 floating point math
+    add_compile_flag("-msse2")
+    add_compile_flag("-mfpmath=sse")
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^armv[2-6]" AND NOT CMAKE_CXX_FLAGS MATCHES "-mfpu=")
+    add_compile_flag("-mfpu=vfpv3")
+  endif()
+endif()
+
+# Declare libbinaryen
+
+if(BUILD_STATIC_LIB)
+  message(STATUS "Building libbinaryen as statically linked library.")
+  add_library(binaryen STATIC)
+  add_definitions(-DBUILD_STATIC_LIBRARY)
+else()
+  message(STATUS "Building libbinaryen as shared library.")
+  add_library(binaryen SHARED)
+endif()
+target_link_libraries(binaryen Threads::Threads)
+
+# Compiler setup.
 
 option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO)
@@ -210,19 +229,10 @@ if(MSVC)
       add_compile_flag("/arch:sse2")
     endif()
   endif()
-  add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
-  # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
-  add_compile_flag("/wd4267")
-  add_compile_flag("/wd4244")
-  # 4722 warns that destructors never return, even with [[noreturn]].
-  add_compile_flag("/wd4722")
-  # "destructor was implicitly defined as deleted" caused by LLVM headers.
-  add_compile_flag("/wd4624")
-  add_compile_flag("/WX-")
+
   add_debug_compile_flag("/Od")
   add_nondebug_compile_flag("/O2")
-  add_compile_flag("/D_CRT_SECURE_NO_WARNINGS")
-  add_compile_flag("/D_SCL_SECURE_NO_WARNINGS")
+
   # workaround for https://github.com/WebAssembly/binaryen/issues/3661
   add_compile_flag("/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING")
   # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
@@ -257,51 +267,10 @@ if(MSVC)
 
   add_link_flag("/STACK:8388608")
 
-  if(RUN_STATIC_ANALYZER)
-    add_definitions(/analyze)
-  endif()
-else()
+else() # MSVC
 
-  option(ENABLE_WERROR "Enable -Werror" ON)
-
-  set(THREADS_PREFER_PTHREAD_FLAG ON)
-  set(CMAKE_THREAD_PREFER_PTHREAD ON)
-  find_package(Threads REQUIRED)
-  if(NOT EMSCRIPTEN)
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
-      # wasm doesn't allow for x87 floating point math
-      add_compile_flag("-msse2")
-      add_compile_flag("-mfpmath=sse")
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^armv[2-6]" AND NOT CMAKE_CXX_FLAGS MATCHES "-mfpu=")
-      add_compile_flag("-mfpu=vfpv3")
-    endif()
-  endif()
-  add_compile_flag("-Wall")
-  if(ENABLE_WERROR)
-    add_compile_flag("-Werror")
-  endif()
-  add_compile_flag("-Wextra")
-  add_compile_flag("-Wno-unused-parameter")
-  add_compile_flag("-Wno-dangling-pointer") # false positive in gcc
   add_compile_flag("-fno-omit-frame-pointer")
   add_compile_flag("-fno-rtti")
-  # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
-  # flags once we resolve the issue.
-  add_compile_flag("-Wno-implicit-int-float-conversion")
-  add_compile_flag("-Wno-unknown-warning-option")
-  add_compile_flag("-Wswitch") # we explicitly expect this in the code
-  add_compile_flag("-Wimplicit-fallthrough")
-  add_compile_flag("-Wnon-virtual-dtor")
-
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # Google style requires this, so make sure we compile cleanly with it.
-    add_compile_flag("-Wctad-maybe-unsupported")
-    # Disable a warning that started to happen on system headers (so we can't
-    # fix it in our codebase) on github CI:
-    # https://github.com/WebAssembly/binaryen/pull/6597
-    add_compile_flag("-Wno-deprecated-declarations")
-  endif()
-
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")
@@ -400,50 +369,11 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
-if(BUILD_STATIC_LIB)
-  message(STATUS "Building libbinaryen as statically linked library.")
-  add_library(binaryen STATIC)
-  add_definitions(-DBUILD_STATIC_LIBRARY)
-else()
-  message(STATUS "Building libbinaryen as shared library.")
-  add_library(binaryen SHARED)
-endif()
-
-add_subdirectory(src/ir)
-add_subdirectory(src/asmjs)
-add_subdirectory(src/cfg)
-add_subdirectory(src/emscripten-optimizer)
-add_subdirectory(src/interpreter)
-add_subdirectory(src/passes)
-add_subdirectory(src/parser)
-add_subdirectory(src/support)
-add_subdirectory(src/wasm)
-add_subdirectory(src/analysis)
-
-if(BUILD_TOOLS)
-  # Build binaryen tools
-  add_subdirectory(src/tools)
-endif()
-
 add_subdirectory(third_party)
+add_subdirectory(src)
 
 # Configure lit tests
 add_subdirectory(test/lit)
-
-if(BUILD_TESTS)
-  # Configure GTest unit tests
-  add_subdirectory(test/gtest)
-endif()
-
-# Sources.
-
-file(GLOB binaryen_HEADERS src/*.h)
-set(binaryen_SOURCES
-  src/binaryen-c.cpp
-  ${binaryen_HEADERS}
-)
-target_sources(binaryen PRIVATE ${binaryen_SOURCES})
-target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
 
 if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen
@@ -459,12 +389,9 @@ endif()
 #
 # Note that we can't emit binaryen.js directly, as there is libbinaryen already
 # declared earlier, so we create binaryen_wasm/js.js, which must then be copied.
-# Note that SHELL: is needed as otherwise cmake will coalesce -s link flags
-# in an incorrect way for emscripten.
 if(EMSCRIPTEN)
   # binaryen.js WebAssembly variant
-  add_executable(binaryen_wasm
-                 ${binaryen_SOURCES})
+  add_executable(binaryen_wasm src/binaryen-c.cpp)
   target_link_libraries(binaryen_wasm binaryen)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
@@ -493,8 +420,7 @@ if(EMSCRIPTEN)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
-  add_executable(binaryen_js
-                 ${binaryen_SOURCES})
+  add_executable(binaryen_js src/binaryen-c.cpp)
   target_link_libraries(binaryen_js binaryen)
   target_link_libraries(binaryen_js "-sWASM=0")
   target_link_libraries(binaryen_js "-sWASM_ASYNC_COMPILATION=0")

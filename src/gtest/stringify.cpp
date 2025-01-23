@@ -133,7 +133,7 @@ adding unique symbol for End
   struct TestStringifyWalker : public StringifyWalker<TestStringifyWalker> {
     std::ostream& os;
 
-    TestStringifyWalker(std::ostream& os) : os(os){};
+    TestStringifyWalker(std::ostream& os) : os(os) {};
 
     void addUniqueSymbol(SeparatorReason reason) {
       os << "adding unique symbol for " << reason << "\n";

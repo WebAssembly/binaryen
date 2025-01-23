@@ -1,5 +1,4 @@
-include_directories(../../third_party/googletest/googletest/include)
-include_directories(../../src/wasm)
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/third_party/googletest/googletest/include)
 
 set(unittest_SOURCES
   arena.cpp
