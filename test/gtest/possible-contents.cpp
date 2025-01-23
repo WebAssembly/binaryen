@@ -948,3 +948,15 @@ TEST_F(PossibleContentsTest, TestOracleNoFullCones) {
   ASSERT_TRUE(bodyContents.isConeType());
   EXPECT_EQ(bodyContents.getCone().depth, Index(2));
 }
+
+TEST_F(PossibleContentsTest, TestTupleItems) {
+  // All tuples must be exact (there is no subtyping for tuples).
+  Type funcref = Type(HeapType::func, Nullable);
+  auto tupleType = Type({Type::i32, funcref});
+  PossibleContents tuple = PossibleContents::exactType(tupleType);
+
+  // We can get the tuple items. The funcref is a full cone, as we did not have
+  // depth info for it.
+  EXPECT_EQ(tuple.getTupleItem(0), PossibleContents::fullConeType(Type::i32));
+  EXPECT_EQ(tuple.getTupleItem(1), PossibleContents::fullConeType(funcref));
+}
