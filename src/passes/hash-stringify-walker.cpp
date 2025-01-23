@@ -160,7 +160,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
       // TODO: This weight was picked with an assumption
       auto interval =
         Interval(startIdx,
-                 startIdx + substring.Length - 1,
+                 startIdx + substring.Length,
                  substring.Length * substring.StartIndices.size());
       intervals.push_back(interval);
       substringIdxs.push_back(i);
@@ -172,6 +172,9 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   std::unordered_set<unsigned> substringsIncluded;
   std::vector<int> indices = IntervalProcessor::filterOverlaps(intervals);
   for (auto i : indices) {
+    // i is the idx of the Interval in the intervals vector
+    // i in substringIdxs returns the idx of the substring that needs to be
+    // included in result
     auto substringIdx = substringIdxs[i];
     if (substringsIncluded.find(substringIdx) != substringsIncluded.end()) {
       continue;

@@ -28,15 +28,15 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
     return std::vector<int>();
   }
 
-  std::vector<std::tuple<Interval, int>> intIntervals;
+  std::vector<std::pair<Interval, int>> intIntervals;
   for (Index i = 0; i < intervals.size(); i++) {
     auto& interval = intervals[i];
-    intIntervals.push_back(std::make_tuple(interval, i));
+    intIntervals.push_back({interval, i});
   }
 
   std::sort(
     intIntervals.begin(), intIntervals.end(), [](const auto& a, const auto& b) {
-      return std::get<0>(a).start < std::get<0>(b).end;
+      return a.first.start < b.first.end;
     });
 
   std::vector<int> result;
@@ -44,18 +44,18 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
   // Look for overlapping intervals
   for (Index i = 1; i < intervals.size(); i++) {
     auto& nextInterval = intIntervals[i];
-    if (std::get<0>(firstInterval).end < std::get<0>(nextInterval).start) {
-      result.push_back(std::get<1>(firstInterval));
+    if (firstInterval.first.end < nextInterval.first.start) {
+      result.push_back(firstInterval.second);
       firstInterval = nextInterval;
       continue;
     }
 
     // Keep the interval with the higher weight
-    if (std::get<0>(nextInterval).weight > std::get<0>(firstInterval).weight) {
-      result.push_back(std::get<1>(nextInterval));
+    if (nextInterval.first.weight > firstInterval.first.weight) {
+      result.push_back(nextInterval.second);
       firstInterval = nextInterval;
     } else {
-      result.push_back(std::get<1>(firstInterval));
+      result.push_back(firstInterval.second);
     }
   }
 
