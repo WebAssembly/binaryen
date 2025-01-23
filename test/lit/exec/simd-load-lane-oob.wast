@@ -27,7 +27,7 @@
   )
 
   ;; CHECK:      [fuzz-exec] calling get
-  ;; CHECK-NEXT: [fuzz-exec] note result: get => 0
+  ;; CHECK-NEXT: [fuzz-exec] note result: get => 1
   (func $get (export "get") (result i32)
     ;; This should be 1
     (global.get $g)
@@ -37,6 +37,6 @@
 ;; CHECK-NEXT: [trap final > memory: 18446744073709551615 > 65536]
 
 ;; CHECK:      [fuzz-exec] calling get
-;; CHECK-NEXT: [fuzz-exec] note result: get => 0
+;; CHECK-NEXT: [fuzz-exec] note result: get => 1
 ;; CHECK-NEXT: [fuzz-exec] comparing get
 ;; CHECK-NEXT: [fuzz-exec] comparing oob
