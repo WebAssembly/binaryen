@@ -443,8 +443,11 @@ function hashCombine(seed, value) {
     if (JSPI) {
       // When we are changing up the order, in JSPI we can also leave some
       // promises unresolved until later, which lets us interleave them. Note we
-      // never defer a task more than once (which would be pointless), and we
-      // also only defer a promise (which we check for using .then).
+      // never defer a task more than once, and we only defer a promise (which
+      // we check for using .then).
+      // TODO: Deferring more than once may make sense, by chaining promises in
+      //       JS (that would not add wasm execution in the middle, but might
+      //       find JS issues in principle).
       if (ordering !== undefined && !task.deferred && result &&
           typeof result == 'object' && typeof result.then === 'function') {
         // Hash with -1 here, just to get something different than the hashing a
