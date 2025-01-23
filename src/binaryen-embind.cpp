@@ -105,13 +105,13 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_INT_ARRAY(id, field)                                        \
     .property(#field, &id::field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)                                        \
-    // TODO .property(#field, &id::field)
+    .property(#field, &id::field, return_value_policy::reference())
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)                                        \
-    // TODO .property(#field, &id::field)
+    .property(#field, &id::field, return_value_policy::reference())
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                                        \
-    // TODO .property(#field, &id::field)
+    .property(#field, &id::field, return_value_policy::reference())
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)                                        \
-    // TODO .property(#field, &id::field)
+    .property(#field, &id::field, return_value_policy::reference())
 
 #define DELEGATE_FIELD_MAIN_START
 
