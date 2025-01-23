@@ -91,6 +91,11 @@ endif()
 
 configure_file(config.h.in config.h)
 
+# Configure threads
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 # Support functionality.
 
 # Use a property to emulate a global variable.
@@ -150,7 +155,7 @@ endfunction()
 
 function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})
-  target_link_libraries(${name} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} Threads::Threads)
   target_link_libraries(${name} binaryen)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -316,9 +321,6 @@ else()
 
   option(ENABLE_WERROR "Enable -Werror" ON)
 
-  set(THREADS_PREFER_PTHREAD_FLAG ON)
-  set(CMAKE_THREAD_PREFER_PTHREAD ON)
-  find_package(Threads REQUIRED)
   if(NOT EMSCRIPTEN)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
       # wasm doesn't allow for x87 floating point math
