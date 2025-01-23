@@ -5,4 +5,4 @@ set(emscripten-optimizer_SOURCES
   simple_ast.cpp
   ${emscripten-optimizer_HEADERS}
 )
-add_library(emscripten-optimizer OBJECT ${emscripten-optimizer_SOURCES})
+target_sources(binaryen PRIVATE ${emscripten-optimizer_SOURCES})

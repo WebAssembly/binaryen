@@ -4,4 +4,4 @@ set(interpreter_SOURCES
  interpreter.cpp
  ${interpreter_HEADERS}
 )
-add_library(interpreter OBJECT ${interpreter_SOURCES})
+target_sources(binaryen PRIVATE ${interpreter_SOURCES})

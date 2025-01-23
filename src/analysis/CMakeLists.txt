@@ -3,4 +3,4 @@ set(analysis_SOURCES
   cfg.cpp
   ${analysis_HEADERS}
 )
-add_library(analysis OBJECT ${analysis_SOURCES})
+target_sources(binaryen PRIVATE ${analysis_SOURCES})
