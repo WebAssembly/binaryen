@@ -402,7 +402,7 @@ endif()
 
 if(BUILD_STATIC_LIB)
   message(STATUS "Building libbinaryen as statically linked library.")
-  add_library(binaryen SHARED)
+  add_library(binaryen STATIC)
   add_definitions(-DBUILD_STATIC_LIBRARY)
 else()
   message(STATUS "Building libbinaryen as shared library.")
