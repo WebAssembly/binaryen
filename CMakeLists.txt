@@ -49,7 +49,7 @@ if(MSVC)
   set(BUILD_STATIC_LIB ON)
 endif()
 
-option(BYN_ENABLE_LTO "Build with LTO" Off)
+option(BYN_ENABLE_LTO "Build with LTO" OFF)
 
 # Turn this off to install only tools and not static/dynamic libs
 option(INSTALL_LIBS "Install libraries" ON)
@@ -148,7 +148,7 @@ function(binaryen_setup_rpath name)
   endif()
 
   set_target_properties(${name} PROPERTIES
-                        BUILD_WITH_INSTALL_RPATH On
+                        BUILD_WITH_INSTALL_RPATH ON
                         INSTALL_RPATH "${_install_rpath}"
                         ${_install_name_dir})
 endfunction()
