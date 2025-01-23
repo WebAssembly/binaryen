@@ -3812,20 +3812,20 @@ public:
   }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     NOTE_ENTER("SIMDLoadStoreLane");
-    Flow flow = self()->visit(curr->ptr);
-    if (flow.breaking()) {
-      return flow;
+    Flow ptrFlow = self()->visit(curr->ptr);
+    if (ptrFlow.breaking()) {
+      return ptrFlow;
     }
     NOTE_EVAL1(flow);
+    Flow vecFlow = self()->visit(curr->vec);
+    if (vecFlow.breaking()) {
+      return vecFlow;
+    }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     Address addr = info.instance->getFinalAddress(
-      curr, flow.getSingleValue(), curr->getMemBytes(), memorySize);
-    flow = self()->visit(curr->vec);
-    if (flow.breaking()) {
-      return flow;
-    }
-    Literal vec = flow.getSingleValue();
+      curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySize);
+    Literal vec = vecFlow.getSingleValue();
     switch (curr->op) {
       case Load8LaneVec128:
       case Store8LaneVec128: {
