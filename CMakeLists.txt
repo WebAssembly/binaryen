@@ -172,12 +172,12 @@ if(NOT EMSCRIPTEN)
   endif()
 endif()
 
-# Compiler setup.
+# Compiler setup. Use SYSTEM to avoid warnings and errors from third-party headers.
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/FP16/include)
 if(BUILD_LLVM_DWARF)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
+  include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llvm-project/include)
 endif()
 
 # Add output directory to include path so config.h can be found
