@@ -5,6 +5,10 @@
 #include "wasm-type.h"
 #include "gtest/gtest.h"
 
+#ifdef FUZZTEST
+#include "type-domains.h"
+#endif
+
 using namespace wasm;
 
 TEST_F(TypeTest, TypeBuilderGrowth) {
@@ -1055,6 +1059,41 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
   }
 }
+
+#ifdef FUZZTEST
+
+void TestHeapTypeRelationsFuzz(std::pair<HeapType, HeapType> pair) {
+  auto [a, b] = pair;
+  auto lub = HeapType::getLeastUpperBound(a, b);
+  auto otherLub = HeapType::getLeastUpperBound(b, a);
+  EXPECT_EQ(lub, otherLub);
+  if (lub) {
+    EXPECT_EQ(a.getTop(), b.getTop());
+    EXPECT_EQ(a.getBottom(), b.getBottom());
+    EXPECT_TRUE(HeapType::isSubType(a, *lub));
+    EXPECT_TRUE(HeapType::isSubType(b, *lub));
+  } else {
+    EXPECT_NE(a.getTop(), b.getTop());
+    EXPECT_NE(a.getBottom(), b.getBottom());
+  }
+  if (a == b) {
+    EXPECT_EQ(lub, a);
+    EXPECT_EQ(lub, b);
+  } else if (lub && *lub == b) {
+    EXPECT_TRUE(HeapType::isSubType(a, b));
+    EXPECT_FALSE(HeapType::isSubType(b, a));
+  } else if (lub && *lub == a) {
+    EXPECT_FALSE(HeapType::isSubType(a, b));
+    EXPECT_TRUE(HeapType::isSubType(b, a));
+  } else if (lub) {
+    EXPECT_FALSE(HeapType::isSubType(a, b));
+    EXPECT_FALSE(HeapType::isSubType(b, a));
+  }
+}
+FUZZ_TEST(TypeFuzzTest, TestHeapTypeRelationsFuzz)
+  .WithDomains(ArbitraryHeapTypePair());
+
+#endif // FUZZTEST
 
 TEST_F(TypeTest, TestSubtypeErrors) {
   Type anyref = Type(HeapType::any, Nullable);
