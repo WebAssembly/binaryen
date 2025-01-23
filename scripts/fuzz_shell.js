@@ -447,7 +447,8 @@ function hashCombine(seed, value) {
       // we check for using .then).
       // TODO: Deferring more than once may make sense, by chaining promises in
       //       JS (that would not add wasm execution in the middle, but might
-      //       find JS issues in principle).
+      //       find JS issues in principle). We could also link promises by
+      //       depending on each other, ensuring certain orders of execution.
       if (ordering !== undefined && !task.deferred && result &&
           typeof result == 'object' && typeof result.then === 'function') {
         // Hash with -1 here, just to get something different than the hashing a
