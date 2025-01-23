@@ -176,11 +176,9 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
     // i in substringIdxs returns the idx of the substring that needs to be
     // included in result
     auto substringIdx = substringIdxs[i];
-    if (substringsIncluded.find(substringIdx) != substringsIncluded.end()) {
-      continue;
+    if (substringsIncluded.insert(substringIdx).second) {
+      result.push_back(substrings[substringIdx]);
     }
-    substringsIncluded.insert(substringIdx);
-    result.push_back(substrings[substringIdx]);
   }
 
   return result;
