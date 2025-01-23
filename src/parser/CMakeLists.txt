@@ -12,4 +12,4 @@ set(parser_SOURCES
  wat-parser.cpp
  ${parser_HEADERS}
 )
-add_library(parser OBJECT ${parser_SOURCES})
+target_sources(binaryen PRIVATE ${parser_SOURCES})

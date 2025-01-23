@@ -1,6 +1,6 @@
 # Version set according the the cmake versions available in Ubuntu/Bionic:
-# https://packages.ubuntu.com/bionic/cmake
-cmake_minimum_required(VERSION 3.10.2)
+# https://packages.ubuntu.com/focal/cmake
+cmake_minimum_required(VERSION 3.16.3)
 
 # Needed for C++17 (std::variant)
 # TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
@@ -400,10 +400,15 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
-# Static libraries
-# Current (partial) dependency structure is as follows:
-# tools -> passes -> wasm -> asmjs -> support
-# TODO: It's odd that wasm should depend on asmjs, maybe we should fix that.
+if(BUILD_STATIC_LIB)
+  message(STATUS "Building libbinaryen as statically linked library.")
+  add_library(binaryen SHARED)
+  add_definitions(-DBUILD_STATIC_LIBRARY)
+else()
+  message(STATUS "Building libbinaryen as shared library.")
+  add_library(binaryen SHARED)
+endif()
+
 add_subdirectory(src/ir)
 add_subdirectory(src/asmjs)
 add_subdirectory(src/cfg)
@@ -430,23 +435,6 @@ if(BUILD_TESTS)
   add_subdirectory(test/gtest)
 endif()
 
-# Object files
-set(binaryen_objs
-    $<TARGET_OBJECTS:passes>
-    $<TARGET_OBJECTS:wasm>
-    $<TARGET_OBJECTS:asmjs>
-    $<TARGET_OBJECTS:emscripten-optimizer>
-    $<TARGET_OBJECTS:ir>
-    $<TARGET_OBJECTS:cfg>
-    $<TARGET_OBJECTS:support>
-    $<TARGET_OBJECTS:analysis>
-    $<TARGET_OBJECTS:parser>
-    $<TARGET_OBJECTS:interpreter>)
-
-if(BUILD_LLVM_DWARF)
-  SET(binaryen_objs ${binaryen_objs} $<TARGET_OBJECTS:llvm_dwarf>)
-endif()
-
 # Sources.
 
 file(GLOB binaryen_HEADERS src/*.h)
@@ -454,15 +442,9 @@ set(binaryen_SOURCES
   src/binaryen-c.cpp
   ${binaryen_HEADERS}
 )
-if(BUILD_STATIC_LIB)
-  message(STATUS "Building libbinaryen as statically linked library.")
-  add_library(binaryen STATIC ${binaryen_SOURCES} ${binaryen_objs})
-  add_definitions(-DBUILD_STATIC_LIBRARY)
-else()
-  message(STATUS "Building libbinaryen as shared library.")
-  add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
-endif()
+target_sources(binaryen PRIVATE ${binaryen_SOURCES})
 target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
+
 if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -21,4 +21,4 @@ set(wasm_SOURCES
 if (NOT MSVC)
   set_source_files_properties(wasm-debug.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 endif()
-add_library(wasm OBJECT ${wasm_SOURCES})
+target_sources(binaryen PRIVATE ${wasm_SOURCES})
