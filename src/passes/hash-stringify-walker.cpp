@@ -148,21 +148,24 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
   return result;
 }
 
-std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::removeOverlaps(
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
-  std::vector<Interval> intervals;
   std::unordered_map<Interval, unsigned> intervalMap;
+  std::vector<Interval> intervals;
+  std::vector<int> substringIdxs;
 
   // Construct intervals
   for (Index i = 0; i < substrings.size(); i++) {
     auto substring = substrings[i];
     for (auto startIdx : substring.StartIndices) {
+      // TODO: This weight was picked with an assumption
       auto interval =
         Interval(startIdx,
                  startIdx + substring.Length - 1,
                  substring.Length * substring.StartIndices.size());
       intervals.push_back(interval);
       intervalMap[std::move(interval)] = i;
+      substringIdxs.push_back(i);
     }
   }
 

@@ -24,26 +24,37 @@ using namespace wasm;
 
 std::set<Interval>
 IntervalProcessor::getOverlaps(std::vector<Interval>& intervals) {
-  std::sort(intervals.begin(), intervals.end(), [](Interval a, Interval b) {
-    return a.start < b.end;
-  });
+  std::vector<std::tuple<Interval, int>> intIntervals;
+  for (Index i = 0; i < intervals.size(); i++) {
+    auto& interval = intervals[i];
+    intIntervals.push_back(std::make_tuple(interval, i));
+  }
+
+  std::sort(
+    intIntervals.begin(), intIntervals.end(), [](const auto& a, const auto& b) {
+      return std::get<0>(a).start < std::get<0>(b).end;
+    });
+
+  if (intervals.size() == 0) {
+    return std::set<Interval>();
+  }
 
   std::set<Interval> overlaps;
-  auto& firstInterval = intervals[0];
+  auto& firstInterval = intIntervals[0];
   // Look for overlapping intervals
   for (Index i = 1; i < intervals.size(); i++) {
-    auto& nextInterval = intervals[i];
-    if (firstInterval.end < nextInterval.start) {
+    auto& nextInterval = intIntervals[i];
+    if (std::get<0>(firstInterval).end < std::get<0>(nextInterval).start) {
       firstInterval = nextInterval;
       continue;
     }
 
     // Keep the interval with the higher weight
-    if (nextInterval.weight > firstInterval.weight) {
-      overlaps.insert(firstInterval);
+    if (std::get<0>(nextInterval).weight > std::get<0>(firstInterval).weight) {
+      overlaps.insert(std::get<0>(firstInterval));
       firstInterval = nextInterval;
     } else {
-      overlaps.insert(nextInterval);
+      overlaps.insert(std::get<0>(nextInterval));
     }
   }
 

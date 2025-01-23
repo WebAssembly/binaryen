@@ -265,7 +265,7 @@ using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
 struct StringifyProcessor {
   static Substrings repeatSubstrings(std::vector<uint32_t>& hashString);
   static Substrings dedupe(const Substrings& substrings);
-  static Substrings removeOverlaps(const Substrings& substrings);
+  static Substrings filterOverlaps(const Substrings& substrings);
   // Filter is the general purpose function backing subsequent filter functions.
   // It can be used directly, but generally prefer a wrapper function
   // to encapsulate your condition and make it available for tests.
