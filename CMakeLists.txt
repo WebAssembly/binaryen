@@ -213,7 +213,22 @@ if(BUILD_TESTS)
   add_subdirectory(test/gtest)
 endif()
 
-# Options
+# Sources.
+
+file(GLOB binaryen_HEADERS src/*.h)
+set(binaryen_SOURCES
+  src/binaryen-c.cpp
+  ${binaryen_HEADERS}
+)
+target_sources(binaryen PRIVATE ${binaryen_SOURCES})
+target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
+
+# Declare binaryen.js targets
+
+if(EMSCRIPTEN)
+  binaryen_add_executable(binaryen_wasm ${binaryen_SOURCES})
+  binaryen_add_executable(binaryen_js ${binaryen_SOURCES})
+endif()
 
 # For now, don't include full DWARF support in JS builds, for size.
 if(NOT EMSCRIPTEN)
@@ -435,15 +450,6 @@ if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
   endif()
 endif()
 
-# Sources.
-
-file(GLOB binaryen_HEADERS src/*.h)
-set(binaryen_SOURCES
-  src/binaryen-c.cpp
-  ${binaryen_HEADERS}
-)
-target_sources(binaryen PRIVATE ${binaryen_SOURCES})
-target_link_libraries(binaryen ${CMAKE_THREAD_LIBS_INIT})
 if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -462,8 +468,6 @@ endif()
 # in an incorrect way for emscripten.
 if(EMSCRIPTEN)
   # binaryen.js WebAssembly variant
-  add_executable(binaryen_wasm
-                 ${binaryen_SOURCES})
   target_link_libraries(binaryen_wasm binaryen)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
@@ -492,8 +496,6 @@ if(EMSCRIPTEN)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
-  add_executable(binaryen_js
-                 ${binaryen_SOURCES})
   target_link_libraries(binaryen_js binaryen)
   target_link_libraries(binaryen_js "-sWASM=0")
   target_link_libraries(binaryen_js "-sWASM_ASYNC_COMPILATION=0")
