@@ -43,20 +43,12 @@ struct Interval {
 };
 
 struct IntervalProcessor {
-  static std::set<Interval> getOverlaps(std::vector<Interval>&);
+  // TODO: Given a vector of Interval, returns a vector of the indices, mapping back
+  // to the original input vector, of non-overlapping indices, ie, the intervals
+  // that overlap have already been removed.
+  static std::vector<int> filterOverlaps(std::vector<Interval>&);
 };
 
 } // namespace wasm
-
-namespace std {
-
-template<> struct hash<wasm::Interval> {
-  size_t operator()(const wasm::Interval& i) const {
-    return std::hash<unsigned>{}(i.start) + std::hash<unsigned>{}(i.end) +
-           std::hash<unsigned>{}(i.weight);
-  }
-};
-
-} // namespace std
 
 #endif // wasm_suport_intervals

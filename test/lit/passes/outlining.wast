@@ -1009,6 +1009,39 @@
 
 ;; Test that no attempt is made to outline overlapping repeat substrings
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $a
     (drop (i32.const 0))
     (drop (i32.const 1))

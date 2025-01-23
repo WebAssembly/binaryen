@@ -150,7 +150,6 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
-  std::unordered_map<Interval, unsigned> intervalMap;
   std::vector<Interval> intervals;
   std::vector<int> substringIdxs;
 
@@ -164,27 +163,21 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
                  startIdx + substring.Length - 1,
                  substring.Length * substring.StartIndices.size());
       intervals.push_back(interval);
-      intervalMap[std::move(interval)] = i;
       substringIdxs.push_back(i);
     }
   }
 
   // Get the overlapping intervals
-  std::set<Interval> overlaps = IntervalProcessor::getOverlaps(intervals);
-  std::set<unsigned> doNotInclude;
-  for (auto& interval : overlaps) {
-    doNotInclude.insert(intervalMap[interval]);
-  }
-
-  // Add the substrings that don't overlap to the result
   std::vector<SuffixTree::RepeatedSubstring> result;
-  for (Index i = 0; i < substrings.size(); i++) {
-    if (doNotInclude.find(i) != doNotInclude.end()) {
+  std::unordered_set<unsigned> substringsIncluded;
+  std::vector<int> indices = IntervalProcessor::filterOverlaps(intervals);
+  for (auto i : indices) {
+    auto substringIdx = substringIdxs[i];
+    if (substringsIncluded.find(substringIdx) != substringsIncluded.end()) {
       continue;
     }
-
-    auto substring = substrings[i];
-    result.push_back(substring);
+    substringsIncluded.insert(substringIdx);
+    result.push_back(substrings[substringIdx]);
   }
 
   return result;
