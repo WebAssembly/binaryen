@@ -2,7 +2,7 @@
 
 ;; RUN: not wasm-opt %s 2>&1 | filecheck %s
 
-;; CHECK: [parse exception: Bad index on tuple.extract: ( tuple.extract 2 2 ( tuple.make  2 ( i32.const 0 ) ( i64.const 1 ) ) ) (at 9:19)]
+;; CHECK: Fatal: 9:3: error: tuple index out of bounds
 
 (module
  (func

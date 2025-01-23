@@ -84,6 +84,7 @@ function asmFunc(imports) {
  }
  
  return {
+  "get_size": $0, 
   "memory": Object.create(Object.prototype, {
    "grow": {
     "value": __wasm_memory_grow
@@ -94,8 +95,7 @@ function asmFunc(imports) {
     }
     
    }
-  }), 
-  "get_size": $0
+  })
  };
 }
 

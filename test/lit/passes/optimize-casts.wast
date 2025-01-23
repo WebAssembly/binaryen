@@ -2,10 +2,10 @@
 ;; RUN: wasm-opt %s --optimize-casts -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (sub (struct )))
+  ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $B (sub $A (struct )))
+  ;; CHECK:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:      (type $void (func))
@@ -1352,6 +1352,43 @@
     )
   )
 
+  ;; CHECK:      (func $local-tee (type $2) (param $x (ref struct))
+  ;; CHECK-NEXT:  (local $y (ref struct))
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-tee (param $x (ref struct))
+    (local $y (ref struct))
+    ;; We should use the cast value after it has been computed, in both gets.
+    (drop
+      (ref.cast (ref $A)
+        (local.tee $y
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
   ;; CHECK:      (func $get (type $11) (result (ref struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
@@ -1361,7 +1398,6 @@
   )
 
   ;; CHECK:      (func $void (type $void)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $void
     ;; Helper for the above.

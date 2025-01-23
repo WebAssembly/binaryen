@@ -40,10 +40,8 @@
     (type $s1 (array (ref $s0)))
   )
 
-  (rec
-    (func (param (ref $forward)))
-    (type $forward (array i32))
-  )
+  (func (param (ref $forward)))
+  (type $forward (array i32))
 )
 
 (assert_invalid

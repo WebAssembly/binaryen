@@ -26,6 +26,7 @@ const std::string DEFAULT_PROFILE_EXPORT("__write_profile");
 struct WasmSplitOptions : ToolOptions {
   enum class Mode : unsigned {
     Split,
+    MultiSplit,
     Instrument,
     MergeProfiles,
     PrintProfile,
@@ -41,6 +42,7 @@ struct WasmSplitOptions : ToolOptions {
   };
   StorageKind storageKind = StorageKind::InGlobals;
 
+  bool usePlaceholders = true;
   bool unescape = false;
   bool verbose = false;
   bool emitBinary = true;
@@ -56,6 +58,8 @@ struct WasmSplitOptions : ToolOptions {
 
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
+  bool hasKeepFuncs = false;
+  bool hasSplitFuncs = false;
 
   std::vector<std::string> inputFiles;
   std::string output;
@@ -66,6 +70,9 @@ struct WasmSplitOptions : ToolOptions {
   std::string placeholderNamespace;
   std::string secondaryMemoryName;
   std::string exportPrefix;
+
+  std::string manifestFile;
+  std::string outPrefix;
 
   // A hack to ensure the split and instrumented modules have the same table
   // size when using Emscripten's SPLIT_MODULE mode with dynamic linking. TODO:

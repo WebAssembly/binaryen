@@ -18,10 +18,8 @@
   ;; CLOSD:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
   ;; CHECK:      (func $foo (type $foo_t)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; CLOSD:      (func $foo (type $foo_t)
-  ;; CLOSD-NEXT:  (nop)
   ;; CLOSD-NEXT: )
   (func $foo (type $foo_t))
 )
@@ -110,10 +108,10 @@
 
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   ;; CLOSD:      (type $0 (func))
 
-  ;; CLOSD:      (type $struct (struct ))
+  ;; CLOSD:      (type $struct (struct))
   (type $struct (struct))
   (type $array (array i8))
 
@@ -169,27 +167,59 @@
   )
 )
 
-;; We can refine here, but as it is an export we only do so in open world.
+;; We can refine $a, after which we should update the global.get in the other
+;; global, or else we'd error on validation.
+;; TODO: we could optimize further here and refine the type of the global $b.
 (module
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $super (sub (func)))
+  ;; CLOSD:      (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:      (type $sub (sub $super (func)))
+  ;; CLOSD:      (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
 
-  ;; CHECK:      (global $func-init (mut (ref $0)) (ref.func $foo))
-  ;; CLOSD:      (type $0 (func))
+  ;; CHECK:      (global $a (ref $sub) (ref.func $func))
+  ;; CLOSD:      (global $a (ref $sub) (ref.func $func))
+  (global $a (ref $super) (ref.func $func))
+  ;; CHECK:      (global $b (ref $super) (global.get $a))
+  ;; CLOSD:      (global $b (ref $super) (global.get $a))
+  (global $b (ref $super) (global.get $a))
 
-  ;; CLOSD:      (global $func-init (mut funcref) (ref.func $foo))
-  (global $func-init (mut funcref) (ref.func $foo))
-
-  ;; CHECK:      (export "global" (global $func-init))
-  ;; CLOSD:      (export "global" (global $func-init))
-  (export "global" (global $func-init))
-
-  ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK:      (func $func (type $sub)
   ;; CHECK-NEXT: )
-  ;; CLOSD:      (func $foo (type $0)
-  ;; CLOSD-NEXT:  (nop)
+  ;; CLOSD:      (func $func (type $sub)
   ;; CLOSD-NEXT: )
-  (func $foo
-    (nop)
+  (func $func (type $sub)
   )
 )
+
+;; Test all combinations of being exported and being mutable.
+;;
+;; Mutability limits our ability to optimize in open world: mutable globals that
+;; are exported cannot be refined, as they might be modified in another module
+;; using the old type. In closed world, however, we can optimize both globals
+;; here, as mutability is not a concern. As a result, we can refine the
+;; (ref null func) to nullfuncref only when not exported, and if exported, then
+;; only when immutable in open world.
+(module
+  ;; CHECK:      (global $mut (mut nullfuncref) (ref.null nofunc))
+  ;; CLOSD:      (global $mut (mut nullfuncref) (ref.null nofunc))
+  (global $mut (mut (ref null func)) (ref.null nofunc))
+  ;; CHECK:      (global $imm nullfuncref (ref.null nofunc))
+  ;; CLOSD:      (global $imm nullfuncref (ref.null nofunc))
+  (global $imm (ref null func) (ref.null nofunc))
+  ;; CHECK:      (global $mut-exp (mut funcref) (ref.null nofunc))
+  ;; CLOSD:      (global $mut-exp (mut funcref) (ref.null nofunc))
+  (global $mut-exp (mut (ref null func)) (ref.null nofunc))
+  ;; CHECK:      (global $imm-exp nullfuncref (ref.null nofunc))
+  ;; CLOSD:      (global $imm-exp funcref (ref.null nofunc))
+  (global $imm-exp (ref null func) (ref.null nofunc))
+
+  ;; CHECK:      (export "mut-exp" (global $mut-exp))
+  ;; CLOSD:      (export "mut-exp" (global $mut-exp))
+  (export "mut-exp" (global $mut-exp))
+  ;; CHECK:      (export "imm-exp" (global $imm-exp))
+  ;; CLOSD:      (export "imm-exp" (global $imm-exp))
+  (export "imm-exp" (global $imm-exp))
+)
+

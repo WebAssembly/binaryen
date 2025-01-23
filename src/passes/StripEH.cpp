@@ -51,6 +51,11 @@ struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
     refinalize = true;
   }
 
+  void visitTryTable(TryTable* curr) {
+    replaceCurrent(curr->body);
+    refinalize = true;
+  }
+
   void visitFunction(Function* curr) {
     if (refinalize) {
       ReFinalize().walkFunctionInModule(curr, getModule());

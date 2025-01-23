@@ -75,6 +75,15 @@ class AsyncifyTest(utils.BinaryenTestCase):
         test('remove')
         test('add')
 
+    def test_asyncify_addlist_and_removelist(self):
+        args = shared.WASM_OPT + [self.input_path('asyncify-pure.wat'),
+                                  '--asyncify',
+                                  '--pass-arg=asyncify-addlist@main',
+                                  '--pass-arg=asyncify-removelist@main']
+        proc = shared.run_process(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
+        self.assertNotEqual(proc.returncode, 0, 'must error on using both lists at once')
+        self.assertIn('main is found in the add-list and in the remove-list', proc.stdout)
+
     def test_asyncify_imports(self):
         def test(args):
             return shared.run_process(shared.WASM_OPT + [self.input_path('asyncify-sleep.wat'), '--asyncify', '--print'] + args, stdout=subprocess.PIPE).stdout

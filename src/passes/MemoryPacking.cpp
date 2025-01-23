@@ -37,6 +37,7 @@
 #include "support/stdckdint.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-limits.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -91,7 +92,7 @@ makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
     curr->dest,
     builder.makeBinary(mem->is64() ? ShlInt64 : ShlInt32,
                        builder.makeMemorySize(mem->name),
-                       builder.makeConstPtr(16, mem->indexType)));
+                       builder.makeConstPtr(16, mem->addressType)));
 }
 
 } // anonymous namespace
@@ -499,7 +500,7 @@ void MemoryPacking::optimizeSegmentOps(Module* module) {
     }
     void doWalkFunction(Function* func) {
       needsRefinalizing = false;
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       if (needsRefinalizing) {
         ReFinalize().walkFunctionInModule(func, getModule());
       }
@@ -780,7 +781,7 @@ void MemoryPacking::createReplacements(Module* module,
 
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
-      Type ptrType = module->getMemory(init->memory)->indexType;
+      Type ptrType = module->getMemory(init->memory)->addressType;
       if (auto* c = init->dest->dynCast<Const>()) {
         dest =
           builder.makeConstPtr(c->value.getInteger() + bytesWritten, ptrType);
@@ -818,8 +819,8 @@ void MemoryPacking::createReplacements(Module* module,
     replacements[init] =
       [module, init, setVar, getVars, result](Function* function) {
         if (setVar != nullptr) {
-          auto indexType = module->getMemory(init->memory)->indexType;
-          Index destVar = Builder(*module).addVar(function, indexType);
+          auto addressType = module->getMemory(init->memory)->addressType;
+          Index destVar = Builder(*module).addVar(function, addressType);
           *setVar = destVar;
           for (auto* getVar : getVars) {
             *getVar = destVar;

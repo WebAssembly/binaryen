@@ -15,7 +15,7 @@
  */
 
 #include "module-utils.h"
-#include "ir/debug.h"
+#include "ir/debuginfo.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
@@ -26,57 +26,88 @@ namespace wasm::ModuleUtils {
 
 // Update the file name indices when moving a set of debug locations from one
 // module to another.
-static void updateLocationSet(std::set<Function::DebugLocation>& locations,
-                              std::vector<Index>& fileIndexMap) {
-  std::set<Function::DebugLocation> updatedLocations;
-
-  for (auto iter : locations) {
-    iter.fileIndex = fileIndexMap[iter.fileIndex];
-    updatedLocations.insert(iter);
+static void updateLocation(std::optional<Function::DebugLocation>& location,
+                           std::vector<Index>& fileIndexMap) {
+  if (location) {
+    location->fileIndex = fileIndexMap[location->fileIndex];
   }
-  locations.clear();
-  std::swap(locations, updatedLocations);
+}
+
+// Update the symbol name indices when moving a set of debug locations from one
+// module to another.
+static void updateSymbol(std::optional<Function::DebugLocation>& location,
+                         std::vector<Index>& symbolIndexMap) {
+  if (location && location->symbolNameIndex) {
+    location->symbolNameIndex = symbolIndexMap[*location->symbolNameIndex];
+  }
 }
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied). If fileIndexMap
 // is specified, it is used to rename source map filename indices when copying
+// the function from one module to another one. If symbolNameIndexMap is
+// specified, it is used to rename source map symbol name indices when copying
 // the function from one module to another one.
 Function* copyFunction(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
+  auto ret = copyFunctionWithoutAdd(
+    func, out, newName, fileIndexMap, symbolNameIndexMap);
+  return out.addFunction(std::move(ret));
+}
+
+std::unique_ptr<Function>
+copyFunctionWithoutAdd(Function* func,
+                       Module& out,
+                       Name newName,
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
+  ret->hasExplicitName = func->hasExplicitName;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->body = ExpressionManipulator::copy(func->body, out);
-  debug::copyDebugInfo(func->body, ret->body, func, ret.get());
+  debuginfo::copyBetweenFunctions(func->body, ret->body, func, ret.get());
   ret->prologLocation = func->prologLocation;
   ret->epilogLocation = func->epilogLocation;
   // Update file indices if needed
   if (fileIndexMap) {
     for (auto& iter : ret->debugLocations) {
-      iter.second.fileIndex = (*fileIndexMap)[iter.second.fileIndex];
+      if (iter.second) {
+        iter.second->fileIndex = (*fileIndexMap)[iter.second->fileIndex];
+      }
     }
-    updateLocationSet(ret->prologLocation, *fileIndexMap);
-    updateLocationSet(ret->epilogLocation, *fileIndexMap);
+    updateLocation(ret->prologLocation, *fileIndexMap);
+    updateLocation(ret->epilogLocation, *fileIndexMap);
+  }
+  if (symbolNameIndexMap) {
+    for (auto& iter : ret->debugLocations) {
+      if (iter.second) {
+        if (iter.second->symbolNameIndex.has_value()) {
+          iter.second->symbolNameIndex =
+            (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
+        }
+      }
+      updateSymbol(ret->prologLocation, *symbolNameIndexMap);
+      updateSymbol(ret->epilogLocation, *symbolNameIndexMap);
+    }
   }
   ret->module = func->module;
   ret->base = func->base;
   ret->noFullInline = func->noFullInline;
   ret->noPartialInline = func->noPartialInline;
-
-  // TODO: copy Stack IR
-  assert(!func->stackIR);
-  return out.addFunction(std::move(ret));
+  return ret;
 }
 
 Global* copyGlobal(Global* global, Module& out) {
   auto* ret = new Global();
   ret->name = global->name;
+  ret->hasExplicitName = global->hasExplicitName;
   ret->type = global->type;
   ret->mutable_ = global->mutable_;
   ret->module = global->module;
@@ -93,7 +124,8 @@ Global* copyGlobal(Global* global, Module& out) {
 Tag* copyTag(Tag* tag, Module& out) {
   auto* ret = new Tag();
   ret->name = tag->name;
-  ret->sig = tag->sig;
+  ret->hasExplicitName = tag->hasExplicitName;
+  ret->type = tag->type;
   ret->module = tag->module;
   ret->base = tag->base;
   out.addTag(ret);
@@ -131,6 +163,7 @@ Table* copyTable(const Table* table, Module& out) {
 
   ret->initial = table->initial;
   ret->max = table->max;
+  ret->addressType = table->addressType;
 
   return out.addTable(std::move(ret));
 }
@@ -141,7 +174,7 @@ Memory* copyMemory(const Memory* memory, Module& out) {
   ret->initial = memory->initial;
   ret->max = memory->max;
   ret->shared = memory->shared;
-  ret->indexType = memory->indexType;
+  ret->addressType = memory->addressType;
   ret->module = memory->module;
   ret->base = memory->base;
 
@@ -188,8 +221,27 @@ void copyModuleItems(const Module& in, Module& out) {
     }
   }
 
+  std::optional<std::vector<Index>> symbolNameIndexMap;
+  if (!in.debugInfoSymbolNames.empty()) {
+    std::unordered_map<std::string, Index> debugInfoSymbolNameIndices;
+    for (Index i = 0; i < out.debugInfoSymbolNames.size(); i++) {
+      debugInfoSymbolNameIndices[out.debugInfoSymbolNames[i]] = i;
+    }
+    symbolNameIndexMap.emplace();
+    for (Index i = 0; i < in.debugInfoSymbolNames.size(); i++) {
+      std::string file = in.debugInfoSymbolNames[i];
+      auto iter = debugInfoSymbolNameIndices.find(file);
+      if (iter == debugInfoSymbolNameIndices.end()) {
+        Index index = out.debugInfoSymbolNames.size();
+        out.debugInfoSymbolNames.push_back(file);
+        debugInfoSymbolNameIndices[file] = index;
+      }
+      symbolNameIndexMap->push_back(debugInfoSymbolNameIndices[file]);
+    }
+  }
+
   for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out, Name(), fileIndexMap);
+    copyFunction(curr.get(), out, Name(), fileIndexMap, symbolNameIndexMap);
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
@@ -209,8 +261,17 @@ void copyModuleItems(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
+
+  for (auto& [type, names] : in.typeNames) {
+    if (!out.typeNames.count(type)) {
+      out.typeNames[type] = names;
+    }
+  }
 }
 
+// TODO: merge this with copyModuleItems, and add options for copying
+// exports and other things that are currently different between them,
+// if we still need those differences.
 void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -221,8 +282,8 @@ void copyModule(const Module& in, Module& out) {
   out.start = in.start;
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+  out.debugInfoSymbolNames = in.debugInfoSymbolNames;
   out.features = in.features;
-  out.typeNames = in.typeNames;
 }
 
 void clearModule(Module& wasm) {
@@ -285,8 +346,8 @@ void renameFunction(Module& wasm, Name oldName, Name newName) {
 namespace {
 
 // Helper for collecting HeapTypes and their frequencies.
-struct Counts {
-  InsertOrderedMap<HeapType, size_t> counts;
+struct TypeInfos {
+  InsertOrderedMap<HeapType, HeapTypeInfo> info;
 
   // Multivalue control flow structures need a function type, but the identity
   // of the function type (i.e. what recursion group it is in or whether it is
@@ -296,7 +357,7 @@ struct Counts {
 
   void note(HeapType type) {
     if (!type.isBasic()) {
-      counts[type]++;
+      ++info[type].useCount;
     }
   }
   void note(Type type) {
@@ -307,7 +368,7 @@ struct Counts {
   // Ensure a type is included without increasing its count.
   void include(HeapType type) {
     if (!type.isBasic()) {
-      counts[type];
+      info[type];
     }
   }
   void include(Type type) {
@@ -320,145 +381,130 @@ struct Counts {
     assert(sig.params.size() == 0);
     if (sig.results.isTuple()) {
       // We have to use a function type.
-      controlFlowSignatures[sig]++;
+      ++controlFlowSignatures[sig];
     } else if (sig.results != Type::none) {
       // The result type can be emitted directly instead of using a function
       // type.
-      note(sig.results[0]);
+      note(sig.results);
     }
   }
+  bool contains(HeapType type) { return info.count(type); }
 };
 
 struct CodeScanner
   : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
-  Counts& counts;
+  TypeInfos& info;
+  TypeInclusion inclusion;
 
-  CodeScanner(Module& wasm, Counts& counts) : counts(counts) {
+  CodeScanner(Module& wasm, TypeInfos& info, TypeInclusion inclusion)
+    : info(info), inclusion(inclusion) {
     setModule(&wasm);
   }
 
   void visitExpression(Expression* curr) {
     if (auto* call = curr->dynCast<CallIndirect>()) {
-      counts.note(call->heapType);
+      info.note(call->heapType);
     } else if (auto* call = curr->dynCast<CallRef>()) {
-      counts.note(call->target->type);
+      info.note(call->target->type);
     } else if (curr->is<RefNull>()) {
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (curr->is<Select>() && curr->type.isRef()) {
       // This select will be annotated in the binary, so note it.
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (curr->is<StructNew>()) {
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (curr->is<ArrayNew>()) {
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (curr->is<ArrayNewData>()) {
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (curr->is<ArrayNewElem>()) {
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (curr->is<ArrayNewFixed>()) {
-      counts.note(curr->type);
+      info.note(curr->type);
     } else if (auto* copy = curr->dynCast<ArrayCopy>()) {
-      counts.note(copy->destRef->type);
-      counts.note(copy->srcRef->type);
+      info.note(copy->destRef->type);
+      info.note(copy->srcRef->type);
     } else if (auto* fill = curr->dynCast<ArrayFill>()) {
-      counts.note(fill->ref->type);
+      info.note(fill->ref->type);
     } else if (auto* init = curr->dynCast<ArrayInitData>()) {
-      counts.note(init->ref->type);
+      info.note(init->ref->type);
     } else if (auto* init = curr->dynCast<ArrayInitElem>()) {
-      counts.note(init->ref->type);
+      info.note(init->ref->type);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
-      counts.note(cast->type);
+      info.note(cast->type);
     } else if (auto* cast = curr->dynCast<RefTest>()) {
-      counts.note(cast->castType);
+      info.note(cast->castType);
     } else if (auto* cast = curr->dynCast<BrOn>()) {
       if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-        counts.note(cast->ref->type);
-        counts.note(cast->castType);
+        info.note(cast->ref->type);
+        info.note(cast->castType);
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {
-      counts.note(get->ref->type);
-      // If the type we read is a reference type then we must include it. It is
-      // not written in the binary format, so it doesn't need to be counted, but
-      // it does need to be taken into account in the IR (this may be the only
-      // place this type appears in the entire binary, and we must scan all
-      // types as the analyses that use us depend on that). TODO: This is kind
-      // of a hack, so it would be nice to remove. If we could remove it, we
-      // could also remove some of the pruning logic in getHeapTypeCounts below.
-      counts.include(get->type);
+      info.note(get->ref->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
-      counts.note(set->ref->type);
+      info.note(set->ref->type);
     } else if (auto* get = curr->dynCast<ArrayGet>()) {
-      counts.note(get->ref->type);
-      // See note on StructGet above.
-      counts.include(get->type);
+      info.note(get->ref->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
-      counts.note(set->ref->type);
+      info.note(set->ref->type);
     } else if (auto* contBind = curr->dynCast<ContBind>()) {
-      counts.note(contBind->contTypeBefore);
-      counts.note(contBind->contTypeAfter);
+      info.note(contBind->contTypeBefore);
+      info.note(contBind->contTypeAfter);
     } else if (auto* contNew = curr->dynCast<ContNew>()) {
-      counts.note(contNew->contType);
+      info.note(contNew->contType);
     } else if (auto* resume = curr->dynCast<Resume>()) {
-      counts.note(resume->contType);
+      info.note(resume->contType);
     } else if (Properties::isControlFlowStructure(curr)) {
-      counts.noteControlFlow(Signature(Type::none, curr->type));
+      info.noteControlFlow(Signature(Type::none, curr->type));
     }
   }
 };
 
-// Count the number of times each heap type that would appear in the binary is
-// referenced. If `prune`, exclude types that are never referenced, even though
-// a binary would be invalid without them.
-InsertOrderedMap<HeapType, size_t> getHeapTypeCounts(Module& wasm,
-                                                     bool prune = false) {
+void classifyTypeVisibility(Module& wasm,
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types);
+
+} // anonymous namespace
+
+InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
+  Module& wasm, TypeInclusion inclusion, VisibilityHandling visibility) {
   // Collect module-level info.
-  Counts counts;
-  CodeScanner(wasm, counts).walkModuleCode(&wasm);
+  TypeInfos info;
+  CodeScanner(wasm, info, inclusion).walkModuleCode(&wasm);
   for (auto& curr : wasm.globals) {
-    counts.note(curr->type);
+    info.note(curr->type);
   }
   for (auto& curr : wasm.tags) {
-    counts.note(curr->sig);
+    info.note(curr->type);
   }
   for (auto& curr : wasm.tables) {
-    counts.note(curr->type);
+    info.note(curr->type);
   }
   for (auto& curr : wasm.elementSegments) {
-    counts.note(curr->type);
+    info.note(curr->type);
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts, Immutable, InsertOrderedMap>
-    analysis(wasm, [&](Function* func, Counts& counts) {
-      counts.note(func->type);
+  ModuleUtils::ParallelFunctionAnalysis<TypeInfos, Immutable, InsertOrderedMap>
+    analysis(wasm, [&](Function* func, TypeInfos& info) {
+      info.note(func->type);
       for (auto type : func->vars) {
-        counts.note(type);
+        info.note(type);
       }
-      if (!func->imported()) {
-        CodeScanner(wasm, counts).walk(func->body);
+      // Don't just use `func->imported()` here because we also might be
+      // printing an error message on a partially parsed module whose declared
+      // function bodies have not all been parsed yet.
+      if (func->body) {
+        CodeScanner(wasm, info, inclusion).walk(func->body);
       }
     });
 
   // Combine the function info with the module info.
-  for (auto& [_, functionCounts] : analysis.map) {
-    for (auto& [type, count] : functionCounts.counts) {
-      counts.counts[type] += count;
+  for (auto& [_, functionInfo] : analysis.map) {
+    for (auto& [type, typeInfo] : functionInfo.info) {
+      info.info[type].useCount += typeInfo.useCount;
     }
-    for (auto& [sig, count] : functionCounts.controlFlowSignatures) {
-      counts.controlFlowSignatures[sig] += count;
-    }
-  }
-
-  if (prune) {
-    // Remove types that are not actually used.
-    auto it = counts.counts.begin();
-    while (it != counts.counts.end()) {
-      if (it->second == 0) {
-        auto deleted = it++;
-        counts.counts.erase(deleted);
-      } else {
-        ++it;
-      }
+    for (auto& [sig, count] : functionInfo.controlFlowSignatures) {
+      info.controlFlowSignatures[sig] += count;
     }
   }
 
@@ -469,6 +515,7 @@ InsertOrderedMap<HeapType, size_t> getHeapTypeCounts(Module& wasm,
   // appear in the type section once, so we just need to visit it once. Also
   // track which recursion groups we've already processed to avoid quadratic
   // behavior when there is a single large group.
+  // TODO: Use a vector here, since we never try to add the same type twice.
   UniqueNonrepeatingDeferredQueue<HeapType> newTypes;
   std::unordered_map<Signature, HeapType> seenSigs;
   auto noteNewType = [&](HeapType type) {
@@ -477,43 +524,32 @@ InsertOrderedMap<HeapType, size_t> getHeapTypeCounts(Module& wasm,
       seenSigs.insert({type.getSignature(), type});
     }
   };
-  for (auto& [type, _] : counts.counts) {
+  for (auto& [type, _] : info.info) {
     noteNewType(type);
   }
-  auto controlFlowIt = counts.controlFlowSignatures.begin();
+  auto controlFlowIt = info.controlFlowSignatures.begin();
   std::unordered_set<RecGroup> includedGroups;
   while (!newTypes.empty()) {
     while (!newTypes.empty()) {
       auto ht = newTypes.pop();
-      for (HeapType child : ht.getHeapTypeChildren()) {
+      for (HeapType child : ht.getReferencedHeapTypes()) {
         if (!child.isBasic()) {
-          if (!counts.counts.count(child)) {
+          if (!info.contains(child)) {
             noteNewType(child);
           }
-          counts.note(child);
-        }
-      }
-
-      if (auto super = ht.getDeclaredSuperType()) {
-        if (!counts.counts.count(*super)) {
-          noteNewType(*super);
-          // We should unconditionally count supertypes, but while the type
-          // system is in flux, skip counting them to keep the type orderings in
-          // nominal test outputs more similar to the orderings in the
-          // equirecursive outputs. FIXME
-          counts.include(*super);
+          info.note(child);
         }
       }
 
       // Make sure we've noted the complete recursion group of each type as
       // well.
-      if (!prune) {
+      if (inclusion != TypeInclusion::UsedIRTypes) {
         auto recGroup = ht.getRecGroup();
         if (includedGroups.insert(recGroup).second) {
           for (auto type : recGroup) {
-            if (!counts.counts.count(type)) {
+            if (!info.contains(type)) {
               noteNewType(type);
-              counts.include(type);
+              info.include(type);
             }
           }
         }
@@ -522,43 +558,50 @@ InsertOrderedMap<HeapType, size_t> getHeapTypeCounts(Module& wasm,
 
     // We've found all the types there are to find without considering more
     // control flow types. Consider one more control flow type and repeat.
-    for (; controlFlowIt != counts.controlFlowSignatures.end();
-         ++controlFlowIt) {
+    for (; controlFlowIt != info.controlFlowSignatures.end(); ++controlFlowIt) {
       auto& [sig, count] = *controlFlowIt;
       if (auto it = seenSigs.find(sig); it != seenSigs.end()) {
-        counts.counts[it->second] += count;
+        info.info[it->second].useCount += count;
       } else {
         // We've never seen this signature before, so add a type for it.
         HeapType type(sig);
         noteNewType(type);
-        counts.counts[type] += count;
+        info.info[type].useCount += count;
         break;
       }
     }
   }
 
-  return counts.counts;
-}
-
-void setIndices(IndexedHeapTypes& indexedTypes) {
-  for (Index i = 0; i < indexedTypes.types.size(); i++) {
-    indexedTypes.indices[indexedTypes.types[i]] = i;
+  if (visibility == VisibilityHandling::FindVisibility) {
+    classifyTypeVisibility(wasm, info.info);
   }
+
+  return std::move(info.info);
 }
 
-InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
-  InsertOrderedSet<HeapType> publicTypes;
+namespace {
+
+void classifyTypeVisibility(Module& wasm,
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
+  // We will need to traverse the types used by public types and mark them
+  // public as well.
+  std::vector<HeapType> workList;
+  std::unordered_set<RecGroup> publicGroups;
 
   auto notePublic = [&](HeapType type) {
     if (type.isBasic()) {
       return;
     }
-    // All the rec group members are public as well.
+    auto group = type.getRecGroup();
+    if (!publicGroups.insert(group).second) {
+      // The groups in this type have already been marked public.
+      return;
+    }
     for (auto member : type.getRecGroup()) {
-      if (!publicTypes.insert(member)) {
-        // We've already inserted this rec group.
-        break;
+      if (auto it = types.find(member); it != types.end()) {
+        it->second.visibility = Visibility::Public;
       }
+      workList.push_back(member);
     }
   };
 
@@ -618,48 +661,63 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
   }
 
   // Find all the other public types reachable from directly publicized types.
-  std::vector<HeapType> workList(publicTypes.begin(), publicTypes.end());
-  while (workList.size()) {
+  while (!workList.empty()) {
     auto curr = workList.back();
     workList.pop_back();
     for (auto t : curr.getReferencedHeapTypes()) {
-      if (!t.isBasic() && publicTypes.insert(t)) {
-        workList.push_back(t);
-      }
+      notePublic(t);
     }
   }
 
-  return publicTypes;
+  for (auto& [_, info] : types) {
+    if (info.visibility != Visibility::Public) {
+      info.visibility = Visibility::Private;
+    }
+  }
+
+  // TODO: In an open world, we need to consider subtypes of public types public
+  // as well, or potentially even consider all types to be public unless
+  // otherwise annotated.
+}
+
+void setIndices(IndexedHeapTypes& indexedTypes) {
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    indexedTypes.indices[indexedTypes.types[i]] = i;
+  }
 }
 
 } // anonymous namespace
 
 std::vector<HeapType> collectHeapTypes(Module& wasm) {
-  auto counts = getHeapTypeCounts(wasm);
+  auto info = collectHeapTypeInfo(wasm);
   std::vector<HeapType> types;
-  types.reserve(counts.size());
-  for (auto& [type, _] : counts) {
+  types.reserve(info.size());
+  for (auto& [type, _] : info) {
     types.push_back(type);
   }
   return types;
 }
 
 std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
-  auto publicTypes = getPublicTypeSet(wasm);
+  auto info = collectHeapTypeInfo(
+    wasm, TypeInclusion::BinaryTypes, VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
-  types.reserve(publicTypes.size());
-  for (auto type : publicTypes) {
-    types.push_back(type);
+  types.reserve(info.size());
+  for (auto& [type, typeInfo] : info) {
+    if (typeInfo.visibility == Visibility::Public) {
+      types.push_back(type);
+    }
   }
   return types;
 }
 
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
-  auto usedTypes = getHeapTypeCounts(wasm, true);
-  auto publicTypes = getPublicTypeSet(wasm);
+  auto info = collectHeapTypeInfo(
+    wasm, TypeInclusion::UsedIRTypes, VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
-  for (auto& [type, _] : usedTypes) {
-    if (!publicTypes.count(type)) {
+  types.reserve(info.size());
+  for (auto& [type, typeInfo] : info) {
+    if (typeInfo.visibility == Visibility::Private) {
       types.push_back(type);
     }
   }
@@ -667,97 +725,115 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts = getHeapTypeCounts(wasm);
+  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
 
-  // Types have to be arranged into topologically ordered recursion groups.
-  // Under isorecrsive typing, the topological sort has to take all referenced
-  // rec groups into account. First, sort the groups by average use count among
-  // their members so that the later topological sort will place frequently used
-  // types first.
-  struct GroupInfo {
-    size_t index;
-    double useCount = 0;
-    std::unordered_set<RecGroup> preds;
-    std::vector<RecGroup> sortedPreds;
-    GroupInfo(size_t index) : index(index) {}
-    bool operator<(const GroupInfo& other) const {
-      if (useCount != other.useCount) {
-        return useCount < other.useCount;
-      }
-      return index > other.index;
-    }
-  };
-
-  struct GroupInfoMap : std::unordered_map<RecGroup, GroupInfo> {
-    void sort(std::vector<RecGroup>& groups) {
-      std::sort(groups.begin(), groups.end(), [&](auto& a, auto& b) {
-        return this->at(a) < this->at(b);
-      });
-    }
-  };
-
-  // Collect the information that will be used to sort the recursion groups.
-  GroupInfoMap groupInfos;
+  // Collect the rec groups.
+  std::unordered_map<RecGroup, size_t> groupIndices;
+  std::vector<RecGroup> groups;
   for (auto& [type, _] : counts) {
-    RecGroup group = type.getRecGroup();
-    // Try to initialize a new info or get the existing info.
-    auto& info = groupInfos.insert({group, {groupInfos.size()}}).first->second;
-    // Update the reference count.
-    info.useCount += counts.at(type);
-    // Collect predecessor groups.
-    for (auto child : type.getReferencedHeapTypes()) {
-      if (!child.isBasic()) {
-        RecGroup otherGroup = child.getRecGroup();
-        if (otherGroup != group) {
-          info.preds.insert(otherGroup);
+    auto group = type.getRecGroup();
+    if (groupIndices.insert({group, groups.size()}).second) {
+      groups.push_back(group);
+    }
+  }
+
+  // Collect the total use counts for each group.
+  std::vector<size_t> groupCounts;
+  groupCounts.reserve(groups.size());
+  for (auto group : groups) {
+    size_t count = 0;
+    for (auto type : group) {
+      count += counts.at(type).useCount;
+    }
+    groupCounts.push_back(count);
+  }
+
+  // Collect the reverse dependencies of each group.
+  std::vector<std::unordered_set<size_t>> depSets(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    for (auto type : groups[i]) {
+      for (auto child : type.getReferencedHeapTypes()) {
+        if (child.isBasic()) {
+          continue;
         }
+        auto childGroup = child.getRecGroup();
+        if (childGroup == groups[i]) {
+          continue;
+        }
+        depSets[groupIndices.at(childGroup)].insert(i);
+      }
+    }
+  }
+  TopologicalSort::Graph deps;
+  deps.reserve(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    deps.emplace_back(depSets[i].begin(), depSets[i].end());
+  }
+
+  // Experimentally determined to be pretty good for a variety of programs in
+  // different languages.
+  constexpr double childFactor = 0.25;
+
+  // Each rec group's weight, adjusted for its size and incorporating the weight
+  // of its users.
+  std::vector<double> weights(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    weights[i] = double(groupCounts[i]) / groups[i].size();
+  }
+  auto sorted = TopologicalSort::sort(deps);
+  for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+    for (auto user : deps[*it]) {
+      weights[*it] += childFactor * weights[user];
+    }
+  }
+
+  // If we've preserved the input type order on the module, we have to respect
+  // that first. Use the index of the first type from each group. In principle
+  // we could try to do something more robust like take the minimum index of all
+  // the types in the group, but if the groups haven't been preserved, then we
+  // won't be able to perfectly preserve the order anyway.
+  std::vector<std::optional<Index>> groupTypeIndices;
+  if (wasm.typeIndices.empty()) {
+    groupTypeIndices.resize(groups.size());
+  } else {
+    groupTypeIndices.reserve(groups.size());
+    for (auto group : groups) {
+      groupTypeIndices.emplace_back();
+      if (auto it = wasm.typeIndices.find(group[0]);
+          it != wasm.typeIndices.end()) {
+        groupTypeIndices.back() = it->second;
       }
     }
   }
 
-  // Fix up the use counts to be averages to ensure groups are used comensurate
-  // with the amount of index space they occupy. Skip this for nominal types
-  // since their internal group size is always 1.
-  for (auto& [group, info] : groupInfos) {
-    info.useCount /= group.size();
-  }
-
-  // Sort the predecessors so the most used will be visited first.
-  for (auto& [group, info] : groupInfos) {
-    info.sortedPreds.insert(
-      info.sortedPreds.end(), info.preds.begin(), info.preds.end());
-    groupInfos.sort(info.sortedPreds);
-    info.preds.clear();
-  }
-
-  struct RecGroupSort : TopologicalSort<RecGroup, RecGroupSort> {
-    GroupInfoMap& groupInfos;
-    RecGroupSort(GroupInfoMap& groupInfos) : groupInfos(groupInfos) {
-      // Sort all the groups so the topological sort visits the most used first.
-      std::vector<RecGroup> sortedGroups;
-      sortedGroups.reserve(groupInfos.size());
-      for (auto& [group, _] : groupInfos) {
-        sortedGroups.push_back(group);
-      }
-      groupInfos.sort(sortedGroups);
-      for (auto group : sortedGroups) {
-        push(group);
-      }
+  auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+    auto indexA = groupTypeIndices[a];
+    auto indexB = groupTypeIndices[b];
+    // Groups with indices must be sorted before groups without indices to
+    // ensure transitivity of this comparison relation.
+    if (indexA.has_value() != indexB.has_value()) {
+      return indexA.has_value();
     }
-
-    void pushPredecessors(RecGroup group) {
-      for (auto pred : groupInfos.at(group).sortedPreds) {
-        push(pred);
-      }
+    // Sort by preserved index if we can.
+    if (indexA && *indexA != *indexB) {
+      return *indexA < *indexB;
     }
-  };
+    // Otherwise sort by weight and break ties by the arbitrary deterministic
+    // order in which we've collected types.
+    auto weightA = weights[a];
+    auto weightB = weights[b];
+    if (weightA != weightB) {
+      return weightA > weightB;
+    }
+    return a < b;
+  });
 
-  // Perform the topological sort and collect the types.
   IndexedHeapTypes indexedTypes;
   indexedTypes.types.reserve(counts.size());
-  for (auto group : RecGroupSort(groupInfos)) {
-    for (auto member : group) {
-      indexedTypes.types.push_back(member);
+
+  for (auto groupIndex : order) {
+    for (auto type : groups[groupIndex]) {
+      indexedTypes.types.push_back(type);
     }
   }
   setIndices(indexedTypes);

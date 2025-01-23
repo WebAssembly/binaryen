@@ -10,7 +10,7 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function legalstub$1($0, $1, $2, $3, $4, $5) {
+ function legalstub$0($0, $1, $2, $3, $4, $5) {
   $3 = $0;
   $0 = $2 & 31;
   if (($2 & 63) >>> 0 >= 32) {
@@ -23,7 +23,7 @@ function asmFunc(imports) {
   return ($0 | 0) == ($4 | 0) & ($1 | 0) == ($5 | 0);
  }
  
- function legalstub$2($0, $1, $2, $3, $4, $5) {
+ function legalstub$1($0, $1, $2, $3, $4, $5) {
   $3 = $0;
   $0 = $2 & 31;
   if (($2 & 63) >>> 0 >= 32) {
@@ -37,8 +37,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "shl_i64": legalstub$1, 
-  "shr_i64": legalstub$2
+  "shl_i64": legalstub$0, 
+  "shr_i64": legalstub$1
  };
 }
 

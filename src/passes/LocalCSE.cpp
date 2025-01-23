@@ -217,16 +217,18 @@ struct Scanner
   // original expression that we request from.
   HashedExprs activeExprs;
 
-  // Stack of hash values of all active expressions. We store these so that we
-  // do not end up recomputing hashes of children in an N^2 manner.
-  SmallVector<size_t, 10> activeHashes;
+  // Stack of information of all active expressions. We store hash values and
+  // possibility (as computed by isPossible), which we compute incrementally so
+  // as to avoid N^2 work (which could happen if we recomputed children).
+  using HashPossibility = std::pair<size_t, bool>;
+  SmallVector<HashPossibility, 10> activeIncrementalInfo;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
     self->activeExprs.clear();
-    self->activeHashes.clear();
+    self->activeIncrementalInfo.clear();
     // Note that we do not clear requestInfos - that is information we will use
     // later in the Applier class. That is, we've cleared all the active
     // information, leaving the things we need later.
@@ -245,19 +247,24 @@ struct Scanner
     // that are not isRelevant() (if they are the children of a relevant thing).
     auto numChildren = Properties::getNumChildren(curr);
     auto hash = ExpressionAnalyzer::shallowHash(curr);
+    auto possible = isPossible(curr);
     for (Index i = 0; i < numChildren; i++) {
-      if (activeHashes.empty()) {
+      if (activeIncrementalInfo.empty()) {
         // The child was in another block, so this expression cannot be
         // optimized.
         return;
       }
-      hash_combine(hash, activeHashes.back());
-      activeHashes.pop_back();
+      auto [currHash, currPossible] = activeIncrementalInfo.back();
+      activeIncrementalInfo.pop_back();
+      hash_combine(hash, currHash);
+      if (!currPossible) {
+        possible = false;
+      }
     }
-    activeHashes.push_back(hash);
+    activeIncrementalInfo.emplace_back(hash, possible);
 
-    // Check if this is something relevant for optimization.
-    if (!isRelevant(curr)) {
+    // Check if this is something possible and also relevant for optimization.
+    if (!possible || !isRelevant(curr)) {
       return;
     }
 
@@ -349,6 +356,49 @@ struct Scanner
 
     return false;
   }
+
+  // Some things are not possible, and also prevent their parents from being
+  // possible as well. This is different from isRelevant in that relevance is
+  // considered for the entire expression, including children - e.g., is the
+  // total size big enough - while isPossible checks conditions that prevent
+  // using an expression at all.
+  bool isPossible(Expression* curr) {
+    // We will fully compute effects later, but consider shallow effects at this
+    // early time to ignore things that cannot be optimized later, because we
+    // use a greedy algorithm. Specifically, imagine we see this:
+    //
+    //  (call
+    //    (i32.add
+    //      ..
+    //    )
+    //  )
+    //
+    // If we considered the call relevant then we'd start to look for that
+    // larger pattern that contains the add, but then when we find that it
+    // cannot be optimized later it is too late for the add. (Instead of
+    // checking effects here we could perhaps add backtracking, but that sounds
+    // more complex.)
+    //
+    // We use |hasNonTrapSideEffects| because if a trap occurs the optimization
+    // remains valid: both this and the copy of it would trap, which means the
+    // first traps and the second isn't reached anyhow.
+    //
+    // (We don't stash these effects because we may compute many of them here,
+    // and only need the few for those patterns that repeat.)
+    if (ShallowEffectAnalyzer(options, *getModule(), curr)
+          .hasNonTrapSideEffects()) {
+      return false;
+    }
+
+    // We also cannot optimize away something that is intrinsically
+    // nondeterministic: even if it has no side effects, if it may return a
+    // different result each time, and then we cannot optimize away repeats.
+    if (Properties::isShallowlyGenerative(curr)) {
+      return false;
+    }
+
+    return true;
+  }
 };
 
 // Check for invalidations due to effects. We do this after scanning as effect
@@ -387,6 +437,16 @@ struct Checker
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
       EffectAnalyzer effects(options, *getModule());
+      // We can ignore traps here:
+      //
+      //  (ORIGINAL)
+      //  (curr)
+      //  (COPY)
+      //
+      // We are some code in between an original and a copy of it, and we are
+      // trying to turn COPY into a local.get of a value that we stash at the
+      // original. If |curr| traps then we simply don't reach the copy anyhow.
+      effects.trap = false;
       // We only need to visit this node itself, as we have already visited its
       // children by the time we get here.
       effects.visit(curr);
@@ -426,7 +486,7 @@ struct Checker
 
     if (info.requests > 0) {
       // This is an original. Compute its side effects, as we cannot optimize
-      // away repeated apperances if it has any.
+      // away repeated appearances if it has any.
       EffectAnalyzer effects(options, *getModule(), curr);
 
       // We can ignore traps here, as we replace a repeating expression with a
@@ -438,16 +498,12 @@ struct Checker
       // none of them.)
       effects.trap = false;
 
-      // We also cannot optimize away something that is intrinsically
-      // nondeterministic: even if it has no side effects, if it may return a
-      // different result each time, then we cannot optimize away repeats.
-      if (effects.hasSideEffects() ||
-          Properties::isGenerative(curr, getModule()->features)) {
-        requestInfos.erase(curr);
-      } else {
-        activeOriginals.emplace(
-          curr, ActiveOriginalInfo{info.requests, std::move(effects)});
-      }
+      // Note that we've already checked above that this has no side effects or
+      // generativity: if we got here, then it is good to go from the
+      // perspective of this expression itself (but may be invalidated by other
+      // code in between, see above).
+      activeOriginals.emplace(
+        curr, ActiveOriginalInfo{info.requests, std::move(effects)});
     } else if (info.original) {
       // The original may have already been invalidated. If so, remove our info
       // as well.

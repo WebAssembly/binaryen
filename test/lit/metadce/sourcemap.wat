@@ -7,20 +7,20 @@
 ;; Test that sourcemap information is preserved
 
 (module
-  ;;@ a:1:1
+  ;;@ a:1:2
   ;; TXT:      (type $0 (func))
 
   ;; TXT:      (export "f" (func $f))
 
   ;; TXT:      (func $f
-  ;; TXT-NEXT:  ;;@ a:2:1
+  ;; TXT-NEXT:  ;;@ a:7:8:someSymbol
   ;; TXT-NEXT:  (nop)
-  ;; TXT-NEXT:  ;;@ a:3:1
+  ;; TXT-NEXT:  ;;@ a:9:10
   ;; TXT-NEXT: )
   (func $f (export "f")
-     ;;@ a:2:1
+     ;;@ a:7:8:someSymbol
      (nop)
-     ;;@ a:3:1
+     ;;@ a:9:10
   )
 )
 ;; BIN:      (type $0 (func))
@@ -28,7 +28,7 @@
 ;; BIN:      (export "f" (func $0))
 
 ;; BIN:      (func $0
-;; BIN-NEXT:  ;;@ a:2:1
+;; BIN-NEXT:  ;;@ a:7:8:someSymbol
 ;; BIN-NEXT:  (nop)
-;; BIN-NEXT:  ;;@ a:3:1
+;; BIN-NEXT:  ;;@ a:9:10
 ;; BIN-NEXT: )

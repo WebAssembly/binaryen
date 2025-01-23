@@ -92,25 +92,17 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
     // "random" extra item in the rec group that is so outlandish it will
     // surely (?) never collide with anything. We must loop while doing so,
     // until we find a hash that does not collide.
-    auto hashSize = num + 10;
-    size_t random = num;
+    //
+    // Note that we use uint64_t here, and deterministic_hash_combine below, to
+    // ensure our output is fully deterministic - the types we add here are
+    // observable in the output.
+    uint64_t hashSize = num + 10;
+    uint64_t random = num;
     while (1) {
       // Make a builder and add a slot for the hash.
       TypeBuilder builder(num + 1);
       for (Index i = 0; i < num; i++) {
-        auto type = types[i];
-        if (type.isStruct()) {
-          builder[i] = type.getStruct();
-        } else {
-          // Atm this pass only needs struct and array types. If we refactor
-          // this function to be general purpose we'd need to extend that. TODO
-          assert(type.isArray());
-          builder[i] = type.getArray();
-        }
-        if (auto super = type.getDeclaredSuperType()) {
-          builder[i].subTypeOf(*super);
-        }
-        builder[i].setOpen(type.isOpen());
+        builder[i].copy(types[i]);
       }
 
       // Implement the hash as a struct with "random" fields, and add it.
@@ -118,7 +110,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
       for (Index i = 0; i < hashSize; i++) {
         // TODO: a denser encoding?
         auto type = (random & 1) ? Type::i32 : Type::f64;
-        hash_combine(random, hashSize + i);
+        deterministic_hash_combine(random, hashSize + i);
         hashStruct.fields.push_back(Field(type, Mutable));
       }
       builder[num] = hashStruct;
@@ -208,6 +200,7 @@ struct TypeSSA : public Pass {
 
     // Finally, refinalize to propagate the new types to parents.
     ReFinalize().run(getPassRunner(), module);
+    ReFinalize().runOnModuleCode(getPassRunner(), module);
   }
 
   News newsToModify;
@@ -249,12 +242,20 @@ struct TypeSSA : public Pass {
     for (Index i = 0; i < num; i++) {
       auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
-      if (oldType.isStruct()) {
-        builder[i] = oldType.getStruct();
-      } else {
-        builder[i] = oldType.getArray();
+      switch (oldType.getKind()) {
+        case HeapTypeKind::Struct:
+          builder[i] = oldType.getStruct();
+          break;
+        case HeapTypeKind::Array:
+          builder[i] = oldType.getArray();
+          break;
+        case HeapTypeKind::Func:
+        case HeapTypeKind::Cont:
+        case HeapTypeKind::Basic:
+          WASM_UNREACHABLE("unexpected kind");
       }
       builder[i].subTypeOf(oldType);
+      builder[i].setShared(oldType.getShared());
       builder[i].setOpen();
     }
     builder.createRecGroup(0, num);

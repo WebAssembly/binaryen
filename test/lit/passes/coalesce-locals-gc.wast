@@ -25,7 +25,7 @@
  (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
 
 
- ;; CHECK:      (func $test-dead-get-non-nullable (type $6) (param $0 (ref struct))
+ ;; CHECK:      (func $test-dead-get-non-nullable (type $7) (param $0 (ref struct))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref struct))
@@ -43,7 +43,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (type $7) (param $0 (ref null $array)) (result (ref null $array))
+ ;; CHECK:      (func $br_on_null (type $8) (param $0 (ref null $array)) (result (ref null $array))
  ;; CHECK-NEXT:  (block $label$1 (result (ref null $array))
  ;; CHECK-NEXT:   (block $label$2
  ;; CHECK-NEXT:    (br $label$1
@@ -155,20 +155,18 @@
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result anyref)
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i31ref)
- ;; CHECK-NEXT:    (ref.i31
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $unreachable-get-null
-  ;; Check that we don't replace the local.get $null with a ref.null, which
-  ;; would have a more precise type.
+  ;; Check that we don't replace the local.get $null with just a ref.null, which
+  ;; would have a more precise type. We wrap the ref.null in a block instead.
   (local $null-any anyref)
   (local $null-i31 i31ref)
   (unreachable)
@@ -180,20 +178,43 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize (type $5) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
- ;; CHECK-NEXT:  (struct.get $A 0
- ;; CHECK-NEXT:   (block (result (ref null $A))
- ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK:      (func $unreachable-get-tuple (type $3)
+ ;; CHECK-NEXT:  (local $0 (tuple anyref i32))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (tuple.extract 2 0
+ ;; CHECK-NEXT:    (block (type $6) (result anyref i32)
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $unreachable-get-tuple
+  (local $tuple (tuple anyref i32))
+  (unreachable)
+  (drop
+   ;; If we replaced the get with something with a more refined type, this
+   ;; extract would end up with a stale type.
+   (tuple.extract 2 0
+    (local.get $tuple)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $remove-tee-refinalize (type $5) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
+ ;; CHECK-NEXT:  (struct.get $B 0
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $remove-tee-refinalize
   (param $a (ref null $A))
   (param $b (ref null $B))
   (result (ref null struct))
-  ;; The local.tee receives a $B and flows out an $A. We want to avoid changing
-  ;; types here, so we'll wrap it in a block, and leave further improvements
-  ;; for other passes.
+  ;; The local.tee receives a $B and flows out an $A. We will ReFinalize here as
+  ;; we remove the tee, making the struct.get operate on $B.
   (struct.get $A 0
    (local.tee $a
     (local.get $b)
@@ -202,10 +223,8 @@
  )
 
  ;; CHECK:      (func $remove-tee-refinalize-2 (type $5) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
- ;; CHECK-NEXT:  (struct.get $A 0
- ;; CHECK-NEXT:   (block (result (ref null $A))
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (struct.get $B 0
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $remove-tee-refinalize-2
@@ -223,16 +242,14 @@
   )
  )
 
- ;; CHECK:      (func $replace-i31-local (type $8) (result i32)
+ ;; CHECK:      (func $replace-i31-local (type $9) (result i32)
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (ref.test (ref i31)
  ;; CHECK-NEXT:    (ref.cast i31ref
  ;; CHECK-NEXT:     (block (result i31ref)
- ;; CHECK-NEXT:      (ref.i31
- ;; CHECK-NEXT:       (i32.const 0)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -255,7 +272,7 @@
   )
  )
 
- ;; CHECK:      (func $replace-struct-param (type $9) (param $0 f64) (param $1 (ref null $A)) (result f32)
+ ;; CHECK:      (func $replace-struct-param (type $10) (param $0 f64) (param $1 (ref null $A)) (result f32)
  ;; CHECK-NEXT:  (call $replace-struct-param
  ;; CHECK-NEXT:   (block (result f64)
  ;; CHECK-NEXT:    (unreachable)
@@ -283,7 +300,7 @@
   )
  )
 
- ;; CHECK:      (func $test (type $10) (param $0 (ref any)) (result (ref any) i32)
+ ;; CHECK:      (func $test (type $11) (param $0 (ref any)) (result (ref any) i32)
  ;; CHECK-NEXT:  (local $1 (tuple anyref i32))
  ;; CHECK-NEXT:  (tuple.drop 2
  ;; CHECK-NEXT:   (tuple.make 2

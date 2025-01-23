@@ -9,13 +9,13 @@
   ;; CHECK:      (func $externals (type $0) (param $ext externref) (param $any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref struct)
-  ;; CHECK-NEXT:    (extern.internalize
+  ;; CHECK-NEXT:    (any.convert_extern
   ;; CHECK-NEXT:     (local.get $ext)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (extern.externalize
+  ;; CHECK-NEXT:   (extern.convert_any
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -25,13 +25,13 @@
     ;; exported.
     (drop
       (ref.cast (ref struct)
-        (extern.internalize
+        (any.convert_extern
           (local.get $ext)
         )
       )
     )
     (drop
-      (extern.externalize
+      (extern.convert_any
         (local.get $any)
       )
     )
@@ -41,7 +41,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable RefCast we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (extern.internalize
+  ;; CHECK-NEXT:     (any.convert_extern
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -49,7 +49,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (extern.externalize
+  ;; CHECK-NEXT:   (extern.convert_any
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -59,13 +59,13 @@
     ;; unreachable.
     (drop
       (ref.cast (ref struct)
-        (extern.internalize
+        (any.convert_extern
           (local.get $ext)
         )
       )
     )
     (drop
-      (extern.externalize
+      (extern.convert_any
         (local.get $any)
       )
     )

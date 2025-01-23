@@ -7,7 +7,7 @@
 ;; contains the serialization of the struct.new instruction).
 
 (module
- ;; CHECK:      (type $A (struct ))
+ ;; CHECK:      (type $A (struct))
  (type $A (struct))
 
  (export "new" (func $new))
@@ -43,7 +43,7 @@
  ;; As above, but now there is an existing global with the name that we want to
  ;; use. We should not collide.
 
- ;; CHECK:      (type $A (struct ))
+ ;; CHECK:      (type $A (struct))
  (type $A (struct))
 
  ;; CHECK:      (type $1 (func (result (ref any))))

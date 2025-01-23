@@ -10,317 +10,317 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $1($0, $1_1) {
-  $0 = Math_fround($0);
+ function $0($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return Math_fround(Math_fround($0 + $1_1));
+  return Math_fround(Math_fround($0_1 + $1_1));
  }
  
- function $2($0, $1_1) {
-  $0 = Math_fround($0);
+ function $1($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return Math_fround(Math_fround($0 - $1_1));
+  return Math_fround(Math_fround($0_1 - $1_1));
  }
  
- function $3($0, $1_1) {
-  $0 = Math_fround($0);
+ function $2($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return Math_fround(Math_fround($0 * $1_1));
+  return Math_fround(Math_fround($0_1 * $1_1));
  }
  
- function $4($0, $1_1) {
-  $0 = Math_fround($0);
+ function $3($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return Math_fround(Math_fround($0 / $1_1));
+  return Math_fround(Math_fround($0_1 / $1_1));
  }
  
- function $5($0, $1_1) {
-  $0 = +$0;
+ function $4($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return +($0 + $1_1);
+  return +($0_1 + $1_1);
  }
  
- function $6($0, $1_1) {
-  $0 = +$0;
+ function $5($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return +($0 - $1_1);
+  return +($0_1 - $1_1);
  }
  
- function $7($0, $1_1) {
-  $0 = +$0;
+ function $6($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return +($0 * $1_1);
+  return +($0_1 * $1_1);
  }
  
- function $8($0, $1_1) {
-  $0 = +$0;
+ function $7($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return +($0 / $1_1);
+  return +($0_1 / $1_1);
  }
  
- function $9($0, $1_1) {
-  $0 = Math_fround($0);
+ function $8($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return $0 == $1_1 | 0;
+  return $0_1 == $1_1 | 0;
  }
  
- function $10($0, $1_1) {
-  $0 = Math_fround($0);
+ function $9($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return $0 != $1_1 | 0;
+  return $0_1 != $1_1 | 0;
  }
  
- function $11($0, $1_1) {
-  $0 = Math_fround($0);
+ function $10($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return $0 >= $1_1 | 0;
+  return $0_1 >= $1_1 | 0;
  }
  
- function $12($0, $1_1) {
-  $0 = Math_fround($0);
+ function $11($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return $0 > $1_1 | 0;
+  return $0_1 > $1_1 | 0;
  }
  
- function $13($0, $1_1) {
-  $0 = Math_fround($0);
+ function $12($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return $0 <= $1_1 | 0;
+  return $0_1 <= $1_1 | 0;
  }
  
- function $14($0, $1_1) {
-  $0 = Math_fround($0);
+ function $13($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return $0 < $1_1 | 0;
+  return $0_1 < $1_1 | 0;
  }
  
- function $15($0, $1_1) {
-  $0 = +$0;
+ function $14($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return $0 == $1_1 | 0;
+  return $0_1 == $1_1 | 0;
  }
  
- function $16($0, $1_1) {
-  $0 = +$0;
+ function $15($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return $0 != $1_1 | 0;
+  return $0_1 != $1_1 | 0;
  }
  
- function $17($0, $1_1) {
-  $0 = +$0;
+ function $16($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return $0 >= $1_1 | 0;
+  return $0_1 >= $1_1 | 0;
  }
  
- function $18($0, $1_1) {
-  $0 = +$0;
+ function $17($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return $0 > $1_1 | 0;
+  return $0_1 > $1_1 | 0;
  }
  
- function $19($0, $1_1) {
-  $0 = +$0;
+ function $18($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return $0 <= $1_1 | 0;
+  return $0_1 <= $1_1 | 0;
  }
  
- function $20($0, $1_1) {
-  $0 = +$0;
+ function $19($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return $0 < $1_1 | 0;
+  return $0_1 < $1_1 | 0;
  }
  
- function $21($0, $1_1) {
-  $0 = Math_fround($0);
+ function $20($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return Math_fround(Math_fround(Math_min($0, $1_1)));
+  return Math_fround(Math_fround(Math_min($0_1, $1_1)));
  }
  
- function $22($0, $1_1) {
-  $0 = Math_fround($0);
+ function $21($0_1, $1_1) {
+  $0_1 = Math_fround($0_1);
   $1_1 = Math_fround($1_1);
-  return Math_fround(Math_fround(Math_max($0, $1_1)));
+  return Math_fround(Math_fround(Math_max($0_1, $1_1)));
  }
  
- function $23($0, $1_1) {
-  $0 = +$0;
+ function $22($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return +Math_min($0, $1_1);
+  return +Math_min($0_1, $1_1);
  }
  
- function $24($0, $1_1) {
-  $0 = +$0;
+ function $23($0_1, $1_1) {
+  $0_1 = +$0_1;
   $1_1 = +$1_1;
-  return +Math_max($0, $1_1);
+  return +Math_max($0_1, $1_1);
  }
  
- function $25($0) {
-  $0 = Math_fround($0);
-  return +$0;
+ function $24($0_1) {
+  $0_1 = Math_fround($0_1);
+  return +$0_1;
  }
  
- function $26($0) {
-  $0 = +$0;
-  return Math_fround(Math_fround($0));
+ function $25($0_1) {
+  $0_1 = +$0_1;
+  return Math_fround(Math_fround($0_1));
  }
  
- function $27($0) {
-  $0 = Math_fround($0);
-  return Math_fround(Math_fround(Math_floor($0)));
+ function $26($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_floor($0_1)));
  }
  
- function $28($0) {
-  $0 = Math_fround($0);
-  return Math_fround(Math_fround(Math_ceil($0)));
+ function $27($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_ceil($0_1)));
  }
  
- function $29($0) {
-  $0 = +$0;
-  return +Math_floor($0);
+ function $28($0_1) {
+  $0_1 = +$0_1;
+  return +Math_floor($0_1);
  }
  
- function $30($0) {
-  $0 = +$0;
-  return +Math_ceil($0);
+ function $29($0_1) {
+  $0_1 = +$0_1;
+  return +Math_ceil($0_1);
  }
  
- function $31($0) {
-  $0 = Math_fround($0);
-  return Math_fround(Math_fround(Math_sqrt($0)));
+ function $30($0_1) {
+  $0_1 = Math_fround($0_1);
+  return Math_fround(Math_fround(Math_sqrt($0_1)));
  }
  
- function $32($0) {
-  $0 = +$0;
-  return +Math_sqrt($0);
+ function $31($0_1) {
+  $0_1 = +$0_1;
+  return +Math_sqrt($0_1);
  }
  
- function $35($0) {
-  $0 = $0 | 0;
-  return Math_fround(Math_fround($0 | 0));
+ function $32($0_1) {
+  $0_1 = $0_1 | 0;
+  return Math_fround(Math_fround($0_1 | 0));
  }
  
- function $36($0) {
-  $0 = $0 | 0;
-  return +($0 | 0);
+ function $33($0_1) {
+  $0_1 = $0_1 | 0;
+  return +($0_1 | 0);
  }
  
- function $37($0) {
-  $0 = $0 | 0;
-  return Math_fround(Math_fround($0 >>> 0));
+ function $34($0_1) {
+  $0_1 = $0_1 | 0;
+  return Math_fround(Math_fround($0_1 >>> 0));
  }
  
- function $38($0) {
-  $0 = $0 | 0;
-  return +($0 >>> 0);
+ function $35($0_1) {
+  $0_1 = $0_1 | 0;
+  return +($0_1 >>> 0);
  }
  
- function $39($0) {
-  $0 = Math_fround($0);
-  return ~~$0 | 0;
+ function $36($0_1) {
+  $0_1 = Math_fround($0_1);
+  return ~~$0_1 | 0;
  }
  
- function $40($0) {
-  $0 = +$0;
-  return ~~$0 | 0;
+ function $37($0_1) {
+  $0_1 = +$0_1;
+  return ~~$0_1 | 0;
  }
  
- function $41($0) {
-  $0 = Math_fround($0);
-  return ~~$0 >>> 0 | 0;
+ function $38($0_1) {
+  $0_1 = Math_fround($0_1);
+  return ~~$0_1 >>> 0 | 0;
  }
  
- function $42($0) {
-  $0 = +$0;
-  return ~~$0 >>> 0 | 0;
+ function $39($0_1) {
+  $0_1 = +$0_1;
+  return ~~$0_1 >>> 0 | 0;
  }
  
- function $47($0) {
-  $0 = Math_fround($0);
+ function $44($0_1) {
+  $0_1 = Math_fround($0_1);
   var $1_1 = 0;
-  if (Math_fround(Math_abs($0)) >= Math_fround(1.0)) {
-   $1_1 = ~~($0 > Math_fround(0.0) ? Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) : Math_fround(Math_ceil(Math_fround(Math_fround($0 - Math_fround(~~$0 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))) >>> 0
+  if (Math_fround(Math_abs($0_1)) >= Math_fround(1.0)) {
+   $1_1 = ~~($0_1 > Math_fround(0.0) ? Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0_1 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) : Math_fround(Math_ceil(Math_fround(Math_fround($0_1 - Math_fround(~~$0_1 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))) >>> 0
   } else {
    $1_1 = 0
   }
-  return !($1_1 | ~~$0 >>> 0) | 0;
+  return !($1_1 | ~~$0_1 >>> 0) | 0;
  }
  
- function $48($0) {
-  $0 = +$0;
+ function $45($0_1) {
+  $0_1 = +$0_1;
   var $1_1 = 0;
-  if (Math_abs($0) >= 1.0) {
-   $1_1 = ~~($0 > 0.0 ? Math_min(Math_floor($0 * 2.3283064365386963e-10), 4294967295.0) : Math_ceil(($0 - +(~~$0 >>> 0 >>> 0)) * 2.3283064365386963e-10)) >>> 0
+  if (Math_abs($0_1) >= 1.0) {
+   $1_1 = ~~($0_1 > 0.0 ? Math_min(Math_floor($0_1 * 2.3283064365386963e-10), 4294967295.0) : Math_ceil(($0_1 - +(~~$0_1 >>> 0 >>> 0)) * 2.3283064365386963e-10)) >>> 0
   } else {
    $1_1 = 0
   }
-  return !($1_1 | ~~$0 >>> 0) | 0;
+  return !($1_1 | ~~$0_1 >>> 0) | 0;
  }
  
- function legalstub$43($0, $1_1) {
-  return Math_fround(+($0 >>> 0) + +($1_1 | 0) * 4294967296.0);
+ function legalstub$40($0_1, $1_1) {
+  return Math_fround(+($0_1 >>> 0) + +($1_1 | 0) * 4294967296.0);
  }
  
- function legalstub$44($0, $1_1) {
-  return +($0 >>> 0) + +($1_1 | 0) * 4294967296.0;
+ function legalstub$41($0_1, $1_1) {
+  return +($0_1 >>> 0) + +($1_1 | 0) * 4294967296.0;
  }
  
- function legalstub$45($0, $1_1) {
-  return Math_fround(+($0 >>> 0) + +($1_1 >>> 0) * 4294967296.0);
+ function legalstub$42($0_1, $1_1) {
+  return Math_fround(+($0_1 >>> 0) + +($1_1 >>> 0) * 4294967296.0);
  }
  
- function legalstub$46($0, $1_1) {
-  return +($0 >>> 0) + +($1_1 >>> 0) * 4294967296.0;
+ function legalstub$43($0_1, $1_1) {
+  return +($0_1 >>> 0) + +($1_1 >>> 0) * 4294967296.0;
  }
  
  return {
-  "f32_add": $1, 
-  "f32_sub": $2, 
-  "f32_mul": $3, 
-  "f32_div": $4, 
-  "f64_add": $5, 
-  "f64_sub": $6, 
-  "f64_mul": $7, 
-  "f64_div": $8, 
-  "f32_eq": $9, 
-  "f32_ne": $10, 
-  "f32_ge": $11, 
-  "f32_gt": $12, 
-  "f32_le": $13, 
-  "f32_lt": $14, 
-  "f64_eq": $15, 
-  "f64_ne": $16, 
-  "f64_ge": $17, 
-  "f64_gt": $18, 
-  "f64_le": $19, 
-  "f64_lt": $20, 
-  "f32_min": $21, 
-  "f32_max": $22, 
-  "f64_min": $23, 
-  "f64_max": $24, 
-  "f64_promote": $25, 
-  "f32_demote": $26, 
-  "f32_floor": $27, 
-  "f32_ceil": $28, 
-  "f64_floor": $29, 
-  "f64_ceil": $30, 
-  "f32_sqrt": $31, 
-  "f64_sqrt": $32, 
-  "i32_to_f32": $35, 
-  "i32_to_f64": $36, 
-  "u32_to_f32": $37, 
-  "u32_to_f64": $38, 
-  "f32_to_i32": $39, 
-  "f64_to_i32": $40, 
-  "f32_to_u32": $41, 
-  "f64_to_u32": $42, 
-  "i64_to_f32": legalstub$43, 
-  "i64_to_f64": legalstub$44, 
-  "u64_to_f32": legalstub$45, 
-  "u64_to_f64": legalstub$46, 
-  "f32_to_i64": $47, 
-  "f64_to_i64": $48, 
-  "f32_to_u64": $47, 
-  "f64_to_u64": $48
+  "f32_add": $0, 
+  "f32_sub": $1, 
+  "f32_mul": $2, 
+  "f32_div": $3, 
+  "f64_add": $4, 
+  "f64_sub": $5, 
+  "f64_mul": $6, 
+  "f64_div": $7, 
+  "f32_eq": $8, 
+  "f32_ne": $9, 
+  "f32_ge": $10, 
+  "f32_gt": $11, 
+  "f32_le": $12, 
+  "f32_lt": $13, 
+  "f64_eq": $14, 
+  "f64_ne": $15, 
+  "f64_ge": $16, 
+  "f64_gt": $17, 
+  "f64_le": $18, 
+  "f64_lt": $19, 
+  "f32_min": $20, 
+  "f32_max": $21, 
+  "f64_min": $22, 
+  "f64_max": $23, 
+  "f64_promote": $24, 
+  "f32_demote": $25, 
+  "f32_floor": $26, 
+  "f32_ceil": $27, 
+  "f64_floor": $28, 
+  "f64_ceil": $29, 
+  "f32_sqrt": $30, 
+  "f64_sqrt": $31, 
+  "i32_to_f32": $32, 
+  "i32_to_f64": $33, 
+  "u32_to_f32": $34, 
+  "u32_to_f64": $35, 
+  "f32_to_i32": $36, 
+  "f64_to_i32": $37, 
+  "f32_to_u32": $38, 
+  "f64_to_u32": $39, 
+  "i64_to_f32": legalstub$40, 
+  "i64_to_f64": legalstub$41, 
+  "u64_to_f32": legalstub$42, 
+  "u64_to_f64": legalstub$43, 
+  "f32_to_i64": $44, 
+  "f64_to_i64": $45, 
+  "f32_to_u64": $44, 
+  "f64_to_u64": $45
  };
 }
 

@@ -14,7 +14,7 @@
 
   ;; CHECK:      (export "export" (func $export))
 
-  ;; CHECK:      (func $export (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $export (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.tee $0
   ;; CHECK-NEXT:    (i32.add

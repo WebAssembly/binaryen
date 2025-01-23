@@ -538,7 +538,7 @@
     (ref.func $B$func)
   ))
 
-  ;; CHECK:      (func $test-expanded (type $0) (param $x i32) (result funcref)
+  ;; CHECK:      (func $test-expanded (type $4) (param $x i32) (result funcref)
   ;; CHECK-NEXT:  (select (result (ref $specific-func))
   ;; CHECK-NEXT:   (ref.func $A$func)
   ;; CHECK-NEXT:   (ref.func $B$func)
@@ -561,7 +561,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-subtyping (type $0) (param $x i32) (result funcref)
+  ;; CHECK:      (func $test-subtyping (type $4) (param $x i32) (result funcref)
   ;; CHECK-NEXT:  (select (result (ref $specific-func))
   ;; CHECK-NEXT:   (ref.func $A$func)
   ;; CHECK-NEXT:   (ref.func $B$func)
@@ -657,7 +657,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-trap (type $0) (param $x i32) (result funcref)
+  ;; CHECK:      (func $test-trap (type $4) (param $x i32) (result funcref)
   ;; CHECK-NEXT:  (struct.get $vtable 0
   ;; CHECK-NEXT:   (select (result (ref null $vtable))
   ;; CHECK-NEXT:    (ref.null none)

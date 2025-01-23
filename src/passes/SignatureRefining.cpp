@@ -147,18 +147,18 @@ struct SignatureRefining : public Pass {
       }
     }
 
-    // We cannot alter the signature of an exported function, as the outside may
-    // notice us doing so. For example, if we turn a parameter from nullable
-    // into non-nullable then callers sending a null will break. Put another
-    // way, we need to see all callers to refine types, and for exports we
-    // cannot do so.
-    // TODO If a function type is passed we should also mark the types used
-    //      there, etc., recursively. For now this code just handles the top-
-    //      level type, which is enough to keep the fuzzer from erroring. More
-    //      generally, we need to decide about adding a "closed-world" flag of
-    //      some kind.
-    for (auto* exportedFunc : ExportUtils::getExportedFunctions(*module)) {
-      allInfo[exportedFunc->type].canModify = false;
+    // Find the public types, which we must not modify.
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      if (type.isFunction()) {
+        allInfo[type].canModify = false;
+      }
+    }
+
+    // Also skip modifying types used in tags, even private tags, since we don't
+    // analyze exception handling or stack switching instructions. TODO: Analyze
+    // and optimize exception handling and stack switching instructions.
+    for (auto& tag : module->tags) {
+      allInfo[tag->type].canModify = false;
     }
 
     // For now, do not optimize types that have subtypes. When we modify such a

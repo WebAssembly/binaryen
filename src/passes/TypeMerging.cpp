@@ -38,6 +38,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/dfa_minimization.h"
 #include "support/small_set.h"
@@ -142,6 +143,17 @@ struct TypeMerging : public Pass {
     return type;
   }
 
+  std::vector<HeapType>
+  mergeableSupertypesFirst(const std::vector<HeapType>& types) {
+    return HeapTypeOrdering::supertypesFirst(
+      types, [&](HeapType type) -> std::optional<HeapType> {
+        if (auto super = type.getDeclaredSuperType()) {
+          return getMerged(*super);
+        }
+        return std::nullopt;
+      });
+  }
+
   void run(Module* module_) override;
 
   // We will do two different kinds of merging: First, we will merge types into
@@ -161,20 +173,6 @@ struct TypeMerging : public Pass {
   std::vector<HeapType> getPublicChildren(HeapType type);
   DFA::State<HeapType> makeDFAState(HeapType type);
   void applyMerges();
-};
-
-struct MergeableSupertypesFirst
-  : HeapTypeOrdering::SupertypesFirstBase<MergeableSupertypesFirst> {
-  TypeMerging& merging;
-
-  MergeableSupertypesFirst(TypeMerging& merging) : merging(merging) {}
-
-  std::optional<HeapType> getDeclaredSuperType(HeapType type) {
-    if (auto super = type.getDeclaredSuperType()) {
-      return merging.getMerged(*super);
-    }
-    return std::nullopt;
-  }
 };
 
 // Hash and equality-compare HeapTypes based on their top-level structure (i.e.
@@ -232,14 +230,24 @@ void TypeMerging::run(Module* module_) {
   // Merging can unlock more sibling merging opportunities because two identical
   // types cannot be merged until their respective identical parents have been
   // merged in a previous step, making them siblings.
+  //
+  // If we merge siblings, we also need to refinalize because the LUB of merged
+  // siblings is the merged type rather than their common supertype after the
+  // merge.
+  bool refinalize = false;
   merge(Supertypes);
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
     if (!merge(Siblings)) {
       break;
     }
+    refinalize = true;
   }
 
   applyMerges();
+
+  if (refinalize) {
+    ReFinalize().run(getPassRunner(), module);
+  }
 }
 
 bool TypeMerging::merge(MergeKind kind) {
@@ -305,8 +313,7 @@ bool TypeMerging::merge(MergeKind kind) {
 
   // For each type, either create a new partition or add to its supertype's
   // partition.
-  MergeableSupertypesFirst sortedTypes(*this);
-  for (auto type : sortedTypes.sort(mergeable)) {
+  for (auto type : mergeableSupertypesFirst(mergeable)) {
     // We need partitions for any public children of this type since those
     // children will participate in the DFA we're creating.
     for (auto child : getPublicChildren(type)) {
@@ -414,7 +421,7 @@ bool TypeMerging::merge(MergeKind kind) {
   std::vector<HeapType> newMergeable;
   bool merged = false;
   for (const auto& partition : refinedPartitions) {
-    auto target = *MergeableSupertypesFirst(*this).sort(partition).begin();
+    auto target = mergeableSupertypesFirst(partition).front();
     newMergeable.push_back(target);
     for (auto type : partition) {
       if (type != target) {
@@ -452,8 +459,7 @@ TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   std::unordered_set<HeapType> includedTypes(types.begin(), types.end());
   std::vector<std::vector<HeapType>> partitions;
   std::unordered_map<HeapType, Index> partitionIndices;
-  MergeableSupertypesFirst sortedTypes(*this);
-  for (auto type : sortedTypes.sort(types)) {
+  for (auto type : mergeableSupertypesFirst(types)) {
     auto super = type.getDeclaredSuperType();
     if (super && includedTypes.count(*super)) {
       // We must already have a partition for the supertype we can add to.
@@ -509,11 +515,19 @@ std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
 
 DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   std::vector<HeapType> succs;
-  for (auto child : type.getHeapTypeChildren()) {
-    // Both private and public heap type children participate in the DFA and are
-    // eligible to be successors.
-    if (!child.isBasic()) {
-      succs.push_back(getMerged(child));
+  // Both private and public heap type children participate in the DFA and are
+  // eligible to be successors, except that public types are terminal states
+  // that do not have successors. This is sufficient because public types are
+  // always in their own singleton partitions, so they already differentiate
+  // types that reach them without needing to consider their children. In the
+  // other direction, including the children is not necessary to differentiate
+  // types reached by the public types because all such reachable types are also
+  // public and not eligible to be merged.
+  if (privateTypes.count(type)) {
+    for (auto child : type.getHeapTypeChildren()) {
+      if (!child.isBasic()) {
+        succs.push_back(getMerged(child));
+      }
     }
   }
   return {type, std::move(succs)};
@@ -541,33 +555,50 @@ bool shapeEq(HeapType a, HeapType b) {
   if (a.isOpen() != b.isOpen()) {
     return false;
   }
-  if (a.isStruct() && b.isStruct()) {
-    return shapeEq(a.getStruct(), b.getStruct());
+  if (a.isShared() != b.isShared()) {
+    return false;
   }
-  if (a.isArray() && b.isArray()) {
-    return shapeEq(a.getArray(), b.getArray());
+  auto aKind = a.getKind();
+  auto bKind = b.getKind();
+  if (aKind != bKind) {
+    return false;
   }
-  if (a.isSignature() && b.isSignature()) {
-    return shapeEq(a.getSignature(), b.getSignature());
+  switch (aKind) {
+    case HeapTypeKind::Func:
+      return shapeEq(a.getSignature(), b.getSignature());
+    case HeapTypeKind::Struct:
+      return shapeEq(a.getStruct(), b.getStruct());
+    case HeapTypeKind::Array:
+      return shapeEq(a.getArray(), b.getArray());
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      WASM_UNREACHABLE("unexpected kind");
   }
   return false;
 }
 
 size_t shapeHash(HeapType a) {
   size_t digest = hash(a.isOpen());
-  if (a.isStruct()) {
-    rehash(digest, 0);
-    hash_combine(digest, shapeHash(a.getStruct()));
-  } else if (a.isArray()) {
-    rehash(digest, 1);
-    hash_combine(digest, shapeHash(a.getArray()));
-  } else if (a.isSignature()) {
-    rehash(digest, 2);
-    hash_combine(digest, shapeHash(a.getSignature()));
-  } else {
-    WASM_UNREACHABLE("unexpected kind");
+  rehash(digest, a.isShared());
+  auto kind = a.getKind();
+  rehash(digest, kind);
+  switch (kind) {
+    case HeapTypeKind::Func:
+      hash_combine(digest, shapeHash(a.getSignature()));
+      return digest;
+    case HeapTypeKind::Struct:
+      hash_combine(digest, shapeHash(a.getStruct()));
+      return digest;
+    case HeapTypeKind::Array:
+      hash_combine(digest, shapeHash(a.getArray()));
+      return digest;
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      break;
   }
-  return digest;
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 bool shapeEq(const Struct& a, const Struct& b) {

@@ -1,6 +1,6 @@
 #include "ir/possible-contents.h"
 #include "ir/subtypes.h"
-#include "wasm-s-parser.h"
+#include "parser/wat-parser.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 
@@ -49,13 +49,9 @@ void assertCombination(const T& a, const T& b, const T& c) {
 static std::unique_ptr<Module> parse(std::string module) {
   auto wasm = std::make_unique<Module>();
   wasm->features = FeatureSet::All;
-  try {
-    SExpressionParser parser(&module.front());
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    Fatal() << "error in parsing wasm text";
+  auto parsed = WATParser::parseModule(*wasm, module);
+  if (auto* err = parsed.getErr()) {
+    Fatal() << err->msg << "\n";
   }
   return wasm;
 };
@@ -903,13 +899,13 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
       (func $foo (result (ref any))
         (select (result (ref any))
           (select (result (ref any))
-            (struct.new $A)
-            (struct.new $B)
+            (struct.new_default $A)
+            (struct.new_default $B)
             (i32.const 0)
           )
           (select (result (ref any))
-            (struct.new $C)
-            (struct.new $D)
+            (struct.new_default $C)
+            (struct.new_default $D)
             (i32.const 0)
           )
           (i32.const 0)

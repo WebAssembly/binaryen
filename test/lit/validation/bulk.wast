@@ -2,7 +2,7 @@
 
 ;; RUN: not wasm-opt -all %s 2>&1 | filecheck %s
 
-;; CHECK: unknown data segment
+;; CHECK: data index out of bounds
 
 (module
  (memory $0 16)

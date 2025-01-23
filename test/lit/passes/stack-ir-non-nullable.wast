@@ -37,20 +37,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -86,20 +86,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -135,20 +135,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -191,20 +191,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -245,20 +245,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -296,20 +296,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -345,20 +345,20 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )
    (then
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 1)
      )
     )
    )
    (else
     (local.set $temp
-     (i31.new
+     (ref.i31
       (i32.const 2)
      )
     )
@@ -410,7 +410,7 @@
     (tuple.extract 2 1
      (local.get $temp)
     )
-    (i31.new
+    (ref.i31
      (i32.const 1)
     )
    )
@@ -418,7 +418,7 @@
     (local.set $temp
      (tuple.make 2
       (i32.const 2)
-      (i31.new
+      (ref.i31
        (i32.const 3)
       )
      )
@@ -428,7 +428,7 @@
     (local.set $temp
      (tuple.make 2
       (i32.const 4)
-      (i31.new
+      (ref.i31
        (i32.const 5)
       )
      )
@@ -482,7 +482,7 @@
     (tuple.extract 2 1
      (local.get $temp)
     )
-    (i31.new
+    (ref.i31
      (i32.const 1)
     )
    )
@@ -490,7 +490,7 @@
     (local.set $temp
      (tuple.make 2
       (i32.const 2)
-      (i31.new
+      (ref.i31
        (i32.const 3)
       )
      )
@@ -500,7 +500,7 @@
     (local.set $temp
      (tuple.make 2
       (i32.const 4)
-      (i31.new
+      (ref.i31
        (i32.const 5)
       )
      )
@@ -1015,7 +1015,7 @@
   (if
    (ref.eq
     (local.get $temp)
-    (i31.new
+    (ref.i31
      (i32.const 0)
     )
    )

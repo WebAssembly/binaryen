@@ -122,7 +122,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
   }
   void visitIf(If* curr) {
-    if (curr->ifFalse) {
+    if (curr->ifFalse && curr->type != Type::unreachable) {
       self()->noteSubtype(curr->ifTrue, curr);
       self()->noteSubtype(curr->ifFalse, curr);
     }
@@ -238,15 +238,26 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(self()->getModule()->getTable(curr->sourceTable)->type,
                         self()->getModule()->getTable(curr->destTable)->type);
   }
+  void visitTableInit(TableInit* curr) {
+    auto* seg = self()->getModule()->getElementSegment(curr->segment);
+    self()->noteSubtype(seg->type,
+                        self()->getModule()->getTable(curr->table)->type);
+  }
   void visitTry(Try* curr) {
     self()->noteSubtype(curr->body, curr);
     for (auto* body : curr->catchBodies) {
       self()->noteSubtype(body, curr);
     }
   }
-  void visitTryTable(TryTable* curr) { self()->noteSubtype(curr->body, curr); }
+  void visitTryTable(TryTable* curr) {
+    self()->noteSubtype(curr->body, curr);
+    for (Index i = 0; i < curr->catchTags.size(); i++) {
+      self()->noteSubtype(curr->sentTypes[i],
+                          self()->findBreakTarget(curr->catchDests[i]));
+    }
+  }
   void visitThrow(Throw* curr) {
-    Type params = self()->getModule()->getTag(curr->tag)->sig.params;
+    Type params = self()->getModule()->getTag(curr->tag)->params();
     assert(params.size() == curr->operands.size());
     for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
       self()->noteSubtype(curr->operands[i], params[i]);
@@ -312,6 +323,21 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     self()->noteSubtype(curr->value, fields[curr->index].type);
+  }
+  void visitStructRMW(StructRMW* curr) {
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    self()->noteSubtype(curr->value, fields[curr->index].type);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    self()->noteSubtype(curr->expected, fields[curr->index].type);
+    self()->noteSubtype(curr->replacement, fields[curr->index].type);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
@@ -383,13 +409,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStringEncode(StringEncode* curr) {}
   void visitStringConcat(StringConcat* curr) {}
   void visitStringEq(StringEq* curr) {}
-  void visitStringAs(StringAs* curr) {}
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {}
   void visitStringWTF16Get(StringWTF16Get* curr) {}
-  void visitStringIterNext(StringIterNext* curr) {}
-  void visitStringIterMove(StringIterMove* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
-  void visitStringSliceIter(StringSliceIter* curr) {}
 
   void visitContBind(ContBind* curr) { WASM_UNREACHABLE("not implemented"); }
   void visitContNew(ContNew* curr) { WASM_UNREACHABLE("not implemented"); }

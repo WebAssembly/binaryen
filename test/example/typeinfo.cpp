@@ -96,16 +96,16 @@ void test_compound() {
 void test_printing() {
   {
     std::cout << ";; Heap types\n";
-    std::cout << HeapType(HeapType::func) << "\n";
+    std::cout << HeapTypes::func << "\n";
     std::cout << Type(HeapType::func, Nullable) << "\n";
     std::cout << Type(HeapType::func, NonNullable) << "\n";
-    std::cout << HeapType(HeapType::any) << "\n";
+    std::cout << HeapTypes::any << "\n";
     std::cout << Type(HeapType::any, Nullable) << "\n";
     std::cout << Type(HeapType::any, NonNullable) << "\n";
-    std::cout << HeapType(HeapType::eq) << "\n";
+    std::cout << HeapTypes::eq << "\n";
     std::cout << Type(HeapType::eq, Nullable) << "\n";
     std::cout << Type(HeapType::eq, NonNullable) << "\n";
-    std::cout << HeapType(HeapType::i31) << "\n";
+    std::cout << HeapTypes::i31 << "\n";
     std::cout << Type(HeapType::i31, Nullable) << "\n";
     std::cout << Type(HeapType::i31, NonNullable) << "\n";
     std::cout << Signature(Type::none, Type::none) << "\n";

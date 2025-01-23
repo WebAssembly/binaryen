@@ -525,10 +525,10 @@ void fuseImportsAndExports() {
       kindModuleExportMaps[ExternalKind::Tag][import->module][import->base];
     if (internalName.is()) {
       auto* export_ = merged.getTag(internalName);
-      if (HeapType(export_->sig) != HeapType(import->sig)) {
+      if (export_->type != import->type) {
         reportTypeMismatch(valid, "tag", import);
-        std::cerr << "export type " << export_->sig
-                  << " is different from import type " << import->sig << ".\n";
+        std::cerr << "export type " << export_->type
+                  << " is different from import type " << import->type << ".\n";
       }
     }
   });
@@ -695,7 +695,7 @@ Input source maps can be specified by adding an -ism option right after the modu
       currModule = laterInput.get();
     }
 
-    options.applyFeatures(*currModule);
+    options.applyOptionsBeforeParse(*currModule);
 
     ModuleReader reader;
     try {
@@ -704,6 +704,8 @@ Input source maps can be specified by adding an -ism option right after the modu
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input: " << inputFile;
     }
+
+    options.applyOptionsAfterParse(*currModule);
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(*currModule)) {
@@ -752,7 +754,7 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Output.
   if (options.extra.count("output") > 0) {
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {

@@ -264,21 +264,31 @@ struct Unsubtyping
         if (super.isBasic()) {
           continue;
         }
-        if (type.isStruct()) {
-          const auto& fields = type.getStruct().fields;
-          const auto& superFields = super.getStruct().fields;
-          for (size_t i = 0, size = superFields.size(); i < size; ++i) {
-            noteSubtype(fields[i].type, superFields[i].type);
+        switch (type.getKind()) {
+          case HeapTypeKind::Func: {
+            auto sig = type.getSignature();
+            auto superSig = super.getSignature();
+            noteSubtype(superSig.params, sig.params);
+            noteSubtype(sig.results, superSig.results);
+            break;
           }
-        } else if (type.isArray()) {
-          auto elem = type.getArray().element;
-          noteSubtype(elem.type, super.getArray().element.type);
-        } else {
-          assert(type.isSignature());
-          auto sig = type.getSignature();
-          auto superSig = super.getSignature();
-          noteSubtype(superSig.params, sig.params);
-          noteSubtype(sig.results, superSig.results);
+          case HeapTypeKind::Struct: {
+            const auto& fields = type.getStruct().fields;
+            const auto& superFields = super.getStruct().fields;
+            for (size_t i = 0, size = superFields.size(); i < size; ++i) {
+              noteSubtype(fields[i].type, superFields[i].type);
+            }
+            break;
+          }
+          case HeapTypeKind::Array: {
+            auto elem = type.getArray().element;
+            noteSubtype(elem.type, super.getArray().element.type);
+            break;
+          }
+          case HeapTypeKind::Cont:
+            WASM_UNREACHABLE("TODO: cont");
+          case HeapTypeKind::Basic:
+            WASM_UNREACHABLE("unexpected kind");
         }
       }
 

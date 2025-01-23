@@ -321,9 +321,9 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Certain expressions cannot be sinked into 'try', and so at the start of
-    // 'try' we forget about them.
-    if (curr->is<Try>()) {
+    // Certain expressions cannot be sinked into 'try'/'try_table', and so at
+    // the start of 'try'/'try_table' we forget about them.
+    if (curr->is<Try>() || curr->is<TryTable>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
         // Expressions that may throw cannot be moved into a try (which might
@@ -1088,15 +1088,15 @@ struct SimplifyLocals
             }
 
             auto bestType = func->getLocalType(best);
-            auto indexType = func->getLocalType(index);
-            if (!Type::isSubType(indexType, bestType)) {
+            auto addressType = func->getLocalType(index);
+            if (!Type::isSubType(addressType, bestType)) {
               // This is less refined than the current best; ignore.
               continue;
             }
 
             // This is better if it has a more refined type, or if it has more
             // uses.
-            if (indexType != bestType ||
+            if (addressType != bestType ||
                 getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
               best = index;
             }

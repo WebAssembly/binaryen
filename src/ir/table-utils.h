@@ -40,7 +40,7 @@ struct FlatTable {
           valid = false;
           return;
         }
-        Index start = offset->cast<Const>()->value.geti32();
+        Index start = offset->cast<Const>()->value.getInteger();
         Index size = segment->data.size();
         Index end;
         if (std::ckd_add(&end, start, size) || end > table.initial) {

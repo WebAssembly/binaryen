@@ -18,8 +18,7 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] Interpretation added to src/wasm-interpreter.h
  - [ ] Effects handled in src/ir/effects.h
  - [ ] Precomputing handled in src/passes/Precompute.cpp
- - [ ] Hashing and comparing in src/ir/ExpressionAnalyzer.cpp
- - [ ] Parsing added in scripts/gen-s-parser.py, src/wasm-s-parser.h and src/wasm/wasm-s-parser.cpp
+ - [ ] Parsing added in scripts/gen-s-parser.py, src/parser/parsers.h, src/parser/contexts.h, src/wasm-ir-builder.h, and src/wasm/wasm-ir-builder.cpp
  - [ ] Printing added in src/passes/Print.cpp
  - [ ] Decoding added in src/wasm-binary.h and src/wasm/wasm-binary.cpp
  - [ ] Binary writing added in src/wasm-stack.h and src/wasm/wasm-stack.cpp
@@ -30,4 +29,4 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] C API tested in test/example/c-api-kitchen-sink.c
  - [ ] JS API tested in test/binaryen.js/kitchen-sink.js
  - [ ] Tests added in test/spec
- - [ ] Tests added in top-level test/
+ - [ ] Tests added in test/lit

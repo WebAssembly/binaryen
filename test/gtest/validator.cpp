@@ -48,3 +48,20 @@ TEST(ValidatorTest, MissingCatchTag) {
     WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
   EXPECT_FALSE(validator.validate(&function, module, flags));
 }
+
+TEST(ValidatorTest, ReturnUnreachable) {
+  Module module;
+  Builder builder(module);
+
+  // (return (unreachable)) should be invalid if a function has no return type.
+  auto func =
+    builder.makeFunction("func",
+                         {},
+                         Signature(Type::none, Type::none),
+                         {},
+                         builder.makeReturn(builder.makeUnreachable()));
+
+  auto flags =
+    WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
+  EXPECT_FALSE(WasmValidator{}.validate(func.get(), module, flags));
+}

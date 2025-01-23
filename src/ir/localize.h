@@ -130,6 +130,8 @@ struct ChildLocalizer {
       // effects we can't remove, or if it interacts with other children.
       bool needLocal = effects[i].hasUnremovableSideEffects();
       if (!needLocal) {
+        // TODO: Avoid quadratic time here by accumulating effects and checking
+        //       vs the accumulation.
         for (Index j = 0; j < num; j++) {
           if (j != i && effects[i].invalidates(effects[j])) {
             needLocal = true;
@@ -153,17 +155,20 @@ struct ChildLocalizer {
       // Nothing to add.
       return parent;
     }
+    auto* block = getChildrenReplacement();
+    if (!hasUnreachableChild) {
+      block->list.push_back(parent);
+      block->finalize();
+    }
+    return block;
+  }
 
+  // Like `getReplacement`, but the result never contains the parent.
+  Block* getChildrenReplacement() {
     auto* block = Builder(wasm).makeBlock();
     block->list.set(sets);
     if (hasUnreachableChild) {
-      // If there is an unreachable child then we do not need the parent at all,
-      // and we know the type is unreachable.
       block->type = Type::unreachable;
-    } else {
-      // Otherwise, add the parent and finalize.
-      block->list.push_back(parent);
-      block->finalize();
     }
     return block;
   }

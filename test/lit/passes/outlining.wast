@@ -630,7 +630,7 @@
   ;; CHECK:      (func $a (type $0)
   ;; CHECK-NEXT:  (block $label1
   ;; CHECK-NEXT:   (call $outline$)
-  ;; CHECK-NEXT:   (loop $loop-in
+  ;; CHECK-NEXT:   (loop
   ;; CHECK-NEXT:    (br $label1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $outline$)
@@ -675,8 +675,8 @@
   ;; CHECK:      (func $a (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (block $block0
-  ;; CHECK-NEXT:    (br_table $block $block0
+  ;; CHECK-NEXT:   (block $block1
+  ;; CHECK-NEXT:    (br_table $block $block1
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (return
@@ -699,7 +699,7 @@
     )
     (block
       (block
-        (br_table 1 0 (local.get $0))
+        (br_table 1 0 (local.get 0))
         (return (i32.const 21))
       )
       (return (i32.const 20))
@@ -982,7 +982,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $loop-in
+  ;; CHECK-NEXT:  (loop
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

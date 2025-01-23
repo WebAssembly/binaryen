@@ -27,7 +27,12 @@ spec_tests = [t for t in spec_tests if '64.wast' not in t]
 wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), ['.wast'])
 assert_tests = ['wasm2js.wast.asserts']
 # These tests exercise functionality not supported by wasm2js
-wasm2js_blacklist = ['empty_imported_table.wast']
+wasm2js_skipped_tests = [
+    'empty_imported_table.wast',
+    'br.wast',  # depends on multivalue
+    'fac.wast',  # depends on mutlivalue
+    'br_table.wast',  # needs support for externref in assert_return
+]
 
 
 def check_for_stale_files():
@@ -52,7 +57,7 @@ def test_wasm2js_output():
     for opt in (0, 1):
         for t in basic_tests + spec_tests + wasm2js_tests:
             basename = os.path.basename(t)
-            if basename in wasm2js_blacklist:
+            if basename in wasm2js_skipped_tests:
                 continue
 
             asm = basename.replace('.wast', '.2asm.js')
@@ -61,7 +66,15 @@ def test_wasm2js_output():
                 expected_file += '.opt'
 
             if not os.path.exists(expected_file):
-                continue
+                # It is ok to skip tests from other test suites that we also
+                # test on wasm2js (the basic and spec tests). When such files
+                # pass in wasm2js, we add expected files for them, so lacking
+                # such a file just means we should ignore it. But lacking an
+                # expected file for an explicit wasm2js test is an error.
+                if t in basic_tests or t in spec_tests:
+                    continue
+                else:
+                    raise Exception(f'missing expected file {expected_file}')
 
             print('..', os.path.basename(t))
 
@@ -77,9 +90,9 @@ def test_wasm2js_output():
                                         '--disable-exception-handling']
                 if opt:
                     cmd += ['-O']
-                if 'emscripten' in t:
+                if 'emscripten' in basename:
                     cmd += ['--emscripten']
-                if 'deterministic' in t:
+                if 'deterministic' in basename:
                     cmd += ['--deterministic']
                 js = support.run_command(cmd)
                 all_js.append(js)
@@ -158,10 +171,11 @@ def update_wasm2js_tests():
             if not wasm.endswith('.wast'):
                 continue
 
-            if os.path.basename(wasm) in wasm2js_blacklist:
+            basename = os.path.basename(wasm)
+            if basename in wasm2js_skipped_tests:
                 continue
 
-            asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
+            asm = basename.replace('.wast', '.2asm.js')
             expected_file = os.path.join(shared.get_test_dir('wasm2js'), asm)
             if opt:
                 expected_file += '.opt'
@@ -188,9 +202,9 @@ def update_wasm2js_tests():
                                         '--disable-exception-handling']
                 if opt:
                     cmd += ['-O']
-                if 'emscripten' in wasm:
+                if 'emscripten' in basename:
                     cmd += ['--emscripten']
-                if 'deterministic' in t:
+                if 'deterministic' in basename:
                     cmd += ['--deterministic']
                 out = support.run_command(cmd)
                 all_out.append(out)

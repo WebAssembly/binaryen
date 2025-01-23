@@ -15,14 +15,93 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
- - (If new wat parser is enabled) Source map comments on `else` branches must
-   now be placed above the instruction inside the `else` branch rather than on
-   the `else` branch itself.
+ - `struct.atomic.get`/`struct.atomic.set` now require the threads feature,
+   `--enable-threads`. (#7185)
+
+v121
+----
+
+ - BinaryenSelect no longer takes a type parameter. (#7097)
+ - AutoDrop APIs have been removed. (#7106)
+ - bulk-memory-opt and call-indirect-overlong features are added for parity with
+   LLVM. (#7139)
+ - WasmGC optimizations now run significantly faster and scale better with
+   available threads. (#7142)
+ - Binaryen now supports parsing control flow structures with parameter types by
+   lowering them away in the parsers. (#7149)
+
+v120
+----
+
+ - Remove closed world validation checks. These checks were causing more harm
+   than good. All valid code will now validate with `--closed-world` (but also
+   it now provides fewer warnings to users that enable closed world on code
+   which does not conform to the requirements of that mode, which can lead to
+   changes in runtime behavior; for the long-term plans, see #6965). (#7019)
+ - Many compile time speedups were implemented (2x overall improvement), see
+   https://github.com/WebAssembly/binaryen/issues/4165#issuecomment-2372548271
+ - Several `exnref` (newest version of Wasm EH) optimizations: #7013, #6996,
+   #6997, #6983, #6980
+ - Source Maps: Support 5 segment mappings. (#6795)
+ - [wasm-split] Add a multi-split mode. (#6943)
+ - Add a `--preserve-type-order` option that minimizes text format changes in
+   type ordering. (#6916)
+ - Add a J2CL specific pass that moves itable entries to vtables. (#6888)
+
+v119
+----
+
+ - Passes can now receive individual pass arguments, that is --foo=A --foo=B for
+   a pass foo will run the pass twice (which was possible before) and will now
+   run it first with argument A and second with B. --pass-arg=foo@BAR will now
+   apply to the most recent --foo pass on the commandline, if foo is a pass
+   (while global pass arguments - that are not the name of a pass - remain, as
+   before, global for all passes). (#6687)
+ - The Metrics pass now takes an optional argument to use as the title,
+   `--metrics=text` will show that text before the metrics. Each instance of
+   Metrics can have unique text, `--metrics=before -O3 --metrics=after`. (#6792)
+ - Add C and JS APIs to control more pass options (trapsNeverHappen,
+   closedWorld, generateStackIR, optimizeStackIR, and the list of skipped
+   passes). (#6713)
+ - A C APIs for getting/setting the type of Functions (#6721).
+ - Allow using `--skip-pass` on the commandline multiple times (#6714).
+ - The instructions relaxed_fma and relaxed_fnma have been renamed to
+   relaxed_madd and relaxed_nmadd.
+ - Add a new `--heap-store-optimization` pass. (#6882)
+ - Add a pass for minimizing recursion groups. (#6832)
+
+
+v118
+----
+
+ - StackIR is now handled entirely during binary writing (#6568). This is
+   mostly not noticeable, except that:
+   - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
+     during binary writing).
+   - `--generate-stack-ir`, `--optimize-stack-ir`, and `--print-stack-ir` are
+     now flags and not passes. That means the order of operations may seem
+     different, as they apply during binary writing (or, if no binary is written
+     but we were still asked to print StackIR, `wasm-opt` does it at the very
+     end).
+   - Whether to generate, optimize, and print StackIR is now noted as part of
+     the PassOptions. As a result `BinaryenModulePrintStackIR` and similar APIs
+     do not receive an `optimize` flag, as they read the PassOption
+     `optimizeStackIR` instead.
+ - The new, standards-compliant text parser is now the default.
+ - Source map comments on `else` branches must now be placed above the
+   instruction inside the `else` branch rather than on the `else` branch itself.
+ - Source map locations from instructions are no longer automatically propagated
+   to function epilogues.
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
-   to configure which features to enable in the parser.
- - The build-time option to use legacy WasmGC opcodes is removed.
+   to configure which features to enable in the parser. (#6380)
+ - The build-time option to use legacy WasmGC opcodes is removed. (#5874)
  - The strings in `string.const` instructions must now be valid WTF-8.
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - C API: Support adding data segments individually (#6346)
+ - Add sourcemap support to wasm-metadce and wasm-merge (#6372).
+ - Fix semantics of return calls (#6448, #6451, #6464, #6470, #6474).
+ - Add table64 lowering pass (#6595).
+ - Add TraceCalls instrumentation pass (#6619).
 
 v117
 ----

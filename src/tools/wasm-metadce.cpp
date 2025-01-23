@@ -29,11 +29,11 @@
 #include "asmjs/shared-constants.h"
 #include "ir/element-utils.h"
 #include "ir/module-utils.h"
+#include "optimization-options.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/json.h"
-#include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -371,7 +371,7 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmMetaDCEOption = "wasm-opt options";
 
-  ToolOptions options(
+  OptimizationOptions options(
     "wasm-metadce",
     "This tool performs dead code elimination (DCE) on a larger space "
     "that the wasm module is just a part of. For example, if you have "
@@ -485,10 +485,8 @@ int main(int argc, const char* argv[]) {
     Fatal() << "no graph file provided.";
   }
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
-
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
 
   {
     if (options.debug) {
@@ -503,6 +501,8 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in parsing wasm input";
     }
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(wasm)) {
@@ -602,7 +602,7 @@ int main(int argc, const char* argv[]) {
   graph.apply();
 
   if (options.extra.count("output") > 0) {
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {

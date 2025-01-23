@@ -8820,7 +8820,7 @@
  ;; CHECK-NEXT:                      (br $__rjti$8)
  ;; CHECK-NEXT:                     )
  ;; CHECK-NEXT:                     (block $label$break$L8
- ;; CHECK-NEXT:                      (block $__rjti$20
+ ;; CHECK-NEXT:                      (block $__rjti$23
  ;; CHECK-NEXT:                       (if
  ;; CHECK-NEXT:                        (i32.and
  ;; CHECK-NEXT:                         (local.tee $9
@@ -8845,7 +8845,7 @@
  ;; CHECK-NEXT:                          (local.get $5)
  ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                         (loop $while-in5
- ;; CHECK-NEXT:                          (br_if $__rjti$20
+ ;; CHECK-NEXT:                          (br_if $__rjti$23
  ;; CHECK-NEXT:                           (i32.eqz
  ;; CHECK-NEXT:                            (i32.load8_u
  ;; CHECK-NEXT:                             (local.get $8)
@@ -8890,7 +8890,7 @@
  ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                        )
  ;; CHECK-NEXT:                       )
- ;; CHECK-NEXT:                       (br_if $__rjti$20
+ ;; CHECK-NEXT:                       (br_if $__rjti$23
  ;; CHECK-NEXT:                        (local.get $9)
  ;; CHECK-NEXT:                       )
  ;; CHECK-NEXT:                       (local.set $9

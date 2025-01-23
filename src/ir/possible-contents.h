@@ -76,6 +76,9 @@ class PossibleContents {
     // The contents flowing out will be a Global, but of a non-nullable type,
     // unlike the original global.
     Type type;
+    // TODO: Consider adding a depth here, or merging this with ConeType in some
+    //       way. In principle, not having depth info can lead to loss of
+    //       precision.
     bool operator==(const GlobalInfo& other) const {
       return name == other.name && type == other.type;
     }
@@ -305,8 +308,9 @@ public:
       // Nothing to add.
     } else if (isLiteral()) {
       rehash(ret, getLiteral());
-    } else if (isGlobal()) {
-      rehash(ret, getGlobal());
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
+      rehash(ret, global->name);
+      rehash(ret, global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       rehash(ret, coneType->type);
       rehash(ret, coneType->depth);
@@ -398,21 +402,6 @@ struct ResultLocation {
   }
 };
 
-// The location of a break target in a function, identified by its name.
-struct BreakTargetLocation {
-  Function* func;
-  Name target;
-  // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
-  // That is, if the branch target has a tuple type, then each branch to that
-  // location sends a tuple, and we'll have a separate BreakTargetLocation for
-  // each, indexed by the index in the tuple that the branch sends.
-  Index tupleIndex;
-  bool operator==(const BreakTargetLocation& other) const {
-    return func == other.func && target == other.target &&
-           tupleIndex == other.tupleIndex;
-  }
-};
-
 // The location of a global in the module.
 struct GlobalLocation {
   Name name;
@@ -442,6 +431,11 @@ struct SignatureResultLocation {
 // The location of contents in a struct or array (i.e., things that can fit in a
 // dataref). Note that this is specific to this type - it does not include data
 // about subtypes or supertypes.
+//
+// We store the truncated bits here when the field is packed. That is, if -1 is
+// written to an i8 then the value here will be 0xff. StructGet/ArrayGet
+// operations that read a signed value must then perform a sign-extend
+// operation.
 struct DataLocation {
   HeapType type;
   // The index of the field in a struct, or 0 for an array (where we do not
@@ -462,6 +456,15 @@ struct TagLocation {
   bool operator==(const TagLocation& other) const {
     return tag == other.tag && tupleIndex == other.tupleIndex;
   }
+};
+
+// The location of an exnref materialized by a catch_ref or catch_all_ref clause
+// of a try_table. No data is stored here. exnrefs contain a tag and a payload
+// at run-time, as well as potential metadata such as stack traces, but we don't
+// track that. So this is the same as NullLocation in a way: we just need *a*
+// source of contents for places that receive an exnref.
+struct CaughtExnRefLocation {
+  bool operator==(const CaughtExnRefLocation& other) const { return true; }
 };
 
 // A null value. This is used as the location of the default value of a var in a
@@ -505,12 +508,12 @@ using Location = std::variant<ExpressionLocation,
                               ParamLocation,
                               LocalLocation,
                               ResultLocation,
-                              BreakTargetLocation,
                               GlobalLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
                               DataLocation,
                               TagLocation,
+                              CaughtExnRefLocation,
                               NullLocation,
                               ConeReadLocation>;
 
@@ -558,13 +561,6 @@ template<> struct hash<wasm::ResultLocation> {
   }
 };
 
-template<> struct hash<wasm::BreakTargetLocation> {
-  size_t operator()(const wasm::BreakTargetLocation& loc) const {
-    return std::hash<std::tuple<size_t, wasm::Name, wasm::Index>>{}(
-      {size_t(loc.func), loc.target, loc.tupleIndex});
-  }
-};
-
 template<> struct hash<wasm::GlobalLocation> {
   size_t operator()(const wasm::GlobalLocation& loc) const {
     return std::hash<wasm::Name>{}(loc.name);
@@ -596,6 +592,12 @@ template<> struct hash<wasm::TagLocation> {
   size_t operator()(const wasm::TagLocation& loc) const {
     return std::hash<std::pair<wasm::Name, wasm::Index>>{}(
       {loc.tag, loc.tupleIndex});
+  }
+};
+
+template<> struct hash<wasm::CaughtExnRefLocation> {
+  size_t operator()(const wasm::CaughtExnRefLocation& loc) const {
+    return std::hash<const void*>()("caught-exnref-location");
   }
 };
 

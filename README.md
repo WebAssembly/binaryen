@@ -1,4 +1,4 @@
-[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
+[![CI](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml?branch=main&event=push)
 
 # Binaryen
 
@@ -31,6 +31,7 @@ Toolchains using Binaryen as a **component** (typically running `wasm-opt`) incl
   * [`J2CL`](https://j2cl.io/) (Java; [`J2Wasm`](https://github.com/google/j2cl/tree/master/samples/wasm))
   * [`Kotlin`](https://kotl.in/wasmgc) (Kotlin/Wasm)
   * [`Dart`](https://flutter.dev/wasm) (Flutter)
+  * [`wasm_of_ocaml`](https://github.com/ocaml-wasm/wasm_of_ocaml) (OCaml)
 
 For more on how some of those work, see the toolchain architecture parts of
 the [V8 WasmGC porting blogpost](https://v8.dev/blog/wasm-gc-porting).
@@ -147,6 +148,34 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
+  * Binaryen IR uses the most refined types possible for references,
+    specifically:
+    * The IR type of a `ref.func` is always a specific function type, and not
+      plain `funcref`. It is also non-nullable.
+    * Non-nullable types are also used for the type that `try_table` sends
+      on branches (if we branch, a null is never sent), that is, it sends
+      (ref exn) and not (ref null exn).
+    In both cases if GC is not enabled then we emit the less-refined type in the
+    binary. When reading a binary, the more refined types will be applied as we
+    build the IR.
+  * `br_if` output types are more refined in Binaryen IR: they have the type of
+    the value, when a value flows in. In the wasm spec the type is that of the
+    branch target, which may be less refined. Using the more refined type here
+    ensures that we optimize in the best way possible, using all the type
+    information, but it does mean that some roundtripping operations may look a
+    little different. In particular, when we emit a `br_if` whose type is more
+    refined in Binaryen IR then we emit a cast right after it, so that the
+    output has the right type in the wasm spec. That may cause a few bytes of
+    extra size in rare cases (we avoid this overhead in the common case where
+    the `br_if` value is unused).
+ * Strings
+   * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
+     `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
+     used in all places (and it is lowered to `ref.as_non_null` where possible
+     in the optimizer). The stringref spec does not seem to allow this though,
+     and to fix that the binary writer will replace `ref.cast` that casts a
+     string view to a non-nullable type to `ref.as_non_null`. A `ref.cast` of a
+     string view that is a no-op is skipped entirely.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
@@ -238,7 +267,7 @@ This repository contains code that builds the following tools in `bin/` (see the
    corresponding imports to exports as it does so. Like a bundler for JS, but
    for wasm.
  * **`wasm-metadce`**: A tool to remove parts of Wasm files in a flexible way
- * that depends on how the module is used.
+   that depends on how the module is used.
  * **`binaryen.js`**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [GitHub](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js) or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
 
 All of the Binaryen tools are deterministic, that is, given the same inputs you should always get the same outputs. (If you see a case that behaves otherwise, please file an issue.)
@@ -915,6 +944,35 @@ environment. That will print this for the above `add`:
 
 (full print mode also adds a `[type]` for each expression, right before the
 debug location).
+
+The debug information is also propagated from an expression to its
+next sibling:
+```wat
+;;@ src.cpp:100:33
+(local.set $x
+ (i32.const 0)
+)
+(local.set $y ;; This receives an annotation of src.cpp:100:33
+ (i32.const 0)
+)
+```
+
+You can prevent the propagation of debug info by explicitly mentioning
+that an expression has not debug info using the annotation `;;@` with
+nothing else:
+```wat
+;;@ src.cpp:100:33
+(local.set $x
+ ;;@
+ (i32.const 0) ;; This does not receive any annotation
+)
+;;@
+(local.set $y ;; This does not receive any annotation
+ (i32.const 7)
+)
+```
+This stops the propagatation to children and siblings as well. So,
+expression `(i32.const 7)` does not have any debug info either.
 
 There is no shorthand in the binary format. That is, roundtripping (writing and
 reading) through a binary + source map should not change which expressions have

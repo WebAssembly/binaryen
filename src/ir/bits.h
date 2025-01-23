@@ -107,6 +107,30 @@ inline Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {
   }
 }
 
+// Given a value that is read from a field, as a replacement for a
+// StructGet/ArrayGet that we inferred the value of, and given the signedness of
+// the get and the field info, if we are doing a signed read of a packed field
+// then sign-extend it, or if it is unsigned then truncate. This fixes up cases
+// where we can replace the StructGet/ArrayGet with the value we know must be
+// there (without making any assumptions about |value|, that is, we do not
+// assume it has been truncated already).
+inline Expression* makePackedFieldGet(Expression* value,
+                                      const Field& field,
+                                      bool signed_,
+                                      Module& wasm) {
+  if (!field.isPacked()) {
+    return value;
+  }
+
+  if (signed_) {
+    return makeSignExt(value, field.getByteSize(), wasm);
+  }
+
+  Builder builder(wasm);
+  auto mask = Bits::lowBitMask(field.getByteSize() * 8);
+  return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+}
+
 // getMaxBits() helper that has pessimistic results for the bits used in locals.
 struct DummyLocalInfoProvider {
   Index getMaxBitsForLocal(LocalGet* get) {

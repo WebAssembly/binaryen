@@ -201,7 +201,6 @@
   )
 
   ;; CHECK:      (func $caller-empty (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $caller-empty
     ;; A tiny function with nothing at all, just to verify we do not crash on
@@ -1195,7 +1194,7 @@
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $1) (param i32))
   (tag $tag (param i32))
 
   (global $once (mut i32) (i32.const 0))
@@ -1481,7 +1480,6 @@
   )
 
   ;; CHECK:      (func $bad-B (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bad-B
   )
@@ -2022,7 +2020,6 @@
   )
 
   ;; CHECK:      (func $other (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $other
   )

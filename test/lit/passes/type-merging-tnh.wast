@@ -4,7 +4,7 @@
 ;; ref.cast does not inhibit merging if traps never happen.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
   (type $B (sub $A (struct)))
 
@@ -25,9 +25,9 @@
 ;; Check that a ref.test still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:       (type $2 (func (param (ref $A)) (result i32)))
@@ -47,17 +47,17 @@
 ;; Check that a br_on_cast still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))
 
   ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result (ref $B))
-  ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
+  ;; CHECK-NEXT:  (block $label (result (ref $B))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return (ref $A) (ref $B)
+  ;; CHECK-NEXT:    (br_on_cast $label (ref $A) (ref $B)
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

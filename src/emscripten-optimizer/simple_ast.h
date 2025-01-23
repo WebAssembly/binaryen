@@ -38,9 +38,8 @@
 #include "snprintf.h"
 #include "support/safe_integer.h"
 
-#define err(str) fprintf(stderr, str "\n");
 #define errv(str, ...) fprintf(stderr, str "\n", __VA_ARGS__);
-#define printErr err
+#define printErr(str) fprintf(stderr, str "\n");
 
 namespace cashew {
 

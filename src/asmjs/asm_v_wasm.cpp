@@ -21,6 +21,10 @@
 namespace wasm {
 
 JsType wasmToJsType(Type type) {
+  if (type.isRef()) {
+    return JS_REF;
+  }
+
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:

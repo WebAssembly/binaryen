@@ -7,7 +7,7 @@
 ;; types.
 
 (module
-  ;; CHECK:      (type $root (sub (struct )))
+  ;; CHECK:      (type $root (sub (struct)))
   (type $root (sub (struct)))
 
   ;; CHECK:      (type $trunk (sub $root (struct (field i32))))

@@ -26,7 +26,6 @@ high chance for set at start of loop
 */
 
 #include "ir/branch-utils.h"
-#include "ir/memory-utils.h"
 #include "ir/struct-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
@@ -66,8 +65,12 @@ struct BinaryArgs {
 
 class TranslateToFuzzReader {
 public:
-  TranslateToFuzzReader(Module& wasm, std::vector<char>&& input);
-  TranslateToFuzzReader(Module& wasm, std::string& filename);
+  TranslateToFuzzReader(Module& wasm,
+                        std::vector<char>&& input,
+                        bool closedWorld = false);
+  TranslateToFuzzReader(Module& wasm,
+                        std::string& filename,
+                        bool closedWorld = false);
 
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
@@ -78,6 +81,8 @@ public:
   Module& wasm;
 
 private:
+  // Whether the module will be tested in a closed-world environment.
+  bool closedWorld;
   Builder builder;
   Random random;
 
@@ -104,8 +109,20 @@ private:
 
   Name funcrefTableName;
 
+  std::unordered_map<Type, Name> logImportNames;
+  Name throwImportName;
+  Name tableGetImportName;
+  Name tableSetImportName;
+  Name callExportImportName;
+  Name callExportCatchImportName;
+  Name callRefImportName;
+  Name callRefCatchImportName;
+  Name sleepImportName;
+
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
+  std::unordered_map<Type, std::vector<Name>> immutableGlobalsByType;
+  std::unordered_map<Type, std::vector<Name>> importedImmutableGlobalsByType;
 
   std::vector<Type> loggableTypes;
 
@@ -150,6 +167,14 @@ private:
     }
 
     ~FunctionCreationContext();
+
+    // Fill in the typeLocals data structure.
+    void computeTypeLocals() {
+      typeLocals.clear();
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        typeLocals[func->getLocalType(i)].push_back(i);
+      }
+    }
   };
 
   FunctionCreationContext* funcContext = nullptr;
@@ -208,14 +233,26 @@ private:
   void addTag();
   void finalizeMemory();
   void finalizeTable();
+  void shuffleExports();
   void prepareHangLimitSupport();
   void addHangLimitSupport();
   void addImportLoggingSupport();
+  void addImportCallingSupport();
+  void addImportThrowingSupport();
+  void addImportTableSupport();
+  void addImportSleepSupport();
   void addHashMemorySupport();
 
   // Special expression makers
   Expression* makeHangLimitCheck();
-  Expression* makeLogging();
+  Expression* makeImportLogging();
+  Expression* makeImportThrowing(Type type);
+  Expression* makeImportTableGet();
+  Expression* makeImportTableSet(Type type);
+  // Call either an export or a ref. We do this from a single function to better
+  // control the frequency of each.
+  Expression* makeImportCallCode(Type type);
+  Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation
@@ -283,6 +320,7 @@ private:
   Expression* buildIf(const struct ThreeArgs& args, Type type);
   Expression* makeIf(Type type);
   Expression* makeTry(Type type);
+  Expression* makeTryTable(Type type);
   Expression* makeBreak(Type type);
   Expression* makeCall(Type type);
   Expression* makeCallIndirect(Type type);
@@ -315,6 +353,16 @@ private:
   Expression* makeBasicRef(Type type);
   Expression* makeCompoundRef(Type type);
 
+  Expression* makeStringConst();
+  Expression* makeStringNewArray();
+  Expression* makeStringNewCodePoint();
+  Expression* makeStringConcat();
+  Expression* makeStringSlice();
+  Expression* makeStringEq(Type type);
+  Expression* makeStringMeasure(Type type);
+  Expression* makeStringGet(Type type);
+  Expression* makeStringEncode(Type type);
+
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a
   // struct.get or array.set would use this.
@@ -324,7 +372,7 @@ private:
   Expression* makeUnary(Type type);
   Expression* buildBinary(const BinaryArgs& args);
   Expression* makeBinary(Type type);
-  Expression* buildSelect(const ThreeArgs& args, Type type);
+  Expression* buildSelect(const ThreeArgs& args);
   Expression* makeSelect(Type type);
   Expression* makeSwitch(Type type);
   Expression* makeDrop(Type type);
@@ -345,6 +393,12 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeBrOn(Type type);
+
+  // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
+  // packed.
+  bool maybeSignedGet(const Field& field);
+
   Expression* makeStructGet(Type type);
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
@@ -379,6 +433,7 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
+  HeapType getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);

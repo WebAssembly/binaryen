@@ -79,29 +79,19 @@ struct SubTypes {
   }
 
   // A topological sort that visits subtypes first.
-  auto getSubTypesFirstSort() const {
-    struct SubTypesFirstSort : TopologicalSort<HeapType, SubTypesFirstSort> {
-      const SubTypes& parent;
-
-      SubTypesFirstSort(const SubTypes& parent) : parent(parent) {
-        for (auto type : parent.types) {
-          // The roots are types with no supertype.
-          if (!type.getDeclaredSuperType()) {
-            push(type);
-          }
-        }
+  std::vector<HeapType> getSubTypesFirstSort() const {
+    std::vector<std::pair<HeapType, std::vector<HeapType>>> graph;
+    graph.reserve(types.size());
+    for (auto type : types) {
+      if (auto it = typeSubTypes.find(type); it != typeSubTypes.end()) {
+        graph.emplace_back(*it);
+      } else {
+        graph.emplace_back(type, std::vector<HeapType>{});
       }
-
-      void pushPredecessors(HeapType type) {
-        // Things we need to process before each type are its subtypes. Once we
-        // know their depth, we can easily compute our own.
-        for (auto pred : parent.getImmediateSubTypes(type)) {
-          push(pred);
-        }
-      }
-    };
-
-    return SubTypesFirstSort(*this);
+    }
+    auto sorted = TopologicalSort::sortOf(graph.begin(), graph.end());
+    std::reverse(sorted.begin(), sorted.end());
+    return sorted;
   }
 
   // Computes the depth of children for each type. This is 0 if the type has no
@@ -124,20 +114,34 @@ struct SubTypes {
     // Add the max depths of basic types.
     for (auto type : types) {
       HeapType basic;
-      if (type.isStruct()) {
-        basic = HeapType::struct_;
-      } else if (type.isArray()) {
-        basic = HeapType::array;
-      } else {
-        assert(type.isSignature());
-        basic = HeapType::func;
+      auto share = type.getShared();
+      switch (type.getKind()) {
+        case HeapTypeKind::Func:
+          basic = HeapTypes::func.getBasic(share);
+          break;
+        case HeapTypeKind::Struct:
+          basic = HeapTypes::struct_.getBasic(share);
+          break;
+        case HeapTypeKind::Array:
+          basic = HeapTypes::array.getBasic(share);
+          break;
+        case HeapTypeKind::Cont:
+          WASM_UNREACHABLE("TODO: cont");
+        case HeapTypeKind::Basic:
+          WASM_UNREACHABLE("unexpected kind");
       }
-      depths[basic] = std::max(depths[basic], depths[type] + 1);
+      auto& basicDepth = depths[basic];
+      basicDepth = std::max(basicDepth, depths[type] + 1);
     }
 
-    depths[HeapType::eq] =
-      std::max(depths[HeapType::struct_], depths[HeapType::array]) + 1;
-    depths[HeapType::any] = depths[HeapType::eq] + 1;
+    for (auto share : {Unshared, Shared}) {
+      depths[HeapTypes::eq.getBasic(share)] =
+        std::max(depths[HeapTypes::struct_.getBasic(share)],
+                 depths[HeapTypes::array.getBasic(share)]) +
+        1;
+      depths[HeapTypes::any.getBasic(share)] =
+        depths[HeapTypes::eq.getBasic(share)] + 1;
+    }
 
     return depths;
   }

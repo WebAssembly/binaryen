@@ -123,11 +123,11 @@
     )
    )
   )
-  (block $out83
-   (br_if $out83
+  (block $out80
+   (br_if $out80
     (i32.const 1)
    )
-   (br_if $out83
+   (br_if $out80
     (call $b14)
    )
   )

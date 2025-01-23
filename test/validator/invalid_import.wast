@@ -1,1 +1,1 @@
-(module (import $bad "test" "bad" (param i64)))
+(module (import "test" "bad" (func $bad (param i64))))

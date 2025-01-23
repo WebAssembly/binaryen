@@ -8,9 +8,13 @@
  ;; CHECK:      (type $array16 (array (mut i16)))
  (type $array16 (array (mut i16)))
 
+ (type $array16-imm (array i16))
+
  ;; CHECK:      (type $2 (func (result (ref string))))
 
- ;; CHECK:      (type $3 (func (result (ref any))))
+ ;; CHECK:      (type $3 (func (result anyref)))
+
+ ;; CHECK:      (type $4 (func (result (ref any))))
 
  ;; CHECK:      (export "get_codepoint-unicode" (func $get_codepoint-unicode))
 
@@ -67,10 +71,8 @@
  ;; CHECK-NEXT:  (i32.const 7)
  ;; CHECK-NEXT: )
  (func $length (result i32)
-  (stringview_wtf16.length
-   (string.as_wtf16
-    (string.const "1234567")
-   )
+  (string.measure_wtf16
+   (string.const "1234567")
   )
  )
 
@@ -78,11 +80,9 @@
  ;; CHECK-NEXT:  (i32.const 8)
  ;; CHECK-NEXT: )
  (func $length-unicode (result i32)
-  (stringview_wtf16.length
-   (string.as_wtf16
-    ;; $_£_€_𐍈 (the last character is encoded as a surrogate pair)
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+  (string.measure_wtf16
+   ;; $_£_€_𐍈 (the last character is encoded as a surrogate pair)
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
   )
  )
 
@@ -92,10 +92,8 @@
  (func $get_codepoint (result i32)
   ;; Returns 95 ('_').
   (stringview_wtf16.get_codeunit
-   (string.as_wtf16
-    ;; $_£_€_𐍈
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    (i32.const 1)
   )
  )
@@ -106,10 +104,8 @@
  (func $get_codepoint-unicode (export "get_codepoint-unicode") (result i32)
   ;; Returns 8364 ('€')
   (stringview_wtf16.get_codeunit
-   (string.as_wtf16
-    ;; $_£_€_𐍈
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    (i32.const 4)
   )
  )
@@ -120,10 +116,8 @@
  (func $get_codepoint-surrogate (export "get_codepoint-surrogate") (result i32)
   ;; Returns 0xd800 (the high surrogate in '𐍈')
   (stringview_wtf16.get_codeunit
-   (string.as_wtf16
-    ;; $_£_€_𐍈
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    (i32.const 6)
   )
  )
@@ -169,7 +163,7 @@
   )
  )
 
- ;; CHECK:      (func $encode-stashed (type $3) (result (ref any))
+ ;; CHECK:      (func $encode-stashed (type $4) (result (ref any))
  ;; CHECK-NEXT:  (local $1 (ref $array16))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (array.new_default $array16
@@ -213,9 +207,7 @@
  (func $slice (export "slice") (result (ref string))
   ;; Slicing [3:6] here should definitely output "def".
   (stringview_wtf16.slice
-   (string.as_wtf16
-    (string.const "abcdefgh")
-   )
+   (string.const "abcdefgh")
    (i32.const 3)
    (i32.const 6)
   )
@@ -227,11 +219,53 @@
  (func $slice-unicode (export "slice-unicode") (result (ref string))
   (stringview_wtf16.slice
    ;; abcd£fgh
-   (string.as_wtf16
-    (string.const "abcd\C2\A3fgh")
-   )
+   (string.const "abcd\C2\A3fgh")
    (i32.const 3)
    (i32.const 6)
+  )
+ )
+
+ ;; CHECK:      (func $string.new-mutable (type $3) (result anyref)
+ ;; CHECK-NEXT:  (string.new_wtf16_array
+ ;; CHECK-NEXT:   (array.new_fixed $array16 4
+ ;; CHECK-NEXT:    (i32.const 65)
+ ;; CHECK-NEXT:    (i32.const 66)
+ ;; CHECK-NEXT:    (i32.const 67)
+ ;; CHECK-NEXT:    (i32.const 68)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $string.new-mutable (result anyref)
+  ;; We do not precompute this because the array is mutable, and we do not yet
+  ;; do an analysis to see that it does not "escape" into places that modify it.
+  (string.new_wtf16_array
+   (array.new_fixed $array16 4
+    (i32.const 65)
+    (i32.const 66)
+    (i32.const 67)
+    (i32.const 68)
+   )
+   (i32.const 0)
+   (i32.const 4)
+  )
+ )
+
+ ;; CHECK:      (func $string.new-immutable (type $3) (result anyref)
+ ;; CHECK-NEXT:  (string.const "ABCD")
+ ;; CHECK-NEXT: )
+ (func $string.new-immutable (result anyref)
+  ;; This array is immutable and we can optimize here.
+  (string.new_wtf16_array
+   (array.new_fixed $array16-imm 4
+    (i32.const 65)
+    (i32.const 66)
+    (i32.const 67)
+    (i32.const 68)
+   )
+   (i32.const 0)
+   (i32.const 4)
   )
  )
 )

@@ -4,7 +4,7 @@
 ;; RUN:   | filecheck %s
 
 (module
- ;; CHECK:      (type $empty (struct ))
+ ;; CHECK:      (type $empty (struct))
  (type $empty (struct))
 
  ;; CHECK:      (type $struct (struct (field (mut i32))))

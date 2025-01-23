@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $"{}" (struct ))
+  ;; CHECK:      (type $"{}" (struct))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 i32 funcref) (result anyref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
@@ -38,7 +38,7 @@
     )
   )
 
-  ;; CHECK:      (func $vacuum-nonnull (type $0)
+  ;; CHECK:      (func $vacuum-nonnull (type $1)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $vacuum-nonnull
@@ -101,7 +101,7 @@
     )
   )
 
-  ;; CHECK:      (func $dropped-calls (type $0)
+  ;; CHECK:      (func $dropped-calls (type $1)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (call $helper-i32)

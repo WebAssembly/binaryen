@@ -945,7 +945,7 @@
   )
 
   ;; CHECK:      (func $unreachable-loop (type $5) (result i32)
-  ;; CHECK-NEXT:  loop $loop-in
+  ;; CHECK-NEXT:  loop
   ;; CHECK-NEXT:   i32.const 1
   ;; CHECK-NEXT:   return
   ;; CHECK-NEXT:  end
@@ -961,7 +961,7 @@
   )
 
   ;; CHECK:      (func $unreachable-loop0 (type $5) (result i32)
-  ;; CHECK-NEXT:  loop $loop-in
+  ;; CHECK-NEXT:  loop
   ;; CHECK-NEXT:   i32.const 1
   ;; CHECK-NEXT:   return
   ;; CHECK-NEXT:  end
@@ -976,7 +976,7 @@
   )
 
   ;; CHECK:      (func $unreachable-loop-toplevel (type $5) (result i32)
-  ;; CHECK-NEXT:  loop $loop-in
+  ;; CHECK-NEXT:  loop
   ;; CHECK-NEXT:   i32.const 1
   ;; CHECK-NEXT:   return
   ;; CHECK-NEXT:  end
@@ -990,7 +990,7 @@
   )
 
   ;; CHECK:      (func $unreachable-loop0-toplevel (type $5) (result i32)
-  ;; CHECK-NEXT:  loop $loop-in
+  ;; CHECK-NEXT:  loop
   ;; CHECK-NEXT:   i32.const 1
   ;; CHECK-NEXT:   return
   ;; CHECK-NEXT:  end

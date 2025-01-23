@@ -28,12 +28,15 @@
 #include <sstream>
 #include <variant>
 
+#include "fp16.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
+#include "support/string.h"
 #include "wasm-builder.h"
+#include "wasm-limits.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -44,14 +47,13 @@
 namespace wasm {
 
 struct WasmException {
-  Name tag;
-  Literals values;
+  Literal exn;
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
 // Utilities
 
-extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW;
+extern Name WASM, RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -63,6 +65,8 @@ public:
   Flow(Literals&& values) : values(std::move(values)) {}
   Flow(Name breakTo) : values(), breakTo(breakTo) {}
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
+  Flow(Name breakTo, Literals&& values)
+    : values(std::move(values)), breakTo(breakTo) {}
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
@@ -187,8 +191,11 @@ protected:
   // data, as we don't have a cycle collector. Those leaks are not a serious
   // problem as Binaryen is not really used in long-running tasks, so we ignore
   // this function in LSan.
-  Literal makeGCData(const Literals& data, Type type) {
-    auto allocation = std::make_shared<GCData>(type.getHeapType(), data);
+  //
+  // This consumes the input |data| entirely.
+  Literal makeGCData(Literals&& data, Type type) {
+    auto allocation =
+      std::make_shared<GCData>(type.getHeapType(), std::move(data));
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
@@ -197,6 +204,15 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type.getHeapType());
+  }
+
+  // Same as makeGCData but for ExnData.
+  Literal makeExnData(Name tag, const Literals& payload) {
+    auto allocation = std::make_shared<ExnData>(tag, payload);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation);
   }
 
 public:
@@ -221,9 +237,9 @@ public:
       if (type.isConcrete() || curr->type.isConcrete()) {
 #if 1 // def WASM_INTERPRETER_DEBUG
         if (!Type::isSubType(type, curr->type)) {
-          std::cerr << "expected " << curr->type << ", seeing " << type
-                    << " from\n"
-                    << *curr << '\n';
+          std::cerr << "expected " << ModuleType(*module, curr->type)
+                    << ", seeing " << ModuleType(*module, type) << " from\n"
+                    << ModuleExpression(*module, curr) << '\n';
         }
 #endif
         assert(Type::isSubType(type, curr->type));
@@ -474,6 +490,8 @@ public:
         return value.splatI32x4();
       case SplatVecI64x2:
         return value.splatI64x2();
+      case SplatVecF16x8:
+        return value.splatF16x8();
       case SplatVecF32x4:
         return value.splatF32x4();
       case SplatVecF64x2:
@@ -516,6 +534,20 @@ public:
         return value.allTrueI64x2();
       case BitmaskVecI64x2:
         return value.bitmaskI64x2();
+      case AbsVecF16x8:
+        return value.absF16x8();
+      case NegVecF16x8:
+        return value.negF16x8();
+      case SqrtVecF16x8:
+        return value.sqrtF16x8();
+      case CeilVecF16x8:
+        return value.ceilF16x8();
+      case FloorVecF16x8:
+        return value.floorF16x8();
+      case TruncVecF16x8:
+        return value.truncF16x8();
+      case NearestVecF16x8:
+        return value.nearestF16x8();
       case AbsVecF32x4:
         return value.absF32x4();
       case NegVecF32x4:
@@ -600,6 +632,14 @@ public:
         return value.demoteZeroToF32x4();
       case PromoteLowVecF32x4ToVecF64x2:
         return value.promoteLowToF64x2();
+      case TruncSatSVecF16x8ToVecI16x8:
+        return value.truncSatToSI16x8();
+      case TruncSatUVecF16x8ToVecI16x8:
+        return value.truncSatToUI16x8();
+      case ConvertSVecI16x8ToVecF16x8:
+        return value.convertSToF16x8();
+      case ConvertUVecI16x8ToVecF16x8:
+        return value.convertUToF16x8();
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }
@@ -857,6 +897,18 @@ public:
         return left.leSI64x2(right);
       case GeSVecI64x2:
         return left.geSI64x2(right);
+      case EqVecF16x8:
+        return left.eqF16x8(right);
+      case NeVecF16x8:
+        return left.neF16x8(right);
+      case LtVecF16x8:
+        return left.ltF16x8(right);
+      case GtVecF16x8:
+        return left.gtF16x8(right);
+      case LeVecF16x8:
+        return left.leF16x8(right);
+      case GeVecF16x8:
+        return left.geF16x8(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -987,6 +1039,23 @@ public:
       case ExtMulHighUVecI64x2:
         return left.extMulHighUI64x2(right);
 
+      case AddVecF16x8:
+        return left.addF16x8(right);
+      case SubVecF16x8:
+        return left.subF16x8(right);
+      case MulVecF16x8:
+        return left.mulF16x8(right);
+      case DivVecF16x8:
+        return left.divF16x8(right);
+      case MinVecF16x8:
+        return left.minF16x8(right);
+      case MaxVecF16x8:
+        return left.maxF16x8(right);
+      case PMinVecF16x8:
+        return left.pminF16x8(right);
+      case PMaxVecF16x8:
+        return left.pmaxF16x8(right);
+
       case AddVecF32x4:
         return left.addF32x4(right);
       case SubVecF32x4:
@@ -1065,6 +1134,8 @@ public:
         return vec.extractLaneI32x4(curr->index);
       case ExtractLaneVecI64x2:
         return vec.extractLaneI64x2(curr->index);
+      case ExtractLaneVecF16x8:
+        return vec.extractLaneF16x8(curr->index);
       case ExtractLaneVecF32x4:
         return vec.extractLaneF32x4(curr->index);
       case ExtractLaneVecF64x2:
@@ -1093,6 +1164,8 @@ public:
         return vec.replaceLaneI32x4(value, curr->index);
       case ReplaceLaneVecI64x2:
         return vec.replaceLaneI64x2(value, curr->index);
+      case ReplaceLaneVecF16x8:
+        return vec.replaceLaneF16x8(value, curr->index);
       case ReplaceLaneVecF32x4:
         return vec.replaceLaneF32x4(value, curr->index);
       case ReplaceLaneVecF64x2:
@@ -1139,14 +1212,18 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedFmaVecF32x4:
-        return a.relaxedFmaF32x4(b, c);
-      case RelaxedFmsVecF32x4:
-        return a.relaxedFmsF32x4(b, c);
-      case RelaxedFmaVecF64x2:
-        return a.relaxedFmaF64x2(b, c);
-      case RelaxedFmsVecF64x2:
-        return a.relaxedFmsF64x2(b, c);
+      case RelaxedMaddVecF16x8:
+        return a.relaxedMaddF16x8(b, c);
+      case RelaxedNmaddVecF16x8:
+        return a.relaxedNmaddF16x8(b, c);
+      case RelaxedMaddVecF32x4:
+        return a.relaxedMaddF32x4(b, c);
+      case RelaxedNmaddVecF32x4:
+        return a.relaxedNmaddF32x4(b, c);
+      case RelaxedMaddVecF64x2:
+        return a.relaxedMaddF64x2(b, c);
+      case RelaxedNmaddVecF64x2:
+        return a.relaxedNmaddF64x2(b, c);
       default:
         // TODO: implement signselect and dot_add
         WASM_UNREACHABLE("not implemented");
@@ -1394,6 +1471,7 @@ public:
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -1404,16 +1482,25 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->tag);
-    WasmException exn;
-    exn.tag = curr->tag;
-    for (auto item : arguments) {
-      exn.values.push_back(item);
-    }
-    throwException(exn);
+    throwException(WasmException{makeExnData(curr->tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrowRef(ThrowRef* curr) {
+    NOTE_ENTER("ThrowRef");
+    Flow flow = visit(curr->exnref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& exnref = flow.getSingleValue();
+    NOTE_EVAL1(exnref);
+    if (exnref.isNull()) {
+      trap("null ref");
+    }
+    assert(exnref.isExn());
+    throwException(WasmException{exnref});
+    WASM_UNREACHABLE("throw");
+  }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
@@ -1422,7 +1509,8 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    return Literal::makeI31(value.geti32());
+    return Literal::makeI31(value.geti32(),
+                            curr->type.getHeapType().getShared());
   }
   Flow visitI31Get(I31Get* curr) {
     NOTE_ENTER("I31Get");
@@ -1578,7 +1666,7 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    return makeGCData(data, curr->type);
+    return makeGCData(std::move(data), curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1613,11 +1701,77 @@ public:
     return Flow();
   }
 
+  Flow visitStructRMW(StructRMW* curr) {
+    NOTE_ENTER("StructRMW");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    auto oldVal = field;
+    auto newVal = value.getSingleValue();
+    switch (curr->op) {
+      case RMWAdd:
+        field = field.add(newVal);
+        break;
+      case RMWSub:
+        field = field.sub(newVal);
+        break;
+      case RMWAnd:
+        field = field.and_(newVal);
+        break;
+      case RMWOr:
+        field = field.or_(newVal);
+        break;
+      case RMWXor:
+        field = field.xor_(newVal);
+        break;
+      case RMWXchg:
+        field = newVal;
+        break;
+    }
+    return oldVal;
+  }
+
+  Flow visitStructCmpxchg(StructCmpxchg* curr) {
+    NOTE_ENTER("StructCmpxchg");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow expected = self()->visit(curr->expected);
+    if (expected.breaking()) {
+      return expected;
+    }
+    Flow replacement = self()->visit(curr->replacement);
+    if (replacement.breaking()) {
+      return replacement;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& field = data->values[curr->index];
+    auto oldVal = field;
+    if (field == expected.getSingleValue()) {
+      field = replacement.getSingleValue();
+    }
+    return oldVal;
+  }
+
   // Arbitrary deterministic limit on size. If we need to allocate a Literals
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not
   // have 4GB support, so give up there.
-  static const Index ArrayLimit = (1 << 30) / sizeof(Literal);
+  static const Index DataLimit = (1 << 30) / sizeof(Literal);
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
@@ -1642,7 +1796,7 @@ public:
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
-    if (num >= ArrayLimit) {
+    if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
     Literals data(num);
@@ -1658,14 +1812,14 @@ public:
         data[i] = value;
       }
     }
-    return makeGCData(data, curr->type);
+    return makeGCData(std::move(data), curr->type);
   }
   Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
     NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
-    if (num >= ArrayLimit) {
+    if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
     if (curr->type == Type::unreachable) {
@@ -1689,7 +1843,7 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return makeGCData(data, curr->type);
+    return makeGCData(std::move(data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1854,15 +2008,15 @@ public:
           trap("null ref");
         }
         return value;
-      case ExternInternalize:
+      case AnyConvertExtern:
         return value.internalize();
-      case ExternExternalize:
+      case ExternConvertAny:
         return value.externalize();
     }
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }
   Flow visitStringNew(StringNew* curr) {
-    Flow ptr = visit(curr->ptr);
+    Flow ptr = visit(curr->ref);
     if (ptr.breaking()) {
       return ptr;
     }
@@ -1883,7 +2037,8 @@ public:
         const auto& ptrDataValues = ptrData->values;
         size_t startVal = start.getSingleValue().getUnsigned();
         size_t endVal = end.getSingleValue().getUnsigned();
-        if (startVal > ptrDataValues.size() || endVal > ptrDataValues.size()) {
+        if (startVal > ptrDataValues.size() || endVal > ptrDataValues.size() ||
+            endVal < startVal) {
           trap("array oob");
         }
         Literals contents;
@@ -1893,7 +2048,17 @@ public:
             contents.push_back(ptrDataValues[i]);
           }
         }
-        return makeGCData(contents, curr->type);
+        return makeGCData(std::move(contents), curr->type);
+      }
+      case StringNewFromCodePoint: {
+        uint32_t codePoint = ptr.getSingleValue().getUnsigned();
+        if (codePoint > 0x10FFFF) {
+          trap("invalid code point");
+        }
+        std::stringstream wtf16;
+        String::writeWTF16CodePoint(wtf16, codePoint);
+        std::string str = wtf16.str();
+        return Literal(str);
       }
       default:
         // TODO: others
@@ -1904,7 +2069,7 @@ public:
 
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
-    if (curr->op != StringMeasureWTF16View) {
+    if (curr->op != StringMeasureWTF16) {
       return Flow(NONCONSTANT_FLOW);
     }
 
@@ -1939,6 +2104,11 @@ public:
       trap("null ref");
     }
 
+    auto totalSize = leftData->values.size() + rightData->values.size();
+    if (totalSize >= DataLimit) {
+      hostLimit("allocation failure");
+    }
+
     Literals contents;
     contents.reserve(leftData->values.size() + rightData->values.size());
     for (Literal& l : leftData->values) {
@@ -1948,7 +2118,7 @@ public:
       contents.push_back(l);
     }
 
-    return makeGCData(contents, curr->type);
+    return makeGCData(std::move(contents), curr->type);
   }
   Flow visitStringEncode(StringEncode* curr) {
     // For now we only support JS-style strings into arrays.
@@ -1956,39 +2126,38 @@ public:
       return Flow(NONCONSTANT_FLOW);
     }
 
-    Flow ref = visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
+    Flow str = visit(curr->str);
+    if (str.breaking()) {
+      return str;
     }
-    // TODO: "WTF-16 position treatment", as in stringview_wtf16.slice?
-    Flow ptr = visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
+    Flow array = visit(curr->array);
+    if (array.breaking()) {
+      return array;
     }
     Flow start = visit(curr->start);
     if (start.breaking()) {
       return start;
     }
 
-    auto refData = ref.getSingleValue().getGCData();
-    auto ptrData = ptr.getSingleValue().getGCData();
-    if (!refData || !ptrData) {
+    auto strData = str.getSingleValue().getGCData();
+    auto arrayData = array.getSingleValue().getGCData();
+    if (!strData || !arrayData) {
       trap("null ref");
     }
     auto startVal = start.getSingleValue().getUnsigned();
-    auto& refValues = refData->values;
-    auto& ptrValues = ptrData->values;
+    auto& strValues = strData->values;
+    auto& arrayValues = arrayData->values;
     size_t end;
-    if (std::ckd_add<size_t>(&end, startVal, refValues.size()) ||
-        end > ptrValues.size()) {
+    if (std::ckd_add<size_t>(&end, startVal, strValues.size()) ||
+        end > arrayValues.size()) {
       trap("oob");
     }
 
-    for (Index i = 0; i < refValues.size(); i++) {
-      ptrValues[startVal + i] = refValues[i];
+    for (Index i = 0; i < strValues.size(); i++) {
+      arrayValues[startVal + i] = strValues[i];
     }
 
-    return Literal(int32_t(refData->values.size()));
+    return Literal(int32_t(strData->values.size()));
   }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
@@ -2056,29 +2225,6 @@ public:
     }
     return Literal(result);
   }
-  Flow visitStringAs(StringAs* curr) {
-    // For now we only support JS-style strings.
-    if (curr->op != StringAsWTF16) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-
-    Flow flow = visit(curr->ref);
-    if (flow.breaking()) {
-      return flow;
-    }
-    auto value = flow.getSingleValue();
-    auto data = value.getGCData();
-    if (!data) {
-      trap("null ref");
-    }
-
-    // A JS-style string can be viewed simply as the underlying data. All we
-    // need to do is fix up the type.
-    return Literal(data, curr->type.getHeapType());
-  }
-  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     NOTE_ENTER("StringWTF16Get");
     Flow ref = visit(curr->ref);
@@ -2102,18 +2248,7 @@ public:
 
     return Literal(values[i].geti32());
   }
-  Flow visitStringIterNext(StringIterNext* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringIterMove(StringIterMove* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
   Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    // For now we only support JS-style strings.
-    if (curr->op != StringSliceWTF16) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-
     Flow ref = visit(curr->ref);
     if (ref.breaking()) {
       return ref;
@@ -2145,10 +2280,7 @@ public:
         }
       }
     }
-    return makeGCData(contents, curr->type);
-  }
-  Flow visitStringSliceIter(StringSliceIter* curr) {
-    return Flow(NONCONSTANT_FLOW);
+    return makeGCData(std::move(contents), curr->type);
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
@@ -2159,7 +2291,7 @@ public:
     WASM_UNREACHABLE("unimp");
   }
 
-private:
+protected:
   // Truncate the value if we need to. The storage is just a list of Literals,
   // so we can't just write the value like we would to a C struct field and
   // expect it to truncate for us. Instead, we truncate so the stored value is
@@ -2193,6 +2325,24 @@ private:
       }
     }
     return value;
+  }
+
+  Literal makeFromMemory(void* p, Field field) {
+    switch (field.packedType) {
+      case Field::not_packed:
+        return Literal::makeFromMemory(p, field.type);
+      case Field::i8: {
+        int8_t i;
+        memcpy(&i, p, sizeof(i));
+        return truncateForPacking(Literal(int32_t(i)), field);
+      }
+      case Field::i16: {
+        int16_t i;
+        memcpy(&i, p, sizeof(i));
+        return truncateForPacking(Literal(int32_t(i)), field);
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
   }
 };
 
@@ -2352,6 +2502,10 @@ public:
     NOTE_ENTER("TableCopy");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2448,13 +2602,17 @@ public:
     NOTE_ENTER("Try");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitRethrow(Rethrow* curr) {
     NOTE_ENTER("Rethrow");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitRefAs(RefAs* curr) {
     // TODO: Remove this once interpretation is implemented.
-    if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+    if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
       return Flow(NONCONSTANT_FLOW);
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
@@ -2506,7 +2664,7 @@ public:
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
-                               Index index,
+                               Address index,
                                HeapType sig,
                                Literals& arguments,
                                Type result,
@@ -2557,8 +2715,22 @@ public:
           }
           break;
         }
-        case Type::f32:
-          return Literal(load32u(addr, memory)).castToF32();
+        case Type::f32: {
+          switch (load->bytes) {
+            case 2: {
+              // Convert the float16 to float32 and store the binary
+              // representation.
+              return Literal(bit_cast<int32_t>(
+                               fp16_ieee_to_fp32_value(load16u(addr, memory))))
+                .castToF32();
+            }
+            case 4:
+              return Literal(load32u(addr, memory)).castToF32();
+            default:
+              WASM_UNREACHABLE("invalid size");
+          }
+          break;
+        }
         case Type::f64:
           return Literal(load64u(addr, memory)).castToF64();
         case Type::v128:
@@ -2607,9 +2779,23 @@ public:
           break;
         }
         // write floats carefully, ensuring all bits reach memory
-        case Type::f32:
-          store32(addr, value.reinterpreti32(), memory);
+        case Type::f32: {
+          switch (store->bytes) {
+            case 2: {
+              float f32 = bit_cast<float>(value.reinterpreti32());
+              // Convert the float32 to float16 and store the binary
+              // representation.
+              store16(addr, fp16_ieee_from_fp32_value(f32), memory);
+              break;
+            }
+            case 4:
+              store32(addr, value.reinterpreti32(), memory);
+              break;
+            default:
+              WASM_UNREACHABLE("invalid store size");
+          }
           break;
+        }
         case Type::f64:
           store64(addr, value.reinterpreti64(), memory);
           break;
@@ -2669,10 +2855,11 @@ public:
 
     virtual Index tableSize(Name tableName) = 0;
 
-    virtual void tableStore(Name tableName, Index index, const Literal& entry) {
+    virtual void
+    tableStore(Name tableName, Address index, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
-    virtual Literal tableLoad(Name tableName, Index index) {
+    virtual Literal tableLoad(Name tableName, Address index) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2759,54 +2946,56 @@ private:
   std::unordered_set<Name> droppedDataSegments;
   std::unordered_set<Name> droppedElementSegments;
 
-  struct TableInterfaceInfo {
-    // The external interface in which the table is defined.
-    ExternalInterface* interface;
+  struct TableInstanceInfo {
+    // The ModuleRunner instance in which the memory is defined.
+    SubType* instance;
+    // The external interface in which the table is defined
+    ExternalInterface* interface() { return instance->externalInterface; }
     // The name the table has in that interface.
     Name name;
   };
 
-  TableInterfaceInfo getTableInterfaceInfo(Name name) {
+  TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
     if (table->imported()) {
       auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
-      return TableInterfaceInfo{importedInstance->externalInterface,
-                                tableExport->value};
-    } else {
-      return TableInterfaceInfo{externalInterface, name};
+      return importedInstance->getTableInstanceInfo(tableExport->value);
     }
+
+    return TableInstanceInfo{self(), name};
   }
 
   void initializeTableContents() {
     for (auto& table : wasm.tables) {
       if (table->type.isNullable()) {
         // Initial with nulls in a nullable table.
-        auto info = getTableInterfaceInfo(table->name);
+        auto info = getTableInstanceInfo(table->name);
         auto null = Literal::makeNull(table->type.getHeapType());
         for (Address i = 0; i < table->initial; i++) {
-          info.interface->tableStore(info.name, i, null);
+          info.interface()->tableStore(info.name, i, null);
         }
       }
     }
 
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)self()->visit(segment->offset).getSingleValue().geti32();
+      Const size;
+      size.value = Literal(uint32_t(segment->data.size()));
+      size.finalize();
 
-      Table* table = wasm.getTable(segment->table);
-      ExternalInterface* extInterface = externalInterface;
-      Name tableName = segment->table;
-      if (table->imported()) {
-        auto inst = linkedInstances.at(table->module);
-        extInterface = inst->externalInterface;
-        tableName = inst->wasm.getExport(table->base)->value;
-      }
+      TableInit init;
+      init.table = segment->table;
+      init.segment = segment->name;
+      init.dest = segment->offset;
+      init.offset = &zero;
+      init.size = &size;
+      init.finalize();
 
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = self()->visit(segment->data[i]);
-        extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
-      }
+      self()->visit(&init);
 
       droppedElementSegments.insert(segment->name);
     });
@@ -2815,27 +3004,25 @@ private:
   struct MemoryInstanceInfo {
     // The ModuleRunner instance in which the memory is defined.
     SubType* instance;
+    // The external interface in which the memory is defined
+    ExternalInterface* interface() { return instance->externalInterface; }
     // The name the memory has in that interface.
     Name name;
   };
 
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
     auto* memory = wasm.getMemory(name);
-    MemoryInstanceInfo memoryInterfaceInfo;
-    if (!memory->imported()) {
-      return MemoryInstanceInfo{self(), name};
+    if (memory->imported()) {
+      auto& importedInstance = linkedInstances.at(memory->module);
+      auto* memoryExport = importedInstance->wasm.getExport(memory->base);
+      return importedInstance->getMemoryInstanceInfo(memoryExport->value);
     }
 
-    auto& importedInstance = linkedInstances.at(memory->module);
-    auto* memoryExport = importedInstance->wasm.getExport(memory->base);
-    return importedInstance->getMemoryInstanceInfo(memoryExport->value);
+    return MemoryInstanceInfo{self(), name};
   }
 
   void initializeMemoryContents() {
     initializeMemorySizes();
-    Const offset;
-    offset.value = Literal(uint32_t(0));
-    offset.finalize();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -2843,15 +3030,23 @@ private:
       if (segment->isPassive) {
         continue;
       }
+
+      auto* memory = wasm.getMemory(segment->memory);
+
+      Const zero;
+      zero.value = Literal::makeFromInt32(0, memory->addressType);
+      zero.finalize();
+
       Const size;
-      size.value = Literal(uint32_t(segment->data.size()));
+      size.value =
+        Literal::makeFromInt32(segment->data.size(), memory->addressType);
       size.finalize();
 
       MemoryInit init;
       init.memory = segment->memory;
       init.segment = segment->name;
       init.dest = segment->offset;
-      init.offset = &offset;
+      init.offset = &zero;
       init.size = &size;
       init.finalize();
 
@@ -2904,6 +3099,8 @@ public:
       : function(function), parent(parent) {
       oldScope = parent.scope;
       parent.scope = this;
+      parent.callDepth++;
+      parent.functionStack.push_back(function->name);
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -2929,7 +3126,11 @@ public:
       }
     }
 
-    ~FunctionScope() { parent.scope = oldScope; }
+    ~FunctionScope() {
+      parent.scope = oldScope;
+      parent.callDepth--;
+      parent.functionStack.pop_back();
+    }
 
     // The current delegate target, if delegation of an exception is in
     // progress. If no delegation is in progress, this will be an empty Name.
@@ -2964,32 +3165,33 @@ public:
   Flow visitCall(Call* curr) {
     NOTE_ENTER("Call");
     NOTE_NAME(curr->target);
+    Name target = curr->target;
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
     auto* func = wasm.getFunction(curr->target);
-    Flow ret;
+    auto funcType = func->type;
     if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
-      auto newArguments = arguments;
-      auto target = newArguments.back();
-      newArguments.pop_back();
-      ret.values = callFunctionInternal(target.getFunc(), newArguments);
-    } else if (func->imported()) {
-      ret.values = externalInterface->callImport(func, arguments);
-    } else {
-      ret.values = callFunctionInternal(curr->target, arguments);
+      target = arguments.back().getFunc();
+      funcType = arguments.back().type.getHeapType();
+      arguments.pop_back();
     }
+
+    if (curr->isReturn) {
+      // Return calls are represented by their arguments followed by a reference
+      // to the function to be called.
+      arguments.push_back(Literal::makeFunc(target, funcType));
+      return Flow(RETURN_CALL_FLOW, std::move(arguments));
+    }
+
+    Flow ret = callFunction(target, arguments);
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
-    // TODO: make this a proper tail call (return first)
-    if (curr->isReturn) {
-      ret.breakTo = RETURN_FLOW;
-    }
     return ret;
   }
 
@@ -3005,19 +3207,28 @@ public:
       return target;
     }
 
-    Index index = target.getSingleValue().geti32();
-    Type type = curr->isReturn ? scope->function->getResults() : curr->type;
+    auto index = target.getSingleValue().getUnsigned();
+    auto info = getTableInstanceInfo(curr->table);
 
-    auto info = getTableInterfaceInfo(curr->table);
-    Flow ret = info.interface->callTable(
-      info.name, index, curr->heapType, arguments, type, *self());
-
-    // TODO: make this a proper tail call (return first)
     if (curr->isReturn) {
-      ret.breakTo = RETURN_FLOW;
+      // Return calls are represented by their arguments followed by a reference
+      // to the function to be called.
+      auto funcref = info.interface()->tableLoad(info.name, index);
+      if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
+        trap("cast failure in call_indirect");
+      }
+      arguments.push_back(funcref);
+      return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
+
+    Flow ret = info.interface()->callTable(
+      info.name, index, curr->heapType, arguments, curr->type, *self());
+#ifdef WASM_INTERPRETER_DEBUG
+    std::cout << "(returned to " << scope->function->name << ")\n";
+#endif
     return ret;
   }
+
   Flow visitCallRef(CallRef* curr) {
     NOTE_ENTER("CallRef");
     Literals arguments;
@@ -3029,24 +3240,22 @@ public:
     if (target.breaking()) {
       return target;
     }
-    if (target.getSingleValue().isNull()) {
+    auto targetRef = target.getSingleValue();
+    if (targetRef.isNull()) {
       trap("null target in call_ref");
     }
-    Name funcName = target.getSingleValue().getFunc();
-    auto* func = wasm.getFunction(funcName);
-    Flow ret;
-    if (func->imported()) {
-      ret.values = externalInterface->callImport(func, arguments);
-    } else {
-      ret.values = callFunctionInternal(funcName, arguments);
+
+    if (curr->isReturn) {
+      // Return calls are represented by their arguments followed by a reference
+      // to the function to be called.
+      arguments.push_back(targetRef);
+      return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
+
+    Flow ret = callFunction(targetRef.getFunc(), arguments);
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
-    // TODO: make this a proper tail call (return first)
-    if (curr->isReturn) {
-      ret.breakTo = RETURN_FLOW;
-    }
     return ret;
   }
 
@@ -3056,32 +3265,32 @@ public:
     if (index.breaking()) {
       return index;
     }
-    auto info = getTableInterfaceInfo(curr->table);
-    return info.interface->tableLoad(info.name,
-                                     index.getSingleValue().geti32());
+    auto info = getTableInstanceInfo(curr->table);
+    auto address = index.getSingleValue().getUnsigned();
+    return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow indexFlow = self()->visit(curr->index);
-    if (indexFlow.breaking()) {
-      return indexFlow;
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
     }
-    Flow valueFlow = self()->visit(curr->value);
-    if (valueFlow.breaking()) {
-      return valueFlow;
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
     }
-    auto info = getTableInterfaceInfo(curr->table);
-    info.interface->tableStore(info.name,
-                               indexFlow.getSingleValue().geti32(),
-                               valueFlow.getSingleValue());
+    auto info = getTableInstanceInfo(curr->table);
+    auto address = index.getSingleValue().getUnsigned();
+    info.interface()->tableStore(info.name, address, value.getSingleValue());
     return Flow();
   }
 
   Flow visitTableSize(TableSize* curr) {
     NOTE_ENTER("TableSize");
-    auto info = getTableInterfaceInfo(curr->table);
-    Index tableSize = info.interface->tableSize(curr->table);
-    return Literal::makeFromInt32(tableSize, Type::i32);
+    auto info = getTableInstanceInfo(curr->table);
+    auto* table = info.instance->wasm.getTable(info.name);
+    Index tableSize = info.interface()->tableSize(curr->table);
+    return Literal::makeFromInt64(tableSize, table->addressType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
@@ -3094,24 +3303,23 @@ public:
     if (deltaFlow.breaking()) {
       return deltaFlow;
     }
-    Name tableName = curr->table;
-    auto info = getTableInterfaceInfo(tableName);
+    auto info = getTableInstanceInfo(curr->table);
 
-    Index tableSize = info.interface->tableSize(tableName);
-    Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
-    Flow fail = Literal::makeFromInt32(-1, Type::i32);
-    Index delta = deltaFlow.getSingleValue().geti32();
+    uint64_t tableSize = info.interface()->tableSize(info.name);
+    auto* table = info.instance->wasm.getTable(info.name);
+    Flow ret = Literal::makeFromInt64(tableSize, table->addressType);
+    Flow fail = Literal::makeFromInt64(-1, table->addressType);
+    uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
 
-    if (tableSize >= uint32_t(-1) - delta) {
+    uint64_t newSize;
+    if (std::ckd_add(&newSize, tableSize, delta)) {
       return fail;
     }
-    auto maxTableSize = self()->wasm.getTable(tableName)->max;
-    if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(maxTableSize)) {
+    if (newSize > table->max || newSize > WebLimitations::MaxTableSize) {
       return fail;
     }
-    Index newSize = tableSize + delta;
-    if (!info.interface->growTable(
-          tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
+    if (!info.interface()->growTable(
+          info.name, valueFlow.getSingleValue(), tableSize, newSize)) {
       // We failed to grow the table in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -3133,20 +3341,19 @@ public:
     if (sizeFlow.breaking()) {
       return sizeFlow;
     }
-    Name tableName = curr->table;
-    auto info = getTableInterfaceInfo(tableName);
+    auto info = getTableInstanceInfo(curr->table);
 
-    Index dest = destFlow.getSingleValue().geti32();
+    auto dest = destFlow.getSingleValue().getUnsigned();
     Literal value = valueFlow.getSingleValue();
-    Index size = sizeFlow.getSingleValue().geti32();
+    auto size = sizeFlow.getSingleValue().getUnsigned();
 
-    Index tableSize = info.interface->tableSize(tableName);
+    auto tableSize = info.interface()->tableSize(info.name);
     if (dest + size > tableSize) {
       trap("out of bounds table access");
     }
 
-    for (Index i = 0; i < size; ++i) {
-      info.interface->tableStore(info.name, dest + i, value);
+    for (uint64_t i = 0; i < size; i++) {
+      info.interface()->tableStore(info.name, dest + i, value);
     }
     return Flow();
   }
@@ -3172,10 +3379,10 @@ public:
     Address sourceVal(source.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    auto destInfo = getTableInterfaceInfo(curr->destTable);
-    auto sourceInfo = getTableInterfaceInfo(curr->sourceTable);
-    auto destTableSize = destInfo.interface->tableSize(destInfo.name);
-    auto sourceTableSize = sourceInfo.interface->tableSize(sourceInfo.name);
+    auto destInfo = getTableInstanceInfo(curr->destTable);
+    auto sourceInfo = getTableInstanceInfo(curr->sourceTable);
+    auto destTableSize = destInfo.interface()->tableSize(destInfo.name);
+    auto sourceTableSize = sourceInfo.interface()->tableSize(sourceInfo.name);
     if (sourceVal + sizeVal > sourceTableSize ||
         destVal + sizeVal > destTableSize ||
         // FIXME: better/cheaper way to detect wrapping?
@@ -3194,10 +3401,58 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      destInfo.interface->tableStore(
+      destInfo.interface()->tableStore(
         destInfo.name,
         destVal + i,
-        sourceInfo.interface->tableLoad(sourceInfo.name, sourceVal + i));
+        sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
+    }
+    return {};
+  }
+
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    Flow dest = self()->visit(curr->dest);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    NOTE_EVAL1(dest);
+    NOTE_EVAL1(offset);
+    NOTE_EVAL1(size);
+
+    auto* segment = wasm.getElementSegment(curr->segment);
+
+    Address destVal(dest.getSingleValue().getUnsigned());
+    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+    if (offsetVal + sizeVal > 0 &&
+        droppedElementSegments.count(curr->segment)) {
+      trap("out of bounds segment access in table.init");
+    }
+    if (offsetVal + sizeVal > segment->data.size()) {
+      trap("out of bounds segment access in table.init");
+    }
+    auto info = getTableInstanceInfo(curr->table);
+    auto tableSize = info.interface()->tableSize(info.name);
+    if (destVal + sizeVal > tableSize) {
+      trap("out of bounds table access in table.init");
+    }
+    for (size_t i = 0; i < sizeVal; ++i) {
+      // FIXME: We should not call visit() here more than once at runtime. The
+      //        values in the segment should be computed once during startup,
+      //        and then read here as needed. For example, if we had a
+      //        struct.new here then we should not allocate a new struct each
+      //        time we table.init that data.
+      auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
+      info.interface()->tableStore(info.name, destVal + i, value);
     }
     return {};
   }
@@ -3257,7 +3512,7 @@ public:
     if (curr->isAtomic) {
       info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
     }
-    auto ret = info.instance->externalInterface->load(curr, addr, info.name);
+    auto ret = info.interface()->load(curr, addr, info.name);
     NOTE_EVAL1(addr);
     NOTE_EVAL1(ret);
     return ret;
@@ -3281,8 +3536,7 @@ public:
     }
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
-    info.instance->externalInterface->store(
-      curr, addr, value.getSingleValue(), info.name);
+    info.interface()->store(curr, addr, value.getSingleValue(), info.name);
     return Flow();
   }
 
@@ -3482,39 +3736,36 @@ public:
       return flow;
     }
     NOTE_EVAL1(flow);
-    Address src(uint32_t(flow.getSingleValue().geti32()));
+    Address src(flow.getSingleValue().getUnsigned());
     auto info = getMemoryInstanceInfo(curr->memory);
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
         case Load8x8SVec128:
-          return Literal(
-            int32_t(info.instance->externalInterface->load8s(addr, info.name)));
+          return Literal(int32_t(info.interface()->load8s(addr, info.name)));
         case Load8x8UVec128:
-          return Literal(
-            int32_t(info.instance->externalInterface->load8u(addr, info.name)));
+          return Literal(int32_t(info.interface()->load8u(addr, info.name)));
         case Load16x4SVec128:
-          return Literal(int32_t(
-            info.instance->externalInterface->load16s(addr, info.name)));
+          return Literal(int32_t(info.interface()->load16s(addr, info.name)));
         case Load16x4UVec128:
-          return Literal(int32_t(
-            info.instance->externalInterface->load16u(addr, info.name)));
+          return Literal(int32_t(info.interface()->load16u(addr, info.name)));
         case Load32x2SVec128:
-          return Literal(int64_t(
-            info.instance->externalInterface->load32s(addr, info.name)));
+          return Literal(int64_t(info.interface()->load32s(addr, info.name)));
         case Load32x2UVec128:
-          return Literal(int64_t(
-            info.instance->externalInterface->load32u(addr, info.name)));
+          return Literal(int64_t(info.interface()->load32u(addr, info.name)));
         default:
           WASM_UNREACHABLE("unexpected op");
       }
       WASM_UNREACHABLE("invalid op");
     };
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
-        lane = loadLane(info.instance->getFinalAddress(
-          curr, Literal(uint32_t(src)), laneBytes, memorySize));
-        src = Address(uint32_t(src) + laneBytes);
+        auto ptr = Literal::makeFromInt64(src, addressType);
+        lane = loadLane(
+          info.instance->getFinalAddress(curr, ptr, laneBytes, memorySize));
+        src =
+          ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
       }
       return Literal(lanes);
     };
@@ -3552,12 +3803,10 @@ public:
     auto zero =
       Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
     if (curr->op == Load32ZeroVec128) {
-      auto val =
-        Literal(info.instance->externalInterface->load32u(src, info.name));
+      auto val = Literal(info.interface()->load32u(src, info.name));
       return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
     } else {
-      auto val =
-        Literal(info.instance->externalInterface->load64u(src, info.name));
+      auto val = Literal(info.interface()->load64u(src, info.name));
       return Literal(std::array<Literal, 2>{{val, zero}});
     }
   }
@@ -3583,10 +3832,10 @@ public:
         std::array<Literal, 16> lanes = vec.getLanesUI8x16();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load8u(addr, info.name));
+            Literal(info.interface()->load8u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store8(
+          info.interface()->store8(
             addr, lanes[curr->index].geti32(), info.name);
           return {};
         }
@@ -3596,10 +3845,10 @@ public:
         std::array<Literal, 8> lanes = vec.getLanesUI16x8();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load16u(addr, info.name));
+            Literal(info.interface()->load16u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store16(
+          info.interface()->store16(
             addr, lanes[curr->index].geti32(), info.name);
           return {};
         }
@@ -3609,10 +3858,10 @@ public:
         std::array<Literal, 4> lanes = vec.getLanesI32x4();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load32u(addr, info.name));
+            Literal(info.interface()->load32u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store32(
+          info.interface()->store32(
             addr, lanes[curr->index].geti32(), info.name);
           return {};
         }
@@ -3622,10 +3871,10 @@ public:
         std::array<Literal, 2> lanes = vec.getLanesI64x2();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load64u(addr, info.name));
+            Literal(info.interface()->load64u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store64(
+          info.interface()->store64(
             addr, lanes[curr->index].geti64(), info.name);
           return {};
         }
@@ -3638,7 +3887,7 @@ public:
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
-    return Literal::makeFromInt64(memorySize, memory->indexType);
+    return Literal::makeFromInt64(memorySize, memory->addressType);
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
@@ -3649,24 +3898,28 @@ public:
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
-    auto indexType = memory->indexType;
-    auto fail = Literal::makeFromInt64(-1, memory->indexType);
-    Flow ret = Literal::makeFromInt64(memorySize, indexType);
+    auto addressType = memory->addressType;
+    auto fail = Literal::makeFromInt64(-1, memory->addressType);
+    Flow ret = Literal::makeFromInt64(memorySize, addressType);
     uint64_t delta = flow.getSingleValue().getUnsigned();
-    if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
+    uint64_t maxAddr = addressType == Type::i32
+                         ? std::numeric_limits<uint32_t>::max()
+                         : std::numeric_limits<uint64_t>::max();
+    if (delta > maxAddr / Memory::kPageSize) {
+      // Impossible to grow this much.
       return fail;
     }
-    if (memorySize >= uint32_t(-1) - delta && indexType == Type::i32) {
+    if (memorySize >= maxAddr - delta) {
+      // Overflow.
       return fail;
     }
     auto newSize = memorySize + delta;
     if (newSize > memory->max) {
       return fail;
     }
-    if (!info.instance->externalInterface->growMemory(
-          info.name,
-          memorySize * Memory::kPageSize,
-          newSize * Memory::kPageSize)) {
+    if (!info.interface()->growMemory(info.name,
+                                      memorySize * Memory::kPageSize,
+                                      newSize * Memory::kPageSize)) {
       // We failed to grow the memory in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -3696,13 +3949,13 @@ public:
     auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
-    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
-    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+    Address offsetVal(offset.getSingleValue().getUnsigned());
+    Address sizeVal(size.getSingleValue().getUnsigned());
 
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+    if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto info = getMemoryInstanceInfo(curr->memory);
@@ -3712,7 +3965,7 @@ public:
     }
     for (size_t i = 0; i < sizeVal; ++i) {
       Literal addr(destVal + i);
-      info.instance->externalInterface->store8(
+      info.interface()->store8(
         info.instance->getFinalAddressWithoutOffset(addr, 1, memorySize),
         segment->data[offsetVal + i],
         info.name);
@@ -3767,10 +4020,10 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      destInfo.instance->externalInterface->store8(
+      destInfo.interface()->store8(
         destInfo.instance->getFinalAddressWithoutOffset(
           Literal(destVal + i), 1, destMemorySize),
-        sourceInfo.instance->externalInterface->load8s(
+        sourceInfo.interface()->load8s(
           sourceInfo.instance->getFinalAddressWithoutOffset(
             Literal(sourceVal + i), 1, sourceMemorySize),
           sourceInfo.name),
@@ -3808,11 +4061,10 @@ public:
     }
     uint8_t val(value.getSingleValue().geti32());
     for (size_t i = 0; i < sizeVal; ++i) {
-      info.instance->externalInterface->store8(
-        info.instance->getFinalAddressWithoutOffset(
-          Literal(destVal + i), 1, memorySize),
-        val,
-        info.name);
+      info.interface()->store8(info.instance->getFinalAddressWithoutOffset(
+                                 Literal(destVal + i), 1, memorySize),
+                               val,
+                               info.name);
     }
     return {};
   }
@@ -3836,17 +4088,26 @@ public:
 
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
-    auto end = offset + size * elemBytes;
-    if ((size != 0ull && droppedDataSegments.count(curr->segment)) ||
-        end > seg.data.size()) {
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+    uint64_t end;
+    if (std::ckd_add(&end, offset, size * elemBytes) || end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
+    }
+    if (droppedDataSegments.count(curr->segment) && end > 0) {
+      trap("dropped segment access in array.new_data");
     }
     contents.reserve(size);
     for (Index i = offset; i < end; i += elemBytes) {
       auto addr = (void*)&seg.data[i];
-      contents.push_back(Literal::makeFromMemory(addr, element));
+      contents.push_back(this->makeFromMemory(addr, element));
     }
-    return self()->makeGCData(contents, curr->type);
+
+#pragma GCC diagnostic pop
+
+    return self()->makeGCData(std::move(contents), curr->type);
   }
   Flow visitArrayNewElem(ArrayNewElem* curr) {
     NOTE_ENTER("ArrayNewElem");
@@ -3877,7 +4138,7 @@ public:
       auto val = self()->visit(seg.data[i]).getSingleValue();
       contents.push_back(val);
     }
-    return self()->makeGCData(contents, curr->type);
+    return self()->makeGCData(std::move(contents), curr->type);
   }
   Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInit");
@@ -3924,7 +4185,7 @@ public:
     }
     for (size_t i = 0; i < sizeVal; i++) {
       void* addr = (void*)&seg->data[offsetVal + i * elemSize];
-      data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
+      data->values[indexVal + i] = this->makeFromMemory(addr, elem);
     }
     return {};
   }
@@ -4010,9 +4271,10 @@ public:
         return ret;
       };
 
+      auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == e.tag) {
-          multiValues.push_back(e.values);
+        if (curr->catchTags[i] == exnData->tag) {
+          multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
       }
@@ -4023,6 +4285,32 @@ public:
         scope->currDelegateTarget = curr->delegateTarget;
       }
       // This exception is not caught by this try-catch. Rethrow it.
+      throw;
+    }
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
+    try {
+      return self()->visit(curr->body);
+    } catch (const WasmException& e) {
+      auto exnData = e.exn.getExnData();
+      for (size_t i = 0; i < curr->catchTags.size(); i++) {
+        auto catchTag = curr->catchTags[i];
+        if (!catchTag.is() || catchTag == exnData->tag) {
+          Flow ret;
+          ret.breakTo = curr->catchDests[i];
+          if (catchTag.is()) {
+            for (auto item : exnData->payload) {
+              ret.values.push_back(item);
+            }
+          }
+          if (curr->catchRefs[i]) {
+            ret.values.push_back(e.exn);
+          }
+          return ret;
+        }
+      }
+      // This exception is not caught by this try_table. Rethrow it.
       throw;
     }
   }
@@ -4095,63 +4383,67 @@ public:
     return value;
   }
 
-  // Call a function, starting an invocation.
-  Literals callFunction(Name name, const Literals& arguments) {
-    auto* func = wasm.getFunction(name);
-    if (func->imported()) {
-      return externalInterface->callImport(func, arguments);
-    }
-
-    // if the last call ended in a jump up the stack, it might have left stuff
-    // for us to clean up here
-    callDepth = 0;
-    functionStack.clear();
-    return callFunctionInternal(name, arguments);
-  }
-
-  // Internal function call. Must be public so that callTable implementations
-  // can use it (refactor?)
-  Literals callFunctionInternal(Name name, const Literals& arguments) {
+  Literals callFunction(Name name, Literals arguments) {
     if (callDepth > maxDepth) {
-      externalInterface->trap("stack limit");
+      hostLimit("stack limit");
     }
-    auto previousCallDepth = callDepth;
-    callDepth++;
-    auto previousFunctionStackSize = functionStack.size();
-    functionStack.push_back(name);
 
-    Function* function = wasm.getFunction(name);
-    assert(function);
-    FunctionScope scope(function, arguments, *self());
+    Flow flow;
+    std::optional<Type> resultType;
+
+    // We may have to call multiple functions in the event of return calls.
+    while (true) {
+      Function* function = wasm.getFunction(name);
+      assert(function);
+
+      // Return calls can only make the result type more precise.
+      if (resultType) {
+        assert(Type::isSubType(function->getResults(), *resultType));
+      }
+      resultType = function->getResults();
+
+      if (function->imported()) {
+        // TODO: Allow imported functions to tail call as well.
+        return externalInterface->callImport(function, arguments);
+      }
+
+      FunctionScope scope(function, arguments, *self());
 
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "entering " << function->name << "\n  with arguments:\n";
-    for (unsigned i = 0; i < arguments.size(); ++i) {
-      std::cout << "    $" << i << ": " << arguments[i] << '\n';
-    }
+      std::cout << "entering " << function->name << "\n  with arguments:\n";
+      for (unsigned i = 0; i < arguments.size(); ++i) {
+        std::cout << "    $" << i << ": " << arguments[i] << '\n';
+      }
 #endif
 
-    Flow flow = self()->visit(function->body);
+      flow = self()->visit(function->body);
+
+#ifdef WASM_INTERPRETER_DEBUG
+      std::cout << "exiting " << function->name << " with " << flow.values
+                << '\n';
+#endif
+
+      if (flow.breakTo != RETURN_CALL_FLOW) {
+        break;
+      }
+
+      // There was a return call, so we need to call the next function before
+      // returning to the caller. The flow carries the function arguments and a
+      // function reference.
+      name = flow.values.back().getFunc();
+      flow.values.pop_back();
+      arguments = flow.values;
+    }
+
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
-    if (!Type::isSubType(type, function->getResults())) {
-      std::cerr << "calling " << function->name << " resulted in " << type
-                << " but the function type is " << function->getResults()
-                << '\n';
+    if (!Type::isSubType(type, *resultType)) {
+      std::cerr << "calling " << name << " resulted in " << type
+                << " but the function type is " << *resultType << '\n';
       WASM_UNREACHABLE("unexpected result type");
     }
-    // may decrease more than one, if we jumped up the stack
-    callDepth = previousCallDepth;
-    // if we jumped up the stack, we also need to pop higher frames
-    // TODO can FunctionScope handle this automatically?
-    while (functionStack.size() > previousFunctionStackSize) {
-      functionStack.pop_back();
-    }
-#ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "exiting " << function->name << " with " << flow.values
-              << '\n';
-#endif
+
     return flow.values;
   }
 

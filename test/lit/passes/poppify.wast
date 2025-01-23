@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s --poppify --no-validation -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e (param i32))
+  ;; CHECK:      (tag $e (type $3) (param i32))
   (tag $e (param i32))
 
   ;; CHECK:      (func $id (type $4) (param $x i32) (result i32)
@@ -223,7 +223,7 @@
   )
 
   ;; CHECK:      (func $try-catch (type $0) (result i32)
-  ;; CHECK-NEXT:  (try $try (result i32)
+  ;; CHECK-NEXT:  (try (result i32)
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (throw $e
@@ -256,7 +256,7 @@
   ;; CHECK:      (func $try-delegate (type $0) (result i32)
   ;; CHECK-NEXT:  (try $l0 (result i32)
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (throw $e

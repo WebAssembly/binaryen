@@ -133,10 +133,10 @@
 ;; Some of these are uninteresting and should not get a new type.
 (module
 
-  ;; CHECK:      (type $0 (func (param anyref arrayref)))
-
   ;; CHECK:      (type $struct (sub (struct (field anyref))))
   (type $struct (sub (struct (field (ref null any)))))
+
+  ;; CHECK:      (type $1 (func (param anyref arrayref)))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct_1 (sub $struct (struct (field anyref))))
@@ -145,7 +145,7 @@
 
   ;; CHECK:       (type $struct_3 (sub $struct (struct (field anyref))))
 
-  ;; CHECK:      (func $foo (type $0) (param $any anyref) (param $array arrayref)
+  ;; CHECK:      (func $foo (type $1) (param $any anyref) (param $array arrayref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct_1)
   ;; CHECK-NEXT:  )
@@ -366,10 +366,10 @@
 ;; turn into a simple Literal). (We do optimize $empty and generate $empty$1,
 ;; but that is not important here.)
 (module
-  ;; CHECK:      (type $empty (sub (struct )))
+  ;; CHECK:      (type $empty (sub (struct)))
   (type $empty (sub (struct)))
 
-  ;; CHECK:      (type $empty_1 (sub $empty (struct )))
+  ;; CHECK:      (type $empty_1 (sub $empty (struct)))
 
   ;; CHECK:      (type $2 (func (param anyref)))
 
@@ -382,15 +382,15 @@
   ;; CHECK:      (func $0 (type $2) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (extern.externalize
+  ;; CHECK-NEXT:    (extern.convert_any
   ;; CHECK-NEXT:     (global.get $g)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (extern.internalize
-  ;; CHECK-NEXT:     (extern.externalize
+  ;; CHECK-NEXT:    (any.convert_extern
+  ;; CHECK-NEXT:     (extern.convert_any
   ;; CHECK-NEXT:      (global.get $g)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (extern.externalize
+  ;; CHECK-NEXT:    (extern.convert_any
   ;; CHECK-NEXT:     (local.get $param)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -400,17 +400,17 @@
     (drop
       (struct.new $struct
         ;; An externalized global.
-        (extern.externalize
+        (extern.convert_any
           (global.get $g)
         )
         ;; An externalized and then internalized global.
-        (extern.internalize
-          (extern.externalize
+        (any.convert_extern
+          (extern.convert_any
             (global.get $g)
           )
         )
         ;; An externalized parameter.
-        (extern.externalize
+        (extern.convert_any
           (local.get $param)
         )
       )
@@ -452,10 +452,10 @@
 )
 
 (module
-  ;; CHECK:      (type $A (sub (struct )))
+  ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $A_1 (sub $A (struct )))
+  ;; CHECK:      (type $A_1 (sub $A (struct)))
 
   ;; CHECK:      (type $2 (func (result (ref $A))))
 

@@ -1,0 +1,83 @@
+
+function wasm2js_trap() { throw new Error('abort'); }
+
+function asmFunc(imports) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
+ var Math_sqrt = Math.sqrt;
+ var global = null;
+ var global_ref = use_global_ref;
+ function null_() {
+  return null;
+ }
+ 
+ function is_null($0) {
+  return $0 == null | 0;
+ }
+ 
+ function ref_func() {
+  return ref_func;
+ }
+ 
+ function ref_eq($0, $1) {
+  return $0 == $1 | 0;
+ }
+ 
+ function ref_as($0) {
+  return $0 || wasm2js_trap();
+ }
+ 
+ function use_global($0) {
+  var $1 = null;
+  $1 = global;
+  global = $0;
+  return $1;
+ }
+ 
+ function use_global_ref($0) {
+  var $1 = null;
+  $1 = global_ref;
+  global_ref = $0;
+  return $1;
+ }
+ 
+ function funcref_temps($0, $1) {
+  $1 = +$1;
+  funcref_temps(funcref_temps, 0.0);
+ }
+ 
+ function named_type_temps() {
+  return named_type_temps;
+ }
+ 
+ return {
+  "null_": null_, 
+  "is_null": is_null, 
+  "ref_func": ref_func, 
+  "ref_eq": ref_eq, 
+  "ref_as": ref_as, 
+  "use_global": use_global, 
+  "use_global_ref": use_global_ref, 
+  "funcref_temps": funcref_temps, 
+  "named_type_temps": named_type_temps
+ };
+}
+
+var retasmFunc = asmFunc({
+});
+export var null_ = retasmFunc.null_;
+export var is_null = retasmFunc.is_null;
+export var ref_func = retasmFunc.ref_func;
+export var ref_eq = retasmFunc.ref_eq;
+export var ref_as = retasmFunc.ref_as;
+export var use_global = retasmFunc.use_global;
+export var use_global_ref = retasmFunc.use_global_ref;
+export var funcref_temps = retasmFunc.funcref_temps;
+export var named_type_temps = retasmFunc.named_type_temps;

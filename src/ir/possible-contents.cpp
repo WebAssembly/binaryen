@@ -501,6 +501,30 @@ struct CollectedFuncInfo {
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
+
+  // All functions that might be called from the outside. Any RefFunc suggests
+  // that, in open world. (We could be more precise and use our flow analysis to
+  // see which, in fact, flow outside, but it is unclear how useful that would
+  // be. Anyhow, closed-world is more important to optimize, and avoids this.)
+  std::unordered_set<Name> calledFromOutside;
+};
+
+// Does a walk while maintaining a map of names of branch targets to those
+// expressions, so they can be found by their name.
+// TODO: can this replace ControlFlowWalker in other places?
+template<typename SubType, typename VisitorType = Visitor<SubType>>
+struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
+  std::unordered_map<Name, Expression*> breakTargets;
+
+  Expression* findBreakTarget(Name name) { return breakTargets[name]; }
+
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+    BranchUtils::operateOnScopeNameDefs(
+      curr, [&](Name name) { self->breakTargets[name] = curr; });
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+  }
 };
 
 // Walk the wasm and find all the links we need to care about, and the locations
@@ -508,10 +532,12 @@ struct CollectedFuncInfo {
 // After all InfoCollectors run, those data structures will be merged and the
 // main flow will begin.
 struct InfoCollector
-  : public PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
+  : public BreakTargetWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
   CollectedFuncInfo& info;
+  const PassOptions& options;
 
-  InfoCollector(CollectedFuncInfo& info) : info(info) {}
+  InfoCollector(CollectedFuncInfo& info, const PassOptions& options)
+    : info(info), options(options) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -552,9 +578,6 @@ struct InfoCollector
     if (curr->list.empty()) {
       return;
     }
-
-    // Values sent to breaks to this block must be received here.
-    handleBreakTarget(curr);
 
     // The final item in the block can flow a value to here as well.
     receiveChildValue(curr->list.back(), curr);
@@ -650,6 +673,10 @@ struct InfoCollector
       info.links.push_back(
         {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
     }
+
+    if (!options.closedWorld) {
+      info.calledFromOutside.insert(curr->func);
+    }
   }
   void visitRefEq(RefEq* curr) {
     addRoot(curr);
@@ -663,6 +690,7 @@ struct InfoCollector
   void visitTableGrow(TableGrow* curr) { addRoot(curr); }
   void visitTableFill(TableFill* curr) { addRoot(curr); }
   void visitTableCopy(TableCopy* curr) { addRoot(curr); }
+  void visitTableInit(TableInit* curr) {}
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -697,7 +725,7 @@ struct InfoCollector
     receiveChildValue(curr->ref, curr);
   }
   void visitRefAs(RefAs* curr) {
-    if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
+    if (curr->op == ExternConvertAny || curr->op == AnyConvertExtern) {
       // The external conversion ops emit something of a completely different
       // type, which we must mark as a root.
       addRoot(curr);
@@ -988,6 +1016,22 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitStructRMW(StructRMW* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -1084,31 +1128,11 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitStringAs(StringAs* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
   void visitStringWTF16Get(StringWTF16Get* curr) {
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitStringIterNext(StringIterNext* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
-  void visitStringIterMove(StringIterMove* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
   void visitStringSliceWTF(StringSliceWTF* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
-  void visitStringSliceIter(StringSliceIter* curr) {
     // TODO: optimize when possible
     addRoot(curr);
   }
@@ -1127,7 +1151,7 @@ struct InfoCollector
       auto tag = curr->catchTags[tagIndex];
       auto* body = curr->catchBodies[tagIndex];
 
-      auto params = getModule()->getTag(tag)->sig.params;
+      auto params = getModule()->getTag(tag)->params();
       if (params.size() == 0) {
         continue;
       }
@@ -1154,8 +1178,37 @@ struct InfoCollector
     }
   }
   void visitTryTable(TryTable* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
+    receiveChildValue(curr->body, curr);
+
+    // Connect caught tags with their branch targets, and materialize non-null
+    // exnref values.
+    auto numTags = curr->catchTags.size();
+    for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
+      auto tag = curr->catchTags[tagIndex];
+      auto target = curr->catchDests[tagIndex];
+
+      Index exnrefIndex = 0;
+      if (tag.is()) {
+        auto params = getModule()->getTag(tag)->params();
+
+        for (Index i = 0; i < params.size(); i++) {
+          if (isRelevant(params[i])) {
+            info.links.push_back(
+              {TagLocation{tag, i}, getBreakTargetLocation(target, i)});
+          }
+        }
+
+        exnrefIndex = params.size();
+      }
+
+      if (curr->catchRefs[tagIndex]) {
+        auto location = CaughtExnRefLocation{};
+        addRoot(location,
+                PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
+        info.links.push_back(
+          {location, getBreakTargetLocation(target, exnrefIndex)});
+      }
+    }
   }
   void visitThrow(Throw* curr) {
     auto& operands = curr->operands;
@@ -1234,7 +1287,12 @@ struct InfoCollector
     // the type must be the same for all gets of that local.)
     LocalGraph localGraph(func, getModule());
 
-    for (auto& [get, setsForGet] : localGraph.getSetses) {
+    for (auto& [curr, _] : localGraph.locations) {
+      auto* get = curr->dynCast<LocalGet>();
+      if (!get) {
+        continue;
+      }
+
       auto index = get->index;
       auto type = func->getLocalType(index);
       if (!isRelevant(type)) {
@@ -1242,7 +1300,7 @@ struct InfoCollector
       }
 
       // Each get reads from its relevant sets.
-      for (auto* set : setsForGet) {
+      for (auto* set : localGraph.getSets(get)) {
         for (Index i = 0; i < type.size(); i++) {
           Location source;
           if (set) {
@@ -1263,6 +1321,13 @@ struct InfoCollector
 
   // Helpers
 
+  // Returns the location of a break target by the name (e.g. returns the
+  // location of a block, if the name is the name of a block). Also receives the
+  // index in a tuple, if this is part of a tuple value.
+  Location getBreakTargetLocation(Name target, Index i) {
+    return ExpressionLocation{findBreakTarget(target), i};
+  }
+
   // Handles the value sent in a break instruction. Does not handle anything
   // else like the condition etc.
   void handleBreakValue(Expression* curr) {
@@ -1272,24 +1337,11 @@ struct InfoCollector
           for (Index i = 0; i < value->type.size(); i++) {
             // Breaks send the contents of the break value to the branch target
             // that the break goes to.
-            info.links.push_back(
-              {ExpressionLocation{value, i},
-               BreakTargetLocation{getFunction(), target, i}});
+            info.links.push_back({ExpressionLocation{value, i},
+                                  getBreakTargetLocation(target, i)});
           }
         }
       });
-  }
-
-  // Handles receiving values from breaks at the target (as in a block).
-  void handleBreakTarget(Expression* curr) {
-    if (isRelevant(curr->type)) {
-      BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-        for (Index i = 0; i < curr->type.size(); i++) {
-          info.links.push_back({BreakTargetLocation{getFunction(), target, i},
-                                ExpressionLocation{curr, i}});
-        }
-      });
-    }
   }
 
   // Connect a child's value to the parent, that is, all content in the child is
@@ -1516,6 +1568,10 @@ void TNHOracle::scan(Function* func,
 
     void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
     void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
+    void visitStructRMW(StructRMW* curr) { notePossibleTrap(curr->ref); }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      notePossibleTrap(curr->ref);
+    }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
@@ -1999,6 +2055,8 @@ private:
                             const GlobalLocation& globalLoc);
   void filterDataContents(PossibleContents& contents,
                           const DataLocation& dataLoc);
+  void filterPackedDataReads(PossibleContents& contents,
+                             const ExpressionLocation& exprLoc);
 
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
@@ -2066,7 +2124,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // First, collect information from each function.
   ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
     wasm, [&](Function* func, CollectedFuncInfo& info) {
-      InfoCollector finder(info);
+      InfoCollector finder(info, options);
 
       if (func->imported()) {
         // Imports return unknown values.
@@ -2088,7 +2146,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
-  InfoCollector finder(globalInfo);
+  InfoCollector finder(globalInfo, options);
   finder.walkModuleCode(&wasm);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -2122,7 +2180,20 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // The merged roots. (Note that all other forms of merged data are declared at
   // the class level, since we need them during the flow, but the roots are only
   // needed to start the flow, so we can declare them here.)
-  std::unordered_map<Location, PossibleContents> roots;
+  //
+  // This must be insert-ordered for the same reason as |workQueue| is, see
+  // above.
+  InsertOrderedMap<Location, PossibleContents> roots;
+
+  // Any function that may be called from the outside, like an export, is a
+  // root, since they can be called with unknown parameters.
+  auto calledFromOutside = [&](Name funcName) {
+    auto* func = wasm.getFunction(funcName);
+    auto params = func->getParams();
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
+    }
+  };
 
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
@@ -2142,6 +2213,10 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
     }
+
+    for (auto func : info.calledFromOutside) {
+      calledFromOutside(func);
+    }
   }
 
   // We no longer need the function-level info.
@@ -2151,16 +2226,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "external phase\n";
 #endif
 
-  // Parameters of exported functions are roots, since exports can have callers
-  // that we can't see, so anything might arrive there.
-  auto calledFromOutside = [&](Name funcName) {
-    auto* func = wasm.getFunction(funcName);
-    auto params = func->getParams();
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
-    }
-  };
-
+  // Exports can be modified from the outside.
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
       calledFromOutside(ex->value);
@@ -2298,10 +2364,25 @@ bool Flower::updateContents(LocationIndex locationIndex,
   if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
     filterDataContents(newContents, *dataLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "  pre-filtered contents:\n";
+    std::cout << "  pre-filtered data contents:\n";
     newContents.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
+  } else if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    if (exprLoc->expr->is<StructGet>() || exprLoc->expr->is<ArrayGet>()) {
+      // Packed data reads must be filtered before the combine() operation, as
+      // we must only combine the filtered contents (e.g. if 0xff arrives which
+      // as a signed read is truly 0xffffffff then we cannot first combine the
+      // existing 0xffffffff with the new 0xff, as they are different, and the
+      // result will no longer be a constant). There is no need to filter atomic
+      // RMW operations here because they always do unsigned reads.
+      filterPackedDataReads(newContents, *exprLoc);
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+      std::cout << "  pre-filtered packed read contents:\n";
+      newContents.dump(std::cout, &wasm);
+      std::cout << '\n';
+#endif
+    }
   }
 
   contents.combine(newContents);
@@ -2365,15 +2446,15 @@ bool Flower::updateContents(LocationIndex locationIndex,
     }
   }
 
-  // After filtering we should always have more precise information than "many"
-  // - in the worst case, we can have the type declared in the wasm.
-  assert(!contents.isMany());
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "  updateContents has something new\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
+
+  // After filtering we should always have more precise information than "many"
+  // - in the worst case, we can have the type declared in the wasm.
+  assert(!contents.isMany());
 
   // Add a work item if there isn't already.
   workQueue.insert(locationIndex);
@@ -2597,7 +2678,13 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
   auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
-  assert(field);
+  if (!field) {
+    // This is a bottom type; nothing will be written here.
+    assert(dataLoc.type.isBottom());
+    contents = PossibleContents::none();
+    return;
+  }
+
   if (field->isPacked()) {
     // We must handle packed fields carefully.
     if (contents.isLiteral()) {
@@ -2627,6 +2714,57 @@ void Flower::filterDataContents(PossibleContents& contents,
     //  (c) and if both are not constants then likewise we always end up as an
     //      unknown i32
     //
+  }
+}
+
+void Flower::filterPackedDataReads(PossibleContents& contents,
+                                   const ExpressionLocation& exprLoc) {
+  auto* expr = exprLoc.expr;
+
+  // Packed fields are stored as the truncated bits (see comment on
+  // DataLocation; the actual truncation is done in filterDataContents), which
+  // means that unsigned gets just work but signed ones need fixing (and we only
+  // know how to do that here, when we reach the get and see if it is signed).
+  auto signed_ = false;
+  Expression* ref;
+  Index index;
+  if (auto* get = expr->dynCast<StructGet>()) {
+    signed_ = get->signed_;
+    ref = get->ref;
+    index = get->index;
+  } else if (auto* get = expr->dynCast<ArrayGet>()) {
+    signed_ = get->signed_;
+    ref = get->ref;
+    // Arrays are treated as having a single field.
+    index = 0;
+  } else {
+    WASM_UNREACHABLE("bad packed read");
+  }
+  if (!signed_) {
+    return;
+  }
+
+  // We are reading data here, so the reference must be a valid struct or
+  // array, otherwise we would never have gotten here.
+  assert(ref->type.isRef());
+  auto field = GCTypeUtils::getField(ref->type.getHeapType(), index);
+  assert(field);
+  if (!field->isPacked()) {
+    return;
+  }
+
+  if (contents.isLiteral()) {
+    // This is a constant. We can sign-extend it and use that value.
+    auto shifts = Literal(int32_t(32 - field->getByteSize() * 8));
+    auto lit = contents.getLiteral();
+    lit = lit.shl(shifts);
+    lit = lit.shrS(shifts);
+    contents = PossibleContents::literal(lit);
+  } else {
+    // This is not a constant. As in filterDataContents, give up and leave
+    // only the type, since we have no way to track the sign-extension on
+    // top of whatever this is.
+    contents = PossibleContents::fromType(contents.getType());
   }
 }
 
@@ -2804,9 +2942,6 @@ void Flower::dump(Location location) {
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';
-  } else if (auto* loc = std::get_if<BreakTargetLocation>(&location)) {
-    std::cout << "  branchloc " << loc->func->name << " : " << loc->target
-              << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (std::get_if<SignatureParamLocation>(&location)) {
     std::cout << "  sigparamloc " << '\n';
   } else if (std::get_if<SignatureResultLocation>(&location)) {

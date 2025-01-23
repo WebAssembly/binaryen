@@ -46,7 +46,7 @@ struct Limits {
 };
 
 struct MemType {
-  Type type;
+  Type addressType;
   Limits limits;
   bool shared;
 };
@@ -54,6 +54,11 @@ struct MemType {
 struct Memarg {
   uint64_t offset;
   uint32_t align;
+};
+
+struct TableType {
+  Type addressType;
+  Limits limits;
 };
 
 // The location, possible name, and index in the respective module index space
@@ -100,22 +105,21 @@ struct NullTypeParserCtx {
   using ElemListT = Ok;
   using DataStringT = Ok;
 
-  HeapTypeT makeFuncType() { return Ok{}; }
-  HeapTypeT makeAnyType() { return Ok{}; }
-  HeapTypeT makeExternType() { return Ok{}; }
-  HeapTypeT makeEqType() { return Ok{}; }
-  HeapTypeT makeI31Type() { return Ok{}; }
-  HeapTypeT makeStructType() { return Ok{}; }
-  HeapTypeT makeArrayType() { return Ok{}; }
-  HeapTypeT makeExnType() { return Ok{}; }
-  HeapTypeT makeStringType() { return Ok{}; }
-  HeapTypeT makeStringViewWTF8Type() { return Ok{}; }
-  HeapTypeT makeStringViewWTF16Type() { return Ok{}; }
-  HeapTypeT makeStringViewIterType() { return Ok{}; }
-  HeapTypeT makeNoneType() { return Ok{}; }
-  HeapTypeT makeNoextType() { return Ok{}; }
-  HeapTypeT makeNofuncType() { return Ok{}; }
-  HeapTypeT makeNoexnType() { return Ok{}; }
+  HeapTypeT makeFuncType(Shareability) { return Ok{}; }
+  HeapTypeT makeAnyType(Shareability) { return Ok{}; }
+  HeapTypeT makeExternType(Shareability) { return Ok{}; }
+  HeapTypeT makeEqType(Shareability) { return Ok{}; }
+  HeapTypeT makeI31Type(Shareability) { return Ok{}; }
+  HeapTypeT makeStructType(Shareability) { return Ok{}; }
+  HeapTypeT makeArrayType(Shareability) { return Ok{}; }
+  HeapTypeT makeExnType(Shareability) { return Ok{}; }
+  HeapTypeT makeStringType(Shareability) { return Ok{}; }
+  HeapTypeT makeContType(Shareability) { return Ok{}; }
+  HeapTypeT makeNoneType(Shareability) { return Ok{}; }
+  HeapTypeT makeNoextType(Shareability) { return Ok{}; }
+  HeapTypeT makeNofuncType(Shareability) { return Ok{}; }
+  HeapTypeT makeNoexnType(Shareability) { return Ok{}; }
+  HeapTypeT makeNocontType(Shareability) { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -171,6 +175,8 @@ struct NullTypeParserCtx {
   BlockTypeT getBlockTypeFromResult(size_t results) { return Ok{}; }
 
   Result<> getBlockTypeFromTypeUse(Index, TypeUseT) { return Ok{}; }
+
+  bool skipFunctionBody() { return false; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -199,22 +205,51 @@ template<typename Ctx> struct TypeParserCtx {
 
   Ctx& self() { return *static_cast<Ctx*>(this); }
 
-  HeapTypeT makeFuncType() { return HeapType::func; }
-  HeapTypeT makeAnyType() { return HeapType::any; }
-  HeapTypeT makeExternType() { return HeapType::ext; }
-  HeapTypeT makeEqType() { return HeapType::eq; }
-  HeapTypeT makeI31Type() { return HeapType::i31; }
-  HeapTypeT makeStructType() { return HeapType::struct_; }
-  HeapTypeT makeArrayType() { return HeapType::array; }
-  HeapTypeT makeExnType() { return HeapType::exn; }
-  HeapTypeT makeStringType() { return HeapType::string; }
-  HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
-  HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
-  HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
-  HeapTypeT makeNoneType() { return HeapType::none; }
-  HeapTypeT makeNoextType() { return HeapType::noext; }
-  HeapTypeT makeNofuncType() { return HeapType::nofunc; }
-  HeapTypeT makeNoexnType() { return HeapType::noexn; }
+  HeapTypeT makeFuncType(Shareability share) {
+    return HeapTypes::func.getBasic(share);
+  }
+  HeapTypeT makeAnyType(Shareability share) {
+    return HeapTypes::any.getBasic(share);
+  }
+  HeapTypeT makeExternType(Shareability share) {
+    return HeapTypes::ext.getBasic(share);
+  }
+  HeapTypeT makeEqType(Shareability share) {
+    return HeapTypes::eq.getBasic(share);
+  }
+  HeapTypeT makeI31Type(Shareability share) {
+    return HeapTypes::i31.getBasic(share);
+  }
+  HeapTypeT makeStructType(Shareability share) {
+    return HeapTypes::struct_.getBasic(share);
+  }
+  HeapTypeT makeArrayType(Shareability share) {
+    return HeapTypes::array.getBasic(share);
+  }
+  HeapTypeT makeExnType(Shareability share) {
+    return HeapTypes::exn.getBasic(share);
+  }
+  HeapTypeT makeStringType(Shareability share) {
+    return HeapTypes::string.getBasic(share);
+  }
+  HeapTypeT makeContType(Shareability share) {
+    return HeapTypes::cont.getBasic(share);
+  }
+  HeapTypeT makeNoneType(Shareability share) {
+    return HeapTypes::none.getBasic(share);
+  }
+  HeapTypeT makeNoextType(Shareability share) {
+    return HeapTypes::noext.getBasic(share);
+  }
+  HeapTypeT makeNofuncType(Shareability share) {
+    return HeapTypes::nofunc.getBasic(share);
+  }
+  HeapTypeT makeNoexnType(Shareability share) {
+    return HeapTypes::noexn.getBasic(share);
+  }
+  HeapTypeT makeNocontType(Shareability share) {
+    return HeapTypes::nocont.getBasic(share);
+  }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
@@ -306,6 +341,8 @@ template<typename Ctx> struct TypeParserCtx {
     assert(results.size() == 1);
     return HeapType(Signature(Type::none, results[0]));
   }
+
+  bool skipFunctionBody() { return false; }
 };
 
 struct NullInstrParserCtx {
@@ -637,6 +674,10 @@ struct NullInstrParserCtx {
   makeTableCopy(Index, const std::vector<Annotation>&, TableIdxT*, TableIdxT*) {
     return Ok{};
   }
+  Result<>
+  makeTableInit(Index, const std::vector<Annotation>&, TableIdxT*, ElemIdxT) {
+    return Ok{};
+  }
   Result<> makeThrow(Index, const std::vector<Annotation>&, TagIdxT) {
     return Ok{};
   }
@@ -658,7 +699,10 @@ struct NullInstrParserCtx {
   Result<> makeCallRef(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
-  Result<> makeRefI31(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<>
+  makeRefI31(Index, const std::vector<Annotation>&, Shareability share) {
+    return Ok{};
+  }
   Result<> makeI31Get(Index, const std::vector<Annotation>&, bool) {
     return Ok{};
   }
@@ -691,13 +735,31 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeStructGet(
-    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, bool) {
+  Result<> makeStructGet(Index,
+                         const std::vector<Annotation>&,
+                         HeapTypeT,
+                         FieldIdxT,
+                         bool,
+                         MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<>
-  makeStructSet(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
+  Result<> makeStructSet(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeStructRMW(Index,
+                         const std::vector<Annotation>&,
+                         AtomicRMWOp,
+                         HeapTypeT,
+                         FieldIdxT,
+                         MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeStructCmpxchg(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -762,8 +824,7 @@ struct NullInstrParserCtx {
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
     return Ok{};
   }
-  Result<> makeStringNew(
-    Index, const std::vector<Annotation>&, StringNewOp, bool, MemoryIdxT*) {
+  Result<> makeStringNew(Index, const std::vector<Annotation>&, StringNewOp) {
     return Ok{};
   }
   Result<>
@@ -774,19 +835,14 @@ struct NullInstrParserCtx {
   makeStringMeasure(Index, const std::vector<Annotation>&, StringMeasureOp) {
     return Ok{};
   }
-  Result<> makeStringEncode(Index,
-                            const std::vector<Annotation>&,
-                            StringEncodeOp,
-                            MemoryIdxT*) {
+  Result<>
+  makeStringEncode(Index, const std::vector<Annotation>&, StringEncodeOp) {
     return Ok{};
   }
   Result<> makeStringConcat(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   Result<> makeStringEq(Index, const std::vector<Annotation>&, StringEqOp) {
-    return Ok{};
-  }
-  Result<> makeStringAs(Index, const std::vector<Annotation>&, StringAsOp) {
     return Ok{};
   }
   Result<> makeStringWTF8Advance(Index, const std::vector<Annotation>&) {
@@ -798,15 +854,7 @@ struct NullInstrParserCtx {
   Result<> makeStringIterNext(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
-  Result<>
-  makeStringIterMove(Index, const std::vector<Annotation>&, StringIterMoveOp) {
-    return Ok{};
-  }
-  Result<>
-  makeStringSliceWTF(Index, const std::vector<Annotation>&, StringSliceWTFOp) {
-    return Ok{};
-  }
-  Result<> makeStringSliceIter(Index, const std::vector<Annotation>&) {
+  Result<> makeStringSliceWTF(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -845,7 +893,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   using LimitsT = Limits;
   using ElemListT = Index;
   using DataStringT = std::vector<char>;
-  using TableTypeT = Limits;
+  using TableTypeT = TableType;
   using MemTypeT = MemType;
 
   Lexer in;
@@ -859,8 +907,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   Module& wasm;
 
   // The module element definitions we are parsing in this phase.
+  std::vector<DefPos> recTypeDefs;
   std::vector<DefPos> typeDefs;
-  std::vector<DefPos> subtypeDefs;
   std::vector<DefPos> funcDefs;
   std::vector<DefPos> tableDefs;
   std::vector<DefPos> memoryDefs;
@@ -904,23 +952,24 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return Ok{};
   }
 
-  ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
+  ParseDeclsCtx(Lexer& in, Module& wasm) : in(in), wasm(wasm) {}
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
   void addStructType(StructT) {}
   void addArrayType(ArrayT) {}
   void setOpen() {}
-  Result<> addSubtype(Index) { return Ok{}; }
-  void finishSubtype(Name name, Index pos) {
+  void setShared() {}
+  Result<> addSubtype(HeapTypeT) { return Ok{}; }
+  void finishTypeDef(Name name, Index pos) {
     // TODO: type annotations
-    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size()), {}});
+    typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
-  void finishDeftype(Index pos) {
+  void finishRectype(Index pos) {
     // TODO: type annotations
-    typeDefs.push_back({{}, pos, Index(typeDefs.size()), {}});
+    recTypeDefs.push_back({{}, pos, Index(recTypeDefs.size()), {}});
   }
 
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
@@ -934,7 +983,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   Limits getLimitsFromElems(Index elems) { return {elems, elems}; }
 
-  Limits makeTableType(Limits limits, TypeT) { return limits; }
+  TableType makeTableType(Type addressType, Limits limits, TypeT) {
+    return {addressType, limits};
+  }
 
   std::vector<char> makeDataString() { return {}; }
   void appendDataString(std::vector<char>& data, std::string_view str) {
@@ -946,8 +997,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return {size, size};
   }
 
-  MemType makeMemType(Type type, Limits limits, bool shared) {
-    return {type, limits, shared};
+  MemType makeMemType(Type addressType, Limits limits, bool shared) {
+    return {addressType, limits, shared};
   }
 
   Result<TypeUseT>
@@ -967,10 +1018,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    std::vector<Annotation>&&,
                    Index pos);
 
-  Result<Table*>
-  addTableDecl(Index pos, Name name, ImportNames* importNames, Limits limits);
+  Result<Table*> addTableDecl(Index pos,
+                              Name name,
+                              ImportNames* importNames,
+                              TableType limits);
   Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, Limits, Index);
+  addTable(Name, const std::vector<Name>&, ImportNames*, TableType, Index);
 
   // TODO: Record index of implicit elem for use when parsing types and instrs.
   Result<> addImplicitElems(TypeT, ElemListT&& elems);
@@ -1041,9 +1094,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   // The index of the subtype definition we are parsing.
   Index index = 0;
 
-  ParseTypeDefsCtx(std::string_view in,
-                   TypeBuilder& builder,
-                   const IndexMap& typeIndices)
+  ParseTypeDefsCtx(Lexer& in, TypeBuilder& builder, const IndexMap& typeIndices)
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()) {}
 
@@ -1079,15 +1130,14 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setOpen() { builder[index].setOpen(); }
 
-  Result<> addSubtype(Index super) {
-    if (super >= builder.size()) {
-      return in.err("supertype index out of bounds");
-    }
-    builder[index].subTypeOf(builder[super]);
+  void setShared() { builder[index].setShared(); }
+
+  Result<> addSubtype(HeapTypeT super) {
+    builder[index].subTypeOf(super);
     return Ok{};
   }
 
-  void finishSubtype(Name name, Index pos) { names[index++].name = name; }
+  void finishTypeDef(Name name, Index pos) { names[index++].name = name; }
 
   size_t getRecGroupStartIndex() { return index; }
 
@@ -1095,7 +1145,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     builder.createRecGroup(start, len);
   }
 
-  void finishDeftype(Index) {}
+  void finishRectype(Index) {}
 };
 
 // Phase 3: Parse type uses to find implicitly defined types.
@@ -1113,14 +1163,15 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   // Map signatures to the first defined heap type they match.
   std::unordered_map<Signature, HeapType> sigTypes;
 
-  ParseImplicitTypeDefsCtx(std::string_view in,
+  ParseImplicitTypeDefsCtx(Lexer& in,
                            std::vector<HeapType>& types,
                            std::unordered_map<Index, HeapType>& implicitTypes,
                            const IndexMap& typeIndices)
     : TypeParserCtx<ParseImplicitTypeDefsCtx>(typeIndices), in(in),
       types(types), implicitTypes(implicitTypes) {
     for (auto type : types) {
-      if (type.isSignature() && type.getRecGroup().size() == 1) {
+      if (type.isSignature() && type.getRecGroup().size() == 1 &&
+          !type.getDeclaredSuperType() && !type.isOpen() && !type.isShared()) {
         sigTypes.insert({type.getSignature(), type});
       }
     }
@@ -1184,7 +1235,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   Index index = 0;
 
   ParseModuleTypesCtx(
-    std::string_view in,
+    Lexer& in,
     Module& wasm,
     const std::vector<HeapType>& types,
     const std::unordered_map<Index, HeapType>& implicitTypes,
@@ -1193,6 +1244,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), in(in), wasm(wasm),
       types(types), implicitTypes(implicitTypes),
       implicitElemIndices(implicitElemIndices) {}
+
+  bool skipFunctionBody() { return true; }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
@@ -1224,12 +1277,6 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   }
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, TypeUse use) {
-    assert(use.type.isSignature());
-    if (use.type.getSignature().params != Type::none) {
-      return in.err(pos, "block parameters not yet supported");
-    }
-    // TODO: Once we support block parameters, return an error here if any of
-    // them are named.
     return use.type;
   }
 
@@ -1244,7 +1291,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   LimitsT getLimitsFromElems(ElemListT) { return Ok{}; }
 
-  Type makeTableType(LimitsT, Type type) { return type; }
+  Type makeTableType(Type addressType, LimitsT, Type type) { return type; }
 
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
@@ -1325,7 +1372,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     if (!use.type.isSignature()) {
       return in.err(pos, "tag type must be a signature");
     }
-    t->sig = use.type.getSignature();
+    t->type = use.type;
     return Ok{};
   }
 };
@@ -1369,6 +1416,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     typeNames;
   const std::unordered_map<Index, Index>& implicitElemIndices;
 
+  std::unordered_map<std::string_view, Index> debugSymbolNameIndices;
   std::unordered_map<std::string_view, Index> debugFileIndices;
 
   // The index of the current module element.
@@ -1387,7 +1435,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   ParseDefsCtx(
-    std::string_view in,
+    Lexer& in,
     Module& wasm,
     const std::vector<HeapType>& types,
     const std::unordered_map<Index, HeapType>& implicitTypes,
@@ -1416,6 +1464,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
+    assert(type.isSignature());
+    // TODO: Error if block parameters are named
     return type;
   }
 
@@ -1433,7 +1483,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   LimitsT getLimitsFromElems(std::vector<Expression*>& elems) { return Ok{}; }
 
-  TableTypeT makeTableType(LimitsT, Type) { return Ok{}; }
+  TableTypeT makeTableType(Type, LimitsT, Type) { return Ok{}; }
 
   struct CatchInfo {
     Name tag;
@@ -1665,7 +1715,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
-  Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
+  Result<> addExport(Index pos, Name value, Name name, ExternalKind kind) {
+    if (wasm.getExportOrNull(name)) {
+      return in.err(pos, "duplicate export");
+    }
     wasm.addExport(builder.makeExport(name, value, kind));
     return Ok{};
   }
@@ -1679,7 +1732,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Result<Expression*> makeExpr() { return irBuilder.build(); }
+  Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
@@ -1714,31 +1767,55 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return;
     }
     Lexer lexer(annotation->contents);
-    auto contents = lexer.takeKeyword();
-    if (!contents || !lexer.empty()) {
+    if (lexer.empty()) {
+      irBuilder.setDebugLocation(std::nullopt);
       return;
     }
 
-    auto fileSize = contents->find(':');
-    if (fileSize == contents->npos) {
-      return;
-    }
-    auto file = contents->substr(0, fileSize);
-    contents = contents->substr(fileSize + 1);
+    auto contents = lexer.next();
 
-    auto lineSize = contents->find(':');
-    if (fileSize == contents->npos) {
+    auto fileSize = contents.find(':');
+    if (fileSize == 0 || fileSize == contents.npos) {
       return;
     }
-    auto line = Lexer(contents->substr(0, lineSize)).takeU32();
-    if (!line) {
-      return;
-    }
-    contents = contents->substr(lineSize + 1);
+    auto file = contents.substr(0, fileSize);
+    contents = contents.substr(fileSize + 1);
 
-    auto col = Lexer(*contents).takeU32();
+    auto lineSize = contents.find(':');
+    if (lineSize == contents.npos) {
+      return;
+    }
+    lexer = Lexer(contents.substr(0, lineSize));
+    auto line = lexer.takeU32();
+    if (!line || !lexer.empty()) {
+      return;
+    }
+    contents = contents.substr(lineSize + 1);
+
+    auto colSize = contents.find(':');
+    if (colSize == contents.npos) {
+      colSize = contents.size();
+      if (colSize == 0) {
+        return;
+      }
+    }
+    lexer = Lexer(contents.substr(0, colSize));
+    auto col = lexer.takeU32();
     if (!col) {
       return;
+    }
+
+    std::optional<BinaryLocation> symbolNameIndex;
+    if (colSize != contents.size()) {
+      contents = contents.substr(colSize + 1);
+      auto symbolName = contents;
+      auto [it, inserted] = debugSymbolNameIndices.insert(
+        {symbolName, debugSymbolNameIndices.size()});
+      if (inserted) {
+        assert(wasm.debugInfoSymbolNames.size() == it->second);
+        wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
+      }
+      symbolNameIndex = it->second;
     }
 
     // TODO: If we ever parallelize the parse, access to
@@ -1749,7 +1826,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       assert(wasm.debugInfoFileNames.size() == it->second);
       wasm.debugInfoFileNames.push_back(std::string(file));
     }
-    irBuilder.setDebugLocation({it->second, *line, *col});
+    irBuilder.setDebugLocation(
+      Function::DebugLocation({it->second, *line, *col, symbolNameIndex}));
   }
 
   Result<> makeBlock(Index pos,
@@ -1758,9 +1836,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
-    return withLoc(pos,
-                   irBuilder.makeBlock(label ? *label : Name{},
-                                       type.getSignature().results));
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
+    return withLoc(
+      pos, irBuilder.makeBlock(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeIf(Index pos,
@@ -1768,10 +1848,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                   std::optional<Name> label,
                   HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeIf(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeIf(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
@@ -1781,10 +1862,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     std::optional<Name> label,
                     HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeLoop(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeTry(Index pos,
@@ -1792,10 +1874,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    std::optional<Name> label,
                    HeapType type) {
     // TODO: validate labels?
-    // TODO: Move error on input types to here?
+    if (!type.isSignature()) {
+      return in.err(pos, "expected function type");
+    }
     return withLoc(
-      pos,
-      irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
+      pos, irBuilder.makeTry(label ? *label : Name{}, type.getSignature()));
   }
 
   Result<> makeTryTable(Index pos,
@@ -1811,12 +1894,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       labels.push_back(info.label);
       isRefs.push_back(info.isRef);
     }
-    return withLoc(pos,
-                   irBuilder.makeTryTable(label ? *label : Name{},
-                                          type.getSignature().results,
-                                          tags,
-                                          labels,
-                                          isRefs));
+    return withLoc(
+      pos,
+      irBuilder.makeTryTable(
+        label ? *label : Name{}, type.getSignature(), tags, labels, isRefs));
   }
 
   Result<> visitCatch(Index pos, Name tag) {
@@ -2286,6 +2367,15 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeTableCopy(*dest, *src));
   }
 
+  Result<> makeTableInit(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name* table,
+                         Name elem) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableInit(elem, *t));
+  }
+
   Result<>
   makeThrow(Index pos, const std::vector<Annotation>& annotations, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
@@ -2327,8 +2417,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
   }
 
-  Result<> makeRefI31(Index pos, const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeRefI31());
+  Result<> makeRefI31(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      Shareability share) {
+    return withLoc(pos, irBuilder.makeRefI31(share));
   }
 
   Result<> makeI31Get(Index pos,
@@ -2374,15 +2466,34 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                          const std::vector<Annotation>& annotations,
                          HeapType type,
                          Index field,
-                         bool signed_) {
-    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_));
+                         bool signed_,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_, order));
   }
 
   Result<> makeStructSet(Index pos,
                          const std::vector<Annotation>& annotations,
                          HeapType type,
-                         Index field) {
-    return withLoc(pos, irBuilder.makeStructSet(type, field));
+                         Index field,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructSet(type, field, order));
+  }
+
+  Result<> makeStructRMW(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         AtomicRMWOp op,
+                         HeapType type,
+                         Index field,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructRMW(op, type, field, order));
+  }
+
+  Result<> makeStructCmpxchg(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             Index field,
+                             MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeStructCmpxchg(type, field, order));
   }
 
   Result<> makeArrayNew(Index pos,
@@ -2469,24 +2580,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringNew(Index pos,
                          const std::vector<Annotation>& annotations,
-                         StringNewOp op,
-                         bool try_,
-                         Name* mem) {
-    Name memName;
-    switch (op) {
-      case StringNewUTF8:
-      case StringNewWTF8:
-      case StringNewLossyUTF8:
-      case StringNewWTF16: {
-        auto m = getMemory(pos, mem);
-        CHECK_ERR(m);
-        memName = *m;
-        break;
-      }
-      default:
-        break;
-    }
-    return withLoc(pos, irBuilder.makeStringNew(op, try_, memName));
+                         StringNewOp op) {
+    return withLoc(pos, irBuilder.makeStringNew(op));
   }
 
   Result<> makeStringConst(Index pos,
@@ -2509,23 +2604,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringEncode(Index pos,
                             const std::vector<Annotation>& annotations,
-                            StringEncodeOp op,
-                            Name* mem) {
-    Name memName;
-    switch (op) {
-      case StringEncodeUTF8:
-      case StringEncodeLossyUTF8:
-      case StringEncodeWTF8:
-      case StringEncodeWTF16: {
-        auto m = getMemory(pos, mem);
-        CHECK_ERR(m);
-        memName = *m;
-        break;
-      }
-      default:
-        break;
-    }
-    return withLoc(pos, irBuilder.makeStringEncode(op, memName));
+                            StringEncodeOp op) {
+    return withLoc(pos, irBuilder.makeStringEncode(op));
   }
 
   Result<> makeStringConcat(Index pos,
@@ -2539,42 +2619,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeStringEq(op));
   }
 
-  Result<> makeStringAs(Index pos,
-                        const std::vector<Annotation>& annotations,
-                        StringAsOp op) {
-    return withLoc(pos, irBuilder.makeStringAs(op));
-  }
-
-  Result<> makeStringWTF8Advance(Index pos,
-                                 const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringWTF8Advance());
-  }
-
   Result<> makeStringWTF16Get(Index pos,
                               const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeStringWTF16Get());
   }
 
-  Result<> makeStringIterNext(Index pos,
-                              const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringIterNext());
-  }
-
-  Result<> makeStringIterMove(Index pos,
-                              const std::vector<Annotation>& annotations,
-                              StringIterMoveOp op) {
-    return withLoc(pos, irBuilder.makeStringIterMove(op));
-  }
-
   Result<> makeStringSliceWTF(Index pos,
-                              const std::vector<Annotation>& annotations,
-                              StringSliceWTFOp op) {
-    return withLoc(pos, irBuilder.makeStringSliceWTF(op));
-  }
-
-  Result<> makeStringSliceIter(Index pos,
-                               const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringSliceIter());
+                              const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeStringSliceWTF());
   }
 
   Result<> makeContBind(Index pos,

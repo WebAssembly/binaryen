@@ -69,7 +69,7 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
     spillPointers();
   }
 
@@ -79,7 +79,7 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
-    pointerType = getModule()->memories[0]->indexType;
+    pointerType = getModule()->memories[0]->addressType;
 
     // we only care about possible pointers
     auto* func = getFunction();

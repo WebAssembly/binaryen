@@ -14,17 +14,17 @@
   ;; YES:      (type $0 (func (result i32)))
 
   ;; YES:      (rec
-  ;; YES-NEXT:  (type $1 (func (param (ref $A))))
-
-  ;; YES:       (type $A (sub (struct )))
+  ;; YES-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct (field (mut i32)))))
 
   ;; NOP:      (type $2 (func (result i32)))
 
   ;; NOP:      (import "a" "b" (func $import (type $2) (result i32)))
-  ;; YES:       (type $A_2 (sub $A (struct )))
+  ;; YES:       (type $2 (func (param (ref $A))))
 
-  ;; YES:       (type $A_1 (sub $A (struct )))
+  ;; YES:       (type $A_2 (sub $A (struct)))
+
+  ;; YES:       (type $A_1 (sub $A (struct)))
 
   ;; YES:      (import "a" "b" (func $import (type $0) (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -33,7 +33,7 @@
 
   ;; NOP:      (export "main2" (func $main2))
 
-  ;; NOP:      (func $main1 (type $2) (; has Stack IR ;) (result i32)
+  ;; NOP:      (func $main1 (type $2) (result i32)
   ;; NOP-NEXT:  (call $get-a-1
   ;; NOP-NEXT:   (struct.new $A
   ;; NOP-NEXT:    (i32.const 42)
@@ -57,7 +57,7 @@
     )
   )
 
-  ;; NOP:      (func $main2 (type $2) (; has Stack IR ;) (result i32)
+  ;; NOP:      (func $main2 (type $2) (result i32)
   ;; NOP-NEXT:  (call $get-a-2
   ;; NOP-NEXT:   (struct.new $A
   ;; NOP-NEXT:    (i32.const 1337)
@@ -77,7 +77,7 @@
     )
   )
 
-  ;; NOP:      (func $get-a-1 (type $0) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
+  ;; NOP:      (func $get-a-1 (type $0) (param $0 (ref $A)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
   ;; NOP-NEXT:   (then
@@ -92,7 +92,7 @@
   ;; NOP-NEXT:   (local.get $0)
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (func $get-a-1 (type $1) (param $0 (ref $A))
+  ;; YES:      (func $get-a-1 (type $2) (param $0 (ref $A))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
   ;; YES-NEXT:   (then
@@ -119,7 +119,7 @@
     (struct.get $A 0 (local.get 0))
   )
 
-  ;; NOP:      (func $get-a-2 (type $0) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
+  ;; NOP:      (func $get-a-2 (type $0) (param $0 (ref $A)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
   ;; NOP-NEXT:   (then
@@ -134,7 +134,7 @@
   ;; NOP-NEXT:   (local.get $0)
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (func $get-a-2 (type $1) (param $0 (ref $A))
+  ;; YES:      (func $get-a-2 (type $2) (param $0 (ref $A))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
   ;; YES-NEXT:   (then

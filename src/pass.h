@@ -39,12 +39,14 @@ struct PassRegistry {
   using Creator = std::function<Pass*()>;
 
   void registerPass(const char* name, const char* description, Creator create);
+
   // Register a pass that's used for internal testing. These passes do not show
   // up in --help.
   void
   registerTestPass(const char* name, const char* description, Creator create);
   std::unique_ptr<Pass> createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
+  bool containsPass(const std::string& name);
   std::string getPassDescription(std::string name);
   bool isPassHidden(std::string name);
 
@@ -103,6 +105,8 @@ class EffectAnalyzer;
 using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
 
 struct PassOptions {
+  friend Pass;
+
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
   // Whether to run the validator to check for errors.
@@ -208,17 +212,19 @@ struct PassOptions {
   // but we also want to keep types of things on the boundary unchanged. For
   // example, we should not change an exported function's signature, as the
   // outside may need that type to properly call the export.
-  //
-  //   * Since the goal of closedWorld is to optimize types aggressively but
-  //     types on the module boundary cannot be changed, we assume the producer
-  //     has made a mistake and we consider it a validation error if any user
-  //     defined types besides the types of imported or exported functions
-  //     themselves appear on the module boundary. For example, no user defined
-  //     struct type may be a parameter or result of an exported function. This
-  //     error may be relaxed or made more configurable in the future.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
+  // Whether to generate StackIR during binary writing. This is on by default
+  // in -O2 and above.
+  bool generateStackIR = false;
+  // Whether to optimize StackIR during binary writing. How we optimize depends
+  // on other optimization flags like optimizeLevel. This is on by default in
+  // -O2 and above.
+  bool optimizeStackIR = false;
+  // Whether to print StackIR during binary writing, and if so to what stream.
+  // This is mainly useful for debugging.
+  std::optional<std::ostream*> printStackIR;
   // Whether we are targeting JS. In that case we want to avoid emitting things
   // in the optimizer that do not translate well to JS, or that could cause us
   // to need extra lowering work or even a loop (where we optimize to something
@@ -259,6 +265,7 @@ struct PassOptions {
     return PassOptions(); // defaults are to not optimize
   }
 
+private:
   bool hasArgument(std::string key) { return arguments.count(key) > 0; }
 
   std::string getArgument(std::string key, std::string errorTextIfMissing) {
@@ -312,9 +319,8 @@ struct PassRunner {
   }
 
   // Add a pass using its name.
-  void add(std::string passName) {
-    doAdd(PassRegistry::get()->createPass(passName));
-  }
+  void add(std::string passName,
+           std::optional<std::string> passArg = std::nullopt);
 
   // Add a pass given an instance.
   void add(std::unique_ptr<Pass> pass) { doAdd(std::move(pass)); }
@@ -476,6 +482,8 @@ public:
   // to imports must override this to return true.
   virtual bool addsEffects() { return false; }
 
+  void setPassArg(const std::string& value) { passArg = value; }
+
   std::string name;
 
   PassRunner* getPassRunner() { return runner; }
@@ -487,6 +495,19 @@ public:
   PassOptions& getPassOptions() { return runner->options; }
 
 protected:
+  bool hasArgument(const std::string& key);
+  std::string getArgument(const std::string& key,
+                          const std::string& errorTextIfMissing);
+  std::string getArgumentOrDefault(const std::string& key,
+                                   const std::string& defaultValue);
+
+  // The main argument of the pass, which can be specified individually for
+  // every pass . getArgument() and friends will refer to this value if queried
+  // for a key that matches the pass name. All other arguments are taken from
+  // the runner / passOptions and therefore are global for all instances of a
+  // pass.
+  std::optional<std::string> passArg;
+
   Pass() = default;
   Pass(const Pass&) = default;
   Pass(Pass&&) = default;
@@ -501,7 +522,7 @@ template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
 
 protected:
-  using super = WalkerPass<WalkerType>;
+  using Super = WalkerPass<WalkerType>;
 
 public:
   void run(Module* module) override {

@@ -5,29 +5,28 @@
  ;; CHECK:      (type $none (func))
  (type $none (func))
  ;; CHECK:      (func $foo (type $none)
- ;; CHECK-NEXT:  (local $0 (tuple funcref (ref $none)))
- ;; CHECK-NEXT:  (local $1 funcref)
- ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (block $label$1 (type $1) (result funcref (ref $none))
- ;; CHECK-NEXT:    (tuple.make 2
- ;; CHECK-NEXT:     (ref.null nofunc)
- ;; CHECK-NEXT:     (ref.func $foo)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local $scratch (tuple funcref (ref $none)))
+ ;; CHECK-NEXT:  (local $scratch_1 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result funcref)
- ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:    (local.set $scratch_1
  ;; CHECK-NEXT:     (tuple.extract 2 0
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.tee $scratch
+ ;; CHECK-NEXT:       (block (type $1) (result funcref (ref $none))
+ ;; CHECK-NEXT:        (tuple.make 2
+ ;; CHECK-NEXT:         (ref.null nofunc)
+ ;; CHECK-NEXT:         (ref.func $foo)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (tuple.extract 2 1
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $scratch)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (local.get $scratch_1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

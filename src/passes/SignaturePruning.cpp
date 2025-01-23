@@ -45,11 +45,6 @@ namespace wasm {
 namespace {
 
 struct SignaturePruning : public Pass {
-  // Maps each heap type to the possible pruned heap type. We will fill this
-  // during analysis and then use it while doing an update of the types. If a
-  // type has no improvement that we can find, it will not appear in this map.
-  std::unordered_map<HeapType, Signature> newSignatures;
-
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -101,7 +96,7 @@ struct SignaturePruning : public Pass {
 
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.usedParams = ParamUtils::getUsedParams(func);
+        info.usedParams = ParamUtils::getUsedParams(func, module);
       });
 
     // A map of types to all the information combined over all the functions
@@ -167,12 +162,17 @@ struct SignaturePruning : public Pass {
       sigFuncs[func->type].push_back(func);
     }
 
-    // Exported functions cannot be modified.
-    for (auto& exp : module->exports) {
-      if (exp->kind == ExternalKind::Function) {
-        auto* func = module->getFunction(exp->value);
-        allInfo[func->type].optimizable = false;
+    // Find the public types, which cannot be modified.
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      if (type.isFunction()) {
+        allInfo[type].optimizable = false;
       }
+    }
+
+    // Similarly, we cannot yet modify types used in exception handling or stack
+    // switching tags. TODO.
+    for (auto& tag : module->tags) {
+      allInfo[tag->type].optimizable = false;
     }
 
     // A type must have the same number of parameters and results as its
@@ -181,6 +181,11 @@ struct SignaturePruning : public Pass {
     // TODO We could handle "cycles" where we remove fields from a group of
     //      types with subtyping relations at once.
     SubTypes subTypes(*module);
+
+    // Maps each heap type to the possible pruned signature. We will fill this
+    // during analysis and then use it while doing an update of the types. If a
+    // type has no improvement that we can find, it will not appear in this map.
+    std::unordered_map<HeapType, Signature> newSignatures;
 
     // Find parameters to prune.
     //

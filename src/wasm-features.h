@@ -27,6 +27,8 @@ namespace wasm {
 
 struct FeatureSet {
   enum Feature : uint32_t {
+    // These features are intended to those documented in tool-conventions:
+    // https://github.com/WebAssembly/tool-conventions/blob/main/Linking.md#target-features-section
     None = 0,
     Atomics = 1 << 0,
     MutableGlobals = 1 << 1,
@@ -45,11 +47,18 @@ struct FeatureSet {
     Strings = 1 << 14,
     MultiMemory = 1 << 15,
     TypedContinuations = 1 << 16,
+    SharedEverything = 1 << 17,
+    FP16 = 1 << 18,
+    BulkMemoryOpt = 1 << 19, // Just the memory.copy and fill operations
+    // This features is a no-op for compatibility. Having it in this list means
+    // that we can automatically generate tool flags that set it, but otherwise
+    // it does nothing. Binaryen always accepts LEB call-indirect encodings.
+    CallIndirectOverlong = 1 << 20,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 17) - 1,
+    All = (1 << 21) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -88,6 +97,14 @@ struct FeatureSet {
         return "multimemory";
       case TypedContinuations:
         return "typed-continuations";
+      case SharedEverything:
+        return "shared-everything";
+      case FP16:
+        return "fp16";
+      case BulkMemoryOpt:
+        return "bulk-memory-opt";
+      case CallIndirectOverlong:
+        return "call-indirect-overlong";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -135,6 +152,15 @@ struct FeatureSet {
   bool hasTypedContinuations() const {
     return (features & TypedContinuations) != 0;
   }
+  bool hasSharedEverything() const {
+    return (features & SharedEverything) != 0;
+  }
+  bool hasFP16() const { return (features & FP16) != 0; }
+  bool hasBulkMemoryOpt() const {
+    bool has = (features & BulkMemoryOpt) != 0;
+    assert(has || !hasBulkMemory());
+    return has;
+  }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -157,6 +183,9 @@ struct FeatureSet {
   void setStrings(bool v = true) { set(Strings, v); }
   void setMultiMemory(bool v = true) { set(MultiMemory, v); }
   void setTypedContinuations(bool v = true) { set(TypedContinuations, v); }
+  void setSharedEverything(bool v = true) { set(SharedEverything, v); }
+  void setFP16(bool v = true) { set(FP16, v); }
+  void setBulkMemoryOpt(bool v = true) { set(BulkMemoryOpt, v); }
   void setMVP() { features = MVP; }
   void setAll() { features = All; }
 
@@ -184,6 +213,13 @@ struct FeatureSet {
   FeatureSet& operator|=(const FeatureSet& other) {
     features |= other.features;
     return *this;
+  }
+
+  FeatureSet operator-(const FeatureSet& other) const {
+    return features & ~other.features;
+  }
+  FeatureSet operator-(Feature other) const {
+    return *this - FeatureSet(other);
   }
 
   uint32_t features;

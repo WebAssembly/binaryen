@@ -49,12 +49,14 @@ inline void ensureNames(Function* func) {
 // name will begin there. This can be used to avoid trying the same 0,1,2,..
 // etc. names each time (which could lead to quadratic behavior in certain
 // cases).
-inline Name
-getValidName(Name root, std::function<bool(Name)> check, Index hint = 0) {
+inline Name getValidName(Name root,
+                         std::function<bool(Name)> check,
+                         Index hint = 0,
+                         std::string separator = "_") {
   if (check(root)) {
     return root;
   }
-  auto prefixed = std::string(root.str) + '_';
+  auto prefixed = std::string(root.str) + separator;
   Index num = hint;
   while (1) {
     auto name = prefixed + std::to_string(num);

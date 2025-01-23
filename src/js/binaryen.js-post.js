@@ -40,9 +40,6 @@ function initializeConstants() {
     ['i31ref', 'I31ref'],
     ['structref', 'Structref'],
     ['stringref', 'Stringref'],
-    ['stringview_wtf8', 'StringviewWTF8'],
-    ['stringview_wtf16', 'StringviewWTF16'],
-    ['stringview_iter', 'StringviewIter'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -127,13 +124,8 @@ function initializeConstants() {
     'StringEncode',
     'StringConcat',
     'StringEq',
-    'StringAs',
-    'StringWTF8Advance',
     'StringWTF16Get',
-    'StringIterNext',
-    'StringIterMove',
     'StringSliceWTF',
-    'StringSliceIter'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
@@ -391,10 +383,10 @@ function initializeConstants() {
     'XorVec128',
     'AndNotVec128',
     'BitselectVec128',
-    'RelaxedFmaVecF32x4',
-    'RelaxedFmsVecF32x4',
-    'RelaxedFmaVecF64x2',
-    'RelaxedFmsVecF64x2',
+    'RelaxedMaddVecF32x4',
+    'RelaxedNmaddVecF32x4',
+    'RelaxedMaddVecF64x2',
+    'RelaxedNmaddVecF64x2',
     'LaneselectI8x16',
     'LaneselectI16x8',
     'LaneselectI32x4',
@@ -572,39 +564,19 @@ function initializeConstants() {
     'RefAsNonNull',
     'RefAsExternInternalize',
     'RefAsExternExternalize',
+    'RefAsAnyConvertExtern',
+    'RefAsExternConvertAny',
     'BrOnNull',
     'BrOnNonNull',
     'BrOnCast',
     'BrOnCastFail',
-    'StringNewUTF8',
-    'StringNewWTF8',
-    'StringNewLossyUTF8',
-    'StringNewWTF16',
-    'StringNewUTF8Array',
-    'StringNewWTF8Array',
     'StringNewLossyUTF8Array',
     'StringNewWTF16Array',
     'StringNewFromCodePoint',
     'StringMeasureUTF8',
-    'StringMeasureWTF8',
     'StringMeasureWTF16',
-    'StringMeasureIsUSV',
-    'StringMeasureWTF16View',
-    'StringEncodeUTF8',
-    'StringEncodeLossyUTF8',
-    'StringEncodeWTF8',
-    'StringEncodeWTF16',
-    'StringEncodeUTF8Array',
     'StringEncodeLossyUTF8Array',
-    'StringEncodeWTF8Array',
     'StringEncodeWTF16Array',
-    'StringAsWTF8',
-    'StringAsWTF16',
-    'StringAsIter',
-    'StringIterMoveAdvance',
-    'StringIterMoveRewind',
-    'StringSliceWTF8',
-    'StringSliceWTF16',
     'StringEqEqual',
     'StringEqCompare'
   ].forEach(name => {
@@ -2338,24 +2310,6 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['stringview_wtf8'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['stringview_wtf8']);
-    }
-  };
-
-  self['stringview_wtf16'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['stringview_wtf16']);
-    }
-  };
-
-  self['stringview_iter'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['stringview_iter']);
-    }
-  };
-
   self['ref'] = {
     'null'(type) {
       return Module['_BinaryenRefNull'](module, type);
@@ -2377,8 +2331,8 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['select'] = function(condition, ifTrue, ifFalse, type) {
-    return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse, typeof type !== 'undefined' ? type : Module['auto']);
+  self['select'] = function(condition, ifTrue, ifFalse) {
+    return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
   };
   self['drop'] = function(value) {
     return Module['_BinaryenDrop'](module, value);
@@ -2428,17 +2382,14 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  // TODO: extern.internalize
-  // TODO: extern.externalize
+  // TODO: any.convert_extern
+  // TODO: extern.convert_any
   // TODO: ref.test
   // TODO: ref.cast
   // TODO: br_on_*
   // TODO: struct.*
   // TODO: array.*
   // TODO: string.*
-  // TODO: stringview_wtf8.*
-  // TODO: stringview_wtf16.*
-  // TODO: stringview_iter.*
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
@@ -2688,8 +2639,8 @@ function wrapModule(module, self = {}) {
     if (textPtr) _free(textPtr);
     return text;
   };
-  self['emitStackIR'] = function(optimize) {
-    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module, optimize);
+  self['emitStackIR'] = function() {
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module);
     let text = UTF8ToString(textPtr);
     if (textPtr) _free(textPtr);
     return text;
@@ -2722,9 +2673,6 @@ function wrapModule(module, self = {}) {
     return preserveStack(() =>
       Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(passes.map(strToStack)), passes.length)
     );
-  };
-  self['autoDrop'] = function() {
-    return Module['_BinaryenModuleAutoDrop'](module);
   };
   self['dispose'] = function() {
     Module['_BinaryenModuleDispose'](module);
@@ -3461,6 +3409,30 @@ Module['setDebugInfo'] = function(on) {
   Module['_BinaryenSetDebugInfo'](on);
 };
 
+// Gets whether no traps can be considered reached at runtime when optimizing.
+Module['getTrapsNeverHappen'] = function() {
+  return Boolean(Module['_BinaryenGetTrapsNeverHappen']());
+};
+
+// Enables or disables whether no traps can be considered reached at
+// runtime when optimizing.
+Module['setTrapsNeverHappen'] = function(on) {
+  Module['_BinaryenSetTrapsNeverHappen'](on);
+};
+
+// Gets whether considering that the code outside of the module does
+// not inspect or interact with GC and function references.
+Module['getClosedWorld'] = function() {
+  return Boolean(Module['_BinaryenGetClosedWorld']());
+};
+
+// Enables or disables whether considering that the code outside of
+// the module does not inspect or interact with GC and function
+// references.
+Module['setClosedWorld'] = function(on) {
+  Module['_BinaryenSetClosedWorld'](on);
+};
+
 // Gets whether the low 1K of memory can be considered unused when optimizing.
 Module['getLowMemoryUnused'] = function() {
   return Boolean(Module['_BinaryenGetLowMemoryUnused']());
@@ -3494,6 +3466,26 @@ Module['setFastMath'] = function(value) {
   Module['_BinaryenSetFastMath'](value);
 };
 
+// Gets whether to generate StackIR during binary writing.
+Module['getGenerateStackIR'] = function() {
+  return Boolean(Module['_BinaryenGetGenerateStackIR']());
+};
+
+// Enable or disable StackIR generation during binary writing.
+Module['setGenerateStackIR'] = function(value) {
+  Module['_BinaryenSetGenerateStackIR'](value);
+};
+
+// Gets whether to optimize StackIR during binary writing.
+Module['getOptimizeStackIR'] = function() {
+  return Boolean(Module['_BinaryenGetOptimizeStackIR']());
+};
+
+// Enable or disable StackIR optimisation during binary writing.
+Module['setOptimizeStackIR'] = function(value) {
+  Module['_BinaryenSetOptimizeStackIR'](value);
+};
+
 // Gets the value of the specified arbitrary pass argument.
 Module['getPassArgument'] = function(key) {
   return preserveStack(() => {
@@ -3511,6 +3503,23 @@ Module['setPassArgument'] = function (key, value) {
 // Clears all arbitrary pass arguments.
 Module['clearPassArguments'] = function() {
   Module['_BinaryenClearPassArguments']();
+};
+
+// Gets whether a pass is in the set of passes to skip.
+Module['hasPassToSkip'] = function(pass) {
+  return preserveStack(() => {
+    return Boolean(Module['_BinaryenHasPassToSkip'](strToStack(pass)));
+  });
+};
+
+// Add a pass to the set of passes to skip.
+Module['addPassToSkip'] = function (pass) {
+  preserveStack(() => { Module['_BinaryenAddPassToSkip'](strToStack(pass)) });
+};
+
+// Clears the set of passes to skip.
+Module['clearPassesToSkip'] = function() {
+  Module['_BinaryenClearPassesToSkip']();
 };
 
 // Gets the function size at which we always inline.

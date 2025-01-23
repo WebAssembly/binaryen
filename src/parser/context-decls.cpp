@@ -82,10 +82,11 @@ Result<> ParseDeclsCtx::addFunc(Name name,
 Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
                                            Name name,
                                            ImportNames* importNames,
-                                           Limits limits) {
+                                           TableType type) {
   auto t = std::make_unique<Table>();
-  t->initial = limits.initial;
-  t->max = limits.max ? *limits.max : Table::kUnlimitedSize;
+  t->addressType = type.addressType;
+  t->initial = type.limits.initial;
+  t->max = type.limits.max ? *type.limits.max : Table::kUnlimitedSize;
   if (name.is()) {
     if (wasm.getTableOrNull(name)) {
       // TODO: if the existing table is not explicitly named, fix its name and
@@ -105,10 +106,10 @@ Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
 Result<> ParseDeclsCtx::addTable(Name name,
                                  const std::vector<Name>& exports,
                                  ImportNames* import,
-                                 Limits limits,
+                                 TableType type,
                                  Index pos) {
   CHECK_ERR(checkImport(pos, import));
-  auto t = addTableDecl(pos, name, import, limits);
+  auto t = addTableDecl(pos, name, import, type);
   CHECK_ERR(t);
   CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Table));
   // TODO: table annotations
@@ -138,7 +139,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
                                              ImportNames* importNames,
                                              MemType type) {
   auto m = std::make_unique<Memory>();
-  m->indexType = type.type;
+  m->addressType = type.addressType;
   m->initial = type.limits.initial;
   m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;
@@ -177,7 +178,7 @@ Result<> ParseDeclsCtx::addImplicitData(DataStringT&& data) {
   auto d = std::make_unique<DataSegment>();
   d->memory = mem.name;
   d->isPassive = false;
-  d->offset = Builder(wasm).makeConstPtr(0, mem.indexType);
+  d->offset = Builder(wasm).makeConstPtr(0, mem.addressType);
   d->data = std::move(data);
   d->name = Names::getValidDataSegmentName(wasm, "implicit-data");
   wasm.addDataSegment(std::move(d));
@@ -195,7 +196,8 @@ ParseDeclsCtx::addGlobalDecl(Index pos, Name name, ImportNames* importNames) {
     }
     g->setExplicitName(name);
   } else {
-    name = (importNames ? "gimport$" : "") + std::to_string(globalCounter++);
+    name =
+      (importNames ? "gimport$" : "global$") + std::to_string(globalCounter++);
     name = Names::getValidGlobalName(wasm, name);
     g->name = name;
   }
@@ -275,7 +277,7 @@ ParseDeclsCtx::addTagDecl(Index pos, Name name, ImportNames* importNames) {
     }
     t->setExplicitName(name);
   } else {
-    name = (importNames ? "timport$" : "") + std::to_string(tagCounter++);
+    name = (importNames ? "eimport$" : "tag$") + std::to_string(tagCounter++);
     name = Names::getValidTagName(wasm, name);
     t->name = name;
   }

@@ -318,7 +318,6 @@
     )
   )
   ;; CHECK:      (func $send-i32 (param $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $send-i32 (param i32))
   ;; flipping of greater than/or equals ops, which are not in Souper IR
@@ -2545,7 +2544,6 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (loop $loopy
-  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (nop)

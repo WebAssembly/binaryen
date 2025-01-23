@@ -25,6 +25,7 @@ namespace wasm {
 
 Name WASM("wasm");
 Name RETURN_FLOW("*return:)*");
+Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 
 namespace BinaryConsts {
@@ -35,6 +36,7 @@ const char* Dylink = "dylink";
 const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
+const char* BuildId = "build_id";
 const char* TargetFeatures = "target_features";
 const char* AtomicsFeature = "atomics";
 const char* BulkMemoryFeature = "bulk-memory";
@@ -53,6 +55,10 @@ const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
+const char* SharedEverythingFeature = "shared-everything";
+const char* FP16Feature = "fp16";
+const char* BulkMemoryOptFeature = "bulk-memory-opt";
+const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -211,28 +217,20 @@ void Block::finalize(std::optional<Type> type_, Breakability breakability) {
 }
 
 void If::finalize(std::optional<Type> type_) {
-  if (type_) {
-    type = *type_;
-    if (type == Type::none && (condition->type == Type::unreachable ||
-                               (ifFalse && ifTrue->type == Type::unreachable &&
-                                ifFalse->type == Type::unreachable))) {
-      type = Type::unreachable;
-    }
+  // The If is unreachable if the condition is unreachable or both arms are
+  // unreachable.
+  if (condition->type == Type::unreachable ||
+      (ifFalse && ifTrue->type == Type::unreachable &&
+       ifFalse->type == Type::unreachable)) {
+    type = Type::unreachable;
     return;
   }
 
-  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
-                 : Type::none;
-  // if the arms return a value, leave it even if the condition
-  // is unreachable, we still mark ourselves as having that type, e.g.
-  // (if (result i32)
-  //  (unreachable)
-  //  (i32.const 10)
-  //  (i32.const 20)
-  // )
-  // otherwise, if the condition is unreachable, so is the if
-  if (type == Type::none && condition->type == Type::unreachable) {
-    type = Type::unreachable;
+  if (type_) {
+    type = *type_;
+  } else {
+    type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                   : Type::none;
   }
 }
 
@@ -384,6 +382,7 @@ void SIMDExtract::finalize() {
     case ExtractLaneVecI64x2:
       type = Type::i64;
       break;
+    case ExtractLaneVecF16x8:
     case ExtractLaneVecF32x4:
       type = Type::f32;
       break;
@@ -634,6 +633,7 @@ void Unary::finalize() {
     case SplatVecI16x8:
     case SplatVecI32x4:
     case SplatVecI64x2:
+    case SplatVecF16x8:
     case SplatVecF32x4:
     case SplatVecF64x2:
     case NotVec128:
@@ -646,6 +646,13 @@ void Unary::finalize() {
     case NegVecI16x8:
     case NegVecI32x4:
     case NegVecI64x2:
+    case AbsVecF16x8:
+    case NegVecF16x8:
+    case SqrtVecF16x8:
+    case CeilVecF16x8:
+    case FloorVecF16x8:
+    case TruncVecF16x8:
+    case NearestVecF16x8:
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:
@@ -690,6 +697,10 @@ void Unary::finalize() {
     case RelaxedTruncUVecF32x4ToVecI32x4:
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
     case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+    case TruncSatSVecF16x8ToVecI16x8:
+    case TruncSatUVecF16x8ToVecI16x8:
+    case ConvertSVecI16x8ToVecF16x8:
+    case ConvertUVecI16x8ToVecF16x8:
       type = Type::v128;
       break;
     case AnyTrueVec128:
@@ -760,16 +771,6 @@ void Binary::finalize() {
   }
 }
 
-void Select::finalize(Type type_) {
-  assert(ifTrue && ifFalse);
-  if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||
-      condition->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = type_;
-  }
-}
-
 void Select::finalize() {
   assert(ifTrue && ifFalse);
   if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||
@@ -788,15 +789,11 @@ void Drop::finalize() {
   }
 }
 
-void MemorySize::make64() { type = ptrType = Type::i64; }
-void MemorySize::finalize() { type = ptrType; }
+void MemorySize::finalize() {}
 
-void MemoryGrow::make64() { type = ptrType = Type::i64; }
 void MemoryGrow::finalize() {
   if (delta->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = ptrType;
   }
 }
 
@@ -854,8 +851,6 @@ void TableSize::finalize() {
 void TableGrow::finalize() {
   if (delta->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = Type::i32;
   }
 }
 
@@ -871,6 +866,14 @@ void TableFill::finalize() {
 void TableCopy::finalize() {
   type = Type::none;
   if (dest->type == Type::unreachable || source->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void TableInit::finalize() {
+  type = Type::none;
+  if (dest->type == Type::unreachable || offset->type == Type::unreachable ||
       size->type == Type::unreachable) {
     type = Type::unreachable;
   }
@@ -914,12 +917,16 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
     return;
   }
   curr->sentTypes.clear();
-  Type exnref = Type(HeapType::exn, Nullable);
+  // We always use the refined non-nullable type in our IR, which is what the
+  // wasm spec defines when GC is enabled (=== non-nullable types are allowed).
+  // If GC is not enabled then we emit a nullable type in the binary format in
+  // WasmBinaryWriter::writeType.
+  Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
     std::vector<Type> sentType;
     if (tagName) {
-      for (auto t : wasm->getTag(tagName)->sig.params) {
+      for (auto t : wasm->getTag(tagName)->params()) {
         sentType.push_back(t);
       }
     }
@@ -968,7 +975,7 @@ void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::i31, NonNullable);
+    assert(type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31));
   }
 }
 
@@ -993,7 +1000,25 @@ void CallRef::finalize() {
     return;
   }
   assert(target->type.isRef());
-  if (target->type.getHeapType().isBottom()) {
+  if (target->type.isNull()) {
+    // If this call_ref has been optimized to have a null reference, then it
+    // will definitely trap. We could update the type to be unreachable, but
+    // that would violate the invariant that non-branch instructions other than
+    // `unreachable` can only be unreachable if they have unreachable children.
+    // Make the result type as close to `unreachable` as possible without
+    // actually making it unreachable. TODO: consider just making this
+    // unreachable instead (and similar in other GC accessors), although this
+    // would currently cause the parser to admit more invalid modules.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    } else if (type.isTuple()) {
+      Tuple elems;
+      for (auto t : type) {
+        elems.push_back(
+          t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
+      }
+      type = Type(elems);
+    }
     return;
   }
   assert(target->type.getHeapType().isSignature());
@@ -1121,7 +1146,12 @@ void StructNew::finalize() {
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!ref->type.isNull()) {
+  } else if (ref->type.isNull()) {
+    // See comment on CallRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
@@ -1131,6 +1161,32 @@ void StructSet::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::none;
+  }
+}
+
+void StructRMW::finalize() {
+  if (ref->type == Type::unreachable || value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // We have no struct type to read the field off of, but the most precise
+    // possible option is the type of the value we are using to make the
+    // modification.
+    type = value->type;
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
+void StructCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // Like StructRMW, but the most precise possible field type is the LUB of
+    // the expected and replacement values.
+    type = Type::getLeastUpperBound(expected->type, replacement->type);
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
 
@@ -1165,7 +1221,12 @@ void ArrayNewFixed::finalize() {
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!ref->type.isNull()) {
+  } else if (ref->type.isNull()) {
+    // See comment on CallRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
     type = ref->type.getHeapType().getArray().element.type;
   }
 }
@@ -1227,19 +1288,28 @@ void ArrayInitElem::finalize() {
 }
 
 void RefAs::finalize() {
-  if (value->type == Type::unreachable) {
+  // An unreachable child means we are unreachable. Also set ourselves to
+  // unreachable when the child is invalid (say, it is an i32 or some other non-
+  // reference), which avoids getHeapType() erroring right after us (in this
+  // situation, the validator will report an error later).
+  // TODO: Remove that part when we solve the validation issue more generally,
+  //       see https://github.com/WebAssembly/binaryen/issues/6781
+  if (!value->type.isRef()) {
     type = Type::unreachable;
     return;
   }
+  auto valHeapType = value->type.getHeapType();
   switch (op) {
     case RefAsNonNull:
-      type = Type(value->type.getHeapType(), NonNullable);
+      type = Type(valHeapType, NonNullable);
       break;
-    case ExternInternalize:
-      type = Type(HeapType::any, value->type.getNullability());
+    case AnyConvertExtern:
+      type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
+                  value->type.getNullability());
       break;
-    case ExternExternalize:
-      type = Type(HeapType::ext, value->type.getNullability());
+    case ExternConvertAny:
+      type = Type(HeapTypes::ext.getBasic(valHeapType.getShared()),
+                  value->type.getNullability());
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
@@ -1247,11 +1317,12 @@ void RefAs::finalize() {
 }
 
 void StringNew::finalize() {
-  if (ptr->type == Type::unreachable ||
-      (length && length->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable ||
+      (start && start->type == Type::unreachable) ||
+      (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, try_ ? Nullable : NonNullable);
+    type = Type(HeapType::string, NonNullable);
   }
 }
 
@@ -1266,8 +1337,8 @@ void StringMeasure::finalize() {
 }
 
 void StringEncode::finalize() {
-  if (ref->type == Type::unreachable || ptr->type == Type::unreachable ||
-      (start && start->type == Type::unreachable)) {
+  if (str->type == Type::unreachable || array->type == Type::unreachable ||
+      start->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1290,53 +1361,8 @@ void StringEq::finalize() {
   }
 }
 
-void StringAs::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    switch (op) {
-      case StringAsWTF8:
-        type = Type(HeapType::stringview_wtf8, NonNullable);
-        break;
-      case StringAsWTF16:
-        type = Type(HeapType::stringview_wtf16, NonNullable);
-        break;
-      case StringAsIter:
-        type = Type(HeapType::stringview_iter, NonNullable);
-        break;
-      default:
-        WASM_UNREACHABLE("bad string.as");
-    }
-  }
-}
-
-void StringWTF8Advance::finalize() {
-  if (ref->type == Type::unreachable || pos->type == Type::unreachable ||
-      bytes->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
 void StringWTF16Get::finalize() {
   if (ref->type == Type::unreachable || pos->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterNext::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterMove::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1346,14 +1372,6 @@ void StringIterMove::finalize() {
 void StringSliceWTF::finalize() {
   if (ref->type == Type::unreachable || start->type == Type::unreachable ||
       end->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type(HeapType::string, NonNullable);
-  }
-}
-
-void StringSliceIter::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type(HeapType::string, NonNullable);
@@ -1394,11 +1412,10 @@ static void populateResumeSentTypes(Resume* curr, Module* wasm) {
   curr->sentTypes.clear();
   curr->sentTypes.resize(curr->handlerTags.size());
   for (Index i = 0; i < curr->handlerTags.size(); i++) {
-    auto& tag = curr->handlerTags[i];
-    auto& tagSig = wasm->getTag(tag)->sig;
+    auto tag = wasm->getTag(curr->handlerTags[i]);
 
-    auto& tgps = tagSig.params;
-    auto& tgrs = tagSig.results;
+    auto tgps = tag->params();
+    auto tgrs = tag->results();
 
     HeapType ftPrime{Signature(tgrs, ctrs)};
     HeapType ctPrime{Continuation(ftPrime)};
@@ -1432,7 +1449,7 @@ void Resume::finalize(Module* wasm) {
 void Suspend::finalize(Module* wasm) {
   if (!handleUnreachableOperands(this) && wasm) {
     auto tag = wasm->getTag(this->tag);
-    type = tag->sig.results;
+    type = tag->results();
   }
 }
 
@@ -1513,13 +1530,13 @@ void Function::clearNames() { localNames.clear(); }
 void Function::clearDebugInfo() {
   localIndices.clear();
   debugLocations.clear();
-  prologLocation.clear();
-  epilogLocation.clear();
+  prologLocation.reset();
+  epilogLocation.reset();
 }
 
 template<typename Map>
 typename Map::mapped_type&
-getModuleElement(Map& m, Name name, const std::string& funcName) {
+getModuleElement(Map& m, Name name, std::string_view funcName) {
   auto iter = m.find(name);
   if (iter == m.end()) {
     Fatal() << "Module::" << funcName << ": " << name << " does not exist";
@@ -1623,7 +1640,7 @@ Importable* Module::getImport(ModuleItemKind kind, Name name) {
 
 Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
   auto doReturn = [](Importable* importable) {
-    return importable->imported() ? importable : nullptr;
+    return importable ? importable->imported() ? importable : nullptr : nullptr;
   };
 
   switch (kind) {
@@ -1859,6 +1876,9 @@ void Module::updateMaps() {
   assert(tagsMap.size() == tags.size());
 }
 
-void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
+void Module::clearDebugInfo() {
+  debugInfoFileNames.clear();
+  debugInfoSymbolNames.clear();
+}
 
 } // namespace wasm

@@ -1,0 +1,26 @@
+;; Verify a binary with declarative element segment whose init is vector of expr
+;; can be parsed correctly.
+;; The declarative-element-use-expr file contains this:
+;;
+;; (module
+;;   (type $0 (func))
+;;   (func $0 (type 0) (block (ref.func 0) (drop)))
+;;   (elem $0 declare funcref (item ref.func 0))
+;; )
+;;
+;; The wasm-opt output contains `(elem declare func 0)` instead of
+;; `(elem declare funcref (item ref.func 0))` because the parser doesn't
+;; preserve declarative segments. This is fine, as we test that the
+;; binary parser can parse it correctly.
+
+;; RUN: wasm-opt -all %s.wasm -S -o - | filecheck %s
+
+;; CHECK:      (module
+;; CHECK-NEXT:  (type $0 (func))
+;; CHECK-NEXT:  (elem declare func $0)
+;; CHECK-NEXT:  (func $0 (type $0)
+;; CHECK-NEXT:   (drop
+;; CHECK-NEXT:    (ref.func $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )

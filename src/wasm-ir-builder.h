@@ -40,17 +40,20 @@ namespace wasm {
 // globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
-  IRBuilder(Module& wasm, Function* func = nullptr)
-    : wasm(wasm), func(func), builder(wasm) {}
+  IRBuilder(Module& wasm) : wasm(wasm), builder(wasm) {}
 
   // Get the valid Binaryen IR expression representing the sequence of visited
   // instructions. The IRBuilder is reset and can be used with a fresh sequence
   // of instructions after this is called.
-  [[nodiscard]] Result<Expression*> build();
+  Result<Expression*> build();
+
+  // If the IRBuilder is empty, then it's ready to parse a new self-contained
+  // sequence of instructions.
+  [[nodiscard]] bool empty() { return scopeStack.empty(); }
 
   // Call visit() on an existing Expression with its non-child fields
   // initialized to initialize the child fields and refinalize it.
-  [[nodiscard]] Result<> visit(Expression*);
+  Result<> visit(Expression*);
 
   // Like visit, but pushes the expression onto the stack as-is without popping
   // any children or refinalization.
@@ -58,23 +61,47 @@ public:
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
-  void setDebugLocation(const Function::DebugLocation&);
+  void setDebugLocation(const std::optional<Function::DebugLocation>&);
+
+  // Give the builder a pointer to the counter tracking the current location in
+  // the binary. If this pointer is non-null, the builder will record the binary
+  // locations relative to the given code section offset for all instructions
+  // and delimiters inside functions.
+  void setBinaryLocation(size_t* binaryPos, size_t codeSectionOffset) {
+    this->binaryPos = binaryPos;
+    this->codeSectionOffset = codeSectionOffset;
+  }
+
+  // Set the function used to add scratch locals when constructing an isolated
+  // sequence of IR.
+  void setFunction(Function* func) { this->func = func; }
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
-  [[nodiscard]] Result<> visitFunctionStart(Function* func);
-  [[nodiscard]] Result<> visitBlockStart(Block* block);
-  [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
-  [[nodiscard]] Result<> visitElse();
-  [[nodiscard]] Result<> visitLoopStart(Loop* iff);
-  [[nodiscard]] Result<> visitTryStart(Try* tryy, Name label = {});
-  [[nodiscard]] Result<> visitCatch(Name tag);
-  [[nodiscard]] Result<> visitCatchAll();
-  [[nodiscard]] Result<> visitDelegate(Index label);
-  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
-                                            Name label = {});
-  [[nodiscard]] Result<> visitEnd();
+  Result<> visitFunctionStart(Function* func);
+  Result<> visitBlockStart(Block* block, Type inputType = Type::none);
+  Result<> visitIfStart(If* iff, Name label = {}, Type inputType = Type::none);
+  Result<> visitElse();
+  Result<> visitLoopStart(Loop* iff, Type inputType = Type::none);
+  Result<>
+  visitTryStart(Try* tryy, Name label = {}, Type inputType = Type::none);
+  Result<> visitCatch(Name tag);
+  Result<> visitCatchAll();
+  Result<> visitDelegate(Index label);
+  Result<> visitTryTableStart(TryTable* trytable,
+                              Name label = {},
+                              Type inputType = Type::none);
+  Result<> visitEnd();
+
+  // Used to visit break nodes when traversing a single block without its
+  // context. The type indicates how many values the break carries to its
+  // destination.
+  Result<> visitBreakWithType(Break*, Type);
+  // Used to visit switch nodes when traversing a single block without its
+  // context. The type indicates how many values the switch carries to its
+  // destination.
+  Result<> visitSwitchWithType(Switch*, Type);
 
   // Binaryen IR uses names to refer to branch targets, but in general there may
   // be branches to constructs that do not yet have names, so in IRBuilder we
@@ -83,192 +110,165 @@ public:
   //
   // Labels in delegates need special handling because the indexing needs to be
   // relative to the try's enclosing scope rather than the try itself.
-  [[nodiscard]] Result<Index> getLabelIndex(Name label,
-                                            bool inDelegate = false);
+  Result<Index> getLabelIndex(Name label, bool inDelegate = false);
 
   // Instead of calling visit, call makeXYZ to have the IRBuilder allocate the
   // nodes. This is generally safer than calling `visit` because the function
   // signatures ensure that there are no missing fields.
-  [[nodiscard]] Result<> makeNop();
-  [[nodiscard]] Result<> makeBlock(Name label, Type type);
-  [[nodiscard]] Result<> makeIf(Name label, Type type);
-  [[nodiscard]] Result<> makeLoop(Name label, Type type);
-  [[nodiscard]] Result<> makeBreak(Index label, bool isConditional);
-  [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
-                                    Index defaultLabel);
+  Result<> makeNop();
+  Result<> makeBlock(Name label, Signature sig);
+  Result<> makeIf(Name label, Signature sig);
+  Result<> makeLoop(Name label, Signature sig);
+  Result<> makeBreak(Index label, bool isConditional);
+  Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
-  [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
-  [[nodiscard]] Result<>
-  makeCallIndirect(Name table, HeapType type, bool isReturn);
-  [[nodiscard]] Result<> makeLocalGet(Index local);
-  [[nodiscard]] Result<> makeLocalSet(Index local);
-  [[nodiscard]] Result<> makeLocalTee(Index local);
-  [[nodiscard]] Result<> makeGlobalGet(Name global);
-  [[nodiscard]] Result<> makeGlobalSet(Name global);
-  [[nodiscard]] Result<> makeLoad(unsigned bytes,
-                                  bool signed_,
-                                  Address offset,
-                                  unsigned align,
-                                  Type type,
-                                  Name mem);
-  [[nodiscard]] Result<> makeStore(
+  Result<> makeCall(Name func, bool isReturn);
+  Result<> makeCallIndirect(Name table, HeapType type, bool isReturn);
+  Result<> makeLocalGet(Index local);
+  Result<> makeLocalSet(Index local);
+  Result<> makeLocalTee(Index local);
+  Result<> makeGlobalGet(Name global);
+  Result<> makeGlobalSet(Name global);
+  Result<> makeLoad(unsigned bytes,
+                    bool signed_,
+                    Address offset,
+                    unsigned align,
+                    Type type,
+                    Name mem);
+  Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
-  [[nodiscard]] Result<>
-  makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
-  [[nodiscard]] Result<>
-  makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
-  [[nodiscard]] Result<> makeAtomicRMW(
+  Result<> makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
+  Result<> makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
+  Result<> makeAtomicRMW(
     AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem);
-  [[nodiscard]] Result<>
+  Result<>
   makeAtomicCmpxchg(unsigned bytes, Address offset, Type type, Name mem);
-  [[nodiscard]] Result<> makeAtomicWait(Type type, Address offset, Name mem);
-  [[nodiscard]] Result<> makeAtomicNotify(Address offset, Name mem);
-  [[nodiscard]] Result<> makeAtomicFence();
-  [[nodiscard]] Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
-  [[nodiscard]] Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
-  [[nodiscard]] Result<> makeSIMDShuffle(const std::array<uint8_t, 16>& lanes);
-  [[nodiscard]] Result<> makeSIMDTernary(SIMDTernaryOp op);
-  [[nodiscard]] Result<> makeSIMDShift(SIMDShiftOp op);
-  [[nodiscard]] Result<>
+  Result<> makeAtomicWait(Type type, Address offset, Name mem);
+  Result<> makeAtomicNotify(Address offset, Name mem);
+  Result<> makeAtomicFence();
+  Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
+  Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
+  Result<> makeSIMDShuffle(const std::array<uint8_t, 16>& lanes);
+  Result<> makeSIMDTernary(SIMDTernaryOp op);
+  Result<> makeSIMDShift(SIMDShiftOp op);
+  Result<>
   makeSIMDLoad(SIMDLoadOp op, Address offset, unsigned align, Name mem);
-  [[nodiscard]] Result<> makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
-                                               Address offset,
-                                               unsigned align,
-                                               uint8_t lane,
-                                               Name mem);
-  [[nodiscard]] Result<> makeMemoryInit(Name data, Name mem);
-  [[nodiscard]] Result<> makeDataDrop(Name data);
-  [[nodiscard]] Result<> makeMemoryCopy(Name destMem, Name srcMem);
-  [[nodiscard]] Result<> makeMemoryFill(Name mem);
-  [[nodiscard]] Result<> makeConst(Literal val);
-  [[nodiscard]] Result<> makeUnary(UnaryOp op);
-  [[nodiscard]] Result<> makeBinary(BinaryOp op);
-  [[nodiscard]] Result<> makeSelect(std::optional<Type> type = std::nullopt);
-  [[nodiscard]] Result<> makeDrop();
-  [[nodiscard]] Result<> makeReturn();
-  [[nodiscard]] Result<> makeMemorySize(Name mem);
-  [[nodiscard]] Result<> makeMemoryGrow(Name mem);
-  [[nodiscard]] Result<> makeUnreachable();
-  [[nodiscard]] Result<> makePop(Type type);
-  [[nodiscard]] Result<> makeRefNull(HeapType type);
-  [[nodiscard]] Result<> makeRefIsNull();
-  [[nodiscard]] Result<> makeRefFunc(Name func);
-  [[nodiscard]] Result<> makeRefEq();
-  [[nodiscard]] Result<> makeTableGet(Name table);
-  [[nodiscard]] Result<> makeTableSet(Name table);
-  [[nodiscard]] Result<> makeTableSize(Name table);
-  [[nodiscard]] Result<> makeTableGrow(Name table);
-  [[nodiscard]] Result<> makeTableFill(Name table);
-  [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
-  [[nodiscard]] Result<> makeTry(Name label, Type type);
-  [[nodiscard]] Result<> makeTryTable(Name label,
-                                      Type type,
-                                      const std::vector<Name>& tags,
-                                      const std::vector<Index>& labels,
-                                      const std::vector<bool>& isRefs);
-  [[nodiscard]] Result<> makeThrow(Name tag);
-  [[nodiscard]] Result<> makeRethrow(Index label);
-  [[nodiscard]] Result<> makeThrowRef();
-  [[nodiscard]] Result<> makeTupleMake(uint32_t arity);
-  [[nodiscard]] Result<> makeTupleExtract(uint32_t arity, uint32_t index);
-  [[nodiscard]] Result<> makeTupleDrop(uint32_t arity);
-  [[nodiscard]] Result<> makeRefI31();
-  [[nodiscard]] Result<> makeI31Get(bool signed_);
-  [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
-  [[nodiscard]] Result<> makeRefTest(Type type);
-  [[nodiscard]] Result<> makeRefCast(Type type);
-  [[nodiscard]] Result<>
+  Result<> makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
+                                 Address offset,
+                                 unsigned align,
+                                 uint8_t lane,
+                                 Name mem);
+  Result<> makeMemoryInit(Name data, Name mem);
+  Result<> makeDataDrop(Name data);
+  Result<> makeMemoryCopy(Name destMem, Name srcMem);
+  Result<> makeMemoryFill(Name mem);
+  Result<> makeConst(Literal val);
+  Result<> makeUnary(UnaryOp op);
+  Result<> makeBinary(BinaryOp op);
+  Result<> makeSelect(std::optional<Type> type = std::nullopt);
+  Result<> makeDrop();
+  Result<> makeReturn();
+  Result<> makeMemorySize(Name mem);
+  Result<> makeMemoryGrow(Name mem);
+  Result<> makeUnreachable();
+  Result<> makePop(Type type);
+  Result<> makeRefNull(HeapType type);
+  Result<> makeRefIsNull();
+  Result<> makeRefFunc(Name func);
+  Result<> makeRefEq();
+  Result<> makeTableGet(Name table);
+  Result<> makeTableSet(Name table);
+  Result<> makeTableSize(Name table);
+  Result<> makeTableGrow(Name table);
+  Result<> makeTableFill(Name table);
+  Result<> makeTableCopy(Name destTable, Name srcTable);
+  Result<> makeTableInit(Name elem, Name table);
+  Result<> makeTry(Name label, Signature sig);
+  Result<> makeTryTable(Name label,
+                        Signature sig,
+                        const std::vector<Name>& tags,
+                        const std::vector<Index>& labels,
+                        const std::vector<bool>& isRefs);
+  Result<> makeThrow(Name tag);
+  Result<> makeRethrow(Index label);
+  Result<> makeThrowRef();
+  Result<> makeTupleMake(uint32_t arity);
+  Result<> makeTupleExtract(uint32_t arity, uint32_t index);
+  Result<> makeTupleDrop(uint32_t arity);
+  Result<> makeRefI31(Shareability share);
+  Result<> makeI31Get(bool signed_);
+  Result<> makeCallRef(HeapType type, bool isReturn);
+  Result<> makeRefTest(Type type);
+  Result<> makeRefCast(Type type);
+  Result<>
   makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
-  [[nodiscard]] Result<> makeStructNew(HeapType type);
-  [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
-  [[nodiscard]] Result<>
-  makeStructGet(HeapType type, Index field, bool signed_);
-  [[nodiscard]] Result<> makeStructSet(HeapType type, Index field);
-  [[nodiscard]] Result<> makeArrayNew(HeapType type);
-  [[nodiscard]] Result<> makeArrayNewDefault(HeapType type);
-  [[nodiscard]] Result<> makeArrayNewData(HeapType type, Name data);
-  [[nodiscard]] Result<> makeArrayNewElem(HeapType type, Name elem);
-  [[nodiscard]] Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
-  [[nodiscard]] Result<> makeArrayGet(HeapType type, bool signed_);
-  [[nodiscard]] Result<> makeArraySet(HeapType type);
-  [[nodiscard]] Result<> makeArrayLen();
-  [[nodiscard]] Result<> makeArrayCopy(HeapType destType, HeapType srcType);
-  [[nodiscard]] Result<> makeArrayFill(HeapType type);
-  [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
-  [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
-  [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
-  [[nodiscard]] Result<> makeStringConst(Name string);
-  [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
-  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
-  [[nodiscard]] Result<> makeStringConcat();
-  [[nodiscard]] Result<> makeStringEq(StringEqOp op);
-  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
-  [[nodiscard]] Result<> makeStringWTF8Advance();
-  [[nodiscard]] Result<> makeStringWTF16Get();
-  [[nodiscard]] Result<> makeStringIterNext();
-  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
-  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
-  [[nodiscard]] Result<> makeStringSliceIter();
-  [[nodiscard]] Result<> makeContBind(HeapType contTypeBefore,
-                                      HeapType contTypeAfter);
-  [[nodiscard]] Result<> makeContNew(HeapType ct);
-  [[nodiscard]] Result<> makeResume(HeapType ct,
-                                    const std::vector<Name>& tags,
-                                    const std::vector<Index>& labels);
-  [[nodiscard]] Result<> makeSuspend(Name tag);
+  Result<> makeStructNew(HeapType type);
+  Result<> makeStructNewDefault(HeapType type);
+  Result<>
+  makeStructGet(HeapType type, Index field, bool signed_, MemoryOrder order);
+  Result<> makeStructSet(HeapType type, Index field, MemoryOrder order);
+  Result<>
+  makeStructRMW(AtomicRMWOp op, HeapType type, Index field, MemoryOrder order);
+  Result<> makeStructCmpxchg(HeapType type, Index field, MemoryOrder order);
+  Result<> makeArrayNew(HeapType type);
+  Result<> makeArrayNewDefault(HeapType type);
+  Result<> makeArrayNewData(HeapType type, Name data);
+  Result<> makeArrayNewElem(HeapType type, Name elem);
+  Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
+  Result<> makeArrayGet(HeapType type, bool signed_);
+  Result<> makeArraySet(HeapType type);
+  Result<> makeArrayLen();
+  Result<> makeArrayCopy(HeapType destType, HeapType srcType);
+  Result<> makeArrayFill(HeapType type);
+  Result<> makeArrayInitData(HeapType type, Name data);
+  Result<> makeArrayInitElem(HeapType type, Name elem);
+  Result<> makeRefAs(RefAsOp op);
+  Result<> makeStringNew(StringNewOp op);
+  Result<> makeStringConst(Name string);
+  Result<> makeStringMeasure(StringMeasureOp op);
+  Result<> makeStringEncode(StringEncodeOp op);
+  Result<> makeStringConcat();
+  Result<> makeStringEq(StringEqOp op);
+  Result<> makeStringWTF8Advance();
+  Result<> makeStringWTF16Get();
+  Result<> makeStringIterNext();
+  Result<> makeStringSliceWTF();
+  Result<> makeContBind(HeapType contTypeBefore, HeapType contTypeAfter);
+  Result<> makeContNew(HeapType ct);
+  Result<> makeResume(HeapType ct,
+                      const std::vector<Name>& tags,
+                      const std::vector<Index>& labels);
+  Result<> makeSuspend(Name tag);
 
   // Private functions that must be public for technical reasons.
-  [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<>
-  visitDrop(Drop*, std::optional<uint32_t> arity = std::nullopt);
-  [[nodiscard]] Result<> visitIf(If*);
-  [[nodiscard]] Result<> visitReturn(Return*);
-  [[nodiscard]] Result<> visitStructNew(StructNew*);
-  [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
-  [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
-  // Used to visit break exprs when traversing the module in the fully nested
-  // format. Break label destinations are assumed to have already been visited,
-  // with a corresponding push onto the scope stack. As a result, an error will
-  // return if a corresponding scope is not found for the break.
-  [[nodiscard]] Result<> visitBreak(Break*,
-                                    std::optional<Index> label = std::nullopt);
-  // Used to visit break nodes when traversing a single block without its
-  // context. The type indicates how many values the break carries to its
-  // destination.
-  [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
-  [[nodiscard]] Result<>
-  // Used to visit switch exprs when traversing the module in the fully nested
-  // format. Switch label destinations are assumed to have already been visited,
-  // with a corresponding push onto the scope stack. As a result, an error will
-  // return if a corresponding scope is not found for the switch.
-  visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
-  // Used to visit switch nodes when traversing a single block without its
-  // context. The type indicates how many values the switch carries to its
-  // destination.
-  [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
-  [[nodiscard]] Result<> visitCall(Call*);
-  [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
-  [[nodiscard]] Result<> visitCallRef(CallRef*);
-  [[nodiscard]] Result<> visitLocalSet(LocalSet*);
-  [[nodiscard]] Result<> visitGlobalSet(GlobalSet*);
-  [[nodiscard]] Result<> visitThrow(Throw*);
-  [[nodiscard]] Result<> visitStringNew(StringNew*);
-  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
-  [[nodiscard]] Result<> visitContBind(ContBind*);
-  [[nodiscard]] Result<> visitResume(Resume*);
-  [[nodiscard]] Result<> visitSuspend(Suspend*);
-  [[nodiscard]] Result<> visitTupleMake(TupleMake*);
-  [[nodiscard]] Result<>
-  visitTupleExtract(TupleExtract*,
-                    std::optional<uint32_t> arity = std::nullopt);
-  [[nodiscard]] Result<> visitPop(Pop*);
+  Result<> visitExpression(Expression*);
+
+  // Do not push pops onto the stack since we generate our own pops as necessary
+  // when visiting the beginnings of try blocks.
+  Result<> visitPop(Pop*) { return Ok{}; }
 
 private:
   Module& wasm;
-  Function* func;
+  Function* func = nullptr;
   Builder builder;
-  std::optional<Function::DebugLocation> debugLoc;
+
+  // Used for setting DWARF expression locations.
+  size_t* binaryPos = nullptr;
+  size_t lastBinaryPos = 0;
+  size_t codeSectionOffset = 0;
+
+  // The location lacks debug info as it was marked as not having it.
+  struct NoDebug : public std::monostate {};
+  // The location lacks debug info, but was not marked as not having
+  // it, and it can receive it from the parent or its previous sibling
+  // (if it has one).
+  struct CanReceiveDebug : public std::monostate {};
+  using DebugVariant =
+    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocation>;
+
+  DebugVariant debugLoc;
+
+  struct ChildPopper;
 
   void applyDebugLoc(Expression* expr);
 
@@ -279,6 +279,10 @@ private:
     struct NoScope {};
     struct FuncScope {
       Function* func;
+      // Used to determine whether we need to run a fixup after creating the
+      // function.
+      bool hasSyntheticBlock = false;
+      bool hasPop = false;
     };
     struct BlockScope {
       Block* block;
@@ -326,49 +330,122 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+
+    // For Try/Catch/CatchAll scopes, we need to separately track a label used
+    // for branches, since the normal label is only used for delegates.
+    Name branchLabel;
+
     bool labelUsed = false;
 
+    // If the control flow scope has an input type, we need to lower it using a
+    // scratch local because we cannot represent control flow input in the IR.
+    Type inputType;
+    Index inputLocal = -1;
+
+    // If there are br_on_*, try_table, or resume branches that target this
+    // scope and carry additional values, we need to use a scratch local to
+    // deliver those additional values because the IR does not support them. We
+    // may need scratch locals of different arities for the same branch target.
+    // For each arity we also need a trampoline label to branch to. TODO:
+    // Support additional values on any branch once we have better multivalue
+    // optimization support.
+    std::vector<Index> outputLocals;
+    std::vector<Name> outputLabels;
+
+    // The stack of instructions being built in this scope.
     std::vector<Expression*> exprStack;
+
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.
     bool unreachable = false;
 
+    // The binary location of the start of the scope, used to set debug info.
+    size_t startPos = 0;
+
     ScopeCtx() : scope(NoScope{}) {}
-    ScopeCtx(Scope scope) : scope(scope) {}
-    ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
+    ScopeCtx(Scope scope, Type inputType)
+      : scope(scope), inputType(inputType) {}
+    ScopeCtx(
+      Scope scope, Name label, bool labelUsed, Type inputType, Index inputLocal)
+      : scope(scope), label(label), labelUsed(labelUsed), inputType(inputType),
+        inputLocal(inputLocal) {}
+    ScopeCtx(Scope scope, Name label, bool labelUsed, Name branchLabel)
+      : scope(scope), label(label), branchLabel(branchLabel),
+        labelUsed(labelUsed) {}
 
     static ScopeCtx makeFunc(Function* func) {
-      return ScopeCtx(FuncScope{func});
+      return ScopeCtx(FuncScope{func}, Type::none);
     }
-    static ScopeCtx makeBlock(Block* block) {
-      return ScopeCtx(BlockScope{block});
+    static ScopeCtx makeBlock(Block* block, Type inputType) {
+      return ScopeCtx(BlockScope{block}, inputType);
     }
-    static ScopeCtx makeIf(If* iff, Name originalLabel = {}) {
-      return ScopeCtx(IfScope{iff, originalLabel});
+    static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType) {
+      return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
-    static ScopeCtx makeElse(If* iff, Name originalLabel, Name label) {
-      return ScopeCtx(ElseScope{iff, originalLabel}, label);
+    static ScopeCtx makeElse(ScopeCtx&& scope) {
+      scope.scope = ElseScope{scope.getIf(), scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/true);
+      return scope;
     }
-    static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
-    static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
-      return ScopeCtx(TryScope{tryy, originalLabel});
+    static ScopeCtx makeLoop(Loop* loop, Type inputType) {
+      return ScopeCtx(LoopScope{loop}, inputType);
     }
-    static ScopeCtx makeCatch(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchScope{tryy, originalLabel}, label);
+    static ScopeCtx makeTry(Try* tryy, Name originalLabel, Type inputType) {
+      return ScopeCtx(TryScope{tryy, originalLabel}, inputType);
     }
-    static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
-    static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
-      return ScopeCtx(TryTableScope{trytable, originalLabel});
+    static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel()};
+      scope.resetForDelimiter(/*keepInput=*/false);
+      return scope;
     }
-
+    static ScopeCtx
+    makeTryTable(TryTable* trytable, Name originalLabel, Type inputType) {
+      return ScopeCtx(TryTableScope{trytable, originalLabel}, inputType);
+    }
+    // When transitioning to a new scope for a delimiter like `else` or catch,
+    // most of the scope context is preserved, but some parts need to be reset.
+    // `keepInput` means that control flow parameters are available at the
+    // begninning of the scope after the delimiter.
+    void resetForDelimiter(bool keepInput) {
+      exprStack.clear();
+      unreachable = false;
+      if (!keepInput) {
+        inputType = Type::none;
+        inputLocal = -1;
+      }
+    }
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Function* getFunction() {
       if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
         return funcScope->func;
       }
       return nullptr;
+    }
+    void noteSyntheticBlock() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        funcScope->hasSyntheticBlock = true;
+      }
+    }
+    void notePop() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        funcScope->hasPop = true;
+      }
+    }
+    bool needsPopFixup() {
+      // If the function has a synthetic block and it has a pop, then it's
+      // possible that the pop is inside the synthetic block and we should run
+      // the fixup. Determining more precisely that a pop is inside the
+      // synthetic block when it is created would be complicated and expensive,
+      // so we are conservative here.
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        return funcScope->hasSyntheticBlock && funcScope->hasPop;
+      }
+      return false;
     }
     Block* getBlock() {
       if (auto* blockScope = std::get_if<BlockScope>(&scope)) {
@@ -448,6 +525,10 @@ private:
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
+    Type getLabelType() {
+      // Loops receive their input type rather than their output type.
+      return getLoop() ? inputType : getResultType();
+    }
     Name getOriginalLabel() {
       if (std::get_if<NoScope>(&scope) || getFunction()) {
         return Name{};
@@ -478,6 +559,7 @@ private:
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
+    bool isDelimiter() { return getElse() || getCatch() || getCatchAll(); }
   };
 
   // The stack of block contexts currently being parsed.
@@ -488,13 +570,20 @@ private:
   // its stack.
   std::unordered_map<Name, std::vector<Index>> labelDepths;
 
-  Name makeFresh(Name label) {
-    return Names::getValidName(label, [&](Name candidate) {
-      return labelDepths.insert({candidate, {}}).second;
-    });
+  Name makeFresh(Name label, Index hint = 0) {
+    return Names::getValidName(
+      label,
+      [&](Name candidate) {
+        return labelDepths.insert({candidate, {}}).second;
+      },
+      hint,
+      "");
   }
 
-  void pushScope(ScopeCtx scope) {
+  Index blockHint = 0;
+  Index labelHint = 0;
+
+  Result<> pushScope(ScopeCtx&& scope) {
     if (auto label = scope.getOriginalLabel()) {
       // Assign a fresh label to the scope, if necessary.
       if (!scope.label) {
@@ -503,7 +592,25 @@ private:
       // Record the original label to handle references to it correctly.
       labelDepths[label].push_back(scopeStack.size() + 1);
     }
-    scopeStack.push_back(scope);
+    if (binaryPos) {
+      scope.startPos = lastBinaryPos;
+      lastBinaryPos = *binaryPos;
+    }
+    bool hasInput = scope.inputType != Type::none;
+    Index inputLocal = scope.inputLocal;
+    if (hasInput && !scope.isDelimiter()) {
+      if (inputLocal == Index(-1)) {
+        auto scratch = addScratchLocal(scope.inputType);
+        CHECK_ERR(scratch);
+        inputLocal = scope.inputLocal = *scratch;
+      }
+      CHECK_ERR(makeLocalSet(inputLocal));
+    }
+    scopeStack.emplace_back(std::move(scope));
+    if (hasInput) {
+      CHECK_ERR(makeLocalGet(inputLocal));
+    }
+    return Ok{};
   }
 
   ScopeCtx& getScope() {
@@ -531,10 +638,11 @@ private:
   // `block`, but otherwise we will have to allocate a new block.
   Result<Expression*> finishScope(Block* block = nullptr);
 
-  [[nodiscard]] Result<Name> getLabelName(Index label);
-  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
-  [[nodiscard]] Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<Expression*> pop(size_t size = 1);
+  Result<Name> getLabelName(Index label, bool forDelegate = false);
+  Result<Name> getDelegateLabelName(Index label) {
+    return getLabelName(label, true);
+  }
+  Result<Index> addScratchLocal(Type);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -545,7 +653,7 @@ private:
 
   // Find the last value-producing expression, if any, and hoist its value to
   // the top of the stack using a scratch local if necessary.
-  [[nodiscard]] MaybeResult<HoistedVal> hoistLastValue();
+  MaybeResult<HoistedVal> hoistLastValue();
   // Transform the stack as necessary such that the original producer of the
   // hoisted value will be popped along with the final expression that produces
   // the value, if they are different. May only be called directly after
@@ -553,11 +661,15 @@ private:
   // consume, so if the hoisted value has `sizeHint` elements, it is left intact
   // even if it is a tuple. Otherwise, hoisted tuple values will be broken into
   // pieces.
-  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
-                                             size_t sizeHint = 1);
+  Result<> packageHoistedValue(const HoistedVal&, size_t sizeHint = 1);
 
-  [[nodiscard]] Result<Expression*>
-  getBranchValue(Expression* curr, Name labelName, std::optional<Index> label);
+  Result<Type> getLabelType(Index label);
+  Result<Type> getLabelType(Name labelName);
+
+  Result<std::pair<Index, Name>> getExtraOutputLocalAndLabel(Index label,
+                                                             size_t extraArity);
+  Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
+  void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
   void dump();
 };

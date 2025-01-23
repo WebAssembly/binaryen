@@ -83,7 +83,7 @@ inline bool isNamedControlFlow(Expression* curr) {
 // isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
   if (auto* refAs = curr->dynCast<RefAs>()) {
-    if (refAs->op == ExternExternalize || refAs->op == ExternInternalize) {
+    if (refAs->op == ExternConvertAny || refAs->op == AnyConvertExtern) {
       return isSingleConstantExpression(refAs->value);
     }
   }
@@ -119,14 +119,15 @@ inline Literal getLiteral(const Expression* curr) {
     return Literal(r->func, r->type.getHeapType());
   } else if (auto* i = curr->dynCast<RefI31>()) {
     if (auto* c = i->value->dynCast<Const>()) {
-      return Literal::makeI31(c->value.geti32());
+      return Literal::makeI31(c->value.geti32(),
+                              i->type.getHeapType().getShared());
     }
   } else if (auto* s = curr->dynCast<StringConst>()) {
     return Literal(s->string.toString());
   } else if (auto* r = curr->dynCast<RefAs>()) {
-    if (r->op == ExternExternalize) {
+    if (r->op == ExternConvertAny) {
       return getLiteral(r->value).externalize();
-    } else if (r->op == ExternInternalize) {
+    } else if (r->op == AnyConvertExtern) {
       return getLiteral(r->value).internalize();
     }
   }
@@ -329,7 +330,7 @@ inline Expression** getImmediateFallthroughPtr(
     // Extern conversions are not casts and actually produce new values.
     // Treating them as fallthroughs would lead to misoptimizations of
     // subsequent casts.
-    if (as->op != ExternInternalize && as->op != ExternExternalize) {
+    if (as->op != AnyConvertExtern && as->op != ExternConvertAny) {
       return &as->value;
     }
   } else if (auto* br = curr->dynCast<BrOn>()) {
@@ -485,6 +486,30 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
+// If this instruction accesses memory or the heap, or otherwise participates in
+// shared memory synchronization, return the memory order corresponding to the
+// kind of synchronization it does. Return MemoryOrder::Unordered if there is no
+// synchronization. Does not look at children.
+inline MemoryOrder getMemoryOrder(Expression* curr) {
+  if (auto* get = curr->dynCast<StructGet>()) {
+    return get->order;
+  }
+  if (auto* set = curr->dynCast<StructSet>()) {
+    return set->order;
+  }
+  if (auto* load = curr->dynCast<Load>()) {
+    return load->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
+  }
+  if (auto* store = curr->dynCast<Store>()) {
+    return store->isAtomic ? MemoryOrder::SeqCst : MemoryOrder::Unordered;
+  }
+  if (curr->is<AtomicRMW>() || curr->is<AtomicWait>() ||
+      curr->is<AtomicNotify>() || curr->is<AtomicFence>()) {
+    return MemoryOrder::SeqCst;
+  }
+  return MemoryOrder::Unordered;
+}
+
 // A "generative" expression is one that can generate different results for the
 // same inputs, and that difference is *not* explained by other expressions that
 // interact with this one. This is an intrinsic/internal property of the
@@ -527,7 +552,10 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //    the latter because calls are already handled best in other manners (using
 //    EffectAnalyzer).
 //
-bool isGenerative(Expression* curr, FeatureSet features);
+bool isGenerative(Expression* curr);
+
+// As above, but only checks |curr| and not children.
+bool isShallowlyGenerative(Expression* curr);
 
 // Whether this expression is valid in a context where WebAssembly requires a
 // constant expression, such as a global initializer.

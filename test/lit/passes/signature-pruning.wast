@@ -308,7 +308,6 @@
   ;; CHECK-NEXT:  (local $1 f32)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
     ;; Use nothing at all: all params can be removed.
@@ -394,7 +393,6 @@
 
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
     ;; This function does not use the parameter. It also has no calls, but that
@@ -416,7 +414,6 @@
   ;; CHECK:      (memory $0 1 1)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -431,7 +428,6 @@
   ;; CHECK:      (memory $0 1 1)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -469,7 +465,6 @@
 
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -505,14 +500,12 @@
 
   ;; CHECK:      (func $foo (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
 
   ;; CHECK:      (func $bar (type $sig)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bar (type $sig) (param $i32 i32)
     ;; As above, but the second function also does not use the parameter, and
@@ -574,7 +567,6 @@
   ;; CHECK:      (table $0 1 1 anyref)
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32)
   )
@@ -593,13 +585,11 @@
   ;; CHECK:      (export "bar" (func $bar))
 
   ;; CHECK:      (func $foo (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (export "foo") (type $sig) (param $i32 i32)
   )
 
   ;; CHECK:      (func $bar (type $sig) (param $i32 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bar (export "bar") (type $sig) (param $i32 i32)
   )
@@ -632,14 +622,12 @@
 
   ;; CHECK:      (func $foo1 (type $sig1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo1 (type $sig1) (param $i32 i32)
   )
 
   ;; CHECK:      (func $foo2 (type $sig2)
   ;; CHECK-NEXT:  (local $0 f64)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo2 (type $sig2) (param $f64 f64)
   )
@@ -982,19 +970,17 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (param i32)))
-
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func (param i32)))
+  ;; CHECK-NEXT:  (type $0 (func (param i32)))
 
-  ;; CHECK:       (type $2 (func (result i32)))
+  ;; CHECK:       (type $1 (func (result i32)))
 
-  ;; CHECK:       (type $3 (func (param i32)))
+  ;; CHECK:       (type $2 (func (param i32)))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $2) (param i32))
   (tag $tag (param i32))
 
-  ;; CHECK:      (func $catch-pop (type $2) (result i32)
+  ;; CHECK:      (func $catch-pop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1055,7 +1041,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32)
+  ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -1071,19 +1057,17 @@
 
 ;; As above, but remove the other parameter (the pop).
 (module
-  ;; CHECK:      (type $0 (func (param i32)))
-
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func (param i32)))
+  ;; CHECK-NEXT:  (type $0 (func (param i32)))
 
-  ;; CHECK:       (type $2 (func (result i32)))
+  ;; CHECK:       (type $1 (func (result i32)))
 
-  ;; CHECK:       (type $3 (func (param i32)))
+  ;; CHECK:       (type $2 (func (param i32)))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $2) (param i32))
   (tag $tag (param i32))
 
-  ;; CHECK:      (func $catch-pop (type $2) (result i32)
+  ;; CHECK:      (func $catch-pop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1139,7 +1123,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32)
+  ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -1148,6 +1132,141 @@
   (func $target (param $x i32) (param $y i32)
     (drop
       (local.get $y) ;; this changed from $x to $y
+    )
+  )
+)
+
+;; $exported is exported. The entire rec group becomes exported as well, which
+;; causes $unused-param's type to be public, which means we cannot normally
+;; modify it. However, in closed world we could allow such changes, by keeping
+;; the original public rec group as-is, and add a new rec group for private
+;; types, put the pruned type there, and use that pruned type on $unused-param.
+;; That can work here, but not in the testcase after us. For now, we also do not
+;; optimize here, as figuring out when it is safe is very difficult, and may
+;; need a new design TODO
+(module
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $none (func))
+   (type $none (func))
+   ;; CHECK:       (type $much (func (param i32)))
+   (type $much (func (param i32)))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (export "exported" (func $exported))
+
+  ;; CHECK:      (func $exported (type $none)
+  ;; CHECK-NEXT: )
+  (func $exported (export "exported") (type $none)
+  )
+
+  ;; CHECK:      (func $unused-param (type $much) (param $param i32)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $much) (param $param i32)
+  )
+
+  ;; CHECK:      (func $caller (type $2)
+  ;; CHECK-NEXT:  (call $unused-param
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $unused-param
+      (i32.const 0)
+    )
+  )
+)
+
+;; As the previous testcase, but add another use of the type we want to prune,
+;; in a struct.new. The struct type is public, so we cannot modify it and
+;; replace the reference to the function type with the pruned version.
+(module
+  (rec
+    ;; CHECK:      (type $0 (func))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $none (func))
+    (type $none (func))
+    ;; CHECK:       (type $much (func (param i32)))
+    (type $much (func (param i32)))
+
+    ;; CHECK:       (type $struct (struct (field (ref $much))))
+    (type $struct (struct (field (ref $much))))
+  )
+
+  ;; CHECK:      (elem declare func $unused-param)
+
+  ;; CHECK:      (export "exported" (func $exported))
+
+  ;; CHECK:      (func $exported (type $none)
+  ;; CHECK-NEXT: )
+  (func $exported (export "exported") (type $none)
+    ;; This makes the rec group public.
+  )
+
+  ;; CHECK:      (func $unused-param (type $much) (param $param i32)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $much) (param $param i32)
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $unused-param
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $unused-param
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $struct.new (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.func $unused-param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct.new
+    ;; This struct.new causes the problem mentioned above.
+    (drop
+      (struct.new $struct
+        (ref.func $unused-param)
+      )
+    )
+  )
+)
+
+;; Test that we do not prune parameters from types used in tags.
+(module
+  ;; CHECK:      (type $sig (func (param anyref)))
+  (type $sig (func (param anyref)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (tag $e (type $sig) (param anyref))
+  (tag $e (type $sig))
+
+  ;; CHECK:      (func $unused-param (type $sig) (param $0 anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $sig) (param anyref)
+    (nop)
+  )
+
+  ;; CHECK:      (func $throw (type $1)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (throw $e
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw
+    (local anyref)
+    ;; This would be invalid if we optimized $sig.
+    (throw $e
+      (local.get 0)
     )
   )
 )

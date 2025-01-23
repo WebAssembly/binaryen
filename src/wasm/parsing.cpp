@@ -36,18 +36,6 @@ void ParseException::dump(std::ostream& o) const {
   Colors::normal(o);
 }
 
-void MapParseException::dump(std::ostream& o) const {
-  Colors::magenta(o);
-  o << "[";
-  Colors::red(o);
-  o << "map parse exception: ";
-  Colors::green(o);
-  o << text;
-  Colors::magenta(o);
-  o << "]";
-  Colors::normal(o);
-}
-
 // UniqueNameMapper
 
 Name UniqueNameMapper::getPrefixedName(Name prefix) {

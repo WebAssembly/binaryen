@@ -34,6 +34,7 @@
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
+#include <ir/localize.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/ordering.h>
@@ -41,6 +42,7 @@
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/stdckdint.h>
 #include <support/threads.h>
 #include <wasm.h>
 
@@ -78,8 +80,8 @@ static bool isSignedOp(BinaryOp op) {
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
 
-  Index maxBits;
-  Index signExtedBits;
+  Index maxBits = -1;
+  Index signExtBits = 0;
 };
 
 struct LocalScanner : PostWalker<LocalScanner> {
@@ -97,9 +99,9 @@ struct LocalScanner : PostWalker<LocalScanner> {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
-        info.signExtedBits = LocalInfo::kUnknown; // we will never know anything
+        info.signExtBits = LocalInfo::kUnknown; // we will never know anything
       } else {
-        info.maxBits = info.signExtedBits = 0; // we are open to learning
+        info.maxBits = info.signExtBits = 0; // we are open to learning
       }
     }
     // walk
@@ -107,8 +109,8 @@ struct LocalScanner : PostWalker<LocalScanner> {
     // finalize
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto& info = localInfo[i];
-      if (info.signExtedBits == LocalInfo::kUnknown) {
-        info.signExtedBits = 0;
+      if (info.signExtBits == LocalInfo::kUnknown) {
+        info.signExtBits = 0;
       }
     }
   }
@@ -135,11 +137,11 @@ struct LocalScanner : PostWalker<LocalScanner> {
         signExtBits = load->bytes * 8;
       }
     }
-    if (info.signExtedBits == 0) {
-      info.signExtedBits = signExtBits; // first info we see
-    } else if (info.signExtedBits != signExtBits) {
+    if (info.signExtBits == 0) {
+      info.signExtBits = signExtBits; // first info we see
+    } else if (info.signExtBits != signExtBits) {
       // contradictory information, give up
-      info.signExtedBits = LocalInfo::kUnknown;
+      info.signExtBits = LocalInfo::kUnknown;
     }
   }
 
@@ -237,7 +239,7 @@ struct OptimizeInstructions
     }
 
     // Main walk.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, getModule());
@@ -1004,6 +1006,22 @@ struct OptimizeInstructions
       }
     }
 
+    // Simple sign extends can be removed if the value is already sign-extended.
+    auto signExtBits = getSignExtBits(curr->value);
+    if (signExtBits > 0) {
+      // Note that we can handle the case of |curr| having a larger sign-extend:
+      // if we have an 8-bit value in 32-bit, then there are 24 sign bits, and
+      // doing a sign-extend to 16 will only affect 16 of those 24, and the
+      // effect is to leave them as they are.
+      if ((curr->op == ExtendS8Int32 && signExtBits <= 8) ||
+          (curr->op == ExtendS16Int32 && signExtBits <= 16) ||
+          (curr->op == ExtendS8Int64 && signExtBits <= 8) ||
+          (curr->op == ExtendS16Int64 && signExtBits <= 16) ||
+          (curr->op == ExtendS32Int64 && signExtBits <= 32)) {
+        return replaceCurrent(curr->value);
+      }
+    }
+
     if (Abstract::hasAnyReinterpret(curr->op)) {
       // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
       // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
@@ -1104,12 +1122,6 @@ struct OptimizeInstructions
     if (get && get->name == curr->name) {
       ExpressionManipulator::nop(curr);
       return replaceCurrent(curr);
-    }
-  }
-
-  void visitBlock(Block* curr) {
-    if (getModule()->features.hasGC()) {
-      optimizeHeapStores(curr->list);
     }
   }
 
@@ -1263,7 +1275,7 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    assert(getModule()->features.hasBulkMemory());
+    assert(getModule()->features.hasBulkMemoryOpt());
     if (auto* ret = optimizeMemoryCopy(curr)) {
       return replaceCurrent(ret);
     }
@@ -1273,7 +1285,7 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    assert(getModule()->features.hasBulkMemory());
+    assert(getModule()->features.hasBulkMemoryOpt());
     if (auto* ret = optimizeMemoryFill(curr)) {
       return replaceCurrent(ret);
     }
@@ -1782,9 +1794,49 @@ struct OptimizeInstructions
     }
   }
 
+  void visitStructNew(StructNew* curr) {
+    // If values are provided, but they are all the default, then we can remove
+    // them (in reachable code).
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    auto& passOptions = getPassOptions();
+    const auto& fields = curr->type.getHeapType().getStruct().fields;
+    assert(fields.size() == curr->operands.size());
+
+    for (Index i = 0; i < fields.size(); i++) {
+      // The field must be defaultable.
+      auto type = fields[i].type;
+      if (!type.isDefaultable()) {
+        return;
+      }
+
+      // The field must be written the default value.
+      auto* value = Properties::getFallthrough(
+        curr->operands[i], passOptions, *getModule());
+      if (!Properties::isSingleConstantExpression(value) ||
+          Properties::getLiteral(value) != Literal::makeZero(type)) {
+        return;
+      }
+    }
+
+    // Success! Drop the children and return a struct.new_with_default.
+    auto* rep = getDroppedChildrenAndAppend(curr, curr);
+    curr->operands.clear();
+    assert(curr->isWithDefault());
+    replaceCurrent(rep);
+  }
+
   void visitStructGet(StructGet* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
+    // Relax acquire loads of unshared fields to unordered because they cannot
+    // synchronize with other threads.
+    if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
+        !curr->ref->type.getHeapType().isShared()) {
+      curr->order = MemoryOrder::Unordered;
+    }
   }
 
   void visitStructSet(StructSet* curr) {
@@ -1802,145 +1854,324 @@ struct OptimizeInstructions
       }
     }
 
-    // If our reference is a tee of a struct.new, we may be able to fold the
-    // stored value into the new itself:
-    //
-    //  (struct.set (local.tee $x (struct.new X Y Z)) X')
-    // =>
-    //  (local.set $x (struct.new X' Y Z))
-    //
-    if (auto* tee = curr->ref->dynCast<LocalSet>()) {
-      if (auto* new_ = tee->value->dynCast<StructNew>()) {
-        if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
-          // Success, so we do not need the struct.set any more, and the tee
-          // can just be a set instead of us.
-          tee->makeSet();
-          replaceCurrent(tee);
-        }
-      }
+    // Relax release stores of unshared fields to unordered because they cannot
+    // synchronize with other threads.
+    if (curr->order == MemoryOrder::AcqRel && curr->ref->type.isRef() &&
+        !curr->ref->type.getHeapType().isShared()) {
+      curr->order = MemoryOrder::Unordered;
     }
   }
 
-  // Similar to the above with struct.set whose reference is a tee of a new, we
-  // can do the same for subsequent sets in a list:
-  //
-  //  (local.set $x (struct.new X Y Z))
-  //  (struct.set (local.get $x) X')
-  // =>
-  //  (local.set $x (struct.new X' Y Z))
-  //
-  // We also handle other struct.sets immediately after this one, but we only
-  // handle the case where they are all in sequence and right after the
-  // local.set (anything in the middle of this pattern will stop us from
-  // optimizing later struct.sets, which might be improved later but would
-  // require an analysis of effects TODO).
-  void optimizeHeapStores(ExpressionList& list) {
-    for (Index i = 0; i < list.size(); i++) {
-      auto* localSet = list[i]->dynCast<LocalSet>();
-      if (!localSet) {
-        continue;
-      }
-      auto* new_ = localSet->value->dynCast<StructNew>();
-      if (!new_) {
-        continue;
-      }
-
-      // This local.set of a struct.new looks good. Find struct.sets after it
-      // to optimize.
-      for (Index j = i + 1; j < list.size(); j++) {
-        auto* structSet = list[j]->dynCast<StructSet>();
-        if (!structSet) {
-          // Any time the pattern no longer matches, stop optimizing possible
-          // struct.sets for this struct.new.
-          break;
-        }
-        auto* localGet = structSet->ref->dynCast<LocalGet>();
-        if (!localGet || localGet->index != localSet->index) {
-          break;
-        }
-        if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
-          break;
-        } else {
-          // Success. Replace the set with a nop, and continue to
-          // perhaps optimize more.
-          ExpressionManipulator::nop(structSet);
-        }
-      }
-    }
-  }
-
-  // Given a struct.new and a struct.set that occurs right after it, and that
-  // applies to the same data, try to apply the set during the new. This can be
-  // either with a nested tee:
-  //
-  //  (struct.set
-  //    (local.tee $x (struct.new X Y Z))
-  //    X'
-  //  )
-  // =>
-  //  (local.set $x (struct.new X' Y Z))
-  //
-  // or without:
-  //
-  //  (local.set $x (struct.new X Y Z))
-  //  (struct.set (local.get $x) X')
-  // =>
-  //  (local.set $x (struct.new X' Y Z))
-  //
-  // Returns true if we succeeded.
-  bool optimizeSubsequentStructSet(StructNew* new_,
-                                   StructSet* set,
-                                   Index refLocalIndex) {
-    // Leave unreachable code for DCE, to avoid updating types here.
-    if (new_->type == Type::unreachable || set->type == Type::unreachable) {
-      return false;
+  void visitStructRMW(StructRMW* curr) {
+    skipNonNullCast(curr->ref, curr);
+    if (trapOnNull(curr, curr->ref)) {
+      return;
     }
 
-    if (new_->isWithDefault()) {
-      // Ignore a new_default for now. If the fields are defaultable then we
-      // could add them, in principle, but that might increase code size.
-      return false;
-    }
-
-    auto index = set->index;
-    auto& operands = new_->operands;
-
-    // Check for effects that prevent us moving the struct.set's value (X' in
-    // the function comment) into its new position in the struct.new. First, it
-    // must be ok to move it past the local.set (otherwise, it might read from
-    // memory using that local, and depend on the struct.new having already
-    // occurred; or, if it writes to that local, then it would cross another
-    // write).
-    auto setValueEffects = effects(set->value);
-    if (setValueEffects.localsRead.count(refLocalIndex) ||
-        setValueEffects.localsWritten.count(refLocalIndex)) {
-      return false;
-    }
-
-    // We must move the set's value past indexes greater than it (Y and Z in
-    // the example in the comment on this function).
-    // TODO When this function is called repeatedly in a sequence this can
-    //      become quadratic - perhaps we should memoize (though, struct sizes
-    //      tend to not be ridiculously large).
-    for (Index i = index + 1; i < operands.size(); i++) {
-      auto operandEffects = effects(operands[i]);
-      if (operandEffects.invalidates(setValueEffects)) {
-        // TODO: we could use locals to reorder everything
-        return false;
-      }
+    if (!curr->ref->type.isStruct()) {
+      return;
     }
 
     Builder builder(*getModule());
 
-    // See if we need to keep the old value.
-    if (effects(operands[index]).hasUnremovableSideEffects()) {
-      operands[index] =
-        builder.makeSequence(builder.makeDrop(operands[index]), set->value);
-    } else {
-      operands[index] = set->value;
+    // Even when the RMW access is to shared memory, we can optimize out the
+    // modify and write parts if we know that the modified value is the same as
+    // the original value. This is valid because reads from writes that don't
+    // change the in-memory value can be considered to be reads from the
+    // previous write to the same location instead. That means there is no read
+    // that necessarily synchronizes with the write.
+    auto* value =
+      Properties::getFallthrough(curr->value, getPassOptions(), *getModule());
+    if (Properties::isSingleConstantExpression(value)) {
+      auto val = Properties::getLiteral(value);
+      bool canOptimize = false;
+      switch (curr->op) {
+        case RMWAdd:
+        case RMWSub:
+        case RMWOr:
+        case RMWXor:
+          canOptimize = val.getInteger() == 0;
+          break;
+        case RMWAnd:
+          canOptimize = val == Literal::makeNegOne(val.type);
+          break;
+        case RMWXchg:
+          canOptimize = false;
+          break;
+      }
+      if (canOptimize) {
+        replaceCurrent(builder.makeStructGet(
+          curr->index,
+          getResultOfFirst(curr->ref, builder.makeDrop(curr->value)),
+          curr->order,
+          curr->type));
+        return;
+      }
     }
 
-    return true;
+    if (curr->ref->type.getHeapType().isShared()) {
+      return;
+    }
+
+    // Lower the RMW to its more basic operations. Breaking the atomic
+    // operation into several non-atomic operations is safe because no other
+    // thread can observe an intermediate state in the unshared memory. This
+    // initially increases code size, but the more basic operations may be
+    // more optimizable than the original RMW.
+    // TODO: Experiment to determine whether this is worthwhile on real code.
+    // Maybe we should do this optimization only when optimizing for speed over
+    // size.
+    auto ref = builder.addVar(getFunction(), curr->ref->type);
+    auto val = builder.addVar(getFunction(), curr->type);
+    auto result = builder.addVar(getFunction(), curr->type);
+    auto* block = builder.makeBlock(
+      {builder.makeLocalSet(ref, curr->ref),
+       builder.makeLocalSet(val, curr->value),
+       builder.makeLocalSet(
+         result,
+         builder.makeStructGet(curr->index,
+                               builder.makeLocalGet(ref, curr->ref->type),
+                               MemoryOrder::Unordered,
+                               curr->type))});
+    Expression* newVal = nullptr;
+    if (curr->op == RMWXchg) {
+      newVal = builder.makeLocalGet(val, curr->type);
+    } else {
+      Abstract::Op binop = Abstract::Add;
+      switch (curr->op) {
+        case RMWAdd:
+          binop = Abstract::Add;
+          break;
+        case RMWSub:
+          binop = Abstract::Sub;
+          break;
+        case RMWAnd:
+          binop = Abstract::And;
+          break;
+        case RMWOr:
+          binop = Abstract::Or;
+          break;
+        case RMWXor:
+          binop = Abstract::Xor;
+          break;
+        case RMWXchg:
+          WASM_UNREACHABLE("unexpected op");
+      }
+      newVal = builder.makeBinary(Abstract::getBinary(curr->type, binop),
+                                  builder.makeLocalGet(result, curr->type),
+                                  builder.makeLocalGet(val, curr->type));
+    }
+    block->list.push_back(
+      builder.makeStructSet(curr->index,
+                            builder.makeLocalGet(ref, curr->ref->type),
+                            newVal,
+                            MemoryOrder::Unordered));
+
+    // We must maintain this operation's effect on the global order of seqcst
+    // operations.
+    if (curr->order == MemoryOrder::SeqCst) {
+      block->list.push_back(builder.makeAtomicFence());
+    }
+
+    block->list.push_back(builder.makeLocalGet(result, curr->type));
+    block->type = curr->type;
+    replaceCurrent(block);
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    skipNonNullCast(curr->ref, curr);
+    if (trapOnNull(curr, curr->ref)) {
+      return;
+    }
+
+    if (!curr->ref->type.isStruct()) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    // Just like other RMW operations, cmpxchg can be optimized to just a read
+    // if it is known not to change the in-memory value. This is the case when
+    // `expected` and `replacement` are known to be the same.
+    if (areConsecutiveInputsEqual(curr->expected, curr->replacement)) {
+      auto* ref = getResultOfFirst(
+        curr->ref,
+        builder.makeSequence(builder.makeDrop(curr->expected),
+                             builder.makeDrop(curr->replacement)));
+      replaceCurrent(
+        builder.makeStructGet(curr->index, ref, curr->order, curr->type));
+      return;
+    }
+
+    if (curr->ref->type.getHeapType().isShared()) {
+      return;
+    }
+
+    // Just like other RMW operations, lower to basic operations when operating
+    // on unshared memory.
+    auto ref = builder.addVar(getFunction(), curr->ref->type);
+    auto expected = builder.addVar(getFunction(), curr->type);
+    auto replacement = builder.addVar(getFunction(), curr->type);
+    auto result = builder.addVar(getFunction(), curr->type);
+    auto* block =
+      builder.makeBlock({builder.makeLocalSet(ref, curr->ref),
+                         builder.makeLocalSet(expected, curr->expected),
+                         builder.makeLocalSet(replacement, curr->replacement)});
+    auto* lhs = builder.makeLocalTee(
+      result,
+      builder.makeStructGet(curr->index,
+                            builder.makeLocalGet(ref, curr->ref->type),
+                            MemoryOrder::Unordered,
+                            curr->type),
+      curr->type);
+    auto* rhs = builder.makeLocalGet(expected, curr->type);
+    Expression* pred = nullptr;
+    if (curr->type.isRef()) {
+      pred = builder.makeRefEq(lhs, rhs);
+    } else {
+      pred = builder.makeBinary(
+        Abstract::getBinary(curr->type, Abstract::Eq), lhs, rhs);
+    }
+    block->list.push_back(builder.makeIf(
+      pred,
+      builder.makeStructSet(curr->index,
+                            builder.makeLocalGet(ref, curr->ref->type),
+                            builder.makeLocalGet(replacement, curr->type),
+                            MemoryOrder::Unordered)));
+
+    // We must maintain this operation's effect on the global order of seqcst
+    // operations.
+    if (curr->order == MemoryOrder::SeqCst) {
+      block->list.push_back(builder.makeAtomicFence());
+    }
+
+    block->list.push_back(builder.makeLocalGet(result, curr->type));
+    block->type = curr->type;
+    replaceCurrent(block);
+  }
+
+  void visitArrayNew(ArrayNew* curr) {
+    // If a value is provided, we can optimize in some cases.
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    // ArrayNew of size 1 is less efficient than ArrayNewFixed with one value
+    // (the latter avoids a Const, which ends up saving one byte).
+    // TODO: also look at the case with a fallthrough or effects on the size
+    if (auto* c = curr->size->dynCast<Const>()) {
+      if (c->value.geti32() == 1) {
+        // Optimize to ArrayNewFixed. Note that if the value is the default
+        // then we may end up optimizing further in visitArrayNewFixed.
+        replaceCurrent(
+          builder.makeArrayNewFixed(curr->type.getHeapType(), {curr->init}));
+        return;
+      }
+    }
+
+    // If the type is defaultable then perhaps the value here is the default.
+    auto type = curr->type.getHeapType().getArray().element.type;
+    if (!type.isDefaultable()) {
+      return;
+    }
+
+    // The value must be the default/zero.
+    auto& passOptions = getPassOptions();
+    auto zero = Literal::makeZero(type);
+    auto* value =
+      Properties::getFallthrough(curr->init, passOptions, *getModule());
+    if (!Properties::isSingleConstantExpression(value) ||
+        Properties::getLiteral(value) != zero) {
+      return;
+    }
+
+    // Success! Drop the init and return an array.new_with_default.
+    auto* init = curr->init;
+    curr->init = nullptr;
+    assert(curr->isWithDefault());
+    replaceCurrent(builder.makeSequence(builder.makeDrop(init), curr));
+  }
+
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    auto size = curr->values.size();
+    if (size == 0) {
+      // TODO: Consider what to do in the trivial case of an empty array: we can
+      //       can use ArrayNew or ArrayNewFixed there. Measure which is best.
+      return;
+    }
+
+    auto& passOptions = getPassOptions();
+
+    // If all the values are equal then we can optimize, either to
+    // array.new_default (if they are all equal to the default) or array.new (if
+    // they are all equal to some other value). First, see if they are all
+    // equal, which we do by comparing in pairs: [0,1], then [1,2], etc.
+    for (Index i = 0; i < size - 1; i++) {
+      if (!areConsecutiveInputsEqual(curr->values[i], curr->values[i + 1])) {
+        return;
+      }
+    }
+
+    // Great, they are all equal!
+
+    Builder builder(*getModule());
+
+    // See if they are equal to a constant, and if that constant is the default.
+    auto type = curr->type.getHeapType().getArray().element.type;
+    if (type.isDefaultable()) {
+      auto* value =
+        Properties::getFallthrough(curr->values[0], passOptions, *getModule());
+
+      if (Properties::isSingleConstantExpression(value) &&
+          Properties::getLiteral(value) == Literal::makeZero(type)) {
+        // They are all equal to the default. Drop the children and return an
+        // array.new_with_default.
+        auto* withDefault = builder.makeArrayNew(
+          curr->type.getHeapType(), builder.makeConst(int32_t(size)));
+        replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+        return;
+      }
+    }
+
+    // They are all equal to each other, but not to the default value. If there
+    // are 2 or more elements here then we can save by using array.new. For
+    // example, with 2 elements we are doing this:
+    //
+    //  (array.new_fixed
+    //    (A)
+    //    (A)
+    //  )
+    // =>
+    //  (array.new
+    //    (A)
+    //    (i32.const 2) ;; get two copies of (A)
+    //  )
+    //
+    // However, with 1, ArrayNewFixed is actually more compact, and we optimize
+    // ArrayNew to it, above.
+    if (size == 1) {
+      return;
+    }
+
+    // Move children to locals, if we need to keep them around. We are removing
+    // them all, except from the first, when we remove the array.new_fixed's
+    // list of children and replace it with a single child + a constant for the
+    // number of children.
+    ChildLocalizer localizer(
+      curr, getFunction(), *getModule(), getPassOptions());
+    auto* block = localizer.getChildrenReplacement();
+    auto* arrayNew = builder.makeArrayNew(curr->type.getHeapType(),
+                                          builder.makeConst(int32_t(size)),
+                                          curr->values[0]);
+    block->list.push_back(arrayNew);
+    block->finalize();
+    replaceCurrent(block);
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -2234,9 +2465,38 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
-      // We can't optimize these. Even removing a non-null cast is not valid as
-      // they allow nulls to filter through, unlike other RefAs*.
+    if (curr->op == ExternConvertAny || curr->op == AnyConvertExtern) {
+      // These pass nulls through, and we can reorder them with null traps:
+      //
+      //  (any.convert_extern/extern.convert_any (ref.as_non_null.. ))
+      // =>
+      //  (ref.as_non_null (any.convert_extern/extern.convert_any ..))
+      //
+      // By moving the RefAsNonNull outside, it may reach a position where it
+      // can be optimized (e.g. if the parent traps anyhow). And,
+      // ExternConvertAny/AnyConvertExtern cannot be folded with anything, so
+      // there is no harm to moving them inside.
+      if (auto* refAsChild = curr->value->dynCast<RefAs>()) {
+        if (refAsChild->op == RefAsNonNull) {
+          // Reorder and fix up the types.
+          curr->value = refAsChild->value;
+          curr->finalize();
+          refAsChild->value = curr;
+          refAsChild->finalize();
+          replaceCurrent(refAsChild);
+          return;
+        }
+
+        // We can optimize away externalizations of internalizations and vice
+        // versa.
+        if ((curr->op == ExternConvertAny &&
+             refAsChild->op == AnyConvertExtern) ||
+            (curr->op == AnyConvertExtern &&
+             refAsChild->op == ExternConvertAny)) {
+          replaceCurrent(refAsChild->value);
+          return;
+        }
+      }
       return;
     }
 
@@ -2294,14 +2554,79 @@ private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
 
+  // Checks if the first is a local.tee and the second a local.get of that same
+  // index. This is useful in the methods right below us, as it is a common
+  // pattern where two consecutive inputs are equal despite being syntactically
+  // different.
+  bool areMatchingTeeAndGet(Expression* left, Expression* right) {
+    if (auto* set = left->dynCast<LocalSet>()) {
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Check if two consecutive inputs to an instruction are equal. As they are
   // consecutive, no code can execeute in between them, which simplies the
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  //
-  // This also checks that the inputs are removable (but we do not assume the
-  // caller will always remove them).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // When we look for a tee/get pair, we can consider the fallthrough values
+    // for the first, as the fallthrough happens last (however, we must use
+    // NoTeeBrIf as we do not want to look through the tee). We cannot do this
+    // on the second, however, as there could be effects in the middle.
+    // TODO: Use effects here perhaps.
+    auto& passOptions = getPassOptions();
+    left =
+      Properties::getFallthrough(left,
+                                 passOptions,
+                                 *getModule(),
+                                 Properties::FallthroughBehavior::NoTeeBrIf);
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
+    }
+
+    // Ignore extraneous things and compare them syntactically. We can also
+    // look at the full fallthrough for both sides now.
+    left = Properties::getFallthrough(left, passOptions, *getModule());
+    auto* originalRight = right;
+    right = Properties::getFallthrough(right, passOptions, *getModule());
+    if (!ExpressionAnalyzer::equal(left, right)) {
+      return false;
+    }
+
+    // We must also not have non-fallthrough effects that invalidate us, such as
+    // this situation:
+    //
+    //  (local.get $x)
+    //  (block
+    //    (local.set $x ..)
+    //    (local.get $x)
+    //  )
+    //
+    // The fallthroughs are identical, but the set may cause us to read a
+    // different value.
+    if (originalRight != right) {
+      // TODO: We could be more precise here and ignore right itself in
+      //       originalRightEffects.
+      auto originalRightEffects = effects(originalRight);
+      auto rightEffects = effects(right);
+      if (originalRightEffects.invalidates(rightEffects)) {
+        return false;
+      }
+    }
+
+    // To be equal, they must also be known to return the same result
+    // deterministically.
+    return !Properties::isGenerative(left);
+  }
+
+  // Similar to areConsecutiveInputsEqual() but also checks if we can remove
+  // them (but we do not assume the caller will always remove them).
   bool areConsecutiveInputsEqualAndRemovable(Expression* left,
                                              Expression* right) {
     // First, check for side effects. If there are any, then we can't even
@@ -2316,18 +2641,7 @@ private:
       return false;
     }
 
-    // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, *getModule());
-    right = Properties::getFallthrough(right, passOptions, *getModule());
-    if (!ExpressionAnalyzer::equal(left, right)) {
-      return false;
-    }
-    // To be equal, they must also be known to return the same result
-    // deterministically.
-    if (Properties::isGenerative(left, getModule()->features)) {
-      return false;
-    }
-    return true;
+    return areConsecutiveInputsEqual(left, right);
   }
 
   // Check if two consecutive inputs to an instruction are equal and can also be
@@ -2341,23 +2655,15 @@ private:
   // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
                                             Expression* right) {
-    if (auto* set = left->dynCast<LocalSet>()) {
-      if (auto* get = right->dynCast<LocalGet>()) {
-        if (set->isTee() && get->index == set->index) {
-          return true;
-        }
-      }
+    // TODO: We could probably consider fallthrough values for left, at least
+    //       (since we fold into it).
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
     }
+
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
-  }
-
-  // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
-  // are equal (and not that they are foldable).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
-    // TODO: optimize cases that must be equal but are *not* foldable.
-    return areConsecutiveInputsEqualAndFoldable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
@@ -3413,8 +3719,12 @@ private:
       uint64_t offset64 = offset;
       auto mem = getModule()->getMemory(memory);
       if (mem->is64()) {
-        last->value = Literal(int64_t(value64 + offset64));
-        offset = 0;
+        // Check for a 64-bit overflow.
+        uint64_t sum;
+        if (!std::ckd_add(&sum, value64, offset64)) {
+          last->value = Literal(int64_t(sum));
+          offset = 0;
+        }
       } else {
         // don't do this if it would wrap the pointer
         if (value64 <= uint64_t(std::numeric_limits<int32_t>::max()) &&
@@ -3518,16 +3828,22 @@ private:
     return inner;
   }
 
-  // check if an expression is already sign-extended
+  // Check if an expression is already sign-extended to an exact number of bits.
   bool isSignExted(Expression* curr, Index bits) {
+    return getSignExtBits(curr) == bits;
+  }
+
+  // Returns the number of bits an expression is sign-extended (or 0 if it is
+  // not).
+  Index getSignExtBits(Expression* curr) {
     if (Properties::getSignExtValue(curr)) {
-      return Properties::getSignExtBits(curr) == bits;
+      return Properties::getSignExtBits(curr);
     }
     if (auto* get = curr->dynCast<LocalGet>()) {
-      // check what we know about the local
-      return localInfo[get->index].signExtedBits == bits;
+      // Check what we know about the local.
+      return localInfo[get->index].signExtBits;
     }
-    return false;
+    return 0;
   }
 
   // optimize trivial math operations, given that the right side of a binary
@@ -5133,7 +5449,7 @@ private:
         curr->ifTrue = updateArm(curr->ifTrue);
         curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
-        curr->finalize(newType);
+        curr->finalize();
         return replaceCurrent(un);
       }
     }

@@ -29,9 +29,9 @@ struct SetGlobals : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    Name input = getPassRunner()->options.getArgument(
-      "set-globals",
-      "SetGlobals usage:  wasm-opt --pass-arg=set-globals@x=y,z=w");
+    Name input =
+      getArgument("set-globals",
+                  "SetGlobals usage:  wasm-opt --pass-arg=set-globals@x=y,z=w");
 
     // The input is a set of X=Y pairs separated by commas.
     String::Split pairs(input.toString(), ",");

@@ -8,13 +8,12 @@
 
   ;; CHECK:      (type $2 (func (param i32)))
 
-  ;; CHECK:      (tag $e-i32 (param i32))
+  ;; CHECK:      (tag $e-i32 (type $2) (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK:      (tag $e-empty)
+  ;; CHECK:      (tag $e-empty (type $0))
   (tag $e-empty)
 
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
@@ -23,7 +22,6 @@
   ;; CHECK-NEXT:  (block $outer
   ;; CHECK-NEXT:   (block $catch_all
   ;; CHECK-NEXT:    (try_table (catch_all $catch_all)
-  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br $outer)
   ;; CHECK-NEXT:   )

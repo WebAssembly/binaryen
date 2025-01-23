@@ -126,8 +126,14 @@ void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
 void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
+void ReFinalize::visitTableInit(TableInit* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
-void ReFinalize::visitTryTable(TryTable* curr) { curr->finalize(); }
+void ReFinalize::visitTryTable(TryTable* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->catchDests.size(); i++) {
+    updateBreakValueType(curr->catchDests[i], curr->sentTypes[i]);
+  }
+}
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitThrowRef(ThrowRef* curr) { curr->finalize(); }
@@ -152,6 +158,8 @@ void ReFinalize::visitBrOn(BrOn* curr) {
 void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
+void ReFinalize::visitStructRMW(StructRMW* curr) { curr->finalize(); }
+void ReFinalize::visitStructCmpxchg(StructCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }
@@ -170,18 +178,8 @@ void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
 void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
 void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
 void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
-void ReFinalize::visitStringAs(StringAs* curr) { curr->finalize(); }
-void ReFinalize::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  curr->finalize();
-}
 void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
-void ReFinalize::visitStringIterNext(StringIterNext* curr) { curr->finalize(); }
-void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
-void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
-  curr->finalize();
-}
-
 void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }
 void ReFinalize::visitContBind(ContBind* curr) { curr->finalize(); }
 void ReFinalize::visitResume(Resume* curr) { curr->finalize(); }

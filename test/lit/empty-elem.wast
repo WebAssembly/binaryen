@@ -6,7 +6,7 @@
 ;; type, resulting in invalid modules.
 
 (module
- ;; CHECK:      (type $struct (sub (struct )))
+ ;; CHECK:      (type $struct (sub (struct)))
  (type $struct (sub (struct)))
 
  ;; CHECK:      (type $array (sub (array (mut (ref null $struct)))))

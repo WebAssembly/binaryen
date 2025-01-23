@@ -70,6 +70,22 @@
         )
       )
     )
+    (drop
+      (block $catch (result f32)
+        (try_table (catch $foo $catch)
+          (nop)
+        )
+        (f32.const 0.0)
+      )
+    )
+    (drop
+      (block $catch (result f64)
+        (try_table (catch $other $catch)
+          (nop)
+        )
+        (f64.const 0.0)
+      )
+    )
 
     ;; Memories
     (drop

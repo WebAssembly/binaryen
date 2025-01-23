@@ -22,14 +22,11 @@
 #define wasm_wasm_io_h
 
 #include "parsing.h"
+#include "pass.h"
 #include "support/file.h"
 #include "wasm.h"
 
 namespace wasm {
-
-// TODO: Remove this after switching to the new WAT parser by default and
-// removing the old one.
-extern bool useNewWATParser;
 
 class ModuleIOBase {
 protected:
@@ -85,6 +82,8 @@ private:
 };
 
 class ModuleWriter : public ModuleIOBase {
+  const PassOptions& options;
+
   bool binary = true;
 
   // TODO: Remove `emitModuleName`. See the comment in wasm-binary.h
@@ -97,7 +96,9 @@ class ModuleWriter : public ModuleIOBase {
 public:
   // Writing defaults to not storing the names section. Storing it is a user-
   // observable fact that must be opted into.
-  ModuleWriter() { setDebugInfo(false); }
+  ModuleWriter(const PassOptions& options) : options(options) {
+    setDebugInfo(false);
+  }
 
   void setBinary(bool binary_) { binary = binary_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }

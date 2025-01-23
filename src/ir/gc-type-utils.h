@@ -149,10 +149,15 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 //
 // TODO: use in more places
 inline std::optional<Field> getField(HeapType type, Index index = 0) {
-  if (type.isStruct()) {
-    return type.getStruct().fields[index];
-  } else if (type.isArray()) {
-    return type.getArray().element;
+  switch (type.getKind()) {
+    case HeapTypeKind::Struct:
+      return type.getStruct().fields[index];
+    case HeapTypeKind::Array:
+      return type.getArray().element;
+    case HeapTypeKind::Func:
+    case HeapTypeKind::Cont:
+    case HeapTypeKind::Basic:
+      break;
   }
   return {};
 }

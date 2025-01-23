@@ -16,7 +16,7 @@
 
 (module
   (func $foo
-    (nop)
+    (call $bar)
   )
   (func $bar
     (nop)

@@ -54,7 +54,6 @@
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
  ;; CHECK-NEXT:  (local $z (tuple anyref i32))
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $unconstrained
   ;; This non-ref local should be unmodified
@@ -119,7 +118,7 @@
 
  ;; CHECK:      (func $loop (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var eqref)
- ;; CHECK-NEXT:  (loop $loop-in (result eqref)
+ ;; CHECK-NEXT:  (loop (result eqref)
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -270,7 +269,7 @@
   (local $var i31ref)
   ;; Require that (ref i31) <: typeof($var).
   (local.set $var
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -405,7 +404,7 @@
   (drop
    (local.tee $dest
     (local.tee $var
-     (i31.new
+     (ref.i31
       (i32.const 0)
      )
     )
@@ -439,7 +438,7 @@
   (local $nonnullable (ref i31))
   ;; Initialize the non-nullable local for validation purposes.
   (local.set $nonnullable
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -770,7 +769,7 @@
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK-NEXT:  (any.convert_extern
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -780,7 +779,7 @@
    (local.get $x)
   )
   ;; Require that typeof($var) <: externref.
-  (extern.internalize
+  (any.convert_extern
    (local.get $var)
   )
  )
@@ -790,7 +789,7 @@
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK-NEXT:  (any.convert_extern
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -800,7 +799,7 @@
    (local.get $x)
   )
   ;; Require that typeof($var) <: (ref extern).
-  (extern.internalize
+  (any.convert_extern
    (local.get $var)
   )
  )
@@ -812,19 +811,19 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK-NEXT:  (extern.convert_any
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $extern-convert-any-nullable (result externref)
   (local $var (ref i31))
   (local.set $var
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
   ;; Require that typeof($var) <: anyref.
-  (extern.externalize
+  (extern.convert_any
    (local.get $var)
   )
  )
@@ -836,19 +835,19 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK-NEXT:  (extern.convert_any
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $extern-convert-any-non-nullable (result (ref extern))
   (local $var (ref i31))
   (local.set $var
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
   ;; Require that typeof($var) <: anyref.
-  (extern.externalize
+  (extern.convert_any
    (local.get $var)
   )
  )
@@ -862,12 +861,12 @@
 )
 
 (module
+ ;; CHECK:      (type $0 (func (result eqref)))
+
  ;; CHECK:      (type $top (sub (func (param i31ref) (result anyref))))
  (type $top (sub (func (param i31ref) (result anyref))))
  ;; CHECK:      (type $mid (sub $top (func (param eqref) (result anyref))))
  (type $mid (sub $top (func (param eqref) (result anyref))))
- ;; CHECK:      (type $2 (func (result eqref)))
-
  ;; CHECK:      (type $bot (sub $mid (func (param eqref) (result eqref))))
  (type $bot (sub $mid (func (param eqref) (result eqref))))
 
@@ -893,7 +892,7 @@
   )
  )
 
- ;; CHECK:      (func $call-ref-results-limited (type $2) (result eqref)
+ ;; CHECK:      (func $call-ref-results-limited (type $0) (result eqref)
  ;; CHECK-NEXT:  (local $f (ref null $bot))
  ;; CHECK-NEXT:  (local $arg eqref)
  ;; CHECK-NEXT:  (call_ref $bot
@@ -912,7 +911,7 @@
   )
  )
 
- ;; CHECK:      (func $call-ref-impossible (type $2) (result eqref)
+ ;; CHECK:      (func $call-ref-impossible (type $0) (result eqref)
  ;; CHECK-NEXT:  (local $f nullfuncref)
  ;; CHECK-NEXT:  (local $arg anyref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
@@ -963,12 +962,12 @@
 
 (module
 
- ;; CHECK:      (type $0 (func (result anyref)))
-
  ;; CHECK:      (type $top (sub (struct (field (mut eqref)) (field eqref))))
  (type $top (sub      (struct (field (mut eqref)) (field eqref))))
  ;; CHECK:      (type $mid (sub $top (struct (field (mut eqref)) (field eqref) (field (mut eqref)))))
  (type $mid (sub $top (struct (field (mut eqref)) (field eqref)  (field (mut eqref)))))
+ ;; CHECK:      (type $2 (func (result anyref)))
+
  ;; CHECK:      (type $3 (func))
 
  ;; CHECK:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
@@ -979,7 +978,7 @@
 
  ;; CHECK:      (type $6 (func (result i31ref)))
 
- ;; CHECK:      (func $struct-new (type $0) (result anyref)
+ ;; CHECK:      (func $struct-new (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $var1 eqref)
  ;; CHECK-NEXT:  (local $var2 anyref)
  ;; CHECK-NEXT:  (struct.new $struct
@@ -997,7 +996,7 @@
   )
  )
 
- ;; CHECK:      (func $struct-get (type $0) (result anyref)
+ ;; CHECK:      (func $struct-get (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $var (ref null $top))
  ;; CHECK-NEXT:  (struct.get $top 1
  ;; CHECK-NEXT:   (local.get $var)
@@ -1027,7 +1026,7 @@
   )
  )
 
- ;; CHECK:      (func $struct-get-index (type $0) (result anyref)
+ ;; CHECK:      (func $struct-get-index (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $var (ref null $mid))
  ;; CHECK-NEXT:  (struct.get $mid 2
  ;; CHECK-NEXT:   (local.get $var)
@@ -1042,7 +1041,7 @@
   )
  )
 
- ;; CHECK:      (func $struct-get-impossible (type $0) (result anyref)
+ ;; CHECK:      (func $struct-get-impossible (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $var nullref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:   (drop

@@ -33,7 +33,8 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a (param $x i32))
   ;; CHECK:      (func $b (type $0)
@@ -114,7 +115,8 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a4 (param $x i32)
     ;; This function is called with one constant and one unreachable. We can
@@ -219,7 +221,6 @@
     (call $a7 (i32.const 1) (call $get-f64))
   )
   ;; CHECK:      (func $a8 (type $1) (param $x i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $a8 (param $x i32)) ;; exported, do not optimize
   ;; CHECK:      (func $b8 (type $0)
@@ -231,7 +232,6 @@
     (call $a8 (i32.const 1))
   )
   ;; CHECK:      (func $a9 (type $1) (param $x i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $a9 (param $x i32)) ;; tabled, do not optimize
   ;; CHECK:      (func $b9 (type $0)
@@ -938,5 +938,36 @@
    (local.get $2)
   )
   (unreachable)
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (param i32)))
+
+ ;; CHECK:      (func $target (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $target (param $0 i32)
+  ;; The parameter here is unused: there is a get, but it is unreachable. We can
+  ;; remove the parameter here, and in the caller below.
+  (unreachable)
+  (drop
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK:      (func $caller (type $1) (param $x i32)
+ ;; CHECK-NEXT:  (call $target)
+ ;; CHECK-NEXT: )
+ (func $caller (param $x i32)
+  (call $target
+   (local.get $x)
+  )
  )
 )

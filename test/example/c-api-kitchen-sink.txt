@@ -13,9 +13,6 @@ BinaryenTypeI31ref: (ptr)
 BinaryenTypeStructref: (ptr)
 BinaryenTypeArrayref: (ptr)
 BinaryenTypeStringref: (ptr)
-BinaryenTypeStringviewWTF8: (ptr)
-BinaryenTypeStringviewWTF16: (ptr)
-BinaryenTypeStringviewIter: (ptr)
 BinaryenTypeNullref: (ptr)
 BinaryenTypeNullExternref: (ptr)
 BinaryenTypeNullFuncref: (ptr)
@@ -23,20 +20,17 @@ BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
 BinaryenPackedTypeInt16: 2
-BinaryenHeapTypeExt: 0
-BinaryenHeapTypeFunc: 1
-BinaryenHeapTypeAny: 2
-BinaryenHeapTypeEq: 3
-BinaryenHeapTypeI31: 4
-BinaryenHeapTypeStruct: 5
-BinaryenHeapTypeArray: 6
-BinaryenHeapTypeString: 8
-BinaryenHeapTypeStringviewWTF8: 9
-BinaryenHeapTypeStringviewWTF16: 10
-BinaryenHeapTypeStringviewIter: 11
-BinaryenHeapTypeNone: 12
-BinaryenHeapTypeNoext: 13
-BinaryenHeapTypeNofunc: 14
+BinaryenHeapTypeExt: 8
+BinaryenHeapTypeFunc: 16
+BinaryenHeapTypeAny: 32
+BinaryenHeapTypeEq: 40
+BinaryenHeapTypeI31: 48
+BinaryenHeapTypeStruct: 56
+BinaryenHeapTypeArray: 64
+BinaryenHeapTypeString: 80
+BinaryenHeapTypeNone: 88
+BinaryenHeapTypeNoext: 96
+BinaryenHeapTypeNofunc: 104
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -53,7 +47,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureAll: 131071
+BinaryenFeatureAll: 2097151
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -97,7 +91,7 @@ BinaryenFeatureAll: 131071
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func $"kitchen()sinker")
  (elem $passive func $"kitchen()sinker")
- (tag $a-tag (param i32))
+ (tag $a-tag (type $4) (param i32))
  (export "mem" (memory $0))
  (export "kitchen_sinker" (func $"kitchen()sinker"))
  (start $starter)
@@ -1890,28 +1884,28 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (f32x4.relaxed_fma
+       (f32x4.relaxed_madd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f32x4.relaxed_fms
+       (f32x4.relaxed_nmadd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.relaxed_fma
+       (f64x2.relaxed_madd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.relaxed_fms
+       (f64x2.relaxed_nmadd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -1970,15 +1964,13 @@ BinaryenFeatureAll: 131071
       )
       (block
       )
-      (if
-       (i32.const 1)
-       (then
-        (drop
+      (drop
+       (if (result i32)
+        (i32.const 1)
+        (then
          (i32.const 2)
         )
-       )
-       (else
-        (drop
+        (else
          (i32.const 3)
         )
        )
@@ -2143,12 +2135,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (extern.internalize
+       (any.convert_extern
         (ref.null noextern)
        )
       )
       (drop
-       (extern.externalize
+       (extern.convert_any
         (ref.null none)
        )
       )
@@ -2343,57 +2335,6 @@ BinaryenFeatureAll: 131071
        (i32.const 2)
       )
       (drop
-       (string.new_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_try
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_lossy_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf16
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array_try
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.new_lossy_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2421,67 +2362,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.measure_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
        (string.measure_wtf16
         (global.get $string-global)
        )
       )
       (drop
-       (string.is_usv_sequence
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (stringview_wtf16.length
-        (string.as_wtf16
-         (global.get $string-global)
-        )
-       )
-      )
-      (drop
-       (string.encode_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_lossy_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf16
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.encode_lossy_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2513,83 +2399,15 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.as_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.as_wtf16
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.as_iter
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (stringview_wtf8.advance
-        (string.as_wtf8
-         (global.get $string-global)
-        )
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (stringview_wtf16.get_codeunit
-        (string.as_wtf16
-         (global.get $string-global)
-        )
-        (i32.const 0)
-       )
-      )
-      (drop
-       (stringview_iter.next
-        (string.as_iter
-         (global.get $string-global)
-        )
-       )
-      )
-      (drop
-       (stringview_iter.advance
-        (string.as_iter
-         (global.get $string-global)
-        )
-        (i32.const 1)
-       )
-      )
-      (drop
-       (stringview_iter.rewind
-        (string.as_iter
-         (global.get $string-global)
-        )
-        (i32.const 1)
-       )
-      )
-      (drop
-       (stringview_wtf8.slice
-        (string.as_wtf8
-         (global.get $string-global)
-        )
-        (i32.const 0)
+        (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
        (stringview_wtf16.slice
-        (string.as_wtf16
-         (global.get $string-global)
-        )
+        (global.get $string-global)
         (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (stringview_iter.slice
-        (string.as_iter
-         (global.get $string-global)
-        )
         (i32.const 0)
        )
       )
@@ -3140,6 +2958,16 @@ module s-expr printed (in memory, caller-owned):
  )
 )
 
+module s-expr printed (StackIR):
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (func $adder (param $0 i32) (param $1 i32) (result i32)
+  local.get $0
+  local.get $1
+  i32.add
+ )
+)
+
 (module
  (type $0 (func (param i32)))
  (type $1 (func))
@@ -3207,9 +3035,9 @@ TypeBuilderErrorReasonForwardSupertypeReference: 2
 TypeBuilderErrorReasonForwardChildReference: 3
 module with recursive GC types:
 (module
+ (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
  (type $SomeArray (sub (array (mut (ref null $SomeArray)))))
  (type $SomeSignature (sub (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature)))))
- (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
  (type $3 (func))
  (type $SomeSubStruct (sub $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8))))
  (func $test (type $3)
@@ -3221,5 +3049,15 @@ module with recursive GC types:
  )
  (func $test2 (type $SomeSignature) (param $0 (ref null $SomeSignature)) (param $1 (ref null $SomeArray)) (result (ref null $SomeSignature))
   (unreachable)
+ )
+)
+module with a call_ref:
+(module
+ (type $0 (func))
+ (elem declare func $tiny)
+ (func $tiny (type $0)
+  (call_ref $0
+   (ref.func $tiny)
+  )
  )
 )

@@ -29,14 +29,13 @@ namespace wasm {
 
 namespace {
 
-// Weighting for the core make* methods. Some nodes are important enough that
-// we should do them quite often.
-
 } // anonymous namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::vector<char>&& input)
-  : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
+                                             std::vector<char>&& input,
+                                             bool closedWorld)
+  : wasm(wasm), closedWorld(closedWorld), builder(wasm),
+    random(std::move(input), wasm.features) {
 
   // Half the time add no unreachable code so that we'll execute the most code
   // as possible with no early exits.
@@ -53,21 +52,41 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::string& filename)
-  : TranslateToFuzzReader(
-      wasm, read_file<std::vector<char>>(filename, Flags::Binary)) {}
+                                             std::string& filename,
+                                             bool closedWorld)
+  : TranslateToFuzzReader(wasm,
+                          read_file<std::vector<char>>(filename, Flags::Binary),
+                          closedWorld) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
+  // Pick random passes to further shape the wasm. This is similar to how we
+  // pick random passes in fuzz_opt.py, but the goal there is to find problems
+  // in the passes, while the goal here is more to shape the wasm, so that
+  // translate-to-fuzz emits interesting outputs (the latter is important for
+  // things like ClusterFuzz, where we are using Binaryen to fuzz other things
+  // than itself). As a result, the list of passes here is different from
+  // fuzz_opt.py.
+
+  // Enclose the world, some of the time. We do this before picking any other
+  // passes so that we make the initial fuzz contents more optimizable by
+  // closed-world passes later. Note that we do this regardless of whether we
+  // are in closed-world mode or not, as it is good to get this variety
+  // regardless.
+  if (oneIn(2)) {
+    options.passes.push_back("enclose-world");
+  }
+
+  // Main selection of passes.
   while (options.passes.size() < 20 && !random.finished() && !oneIn(3)) {
-    switch (upTo(32)) {
+    switch (upTo(42)) {
       case 0:
       case 1:
       case 2:
       case 3:
       case 4: {
-        options.passes.push_back("O");
         options.passOptions.optimizeLevel = upTo(4);
-        options.passOptions.shrinkLevel = upTo(4);
+        options.passOptions.shrinkLevel = upTo(3);
+        options.addDefaultOptPasses();
         break;
       }
       case 5:
@@ -86,7 +105,14 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
         options.passes.push_back("duplicate-function-elimination");
         break;
       case 10:
-        options.passes.push_back("flatten");
+        // Some features do not support flatten yet.
+        if (!wasm.features.hasReferenceTypes() &&
+            !wasm.features.hasExceptionHandling() && !wasm.features.hasGC()) {
+          options.passes.push_back("flatten");
+          if (oneIn(2)) {
+            options.passes.push_back("rereloop");
+          }
+        }
         break;
       case 11:
         options.passes.push_back("inlining");
@@ -130,11 +156,9 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 24:
         options.passes.push_back("reorder-locals");
         break;
-      case 25: {
-        options.passes.push_back("flatten");
-        options.passes.push_back("rereloop");
+      case 25:
+        options.passes.push_back("directize");
         break;
-      }
       case 26:
         options.passes.push_back("simplify-locals");
         break;
@@ -153,18 +177,125 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 31:
         options.passes.push_back("vacuum");
         break;
+      case 32:
+        options.passes.push_back("merge-locals");
+        break;
+      case 33:
+        options.passes.push_back("licm");
+        break;
+      case 34:
+        options.passes.push_back("tuple-optimization");
+        break;
+      case 35:
+        options.passes.push_back("rse");
+        break;
+      case 36:
+        options.passes.push_back("monomorphize");
+        break;
+      case 37:
+        options.passes.push_back("monomorphize-always");
+        break;
+      case 38:
+      case 39:
+      case 40:
+      case 41:
+        // GC specific passes.
+        if (wasm.features.hasGC()) {
+          // Most of these depend on closed world, so just set that. Set it both
+          // on the global pass options, and in the internal state of this
+          // TranslateToFuzzReader instance.
+          options.passOptions.closedWorld = true;
+          closedWorld = true;
+
+          switch (upTo(16)) {
+            case 0:
+              options.passes.push_back("abstract-type-refining");
+              break;
+            case 1:
+              options.passes.push_back("cfp");
+              break;
+            case 2:
+              options.passes.push_back("gsi");
+              break;
+            case 3:
+              options.passes.push_back("gto");
+              break;
+            case 4:
+              options.passes.push_back("heap2local");
+              break;
+            case 5:
+              options.passes.push_back("heap-store-optimization");
+              break;
+            case 6:
+              options.passes.push_back("minimize-rec-groups");
+              break;
+            case 7:
+              options.passes.push_back("remove-unused-types");
+              break;
+            case 8:
+              options.passes.push_back("signature-pruning");
+              break;
+            case 9:
+              options.passes.push_back("signature-refining");
+              break;
+            case 10:
+              options.passes.push_back("type-finalizing");
+              break;
+            case 11:
+              options.passes.push_back("type-refining");
+              break;
+            case 12:
+              options.passes.push_back("type-merging");
+              break;
+            case 13:
+              options.passes.push_back("type-ssa");
+              break;
+            case 14:
+              options.passes.push_back("type-unfinalizing");
+              break;
+            case 15:
+              options.passes.push_back("unsubtyping");
+              break;
+            default:
+              WASM_UNREACHABLE("unexpected value");
+          }
+        }
+        break;
       default:
         WASM_UNREACHABLE("unexpected value");
     }
   }
+
   if (oneIn(2)) {
+    // We randomize these when we pick -O?, but sometimes do so even without, as
+    // they affect some passes.
     options.passOptions.optimizeLevel = upTo(4);
+    options.passOptions.shrinkLevel = upTo(3);
   }
+
+  if (!options.passOptions.closedWorld && oneIn(2)) {
+    options.passOptions.closedWorld = true;
+  }
+
+  // Prune things that error in JS if we call them (like SIMD), some of the
+  // time. This alters the wasm/JS boundary quite a lot, so testing both forms
+  // is useful.
   if (oneIn(2)) {
-    options.passOptions.shrinkLevel = upTo(4);
+    options.passes.push_back("legalize-and-prune-js-interface");
   }
-  std::cout << "opt level: " << options.passOptions.optimizeLevel << '\n';
-  std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
+
+  // Usually DCE at the very end, to ensure that our binaries validate in other
+  // VMs, due to how non-nullable local validation and unreachable code
+  // interact. See fuzz_opt.py and
+  //   https://github.com/WebAssembly/binaryen/pull/5665
+  //   https://github.com/WebAssembly/binaryen/issues/5599
+  if (wasm.features.hasGC() && !oneIn(10)) {
+    options.passes.push_back("dce");
+  }
+
+  // TODO: We could in theory run some function-level passes on particular
+  //       functions, but then we'd need to do this after generation, not
+  //       before (and random data no longer remains then).
 }
 
 void TranslateToFuzzReader::build() {
@@ -179,9 +310,15 @@ void TranslateToFuzzReader::build() {
   setupGlobals();
   if (wasm.features.hasExceptionHandling()) {
     setupTags();
+    addImportThrowingSupport();
   }
-  modifyInitialFunctions();
+  if (wasm.features.hasReferenceTypes()) {
+    addImportTableSupport();
+  }
   addImportLoggingSupport();
+  addImportCallingSupport();
+  addImportSleepSupport();
+  modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
     auto* func = addFunction();
@@ -195,11 +332,28 @@ void TranslateToFuzzReader::build() {
     addHashMemorySupport();
   }
   finalizeTable();
+  shuffleExports();
 }
 
 void TranslateToFuzzReader::setupMemory() {
-  // Add memory itself
-  MemoryUtils::ensureExists(&wasm);
+  // Add a memory, if one does not already exist.
+  if (wasm.memories.empty()) {
+    auto memory = Builder::makeMemory("0");
+    // Add at least one page of memory.
+    memory->initial = 1 + upTo(10);
+    // Make the max potentially higher, or unlimited.
+    if (oneIn(2)) {
+      memory->max = memory->initial + upTo(4);
+    } else {
+      memory->max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      memory->addressType = Type::i64;
+    }
+    wasm.addMemory(std::move(memory));
+  }
+
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
@@ -216,7 +370,8 @@ void TranslateToFuzzReader::setupMemory() {
         segment->data[j] = upTo(512);
       }
       if (!segment->isPassive) {
-        segment->offset = builder.makeConst(int32_t(memCovered));
+        segment->offset = builder.makeConst(
+          Literal::makeFromInt32(memCovered, memory->addressType));
         memCovered += segSize;
         segment->memory = memory->name;
       }
@@ -226,14 +381,16 @@ void TranslateToFuzzReader::setupMemory() {
     // init some data
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
-    segment->offset = builder.makeConst(int32_t(0));
-    segment->setName(Name::fromInt(0), false);
-    wasm.dataSegments.push_back(std::move(segment));
+    segment->offset =
+      builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
+    segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
+                     false);
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
-      wasm.dataSegments[0]->data.push_back(value >= 256 ? 0 : (value & 0xff));
+      segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
     }
+    wasm.addDataSegment(std::move(segment));
   }
 }
 
@@ -287,28 +444,41 @@ void TranslateToFuzzReader::setupHeapTypes() {
     }
     // Basic types must be handled directly, since subTypes doesn't look at
     // those.
-    if (type.isStruct()) {
-      interestingHeapSubTypes[HeapType::struct_].push_back(type);
-      interestingHeapSubTypes[HeapType::eq].push_back(type);
-      interestingHeapSubTypes[HeapType::any].push_back(type);
-
-      // Note the mutable fields.
-      auto& fields = type.getStruct().fields;
-      for (Index i = 0; i < fields.size(); i++) {
-        if (fields[i].mutable_) {
-          mutableStructFields.push_back(StructField{type, i});
+    auto share = type.getShared();
+    auto struct_ = HeapTypes::struct_.getBasic(share);
+    auto array = HeapTypes::array.getBasic(share);
+    auto eq = HeapTypes::eq.getBasic(share);
+    auto any = HeapTypes::any.getBasic(share);
+    auto func = HeapTypes::func.getBasic(share);
+    switch (type.getKind()) {
+      case HeapTypeKind::Func:
+        interestingHeapSubTypes[func].push_back(type);
+        break;
+      case HeapTypeKind::Struct: {
+        interestingHeapSubTypes[struct_].push_back(type);
+        interestingHeapSubTypes[eq].push_back(type);
+        interestingHeapSubTypes[any].push_back(type);
+        // Note the mutable fields.
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          if (fields[i].mutable_) {
+            mutableStructFields.push_back(StructField{type, i});
+          }
         }
+        break;
       }
-    } else if (type.isArray()) {
-      interestingHeapSubTypes[HeapType::array].push_back(type);
-      interestingHeapSubTypes[HeapType::eq].push_back(type);
-      interestingHeapSubTypes[HeapType::any].push_back(type);
-
-      if (type.getArray().element.mutable_) {
-        mutableArrays.push_back(type);
-      }
-    } else if (type.isSignature()) {
-      interestingHeapSubTypes[HeapType::func].push_back(type);
+      case HeapTypeKind::Array:
+        interestingHeapSubTypes[array].push_back(type);
+        interestingHeapSubTypes[eq].push_back(type);
+        interestingHeapSubTypes[any].push_back(type);
+        if (type.getArray().element.mutable_) {
+          mutableArrays.push_back(type);
+        }
+        break;
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
 
@@ -337,8 +507,26 @@ void TranslateToFuzzReader::setupTables() {
   if (iter != wasm.tables.end()) {
     table = iter->get();
   } else {
-    auto tablePtr = builder.makeTable(
-      Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
+    // Start from a potentially empty table.
+    Address initial = upTo(10);
+    // Make the max potentially higher, or unlimited.
+    Address max;
+    if (oneIn(2)) {
+      max = initial + upTo(4);
+    } else {
+      max = Memory::kUnlimitedSize;
+    }
+    // Fuzz wasm64 when possible, sometimes.
+    auto addressType = Type::i32;
+    if (wasm.features.hasMemory64() && oneIn(2)) {
+      addressType = Type::i64;
+    }
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"),
+                        funcref,
+                        initial,
+                        max,
+                        addressType);
     tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
@@ -349,10 +537,11 @@ void TranslateToFuzzReader::setupTables() {
                 [&](auto& segment) {
                   return segment->table.is() && segment->type == funcref;
                 });
+  auto addressType = wasm.getTable(funcrefTableName)->addressType;
   if (!hasFuncrefElemSegment) {
     // TODO: use a random table
     auto segment = std::make_unique<ElementSegment>(
-      table->name, builder.makeConst(int32_t(0)));
+      table->name, builder.makeConst(Literal::makeFromInt32(0, addressType)));
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
@@ -382,26 +571,46 @@ void TranslateToFuzzReader::setupGlobals() {
     }
   }
 
+  auto useGlobalLater = [&](Global* global) {
+    auto type = global->type;
+    auto name = global->name;
+    globalsByType[type].push_back(name);
+    if (global->mutable_) {
+      mutableGlobalsByType[type].push_back(name);
+    } else {
+      immutableGlobalsByType[type].push_back(name);
+      if (global->imported()) {
+        importedImmutableGlobalsByType[type].push_back(name);
+      }
+    }
+  };
+
   // Randomly assign some globals from initial content to be ignored for the
   // fuzzer to use. Such globals will only be used from initial content. This is
   // important to preserve some real-world patterns, like the "once" pattern in
   // which a global is used in one function only. (If we randomly emitted gets
   // and sets of such globals, we'd with very high probability end up breaking
   // that pattern, and not fuzzing it at all.)
-  //
-  // Pick a percentage of initial globals to ignore later down when we decide
-  // which to allow uses from.
-  auto numInitialGlobals = wasm.globals.size();
-  unsigned percentIgnoredInitialGlobals = 0;
-  if (numInitialGlobals) {
-    // Only generate this random number if it will be used.
-    percentIgnoredInitialGlobals = upTo(100);
+  if (!wasm.globals.empty()) {
+    unsigned percentUsedInitialGlobals = upTo(100);
+    for (auto& global : wasm.globals) {
+      if (upTo(100) < percentUsedInitialGlobals) {
+        useGlobalLater(global.get());
+      }
+    }
   }
 
   // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    auto* init = makeConst(type);
+    // Prefer immutable ones as they can be used in global.gets in other
+    // globals, for more interesting patterns.
+    auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
+
+    // We can only make something trivial (like a constant) in a global
+    // initializer.
+    auto* init = makeTrivial(type);
+
     if (!FindAll<RefAs>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
       // means we had to stop in the middle of an overly-nested struct or array,
@@ -410,27 +619,16 @@ void TranslateToFuzzReader::setupGlobals() {
       // validate in a global. Switch to something safe instead.
       type = getMVPType();
       init = makeConst(type);
+    } else if (type.isTuple() && !init->is<TupleMake>()) {
+      // For now we disallow anything but tuple.make at the top level of tuple
+      // globals (see details in wasm-binary.cpp). In the future we may allow
+      // global.get or other things here.
+      init = makeConst(type);
+      assert(init->is<TupleMake>());
     }
-    auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
-    wasm.addGlobal(std::move(global));
-  }
-
-  // Set up data structures for picking globals later for get/set operations.
-  for (Index i = 0; i < wasm.globals.size(); i++) {
-    auto& global = wasm.globals[i];
-
-    // Apply the chance for initial globals to be ignored, see above.
-    if (i < numInitialGlobals && upTo(100) < percentIgnoredInitialGlobals) {
-      continue;
-    }
-
-    // This is a global we can use later, note it.
-    globalsByType[global->type].push_back(global->name);
-    if (global->mutable_) {
-      mutableGlobalsByType[global->type].push_back(global->name);
-    }
+    useGlobalLater(wasm.addGlobal(std::move(global)));
   }
 }
 
@@ -473,7 +671,7 @@ void TranslateToFuzzReader::finalizeMemory() {
           // TODO: It would be better to avoid segment overlap so that
           //       MemoryPacking can run.
           segment->offset =
-            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
@@ -517,7 +715,7 @@ void TranslateToFuzzReader::finalizeTable() {
             assert(!wasm.getGlobal(get->name)->imported());
             // TODO: the segments must not overlap...
             segment->offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+              builder.makeConst(Literal::makeFromInt32(0, table->addressType));
           }
         }
         Address maxOffset = segment->data.size();
@@ -549,6 +747,37 @@ void TranslateToFuzzReader::finalizeTable() {
   }
 }
 
+void TranslateToFuzzReader::shuffleExports() {
+  // Randomly ordering the exports is useful for a few reasons. First, initial
+  // content may have a natural order in which to execute things (an "init"
+  // export first, for example), and changing that order may lead to very
+  // different execution. Second, even in the fuzzer's own random content there
+  // is a "direction", since we generate as we go (e.g. no function calls a
+  // later function that does not exist yet / will be created later), and also
+  // we emit invokes for a function right after it (so we end up calling the
+  // same code several times in succession, but interleaving it with others may
+  // find more things). But we also keep a good chance for the natural order
+  // here, as it may help some initial content.
+  if (wasm.exports.empty() || oneIn(2)) {
+    return;
+  }
+
+  // Sort the exports in the simple Fisher-Yates manner.
+  // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+  for (Index i = 0; i < wasm.exports.size() - 1; i++) {
+    // Pick the index of the item to place at index |i|. The number of items to
+    // pick from begins at the full length, then decreases with i.
+    auto j = i + upTo(wasm.exports.size() - i);
+
+    // Swap the item over here.
+    if (j != i) {
+      std::swap(wasm.exports[i], wasm.exports[j]);
+    }
+  }
+
+  wasm.updateMaps();
+}
+
 void TranslateToFuzzReader::prepareHangLimitSupport() {
   HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm, "hangLimit");
 }
@@ -563,14 +792,172 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
   for (auto type : loggableTypes) {
-    auto* func = new Function;
-    Name name = std::string("log-") + type.toString();
-    func->name = name;
+    auto func = std::make_unique<Function>();
+    Name baseName = std::string("log-") + type.toString();
+    func->name = Names::getValidFunctionName(wasm, baseName);
+    logImportNames[type] = func->name;
     func->module = "fuzzing-support";
-    func->base = name;
+    func->base = baseName;
     func->type = Signature(type, Type::none);
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
   }
+}
+
+void TranslateToFuzzReader::addImportCallingSupport() {
+  if (wasm.features.hasReferenceTypes() && closedWorld) {
+    // In closed world mode we must *remove* the call-ref* imports, if they
+    // exist in the initial content. These are not valid to call in closed-world
+    // mode as they call function references. (Another solution here would be to
+    // make closed-world issue validation errors on these imports, but that
+    // would require changes to the general-purpose validator.)
+    for (auto& func : wasm.functions) {
+      if (func->imported() && func->module == "fuzzing-support" &&
+          func->base.startsWith("call-ref")) {
+        // Make it non-imported, and with a simple body.
+        func->module = func->base = Name();
+        auto results = func->getResults();
+        func->body =
+          results.isConcrete() ? makeConst(results) : makeNop(Type::none);
+      }
+    }
+  }
+
+  // Only add these some of the time, as they inhibit some fuzzing (things like
+  // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
+  // its own exports, and to care about the indexes of the exports).
+  if (oneIn(2)) {
+    return;
+  }
+
+  auto choice = upTo(16);
+
+  if (choice & 1) {
+    // Given an export index, call it from JS.
+    callExportImportName = Names::getValidFunctionName(wasm, "call-export");
+    auto func = std::make_unique<Function>();
+    func->name = callExportImportName;
+    func->module = "fuzzing-support";
+    func->base = "call-export";
+    func->type = Signature({Type::i32}, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+
+  if (choice & 2) {
+    // Given an export index, call it from JS and catch all exceptions. Return
+    // whether we caught. Exceptions are common (if the index is invalid, in
+    // particular), so a variant that catches is useful to avoid halting.
+    callExportCatchImportName =
+      Names::getValidFunctionName(wasm, "call-export-catch");
+    auto func = std::make_unique<Function>();
+    func->name = callExportCatchImportName;
+    func->module = "fuzzing-support";
+    func->base = "call-export-catch";
+    func->type = Signature(Type::i32, Type::i32);
+    wasm.addFunction(std::move(func));
+  }
+
+  // If the wasm will be used for closed-world testing, we cannot use the
+  // call-ref variants, as mentioned before.
+  if (wasm.features.hasReferenceTypes() && !closedWorld) {
+    if (choice & 4) {
+      // Given an funcref, call it from JS.
+      callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
+      auto func = std::make_unique<Function>();
+      func->name = callRefImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref";
+      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      wasm.addFunction(std::move(func));
+    }
+
+    if (choice & 8) {
+      // Given an funcref, call it from JS and catch all exceptions (similar
+      // to callExportCatch), return 1 if we caught).
+      callRefCatchImportName =
+        Names::getValidFunctionName(wasm, "call-ref-catch");
+      auto func = std::make_unique<Function>();
+      func->name = callRefCatchImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref-catch";
+      func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
+      wasm.addFunction(std::move(func));
+    }
+  }
+}
+
+void TranslateToFuzzReader::addImportThrowingSupport() {
+  // Throw some kind of exception from JS.
+  // TODO: Send an index, which is which exported wasm Tag we should throw, or
+  //       something not exported if out of bounds. First we must also export
+  //       tags sometimes.
+  throwImportName = Names::getValidFunctionName(wasm, "throw");
+  auto func = std::make_unique<Function>();
+  func->name = throwImportName;
+  func->module = "fuzzing-support";
+  func->base = "throw";
+  func->type = Signature(Type::none, Type::none);
+  wasm.addFunction(std::move(func));
+}
+
+void TranslateToFuzzReader::addImportTableSupport() {
+  // For the table imports to be able to do anything, we must export a table
+  // for them. For simplicity, use the funcref table we use internally, though
+  // we could pick one at random, support non-funcref ones, and even export
+  // multiple ones TODO
+  if (!funcrefTableName) {
+    return;
+  }
+
+  // If a "table" export already exists, skip fuzzing these imports, as the
+  // current export may not contain a valid table for it.
+  if (wasm.getExportOrNull("table")) {
+    return;
+  }
+
+  // Export the table.
+  wasm.addExport(
+    builder.makeExport("table", funcrefTableName, ExternalKind::Table));
+
+  // Get from the table.
+  {
+    tableGetImportName = Names::getValidFunctionName(wasm, "table-get");
+    auto func = std::make_unique<Function>();
+    func->name = tableGetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-get";
+    func->type = Signature({Type::i32}, Type(HeapType::func, Nullable));
+    wasm.addFunction(std::move(func));
+  }
+
+  // Set into the table.
+  {
+    tableSetImportName = Names::getValidFunctionName(wasm, "table-set");
+    auto func = std::make_unique<Function>();
+    func->name = tableSetImportName;
+    func->module = "fuzzing-support";
+    func->base = "table-set";
+    func->type =
+      Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none);
+    wasm.addFunction(std::move(func));
+  }
+}
+
+void TranslateToFuzzReader::addImportSleepSupport() {
+  if (!oneIn(4)) {
+    // Fuzz this somewhat rarely, as it may be slow.
+    return;
+  }
+
+  // An import that sleeps for a given number of milliseconds, and also receives
+  // an integer id. It returns that integer id (useful for tracking separate
+  // sleeps).
+  sleepImportName = Names::getValidFunctionName(wasm, "sleep");
+  auto func = std::make_unique<Function>();
+  func->name = sleepImportName;
+  func->module = "fuzzing-support";
+  func->base = "sleep";
+  func->type = Signature({Type::i32, Type::i32}, Type::i32);
+  wasm.addFunction(std::move(func));
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
@@ -586,7 +973,7 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   std::vector<Expression*> contents;
   contents.push_back(
     builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->addressType);
   for (Index i = 0; i < USABLE_MEMORY; i++) {
     contents.push_back(builder.makeLocalSet(
       0,
@@ -672,21 +1059,105 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
                          builder.makeConst(int32_t(1)))));
 }
 
-Expression* TranslateToFuzzReader::makeLogging() {
+Expression* TranslateToFuzzReader::makeImportLogging() {
   auto type = getLoggableType();
+  return builder.makeCall(logImportNames[type], {make(type)}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
+  // We throw from the import, so this call appears to be none and not
+  // unreachable.
+  assert(type == Type::none);
+
+  // TODO: This and makeThrow should probably be rare, as they halt the program.
+  return builder.makeCall(throwImportName, {}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportTableGet() {
+  assert(tableGetImportName);
   return builder.makeCall(
-    std::string("log-") + type.toString(), {make(type)}, Type::none);
+    tableGetImportName, {make(Type::i32)}, Type(HeapType::func, Nullable));
+}
+
+Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
+  assert(type == Type::none);
+  assert(tableSetImportName);
+  return builder.makeCall(
+    tableSetImportName,
+    {make(Type::i32), makeBasicRef(Type(HeapType::func, Nullable))},
+    Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
+  // Call code: either an export or a ref. Each has a catching and non-catching
+  // variant. The catching variants return i32, the others none.
+  assert(type == Type::none || type == Type::i32);
+  auto catching = type == Type::i32;
+  auto exportTarget =
+    catching ? callExportCatchImportName : callExportImportName;
+  auto refTarget = catching ? callRefCatchImportName : callRefImportName;
+
+  // We want to call a ref less often, as refs are more likely to error (a
+  // function reference can have arbitrary params and results, including things
+  // that error on the JS boundary; an export is already filtered for such
+  // things in some cases - when we legalize the boundary - and even if not, we
+  // emit lots of void(void) functions - all the invoke_foo functions - that are
+  // safe to call).
+  if (refTarget) {
+    // This matters a lot more in the variants that do *not* catch (in the
+    // catching ones, we just get a result of 1, but when not caught it halts
+    // execution).
+    if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
+      // Most of the time make a non-nullable funcref, to avoid errors.
+      auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+      return builder.makeCall(refTarget, {make(refType)}, type);
+    }
+  }
+
+  if (!exportTarget) {
+    // We decided not to emit a call-ref here, due to fear of erroring, and
+    // there is no call-export, so just emit something trivial.
+    return makeTrivial(type);
+  }
+
+  // Pick the maximum export index to call.
+  Index maxIndex = wasm.exports.size();
+  if (type == Type::i32) {
+    // This swallows errors, so we can be less careful, but we do still want to
+    // avoid swallowing a lot as executing code is more interesting. (Note that
+    // even though we double here, the risk is not that great: we are still
+    // adding functions as we go, so the first half of functions/exports can
+    // double here and still end up in bounds by the time we've added them all.)
+    maxIndex = (maxIndex + 1) * 2;
+  }
+
+  // Most of the time, call a valid export index in the range we picked, but
+  // sometimes allow anything at all.
+  auto* index = make(Type::i32);
+  if (!allowOOB || !oneIn(10)) {
+    index = builder.makeBinary(
+      RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
+  }
+  return builder.makeCall(exportTarget, {index}, type);
+}
+
+Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
+  // Sleep for some ms, and return a given id.
+  auto* ms = make(Type::i32);
+  auto id = make(Type::i32);
+  return builder.makeCall(sleepImportName, {ms, id}, Type::i32);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
   auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
-  return builder.makeCall(std::string("log-i32"), {hash}, Type::none);
+  return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
 // TODO: return std::unique_ptr<Function>
 Function* TranslateToFuzzReader::addFunction() {
   LOGGING_PERCENT = upToSquared(100);
-  auto* func = new Function;
+  auto allocation = std::make_unique<Function>();
+  auto* func = allocation.get();
   func->name = Names::getValidFunctionName(wasm, "func");
   FunctionCreationContext context(*this, func);
   assert(funcContext->typeLocals.empty());
@@ -695,7 +1166,6 @@ Function* TranslateToFuzzReader::addFunction() {
   params.reserve(numParams);
   for (Index i = 0; i < numParams; i++) {
     auto type = getSingleConcreteType();
-    funcContext->typeLocals[type].push_back(params.size());
     params.push_back(type);
   }
   auto paramType = Type(params);
@@ -704,9 +1174,12 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
-    funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
+    if (!TypeUpdating::canHandleAsLocal(type)) {
+      type = Type::i32;
+    }
     func->vars.push_back(type);
   }
+  context.computeTypeLocals();
   // with small chance, make the body unreachable
   auto bodyType = func->getResults();
   if (oneIn(10)) {
@@ -722,6 +1195,14 @@ Function* TranslateToFuzzReader::addFunction() {
   // may end up breaking them. TODO: do them after the fact, like with the
   // hang limit checks.
   if (allowOOB) {
+    // Notice the locals and their types again, as more may have been added
+    // during generation of the body. We want to be able to local.get from those
+    // as well.
+    // TODO: We could also add a "localize" phase here to stash even more things
+    //       in locals, so that they can be reused. But we would need to be
+    //       careful with non-nullable locals (which error if used before being
+    //       set, or trap if we make them nullable, both of which are bad).
+    context.computeTypeLocals();
     // Recombinations create duplicate code patterns.
     recombine(func);
     // Mutations add random small changes, which can subtly break duplicate
@@ -733,33 +1214,18 @@ Function* TranslateToFuzzReader::addFunction() {
     // after.
     fixAfterChanges(func);
   }
+
   // Add hang limit checks after all other operations on the function body.
-  wasm.addFunction(func);
+  wasm.addFunction(std::move(allocation));
   // Export some functions, but not all (to allow inlining etc.). Try to export
-  // at least one, though, to keep each testcase interesting. Only functions
-  // with valid params and returns can be exported because the trap fuzzer
-  // depends on that (TODO: fix this).
-  auto validExportType = [](Type t) {
-    if (!t.isRef()) {
-      return true;
-    }
-    auto heapType = t.getHeapType();
-    return heapType == HeapType::ext || heapType == HeapType::func ||
-           heapType == HeapType::string;
-  };
+  // at least one, though, to keep each testcase interesting. Avoid non-
+  // nullable params, as those cannot be constructed by the fuzzer on the
+  // outside.
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
-      return validExportType(t) && t.isDefaultable();
+      return t.isDefaultable();
     });
-  // Note: spec discussions around JS API integration are still ongoing, and it
-  // is not clear if we should allow nondefaultable types in exports or not
-  // (in imports, we cannot allow them in the fuzzer anyhow, since it can't
-  // construct such values in JS to send over to the wasm from the fuzzer
-  // harness).
-  bool validExportResults =
-    std::all_of(resultType.begin(), resultType.end(), validExportType);
-  if (validExportParams && validExportResults &&
-      (numAddedFunctions == 0 || oneIn(2)) &&
+  if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name)) {
     auto* export_ = new Export;
     export_->name = func->name;
@@ -1102,7 +1568,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   struct Fixer
-    : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
+    : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
 
@@ -1140,12 +1606,15 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
 
     bool hasBreakTarget(Name name) {
-      if (controlFlowStack.empty()) {
+      // The break must be on top.
+      assert(!expressionStack.empty());
+      if (expressionStack.size() < 2) {
+        // There must be a scope for this break to be valid.
         return false;
       }
-      Index i = controlFlowStack.size() - 1;
+      Index i = expressionStack.size() - 2;
       while (1) {
-        auto* curr = controlFlowStack[i];
+        auto* curr = expressionStack[i];
         bool has = false;
         BranchUtils::operateOnScopeNameDefs(curr, [&](Name& def) {
           if (def == name) {
@@ -1156,6 +1625,43 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           return true;
         }
         if (i == 0) {
+          return false;
+        }
+        i--;
+      }
+    }
+
+    void visitRethrow(Rethrow* curr) {
+      if (!isValidRethrow(curr->target)) {
+        replace();
+      }
+    }
+
+    bool isValidRethrow(Name target) {
+      // The rethrow must be on top.
+      assert(!expressionStack.empty());
+      assert(expressionStack.back()->is<Rethrow>());
+      if (expressionStack.size() < 2) {
+        // There must be a try for this rethrow to be valid.
+        return false;
+      }
+      Index i = expressionStack.size() - 2;
+      while (1) {
+        auto* curr = expressionStack[i];
+        if (auto* tryy = curr->dynCast<Try>()) {
+          // The rethrow must target a try, and must be nested in a catch of
+          // that try (not the body). Look at the child above us to check, when
+          // we find the proper try.
+          if (tryy->name == target) {
+            if (i + 1 >= expressionStack.size()) {
+              return false;
+            }
+            auto* child = expressionStack[i + 1];
+            return child != tryy->body;
+          }
+        }
+        if (i == 0) {
+          // We never found our try.
           return false;
         }
         i--;
@@ -1184,18 +1690,22 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   // the end (currently that is not needed atm, but it might in the future).
   for (Index i = 0; i < wasm.functions.size(); i++) {
     auto* func = wasm.functions[i].get();
+    // We can't allow extra imports, as the fuzzing infrastructure wouldn't
+    // know what to provide. Keep only our own fuzzer imports.
+    if (func->imported() && func->module == "fuzzing-support") {
+      continue;
+    }
     FunctionCreationContext context(*this, func);
     if (func->imported()) {
-      // We can't allow extra imports, as the fuzzing infrastructure wouldn't
-      // know what to provide.
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }
     // Optionally, fuzz the function contents.
     if (upTo(RESOLUTION) >= chance) {
       dropToLog(func);
+      // Notice params as well as any locals generated above.
       // TODO add some locals? and the rest of addFunction's operations?
-      // TODO: interposition, replace initial a(b) with a(RANDOM_THING(b))
+      context.computeTypeLocals();
       // TODO: if we add OOB checks after creation, then we can do it on
       //       initial contents too, and it may be nice to *not* run these
       //       passes, like we don't run them on new functions. But, we may
@@ -1210,6 +1720,20 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       //       them.
     }
   }
+
+  // Add invocations, which can help execute the code here even if the function
+  // was not exported (or was exported but with a signature that traps
+  // immediately, like receiving a non-nullable ref, that the fuzzer can't
+  // provide from JS). Note we need to use a temp vector for iteration, as
+  // addInvocations modifies wasm.functions.
+  std::vector<Function*> funcs;
+  for (auto& func : wasm.functions) {
+    funcs.push_back(func.get());
+  }
+  for (auto* func : funcs) {
+    addInvocations(func);
+  }
+
   // Remove a start function - the fuzzing harness expects code to run only
   // from exports.
   wasm.start = Name();
@@ -1229,10 +1753,9 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
 
     void visitDrop(Drop* curr) {
       if (parent.isLoggableType(curr->value->type) && parent.oneIn(2)) {
-        replaceCurrent(parent.builder.makeCall(std::string("log-") +
-                                                 curr->value->type.toString(),
-                                               {curr->value},
-                                               Type::none));
+        auto target = parent.logImportNames[curr->value->type];
+        replaceCurrent(
+          parent.builder.makeCall(target, {curr->value}, Type::none));
       }
     }
   };
@@ -1334,7 +1857,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCall,
            &Self::makeCallIndirect)
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
-      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+      .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
   }
   if (type.isSingle()) {
     options
@@ -1352,11 +1877,23 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
   }
   if (type == Type::i32) {
+    if (callExportCatchImportName || callRefCatchImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportCallCode);
+    }
+    if (sleepImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportSleep);
+    }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
                 &Self::makeRefTest,
                 &Self::makeI31Get);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                  FeatureSet::Strings,
+                &Self::makeStringEncode,
+                &Self::makeStringEq,
+                &Self::makeStringMeasure,
+                &Self::makeStringGet);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -1383,7 +1920,6 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                   &Self::makeArrayGet);
     }
   }
-  // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
 }
 
@@ -1391,7 +1927,7 @@ Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
     if (choice < LOGGING_PERCENT / 2) {
-      return makeLogging();
+      return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
     }
@@ -1414,11 +1950,21 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+    .add(FeatureSet::ExceptionHandling, &Self::makeTry)
+    .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
+    .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
+  if (tableSetImportName) {
+    options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
+  }
+  if (callExportImportName || callRefImportName) {
+    options.add(FeatureSet::MVP, &Self::makeImportCallCode);
+  }
   return (this->*pick(options))(Type::none);
 }
 
@@ -1444,7 +1990,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
 
@@ -1463,9 +2009,12 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
     // using it before it was set, which would trap.
     if (funcContext && oneIn(type.isNonNullable() ? 10 : 2)) {
       return makeLocalGet(type);
-    } else {
-      return makeConst(type);
     }
+
+    // Either make a const, or a global.get (which may fail to find a suitable
+    // global, especially in a non-function context, and if so it will make a
+    // constant instead).
+    return oneIn(2) ? makeConst(type) : makeGlobalGet(type);
   } else if (type == Type::none) {
     return makeNop(type);
   }
@@ -1628,7 +2177,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     // Catch bodies (aside from a catch-all) begin with a pop.
     Expression* prefix = nullptr;
     if (i < numTags) {
-      auto tagType = wasm.getTag(catchTags[i])->sig.params;
+      auto tagType = wasm.getTag(catchTags[i])->params();
       if (tagType != Type::none) {
         auto* pop = builder.makePop(tagType);
         // Capture the pop in a local, so that it can be used later.
@@ -1646,6 +2195,71 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
   }
   // TODO: delegate stuff
   return builder.makeTry(body, catchTags, catchBodies);
+}
+
+Expression* TranslateToFuzzReader::makeTryTable(Type type) {
+  auto* body = make(type);
+
+  if (funcContext->breakableStack.empty()) {
+    // Nothing to break to, emit a trivial TryTable.
+    // TODO: Perhaps generate a block wrapping us?
+    return builder.makeTryTable(body, {}, {}, {});
+  }
+
+  if (wasm.tags.empty()) {
+    addTag();
+  }
+
+  // Add catches of specific tags, and possibly a catch_all at the end. We use
+  // the last iteration of the loop for that.
+  std::vector<Name> catchTags;
+  std::vector<Name> catchDests;
+  std::vector<bool> catchRefs;
+  auto numCatches = upTo(MAX_TRY_CATCHES);
+  for (Index i = 0; i <= numCatches; i++) {
+    Name tagName;
+    Type tagType;
+    if (i < numCatches) {
+      // Look for a specific tag.
+      auto& tag = pick(wasm.tags);
+      tagName = tag->name;
+      tagType = tag->params();
+    } else {
+      // Add a catch_all at the end, some of the time (but all of the time if we
+      // have nothing else).
+      if (!catchTags.empty() && oneIn(2)) {
+        break;
+      }
+      tagType = Type::none;
+    }
+
+    // We need to find a proper target to break to, which means a target that
+    // has the type of the tag, or the tag + an exnref at the end.
+    std::vector<Type> vec(tagType.begin(), tagType.end());
+    // Use a non-nullable exnref here, and then the subtyping check below will
+    // also accept a target that is nullable.
+    vec.push_back(Type(HeapType::exn, NonNullable));
+    auto tagTypeWithExn = Type(vec);
+    int tries = TRIES;
+    while (tries-- > 0) {
+      auto* target = pick(funcContext->breakableStack);
+      auto dest = getTargetName(target);
+      auto valueType = getTargetType(target);
+      auto subOfTagType = Type::isSubType(tagType, valueType);
+      auto subOfTagTypeWithExn = Type::isSubType(tagTypeWithExn, valueType);
+      if (subOfTagType || subOfTagTypeWithExn) {
+        catchTags.push_back(tagName);
+        catchDests.push_back(dest);
+        catchRefs.push_back(subOfTagTypeWithExn);
+        break;
+      }
+    }
+    // TODO: Perhaps generate a block wrapping us, if we fail to find a target?
+    // TODO: It takes a bit of luck to find a target with an exnref - perhaps
+    //       generate those?
+  }
+
+  return builder.makeTryTable(body, catchTags, catchDests, catchRefs);
 }
 
 Expression* TranslateToFuzzReader::makeBreak(Type type) {
@@ -1784,13 +2398,14 @@ Expression* TranslateToFuzzReader::makeCallIndirect(Type type) {
       return makeTrivial(type);
     }
   }
-  // with high probability, make sure the type is valid  otherwise, most are
+  // with high probability, make sure the type is valid - otherwise, most are
   // going to trap
+  auto addressType = wasm.getTable(funcrefTableName)->addressType;
   Expression* target;
   if (!allowOOB || !oneIn(10)) {
-    target = builder.makeConst(int32_t(i));
+    target = builder.makeConst(Literal::makeFromInt32(i, addressType));
   } else {
-    target = make(Type::i32);
+    target = make(addressType);
   }
   std::vector<Expression*> args;
   for (const auto& type : targetFn->getParams()) {
@@ -1844,7 +2459,7 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   // the time), or emit a local.get of a new local, or emit a local.tee of a new
   // local.
   auto choice = upTo(3);
-  if (choice == 0) {
+  if (choice == 0 || !TypeUpdating::canHandleAsLocal(type)) {
     return makeConst(type);
   }
   // Otherwise, add a new local. If the type is not non-nullable then we may
@@ -1886,9 +2501,17 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
-  auto it = globalsByType.find(type);
-  if (it == globalsByType.end() || it->second.empty()) {
-    return makeTrivial(type);
+  // In a non-function context, like in another global, we can only get from an
+  // immutable global. Whether GC is enabled also matters, as it allows getting
+  // from a non-import.
+  auto& relevantGlobals =
+    funcContext ? globalsByType
+                : (wasm.features.hasGC() ? immutableGlobalsByType
+                                         : importedImmutableGlobalsByType);
+  auto it = relevantGlobals.find(type);
+  // If we have no such relevant globals give up and emit a constant instead.
+  if (it == relevantGlobals.end() || it->second.empty()) {
+    return makeConst(type);
   }
 
   auto name = pick(it->second);
@@ -1955,7 +2578,7 @@ Expression* TranslateToFuzzReader::makeTupleExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makePointer() {
-  auto* ret = make(wasm.memories[0]->indexType);
+  auto* ret = make(wasm.memories[0]->addressType);
   // with high probability, mask the pointer so it's in a reasonable
   // range. otherwise, most pointers are going to be out of range and
   // most memory ops will just trap
@@ -2430,31 +3053,29 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
 
 Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   auto heapType = type.getHeapType();
-  if (heapType == HeapType::func) {
-    // First set to target to the last created function, and try to select
-    // among other existing function if possible.
-    Function* target = funcContext ? funcContext->func : nullptr;
-    // If there is no last function, and we have others, pick between them. Also
-    // pick between them with some random probability even if there is a last
-    // function.
-    if (!wasm.functions.empty() && (!target || !oneIn(wasm.functions.size()))) {
-      target = pick(wasm.functions).get();
-    }
-    if (target) {
+  auto share = heapType.getShared();
+  if (heapType.isBasic()) {
+    assert(heapType.getBasic(Unshared) == HeapType::func);
+    // With high probability, use the last created function if possible.
+    // Otherwise, continue on to select some other function.
+    if (funcContext && funcContext->func->type.getShared() == share &&
+        !oneIn(4)) {
+      auto* target = funcContext->func;
       return builder.makeRefFunc(target->name, target->type);
     }
   }
-  if (heapType == HeapType::func) {
-    // From here on we need a specific signature type, as we want to create a
-    // RefFunc or even a Function out of it. Pick an arbitrary one if we only
-    // had generic 'func' here.
-    heapType = Signature(Type::none, Type::none);
-  }
-  // TODO: randomize the order
-  for (auto& func : wasm.functions) {
-    if (Type::isSubType(Type(func->type, NonNullable), type)) {
-      return builder.makeRefFunc(func->name, func->type);
-    }
+  // Look for a proper function starting from a random location, and loop from
+  // there, wrapping around to 0.
+  if (!wasm.functions.empty()) {
+    Index start = upTo(wasm.functions.size());
+    Index i = start;
+    do {
+      auto& func = wasm.functions[i];
+      if (Type::isSubType(Type(func->type, NonNullable), type)) {
+        return builder.makeRefFunc(func->name, func->type);
+      }
+      i = (i + 1) % wasm.functions.size();
+    } while (i != start);
   }
   // We don't have a matching function. Create a null some of the time here,
   // but only rarely if the type is non-nullable (because in that case we'd need
@@ -2462,7 +3083,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // here).
   if ((type.isNullable() && oneIn(2)) ||
       (type.isNonNullable() && oneIn(16) && funcContext)) {
-    Expression* ret = builder.makeRefNull(HeapType::nofunc);
+    Expression* ret = builder.makeRefNull(HeapTypes::nofunc.getBasic(share));
     if (!type.isNullable()) {
       assert(funcContext);
       ret = builder.makeRefAs(RefAsNonNull, ret);
@@ -2474,6 +3095,14 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // here (we might end up recursing). Note that a trap in the function lets us
   // execute more code then the ref.as_non_null path just before us, which traps
   // even if we never call the function.
+  if (heapType.isBasic()) {
+    // We need a specific signature type to create a function. Pick an arbitrary
+    // signature if we only had generic 'func' here.
+    TypeBuilder builder(1);
+    builder[0] = Signature(Type::none, Type::none);
+    builder[0].setShared(share);
+    heapType = (*builder.build())[0];
+  }
   auto* body = heapType.getSignature().results == Type::none
                  ? (Expression*)builder.makeNop()
                  : (Expression*)builder.makeUnreachable();
@@ -2488,6 +3117,9 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     // With a low chance, just emit a null if that is valid.
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type.getHeapType());
+    }
+    if (type.getHeapType().isString()) {
+      return makeStringConst();
     }
     if (type.getHeapType().isBasic()) {
       return makeBasicRef(type);
@@ -2511,9 +3143,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   auto heapType = type.getHeapType();
   assert(heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
-  switch (heapType.getBasic()) {
+  auto share = heapType.getShared();
+  switch (heapType.getBasic(Unshared)) {
     case HeapType::ext: {
-      auto null = builder.makeRefNull(HeapType::ext);
+      auto null = builder.makeRefNull(HeapTypes::ext.getBasic(share));
       // TODO: support actual non-nullable externrefs via imported globals or
       // similar.
       if (!type.isNullable()) {
@@ -2523,24 +3156,31 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::func: {
+      // Rarely, emit a call to imported table.get (when nullable, unshared, and
+      // where we can emit a call).
+      if (type.isNullable() && share == Unshared && funcContext &&
+          tableGetImportName && !oneIn(3)) {
+        return makeImportTableGet();
+      }
       return makeRefFuncConst(type);
+    }
+    case HeapType::cont: {
+      WASM_UNREACHABLE("not implemented");
     }
     case HeapType::any: {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      HeapType subtype;
-      switch (upTo(3)) {
-        case 0:
-          subtype = HeapType::i31;
-          break;
-        case 1:
-          subtype = HeapType::struct_;
-          break;
-        case 2:
-          subtype = HeapType::array;
-          break;
+      auto subtypeOpts = FeatureOptions<HeapType>().add(
+        FeatureSet::ReferenceTypes | FeatureSet::GC,
+        HeapType::i31,
+        HeapType::struct_,
+        HeapType::array);
+      if (share == Unshared) {
+        // Shared strings not yet supported.
+        subtypeOpts.add(FeatureSet::Strings, HeapType::string);
       }
+      auto subtype = pick(subtypeOpts).getBasic(share);
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -2549,7 +3189,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         // a subtype of anyref, but we cannot create constants of it, except
         // for null.
         assert(type.isNullable());
-        return builder.makeRefNull(HeapType::none);
+        return builder.makeRefNull(HeapTypes::none.getBasic(share));
       }
       auto nullability = getSubType(type.getNullability());
       // ref.i31 is not allowed in initializer expressions.
@@ -2565,14 +3205,14 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
           subtype = HeapType::array;
           break;
       }
-      return makeConst(Type(subtype, nullability));
+      return makeConst(Type(subtype.getBasic(share), nullability));
     }
     case HeapType::i31: {
       assert(wasm.features.hasGC());
       if (type.isNullable() && oneIn(4)) {
-        return builder.makeRefNull(HeapType::none);
+        return builder.makeRefNull(HeapTypes::none.getBasic(share));
       }
-      return builder.makeRefI31(makeConst(Type::i32));
+      return builder.makeRefI31(makeConst(Type::i32), share);
     }
     case HeapType::struct_: {
       assert(wasm.features.hasGC());
@@ -2581,15 +3221,29 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Use a local static to avoid the expense of canonicalizing a new type
       // every time.
       static HeapType trivialStruct = HeapType(Struct());
-      return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
+      static HeapType sharedTrivialStruct = []() {
+        TypeBuilder builder(1);
+        builder[0] = Struct{};
+        builder[0].setShared();
+        return (*builder.build())[0];
+      }();
+      auto ht = share == Shared ? sharedTrivialStruct : trivialStruct;
+      return builder.makeStructNew(ht, std::vector<Expression*>{});
     }
     case HeapType::array: {
       static HeapType trivialArray =
         HeapType(Array(Field(Field::PackedType::i8, Immutable)));
-      return builder.makeArrayNewFixed(trivialArray, {});
+      static HeapType sharedTrivialArray = []() {
+        TypeBuilder builder(1);
+        builder[0] = Array(Field(Field::PackedType::i8, Immutable));
+        builder[0].setShared();
+        return (*builder.build())[0];
+      }();
+      auto ht = share == Shared ? sharedTrivialArray : trivialArray;
+      return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      auto null = builder.makeRefNull(HeapType::exn);
+      auto null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
       if (!type.isNullable()) {
         assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
@@ -2597,63 +3251,42 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      // Construct an interesting WTF-8 string from parts.
-      std::stringstream wtf8;
-      bool lastWasLeadingSurrogate = false;
-      for (size_t i = 0, end = upTo(4); i < end; ++i) {
-        switch (upTo(6)) {
-          case 0:
-            // A simple ascii string.
-            wtf8 << std::to_string(upTo(1024));
-            break;
-          case 1:
-            // '£'
-            wtf8 << "\xC2\xA3";
-            break;
-          case 2:
-            // '€'
-            wtf8 << "\xE2\x82\xAC";
-            break;
-          case 3:
-            // '𐍈'
-            wtf8 << "\xF0\x90\x8D\x88";
-            break;
-          case 4:
-            // The leading surrogate in '𐍈'
-            wtf8 << "\xED\xA0\x80";
-            lastWasLeadingSurrogate = true;
-            continue;
-          case 5:
-            if (lastWasLeadingSurrogate) {
-              // Avoid invalid WTF-8.
-              continue;
-            }
-            // The trailing surrogate in '𐍈'
-            wtf8 << "\xED\xBD\x88";
-            break;
-        }
-        lastWasLeadingSurrogate = false;
+      // In non-function contexts all we can do is string.const.
+      assert(share == Unshared && "shared strings not supported");
+      if (!funcContext) {
+        return makeStringConst();
       }
-      std::stringstream wtf16;
-      // TODO: Use wtf16.view() once we have C++20.
-      String::convertWTF8ToWTF16(wtf16, wtf8.str());
-      return builder.makeStringConst(wtf16.str());
+      switch (upTo(11)) {
+        case 0:
+        case 1:
+        case 2:
+          return makeStringConst();
+        case 3:
+        case 4:
+        case 5:
+          return makeStringNewCodePoint();
+        case 6:
+        case 7:
+          // We less frequently make string.new_array as it may generate a lot
+          // of code for the array in some cases.
+          return makeStringNewArray();
+        case 8:
+          // We much less frequently make string.concat as it will recursively
+          // generate two string children, i.e., it can lead to exponential
+          // growth.
+          return makeStringConcat();
+        case 9:
+        case 10:
+          return makeStringSlice();
+      }
+      WASM_UNREACHABLE("bad switch");
     }
-    case HeapType::stringview_wtf16:
-      // We fully support wtf16 strings.
-      return builder.makeStringAs(
-        StringAsWTF16, makeBasicRef(Type(HeapType::string, NonNullable)));
-    case HeapType::stringview_wtf8:
-    case HeapType::stringview_iter:
-      // We do not have interpreter support for wtf8 and iter, so emit something
-      // that does not return, with a block that casts to the type the parent
-      // expects.
-      return builder.makeBlock({_makeunreachable()}, type);
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
+    case HeapType::nocont:
     case HeapType::noexn: {
-      auto null = builder.makeRefNull(heapType);
+      auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
         assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
@@ -2696,14 +3329,19 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // which is not ideal.
   if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
     // If we have a function context then we can at least emit a local.get,
-    // perhaps, which is less bad. Note that we need to check typeLocals
+    // sometimes, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
     // to us, if there is no local).
     // TODO: we could also look for locals containing subtypes
-    if (funcContext && !funcContext->typeLocals[type].empty()) {
-      return makeLocalGet(type);
+    if (funcContext) {
+      if (!funcContext->typeLocals[type].empty()) {
+        return makeLocalGet(type);
+      }
+      // No local, but we are in a function context so RefAsNonNull is valid.
+      return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
     }
-    return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
+    // No function context, so we are in quite the pickle. Continue onwards, as
+    // we may succeed to emit something more complex (like a struct.new).
   }
 
   // When we make children, they must be trivial if we are not in a function
@@ -2712,43 +3350,148 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     return funcContext ? make(type) : makeTrivial(type);
   };
 
-  if (heapType.isSignature()) {
-    return makeRefFuncConst(type);
-  } else if (type.isStruct()) {
-    auto& fields = heapType.getStruct().fields;
-    std::vector<Expression*> values;
-    // If there is a nondefaultable field, we must provide the value and not
-    // depend on defaults. Also do that randomly half the time.
-    if (std::any_of(
-          fields.begin(),
-          fields.end(),
-          [&](const Field& field) { return !field.type.isDefaultable(); }) ||
-        oneIn(2)) {
-      for (auto& field : fields) {
-        values.push_back(makeChild(field.type));
+  switch (heapType.getKind()) {
+    case HeapTypeKind::Func:
+      return makeRefFuncConst(type);
+    case HeapTypeKind::Struct: {
+      auto& fields = heapType.getStruct().fields;
+      std::vector<Expression*> values;
+      // If there is a nondefaultable field, we must provide the value and not
+      // depend on defaults. Also do that randomly half the time.
+      if (std::any_of(
+            fields.begin(),
+            fields.end(),
+            [&](const Field& field) { return !field.type.isDefaultable(); }) ||
+          oneIn(2)) {
+        for (auto& field : fields) {
+          values.push_back(makeChild(field.type));
+        }
+        // Add more nesting manually, as we can easily get exponential blowup
+        // here. This nesting makes it much less likely for a recursive data
+        // structure to end up as a massive tree of struct.news, since the
+        // nesting limitation code at the top of this function will kick in.
+        if (!values.empty()) {
+          // Subtract 1 since if there is a single value there cannot be
+          // exponential blowup.
+          nester.add(values.size() - 1);
+        }
       }
-      // Add more nesting manually, as we can easily get exponential blowup
-      // here. This nesting makes it much less likely for a recursive data
-      // structure to end up as a massive tree of struct.news, since the nesting
-      // limitation code at the top of this function will kick in.
-      if (!values.empty()) {
-        // Subtract 1 since if there is a single value there cannot be
-        // exponential blowup.
-        nester.add(values.size() - 1);
+      return builder.makeStructNew(heapType, values);
+    }
+    case HeapTypeKind::Array: {
+      auto element = heapType.getArray().element;
+      Expression* init = nullptr;
+      if (!element.type.isDefaultable() || oneIn(2)) {
+        init = makeChild(element.type);
       }
+      auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
+      return builder.makeArrayNew(type.getHeapType(), count, init);
     }
-    return builder.makeStructNew(heapType, values);
-  } else if (type.isArray()) {
-    auto element = heapType.getArray().element;
-    Expression* init = nullptr;
-    if (!element.type.isDefaultable() || oneIn(2)) {
-      init = makeChild(element.type);
-    }
-    auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
-    return builder.makeArrayNew(type.getHeapType(), count, init);
-  } else {
-    WASM_UNREACHABLE("bad user-defined ref type");
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      break;
   }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+Expression* TranslateToFuzzReader::makeStringNewArray() {
+  auto* array = makeTrappingRefUse(getArrayTypeForString());
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringNew(StringNewWTF16Array, array, start, end);
+}
+
+Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
+  auto codePoint = make(Type::i32);
+  return builder.makeStringNew(StringNewFromCodePoint, codePoint);
+}
+
+Expression* TranslateToFuzzReader::makeStringConst() {
+  // Construct an interesting WTF-8 string from parts and use string.const.
+  std::stringstream wtf8;
+  bool lastWasLeadingSurrogate = false;
+  for (size_t i = 0, end = upTo(4); i < end; ++i) {
+    switch (upTo(6)) {
+      case 0:
+        // A simple ascii string.
+        wtf8 << std::to_string(upTo(1024));
+        break;
+      case 1:
+        // '£'
+        wtf8 << "\xC2\xA3";
+        break;
+      case 2:
+        // '€'
+        wtf8 << "\xE2\x82\xAC";
+        break;
+      case 3:
+        // '𐍈'
+        wtf8 << "\xF0\x90\x8D\x88";
+        break;
+      case 4:
+        // The leading surrogate in '𐍈'
+        wtf8 << "\xED\xA0\x80";
+        lastWasLeadingSurrogate = true;
+        continue;
+      case 5:
+        if (lastWasLeadingSurrogate) {
+          // Avoid invalid WTF-8.
+          continue;
+        }
+        // The trailing surrogate in '𐍈'
+        wtf8 << "\xED\xBD\x88";
+        break;
+    }
+    lastWasLeadingSurrogate = false;
+  }
+  std::stringstream wtf16;
+  // TODO: Use wtf16.view() once we have C++20.
+  String::convertWTF8ToWTF16(wtf16, wtf8.str());
+  return builder.makeStringConst(wtf16.str());
+}
+
+Expression* TranslateToFuzzReader::makeStringConcat() {
+  auto* left = makeTrappingRefUse(HeapType::string);
+  auto* right = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringConcat(left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringSlice() {
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringSliceWTF(ref, start, end);
+}
+
+Expression* TranslateToFuzzReader::makeStringEq(Type type) {
+  assert(type == Type::i32);
+
+  if (oneIn(2)) {
+    auto* left = make(Type(HeapType::string, getNullability()));
+    auto* right = make(Type(HeapType::string, getNullability()));
+    return builder.makeStringEq(StringEqEqual, left, right);
+  }
+
+  // string.compare may trap if the either input is null.
+  auto* left = makeTrappingRefUse(HeapType::string);
+  auto* right = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringEq(StringEqCompare, left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringMeasure(StringMeasureWTF16, ref);
+}
+
+Expression* TranslateToFuzzReader::makeStringGet(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  auto* pos = make(Type::i32);
+  return builder.makeStringWTF16Get(ref, pos);
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
@@ -2952,31 +3695,46 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 3:
           return buildUnary({SplatVecF64x2, make(Type::f64)});
         case 4:
-          return buildUnary({pick(NotVec128,
-                                  // TODO: add additional SIMD instructions
-                                  NegVecI8x16,
-                                  NegVecI16x8,
-                                  NegVecI32x4,
-                                  NegVecI64x2,
-                                  AbsVecF32x4,
-                                  NegVecF32x4,
-                                  SqrtVecF32x4,
-                                  AbsVecF64x2,
-                                  NegVecF64x2,
-                                  SqrtVecF64x2,
-                                  TruncSatSVecF32x4ToVecI32x4,
-                                  TruncSatUVecF32x4ToVecI32x4,
-                                  ConvertSVecI32x4ToVecF32x4,
-                                  ConvertUVecI32x4ToVecF32x4,
-                                  ExtendLowSVecI8x16ToVecI16x8,
-                                  ExtendHighSVecI8x16ToVecI16x8,
-                                  ExtendLowUVecI8x16ToVecI16x8,
-                                  ExtendHighUVecI8x16ToVecI16x8,
-                                  ExtendLowSVecI16x8ToVecI32x4,
-                                  ExtendHighSVecI16x8ToVecI32x4,
-                                  ExtendLowUVecI16x8ToVecI32x4,
-                                  ExtendHighUVecI16x8ToVecI32x4),
-                             make(Type::v128)});
+          return buildUnary(
+            {pick(FeatureOptions<UnaryOp>()
+                    .add(FeatureSet::SIMD,
+                         NotVec128,
+                         // TODO: add additional SIMD instructions
+                         NegVecI8x16,
+                         NegVecI16x8,
+                         NegVecI32x4,
+                         NegVecI64x2,
+                         AbsVecF32x4,
+                         NegVecF32x4,
+                         SqrtVecF32x4,
+                         AbsVecF64x2,
+                         NegVecF64x2,
+                         SqrtVecF64x2,
+                         TruncSatSVecF32x4ToVecI32x4,
+                         TruncSatUVecF32x4ToVecI32x4,
+                         ConvertSVecI32x4ToVecF32x4,
+                         ConvertUVecI32x4ToVecF32x4,
+                         ExtendLowSVecI8x16ToVecI16x8,
+                         ExtendHighSVecI8x16ToVecI16x8,
+                         ExtendLowUVecI8x16ToVecI16x8,
+                         ExtendHighUVecI8x16ToVecI16x8,
+                         ExtendLowSVecI16x8ToVecI32x4,
+                         ExtendHighSVecI16x8ToVecI32x4,
+                         ExtendLowUVecI16x8ToVecI32x4,
+                         ExtendHighUVecI16x8ToVecI32x4)
+                    .add(FeatureSet::FP16,
+                         AbsVecF16x8,
+                         NegVecF16x8,
+                         SqrtVecF16x8,
+                         CeilVecF16x8,
+                         FloorVecF16x8,
+                         TruncVecF16x8,
+                         NearestVecF16x8,
+                         TruncSatSVecF16x8ToVecI16x8,
+                         TruncSatUVecF16x8ToVecI16x8,
+                         ConvertSVecI16x8ToVecF16x8,
+                         ConvertUVecI16x8ToVecF16x8)),
+             make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
     }
@@ -3114,103 +3872,119 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
     }
     case Type::v128: {
       assert(wasm.features.hasSIMD());
-      return buildBinary({pick(EqVecI8x16,
-                               NeVecI8x16,
-                               LtSVecI8x16,
-                               LtUVecI8x16,
-                               GtSVecI8x16,
-                               GtUVecI8x16,
-                               LeSVecI8x16,
-                               LeUVecI8x16,
-                               GeSVecI8x16,
-                               GeUVecI8x16,
-                               EqVecI16x8,
-                               NeVecI16x8,
-                               LtSVecI16x8,
-                               LtUVecI16x8,
-                               GtSVecI16x8,
-                               GtUVecI16x8,
-                               LeSVecI16x8,
-                               LeUVecI16x8,
-                               GeSVecI16x8,
-                               GeUVecI16x8,
-                               EqVecI32x4,
-                               NeVecI32x4,
-                               LtSVecI32x4,
-                               LtUVecI32x4,
-                               GtSVecI32x4,
-                               GtUVecI32x4,
-                               LeSVecI32x4,
-                               LeUVecI32x4,
-                               GeSVecI32x4,
-                               GeUVecI32x4,
-                               EqVecF32x4,
-                               NeVecF32x4,
-                               LtVecF32x4,
-                               GtVecF32x4,
-                               LeVecF32x4,
-                               GeVecF32x4,
-                               EqVecF64x2,
-                               NeVecF64x2,
-                               LtVecF64x2,
-                               GtVecF64x2,
-                               LeVecF64x2,
-                               GeVecF64x2,
-                               AndVec128,
-                               OrVec128,
-                               XorVec128,
-                               AndNotVec128,
-                               AddVecI8x16,
-                               AddSatSVecI8x16,
-                               AddSatUVecI8x16,
-                               SubVecI8x16,
-                               SubSatSVecI8x16,
-                               SubSatUVecI8x16,
-                               MinSVecI8x16,
-                               MinUVecI8x16,
-                               MaxSVecI8x16,
-                               MaxUVecI8x16,
-                               // TODO: avgr_u
-                               // TODO: q15mulr_sat_s
-                               // TODO: extmul
-                               AddVecI16x8,
-                               AddSatSVecI16x8,
-                               AddSatUVecI16x8,
-                               SubVecI16x8,
-                               SubSatSVecI16x8,
-                               SubSatUVecI16x8,
-                               MulVecI16x8,
-                               MinSVecI16x8,
-                               MinUVecI16x8,
-                               MaxSVecI16x8,
-                               MaxUVecI16x8,
-                               AddVecI32x4,
-                               SubVecI32x4,
-                               MulVecI32x4,
-                               MinSVecI32x4,
-                               MinUVecI32x4,
-                               MaxSVecI32x4,
-                               MaxUVecI32x4,
-                               DotSVecI16x8ToVecI32x4,
-                               AddVecI64x2,
-                               SubVecI64x2,
-                               AddVecF32x4,
-                               SubVecF32x4,
-                               MulVecF32x4,
-                               DivVecF32x4,
-                               MinVecF32x4,
-                               MaxVecF32x4,
-                               AddVecF64x2,
-                               SubVecF64x2,
-                               MulVecF64x2,
-                               DivVecF64x2,
-                               MinVecF64x2,
-                               MaxVecF64x2,
-                               NarrowSVecI16x8ToVecI8x16,
-                               NarrowUVecI16x8ToVecI8x16,
-                               NarrowSVecI32x4ToVecI16x8,
-                               NarrowUVecI32x4ToVecI16x8,
-                               SwizzleVecI8x16),
+      return buildBinary({pick(FeatureOptions<BinaryOp>()
+                                 .add(FeatureSet::SIMD,
+                                      EqVecI8x16,
+                                      NeVecI8x16,
+                                      LtSVecI8x16,
+                                      LtUVecI8x16,
+                                      GtSVecI8x16,
+                                      GtUVecI8x16,
+                                      LeSVecI8x16,
+                                      LeUVecI8x16,
+                                      GeSVecI8x16,
+                                      GeUVecI8x16,
+                                      EqVecI16x8,
+                                      NeVecI16x8,
+                                      LtSVecI16x8,
+                                      LtUVecI16x8,
+                                      GtSVecI16x8,
+                                      GtUVecI16x8,
+                                      LeSVecI16x8,
+                                      LeUVecI16x8,
+                                      GeSVecI16x8,
+                                      GeUVecI16x8,
+                                      EqVecI32x4,
+                                      NeVecI32x4,
+                                      LtSVecI32x4,
+                                      LtUVecI32x4,
+                                      GtSVecI32x4,
+                                      GtUVecI32x4,
+                                      LeSVecI32x4,
+                                      LeUVecI32x4,
+                                      GeSVecI32x4,
+                                      GeUVecI32x4,
+                                      EqVecF32x4,
+                                      NeVecF32x4,
+                                      LtVecF32x4,
+                                      GtVecF32x4,
+                                      LeVecF32x4,
+                                      GeVecF32x4,
+                                      EqVecF64x2,
+                                      NeVecF64x2,
+                                      LtVecF64x2,
+                                      GtVecF64x2,
+                                      LeVecF64x2,
+                                      GeVecF64x2,
+                                      AndVec128,
+                                      OrVec128,
+                                      XorVec128,
+                                      AndNotVec128,
+                                      AddVecI8x16,
+                                      AddSatSVecI8x16,
+                                      AddSatUVecI8x16,
+                                      SubVecI8x16,
+                                      SubSatSVecI8x16,
+                                      SubSatUVecI8x16,
+                                      MinSVecI8x16,
+                                      MinUVecI8x16,
+                                      MaxSVecI8x16,
+                                      MaxUVecI8x16,
+                                      // TODO: avgr_u
+                                      // TODO: q15mulr_sat_s
+                                      // TODO: extmul
+                                      AddVecI16x8,
+                                      AddSatSVecI16x8,
+                                      AddSatUVecI16x8,
+                                      SubVecI16x8,
+                                      SubSatSVecI16x8,
+                                      SubSatUVecI16x8,
+                                      MulVecI16x8,
+                                      MinSVecI16x8,
+                                      MinUVecI16x8,
+                                      MaxSVecI16x8,
+                                      MaxUVecI16x8,
+                                      AddVecI32x4,
+                                      SubVecI32x4,
+                                      MulVecI32x4,
+                                      MinSVecI32x4,
+                                      MinUVecI32x4,
+                                      MaxSVecI32x4,
+                                      MaxUVecI32x4,
+                                      DotSVecI16x8ToVecI32x4,
+                                      AddVecI64x2,
+                                      SubVecI64x2,
+                                      AddVecF32x4,
+                                      SubVecF32x4,
+                                      MulVecF32x4,
+                                      DivVecF32x4,
+                                      MinVecF32x4,
+                                      MaxVecF32x4,
+                                      AddVecF64x2,
+                                      SubVecF64x2,
+                                      MulVecF64x2,
+                                      DivVecF64x2,
+                                      MinVecF64x2,
+                                      MaxVecF64x2,
+                                      NarrowSVecI16x8ToVecI8x16,
+                                      NarrowUVecI16x8ToVecI8x16,
+                                      NarrowSVecI32x4ToVecI16x8,
+                                      NarrowUVecI32x4ToVecI16x8,
+                                      SwizzleVecI8x16)
+                                 .add(FeatureSet::FP16,
+                                      EqVecF16x8,
+                                      EqVecF16x8,
+                                      NeVecF16x8,
+                                      LtVecF16x8,
+                                      GtVecF16x8,
+                                      LeVecF16x8,
+                                      GeVecF16x8,
+                                      AddVecF16x8,
+                                      SubVecF16x8,
+                                      MulVecF16x8,
+                                      DivVecF16x8,
+                                      MinVecF16x8,
+                                      MaxVecF16x8)),
                           make(Type::v128),
                           make(Type::v128)});
     }
@@ -3221,15 +3995,14 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
   WASM_UNREACHABLE("invalid type");
 }
 
-Expression* TranslateToFuzzReader::buildSelect(const ThreeArgs& args,
-                                               Type type) {
-  return builder.makeSelect(args.a, args.b, args.c, type);
+Expression* TranslateToFuzzReader::buildSelect(const ThreeArgs& args) {
+  return builder.makeSelect(args.a, args.b, args.c);
 }
 
 Expression* TranslateToFuzzReader::makeSelect(Type type) {
   Type subType1 = getSubType(type);
   Type subType2 = getSubType(type);
-  return buildSelect({make(Type::i32), make(subType1), make(subType2)}, type);
+  return buildSelect({make(Type::i32), make(subType1), make(subType2)});
 }
 
 Expression* TranslateToFuzzReader::makeSwitch(Type type) {
@@ -3416,7 +4189,9 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       op = ExtractLaneVecI64x2;
       break;
     case Type::f32:
-      op = ExtractLaneVecF32x4;
+      op = pick(FeatureOptions<SIMDExtractOp>()
+                  .add(FeatureSet::SIMD, ExtractLaneVecF32x4)
+                  .add(FeatureSet::FP16, ExtractLaneVecF16x8));
       break;
     case Type::f64:
       op = ExtractLaneVecF64x2;
@@ -3435,6 +4210,7 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       break;
     case ExtractLaneSVecI16x8:
     case ExtractLaneUVecI16x8:
+    case ExtractLaneVecF16x8:
       index = upTo(8);
       break;
     case ExtractLaneVecI32x4:
@@ -3450,12 +4226,16 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDReplace() {
-  SIMDReplaceOp op = pick(ReplaceLaneVecI8x16,
-                          ReplaceLaneVecI16x8,
-                          ReplaceLaneVecI32x4,
-                          ReplaceLaneVecI64x2,
-                          ReplaceLaneVecF32x4,
-                          ReplaceLaneVecF64x2);
+  SIMDReplaceOp op =
+    pick(FeatureOptions<SIMDReplaceOp>()
+           .add(FeatureSet::SIMD,
+                ReplaceLaneVecI8x16,
+                ReplaceLaneVecI16x8,
+                ReplaceLaneVecI32x4,
+                ReplaceLaneVecI64x2,
+                ReplaceLaneVecF32x4,
+                ReplaceLaneVecF64x2)
+           .add(FeatureSet::FeatureSet::FP16, ReplaceLaneVecF16x8));
   Expression* vec = make(Type::v128);
   uint8_t index;
   Type lane_t;
@@ -3475,6 +4255,10 @@ Expression* TranslateToFuzzReader::makeSIMDReplace() {
     case ReplaceLaneVecI64x2:
       index = upTo(2);
       lane_t = Type::i64;
+      break;
+    case ReplaceLaneVecF16x8:
+      index = upTo(8);
+      lane_t = Type::f32;
       break;
     case ReplaceLaneVecF32x4:
       index = upTo(4);
@@ -3677,13 +4461,131 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   return builder.makeRefCast(make(refType), type);
 }
 
+Expression* TranslateToFuzzReader::makeBrOn(Type type) {
+  if (funcContext->breakableStack.empty()) {
+    return makeTrivial(type);
+  }
+  // We need to find a proper target to break to; try a few times. Finding the
+  // target is harder than flowing out the proper type, so focus on the target,
+  // and fix up the flowing type later. That is, once we find a target to break
+  // to, we can then either drop ourselves or wrap ourselves in a block +
+  // another value, so that we return the proper thing here (which is done below
+  // in fixFlowingType).
+  int tries = TRIES;
+  Name targetName;
+  Type targetType;
+  while (--tries >= 0) {
+    auto* target = pick(funcContext->breakableStack);
+    targetName = getTargetName(target);
+    targetType = getTargetType(target);
+    // We can send any reference type, or no value at all, but nothing else.
+    if (targetType.isRef() || targetType == Type::none) {
+      break;
+    }
+  }
+  if (tries < 0) {
+    return makeTrivial(type);
+  }
+
+  auto fixFlowingType = [&](Expression* brOn) -> Expression* {
+    if (Type::isSubType(brOn->type, type)) {
+      // Already of the proper type.
+      return brOn;
+    }
+    if (type == Type::none) {
+      // We just need to drop whatever it is.
+      return builder.makeDrop(brOn);
+    }
+    // We need to replace the type with something else. Drop the BrOn if we need
+    // to, and append a value with the proper type.
+    if (brOn->type != Type::none) {
+      brOn = builder.makeDrop(brOn);
+    }
+    return builder.makeSequence(brOn, make(type));
+  };
+
+  // We found something to break to. Figure out which BrOn variants we can
+  // send.
+  if (targetType == Type::none) {
+    // BrOnNull is the only variant that sends no value.
+    return fixFlowingType(
+      builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
+  }
+
+  // We are sending a reference type to the target. All other BrOn variants can
+  // do that.
+  assert(targetType.isRef());
+  auto op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  Type castType = Type::none;
+  Type refType;
+  switch (op) {
+    case BrOnNonNull: {
+      // The sent type is the non-nullable version of the reference, so any ref
+      // of that type is ok, nullable or not.
+      refType = Type(targetType.getHeapType(), getNullability());
+      break;
+    }
+    case BrOnCast: {
+      // The sent type is the heap type we cast to, with the input type's
+      // nullability, so the combination of the two must be a subtype of
+      // targetType.
+      castType = getSubType(targetType);
+      // The ref's type must be castable to castType, or we'd not validate. But
+      // it can also be a subtype, which will trivially also succeed (so do that
+      // more rarely). Pick subtypes rarely, as they make the cast trivial.
+      refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
+      if (targetType.isNonNullable()) {
+        // And it must have the right nullability for the target, as mentioned
+        // above: if the target type is non-nullable then either the ref or the
+        // cast types must be.
+        if (!refType.isNonNullable() && !castType.isNonNullable()) {
+          // Pick one to make non-nullable.
+          if (oneIn(2)) {
+            refType = Type(refType.getHeapType(), NonNullable);
+          } else {
+            castType = Type(castType.getHeapType(), NonNullable);
+          }
+        }
+      }
+      break;
+    }
+    case BrOnCastFail: {
+      // The sent type is the ref's type, with adjusted nullability (if the cast
+      // allows nulls then no null can fail the cast, and what is sent is non-
+      // nullable). First, pick a ref type that we can send to the target.
+      refType = getSubType(targetType);
+      // See above on BrOnCast, but flipped.
+      castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
+      // There is no nullability to adjust: if targetType is non-nullable then
+      // both refType and castType are as well, as subtypes of it. But we can
+      // also allow castType to be nullable (it is not sent to the target).
+      if (castType.isNonNullable() && oneIn(2)) {
+        castType = Type(castType.getHeapType(), Nullable);
+      }
+    } break;
+    default: {
+      WASM_UNREACHABLE("bad br_on op");
+    }
+  }
+  return fixFlowingType(
+    builder.makeBrOn(op, targetName, make(refType), castType));
+}
+
+bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
+  if (field.isPacked()) {
+    return oneIn(2);
+  }
+  return false;
+}
+
 Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto& structFields = typeStructFields[type];
   assert(!structFields.empty());
   auto [structType, fieldIndex] = pick(structFields);
   auto* ref = makeTrappingRefUse(structType);
-  // TODO: fuzz signed and unsigned
-  return builder.makeStructGet(fieldIndex, ref, type);
+  auto signed_ = maybeSignedGet(structType.getStruct().fields[fieldIndex]);
+  return builder.makeStructGet(
+    fieldIndex, ref, MemoryOrder::Unordered, type, signed_);
 }
 
 Expression* TranslateToFuzzReader::makeStructSet(Type type) {
@@ -3695,7 +4597,7 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
   auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
-  return builder.makeStructSet(fieldIndex, ref, value);
+  return builder.makeStructSet(fieldIndex, ref, value, MemoryOrder::Unordered);
 }
 
 // Make a bounds check for an array operation, given a ref + index. An optional
@@ -3731,9 +4633,9 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the reference (we stored the reference in a local,
     // so this reads from that local).
     Expression* getRef;
-    // An addition use of the index (as with the ref, it reads from a local).
+    // An additional use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-    // An addition use of the length, if it was provided.
+    // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
@@ -3748,18 +4650,18 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto arrayType = pick(arrays);
   auto* ref = makeTrappingRefUse(arrayType);
   auto* index = make(Type::i32);
+  auto signed_ = maybeSignedGet(arrayType.getArray().element);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    // TODO: fuzz signed and unsigned, and also below
-    return builder.makeArrayGet(ref, index, type);
+    return builder.makeArrayGet(ref, index, type, signed_);
   }
   // To avoid a trap, check the length dynamically using this pattern:
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, type);
+  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, type, signed_);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(check.condition, get, fallback);
 }
@@ -3777,7 +4679,6 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    // TODO: fuzz signed and unsigned, and also below
     return builder.makeArraySet(ref, index, value);
   }
   // To avoid a trap, check the length dynamically using this pattern:
@@ -3805,7 +4706,6 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     // Only rarely emit a plain get which might trap. See related logic in
     // ::makePointer().
     if (allowOOB && oneIn(10)) {
-      // TODO: fuzz signed and unsigned, and also below
       return builder.makeArrayFill(ref, index, value, length);
     }
     auto check =
@@ -3830,7 +4730,6 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     auto* srcRef = makeTrappingRefUse(srcArrayType);
     auto* length = make(Type::i32);
     if (allowOOB && oneIn(10)) {
-      // TODO: fuzz signed and unsigned, and also below
       return builder.makeArrayCopy(ref, index, srcRef, srcIndex, length);
     }
     auto check =
@@ -3847,6 +4746,40 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
   }
 }
 
+Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  auto* array = makeTrappingRefUse(getArrayTypeForString());
+  auto* start = make(Type::i32);
+
+  // Only rarely emit without a bounds check, which might trap. See related
+  // logic in other array operations.
+  if (allowOOB || oneIn(10)) {
+    return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
+  }
+
+  // Stash the string reference while computing its length for a bounds check.
+  auto refLocal = builder.addVar(funcContext->func, ref->type);
+  auto* setRef = builder.makeLocalSet(refLocal, ref);
+  auto* strLen = builder.makeStringMeasure(
+    StringMeasureWTF16, builder.makeLocalGet(refLocal, ref->type));
+
+  // Do a bounds check on the array.
+  auto check =
+    makeArrayBoundsCheck(array, start, funcContext->func, builder, strLen);
+  array = check.getRef;
+  start = check.getIndex;
+  auto* getRef = builder.makeLocalGet(refLocal, ref->type);
+  auto* encode =
+    builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
+
+  // Emit the set of the string reference and then an if that picks which code
+  // path to visit, depending on the outcome of the bounds check.
+  auto* iff = builder.makeIf(check.condition, encode, make(Type::i32));
+  return builder.makeSequence(setRef, iff);
+}
+
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
@@ -3860,7 +4793,7 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     addTag();
   }
   auto* tag = pick(wasm.tags).get();
-  auto tagType = tag->sig.params;
+  auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
     operands.push_back(make(t));
@@ -3899,7 +4832,7 @@ Expression* TranslateToFuzzReader::makeMemoryCopy() {
   }
   Expression* dest = makePointer();
   Expression* source = makePointer();
-  Expression* size = make(wasm.memories[0]->indexType);
+  Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryCopy(
     dest, source, size, wasm.memories[0]->name, wasm.memories[0]->name);
 }
@@ -3910,7 +4843,7 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
   }
   Expression* dest = makePointer();
   Expression* value = make(Type::i32);
-  Expression* size = make(wasm.memories[0]->indexType);
+  Expression* size = make(wasm.memories[0]->addressType);
   return builder.makeMemoryFill(dest, value, size, wasm.memories[0]->name);
 }
 
@@ -3946,7 +4879,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
@@ -3969,7 +4905,10 @@ Type TranslateToFuzzReader::getReferenceType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
@@ -4070,52 +5009,61 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     return type;
   }
   if (type.isBasic() && oneIn(2)) {
-    switch (type.getBasic()) {
+    auto share = type.getShared();
+    switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
         return pick(FeatureOptions<HeapType>()
                       .add(FeatureSet::ReferenceTypes, HeapType::func)
-                      .add(FeatureSet::GC, HeapType::nofunc));
+                      .add(FeatureSet::GC, HeapType::nofunc))
+          .getBasic(share);
+      case HeapType::cont:
+        return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext:
         return pick(FeatureOptions<HeapType>()
                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                      .add(FeatureSet::GC, HeapType::noext));
-      case HeapType::any:
+                      .add(FeatureSet::GC, HeapType::noext))
+          .getBasic(share);
+      case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::struct_,
-                    HeapType::array,
-                    HeapType::none);
+        auto options = FeatureOptions<HeapType>().add(FeatureSet::GC,
+                                                      HeapType::any,
+                                                      HeapType::eq,
+                                                      HeapType::i31,
+                                                      HeapType::struct_,
+                                                      HeapType::array,
+                                                      HeapType::none);
+        if (share == Unshared) {
+          // Shared strings not yet supported.
+          options.add(FeatureSet::Strings, HeapType::string);
+        }
+        return pick(options).getBasic(share);
+      }
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(HeapType::eq,
-                    HeapType::i31,
-                    HeapType::struct_,
-                    HeapType::array,
-                    HeapType::none);
+        return pick(HeapTypes::eq,
+                    HeapTypes::i31,
+                    HeapTypes::struct_,
+                    HeapTypes::array,
+                    HeapTypes::none)
+          .getBasic(share);
       case HeapType::i31:
-        return pick(HeapType::i31, HeapType::none);
+        return pick(HeapTypes::i31, HeapTypes::none).getBasic(share);
       case HeapType::struct_:
-        return pick(HeapType::struct_, HeapType::none);
+        return pick(HeapTypes::struct_, HeapTypes::none).getBasic(share);
       case HeapType::array:
-        return pick(HeapType::array, HeapType::none);
+        return pick(HeapTypes::array, HeapTypes::none).getBasic(share);
       case HeapType::exn:
-        return HeapType::exn;
+        return HeapTypes::exn.getBasic(share);
       case HeapType::string:
+        assert(share == Unshared);
         return HeapType::string;
-      case HeapType::stringview_wtf8:
-        return HeapType::stringview_wtf8;
-      case HeapType::stringview_wtf16:
-        return HeapType::stringview_wtf16;
-      case HeapType::stringview_iter:
-        return HeapType::stringview_iter;
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::nocont:
       case HeapType::noexn:
         break;
     }
@@ -4189,6 +5137,12 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
     superType = Type(heapType, Nullable);
   }
   return superType;
+}
+
+HeapType TranslateToFuzzReader::getArrayTypeForString() {
+  // Emit an array that can be used with JS-style strings, containing 16-bit
+  // elements. For now, this must be a mutable type as that is all V8 accepts.
+  return HeapType(Array(Field(Field::PackedType::i16, Mutable)));
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {

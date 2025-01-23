@@ -1,0 +1,7 @@
+# Verify that the build id is included in the source map.
+
+;; RUN: wasm-opt %s.wasm -o %t.wasm -osm %t.map
+;; RUN: cat %t.map | filecheck %s
+
+;; CHECK: {"version":3,"debugId":"01ab23cd45ef67ab89","sources":[],"names":[],"mappings":""}
+

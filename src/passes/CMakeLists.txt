@@ -29,11 +29,13 @@ set(passes_SOURCES
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   DeAlign.cpp
+  DebugLocationPropagation.cpp
   DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
+  EncloseWorld.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
@@ -46,15 +48,18 @@ set(passes_SOURCES
   hash-stringify-walker.cpp
   Outlining.cpp
   Heap2Local.cpp
+  HeapStoreOptimization.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
+  J2CLItableMerging.cpp
   J2CLOpts.cpp
   JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
+  LLVMMemoryCopyFillLowering.cpp
   LocalCSE.cpp
   LocalSubtyping.cpp
   LogExecution.cpp
@@ -66,11 +71,13 @@ set(passes_SOURCES
   MergeLocals.cpp
   Metrics.cpp
   MinifyImportsAndExports.cpp
+  MinimizeRecGroups.cpp
   Monomorphize.cpp
   MultiMemoryLowering.cpp
   NameList.cpp
   NameTypes.cpp
   NoInline.cpp
+  LLVMNontrappingFPToIntLowering.cpp
   OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeCasts.cpp
@@ -86,16 +93,16 @@ set(passes_SOURCES
   PrintFunctionMap.cpp
   RoundTrip.cpp
   SetGlobals.cpp
-  StackIR.cpp
   SignaturePruning.cpp
   SignatureRefining.cpp
   SignExtLowering.cpp
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
+  TraceCalls.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
-  RemoveMemory.cpp
+  RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp

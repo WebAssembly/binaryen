@@ -9,22 +9,22 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $unused-6 (sub (struct )))
+  ;; CHECK-NEXT:  (type $unused-6 (sub (struct)))
 
-  ;; CHECK:       (type $used-a-bit (sub (struct )))
+  ;; CHECK:       (type $used-a-bit (sub (struct)))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $unused-1 (sub (struct )))
+  ;; CHECK-NEXT:  (type $unused-1 (sub (struct)))
   (type $unused-1 (sub (struct)))
-  ;; CHECK:       (type $unused-2 (sub (struct )))
+  ;; CHECK:       (type $unused-2 (sub (struct)))
   (type $unused-2 (sub (struct)))
-  ;; CHECK:       (type $unused-3 (sub (struct )))
+  ;; CHECK:       (type $unused-3 (sub (struct)))
   (type $unused-3 (sub (struct)))
-  ;; CHECK:       (type $unused-4 (sub (struct )))
+  ;; CHECK:       (type $unused-4 (sub (struct)))
   (type $unused-4 (sub (struct)))
-  ;; CHECK:       (type $used-a-lot (sub (struct )))
+  ;; CHECK:       (type $used-a-lot (sub (struct)))
   (type $used-a-lot (sub (struct)))
-  ;; CHECK:       (type $unused-5 (sub (struct )))
+  ;; CHECK:       (type $unused-5 (sub (struct)))
   (type $unused-5 (sub (struct)))
  )
 
@@ -47,20 +47,20 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $leaf (sub (struct )))
+  ;; CHECK-NEXT:  (type $leaf (sub (struct)))
   (type $leaf (sub (struct)))
-  ;; CHECK:       (type $unused (sub (struct )))
+  ;; CHECK:       (type $unused (sub (struct)))
   (type $unused (sub (struct)))
  )
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $shrub (sub $leaf (struct )))
+  ;; CHECK-NEXT:  (type $shrub (sub $leaf (struct)))
 
-  ;; CHECK:       (type $used-a-ton (sub (struct )))
+  ;; CHECK:       (type $used-a-ton (sub (struct)))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $twig (sub (struct )))
+  ;; CHECK-NEXT:  (type $twig (sub (struct)))
   (type $twig (sub (struct)))
   ;; CHECK:       (type $used-a-bit (sub (struct (field (ref $leaf)))))
   (type $used-a-bit (sub (struct (ref $leaf))))
@@ -73,9 +73,9 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $root (sub (struct )))
+  ;; CHECK-NEXT:  (type $root (sub (struct)))
   (type $root (sub (struct)))
-  ;; CHECK:       (type $used-a-lot (sub $twig (struct )))
+  ;; CHECK:       (type $used-a-lot (sub $twig (struct)))
   (type $used-a-lot (sub $twig (struct)))
  )
 

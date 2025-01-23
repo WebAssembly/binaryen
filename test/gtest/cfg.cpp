@@ -35,9 +35,7 @@ TEST_F(CFGTest, Print) {
               (i32.const 3)
             )
             (else
-              (return
-               (i32.const 4)
-              )
+              (return)
             )
           )
         )
@@ -71,13 +69,12 @@ TEST_F(CFGTest, Print) {
 
 ;; preds: [0], succs: [7]
 5:
-  8: i32.const 4
-  9: return
+  8: return
 
 ;; preds: [4], succs: [7]
 6:
-  10: drop
-  11: block
+  9: drop
+  10: block
 
 ;; preds: [5, 6], succs: []
 ;; exit
@@ -152,7 +149,7 @@ TEST_F(CFGTest, Empty) {
 ;; entry
 ;; exit
 0:
-  0: nop
+  0: block
 )cfg";
 
   Module wasm;
@@ -301,10 +298,10 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
   Function* func = wasm.getFunction("bar");
   CFG cfg = CFG::fromFunction(func);
 
-  LocalGraph::GetSetses getSetses;
+  LocalGraph::GetSetsMap getSetsMap;
   LocalGraph::Locations locations;
   ReachingDefinitionsTransferFunction transferFunction(
-    func, getSetses, locations);
+    func, getSetsMap, locations);
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
@@ -323,12 +320,12 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
   LocalGet* getC = foundGets.list[2];
   LocalSet* setA1 = foundSets.list[0];
 
-  LocalGraph::GetSetses expectedResult;
+  LocalGraph::GetSetsMap expectedResult;
   expectedResult[getA1].insert(setA1);
   expectedResult[getA2].insert(setA1);
   expectedResult[getC].insert(nullptr);
 
-  EXPECT_EQ(expectedResult, getSetses);
+  EXPECT_EQ(expectedResult, getSetsMap);
 }
 
 TEST_F(CFGTest, ReachingDefinitionsIf) {
@@ -372,10 +369,10 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
   Function* func = wasm.getFunction("bar");
   CFG cfg = CFG::fromFunction(func);
 
-  LocalGraph::GetSetses getSetses;
+  LocalGraph::GetSetsMap getSetsMap;
   LocalGraph::Locations locations;
   ReachingDefinitionsTransferFunction transferFunction(
-    func, getSetses, locations);
+    func, getSetsMap, locations);
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
@@ -393,14 +390,14 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
   LocalSet* setB = foundSets.list[1];
   LocalSet* setA2 = foundSets.list[2];
 
-  LocalGraph::GetSetses expectedResult;
+  LocalGraph::GetSetsMap expectedResult;
   expectedResult[getA1].insert(setA1);
   expectedResult[getB].insert(nullptr);
   expectedResult[getB].insert(setB);
   expectedResult[getA2].insert(setA1);
   expectedResult[getA2].insert(setA2);
 
-  EXPECT_EQ(expectedResult, getSetses);
+  EXPECT_EQ(expectedResult, getSetsMap);
 }
 
 TEST_F(CFGTest, ReachingDefinitionsLoop) {
@@ -440,10 +437,10 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
   Function* func = wasm.getFunction("bar");
   CFG cfg = CFG::fromFunction(func);
 
-  LocalGraph::GetSetses getSetses;
+  LocalGraph::GetSetsMap getSetsMap;
   LocalGraph::Locations locations;
   ReachingDefinitionsTransferFunction transferFunction(
-    func, getSetses, locations);
+    func, getSetsMap, locations);
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
@@ -461,7 +458,7 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
   LocalGet* getA4 = foundGets.list[4];
   LocalSet* setA = foundSets.list[0];
 
-  LocalGraph::GetSetses expectedResult;
+  LocalGraph::GetSetsMap expectedResult;
   expectedResult[getA1].insert(nullptr);
   expectedResult[getA1].insert(setA);
   expectedResult[getA2].insert(nullptr);
@@ -470,5 +467,5 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
   expectedResult[getB].insert(nullptr);
   expectedResult[getA4].insert(setA);
 
-  EXPECT_EQ(expectedResult, getSetses);
+  EXPECT_EQ(expectedResult, getSetsMap);
 }

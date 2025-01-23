@@ -88,7 +88,7 @@
    (if
     (local.get $8)
     (then
-     (block $block1
+     (block $block
       (nop)
       (nop)
       (nop)

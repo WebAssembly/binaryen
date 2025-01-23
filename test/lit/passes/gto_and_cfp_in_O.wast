@@ -26,7 +26,7 @@
 
   ;; OPEN_WORLD:      (export "main" (func $main))
 
-  ;; OPEN_WORLD:      (func $by-ref (type $1) (; has Stack IR ;)
+  ;; OPEN_WORLD:      (func $by-ref (type $1)
   ;; OPEN_WORLD-NEXT:  (struct.set $struct 1
   ;; OPEN_WORLD-NEXT:   (global.get $glob)
   ;; OPEN_WORLD-NEXT:   (i32.const 200)
@@ -49,10 +49,10 @@
 
   ;; CHECK:      (export "main" (func $main))
 
-  ;; CHECK:      (func $main (type $0) (; has Stack IR ;) (result i32)
+  ;; CHECK:      (func $main (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $main (type $2) (; has Stack IR ;) (result i32)
+  ;; OPEN_WORLD:      (func $main (type $2) (result i32)
   ;; OPEN_WORLD-NEXT:  (struct.get $struct 1
   ;; OPEN_WORLD-NEXT:   (global.get $glob)
   ;; OPEN_WORLD-NEXT:  )

@@ -273,6 +273,13 @@
 //      some indirect calls that *do* need to be instrumented, or if you will
 //      do some later transform of the code that adds more call paths, etc.
 //
+//   --pass-arg=asyncify-propagate-addlist
+//
+//      The default behaviour of the addlist does not propagate instrumentation
+//      status. If this option is set then functions which call a function in
+//      the addlist will also be instrumented, and those that call them and so
+//      on.
+//
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
 //      If the "only-list" is provided, then *only* the functions in the list
@@ -534,6 +541,7 @@ public:
                  bool canIndirectChangeState,
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
+                 bool propagateAddList,
                  const String::Split& onlyListInput,
                  bool verbose)
     : module(module), canIndirectChangeState(canIndirectChangeState),
@@ -675,20 +683,61 @@ public:
       module.removeFunction(name);
     }
 
+    auto handleAddList = [&](ModuleAnalyzer::Map& map) {
+      if (!addListInput.empty()) {
+        for (auto& func : module.functions) {
+          if (addList.match(func->name) && removeList.match(func->name)) {
+            Fatal() << func->name
+                    << " is found in the add-list and in the remove-list";
+          }
+
+          if (!func->imported() && addList.match(func->name)) {
+            auto& info = map[func.get()];
+            if (verbose && !info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is in the add-list, add\n";
+            }
+            info.canChangeState = true;
+            info.addedFromList = true;
+          }
+        }
+      }
+    };
+
+    // When propagateAddList is enabled, we should check a add-list before
+    // scannerpropagateBack so that callers of functions in add-list should also
+    // be instrumented.
+    if (propagateAddList) {
+      handleAddList(scanner.map);
+    }
+
+    // The order of propagation in |propagateBack| is non-deterministic, so sort
+    // the loggings we intend to do.
+    std::vector<std::string> loggings;
+
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
-                              std::cout << "[asyncify] " << info.name
-                                        << " can change the state due to "
-                                        << reason->name << "\n";
+                          [](Info& info) { info.canChangeState = true; },
+                          [&](const Info& info, Function* reason) {
+                            if (verbose) {
+                              std::stringstream str;
+                              str << "[asyncify] " << info.name
+                                  << " can change the state due to "
+                                  << reason->name << "\n";
+                              loggings.push_back(str.str());
                             }
-                            info.canChangeState = true;
                           },
                           scanner.IgnoreNonDirectCalls);
+
+    if (!loggings.empty()) {
+      std::sort(loggings.begin(), loggings.end());
+      for (auto& logging : loggings) {
+        std::cout << logging;
+      }
+    }
 
     map.swap(scanner.map);
 
@@ -711,18 +760,10 @@ public:
       }
     }
 
-    if (!addListInput.empty()) {
-      for (auto& func : module.functions) {
-        if (!func->imported() && addList.match(func->name)) {
-          auto& info = map[func.get()];
-          if (verbose && !info.canChangeState) {
-            std::cout << "[asyncify] " << func->name
-                      << " is in the add-list, add\n";
-          }
-          info.canChangeState = true;
-          info.addedFromList = true;
-        }
-      }
+    // When propagateAddList is disabled, which is default behavior,
+    // functions in add-list are just prepended to instrumented functions.
+    if (!propagateAddList) {
+      handleAddList(map);
     }
 
     removeList.checkPatternsMatches();
@@ -1567,53 +1608,49 @@ struct Asyncify : public Pass {
   bool addsEffects() override { return true; }
 
   void run(Module* module) override {
-    auto& options = getPassOptions();
-    bool optimize = options.optimizeLevel > 0;
+    bool optimize = getPassOptions().optimizeLevel > 0;
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("asyncify-imports", "")));
-    auto ignoreImports =
-      options.getArgumentOrDefault("asyncify-ignore-imports", "");
+      getArgumentOrDefault("asyncify-imports", "")));
+    auto ignoreImports = getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports,
                                 String::Split::NewLineOr(","));
     // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
     // to false.
-    auto canIndirectChangeState =
-      !options.hasArgument("asyncify-ignore-indirect");
+    auto canIndirectChangeState = !hasArgument("asyncify-ignore-indirect");
     std::string removeListInput =
-      options.getArgumentOrDefault("asyncify-removelist", "");
+      getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
+      removeListInput = getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
       String::trim(read_possible_response_file(removeListInput)),
       String::Split::NewLineOr(","));
-    String::Split addList(
-      String::trim(read_possible_response_file(
-        options.getArgumentOrDefault("asyncify-addlist", ""))),
-      String::Split::NewLineOr(","));
-    std::string onlyListInput =
-      options.getArgumentOrDefault("asyncify-onlylist", "");
+    String::Split addList(String::trim(read_possible_response_file(
+                            getArgumentOrDefault("asyncify-addlist", ""))),
+                          String::Split::NewLineOr(","));
+    std::string onlyListInput = getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput = getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)),
       String::Split::NewLineOr(","));
-    auto asserts = options.hasArgument("asyncify-asserts");
-    auto verbose = options.hasArgument("asyncify-verbose");
-    auto relocatable = options.hasArgument("asyncify-relocatable");
-    auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
+    auto asserts = hasArgument("asyncify-asserts");
+    auto verbose = hasArgument("asyncify-verbose");
+    auto relocatable = hasArgument("asyncify-relocatable");
+    auto secondaryMemory = hasArgument("asyncify-in-secondary-memory");
+    auto propagateAddList = hasArgument("asyncify-propagate-addlist");
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
       auto secondaryMemorySizeString =
-        options.getArgumentOrDefault("asyncify-secondary-memory-size", "1");
+        getArgumentOrDefault("asyncify-secondary-memory-size", "1");
       Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
       asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
     } else {
@@ -1651,6 +1688,7 @@ struct Asyncify : public Pass {
                             canIndirectChangeState,
                             removeList,
                             addList,
+                            propagateAddList,
                             onlyList,
                             verbose);
 

@@ -352,7 +352,12 @@ public:
   // Main entry point. This performs the entire process of creating new heap
   // types and calling the hooks below, then applies the new types throughout
   // the module.
-  void update();
+  //
+  // This only operates on private types (so as not to modify the module's
+  // external ABI). It takes as a parameter a list of public types to consider
+  // private, which allows more flexibility (e.g. in closed world if a pass
+  // knows a type is safe to modify despite being public, it can add it).
+  void update(const std::vector<HeapType>& additionalPrivateTypes = {});
 
   using TypeMap = std::unordered_map<HeapType, HeapType>;
 
@@ -363,6 +368,12 @@ public:
   // The input map does not need to contain all the types. Whenever a type does
   // not appear, it is mapped to itself.
   void mapTypes(const TypeMap& oldToNewTypes);
+
+  // Users of `mapTypes` may want to update the type names according to their
+  // mapping. This is not done automatically in `mapTypes` because other users
+  // may want the names to reflect that types have been replaced. Do the same
+  // mapping for recorded type indices.
+  void mapTypeNamesAndIndices(const TypeMap& oldToNewTypes);
 
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
@@ -398,7 +409,10 @@ public:
 
   // Helper for the repeating pattern of just updating Signature types using a
   // map of old heap type => new Signature.
-  static void updateSignatures(const SignatureUpdates& updates, Module& wasm) {
+  static void
+  updateSignatures(const SignatureUpdates& updates,
+                   Module& wasm,
+                   const std::vector<HeapType>& additionalPrivateTypes = {}) {
     if (updates.empty()) {
       return;
     }
@@ -407,9 +421,11 @@ public:
       const SignatureUpdates& updates;
 
     public:
-      SignatureRewriter(Module& wasm, const SignatureUpdates& updates)
+      SignatureRewriter(Module& wasm,
+                        const SignatureUpdates& updates,
+                        const std::vector<HeapType>& additionalPrivateTypes)
         : GlobalTypeRewriter(wasm), updates(updates) {
-        update();
+        update(additionalPrivateTypes);
       }
 
       void modifySignature(HeapType oldSignatureType, Signature& sig) override {
@@ -419,7 +435,7 @@ public:
           sig.results = getTempType(iter->second.results);
         }
       }
-    } rewriter(wasm, updates);
+    } rewriter(wasm, updates, additionalPrivateTypes);
   }
 
 protected:
@@ -427,9 +443,7 @@ protected:
   // returns a map from the old types to the modified types. Used internally in
   // update().
   //
-  // This only operates on private types (so as not to modify the module's
-  // external ABI). It takes as a parameter a list of public types to consider
-  // private, which allows more flexibility.
+  // See above regarding private types.
   TypeMap
   rebuildTypes(const std::vector<HeapType>& additionalPrivateTypes = {});
 

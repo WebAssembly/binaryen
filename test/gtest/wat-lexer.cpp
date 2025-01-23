@@ -77,9 +77,6 @@ TEST(LexerTest, LexBlockComment) {
 }
 
 TEST(LexerTest, LexParens) {
-  Token left{"("sv, LParenTok{}};
-  Token right{")"sv, RParenTok{}};
-
   Lexer lexer("(())"sv);
 
   ASSERT_FALSE(lexer.empty());

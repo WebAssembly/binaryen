@@ -27,6 +27,7 @@ using Loggings = std::vector<Literal>;
 
 // Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {
+private:
   Loggings& loggings;
 
   struct State {
@@ -37,30 +38,102 @@ struct LoggingExternalInterface : public ShellExternalInterface {
     uint32_t tempRet0 = 0;
   } state;
 
-  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
+  // The name of the table exported by the name 'table.' Imports access it.
+  Name exportedTable;
+  Module& wasm;
+
+  // The ModuleRunner and this ExternalInterface end up needing links both ways,
+  // so we cannot init this in the constructor.
+  ModuleRunner* instance = nullptr;
+
+public:
+  LoggingExternalInterface(Loggings& loggings, Module& wasm)
+    : loggings(loggings), wasm(wasm) {
+    for (auto& exp : wasm.exports) {
+      if (exp->kind == ExternalKind::Table && exp->name == "table") {
+        exportedTable = exp->value;
+        break;
+      }
+    }
+  }
 
   Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
-      std::cout << "[LoggingExternalInterface logging";
-      loggings.push_back(Literal()); // buffer with a None between calls
-      for (auto argument : arguments) {
-        if (argument.type == Type::i64) {
-          // To avoid JS legalization changing logging results, treat a logging
-          // of an i64 as two i32s (which is what legalization would turn us
-          // into).
-          auto low = Literal(int32_t(argument.getInteger()));
-          auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
-          std::cout << ' ' << low;
-          loggings.push_back(low);
-          std::cout << ' ' << high;
-          loggings.push_back(high);
-        } else {
-          std::cout << ' ' << argument;
-          loggings.push_back(argument);
+      if (import->base.startsWith("log")) {
+        // This is a logging function like log-i32 or log-f64
+        std::cout << "[LoggingExternalInterface logging";
+        loggings.push_back(Literal()); // buffer with a None between calls
+        for (auto argument : arguments) {
+          if (argument.type == Type::i64) {
+            // To avoid JS legalization changing logging results, treat a
+            // logging of an i64 as two i32s (which is what legalization would
+            // turn us into).
+            auto low = Literal(int32_t(argument.getInteger()));
+            auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
+            std::cout << ' ' << low;
+            loggings.push_back(low);
+            std::cout << ' ' << high;
+            loggings.push_back(high);
+          } else {
+            std::cout << ' ' << argument;
+            loggings.push_back(argument);
+          }
         }
+        std::cout << "]\n";
+        return {};
+      } else if (import->base == "throw") {
+        throwEmptyException();
+      } else if (import->base == "table-get") {
+        // Check for errors here, duplicating tableLoad(), because that will
+        // trap, and we just want to throw an exception (the same as JS would).
+        if (!exportedTable) {
+          throwEmptyException();
+        }
+        auto index = arguments[0].getUnsigned();
+        if (index >= tables[exportedTable].size()) {
+          throwEmptyException();
+        }
+        return {tableLoad(exportedTable, index)};
+      } else if (import->base == "table-set") {
+        if (!exportedTable) {
+          throwEmptyException();
+        }
+        auto index = arguments[0].getUnsigned();
+        if (index >= tables[exportedTable].size()) {
+          throwEmptyException();
+        }
+        tableStore(exportedTable, index, arguments[1]);
+        return {};
+      } else if (import->base == "call-export") {
+        callExportAsJS(arguments[0].geti32());
+        // Return nothing. If we wanted to return a value we'd need to have
+        // multiple such functions, one for each signature.
+        return {};
+      } else if (import->base == "call-export-catch") {
+        try {
+          callExportAsJS(arguments[0].geti32());
+          return {Literal(int32_t(0))};
+        } catch (const WasmException& e) {
+          return {Literal(int32_t(1))};
+        }
+      } else if (import->base == "call-ref") {
+        callRefAsJS(arguments[0]);
+        // Return nothing. If we wanted to return a value we'd need to have
+        // multiple such functions, one for each signature.
+        return {};
+      } else if (import->base == "call-ref-catch") {
+        try {
+          callRefAsJS(arguments[0]);
+          return {Literal(int32_t(0))};
+        } catch (const WasmException& e) {
+          return {Literal(int32_t(1))};
+        }
+      } else if (import->base == "sleep") {
+        // Do not actually sleep, just return the id.
+        return {arguments[1]};
+      } else {
+        WASM_UNREACHABLE("unknown fuzzer import");
       }
-      std::cout << "]\n";
-      return {};
     } else if (import->module == ENV) {
       if (import->base == "log_execution") {
         std::cout << "[LoggingExternalInterface log-execution";
@@ -80,6 +153,68 @@ struct LoggingExternalInterface : public ShellExternalInterface {
               << import->module << " . " << import->base << '\n';
     return {};
   }
+
+  void throwEmptyException() {
+    // Use a hopefully private tag.
+    auto payload = std::make_shared<ExnData>("__private", Literals{});
+    throwException(WasmException{Literal(payload)});
+  }
+
+  Literals callExportAsJS(Index index) {
+    if (index >= wasm.exports.size()) {
+      // No export.
+      throwEmptyException();
+    }
+    auto& exp = wasm.exports[index];
+    if (exp->kind != ExternalKind::Function) {
+      // No callable export.
+      throwEmptyException();
+    }
+    return callFunctionAsJS(exp->value);
+  }
+
+  Literals callRefAsJS(Literal ref) {
+    if (!ref.isFunction()) {
+      // Not a callable ref.
+      throwEmptyException();
+    }
+    return callFunctionAsJS(ref.getFunc());
+  }
+
+  // Call a function in a "JS-ey" manner, adding arguments as needed, and
+  // throwing if necessary, the same way JS does.
+  Literals callFunctionAsJS(Name name) {
+    auto* func = wasm.getFunction(name);
+
+    // Send default values as arguments, or error if we need anything else.
+    Literals arguments;
+    for (const auto& param : func->getParams()) {
+      // An i64 param can work from JS, but fuzz_shell provides 0, which errors
+      // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
+      if (param == Type::i64 || param == Type::v128 || param.isExn()) {
+        throwEmptyException();
+      }
+      if (!param.isDefaultable()) {
+        throwEmptyException();
+      }
+      arguments.push_back(Literal::makeZero(param));
+    }
+
+    // Error on illegal results. Note that this happens, as per JS semantics,
+    // *before* the call.
+    for (const auto& result : func->getResults()) {
+      // An i64 result is fine: a BigInt will be provided. But v128 and exnref
+      // still error.
+      if (result == Type::v128 || result.isExn()) {
+        throwEmptyException();
+      }
+    }
+
+    // Call the function.
+    return instance->callFunction(func->name, arguments);
+  }
+
+  void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
 };
 
 // gets execution results from a wasm module. this is useful for fuzzing
@@ -98,9 +233,10 @@ struct ExecutionResults {
 
   // get results of execution
   void get(Module& wasm) {
-    LoggingExternalInterface interface(loggings);
+    LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      interface.setModuleRunner(&instance);
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
@@ -148,7 +284,7 @@ struct ExecutionResults {
     // simple and stable internal structures that optimizations will not alter.
     auto type = value.type;
     if (type.isRef()) {
-      if (type.isString() || type.getHeapType() == HeapType::i31) {
+      if (type.isString() || type.getHeapType().isMaybeShared(HeapType::i31)) {
         std::cout << value << '\n';
       } else if (value.isNull()) {
         std::cout << "null\n";
@@ -175,17 +311,22 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
-    if (a.type.isRef()) {
-      // Don't compare references. There are several issues here that we can't
-      // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
-      // but the core issue is that since we optimize assuming a closed world,
-      // the types and structure of GC data can arbitrarily change after
-      // optimizations, even in ways that are externally visible from outside
-      // the module.
-      //
-      // TODO: Once we support optimizing under some form of open-world
-      // assumption, we should be able to check that the types and/or structure
-      // of GC data passed out of the module does not change.
+    // Don't compare references. There are several issues here that we can't
+    // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
+    // but the core issue is that since we optimize assuming a closed world, the
+    // types and structure of GC data can arbitrarily change after
+    // optimizations, even in ways that are externally visible from outside
+    // the module.
+    //
+    // We can, however, compare strings as they refer to simple data that has a
+    // consistent representation (the same reasons as why we can print them in
+    // printValue(), above).
+    //
+    // TODO: Once we support optimizing under some form of open-world
+    // assumption, we should be able to check that the types and/or structure of
+    // GC data passed out of the module does not change.
+    if (a.type.isRef() && !a.type.isString() &&
+        !a.type.getHeapType().isMaybeShared(HeapType::i31)) {
       return true;
     }
     if (a != b) {
@@ -243,9 +384,10 @@ struct ExecutionResults {
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
   FunctionResult run(Function* func, Module& wasm) {
-    LoggingExternalInterface interface(loggings);
+    LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      interface.setModuleRunner(&instance);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // May throw in instance creation (init of offsets).

@@ -6,13 +6,12 @@
   ;; removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
   ;; CHECK:      (func $func (type $1) (param $x (ref $struct))
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $struct))
   )
@@ -22,7 +21,7 @@
   ;; A write does not keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -53,7 +52,7 @@
   ;; A new does not keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -77,7 +76,7 @@
   ;; A new_default does not keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -328,23 +327,18 @@
   )
 
   ;; CHECK:      (func $func-0 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-0)
   ;; CHECK:      (func $func-1 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-1)
   ;; CHECK:      (func $func-2 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-2)
   ;; CHECK:      (func $func-3 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-3)
   ;; CHECK:      (func $func-4 (type $0)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func-4)
 )
@@ -589,17 +583,23 @@
   )
 
   ;; CHECK:      (func $new-side-effect-in-kept (type $3) (param $any (ref any))
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (call $helper0
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $new-side-effect-in-kept (param $any (ref any))
-    ;; Side effects appear in fields that we do *not* remove. In that case,
-    ;; we do not need to use locals.
+    ;; Side effects appear in fields that we do *not* remove. We do not need to
+    ;; use locals here, but for simplicity we do, and rely on later opts.
     (drop
       (struct.new $struct
         (call $helper0 (i32.const 0))
@@ -631,26 +631,27 @@
   )
 )
 
-;; We can remove fields from the end if they are only used in subtypes, because
-;; the subtypes can always add fields at the end (and only at the end).
+;; We can remove fields if they are only used in subtypes, because we can
+;; reorder the fields in the super and re-add them in the sub, appending on top
+;; of the now-shorter super.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i64))))
+  ;; CHECK-NEXT:  (type $parent (sub (struct (field i64))))
   (type $parent (sub (struct (field i32) (field i64) (field f32) (field f64))))
 
-  ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
+  ;; CHECK:       (type $child (sub $parent (struct (field i64) (field i32) (field f32) (field f64) (field anyref))))
   (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
 
   ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
 
   ;; CHECK:      (func $func (type $2) (param $x (ref $parent)) (param $y (ref $child))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:   (struct.get $child 1
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -672,9 +673,10 @@
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $parent)) (param $y (ref $child))
     ;; The parent has fields 0, 1, 2, 3 and the child adds 4.
-    ;; Use fields only 1 in the parent, and all the rest in the child. We can
-    ;; only remove from the end in the child, which means we can remove 2 and 3
-    ;; in the parent, but not 0.
+    ;; Use only field 1 in the parent, and all the rest in the child. We can
+    ;; reorder field 1 to the start of the parent (flipping its position with
+    ;; field 0) and then remove all the fields but the now-first. The child
+    ;; keeps all fields, but is reordered.
     (drop (struct.get $parent 1 (local.get $x)))
     (drop (struct.get $child  0 (local.get $y)))
     (drop (struct.get $child  2 (local.get $y)))
@@ -685,31 +687,31 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i64) (field (mut f32)))))
+  ;; CHECK-NEXT:  (type $parent (sub (struct (field i64) (field (mut f32)))))
   (type $parent (sub (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)))))
 
-  ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field (mut f32)) (field f64) (field anyref))))
+  ;; CHECK:       (type $child (sub $parent (struct (field i64) (field (mut f32)) (field i32) (field f64) (field anyref))))
   (type $child (sub $parent (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)))))
 
   ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
 
   ;; CHECK:      (func $func (type $2) (param $x (ref $parent)) (param $y (ref $child))
-  ;; CHECK-NEXT:  (struct.set $parent 2
+  ;; CHECK-NEXT:  (struct.set $parent 1
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (f32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:   (struct.get $child 2
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:   (struct.get $child 1
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -733,6 +735,54 @@
     (drop (struct.get $child  0 (local.get $y)))
     (drop (struct.get $child  2 (local.get $y)))
     (drop (struct.get $child  3 (local.get $y)))
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $parent (sub (struct (field i64) (field (mut f32)))))
+  (type $parent (sub (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)))))
+
+  ;; CHECK:       (type $child (sub $parent (struct (field i64) (field (mut f32)) (field i32) (field anyref))))
+  (type $child (sub $parent (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)))))
+
+  ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (struct.set $parent 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 1
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; As above, but now we remove fields in the child as well: 3 is not used.
+    (struct.set $parent 2 (local.get $x) (f32.const 0))
+
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    ;; the read of 3 was removed here.
     (drop (struct.get $child  4 (local.get $y)))
   )
 )
@@ -770,10 +820,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $parent (sub (struct )))
+    ;; CHECK-NEXT:  (type $parent (sub (struct)))
     (type $parent (sub (struct (field i32))))
 
-    ;; CHECK:       (type $child2 (sub $parent (struct )))
+    ;; CHECK:       (type $child2 (sub $parent (struct)))
 
     ;; CHECK:       (type $child1 (sub $parent (struct (field i32))))
     (type $child1 (sub $parent (struct (field i32))))
@@ -802,7 +852,7 @@
 
   ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:       (type $"{mut:i8}" (sub (struct )))
+  ;; CHECK:       (type $"{mut:i8}" (sub (struct)))
   (type $"{mut:i8}" (sub (struct (field (mut i8)))))
 
   ;; CHECK:       (type $4 (func (param (ref null $"{mut:i8}"))))
@@ -928,7 +978,7 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field anyref) (field i32) (field f32) (field f64))))
 
   ;; CHECK:       (type $1 (func (result (ref $struct))))
@@ -968,6 +1018,612 @@
         )
         (f64.const 30)
       )
+    )
+  )
+)
+
+;; A parent with two children, with fields used in various combinations.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field eqref) (field nullref))))
+    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
+
+    ;; CHECK:       (type $C (sub $A (struct (field i64) (field eqref) (field nullref) (field f64) (field anyref))))
+    (type $C (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
+
+    ;; CHECK:       (type $B (sub $A (struct (field i64) (field eqref) (field nullref) (field f32) (field anyref))))
+    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
+  )
+
+  ;; CHECK:       (type $3 (func (param anyref)))
+
+  ;; CHECK:      (func $func (type $3) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 3
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 3
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 4
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 4
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 1
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 2
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 2
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x anyref)
+    ;; Field 0 (i32)     is used nowhere.
+    ;; Field 1 (i64)     is used only in $A.
+    ;; Field 2 (f32)     is used only in $B.
+    ;; Field 3 (f64)     is used only in $C.
+    ;; Field 4 (anyref)  is used only in $B and $C.
+    ;; Field 5 (eqref)   is used only in $A and $C.
+    ;; Field 6 (nullref) is used only in $A and $B.
+    ;; As a result:
+    ;;   * A can keep only fields 1, 5, 6 (i64, eqref, nullref).
+    ;;   * B keeps A's fields, and appends 2, 4 (f32, anyref).
+    ;;   * C keeps A's fields, and appends 3, 4 (f64, anyref).
+
+    (drop (struct.get $A 1 (ref.cast (ref $A) (local.get $x))))
+
+    (drop (struct.get $B 2 (ref.cast (ref $B) (local.get $x))))
+
+    (drop (struct.get $C 3 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $B 4 (ref.cast (ref $B) (local.get $x))))
+    (drop (struct.get $C 4 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 5 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $C 5 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 6 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $B 6 (ref.cast (ref $B) (local.get $x))))
+  )
+)
+
+;; As above, but instead of $A having children $B, $C, now they are a chain,
+;;   $A :> $B :> $C
+;; $C must now also include $B's fields (specifically field 2, the f32).
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field eqref) (field nullref))))
+    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
+
+    ;; CHECK:       (type $B (sub $A (struct (field i64) (field eqref) (field nullref) (field f32) (field anyref))))
+    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
+
+    ;; CHECK:       (type $C (sub $B (struct (field i64) (field eqref) (field nullref) (field f32) (field anyref) (field f64))))
+    (type $C (sub $B (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
+  )
+
+  ;; CHECK:       (type $3 (func (param anyref)))
+
+  ;; CHECK:      (func $func (type $3) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 3
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 5
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 4
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 4
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 1
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 2
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 2
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x anyref)
+    ;; Same uses as before.
+
+    (drop (struct.get $A 1 (ref.cast (ref $A) (local.get $x))))
+
+    (drop (struct.get $B 2 (ref.cast (ref $B) (local.get $x))))
+
+    (drop (struct.get $C 3 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $B 4 (ref.cast (ref $B) (local.get $x))))
+    (drop (struct.get $C 4 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 5 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $C 5 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 6 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $B 6 (ref.cast (ref $B) (local.get $x))))
+  )
+)
+
+;; The parent $A is an empty struct, with nothing to remove. See we do not error
+;; here.
+(module
+  ;; CHECK:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:      (type $B (sub $A (struct)))
+  (type $B (sub $A (struct)))
+
+  ;; CHECK:      (type $2 (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $B))
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+    ;; Use $B in a param to keep it alive, and lead us to process it and $A.
+  )
+)
+
+;; As above, but now $B has fields to remove.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:       (type $B (sub $A (struct)))
+  (type $B (sub $A (struct (field i32) (field i64))))
+
+  ;; CHECK:       (type $2 (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $B))
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+  )
+)
+
+;; As above, but now $B's fields are used.
+(module
+  ;; CHECK:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:      (type $B (sub $A (struct (field i32) (field i64))))
+  (type $B (sub $A (struct (field i32) (field i64))))
+
+  ;; CHECK:      (type $2 (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+    (drop (struct.get $B 0 (local.get $x)))
+    (drop (struct.get $B 1 (local.get $x)))
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
+    (type $A (sub (struct (field i32))))
+    ;; CHECK:       (type $B (sub $A (struct (field i32))))
+    (type $B (sub $A (struct (field i32) (field f64))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $x (ref null $A))
+    ;; We cannot remove anything from $A, but we can from $B. That $A is
+    ;; unchanged should not confuse us.
+    (drop
+      (struct.get $A 0
+        (local.get $x)
+      )
+    )
+    ;; $B reads field 0, but not its new field 1.
+    (drop
+      (struct.get $B 0
+        (ref.cast (ref $B)
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (struct (field i32))))
+    ;; CHECK:       (type $B (sub $A (struct (field i32) (field f64))))
+    (type $B (sub $A (struct (field i32) (field f64))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $x (ref null $B))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $x (ref null $B))
+    ;; We can remove everything from $A, but nothing from $B. That $A changes
+    ;; entirely, and $B changes not at all, should not cause any errors.
+    (local.set $x
+      (struct.new $B
+        (i32.const 42)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $x)
+      )
+    )
+    (drop
+      (struct.get $B 1
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; Public types cannot be optimized. The function type here is public as the
+;; function is exported, and so the entire rec group is public, and cannot be
+;; modified. We cannot even optimize $child3 which is outside of the rec group,
+;; because its parent is inside. However, we can optimize $unrelated which is
+;; unrelated to them (and so we can remove the field there).
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $parent (sub (struct (field (ref func)))))
+    (type $parent (sub (struct (field (ref func)))))
+    ;; CHECK:       (type $child1 (sub $parent (struct (field (ref func)))))
+    (type $child1 (sub $parent (struct (field (ref func)))))
+    ;; CHECK:       (type $child2 (sub $parent (struct (field (ref func)))))
+    (type $child2 (sub $parent (struct (field (ref func)))))
+
+    ;; CHECK:       (type $func (func (param (ref $child2))))
+    (type $func (func (param $child2 (ref $child2))))
+  )
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $unrelated (sub (struct)))
+
+  ;; CHECK:       (type $child3 (sub $parent (struct (field (ref func)))))
+  (type $child3 (sub $parent (struct (field (ref func)))))
+
+  (type $unrelated (sub (struct (field (ref func)))))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $func) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child1
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child2
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child3
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $unrelated)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func") (type $func) (param $child2 (ref $child2))
+    ;; Create all the types. Note that the value here is non-nullable, as is the
+    ;; field, so if we remove the field by mistake in GTO but leave it during
+    ;; TypeUpdater, we'd error (on providing a default value for a non-nullable
+    ;; field).
+    (drop
+      (struct.new $parent
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child1
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child2
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child3
+        (ref.func $func)
+      )
+    )
+    ;; We can optimize this one, and no other.
+    (drop
+      (struct.new $unrelated
+        (ref.func $func)
+      )
+    )
+  )
+)
+
+;; The type $A is public because it is on an exported global. As a result we
+;; cannot remove the unused i32 field from its child or grandchild.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; Use $C so it isn't removed trivially, which also keeps $B alive as its
+  ;; super.
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but now there is an f64 field on $C that can be removed, since it
+;; is not on the parents.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but the f64 field is now on $B as well. We can still remove it.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but now $B is public as well. Now we cannot remove the f64.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (global $globalB (ref $B) (struct.new_default $C))
+  (global $globalB (ref $B) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (export "globalB" (global $globalB))
+  (export "globalB" (global $globalB))
+)
+
+;; Removed atomic sets needs special handling.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (shared (struct)))
+  (type $A (shared (struct (mut i32))))
+
+  ;; CHECK:       (type $1 (func (param (ref $A))))
+
+  ;; CHECK:      (func $sets (type $1) (param $0 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (block (result (ref $A))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (atomic.fence)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sets (param (ref $A))
+    ;; Normal set is optimizable.
+    (struct.set $A 0
+      (local.get 0)
+      (i32.const 1)
+    )
+    ;; Release set is optimizable without a fence because there is no get to
+    ;; synchronize with.
+    (struct.atomic.set acqrel $A 0
+      (local.get 0)
+      (i32.const 1)
+    )
+    ;; This requires a fence to keep the effect on the global order of seqcst
+    ;; operations.
+    (struct.atomic.set $A 0
+      (local.get 0)
+      (i32.const 1)
     )
   )
 )

@@ -39,6 +39,7 @@ enum JsType {
   JS_INT16X8,
   JS_INT32X4,
   JS_INT64,
+  JS_REF,
   JS_NONE // number of types
 };
 
@@ -51,6 +52,7 @@ enum JsSign {
 };
 
 cashew::Ref makeJsCoercedZero(JsType type);
+bool needsJsCoercion(JsType type);
 cashew::Ref makeJsCoercion(cashew::Ref node, JsType type);
 cashew::Ref makeSigning(cashew::Ref node, JsSign sign);
 

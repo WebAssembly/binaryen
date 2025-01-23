@@ -60,7 +60,7 @@ def do_test_binaryen_js_with(which):
             test([shared.MOZJS, '-m', 'a.mjs'])
         if shared.NODEJS:
             if node_has_wasm or 'WebAssembly.' not in test_src:
-                test([shared.NODEJS, '--experimental-wasm-eh', 'a.mjs'])
+                test([shared.NODEJS, 'a.mjs'])
             else:
                 print('Skipping ' + test_path + ' because WebAssembly might not be supported')
 

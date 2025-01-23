@@ -555,16 +555,16 @@
 ;;            subtype, the get must trap anyhow (the reference it receives can
 ;;            only be null in this closed world).
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32))))
   (type $substruct (sub $struct (struct i32)))
 
+  ;; CHECK:      (type $2 (func))
+
   ;; CHECK:      (type $3 (func (param (ref null $substruct))))
 
-  ;; CHECK:      (func $create (type $0)
+  ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -604,14 +604,14 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (sub (struct (mut i32))))
-  ;; CHECK:      (type $1 (func (param (ref null $struct))))
-
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)))))
   (type $substruct (sub $struct (struct (mut i32))))
 
+  ;; CHECK:      (type $2 (func (param (ref null $struct))))
+
   ;; CHECK:      (type $3 (func (param (ref null $substruct))))
 
-  ;; CHECK:      (func $create (type $1) (param $struct (ref null $struct))
+  ;; CHECK:      (func $create (type $2) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -658,17 +658,17 @@
 ;;            reference to the subtype (we never create a supertype) and so we
 ;;            can optimize.
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
+
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct))))
 
-  ;; CHECK:      (func $create (type $0)
+  ;; CHECK:      (func $create (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -767,6 +767,10 @@
 ;; Subtyping: Create both a subtype and a supertype, with different constants
 ;;            for the shared field, preventing optimization, as a get of the
 ;;            supertype may receive an instance of the subtype.
+;;
+;; Note that this may be optimized using a ref.test, in --cfp-reftest, but not
+;; in --cfp. This gives us coverage that --cfp does not do the things that
+;; --cfp-reftest does (how --cfp-reftest works is tested in cfp-reftest.wast).
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
@@ -2228,6 +2232,87 @@
       )
     )
   )
+
+  ;; CHECK:      (func $test_signed (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_8
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (i32.const 305419896)
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_16
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (i32.const 305419896)
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $B_16
+  ;; CHECK-NEXT:       (global.get $g)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (global.get $g)
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_signed
+    ;; As above, but with signed gets.
+    (drop
+      (struct.get_s $A_8 0
+        (struct.new $A_8
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_s $A_16 0
+        (struct.new $A_16
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_s $B_16 0
+        (struct.new $B_16
+          (global.get $g)
+        )
+      )
+    )
+  )
 )
 
 (module
@@ -2247,9 +2332,11 @@
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (select (result (ref null $A))
   ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (struct.new $B
-  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:    (block (result (ref null $A))
+  ;; CHECK-NEXT:     (local.tee $B
+  ;; CHECK-NEXT:      (struct.new $B
+  ;; CHECK-NEXT:       (i32.const 20)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
@@ -2276,10 +2363,12 @@
       ;; This select is used to keep the type that reaches the struct.set $A,
       ;; and not $B, so it looks like a perfect copy of $A->$A.
       (select (result (ref null $A))
-        (ref.null $A)
-        (local.tee $B
-          (struct.new $B
-            (i32.const 20)
+        (ref.null none)
+        (block (result (ref null $A))
+          (local.tee $B
+            (struct.new $B
+              (i32.const 20)
+            )
           )
         )
         (i32.const 0)
@@ -2621,6 +2710,245 @@
     (drop
       (struct.get $B2 0
         (local.get $B2)
+      )
+    )
+  )
+)
+
+;; $C is created with two values for its field: a global.get, and a copy from
+;; another $C, which does not expand the set of possible values. We should not
+;; get confused about $B, its sibling, which is never created, and whose field
+;; has an incompatible type.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
+    (type $X (sub (struct)))
+    ;; CHECK:       (type $Y (sub final $X (struct)))
+    (type $Y (sub final $X (struct)))
+    ;; CHECK:       (type $Z (sub final $X (struct)))
+    (type $Z (sub final $X (struct)))
+
+    ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
+    (type $A (sub (struct (field (ref null $X)))))
+    ;; CHECK:       (type $B (sub final $A (struct (field (ref null $Y)))))
+    (type $B (sub final $A (struct (field (ref null $Y)))))
+    ;; CHECK:       (type $C (sub final $A (struct (field (ref null $Z)))))
+    (type $C (sub final $A (struct (field (ref null $Z)))))
+  )
+
+  ;; CHECK:      (type $6 (func))
+
+  ;; CHECK:      (type $7 (func (param (ref null $C))))
+
+  ;; CHECK:      (type $8 (func (param (ref null $A)) (result (ref null $X))))
+
+  ;; CHECK:      (type $9 (func (param (ref null $B)) (result (ref null $Y))))
+
+  ;; CHECK:      (global $global (ref null $Z) (struct.new_default $Z))
+  (global $global (ref null $Z) (struct.new_default $Z))
+
+  ;; CHECK:      (func $new (type $6)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new
+    (drop
+      (struct.new $C
+        (global.get $global)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $copy (type $7) (param $C (ref null $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (block (result (ref null $Z))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $C)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $copy (param $C (ref null $C))
+    ;; The struct.get here can be optimized to a global.get.
+    (drop
+      (struct.new $C
+        (struct.get $C 0
+          (local.get $C)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $get-A (type $8) (param $A (ref null $A)) (result (ref null $X))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.get $global)
+  ;; CHECK-NEXT: )
+  (func $get-A (param $A (ref null $A)) (result (ref null $X))
+    ;; The struct.get here can be optimized to a global.get. While we never
+    ;; create an $A, a $C might be referred to by an $A reference, and the
+    ;; global.get is the only possible value.
+    (struct.get $A 0
+      (local.get $A)
+    )
+  )
+
+  ;; CHECK:      (func $get-B (type $9) (param $B (ref null $B)) (result (ref null $Y))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-B (param $B (ref null $B)) (result (ref null $Y))
+    ;; This should not be optimized to a global.get: no $B is created, and we
+    ;; cannot refer to anything that is actually created. If we mistakenly
+    ;; thought this field can contain the global.get (as we do for the parent
+    ;; $A) then we would error here: $B's field contains $Y, but the global is
+    ;; is of a sibling type $Z. Instead, we can add an unreachable here, as no
+    ;; valid value is possible.
+    (struct.get $B 0
+      (local.get $B)
+    )
+  )
+)
+
+;; Atomic accesses require special handling
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $shared (shared (struct (field (mut i32)))))
+    (type $shared (shared (struct (mut i32))))
+    ;; CHECK:       (type $unwritten (shared (struct (field (mut i32)))))
+    (type $unwritten (shared (struct (mut i32))))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref $shared))))
+
+  ;; CHECK:      (type $4 (func (param (ref $unwritten))))
+
+  ;; CHECK:      (func $init (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $shared)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $init
+    (drop
+      (struct.new_default $shared)
+    )
+  )
+
+  ;; CHECK:      (func $gets (type $3) (param $0 (ref $shared))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared 0
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (atomic.fence)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $gets (param (ref $shared))
+    (drop
+      (struct.get $shared 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This is not optimized because we wouldn't want to replace it with a
+      ;; stronger acquire fence.
+      (struct.atomic.get acqrel $shared 0
+        (local.get 0)
+      )
+    )
+    (drop
+      ;; This can be optimized, but requires a seqcst fence.
+      (struct.atomic.get $shared 0
+        (local.get 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $traps (type $4) (param $0 (ref $unwritten))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $traps (param (ref $unwritten))
+    ;; This are all optimizable because they are known to trap. No fences are
+    ;; necessary.
+    (drop
+      (struct.get $unwritten 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get acqrel $unwritten 0
+        (local.get 0)
+      )
+    )
+    (drop
+      (struct.atomic.get $unwritten 0
+        (local.get 0)
       )
     )
   )

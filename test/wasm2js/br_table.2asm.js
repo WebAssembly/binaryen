@@ -18,6 +18,10 @@ function asmFunc(imports) {
   
  }
  
+ function $0() {
+  
+ }
+ 
  function $1() {
   
  }
@@ -31,10 +35,6 @@ function asmFunc(imports) {
  }
  
  function $4() {
-  
- }
- 
- function $5() {
   var $1_1 = 0;
   block : {
    $1_1 = 1;
@@ -46,7 +46,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $6() {
+ function $5() {
   var i64toi32_i32$0 = 0, $1_1 = 0, $1$hi = 0;
   block : {
    i64toi32_i32$0 = 0;
@@ -62,7 +62,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $7() {
+ function $6() {
   var $1_1 = Math_fround(0);
   block : {
    $1_1 = Math_fround(3.0);
@@ -74,7 +74,7 @@ function asmFunc(imports) {
   return Math_fround($1_1);
  }
  
- function $8() {
+ function $7() {
   var $1_1 = 0.0;
   block : {
    $1_1 = 4.0;
@@ -86,17 +86,17 @@ function asmFunc(imports) {
   return +$1_1;
  }
  
- function $9($0) {
-  $0 = $0 | 0;
+ function $8($0_1) {
+  $0_1 = $0_1 | 0;
   return 22 | 0;
  }
  
- function $10($0) {
-  $0 = $0 | 0;
+ function $9($0_1) {
+  $0_1 = $0_1 | 0;
   var $3_1 = 0;
   block : {
    $3_1 = 33;
-   switch ($0 | 0) {
+   switch ($0_1 | 0) {
    default:
     break block;
    };
@@ -104,10 +104,10 @@ function asmFunc(imports) {
   return $3_1 | 0;
  }
  
- function $11($0) {
-  $0 = $0 | 0;
+ function $10($0_1) {
+  $0_1 = $0_1 | 0;
   block : {
-   switch ($0 | 0) {
+   switch ($0_1 | 0) {
    default:
     return 20 | 0;
    case 0:
@@ -117,30 +117,30 @@ function asmFunc(imports) {
   return 22 | 0;
  }
  
- function $12($0) {
-  $0 = $0 | 0;
-  var $2_1 = 0, $3_1 = 0, $4_1 = 0;
-  block : {
-   block1 : {
+ function $11($0_1) {
+  $0_1 = $0_1 | 0;
+  var $2_1 = 0, $4_1 = 0, $3_1 = 0;
+  block0 : {
+   block : {
     $2_1 = 33;
     $3_1 = $2_1;
     $4_1 = $2_1;
-    switch ($0 | 0) {
+    switch ($0_1 | 0) {
     case 0:
-     break block1;
-    default:
      break block;
+    default:
+     break block0;
     };
    }
-   $3_1 = 32;
+   $4_1 = 32;
   }
-  return $3_1 | 0;
+  return $4_1 | 0;
  }
  
- function $13($0) {
-  $0 = $0 | 0;
-  block : {
-   switch ($0 | 0) {
+ function $12($0_1) {
+  $0_1 = $0_1 | 0;
+  block3 : {
+   switch ($0_1 | 0) {
    case 3:
     return 100 | 0;
    case 2:
@@ -150,59 +150,59 @@ function asmFunc(imports) {
    case 0:
     return 103 | 0;
    default:
-    break block;
+    break block3;
    };
   }
   return 104 | 0;
  }
  
- function $14($0) {
-  $0 = $0 | 0;
+ function $13($0_1) {
+  $0_1 = $0_1 | 0;
   var $1_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0, $6_1 = 0, $7_1 = 0, $8_1 = 0;
-  block : {
-   block6 : {
-    block7 : {
-     block8 : {
-      block9 : {
+  block3 : {
+   block : {
+    block0 : {
+     block1 : {
+      block2 : {
        $3_1 = 200;
        $4_1 = $3_1;
        $5_1 = $3_1;
        $6_1 = $3_1;
        $7_1 = $3_1;
        $8_1 = $3_1;
-       switch ($0 | 0) {
+       switch ($0_1 | 0) {
        case 0:
-        break block6;
-       case 1:
-        break block7;
-       case 2:
-        break block8;
-       case 3:
-        break block9;
-       default:
         break block;
+       case 1:
+        break block0;
+       case 2:
+        break block1;
+       case 3:
+        break block2;
+       default:
+        break block3;
        };
       }
-      $1_1 = $8_1;
+      $1_1 = $7_1;
       return $1_1 + 10 | 0 | 0;
      }
-     $1_1 = $7_1;
+     $1_1 = $6_1;
      return $1_1 + 11 | 0 | 0;
     }
-    $1_1 = $6_1;
+    $1_1 = $5_1;
     return $1_1 + 12 | 0 | 0;
    }
-   $1_1 = $5_1;
+   $1_1 = $4_1;
    return $1_1 + 13 | 0 | 0;
   }
-  $1_1 = $4_1;
+  $1_1 = $8_1;
   return $1_1 + 14 | 0 | 0;
  }
  
- function $15($0) {
-  $0 = $0 | 0;
-  block : {
-   switch ($0 | 0) {
+ function $14($0_1) {
+  $0_1 = $0_1 | 0;
+  block0 : {
+   switch ($0_1 | 0) {
    case 0:
    case 2:
    case 4:
@@ -12513,14 +12513,24 @@ function asmFunc(imports) {
    case 24614:
     return 0 | 0;
    default:
-    break block;
+    break block0;
    };
   }
   return 1 | 0;
  }
  
- function $16() {
+ function $15() {
   
+ }
+ 
+ function $16() {
+  block : {
+   dummy();
+   switch (0 | 0) {
+   default:
+    break block;
+   };
+  }
  }
  
  function $17() {
@@ -12534,16 +12544,6 @@ function asmFunc(imports) {
  }
  
  function $18() {
-  block : {
-   dummy();
-   switch (0 | 0) {
-   default:
-    break block;
-   };
-  }
- }
- 
- function $19() {
   var $1_1 = 0;
   block : {
    dummy();
@@ -12556,14 +12556,29 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $20() {
+ function $19() {
   var $1_1 = 0, $2_1 = 0, $4_1 = 0;
-  __binaryen_fake_return : {
-   loop_in : while (1) {
+  label : {
+   $null_Name_ : while (1) {
     $1_1 = 3;
     switch (0 | 0) {
     default:
-     break __binaryen_fake_return;
+     break label;
+    };
+   };
+  }
+  return $1_1 | 0;
+ }
+ 
+ function $20() {
+  var $1_1 = 0, $2_1 = 0, $4_1 = 0;
+  label : {
+   $null_Name_ : while (1) {
+    dummy();
+    $1_1 = 4;
+    switch (-1 | 0) {
+    default:
+     break label;
     };
    };
   }
@@ -12571,14 +12586,14 @@ function asmFunc(imports) {
  }
  
  function $21() {
-  var $1_1 = 0, $2_1 = 0, $4_1 = 0;
-  __binaryen_fake_return : {
-   loop_in : while (1) {
+  var $1_1 = 0;
+  label : {
+   $null_Name_ : while (1) {
     dummy();
-    $1_1 = 4;
-    switch (-1 | 0) {
+    $1_1 = 5;
+    switch (1 | 0) {
     default:
-     break __binaryen_fake_return;
+     break label;
     };
    };
   }
@@ -12586,21 +12601,6 @@ function asmFunc(imports) {
  }
  
  function $22() {
-  var $1_1 = 0;
-  __binaryen_fake_return : {
-   loop_in : while (1) {
-    dummy();
-    $1_1 = 5;
-    switch (1 | 0) {
-    default:
-     break __binaryen_fake_return;
-    };
-   };
-  }
-  return $1_1 | 0;
- }
- 
- function $23() {
   var $1_1 = 0;
   block : {
    $1_1 = 9;
@@ -12612,11 +12612,11 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $24() {
+ function $23() {
   
  }
  
- function $25() {
+ function $24() {
   var $1_1 = 0;
   block : {
    $1_1 = 8;
@@ -12628,7 +12628,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $26() {
+ function $25() {
   var $1_1 = 0;
   block : {
    $1_1 = 9;
@@ -12640,11 +12640,11 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $27() {
+ function $26() {
   
  }
  
- function $28() {
+ function $27() {
   var $1_1 = 0;
   block : {
    $1_1 = 10;
@@ -12656,7 +12656,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $29() {
+ function $28() {
   var $1_1 = 0;
   block : {
    $1_1 = 11;
@@ -12668,7 +12668,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $30() {
+ function $29() {
   var i64toi32_i32$0 = 0, $1_1 = 0, $1$hi = 0;
   block : {
    i64toi32_i32$0 = 0;
@@ -12684,24 +12684,24 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $31() {
+ function $30() {
   var $1_1 = 0, $2_1 = 0;
-  if_ : {
+  block : {
    $1_1 = 2;
    switch (0 | 0) {
    default:
-    break if_;
+    break block;
    };
   }
   return $1_1 | 0;
  }
  
- function $32($0, $1_1) {
-  $0 = $0 | 0;
+ function $31($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
   var $4_1 = 0, $6_1 = 0;
   block : {
-   if ($0) {
+   if ($0_1) {
     $4_1 = 3;
     switch (0 | 0) {
     default:
@@ -12715,13 +12715,13 @@ function asmFunc(imports) {
   return $4_1 | 0;
  }
  
- function $33($0, $1_1) {
-  $0 = $0 | 0;
+ function $32($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
   var $4_1 = 0, $5_1 = 0, $6_1 = 0, $7_1 = 0;
   block : {
-   if_ : {
-    if ($0) {
+   label : {
+    if ($0_1) {
      $7_1 = $1_1
     } else {
      $4_1 = 4;
@@ -12731,7 +12731,7 @@ function asmFunc(imports) {
      case 0:
       break block;
      default:
-      break if_;
+      break label;
      };
     }
     $6_1 = $7_1;
@@ -12741,8 +12741,8 @@ function asmFunc(imports) {
   return $5_1 | 0;
  }
  
- function $34($0, $1_1) {
-  $0 = $0 | 0;
+ function $33($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
   var $3_1 = 0, $4_1 = 0, $5_1 = 0;
   block : {
@@ -12755,12 +12755,12 @@ function asmFunc(imports) {
   return $3_1 | 0;
  }
  
- function $35($0, $1_1) {
-  $0 = $0 | 0;
+ function $34($0_1, $1_1) {
+  $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
   var $2_1 = 0, $4_1 = 0, $5_1 = 0;
   block : {
-   $2_1 = $0;
+   $2_1 = $0_1;
    $4_1 = 6;
    switch (1 | 0) {
    default:
@@ -12770,7 +12770,7 @@ function asmFunc(imports) {
   return $4_1 | 0;
  }
  
- function $36() {
+ function $35() {
   var $1_1 = 0;
   block : {
    $1_1 = 7;
@@ -12782,14 +12782,14 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function f($0, $1_1, $2_1) {
-  $0 = $0 | 0;
+ function f($0_1, $1_1, $2_1) {
+  $0_1 = $0_1 | 0;
   $1_1 = $1_1 | 0;
   $2_1 = $2_1 | 0;
   return -1 | 0;
  }
  
- function $38() {
+ function $36() {
   var $1_1 = 0;
   block : {
    $1_1 = 12;
@@ -12801,7 +12801,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $39() {
+ function $37() {
   var $1_1 = 0;
   block : {
    $1_1 = 13;
@@ -12813,7 +12813,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $40() {
+ function $38() {
   var $1_1 = 0;
   block : {
    $1_1 = 14;
@@ -12825,7 +12825,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $41() {
+ function $39() {
   var $1_1 = 0;
   block : {
    $1_1 = 20;
@@ -12837,7 +12837,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $42() {
+ function $40() {
   var $1_1 = 0;
   block : {
    $1_1 = 21;
@@ -12849,7 +12849,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $43() {
+ function $41() {
   var $1_1 = 0;
   block : {
    $1_1 = 22;
@@ -12861,7 +12861,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $44() {
+ function $42() {
   var $1_1 = 0;
   block : {
    $1_1 = 23;
@@ -12873,7 +12873,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $45() {
+ function $43() {
   var $2_1 = 0;
   block : {
    $2_1 = 17;
@@ -12885,7 +12885,7 @@ function asmFunc(imports) {
   return $2_1 | 0;
  }
  
- function $46() {
+ function $44() {
   var $2_1 = 0;
   block : {
    $2_1 = 1;
@@ -12897,7 +12897,7 @@ function asmFunc(imports) {
   return $2_1 | 0;
  }
  
- function $47() {
+ function $45() {
   var $1_1 = 0;
   block : {
    $1_1 = 1;
@@ -12909,7 +12909,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $48() {
+ function $46() {
   var $1_1 = Math_fround(0);
   block : {
    $1_1 = Math_fround(1.7000000476837158);
@@ -12921,7 +12921,7 @@ function asmFunc(imports) {
   return Math_fround($1_1);
  }
  
- function $49() {
+ function $47() {
   var i64toi32_i32$0 = 0, $1_1 = 0, $1$hi = 0;
   block : {
    i64toi32_i32$0 = 0;
@@ -12937,7 +12937,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $50() {
+ function $48() {
   var $1_1 = 0;
   block : {
    $1_1 = 30;
@@ -12949,7 +12949,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $51() {
+ function $49() {
   var $1_1 = 0;
   block : {
    $1_1 = 31;
@@ -12961,7 +12961,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $52() {
+ function $50() {
   var $1_1 = 0;
   block : {
    $1_1 = 32;
@@ -12973,7 +12973,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $53() {
+ function $51() {
   var $1_1 = 0;
   block : {
    $1_1 = 33;
@@ -12985,7 +12985,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $54() {
+ function $52() {
   var $1_1 = Math_fround(0);
   block : {
    $1_1 = Math_fround(3.4000000953674316);
@@ -12997,7 +12997,7 @@ function asmFunc(imports) {
   return Math_fround($1_1);
  }
  
- function $55() {
+ function $53() {
   var $1_1 = 0;
   block : {
    $1_1 = 3;
@@ -13009,7 +13009,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $56() {
+ function $54() {
   var i64toi32_i32$0 = 0, $1_1 = 0, $1$hi = 0, i64toi32_i32$1 = 0;
   block : {
    i64toi32_i32$0 = 0;
@@ -13025,7 +13025,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $57() {
+ function $55() {
   var $1_1 = 0;
   block : {
    $1_1 = 44;
@@ -13037,7 +13037,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $58() {
+ function $56() {
   var $1_1 = 0;
   block : {
    $1_1 = 43;
@@ -13049,7 +13049,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $59() {
+ function $57() {
   var $1_1 = 0;
   block : {
    $1_1 = 42;
@@ -13061,7 +13061,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $60() {
+ function $58() {
   var $1_1 = 0;
   block : {
    $1_1 = 41;
@@ -13073,7 +13073,7 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $61() {
+ function $59() {
   var $1_1 = 0;
   block : {
    $1_1 = 40;
@@ -13085,49 +13085,49 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function $62($0) {
-  $0 = $0 | 0;
-  var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
-  block : {
-   block11 : {
-    block12 : {
+ function $60($0_1) {
+  $0_1 = $0_1 | 0;
+  var $2_1 = 0, $4_1 = 0, $5_1 = 0, $3_1 = 0;
+  block1 : {
+   block0 : {
+    block : {
      $2_1 = 16;
      $3_1 = $2_1;
      $4_1 = $2_1;
      $5_1 = $2_1;
-     switch ($0 | 0) {
-     case 1:
-      break block11;
+     switch ($0_1 | 0) {
      case 0:
-      break block12;
-     default:
       break block;
+     case 1:
+      break block0;
+     default:
+      break block1;
      };
     }
-    $4_1 = 2 + $5_1 | 0;
+    $4_1 = 2 + $3_1 | 0;
    }
-   $3_1 = 1 + $4_1 | 0;
+   $5_1 = 1 + $4_1 | 0;
   }
-  return $3_1 | 0;
+  return $5_1 | 0;
  }
  
- function $63($0) {
-  $0 = $0 | 0;
+ function $61($0_1) {
+  $0_1 = $0_1 | 0;
   var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
   block : {
-   block13 : {
-    block14 : {
+   block0 : {
+    block1 : {
      $2_1 = 8;
      $3_1 = $2_1;
      $4_1 = $2_1;
      $5_1 = $2_1;
-     switch ($0 | 0) {
+     switch ($0_1 | 0) {
      case 0:
       break block;
      case 1:
-      break block13;
+      break block0;
      default:
-      break block14;
+      break block1;
      };
     }
     $4_1 = 16;
@@ -13137,134 +13137,134 @@ function asmFunc(imports) {
   return $3_1 | 0;
  }
  
- function $64($0) {
-  $0 = $0 | 0;
+ function $62($0_1) {
+  $0_1 = $0_1 | 0;
   var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
-  block : {
-   block15 : {
-    block16 : {
+  block1 : {
+   block0 : {
+    block : {
      $2_1 = 8;
      $3_1 = $2_1;
      $4_1 = $2_1;
      $5_1 = $2_1;
-     switch ($0 | 0) {
-     case 1:
-      break block15;
+     switch ($0_1 | 0) {
      case 0:
-      break block16;
-     default:
       break block;
+     case 1:
+      break block0;
+     default:
+      break block1;
      };
     }
     $4_1 = 16;
    }
-   $3_1 = 1 + $4_1 | 0;
+   $5_1 = 1 + $4_1 | 0;
   }
-  return $3_1 | 0;
+  return $5_1 | 0;
  }
  
- function $65($0) {
-  $0 = $0 | 0;
-  var $4_1 = 0, $2_1 = 0, $3_1 = 0;
-  block : {
-   block17 : {
-    $2_1 = 8;
-    $3_1 = $2_1;
-    $4_1 = $2_1;
-    switch ($0 | 0) {
-    case 1:
-     break block;
-    default:
-     break block17;
-    };
-   }
-   $3_1 = 1 + $4_1 | 0;
-  }
-  return $3_1 | 0;
- }
- 
- function $66($0) {
-  $0 = $0 | 0;
-  var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
-  block : {
-   block18 : {
-    block19 : {
-     $2_1 = 8;
-     $3_1 = $2_1;
-     $4_1 = $2_1;
-     $5_1 = $2_1;
-     switch ($0 | 0) {
-     case 1:
-      break block18;
-     case 0:
-      break block19;
-     default:
-      break block;
-     };
-    }
-    $4_1 = 16;
-   }
-   $3_1 = 1 + $4_1 | 0;
-  }
-  return $3_1 | 0;
- }
- 
- function $67($0) {
-  $0 = $0 | 0;
-  var $4_1 = 0, $2_1 = 0, $3_1 = 0;
-  block : {
-   block20 : {
-    $2_1 = 8;
-    $3_1 = $2_1;
-    $4_1 = $2_1;
-    switch ($0 | 0) {
-    case 1:
-     break block;
-    default:
-     break block20;
-    };
-   }
-   $3_1 = 1 + $4_1 | 0;
-  }
-  return $3_1 | 0;
- }
- 
- function $68($0) {
-  $0 = $0 | 0;
-  var $4_1 = 0, $9_1 = 0;
-  loop_in : while (1) {
+ function $63($0_1) {
+  $0_1 = $0_1 | 0;
+  var $3_1 = 0, $2_1 = 0, $4_1 = 0;
+  block0 : {
    block : {
-    switch ($0 | 0) {
+    $2_1 = 8;
+    $3_1 = $2_1;
+    $4_1 = $2_1;
+    switch ($0_1 | 0) {
+    case 1:
+     break block0;
+    default:
+     break block;
+    };
+   }
+   $4_1 = 1 + $3_1 | 0;
+  }
+  return $4_1 | 0;
+ }
+ 
+ function $64($0_1) {
+  $0_1 = $0_1 | 0;
+  var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0;
+  block1 : {
+   block0 : {
+    block : {
+     $2_1 = 8;
+     $3_1 = $2_1;
+     $4_1 = $2_1;
+     $5_1 = $2_1;
+     switch ($0_1 | 0) {
+     case 0:
+      break block;
+     case 1:
+      break block0;
+     default:
+      break block1;
+     };
+    }
+    $4_1 = 16;
+   }
+   $5_1 = 1 + $4_1 | 0;
+  }
+  return $5_1 | 0;
+ }
+ 
+ function $65($0_1) {
+  $0_1 = $0_1 | 0;
+  var $3_1 = 0, $2_1 = 0, $4_1 = 0;
+  block0 : {
+   block : {
+    $2_1 = 8;
+    $3_1 = $2_1;
+    $4_1 = $2_1;
+    switch ($0_1 | 0) {
+    case 1:
+     break block0;
+    default:
+     break block;
+    };
+   }
+   $4_1 = 1 + $3_1 | 0;
+  }
+  return $4_1 | 0;
+ }
+ 
+ function $66($0_1) {
+  $0_1 = $0_1 | 0;
+  var $4_1 = 0, $9_1 = 0;
+  label : while (1) {
+   block : {
+    switch ($0_1 | 0) {
     case 0:
-     continue loop_in;
+     continue label;
     default:
      break block;
     };
    }
    $4_1 = 0;
-   break loop_in;
+   break label;
   };
-  $0 = $4_1;
-  loop_in21 : while (1) {
-   block22 : {
-    switch ($0 | 0) {
+  $0_1 = $4_1;
+  label0 : while (1) {
+   block0 : {
+    switch ($0_1 | 0) {
     case 0:
-     break block22;
+     break block0;
     default:
-     continue loop_in21;
+     continue label0;
     };
    }
    $9_1 = 3;
-   break loop_in21;
+   break label0;
   };
   return $9_1 | 0;
  }
  
- function legalstub$6() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $6() | 0;
+ function legalstub$5() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0_1 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $5() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  $0 = i64toi32_i32$0;
+  $0_1 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
   i64toi32_i32$2 = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
@@ -13279,14 +13279,14 @@ function asmFunc(imports) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
- function legalstub$30() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $30() | 0;
+ function legalstub$29() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0_1 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $29() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  $0 = i64toi32_i32$0;
+  $0_1 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
   i64toi32_i32$2 = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
@@ -13301,14 +13301,14 @@ function asmFunc(imports) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
- function legalstub$49() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $49() | 0;
+ function legalstub$47() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0_1 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $47() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  $0 = i64toi32_i32$0;
+  $0_1 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
   i64toi32_i32$2 = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
@@ -13323,14 +13323,14 @@ function asmFunc(imports) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
- function legalstub$56() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
-  i64toi32_i32$0 = $56() | 0;
+ function legalstub$54() {
+  var i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7_1 = 0, $0_1 = 0, $0$hi = 0, i64toi32_i32$2 = 0;
+  i64toi32_i32$0 = $54() | 0;
   i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
-  $0 = i64toi32_i32$0;
+  $0_1 = i64toi32_i32$0;
   $0$hi = i64toi32_i32$1;
   i64toi32_i32$2 = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
@@ -13345,77 +13345,77 @@ function asmFunc(imports) {
   }
   setTempRet0($7_1 | 0);
   i64toi32_i32$0 = $0$hi;
-  return $0 | 0;
+  return $0_1 | 0;
  }
  
  return {
-  "type_i32": $1, 
-  "type_i64": $2, 
-  "type_f32": $3, 
-  "type_f64": $4, 
-  "type_i32_value": $5, 
-  "type_i64_value": legalstub$6, 
-  "type_f32_value": $7, 
-  "type_f64_value": $8, 
-  "empty": $9, 
-  "empty_value": $10, 
-  "singleton": $11, 
-  "singleton_value": $12, 
-  "multiple": $13, 
-  "multiple_value": $14, 
-  "large": $15, 
-  "as_block_first": $16, 
-  "as_block_mid": $17, 
-  "as_block_last": $18, 
-  "as_block_value": $19, 
-  "as_loop_first": $20, 
-  "as_loop_mid": $21, 
-  "as_loop_last": $22, 
-  "as_br_value": $23, 
-  "as_br_if_cond": $24, 
-  "as_br_if_value": $25, 
-  "as_br_if_value_cond": $26, 
-  "as_br_table_index": $27, 
-  "as_br_table_value": $28, 
-  "as_br_table_value_index": $29, 
-  "as_return_value": legalstub$30, 
-  "as_if_cond": $31, 
-  "as_if_then": $32, 
-  "as_if_else": $33, 
-  "as_select_first": $34, 
-  "as_select_second": $35, 
-  "as_select_cond": $36, 
-  "as_call_first": $38, 
-  "as_call_mid": $39, 
-  "as_call_last": $40, 
-  "as_call_indirect_first": $41, 
-  "as_call_indirect_mid": $42, 
-  "as_call_indirect_last": $43, 
-  "as_call_indirect_func": $44, 
-  "as_local_set_value": $45, 
-  "as_local_tee_value": $46, 
-  "as_global_set_value": $47, 
-  "as_load_address": $48, 
-  "as_loadN_address": legalstub$49, 
-  "as_store_address": $50, 
-  "as_store_value": $51, 
-  "as_storeN_address": $52, 
-  "as_storeN_value": $53, 
-  "as_unary_operand": $54, 
-  "as_binary_left": $55, 
-  "as_binary_right": legalstub$56, 
-  "as_test_operand": $57, 
-  "as_compare_left": $58, 
-  "as_compare_right": $59, 
-  "as_convert_operand": $60, 
-  "as_memory_grow_size": $61, 
-  "nested_block_value": $62, 
-  "nested_br_value": $63, 
-  "nested_br_if_value": $64, 
-  "nested_br_if_value_cond": $65, 
-  "nested_br_table_value": $66, 
-  "nested_br_table_value_index": $67, 
-  "nested_br_table_loop_block": $68
+  "type_i32": $0, 
+  "type_i64": $1, 
+  "type_f32": $2, 
+  "type_f64": $3, 
+  "type_i32_value": $4, 
+  "type_i64_value": legalstub$5, 
+  "type_f32_value": $6, 
+  "type_f64_value": $7, 
+  "empty": $8, 
+  "empty_value": $9, 
+  "singleton": $10, 
+  "singleton_value": $11, 
+  "multiple": $12, 
+  "multiple_value": $13, 
+  "large": $14, 
+  "as_block_first": $15, 
+  "as_block_mid": $16, 
+  "as_block_last": $17, 
+  "as_block_value": $18, 
+  "as_loop_first": $19, 
+  "as_loop_mid": $20, 
+  "as_loop_last": $21, 
+  "as_br_value": $22, 
+  "as_br_if_cond": $23, 
+  "as_br_if_value": $24, 
+  "as_br_if_value_cond": $25, 
+  "as_br_table_index": $26, 
+  "as_br_table_value": $27, 
+  "as_br_table_value_index": $28, 
+  "as_return_value": legalstub$29, 
+  "as_if_cond": $30, 
+  "as_if_then": $31, 
+  "as_if_else": $32, 
+  "as_select_first": $33, 
+  "as_select_second": $34, 
+  "as_select_cond": $35, 
+  "as_call_first": $36, 
+  "as_call_mid": $37, 
+  "as_call_last": $38, 
+  "as_call_indirect_first": $39, 
+  "as_call_indirect_mid": $40, 
+  "as_call_indirect_last": $41, 
+  "as_call_indirect_func": $42, 
+  "as_local_set_value": $43, 
+  "as_local_tee_value": $44, 
+  "as_global_set_value": $45, 
+  "as_load_address": $46, 
+  "as_loadN_address": legalstub$47, 
+  "as_store_address": $48, 
+  "as_store_value": $49, 
+  "as_storeN_address": $50, 
+  "as_storeN_value": $51, 
+  "as_unary_operand": $52, 
+  "as_binary_left": $53, 
+  "as_binary_right": legalstub$54, 
+  "as_test_operand": $55, 
+  "as_compare_left": $56, 
+  "as_compare_right": $57, 
+  "as_convert_operand": $58, 
+  "as_memory_grow_size": $59, 
+  "nested_block_value": $60, 
+  "nested_br_value": $61, 
+  "nested_br_if_value": $62, 
+  "nested_br_if_value_cond": $63, 
+  "nested_br_table_value": $64, 
+  "nested_br_table_value_index": $65, 
+  "nested_br_table_loop_block": $66
  };
 }
 

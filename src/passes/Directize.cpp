@@ -130,7 +130,7 @@ private:
       return CallUtils::Unknown{};
     }
 
-    Index index = c->value.geti32();
+    Address index = c->value.getUnsigned();
 
     // Check if index is invalid, or the type is wrong.
     auto& flatTable = *table.flatTable;
@@ -203,7 +203,7 @@ struct Directize : public Pass {
 
     // TODO: consider a per-table option here
     auto initialContentsImmutable =
-      getPassOptions().hasArgument("directize-initial-contents-immutable");
+      hasArgument("directize-initial-contents-immutable");
 
     // Set up the initial info.
     TableInfoMap tables;
@@ -265,6 +265,9 @@ struct Directize : public Pass {
           }
           void visitTableCopy(TableCopy* curr) {
             tablesWithSet.insert(curr->destTable);
+          }
+          void visitTableInit(TableInit* curr) {
+            tablesWithSet.insert(curr->table);
           }
         };
 

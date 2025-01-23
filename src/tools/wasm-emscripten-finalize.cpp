@@ -196,7 +196,7 @@ int main(int argc, const char* argv[]) {
   auto writeOutput = outfile.size() > 0 || !emitBinary;
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
   ModuleReader reader;
   // If we are not writing output then we definitely don't need to read debug
   // info. However, if we emit output then definitely load the names section so
@@ -225,6 +225,8 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);
@@ -264,8 +266,6 @@ int main(int argc, const char* argv[]) {
     passRunner.add("legalize-js-interface");
   }
 
-  passRunner.add("strip-target-features");
-
   // If DWARF is unused, strip it out. This avoids us keeping it alive
   // until wasm-opt strips it later.
   if (!DWARF) {
@@ -279,7 +279,7 @@ int main(int argc, const char* argv[]) {
 
   if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setDebugInfo(debugInfo);
     // writer.setSymbolMap(symbolMap);
     writer.setBinary(emitBinary);

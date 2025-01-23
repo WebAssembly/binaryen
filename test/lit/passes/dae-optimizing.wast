@@ -4,10 +4,12 @@
 ;; RUN: foreach %s %t wasm-opt --dae-optimizing -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $0 (func (result i32)))
  (type $0 (func (param f32) (result f32)))
- ;; CHECK:      (type $1 (func (result f32)))
  (type $1 (func (param f64 f32 f32 f64 f32 i64 f64) (result i32)))
+ ;; CHECK:      (type $3 (func (result i32)))
+
+ ;; CHECK:      (type $4 (func (result f32)))
+
  ;; CHECK:      (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
  (type $2 (func (param f64 f32 f32 f64 f32 i32 i32 f64) (result i32)))
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
