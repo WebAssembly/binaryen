@@ -1627,3 +1627,27 @@
     )
   )
 )
+
+;; A struct with a pop, which requires EH fixups to avoid popping in a nested
+;; block.
+(module
+ ( type $i32 (func (param i32)))
+
+  (type $struct (struct (field (mut i32))))
+
+  (tag $tag (type $i32) (param i32))
+
+  (func $func
+    (try
+      (do
+      )
+      (catch $tag
+        (drop
+          (struct.new $struct
+            (pop i32)
+          )
+        )
+      )
+    )
+  )
+)
