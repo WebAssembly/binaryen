@@ -35,13 +35,23 @@ std::string stringify(Module& wasm) {
   return str.str();
 }
 
+// Embind generates getters and setters for properties like
+// DELEGATE_FIELD_CHILD_VECTOR. The setter in those cases needs a copy
+// constructor, which we intentionally do not have for ArenaVectors etc. To
+// work around this, we define a getter
+//struct VecWrapper
+
 } // anonymous namespace
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
 
   function("stringify", &stringify);
 
-  enum_<Type::BasicType>("BasicType").value("i32", Type::BasicType::i32);
+  enum_<Type::BasicType>("BasicType")
+    .value("i32", Type::BasicType::i32)
+    .value("i64", Type::BasicType::i64)
+    .value("f32", Type::BasicType::f32)
+    .value("f64", Type::BasicType::f64);
 
   class_<Type>("Type")
     .constructor<Type::BasicType>()
@@ -78,10 +88,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   .property(                                                                   \
     #field,                                                                    \
     &id::field,                                                                \
-    allow_raw_pointers()) // errors due to
-                          // https://github.com/emscripten-core/emscripten/issues/6492
+    allow_raw_pointers())
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-  // TODO .property(#field, &id::field)
+    .function("get_" #field, +[](id& curr) { return &curr.field; }, return_value_policy::reference())
 #define DELEGATE_FIELD_TYPE(id, field) .property(#field, &id::field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field) .property(#field, &id::field)
 #define DELEGATE_FIELD_INT(id, field) .property(#field, &id::field)
@@ -92,13 +101,13 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_ADDRESS(id, field) .property(#field, &id::field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field) .property(#field, &id::field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)                                   \
-  .property(#field, &id::field, return_value_policy::reference())
+  //.property(#field, &id::field, return_value_policy::reference())
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)                                  \
-  .property(#field, &id::field, return_value_policy::reference())
+  //.property(#field, &id::field, return_value_policy::reference())
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
-  .property(#field, &id::field, return_value_policy::reference())
+  //.property(#field, &id::field, return_value_policy::reference())
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)                                  \
-  .property(#field, &id::field, return_value_policy::reference())
+  //.property(#field, &id::field, return_value_policy::reference())
 
 #define DELEGATE_FIELD_MAIN_START
 
@@ -120,10 +129,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   class_<Function>("Function");
 
-  class_<NameType>("NameType")
-    .constructor<Name, Type>()
-    .property("name", &NameType::name)
-    .property("type", &NameType::type);
+  value_object<NameType>("NameType")
+    .field("name", &NameType::name)
+    .field("type", &NameType::type);
   register_vector<NameType>("NameTypeVec");
 
   class_<Builder>("Builder")

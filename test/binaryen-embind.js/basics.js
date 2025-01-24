@@ -36,6 +36,7 @@ binaryenFactory().then((binaryen) => {
   };
   const func_ii = new binaryen.HeapType(sig);
   const vars = new binaryen.TypeVec();
+  vars.push_back(binaryen.BasicType.f64);
   const func = binaryen.Builder.makeFunction(
     new binaryen.Name("foo"),
     func_ii,
@@ -50,12 +51,13 @@ binaryenFactory().then((binaryen) => {
            (module
             (type $0 (func (param i32) (result i32)))
             (func $foo (param $0 i32) (result i32)
+             (local $temp f64)
              (nop)
             )
            )
           `);
 
-  // Clean up. XXX new HeapType etc. are all unneeded and also leaked!
+  // Clean up. TODO: |new HeapType| etc. above are leaked atm.
   module.delete();
 
   console.log('success.');

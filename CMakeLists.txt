@@ -386,7 +386,7 @@ if(EMSCRIPTEN)
     add_link_flag("-sNODERAWFS")
   endif()
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-    add_nondebug_compile_flag("-flto")
+    # add_nondebug_compile_flag("-flto")
     if(EMSCRIPTEN_ENABLE_WASM64)
       add_compile_flag("-sMEMORY64 -Wno-experimental")
       add_link_flag("-sMEMORY64")
