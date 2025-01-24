@@ -224,6 +224,29 @@ function toAddressType(table, index) {
   return index;
 }
 
+// Simple deterministic hashing, on an unsigned 32-bit seed. See e.g.
+// https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
+var hashSeed;
+function hashCombine(value) {
+  // hashSeed must be set before we do anything.
+  assert(hashSeed !== undefined);
+
+  hashSeed ^= value + 0x9e3779b9 + (hashSeed << 6) + (hashSeed >>> 2);
+  return hashSeed >>> 0;
+}
+
+// Get a random 32-bit number. This is like hashCombine but does not take a
+// parameter.
+function randomBits() {
+  return hashCombine(-1);
+}
+
+// Return true with probability 1 in n. E.g. oneIn(3) returns false 2/3 of the
+// time, and true 1/3 of the time.
+function oneIn(n) {
+  return (randomBits() % n) == 0;
+}
+
 // Set up the imports.
 var tempRet0;
 var imports = {
@@ -274,7 +297,10 @@ var imports = {
 
     // Sleep a given amount of ms (when JSPI) and return a given id after that.
     'sleep': (ms, id) => {
-      if (!JSPI) {
+      // Also avoid sleeping even in JSPI mode, rarely, just to add variety
+      // here.
+      if (!JSPI || oneIn(2)) {
+        console.log(`(jspi: avoid sleeping #${id})`);
         return id;
       }
       return new Promise((resolve, reject) => {
@@ -371,13 +397,6 @@ function build(binary) {
   }
 }
 
-// Simple deterministic hashing, on an unsigned 32-bit seed. See e.g.
-// https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
-function hashCombine(seed, value) {
-  seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >>> 2);
-  return seed >>> 0;
-}
-
 // Run the code by calling exports. The optional |ordering| parameter indicates
 // howe we should order the calls to the exports: if it is not provided, we call
 // them in the natural order, which allows our output to be compared to other
@@ -385,6 +404,8 @@ function hashCombine(seed, value) {
 // provided, it is a random seed we use to make deterministic choices on
 // the order of calls.
 /* async */ function callExports(ordering) {
+  hashSeed = ordering;
+
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
   let relevantExports = exportsToCall || exportList;
@@ -425,7 +446,7 @@ function hashCombine(seed, value) {
       task = tasks.pop();
     } else {
       // Pick a random task.
-      ordering = hashCombine(ordering, tasks.length);
+      ordering = hashCombine(tasks.length);
       let i = ordering % tasks.length;
       task = tasks.splice(i, 1)[0];
     }
@@ -451,9 +472,7 @@ function hashCombine(seed, value) {
       //       depending on each other, ensuring certain orders of execution.
       if (ordering !== undefined && !task.deferred && result &&
           typeof result == 'object' && typeof result.then === 'function') {
-        // Hash with -1 here, just to get something different than the hashing a
-        // few lines above.
-        ordering = hashCombine(ordering, -1);
+        ordering = randomBits();
         if (ordering & 1) {
           // Defer it for later. Reuse the existing task for simplicity.
           console.log(`(jspi: defer ${task.name})`);
