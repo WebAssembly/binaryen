@@ -62,7 +62,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   case Expression::Id::CLASS_TO_VISIT##Id:                                     \
     return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
-      static_cast<CLASS_TO_VISIT*>(curr))
+      static_cast<CLASS_TO_VISIT*>(curr));
 
 #include "wasm-delegations.def"
 

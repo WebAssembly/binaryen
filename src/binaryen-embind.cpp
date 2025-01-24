@@ -144,8 +144,16 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
                       &Builder::makeFunction),
                     allow_raw_pointers())
 
-    // TODO All Expression classes...
-    .function("makeNop", &Builder::makeNop, allow_raw_pointers());
+    // Create constructors for all classes.
+//#define DELEGATE(id) \
+//  .function("make" #id, &Builder::make##id, allow_raw_pointers())
+//#include "wasm-delegations.def"
+// The above can't naively work. Nop will, on the one hand:
+.function("make" "Nop", &Builder::makeNop, allow_raw_pointers())
+// but Block has overloads, and we'd need to manually write one out, like this,
+// which avoids fully automating things.
+.function("make" "Block", +[](Builder& builder) { return builder.makeBlock(..); }, allow_raw_pointers())
+  ;
 
   class_<Module>("Module")
     .smart_ptr_constructor("Module", &std::make_shared<Module>)

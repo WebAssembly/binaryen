@@ -42,7 +42,7 @@ binaryenFactory().then((binaryen) => {
     new binaryen.Name("foo"),
     func_ii,
     vars,
-    builder.makeNop()
+    builder.makeBinary(10, builder.makeNop(), builder.makeNop())
   );
   module.addFunction(func);
 
