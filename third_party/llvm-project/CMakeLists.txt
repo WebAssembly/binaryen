@@ -74,4 +74,3 @@ SET(llvm_dwarf_SOURCES
   YAMLTraits.cpp
 )
 add_library(llvm_dwarf OBJECT ${llvm_dwarf_SOURCES})
-target_link_libraries(binaryen llvm_dwarf)
