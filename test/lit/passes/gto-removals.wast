@@ -1631,7 +1631,7 @@
 ;; A struct with a pop, which requires EH fixups to avoid popping in a nested
 ;; block.
 (module
- ( type $i32 (func (param i32)))
+  (type $i32 (func (param i32)))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))
