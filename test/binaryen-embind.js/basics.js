@@ -30,13 +30,14 @@ binaryenFactory().then((binaryen) => {
 
   // Generate a function and everything we need for that.
   const i32 = new binaryen.Type(binaryen.BasicType.i32);
+  const f64 = new binaryen.Type(binaryen.BasicType.f64);
   const sig = {
     params: i32,
     results: i32
   };
   const func_ii = new binaryen.HeapType(sig);
   const vars = new binaryen.TypeVec();
-  vars.push_back(binaryen.BasicType.f64);
+  vars.push_back(f64);
   const func = binaryen.Builder.makeFunction(
     new binaryen.Name("foo"),
     func_ii,
@@ -51,7 +52,7 @@ binaryenFactory().then((binaryen) => {
            (module
             (type $0 (func (param i32) (result i32)))
             (func $foo (param $0 i32) (result i32)
-             (local $temp f64)
+             (local $1 f64)
              (nop)
             )
            )

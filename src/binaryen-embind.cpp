@@ -53,6 +53,8 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .value("f32", Type::BasicType::f32)
     .value("f64", Type::BasicType::f64);
 
+  // TODO: make a "type factory" that produces types, so we can use
+  // value_object for Type?
   class_<Type>("Type")
     .constructor<Type::BasicType>()
     .function("isTuple", &Type::isTuple)
