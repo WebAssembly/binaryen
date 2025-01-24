@@ -375,10 +375,6 @@ add_subdirectory(src)
 # Configure lit tests
 add_subdirectory(test/lit)
 
-if(BUILD_LLVM_DWARF)
-  target_link_libraries(binaryen llvm_dwarf)
-endif()
-
 if(INSTALL_LIBS OR NOT BUILD_STATIC_LIB)
   install(TARGETS binaryen
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
