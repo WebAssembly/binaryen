@@ -227,9 +227,14 @@ function toAddressType(table, index) {
 // Simple deterministic hashing, on an unsigned 32-bit seed. See e.g.
 // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
 var hashSeed;
+
+function hasHashSeed() {
+  return hashSeed !== undefined;
+}
+
 function hashCombine(value) {
   // hashSeed must be set before we do anything.
-  assert(hashSeed !== undefined);
+  assert(hasHashSeed());
 
   hashSeed ^= value + 0x9e3779b9 + (hashSeed << 6) + (hashSeed >>> 2);
   return hashSeed >>> 0;
@@ -298,13 +303,16 @@ var imports = {
     // Sleep a given amount of ms (when JSPI) and return a given id after that.
     'sleep': (ms, id) => {
       // Also avoid sleeping even in JSPI mode, rarely, just to add variety
-      // here.
-      if (!JSPI || oneIn(2)) {
+      // here. Only do this when we have a hash seed, that is, when we are
+      // allowing randomness.
+      if (!JSPI || (hasHashSeed() && oneIn(10))) {
         console.log(`(jspi: avoid sleeping #${id})`);
         return id;
       }
       return new Promise((resolve, reject) => {
+        console.log(`(jspi: sleep #${id})`);
         setTimeout(() => {
+          console.log(`(jspi: resolve #${id})`);
           resolve(id);
         }, 0); // TODO: Use the ms in some reasonable, deterministic manner.
                //       Rather than actually setTimeout on them we could manage
