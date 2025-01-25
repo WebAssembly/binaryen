@@ -312,7 +312,7 @@ var imports = {
       return new Promise((resolve, reject) => {
         console.log(`(jspi: sleep #${id})`);
         setTimeout(() => {
-          console.log(`(jspi: resolve #${id})`);
+          console.log(`(jspi: wake #${id})`);
           resolve(id);
         }, 0); // TODO: Use the ms in some reasonable, deterministic manner.
                //       Rather than actually setTimeout on them we could manage
@@ -460,7 +460,7 @@ function build(binary) {
     }
 
     // Execute the task.
-    console.log('[fuzz-exec] calling ' + task.name);
+    console.log(`[fuzz-exec] calling ${task.name} ${task.deferred ? '(after defer)' : ''})`);
     let result;
     try {
       result = task.func();
