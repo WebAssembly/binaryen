@@ -460,7 +460,7 @@ function build(binary) {
     }
 
     // Execute the task.
-    console.log(`[fuzz-exec] calling ${task.name} ${task.deferred ? '(after defer)' : ''})`);
+    console.log(`[fuzz-exec] calling ${task.name}${task.deferred ? ' (after defer)' : ''}`);
     let result;
     try {
       result = task.func();
