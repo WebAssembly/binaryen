@@ -306,7 +306,6 @@ var imports = {
       // here. Only do this when we have a hash seed, that is, when we are
       // allowing randomness.
       if (!JSPI || (hasHashSeed() && oneIn(10))) {
-        console.log(`(jspi: avoid sleeping #${id})`);
         return id;
       }
       return new Promise((resolve, reject) => {
