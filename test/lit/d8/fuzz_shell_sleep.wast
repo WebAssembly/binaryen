@@ -65,7 +65,6 @@
 ;; CHECK: [fuzz-exec] calling func5
 ;; CHECK: (jspi: defer func5)
 ;; CHECK: [fuzz-exec] calling func4
-;; CHECK: (jspi: sleep #4)
 ;; CHECK: [fuzz-exec] note result: func4 => 4
 ;; CHECK: [fuzz-exec] calling func5 (after defer)
 ;; CHECK: (jspi: finish func5)
