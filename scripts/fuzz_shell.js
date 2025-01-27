@@ -454,8 +454,7 @@ function build(binary) {
       task = tasks.pop();
     } else {
       // Pick a random task.
-      ordering = hashCombine(tasks.length);
-      let i = ordering % tasks.length;
+      let i = hashCombine(tasks.length) % tasks.length;
       task = tasks.splice(i, 1)[0];
     }
 
@@ -480,8 +479,7 @@ function build(binary) {
       //       depending on each other, ensuring certain orders of execution.
       if (ordering !== undefined && !task.deferred && result &&
           typeof result == 'object' && typeof result.then === 'function') {
-        ordering = randomBits();
-        if (ordering & 1) {
+        if (randomBits() & 1) {
           // Defer it for later. Reuse the existing task for simplicity.
           console.log(`(jspi: defer ${task.name})`);
           task.func = /* async */ () => {
