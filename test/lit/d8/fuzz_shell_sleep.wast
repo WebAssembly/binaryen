@@ -48,8 +48,9 @@
 ;; RUN: wasm-opt %s -o %t.wasm -q
 ;; RUN: v8 --wasm-staging %t.js -- %t.wasm | filecheck %s
 ;;
-;; We should see a few cases of "avoid sleeping", but otherwise the majority of
-;; executions should sleep, and therefore have "sleep" and "wake" messages.
+;; We should see a few cases that avoid sleeping (they do not log "sleep")", but
+;; otherwise the majority of executions should sleep, and therefore have "sleep"
+;; and "wake" messages. (Specifically, #3 and #5 do not sleep.)
 ;;
 ;; CHECK: [fuzz-exec] calling func2
 ;; CHECK: (jspi: sleep #2)
@@ -59,14 +60,12 @@
 ;; CHECK: (jspi: sleep #1)
 ;; CHECK: (jspi: defer func1)
 ;; CHECK: [fuzz-exec] calling func3
-;; CHECK: (jspi: avoid sleeping #3)
 ;; CHECK: [fuzz-exec] note result: func3 => 3
 ;; CHECK: [fuzz-exec] calling func1 (after defer)
 ;; CHECK: (jspi: finish func1)
 ;; CHECK: (jspi: wake #1)
 ;; CHECK: [fuzz-exec] note result: func1 => 1
 ;; CHECK: [fuzz-exec] calling func5
-;; CHECK: (jspi: avoid sleeping #5)
 ;; CHECK: (jspi: defer func5)
 ;; CHECK: [fuzz-exec] calling func4
 ;; CHECK: (jspi: sleep #4)
