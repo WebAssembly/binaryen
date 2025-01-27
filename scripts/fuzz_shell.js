@@ -309,9 +309,7 @@ var imports = {
         return id;
       }
       return new Promise((resolve, reject) => {
-        console.log(`(jspi: sleep #${id})`);
         setTimeout(() => {
-          console.log(`(jspi: wake #${id})`);
           resolve(id);
         }, 0); // TODO: Use the ms in some reasonable, deterministic manner.
                //       Rather than actually setTimeout on them we could manage
