@@ -246,12 +246,11 @@ if(MSVC)
         CMAKE_C_FLAGS_MINSIZEREL)
       string(REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
         "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
-
-      # Compile with `/MT` to link against `libcmt.lib`, removing a dependency
-      # on `msvcrt.dll`. May result in slightly larger binaries but they should
-      # be more portable across systems.
-      string(REPLACE "/MD" "/MT" ${flags_var_to_scrub} "${${flags_var_to_scrub}}")
     endforeach()
+    # Compile with `/MT` to link against `libcmt.lib`, removing a dependency
+    # on `msvcrt.dll`. May result in slightly larger binaries but they should
+    # be more portable across systems.
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
   endif()
 
   add_link_flag("/STACK:8388608")
