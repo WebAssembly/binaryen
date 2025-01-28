@@ -1255,7 +1255,7 @@ FeatureSet HeapType::getFeatures() const {
             return;
           case HeapType::cont:
           case HeapType::nocont:
-            feats |= FeatureSet::TypedContinuations;
+            feats |= FeatureSet::StackSwitching;
             return;
         }
       }
@@ -1281,7 +1281,7 @@ FeatureSet HeapType::getFeatures() const {
           feats |= FeatureSet::Multivalue;
         }
       } else if (heapType.isContinuation()) {
-        feats |= FeatureSet::TypedContinuations;
+        feats |= FeatureSet::StackSwitching;
       }
 
       // In addition, scan their non-ref children, to add dependencies on

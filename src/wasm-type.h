@@ -369,6 +369,9 @@ public:
   bool isArray() const { return isRef() && getHeapType().isArray(); }
   bool isExn() const { return isRef() && getHeapType().isExn(); }
   bool isString() const { return isRef() && getHeapType().isString(); }
+  bool isContinuation() const {
+    return isRef() && getHeapType().isContinuation();
+  }
   bool isDefaultable() const;
 
   // TODO: Allow this only for reference types.

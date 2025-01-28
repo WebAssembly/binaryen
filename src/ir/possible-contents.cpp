@@ -1269,11 +1269,15 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
+  void visitContNew(ContNew* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
   void visitContBind(ContBind* curr) {
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitContNew(ContNew* curr) {
+  void visitSuspend(Suspend* curr) {
     // TODO: optimize when possible
     addRoot(curr);
   }
@@ -1281,7 +1285,11 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitSuspend(Suspend* curr) {
+  void visitResumeThrow(ResumeThrow* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStackSwitch(StackSwitch* curr) {
     // TODO: optimize when possible
     addRoot(curr);
   }

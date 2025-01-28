@@ -90,6 +90,14 @@ unfuzzable = [
     'names.wast',
     # huge amount of locals that make it extremely slow
     'too_much_for_liveness.wasm',
+    # TODO: fuzzer support for stack switching
+    'stack_switching.wast',
+    'stack_switching_contnew.wast',
+    'stack_switching_contbind.wast',
+    'stack_switching_suspend.wast',
+    'stack_switching_resume.wast',
+    'stack_switching_resume_throw.wast',
+    'stack_switching_switch.wast'
 ]
 
 

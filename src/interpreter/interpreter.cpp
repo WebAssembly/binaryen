@@ -153,10 +153,12 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitStringEq(StringEq* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitContBind(ContBind* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitContNew(ContNew* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitContBind(ContBind* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitSuspend(Suspend* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitResumeThrow(ResumeThrow* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitStackSwitch(StackSwitch* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 } // anonymous namespace
