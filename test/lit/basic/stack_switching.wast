@@ -59,25 +59,25 @@
 
  ;; CHECK-TEXT:      (export "unhandled-1" (func $f1))
 
- ;; CHECK-TEXT:      (export "unhandled-2" (func $2))
+ ;; CHECK-TEXT:      (export "unhandled-2" (func $unhandled-2))
 
- ;; CHECK-TEXT:      (export "unhandled-3" (func $3))
+ ;; CHECK-TEXT:      (export "unhandled-3" (func $unhandled-3))
 
- ;; CHECK-TEXT:      (export "handled" (func $4))
+ ;; CHECK-TEXT:      (export "handled" (func $handled))
 
- ;; CHECK-TEXT:      (export "uncaught-1" (func $5))
+ ;; CHECK-TEXT:      (export "uncaught-1" (func $uncaught-1))
 
- ;; CHECK-TEXT:      (export "uncaught-2" (func $6))
+ ;; CHECK-TEXT:      (export "uncaught-2" (func $uncaught-2))
 
- ;; CHECK-TEXT:      (export "uncaught-3" (func $7))
+ ;; CHECK-TEXT:      (export "uncaught-3" (func $uncaught-3))
 
- ;; CHECK-TEXT:      (export "non-linear-1" (func $8))
+ ;; CHECK-TEXT:      (export "non-linear-1" (func $non-linear-1))
 
- ;; CHECK-TEXT:      (export "non-linear-2" (func $9))
+ ;; CHECK-TEXT:      (export "non-linear-2" (func $non-linear-2))
 
- ;; CHECK-TEXT:      (export "non-linear-3" (func $10))
+ ;; CHECK-TEXT:      (export "non-linear-3" (func $non-linear-3))
 
- ;; CHECK-TEXT:      (export "non-linear-4" (func $11))
+ ;; CHECK-TEXT:      (export "non-linear-4" (func $non-linear-4))
 
  ;; CHECK-TEXT:      (func $id (type $7) (param $x (ref $ct)) (result (ref $ct))
  ;; CHECK-TEXT-NEXT:  (local.get $x)
@@ -104,25 +104,25 @@
 
  ;; CHECK-BIN:      (export "unhandled-1" (func $f1))
 
- ;; CHECK-BIN:      (export "unhandled-2" (func $6))
+ ;; CHECK-BIN:      (export "unhandled-2" (func $unhandled-2))
 
- ;; CHECK-BIN:      (export "unhandled-3" (func $7))
+ ;; CHECK-BIN:      (export "unhandled-3" (func $unhandled-3))
 
- ;; CHECK-BIN:      (export "handled" (func $8))
+ ;; CHECK-BIN:      (export "handled" (func $handled))
 
- ;; CHECK-BIN:      (export "uncaught-1" (func $10))
+ ;; CHECK-BIN:      (export "uncaught-1" (func $uncaught-1))
 
- ;; CHECK-BIN:      (export "uncaught-2" (func $11))
+ ;; CHECK-BIN:      (export "uncaught-2" (func $uncaught-2))
 
- ;; CHECK-BIN:      (export "uncaught-3" (func $14))
+ ;; CHECK-BIN:      (export "uncaught-3" (func $uncaught-3))
 
- ;; CHECK-BIN:      (export "non-linear-1" (func $21))
+ ;; CHECK-BIN:      (export "non-linear-1" (func $non-linear-1))
 
- ;; CHECK-BIN:      (export "non-linear-2" (func $22))
+ ;; CHECK-BIN:      (export "non-linear-2" (func $non-linear-2))
 
- ;; CHECK-BIN:      (export "non-linear-3" (func $23))
+ ;; CHECK-BIN:      (export "non-linear-3" (func $non-linear-3))
 
- ;; CHECK-BIN:      (export "non-linear-4" (func $24))
+ ;; CHECK-BIN:      (export "non-linear-4" (func $non-linear-4))
 
  ;; CHECK-BIN:      (func $id (type $7) (param $x (ref $ct)) (result (ref $ct))
  ;; CHECK-BIN-NEXT:  (local.get $x)
@@ -265,36 +265,25 @@
     (suspend $e1)
   )
 
-  (func (export "unhandled-2")
-    (resume $k1 (cont.new $k1 (ref.func $f1)))
-  )
-
-  (func (export "unhandled-3")
-    (block $h (result (ref $k1))
-      (resume $k1 (on $e2 $h) (cont.new $k1 (ref.func $f1)))
-      (unreachable)
-    )
-    (drop)
-  )
-
-  (func (export "handled")
-    (block $h (result (ref $k1))
-      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f1)))
-      (unreachable)
-    )
-    (drop)
-  )
-
-  (elem declare func $f2)
-  ;; CHECK-TEXT:      (func $2 (type $f1)
+  ;; CHECK-TEXT:      (func $unhandled-2 (type $f1)
   ;; CHECK-TEXT-NEXT:  (resume $k1
   ;; CHECK-TEXT-NEXT:   (cont.new $k1
   ;; CHECK-TEXT-NEXT:    (ref.func $f1)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $unhandled-2 (type $f1)
+  ;; CHECK-BIN-NEXT:  (resume $k1
+  ;; CHECK-BIN-NEXT:   (cont.new $k1
+  ;; CHECK-BIN-NEXT:    (ref.func $f1)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $unhandled-2 (export "unhandled-2")
+    (resume $k1 (cont.new $k1 (ref.func $f1)))
+  )
 
-  ;; CHECK-TEXT:      (func $3 (type $f1)
+  ;; CHECK-TEXT:      (func $unhandled-3 (type $f1)
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
   ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e2 $h)
@@ -306,32 +295,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-
-  ;; CHECK-TEXT:      (func $4 (type $f1)
-  ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
-  ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e1 $h)
-  ;; CHECK-TEXT-NEXT:     (cont.new $k1
-  ;; CHECK-TEXT-NEXT:      (ref.func $f1)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (unreachable)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT: )
-
-  ;; CHECK-TEXT:      (func $f2 (type $f1)
-  ;; CHECK-TEXT-NEXT:  (throw $exn)
-  ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $6 (type $f1)
-  ;; CHECK-BIN-NEXT:  (resume $k1
-  ;; CHECK-BIN-NEXT:   (cont.new $k1
-  ;; CHECK-BIN-NEXT:    (ref.func $f1)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT: )
-
-  ;; CHECK-BIN:      (func $7 (type $f1)
+  ;; CHECK-BIN:      (func $unhandled-3 (type $f1)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e2 $block)
@@ -343,8 +307,27 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
+  (func $unhandled-3 (export "unhandled-3")
+    (block $h (result (ref $k1))
+      (resume $k1 (on $e2 $h) (cont.new $k1 (ref.func $f1)))
+      (unreachable)
+    )
+    (drop)
+  )
 
-  ;; CHECK-BIN:      (func $8 (type $f1)
+  ;; CHECK-TEXT:      (func $handled (type $f1)
+  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e1 $h)
+  ;; CHECK-TEXT-NEXT:     (cont.new $k1
+  ;; CHECK-TEXT-NEXT:      (ref.func $f1)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (unreachable)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $handled (type $f1)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -356,7 +339,18 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
+  (func $handled (export "handled")
+    (block $h (result (ref $k1))
+      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f1)))
+      (unreachable)
+    )
+    (drop)
+  )
 
+  (elem declare func $f2)
+  ;; CHECK-TEXT:      (func $f2 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (throw $exn)
+  ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $f2 (type $f1)
   ;; CHECK-BIN-NEXT:  (throw $exn)
   ;; CHECK-BIN-NEXT: )
@@ -364,24 +358,7 @@
     (throw $exn)
   )
 
-  (func (export "uncaught-1")
-    (block $h (result (ref $k1))
-      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f2)))
-      (unreachable)
-    )
-    (drop)
-  )
-
-  (func (export "uncaught-2")
-    (block $h (result (ref $k1))
-      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f1)))
-      (unreachable)
-    )
-    (resume_throw $k1 $exn)
-  )
-
-  (elem declare func $f3)
-  ;; CHECK-TEXT:      (func $5 (type $f1)
+  ;; CHECK-TEXT:      (func $uncaught-1 (type $f1)
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
   ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e1 $h)
@@ -393,24 +370,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-
-  ;; CHECK-TEXT:      (func $6 (type $f1)
-  ;; CHECK-TEXT-NEXT:  (resume_throw $k1 $exn
-  ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
-  ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e1 $h)
-  ;; CHECK-TEXT-NEXT:     (cont.new $k1
-  ;; CHECK-TEXT-NEXT:      (ref.func $f1)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (unreachable)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT: )
-
-  ;; CHECK-TEXT:      (func $f3 (type $f1)
-  ;; CHECK-TEXT-NEXT:  (call $f4)
-  ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $10 (type $f1)
+  ;; CHECK-BIN:      (func $uncaught-1 (type $f1)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -422,8 +382,27 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
+  (func $uncaught-1 (export "uncaught-1")
+    (block $h (result (ref $k1))
+      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f2)))
+      (unreachable)
+    )
+    (drop)
+  )
 
-  ;; CHECK-BIN:      (func $11 (type $f1)
+  ;; CHECK-TEXT:      (func $uncaught-2 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (resume_throw $k1 $exn
+  ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
+  ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e1 $h)
+  ;; CHECK-TEXT-NEXT:     (cont.new $k1
+  ;; CHECK-TEXT-NEXT:      (ref.func $f1)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (unreachable)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $uncaught-2 (type $f1)
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -435,7 +414,18 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
+  (func $uncaught-2 (export "uncaught-2")
+    (block $h (result (ref $k1))
+      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f1)))
+      (unreachable)
+    )
+    (resume_throw $k1 $exn)
+  )
 
+  (elem declare func $f3)
+  ;; CHECK-TEXT:      (func $f3 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (call $f4)
+  ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $f3 (type $f1)
   ;; CHECK-BIN-NEXT:  (call $f4)
   ;; CHECK-BIN-NEXT: )
@@ -452,16 +442,7 @@
     (suspend $e1)
   )
 
-  (func (export "uncaught-3")
-    (block $h (result (ref $k1))
-      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f3)))
-      (unreachable)
-    )
-    (resume_throw $k1 $exn)
-  )
-
-  (elem declare func $r0 $r1)
-  ;; CHECK-TEXT:      (func $7 (type $f1)
+  ;; CHECK-TEXT:      (func $uncaught-3 (type $f1)
   ;; CHECK-TEXT-NEXT:  (resume_throw $k1 $exn
   ;; CHECK-TEXT-NEXT:   (block $h (result (ref $k1))
   ;; CHECK-TEXT-NEXT:    (resume $k1 (on $e1 $h)
@@ -473,10 +454,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-
-  ;; CHECK-TEXT:      (func $r0 (type $f1)
-  ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $14 (type $f1)
+  ;; CHECK-BIN:      (func $uncaught-3 (type $f1)
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -488,7 +466,17 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
+  (func $uncaught-3 (export "uncaught-3")
+    (block $h (result (ref $k1))
+      (resume $k1 (on $e1 $h) (cont.new $k1 (ref.func $f3)))
+      (unreachable)
+    )
+    (resume_throw $k1 $exn)
+  )
 
+  (elem declare func $r0 $r1)
+  ;; CHECK-TEXT:      (func $r0 (type $f1)
+  ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $r0 (type $f1)
   ;; CHECK-BIN-NEXT: )
   (func $r0)
@@ -644,84 +632,76 @@
     (resume $k1 (local.get $k))
   )
 
-  (func (export "non-linear-1")
+  ;; CHECK-TEXT:      (func $non-linear-1 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (call $nl1
+  ;; CHECK-TEXT-NEXT:   (cont.new $k1
+  ;; CHECK-TEXT-NEXT:    (ref.func $r0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $non-linear-1 (type $f1)
+  ;; CHECK-BIN-NEXT:  (call $nl1
+  ;; CHECK-BIN-NEXT:   (cont.new $k1
+  ;; CHECK-BIN-NEXT:    (ref.func $r0)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $non-linear-1 (export "non-linear-1")
     (call $nl1 (cont.new $k1 (ref.func $r0)))
   )
-  (func (export "non-linear-2")
+  ;; CHECK-TEXT:      (func $non-linear-2 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (call $nl2
+  ;; CHECK-TEXT-NEXT:   (cont.new $k1
+  ;; CHECK-TEXT-NEXT:    (ref.func $r1)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $non-linear-2 (type $f1)
+  ;; CHECK-BIN-NEXT:  (call $nl2
+  ;; CHECK-BIN-NEXT:   (cont.new $k1
+  ;; CHECK-BIN-NEXT:    (ref.func $r1)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $non-linear-2 (export "non-linear-2")
     (call $nl2 (cont.new $k1 (ref.func $r1)))
   )
-  (func (export "non-linear-3")
+  ;; CHECK-TEXT:      (func $non-linear-3 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (call $nl3
+  ;; CHECK-TEXT-NEXT:   (cont.new $k1
+  ;; CHECK-TEXT-NEXT:    (ref.func $r1)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $non-linear-3 (type $f1)
+  ;; CHECK-BIN-NEXT:  (call $nl3
+  ;; CHECK-BIN-NEXT:   (cont.new $k1
+  ;; CHECK-BIN-NEXT:    (ref.func $r1)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $non-linear-3 (export "non-linear-3")
     (call $nl3 (cont.new $k1 (ref.func $r1)))
   )
-  (func (export "non-linear-4")
+  ;; CHECK-TEXT:      (func $non-linear-4 (type $f1)
+  ;; CHECK-TEXT-NEXT:  (call $nl4
+  ;; CHECK-TEXT-NEXT:   (cont.new $k1
+  ;; CHECK-TEXT-NEXT:    (ref.func $r1)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $non-linear-4 (type $f1)
+  ;; CHECK-BIN-NEXT:  (call $nl4
+  ;; CHECK-BIN-NEXT:   (cont.new $k1
+  ;; CHECK-BIN-NEXT:    (ref.func $r1)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $non-linear-4 (export "non-linear-4")
     (call $nl4 (cont.new $k1 (ref.func $r1)))
   )
 
 )
-;; CHECK-TEXT:      (func $8 (type $f1)
-;; CHECK-TEXT-NEXT:  (call $nl1
-;; CHECK-TEXT-NEXT:   (cont.new $k1
-;; CHECK-TEXT-NEXT:    (ref.func $r0)
-;; CHECK-TEXT-NEXT:   )
-;; CHECK-TEXT-NEXT:  )
-;; CHECK-TEXT-NEXT: )
-
-;; CHECK-TEXT:      (func $9 (type $f1)
-;; CHECK-TEXT-NEXT:  (call $nl2
-;; CHECK-TEXT-NEXT:   (cont.new $k1
-;; CHECK-TEXT-NEXT:    (ref.func $r1)
-;; CHECK-TEXT-NEXT:   )
-;; CHECK-TEXT-NEXT:  )
-;; CHECK-TEXT-NEXT: )
-
-;; CHECK-TEXT:      (func $10 (type $f1)
-;; CHECK-TEXT-NEXT:  (call $nl3
-;; CHECK-TEXT-NEXT:   (cont.new $k1
-;; CHECK-TEXT-NEXT:    (ref.func $r1)
-;; CHECK-TEXT-NEXT:   )
-;; CHECK-TEXT-NEXT:  )
-;; CHECK-TEXT-NEXT: )
-
-;; CHECK-TEXT:      (func $11 (type $f1)
-;; CHECK-TEXT-NEXT:  (call $nl4
-;; CHECK-TEXT-NEXT:   (cont.new $k1
-;; CHECK-TEXT-NEXT:    (ref.func $r1)
-;; CHECK-TEXT-NEXT:   )
-;; CHECK-TEXT-NEXT:  )
-;; CHECK-TEXT-NEXT: )
-
-;; CHECK-BIN:      (func $21 (type $f1)
-;; CHECK-BIN-NEXT:  (call $nl1
-;; CHECK-BIN-NEXT:   (cont.new $k1
-;; CHECK-BIN-NEXT:    (ref.func $r0)
-;; CHECK-BIN-NEXT:   )
-;; CHECK-BIN-NEXT:  )
-;; CHECK-BIN-NEXT: )
-
-;; CHECK-BIN:      (func $22 (type $f1)
-;; CHECK-BIN-NEXT:  (call $nl2
-;; CHECK-BIN-NEXT:   (cont.new $k1
-;; CHECK-BIN-NEXT:    (ref.func $r1)
-;; CHECK-BIN-NEXT:   )
-;; CHECK-BIN-NEXT:  )
-;; CHECK-BIN-NEXT: )
-
-;; CHECK-BIN:      (func $23 (type $f1)
-;; CHECK-BIN-NEXT:  (call $nl3
-;; CHECK-BIN-NEXT:   (cont.new $k1
-;; CHECK-BIN-NEXT:    (ref.func $r1)
-;; CHECK-BIN-NEXT:   )
-;; CHECK-BIN-NEXT:  )
-;; CHECK-BIN-NEXT: )
-
-;; CHECK-BIN:      (func $24 (type $f1)
-;; CHECK-BIN-NEXT:  (call $nl4
-;; CHECK-BIN-NEXT:   (cont.new $k1
-;; CHECK-BIN-NEXT:    (ref.func $r1)
-;; CHECK-BIN-NEXT:   )
-;; CHECK-BIN-NEXT:  )
-;; CHECK-BIN-NEXT: )
-
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $0))

@@ -23,12 +23,16 @@
 
  ;; CHECK-TEXT:      (type $4 (func (param (ref $ct)) (result i32)))
 
+ ;; CHECK-TEXT:      (type $5 (func (result i32)))
+
  ;; CHECK-TEXT:      (tag $t (type $ft) (param i32) (result i32))
  ;; CHECK-BIN:      (type $2 (func (result i32 (ref $ct))))
 
  ;; CHECK-BIN:      (type $3 (func (param i64)))
 
  ;; CHECK-BIN:      (type $4 (func (param (ref $ct)) (result i32)))
+
+ ;; CHECK-BIN:      (type $5 (func (result i32)))
 
  ;; CHECK-BIN:      (tag $t (type $ft) (param i32) (result i32))
  (tag $t (param i32) (result i32))
@@ -85,6 +89,30 @@
    )
   )
  )
+
+ ;; CHECK-TEXT:      (func $unreachable (type $5) (result i32)
+ ;; CHECK-TEXT-NEXT:  (block ;; (replaces unreachable ResumeThrow we can't emit)
+ ;; CHECK-TEXT-NEXT:   (drop
+ ;; CHECK-TEXT-NEXT:    (i64.const 123)
+ ;; CHECK-TEXT-NEXT:   )
+ ;; CHECK-TEXT-NEXT:   (drop
+ ;; CHECK-TEXT-NEXT:    (unreachable)
+ ;; CHECK-TEXT-NEXT:   )
+ ;; CHECK-TEXT-NEXT:   (unreachable)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $unreachable (type $5) (result i32)
+ ;; CHECK-BIN-NEXT:  (drop
+ ;; CHECK-BIN-NEXT:   (i64.const 123)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (unreachable)
+ ;; CHECK-BIN-NEXT: )
+ (func $unreachable (result i32)
+   (resume_throw $ct $e
+     (i64.const 123)
+     (unreachable)
+   )
+ )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i32)))
 
@@ -95,6 +123,8 @@
 ;; CHECK-BIN-NODEBUG:      (type $3 (func (param i64)))
 
 ;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref $1)) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $5 (func (result i32)))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0) (param i32) (result i32))
 
@@ -123,4 +153,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $scratch_2)
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $1 (type $5) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 123)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )

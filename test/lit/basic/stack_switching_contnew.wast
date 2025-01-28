@@ -77,22 +77,20 @@
    (cont.new $ct (ref.func $g))
  )
 
- (func (result (ref cont))
+ ;; CHECK-TEXT:      (func $k (type $3) (result (ref cont))
+ ;; CHECK-TEXT-NEXT:  (cont.new $ct
+ ;; CHECK-TEXT-NEXT:   (ref.null nofunc)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $k (type $3) (result (ref cont))
+ ;; CHECK-BIN-NEXT:  (cont.new $ct
+ ;; CHECK-BIN-NEXT:   (ref.null nofunc)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $k (result (ref cont))
    (cont.new $ct (ref.null nofunc)))
 
 )
-;; CHECK-TEXT:      (func $0 (type $3) (result (ref cont))
-;; CHECK-TEXT-NEXT:  (cont.new $ct
-;; CHECK-TEXT-NEXT:   (ref.null nofunc)
-;; CHECK-TEXT-NEXT:  )
-;; CHECK-TEXT-NEXT: )
-
-;; CHECK-BIN:      (func $3 (type $3) (result (ref cont))
-;; CHECK-BIN-NEXT:  (cont.new $ct
-;; CHECK-BIN-NEXT:   (ref.null nofunc)
-;; CHECK-BIN-NEXT:  )
-;; CHECK-BIN-NEXT: )
-
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )

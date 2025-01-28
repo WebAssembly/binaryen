@@ -20,23 +20,23 @@
    ;; CHECK-BIN:       (type $ct (cont $ft))
    (type $ct (cont $ft)))
 
- ;; CHECK-TEXT:      (type $2 (func (result i32)))
+ ;; CHECK-TEXT:      (type $2 (func (param (ref null $ct)) (result i32)))
 
- ;; CHECK-TEXT:      (type $3 (func (param (ref null $ct)) (result i32)))
+ ;; CHECK-TEXT:      (type $3 (func (result i32)))
 
  ;; CHECK-TEXT:      (type $4 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-TEXT:      (tag $t (type $2) (result i32))
- ;; CHECK-BIN:      (type $2 (func (result i32)))
+ ;; CHECK-TEXT:      (tag $t (type $3) (result i32))
+ ;; CHECK-BIN:      (type $2 (func (param (ref null $ct)) (result i32)))
 
- ;; CHECK-BIN:      (type $3 (func (param (ref null $ct)) (result i32)))
+ ;; CHECK-BIN:      (type $3 (func (result i32)))
 
  ;; CHECK-BIN:      (type $4 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-BIN:      (tag $t (type $2) (result i32))
+ ;; CHECK-BIN:      (tag $t (type $3) (result i32))
  (tag $t (result i32))
 
- ;; CHECK-TEXT:      (func $swap (type $3) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-TEXT:      (func $swap (type $2) (param $k (ref null $ct)) (result i32)
  ;; CHECK-TEXT-NEXT:  (local $scratch (tuple i32 (ref null $ct)))
  ;; CHECK-TEXT-NEXT:  (local $scratch_2 i32)
  ;; CHECK-TEXT-NEXT:  (return
@@ -60,7 +60,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $swap (type $3) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN:      (func $swap (type $2) (param $k (ref null $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $scratch i32)
  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
  ;; CHECK-BIN-NEXT:  (local $3 (ref null $ct))
@@ -124,21 +124,50 @@
      (local.get $x)
    )
  )
+
+ ;; CHECK-TEXT:      (func $unreachable (type $2) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-TEXT-NEXT:  (return
+ ;; CHECK-TEXT-NEXT:   (local.tee $k
+ ;; CHECK-TEXT-NEXT:    (block ;; (replaces unreachable StackSwitch we can't emit)
+ ;; CHECK-TEXT-NEXT:     (drop
+ ;; CHECK-TEXT-NEXT:      (i32.const 42)
+ ;; CHECK-TEXT-NEXT:     )
+ ;; CHECK-TEXT-NEXT:     (drop
+ ;; CHECK-TEXT-NEXT:      (unreachable)
+ ;; CHECK-TEXT-NEXT:     )
+ ;; CHECK-TEXT-NEXT:     (unreachable)
+ ;; CHECK-TEXT-NEXT:    )
+ ;; CHECK-TEXT-NEXT:   )
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $unreachable (type $2) (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN-NEXT:  (drop
+ ;; CHECK-BIN-NEXT:   (i32.const 42)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT:  (unreachable)
+ ;; CHECK-BIN-NEXT: )
+ (func $unreachable (param $k (ref null $ct)) (result i32)
+   (switch $ct $t
+   (i32.const 42)
+   (unreachable))
+   (local.set $k)
+   (return)
+ )
 )
 ;; CHECK-BIN-NODEBUG:      (rec
 ;; CHECK-BIN-NODEBUG-NEXT:  (type $0 (func (param i32 (ref null $1)) (result i32)))
 
 ;; CHECK-BIN-NODEBUG:       (type $1 (cont $0))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref null $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (param (ref null $1)) (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (result i32)))
 
 ;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $2) (result i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $3) (result i32))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $3 (ref null $1))
@@ -180,4 +209,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nocont)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
