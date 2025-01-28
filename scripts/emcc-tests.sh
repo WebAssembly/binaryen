@@ -4,6 +4,12 @@ set -o errexit
 set -o pipefail
 
 mkdir -p emcc-build
+
+# TODO
+# ninja -C emcc-build binaryen_embind_wasm
+# NODE=nodejs ./check.py --binaryen-bin=emcc-build/bin binaryenjs_embind
+#
+
 echo "emcc-tests: build:wasm"
 emcmake cmake -B emcc-build -DCMAKE_BUILD_TYPE=Release -G Ninja
 ninja -C emcc-build binaryen_wasm

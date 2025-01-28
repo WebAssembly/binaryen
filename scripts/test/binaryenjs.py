@@ -113,3 +113,19 @@ def test_binaryen_js():
 
 def test_binaryen_wasm():
     do_test_binaryen_js_with(shared.BINARYEN_WASM)
+
+
+def test_binaryen_embind():
+    print('\n[ checking binaryen.js (embind) testcases (' + shared.BINARYEN_EMBIND + ')... ]\n')
+
+    for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen-embind.js'))):
+        if not s.endswith('.js'):
+            continue
+        print(s)
+        test_path = os.path.join(shared.options.binaryen_test, 'binaryen-embind.js', s)
+
+        # Run the test and pass the build as an argument, so it knows where to
+        # load it.
+        out = support.run_command([shared.NODEJS, test_path, shared.BINARYEN_EMBIND])
+        assert('success.' in out)
+
