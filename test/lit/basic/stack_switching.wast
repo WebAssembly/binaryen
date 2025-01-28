@@ -51,11 +51,11 @@
 
  ;; CHECK-TEXT:      (elem declare func $f1 $f2 $f3 $fglo $r0 $r1)
 
- ;; CHECK-TEXT:      (tag $exn)
+ ;; CHECK-TEXT:      (tag $exn (type $f1))
 
- ;; CHECK-TEXT:      (tag $e1)
+ ;; CHECK-TEXT:      (tag $e1 (type $f1))
 
- ;; CHECK-TEXT:      (tag $e2)
+ ;; CHECK-TEXT:      (tag $e2 (type $f1))
 
  ;; CHECK-TEXT:      (export "unhandled-1" (func $f1))
 
@@ -96,11 +96,11 @@
 
  ;; CHECK-BIN:      (elem declare func $f1 $f2 $f3 $fglo $r0 $r1)
 
- ;; CHECK-BIN:      (tag $exn)
+ ;; CHECK-BIN:      (tag $exn (type $f1))
 
- ;; CHECK-BIN:      (tag $e1)
+ ;; CHECK-BIN:      (tag $e1 (type $f1))
 
- ;; CHECK-BIN:      (tag $e2)
+ ;; CHECK-BIN:      (tag $e2 (type $f1))
 
  ;; CHECK-BIN:      (export "unhandled-1" (func $f1))
 
@@ -722,11 +722,11 @@
 ;; CHECK-BIN-NEXT:  )
 ;; CHECK-BIN-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0)
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$1)
+;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $0))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$2)
+;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $0))
 
 ;; CHECK-BIN-NODEBUG:      (export "unhandled-1" (func $5))
 

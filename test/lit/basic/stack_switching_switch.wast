@@ -26,14 +26,14 @@
 
  ;; CHECK-TEXT:      (type $4 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-TEXT:      (tag $t (result i32))
+ ;; CHECK-TEXT:      (tag $t (type $2) (result i32))
  ;; CHECK-BIN:      (type $2 (func (result i32)))
 
  ;; CHECK-BIN:      (type $3 (func (param (ref null $ct)) (result i32)))
 
  ;; CHECK-BIN:      (type $4 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-BIN:      (tag $t (result i32))
+ ;; CHECK-BIN:      (tag $t (type $2) (result i32))
  (tag $t (result i32))
 
  ;; CHECK-TEXT:      (func $swap (type $3) (param $k (ref null $ct)) (result i32)
@@ -136,7 +136,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $4 (func (param (ref $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (result i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $2) (result i32))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
