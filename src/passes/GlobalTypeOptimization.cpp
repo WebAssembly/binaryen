@@ -22,6 +22,7 @@
 //  * Fields that are never read from can be removed entirely.
 //
 
+#include "ir/eh-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/ordering.h"
@@ -453,6 +454,8 @@ struct GlobalTypeOptimization : public Pass {
         return std::make_unique<FieldRemover>(parent);
       }
 
+      bool needEHFixups = false;
+
       void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable) {
           return;
@@ -476,6 +479,8 @@ struct GlobalTypeOptimization : public Pass {
         ChildLocalizer localizer(
           curr, getFunction(), *getModule(), getPassOptions());
         replaceCurrent(localizer.getReplacement());
+        // Adding a block here requires EH fixups.
+        needEHFixups = true;
 
         // Remove and reorder operands.
         Index removed = 0;
@@ -514,13 +519,24 @@ struct GlobalTypeOptimization : public Pass {
           // operations here: the trap on a null ref happens after the value,
           // which might have side effects.
           Builder builder(*getModule());
-          auto flipped = getResultOfFirst(curr->ref,
-                                          builder.makeDrop(curr->value),
-                                          getFunction(),
-                                          getModule(),
-                                          getPassOptions());
-          replaceCurrent(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped)));
+          auto* flipped = getResultOfFirst(curr->ref,
+                                           builder.makeDrop(curr->value),
+                                           getFunction(),
+                                           getModule(),
+                                           getPassOptions());
+          needEHFixups = true;
+          Expression* replacement =
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped));
+          if (curr->order == MemoryOrder::SeqCst) {
+            // If the removed set is sequentially consistent, we must insert a
+            // seqcst fence to preserve the effect on the global order of seqcst
+            // operations. No fence is necessary for release sets because there
+            // are no reads for them to synchronize with given that we are
+            // removing the field.
+            replacement =
+              builder.makeSequence(replacement, builder.makeAtomicFence());
+          }
+          replaceCurrent(replacement);
         }
       }
 
@@ -533,6 +549,12 @@ struct GlobalTypeOptimization : public Pass {
         // We must not remove a field that is read from.
         assert(newIndex != RemovedField);
         curr->index = newIndex;
+      }
+
+      void visitFunction(Function* curr) {
+        if (needEHFixups) {
+          EHUtils::handleBlockNestedPops(curr, *getModule());
+        }
       }
 
     private:

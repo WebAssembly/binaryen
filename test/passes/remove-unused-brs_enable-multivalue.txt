@@ -2389,12 +2389,12 @@
   (loop $label$1
    (br_if $label$1
     (block $label$2
-     (if
-      (block $label$4
-       (unreachable)
-      )
-      (then
-       (block $label$3
+     (block $label$3
+      (if
+       (block $label$4
+        (unreachable)
+       )
+       (then
         (br $label$3)
        )
       )
@@ -2405,15 +2405,15 @@
   )
  )
  (func $if-arm-unreachable
-  (if
-   (unreachable)
-   (then
-    (block $label$1
+  (block $label$1
+   (if
+    (unreachable)
+    (then
      (nop)
     )
-   )
-   (else
-    (unreachable)
+    (else
+     (unreachable)
+    )
    )
   )
  )

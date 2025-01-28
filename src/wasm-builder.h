@@ -162,10 +162,10 @@ public:
     return glob;
   }
 
-  static std::unique_ptr<Tag> makeTag(Name name, Signature sig) {
+  static std::unique_ptr<Tag> makeTag(Name name, HeapType type) {
     auto tag = std::make_unique<Tag>();
     tag->name = name;
-    tag->sig = sig;
+    tag->type = type;
     return tag;
   }
 
@@ -936,21 +936,57 @@ public:
     ret->finalize();
     return ret;
   }
-  StructGet*
-  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
+  StructGet* makeStructGet(Index index,
+                           Expression* ref,
+                           MemoryOrder order,
+                           Type type,
+                           bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<StructGet>();
     ret->index = index;
     ret->ref = ref;
     ret->type = type;
     ret->signed_ = signed_;
+    ret->order = order;
     ret->finalize();
     return ret;
   }
-  StructSet* makeStructSet(Index index, Expression* ref, Expression* value) {
+  StructSet* makeStructSet(Index index,
+                           Expression* ref,
+                           Expression* value,
+                           MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<StructSet>();
     ret->index = index;
     ret->ref = ref;
     ret->value = value;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  StructRMW* makeStructRMW(AtomicRMWOp op,
+                           Index index,
+                           Expression* ref,
+                           Expression* value,
+                           MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<StructRMW>();
+    ret->op = op;
+    ret->index = index;
+    ret->ref = ref;
+    ret->value = value;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  StructCmpxchg* makeStructCmpxchg(Index index,
+                                   Expression* ref,
+                                   Expression* expected,
+                                   Expression* replacement,
+                                   MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<StructCmpxchg>();
+    ret->index = index;
+    ret->ref = ref;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->order = order;
     ret->finalize();
     return ret;
   }

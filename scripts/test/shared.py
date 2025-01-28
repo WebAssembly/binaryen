@@ -315,7 +315,7 @@ class Py2CalledProcessError(subprocess.CalledProcessError):
 
 
 def run_process(cmd, check=True, input=None, capture_output=False, decode_output=True, *args, **kw):
-    if input and type(input) == str:
+    if input and type(input) is str:
         input = bytes(input, 'utf-8')
     if capture_output:
         kw['stdout'] = subprocess.PIPE
@@ -358,7 +358,7 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-    binary = expected_file.endswith(".wasm") or type(actual) == bytes
+    binary = expected_file.endswith(".wasm") or type(actual) is bytes
     with open(expected_file, 'rb' if binary else 'r') as f:
         fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
@@ -416,7 +416,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
     'align.wast',    # Alignment bit 6 used by multi-memory
     'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
-    'block.wast',    # Requires block parameters
     'bulk.wast',     # Requires table.init abbreviation with implicit table
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
@@ -425,25 +424,22 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'elem.wast',    # Requires table.init abbreviation with implicit table
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
-    'fac.wast',     # Requires block parameters (on a loop)
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
     'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
     'global.wast',  # Globals allowed to refer to previous globals by GC
-    'if.wast',      # Requires block parameters (on an if)
+    'if.wast',      # Requires more precise unreachable validation
     'imports.wast',  # Requires wast `register` support
     'linking.wast',  # Requires wast `register` support
-    'loop.wast',     # Requires block parameters (on a loop)
     'memory.wast',   # Multiple memories now allowed
     'annotations.wast',  # String annotations IDs should be allowed
     'id.wast',       # Empty IDs should be disallowed
     'throw.wast',    # Requires try_table interpretation
     'try_catch.wast',  # Requires wast `register` support
     'tag.wast',      # Non-empty tag results allowed by stack switching
-    'throw_ref.wast',  # Requires block parameters (on an if)
     'try_table.wast',  # Requires try_table interpretation
-    'br_on_non_null.wast',  # Requires sending values on br_on_non_null
-    'br_on_null.wast',      # Requires sending values on br_on_null
+    # 'br_on_non_null.wast',  # Requires sending values on br_on_non_null
+    # 'br_on_null.wast',      # Requires sending values on br_on_null
     'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
     'ref_is_null.wast',  # Requires ref.null wast constants
@@ -456,8 +452,8 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'array.wast',  # Requires support for table default elements
     'array_init_elem.wast',  # Requires support for elem.drop
     'br_if.wast',  # Requires more precise branch validation
-    'br_on_cast.wast',  # Requires sending values on br_on_cast
-    'br_on_cast_fail.wast',  # Requires sending values on br_on_cast_fail
+    'br_on_cast.wast',  # Requires host references to not be externalized i31refs
+    'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs
     'extern.wast',    # Requires ref.host wast constants
     'i31.wast',       # Requires support for table default elements
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
@@ -565,3 +561,19 @@ def skip_if_on_windows(name):
         print('skipping test "%s" on windows' % name)
         return True
     return False
+
+
+test_suffixes = ['*.wasm', '*.wast', '*.wat']
+
+
+# return a list of all the tests in the entire test suite
+def get_all_tests():
+    core_tests = get_tests(get_test_dir('.'), test_suffixes)
+    passes_tests = get_tests(get_test_dir('passes'), test_suffixes)
+    spec_tests = get_tests(get_test_dir('spec'), test_suffixes)
+    wasm2js_tests = get_tests(get_test_dir('wasm2js'), test_suffixes)
+    lld_tests = get_tests(get_test_dir('lld'), test_suffixes)
+    unit_tests = get_tests(get_test_dir(os.path.join('unit', 'input')), test_suffixes)
+    lit_tests = get_tests(get_test_dir('lit'), test_suffixes, recursive=True)
+
+    return core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests

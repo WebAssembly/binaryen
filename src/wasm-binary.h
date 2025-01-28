@@ -28,6 +28,7 @@
 #include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "parsing.h"
+#include "source-map.h"
 #include "wasm-builder.h"
 #include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
@@ -395,6 +396,8 @@ extern const char* MultiMemoryFeature;
 extern const char* StackSwitchingFeature;
 extern const char* SharedEverythingFeature;
 extern const char* FP16Feature;
+extern const char* BulkMemoryOptFeature;
+extern const char* CallIndirectOverlongFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1122,6 +1125,22 @@ enum ASTNodes {
   I31GetU = 0x1e,
   RefI31Shared = 0x1f,
 
+  // Shared GC Opcodes
+
+  OrderSeqCst = 0x0,
+  OrderAcqRel = 0x1,
+  StructAtomicGet = 0x5c,
+  StructAtomicGetS = 0x5d,
+  StructAtomicGetU = 0x5e,
+  StructAtomicSet = 0x5f,
+  StructAtomicRMWAdd = 0x60,
+  StructAtomicRMWSub = 0x61,
+  StructAtomicRMWAnd = 0x62,
+  StructAtomicRMWOr = 0x63,
+  StructAtomicRMWXor = 0x64,
+  StructAtomicRMWXchg = 0x65,
+  StructAtomicRMWCmpxchg = 0x66,
+
   // stringref opcodes
 
   StringConst = 0x82,
@@ -1354,6 +1373,8 @@ public:
 
   void writeField(const Field& field);
 
+  void writeMemoryOrder(MemoryOrder order, bool isRMW = false);
+
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
@@ -1408,40 +1429,12 @@ private:
   void prepare();
 };
 
+extern std::vector<char> defaultEmptySourceMap;
+
 class WasmBinaryReader {
   Module& wasm;
   MixedArena& allocator;
   const std::vector<char>& input;
-
-  // Source map debugging support.
-
-  std::istream* sourceMap;
-
-  // The binary position that the next debug location refers to. That is, this
-  // is the first item in a source map entry that we have read (the "column", in
-  // source map terms, which for wasm means the offset in the binary). We have
-  // read this entry, but have not used it yet (we use it when we read the
-  // expression at this binary offset).
-  //
-  // This is set to 0 as an invalid value if we reach the end of the source map
-  // and there is nothing left to read.
-  size_t nextDebugPos;
-
-  // The debug location (file:line:col) corresponding to |nextDebugPos|. That
-  // is, this is the next 3 fields in a source map entry that we have read, but
-  // not used yet.
-  //
-  // If that location has no debug info (it lacks those 3 fields), then this
-  // contains the info from the previous one, because in a source map, these
-  // fields are relative to their last appearance, so we cannot forget them (we
-  // can't just do something like std::optional<DebugLocation> or such); for
-  // example, if we have line number 100, then no debug info, and then line
-  // number 500, then when we get to 500 we will see "+400" which is relative to
-  // the last existing line number (we "skip" over a place without debug info).
-  Function::DebugLocation nextDebugLocation;
-
-  // Whether debug info is present on |nextDebugPos| (see comment there).
-  bool nextDebugLocationHasDebugInfo;
 
   // Settings.
 
@@ -1453,9 +1446,11 @@ class WasmBinaryReader {
 
   size_t pos = 0;
   Index startIndex = -1;
-  std::set<Function::DebugLocation> debugLocation;
   size_t codeSectionLocation;
   std::unordered_set<uint8_t> seenSections;
+
+  IRBuilder builder;
+  SourceMapReader sourceMapReader;
 
   // All types defined in the type section
   std::vector<HeapType> types;
@@ -1463,7 +1458,8 @@ class WasmBinaryReader {
 public:
   WasmBinaryReader(Module& wasm,
                    FeatureSet features,
-                   const std::vector<char>& input);
+                   const std::vector<char>& input,
+                   const std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
@@ -1494,10 +1490,12 @@ public:
 
   bool getBasicType(int32_t code, Type& out);
   bool getBasicHeapType(int64_t code, HeapType& out);
+  // Get the signature of a control flow structure.
+  Signature getBlockType();
   // Read a value and get a type for it.
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
-  Type getType(int initial);
+  Type getType(int code);
   HeapType getHeapType();
   HeapType getIndexedHeapType();
 
@@ -1589,8 +1587,6 @@ public:
   Expression* readExpression();
   void readGlobals();
 
-  IRBuilder builder;
-
   // validations that cannot be performed on the Module
   void validateBinary();
 
@@ -1612,15 +1608,9 @@ public:
   void readDylink(size_t);
   void readDylink0(size_t);
 
-  // Debug information reading helpers
-  void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
-  std::unordered_map<std::string, Index> debugInfoFileIndices;
-  std::unordered_map<std::string, Index> debugInfoSymbolNameIndices;
-  void readNextDebugLocation();
-  void readSourceMapHeader();
-
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
+  MemoryOrder getMemoryOrder(bool isRMW = false);
 
   [[noreturn]] void throwError(std::string text) {
     throw ParseException(text, 0, pos);

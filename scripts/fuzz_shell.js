@@ -1,3 +1,17 @@
+// This script can be customized by setting the following variables in code that
+// runs before this script.
+//
+// The binary to be run. (If not set, we get the filename from argv and read
+// from it.)
+var binary;
+// A second binary to be linked in and run as well. (Can also be read from
+// argv.)
+var secondBinary;
+// Whether we are fuzzing JSPI. In addition to this being set, the "async" and
+// "await" keywords must be taken out of the /* KEYWORD */ comments (which they
+// are normally in, so as not to affect normal fuzzing).
+var JSPI;
+
 // Shell integration: find argv and set up readBinary().
 var argv;
 var readBinary;
@@ -25,9 +39,6 @@ if (typeof process === 'object' && typeof require === 'function') {
   };
 }
 
-// The binary to be run. This may be set already (by code that runs before this
-// script), and if not, we get the filename from argv.
-var binary;
 if (!binary) {
   binary = readBinary(argv[0]);
 }
@@ -43,7 +54,6 @@ if (argv.length > 0 && argv[argv.length - 1].startsWith('exports:')) {
 
 // If a second parameter is given, it is a second binary that we will link in
 // with it.
-var secondBinary;
 if (argv[1]) {
   secondBinary = readBinary(argv[1]);
 }
@@ -160,6 +170,49 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
+// Calls a given function in a try-catch, swallowing JS exceptions, and return 1
+// if we did in fact swallow an exception. Wasm traps are not swallowed (see
+// details below).
+/* async */ function tryCall(func) {
+  try {
+    /* await */ func();
+    return 0;
+  } catch (e) {
+    // We only want to catch exceptions, not wasm traps: traps should still
+    // halt execution. Handling this requires different code in wasm2js, so
+    // check for that first (wasm2js does not define RuntimeError, so use
+    // that for the check - when wasm2js is run, we override the entire
+    // WebAssembly object with a polyfill, so we know exactly what it
+    // contains).
+    var wasm2js = !WebAssembly.RuntimeError;
+    if (!wasm2js) {
+      // When running native wasm, we can detect wasm traps.
+      if (e instanceof WebAssembly.RuntimeError) {
+        throw e;
+      }
+    }
+    var text = e + '';
+    // We must not swallow host limitations here: a host limitation is a
+    // problem that means we must not compare the outcome here to any other
+    // VM.
+    var hostIssues = ['requested new array is too large',
+                      'out of memory',
+                      'Maximum call stack size exceeded'];
+    if (wasm2js) {
+      // When wasm2js does trap, it just throws an "abort" error.
+      hostIssues.push('abort');
+    }
+    for (var hostIssue of hostIssues) {
+      if (text.includes(hostIssue)) {
+        throw e;
+      }
+    }
+    // Otherwise, this is a normal exception we want to catch (a wasm
+    // exception, or a conversion error on the wasm/JS boundary, etc.).
+    return 1;
+  }
+}
+
 // Table get/set operations need a BigInt if the table has 64-bit indexes. This
 // adds a proper cast as needed.
 function toAddressType(table, index) {
@@ -200,47 +253,39 @@ var imports = {
     },
 
     // Export operations.
-    'call-export': (index) => {
-      callFunc(exportList[index].value);
+    'call-export': /* async */ (index) => {
+      /* await */ callFunc(exportList[index].value);
     },
-    'call-export-catch': (index) => {
-      try {
-        callFunc(exportList[index].value);
-        return 0;
-      } catch (e) {
-        // We only want to catch exceptions, not wasm traps: traps should still
-        // halt execution. Handling this requires different code in wasm2js, so
-        // check for that first (wasm2js does not define RuntimeError, so use
-        // that for the check - when wasm2js is run, we override the entire
-        // WebAssembly object with a polyfill, so we know exactly what it
-        // contains).
-        var wasm2js = !WebAssembly.RuntimeError;
-        if (!wasm2js) {
-          // When running native wasm, we can detect wasm traps.
-          if (e instanceof WebAssembly.RuntimeError) {
-            throw e;
-          }
-        }
-        var text = e + '';
-        // We must not swallow host limitations here: a host limitation is a
-        // problem that means we must not compare the outcome here to any other
-        // VM.
-        var hostIssues = ['requested new array is too large',
-                          'out of memory',
-                          'Maximum call stack size exceeded'];
-        if (wasm2js) {
-          // When wasm2js does trap, it just throws an "abort" error.
-          hostIssues.push('abort');
-        }
-        for (var hostIssue of hostIssues) {
-          if (text.includes(hostIssue)) {
-            throw e;
-          }
-        }
-        // Otherwise, this is a normal exception we want to catch (a wasm
-        // exception, or a conversion error on the wasm/JS boundary, etc.).
-        return 1;
+    'call-export-catch': /* async */ (index) => {
+      return tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
+    },
+
+    // Funcref operations.
+    'call-ref': /* async */ (ref) => {
+      // This is a direct function reference, and just like an export, it must
+      // be wrapped for JSPI.
+      ref = wrapExportForJSPI(ref);
+      /* await */ callFunc(ref);
+    },
+    'call-ref-catch': /* async */ (ref) => {
+      ref = wrapExportForJSPI(ref);
+      return tryCall(/* async */ () => /* await */ callFunc(ref));
+    },
+
+    // Sleep a given amount of ms (when JSPI) and return a given id after that.
+    'sleep': (ms, id) => {
+      if (!JSPI) {
+        return id;
       }
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(id);
+        }, 0); // TODO: Use the ms in some reasonable, deterministic manner.
+               //       Rather than actually setTimeout on them we could manage
+               //       a queue of pending sleeps manually, and order them based
+               //       on the "ms" (which would not be literal ms, but just
+               //       how many time units to wait).
+      });
     },
   },
   // Emscripten support.
@@ -257,6 +302,22 @@ if (typeof WebAssembly.Tag !== 'undefined') {
       'parameters': ['externref']
     }),
   };
+}
+
+// If JSPI is available, wrap the imports and exports.
+if (JSPI) {
+  for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
+                    'call-ref-catch']) {
+    imports['fuzzing-support'][name] =
+      new WebAssembly.Suspending(imports['fuzzing-support'][name]);
+  }
+}
+
+function wrapExportForJSPI(value) {
+  if (JSPI && typeof value === 'function') {
+    value = WebAssembly.promising(value);
+  }
+  return value;
 }
 
 // If a second binary will be linked in then set up the imports for
@@ -285,37 +346,59 @@ function build(binary) {
   try {
     instance = new WebAssembly.Instance(module, imports);
   } catch (e) {
-    console.log('exception thrown: failed to instantiate module');
+    console.log('exception thrown: failed to instantiate module: ' + e);
     quit();
   }
 
-  // Update the exports. Note that this adds onto |exports|, |exportList|,
+  // Update the exports. Note that this adds onto |exports| and |exportList|,
   // which is intentional: if we build another wasm, or build this one more
   // than once, we want to be able to call them all, so we unify all their
   // exports. (We do trample in |exports| when keys are equal - basically this
   // is a single global namespace - but |exportList| is appended to, so we do
   // keep the ability to call anything that was ever exported.)
-  for (var key in instance.exports) {
+  //
+  // Note we do not iterate on instance.exports: the order there is not
+  // necessarily the order in the wasm (which is what wasm-opt --fuzz-exec uses,
+  // for example), because of JS object iteration rules (numbers are considered
+  // "array indexes" and appear first,
+  // https://tc39.es/ecma262/#sec-ordinaryownpropertykeys).
+  for (var e of WebAssembly.Module.exports(module)) {
+    var key = e.name;
     var value = instance.exports[key];
+    value = wrapExportForJSPI(value);
     exports[key] = value;
     exportList.push({ name: key, value: value });
   }
 }
 
-// Run the code by calling exports.
-function callExports() {
+// Simple deterministic hashing, on an unsigned 32-bit seed. See e.g.
+// https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
+function hashCombine(seed, value) {
+  seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >>> 2);
+  return seed >>> 0;
+}
+
+// Run the code by calling exports. The optional |ordering| parameter indicates
+// howe we should order the calls to the exports: if it is not provided, we call
+// them in the natural order, which allows our output to be compared to other
+// executions of the wasm (e.g. from wasm-opt --fuzz-exec). If |ordering| is
+// provided, it is a random seed we use to make deterministic choices on
+// the order of calls.
+/* async */ function callExports(ordering) {
   // Call the exports we were told, or if we were not given an explicit list,
   // call them all.
-  var relevantExports = exportsToCall || exportList;
+  let relevantExports = exportsToCall || exportList;
 
-  for (var e of relevantExports) {
-    var name, value;
+  // Build the list of call tasks to run, one for each relevant export.
+  let tasks = [];
+  for (let e of relevantExports) {
+    let name, value;
     if (typeof e === 'string') {
       // We are given a string name to call. Look it up in the global namespace.
       name = e;
       value = exports[e];
     } else {
-      // We are given an object form exportList, which bas both a name and a
+      // We are given an object form exportList, which has both a name and a
       // value.
       name = e.name;
       value = e.value;
@@ -325,14 +408,78 @@ function callExports() {
       continue;
     }
 
+    // A task is a name + a function to call. For an export, the function is
+    // simply a call of the export.
+    tasks.push({ name: name, func: /* async */ () => callFunc(value) });
+  }
+
+  // Reverse the array, so the first task is at the end, for efficient
+  // popping in the common case.
+  tasks.reverse();
+
+  // Execute tasks while they remain.
+  while (tasks.length) {
+    let task;
+    if (ordering === undefined) {
+      // Use the natural order.
+      task = tasks.pop();
+    } else {
+      // Pick a random task.
+      ordering = hashCombine(ordering, tasks.length);
+      let i = ordering % tasks.length;
+      task = tasks.splice(i, 1)[0];
+    }
+
+    // Execute the task.
+    console.log('[fuzz-exec] calling ' + task.name);
+    let result;
     try {
-      console.log('[fuzz-exec] calling ' + name);
-      var result = callFunc(value);
-      if (typeof result !== 'undefined') {
-        console.log('[fuzz-exec] note result: ' + name + ' => ' + printed(result));
-      }
+      result = task.func();
     } catch (e) {
       console.log('exception thrown: ' + e);
+      continue;
+    }
+
+    if (JSPI) {
+      // When we are changing up the order, in JSPI we can also leave some
+      // promises unresolved until later, which lets us interleave them. Note we
+      // never defer a task more than once, and we only defer a promise (which
+      // we check for using .then).
+      // TODO: Deferring more than once may make sense, by chaining promises in
+      //       JS (that would not add wasm execution in the middle, but might
+      //       find JS issues in principle). We could also link promises by
+      //       depending on each other, ensuring certain orders of execution.
+      if (ordering !== undefined && !task.deferred && result &&
+          typeof result == 'object' && typeof result.then === 'function') {
+        // Hash with -1 here, just to get something different than the hashing a
+        // few lines above.
+        ordering = hashCombine(ordering, -1);
+        if (ordering & 1) {
+          // Defer it for later. Reuse the existing task for simplicity.
+          console.log(`(jspi: defer ${task.name})`);
+          task.func = /* async */ () => {
+            console.log(`(jspi: finish ${task.name})`);
+            return /* await */ result;
+          };
+          task.deferred = true;
+          tasks.push(task);
+          continue;
+        }
+        // Otherwise, continue down.
+      }
+
+      // Await it right now.
+      try {
+        result = /* await */ result;
+      } catch (e) {
+        console.log('exception thrown: ' + e);
+        continue;
+      }
+    }
+
+    // Log the result.
+    if (typeof result !== 'undefined') {
+      console.log('[fuzz-exec] note result: ' + task.name + ' => ' + printed(result));
     }
   }
 }

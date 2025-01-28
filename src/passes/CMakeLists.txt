@@ -102,7 +102,7 @@ set(passes_SOURCES
   TraceCalls.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
-  RemoveMemory.cpp
+  RemoveMemoryInit.cpp
   RemoveNonJSOps.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
@@ -112,7 +112,6 @@ set(passes_SOURCES
   ReorderGlobals.cpp
   ReorderLocals.cpp
   ReReloop.cpp
-  Table64Lowering.cpp
   TrapMode.cpp
   TypeGeneralizing.cpp
   TypeRefining.cpp
@@ -145,4 +144,4 @@ if(EMSCRIPTEN)
   list(REMOVE_ITEM passes_SOURCES "hash-stringify-walker.cpp")
   list(REMOVE_ITEM passes_SOURCES "Outlining.cpp")
 endif()
-add_library(passes OBJECT ${passes_SOURCES})
+target_sources(binaryen PRIVATE ${passes_SOURCES})

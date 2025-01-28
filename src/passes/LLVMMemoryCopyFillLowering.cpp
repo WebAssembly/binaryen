@@ -49,7 +49,7 @@ struct LLVMMemoryCopyFillLowering
   }
 
   void run(Module* module) override {
-    if (!module->features.hasBulkMemory()) {
+    if (!module->features.hasBulkMemoryOpt()) {
       return;
     }
     if (module->features.hasMemory64() || module->features.hasMultiMemory()) {
@@ -70,6 +70,9 @@ struct LLVMMemoryCopyFillLowering
                    " no passive segments";
       }
     }
+    // Since there are no passive segments, we can remove the feature. This also
+    // causes Binaryen to not encode a DataCount section.
+    module->features.setBulkMemory(false);
 
     // In order to introduce a call to a function, it must first exist, so
     // create an empty stub.
@@ -108,7 +111,7 @@ struct LLVMMemoryCopyFillLowering
     } else {
       module->removeFunction(memFillFuncName);
     }
-    module->features.disable(FeatureSet::BulkMemory);
+    module->features.setBulkMemoryOpt(false);
   }
 
   void createMemoryCopyFunc(Module* module) {

@@ -51,6 +51,9 @@
 ;; CHECK-NEXT:                                        wasm-opt while reducing. (default:
 ;; CHECK-NEXT:                                        --enable-all)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --save-all-working,-saw              Save all intermediate working files, as
+;; CHECK-NEXT:                                        $WORKING.0, .1, .2 etc
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------
@@ -92,6 +95,18 @@
 ;; CHECK-NEXT:   --enable-bulk-memory                 Enable bulk memory operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-bulk-memory                Disable bulk memory operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-bulk-memory-opt             Enable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-bulk-memory-opt            Disable memory.copy and memory.fill
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-call-indirect-overlong      Enable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-call-indirect-overlong     Disable LEB encoding of call-indirect
+;; CHECK-NEXT:                                        (Ignored for compatibility as it has no
+;; CHECK-NEXT:                                        effect on Binaryen)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-exception-handling          Enable exception handling operations
 ;; CHECK-NEXT:

@@ -65,8 +65,12 @@ struct BinaryArgs {
 
 class TranslateToFuzzReader {
 public:
-  TranslateToFuzzReader(Module& wasm, std::vector<char>&& input);
-  TranslateToFuzzReader(Module& wasm, std::string& filename);
+  TranslateToFuzzReader(Module& wasm,
+                        std::vector<char>&& input,
+                        bool closedWorld = false);
+  TranslateToFuzzReader(Module& wasm,
+                        std::string& filename,
+                        bool closedWorld = false);
 
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
@@ -77,6 +81,8 @@ public:
   Module& wasm;
 
 private:
+  // Whether the module will be tested in a closed-world environment.
+  bool closedWorld;
   Builder builder;
   Random random;
 
@@ -109,6 +115,9 @@ private:
   Name tableSetImportName;
   Name callExportImportName;
   Name callExportCatchImportName;
+  Name callRefImportName;
+  Name callRefCatchImportName;
+  Name sleepImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
@@ -224,12 +233,14 @@ private:
   void addTag();
   void finalizeMemory();
   void finalizeTable();
+  void shuffleExports();
   void prepareHangLimitSupport();
   void addHangLimitSupport();
   void addImportLoggingSupport();
   void addImportCallingSupport();
   void addImportThrowingSupport();
   void addImportTableSupport();
+  void addImportSleepSupport();
   void addHashMemorySupport();
 
   // Special expression makers
@@ -238,7 +249,10 @@ private:
   Expression* makeImportThrowing(Type type);
   Expression* makeImportTableGet();
   Expression* makeImportTableSet(Type type);
-  Expression* makeImportCallExport(Type type);
+  // Call either an export or a ref. We do this from a single function to better
+  // control the frequency of each.
+  Expression* makeImportCallCode(Type type);
+  Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation

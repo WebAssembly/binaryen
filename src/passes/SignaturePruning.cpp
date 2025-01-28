@@ -169,6 +169,12 @@ struct SignaturePruning : public Pass {
       }
     }
 
+    // Similarly, we cannot yet modify types used in exception handling or stack
+    // switching tags. TODO.
+    for (auto& tag : module->tags) {
+      allInfo[tag->type].optimizable = false;
+    }
+
     // A type must have the same number of parameters and results as its
     // supertypes and subtypes, so we only attempt to modify types without
     // supertypes or subtypes.

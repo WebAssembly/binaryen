@@ -134,23 +134,37 @@ public:
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) {
-    if (curr->ref->type != Type::unreachable && !curr->ref->type.isNull()) {
-      // If this field is immutable then we may be able to precompute this, as
-      // if we also created the data in this function (or it was created in an
-      // immutable global) then we know the value in the field. If it is
-      // immutable, call the super method which will do the rest here. That
-      // includes checking for the data being properly created, as if it was
-      // not then we will not have a constant value for it, which means the
-      // local.get of that value will stop us.
-      auto& field =
-        curr->ref->type.getHeapType().getStruct().fields[curr->index];
-      if (field.mutable_ == Immutable) {
-        return Super::visitStructGet(curr);
-      }
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+      return Flow(NONCONSTANT_FLOW);
     }
-
-    // Otherwise, we've failed to precompute.
-    return Flow(NONCONSTANT_FLOW);
+    switch (curr->order) {
+      case MemoryOrder::Unordered:
+        // This can always be precomputed.
+        break;
+      case MemoryOrder::SeqCst:
+        // This can never be precomputed away because it synchronizes with other
+        // threads.
+        return Flow(NONCONSTANT_FLOW);
+      case MemoryOrder::AcqRel:
+        // This synchronizes only with writes to the same data, so it can still
+        // be precomputed if the data is not shared with other threads.
+        if (curr->ref->type.getHeapType().isShared()) {
+          return Flow(NONCONSTANT_FLOW);
+        }
+        break;
+    }
+    // If this field is immutable then we may be able to precompute this, as
+    // if we also created the data in this function (or it was created in an
+    // immutable global) then we know the value in the field. If it is
+    // immutable, call the super method which will do the rest here. That
+    // includes checking for the data being properly created, as if it was
+    // not then we will not have a constant value for it, which means the
+    // local.get of that value will stop us.
+    auto& field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    if (field.mutable_ == Mutable) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    return Super::visitStructGet(curr);
   }
   Flow visitArrayNew(ArrayNew* curr) {
     auto flow = Super::visitArrayNew(curr);

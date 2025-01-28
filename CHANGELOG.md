@@ -15,8 +15,20 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
- - BinaryenSelect no longer takes a type parameter.
- - AutoDrop APIs have been removed.
+ - `struct.atomic.get`/`struct.atomic.set` now require the threads feature,
+   `--enable-threads`. (#7185)
+
+v121
+----
+
+ - BinaryenSelect no longer takes a type parameter. (#7097)
+ - AutoDrop APIs have been removed. (#7106)
+ - bulk-memory-opt and call-indirect-overlong features are added for parity with
+   LLVM. (#7139)
+ - WasmGC optimizations now run significantly faster and scale better with
+   available threads. (#7142)
+ - Binaryen now supports parsing control flow structures with parameter types by
+   lowering them away in the parsers. (#7149)
 
 v120
 ----

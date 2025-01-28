@@ -81,6 +81,8 @@ DELEGATE(BrOn);
 DELEGATE(StructNew);
 DELEGATE(StructGet);
 DELEGATE(StructSet);
+DELEGATE(StructRMW);
+DELEGATE(StructCmpxchg);
 DELEGATE(ArrayNew);
 DELEGATE(ArrayNewData);
 DELEGATE(ArrayNewElem);

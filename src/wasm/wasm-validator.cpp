@@ -487,6 +487,8 @@ public:
   void visitStructNew(StructNew* curr);
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
+  void visitStructRMW(StructRMW* curr);
+  void visitStructCmpxchg(StructCmpxchg* curr);
   void visitArrayNew(ArrayNew* curr);
   template<typename ArrayNew> void visitArrayNew(ArrayNew* curr);
   void visitArrayNewData(ArrayNewData* curr);
@@ -677,11 +679,11 @@ void FunctionValidator::validatePoppyExpression(Expression* curr) {
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
-  if (!getModule()->features.hasMultivalue()) {
-    shouldBeTrue(
-      !curr->type.isTuple(),
-      curr,
-      "Multivalue block type require multivalue [--enable-multivalue]");
+  auto feats = curr->type.getFeatures();
+  if (!shouldBeTrue(feats <= getModule()->features,
+                    curr,
+                    "Block type requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
   }
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
@@ -1528,10 +1530,10 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
-  shouldBeTrue(
-    getModule()->features.hasBulkMemory(),
-    curr,
-    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+  shouldBeTrue(getModule()->features.hasBulkMemoryOpt(),
+               curr,
+               "memory.copy operations require bulk memory operations "
+               "[--enable-bulk-memory-opt]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.copy must have type none");
   auto* destMemory = getModule()->getMemoryOrNull(curr->destMemory);
@@ -1563,9 +1565,9 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(
-    getModule()->features.hasBulkMemory(),
+    getModule()->features.hasBulkMemoryOpt(),
     curr,
-    "Bulk memory operations require bulk memory [--enable-bulk-memory]");
+    "memory.fill operations require bulk memory [--enable-bulk-memory-opt]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(
@@ -2267,7 +2269,7 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   auto feats = curr->type.getFeatures();
   if (!shouldBeTrue(!getFunction() || feats <= getModule()->features,
                     curr,
-                    "ref.null requires additional features")) {
+                    "ref.null requires additional features ")) {
     getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
   }
   if (!shouldBeTrue(
@@ -2585,14 +2587,14 @@ void FunctionValidator::visitTry(Try* curr) {
     auto* tag = getModule()->getTagOrNull(tagName);
     if (!shouldBeTrue(tag != nullptr, curr, "")) {
       getStream() << "tag name is invalid: " << tagName << "\n";
-    } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+    } else if (!shouldBeEqual(tag->results(), Type(Type::none), curr, "")) {
       getStream()
         << "catch's tag (" << tagName
         << ") has result values, which is not allowed for exception handling";
     } else {
       auto* catchBody = curr->catchBodies[i];
       auto pops = EHUtils::findPops(catchBody);
-      if (tag->sig.params == Type::none) {
+      if (tag->params() == Type::none) {
         if (!shouldBeTrue(pops.empty(), curr, "")) {
           getStream() << "catch's tag (" << tagName
                       << ") doesn't have any params, but there are pops";
@@ -2600,7 +2602,7 @@ void FunctionValidator::visitTry(Try* curr) {
       } else {
         if (shouldBeTrue(pops.size() == 1, curr, "")) {
           auto* pop = *pops.begin();
-          if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
+          if (!shouldBeSubType(tag->params(), pop->type, curr, "")) {
             getStream()
               << "catch's tag (" << tagName
               << ")'s pop doesn't have the same type as the tag's params";
@@ -2672,7 +2674,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
       auto* tag = getModule()->getTagOrNull(tagName);
       if (!shouldBeTrue(tag != nullptr, curr, "")) {
         getStream() << "catch's tag name is invalid: " << tagName << "\n";
-      } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+      } else if (!shouldBeEqual(tag->results(), Type(Type::none), curr, "")) {
         getStream()
           << "catch's tag (" << tagName
           << ") has result values, which is not allowed for exception handling";
@@ -2680,7 +2682,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
 
       // tagType and sentType should be the same (except for the possible exnref
       // at the end of sentType)
-      auto tagType = tag->sig.params;
+      auto tagType = tag->params();
       tagTypeSize = tagType.size();
       for (Index j = 0; j < tagType.size(); j++) {
         shouldBeEqual(tagType[j], sentType[j], curr, invalidSentTypeMsg);
@@ -2722,18 +2724,18 @@ void FunctionValidator::visitThrow(Throw* curr) {
     return;
   }
   shouldBeEqual(
-    tag->sig.results,
+    tag->results(),
     Type(Type::none),
     curr,
     "tags with result types must not be used for exception handling");
   if (!shouldBeEqual(curr->operands.size(),
-                     tag->sig.params.size(),
+                     tag->params().size(),
                      curr,
                      "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
-  for (const auto& param : tag->sig.params) {
+  for (const auto& param : tag->params()) {
     if (!shouldBeSubType(curr->operands[i]->type,
                          param,
                          curr->operands[i],
@@ -2991,6 +2993,15 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc [--enable-gc]");
+  if (curr->order != MemoryOrder::Unordered) {
+    shouldBeTrue(getModule()->features.hasSharedEverything(),
+                 curr,
+                 "struct.atomic.get requires shared-everything "
+                 "[--enable-shared-everything]");
+    shouldBeTrue(getModule()->features.hasAtomics(),
+                 curr,
+                 "struct.atomic.get requires threads [--enable-threads]");
+  }
   if (curr->type == Type::unreachable || curr->ref->type.isNull()) {
     return;
   }
@@ -3018,6 +3029,15 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.set requires gc [--enable-gc]");
+  if (curr->order != MemoryOrder::Unordered) {
+    shouldBeTrue(getModule()->features.hasSharedEverything(),
+                 curr,
+                 "struct.atomic.set requires shared-everything "
+                 "[--enable-shared-everything]");
+    shouldBeTrue(getModule()->features.hasAtomics(),
+                 curr,
+                 "struct.atomic.set requires threads [--enable-threads]");
+  }
   if (curr->ref->type == Type::unreachable) {
     return;
   }
@@ -3035,14 +3055,126 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
     return;
   }
   const auto& fields = type.getStruct().fields;
-  shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+  if (!shouldBeTrue(
+        curr->index < fields.size(), curr, "bad struct.get field")) {
+    return;
+  }
   auto& field = fields[curr->index];
   shouldBeSubType(curr->value->type,
                   field.type,
                   curr,
-                  "struct.set must have the proper type");
+                  "struct.set value must have the proper type");
   shouldBeEqual(
     field.mutable_, Mutable, curr, "struct.set field must be mutable");
+}
+
+void FunctionValidator::visitStructRMW(StructRMW* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "struct.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "struct.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isStruct(), curr->ref, "struct.atomic.rmw ref must be a struct")) {
+    return;
+  }
+  const auto& fields = type.getStruct().fields;
+  if (!shouldBeTrue(
+        curr->index < fields.size(), curr, "bad struct.atomic.rmw field")) {
+    return;
+  }
+  auto& field = fields[curr->index];
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
+  shouldBeFalse(
+    field.isPacked(), curr, "struct.atomic.rmw field must not be packed");
+  bool isAny =
+    field.type.isRef() &&
+    Type::isSubType(
+      field.type,
+      Type(HeapTypes::any.getBasic(field.type.getHeapType().getShared()),
+           Nullable));
+  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 ||
+                      (isAny && curr->op == RMWXchg),
+                    curr,
+                    "struct.atomic.rmw field type invalid for operation")) {
+    return;
+  }
+  shouldBeSubType(curr->value->type,
+                  field.type,
+                  curr,
+                  "struct.atomic.rmw value must have the proper type");
+}
+
+void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "struct.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "struct.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isStruct(), curr->ref, "struct.atomic.rmw ref must be a struct")) {
+    return;
+  }
+  const auto& fields = type.getStruct().fields;
+  if (!shouldBeTrue(
+        curr->index < fields.size(), curr, "bad struct.atomic.rmw field")) {
+    return;
+  }
+  auto& field = fields[curr->index];
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
+  shouldBeFalse(
+    field.isPacked(), curr, "struct.atomic.rmw field must not be packed");
+  bool isEq =
+    field.type.isRef() &&
+    Type::isSubType(
+      field.type,
+      Type(HeapTypes::eq.getBasic(field.type.getHeapType().getShared()),
+           Nullable));
+  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 || isEq,
+                    curr,
+                    "struct.atomic.rmw field type invalid for operation")) {
+    return;
+  }
+  shouldBeSubType(
+    curr->expected->type,
+    field.type,
+    curr,
+    "struct.atomic.rmw.cmpxchg expected value must have the proper type");
+  shouldBeSubType(
+    curr->replacement->type,
+    field.type,
+    curr,
+    "struct.atomic.rmw.cmpxchg replacement value must have the proper type");
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
@@ -4010,7 +4142,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
     if (!info.shouldBeTrue(table->type == funcref ||
                              typeFeats <= module.features,
                            "table",
-                           "table type requires additional features")) {
+                           "table type requires additional features ")) {
       info.getStream(nullptr)
         << getMissingFeaturesList(module, typeFeats) << '\n';
     }
@@ -4033,7 +4165,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
     if (!info.shouldBeTrue(
           segment->type == funcref || typeFeats <= module.features,
           "elem",
-          "element segment type requires additional features")) {
+          "element segment type requires additional features ")) {
       info.getStream(nullptr)
         << getMissingFeaturesList(module, typeFeats) << '\n';
     }
@@ -4084,20 +4216,20 @@ static void validateTags(Module& module, ValidationInfo& info) {
       "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
-    if (curr->sig.results != Type(Type::none)) {
+    if (curr->results() != Type::none) {
       info.shouldBeTrue(module.features.hasStackSwitching(),
                         curr->name,
                         "Tags with result types require stack switching "
                         "feature [--enable-stack-switching]");
     }
-    if (curr->sig.params.isTuple()) {
+    if (curr->params().isTuple()) {
       info.shouldBeTrue(
         module.features.hasMultivalue(),
         curr->name,
         "Multivalue tag type requires multivalue [--enable-multivalue]");
     }
     FeatureSet features;
-    for (const auto& param : curr->sig.params) {
+    for (const auto& param : curr->params()) {
       features |= param.getFeatures();
       info.shouldBeTrue(param.isConcrete(),
                         curr->name,

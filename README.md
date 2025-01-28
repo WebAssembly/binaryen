@@ -1,4 +1,4 @@
-[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
+[![CI](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml?branch=main&event=push)
 
 # Binaryen
 
@@ -124,50 +124,50 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      used in the containing node. Such a block is sometimes called an "implicit
      block".
  * Reference Types
-  * The wasm text and binary formats require that a function whose address is
-    taken by `ref.func` must be either in the table, or declared via an
-    `(elem declare func $..)`. Binaryen will emit that data when necessary, but
-    it does not represent it in IR. That is, IR can be worked on without needing
-    to think about declaring function references.
-  * Binaryen IR allows non-nullable locals in the form that the wasm spec does,
-    (which was historically nicknamed "1a"), in which a `local.get` must be
-    structurally dominated by a `local.set` in order to validate (that ensures
-    we do not read the default value of null). Despite being aligned with the
-    wasm spec, there are some minor details that you may notice:
-    * A nameless `Block` in Binaryen IR does not interfere with validation.
-      Nameless blocks are never emitted into the binary format (we just emit
-      their contents), so we ignore them for purposes of non-nullable locals. As
-      a result, if you read wasm text emitted by Binaryen then you may see what
-      seems to be code that should not validate per the spec (and may not
-      validate in wasm text parsers), but that difference will not exist in the
-      binary format (binaries emitted by Binaryen will always work everywhere,
-      aside for bugs of course).
-    * The Binaryen pass runner will automatically fix up validation after each
-      pass (finding things that do not validate and fixing them up, usually by
-      demoting a local to be nullable). As a result you do not need to worry
-      much about this when writing Binaryen passes. For more details see the
-      `requiresNonNullableLocalFixups()` hook in `pass.h` and the
-      `LocalStructuralDominance` class.
-  * Binaryen IR uses the most refined types possible for references,
-    specifically:
-    * The IR type of a `ref.func` is always a specific function type, and not
-      plain `funcref`. It is also non-nullable.
-    * Non-nullable types are also used for the type that `try_table` sends
-      on branches (if we branch, a null is never sent), that is, it sends
-      (ref exn) and not (ref null exn).
-    In both cases if GC is not enabled then we emit the less-refined type in the
-    binary. When reading a binary, the more refined types will be applied as we
-    build the IR.
-  * `br_if` output types are more refined in Binaryen IR: they have the type of
-    the value, when a value flows in. In the wasm spec the type is that of the
-    branch target, which may be less refined. Using the more refined type here
-    ensures that we optimize in the best way possible, using all the type
-    information, but it does mean that some roundtripping operations may look a
-    little different. In particular, when we emit a `br_if` whose type is more
-    refined in Binaryen IR then we emit a cast right after it, so that the
-    output has the right type in the wasm spec. That may cause a few bytes of
-    extra size in rare cases (we avoid this overhead in the common case where
-    the `br_if` value is unused).
+   * The wasm text and binary formats require that a function whose address is
+     taken by `ref.func` must be either in the table, or declared via an
+     `(elem declare func $..)`. Binaryen will emit that data when necessary, but
+     it does not represent it in IR. That is, IR can be worked on without needing
+     to think about declaring function references.
+   * Binaryen IR allows non-nullable locals in the form that the wasm spec does,
+     (which was historically nicknamed "1a"), in which a `local.get` must be
+     structurally dominated by a `local.set` in order to validate (that ensures
+     we do not read the default value of null). Despite being aligned with the
+     wasm spec, there are some minor details that you may notice:
+     * A nameless `Block` in Binaryen IR does not interfere with validation.
+       Nameless blocks are never emitted into the binary format (we just emit
+       their contents), so we ignore them for purposes of non-nullable locals. As
+       a result, if you read wasm text emitted by Binaryen then you may see what
+       seems to be code that should not validate per the spec (and may not
+       validate in wasm text parsers), but that difference will not exist in the
+       binary format (binaries emitted by Binaryen will always work everywhere,
+       aside for bugs of course).
+     * The Binaryen pass runner will automatically fix up validation after each
+       pass (finding things that do not validate and fixing them up, usually by
+       demoting a local to be nullable). As a result you do not need to worry
+       much about this when writing Binaryen passes. For more details see the
+       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
+       `LocalStructuralDominance` class.
+   * Binaryen IR uses the most refined types possible for references,
+     specifically:
+     * The IR type of a `ref.func` is always a specific function type, and not
+       plain `funcref`. It is also non-nullable.
+     * Non-nullable types are also used for the type that `try_table` sends
+       on branches (if we branch, a null is never sent), that is, it sends
+       (ref exn) and not (ref null exn).
+     In both cases if GC is not enabled then we emit the less-refined type in the
+     binary. When reading a binary, the more refined types will be applied as we
+     build the IR.
+   * `br_if` output types are more refined in Binaryen IR: they have the type of
+     the value, when a value flows in. In the wasm spec the type is that of the
+     branch target, which may be less refined. Using the more refined type here
+     ensures that we optimize in the best way possible, using all the type
+     information, but it does mean that some roundtripping operations may look a
+     little different. In particular, when we emit a `br_if` whose type is more
+     refined in Binaryen IR then we emit a cast right after it, so that the
+     output has the right type in the wasm spec. That may cause a few bytes of
+     extra size in rare cases (we avoid this overhead in the common case where
+     the `br_if` value is unused).
  * Strings
    * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
      `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be

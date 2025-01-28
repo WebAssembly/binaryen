@@ -1564,3 +1564,118 @@
   (export "globalB" (global $globalB))
 )
 
+;; Removed atomic sets needs special handling.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (shared (struct)))
+  (type $A (shared (struct (mut i32))))
+
+  ;; CHECK:       (type $1 (func (param (ref $A))))
+
+  ;; CHECK:      (func $sets (type $1) (param $0 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (block (result (ref $A))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (atomic.fence)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sets (param (ref $A))
+    ;; Normal set is optimizable.
+    (struct.set $A 0
+      (local.get 0)
+      (i32.const 1)
+    )
+    ;; Release set is optimizable without a fence because there is no get to
+    ;; synchronize with.
+    (struct.atomic.set acqrel $A 0
+      (local.get 0)
+      (i32.const 1)
+    )
+    ;; This requires a fence to keep the effect on the global order of seqcst
+    ;; operations.
+    (struct.atomic.set $A 0
+      (local.get 0)
+      (i32.const 1)
+    )
+  )
+)
+
+;; A struct with a pop, which requires EH fixups to avoid popping in a nested
+;; block.
+(module
+  (type $i32 (func (param i32)))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+  (type $struct (struct (field (mut i32))))
+
+  ;; CHECK:       (type $1 (func))
+
+  ;; CHECK:       (type $i32 (func (param i32)))
+
+  ;; CHECK:      (tag $tag (type $i32) (param i32))
+  (tag $tag (type $i32) (param i32))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (try
+      (do
+      )
+      (catch $tag
+        (drop
+          (struct.new $struct
+            (pop i32)
+          )
+        )
+      )
+    )
+  )
+)

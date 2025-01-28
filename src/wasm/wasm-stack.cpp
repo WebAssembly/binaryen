@@ -2327,15 +2327,20 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   }
   const auto& heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getStruct().fields[curr->index];
+  bool atomic = curr->order != MemoryOrder::Unordered;
   int8_t op;
   if (field.type != Type::i32 || field.packedType == Field::not_packed) {
-    op = BinaryConsts::StructGet;
+    op = atomic ? BinaryConsts::StructAtomicGet : BinaryConsts::StructGet;
   } else if (curr->signed_) {
-    op = BinaryConsts::StructGetS;
+    op = atomic ? BinaryConsts::StructAtomicGetS : BinaryConsts::StructGetS;
   } else {
-    op = BinaryConsts::StructGetU;
+    op = atomic ? BinaryConsts::StructAtomicGetU : BinaryConsts::StructGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  auto prefix = atomic ? BinaryConsts::AtomicPrefix : BinaryConsts::GCPrefix;
+  o << int8_t(prefix) << U32LEB(op);
+  if (atomic) {
+    parent.writeMemoryOrder(curr->order);
+  }
   parent.writeIndexedHeapType(heapType);
   o << U32LEB(curr->index);
 }
@@ -2345,7 +2350,56 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
     emitUnreachable();
     return;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  if (curr->order == MemoryOrder::Unordered) {
+    o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
+  } else {
+    o << int8_t(BinaryConsts::AtomicPrefix)
+      << U32LEB(BinaryConsts::StructAtomicSet);
+    parent.writeMemoryOrder(curr->order);
+  }
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
+}
+
+void BinaryInstWriter::visitStructRMW(StructRMW* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->op) {
+    case RMWAdd:
+      o << U32LEB(BinaryConsts::StructAtomicRMWAdd);
+      break;
+    case RMWSub:
+      o << U32LEB(BinaryConsts::StructAtomicRMWSub);
+      break;
+    case RMWAnd:
+      o << U32LEB(BinaryConsts::StructAtomicRMWAnd);
+      break;
+    case RMWOr:
+      o << U32LEB(BinaryConsts::StructAtomicRMWOr);
+      break;
+    case RMWXor:
+      o << U32LEB(BinaryConsts::StructAtomicRMWXor);
+      break;
+    case RMWXchg:
+      o << U32LEB(BinaryConsts::StructAtomicRMWXchg);
+      break;
+  }
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
+}
+
+void BinaryInstWriter::visitStructCmpxchg(StructCmpxchg* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::StructAtomicRMWCmpxchg);
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }
@@ -3135,8 +3189,8 @@ ModuleStackIR::ModuleStackIR(Module& wasm, const PassOptions& options)
     }) {}
 
 void StackIRToBinaryWriter::write() {
-  if (func->prologLocation.size()) {
-    parent.writeDebugLocation(*func->prologLocation.begin());
+  if (func->prologLocation) {
+    parent.writeDebugLocation(*func->prologLocation);
   }
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
@@ -3197,8 +3251,8 @@ void StackIRToBinaryWriter::write() {
   }
   // Indicate the debug location corresponding to the end opcode that
   // terminates the function code.
-  if (func->epilogLocation.size()) {
-    parent.writeDebugLocation(*func->epilogLocation.begin());
+  if (func->epilogLocation) {
+    parent.writeDebugLocation(*func->epilogLocation);
   } else {
     // The end opcode has no debug location.
     parent.writeNoDebugLocation();

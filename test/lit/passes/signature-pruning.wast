@@ -970,19 +970,17 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (param i32)))
-
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func (param i32)))
+  ;; CHECK-NEXT:  (type $0 (func (param i32)))
 
-  ;; CHECK:       (type $2 (func (result i32)))
+  ;; CHECK:       (type $1 (func (result i32)))
 
-  ;; CHECK:       (type $3 (func (param i32)))
+  ;; CHECK:       (type $2 (func (param i32)))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $2) (param i32))
   (tag $tag (param i32))
 
-  ;; CHECK:      (func $catch-pop (type $2) (result i32)
+  ;; CHECK:      (func $catch-pop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1043,7 +1041,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32)
+  ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -1059,19 +1057,17 @@
 
 ;; As above, but remove the other parameter (the pop).
 (module
-  ;; CHECK:      (type $0 (func (param i32)))
-
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func (param i32)))
+  ;; CHECK-NEXT:  (type $0 (func (param i32)))
 
-  ;; CHECK:       (type $2 (func (result i32)))
+  ;; CHECK:       (type $1 (func (result i32)))
 
-  ;; CHECK:       (type $3 (func (param i32)))
+  ;; CHECK:       (type $2 (func (param i32)))
 
-  ;; CHECK:      (tag $tag (param i32))
+  ;; CHECK:      (tag $tag (type $2) (param i32))
   (tag $tag (param i32))
 
-  ;; CHECK:      (func $catch-pop (type $2) (result i32)
+  ;; CHECK:      (func $catch-pop (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1127,7 +1123,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32)
+  ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -1243,3 +1239,34 @@
   )
 )
 
+;; Test that we do not prune parameters from types used in tags.
+(module
+  ;; CHECK:      (type $sig (func (param anyref)))
+  (type $sig (func (param anyref)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (tag $e (type $sig) (param anyref))
+  (tag $e (type $sig))
+
+  ;; CHECK:      (func $unused-param (type $sig) (param $0 anyref)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $sig) (param anyref)
+    (nop)
+  )
+
+  ;; CHECK:      (func $throw (type $1)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (throw $e
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw
+    (local anyref)
+    ;; This would be invalid if we optimized $sig.
+    (throw $e
+      (local.get 0)
+    )
+  )
+)

@@ -50,25 +50,18 @@ void ModuleReader::readText(std::string filename, Module& wasm) {
 void ModuleReader::readBinaryData(std::vector<char>& input,
                                   Module& wasm,
                                   std::string sourceMapFilename) {
-  std::unique_ptr<std::ifstream> sourceMapStream;
+  std::vector<char> sourceMapBuffer;
+  if (sourceMapFilename.size()) {
+    sourceMapBuffer =
+      read_file<std::vector<char>>(sourceMapFilename, Flags::Text);
+  }
   // Assume that the wasm has had its initial features applied, and use those
   // while parsing.
-  WasmBinaryReader parser(wasm, wasm.features, input);
+  WasmBinaryReader parser(wasm, wasm.features, input, sourceMapBuffer);
   parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
   parser.setSkipFunctionBodies(skipFunctionBodies);
-  if (sourceMapFilename.size()) {
-    sourceMapStream = std::make_unique<std::ifstream>();
-    sourceMapStream->open(wasm::Path::to_path(sourceMapFilename));
-    if (!sourceMapStream->is_open()) {
-      Fatal() << "Failed opening '" << sourceMapFilename << "'";
-    }
-    parser.setDebugLocations(sourceMapStream.get());
-  }
   parser.read();
-  if (sourceMapStream) {
-    sourceMapStream->close();
-  }
 }
 
 void ModuleReader::readBinary(std::string filename,

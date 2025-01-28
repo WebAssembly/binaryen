@@ -2,10 +2,10 @@
 ;; RUN: wasm-opt %s --coalesce-locals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e)
+  ;; CHECK:      (tag $e (type $0))
   (tag $e)
 
-  ;; CHECK:      (tag $any (param (ref any)))
+  ;; CHECK:      (tag $any (type $1) (param (ref any)))
   (tag $any (param (ref any)))
 
   ;; CHECK:      (func $bar (type $2) (result i32)

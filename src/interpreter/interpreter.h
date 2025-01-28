@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 WebAssembly Community Group participants
+ * Copyright 2025 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-//
-// Removeds memory segments, leaving only code in the module.
-//
+#ifndef interpreter_interpreter_h
+#define interpreter_interpreter_h
 
-#include <pass.h>
-#include <wasm.h>
+#include "store.h"
 
 namespace wasm {
 
-struct RemoveMemory : public Pass {
-  void run(Module* module) override {
-    module->removeDataSegments([&](DataSegment* curr) { return true; });
-  }
+class Interpreter {
+public:
+  // TODO: Methods to instantiate modules.
+  // TODO: Methods to run exported functions.
+  std::vector<Literal> run(Expression* root);
+
+private:
+  interpreter::WasmStore store;
+  friend class InterpreterImpl;
 };
 
-Pass* createRemoveMemoryPass() { return new RemoveMemory(); }
-
 } // namespace wasm
+
+#endif // interpreter_interpreter_h

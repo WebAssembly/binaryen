@@ -327,12 +327,22 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
+  void visitStructGet(StructGet* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
+  }
   void visitStructSet(StructSet* curr) {
     if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
       visitExpression(curr);
     }
   }
-  void visitStructGet(StructGet* curr) {
+  void visitStructRMW(StructRMW* curr) {
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
     if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
       visitExpression(curr);
     }
@@ -432,6 +442,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTag(Tag* curr);
   void visitImportedTag(Tag* curr);
   void visitDefinedTag(Tag* curr);
+  void printTagType(HeapType type);
   void printTableHeader(Table* curr);
   void visitTable(Table* curr);
   void visitElementSegment(ElementSegment* curr);
@@ -660,29 +671,33 @@ struct PrintExpressionContents
     }
     o << '.';
   }
+  void printAtomicRMWOp(AtomicRMWOp op) {
+    switch (op) {
+      case RMWAdd:
+        o << "add";
+        return;
+      case RMWSub:
+        o << "sub";
+        return;
+      case RMWAnd:
+        o << "and";
+        return;
+      case RMWOr:
+        o << "or";
+        return;
+      case RMWXor:
+        o << "xor";
+        return;
+      case RMWXchg:
+        o << "xchg";
+        return;
+    }
+    WASM_UNREACHABLE("unexpected rmw op");
+  }
   void visitAtomicRMW(AtomicRMW* curr) {
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
-    switch (curr->op) {
-      case RMWAdd:
-        o << "add";
-        break;
-      case RMWSub:
-        o << "sub";
-        break;
-      case RMWAnd:
-        o << "and";
-        break;
-      case RMWOr:
-        o << "or";
-        break;
-      case RMWXor:
-        o << "xor";
-        break;
-      case RMWXchg:
-        o << "xchg";
-        break;
-    }
+    printAtomicRMWOp(curr->op);
     if (curr->type != Type::unreachable &&
         curr->bytes != curr->type.getByteSize()) {
       o << "_u";
@@ -2305,24 +2320,71 @@ struct PrintExpressionContents
       o << index;
     }
   }
+  void printMemoryOrder(MemoryOrder order) {
+    switch (order) {
+      // Unordered should have a different base instruction, so there is nothing
+      // to print. We could be explicit and print seqcst, but we choose not to
+      // for more concise output.
+      case MemoryOrder::Unordered:
+      case MemoryOrder::SeqCst:
+        break;
+      case MemoryOrder::AcqRel:
+        o << "acqrel ";
+        break;
+    }
+  }
   void visitStructGet(StructGet* curr) {
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
+    printMedium(o, "struct");
+    if (curr->order != MemoryOrder::Unordered) {
+      printMedium(o, ".atomic");
+    }
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, "struct.get_s ");
+        printMedium(o, ".get_s ");
       } else {
-        printMedium(o, "struct.get_u ");
+        printMedium(o, ".get_u ");
       }
     } else {
-      printMedium(o, "struct.get ");
+      printMedium(o, ".get ");
     }
+    printMemoryOrder(curr->order);
     printHeapType(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
-    printMedium(o, "struct.set ");
+    if (curr->order == MemoryOrder::Unordered) {
+      printMedium(o, "struct.set ");
+    } else {
+      printMedium(o, "struct.atomic.set ");
+    }
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapType(heapType);
+    o << ' ';
+    printFieldName(heapType, curr->index);
+  }
+  void visitStructRMW(StructRMW* curr) {
+    prepareColor(o);
+    o << "struct.atomic.rmw.";
+    printAtomicRMWOp(curr->op);
+    restoreNormalColor(o);
+    o << ' ';
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapType(heapType);
+    o << ' ';
+    printFieldName(heapType, curr->index);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    prepareColor(o);
+    o << "struct.atomic.rmw.cmpxchg ";
+    restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
     printHeapType(heapType);
     o << ' ';
@@ -3103,8 +3165,8 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   currFunction = curr;
   lastPrintedLocation = std::nullopt;
   lastPrintIndent = 0;
-  if (currFunction->prologLocation.size()) {
-    printDebugLocation(*currFunction->prologLocation.begin());
+  if (currFunction->prologLocation) {
+    printDebugLocation(*currFunction->prologLocation);
   }
   handleSignature(curr, true);
   incIndent();
@@ -3138,14 +3200,14 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     }
     assert(controlFlowDepth == 0);
   }
-  if (currFunction->epilogLocation.size()) {
+  if (currFunction->epilogLocation) {
     // Print last debug location: mix of decIndent and printDebugLocation
     // logic.
     doIndent(o, indent);
     if (!minify) {
       indent--;
     }
-    printDebugLocation(*currFunction->epilogLocation.begin());
+    printDebugLocation(*currFunction->epilogLocation);
     o << ')';
   } else {
     decIndent();
@@ -3167,16 +3229,9 @@ void PrintSExpression::visitImportedTag(Tag* curr) {
   emitImportHeader(curr);
   o << "(tag ";
   curr->name.print(o);
-  if (curr->sig.params != Type::none) {
-    o << maybeSpace;
-    printParamType(curr->sig.params);
-  }
-  if (curr->sig.results != Type::none) {
-    o << maybeSpace;
-    printResultType(curr->sig.results);
-  }
-  o << "))";
-  o << maybeNewLine;
+  o << maybeSpace;
+  printTagType(curr->type);
+  o << "))" << maybeNewLine;
 }
 
 void PrintSExpression::visitDefinedTag(Tag* curr) {
@@ -3184,15 +3239,31 @@ void PrintSExpression::visitDefinedTag(Tag* curr) {
   o << '(';
   printMedium(o, "tag ");
   curr->name.print(o);
-  if (curr->sig.params != Type::none) {
-    o << maybeSpace;
-    printParamType(curr->sig.params);
+  o << maybeSpace;
+  printTagType(curr->type);
+  o << ')' << maybeNewLine;
+}
+
+void PrintSExpression::printTagType(HeapType type) {
+  o << "(type ";
+  printHeapType(type);
+  o << ')';
+  if (auto params = type.getSignature().params; params != Type::none) {
+    o << maybeSpace << "(param";
+    for (auto t : params) {
+      o << ' ';
+      printType(t);
+    }
+    o << ')';
   }
-  if (curr->sig.results != Type::none) {
-    o << maybeSpace;
-    printResultType(curr->sig.results);
+  if (auto results = type.getSignature().results; results != Type::none) {
+    o << maybeSpace << "(result";
+    for (auto t : results) {
+      o << ' ';
+      printType(t);
+    }
+    o << ')';
   }
-  o << ")" << maybeNewLine;
 }
 
 void PrintSExpression::printTableHeader(Table* curr) {

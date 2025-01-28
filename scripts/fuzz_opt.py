@@ -41,6 +41,7 @@ import time
 import traceback
 from os.path import abspath
 
+from test import fuzzing
 from test import shared
 from test import support
 
@@ -225,18 +226,24 @@ def randomize_fuzz_settings():
         # optimizations we use to create any other wasm file.
         FUZZ_OPTS += ['--dce']
 
-    # Enclose the world much of the time when fuzzing closed-world, so that many
-    # types are private and hence optimizable.
-    if CLOSED_WORLD and random.random() < 0.5:
-        GEN_ARGS += ['--enclose-world']
+    if CLOSED_WORLD:
+        GEN_ARGS += [CLOSED_WORLD_FLAG]
+        # Enclose the world much of the time when fuzzing closed-world, so that
+        # many types are private and hence optimizable.
+        if random.random() < 0.5:
+            GEN_ARGS += ['--enclose-world']
 
-    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
+    # Test JSPI somewhat rarely, as it may be slower.
+    global JSPI
+    JSPI = random.random() < 0.25
+
+    print('randomized settings (NaNs, OOB, legalize, JSPI):', NANS, OOB, LEGALIZE, JSPI)
 
 
 def init_important_initial_contents():
     # Fuzz dir contents are always important to us.
     fuzz_dir = os.path.join(shared.options.binaryen_root, 'fuzz')
-    fuzz_cases = shared.get_tests(fuzz_dir, test_suffixes, recursive=True)
+    fuzz_cases = shared.get_tests(fuzz_dir, shared.test_suffixes, recursive=True)
     FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
 
     # If auto_initial_contents is set we'll also grab all test files that are
@@ -300,68 +307,7 @@ def init_important_initial_contents():
     IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in initial_contents]
 
 
-INITIAL_CONTENTS_IGNORE = [
-    # Float16 is still experimental.
-    'f16.wast',
-    # not all relaxed SIMD instructions are implemented in the interpreter
-    'relaxed-simd.wast',
-    # TODO: fuzzer and interpreter support for strings
-    'strings.wast',
-    'simplify-locals-strings.wast',
-    'string-lowering-instructions.wast',
-    # TODO: fuzzer and interpreter support for extern conversions
-    'extern-conversions.wast',
-    # ignore DWARF because it is incompatible with multivalue atm
-    'zlib.wasm',
-    'cubescript.wasm',
-    'class_with_dwarf_noprint.wasm',
-    'fib2_dwarf.wasm',
-    'fib_nonzero-low-pc_dwarf.wasm',
-    'inlined_to_start_dwarf.wasm',
-    'fannkuch3_manyopts_dwarf.wasm',
-    'fib2_emptylocspan_dwarf.wasm',
-    'fannkuch3_dwarf.wasm',
-    'dwarf-local-order.wasm',
-    'strip-producers.wasm',
-    'multi_unit_abbrev_noprint.wasm',
-    'reverse_dwarf_abbrevs.wasm',
-    'print_g.wasm',
-    'print_g_strip-dwarf.wasm',
-    'fannkuch0_dwarf.wasm',
-    'dwarfdump_roundtrip_dwarfdump.wasm',
-    'dwarfdump.wasm',
-    'fannkuch3_dwarf.wasm',
-    'dwarf-local-order.wasm',
-    'dwarf_unit_with_no_abbrevs_noprint.wasm',
-    'strip-debug.wasm',
-    'multi_line_table_dwarf.wasm',
-    'dwarf_with_exceptions.wasm',
-    'strip-dwarf.wasm',
-    'ignore_missing_func_dwarf.wasm',
-    'print.wasm',
-    # TODO fuzzer support for multimemory
-    'multi-memories-atomics64.wast',
-    'multi-memories-basics.wast',
-    'multi-memories-simd.wast',
-    'multi-memories-atomics64.wasm',
-    'multi-memories-basics.wasm',
-    'multi-memories-simd.wasm',
-    'multi-memories_size.wast',
-    # TODO: fuzzer support for internalize/externalize
-    'optimize-instructions-gc-extern.wast',
-    'gufa-extern.wast',
-    # the fuzzer does not support imported memories
-    'multi-memory-lowering-import.wast',
-    'multi-memory-lowering-import-error.wast',
-    # the fuzzer does not support stack switching
-    'stack_switching.wast',
-    'stack_switching_contnew.wast',
-    'stack_switching_contbind.wast',
-    'stack_switching_suspend.wast',
-    'stack_switching_resume.wast',
-    'stack_switching_resume_throw.wast',
-    'stack_switching_switch.wast'
-]
+all_tests = shared.get_all_tests()
 
 
 def pick_initial_contents():
@@ -386,25 +332,9 @@ def pick_initial_contents():
         # no longer exist, and we should just skip it.
         if not os.path.exists(test_name):
             return
-    if os.path.basename(test_name) in INITIAL_CONTENTS_IGNORE:
+    if not fuzzing.is_fuzzable(test_name):
         return
     assert os.path.exists(test_name)
-    # tests that check validation errors are not helpful for us
-    if '.fail.' in test_name:
-        print('initial contents is just a .fail test')
-        return
-    if os.path.basename(test_name) in [
-        # contains too many segments to run in a wasm VM
-        'limit-segments_disable-bulk-memory.wast',
-        # https://github.com/WebAssembly/binaryen/issues/3203
-        'simd.wast',
-        # corner cases of escaping of names is not interesting
-        'names.wast',
-        # huge amount of locals that make it extremely slow
-        'too_much_for_liveness.wasm'
-    ]:
-        print('initial contents is disallowed')
-        return
 
     if test_name.endswith('.wast'):
         # this can contain multiple modules, pick one
@@ -758,11 +688,39 @@ def run_d8_js(js, args=[], liftoff=True):
     return run_vm(cmd)
 
 
-FUZZ_SHELL_JS = in_binaryen('scripts', 'fuzz_shell.js')
+# For JSPI, we must customize fuzz_shell.js. We do so the first time we need
+# it, and save the filename here.
+JSPI_JS_FILE = None
+
+
+def get_fuzz_shell_js():
+    js = in_binaryen('scripts', 'fuzz_shell.js')
+
+    if not JSPI:
+        # Just use the normal fuzz shell script.
+        return js
+
+    global JSPI_JS_FILE
+    if JSPI_JS_FILE:
+        # Use the customized file we've already created.
+        return JSPI_JS_FILE
+
+    JSPI_JS_FILE = os.path.abspath('jspi_fuzz_shell.js')
+    with open(JSPI_JS_FILE, 'w') as f:
+        # Enable JSPI.
+        f.write('var JSPI = 1;\n\n')
+
+        # Un-comment the async and await keywords.
+        with open(js) as g:
+            code = g.read()
+        code = code.replace('/* async */', 'async')
+        code = code.replace('/* await */', 'await')
+        f.write(code)
+    return JSPI_JS_FILE
 
 
 def run_d8_wasm(wasm, liftoff=True, args=[]):
-    return run_d8_js(FUZZ_SHELL_JS, [wasm] + args, liftoff=liftoff)
+    return run_d8_js(get_fuzz_shell_js(), [wasm] + args, liftoff=liftoff)
 
 
 def all_disallowed(features):
@@ -850,7 +808,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
+                return run_vm([shared.V8, get_fuzz_shell_js()] + shared.V8_OPTS + get_v8_extra_flags() + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
@@ -1014,7 +972,7 @@ class CompareVMs(TestCaseHandler):
                     print('(ignored, so not running other VMs)')
 
                     # the ignoring should have been noted during run_vms()
-                    assert(ignored_vm_runs > ignored_before)
+                    assert ignored_vm_runs > ignored_before
 
                     return vm_results
 
@@ -1090,24 +1048,6 @@ class Wasm2JS(TestCaseHandler):
             # with NaNs we can't compare the output, as a reinterpret through
             # memory might end up different in JS than wasm
             return
-        # we also cannot compare if the wasm hits a trap, as wasm2js does not
-        # trap on many things wasm would, and in those cases it can do weird
-        # undefined things. in such a case, at least compare up until before
-        # the trap, which lets us compare at least some results in some cases.
-        # (this is why wasm2js is not in CompareVMs, which does full
-        # comparisons - we need to limit the comparison in a special way here)
-        interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
-        if TRAP_PREFIX in interpreter:
-            trap_index = interpreter.index(TRAP_PREFIX)
-            # we can't test this function, which the trap is in the middle of.
-            # erase everything from this function's output and onward, so we
-            # only compare the previous trap-free code
-            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
-            call_end = interpreter.index('\n', call_start)
-            call_line = interpreter[call_start:call_end]
-            before = before[:before.index(call_line)]
-            after = after[:after.index(call_line)]
-            interpreter = interpreter[:interpreter.index(call_line)]
 
         def fix_output_for_js(x):
             # start with the normal output fixes that all VMs need
@@ -1127,6 +1067,12 @@ class Wasm2JS(TestCaseHandler):
             # the casts, we end up returning null here and not 0, which the
             # fuzzer can notice.
             x = re.sub(r' null', ' 0', x)
+
+            # wasm2js converts exports to valid JS forms, which affects some of
+            # the names in the test suite. Fix those up.
+            x = x.replace('log-', 'log_')
+            x = x.replace('call-', 'call_')
+            x = x.replace('export-', 'export_')
 
             # check if a number is 0 or a subnormal, which is basically zero
             def is_basically_zero(x):
@@ -1153,6 +1099,28 @@ class Wasm2JS(TestCaseHandler):
 
         before = fix_output_for_js(before)
         after = fix_output_for_js(after)
+
+        # we must not compare if the wasm hits a trap, as wasm2js does not
+        # trap on many things wasm would, and in those cases it can do weird
+        # undefined things. in such a case, at least compare up until before
+        # the trap, which lets us compare at least some results in some cases.
+        # (this is why wasm2js is not in CompareVMs, which does full
+        # comparisons - we need to limit the comparison in a special way here)
+        interpreter = run_bynterp(before_wasm_temp, ['--fuzz-exec-before'])
+        if TRAP_PREFIX in interpreter:
+            trap_index = interpreter.index(TRAP_PREFIX)
+            # we can't test this function, which the trap is in the middle of.
+            # erase everything from this function's output and onward, so we
+            # only compare the previous trap-free code
+            call_start = interpreter.rindex(FUZZ_EXEC_CALL_PREFIX, 0, trap_index)
+            call_end = interpreter.index('\n', call_start)
+            call_line = interpreter[call_start:call_end]
+            # fix up the call line so it matches the JS
+            fixed_call_line = fix_output_for_js(call_line)
+            before = before[:before.index(fixed_call_line)]
+            after = after[:after.index(fixed_call_line)]
+            interpreter = interpreter[:interpreter.index(call_line)]
+
         if compare_before_to_after:
             compare_between_vms(before, after, 'Wasm2JS (before/after)')
             if compare_to_interpreter:
@@ -1160,7 +1128,7 @@ class Wasm2JS(TestCaseHandler):
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
-        with open(FUZZ_SHELL_JS) as f:
+        with open(get_fuzz_shell_js()) as f:
             wrapper = f.read()
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
         # avoid optimizations if we have nans, as we don't handle them with
@@ -1192,6 +1160,10 @@ class Wasm2JS(TestCaseHandler):
         # to non-emscripten mode or adding memory information, or check
         # specifically for growth here
         if INITIAL_CONTENTS:
+            return False
+        # We run in node, which lacks JSPI support, and also we need wasm2js to
+        # implement wasm suspending using JS async/await.
+        if JSPI:
             return False
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
 
@@ -1360,7 +1332,7 @@ class TrapsNeverHappen(TestCaseHandler):
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
-    frequency = 0.2
+    frequency = 0.1
 
     def handle(self, wasm):
         # get the expected execution results.
@@ -1370,6 +1342,11 @@ class CtorEval(TestCaseHandler):
         ctors = ','.join(get_exports(wasm, ['func']))
         if not ctors:
             return
+
+        # Fix escaping of the names, as we will be passing them as commandline
+        # parameters below (e.g. we want --ctors=foo\28bar and not
+        # --ctors=foo\\28bar; that extra escaping \ would cause an error).
+        ctors = ctors.replace('\\\\', '\\')
 
         # eval the wasm.
         # we can use --ignore-external-input because the fuzzer passes in 0 to
@@ -1477,7 +1454,9 @@ class Merge(TestCaseHandler):
 FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
 
 
-# Tests wasm-split
+# Tests wasm-split. This also tests that fuzz_shell.js properly executes 2 wasm
+# files, which adds coverage for ClusterFuzz (which sometimes runs two wasm
+# files in that way).
 class Split(TestCaseHandler):
     frequency = 1  # TODO: adjust lower when we actually enable this
 
@@ -1592,6 +1571,10 @@ class RoundtripText(TestCaseHandler):
         run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
+# The error shown when a module fails to instantiate.
+INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
+
+
 # Fuzz in a near-identical manner to how we fuzz on ClusterFuzz. This is mainly
 # to see that fuzzing that way works properly (it likely won't catch anything
 # the other fuzzers here catch, though it is possible). That is, running this
@@ -1619,7 +1602,10 @@ class ClusterFuzz(TestCaseHandler):
         run([sys.executable,
              os.path.join(self.clusterfuzz_dir, 'run.py'),
              '--output_dir=' + os.getcwd(),
-             '--no_of_files=1'])
+             '--no_of_files=1',
+             # Do not retry on wasm-opt errors: we want to investigate
+             # them.
+             '--no_retry'])
 
         # We should see the two files.
         assert os.path.exists(fuzz_file)
@@ -1644,8 +1630,10 @@ class ClusterFuzz(TestCaseHandler):
 
         # Verify that we called something. The fuzzer should always emit at
         # least one exported function (unless we've decided to ignore the entire
-        # run).
-        if output != IGNORE:
+        # run, or if the wasm errored during instantiation, which can happen due
+        # to a testcase with a segment out of bounds, say).
+        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+
             assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
@@ -1670,6 +1658,78 @@ class ClusterFuzz(TestCaseHandler):
         tar.close()
 
 
+# Tests linking two wasm files at runtime, and that optimizations do not break
+# anything. This is similar to Split(), but rather than split a wasm file into
+# two and link them at runtime, this starts with two separate wasm files.
+class Two(TestCaseHandler):
+    frequency = 0.2
+
+    def handle(self, wasm):
+        # Generate a second wasm file, unless we were given one (useful during
+        # reduction).
+        second_wasm = abspath('second.wasm')
+        given = os.environ.get('BINARYEN_SECOND_WASM')
+        if given:
+            # TODO: should we de-nan this etc. as with the primary?
+            shutil.copyfile(given, second_wasm)
+        else:
+            second_input = abspath('second_input.dat')
+            make_random_input(random_size(), second_input)
+            args = [second_input, '-ttf', '-o', second_wasm]
+            run([in_bin('wasm-opt')] + args + GEN_ARGS + FEATURE_OPTS)
+
+        # The binaryen interpreter only supports a single file, so we run them
+        # from JS using fuzz_shell.js's support for two files.
+        #
+        # Note that we *cannot* run each wasm file separately and compare those
+        # to the combined output, as fuzz_shell.js intentionally allows calls
+        # *between* the wasm files, through JS APIs like call-export*. So all we
+        # do here is see the combined, linked behavior, and then later below we
+        # see that that behavior remains even after optimizations.
+        output = run_d8_wasm(wasm, args=[second_wasm])
+
+        if output == IGNORE:
+            # There is no point to continue since we can't compare this output
+            # to anything.
+            return
+
+        if output.startswith(INSTANTIATE_ERROR):
+            # We may fail to instantiate the modules for valid reasons, such as
+            # an active segment being out of bounds. There is no point to
+            # continue in such cases, as no exports are called.
+            return
+
+        # Make sure that fuzz_shell.js actually executed all exports from both
+        # wasm files.
+        exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
+        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
+
+        output = fix_output(output)
+
+        # Optimize at least one of the two.
+        wasms = [wasm, second_wasm]
+        for i in range(random.randint(1, 2)):
+            wasm_index = random.randint(0, 1)
+            name = wasms[wasm_index]
+            new_name = name + f'.opt{i}.wasm'
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), name, '-o', new_name] + opts + FEATURE_OPTS)
+            wasms[wasm_index] = new_name
+
+        # Run again, and compare the output
+        optimized_output = run_d8_wasm(wasms[0], args=[wasms[1]])
+        optimized_output = fix_output(optimized_output)
+
+        compare(output, optimized_output, 'Two')
+
+    def can_run_on_wasm(self, wasm):
+        # We cannot optimize wasm files we are going to link in closed world
+        # mode. We also cannot run shared-everything code in d8 yet. We also
+        # cannot compare if there are NaNs (as optimizations can lead to
+        # different outputs).
+        return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -1683,19 +1743,8 @@ testcase_handlers = [
     # Split(),
     RoundtripText(),
     ClusterFuzz(),
+    Two(),
 ]
-
-
-test_suffixes = ['*.wasm', '*.wast', '*.wat']
-
-core_tests = shared.get_tests(shared.get_test_dir('.'), test_suffixes)
-passes_tests = shared.get_tests(shared.get_test_dir('passes'), test_suffixes)
-spec_tests = shared.get_tests(shared.get_test_dir('spec'), test_suffixes)
-wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), test_suffixes)
-lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
-unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
-lit_tests = shared.get_tests(shared.get_test_dir('lit'), test_suffixes, recursive=True)
-all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
@@ -2136,6 +2185,9 @@ echo "  " $?
 #   bash %(reduce_sh)s
 #
 # You may also need to add  --timeout 5  or such if the testcase is a slow one.
+#
+# If the testcase handler uses a second wasm file, you may be able to reduce it
+# using BINARYEN_SECOND_WASM.
 #
                   ''' % {'wasm_opt': in_bin('wasm-opt'),
                          'bin': shared.options.binaryen_bin,

@@ -596,7 +596,7 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
       auto* catchBody = curr->catchBodies[i];
       Type tagType = Type::none;
       if (tryTable->catchTags[i]) {
-        tagType = wasm->getTag(tryTable->catchTags[i])->sig.params;
+        tagType = wasm->getTag(tryTable->catchTags[i])->params();
       }
 
       // This is to be the body of the next(outer) level block

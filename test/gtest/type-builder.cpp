@@ -164,7 +164,6 @@ TEST_F(TypeTest, Basics) {
   TypeBuilder builder(3);
   ASSERT_EQ(builder.size(), size_t{3});
 
-  Type refSig = builder.getTempRefType(builder[0], NonNullable);
   Type refStruct = builder.getTempRefType(builder[1], NonNullable);
   Type refArray = builder.getTempRefType(builder[2], NonNullable);
   Type refNullArray = builder.getTempRefType(builder[2], Nullable);
@@ -191,7 +190,6 @@ TEST_F(TypeTest, Basics) {
   ASSERT_TRUE(built[2].isArray());
 
   // The built types should have the correct structure.
-  Type newRefSig = Type(built[0], NonNullable);
   Type newRefStruct = Type(built[1], NonNullable);
   Type newRefArray = Type(built[2], NonNullable);
   Type newRefNullArray = Type(built[2], Nullable);
@@ -200,12 +198,6 @@ TEST_F(TypeTest, Basics) {
             Signature(newRefStruct, {newRefArray, Type::i32}));
   EXPECT_EQ(built[1].getStruct(), Struct({Field(newRefNullArray, Immutable)}));
   EXPECT_EQ(built[2].getArray(), Array(Field(refNullAny, Mutable)));
-
-  // The built types should be different from the temporary types.
-  EXPECT_NE(newRefSig, refSig);
-  EXPECT_NE(newRefStruct, refStruct);
-  EXPECT_NE(newRefArray, refArray);
-  EXPECT_NE(newRefNullArray, refNullArray);
 }
 
 TEST_F(TypeTest, DirectSelfSupertype) {

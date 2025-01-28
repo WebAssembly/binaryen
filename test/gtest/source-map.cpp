@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-#include "parser/wat-parser.h"
+#include "source-map.h"
 #include "print-test.h"
-#include "wasm-binary.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
 
-using BinaryReaderTest = PrintTest;
+using SourceMapTest = PrintTest;
 
 // Check that debug location parsers can handle single-segment mappings.
-TEST_F(BinaryReaderTest, SourceMappingSingleSegment) {
-  auto moduleText = "(module)";
-  Module module;
-  parseWast(module, moduleText);
-
-  BufferWithRandomAccess buffer;
-  WasmBinaryWriter(&module, buffer, PassOptions());
-  auto moduleBytes = buffer.getAsChars();
+TEST_F(SourceMapTest, SourceMappingSingleSegment) {
+  auto text = "(module)";
+  Module wasm;
+  parseWast(wasm, text);
 
   // A single-segment mapping starting at offset 0.
   std::string sourceMap = R"(
@@ -42,22 +37,15 @@ TEST_F(BinaryReaderTest, SourceMappingSingleSegment) {
           "mappings": "A"
       }
   )";
-  std::stringstream sourceMapStream(sourceMap);
+  std::vector<char> buffer(sourceMap.begin(), sourceMap.end());
+
+  SourceMapReader reader(buffer);
 
   // Test `readSourceMapHeader` (only check for errors, as there is no mapping
   // to print).
-  {
-    Module module;
-    WasmBinaryReader binaryReader(module, FeatureSet::All, moduleBytes);
-    binaryReader.setDebugLocations(&sourceMapStream);
-    binaryReader.readSourceMapHeader();
-  }
+  reader.readHeader(wasm);
 
   // Test `readNextDebugLocation`.
-  {
-    Module module;
-    WasmBinaryReader binaryReader(module, FeatureSet::All, moduleBytes);
-    binaryReader.setDebugLocations(&sourceMapStream);
-    binaryReader.readNextDebugLocation();
-  }
+  // TODO: Actually check the result.
+  reader.readDebugLocationAt(1);
 }

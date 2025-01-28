@@ -468,6 +468,12 @@ namespace wasm {
 
 namespace {
 
+// Information that is shared with InfoCollector.
+struct SharedInfo {
+  // The names of tables that are imported or exported.
+  std::unordered_set<Name> publicTables;
+};
+
 // The data we gather from each function, as we process them in parallel. Later
 // this will be merged into a single big graph.
 struct CollectedFuncInfo {
@@ -501,6 +507,12 @@ struct CollectedFuncInfo {
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
+
+  // All functions that might be called from the outside. Any RefFunc suggests
+  // that, in open world. (We could be more precise and use our flow analysis to
+  // see which, in fact, flow outside, but it is unclear how useful that would
+  // be. Anyhow, closed-world is more important to optimize, and avoids this.)
+  std::unordered_set<Name> calledFromOutside;
 };
 
 // Does a walk while maintaining a map of names of branch targets to those
@@ -527,9 +539,14 @@ struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
 // main flow will begin.
 struct InfoCollector
   : public BreakTargetWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
+  SharedInfo& shared;
   CollectedFuncInfo& info;
+  const PassOptions& options;
 
-  InfoCollector(CollectedFuncInfo& info) : info(info) {}
+  InfoCollector(SharedInfo& shared,
+                CollectedFuncInfo& info,
+                const PassOptions& options)
+    : shared(shared), info(info), options(options) {}
 
   // Check if a type is relevant for us. If not, we can ignore it entirely.
   bool isRelevant(Type type) {
@@ -664,6 +681,10 @@ struct InfoCollector
     for (Index i = 0; i < func->getResults().size(); i++) {
       info.links.push_back(
         {ResultLocation{func, i}, SignatureResultLocation{func->type, i}});
+    }
+
+    if (!options.closedWorld) {
+      info.calledFromOutside.insert(curr->func);
     }
   }
   void visitRefEq(RefEq* curr) {
@@ -876,9 +897,16 @@ struct InfoCollector
     curr->operands.push_back(target);
   }
   void visitCallIndirect(CallIndirect* curr) {
-    // TODO: the table identity could also be used here
     // TODO: optimize the call target like CallRef
     handleIndirectCall(curr, curr->heapType);
+
+    // If this goes to a public table, then we must root the output, as the
+    // table could contain anything at all, and calling functions there could
+    // return anything at all.
+    if (shared.publicTables.count(curr->table)) {
+      addRoot(curr);
+    }
+    // TODO: the table identity could also be used here in more ways
   }
   void visitCallRef(CallRef* curr) {
     handleIndirectCall(curr, curr->target->type);
@@ -1004,6 +1032,22 @@ struct InfoCollector
     addChildParentLink(curr->ref, curr);
     addChildParentLink(curr->value, curr);
   }
+  void visitStructRMW(StructRMW* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
   // Array operations access the array's location, parallel to how structs work.
   void visitArrayGet(ArrayGet* curr) {
     if (!isRelevant(curr->ref)) {
@@ -1123,7 +1167,7 @@ struct InfoCollector
       auto tag = curr->catchTags[tagIndex];
       auto* body = curr->catchBodies[tagIndex];
 
-      auto params = getModule()->getTag(tag)->sig.params;
+      auto params = getModule()->getTag(tag)->params();
       if (params.size() == 0) {
         continue;
       }
@@ -1161,7 +1205,7 @@ struct InfoCollector
 
       Index exnrefIndex = 0;
       if (tag.is()) {
-        auto params = getModule()->getTag(tag)->sig.params;
+        auto params = getModule()->getTag(tag)->params();
 
         for (Index i = 0; i < params.size(); i++) {
           if (isRelevant(params[i])) {
@@ -1355,7 +1399,15 @@ struct InfoCollector
       if (contents.isMany()) {
         contents = PossibleContents::fromType(curr->type);
       }
-      addRoot(ExpressionLocation{curr, 0}, contents);
+
+      if (!curr->type.isTuple()) {
+        addRoot(ExpressionLocation{curr, 0}, contents);
+      } else {
+        // For a tuple, we create a root for each index.
+        for (Index i = 0; i < curr->type.size(); i++) {
+          addRoot(ExpressionLocation{curr, i}, contents.getTupleItem(i));
+        }
+      }
     }
   }
 
@@ -1548,6 +1600,10 @@ void TNHOracle::scan(Function* func,
 
     void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
     void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
+    void visitStructRMW(StructRMW* curr) { notePossibleTrap(curr->ref); }
+    void visitStructCmpxchg(StructCmpxchg* curr) {
+      notePossibleTrap(curr->ref);
+    }
     void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
     void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
     void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
@@ -2097,10 +2153,26 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "parallel phase\n";
 #endif
 
-  // First, collect information from each function.
+  // Compute shared info that we need for the main pass over each function, such
+  // as the imported/exported tables.
+  SharedInfo shared;
+
+  for (auto& table : wasm.tables) {
+    if (table->imported()) {
+      shared.publicTables.insert(table->name);
+    }
+  }
+
+  for (auto& ex : wasm.exports) {
+    if (ex->kind == ExternalKind::Table) {
+      shared.publicTables.insert(ex->value);
+    }
+  }
+
+  // Collect information from each function.
   ModuleUtils::ParallelFunctionAnalysis<CollectedFuncInfo> analysis(
     wasm, [&](Function* func, CollectedFuncInfo& info) {
-      InfoCollector finder(info);
+      InfoCollector finder(shared, info, options);
 
       if (func->imported()) {
         // Imports return unknown values.
@@ -2122,7 +2194,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Also walk the global module code (for simplicity, also add it to the
   // function map, using a "function" key of nullptr).
   auto& globalInfo = analysis.map[nullptr];
-  InfoCollector finder(globalInfo);
+  InfoCollector finder(shared, globalInfo, options);
   finder.walkModuleCode(&wasm);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
@@ -2161,6 +2233,16 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // above.
   InsertOrderedMap<Location, PossibleContents> roots;
 
+  // Any function that may be called from the outside, like an export, is a
+  // root, since they can be called with unknown parameters.
+  auto calledFromOutside = [&](Name funcName) {
+    auto* func = wasm.getFunction(funcName);
+    auto params = func->getParams();
+    for (Index i = 0; i < func->getParams().size(); i++) {
+      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
+    }
+  };
+
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
       links.insert(getIndexes(link));
@@ -2179,6 +2261,10 @@ Flower::Flower(Module& wasm, const PassOptions& options)
       childParents[getIndex(ExpressionLocation{child, 0})] =
         getIndex(ExpressionLocation{parent, 0});
     }
+
+    for (auto func : info.calledFromOutside) {
+      calledFromOutside(func);
+    }
   }
 
   // We no longer need the function-level info.
@@ -2188,16 +2274,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   std::cout << "external phase\n";
 #endif
 
-  // Parameters of exported functions are roots, since exports can have callers
-  // that we can't see, so anything might arrive there.
-  auto calledFromOutside = [&](Name funcName) {
-    auto* func = wasm.getFunction(funcName);
-    auto params = func->getParams();
-    for (Index i = 0; i < func->getParams().size(); i++) {
-      roots[ParamLocation{func, i}] = PossibleContents::fromType(params[i]);
-    }
-  };
-
+  // Exports can be modified from the outside.
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
       calledFromOutside(ex->value);
@@ -2345,7 +2422,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // we must only combine the filtered contents (e.g. if 0xff arrives which
       // as a signed read is truly 0xffffffff then we cannot first combine the
       // existing 0xffffffff with the new 0xff, as they are different, and the
-      // result will no longer be a constant).
+      // result will no longer be a constant). There is no need to filter atomic
+      // RMW operations here because they always do unsigned reads.
       filterPackedDataReads(newContents, *exprLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  pre-filtered packed read contents:\n";
@@ -2914,8 +2992,8 @@ void Flower::dump(Location location) {
     std::cout << "  globalloc " << loc->name << '\n';
   } else if (std::get_if<SignatureParamLocation>(&location)) {
     std::cout << "  sigparamloc " << '\n';
-  } else if (std::get_if<SignatureResultLocation>(&location)) {
-    std::cout << "  sigresultloc " << '\n';
+  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
+    std::cout << "  sigresultloc " << loc->type << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';
   } else {

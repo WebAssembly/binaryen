@@ -24,4 +24,4 @@ set(ir_SOURCES
   module-splitting.cpp
   ${ir_HEADERS}
 )
-add_library(ir OBJECT ${ir_SOURCES})
+target_sources(binaryen PRIVATE ${ir_SOURCES})

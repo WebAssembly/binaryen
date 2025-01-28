@@ -349,7 +349,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(tag);
     o << U32LEB(int32_t(ExternalKind::Tag));
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(tag->sig));
+    o << U32LEB(getTypeIndex(tag->type));
   });
   ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
     writeImportHeader(memory);
@@ -854,7 +854,7 @@ void WasmBinaryWriter::writeTags() {
   o << U32LEB(num);
   ModuleUtils::iterDefinedTags(*wasm, [&](Tag* tag) {
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(tag->sig));
+    o << U32LEB(getTypeIndex(tag->type));
   });
 
   finishSection(start);
@@ -1354,6 +1354,10 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::SharedEverythingFeature;
       case FeatureSet::FP16:
         return BinaryConsts::CustomSections::FP16Feature;
+      case FeatureSet::BulkMemoryOpt:
+        return BinaryConsts::CustomSections::BulkMemoryOptFeature;
+      case FeatureSet::CallIndirectOverlong:
+        return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -1733,14 +1737,34 @@ void WasmBinaryWriter::writeField(const Field& field) {
   o << U32LEB(field.mutable_);
 }
 
+void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
+  uint8_t code = 0;
+  switch (order) {
+    case MemoryOrder::Unordered:
+      // Non-atomic get or set does not need a memory order.
+      return;
+    case MemoryOrder::SeqCst:
+      code = BinaryConsts::OrderSeqCst;
+      break;
+    case MemoryOrder::AcqRel:
+      code = BinaryConsts::OrderAcqRel;
+      break;
+  }
+  if (isRMW) {
+    o << uint8_t((code << 4) | code);
+  } else {
+    o << code;
+  }
+}
+
 // reader
 
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
-                                   const std::vector<char>& input)
-  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-    nextDebugPos(0), nextDebugLocation{0, 0, 0, std::nullopt},
-    nextDebugLocationHasDebugInfo(false), debugLocation(), builder(wasm) {
+                                   const std::vector<char>& input,
+                                   const std::vector<char>& sourceMap)
+  : wasm(wasm), allocator(wasm.allocator), input(input), builder(wasm),
+    sourceMapReader(sourceMap) {
   wasm.features = features;
 }
 
@@ -1788,7 +1812,7 @@ void WasmBinaryReader::read() {
   }
 
   readHeader();
-  readSourceMapHeader();
+  sourceMapReader.readHeader(wasm);
 
   // Read sections until the end
   while (more()) {
@@ -2117,30 +2141,30 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
   }
 }
 
-Type WasmBinaryReader::getType(int initial) {
-  // Single value types are negative; signature indices are non-negative
-  if (initial >= 0) {
-    // TODO: Handle block input types properly.
-    auto sig = getSignatureByTypeIndex(initial);
-    if (sig.params != Type::none) {
-      throwError("control flow inputs are not supported yet");
-    }
-    return sig.results;
+Signature WasmBinaryReader::getBlockType() {
+  // Single value types are negative; signature indices are non-negative.
+  auto code = getS32LEB();
+  if (code >= 0) {
+    return getSignatureByTypeIndex(code);
   }
+  if (code == BinaryConsts::EncodedType::Empty) {
+    return Signature();
+  }
+  return Signature(Type::none, getType(code));
+}
+
+Type WasmBinaryReader::getType(int code) {
   Type type;
-  if (getBasicType(initial, type)) {
+  if (getBasicType(code, type)) {
     return type;
   }
-  switch (initial) {
-    // None only used for block signatures. TODO: Separate out?
-    case BinaryConsts::EncodedType::Empty:
-      return Type::none;
+  switch (code) {
     case BinaryConsts::EncodedType::nullable:
       return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::nonnullable:
       return Type(getHeapType(), NonNullable);
     default:
-      throwError("invalid wasm type: " + std::to_string(initial));
+      throwError("invalid wasm type: " + std::to_string(code));
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -2804,12 +2828,10 @@ void WasmBinaryReader::readFunctions() {
         BinaryLocation(pos - codeSectionLocation + size)};
     }
 
-    readNextDebugLocation();
+    func->prologLocation = sourceMapReader.readDebugLocationAt(pos);
 
     readVars();
     setLocalNames(*func, numFuncImports + i);
-
-    func->prologLocation = debugLocation;
     {
       // Process the function body. Even if we are skipping function bodies we
       // need to not skip the start function. That contains important code for
@@ -2846,11 +2868,9 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
+    sourceMapReader.finishFunction();
     TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
-
-    std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
-    debugLocation.clear();
   }
 }
 
@@ -2879,18 +2899,17 @@ void WasmBinaryReader::readVars() {
 }
 
 Result<> WasmBinaryReader::readInst() {
-  readNextDebugLocation();
-  if (debugLocation.size()) {
-    builder.setDebugLocation(*debugLocation.begin());
+  if (auto loc = sourceMapReader.readDebugLocationAt(pos)) {
+    builder.setDebugLocation(loc);
   }
   uint8_t code = getInt8();
   switch (code) {
     case BinaryConsts::Block:
-      return builder.makeBlock(Name(), getType());
+      return builder.makeBlock(Name(), getBlockType());
     case BinaryConsts::If:
-      return builder.makeIf(Name(), getType());
+      return builder.makeIf(Name(), getBlockType());
     case BinaryConsts::Loop:
-      return builder.makeLoop(Name(), getType());
+      return builder.makeLoop(Name(), getBlockType());
     case BinaryConsts::Br:
       return builder.makeBreak(getU32LEB(), false);
     case BinaryConsts::BrIf:
@@ -2975,9 +2994,9 @@ Result<> WasmBinaryReader::readInst() {
     case BinaryConsts::TableSet:
       return builder.makeTableSet(getTableName(getU32LEB()));
     case BinaryConsts::Try:
-      return builder.makeTry(Name(), getType());
+      return builder.makeTry(Name(), getBlockType());
     case BinaryConsts::TryTable: {
-      auto type = getType();
+      auto type = getBlockType();
       std::vector<Name> tags;
       std::vector<Index> labels;
       std::vector<bool> isRefs;
@@ -3444,6 +3463,43 @@ Result<> WasmBinaryReader::readInst() {
             return Err{"expected 0x00 byte immediate on atomic.fence"};
           }
           return builder.makeAtomicFence();
+        case BinaryConsts::StructAtomicGet:
+        case BinaryConsts::StructAtomicGetS:
+        case BinaryConsts::StructAtomicGetU: {
+          auto order = getMemoryOrder();
+          auto type = getIndexedHeapType();
+          auto field = getU32LEB();
+          bool signed_ = op == BinaryConsts::StructAtomicGetS;
+          return builder.makeStructGet(type, field, signed_, order);
+        }
+        case BinaryConsts::StructAtomicSet: {
+          auto order = getMemoryOrder();
+          auto type = getIndexedHeapType();
+          auto field = getU32LEB();
+          return builder.makeStructSet(type, field, order);
+        }
+
+#define STRUCT_RMW(op)                                                         \
+  case BinaryConsts::StructAtomicRMW##op: {                                    \
+    auto order = getMemoryOrder(true);                                         \
+    auto type = getIndexedHeapType();                                          \
+    auto field = getU32LEB();                                                  \
+    return builder.makeStructRMW(RMW##op, type, field, order);                 \
+  }
+
+          STRUCT_RMW(Add)
+          STRUCT_RMW(Sub)
+          STRUCT_RMW(And)
+          STRUCT_RMW(Or)
+          STRUCT_RMW(Xor)
+          STRUCT_RMW(Xchg)
+
+        case BinaryConsts::StructAtomicRMWCmpxchg: {
+          auto order = getMemoryOrder(true);
+          auto type = getIndexedHeapType();
+          auto field = getU32LEB();
+          return builder.makeStructCmpxchg(type, field, order);
+        }
       }
       return Err{"unknown atomic operation"};
     }
@@ -4181,13 +4237,15 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::StructGetU: {
           auto type = getIndexedHeapType();
           auto field = getU32LEB();
-          return builder.makeStructGet(
-            type, field, op == BinaryConsts::StructGetS);
+          return builder.makeStructGet(type,
+                                       field,
+                                       op == BinaryConsts::StructGetS,
+                                       MemoryOrder::Unordered);
         }
         case BinaryConsts::StructSet: {
           auto type = getIndexedHeapType();
           auto field = getU32LEB();
-          return builder.makeStructSet(type, field);
+          return builder.makeStructSet(type, field, MemoryOrder::Unordered);
         }
         case BinaryConsts::ArrayNew:
           return builder.makeArrayNew(getIndexedHeapType());
@@ -4307,242 +4365,6 @@ void WasmBinaryReader::readExports() {
         break;
     }
     throwError("invalid export kind");
-  }
-}
-
-static int32_t readBase64VLQ(std::istream& in) {
-  uint32_t value = 0;
-  uint32_t shift = 0;
-  while (1) {
-    auto ch = in.get();
-    if (ch == EOF) {
-      throw MapParseException("unexpected EOF in the middle of VLQ");
-    }
-    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch < 'g')) {
-      // last number digit
-      uint32_t digit = ch < 'a' ? ch - 'A' : ch - 'a' + 26;
-      value |= digit << shift;
-      break;
-    }
-    if (!(ch >= 'g' && ch <= 'z') && !(ch >= '0' && ch <= '9') && ch != '+' &&
-        ch != '/') {
-      throw MapParseException("invalid VLQ digit");
-    }
-    uint32_t digit =
-      ch > '9' ? ch - 'g' : (ch >= '0' ? ch - '0' + 20 : (ch == '+' ? 30 : 31));
-    value |= digit << shift;
-    shift += 5;
-  }
-  return value & 1 ? -int32_t(value >> 1) : int32_t(value >> 1);
-}
-
-void WasmBinaryReader::readSourceMapHeader() {
-  if (!sourceMap) {
-    return;
-  }
-
-  auto skipWhitespace = [&]() {
-    while (sourceMap->peek() == ' ' || sourceMap->peek() == '\n') {
-      sourceMap->get();
-    }
-  };
-
-  auto maybeReadChar = [&](char expected) {
-    if (sourceMap->peek() != expected) {
-      return false;
-    }
-    sourceMap->get();
-    return true;
-  };
-
-  auto mustReadChar = [&](char expected) {
-    char c = sourceMap->get();
-    if (c != expected) {
-      throw MapParseException(std::string("Unexpected char: expected '") +
-                              expected + "' got '" + c + "'");
-    }
-  };
-
-  auto findField = [&](const char* name) {
-    bool matching = false;
-    size_t len = strlen(name);
-    size_t pos;
-    while (1) {
-      int ch = sourceMap->get();
-      if (ch == EOF) {
-        return false;
-      }
-      if (ch == '\"') {
-        if (matching) {
-          // we matched a terminating quote.
-          if (pos == len) {
-            break;
-          }
-          matching = false;
-        } else {
-          matching = true;
-          pos = 0;
-        }
-      } else if (matching && name[pos] == ch) {
-        ++pos;
-      } else if (matching) {
-        matching = false;
-      }
-    }
-    skipWhitespace();
-    mustReadChar(':');
-    skipWhitespace();
-    return true;
-  };
-
-  auto readString = [&](std::string& str) {
-    std::vector<char> vec;
-    skipWhitespace();
-    mustReadChar('\"');
-    if (!maybeReadChar('\"')) {
-      while (1) {
-        int ch = sourceMap->get();
-        if (ch == EOF) {
-          throw MapParseException("unexpected EOF in the middle of string");
-        }
-        if (ch == '\"') {
-          break;
-        }
-        vec.push_back(ch);
-      }
-    }
-    skipWhitespace();
-    str = std::string(vec.begin(), vec.end());
-  };
-
-  if (!findField("sources")) {
-    throw MapParseException("cannot find the 'sources' field in map");
-  }
-
-  skipWhitespace();
-  mustReadChar('[');
-  if (!maybeReadChar(']')) {
-    do {
-      std::string file;
-      readString(file);
-      Index index = wasm.debugInfoFileNames.size();
-      wasm.debugInfoFileNames.push_back(file);
-      debugInfoFileIndices[file] = index;
-    } while (maybeReadChar(','));
-    mustReadChar(']');
-  }
-
-  if (findField("names")) {
-    skipWhitespace();
-    mustReadChar('[');
-    if (!maybeReadChar(']')) {
-      do {
-        std::string symbol;
-        readString(symbol);
-        Index index = wasm.debugInfoSymbolNames.size();
-        wasm.debugInfoSymbolNames.push_back(symbol);
-        debugInfoSymbolNameIndices[symbol] = index;
-      } while (maybeReadChar(','));
-      mustReadChar(']');
-    }
-  }
-
-  if (!findField("mappings")) {
-    throw MapParseException("cannot find the 'mappings' field in map");
-  }
-
-  mustReadChar('\"');
-  if (maybeReadChar('\"')) { // empty mappings
-    nextDebugPos = 0;
-    return;
-  }
-  // read first debug location
-  // TODO: Handle the case where the very first one has only a position but not
-  //       debug info. In practice that does not happen, which needs
-  //       investigation (if it does, it will assert in readBase64VLQ, so it
-  //       would not be a silent error at least).
-  uint32_t position = readBase64VLQ(*sourceMap);
-  nextDebugPos = position;
-
-  auto peek = sourceMap->peek();
-  if (peek == ',' || peek == '\"') {
-    // This is a 1-length entry, so the next location has no debug info.
-    nextDebugLocationHasDebugInfo = false;
-  } else {
-    uint32_t fileIndex = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber =
-      readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
-    uint32_t columnNumber = readBase64VLQ(*sourceMap);
-    std::optional<BinaryLocation> symbolNameIndex;
-    peek = sourceMap->peek();
-    if (!(peek == ',' || peek == '\"')) {
-      symbolNameIndex = readBase64VLQ(*sourceMap);
-    }
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
-    nextDebugLocationHasDebugInfo = true;
-  }
-}
-
-void WasmBinaryReader::readNextDebugLocation() {
-  if (!sourceMap) {
-    return;
-  }
-
-  if (nextDebugPos == 0) {
-    // We reached the end of the source map; nothing left to read.
-    return;
-  }
-
-  while (nextDebugPos && nextDebugPos <= pos) {
-    debugLocation.clear();
-    // use debugLocation only for function expressions
-    if (currFunction) {
-      if (nextDebugLocationHasDebugInfo) {
-        debugLocation.insert(nextDebugLocation);
-      } else {
-        debugLocation.clear();
-      }
-    }
-
-    char ch;
-    *sourceMap >> ch;
-    if (ch == '\"') { // end of records
-      nextDebugPos = 0;
-      break;
-    }
-    if (ch != ',') {
-      throw MapParseException("Unexpected delimiter");
-    }
-
-    int32_t positionDelta = readBase64VLQ(*sourceMap);
-    uint32_t position = nextDebugPos + positionDelta;
-
-    nextDebugPos = position;
-
-    auto peek = sourceMap->peek();
-    if (peek == ',' || peek == '\"') {
-      // This is a 1-length entry, so the next location has no debug info.
-      nextDebugLocationHasDebugInfo = false;
-      break;
-    }
-
-    int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
-    uint32_t fileIndex = nextDebugLocation.fileIndex + fileIndexDelta;
-    int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber = nextDebugLocation.lineNumber + lineNumberDelta;
-    int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
-
-    std::optional<BinaryLocation> symbolNameIndex;
-    peek = sourceMap->peek();
-    if (!(peek == ',' || peek == '\"')) {
-      int32_t symbolNameIndexDelta = readBase64VLQ(*sourceMap);
-      symbolNameIndex =
-        nextDebugLocation.symbolNameIndex.value_or(0) + symbolNameIndexDelta;
-    }
-
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
-    nextDebugLocationHasDebugInfo = true;
   }
 }
 
@@ -5008,11 +4830,6 @@ void WasmBinaryReader::findAndReadNames() {
       auto numTypes = getU32LEB();
       for (size_t i = 0; i < numTypes; i++) {
         auto typeIndex = getU32LEB();
-        bool validType =
-          typeIndex < types.size() && types[typeIndex].isStruct();
-        if (!validType) {
-          std::cerr << "warning: invalid field index in name field section\n";
-        }
         auto numFields = getU32LEB();
         NameProcessor processor;
         for (size_t i = 0; i < numFields; i++) {
@@ -5073,6 +4890,12 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::Atomics;
     } else if (name == BinaryConsts::CustomSections::BulkMemoryFeature) {
       feature = FeatureSet::BulkMemory;
+      if (used) {
+        // For backward compatibility, enable this dependent feature.
+        feature |= FeatureSet::BulkMemoryOpt;
+      }
+    } else if (name == BinaryConsts::CustomSections::BulkMemoryOptFeature) {
+      feature = FeatureSet::BulkMemoryOpt;
     } else if (name == BinaryConsts::CustomSections::ExceptionHandlingFeature) {
       feature = FeatureSet::ExceptionHandling;
     } else if (name == BinaryConsts::CustomSections::MutableGlobalsFeature) {
@@ -5222,6 +5045,26 @@ std::tuple<Name, Address, Address> WasmBinaryReader::getMemarg() {
   Address alignment, offset;
   auto memIdx = readMemoryAccess(alignment, offset);
   return {getMemoryName(memIdx), alignment, offset};
+}
+
+MemoryOrder WasmBinaryReader::getMemoryOrder(bool isRMW) {
+  auto code = getInt8();
+  switch (code) {
+    case BinaryConsts::OrderSeqCst:
+      // Covers the RMW case as well because (0 << 4 ) | 0 == 0.
+      return MemoryOrder::SeqCst;
+    case BinaryConsts::OrderAcqRel:
+      if (!isRMW) {
+        return MemoryOrder::AcqRel;
+      }
+      throwError("RMW memory orders must match");
+    case ((BinaryConsts::OrderAcqRel << 4) | BinaryConsts::OrderAcqRel):
+      if (isRMW) {
+        return MemoryOrder::AcqRel;
+      }
+      break;
+  }
+  throwError("Unrecognized memory order code " + std::to_string(code));
 }
 
 } // namespace wasm

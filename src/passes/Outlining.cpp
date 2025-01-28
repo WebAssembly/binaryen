@@ -364,11 +364,20 @@ struct Outlining : public Pass {
                    seqByFunc.end(),
                    keys.begin(),
                    [](auto pair) { return pair.first; });
-    for (auto funcName : keys) {
-      auto* func = module->getFunction(funcName);
-      ReconstructStringifyWalker reconstruct(module, func);
-      reconstruct.sequences = std::move(seqByFunc[funcName]);
-      reconstruct.doWalkFunction(func);
+    for (auto func : keys) {
+      // During function reconstruction, a walker iterates thru each instruction
+      // of a function, incrementing a counter to find matching sequences. As a
+      // result, the sequences of a function must be sorted by
+      // smallest start index, otherwise reconstruction will miss outlining a
+      // repeat sequence.
+      std::sort(seqByFunc[func].begin(),
+                seqByFunc[func].end(),
+                [](OutliningSequence a, OutliningSequence b) {
+                  return a.startIdx < b.startIdx;
+                });
+      ReconstructStringifyWalker reconstruct(module, module->getFunction(func));
+      reconstruct.sequences = std::move(seqByFunc[func]);
+      reconstruct.doWalkFunction(module->getFunction(func));
     }
   }
 

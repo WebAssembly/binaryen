@@ -1752,7 +1752,8 @@ BinaryenExpressionRef BinaryenStructGet(BinaryenModuleRef module,
                                         bool signed_) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStructGet(index, (Expression*)ref, Type(type), signed_));
+      .makeStructGet(
+        index, (Expression*)ref, MemoryOrder::Unordered, Type(type), signed_));
 }
 BinaryenExpressionRef BinaryenStructSet(BinaryenModuleRef module,
                                         BinaryenIndex index,
@@ -1760,7 +1761,8 @@ BinaryenExpressionRef BinaryenStructSet(BinaryenModuleRef module,
                                         BinaryenExpressionRef value) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStructSet(index, (Expression*)ref, (Expression*)value));
+      .makeStructSet(
+        index, (Expression*)ref, (Expression*)value, MemoryOrder::Unordered));
 }
 BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                        BinaryenHeapType type,
@@ -4768,7 +4770,7 @@ BinaryenTagRef BinaryenAddTag(BinaryenModuleRef module,
                               BinaryenType results) {
   auto* ret = new Tag();
   ret->setExplicitName(name);
-  ret->sig = Signature(Type(params), Type(results));
+  ret->type = Signature(Type(params), Type(results));
   ((Module*)module)->addTag(ret);
   return ret;
 }
@@ -4872,7 +4874,7 @@ void BinaryenAddTagImport(BinaryenModuleRef module,
     tag->name = internalName;
     tag->module = externalModuleName;
     tag->base = externalBaseName;
-    tag->sig = Signature(Type(params), Type(results));
+    tag->type = Signature(Type(params), Type(results));
     ((Module*)module)->addTag(std::move(tag));
   } else {
     // already exists so just set module and base
@@ -5836,11 +5838,11 @@ const char* BinaryenTagGetName(BinaryenTagRef tag) {
   return ((Tag*)tag)->name.str.data();
 }
 BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
-  return ((Tag*)tag)->sig.params.getID();
+  return ((Tag*)tag)->params().getID();
 }
 
 BinaryenType BinaryenTagGetResults(BinaryenTagRef tag) {
-  return ((Tag*)tag)->sig.results.getID();
+  return ((Tag*)tag)->results().getID();
 }
 
 //

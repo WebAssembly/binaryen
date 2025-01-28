@@ -225,10 +225,6 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       return type;
     }
 
-    Signature getNew(Signature sig) {
-      return Signature(getNew(sig.params), getNew(sig.results));
-    }
-
     void visitExpression(Expression* curr) {
       // local.get and local.tee are special in that their type is tied to the
       // type of the local in the function, which is tied to the signature. That
@@ -304,7 +300,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
     global->type = updater.getNew(global->type);
   }
   for (auto& tag : wasm.tags) {
-    tag->sig = updater.getNew(tag->sig);
+    tag->type = updater.getNew(tag->type);
   }
 }
 

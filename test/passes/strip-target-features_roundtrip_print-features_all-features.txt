@@ -17,6 +17,8 @@
 --enable-stack-switching
 --enable-shared-everything
 --enable-fp16
+--enable-bulk-memory-opt
+--enable-call-indirect-overlong
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)

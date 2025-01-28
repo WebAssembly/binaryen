@@ -158,6 +158,8 @@ void ReFinalize::visitBrOn(BrOn* curr) {
 void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
+void ReFinalize::visitStructRMW(StructRMW* curr) { curr->finalize(); }
+void ReFinalize::visitStructCmpxchg(StructCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }

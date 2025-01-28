@@ -35,15 +35,15 @@
 ;; The fixup will hoist the 'pop' and create another local to store it right
 ;; after 'catch'.
 
-;; RUN: wasm-opt -all %s.wasm -S -o - | filecheck %s
+;; RUN: wasm-opt %s.wasm -S -o - | filecheck %s
 
 ;; CHECK:      (type $0 (func (param i32)))
 
 ;; CHECK:      (type $1 (func))
 
-;; CHECK:      (tag $tag$0 (param i32))
+;; CHECK:      (tag $tag$0 (type $0) (param i32))
 
-;; CHECK:      (func $0 (type $1)
+;; CHECK:      (func $0
 ;; CHECK-NEXT:  (local $0 i32)
 ;; CHECK-NEXT:  (local $1 i32)
 ;; CHECK-NEXT:  (local $2 i32)

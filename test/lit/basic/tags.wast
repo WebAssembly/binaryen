@@ -23,40 +23,40 @@
 
   ;; CHECK-TEXT:      (type $2 (func))
 
-  ;; CHECK-TEXT:      (import "env" "im0" (tag $e-import (param i32)))
+  ;; CHECK-TEXT:      (import "env" "im0" (tag $e-import (type $1) (param i32)))
 
-  ;; CHECK-TEXT:      (import "env" "im1" (tag $eimport$0 (param i32 f32)))
+  ;; CHECK-TEXT:      (import "env" "im1" (tag $eimport$0 (type $0) (param i32 f32)))
 
-  ;; CHECK-TEXT:      (tag $tag$1 (param i32))
+  ;; CHECK-TEXT:      (tag $tag$1 (type $1) (param i32))
 
-  ;; CHECK-TEXT:      (tag $e (param i32 f32))
+  ;; CHECK-TEXT:      (tag $e (type $0) (param i32 f32))
   ;; CHECK-BIN:      (type $0 (func (param i32 f32)))
 
   ;; CHECK-BIN:      (type $1 (func (param i32)))
 
   ;; CHECK-BIN:      (type $2 (func))
 
-  ;; CHECK-BIN:      (import "env" "im0" (tag $e-import (param i32)))
+  ;; CHECK-BIN:      (import "env" "im0" (tag $e-import (type $1) (param i32)))
 
-  ;; CHECK-BIN:      (import "env" "im1" (tag $eimport$1 (param i32 f32)))
+  ;; CHECK-BIN:      (import "env" "im1" (tag $eimport$1 (type $0) (param i32 f32)))
 
-  ;; CHECK-BIN:      (tag $tag$0 (param i32))
+  ;; CHECK-BIN:      (tag $tag$0 (type $1) (param i32))
 
-  ;; CHECK-BIN:      (tag $e (param i32 f32))
+  ;; CHECK-BIN:      (tag $e (type $0) (param i32 f32))
   (tag $e (param i32 f32))
-  ;; CHECK-TEXT:      (tag $empty)
-  ;; CHECK-BIN:      (tag $empty)
+  ;; CHECK-TEXT:      (tag $empty (type $2))
+  ;; CHECK-BIN:      (tag $empty (type $2))
   (tag $empty)
 
-  ;; CHECK-TEXT:      (tag $e-params0 (param i32 f32))
-  ;; CHECK-BIN:      (tag $e-params0 (param i32 f32))
+  ;; CHECK-TEXT:      (tag $e-params0 (type $0) (param i32 f32))
+  ;; CHECK-BIN:      (tag $e-params0 (type $0) (param i32 f32))
   (tag $e-params0 (param i32 f32))
-  ;; CHECK-TEXT:      (tag $e-params1 (param i32 f32))
-  ;; CHECK-BIN:      (tag $e-params1 (param i32 f32))
+  ;; CHECK-TEXT:      (tag $e-params1 (type $0) (param i32 f32))
+  ;; CHECK-BIN:      (tag $e-params1 (type $0) (param i32 f32))
   (tag $e-params1 (param i32) (param f32))
 
-  ;; CHECK-TEXT:      (tag $e-export (param i32))
-  ;; CHECK-BIN:      (tag $e-export (param i32))
+  ;; CHECK-TEXT:      (tag $e-export (type $1) (param i32))
+  ;; CHECK-BIN:      (tag $e-export (type $1) (param i32))
   (tag $e-export (export "ex0") (param i32))
 
   ;; CHECK-TEXT:      (export "ex0" (tag $e-export))
@@ -73,21 +73,21 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $2 (func))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "im0" (tag $eimport$0 (param i32)))
+;; CHECK-BIN-NODEBUG:      (import "env" "im0" (tag $eimport$0 (type $1) (param i32)))
 
-;; CHECK-BIN-NODEBUG:      (import "env" "im1" (tag $eimport$1 (param i32 f32)))
+;; CHECK-BIN-NODEBUG:      (import "env" "im1" (tag $eimport$1 (type $0) (param i32 f32)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $1) (param i32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$1 (param i32 f32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $0) (param i32 f32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$2)
+;; CHECK-BIN-NODEBUG:      (tag $tag$2 (type $2))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$3 (param i32 f32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$3 (type $0) (param i32 f32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$4 (param i32 f32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$4 (type $0) (param i32 f32))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$5 (param i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$5 (type $1) (param i32))
 
 ;; CHECK-BIN-NODEBUG:      (export "ex0" (tag $tag$5))
 

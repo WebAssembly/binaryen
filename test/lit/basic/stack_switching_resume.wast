@@ -27,12 +27,12 @@
 
  ;; CHECK-TEXT:      (type $3 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-TEXT:      (tag $t (param i32) (result i32))
+ ;; CHECK-TEXT:      (tag $t (type $ft) (param i32) (result i32))
  ;; CHECK-BIN:      (type $2 (func (result i32 (ref $ct))))
 
  ;; CHECK-BIN:      (type $3 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-BIN:      (tag $t (param i32) (result i32))
+ ;; CHECK-BIN:      (tag $t (type $ft) (param i32) (result i32))
  (tag $t (param i32) (result i32))
 
  ;; CHECK-BINARY:      (func $go (type $3) (param $x (ref $ct)) (result i32)
@@ -129,7 +129,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $3 (func (param (ref $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32) (result i32))
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0) (param i32) (result i32))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 (ref $1)))

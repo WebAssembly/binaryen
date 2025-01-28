@@ -1,35 +1,35 @@
 Metrics
 total
- [exports]      : 54      
- [funcs]        : 84      
+ [exports]      : 84      
+ [funcs]        : 112     
  [globals]      : 17      
  [imports]      : 4       
  [memories]     : 1       
  [memory-data]  : 11      
- [table-data]   : 22      
+ [table-data]   : 36      
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 8343    
- [vars]         : 264     
- Binary         : 597     
- Block          : 1335    
- Break          : 226     
- Call           : 346     
- CallIndirect   : 65      
- Const          : 1375    
+ [total]        : 7833    
+ [vars]         : 292     
+ Binary         : 578     
+ Block          : 1340    
+ Break          : 204     
+ Call           : 414     
+ CallIndirect   : 35      
+ Const          : 1256    
  Drop           : 107     
- GlobalGet      : 719     
- GlobalSet      : 522     
- If             : 458     
- Load           : 139     
- LocalGet       : 650     
- LocalSet       : 441     
- Loop           : 165     
- Nop            : 97      
- RefFunc        : 22      
- Return         : 120     
- Select         : 71      
- Store          : 56      
- Switch         : 2       
- Unary          : 574     
- Unreachable    : 256     
+ GlobalGet      : 698     
+ GlobalSet      : 535     
+ If             : 418     
+ Load           : 134     
+ LocalGet       : 502     
+ LocalSet       : 331     
+ Loop           : 149     
+ Nop            : 87      
+ RefFunc        : 36      
+ Return         : 103     
+ Select         : 49      
+ Store          : 70      
+ Switch         : 6       
+ Unary          : 508     
+ Unreachable    : 273     

@@ -32,8 +32,10 @@ namespace {
 } // anonymous namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::vector<char>&& input)
-  : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
+                                             std::vector<char>&& input,
+                                             bool closedWorld)
+  : wasm(wasm), closedWorld(closedWorld), builder(wasm),
+    random(std::move(input), wasm.features) {
 
   // Half the time add no unreachable code so that we'll execute the most code
   // as possible with no early exits.
@@ -50,9 +52,11 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
-                                             std::string& filename)
-  : TranslateToFuzzReader(
-      wasm, read_file<std::vector<char>>(filename, Flags::Binary)) {}
+                                             std::string& filename,
+                                             bool closedWorld)
+  : TranslateToFuzzReader(wasm,
+                          read_file<std::vector<char>>(filename, Flags::Binary),
+                          closedWorld) {}
 
 void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
   // Pick random passes to further shape the wasm. This is similar to how we
@@ -197,8 +201,11 @@ void TranslateToFuzzReader::pickPasses(OptimizationOptions& options) {
       case 41:
         // GC specific passes.
         if (wasm.features.hasGC()) {
-          // Most of these depend on closed world, so just set that.
+          // Most of these depend on closed world, so just set that. Set it both
+          // on the global pass options, and in the internal state of this
+          // TranslateToFuzzReader instance.
           options.passOptions.closedWorld = true;
+          closedWorld = true;
 
           switch (upTo(16)) {
             case 0:
@@ -310,6 +317,7 @@ void TranslateToFuzzReader::build() {
   }
   addImportLoggingSupport();
   addImportCallingSupport();
+  addImportSleepSupport();
   modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
@@ -324,6 +332,7 @@ void TranslateToFuzzReader::build() {
     addHashMemorySupport();
   }
   finalizeTable();
+  shuffleExports();
 }
 
 void TranslateToFuzzReader::setupMemory() {
@@ -738,6 +747,37 @@ void TranslateToFuzzReader::finalizeTable() {
   }
 }
 
+void TranslateToFuzzReader::shuffleExports() {
+  // Randomly ordering the exports is useful for a few reasons. First, initial
+  // content may have a natural order in which to execute things (an "init"
+  // export first, for example), and changing that order may lead to very
+  // different execution. Second, even in the fuzzer's own random content there
+  // is a "direction", since we generate as we go (e.g. no function calls a
+  // later function that does not exist yet / will be created later), and also
+  // we emit invokes for a function right after it (so we end up calling the
+  // same code several times in succession, but interleaving it with others may
+  // find more things). But we also keep a good chance for the natural order
+  // here, as it may help some initial content.
+  if (wasm.exports.empty() || oneIn(2)) {
+    return;
+  }
+
+  // Sort the exports in the simple Fisher-Yates manner.
+  // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+  for (Index i = 0; i < wasm.exports.size() - 1; i++) {
+    // Pick the index of the item to place at index |i|. The number of items to
+    // pick from begins at the full length, then decreases with i.
+    auto j = i + upTo(wasm.exports.size() - i);
+
+    // Swap the item over here.
+    if (j != i) {
+      std::swap(wasm.exports[i], wasm.exports[j]);
+    }
+  }
+
+  wasm.updateMaps();
+}
+
 void TranslateToFuzzReader::prepareHangLimitSupport() {
   HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm, "hangLimit");
 }
@@ -764,21 +804,32 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
+  if (wasm.features.hasReferenceTypes() && closedWorld) {
+    // In closed world mode we must *remove* the call-ref* imports, if they
+    // exist in the initial content. These are not valid to call in closed-world
+    // mode as they call function references. (Another solution here would be to
+    // make closed-world issue validation errors on these imports, but that
+    // would require changes to the general-purpose validator.)
+    for (auto& func : wasm.functions) {
+      if (func->imported() && func->module == "fuzzing-support" &&
+          func->base.startsWith("call-ref")) {
+        // Make it non-imported, and with a simple body.
+        func->module = func->base = Name();
+        auto results = func->getResults();
+        func->body =
+          results.isConcrete() ? makeConst(results) : makeNop(Type::none);
+      }
+    }
+  }
+
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
-  // its own exports, and to care about the indexes of the exports):
-  //
-  //  0 - none
-  //  1 - call-export
-  //  2 - call-export-catch
-  //  3 - call-export & call-export-catch
-  //  4 - none
-  //  5 - none
-  //
-  auto choice = upTo(6);
-  if (choice >= 4) {
+  // its own exports, and to care about the indexes of the exports).
+  if (oneIn(2)) {
     return;
   }
+
+  auto choice = upTo(16);
 
   if (choice & 1) {
     // Given an export index, call it from JS.
@@ -803,6 +854,34 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->base = "call-export-catch";
     func->type = Signature(Type::i32, Type::i32);
     wasm.addFunction(std::move(func));
+  }
+
+  // If the wasm will be used for closed-world testing, we cannot use the
+  // call-ref variants, as mentioned before.
+  if (wasm.features.hasReferenceTypes() && !closedWorld) {
+    if (choice & 4) {
+      // Given an funcref, call it from JS.
+      callRefImportName = Names::getValidFunctionName(wasm, "call-ref");
+      auto func = std::make_unique<Function>();
+      func->name = callRefImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref";
+      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      wasm.addFunction(std::move(func));
+    }
+
+    if (choice & 8) {
+      // Given an funcref, call it from JS and catch all exceptions (similar
+      // to callExportCatch), return 1 if we caught).
+      callRefCatchImportName =
+        Names::getValidFunctionName(wasm, "call-ref-catch");
+      auto func = std::make_unique<Function>();
+      func->name = callRefCatchImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-ref-catch";
+      func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
+      wasm.addFunction(std::move(func));
+    }
   }
 }
 
@@ -861,6 +940,24 @@ void TranslateToFuzzReader::addImportTableSupport() {
       Signature({Type::i32, Type(HeapType::func, Nullable)}, Type::none);
     wasm.addFunction(std::move(func));
   }
+}
+
+void TranslateToFuzzReader::addImportSleepSupport() {
+  if (!oneIn(4)) {
+    // Fuzz this somewhat rarely, as it may be slow.
+    return;
+  }
+
+  // An import that sleeps for a given number of milliseconds, and also receives
+  // an integer id. It returns that integer id (useful for tracking separate
+  // sleeps).
+  sleepImportName = Names::getValidFunctionName(wasm, "sleep");
+  auto func = std::make_unique<Function>();
+  func->name = sleepImportName;
+  func->module = "fuzzing-support";
+  func->base = "sleep";
+  func->type = Signature({Type::i32, Type::i32}, Type::i32);
+  wasm.addFunction(std::move(func));
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
@@ -991,27 +1088,48 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
     Type::none);
 }
 
-Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
-  // The none-returning variant just does the call. The i32-returning one
-  // catches any errors and returns 1 when it saw an error. Based on the
-  // variant, pick which to call, and the maximum index to call.
-  Name target;
+Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
+  // Call code: either an export or a ref. Each has a catching and non-catching
+  // variant. The catching variants return i32, the others none.
+  assert(type == Type::none || type == Type::i32);
+  auto catching = type == Type::i32;
+  auto exportTarget =
+    catching ? callExportCatchImportName : callExportImportName;
+  auto refTarget = catching ? callRefCatchImportName : callRefImportName;
+
+  // We want to call a ref less often, as refs are more likely to error (a
+  // function reference can have arbitrary params and results, including things
+  // that error on the JS boundary; an export is already filtered for such
+  // things in some cases - when we legalize the boundary - and even if not, we
+  // emit lots of void(void) functions - all the invoke_foo functions - that are
+  // safe to call).
+  if (refTarget) {
+    // This matters a lot more in the variants that do *not* catch (in the
+    // catching ones, we just get a result of 1, but when not caught it halts
+    // execution).
+    if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
+      // Most of the time make a non-nullable funcref, to avoid errors.
+      auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
+      return builder.makeCall(refTarget, {make(refType)}, type);
+    }
+  }
+
+  if (!exportTarget) {
+    // We decided not to emit a call-ref here, due to fear of erroring, and
+    // there is no call-export, so just emit something trivial.
+    return makeTrivial(type);
+  }
+
+  // Pick the maximum export index to call.
   Index maxIndex = wasm.exports.size();
-  if (type == Type::none) {
-    target = callExportImportName;
-  } else if (type == Type::i32) {
-    target = callExportCatchImportName;
-    // This never traps, so we can be less careful, but we do still want to
-    // avoid trapping a lot as executing code is more interesting. (Note that
+  if (type == Type::i32) {
+    // This swallows errors, so we can be less careful, but we do still want to
+    // avoid swallowing a lot as executing code is more interesting. (Note that
     // even though we double here, the risk is not that great: we are still
     // adding functions as we go, so the first half of functions/exports can
     // double here and still end up in bounds by the time we've added them all.)
     maxIndex = (maxIndex + 1) * 2;
-  } else {
-    WASM_UNREACHABLE("bad import.call");
   }
-  // We must have set up the target function.
-  assert(target);
 
   // Most of the time, call a valid export index in the range we picked, but
   // sometimes allow anything at all.
@@ -1020,7 +1138,14 @@ Expression* TranslateToFuzzReader::makeImportCallExport(Type type) {
     index = builder.makeBinary(
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-  return builder.makeCall(target, {index}, type);
+  return builder.makeCall(exportTarget, {index}, type);
+}
+
+Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
+  // Sleep for some ms, and return a given id.
+  auto* ms = make(Type::i32);
+  auto id = make(Type::i32);
+  return builder.makeCall(sleepImportName, {ms, id}, Type::i32);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1443,7 +1568,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   struct Fixer
-    : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
+    : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
 
@@ -1481,12 +1606,15 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
 
     bool hasBreakTarget(Name name) {
-      if (controlFlowStack.empty()) {
+      // The break must be on top.
+      assert(!expressionStack.empty());
+      if (expressionStack.size() < 2) {
+        // There must be a scope for this break to be valid.
         return false;
       }
-      Index i = controlFlowStack.size() - 1;
+      Index i = expressionStack.size() - 2;
       while (1) {
-        auto* curr = controlFlowStack[i];
+        auto* curr = expressionStack[i];
         bool has = false;
         BranchUtils::operateOnScopeNameDefs(curr, [&](Name& def) {
           if (def == name) {
@@ -1497,6 +1625,43 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
           return true;
         }
         if (i == 0) {
+          return false;
+        }
+        i--;
+      }
+    }
+
+    void visitRethrow(Rethrow* curr) {
+      if (!isValidRethrow(curr->target)) {
+        replace();
+      }
+    }
+
+    bool isValidRethrow(Name target) {
+      // The rethrow must be on top.
+      assert(!expressionStack.empty());
+      assert(expressionStack.back()->is<Rethrow>());
+      if (expressionStack.size() < 2) {
+        // There must be a try for this rethrow to be valid.
+        return false;
+      }
+      Index i = expressionStack.size() - 2;
+      while (1) {
+        auto* curr = expressionStack[i];
+        if (auto* tryy = curr->dynCast<Try>()) {
+          // The rethrow must target a try, and must be nested in a catch of
+          // that try (not the body). Look at the child above us to check, when
+          // we find the proper try.
+          if (tryy->name == target) {
+            if (i + 1 >= expressionStack.size()) {
+              return false;
+            }
+            auto* child = expressionStack[i + 1];
+            return child != tryy->body;
+          }
+        }
+        if (i == 0) {
+          // We never found our try.
           return false;
         }
         i--;
@@ -1555,6 +1720,20 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       //       them.
     }
   }
+
+  // Add invocations, which can help execute the code here even if the function
+  // was not exported (or was exported but with a signature that traps
+  // immediately, like receiving a non-nullable ref, that the fuzzer can't
+  // provide from JS). Note we need to use a temp vector for iteration, as
+  // addInvocations modifies wasm.functions.
+  std::vector<Function*> funcs;
+  for (auto& func : wasm.functions) {
+    funcs.push_back(func.get());
+  }
+  for (auto* func : funcs) {
+    addInvocations(func);
+  }
+
   // Remove a start function - the fuzzing harness expects code to run only
   // from exports.
   wasm.start = Name();
@@ -1698,8 +1877,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Atomics, &Self::makeAtomic);
   }
   if (type == Type::i32) {
-    if (callExportCatchImportName) {
-      options.add(FeatureSet::MVP, &Self::makeImportCallExport);
+    if (callExportCatchImportName || callRefCatchImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportCallCode);
+    }
+    if (sleepImportName) {
+      options.add(FeatureSet::MVP, &Self::makeImportSleep);
     }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
@@ -1780,8 +1962,8 @@ Expression* TranslateToFuzzReader::_makenone() {
   if (tableSetImportName) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeImportTableSet);
   }
-  if (callExportImportName) {
-    options.add(FeatureSet::MVP, &Self::makeImportCallExport);
+  if (callExportImportName || callRefImportName) {
+    options.add(FeatureSet::MVP, &Self::makeImportCallCode);
   }
   return (this->*pick(options))(Type::none);
 }
@@ -1995,7 +2177,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     // Catch bodies (aside from a catch-all) begin with a pop.
     Expression* prefix = nullptr;
     if (i < numTags) {
-      auto tagType = wasm.getTag(catchTags[i])->sig.params;
+      auto tagType = wasm.getTag(catchTags[i])->params();
       if (tagType != Type::none) {
         auto* pop = builder.makePop(tagType);
         // Capture the pop in a local, so that it can be used later.
@@ -2041,7 +2223,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       // Look for a specific tag.
       auto& tag = pick(wasm.tags);
       tagName = tag->name;
-      tagType = tag->sig.params;
+      tagType = tag->params();
     } else {
       // Add a catch_all at the end, some of the time (but all of the time if we
       // have nothing else).
@@ -3147,14 +3329,19 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // which is not ideal.
   if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
     // If we have a function context then we can at least emit a local.get,
-    // perhaps, which is less bad. Note that we need to check typeLocals
+    // sometimes, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
     // to us, if there is no local).
     // TODO: we could also look for locals containing subtypes
-    if (funcContext && !funcContext->typeLocals[type].empty()) {
-      return makeLocalGet(type);
+    if (funcContext) {
+      if (!funcContext->typeLocals[type].empty()) {
+        return makeLocalGet(type);
+      }
+      // No local, but we are in a function context so RefAsNonNull is valid.
+      return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
     }
-    return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
+    // No function context, so we are in quite the pickle. Continue onwards, as
+    // we may succeed to emit something more complex (like a struct.new).
   }
 
   // When we make children, they must be trivial if we are not in a function
@@ -4397,7 +4584,8 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto [structType, fieldIndex] = pick(structFields);
   auto* ref = makeTrappingRefUse(structType);
   auto signed_ = maybeSignedGet(structType.getStruct().fields[fieldIndex]);
-  return builder.makeStructGet(fieldIndex, ref, type, signed_);
+  return builder.makeStructGet(
+    fieldIndex, ref, MemoryOrder::Unordered, type, signed_);
 }
 
 Expression* TranslateToFuzzReader::makeStructSet(Type type) {
@@ -4409,7 +4597,7 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
   auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
-  return builder.makeStructSet(fieldIndex, ref, value);
+  return builder.makeStructSet(fieldIndex, ref, value, MemoryOrder::Unordered);
 }
 
 // Make a bounds check for an array operation, given a ref + index. An optional
@@ -4605,7 +4793,7 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     addTag();
   }
   auto* tag = pick(wasm.tags).get();
-  auto tagType = tag->sig.params;
+  auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
     operands.push_back(make(t));
