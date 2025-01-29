@@ -1325,7 +1325,10 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
       return in.err(pos, "expected signature type");
     }
     f->type = type.type;
-    for (Index i = 0; i < type.names.size(); ++i) {
+    // If we are provided with too many names (more than the function has), we
+    // will error on that later when we check the signature matches the type.
+    // For now, avoid asserting in setLocalName.
+    for (Index i = 0; i < std::min(type.names.size(), f->getNumLocals()); ++i) {
       if (type.names[i].is()) {
         f->setLocalName(i, type.names[i]);
       }
