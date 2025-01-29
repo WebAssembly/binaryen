@@ -20,7 +20,7 @@ extract_wasms.py INFILE.js OUTFILE
 
 That will find embedded wasm files in INFILE.js, of the form
 
-  var .. = new Uint8Array([..wasm_contents..]);
+  new Uint8Array([..wasm_contents..]);
 
 and extract them into OUTFILE.0.wasm, OUTFILE.1.wasm, etc. It also emits
 OUTFILE.js which will no longer contain the embedded contents, after which the
@@ -53,21 +53,35 @@ with open(in_js) as f:
 def repl(text):
     # We found something of the form
     #
-    #   var binary = new Uint8Array([..binary data as numbers..]);
+    #   new Uint8Array([..binary data as numbers..]);
     #
-    # Parse out the numbers into a binary wasm file.
+    # See if the numbers are the beginnings of a wasm file, "\0asm". If so, we
+    # assume it is wasm.
     numbers = text.groups()[0]
     numbers = numbers.split(',')
-    numbers = [int(n) for n in numbers]
+
+    # Handle both base 10 and 16.
+    try:
+        numbers = [int(n) for n in numbers]
+        binary = bytes(numbers)
+    except ValueError:
+        # Not wasm; return the existing text.
+        return text
+
+    if binary[:4] != b'\0asm':
+        return text
+
+    # It is wasm. Parse out the numbers into a binary wasm file.
     with open(get_wasm_filename(), 'wb') as f:
-        f.write(bytes(numbers))
+        f.write(binary)
 
-    # Replace it with nothing.
-    return ''
+    # Replace the Uint8Array with undefined + a comment.
+    return 'undefined /* extracted wasm */'
 
 
-# Replace the wasm files and write them out.
-js = re.sub(r'var \w+ = new Uint8Array\(\[([\d,]+)\]\)', repl, js)
+# Replace the wasm files and write them out. We investigate any new Uint8Array
+# on an array of values like [100, 200] or [0x61, 0x6D, 0x6a] etc.
+js = re.sub(r'new Uint8Array\(\[([\d,x a-fA-F]+)\]\)', repl, js)
 
 # Write out the new JS.
 with open(f'{out}.js', 'w') as f:
