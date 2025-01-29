@@ -6,6 +6,5 @@
 (module
  (type $0 (func))
 
- (func $0 (type $0) (param $var$0 i32)
- )
+ (func $0 (type $0) (param $var$0 i32))
 )
