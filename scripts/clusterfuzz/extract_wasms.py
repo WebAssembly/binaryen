@@ -50,25 +50,32 @@ with open(in_js) as f:
     js = f.read()
 
 
-def repl(text):
+def repl(match):
+    text = match.group(0)
+    print('text', text)
+
     # We found something of the form
     #
     #   new Uint8Array([..binary data as numbers..]);
     #
     # See if the numbers are the beginnings of a wasm file, "\0asm". If so, we
     # assume it is wasm.
-    numbers = text.groups()[0]
+    numbers = match.groups()[0]
     numbers = numbers.split(',')
+    print('numbers', numbers)
 
     # Handle both base 10 and 16.
     try:
-        numbers = [int(n) for n in numbers]
-        binary = bytes(numbers)
+        parsed = [int(n, 0) for n in numbers]
+        print('parsed', parsed)
+        binary = bytes(parsed)
+        print('binary', binary)
     except ValueError:
         # Not wasm; return the existing text.
         return text
 
     if binary[:4] != b'\0asm':
+        print('sad')
         return text
 
     # It is wasm. Parse out the numbers into a binary wasm file.
