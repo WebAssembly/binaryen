@@ -15,8 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
- - `struct.atomic.get`/`struct.atomic.set` now require the threads feature,
-   `--enable-threads`. (#7185)
+v122
+----
+
+ - The heap type associated with a tag is now preserved through optimization.
+   (#7220)
+ - The "typed-continuations" features is renamed "stack-switching" and the
+   latest instructions are experimentally supported. (#7041)
+ - WasmGC branches that send extra values can now be parsed via lowering to use
+   scratch locals. (#7202)
+ - Add experimental support for atomic struct get and set (#7155) and RMW
+   (#7225) operations.
 
 v121
 ----
