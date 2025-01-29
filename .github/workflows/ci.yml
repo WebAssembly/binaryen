@@ -147,6 +147,34 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
+  # Copied and modified from build-clang
+  build-fuzztest:
+    name: clang with fuzztest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: install v8
+      run: |
+        npm install jsvu -g
+        jsvu --os=default --engines=v8
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
+    - name: cmake
+      run: |
+        mkdir -p out
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBUILD_FUZZTEST=ON
+    - name: build
+      run: cmake --build out -v
+    - name: test
+      run: python check.py --binaryen-bin=out/bin
+
   # TODO(sbc): Find a way to reduce the duplicate between these sanitizer jobs
   build-asan:
     name: asan

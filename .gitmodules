@@ -4,3 +4,6 @@
 [submodule "test/spec/testsuite"]
 	path = test/spec/testsuite
 	url = https://github.com/WebAssembly/testsuite.git
+[submodule "third_party/fuzztest"]
+	path = third_party/fuzztest
+	url = https://github.com/google/fuzztest

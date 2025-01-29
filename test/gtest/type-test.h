@@ -6,7 +6,6 @@
 
 // Helper test fixture for managing the global type system state.
 class TypeTest : public ::testing::Test {
-
 protected:
   void TearDown() override { wasm::destroyAllTypesForTestingPurposesOnly(); }
 

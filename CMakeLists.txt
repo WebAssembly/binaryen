@@ -36,6 +36,8 @@ option(BYN_ENABLE_LTO "Build with LTO" Off)
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
 
+option(BUILD_FUZZTEST "Build fuzztest-based tests and fuzzers" OFF)
+
 # Turn this off to build only the library.
 option(BUILD_TOOLS "Build tools" ON)
 
@@ -161,8 +163,8 @@ endfunction()
 
 function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})
-  target_link_libraries(${name} Threads::Threads)
-  target_link_libraries(${name} binaryen)
+  target_link_libraries(${name} PRIVATE Threads::Threads)
+  target_link_libraries(${name} PRIVATE binaryen)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endfunction()
@@ -258,7 +260,10 @@ if(MSVC)
 else() # MSVC
 
   add_compile_flag("-fno-omit-frame-pointer")
-  add_compile_flag("-fno-rtti")
+  if(NOT BUILD_FUZZTEST)
+    # fuzztest depends on RTTIs.
+    add_compile_flag("-fno-rtti")
+  endif()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")
@@ -275,10 +280,6 @@ else() # MSVC
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
     add_nondebug_compile_flag("-UNDEBUG")
-  endif()
-  if(NOT APPLE AND NOT "${CMAKE_CXX_FLAGS}" MATCHES "-fsanitize")
-    # This flag only applies to shared libraries so don't use add_link_flag
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
   endif()
 endif()
 
@@ -416,6 +417,25 @@ else() # MSVC
     add_compile_flag("-Wno-deprecated-declarations")
   endif()
 
+  if(BUILD_FUZZTEST)
+    add_compile_flag("-DFUZZTEST")
+    fuzztest_setup_fuzzing_flags()
+
+    # Enabling fuzzing mode turns on sanitizers, which turn on additional
+    # warnings. To keep the build working, do not treat these warnings as
+    # errors.
+    add_compile_flag("-Wno-error=maybe-uninitialized")
+    add_compile_flag("-Wno-error=uninitialized")
+    add_compile_flag("-Wno-error=array-bounds")
+    add_compile_flag("-Wno-error=stringop-overread")
+    add_compile_flag("-Wno-error=missing-field-initializers")
+  endif()
+
+  if(NOT APPLE AND NOT "${CMAKE_CXX_FLAGS}" MATCHES "-fsanitize")
+    # This flag only applies to shared libraries so don't use add_link_flag
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+  endif()
+
 endif()
 
 # Declare libbinaryen
@@ -483,83 +503,84 @@ endif()
 if(EMSCRIPTEN)
   # binaryen.js WebAssembly variant
   add_executable(binaryen_wasm ${binaryen_SOURCES})
-  target_link_libraries(binaryen_wasm binaryen)
-  target_link_libraries(binaryen_wasm "-sFILESYSTEM")
-  target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
-  target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
+  target_link_libraries(binaryen_wasm PRIVATE binaryen)
+  target_link_libraries(binaryen_wasm PRIVATE "-sFILESYSTEM")
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm PRIVATE "-sNODERAWFS=0")
   # Do not error on the repeated NODERAWFS argument
-  target_link_libraries(binaryen_wasm "-Wno-unused-command-line-argument")
+  target_link_libraries(binaryen_wasm PRIVATE "-Wno-unused-command-line-argument")
   # Emit a single file for convenience of people using binaryen.js as a library,
   # so they only need to distribute a single file.
   if(EMSCRIPTEN_ENABLE_SINGLE_FILE)
-    target_link_libraries(binaryen_wasm "-sSINGLE_FILE")
+    target_link_libraries(binaryen_wasm PRIVATE "-sSINGLE_FILE")
   endif()
-  target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
-  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
-  target_link_libraries(binaryen_wasm "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
-  target_link_libraries(binaryen_wasm "-msign-ext")
-  target_link_libraries(binaryen_wasm "-mbulk-memory")
-  target_link_libraries(binaryen_wasm optimized "--closure=1")
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_ES6")
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_wasm PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  target_link_libraries(binaryen_wasm PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_wasm PRIVATE "-msign-ext")
+  target_link_libraries(binaryen_wasm PRIVATE "-mbulk-memory")
+  target_link_libraries(binaryen_wasm PRIVATE optimized "--closure=1")
   # TODO: Fix closure warnings! (#5062)
-  target_link_libraries(binaryen_wasm optimized "-Wno-error=closure")
-  target_link_libraries(binaryen_wasm optimized "-flto")
-  target_link_libraries(binaryen_wasm debug "--profiling")
+  target_link_libraries(binaryen_wasm PRIVATE optimized "-Wno-error=closure")
+  target_link_libraries(binaryen_wasm PRIVATE optimized "-flto")
+  target_link_libraries(binaryen_wasm PRIVATE debug "--profiling")
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
-  target_link_libraries(binaryen_wasm "-sNODEJS_CATCH_EXIT=0")
+  target_link_libraries(binaryen_wasm PRIVATE "-sNODEJS_CATCH_EXIT=0")
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
   add_executable(binaryen_js ${binaryen_SOURCES})
-  target_link_libraries(binaryen_js binaryen)
-  target_link_libraries(binaryen_js "-sWASM=0")
-  target_link_libraries(binaryen_js "-sWASM_ASYNC_COMPILATION=0")
+  target_link_libraries(binaryen_js PRIVATE binaryen)
+  target_link_libraries(binaryen_js PRIVATE "-sWASM=0")
+  target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
+
   if(${CMAKE_CXX_COMPILER_VERSION} STREQUAL "6.0.1")
     # only valid with fastcomp and WASM=0
-    target_link_libraries(binaryen_js "-sELIMINATE_DUPLICATE_FUNCTIONS")
+    target_link_libraries(binaryen_js PRIVATE "-sELIMINATE_DUPLICATE_FUNCTIONS")
   endif()
   # Disabling filesystem and setting web environment for js_of_ocaml
   # so it doesn't try to detect the "node" environment
   if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js "-sFILESYSTEM=0")
-    target_link_libraries(binaryen_js "-sENVIRONMENT=web,worker")
+    target_link_libraries(binaryen_js PRIVATE "-sFILESYSTEM=0")
+    target_link_libraries(binaryen_js PRIVATE "-sENVIRONMENT=web,worker")
   else()
-    target_link_libraries(binaryen_js "-sFILESYSTEM=1")
+    target_link_libraries(binaryen_js PRIVATE "-sFILESYSTEM=1")
   endif()
-  target_link_libraries(binaryen_js "-sNODERAWFS=0")
+  target_link_libraries(binaryen_js PRIVATE "-sNODERAWFS=0")
   # Do not error on the repeated NODERAWFS argument
-  target_link_libraries(binaryen_js "-Wno-unused-command-line-argument")
+  target_link_libraries(binaryen_js PRIVATE "-Wno-unused-command-line-argument")
   if(EMSCRIPTEN_ENABLE_SINGLE_FILE)
-    target_link_libraries(binaryen_js "-sSINGLE_FILE")
+    target_link_libraries(binaryen_js PRIVATE "-sSINGLE_FILE")
   endif()
-  target_link_libraries(binaryen_js "-sEXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORT_NAME=Binaryen")
   # Currently, js_of_ocaml can only process ES5 code
   if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js "-sEXPORT_ES6=0")
+    target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6=0")
   else()
-    target_link_libraries(binaryen_js "-sEXPORT_ES6=1")
+    target_link_libraries(binaryen_js PRIVATE "-sEXPORT_ES6=1")
   endif()
-  target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
-  target_link_libraries(binaryen_js "-sEXPORTED_FUNCTIONS=_malloc,_free")
-  target_link_libraries(binaryen_js "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_js PRIVATE "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  target_link_libraries(binaryen_js PRIVATE "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
+    target_link_libraries(binaryen_js PRIVATE "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
   endif()
-  target_link_libraries(binaryen_js optimized "--closure=1")
+  target_link_libraries(binaryen_js PRIVATE optimized "--closure=1")
   # Currently, js_of_ocaml can only process ES5 code
   if(JS_OF_OCAML)
-    target_link_libraries(binaryen_js optimized "--closure-args=\"--language_out=ECMASCRIPT5\"")
+    target_link_libraries(binaryen_js PRIVATE optimized "--closure-args=\"--language_out=ECMASCRIPT5\"")
   endif()
   # TODO: Fix closure warnings! (#5062)
-  target_link_libraries(binaryen_js optimized "-Wno-error=closure")
-  target_link_libraries(binaryen_js optimized "-flto")
-  target_link_libraries(binaryen_js debug "--profiling")
-  target_link_libraries(binaryen_js debug "-sASSERTIONS")
+  target_link_libraries(binaryen_js PRIVATE optimized "-Wno-error=closure")
+  target_link_libraries(binaryen_js PRIVATE optimized "-flto")
+  target_link_libraries(binaryen_js PRIVATE debug "--profiling")
+  target_link_libraries(binaryen_js PRIVATE debug "-sASSERTIONS")
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
-  target_link_libraries(binaryen_js "-sNODEJS_CATCH_EXIT=0")
+  target_link_libraries(binaryen_js PRIVATE "-sNODEJS_CATCH_EXIT=0")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
