@@ -24,7 +24,7 @@
 //  * If a call provides a more refined type than the function declares for a
 //    parameter.
 //  * If a call provides a constant as a parameter.
-//  * If a call provides a GC allocation as a parameter. TODO
+//  * If a call provides a GC allocation as a parameter.
 //  * If a call is dropped. TODO also other stuff on the outside, e.g. eqz?
 //
 // We realize the benefit by creating a monomorphized (specialized/refined)
