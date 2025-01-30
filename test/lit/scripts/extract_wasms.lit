@@ -9,8 +9,9 @@
 ;; The last byte is unparseable as an integer, so we won't.
 ;; RUN: echo "bad2(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 6Dx0]));" >> %t.js
 
-;; Another proper one.
-;; RUN: echo "good2(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 0x01]));" >> %t.js
+;; Another proper one. Note the second number is in base 10, which works too,
+;; there is various odd whitespace which we ignore.
+;; RUN: echo "good2(new Uint8Array([0x00,97,   0x73, 0x6D,0x01]));" >> %t.js
 
 ;; RUN: python %S/../../../scripts/clusterfuzz/extract_wasms.py %t.js %t.out
 ;; RUN: cat %t.out.js | filecheck %s

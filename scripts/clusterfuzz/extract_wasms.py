@@ -64,8 +64,8 @@ def repl(match):
     numbers = numbers.split(',')
     print('numbers', numbers)
 
-    # Handle both base 10 and 16.
     try:
+        # Handle both base 10 and 16 by passing in base 0.
         parsed = [int(n, 0) for n in numbers]
         print('parsed', parsed)
         binary = bytes(parsed)
