@@ -19,8 +19,8 @@
 #include "ir/gc-type-utils.h"
 #include "ir/subtypes.h"
 #include "support/insert_ordered.h"
-#include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing.h"
+#include "tools/fuzzing/heap-types.h"
 
 namespace wasm {
 
