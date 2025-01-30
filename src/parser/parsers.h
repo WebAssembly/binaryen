@@ -1012,7 +1012,6 @@ template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
       if (ctx.in.getPos() != *info.end) {
         return ctx.in.err("expected end of instruction");
       }
-      assert(ctx.in.getPos() == *info.end && "expected end of instruction");
       continue;
     }
 
