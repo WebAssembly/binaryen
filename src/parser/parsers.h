@@ -1005,6 +1005,13 @@ template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
       auto inst = plaininstr(ctx, std::move(info.annotations));
       assert(inst && "unexpectedly failed to parse instruction");
       CHECK_ERR(inst);
+      // We have already parsed the instruction, so we generally know where it
+      // ends. But there may have been some invalid extra immediates (e.g.
+      // invalid memory indices) that we only realize are invalid now that we've
+      // parsed the instruction for real.
+      if (ctx.in.getPos() != *info.end) {
+        return ctx.in.err("expected end of instruction");
+      }
       assert(ctx.in.getPos() == *info.end && "expected end of instruction");
       continue;
     }
