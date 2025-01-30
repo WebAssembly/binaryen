@@ -20,7 +20,7 @@
 #include "ir/subtypes.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/heap-types.h"
-#include "tools/fuzzing/parameters.h"
+#include "tools/fuzzing.h"
 
 namespace wasm {
 

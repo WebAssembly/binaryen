@@ -58,58 +58,58 @@ struct BinaryArgs {
 // Parameters.
 
 // The maximum amount of params to each function.
-int MAX_PARAMS;
+extern int MAX_PARAMS;
 
 // The maximum amount of vars in each function.
-int MAX_VARS;
+extern int MAX_VARS;
 
 // The maximum number of globals in a module.
-int MAX_GLOBALS;
+extern int MAX_GLOBALS;
 
 // The maximum number of tuple elements.
-int MAX_TUPLE_SIZE
+extern int MAX_TUPLE_SIZE;
 
 // The maximum number of struct fields.
-static const int MAX_STRUCT_SIZE;
+extern int MAX_STRUCT_SIZE;
 
 // The maximum number of elements in an array.
-static const int MAX_ARRAY_SIZE;
+extern int MAX_ARRAY_SIZE;
 
 // The number of nontrivial heap types to generate.
-int MIN_HEAPTYPES;
-int MAX_HEAPTYPES;
+extern int MIN_HEAPTYPES;
+extern int MAX_HEAPTYPES;
 
 // some things require luck, try them a few times
-int TRIES;
+extern int TRIES;
 
 // beyond a nesting limit, greatly decrease the chance to continue to nest
-int NESTING_LIMIT;
+extern int NESTING_LIMIT;
 
 // the maximum size of a block
-int BLOCK_FACTOR;
+extern int BLOCK_FACTOR;
 
 // the memory that we use, a small portion so that we have a good chance of
 // looking at writes (we also look outside of this region with small
 // probability) this should be a power of 2
-Address USABLE_MEMORY;
+extern Address USABLE_MEMORY;
 
 // the number of runtime iterations (function calls, loop backbranches) we
 // allow before we stop execution with a trap, to prevent hangs. 0 means
 // no hang protection.
-int HANG_LIMIT;
+extern int HANG_LIMIT;
 
 // the maximum amount of new GC types (structs, etc.) to create
-int MAX_NEW_GC_TYPES;
+extern int MAX_NEW_GC_TYPES;
 
 // the maximum amount of catches in each try (not including a catch-all, if
 // present).
-int MAX_TRY_CATCHES;
+extern int MAX_TRY_CATCHES;
 
 // main reader
 
 class TranslateToFuzzReader {
-  constexpr size_t VeryImportant = 4;
-  constexpr size_t Important = 2;
+  static constexpr size_t VeryImportant = 4;
+  static constexpr size_t Important = 2;
 
 public:
   TranslateToFuzzReader(Module& wasm,

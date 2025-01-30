@@ -16,7 +16,7 @@
 
 // Default values for fuzzing parameters
 
-#include "tools/fuzzing/fuzzing.h"
+#include "tools/fuzzing.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -29,9 +29,9 @@ int MAX_GLOBALS = 30;
 
 int MAX_TUPLE_SIZE = 6;
 
-static const int MAX_STRUCT_SIZE = 6;
+int MAX_STRUCT_SIZE = 6;
 
-static const int MAX_ARRAY_SIZE = 100;
+int MAX_ARRAY_SIZE = 100;
 
 int MIN_HEAPTYPES = 4;
 int MAX_HEAPTYPES = 20;
