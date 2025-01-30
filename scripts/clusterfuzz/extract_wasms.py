@@ -93,3 +93,5 @@ js = re.sub(r'new Uint8Array\(\[([\d,x a-fA-F]+)\]\)', repl, js)
 # Write out the new JS.
 with open(f'{out}.js', 'w') as f:
     f.write(js)
+
+print('NONONONONONONO')
