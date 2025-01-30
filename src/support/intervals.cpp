@@ -19,6 +19,7 @@
 #include "intervals.h"
 #include "support/index.h"
 #include <algorithm>
+#include <iostream>
 
 using namespace wasm;
 
@@ -36,26 +37,24 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
 
   std::sort(
     intIntervals.begin(), intIntervals.end(), [](const auto& a, const auto& b) {
-      return a.first.start < b.first.end;
+      return a.first.start < b.first.start;
     });
 
   std::vector<int> result;
-  auto& firstInterval = intIntervals[0];
+  auto& formerInterval = intIntervals[0];
   // Look for overlapping intervals
-  for (Index i = 1; i < intervals.size(); i++) {
-    auto& nextInterval = intIntervals[i];
-    if (firstInterval.first.end < nextInterval.first.start) {
-      result.push_back(firstInterval.second);
-      firstInterval = nextInterval;
+  for (Index i = 1; i <= intIntervals.size(); i++) {
+    auto& latterInterval = intIntervals[i];
+    if (i == intIntervals.size() ||
+        formerInterval.first.end <= latterInterval.first.start) {
+      result.push_back(formerInterval.second);
+      formerInterval = latterInterval;
       continue;
     }
 
     // Keep the interval with the higher weight
-    if (nextInterval.first.weight > firstInterval.first.weight) {
-      result.push_back(nextInterval.second);
-      firstInterval = nextInterval;
-    } else {
-      result.push_back(firstInterval.second);
+    if (latterInterval.first.weight > formerInterval.first.weight) {
+      formerInterval = latterInterval;
     }
   }
 
