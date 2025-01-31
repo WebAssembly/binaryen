@@ -150,6 +150,9 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
+  // Substring has a 1 to many relationship with Interval, i.e., 1 substring is
+  // represented by n intervals. Each interval represents an occurrence of when
+  // the substring repeats.
   std::vector<Interval> intervals;
   std::vector<int> substringIdxs;
 
@@ -157,13 +160,8 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   for (Index i = 0; i < substrings.size(); i++) {
     auto substring = substrings[i];
     for (auto startIdx : substring.StartIndices) {
-      // The weight, third parameter to the Interval constructor, was picked
-      // with the assumption that it is more worthwhile to outline substrings
-      // that are the longest and have the most occurrences.
       auto interval =
-        Interval(startIdx,
-                 startIdx + substring.Length,
-                 substring.Length * substring.StartIndices.size());
+        Interval(startIdx, startIdx + substring.Length, substring.Length);
       intervals.push_back(interval);
       substringIdxs.push_back(i);
     }
@@ -171,19 +169,19 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
 
   // Get the overlapping intervals
   std::vector<SuffixTree::RepeatedSubstring> result;
-  std::unordered_set<unsigned> substringsIncluded;
-  std::vector<Index> seenCount(substrings.size(), 0);
+  std::vector<std::vector<Index>> startIndices(substrings.size());
   std::vector<int> indices = IntervalProcessor::filterOverlaps(intervals);
   for (auto i : indices) {
     // i is the idx of the Interval in the intervals vector
     // i in substringIdxs returns the idx of the substring that needs to be
     // included in result
     auto substringIdx = substringIdxs[i];
-    seenCount[substringIdx] += 1;
-    auto& substring = substrings[substringIdx];
-    if (seenCount[substringIdx] == substring.StartIndices.size() &&
-        substringsIncluded.insert(substringIdx).second) {
-      result.push_back(substring);
+    startIndices[substringIdx].push_back(intervals[i].start);
+  }
+  for (Index i = 0; i < startIndices.size(); i++) {
+    if (startIndices[i].size() > 1) {
+      result.push_back(SuffixTree::RepeatedSubstring(
+        {substrings[i].Length, std::move(startIndices[i])}));
     }
   }
 

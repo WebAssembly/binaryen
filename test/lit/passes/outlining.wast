@@ -180,15 +180,6 @@
 
   ;; CHECK:      (func $outline$ (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.sub
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:    (i32.const 4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-
-  ;; CHECK:      (func $outline$_4 (type $0)
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -196,9 +187,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
 
+  ;; CHECK:      (func $outline$_4 (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
   ;; CHECK:      (func $a (type $0)
-  ;; CHECK-NEXT:  (call $outline$_4)
   ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$_4)
   ;; CHECK-NEXT: )
   (func $a
     (drop
@@ -215,7 +215,7 @@
     )
   )
   ;; CHECK:      (func $b (type $0)
-  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$_4)
   ;; CHECK-NEXT: )
   (func $b
     (drop
@@ -226,7 +226,7 @@
     )
   )
   ;; CHECK:      (func $c (type $0)
-  ;; CHECK-NEXT:  (call $outline$_4)
+  ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT: )
   (func $c
     (drop

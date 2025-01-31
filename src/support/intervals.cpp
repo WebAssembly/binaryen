@@ -41,19 +41,21 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
     });
 
   std::vector<int> result;
-  auto& formerInterval = intIntervals[0];
+  Index formerInterval = 0;
   // Look for overlapping intervals
-  for (Index i = 1; i <= intIntervals.size(); i++) {
-    auto& latterInterval = intIntervals[i];
-    if (i == intIntervals.size() ||
-        formerInterval.first.end <= latterInterval.first.start) {
-      result.push_back(formerInterval.second);
+  for (Index latterInterval = 1; latterInterval <= intIntervals.size();
+       latterInterval++) {
+    if (latterInterval == intIntervals.size() ||
+        intIntervals[formerInterval].first.end <=
+          intIntervals[latterInterval].first.start) {
+      result.push_back(intIntervals[formerInterval].second);
       formerInterval = latterInterval;
       continue;
     }
 
     // Keep the interval with the higher weight
-    if (latterInterval.first.weight > formerInterval.first.weight) {
+    if (intIntervals[latterInterval].first.weight >
+        intIntervals[formerInterval].first.weight) {
       formerInterval = latterInterval;
     }
   }
