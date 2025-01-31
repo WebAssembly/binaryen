@@ -218,7 +218,7 @@ jobs:
   # Keep in sync with build_release.yml
   build-alpine:
     name: alpine
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/setup-python@v5
       with:
@@ -228,7 +228,7 @@ jobs:
         submodules: true
     - name: start docker
       run: |
-        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        docker run -w /src -dit --platform=linux/arm64 --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 

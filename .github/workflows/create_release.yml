@@ -105,10 +105,10 @@ jobs:
   # Note: Alpine uses musl libc.
   build-alpine:
     name: alpine
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        docker_platform: [amd64, arm64]
+        os: [ubuntu-latest, ubuntu-24.04-arm]
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -116,13 +116,10 @@ jobs:
     - uses: actions/checkout@v1
       with:
         submodules: true
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      if: matrix.docker_platform != 'amd64'
 
     - name: start docker
       run: |
-        docker run -w /src -dit --platform=linux/${{ matrix.docker_platform }} --name alpine -v $PWD:/src node:lts-alpine
+        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 
