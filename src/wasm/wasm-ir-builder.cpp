@@ -1698,6 +1698,9 @@ Result<> IRBuilder::makeDrop() {
 }
 
 Result<> IRBuilder::makeReturn() {
+  if (!func) {
+    return Err{"return is only valid in a function context"};
+  }
   Return curr;
   CHECK_ERR(visitReturn(&curr));
   push(builder.makeReturn(curr.value));
