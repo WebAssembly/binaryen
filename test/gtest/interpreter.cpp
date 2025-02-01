@@ -25,7 +25,7 @@
 
 using namespace wasm;
 
-TEST(InterpreterTest, Add) {
+TEST(InterpreterTest, AddI32) {
   Module wasm;
   IRBuilder builder(wasm);
 
@@ -38,6 +38,23 @@ TEST(InterpreterTest, Add) {
 
   auto results = Interpreter{}.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(3))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, SubI32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(SubInt32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(-1))};
 
   EXPECT_EQ(results, expected);
 }
