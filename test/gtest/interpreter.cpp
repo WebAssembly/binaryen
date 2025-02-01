@@ -25,7 +25,7 @@
 
 using namespace wasm;
 
-TEST(InterpreterTest, Addi32) {
+TEST(InterpreterTest, AddI32) {
   Module wasm;
   IRBuilder builder(wasm);
 
@@ -42,7 +42,7 @@ TEST(InterpreterTest, Addi32) {
   EXPECT_EQ(results, expected);
 }
 
-TEST(InterpreterTest, Subi32) {
+TEST(InterpreterTest, SubI32) {
   Module wasm;
   IRBuilder builder(wasm);
 
