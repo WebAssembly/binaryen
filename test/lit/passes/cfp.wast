@@ -2870,8 +2870,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared 0
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2893,8 +2898,7 @@
       )
     )
     (drop
-      ;; This is not optimized because we wouldn't want to replace it with a
-      ;; stronger acquire fence.
+      ;; This can be optimzied and does not require a fence.
       (struct.atomic.get acqrel $shared 0
         (local.get 0)
       )
