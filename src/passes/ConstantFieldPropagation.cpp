@@ -444,6 +444,13 @@ struct PCVScanner
     // Reads do not interest us.
   }
 
+  void noteRMW(Expression* expr,
+               HeapType type,
+               Index index,
+               PossibleConstantValues& info) {
+    WASM_UNREACHABLE("TODO");
+  }
+
   BoolFunctionStructValuesMap& functionCopyInfos;
 };
 

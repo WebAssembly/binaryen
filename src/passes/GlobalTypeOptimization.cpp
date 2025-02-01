@@ -95,6 +95,11 @@ struct FieldInfoScanner
   void noteRead(HeapType type, Index index, FieldInfo& info) {
     info.noteRead();
   }
+
+  void noteRMW(Expression* expr, HeapType type, Index index, FieldInfo& info) {
+    info.noteRead();
+    info.noteWrite();
+  }
 };
 
 struct GlobalTypeOptimization : public Pass {
