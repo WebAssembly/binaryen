@@ -23,7 +23,6 @@
 #include "ir/type-updating.h"
 #include "support/string.h"
 #include "tools/fuzzing/heap-types.h"
-#include "tools/fuzzing/parameters.h"
 
 namespace wasm {
 
@@ -2420,7 +2419,7 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   // look for a call target with the right type
   Function* target;
   bool isReturn;
-  size_t i = 0;
+  decltype(TRIES) i = 0;
   while (1) {
     if (i == TRIES || wasm.functions.empty()) {
       // We can't find a proper target, give up.
