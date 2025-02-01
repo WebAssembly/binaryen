@@ -94,6 +94,9 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     if (curr->op == AddInt32) {
       push(lhs.add(rhs));
       return {};
+    } else if (curr->op == SubInt32) {
+      push(lhs.sub(rhs));
+      return {};
     }
     WASM_UNREACHABLE("TODO");
   }
