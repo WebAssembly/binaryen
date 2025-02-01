@@ -1631,15 +1631,15 @@
 ;; A struct with a pop, which requires EH fixups to avoid popping in a nested
 ;; block.
 (module
-  (type $i32 (func (param i32)))
-
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))
-  (type $struct (struct (field (mut i32))))
 
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $i32 (func (param i32)))
+  (type $i32 (func (param i32)))
+
+  (type $struct (struct (field (mut i32))))
 
   ;; CHECK:      (tag $tag (type $i32) (param i32))
   (tag $tag (type $i32) (param i32))
