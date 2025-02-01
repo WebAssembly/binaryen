@@ -84,6 +84,8 @@ unfuzzable = [
     'shared-structs.wast',
     'heap2local-rmw.wast',
     'optimize-instructions-struct-rmw.wast',
+    'gto-removals-rmw.wast',
+    'type-refining-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176
