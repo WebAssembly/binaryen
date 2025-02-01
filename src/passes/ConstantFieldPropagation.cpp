@@ -142,10 +142,12 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // If an optimized access is sequentially consistent, then it synchronizes
   // with other threads at least by participating in the global order of
   // sequentially consistent operations. Preserve that effect by replacing the
-  // access with a fence.
+  // access with a fence. On the other hand, if we're optimizing an
+  // acquire-release operation, then we know the accessed field is constant and
+  // will not be modified, so the operation does not necessarily synchronize
+  // with other threads and no fence is required.
   Expression* maybeAddFence(Expression* expr, MemoryOrder order) {
     Builder builder(*getModule());
-    assert(order != MemoryOrder::AcqRel);
     if (order == MemoryOrder::SeqCst) {
       return builder.blockify(expr, builder.makeAtomicFence());
     }
@@ -215,14 +217,6 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    if (curr->order == MemoryOrder::AcqRel) {
-      // Removing an acquire get and preserving its synchronization properties
-      // would require inserting an acquire fence, but the fence would have
-      // stronger synchronization properties so might be more expensive.
-      // Instead, just skip the optimization.
-      return;
-    }
-
     // If the value is not a constant, then it is unknown and we must give up
     // on simply applying a constant. However, we can try to use a ref.test, if
     // that is allowed.
@@ -258,11 +252,6 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // value, we always have something recorded.
     PossibleConstantValues info = getInfo(heapType, curr->index);
     assert(info.hasNoted() && "unexpected lack of info for RMW");
-
-    if (curr->order == MemoryOrder::AcqRel) {
-      // See comment on visitStructGet for why we don't optimize here.
-      return std::nullopt;
-    }
 
     if (!info.isConstant()) {
       // Optimizing using ref.test is not an option here because that only works
