@@ -97,9 +97,6 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     } else if (curr->op == SubInt32) {
       push(lhs.sub(rhs));
       return {};
-    } else if (curr->op == MulInt32) {
-      push(lhs.mul(rhs));
-      return {};
     }
     WASM_UNREACHABLE("TODO");
   }
