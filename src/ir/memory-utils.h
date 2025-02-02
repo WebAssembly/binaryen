@@ -46,12 +46,12 @@ inline void ensureExists(Module* wasm) {
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
 // Does not yet support multimemory
-inline bool ensureLimitedSegments(Module& module) {
+inline bool ensureLimitedSegments(Module& module, uint32_t maxDataSegments=WebLimitations::MaxDataSegments) {
   if (module.memories.size() > 1) {
     return false;
   }
   auto& dataSegments = module.dataSegments;
-  if (dataSegments.size() <= WebLimitations::MaxDataSegments) {
+  if (dataSegments.size() <= maxDataSegments) {
     return true;
   }
 
@@ -86,19 +86,19 @@ inline bool ensureLimitedSegments(Module& module) {
 
   // check if we have too many dynamic data segments, which we can do nothing
   // about
-  if (numDynamic + 1 >= WebLimitations::MaxDataSegments) {
+  if (numDynamic + 1 >= maxDataSegments) {
     return false;
   }
 
   // we'll merge constant segments if we must
-  if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
-    numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
+  if (numConstant + numDynamic >= maxDataSegments) {
+    numConstant = maxDataSegments - numDynamic - 1;
     [[maybe_unused]] auto num = numConstant + numDynamic;
-    assert(num == WebLimitations::MaxDataSegments - 1);
+    assert(num == maxDataSegments - 1);
   }
 
   std::vector<std::unique_ptr<wasm::DataSegment>> mergedSegments;
-  mergedSegments.reserve(WebLimitations::MaxDataSegments);
+  mergedSegments.reserve(maxDataSegments);
 
   // drop empty segments and pass through dynamic-offset segments
   for (auto& segment : dataSegments) {
@@ -121,7 +121,7 @@ inline bool ensureLimitedSegments(Module& module) {
     if (!isRelevant(*segment)) {
       continue;
     }
-    if (mergedSegments.size() + 2 < WebLimitations::MaxDataSegments) {
+    if (mergedSegments.size() + 2 < maxDataSegments) {
       mergedSegments.push_back(std::move(segment));
       continue;
     }
