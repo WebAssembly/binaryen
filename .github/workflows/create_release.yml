@@ -110,7 +110,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
@@ -180,7 +180,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
