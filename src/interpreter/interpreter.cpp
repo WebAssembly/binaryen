@@ -90,18 +90,20 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitBinary(Binary* curr) {
     auto rhs = pop();
     auto lhs = pop();
-    // TODO: switch-case over all operations.
-    if (curr->op == AddInt32) {
-      push(lhs.add(rhs));
-      return {};
-    } else if (curr->op == SubInt32) {
-      push(lhs.sub(rhs));
-      return {};
-    } else if (curr->op == MulInt32) {
-      push(lhs.mul(rhs));
-      return {};
+    // TODO: add support for all operations.
+    switch (curr->op) {
+      case AddInt32:
+        push(lhs.add(rhs));
+        return {};
+      case SubInt32:
+        push(lhs.sub(rhs));
+        return {};
+      case MulInt32:
+        push(lhs.mul(rhs));
+        return {};
+      default:
+        WASM_UNREACHABLE("TODO");
     }
-    WASM_UNREACHABLE("TODO");
   }
   Flow visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitDrop(Drop* curr) { WASM_UNREACHABLE("TODO"); }
