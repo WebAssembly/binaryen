@@ -54,6 +54,8 @@ struct HeapTypeGeneratorImpl {
   // The index of the type we are currently generating.
   Index index = 0;
 
+  FuzzParams params;
+
   HeapTypeGeneratorImpl(Random& rand, FeatureSet features, size_t n)
     : result{TypeBuilder(n),
              std::vector<std::vector<Index>>(n),
@@ -216,7 +218,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Type generateTupleType(Shareability share) {
-    std::vector<Type> types(2 + rand.upTo(MAX_TUPLE_SIZE - 1));
+    std::vector<Type> types(2 + rand.upTo(params.MAX_TUPLE_SIZE - 1));
     for (auto& type : types) {
       type = generateSingleType(share);
     }
@@ -234,7 +236,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Signature generateSignature() {
-    std::vector<Type> types(rand.upToSquared(MAX_PARAMS));
+    std::vector<Type> types(rand.upToSquared(params.MAX_PARAMS));
     for (auto& type : types) {
       type = generateSingleType(Unshared);
     }
@@ -252,7 +254,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Struct generateStruct(Shareability share) {
-    std::vector<Field> fields(rand.upTo(MAX_STRUCT_SIZE + 1));
+    std::vector<Field> fields(rand.upTo(params.MAX_STRUCT_SIZE + 1));
     for (auto& field : fields) {
       field = generateField(share);
     }
@@ -595,7 +597,7 @@ struct HeapTypeGeneratorImpl {
       fields.push_back(generateSubField(field));
     }
     // Width subtyping
-    Index extra = rand.upTo(MAX_STRUCT_SIZE + 1 - fields.size());
+    Index extra = rand.upTo(params.MAX_STRUCT_SIZE + 1 - fields.size());
     for (Index i = 0; i < extra; ++i) {
       fields.push_back(generateField(share));
     }

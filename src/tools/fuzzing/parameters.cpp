@@ -21,7 +21,7 @@
 
 namespace wasm {
 
-void TranslateToFuzzReader::ParamContext::setDefaults() {
+void FuzzParams::setDefaults() {
   MAX_PARAMS = 10;
 
   MAX_VARS = 20;

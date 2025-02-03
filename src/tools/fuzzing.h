@@ -55,6 +55,64 @@ struct BinaryArgs {
   Expression* c;
 };
 
+// params
+
+struct FuzzParams {
+  // The maximum amount of params to each function.
+  int MAX_PARAMS;
+
+  // The maximum amount of vars in each function.
+  int MAX_VARS;
+
+  // The maximum number of globals in a module.
+  int MAX_GLOBALS;
+
+  // The maximum number of tuple elements.
+  int MAX_TUPLE_SIZE;
+
+  // The maximum number of struct fields.
+  int MAX_STRUCT_SIZE;
+
+  // The maximum number of elements in an array.
+  int MAX_ARRAY_SIZE;
+
+  // The number of nontrivial heap types to generate.
+  int MIN_HEAPTYPES;
+  int MAX_HEAPTYPES;
+
+  // some things require luck, try them a few times
+  int TRIES;
+
+  // beyond a nesting limit, greatly decrease the chance to continue to nest
+  int NESTING_LIMIT;
+
+  // the maximum size of a block
+  int BLOCK_FACTOR;
+
+  // the memory that we use, a small portion so that we have a good chance of
+  // looking at writes (we also look outside of this region with small
+  // probability) this should be a power of 2
+  Address USABLE_MEMORY;
+
+  // the number of runtime iterations (function calls, loop backbranches) we
+  // allow before we stop execution with a trap, to prevent hangs. 0 means
+  // no hang protection.
+  int HANG_LIMIT;
+
+  // the maximum amount of new GC types (structs, etc.) to create
+  int MAX_NEW_GC_TYPES;
+
+  // the maximum amount of catches in each try (not including a catch-all, if
+  // present).
+  int MAX_TRY_CATCHES;
+
+  FuzzParams() {
+    setDefaults();
+  }
+
+  void setDefaults();
+};
+
 // main reader
 
 class TranslateToFuzzReader {
@@ -178,79 +236,26 @@ private:
 
   // The fuzzing parameters we use. This may change from function to function or
   // even in a more refined manner, so we use an RAII context to manage it.
-  struct ParamContext {
+  struct FuzzParamsContext : public FuzzParams {
     TranslateToFuzzReader& parent;
 
-    ParamContext* old;
+    FuzzParamsContext* old;
 
-    ParamContext(TranslateToFuzzReader& parent)
-      : parent(parent), old(parent.params) {
-      parent.params = this;
+    FuzzParamsContext(TranslateToFuzzReader& parent)
+      : parent(parent), old(parent.fuzzParams) {
+      parent.fuzzParams = this;
     }
 
-    ~ParamContext() {
-      parent.params = old;
+    ~FuzzParamsContext() {
+      parent.fuzzParams = old;
     }
-
-    // The parameters.    
-
-    // The maximum amount of params to each function.
-    int MAX_PARAMS;
-
-    // The maximum amount of vars in each function.
-    int MAX_VARS;
-
-    // The maximum number of globals in a module.
-    int MAX_GLOBALS;
-
-    // The maximum number of tuple elements.
-    int MAX_TUPLE_SIZE;
-
-    // The maximum number of struct fields.
-    int MAX_STRUCT_SIZE;
-
-    // The maximum number of elements in an array.
-    int MAX_ARRAY_SIZE;
-
-    // The number of nontrivial heap types to generate.
-    int MIN_HEAPTYPES;
-    int MAX_HEAPTYPES;
-
-    // some things require luck, try them a few times
-    int TRIES;
-
-    // beyond a nesting limit, greatly decrease the chance to continue to nest
-    int NESTING_LIMIT;
-
-    // the maximum size of a block
-    int BLOCK_FACTOR;
-
-    // the memory that we use, a small portion so that we have a good chance of
-    // looking at writes (we also look outside of this region with small
-    // probability) this should be a power of 2
-    Address USABLE_MEMORY;
-
-    // the number of runtime iterations (function calls, loop backbranches) we
-    // allow before we stop execution with a trap, to prevent hangs. 0 means
-    // no hang protection.
-    int HANG_LIMIT;
-
-    // the maximum amount of new GC types (structs, etc.) to create
-    int MAX_NEW_GC_TYPES;
-
-    // the maximum amount of catches in each try (not including a catch-all, if
-    // present).
-    int MAX_TRY_CATCHES;
-
-    // Set the default values.
-    void setDefaults();
   };
 
-  ParamContext* params = nullptr;
+  FuzzParamsContext* fuzzParams = nullptr;
 
   // The default global context we use throughout the process (unless it is
   // overridden using another context in an RAII manner).
-  std::unique_ptr<ParamContext> globalParams;
+  std::unique_ptr<FuzzParamsContext> globalParams;
 
 public:
   int nesting = 0;
