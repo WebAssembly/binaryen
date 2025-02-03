@@ -5,6 +5,6 @@
 ;; CHECK: Fatal: 9:1: error: tuple types not allowed in signature
 
 (module
- (func $stacky-later-tuple (param (tuple i32 i32))
+ (func $tuple-in-sig (param (tuple i32 i32))
  )
 )
