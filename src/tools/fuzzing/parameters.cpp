@@ -21,33 +21,35 @@
 
 namespace wasm {
 
-int MAX_PARAMS = 10;
+void TranslateToFuzzReader::ParamContext::setDefaults() {
+  MAX_PARAMS = 10;
 
-int MAX_VARS = 20;
+  MAX_VARS = 20;
 
-int MAX_GLOBALS = 30;
+  MAX_GLOBALS = 30;
 
-int MAX_TUPLE_SIZE = 6;
+  MAX_TUPLE_SIZE = 6;
 
-int MAX_STRUCT_SIZE = 6;
+  MAX_STRUCT_SIZE = 6;
 
-int MAX_ARRAY_SIZE = 100;
+  MAX_ARRAY_SIZE = 100;
 
-int MIN_HEAPTYPES = 4;
-int MAX_HEAPTYPES = 20;
+  MIN_HEAPTYPES = 4;
+  MAX_HEAPTYPES = 20;
 
-int TRIES = 10;
+  TRIES = 10;
 
-int NESTING_LIMIT = 11;
+  NESTING_LIMIT = 11;
 
-int BLOCK_FACTOR = 5;
+  BLOCK_FACTOR = 5;
 
-Address USABLE_MEMORY = 16;
+  USABLE_MEMORY = 16;
 
-int HANG_LIMIT = 100;
+  HANG_LIMIT = 100;
 
-int MAX_NEW_GC_TYPES = 25;
+  MAX_NEW_GC_TYPES = 25;
 
-int MAX_TRY_CATCHES = 4;
+  MAX_TRY_CATCHES = 4;
+}
 
 } // namespace wasm

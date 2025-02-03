@@ -48,6 +48,9 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   if (wasm.features.hasSIMD()) {
     loggableTypes.push_back(Type::v128);
   }
+
+  globalParams = std::make_unique<ParamContext>();
+  globalParams->setDefaults();
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
