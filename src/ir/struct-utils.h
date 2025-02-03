@@ -206,7 +206,7 @@ struct StructScanner
     auto heapType = type.getHeapType();
     auto index = curr->index;
     auto& info =
-      functionSetGetInfos[this->getFunction()][type.getHeapType()][curr->index];
+      functionSetGetInfos[this->getFunction()][type.getHeapType()][index];
 
     if (curr->op == RMWXchg) {
       // An xchg is really like a read and write combined.

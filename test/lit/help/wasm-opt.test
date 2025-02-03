@@ -771,9 +771,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-multimemory                         Disable multimemory
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-stack-switching             Enable stack switching
+;; CHECK-NEXT:   --enable-stack-switching                      Enable stack switching
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-stack-switching            Disable stack switching
+;; CHECK-NEXT:   --disable-stack-switching                     Disable stack switching
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-shared-everything                    Enable shared-everything threads
 ;; CHECK-NEXT:
