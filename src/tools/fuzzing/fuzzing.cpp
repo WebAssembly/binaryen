@@ -1804,8 +1804,8 @@ Expression* TranslateToFuzzReader::make(Type type) {
     return makeTrivial(type);
   }
   // When we should stop, emit something small (but not necessarily trivial).
-  if (random.finished() || nesting >= 5 * params.NESTING_LIMIT || // hard limit
-      (nesting >= params.NESTING_LIMIT && !oneIn(3))) {
+  if (random.finished() || nesting >= 5 * fuzzParams->NESTING_LIMIT || // hard limit
+      (nesting >= fuzzParams->NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
       if (oneIn(2)) {
         return makeConst(type);
@@ -2032,11 +2032,11 @@ Expression* TranslateToFuzzReader::makeBlock(Type type) {
   ret->type = type; // so we have it during child creation
   ret->name = makeLabel();
   funcContext->breakableStack.push_back(ret);
-  Index num = upToSquared(params.BLOCK_FACTOR - 1); // we add another later
-  if (nesting >= params.NESTING_LIMIT / 2) {
+  Index num = upToSquared(fuzzParams->BLOCK_FACTOR - 1); // we add another later
+  if (nesting >= fuzzParams->NESTING_LIMIT / 2) {
     // smaller blocks past the limit
     num /= 2;
-    if (nesting >= params.NESTING_LIMIT && oneIn(2)) {
+    if (nesting >= fuzzParams->NESTING_LIMIT && oneIn(2)) {
       // smaller blocks past the limit
       num /= 2;
     }
@@ -2107,7 +2107,7 @@ Expression* TranslateToFuzzReader::makeCondition() {
 
 Expression* TranslateToFuzzReader::makeMaybeBlock(Type type) {
   // if past the limit, prefer not to emit blocks
-  if (nesting >= params.NESTING_LIMIT || oneIn(3)) {
+  if (nesting >= fuzzParams->NESTING_LIMIT || oneIn(3)) {
     return make(type);
   } else {
     return makeBlock(type);
@@ -2241,7 +2241,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     // also accept a target that is nullable.
     vec.push_back(Type(HeapType::exn, NonNullable));
     auto tagTypeWithExn = Type(vec);
-    int tries = params.TRIES;
+    int tries = fuzzParams->TRIES;
     while (tries-- > 0) {
       auto* target = pick(funcContext->breakableStack);
       auto dest = getTargetName(target);
@@ -2273,7 +2273,7 @@ Expression* TranslateToFuzzReader::makeBreak(Type type) {
     condition = makeCondition();
   }
   // we need to find a proper target to break to; try a few times
-  int tries = params.TRIES;
+  int tries = fuzzParams->TRIES;
   while (tries-- > 0) {
     auto* target = pick(funcContext->breakableStack);
     auto name = getTargetName(target);
@@ -2347,7 +2347,7 @@ Expression* TranslateToFuzzReader::makeBreak(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeCall(Type type) {
-  int tries = params.TRIES;
+  int tries = fuzzParams->TRIES;
   bool isReturn;
   while (tries-- > 0) {
     Function* target = funcContext->func;
@@ -2421,9 +2421,9 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
   // look for a call target with the right type
   Function* target;
   bool isReturn;
-  decltype(params.TRIES) i = 0;
+  decltype(fuzzParams->TRIES) i = 0;
   while (1) {
-    if (i == params.TRIES || wasm.functions.empty()) {
+    if (i == fuzzParams->TRIES || wasm.functions.empty()) {
       // We can't find a proper target, give up.
       return makeTrivial(type);
     }
@@ -3317,7 +3317,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // will only stop here when we exceed the nesting and reach a nullable one.
   // (This assumes there is a nullable one, that is, that the types are
   // inhabitable.)
-  const auto LIMIT = params.NESTING_LIMIT + 1;
+  const auto LIMIT = fuzzParams->NESTING_LIMIT + 1;
   AutoNester nester(*this);
   if (type.isNullable() &&
       (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
@@ -4012,7 +4012,7 @@ Expression* TranslateToFuzzReader::makeSwitch(Type type) {
     return make(type);
   }
   // we need to find proper targets to break to; try a bunch
-  int tries = params.TRIES;
+  int tries = fuzzParams->TRIES;
   std::vector<Name> names;
   Type valueType = Type::unreachable;
   while (tries-- > 0) {
@@ -4472,7 +4472,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   // to, we can then either drop ourselves or wrap ourselves in a block +
   // another value, so that we return the proper thing here (which is done below
   // in fixFlowingType).
-  int tries = params.TRIES;
+  int tries = fuzzParams->TRIES;
   Name targetName;
   Type targetType;
   while (--tries >= 0) {
