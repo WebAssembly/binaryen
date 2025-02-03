@@ -406,8 +406,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
-    auto generator =
-      HeapTypeGenerator::create(random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
+    auto generator = HeapTypeGenerator::create(
+      random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
@@ -784,10 +784,11 @@ void TranslateToFuzzReader::prepareHangLimitSupport() {
 }
 
 void TranslateToFuzzReader::addHangLimitSupport() {
-  auto glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
-                                 Type::i32,
-                                 builder.makeConst(int32_t(fuzzParams->HANG_LIMIT)),
-                                 Builder::Mutable);
+  auto glob =
+    builder.makeGlobal(HANG_LIMIT_GLOBAL,
+                       Type::i32,
+                       builder.makeConst(int32_t(fuzzParams->HANG_LIMIT)),
+                       Builder::Mutable);
   wasm.addGlobal(std::move(glob));
 }
 
@@ -1049,10 +1050,10 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
     builder.makeIf(
       builder.makeUnary(UnaryOp::EqZInt32,
                         builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32)),
-      builder.makeSequence(
-        builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
-                              builder.makeConst(int32_t(fuzzParams->HANG_LIMIT))),
-        builder.makeUnreachable())),
+      builder.makeSequence(builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
+                                                 builder.makeConst(int32_t(
+                                                   fuzzParams->HANG_LIMIT))),
+                           builder.makeUnreachable())),
     builder.makeGlobalSet(
       HANG_LIMIT_GLOBAL,
       builder.makeBinary(BinaryOp::SubInt32,
@@ -1804,7 +1805,8 @@ Expression* TranslateToFuzzReader::make(Type type) {
     return makeTrivial(type);
   }
   // When we should stop, emit something small (but not necessarily trivial).
-  if (random.finished() || nesting >= 5 * fuzzParams->NESTING_LIMIT || // hard limit
+  if (random.finished() ||
+      nesting >= 5 * fuzzParams->NESTING_LIMIT || // hard limit
       (nesting >= fuzzParams->NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
       if (oneIn(2)) {
@@ -2586,10 +2588,14 @@ Expression* TranslateToFuzzReader::makePointer() {
   if (!allowOOB || !oneIn(10)) {
     if (wasm.memories[0]->is64()) {
       ret = builder.makeBinary(
-        AndInt64, ret, builder.makeConst(int64_t(fuzzParams->USABLE_MEMORY - 1)));
+        AndInt64,
+        ret,
+        builder.makeConst(int64_t(fuzzParams->USABLE_MEMORY - 1)));
     } else {
       ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(int32_t(fuzzParams->USABLE_MEMORY - 1)));
+        AndInt32,
+        ret,
+        builder.makeConst(int32_t(fuzzParams->USABLE_MEMORY - 1)));
     }
   }
   return ret;
@@ -3385,7 +3391,8 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       if (!element.type.isDefaultable() || oneIn(2)) {
         init = makeChild(element.type);
       }
-      auto* count = builder.makeConst(int32_t(upTo(fuzzParams->MAX_ARRAY_SIZE)));
+      auto* count =
+        builder.makeConst(int32_t(upTo(fuzzParams->MAX_ARRAY_SIZE)));
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
     case HeapTypeKind::Cont:

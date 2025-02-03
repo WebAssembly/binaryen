@@ -106,9 +106,7 @@ struct FuzzParams {
   // present).
   int MAX_TRY_CATCHES;
 
-  FuzzParams() {
-    setDefaults();
-  }
+  FuzzParams() { setDefaults(); }
 
   void setDefaults();
 };
@@ -246,9 +244,7 @@ private:
       parent.fuzzParams = this;
     }
 
-    ~FuzzParamsContext() {
-      parent.fuzzParams = old;
-    }
+    ~FuzzParamsContext() { parent.fuzzParams = old; }
   };
 
   FuzzParamsContext* fuzzParams = nullptr;
