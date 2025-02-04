@@ -1,5 +1,7 @@
 [![CI](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions/workflows/ci.yml?branch=main&event=push)
 
+TEST PR
+
 # Binaryen
 
 Binaryen is a compiler and toolchain infrastructure library for WebAssembly,
