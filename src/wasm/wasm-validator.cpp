@@ -3154,20 +3154,23 @@ void FunctionValidator::visitStructCmpxchg(StructCmpxchg* curr) {
     field.mutable_, Mutable, curr, "struct.atomic.rmw field must be mutable");
   shouldBeFalse(
     field.isPacked(), curr, "struct.atomic.rmw field must not be packed");
-  bool isEq =
-    field.type.isRef() &&
-    Type::isSubType(
-      field.type,
-      Type(HeapTypes::eq.getBasic(field.type.getHeapType().getShared()),
-           Nullable));
-  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 || isEq,
-                    curr,
-                    "struct.atomic.rmw field type invalid for operation")) {
+
+  Type expectedExpectedType;
+  if (field.type == Type::i32) {
+    expectedExpectedType = Type::i32;
+  } else if (field.type == Type::i64) {
+    expectedExpectedType = Type::i64;
+  } else if (field.type.isRef()) {
+    expectedExpectedType = Type(
+      HeapTypes::eq.getBasic(field.type.getHeapType().getShared()), Nullable);
+  } else {
+    shouldBeTrue(
+      false, curr, "struct.atomic.rmw field type invalid for operation");
     return;
   }
   shouldBeSubType(
     curr->expected->type,
-    field.type,
+    expectedExpectedType,
     curr,
     "struct.atomic.rmw.cmpxchg expected value must have the proper type");
   shouldBeSubType(
