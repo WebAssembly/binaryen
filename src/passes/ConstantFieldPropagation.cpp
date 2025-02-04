@@ -133,7 +133,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     return PossibleConstantValues{};
   }
 
-  template<typename T> Expression* makeDroppedRef(T* curr) {
+  // Returns a block dropping the `ref` operand of the argument.
+  template<typename T> Block* makeRefDroppingBlock(T* curr) {
     Builder builder(*getModule());
     return builder.blockify(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
@@ -143,13 +144,12 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // with other threads at least by participating in the global order of
   // sequentially consistent operations. Preserve that effect by replacing the
   // access with a fence.
-  Expression* maybeAddFence(Expression* expr, MemoryOrder order) {
-    Builder builder(*getModule());
+  Block* maybeAddFence(Block* block, MemoryOrder order) {
     assert(order != MemoryOrder::AcqRel);
     if (order == MemoryOrder::SeqCst) {
-      return builder.blockify(expr, builder.makeAtomicFence());
+      block->list.push_back(Builder(*getModule()).makeAtomicFence());
     }
-    return expr;
+    return block;
   }
 
   // Given information about a constant value, and the struct type and
@@ -185,12 +185,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
   void visitStructGet(StructGet* curr) {
-    HeapType heapType;
-    if (auto type = getRelevantHeapType(curr)) {
-      heapType = *type;
-    } else {
+    auto type = getRelevantHeapType(curr);
+    if (!type) {
       return;
     }
+    auto heapType = *type;
 
     Builder builder(*getModule());
 
@@ -238,21 +237,22 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     auto* value = makeExpression(info, heapType, curr);
-    auto* replacement = makeDroppedRef(curr);
+    auto* replacement = makeRefDroppingBlock(curr);
     replacement = maybeAddFence(replacement, curr->order);
-    replaceCurrent(builder.blockify(replacement, value));
+    replacement->list.push_back(value);
+    replacement->type = value->type;
+    replaceCurrent(replacement);
     changed = true;
   }
 
   template<typename T>
   std::optional<std::pair<HeapType, PossibleConstantValues>>
   shouldOptimizeRMW(T* curr) {
-    HeapType heapType;
-    if (auto type = getRelevantHeapType(curr)) {
-      heapType = *type;
-    } else {
+    auto type = getRelevantHeapType(curr);
+    if (!type) {
       return std::nullopt;
     }
+    auto heapType = *type;
 
     // Get the info about the field. Since RMWs can only copy or mutate the
     // value, we always have something recorded.
@@ -279,13 +279,17 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     if (!typeAndInfo) {
       return;
     }
+    // Only xchg allows the field to have a constant value.
+    assert(curr->op == RMWXchg && "unexpected op");
     auto& [type, info] = *typeAndInfo;
     Builder builder(*getModule());
     auto* value = makeExpression(info, type, curr);
-    auto* replacement = makeDroppedRef(curr);
-    replacement = builder.blockify(replacement, builder.makeDrop(curr->value));
+    auto* replacement = makeRefDroppingBlock(curr);
+    replacement->list.push_back(builder.makeDrop(curr->value));
     replacement = maybeAddFence(replacement, curr->order);
-    replaceCurrent(builder.blockify(replacement, value));
+    replacement->list.push_back(value);
+    replacement->type = value->type;
+    replaceCurrent(replacement);
     changed = true;
   }
 
@@ -297,12 +301,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto& [type, info] = *typeAndInfo;
     Builder builder(*getModule());
     auto* value = makeExpression(info, type, curr);
-    auto* replacement = makeDroppedRef(curr);
-    replacement = builder.blockify(replacement,
-                                   builder.makeDrop(curr->expected),
-                                   builder.makeDrop(curr->replacement));
+    auto* replacement = makeRefDroppingBlock(curr);
+    replacement->list.push_back(builder.makeDrop(curr->expected));
+    replacement->list.push_back(builder.makeDrop(curr->replacement));
     replacement = maybeAddFence(replacement, curr->order);
-    replaceCurrent(builder.blockify(replacement, value));
+    replacement->list.push_back(value);
+    replacement->type = value->type;
+    replaceCurrent(replacement);
     changed = true;
   }
 
