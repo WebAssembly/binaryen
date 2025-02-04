@@ -49,7 +49,53 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     loggableTypes.push_back(Type::v128);
   }
 
+  // Setup params. Start with the defaults.
   globalParams = std::make_unique<FuzzParamsContext>(*this);
+
+  // Some of the time, adjust parameters based on the size, e.g. allowing more
+  // heap types in larger inputs, etc.
+  if (random.oneIn(2)) {
+    // A typical random wasm input from fuzz_opt.py is fairly large, to minimize
+    // the process creation overhead of all the things we run from python), and
+    // the defaults are tuned to that.
+    double size = random.remaining();
+    const double MEAN_SIZE = 40 * 1024;
+    auto ratio = size / MEAN_SIZE;
+
+    auto bits = random.get8();
+std::cout << "RAT1 " << ratio << '\n';
+    if (bits & 1) {
+      // Make the distribution more extreme.
+      ratio *= ratio;
+std::cout << "RAT2 " << ratio << '\n';
+    }
+std::cout << fuzzParams->MAX_NEW_GC_TYPES << '\n';
+std::cout << fuzzParams->MAX_GLOBALS << '\n';
+std::cout << fuzzParams->HANG_LIMIT << '\n';
+std::cout << fuzzParams->TRIES << '\n';
+std::cout << fuzzParams->MAX_ARRAY_SIZE << '\n';
+    if (bits & 2) {
+      fuzzParams->MAX_NEW_GC_TYPES *= ratio;
+    }
+    if (bits & 4) {
+      fuzzParams->MAX_GLOBALS *= ratio;
+    }
+    if (bits & 8) {
+      fuzzParams->HANG_LIMIT *= ratio;
+    }
+    if (bits & 16) {
+      fuzzParams->TRIES *= ratio;
+    }
+    if (bits & 32) {
+      fuzzParams->MAX_ARRAY_SIZE *= ratio;
+    }
+std::cout << "...\n";
+std::cout << fuzzParams->MAX_NEW_GC_TYPES << '\n';
+std::cout << fuzzParams->MAX_GLOBALS << '\n';
+std::cout << fuzzParams->HANG_LIMIT << '\n';
+std::cout << fuzzParams->TRIES << '\n';
+std::cout << fuzzParams->MAX_ARRAY_SIZE << '\n';
+  }
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
