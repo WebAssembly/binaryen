@@ -65,7 +65,7 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     auto bits = random.get();
     if (bits & 1) {
       // Make the distribution more extreme.
-      ratio *= ratio;
+//      ratio *= ratio;
     }
     if (bits & 2) {
       fuzzParams->MAX_NEW_GC_TYPES = fuzzParams->MAX_NEW_GC_TYPES * ratio;
@@ -92,6 +92,20 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
       fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
     }
   }
+
+/* PRE
+                                                                                                                                                                            19:55:33 [46/1805]ITERATION: 21175 seed: 14211798058871978655 size: 45635 (mean: 40811.345643447465, stddev: 27485.916534653745) speed: 2.058151297878523 iters/sec,  33772.426210153484 wasm_bytes/iter
+(ignored 189.0 iters, for reasons {'too many errors vs calls': 128.0, 'uninitialized non-defaultable local': 11, 'larger than implementation limit': 25, '[host limit ': 18, 'requested new array is too large': 7})                                                                                                                                                                                                                                                                                                                                                                      randomized pass debug:                                                                                                                                                                        
+
+NEW
+
+   Two: 339                                                                                                                                                                                                                                                                                                                                                                                 ITERATION: 14259 seed: 17422500138039178435 size: 41018 (mean: 40991.70025948524, stddev: 27487.364172912974) speed: 2.353946233215924 iters/sec,  32571.177852584333 wasm_bytes/iter         (ignored 344.0 iters, for reasons {'[host limit ': 168, 'too many errors vs calls': 143.0, 'larger than implementation limit': 26, 'requested new array is too large': 6, 'uninitialized non-defaultable local': 1})                                                                                                                                                                                                                                                                                                                                                                      randomized pass debug:                                                                                                                                                                        
+
+ITERATION: 10691 seed: 914886639200732475 size: 28816 (mean: 40483.828547376295, stddev: 26994.02375735314) speed: 2.346791479595881 iters/sec,  32871.351417079786 wasm_bytes/iter           
+(ignored 328.0 iters, for reasons {'too many errors vs calls': 133.0, '[host limit ': 162, 'requested new array is too large': 7, 'uninitialized non-defaultable local': 12, 'larger than implementation limit': 14})                                                                        
+
+NEW, but without ratio^2
+*/
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
