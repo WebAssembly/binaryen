@@ -540,8 +540,8 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-acqrel (param (ref $A) i32) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that the replacement
-    ;; fence could be more expensive than the original op, so we don't optimize.
+    ;; Acqrel accesses to constant fields do not synchronize with anything, so
+    ;; we can optimize without fences.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
       (local.get 0)
       (local.get 1)
@@ -662,8 +662,8 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-acqrel (param (ref $A) i32) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that the replacement
-    ;; fence could be more expensive than the original op, so we don't optimize.
+    ;; Acqrel accesses to constant fields do not synchronize with anything, so
+    ;; we can optimize without fences.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
       (local.get 0)
       (local.get 1)
