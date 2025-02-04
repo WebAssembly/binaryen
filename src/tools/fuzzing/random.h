@@ -64,7 +64,7 @@ public:
   bool finished() { return finishedInput; }
 
   // How many bytes of data remain to be used.
-  bool remaining() {
+  size_t remaining() {
     if (finishedInput) {
       // We finished it and are cycling through it again (using xorFactor to try
       // to improve the entropy).

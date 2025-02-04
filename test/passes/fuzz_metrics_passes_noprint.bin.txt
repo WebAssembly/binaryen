@@ -1,35 +1,50 @@
+remaining 40958
+mean 40960
+RAT1 0.999951
+RAT2 0.999902
+25
+30
+100
+10
+100
+...
+25
+30
+100
+10
+99
 Metrics
 total
- [exports]      : 84      
- [funcs]        : 112     
- [globals]      : 17      
+ [exports]      : 53      
+ [funcs]        : 77      
+ [globals]      : 14      
  [imports]      : 4       
  [memories]     : 1       
- [memory-data]  : 11      
- [table-data]   : 36      
+ [memory-data]  : 21      
+ [table-data]   : 26      
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 7833    
- [vars]         : 292     
- Binary         : 578     
- Block          : 1340    
- Break          : 204     
- Call           : 414     
- CallIndirect   : 35      
- Const          : 1256    
- Drop           : 107     
- GlobalGet      : 698     
- GlobalSet      : 535     
- If             : 418     
- Load           : 134     
- LocalGet       : 502     
- LocalSet       : 331     
- Loop           : 149     
- Nop            : 87      
- RefFunc        : 36      
- Return         : 103     
- Select         : 49      
- Store          : 70      
- Switch         : 6       
- Unary          : 508     
- Unreachable    : 273     
+ [total]        : 5168    
+ [vars]         : 206     
+ Binary         : 395     
+ Block          : 901     
+ Break          : 125     
+ Call           : 205     
+ CallIndirect   : 41      
+ Const          : 804     
+ Drop           : 63      
+ GlobalGet      : 478     
+ GlobalSet      : 375     
+ If             : 279     
+ Load           : 76      
+ LocalGet       : 324     
+ LocalSet       : 242     
+ Loop           : 104     
+ Nop            : 68      
+ RefFunc        : 26      
+ Return         : 54      
+ Select         : 44      
+ Store          : 34      
+ Switch         : 1       
+ Unary          : 348     
+ Unreachable    : 181     

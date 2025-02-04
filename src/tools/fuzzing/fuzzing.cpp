@@ -59,10 +59,12 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     // the process creation overhead of all the things we run from python), and
     // the defaults are tuned to that.
     double size = random.remaining();
+std::cout << "remaining " << size << '\n';
     const double MEAN_SIZE = 40 * 1024;
+std::cout << "mean " << MEAN_SIZE << '\n';
     auto ratio = size / MEAN_SIZE;
 
-    auto bits = random.get8();
+    auto bits = random.get();
 std::cout << "RAT1 " << ratio << '\n';
     if (bits & 1) {
       // Make the distribution more extreme.
@@ -75,19 +77,28 @@ std::cout << fuzzParams->HANG_LIMIT << '\n';
 std::cout << fuzzParams->TRIES << '\n';
 std::cout << fuzzParams->MAX_ARRAY_SIZE << '\n';
     if (bits & 2) {
-      fuzzParams->MAX_NEW_GC_TYPES *= ratio;
+      fuzzParams->MAX_NEW_GC_TYPES = fuzzParams->MAX_NEW_GC_TYPES * ratio;
     }
     if (bits & 4) {
-      fuzzParams->MAX_GLOBALS *= ratio;
+      fuzzParams->MAX_GLOBALS = fuzzParams->MAX_GLOBALS * ratio;
     }
     if (bits & 8) {
-      fuzzParams->HANG_LIMIT *= ratio;
+      // Only adjust the limit if there is one.
+      if (fuzzParams->HANG_LIMIT) {
+        fuzzParams->HANG_LIMIT = fuzzParams->HANG_LIMIT * ratio;
+        // There is a limit, so keep it non-zero to actually prevent hangs.
+        fuzzParams->HANG_LIMIT = std::max(fuzzParams->HANG_LIMIT, 1);
+      }
     }
     if (bits & 16) {
-      fuzzParams->TRIES *= ratio;
+      // Only increase the number of tries. Trying fewer times does not help
+      // find more interesting patterns.
+      if (ratio > 1) {
+        fuzzParams->TRIES = fuzzParams->TRIES * ratio;
+      }
     }
     if (bits & 32) {
-      fuzzParams->MAX_ARRAY_SIZE *= ratio;
+      fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
     }
 std::cout << "...\n";
 std::cout << fuzzParams->MAX_NEW_GC_TYPES << '\n';
