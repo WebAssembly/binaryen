@@ -107,14 +107,19 @@
   )
 
   ;; CHECK:      (func $rmw-xchg-acqrel (type $1) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $A 0
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-acqrel (param (ref $A)) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that the replacement
-    ;; fence could be more expensive than the original op, so we don't optimize.
+    ;; Making the accesses acqrel instead of seqcst means that we don't need a
+    ;; fence when we optimize.
     (struct.atomic.rmw.xchg acqrel acqrel $A 0
       (local.get 0)
       (i32.const 0)
@@ -220,16 +225,26 @@
   )
 
   ;; CHECK:      (func $rmw-xchg-copy-acqrel (type $1) (param $0 (ref $A)) (param $1 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (struct.atomic.get acqrel $A 0
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-copy-acqrel (param (ref $A) (ref $A)) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that the replacement
-    ;; fence could be more expensive than the original op, so we don't optimize.
+    ;; Making the accesses acqrel instead of seqcst means that we don't need a
+    ;; fence when we optimize.
     (struct.atomic.rmw.xchg acqrel acqrel $A 0
       (local.get 0)
       (struct.atomic.get acqrel $A 0
@@ -511,15 +526,22 @@
   )
 
   ;; CHECK:      (func $rmw-cmpxchg-acqrel (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-acqrel (param (ref $A) i32) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that the replacement
-    ;; fence could be more expensive than the original op, so we don't optimize.
+    ;; Acqrel accesses to constant fields do not synchronize with anything, so
+    ;; we can optimize without fences.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
       (local.get 0)
       (local.get 1)
@@ -626,15 +648,22 @@
   )
 
   ;; CHECK:      (func $rmw-cmpxchg-acqrel (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-acqrel (param (ref $A) i32) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that the replacement
-    ;; fence could be more expensive than the original op, so we don't optimize.
+    ;; Acqrel accesses to constant fields do not synchronize with anything, so
+    ;; we can optimize without fences.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
       (local.get 0)
       (local.get 1)
