@@ -59,23 +59,14 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     // the process creation overhead of all the things we run from python), and
     // the defaults are tuned to that.
     double size = random.remaining();
-std::cout << "remaining " << size << '\n';
     const double MEAN_SIZE = 40 * 1024;
-std::cout << "mean " << MEAN_SIZE << '\n';
     auto ratio = size / MEAN_SIZE;
 
     auto bits = random.get();
-std::cout << "RAT1 " << ratio << '\n';
     if (bits & 1) {
       // Make the distribution more extreme.
       ratio *= ratio;
-std::cout << "RAT2 " << ratio << '\n';
     }
-std::cout << fuzzParams->MAX_NEW_GC_TYPES << '\n';
-std::cout << fuzzParams->MAX_GLOBALS << '\n';
-std::cout << fuzzParams->HANG_LIMIT << '\n';
-std::cout << fuzzParams->TRIES << '\n';
-std::cout << fuzzParams->MAX_ARRAY_SIZE << '\n';
     if (bits & 2) {
       fuzzParams->MAX_NEW_GC_TYPES = fuzzParams->MAX_NEW_GC_TYPES * ratio;
     }
@@ -100,12 +91,6 @@ std::cout << fuzzParams->MAX_ARRAY_SIZE << '\n';
     if (bits & 32) {
       fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
     }
-std::cout << "...\n";
-std::cout << fuzzParams->MAX_NEW_GC_TYPES << '\n';
-std::cout << fuzzParams->MAX_GLOBALS << '\n';
-std::cout << fuzzParams->HANG_LIMIT << '\n';
-std::cout << fuzzParams->TRIES << '\n';
-std::cout << fuzzParams->MAX_ARRAY_SIZE << '\n';
   }
 }
 
