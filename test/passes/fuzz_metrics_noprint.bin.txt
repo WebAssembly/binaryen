@@ -1,18 +1,3 @@
-remaining 40958
-mean 40960
-RAT1 0.999951
-RAT2 0.999902
-25
-30
-100
-10
-100
-...
-25
-30
-100
-10
-99
 Metrics
 total
  [exports]      : 49      
