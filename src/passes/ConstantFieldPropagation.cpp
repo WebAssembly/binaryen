@@ -113,29 +113,90 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     : propagatedInfos(propagatedInfos), subTypes(subTypes),
       rawNewInfos(rawNewInfos), refTest(refTest) {}
 
-  void visitStructGet(StructGet* curr) {
+  template<typename T> std::optional<HeapType> getRelevantHeapType(T* curr) {
     auto type = curr->ref->type;
     if (type == Type::unreachable) {
-      return;
+      return std::nullopt;
     }
     auto heapType = type.getHeapType();
     if (!heapType.isStruct()) {
+      return std::nullopt;
+    }
+    return heapType;
+  }
+
+  PossibleConstantValues getInfo(HeapType type, Index index) {
+    if (auto it = propagatedInfos.find(type); it != propagatedInfos.end()) {
+      // There is information on this type, fetch it.
+      return it->second[index];
+    }
+    return PossibleConstantValues{};
+  }
+
+  // Returns a block dropping the `ref` operand of the argument.
+  template<typename T> Block* makeRefDroppingBlock(T* curr) {
+    Builder builder(*getModule());
+    return builder.blockify(
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
+  }
+
+  // If an optimized access is sequentially consistent, then it synchronizes
+  // with other threads at least by participating in the global order of
+  // sequentially consistent operations. Preserve that effect by replacing the
+  // access with a fence.
+  Block* maybeAddFence(Block* block, MemoryOrder order) {
+    assert(order != MemoryOrder::AcqRel);
+    if (order == MemoryOrder::SeqCst) {
+      block->list.push_back(Builder(*getModule()).makeAtomicFence());
+    }
+    return block;
+  }
+
+  // Given information about a constant value, and the struct type and
+  // StructGet/RMW/Cmpxchg that reads it, create an expression for that value.
+  template<typename T>
+  Expression*
+  makeExpression(const PossibleConstantValues& info, HeapType type, T* curr) {
+    auto* value = info.makeExpression(*getModule());
+    auto field = GCTypeUtils::getField(type, curr->index);
+    assert(field);
+    // Apply packing, if needed.
+    if constexpr (std::is_same_v<T, StructGet>) {
+      value =
+        Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
+    }
+    // Check if the value makes sense. The analysis below flows values around
+    // without considering where they are placed, that is, when we see a parent
+    // type can contain a value in a field then we assume a child may as well
+    // (which in general it can, e.g., using a reference to the parent, we can
+    // write that value to it, but the reference might actually point to a
+    // child instance). If we tracked the types of fields then we might avoid
+    // flowing values into places they cannot reside, like when a child field is
+    // a subtype, and so we could ignore things not refined enough for it (GUFA
+    // does a better job at this). For here, just check we do not break
+    // validation, and if we do, then we've inferred the only possible value is
+    // an impossible one, making the code unreachable.
+    if (!Type::isSubType(value->type, field->type)) {
+      Builder builder(*getModule());
+      value = builder.makeSequence(builder.makeDrop(value),
+                                   builder.makeUnreachable());
+    }
+    return value;
+  }
+
+  void visitStructGet(StructGet* curr) {
+    auto type = getRelevantHeapType(curr);
+    if (!type) {
       return;
     }
+    auto heapType = *type;
 
     Builder builder(*getModule());
 
     // Find the info for this field, and see if we can optimize. First, see if
     // there is any information for this heap type at all. If there isn't, it is
     // as if nothing was ever noted for that field.
-    PossibleConstantValues info;
-    assert(!info.hasNoted());
-    auto iter = propagatedInfos.find(heapType);
-    if (iter != propagatedInfos.end()) {
-      // There is information on this type, fetch it.
-      info = iter->second[curr->index];
-    }
-
+    PossibleConstantValues info = getInfo(heapType, curr->index);
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -176,48 +237,78 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     auto* value = makeExpression(info, heapType, curr);
-    auto* replacement = builder.blockify(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
-    // If this get is sequentially consistent, then it synchronizes with other
-    // threads at least by participating in the global order of sequentially
-    // consistent operations. Preserve that effect by replacing the access with
-    // a fence.
-    assert(curr->order != MemoryOrder::AcqRel);
-    if (curr->order == MemoryOrder::SeqCst) {
-      replacement = builder.blockify(replacement, builder.makeAtomicFence());
-    }
-    replaceCurrent(builder.blockify(replacement, value));
+    auto* replacement = makeRefDroppingBlock(curr);
+    replacement = maybeAddFence(replacement, curr->order);
+    replacement->list.push_back(value);
+    replacement->type = value->type;
+    replaceCurrent(replacement);
     changed = true;
   }
 
-  // Given information about a constant value, and the struct type and StructGet
-  // that reads it, create an expression for that value.
-  Expression* makeExpression(const PossibleConstantValues& info,
-                             HeapType type,
-                             StructGet* curr) {
-    auto* value = info.makeExpression(*getModule());
-    auto field = GCTypeUtils::getField(type, curr->index);
-    assert(field);
-    // Apply packing, if needed.
-    value =
-      Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
-    // Check if the value makes sense. The analysis below flows values around
-    // without considering where they are placed, that is, when we see a parent
-    // type can contain a value in a field then we assume a child may as well
-    // (which in general it can, e.g., using a reference to the parent, we can
-    // write that value to it, but the reference might actually point to a
-    // child instance). If we tracked the types of fields then we might avoid
-    // flowing values into places they cannot reside, like when a child field is
-    // a subtype, and so we could ignore things not refined enough for it (GUFA
-    // does a better job at this). For here, just check we do not break
-    // validation, and if we do, then we've inferred the only possible value is
-    // an impossible one, making the code unreachable.
-    if (!Type::isSubType(value->type, field->type)) {
-      Builder builder(*getModule());
-      value = builder.makeSequence(builder.makeDrop(value),
-                                   builder.makeUnreachable());
+  template<typename T>
+  std::optional<std::pair<HeapType, PossibleConstantValues>>
+  shouldOptimizeRMW(T* curr) {
+    auto type = getRelevantHeapType(curr);
+    if (!type) {
+      return std::nullopt;
     }
-    return value;
+    auto heapType = *type;
+
+    // Get the info about the field. Since RMWs can only copy or mutate the
+    // value, we always have something recorded.
+    PossibleConstantValues info = getInfo(heapType, curr->index);
+    assert(info.hasNoted() && "unexpected lack of info for RMW");
+
+    if (curr->order == MemoryOrder::AcqRel) {
+      // See comment on visitStructGet for why we don't optimize here.
+      return std::nullopt;
+    }
+
+    if (!info.isConstant()) {
+      // Optimizing using ref.test is not an option here because that only works
+      // on immutable fields, but RMW operations always access mutable fields.
+      return std::nullopt;
+    }
+
+    // We can optimize.
+    return std::pair(heapType, info);
+  }
+
+  void visitStructRMW(StructRMW* curr) {
+    auto typeAndInfo = shouldOptimizeRMW(curr);
+    if (!typeAndInfo) {
+      return;
+    }
+    // Only xchg allows the field to have a constant value.
+    assert(curr->op == RMWXchg && "unexpected op");
+    auto& [type, info] = *typeAndInfo;
+    Builder builder(*getModule());
+    auto* value = makeExpression(info, type, curr);
+    auto* replacement = makeRefDroppingBlock(curr);
+    replacement->list.push_back(builder.makeDrop(curr->value));
+    replacement = maybeAddFence(replacement, curr->order);
+    replacement->list.push_back(value);
+    replacement->type = value->type;
+    replaceCurrent(replacement);
+    changed = true;
+  }
+
+  void visitStructCmpxchg(StructCmpxchg* curr) {
+    auto typeAndInfo = shouldOptimizeRMW(curr);
+    if (!typeAndInfo) {
+      return;
+    }
+    auto& [type, info] = *typeAndInfo;
+    Builder builder(*getModule());
+    auto* value = makeExpression(info, type, curr);
+    auto* replacement = makeRefDroppingBlock(curr);
+    replacement->list.push_back(builder.makeDrop(curr->expected));
+    replacement->list.push_back(builder.makeDrop(curr->replacement));
+    replacement = maybeAddFence(replacement, curr->order);
+    replacement->list.push_back(value);
+    replacement->type = value->type;
+    replaceCurrent(replacement);
+    changed = true;
   }
 
   void optimizeUsingRefTest(StructGet* curr) {
@@ -448,7 +539,10 @@ struct PCVScanner
                HeapType type,
                Index index,
                PossibleConstantValues& info) {
-    WASM_UNREACHABLE("TODO");
+    // In general RMWs will modify the value of the field, so there is no single
+    // constant value. We could in principle try to recognize no-op RMWs like
+    // adds of 0, but we leave that for OptimizeInstructions for simplicity.
+    info.noteUnknown();
   }
 
   BoolFunctionStructValuesMap& functionCopyInfos;
