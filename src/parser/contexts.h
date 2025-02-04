@@ -1215,6 +1215,14 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
       resultTypes = *results;
     }
 
+    for (auto& v : {paramTypes, resultTypes}) {
+      for (auto t : v) {
+        if (!t.isSingle()) {
+          return in.err("tuple types not allowed in signature");
+        }
+      }
+    }
+
     auto sig = Signature(Type(paramTypes), Type(resultTypes));
     auto [it, inserted] = sigTypes.insert({sig, HeapType::func});
     if (inserted) {
