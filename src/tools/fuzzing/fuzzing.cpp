@@ -798,14 +798,24 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     Name baseName = std::string("log-") + type.toString();
     func->name = Names::getValidFunctionName(wasm, baseName);
     logImportNames[type] = func->name;
-    func->module = "fuzzing-support";
-    func->base = baseName;
+    if (!preserveImportsAndExports) {
+      func->module = "fuzzing-support";
+      func->base = baseName;
+    } else {
+      // We cannot add an import, so just make it a trivial function (this is
+      // simpler than avoiding calls to logging in all the rest of the logic).
+      func->body = builder.makeNop();
+    }
     func->type = Signature(type, Type::none);
     wasm.addFunction(std::move(func));
   }
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
+  if (preserveImportsAndExports) {
+    return;
+  }
+
   if (wasm.features.hasReferenceTypes() && closedWorld) {
     // In closed world mode we must *remove* the call-ref* imports, if they
     // exist in the initial content. These are not valid to call in closed-world
@@ -895,8 +905,13 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   throwImportName = Names::getValidFunctionName(wasm, "throw");
   auto func = std::make_unique<Function>();
   func->name = throwImportName;
-  func->module = "fuzzing-support";
-  func->base = "throw";
+  if (!preserveImportsAndExports) {
+    func->module = "fuzzing-support";
+    func->base = "throw";
+  } else {
+    // As with logging, implement in a trivial way when we cannot add imports.
+    func->body = builder.makeNop();
+  }
   func->type = Signature(Type::none, Type::none);
   wasm.addFunction(std::move(func));
 }
@@ -946,8 +961,9 @@ void TranslateToFuzzReader::addImportTableSupport() {
 }
 
 void TranslateToFuzzReader::addImportSleepSupport() {
-  if (!oneIn(4)) {
-    // Fuzz this somewhat rarely, as it may be slow.
+  // Fuzz this somewhat rarely, as it may be slow, and only when we can add
+  // imports.
+  if (preserveImportsAndExports || !oneIn(4)) {
     return;
   }
 
