@@ -444,6 +444,19 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     self->tryStack.pop_back();
   }
 
+  static void doEndResume(SubType* self, Expression** currp) {
+    auto* module = self->getModule();
+    if (!module || module->features.hasExceptionHandling()) {
+      // This resume might throw, so run the code to handle that.
+      doEndThrowingInst(self, currp);
+    }
+    auto handlerBlocks = BranchUtils::getUniqueTargets(*currp);
+    // Add branches to the targets.
+    for (auto target : handlerBlocks) {
+      self->branches[target].push_back(self->currBasicBlock);
+    }
+  }
+
   static bool isReturnCall(Expression* curr) {
     switch (curr->_id) {
       case Expression::Id::CallId:
@@ -519,6 +532,20 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::RethrowId:
       case Expression::Id::ThrowRefId: {
         self->pushTask(SubType::doEndThrow, currp);
+        break;
+      }
+      case Expression::Id::ResumeId:
+      case Expression::Id::ResumeThrowId: {
+        self->pushTask(SubType::doEndResume, currp);
+        break;
+      }
+      case Expression::Id::SuspendId:
+      case Expression::Id::StackSwitchId: {
+        auto* module = self->getModule();
+        if (!module || module->features.hasExceptionHandling()) {
+          // This might throw, so run the code to handle that.
+          self->pushTask(SubType::doEndCall, currp);
+        }
         break;
       }
       default: {
