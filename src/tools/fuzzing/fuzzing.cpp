@@ -556,10 +556,12 @@ void TranslateToFuzzReader::setupGlobals() {
   // run the wasm.
   for (auto& global : wasm.globals) {
     if (global->imported()) {
-      // Remove import info from imported globals, and give them a simple
-      // initializer.
-      global->module = global->base = Name();
-      global->init = makeConst(global->type);
+      if (!preserveImportsAndExports) {
+        // Remove import info from imported globals, and give them a simple
+        // initializer.
+        global->module = global->base = Name();
+        global->init = makeConst(global->type);
+      }
     } else {
       // If the initialization referred to an imported global, it no longer can
       // point to the same global after we make it a non-imported global unless
@@ -637,7 +639,7 @@ void TranslateToFuzzReader::setupTags() {
   // As in modifyInitialFunctions(), we can't allow tag imports as it would trap
   // when the fuzzing infrastructure doesn't know what to provide.
   for (auto& tag : wasm.tags) {
-    if (tag->imported()) {
+    if (tag->imported() && !preserveImportsAndExports) {
       tag->module = tag->base = Name();
     }
   }
@@ -696,9 +698,12 @@ void TranslateToFuzzReader::finalizeMemory() {
     memory->max =
       std::min(Address(memory->initial + 1), Address(Memory::kMaxSize32));
   }
-  // Avoid an imported memory (which the fuzz harness would need to handle).
-  for (auto& memory : wasm.memories) {
-    memory->module = memory->base = Name();
+
+  if (!preserveImportsAndExports) {
+    // Avoid an imported memory (which the fuzz harness would need to handle).
+    for (auto& memory : wasm.memories) {
+      memory->module = memory->base = Name();
+    }
   }
 }
 
@@ -743,8 +748,11 @@ void TranslateToFuzzReader::finalizeTable() {
     assert(ReasonableMaxTableSize <= Table::kMaxSize);
 
     table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
-    // Avoid an imported table (which the fuzz harness would need to handle).
-    table->module = table->base = Name();
+
+    if (!preserveImportsAndExports) {
+      // Avoid an imported table (which the fuzz harness would need to handle).
+      table->module = table->base = Name();
+    }
   }
 }
 
@@ -1719,6 +1727,10 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     }
     FunctionCreationContext context(*this, func);
     if (func->imported()) {
+      if (preserveImportsAndExports) {
+        // Leave the import as-is.
+        continue;
+      }
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }
