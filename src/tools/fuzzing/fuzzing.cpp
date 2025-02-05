@@ -64,16 +64,12 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
     auto bits = random.get();
     if (bits & 1) {
-      // Make the distribution more extreme.
-//      ratio *= ratio;
-    }
-    if (bits & 2) {
       fuzzParams->MAX_NEW_GC_TYPES = fuzzParams->MAX_NEW_GC_TYPES * ratio;
     }
-    if (bits & 4) {
+    if (bits & 2) {
       fuzzParams->MAX_GLOBALS = fuzzParams->MAX_GLOBALS * ratio;
     }
-    if (bits & 8) {
+    if (bits & 4) {
       // Only adjust the limit if there is one.
       if (fuzzParams->HANG_LIMIT) {
         fuzzParams->HANG_LIMIT = fuzzParams->HANG_LIMIT * ratio;
@@ -81,14 +77,14 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
         fuzzParams->HANG_LIMIT = std::max(fuzzParams->HANG_LIMIT, 1);
       }
     }
-    if (bits & 16) {
+    if (bits & 8) {
       // Only increase the number of tries. Trying fewer times does not help
       // find more interesting patterns.
       if (ratio > 1) {
         fuzzParams->TRIES = fuzzParams->TRIES * ratio;
       }
     }
-    if (bits & 32) {
+    if (bits & 16) {
       fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
     }
   }
