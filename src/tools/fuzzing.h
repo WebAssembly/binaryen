@@ -129,7 +129,7 @@ public:
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
   void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
-    setPreserveImportsAndExports = setPreserveImportsAndExports_;
+    preserveImportsAndExports = preserveImportsAndExports_;
   }
 
   void build();
