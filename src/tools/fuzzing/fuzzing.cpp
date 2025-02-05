@@ -1721,16 +1721,14 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   for (Index i = 0; i < wasm.functions.size(); i++) {
     auto* func = wasm.functions[i].get();
     // We can't allow extra imports, as the fuzzing infrastructure wouldn't
-    // know what to provide. Keep only our own fuzzer imports.
-    if (func->imported() && func->module == "fuzzing-support") {
+    // know what to provide. Keep only our own fuzzer imports (or, if we are
+    // preserving imports, keep them all).
+    if (func->imported() && (func->module == "fuzzing-support" ||
+         preserveImportsAndExports)) {
       continue;
     }
     FunctionCreationContext context(*this, func);
     if (func->imported()) {
-      if (preserveImportsAndExports) {
-        // Leave the import as-is.
-        continue;
-      }
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }

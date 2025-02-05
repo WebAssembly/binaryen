@@ -8,9 +8,12 @@
 
 ;; PRESERVE: [exports]      : 1
 ;; PRESERVE: [imports]      : 5
+;; [sic] - we do not close ("))") the import as it has more info in the wat,
+;; which we do not care about.
+;; PRESERVE:  (import "a" "d" (memory
+;; PRESERVE:  (import "a" "e" (table
 ;; PRESERVE:  (import "a" "b" (global $ig i32))
-;; [sic] - we do not close the tag import as it has a type mentioned, which we
-;; do not care about.
+;; PRESERVE:  (import "a" "f" (func $if
 ;; PRESERVE:  (import "a" "c" (tag $tag
 ;; PRESERVE:  (export "foo" (func $foo))
 
