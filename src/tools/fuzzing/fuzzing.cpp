@@ -49,7 +49,45 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
     loggableTypes.push_back(Type::v128);
   }
 
+  // Setup params. Start with the defaults.
   globalParams = std::make_unique<FuzzParamsContext>(*this);
+
+  // Some of the time, adjust parameters based on the size, e.g. allowing more
+  // heap types in larger inputs, etc.
+  if (random.oneIn(2)) {
+    // A typical random wasm input from fuzz_opt.py is fairly large (to minimize
+    // the process creation overhead of all the things we run from python), and
+    // the defaults are tuned to that.
+    double size = random.remaining();
+    const double MEAN_SIZE = 40 * 1024;
+    auto ratio = size / MEAN_SIZE;
+
+    auto bits = random.get();
+    if (bits & 1) {
+      fuzzParams->MAX_NEW_GC_TYPES = fuzzParams->MAX_NEW_GC_TYPES * ratio;
+    }
+    if (bits & 2) {
+      fuzzParams->MAX_GLOBALS = fuzzParams->MAX_GLOBALS * ratio;
+    }
+    if (bits & 4) {
+      // Only adjust the limit if there is one.
+      if (fuzzParams->HANG_LIMIT) {
+        fuzzParams->HANG_LIMIT = fuzzParams->HANG_LIMIT * ratio;
+        // There is a limit, so keep it non-zero to actually prevent hangs.
+        fuzzParams->HANG_LIMIT = std::max(fuzzParams->HANG_LIMIT, 1);
+      }
+    }
+    if (bits & 8) {
+      // Only increase the number of tries. Trying fewer times does not help
+      // find more interesting patterns.
+      if (ratio > 1) {
+        fuzzParams->TRIES = fuzzParams->TRIES * ratio;
+      }
+    }
+    if (bits & 16) {
+      fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
+    }
+  }
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
