@@ -1723,8 +1723,8 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     // We can't allow extra imports, as the fuzzing infrastructure wouldn't
     // know what to provide. Keep only our own fuzzer imports (or, if we are
     // preserving imports, keep them all).
-    if (func->imported() && (func->module == "fuzzing-support" ||
-         preserveImportsAndExports)) {
+    if (func->imported() &&
+        (func->module == "fuzzing-support" || preserveImportsAndExports)) {
       continue;
     }
     FunctionCreationContext context(*this, func);
