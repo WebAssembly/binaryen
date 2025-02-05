@@ -911,8 +911,9 @@ void TranslateToFuzzReader::addImportTableSupport() {
   }
 
   // If a "table" export already exists, skip fuzzing these imports, as the
-  // current export may not contain a valid table for it.
-  if (wasm.getExportOrNull("table")) {
+  // current export may not contain a valid table for it. We also skip if we are
+  // not adding imports or exports.
+  if (wasm.getExportOrNull("table") || preserveImportsAndExports) {
     return;
   }
 
@@ -999,12 +1000,15 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   auto* body = builder.makeBlock(contents);
   auto* hasher = wasm.addFunction(builder.makeFunction(
     "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
-  wasm.addExport(
-    builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
-  // Export memory so JS fuzzing can use it
-  if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport(
-      "memory", wasm.memories[0]->name, ExternalKind::Memory));
+
+  if (!preserveImportsAndExports) {
+    wasm.addExport(
+      builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+    // Export memory so JS fuzzing can use it
+    if (!wasm.getExportOrNull("memory")) {
+      wasm.addExport(builder.makeExport(
+        "memory", wasm.memories[0]->name, ExternalKind::Memory));
+    }
   }
 }
 
@@ -1228,7 +1232,7 @@ Function* TranslateToFuzzReader::addFunction() {
       return t.isDefaultable();
     });
   if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
-      !wasm.getExportOrNull(func->name)) {
+      !wasm.getExportOrNull(func->name) && !preserveImportsAndExports) {
     auto* export_ = new Export;
     export_->name = func->name;
     export_->value = func->name;
@@ -1795,7 +1799,12 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   }
   body->list.set(invocations);
   wasm.addFunction(std::move(invoker));
-  wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
+
+  // Most of the benefit of invocations is lost when we do not add exports for
+  // them, but still, they might be called by existing functions.
+  if (!preserveImportsAndExports) {
+    wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
+  }
 }
 
 Expression* TranslateToFuzzReader::make(Type type) {
