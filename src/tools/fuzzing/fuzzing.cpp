@@ -651,7 +651,7 @@ void TranslateToFuzzReader::setupTags() {
   }
 
   // Add the fuzzing support tag manually sometimes.
-  if (oneIn(2)) {
+  if (!preserveImportsAndExports && oneIn(2)) {
     auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag"),
                                Signature(Type::i32, Type::none));
     tag->module = "fuzzing-support";
