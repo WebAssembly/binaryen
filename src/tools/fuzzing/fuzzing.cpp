@@ -856,6 +856,20 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     func->base = "call-export-catch";
     func->type = Signature(Type::i32, Type::i32);
     wasm.addFunction(std::move(func));
+
+    if (wasm.features.hasExceptionHandling()) {
+      // Variation that returns an exnref: null if nothing was caught
+      // (corresponding to 0 in call-export-catch), or the exnref if something
+      // was caught (corresponding to 1 in call-export-catch).
+      callExportCatchRefImportName =
+        Names::getValidFunctionName(wasm, "call-export-catch-ref");
+      auto func = std::make_unique<Function>();
+      func->name = callExportCatchRefImportName;
+      func->module = "fuzzing-support";
+      func->base = "call-export-catch-ref";
+      func->type = Signature(Type::i32, Type(HeapType::exn, Nullable));
+      wasm.addFunction(std::move(func));
+    }
   }
 
   // If the wasm will be used for closed-world testing, we cannot use the
@@ -883,6 +897,21 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->base = "call-ref-catch";
       func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
       wasm.addFunction(std::move(func));
+
+      if (wasm.features.hasExceptionHandling()) {
+        // Variation that returns an exnref: null if nothing was caught
+        // (corresponding to 0 in call-ref-catch), or the exnref if something
+        // was caught (corresponding to 1 in call-ref-catch).
+        callRefCatchRefImportName =
+          Names::getValidFunctionName(wasm, "call-ref-catch-ref");
+        auto func = std::make_unique<Function>();
+        func->name = callRefCatchRefImportName;
+        func->module = "fuzzing-support";
+        func->base = "call-ref-catch-ref";
+        func->type = Signature(Type(HeapType::func, Nullable),
+                               Type(HeapType::exn, Nullable));
+        wasm.addFunction(std::move(func));
+      }
     }
   }
 }
@@ -1092,12 +1121,30 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
 
 Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
   // Call code: either an export or a ref. Each has a catching and non-catching
-  // variant. The catching variants return i32, the others none.
-  assert(type == Type::none || type == Type::i32);
-  auto catching = type == Type::i32;
-  auto exportTarget =
-    catching ? callExportCatchImportName : callExportImportName;
-  auto refTarget = catching ? callRefCatchImportName : callRefImportName;
+  // variant, and the catching variants return either an i32 or an exnref (the
+  // non-catching variants return none).
+  auto exnref = Type(HeapType::exn, Nullable);
+  assert(type == Type::none || type == Type::i32 || type == exnref);
+
+  // Whether we are catching any exceptions.
+  auto catching = type != Type::none;
+  // Whether we are catching any exceptions and returning them as an exnref (and
+  // not as a bool that says if we caught).
+  auto catchingRef = type == exnref;
+  // We can call either an export or a ref. Find the imports for each.
+  Name exportTarget, refTarget;
+  if (catching) {
+    if (catchingRef) {
+      exportTarget = callExportCatchRefImportName;
+      refTarget = callRefCatchRefImportName;
+    } else {
+      exportTarget = callExportCatchImportName;
+      refTarget = callRefCatchImportName;
+    }
+  } else {
+    exportTarget = callExportImportName;
+    refTarget = callRefImportName;
+  }
 
   // We want to call a ref less often, as refs are more likely to error (a
   // function reference can have arbitrary params and results, including things
@@ -1922,6 +1969,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeArrayGet);
     }
+  }
+  auto exnref = Type(HeapType::exn, Nullable);
+  if (type == exnref && (callExportCatchRefImportName || callRefCatchRefImportName)) {
+    options.add(FeatureSet::ExceptionHandling, &Self::makeImportCallCode);
   }
   return (this->*pick(options))(type);
 }
