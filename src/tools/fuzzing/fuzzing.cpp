@@ -634,10 +634,11 @@ void TranslateToFuzzReader::setupGlobals() {
 }
 
 void TranslateToFuzzReader::setupTags() {
-  // As in modifyInitialFunctions(), we can't allow tag imports as it would trap
-  // when the fuzzing infrastructure doesn't know what to provide.
+  // As in modifyInitialFunctions(), we can't allow arbitrary tag imports, which
+  // would trap when the fuzzing infrastructure doesn't know what to provide.
+  // We do allow the fuzzing-support tag, which is set up in fuzz_shell.js.
   for (auto& tag : wasm.tags) {
-    if (tag->imported()) {
+    if (tag->imported() && tag->module != "fuzzing-support") {
       tag->module = tag->base = Name();
     }
   }
@@ -4801,6 +4802,7 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     addTag();
   }
   auto* tag = pick(wasm.tags).get();
+  assert(!tag->imported());
   auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
