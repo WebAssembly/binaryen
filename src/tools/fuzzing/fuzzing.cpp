@@ -3250,12 +3250,17 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      auto null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
-      if (!type.isNullable()) {
-        assert(funcContext);
-        return builder.makeRefAs(RefAsNonNull, null);
+      // If nullable, we can emit a null. If not, generate an exnref using a
+      // throw in a try_table.
+      if (type.isNullable() && oneIn(2)) {
+        return builder.makeRefNull(HeapTypes::exn.getBasic(share));
       }
-      return null;
+
+      // Make a catch_all_ref to a block.
+      auto* throww = makeThrow(Type::unreachable);
+      auto label = makeLabel();
+      auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
+      return builder.makeBlock(label, tryy);
     }
     case HeapType::string: {
       // In non-function contexts all we can do is string.const.
