@@ -11,11 +11,11 @@
 
 ;; [sic] - we do not close ("))") some imports, which have info in the wat
 ;; which we do not care about.
-;; PRESERVE:  (import "a" "d" (memory
-;; PRESERVE:  (import "a" "e" (table
-;; PRESERVE:  (import "a" "b" (global $ig i32))
-;; PRESERVE:  (import "a" "f" (func $if
-;; PRESERVE:  (import "a" "c" (tag $tag
+;; PRESERVE:  (import "a" "d" (memory $imemory
+;; PRESERVE:  (import "a" "e" (table $itable
+;; PRESERVE:  (import "a" "b" (global $iglobal i32))
+;; PRESERVE:  (import "a" "f" (func $ifunc
+;; PRESERVE:  (import "a" "c" (tag $itag
 
 ;; PRESERVE:  (export "foo" (func $foo))
 
@@ -34,11 +34,11 @@
   ;; into normal ones (as the fuzz harness does not know what to provide at
   ;; compile time), so we also test that --fuzz-preserve-imports-exports leaves
   ;; such imports alone.
-  (import "a" "b" (global $ig i32))
-  (import "a" "c" (tag $tag))
-  (import "a" "d" (memory 10 20))
-  (import "a" "e" (table 10 20 funcref))
-  (import "a" "f" (func $if))
+  (import "a" "b" (global $iglobal i32))
+  (import "a" "c" (tag $itag))
+  (import "a" "d" (memory $imemory 10 20))
+  (import "a" "e" (table $itable 10 20 funcref))
+  (import "a" "f" (func $ifunc))
 
   ;; One existing export.
   (func $foo (export "foo")
