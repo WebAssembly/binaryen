@@ -116,6 +116,13 @@ public:
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
         }
+      } else if (import->base == "call-export-catch-ref") {
+        try {
+          callExportAsJS(arguments[0].geti32());
+          return {Literal::makeNull(HeapType::exn)};
+        } catch (const WasmException& e) {
+          return e.exn;
+        }
       } else if (import->base == "call-ref") {
         callRefAsJS(arguments[0]);
         // Return nothing. If we wanted to return a value we'd need to have
@@ -127,6 +134,13 @@ public:
           return {Literal(int32_t(0))};
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
+        }
+      } else if (import->base == "call-ref-catch-ref") {
+        try {
+          callRefAsJS(arguments[0]);
+          return {Literal::makeNull(HeapType::exn)};
+        } catch (const WasmException& e) {
+          return e.exn;
         }
       } else if (import->base == "sleep") {
         // Do not actually sleep, just return the id.
