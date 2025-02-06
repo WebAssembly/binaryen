@@ -268,8 +268,12 @@ var imports = {
     'log-v128': logValue,
 
     // Throw an exception from JS.
-    'throw': () => {
-      throw 'some JS error';
+    'throw': (which) => {
+      if (!which) {
+        throw 'some JS error';
+      } else {
+        throw new WebAssembly.Exception(jsTag, which);
+      }
     },
 
     // Table operations.
