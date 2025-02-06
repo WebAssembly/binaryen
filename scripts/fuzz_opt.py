@@ -1758,7 +1758,7 @@ class PreserveImportsExports(TestCaseHandler):
             # ways.
             lines = [re.sub(r'[(]type [$][0-9a-zA-Z_$]+[)]', '', line) for line in lines]
 
-            # Sort the lines for determinism.
+            # Sort the lines for determinism. TODO is this a bug?
             lines.sort()
 
             return '\n'.join(lines)
