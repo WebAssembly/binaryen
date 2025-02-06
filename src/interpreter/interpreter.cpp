@@ -86,7 +86,28 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     push(curr->value);
     return {};
   }
-  Flow visitUnary(Unary* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitUnary(Unary* curr) {
+    auto value = pop();
+    switch (curr->op) {
+      case SqrtFloat32:
+        push(value.sqrt());
+        return {};
+      case CeilFloat32:
+        push(value.ceil());
+        return {};
+      case FloorFloat32:
+        push(value.floor());
+        return {};
+      case TruncFloat32:
+        push(value.trunc());
+        return {};
+      case NearestFloat32:
+        push(value.nearbyint());
+        return {};
+      default:
+        WASM_UNREACHABLE("TODO");
+    }
+  }
   Flow visitBinary(Binary* curr) {
     auto rhs = pop();
     auto lhs = pop();
@@ -106,6 +127,12 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
         return {};
       case DivFloat32:
         push(lhs.div(rhs));
+        return {};
+      case MinFloat32:
+        push(lhs.min(rhs));
+        return {};
+      case MaxFloat32:
+        push(lhs.max(rhs));
         return {};
       default:
         WASM_UNREACHABLE("TODO");
