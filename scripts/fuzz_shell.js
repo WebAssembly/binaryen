@@ -326,8 +326,14 @@ var imports = {
   },
 };
 
-// If Tags are available, add the import j2wasm expects.
+// If Tags are available, add some.
 if (typeof WebAssembly.Tag !== 'undefined') {
+  // A tag for general use in the fuzzer.
+  var jsTag = imports['fuzzing-support']['tag'] = new WebAssembly.Tag({
+    'parameters': ['i32']
+  });
+
+  // This allows j2wasm content to run in the fuzzer.
   imports['imports'] = {
     'j2wasm.ExceptionUtils.tag': new WebAssembly.Tag({
       'parameters': ['externref']

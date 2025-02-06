@@ -636,8 +636,8 @@ void TranslateToFuzzReader::setupGlobals() {
 }
 
 void TranslateToFuzzReader::setupTags() {
-  // As in modifyInitialFunctions(), we can't allow tag imports as it would trap
-  // when the fuzzing infrastructure doesn't know what to provide.
+  // As in modifyInitialFunctions(), we can't allow arbitrary tag imports, which
+  // would trap when the fuzzing infrastructure doesn't know what to provide.
   for (auto& tag : wasm.tags) {
     if (tag->imported() && !preserveImportsAndExports) {
       tag->module = tag->base = Name();
@@ -648,6 +648,15 @@ void TranslateToFuzzReader::setupTags() {
   Index num = upTo(3);
   for (size_t i = 0; i < num; i++) {
     addTag();
+  }
+
+  // Add the fuzzing support tag manually sometimes.
+  if (oneIn(2)) {
+    auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag"),
+                               Signature(Type::i32, Type::none));
+    tag->module = "fuzzing-support";
+    tag->base = "tag";
+    wasm.addTag(std::move(tag));
   }
 }
 
