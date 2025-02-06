@@ -681,9 +681,16 @@ void TranslateToFuzzReader::finalizeMemory() {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
-    memory->initial = std::max(
-      memory->initial,
-      Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
+    // Ensure the initial memory can fit the segment (so we don't just trap),
+    // but only do so when the segment is at a reasonable offset (to avoid
+    // validation errors on the initial size >= 4GB in wasm32, but also to
+    // avoid OOM errors on trying to allocate too much initial memory).
+    Address ONE_GB = 1024 * 1024 * 1024;
+    if (maxOffset <= ONE_GB) {
+      memory->initial = std::max(
+        memory->initial,
+        Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
+    }
   }
   memory->initial = std::max(memory->initial, fuzzParams->USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
