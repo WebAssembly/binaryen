@@ -146,3 +146,155 @@
     )
   )
 )
+
+;; Imported tags may be written to from places we do not see.
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $0) (param i32)))
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+  ;; CHECK:      (import "fuzzing-support" "tag" (tag $tag (type $0) (param i32)))
+  (import "fuzzing-support" "tag" (tag $tag (param i32)))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (call $throw
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func")
+    (try
+      (do
+        (call $throw
+          (i32.const 1)
+        )
+      )
+      (catch $tag
+        ;; The i32 result of the tag will be stored to a local. If we thought no
+        ;; value was possible there, we'd put an unreachable after it. As it is
+        ;; imported, a value might be there, so we do not.
+        (drop
+          (pop i32)
+        )
+      )
+    )
+  )
+)
+
+;; As above, but with an exported tag. Also test a tag with multiple params.
+(module
+  ;; CHECK:      (type $0 (func (param i32 f64)))
+
+  ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $1) (param i32)))
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+
+  ;; CHECK:      (tag $tag (type $0) (param i32 f64))
+  (tag $tag (param i32 f64))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (export "tag" (tag $tag))
+  (export "tag" (tag $tag))
+
+  ;; CHECK:      (func $func (type $2)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (call $throw
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (tuple.drop 2
+  ;; CHECK-NEXT:     (pop (tuple i32 f64))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func")
+    (try
+      (do
+        (call $throw
+          (i32.const 1)
+        )
+      )
+      (catch $tag
+        ;; Once more, we do not optimize to unreachable here.
+        (tuple.drop 2
+          (pop (tuple i32 f64))
+        )
+      )
+    )
+  )
+)
+
+;; Private tags are optimizable.
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $0) (param i32)))
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+
+  ;; CHECK:      (tag $tag (type $0) (param i32))
+  (tag $tag (param i32))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (call $throw
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func")
+    (try
+      (do
+        (call $throw
+          (i32.const 1)
+        )
+      )
+      (catch $tag
+        ;; The tag is neither imported nor exported, so we can optimize to
+        ;; unreachable.
+        (drop
+          (pop i32)
+        )
+      )
+    )
+  )
+)
+
