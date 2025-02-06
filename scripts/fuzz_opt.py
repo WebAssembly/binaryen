@@ -1753,9 +1753,14 @@ class PreserveImportsExports(TestCaseHandler):
         def get_relevant_lines(wat):
             # Imports and exports are relevant.
             lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
+
+            # Ignore type names, which may vary from $5 to $17 in uninteresting
+            # ways.
+            lines = [re.sub(r'[(]type [$]\d+[)]', '', line) for line in lines]
+
             return '\n'.join(lines)
 
-        assert get_relevant_lines(original) == get_relevant_lines(processed)
+        compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
 # The global list of all test case handlers
