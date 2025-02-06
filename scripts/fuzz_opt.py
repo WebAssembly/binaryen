@@ -1756,7 +1756,7 @@ class PreserveImportsExports(TestCaseHandler):
 
             # Ignore type names, which may vary from $5 to $17 in uninteresting
             # ways.
-            lines = [re.sub(r'[(]type [$]\d+[)]', '', line) for line in lines]
+            lines = [re.sub(r'[(]type [$][0-9a-zA-Z_]+[)]', '', line) for line in lines]
 
             # Sort the lines for determinism.
             lines.sort()
