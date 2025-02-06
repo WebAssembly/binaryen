@@ -8,7 +8,7 @@
  (import "fuzzing-support" "log-i32" (func $log-i32 (param i32)))
  (import "fuzzing-support" "log-f64" (func $log-f64 (param f64)))
 
- (import "fuzzing-support" "throw" (func $throw))
+ (import "fuzzing-support" "throw" (func $throw (param i32)))
 
  (import "fuzzing-support" "table-set" (func $table.set (param i32 funcref)))
  (import "fuzzing-support" "table-get" (func $table.get (param i32) (result funcref)))
@@ -20,6 +20,8 @@
  (import "fuzzing-support" "call-ref-catch" (func $call.ref.catch (param funcref) (result i32)))
 
  (import "fuzzing-support" "sleep" (func $sleep (param i32 i32) (result i32)))
+
+ (import "fuzzing-support" "tag" (tag $imported-tag (param i32)))
 
  (table $table 10 20 funcref)
 
@@ -42,7 +44,19 @@
  ;; CHECK:      [fuzz-exec] calling throwing
  ;; CHECK-NEXT: [exception thrown: __private ()]
  (func $throwing (export "throwing")
-  (call $throw)
+  ;; Throwing 0 throws a JS ("private") exception.
+  (call $throw
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling throwing-tag
+ ;; CHECK-NEXT: [exception thrown: imported-tag 42]
+ (func $throwing-tag (export "throwing-tag")
+  ;; Throwing non-0 throws using the tag we imported.
+  (call $throw
+   (i32.const 42)
+  )
  )
 
  ;; CHECK:      [fuzz-exec] calling table.setting
@@ -315,6 +329,9 @@
 ;; CHECK:      [fuzz-exec] calling throwing
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
+;; CHECK:      [fuzz-exec] calling throwing-tag
+;; CHECK-NEXT: [exception thrown: imported-tag 42]
+
 ;; CHECK:      [fuzz-exec] calling table.setting
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
@@ -386,3 +403,4 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing
+;; CHECK-NEXT: [fuzz-exec] comparing throwing-tag
