@@ -1633,7 +1633,6 @@ class ClusterFuzz(TestCaseHandler):
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say).
         if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
-
             assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
@@ -1730,20 +1729,38 @@ class Two(TestCaseHandler):
         return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
 
 
+# Test --preserve-imports-exports, which never modifies imports or exports.
+class PreserveImportsExports(TestCaseHandler):
+    frequency = 1 # 0.2
+
+    def handle(self, wasm):
+        # Generate some random input data.
+        data = abspath('second_input.dat')
+        make_random_input(random_size(), data)
+
+        # Process the existing wasm file.
+        processed = run([in_bin('wasm-opt'), data] + FEATURE_OPTS + [
+            '-ttf',
+            '--fuzz-preserve-imports-exports',
+            '--initial-fuzz=' + wasm,
+            '--print',
+        ])
+
+        # Verify no imports or exports changed, by comparing to unprocessed/
+        # original text.
+        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
+
+        def get_relevant_lines(wat):
+            # Imports and exports are relevant.
+            lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
+            return '\n'.join(lines)
+
+        assert get_relevant_lines(original) == get_relevant_lines(processed)
+
+
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
-    # TODO: enable when stable enough, and adjust |frequency| (see above)
-    # Split(),
-    RoundtripText(),
-    ClusterFuzz(),
-    Two(),
+    PreserveImportsExports(),
 ]
 
 
