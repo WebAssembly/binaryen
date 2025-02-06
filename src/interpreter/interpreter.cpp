@@ -93,13 +93,19 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     // TODO: add support for all operations.
     switch (curr->op) {
       case AddInt32:
+      case AddFloat32:
         push(lhs.add(rhs));
         return {};
       case SubInt32:
+      case SubFloat32:
         push(lhs.sub(rhs));
         return {};
       case MulInt32:
+      case MulFloat32:
         push(lhs.mul(rhs));
+        return {};
+      case DivFloat32:
+        push(lhs.div(rhs));
         return {};
       default:
         WASM_UNREACHABLE("TODO");
