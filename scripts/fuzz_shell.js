@@ -272,7 +272,7 @@ var imports = {
       if (!which) {
         throw 'some JS error';
       } else {
-        throw new WebAssembly.Exception(jsTag, which);
+        throw new WebAssembly.Exception(jsTag, [which]);
       }
     },
 
