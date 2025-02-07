@@ -15,9 +15,11 @@
 
  (import "fuzzing-support" "call-export" (func $call.export (param i32)))
  (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32) (result i32)))
+ (import "fuzzing-support" "call-export-catch-ref" (func $call.export.catch.ref (param i32) (result exnref)))
 
  (import "fuzzing-support" "call-ref" (func $call.ref (param funcref)))
  (import "fuzzing-support" "call-ref-catch" (func $call.ref.catch (param funcref) (result i32)))
+ (import "fuzzing-support" "call-ref-catch-ref" (func $call.ref.catch.ref (param funcref) (result exnref)))
 
  (import "fuzzing-support" "sleep" (func $sleep (param i32 i32) (result i32)))
 
@@ -137,6 +139,14 @@
   )
  )
 
+ (func $export.calling.catching.ref (export "export.calling.catching.ref") (result exnref)
+  ;; At index 999 we have nothing, so we'll error, catch it, and return the
+  ;; returned exnref.
+  (call $call.export.catch
+   (i32.const 999)
+  )
+ )
+
  ;; CHECK:      [fuzz-exec] calling ref.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
@@ -169,6 +179,13 @@
    (call $call.ref.catch
     (ref.null func)
    )
+  )
+ )
+
+ (func $ref.calling.catching.ref (export "ref.calling.catching.ref") (result exnref)
+  ;; The null makes us throw, which we catch, and return the returned exnref.
+  (call $call.export.catch.ref
+   (ref.null func)
   )
  )
 
