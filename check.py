@@ -371,6 +371,16 @@ TEST_SUITES = OrderedDict([
 
 # Run all the tests
 def main():
+    cmd = shared.WASM_OPT + [os.path.join(shared.options.binaryen_test, 'passes/translate-to-fuzz_all-features_metrics_noprint.wast'),
+        '-ttf', '-all', '--metrics', '--print']
+    print(cmd)
+    out = support.run_command(cmd)
+    import time
+    time.sleep(1)
+    print(out)
+
+    return
+
     all_suites = TEST_SUITES.keys()
     skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
 

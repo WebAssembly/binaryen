@@ -35,6 +35,7 @@ int8_t Random::get() {
     pos = 0;
     xorFactor++;
   }
+std::cerr << "get " << pos << " : " << bytes.size() << " : " << xorFactor << " : " << (bytes[pos] ^ xorFactor) << '\n';
   return bytes[pos++] ^ xorFactor;
 }
 
