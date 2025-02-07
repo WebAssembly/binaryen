@@ -844,12 +844,16 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 
   if (choice & 1) {
     // Given an export index, call it from JS.
+    // A second parameter has flags. The first bit determines whether we catch
+    // and rethrow all exceptions. (This ends up giving us the same signature
+    // and behavior as the normal mode, so we just add the flags here rather
+    // than another export.)
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
     func->name = callExportImportName;
     func->module = "fuzzing-support";
     func->base = "call-export";
-    func->type = Signature({Type::i32}, Type::none);
+    func->type = Signature({Type::i32, Type::i32}, Type::none);
     wasm.addFunction(std::move(func));
   }
 
@@ -877,7 +881,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->name = callRefImportName;
       func->module = "fuzzing-support";
       func->base = "call-ref";
-      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      // As call-export, there is a flags param that allows us to catch+rethrow
+      // all exceptions.
+      func->type = Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none);
       wasm.addFunction(std::move(func));
     }
 
@@ -1107,6 +1113,7 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
+  // Call code: either an export or a ref. Each has a catching and non-catching
   // variant. The catching variants return i32, the others none.
   assert(type == Type::none || type == Type::i32);
   auto catching = type == Type::i32;
