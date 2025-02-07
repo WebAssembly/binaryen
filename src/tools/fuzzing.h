@@ -483,6 +483,7 @@ private:
   Expression* makeArrayBulkMemoryOp(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeThrow(Type type);
+  Expression* makeThrowRef(Type type);
 
   Expression* makeMemoryInit();
   Expression* makeDataDrop();

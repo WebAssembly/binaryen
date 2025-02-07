@@ -2008,7 +2008,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeSwitch,
          &Self::makeDrop,
          &Self::makeReturn)
-    .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
+    .add(FeatureSet::ExceptionHandling, &Self::makeThrow, &Self::makeThrowRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
@@ -3266,12 +3266,17 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      auto null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
-      if (!type.isNullable()) {
-        assert(funcContext);
-        return builder.makeRefAs(RefAsNonNull, null);
+      // If nullable, we can emit a null. If not, generate an exnref using a
+      // throw in a try_table.
+      if (type.isNullable() && oneIn(2)) {
+        return builder.makeRefNull(HeapTypes::exn.getBasic(share));
       }
-      return null;
+
+      // Make a catch_all_ref to a block.
+      auto* throww = makeThrow(Type::unreachable);
+      auto label = makeLabel();
+      auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
+      return builder.makeBlock(label, tryy);
     }
     case HeapType::string: {
       // In non-function contexts all we can do is string.const.
@@ -4823,6 +4828,15 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     operands.push_back(make(t));
   }
   return builder.makeThrow(tag, operands);
+}
+
+Expression* TranslateToFuzzReader::makeThrowRef(Type type) {
+  assert(type == Type::unreachable);
+  // Use a nullable type here to avoid the risk of trapping (when we find no way
+  // to make a non-nullable ref, we end up fixing validation with
+  // ref.as_non_null of a null, which validates but traps).
+  auto* ref = make(Type(HeapType::exn, Nullable));
+  return builder.makeThrowRef(ref);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryInit() {
