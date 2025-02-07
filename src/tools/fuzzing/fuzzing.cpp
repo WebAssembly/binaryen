@@ -1997,6 +1997,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
   using Self = TranslateToFuzzReader;
   auto options = FeatureOptions<Expression* (Self::*)(Type)>();
   using WeightedOption = decltype(options)::WeightedOption;
+  std::cerr << "waka _makeunreachable options " << options.options.size() << '\n';
   options
     .add(FeatureSet::MVP,
          WeightedOption{&Self::makeLocalSet, VeryImportant},
@@ -2013,9 +2014,12 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeSelect,
          &Self::makeSwitch,
          &Self::makeDrop,
-         &Self::makeReturn)
-    .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
-    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
+         &Self::makeReturn);
+std::cerr << "waka b _makeunreachable options " << options.options.size() << '\n';
+  options .add(FeatureSet::ExceptionHandling, &Self::makeThrow);
+  std::cerr << "waka c _makeunreachable options " << options.options.size() << '\n';
+  options  .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
+  std::cerr << "waka d _makeunreachable options " << options.options.size() << '\n';
   return (this->*pick(options))(Type::unreachable);
 }
 

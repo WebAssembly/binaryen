@@ -132,11 +132,14 @@ public:
   template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
     std::vector<T> matches;
     for (const auto& item : picker.options) {
+std::cerr << "waka FO.items() " << item.first << " : " << item.second.size() << '\n';
       if (features.has(item.first)) {
         matches.reserve(matches.size() + item.second.size());
         matches.insert(matches.end(), item.second.begin(), item.second.end());
+  std::cerr << "  waka FO items addedd " << matches.size() << "\n";
       }
     }
+  std::cerr << "waka FO size final " << matches.size() << '\n';// items addddddddddd\n";
     return matches;
   }
 
