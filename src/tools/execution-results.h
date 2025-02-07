@@ -139,7 +139,7 @@ public:
           callExportAsJS(arguments[0].geti32());
           return {Literal::makeNull(HeapType::exn)};
         } catch (const WasmException& e) {
-          return e.exn;
+          return {e.exn};
         }
       } else if (import->base == "call-ref") {
         callRefAsJS(arguments[0]);
@@ -158,7 +158,7 @@ public:
           callRefAsJS(arguments[0]);
           return {Literal::makeNull(HeapType::exn)};
         } catch (const WasmException& e) {
-          return e.exn;
+          return {e.exn};
         }
       } else if (import->base == "sleep") {
         // Do not actually sleep, just return the id.
