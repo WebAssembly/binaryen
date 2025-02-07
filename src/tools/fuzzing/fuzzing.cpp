@@ -883,7 +883,8 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->base = "call-ref";
       // As call-export, there is a flags param that allows us to catch+rethrow
       // all exceptions.
-      func->type = Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none);
+      func->type =
+        Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none);
       wasm.addFunction(std::move(func));
     }
 
