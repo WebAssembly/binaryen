@@ -183,8 +183,18 @@ void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
 void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }
 void ReFinalize::visitContBind(ContBind* curr) { curr->finalize(); }
 void ReFinalize::visitSuspend(Suspend* curr) { curr->finalize(getModule()); }
-void ReFinalize::visitResume(Resume* curr) { curr->finalize(); }
-void ReFinalize::visitResumeThrow(ResumeThrow* curr) { curr->finalize(); }
+void ReFinalize::visitResume(Resume* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->handlerBlocks.size(); i++) {
+    updateBreakValueType(curr->handlerBlocks[i], curr->sentTypes[i]);
+  }
+}
+void ReFinalize::visitResumeThrow(ResumeThrow* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->handlerBlocks.size(); i++) {
+    updateBreakValueType(curr->handlerBlocks[i], curr->sentTypes[i]);
+  }
+}
 void ReFinalize::visitStackSwitch(StackSwitch* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
