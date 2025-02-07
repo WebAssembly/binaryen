@@ -60,7 +60,7 @@ public:
     }
 
     for (auto& tag : wasm.tags) {
-      if (tag->module == "fuzzing-support" && tag->base == "tag") {
+      if (tag->module == "fuzzing-support" && tag->base == "wasmtag") {
         wasmTag = tag->name;
         break;
       }

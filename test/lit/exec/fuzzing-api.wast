@@ -331,7 +331,7 @@
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
 ;; CHECK:      [fuzz-exec] calling throwing-tag
-;; CHECK-NEXT: [exception thrown: imported-tag 42]
+;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
 
 ;; CHECK:      [fuzz-exec] calling table.setting
 ;; CHECK-NEXT: [exception thrown: __private ()]
