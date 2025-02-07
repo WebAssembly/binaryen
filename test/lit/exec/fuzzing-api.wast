@@ -139,9 +139,21 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling export.calling.catching.ref
- ;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref => object
- (func $export.calling.catching.ref (export "export.calling.catching.ref") (result exnref)
+ ;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.a
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.a => null
+ (func $export.calling.catching.ref.a (export "export.calling.catching.ref.a") (result exnref)
+  ;; At index 0 we have a function that does some logging. As no exception is
+  ;; thrown, we'll return a null here.
+  (call $call.export.catch.ref
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.b
+ ;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.b => object
+ (func $export.calling.catching.ref.b (export "export.calling.catching.ref.b") (result exnref)
   ;; At index 999 we have nothing, so we'll error, catch it, and return the
   ;; returned exnref.
   (call $call.export.catch.ref
@@ -372,8 +384,13 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling export.calling.catching.ref
-;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref => object
+;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.a
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.a => null
+
+;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.b
+;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.b => object
 
 ;; CHECK:      [fuzz-exec] calling ref.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -417,7 +434,8 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
-;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching.ref
+;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching.ref.a
+;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching.ref.b
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
