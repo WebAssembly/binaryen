@@ -2617,15 +2617,29 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
-  Flow visitContNew(ContNew* curr) { WASM_UNREACHABLE("unimplemented"); }
-  Flow visitContBind(ContBind* curr) { WASM_UNREACHABLE("unimplemented"); }
-  Flow visitSuspend(Suspend* curr) { WASM_UNREACHABLE("unimplemented"); }
-  Flow visitResume(Resume* curr) { WASM_UNREACHABLE("unimplemented"); }
+  Flow visitContNew(ContNew* curr) {
+    NOTE_ENTER("ContNew");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitContBind(ContBind* curr) {
+    NOTE_ENTER("ContBind");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSuspend(Suspend* curr) {
+    NOTE_ENTER("Suspend");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitResume(Resume* curr) {
+    NOTE_ENTER("Resume");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitResumeThrow(ResumeThrow* curr) {
-    WASM_UNREACHABLE("unimplemented");
+    NOTE_ENTER("ResumeThrow");
+    return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStackSwitch(StackSwitch* curr) {
-    WASM_UNREACHABLE("unimplemented");
+    NOTE_ENTER("StackSwitch");
+    return Flow(NONCONSTANT_FLOW);
   }
 
   void trap(const char* why) override { throw NonconstantException(); }
