@@ -92,11 +92,12 @@ public:
         std::cout << "]\n";
         return {};
       } else if (import->base == "throw") {
+        // Throw something, depending on the value of the argument. 0 means we
+        // should throw a JS exception, and any other value means we should
+        // throw a wasm exception (with that value as the payload).
         if (arguments[0].geti32() == 0) {
-          // Throw in a way similar to JS.
           throwEmptyException();
         } else {
-          // Throw the argument in the imported JS tag.
           auto payload = std::make_shared<ExnData>(fuzzTag, arguments);
           throwException(WasmException{Literal(payload)});
         }
