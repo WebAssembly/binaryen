@@ -12,7 +12,7 @@
  ;; CHECK:      (func $resume (type $2) (param $c (ref $cont))
  ;; CHECK-NEXT:  (block $exit
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block $handle_effect
+ ;; CHECK-NEXT:    (block $handle_effect (result (ref $cont))
  ;; CHECK-NEXT:     (resume $cont (on $tag $handle_effect)
  ;; CHECK-NEXT:      (local.get $c)
  ;; CHECK-NEXT:     )
@@ -39,7 +39,7 @@
  ;; CHECK:      (func $resume_throw (type $2) (param $c (ref $cont))
  ;; CHECK-NEXT:  (block $exit
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block $handle_effect
+ ;; CHECK-NEXT:    (block $handle_effect (result (ref $cont))
  ;; CHECK-NEXT:     (resume_throw $cont $tag (on $tag $handle_effect)
  ;; CHECK-NEXT:      (local.get $c)
  ;; CHECK-NEXT:     )
