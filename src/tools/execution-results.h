@@ -42,8 +42,8 @@ private:
   Name exportedTable;
   Module& wasm;
 
-  // The name of the imported fuzzing tag.
-  Name fuzzTag;
+  // The name of the imported fuzzing tag for wasm.
+  Name wasmTag;
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -61,7 +61,7 @@ public:
 
     for (auto& tag : wasm.tags) {
       if (tag->module == "fuzzing-support" && tag->base == "tag") {
-        fuzzTag = tag->name;
+        wasmTag = tag->name;
         break;
       }
     }
@@ -98,7 +98,7 @@ public:
         if (arguments[0].geti32() == 0) {
           throwEmptyException();
         } else {
-          auto payload = std::make_shared<ExnData>(fuzzTag, arguments);
+          auto payload = std::make_shared<ExnData>(wasmTag, arguments);
           throwException(WasmException{Literal(payload)});
         }
       } else if (import->base == "table-get") {
