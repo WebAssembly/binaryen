@@ -634,8 +634,8 @@ void TranslateToFuzzReader::setupGlobals() {
 }
 
 void TranslateToFuzzReader::setupTags() {
-  // As in modifyInitialFunctions(), we can't allow tag imports as it would trap
-  // when the fuzzing infrastructure doesn't know what to provide.
+  // As in modifyInitialFunctions(), we can't allow arbitrary tag imports, which
+  // would trap when the fuzzing infrastructure doesn't know what to provide.
   for (auto& tag : wasm.tags) {
     if (tag->imported()) {
       tag->module = tag->base = Name();
@@ -646,6 +646,15 @@ void TranslateToFuzzReader::setupTags() {
   Index num = upTo(3);
   for (size_t i = 0; i < num; i++) {
     addTag();
+  }
+
+  // Add the fuzzing support tag manually sometimes.
+  if (oneIn(2)) {
+    auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag"),
+                               Signature(Type::i32, Type::none));
+    tag->module = "fuzzing-support";
+    tag->base = "tag";
+    wasm.addTag(std::move(tag));
   }
 }
 
@@ -888,16 +897,14 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 }
 
 void TranslateToFuzzReader::addImportThrowingSupport() {
-  // Throw some kind of exception from JS.
-  // TODO: Send an index, which is which exported wasm Tag we should throw, or
-  //       something not exported if out of bounds. First we must also export
-  //       tags sometimes.
+  // Throw some kind of exception from JS. If we send 0 then a pure JS
+  // exception is thrown, and any other value is the value in a wasm tag.
   throwImportName = Names::getValidFunctionName(wasm, "throw");
   auto func = std::make_unique<Function>();
   func->name = throwImportName;
   func->module = "fuzzing-support";
   func->base = "throw";
-  func->type = Signature(Type::none, Type::none);
+  func->type = Signature(Type::i32, Type::none);
   wasm.addFunction(std::move(func));
 }
 
@@ -1067,12 +1074,21 @@ Expression* TranslateToFuzzReader::makeImportLogging() {
 }
 
 Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
+  // TODO: This and makeThrow should probably be rare, as they halt the program.
+
   // We throw from the import, so this call appears to be none and not
   // unreachable.
   assert(type == Type::none);
 
-  // TODO: This and makeThrow should probably be rare, as they halt the program.
-  return builder.makeCall(throwImportName, {}, Type::none);
+  // An argument of 0 means to throw a JS exception, and otherwise the value in
+  // a wasm tag. Emit 0 or non-zero with ~equal probability.
+  Expression* arg;
+  if (oneIn(2)) {
+    arg = builder.makeConst(int32_t(0));
+  } else {
+    arg = makeConst(Type::i32);
+  }
+  return builder.makeCall(throwImportName, {arg}, Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeImportTableGet() {

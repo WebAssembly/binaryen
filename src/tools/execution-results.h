@@ -42,6 +42,9 @@ private:
   Name exportedTable;
   Module& wasm;
 
+  // The name of the imported fuzzing tag.
+  Name fuzzTag;
+
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
   ModuleRunner* instance = nullptr;
@@ -52,6 +55,13 @@ public:
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
         exportedTable = exp->value;
+        break;
+      }
+    }
+
+    for (auto& tag : wasm.tags) {
+      if (tag->module == "fuzzing-support" && tag->base == "tag") {
+        fuzzTag = tag->name;
         break;
       }
     }
@@ -82,7 +92,15 @@ public:
         std::cout << "]\n";
         return {};
       } else if (import->base == "throw") {
-        throwEmptyException();
+        // Throw something, depending on the value of the argument. 0 means we
+        // should throw a JS exception, and any other value means we should
+        // throw a wasm exception (with that value as the payload).
+        if (arguments[0].geti32() == 0) {
+          throwEmptyException();
+        } else {
+          auto payload = std::make_shared<ExnData>(fuzzTag, arguments);
+          throwException(WasmException{Literal(payload)});
+        }
       } else if (import->base == "table-get") {
         // Check for errors here, duplicating tableLoad(), because that will
         // trap, and we just want to throw an exception (the same as JS would).
