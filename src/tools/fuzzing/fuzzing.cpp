@@ -649,9 +649,7 @@ void TranslateToFuzzReader::setupTags() {
   }
 
   // Add the fuzzing support tag manually sometimes.
-std::cerr << "waka addTag?\n";
   if (oneIn(2)) {
-std::cerr << "waka   addTag!!1\n";
     auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag"),
                                Signature(Type::i32, Type::none));
     tag->module = "fuzzing-support";
@@ -1084,16 +1082,12 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
 
   // An argument of 0 means to throw a JS exception, and otherwise the value in
   // a wasm tag. Emit 0 or non-zero with ~equal probability.
-std::cerr << "waka makeIT\n";
   Expression* arg;
   if (oneIn(2)) {
-std::cerr << "waka   makeIT zero\n";
     arg = builder.makeConst(int32_t(0));
   } else {
-std::cerr << "waka   makeIT const\n";
     arg = makeConst(Type::i32);
   }
-std::cerr << "waka   makeIT CALL NOW\n";
   return builder.makeCall(throwImportName, {arg}, Type::none);
 }
 
@@ -1997,7 +1991,6 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
   using Self = TranslateToFuzzReader;
   auto options = FeatureOptions<Expression* (Self::*)(Type)>();
   using WeightedOption = decltype(options)::WeightedOption;
-  std::cerr << "waka _makeunreachable options " << options.options.size() << '\n';
   options
     .add(FeatureSet::MVP,
          WeightedOption{&Self::makeLocalSet, VeryImportant},
@@ -2014,12 +2007,9 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeSelect,
          &Self::makeSwitch,
          &Self::makeDrop,
-         &Self::makeReturn);
-std::cerr << "waka b _makeunreachable options " << options.options.size() << '\n';
-  options .add(FeatureSet::ExceptionHandling, &Self::makeThrow);
-  std::cerr << "waka c _makeunreachable options " << options.options.size() << '\n';
-  options  .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
-  std::cerr << "waka d _makeunreachable options " << options.options.size() << '\n';
+         &Self::makeReturn)
+    .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
 
