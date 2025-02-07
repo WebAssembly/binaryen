@@ -1107,7 +1107,7 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
- // variant. The catching variants return i32, the others none.
+  // variant. The catching variants return i32, the others none.
   assert(type == Type::none || type == Type::i32);
   auto catching = type == Type::i32;
   auto exportTarget =
