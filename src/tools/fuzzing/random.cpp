@@ -26,6 +26,10 @@ Random::Random(std::vector<char>&& bytes_, FeatureSet features)
   if (bytes.empty()) {
     bytes.push_back(0);
   }
+for (Index i = 0; i < bytes.size(); i++) {
+  std::cerr << "bytes[" << i << " ] = " << int(bytes[i]) << '\n';
+}
+std::cerr << "xorF: " << xorFactor << '\n';
 }
 
 int8_t Random::get() {
@@ -34,6 +38,7 @@ int8_t Random::get() {
     finishedInput = true;
     pos = 0;
     xorFactor++;
+std::cerr << "bump xorF " << xorFactor << '\n';
   }
 std::cerr << "get " << pos << " : " << bytes.size() << " : " << xorFactor << " : " << (bytes[pos] ^ xorFactor) << '\n';
   return bytes[pos++] ^ xorFactor;
@@ -72,7 +77,9 @@ uint32_t Random::upTo(uint32_t x) {
   }
   auto ret = raw % x;
   // use extra bits as "noise" for later
+std::cerr << "upTo " << x << " will return " << ret << " from raw " << raw << '\n';
   xorFactor += raw / x;
+std::cerr << "  mod xorF " << xorFactor << '\n';
   return ret;
 }
 
