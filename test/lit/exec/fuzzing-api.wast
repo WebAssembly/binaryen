@@ -52,7 +52,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling throwing-tag
- ;; CHECK-NEXT: [exception thrown: (null Name) 42]
+ ;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
  (func $throwing-tag (export "throwing-tag")
   ;; Throwing non-0 throws using the tag we imported.
   (call $throw
@@ -331,7 +331,7 @@
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
 ;; CHECK:      [fuzz-exec] calling throwing-tag
-;; CHECK-NEXT: [exception thrown: (null Name) 42]
+;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
 
 ;; CHECK:      [fuzz-exec] calling table.setting
 ;; CHECK-NEXT: [exception thrown: __private ()]
