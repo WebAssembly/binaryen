@@ -122,7 +122,11 @@ public:
         }
         tableStore(exportedTable, index, arguments[1]);
         return {};
-      } else if (import->base == "call-export") {
+      } else if (import->base == "call-export" ||
+                 import->base == "call-export-catch-rethrow") {
+        // If an exception is thrown, the catch-rethrow variant should catch and
+        // rethrow it. We can simulate that by just doing nothing and letting
+        // exceptions flow out.
         callExportAsJS(arguments[0].geti32());
         // Return nothing. If we wanted to return a value we'd need to have
         // multiple such functions, one for each signature.
@@ -134,17 +138,10 @@ public:
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
         }
-      } else if (import->base == "call-export-catch-ref") {
-        try {
-          callExportAsJS(arguments[0].geti32());
-          return {Literal::makeNull(HeapType::exn)};
-        } catch (const WasmException& e) {
-          return {e.exn};
-        }
-      } else if (import->base == "call-ref") {
+      } else if (import->base == "call-ref" ||
+                 import->base == "call-ref-catch-rethrow") {
+        // Similar to call-export*, but with a ref.
         callRefAsJS(arguments[0]);
-        // Return nothing. If we wanted to return a value we'd need to have
-        // multiple such functions, one for each signature.
         return {};
       } else if (import->base == "call-ref-catch") {
         try {
@@ -152,13 +149,6 @@ public:
           return {Literal(int32_t(0))};
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
-        }
-      } else if (import->base == "call-ref-catch-ref") {
-        try {
-          callRefAsJS(arguments[0]);
-          return {Literal::makeNull(HeapType::exn)};
-        } catch (const WasmException& e) {
-          return {e.exn};
         }
       } else if (import->base == "sleep") {
         // Do not actually sleep, just return the id.
