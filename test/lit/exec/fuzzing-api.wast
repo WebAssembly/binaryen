@@ -21,7 +21,8 @@
 
  (import "fuzzing-support" "sleep" (func $sleep (param i32 i32) (result i32)))
 
- (import "fuzzing-support" "tag" (tag $imported-tag (param i32)))
+ (import "fuzzing-support" "wasmtag" (tag $imported-wasm-tag (param i32)))
+ (import "fuzzing-support" "jstag" (tag $imported-js-tag (param externref)))
 
  (table $table 10 20 funcref)
 
@@ -51,7 +52,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling throwing-tag
- ;; CHECK-NEXT: [exception thrown: imported-tag 42]
+ ;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
  (func $throwing-tag (export "throwing-tag")
   ;; Throwing non-0 throws using the tag we imported.
   (call $throw
