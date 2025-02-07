@@ -658,7 +658,7 @@ void TranslateToFuzzReader::setupTags() {
 
     auto externref = Type(HeapType::ext, Nullable);
     auto jsTag = builder.makeTag(Names::getValidTagName(wasm, "jstag"),
-                               Signature(Type::i32, Type::none));
+                               Signature(externref, Type::none));
     jsTag->module = "fuzzing-support";
     jsTag->base = "jstag";
     wasm.addTag(std::move(jsTag));
