@@ -13,13 +13,11 @@
  (import "fuzzing-support" "table-set" (func $table.set (param i32 funcref)))
  (import "fuzzing-support" "table-get" (func $table.get (param i32) (result funcref)))
 
- (import "fuzzing-support" "call-export" (func $call.export (param i32)))
+ (import "fuzzing-support" "call-export" (func $call.export (param i32 i32)))
  (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32) (result i32)))
- (import "fuzzing-support" "call-export-catch-ref" (func $call.export.catch.ref (param i32) (result exnref)))
 
- (import "fuzzing-support" "call-ref" (func $call.ref (param funcref)))
+ (import "fuzzing-support" "call-ref" (func $call.ref (param funcref i32)))
  (import "fuzzing-support" "call-ref-catch" (func $call.ref.catch (param funcref) (result i32)))
- (import "fuzzing-support" "call-ref-catch-ref" (func $call.ref.catch.ref (param funcref) (result exnref)))
 
  (import "fuzzing-support" "sleep" (func $sleep (param i32 i32) (result i32)))
 
@@ -111,10 +109,28 @@
   ;; At index 0 in the exports we have $logging, so we will do those loggings.
   (call $call.export
    (i32.const 0)
+   ;; First bit set in the flags means a normal call.
+   (i32.const 1)
   )
   ;; At index 999 we have nothing, so we'll error.
   (call $call.export
    (i32.const 999)
+   (i32.const 1)
+  )
+ )
+
+ (func $export.calling.rethrow (export "export.calling.rethrow")
+  ;; As above, but the second param is different.
+  (call $call.export
+   (i32.const 0)
+   ;; First bit unset in the flags means a catch+rethrow. There is no visible
+   ;; effect here, but there might be in JS VMs.
+   (i32.const 0)
+  )
+  ;; At index 999 we have nothing, so we'll error.
+  (call $call.export
+   (i32.const 999)
+   (i32.const 0)
   )
  )
 
@@ -139,28 +155,6 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.a
- ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
- ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.a => null
- (func $export.calling.catching.ref.a (export "export.calling.catching.ref.a") (result exnref)
-  ;; At index 0 we have a function that does some logging. As no exception is
-  ;; thrown, we'll return a null here.
-  (call $call.export.catch.ref
-   (i32.const 0)
-  )
- )
-
- ;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.b
- ;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.b => object
- (func $export.calling.catching.ref.b (export "export.calling.catching.ref.b") (result exnref)
-  ;; At index 999 we have nothing, so we'll error, catch it, and return the
-  ;; returned exnref.
-  (call $call.export.catch.ref
-   (i32.const 999)
-  )
- )
-
  ;; CHECK:      [fuzz-exec] calling ref.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
@@ -169,10 +163,27 @@
   ;; This will emit some logging.
   (call $call.ref
    (ref.func $logging)
+   ;; Normal call.
+   (i32.const 1)
   )
   ;; This will throw.
   (call $call.ref
    (ref.null func)
+   (i32.const 1)
+  )
+ )
+
+ (func $ref.calling.rethrow (export "ref.calling.rethrow")
+  ;; As with calling an export, when we set the flags to 0 exceptions are
+  ;; caught and rethrown, but there is no noticeable difference here.
+  (call $call.ref
+   (ref.func $logging)
+   (i32.const 0)
+  )
+  ;; This will throw.
+  (call $call.ref
+   (ref.null func)
+   (i32.const 0)
   )
  )
 

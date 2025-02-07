@@ -1107,31 +1107,12 @@ Expression* TranslateToFuzzReader::makeImportTableSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
-  // Call code: either an export or a ref. Each has a catching and non-catching
-  // variant, and the catching variants return either an i32 or an exnref (the
-  // non-catching variants return none).
-  auto exnref = Type(HeapType::exn, Nullable);
-  assert(type == Type::none || type == Type::i32 || type == exnref);
-
-  // Whether we are catching any exceptions.
-  auto catching = type != Type::none;
-  // Whether we are catching any exceptions and returning them as an exnref (and
-  // not as a bool that says if we caught).
-  auto catchingRef = type == exnref;
-  // We can call either an export or a ref. Find the imports for each.
-  Name exportTarget, refTarget;
-  if (catching) {
-    if (catchingRef) {
-      exportTarget = callExportCatchRefImportName;
-      refTarget = callRefCatchRefImportName;
-    } else {
-      exportTarget = callExportCatchImportName;
-      refTarget = callRefCatchImportName;
-    }
-  } else {
-    exportTarget = callExportImportName;
-    refTarget = callRefImportName;
-  }
+ // variant. The catching variants return i32, the others none.
+  assert(type == Type::none || type == Type::i32);
+  auto catching = type == Type::i32;
+  auto exportTarget =
+    catching ? callExportCatchImportName : callExportImportName;
+  auto refTarget = catching ? callRefCatchImportName : callRefImportName;
 
   // We want to call a ref less often, as refs are more likely to error (a
   // function reference can have arbitrary params and results, including things
@@ -1174,7 +1155,15 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     index = builder.makeBinary(
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-  return builder.makeCall(exportTarget, {index}, type);
+
+  // The non-catching variants send a flags argument, which says whether to
+  // catch+rethrow.
+  std::vector<Expression*> args = {index};
+  if (!catching) {
+    // The first bit matters here, so we can send anything.
+    args.push_back(make(Type::i32));
+  }
+  return builder.makeCall(exportTarget, args, type);
 }
 
 Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
@@ -1956,10 +1945,6 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeArrayGet);
     }
-  }
-  auto exnref = Type(HeapType::exn, Nullable);
-  if (type == exnref && (callExportCatchRefImportName || callRefCatchRefImportName)) {
-    options.add(FeatureSet::ExceptionHandling, &Self::makeImportCallCode);
   }
   return (this->*pick(options))(type);
 }
