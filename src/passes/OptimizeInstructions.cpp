@@ -1872,14 +1872,27 @@ struct OptimizeInstructions
       return;
     }
 
+    // We generally can't optimize seqcst RMWs on shared memory because they can
+    // act as both the source and sink of synchronization edges, even if they
+    // don't modify the in-memory value.
+    if (curr->ref->type.getHeapType().isShared() &&
+        curr->order == MemoryOrder::SeqCst) {
+      return;
+    }
+
     Builder builder(*getModule());
 
-    // Even when the RMW access is to shared memory, we can optimize out the
-    // modify and write parts if we know that the modified value is the same as
-    // the original value. This is valid because reads from writes that don't
-    // change the in-memory value can be considered to be reads from the
-    // previous write to the same location instead. That means there is no read
-    // that necessarily synchronizes with the write.
+    // This RMW is either to non-shared memory or has acquire-release ordering.
+    // In the former case, it trivially does not synchronize with other threads
+    // and we can optimize to our heart's content. In the latter case, if we
+    // know the RMW does not change the value in memory, then we can consider
+    // all subsequent reads as reading from the previous write rather than from
+    // this RMW op, which means this RMW does not synchronize with later reads
+    // and we can optimize out the write part. This optimization wouldn't be
+    // valid for sequentially consistent RMW ops because the next reads from
+    // this location in the total order of seqcst ops would have to be
+    // considered to be reading from this RMW and therefore would synchronize
+    // with it.
     auto* value =
       Properties::getFallthrough(curr->value, getPassOptions(), *getModule());
     if (Properties::isSingleConstantExpression(value)) {
@@ -1909,6 +1922,7 @@ struct OptimizeInstructions
       }
     }
 
+    // No further optimizations possible on RMWs to shared memory.
     if (curr->ref->type.getHeapType().isShared()) {
       return;
     }
@@ -1990,9 +2004,17 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
-    // Just like other RMW operations, cmpxchg can be optimized to just a read
-    // if it is known not to change the in-memory value. This is the case when
-    // `expected` and `replacement` are known to be the same.
+    // As with other RMW operations, we cannot optimize if the RMW is
+    // sequentially consistent and to shared memory.
+    if (curr->ref->type.getHeapType().isShared() &&
+        curr->order == MemoryOrder::SeqCst) {
+      return;
+    }
+
+    // Just like other RMW operations, unshared or release-acquire cmpxchg can
+    // be optimized to just a read if it is known not to change the in-memory
+    // value. This is the case when `expected` and `replacement` are known to be
+    // the same.
     if (areConsecutiveInputsEqual(curr->expected, curr->replacement)) {
       auto* ref = getResultOfFirst(
         curr->ref,
