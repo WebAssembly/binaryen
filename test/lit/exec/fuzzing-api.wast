@@ -119,6 +119,10 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling export.calling.rethrow
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [exception thrown: __private ()]
  (func $export.calling.rethrow (export "export.calling.rethrow")
   ;; As above, but the second param is different.
   (call $call.export
@@ -173,6 +177,10 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [exception thrown: __private ()]
  (func $ref.calling.rethrow (export "ref.calling.rethrow")
   ;; As with calling an export, when we set the flags to 0 exceptions are
   ;; caught and rethrown, but there is no noticeable difference here.
@@ -207,15 +215,6 @@
   )
  )
 
- ;; CHECK:      [fuzz-exec] calling ref.calling.catching.ref
- ;; CHECK-NEXT: [fuzz-exec] note result: ref.calling.catching.ref => object
- (func $ref.calling.catching.ref (export "ref.calling.catching.ref") (result exnref)
-  ;; The null makes us throw, which we catch, and return the returned exnref.
-  (call $call.ref.catch.ref
-   (ref.null func)
-  )
- )
-
  (func $legal (param $x i32) (result i32)
   ;; Helper for the function below. All types here are legal for JS.
   (call $log-i32
@@ -238,6 +237,7 @@
   ;; logging from the function, "12".
   (call $call.ref
    (ref.func $legal)
+   (i32.const 1)
   )
  )
 
@@ -389,21 +389,23 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [exception thrown: __private ()]
 
+;; CHECK:      [fuzz-exec] calling export.calling.rethrow
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [exception thrown: __private ()]
+
 ;; CHECK:      [fuzz-exec] calling export.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
 
-;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.a
+;; CHECK:      [fuzz-exec] calling ref.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.a => null
+;; CHECK-NEXT: [exception thrown: __private ()]
 
-;; CHECK:      [fuzz-exec] calling export.calling.catching.ref.b
-;; CHECK-NEXT: [fuzz-exec] note result: export.calling.catching.ref.b => object
-
-;; CHECK:      [fuzz-exec] calling ref.calling
+;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [exception thrown: __private ()]
@@ -413,9 +415,6 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
-
-;; CHECK:      [fuzz-exec] calling ref.calling.catching.ref
-;; CHECK-NEXT: [fuzz-exec] note result: ref.calling.catching.ref => object
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.legal
 ;; CHECK-NEXT: [LoggingExternalInterface logging 12]
@@ -445,18 +444,17 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
-;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching.ref.a
-;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching.ref.b
+;; CHECK-NEXT: [fuzz-exec] comparing export.calling.rethrow
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
-;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching.ref
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-exnref
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.rethrow
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.trap
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
