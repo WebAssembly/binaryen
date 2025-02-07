@@ -25,64 +25,69 @@
  (tag $effect (param (ref eq)) (result (ref eq) (ref eq)))
 
  ;; CHECK:      (func $resume (type $10) (param $0 (ref $fiber)) (param $1 (ref $closure)) (param $2 (ref eq)) (result (ref eq))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local $3 (tuple (ref eq) (ref $cont)))
+ ;; CHECK-NEXT:  (local $4 (ref $handlers))
+ ;; CHECK-NEXT:  (local $5 (ref $closure_2))
+ ;; CHECK-NEXT:  (return_call_ref $function_1
  ;; CHECK-NEXT:   (block $handle_exception (result (ref eq))
- ;; CHECK-NEXT:    (tuple.drop 2
- ;; CHECK-NEXT:     (block $handle_effect (type $3) (result (ref eq) (ref $cont))
- ;; CHECK-NEXT:      (return_call_ref $function_1
- ;; CHECK-NEXT:       (try_table (result (ref eq)) (catch $exception $handle_exception)
- ;; CHECK-NEXT:        (resume $cont (on $effect $handle_effect)
- ;; CHECK-NEXT:         (local.get $1)
- ;; CHECK-NEXT:         (local.get $2)
- ;; CHECK-NEXT:         (struct.get $fiber $cont
- ;; CHECK-NEXT:          (local.get $0)
+ ;; CHECK-NEXT:    (return_call_ref $function_2
+ ;; CHECK-NEXT:     (tuple.extract 2 0
+ ;; CHECK-NEXT:      (local.tee $3
+ ;; CHECK-NEXT:       (block $handle_effect (type $7) (result (ref eq) (ref $cont))
+ ;; CHECK-NEXT:        (return_call_ref $function_1
+ ;; CHECK-NEXT:         (try_table (result (ref eq)) (catch $exception $handle_exception)
+ ;; CHECK-NEXT:          (resume $cont (on $effect $handle_effect)
+ ;; CHECK-NEXT:           (local.get $1)
+ ;; CHECK-NEXT:           (local.get $2)
+ ;; CHECK-NEXT:           (struct.get $fiber $cont
+ ;; CHECK-NEXT:            (local.get $0)
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (local.tee $1
+ ;; CHECK-NEXT:          (struct.get $handlers $value
+ ;; CHECK-NEXT:           (struct.get $fiber $handlers
+ ;; CHECK-NEXT:            (local.get $0)
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (struct.get $closure 0
+ ;; CHECK-NEXT:          (local.get $1)
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (local.tee $1
- ;; CHECK-NEXT:        (struct.get $handlers $value
- ;; CHECK-NEXT:         (struct.get $fiber $handlers
- ;; CHECK-NEXT:          (local.get $0)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (struct.get $closure 0
- ;; CHECK-NEXT:        (local.get $1)
- ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block ;; (replaces unreachable StructGet we can't emit)
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block ;; (replaces unreachable StructGet we can't emit)
- ;; CHECK-NEXT:       (drop
- ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:     (struct.new $fiber
+ ;; CHECK-NEXT:      (local.tee $4
+ ;; CHECK-NEXT:       (struct.get $fiber $handlers
+ ;; CHECK-NEXT:        (local.get $0)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (tuple.extract 2 1
+ ;; CHECK-NEXT:       (local.get $3)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block ;; (replaces unreachable StructGet we can't emit)
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     (local.tee $5
+ ;; CHECK-NEXT:      (struct.get $handlers $effect
+ ;; CHECK-NEXT:       (local.get $4)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (struct.get $closure_2 0
+ ;; CHECK-NEXT:      (local.get $5)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (local.tee $1
+ ;; CHECK-NEXT:    (struct.get $handlers $exn
+ ;; CHECK-NEXT:     (struct.get $fiber $handlers
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (struct.get $closure 0
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $resume (export "resume") (param $fiber (ref $fiber)) (param $f (ref $closure)) (param $v (ref eq)) (result (ref eq))

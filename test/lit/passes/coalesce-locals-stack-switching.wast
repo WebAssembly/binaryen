@@ -18,10 +18,10 @@
 
  ;; CHECK:      (func $resume (type $2) (param $0 (ref $cont)) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (block $handle_exn (result i32)
  ;; CHECK-NEXT:    (try_table (catch $exn $handle_exn)
- ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:     (local.set $0
  ;; CHECK-NEXT:      (block $handle_effect (result (ref $cont))
  ;; CHECK-NEXT:       (resume $cont (on $tag $handle_effect)
  ;; CHECK-NEXT:        (local.get $0)
@@ -32,9 +32,7 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (return_call $resume
- ;; CHECK-NEXT:      (block (result (ref $cont))
- ;; CHECK-NEXT:       (unreachable)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (return
@@ -42,7 +40,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (local.get $1)
  ;; CHECK-NEXT: )
  (func $resume (param $c (ref $cont)) (result i32)
   (local $x i32)
@@ -77,10 +75,10 @@
 
  ;; CHECK:      (func $resume_throw (type $2) (param $0 (ref $cont)) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (block $handle_exn (result i32)
  ;; CHECK-NEXT:    (try_table (catch $exn $handle_exn)
- ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:     (local.set $0
  ;; CHECK-NEXT:      (block $handle_effect (result (ref $cont))
  ;; CHECK-NEXT:       (resume_throw $cont $tag (on $tag $handle_effect)
  ;; CHECK-NEXT:        (local.get $0)
@@ -91,9 +89,7 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (return_call $resume
- ;; CHECK-NEXT:      (block (result (ref $cont))
- ;; CHECK-NEXT:       (unreachable)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (return
@@ -101,7 +97,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (local.get $1)
  ;; CHECK-NEXT: )
  (func $resume_throw (param $c (ref $cont)) (result i32)
   (local $x i32)
@@ -136,7 +132,7 @@
 
  ;; CHECK:      (func $suspend (type $6) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (block $handle_exn (result i32)
  ;; CHECK-NEXT:    (try_table (catch $exn $handle_exn)
  ;; CHECK-NEXT:     (suspend $tag)
@@ -146,7 +142,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (local.get $0)
  ;; CHECK-NEXT: )
  (func $suspend (result i32)
   (local $x i32)
@@ -167,7 +163,7 @@
 
  ;; CHECK:      (func $switch (type $7) (param $0 (ref $cont_2)) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (block $handle_exn (result i32)
  ;; CHECK-NEXT:    (try_table (catch $exn $handle_exn)
  ;; CHECK-NEXT:     (switch $cont_2 $tag
@@ -179,7 +175,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (local.get $1)
  ;; CHECK-NEXT: )
  (func $switch (param $c (ref $cont_2)) (result i32)
   (local $x i32)
