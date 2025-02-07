@@ -79,7 +79,7 @@ uint32_t Random::upTo(uint32_t x) {
   // use extra bits as "noise" for later
 std::cerr << "upTo " << x << " will return " << ret << " from raw " << raw << '\n';
   xorFactor += raw / x;
-std::cerr << "  mod xorF " << xorFactor << '\n';
+std::cerr << " mod xorF " << xorFactor << '\n';
 if (x == 28 || x == 29) assert(0); // 28 for me, 29 remotely..?
   return ret;
 }
