@@ -1,0 +1,35 @@
+;; Test throwing from JS by calling the throw import.
+
+(module
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+
+  (func $throwing-js (export "throwing-js")
+    ;; Telling JS to throw with arg 0 leads to a JS exception thrown.
+    (call $throw
+      (i32.const 0)
+    )
+  )
+
+  (func $throwing-tag (export "throwing-tag")
+    ;; A non-0 arg leads to a wasm Tag being thrown.
+    (call $throw
+      (i32.const 42)
+    )
+  )
+)
+
+;; Build to a binary wasm.
+;;
+;; RUN: wasm-opt %s -o %t.wasm -q
+
+;; Run in node.
+;;
+;; RUN: v8 %S/../../../scripts/fuzz_shell.js -- %t.wasm | filecheck %s
+;;
+;; CHECK: [fuzz-exec] calling throwing-js
+;; CHECK: exception thrown: some JS error
+;; CHECK: [fuzz-exec] calling throwing-tag
+;; CHECK: exception thrown: [object WebAssembly.Exception]
+
+
+
