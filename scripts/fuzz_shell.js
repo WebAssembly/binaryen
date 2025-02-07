@@ -170,13 +170,13 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
-// Calls a given function in a try-catch, swallowing JS exceptions, and return 1
-// if we did in fact swallow an exception. Wasm traps are not swallowed (see
-// details below).
+// Calls a given function in a try-catch, swallowing JS exceptions. If an
+// exception was throw, it is returned, and null otherwise. Wasm traps are not
+// swallowed (see details below).
 /* async */ function tryCall(func) {
   try {
     /* await */ func();
-    return 0;
+    return null;
   } catch (e) {
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
@@ -209,7 +209,7 @@ function callFunc(func) {
     }
     // Otherwise, this is a normal exception we want to catch (a wasm
     // exception, or a conversion error on the wasm/JS boundary, etc.).
-    return 1;
+    return e;
   }
 }
 
@@ -285,6 +285,9 @@ var imports = {
       /* await */ callFunc(exportList[index].value);
     },
     'call-export-catch': /* async */ (index) => {
+      return !!tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
+    },
+    'call-export-catch-ref': /* async */ (index) => {
       return tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
     },
 
@@ -296,6 +299,10 @@ var imports = {
       /* await */ callFunc(ref);
     },
     'call-ref-catch': /* async */ (ref) => {
+      ref = wrapExportForJSPI(ref);
+      return !!tryCall(/* async */ () => /* await */ callFunc(ref));
+    },
+    'call-ref-catch-ref': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
       return tryCall(/* async */ () => /* await */ callFunc(ref));
     },
@@ -338,7 +345,8 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 // If JSPI is available, wrap the imports and exports.
 if (JSPI) {
   for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
-                    'call-ref-catch']) {
+                    'call-ref-catch', 'call-export-catch-ref',
+                    'call-ref-catch-ref']) {
     imports['fuzzing-support'][name] =
       new WebAssembly.Suspending(imports['fuzzing-support'][name]);
   }
