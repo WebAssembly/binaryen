@@ -122,12 +122,12 @@ public:
         }
         tableStore(exportedTable, index, arguments[1]);
         return {};
-      } else if (import->base == "call-export" ||
-                 import->base == "call-export-catch-rethrow") {
-        // If an exception is thrown, the catch-rethrow variant should catch and
-        // rethrow it. We can simulate that by just doing nothing and letting
-        // exceptions flow out.
+      } else if (import->base == "call-export") {
         callExportAsJS(arguments[0].geti32());
+        // The second argument determines if we should catch and rethrow
+        // exceptions. There is no observable difference in those two modes in
+        // the binaryen interpreter, so we don't need to do anything.
+
         // Return nothing. If we wanted to return a value we'd need to have
         // multiple such functions, one for each signature.
         return {};
@@ -138,8 +138,7 @@ public:
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
         }
-      } else if (import->base == "call-ref" ||
-                 import->base == "call-ref-catch-rethrow") {
+      } else if (import->base == "call-ref") {
         // Similar to call-export*, but with a ref.
         callRefAsJS(arguments[0]);
         return {};

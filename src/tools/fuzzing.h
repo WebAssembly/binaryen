@@ -168,10 +168,8 @@ private:
   Name tableSetImportName;
   Name callExportImportName;
   Name callExportCatchImportName;
-  Name callExportCatchRethrowImportName;
   Name callRefImportName;
   Name callRefCatchImportName;
-  Name callRefCatchRethrowImportName;
   Name sleepImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;

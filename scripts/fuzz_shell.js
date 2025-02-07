@@ -285,15 +285,18 @@ var imports = {
     },
 
     // Export operations.
-    'call-export': /* async */ (index) => {
-      /* await */ callFunc(exportList[index].value);
+    'call-export': /* async */ (index, flags) => {
+      if (flags & 1) {
+        // Normal call.
+        /* await */ callFunc(exportList[index].value);
+      } else {
+        // Catch and rethrow exceptions.
+        var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
+        if (e) throw e;
+      }
     },
     'call-export-catch': /* async */ (index) => {
       return !!tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-    },
-    'call-export-catch-rethrow': /* async */ (index) => {
-      var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-      if (e) throw e;
     },
 
     // Funcref operations.
@@ -305,12 +308,14 @@ var imports = {
     },
     'call-ref-catch': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
-      return !!tryCall(/* async */ () => /* await */ callFunc(ref));
-    },
-    'call-ref-catch-rethrow': /* async */ (ref) => {
-      ref = wrapExportForJSPI(ref);
-      var e = tryCall(/* async */ () => /* await */ callFunc(ref));
-      if (e) throw e;
+      if (flags & 1) {
+        // Normal call.
+        /* await */ callFunc(ref);
+      } else {
+        // Catch and rethrow exceptions.
+        var e = tryCall(/* async */ () => /* await */ callFunc(ref));
+        if (e) throw e;
+      }
     },
 
     // Sleep a given amount of ms (when JSPI) and return a given id after that.
@@ -357,8 +362,7 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 // If JSPI is available, wrap the imports and exports.
 if (JSPI) {
   for (var name of ['sleep', 'call-export', 'call-export-catch', 'call-ref',
-                    'call-ref-catch', 'call-export-catch-rethrow',
-                    'call-ref-catch-rethrow']) {
+                    'call-ref-catch']) {
     imports['fuzzing-support'][name] =
       new WebAssembly.Suspending(imports['fuzzing-support'][name]);
   }

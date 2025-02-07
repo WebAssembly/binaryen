@@ -867,17 +867,6 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     wasm.addFunction(std::move(func));
   }
 
-  if (choice & 4) { // todo laters
-    // As callExport, but catches and rethrows exceptions.
-    callExportCatchRethrowImportName = Names::getValidFunctionName(wasm, "call-export-catch-rethrow");
-    auto func = std::make_unique<Function>();
-    func->name = callExportCatchRethrowImportName;
-    func->module = "fuzzing-support";
-    func->base = "call-export-catch-rethrow";
-    func->type = Signature({Type::i32}, Type::none);
-    wasm.addFunction(std::move(func));
-  }
-
   // If the wasm will be used for closed-world testing, we cannot use the
   // call-ref variants, as mentioned before.
   if (wasm.features.hasReferenceTypes() && !closedWorld) {
@@ -903,21 +892,6 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->base = "call-ref-catch";
       func->type = Signature(Type(HeapType::func, Nullable), Type::i32);
       wasm.addFunction(std::move(func));
-
-      if (wasm.features.hasExceptionHandling()) {
-        // Variation that returns an exnref: null if nothing was caught
-        // (corresponding to 0 in call-ref-catch), or the exnref if something
-        // was caught (corresponding to 1 in call-ref-catch).
-        callRefCatchRefImportName =
-          Names::getValidFunctionName(wasm, "call-ref-catch-ref");
-        auto func = std::make_unique<Function>();
-        func->name = callRefCatchRefImportName;
-        func->module = "fuzzing-support";
-        func->base = "call-ref-catch-ref";
-        func->type = Signature(Type(HeapType::func, Nullable),
-                               Type(HeapType::exn, Nullable));
-        wasm.addFunction(std::move(func));
-      }
     }
   }
 }
