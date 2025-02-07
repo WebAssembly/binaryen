@@ -1981,12 +1981,6 @@ struct OptimizeInstructions
                             newVal,
                             MemoryOrder::Unordered));
 
-    // We must maintain this operation's effect on the global order of seqcst
-    // operations.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
-
     block->list.push_back(builder.makeLocalGet(result, curr->type));
     block->type = curr->type;
     replaceCurrent(block);
@@ -2060,12 +2054,6 @@ struct OptimizeInstructions
                             builder.makeLocalGet(ref, curr->ref->type),
                             builder.makeLocalGet(replacement, curr->type),
                             MemoryOrder::Unordered)));
-
-    // We must maintain this operation's effect on the global order of seqcst
-    // operations.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
 
     block->list.push_back(builder.makeLocalGet(result, curr->type));
     block->type = curr->type;
