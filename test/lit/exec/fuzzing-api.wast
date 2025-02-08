@@ -311,6 +311,28 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling catch-js-tag
+ ;; CHECK-NEXT: [exception thrown: __private ()]
+ (func $catch-js-tag (export "catch-js-tag") (result i32)
+  ;; The table.set out of bounds will throw a JS exception, so it will be caught
+  ;; by the catch here, and we'll return the number at the end.
+  (drop
+   (block $out (result externref)
+    (try_table (catch $imported-js-tag $out)
+     (call $table.set
+      (i32.const 9999)
+      (ref.func $table.setting)
+     )
+     (return
+      (i32.const -1)
+     )
+    )
+   )
+  )
+  (i32.const 100)
+ )
+
+
  ;; CHECK:      [fuzz-exec] calling do-sleep
  ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
@@ -386,8 +408,12 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.trap
 ;; CHECK-NEXT: [trap unreachable]
 
+;; CHECK:      [fuzz-exec] calling catch-js-tag
+;; CHECK-NEXT: [exception thrown: __private ()]
+
 ;; CHECK:      [fuzz-exec] calling do-sleep
 ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
+;; CHECK-NEXT: [fuzz-exec] comparing catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
