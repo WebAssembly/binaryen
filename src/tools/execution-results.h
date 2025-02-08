@@ -45,6 +45,11 @@ private:
   // The name of the imported fuzzing tag for wasm.
   Name wasmTag;
 
+  // The name of the imported tag for js exceptions. If it is not imported, we
+  // use a default name here (which should differentiate it from any wasm
+  // exceptions).
+  Name jsTag = "__private";
+
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
   ModuleRunner* instance = nullptr;
@@ -60,9 +65,12 @@ public:
     }
 
     for (auto& tag : wasm.tags) {
-      if (tag->module == "fuzzing-support" && tag->base == "wasmtag") {
-        wasmTag = tag->name;
-        break;
+      if (tag->module == "fuzzing-support") {
+        if (tag->base == "wasmtag") {
+          wasmTag = tag->name;
+        } else if (tag->base == "jstag") {
+          jsTag = tag->name;
+        }
       }
     }
   }
@@ -173,8 +181,11 @@ public:
   }
 
   void throwEmptyException() {
-    // Use a hopefully private tag.
-    auto payload = std::make_shared<ExnData>("__private", Literals{});
+    // JS exceptions are not truly empty, but only contain an externref, which
+    // wasm can't read. The actual value there does not matter;
+    Literal externref = Literal::makeI31(0, Unshared).externalize();
+    Literals arguments = {externref};
+    auto payload = std::make_shared<ExnData>(jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
 

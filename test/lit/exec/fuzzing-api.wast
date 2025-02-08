@@ -43,7 +43,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling throwing
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $throwing (export "throwing")
   ;; Throwing 0 throws a JS ("private") exception.
   (call $throw
@@ -61,7 +61,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling table.setting
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $table.setting (export "table.setting")
   (call $table.set
    (i32.const 5)
@@ -77,7 +77,7 @@
  ;; CHECK:      [fuzz-exec] calling table.getting
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $table.getting (export "table.getting")
   ;; There is a non-null value at 5, and a null at 6.
   (call $log-i32
@@ -105,7 +105,7 @@
  ;; CHECK:      [fuzz-exec] calling export.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $export.calling (export "export.calling")
   ;; At index 0 in the exports we have $logging, so we will do those loggings.
   (call $call.export
@@ -141,7 +141,7 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $ref.calling (export "ref.calling")
   ;; This will emit some logging.
   (call $call.ref
@@ -312,7 +312,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling catch-js-tag
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [fuzz-exec] note result: catch-js-tag => 100
  (func $catch-js-tag (export "catch-js-tag") (result i32)
   ;; The table.set out of bounds will throw a JS exception, so it will be caught
   ;; by the catch here, and we'll return the number at the end.
@@ -350,23 +350,23 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 
 ;; CHECK:      [fuzz-exec] calling throwing
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling throwing-tag
 ;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
 
 ;; CHECK:      [fuzz-exec] calling table.setting
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling table.getting
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -377,7 +377,7 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -409,7 +409,7 @@
 ;; CHECK-NEXT: [trap unreachable]
 
 ;; CHECK:      [fuzz-exec] calling catch-js-tag
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [fuzz-exec] note result: catch-js-tag => 100
 
 ;; CHECK:      [fuzz-exec] calling do-sleep
 ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
