@@ -272,7 +272,7 @@ var imports = {
       if (!which) {
         throw 'some JS error';
       } else {
-        throw new WebAssembly.Exception(jsTag, [which]);
+        throw new WebAssembly.Exception(wasmTag, [which]);
       }
     },
 
@@ -347,9 +347,12 @@ var imports = {
 // If Tags are available, add some.
 if (typeof WebAssembly.Tag !== 'undefined') {
   // A tag for general use in the fuzzer.
-  var jsTag = imports['fuzzing-support']['tag'] = new WebAssembly.Tag({
+  var wasmTag = imports['fuzzing-support']['wasmtag'] = new WebAssembly.Tag({
     'parameters': ['i32']
   });
+
+  // The JSTag that represents a JS tag.
+  imports['fuzzing-support']['jstag'] = WebAssembly.JSTag;
 
   // This allows j2wasm content to run in the fuzzer.
   imports['imports'] = {

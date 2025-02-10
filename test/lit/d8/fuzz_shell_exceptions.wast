@@ -3,6 +3,10 @@
 (module
   (import "fuzzing-support" "throw" (func $throw (param i32)))
 
+  ;; Verify that fuzz_shell.js provides these imports for the wasm.
+  (import "fuzzing-support" "wasmtag" (tag $imported-wasm-tag (param i32)))
+  (import "fuzzing-support" "jstag" (tag $imported-js-tag (param externref)))
+
   (func $throwing-js (export "throwing-js")
     ;; Telling JS to throw with arg 0 leads to a JS exception thrown.
     (call $throw
@@ -20,7 +24,7 @@
 
 ;; Build to a binary wasm.
 ;;
-;; RUN: wasm-opt %s -o %t.wasm -q
+;; RUN: wasm-opt %s -o %t.wasm -q -all
 
 ;; Run in node.
 ;;
