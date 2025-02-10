@@ -123,7 +123,7 @@
  ;; CHECK:      [fuzz-exec] calling export.calling.rethrow
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $export.calling.rethrow (export "export.calling.rethrow")
   ;; As above, but the second param is different.
   (call $call.export
@@ -181,7 +181,7 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $ref.calling.rethrow (export "ref.calling.rethrow")
   ;; As with calling an export, when we set the flags to 0 exceptions are
   ;; caught and rethrown, but there is no noticeable difference here.
@@ -415,7 +415,7 @@
 ;; CHECK:      [fuzz-exec] calling export.calling.rethrow
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -431,7 +431,7 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
