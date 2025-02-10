@@ -169,12 +169,12 @@
   (call $call.ref
    (ref.func $logging)
    ;; Normal call.
-   (i32.const 1)
+   (i32.const 0)
   )
   ;; This will throw.
   (call $call.ref
    (ref.null func)
-   (i32.const 1)
+   (i32.const 0)
   )
  )
 
@@ -187,12 +187,12 @@
   ;; caught and rethrown, but there is no noticeable difference here.
   (call $call.ref
    (ref.func $logging)
-   (i32.const 0)
+   (i32.const 1)
   )
   ;; This will throw.
   (call $call.ref
    (ref.null func)
-   (i32.const 0)
+   (i32.const 1)
   )
  )
 
