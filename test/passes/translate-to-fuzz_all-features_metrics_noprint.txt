@@ -2,6 +2,7 @@ Metrics
 total
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
  [exports]      : 13      
  [funcs]        : 14      
 =======
@@ -12,10 +13,15 @@ total
  [exports]      : 14      
  [funcs]        : 18      
 >>>>>>> myself/fuzz.imported.tag2
+=======
+ [exports]      : 14      
+ [funcs]        : 18      
+>>>>>>> origin/main
  [globals]      : 4       
  [imports]      : 12      
  [memories]     : 1       
  [memory-data]  : 112     
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
  [table-data]   : 2       
@@ -73,6 +79,13 @@ total
  [total]        : 626     
  [vars]         : 49      
 >>>>>>> myself/fuzz.imported.tag2
+=======
+ [table-data]   : 3       
+ [tables]       : 1       
+ [tags]         : 0       
+ [total]        : 626     
+ [vars]         : 49      
+>>>>>>> origin/main
  ArrayNew       : 1       
  ArrayNewFixed  : 5       
  ArraySet       : 1       
@@ -104,9 +117,13 @@ total
  TryTable       : 2       
  TupleMake      : 3       
 <<<<<<< HEAD
+<<<<<<< HEAD
  Unary          : 19      
 >>>>>>> origin/main
 =======
  Unary          : 21      
 >>>>>>> myself/fuzz.imported.tag2
+=======
+ Unary          : 21      
+>>>>>>> origin/main
  Unreachable    : 19      
