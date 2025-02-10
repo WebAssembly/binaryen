@@ -1,42 +1,45 @@
 Metrics
 total
- [exports]      : 15      
- [funcs]        : 17      
+ [exports]      : 14      
+ [funcs]        : 18      
  [globals]      : 4       
- [imports]      : 11      
+ [imports]      : 12      
  [memories]     : 1       
  [memory-data]  : 112     
- [table-data]   : 4       
+ [table-data]   : 3       
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 688     
- [vars]         : 15      
+ [total]        : 626     
+ [vars]         : 49      
  ArrayNew       : 1       
  ArrayNewFixed  : 5       
- Binary         : 70      
- Block          : 77      
- Call           : 43      
- Const          : 166     
- Drop           : 8       
- GlobalGet      : 43      
+ ArraySet       : 1       
+ AtomicCmpxchg  : 1       
+ AtomicFence    : 1       
+ Binary         : 74      
+ Block          : 79      
+ Call           : 40      
+ Const          : 138     
+ Drop           : 9       
+ GlobalGet      : 42      
  GlobalSet      : 38      
- If             : 19      
+ If             : 20      
  Load           : 16      
- LocalGet       : 45      
- LocalSet       : 21      
- Loop           : 3       
- Nop            : 3       
+ LocalGet       : 46      
+ LocalSet       : 22      
+ Loop           : 2       
+ Nop            : 4       
  RefAs          : 2       
- RefFunc        : 28      
- RefNull        : 8       
- Return         : 5       
+ RefFunc        : 8       
+ RefNull        : 4       
+ Return         : 3       
  Select         : 1       
  Store          : 1       
- StringConst    : 2       
- StructNew      : 37      
+ StringConst    : 3       
+ StructNew      : 18      
  StructSet      : 1       
  Throw          : 1       
- TryTable       : 3       
+ TryTable       : 2       
  TupleMake      : 3       
- Unary          : 19      
+ Unary          : 21      
  Unreachable    : 19      

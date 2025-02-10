@@ -648,13 +648,20 @@ void TranslateToFuzzReader::setupTags() {
     addTag();
   }
 
-  // Add the fuzzing support tag manually sometimes.
+  // Add the fuzzing support tags manually sometimes.
   if (oneIn(2)) {
-    auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag"),
-                               Signature(Type::i32, Type::none));
-    tag->module = "fuzzing-support";
-    tag->base = "tag";
-    wasm.addTag(std::move(tag));
+    auto wasmTag = builder.makeTag(Names::getValidTagName(wasm, "wasmtag"),
+                                   Signature(Type::i32, Type::none));
+    wasmTag->module = "fuzzing-support";
+    wasmTag->base = "wasmtag";
+    wasm.addTag(std::move(wasmTag));
+
+    auto externref = Type(HeapType::ext, Nullable);
+    auto jsTag = builder.makeTag(Names::getValidTagName(wasm, "jstag"),
+                                 Signature(externref, Type::none));
+    jsTag->module = "fuzzing-support";
+    jsTag->base = "jstag";
+    wasm.addTag(std::move(jsTag));
   }
 }
 

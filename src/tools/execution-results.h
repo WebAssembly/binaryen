@@ -42,8 +42,13 @@ private:
   Name exportedTable;
   Module& wasm;
 
-  // The name of the imported fuzzing tag.
-  Name fuzzTag;
+  // The name of the imported fuzzing tag for wasm.
+  Name wasmTag;
+
+  // The name of the imported tag for js exceptions. If it is not imported, we
+  // use a default name here (which should differentiate it from any wasm
+  // exceptions).
+  Name jsTag = "__private";
 
   // The ModuleRunner and this ExternalInterface end up needing links both ways,
   // so we cannot init this in the constructor.
@@ -60,9 +65,12 @@ public:
     }
 
     for (auto& tag : wasm.tags) {
-      if (tag->module == "fuzzing-support" && tag->base == "tag") {
-        fuzzTag = tag->name;
-        break;
+      if (tag->module == "fuzzing-support") {
+        if (tag->base == "wasmtag") {
+          wasmTag = tag->name;
+        } else if (tag->base == "jstag") {
+          jsTag = tag->name;
+        }
       }
     }
   }
@@ -96,29 +104,29 @@ public:
         // should throw a JS exception, and any other value means we should
         // throw a wasm exception (with that value as the payload).
         if (arguments[0].geti32() == 0) {
-          throwEmptyException();
+          throwJSException();
         } else {
-          auto payload = std::make_shared<ExnData>(fuzzTag, arguments);
+          auto payload = std::make_shared<ExnData>(wasmTag, arguments);
           throwException(WasmException{Literal(payload)});
         }
       } else if (import->base == "table-get") {
         // Check for errors here, duplicating tableLoad(), because that will
         // trap, and we just want to throw an exception (the same as JS would).
         if (!exportedTable) {
-          throwEmptyException();
+          throwJSException();
         }
         auto index = arguments[0].getUnsigned();
         if (index >= tables[exportedTable].size()) {
-          throwEmptyException();
+          throwJSException();
         }
         return {tableLoad(exportedTable, index)};
       } else if (import->base == "table-set") {
         if (!exportedTable) {
-          throwEmptyException();
+          throwJSException();
         }
         auto index = arguments[0].getUnsigned();
         if (index >= tables[exportedTable].size()) {
-          throwEmptyException();
+          throwJSException();
         }
         tableStore(exportedTable, index, arguments[1]);
         return {};
@@ -172,21 +180,24 @@ public:
     return {};
   }
 
-  void throwEmptyException() {
-    // Use a hopefully private tag.
-    auto payload = std::make_shared<ExnData>("__private", Literals{});
+  void throwJSException() {
+    // JS exceptions contain an externref, which wasm can't read (so the actual
+    // value here does not matter).
+    Literal externref = Literal::makeI31(0, Unshared).externalize();
+    Literals arguments = {externref};
+    auto payload = std::make_shared<ExnData>(jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
 
   Literals callExportAsJS(Index index) {
     if (index >= wasm.exports.size()) {
       // No export.
-      throwEmptyException();
+      throwJSException();
     }
     auto& exp = wasm.exports[index];
     if (exp->kind != ExternalKind::Function) {
       // No callable export.
-      throwEmptyException();
+      throwJSException();
     }
     return callFunctionAsJS(exp->value);
   }
@@ -194,7 +205,7 @@ public:
   Literals callRefAsJS(Literal ref) {
     if (!ref.isFunction()) {
       // Not a callable ref.
-      throwEmptyException();
+      throwJSException();
     }
     return callFunctionAsJS(ref.getFunc());
   }
@@ -210,10 +221,10 @@ public:
       // An i64 param can work from JS, but fuzz_shell provides 0, which errors
       // on attempts to convert it to BigInt. v128 and exnref are disalloewd.
       if (param == Type::i64 || param == Type::v128 || param.isExn()) {
-        throwEmptyException();
+        throwJSException();
       }
       if (!param.isDefaultable()) {
-        throwEmptyException();
+        throwJSException();
       }
       arguments.push_back(Literal::makeZero(param));
     }
@@ -224,7 +235,7 @@ public:
       // An i64 result is fine: a BigInt will be provided. But v128 and exnref
       // still error.
       if (result == Type::v128 || result.isExn()) {
-        throwEmptyException();
+        throwJSException();
       }
     }
 
