@@ -182,7 +182,8 @@ public:
 
   void throwJSException() {
     // JS exceptions contain an externref, which wasm can't read (so the actual
-    // value here does not matter).
+    // value here does not matter, but it does need to match what the 'throw'
+    // import does in fuzz_shell.js, as the fuzzer will do comparisons).
     Literal externref = Literal::makeI31(0, Unshared).externalize();
     Literals arguments = {externref};
     auto payload = std::make_shared<ExnData>(jsTag, arguments);
