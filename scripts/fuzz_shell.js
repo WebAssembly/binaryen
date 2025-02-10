@@ -286,17 +286,17 @@ var imports = {
 
     // Export operations.
     'call-export': /* async */ (index, flags) => {
-      if (flags & 1) {
+      // TODO: For now we ignore flags in JSPI. In that mode, we may return a
+      //       promise from the tryCall, and we would also need to add code
+      //       like this in other places too (the other try-catches,
+      //       basically). Perhaps we can refactor all this somehow.
+      if (!JSPI && (flags & 1)) {
         // Normal call.
         /* await */ callFunc(exportList[index].value);
       } else {
         // Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-        // TODO: For now we skip this in JSPI. In that mode, we may return a
-        //       promise from the tryCall, and we would also need to add code
-        //       like this in other places too (the other try-catches,
-        //       basically). Perhaps we can refactor all this somehow.
-        if (!JSPI && e) throw e;
+        if (e) throw e;
       }
     },
     'call-export-catch': /* async */ (index) => {
@@ -312,14 +312,14 @@ var imports = {
     },
     'call-ref-catch': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
-      if (flags & 1) {
+      // See comment above
+      if (!JSPI && (flags & 1)) {
         // Normal call.
         /* await */ callFunc(ref);
       } else {
         // Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(ref));
-        // See comment above
-        if (!JSPI && e) throw e;
+        if (e) throw e;
       }
     },
 
