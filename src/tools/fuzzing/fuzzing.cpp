@@ -1142,7 +1142,12 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
       // Most of the time make a non-nullable funcref, to avoid errors.
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-      return builder.makeCall(refTarget, {make(refType)}, type);
+      std::vector<Expression*> args = {make(refType)};
+      if (!catching) {
+        // The first bit matters here, so we can send anything.
+        args.push_back(make(Type::i32));
+      }
+      return builder.makeCall(refTarget, args, type);
     }
   }
 
