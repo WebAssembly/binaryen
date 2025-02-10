@@ -292,7 +292,11 @@ var imports = {
       } else {
         // Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-        if (e && (!e instanceof Promise)) throw e;
+        // TODO: For now we skip this in JSPI. In that mode, we may return a
+        //       promise from the tryCall, and we would also need to add code
+        //       like this in other places too (the other try-catches,
+        //       basically). Perhaps we can refactor all this somehow.
+        if (!JSPI && e) throw e;
       }
     },
     'call-export-catch': /* async */ (index) => {
@@ -314,7 +318,8 @@ var imports = {
       } else {
         // Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(ref));
-        if (e && (!e instanceof Promise)) throw e;
+        // See comment above
+        if (!JSPI && e) throw e;
       }
     },
 
