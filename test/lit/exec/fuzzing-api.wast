@@ -110,8 +110,8 @@
   ;; At index 0 in the exports we have $logging, so we will do those loggings.
   (call $call.export
    (i32.const 0)
-   ;; First bit set in the flags means a normal call.
-   (i32.const 1)
+   ;; First bit unset in the flags means a normal call.
+   (i32.const 0)
   )
   ;; At index 999 we have nothing, so we'll error.
   (call $call.export
@@ -128,7 +128,7 @@
   ;; As above, but the second param is different.
   (call $call.export
    (i32.const 0)
-   ;; First bit unset in the flags means a catch+rethrow. There is no visible
+   ;; First bit set in the flags means a catch+rethrow. There is no visible
    ;; effect here, but there might be in JS VMs.
    (i32.const 0)
   )

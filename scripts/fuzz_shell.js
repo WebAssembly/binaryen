@@ -292,11 +292,11 @@ var imports = {
       //       promise from the tryCall, and we would also need to add code
       //       like this in other places too (the other try-catches,
       //       basically). Perhaps we can refactor all this somehow.
-      if (!JSPI && (flags & 1)) {
+      if (!JSPI && !(flags & 1)) {
         // Normal call.
         /* await */ callFunc(exportList[index].value);
       } else {
-        // Catch and rethrow exceptions.
+        // Flag bit 1 set: Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
         if (e) throw e;
       }
@@ -315,11 +315,11 @@ var imports = {
     'call-ref-catch': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
       // See comment above
-      if (!JSPI && (flags & 1)) {
+      if (!JSPI && !(flags & 1)) {
         // Normal call.
         /* await */ callFunc(ref);
       } else {
-        // Catch and rethrow exceptions.
+        // Flag bit 1 set: Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(ref));
         if (e) throw e;
       }
