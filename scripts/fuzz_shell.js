@@ -292,7 +292,7 @@ var imports = {
       } else {
         // Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-        if (e) throw e;
+        if (e && (!e instanceof Promise)) throw e;
       }
     },
     'call-export-catch': /* async */ (index) => {
@@ -314,7 +314,7 @@ var imports = {
       } else {
         // Catch and rethrow exceptions.
         var e = tryCall(/* async */ () => /* await */ callFunc(ref));
-        if (e) throw e;
+        if (e && (!e instanceof Promise)) throw e;
       }
     },
 
