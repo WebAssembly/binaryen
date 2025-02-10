@@ -116,7 +116,7 @@
   ;; At index 999 we have nothing, so we'll error.
   (call $call.export
    (i32.const 999)
-   (i32.const 1)
+   (i32.const 0)
   )
  )
 
@@ -130,12 +130,12 @@
    (i32.const 0)
    ;; First bit set in the flags means a catch+rethrow. There is no visible
    ;; effect here, but there might be in JS VMs.
-   (i32.const 0)
+   (i32.const 1)
   )
   ;; At index 999 we have nothing, so we'll error.
   (call $call.export
    (i32.const 999)
-   (i32.const 0)
+   (i32.const 1)
   )
  )
 
