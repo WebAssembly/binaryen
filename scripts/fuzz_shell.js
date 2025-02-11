@@ -306,13 +306,9 @@ var imports = {
     },
 
     // Funcref operations.
-    'call-ref': /* async */ (ref) => {
+    'call-ref': /* async */ (ref, flags) => {
       // This is a direct function reference, and just like an export, it must
       // be wrapped for JSPI.
-      ref = wrapExportForJSPI(ref);
-      /* await */ callFunc(ref);
-    },
-    'call-ref-catch': /* async */ (ref, flags) => {
       ref = wrapExportForJSPI(ref);
       // See comment above
       if (!JSPI || !(flags & 1)) {
@@ -323,6 +319,10 @@ var imports = {
         var e = tryCall(/* async */ () => /* await */ callFunc(ref));
         if (e) throw e;
       }
+    },
+    'call-ref-catch': /* async */ (ref) => {
+      ref = wrapExportForJSPI(ref);
+      return !!tryCall(/* async */ () => /* await */ callFunc(ref));
     },
 
     // Sleep a given amount of ms (when JSPI) and return a given id after that.
