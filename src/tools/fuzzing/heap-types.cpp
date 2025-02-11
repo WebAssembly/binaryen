@@ -160,14 +160,26 @@ struct HeapTypeGeneratorImpl {
         rand.pick(HeapType::noext, HeapType::nofunc, HeapType::none);
       return ht.getBasic(share);
     }
-    HeapType ht = rand.pick(HeapType::func,
-                            HeapType::ext,
-                            HeapType::any,
-                            HeapType::eq,
-                            HeapType::i31,
-                            HeapType::struct_,
-                            HeapType::array,
-                            HeapType::exn);
+    // Avoid shared exn, which we cannot generate.
+    HeapType ht;
+    if (share == Unshared) {
+      ht = rand.pick(HeapType::func,
+                              HeapType::ext,
+                              HeapType::any,
+                              HeapType::eq,
+                              HeapType::i31,
+                              HeapType::struct_,
+                              HeapType::array,
+                              HeapType::exn);
+    } else {
+      ht = rand.pick(HeapType::func,
+                              HeapType::ext,
+                              HeapType::any,
+                              HeapType::eq,
+                              HeapType::i31,
+                              HeapType::struct_,
+                              HeapType::array);
+    }
     if (share == Unshared && features.hasSharedEverything() && rand.oneIn(2)) {
       share = Shared;
     }

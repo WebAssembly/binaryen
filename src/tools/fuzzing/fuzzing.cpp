@@ -1857,8 +1857,10 @@ Expression* TranslateToFuzzReader::make(Type type) {
     assert(type == Type::unreachable);
     ret = _makeunreachable();
   }
-  // We should create the right type of thing.
-  assert(Type::isSubType(ret->type, type));
+  if (!Type::isSubType(ret->type, type)) {
+    Fatal() << "Did not generate the right type of thing " << type
+            << " but have " << ret->type << " : " << *ret << '\n';
+  }
   nesting--;
   return ret;
 }
