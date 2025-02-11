@@ -5055,6 +5055,11 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  // Do not generate new shared exnrefs, which we cannot generate in wasm.
+  if (heapType.isMaybeShared(HeapType::exn)) {
+    return type;
+  }
+
   if (oneIn(3)) {
     return type;
   }
@@ -5138,7 +5143,13 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     }
     return Type(types);
   } else if (type.isRef()) {
-    auto heapType = getSubType(type.getHeapType());
+    auto heapType = type.getHeapType();
+    // Do not generate non-nullable exnrefs in global positions (they cannot be
+    // created in wasm, nor imported from JS).
+    if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
+      return type;
+    }
+    heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
     auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
