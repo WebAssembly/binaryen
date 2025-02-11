@@ -302,7 +302,12 @@ var imports = {
       }
     },
     'call-export-catch': /* async */ (index) => {
-      return !!tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
+      var ret = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
+      // Ensure the right boolean output, but let a Promise flow through.
+      if (!(ret instanceof Promise)) {
+        ret = !!ret;
+      }
+      return ret;
     },
 
     // Funcref operations.
@@ -322,7 +327,11 @@ var imports = {
     },
     'call-ref-catch': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
-      return !!tryCall(/* async */ () => /* await */ callFunc(ref));
+      var ret = tryCall(/* async */ () => /* await */ callFunc(ref));
+      if (!(ret instanceof Promise)) {
+        ret = !!ret;
+      }
+      return ret;
     },
 
     // Sleep a given amount of ms (when JSPI) and return a given id after that.
