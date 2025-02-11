@@ -312,7 +312,7 @@ var imports = {
       ref = wrapExportForJSPI(ref);
       /* await */ callFunc(ref);
     },
-    'call-ref-catch': /* async */ (ref) => {
+    'call-ref-catch': /* async */ (ref, flags) => {
       ref = wrapExportForJSPI(ref);
       // See comment above
       if (!JSPI || !(flags & 1)) {
