@@ -546,6 +546,22 @@ void TranslateToFuzzReader::setupTables() {
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
+
+  // When EH is enabled, set up an exnref table.
+  if (wasm.features.hasExceptionHandling()) {
+    Type exnref = Type(HeapType::exn, Nullable);
+    Address initial = upTo(10);
+    Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
+                        exnref,
+                        initial,
+                        max,
+                        Type::i32); // TODO: wasm64
+    tablePtr->hasExplicitName = true;
+    table = wasm.addTable(std::move(tablePtr));
+    exnrefTableName = table->name;
+  }
 }
 
 void TranslateToFuzzReader::setupGlobals() {
@@ -4411,6 +4427,53 @@ Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
       return makeMemoryFill();
   }
   WASM_UNREACHABLE("invalid value");
+}
+
+Expression* TranslateToFuzzReader::makeTableGet(Type type) {
+  // Emit a get from the funcref table (which always exists) or the exnref one
+  // (which might not, if EH is disabled).
+  auto makeTableGet = [&](Name tableName) {
+    auto* table = wasm.getTable(tableName);
+    // Usually emit in-bounds gets, to avoid trapping, but rarely allow
+    // anything.
+    Expression* index;
+    if (allowOOB && oneIn(10)) {
+      index = make(table->indexType);
+    } else {
+      index = builder.makeConst(table->indexType(upTo(table->initial)));
+    }
+    return builder.makeTableGet(tableName, index);
+  };
+  if (type.getHeapType == Type::exnref) {
+    return makeTableGet(exnrefTableName);    
+  } else {
+    return makeTableGet(funcrefTableName);
+  }
+}
+
+Expression* TranslateToFuzzReader::makeTableSet(Type type) {
+  assert(type == Type::none);
+
+  // Emit a set to either the funcref table (which always exists) or the exnref
+  // one (which might not, if EH is disabled).
+  auto makeTableSet = [&](Name tableName) {
+    auto* table = wasm.getTable(tableName);
+    // Usually emit in-bounds sets, to avoid trapping, but rarely allow
+    // anything.
+    Expression* index;
+    if (allowOOB && oneIn(10)) {
+      index = make(table->indexType);
+    } else {
+      index = builder.makeConst(table->indexType(upTo(table->initial)));
+    }
+    auto* value = make(table->type);
+    return builder.makeTableSet(tableName, index, value);
+  };
+  if (exnrefTableName && oneIn(2)) {
+    return makeTableSet(exnrefTableName);    
+  } else {
+    return makeTableSet(funcrefTableName);
+  }
 }
 
 Expression* TranslateToFuzzReader::makeRefIsNull(Type type) {
