@@ -1858,8 +1858,9 @@ Expression* TranslateToFuzzReader::make(Type type) {
     ret = _makeunreachable();
   }
   if (!Type::isSubType(ret->type, type)) {
-    Fatal() << "Did not generate the right type of thing " << type
+    std::cerr << "Did not generate the right type of thing " << type
             << " but have " << ret->type << " : " << *ret << '\n';
+              assert(0);
   }
   nesting--;
   return ret;
@@ -5052,11 +5053,6 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
-  // Do not generate new shared exnrefs, which we cannot generate in wasm.
-  if (type.isMaybeShared(HeapType::exn)) {
-    return type;
-  }
-
   if (oneIn(3)) {
     return type;
   }
@@ -5108,6 +5104,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::array:
         return pick(HeapTypes::array, HeapTypes::none).getBasic(share);
       case HeapType::exn:
+        assert(share == Unshared);
         return HeapTypes::exn.getBasic(share);
       case HeapType::string:
         assert(share == Unshared);

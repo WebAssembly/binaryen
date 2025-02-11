@@ -173,7 +173,8 @@ struct HeapTypeGeneratorImpl {
       options.push_back(HeapType::exn);
     }
     auto ht = rand.pick(options);
-    if (share == Unshared && features.hasSharedEverything() && rand.oneIn(2)) {
+    if (share == Unshared && features.hasSharedEverything() &&
+        ht != HeapType::exn && rand.oneIn(2)) {
       share = Shared;
     }
     return ht.getBasic(share);
