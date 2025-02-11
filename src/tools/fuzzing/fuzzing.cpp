@@ -1858,9 +1858,8 @@ Expression* TranslateToFuzzReader::make(Type type) {
     ret = _makeunreachable();
   }
   if (!Type::isSubType(ret->type, type)) {
-    std::cerr << "Did not generate the right type of thing " << type
-            << " but have " << ret->type << " : " << *ret << '\n';
-              assert(0);
+    Fatal() << "Did not generate the right type of " << type
+            << ", instead we have " << ret->type << " : " << *ret << '\n';
   }
   nesting--;
   return ret;
