@@ -1945,6 +1945,14 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (heapType.isBasic()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeBasicRef);
+      if (type.isNullable()) {
+        if (heapType == HeapType::func) {
+          options.add(FeatureSet::ReferenceTypes, &Self::makeTableGet);
+        }
+        if (heapType == HeapType::exn) {
+          options.add(FeatureSet::ExceptionHandling, &Self::makeTableGet);
+        }
+      }
     } else {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeCompoundRef);
@@ -1992,6 +2000,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
+    .add(FeatureSet::ReferenceTypes, &Self::makeTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
     .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
