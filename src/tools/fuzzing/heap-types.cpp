@@ -160,26 +160,21 @@ struct HeapTypeGeneratorImpl {
         rand.pick(HeapType::noext, HeapType::nofunc, HeapType::none);
       return ht.getBasic(share);
     }
+
+    std::vector<HeapType> options{
+                              HeapType::func,
+                              HeapType::ext,
+                              HeapType::any,
+                              HeapType::eq,
+                              HeapType::i31,
+                              HeapType::struct_,
+                              HeapType::array
+                              };
     // Avoid shared exn, which we cannot generate.
-    HeapType ht;
-    if (share == Unshared) {
-      ht = rand.pick(HeapType::func,
-                              HeapType::ext,
-                              HeapType::any,
-                              HeapType::eq,
-                              HeapType::i31,
-                              HeapType::struct_,
-                              HeapType::array,
-                              HeapType::exn);
-    } else {
-      ht = rand.pick(HeapType::func,
-                              HeapType::ext,
-                              HeapType::any,
-                              HeapType::eq,
-                              HeapType::i31,
-                              HeapType::struct_,
-                              HeapType::array);
+    if (features.hasExceptionHandling() && share == Unshared) {
+      options.push_back(HeapType::exn);
     }
+    auto ht = rand.pick(options);
     if (share == Unshared && features.hasSharedEverything() && rand.oneIn(2)) {
       share = Shared;
     }
