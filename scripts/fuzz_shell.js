@@ -170,13 +170,13 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
-// Calls a given function in a try-catch. If an exception was thrown, it is
-// returned, and null otherwise. Wasm traps are not swallowed (see details
-// below).
-/* async */ function tryCall(func) {
+// Calls a given function in a try-catch. Return 1 if an exception was thrown.
+// If |rethrow| is set, and an exception is thrown, it is caught and rethrown.
+// Wasm traps are not swallowed (see details below).
+/* async */ function tryCall(func, rethrow) {
   try {
     /* await */ func();
-    return null;
+    return 0;
   } catch (e) {
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
@@ -208,8 +208,12 @@ function callFunc(func) {
       }
     }
     // Otherwise, this is a normal exception we want to catch (a wasm
-    // exception, or a conversion error on the wasm/JS boundary, etc.).
-    return e;
+    // exception, or a conversion error on the wasm/JS boundary, etc.). Rethrow
+    // if we were asked to.
+    if (rethrow) {
+      throw e;
+    }
+    return 1;
   }
 }
 
@@ -288,26 +292,16 @@ var imports = {
 
     // Export operations.
     'call-export': /* async */ (index, flags) => {
-      // TODO: For now we ignore flags in JSPI. In that mode, we may return a
-      //       promise from the tryCall, and we would also need to add code
-      //       like this in other places too (the other try-catches,
-      //       basically). Perhaps we can refactor all this somehow.
-      if (!JSPI || !(flags & 1)) {
-        // Normal call.
+      var rethrow = flags & 1;
+      if (!rethrow) {
         /* await */ callFunc(exportList[index].value);
       } else {
-        // Flag bit 1 set: Catch and rethrow exceptions.
-        var e = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-        if (e) throw e;
+        tryCall(/* async */ () => /* await */ callFunc(exportList[index].value),
+                rethrow);
       }
     },
     'call-export-catch': /* async */ (index) => {
-      var ret = tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
-      // Ensure the right boolean output, but let a Promise flow through.
-      if (!(ret instanceof Promise)) {
-        ret = !!ret;
-      }
-      return ret;
+      return tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
     },
 
     // Funcref operations.
@@ -315,23 +309,17 @@ var imports = {
       // This is a direct function reference, and just like an export, it must
       // be wrapped for JSPI.
       ref = wrapExportForJSPI(ref);
-      // See comment above
-      if (!JSPI || !(flags & 1)) {
-        // Normal call.
+      var rethrow = flags & 1;
+      if (!rethrow) {
         /* await */ callFunc(ref);
       } else {
-        // Flag bit 1 set: Catch and rethrow exceptions.
-        var e = tryCall(/* async */ () => /* await */ callFunc(ref));
-        if (e) throw e;
+        tryCall(/* async */ () => /* await */ callFunc(ref),
+                rethrow);
       }
     },
     'call-ref-catch': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
-      var ret = tryCall(/* async */ () => /* await */ callFunc(ref));
-      if (!(ret instanceof Promise)) {
-        ret = !!ret;
-      }
-      return ret;
+      return tryCall(/* async */ () => /* await */ callFunc(ref));
     },
 
     // Sleep a given amount of ms (when JSPI) and return a given id after that.
