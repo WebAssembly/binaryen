@@ -170,9 +170,9 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
-// Calls a given function in a try-catch, swallowing JS exceptions. If an
-// exception was thrown, it is returned, and null otherwise. Wasm traps are not
-// swallowed (see details below).
+// Calls a given function in a try-catch. If an exception was thrown, it is
+// returned, and null otherwise. Wasm traps are not swallowed (see details
+// below).
 /* async */ function tryCall(func) {
   try {
     /* await */ func();
