@@ -5142,7 +5142,7 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
       return type;
     }
-    heapType = getSubType(type.getHeapType());
+    heapType = getSubType(heapType);
     auto nullability = getSubType(type.getNullability());
     auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
