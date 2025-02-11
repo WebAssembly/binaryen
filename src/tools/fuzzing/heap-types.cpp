@@ -161,15 +161,13 @@ struct HeapTypeGeneratorImpl {
       return ht.getBasic(share);
     }
 
-    std::vector<HeapType> options{
-                              HeapType::func,
-                              HeapType::ext,
-                              HeapType::any,
-                              HeapType::eq,
-                              HeapType::i31,
-                              HeapType::struct_,
-                              HeapType::array
-                              };
+    std::vector<HeapType> options{HeapType::func,
+                                  HeapType::ext,
+                                  HeapType::any,
+                                  HeapType::eq,
+                                  HeapType::i31,
+                                  HeapType::struct_,
+                                  HeapType::array};
     // Avoid shared exn, which we cannot generate.
     if (features.hasExceptionHandling() && share == Unshared) {
       options.push_back(HeapType::exn);
