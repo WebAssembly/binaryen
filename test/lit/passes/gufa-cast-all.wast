@@ -182,8 +182,8 @@
         )
       )
       (catch $tag
-        ;; The i32 result of the tag will be stored to a local. If we thought no
-        ;; value was possible there, we'd put an unreachable after it. As it is
+        ;; If we thought no value was possible to pop here (if no exception were
+        ;; created of this tag) then we'd put an unreachable after it. As it is
         ;; imported, a value might be there, so we do not.
         (drop
           (pop i32)
