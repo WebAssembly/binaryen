@@ -293,6 +293,10 @@ var imports = {
     // Export operations.
     'call-export': /* async */ (index, flags) => {
       var rethrow = flags & 1;
+      if (JSPI) {
+        // TODO: Figure out why JSPI fails here.
+        rethrow = 0;
+      }
       if (!rethrow) {
         /* await */ callFunc(exportList[index].value);
       } else {
@@ -310,6 +314,10 @@ var imports = {
       // be wrapped for JSPI.
       ref = wrapExportForJSPI(ref);
       var rethrow = flags & 1;
+      if (JSPI) {
+        // TODO: Figure out why JSPI fails here.
+        rethrow = 0;
+      }
       if (!rethrow) {
         /* await */ callFunc(ref);
       } else {
