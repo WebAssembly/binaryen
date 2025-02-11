@@ -5056,7 +5056,7 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   // Do not generate new shared exnrefs, which we cannot generate in wasm.
-  if (heapType.isMaybeShared(HeapType::exn)) {
+  if (type.isMaybeShared(HeapType::exn)) {
     return type;
   }
 
