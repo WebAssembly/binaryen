@@ -4971,8 +4971,8 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
     auto nullability = getNullability();
     return Type(heapType, nullability);
   }
-  // Skip (ref func), (ref extern), and (ref i31) for now
-  // because there is no way to create them in globals. TODO.
+  // Skip (ref func|extern|i31|exn) because there is no way to create them in
+  // globals. TODO
   using WeightedOption = FeatureOptions<Type>::WeightedOption;
   return pick(FeatureOptions<Type>()
                 .add(FeatureSet::MVP,
@@ -4984,6 +4984,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                 .add(FeatureSet::ReferenceTypes,
                      Type(HeapType::func, Nullable),
                      Type(HeapType::ext, Nullable))
+                .add(FeatureSet::ExceptionHandling,
+                     // Type(HeapType::exn, NonNullable),
+                     Type(HeapType::exn, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
                      // Type(HeapType::ext, NonNullable),
