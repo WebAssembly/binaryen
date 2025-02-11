@@ -2309,6 +2309,26 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     }
   }
 
+  // Exported/imported tags are modifiable from the outside. TODO: should that
+  // not be possible in closed world?
+  std::unordered_set<Name> publicTags;
+  for (auto& tag : wasm.tags) {
+    if (tag->imported()) {
+      publicTags.insert(tag->name);
+    }
+  }
+  for (auto& ex : wasm.exports) {
+    if (ex->kind == ExternalKind::Tag) {
+      publicTags.insert(ex->value);
+    }
+  }
+  for (auto tag : publicTags) {
+    auto params = wasm.getTag(tag)->params();
+    for (Index i = 0; i < params.size(); i++) {
+      roots[TagLocation{tag, i}] = PossibleContents::fromType(params[i]);
+    }
+  }
+
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "struct phase\n";
 #endif
