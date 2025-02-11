@@ -3273,17 +3273,20 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      // If nullable, we can emit a null. If not, generate an exnref using a
-      // throw in a try_table.
+      // If nullable, we can emit a null.
       if (type.isNullable() && oneIn(2)) {
         return builder.makeRefNull(HeapTypes::exn.getBasic(share));
       }
 
-      // Make a catch_all_ref to a block.
-      auto* throww = makeThrow(Type::unreachable);
-      auto label = makeLabel();
-      auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
-      return builder.makeBlock(label, tryy);
+      // If we are in a function, make a catch_all_ref to a block.
+      if (funcContext) {
+        auto* throww = makeThrow(Type::unreachable);
+        auto label = makeLabel();
+        auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
+        return builder.makeBlock(label, tryy);
+      }
+
+      WASM_UNREACHABLE("non-nullable exnref in non-func context");
     }
     case HeapType::string: {
       // In non-function contexts all we can do is string.const.
