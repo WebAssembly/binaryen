@@ -4447,13 +4447,13 @@ Expression* TranslateToFuzzReader::makeTableGet(Type type) {
     // anything.
     Expression* index;
     if (allowOOB && oneIn(10)) {
-      index = make(table->indexType);
+      index = make(table->addressType);
     } else {
-      index = builder.makeConst(table->indexType(upTo(table->initial)));
+      index = builder.makeConst(Literal::makeFromInt32(table->initial, table->addressType));
     }
-    return builder.makeTableGet(tableName, index);
+    return builder.makeTableGet(tableName, index, table->type);
   };
-  if (type.getHeapType == Type::exnref) {
+  if (type.getHeapType() == HeapType::exn) {
     return makeTableGet(exnrefTableName);    
   } else {
     return makeTableGet(funcrefTableName);
@@ -4471,9 +4471,9 @@ Expression* TranslateToFuzzReader::makeTableSet(Type type) {
     // anything.
     Expression* index;
     if (allowOOB && oneIn(10)) {
-      index = make(table->indexType);
+      index = make(table->addressType);
     } else {
-      index = builder.makeConst(table->indexType(upTo(table->initial)));
+      index = builder.makeConst(Literal::makeFromInt32(table->initial, table->addressType));
     }
     auto* value = make(table->type);
     return builder.makeTableSet(tableName, index, value);
