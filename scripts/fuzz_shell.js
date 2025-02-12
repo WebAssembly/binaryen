@@ -275,7 +275,7 @@ var imports = {
     'throw': (which) => {
       if (!which) {
         // Throw a JS exception.
-        throw 0;
+        throw new Error('js exception');
       } else {
         // Throw a wasm exception.
         throw new WebAssembly.Exception(wasmTag, [which]);

@@ -184,11 +184,13 @@ public:
   }
 
   void throwJSException() {
-    // JS exceptions contain an externref, which wasm can't read (so the actual
-    // value here does not matter, but it does need to match what the 'throw'
-    // import does in fuzz_shell.js, as the fuzzer will do comparisons).
-    Literal externref = Literal::makeI31(0, Unshared).externalize();
-    Literals arguments = {externref};
+    // JS exceptions contain an externref. Use the same type of value as a JS
+    // exception would have, which is a reference to an object, and which will
+    // print out "object" in the logging from JS. A trivial struct is enough for
+    // us to log the same thing here.
+    auto empty = HeapType(Struct{});
+    auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
+    Literals arguments = {inner.externalize()};
     auto payload = std::make_shared<ExnData>(jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
