@@ -173,10 +173,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (export "func")
-    ;; If we thought no value was possible to pop here (if no exception were
-    ;; created of this tag) then we'd put an unreachable after it. As it is
-    ;; imported, a value might be there, so we do not.
     (drop
+      ;; If we thought no i32 value could arrive here (if no exception were
+      ;; created of this tag) then we'd put an unreachable after it. As it is
+      ;; imported, a value might be there, so we do not.
       (block $block (result i32)
         (try_table (catch $tag $block)
           (call $throw
