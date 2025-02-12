@@ -4456,8 +4456,10 @@ Expression* TranslateToFuzzReader::makeTableGet(Type type) {
   };
   if (type.getHeapType() == HeapType::exn) {
     return makeTableGet(exnrefTableName);
-  } else {
+  } else if (type.getHeapType() == HeapType::func) {
     return makeTableGet(funcrefTableName);
+  } else {
+    WASM_UNREACHABLE("bad TableGet type");
   }
 }
 
@@ -4483,6 +4485,7 @@ Expression* TranslateToFuzzReader::makeTableSet(Type type) {
   if (exnrefTableName && oneIn(2)) {
     return makeTableSet(exnrefTableName);
   } else {
+    assert(funcrefTableName);
     return makeTableSet(funcrefTableName);
   }
 }
