@@ -374,7 +374,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       }
 
       // The params are allowed to be multivalue, but not the results. Otherwise
-      // look for SIMD.
+      // look for SIMD etc.
       auto sig = func->type.getSignature();
       auto illegal = isIllegal(sig.results);
       illegal =
@@ -409,7 +409,8 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
 
   bool isIllegal(Type type) {
     auto features = type.getFeatures();
-    return features.hasSIMD() || features.hasMultivalue();
+    return features.hasSIMD() || features.hasMultivalue() ||
+           features.hasExceptionHandling();
   }
 };
 
