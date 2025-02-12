@@ -4449,14 +4449,17 @@ Expression* TranslateToFuzzReader::makeTableGet(Type type) {
     if (allowOOB && oneIn(10)) {
       index = make(table->addressType);
     } else {
-      index = builder.makeConst(Literal::makeFromInt32(table->initial, table->addressType));
+      index = builder.makeConst(
+        Literal::makeFromInt32(upTo(table->initial), table->addressType));
     }
     return builder.makeTableGet(tableName, index, table->type);
   };
   if (type.getHeapType() == HeapType::exn) {
     return makeTableGet(exnrefTableName);
-  } else {
+  } else if (type.getHeapType() == HeapType::func) {
     return makeTableGet(funcrefTableName);
+  } else {
+    WASM_UNREACHABLE("bad TableGet type");
   }
 }
 
@@ -4473,14 +4476,16 @@ Expression* TranslateToFuzzReader::makeTableSet(Type type) {
     if (allowOOB && oneIn(10)) {
       index = make(table->addressType);
     } else {
-      index = builder.makeConst(Literal::makeFromInt32(table->initial, table->addressType));
+      index = builder.makeConst(
+        Literal::makeFromInt32(upTo(table->initial), table->addressType));
     }
     auto* value = make(table->type);
     return builder.makeTableSet(tableName, index, value);
   };
   if (exnrefTableName && oneIn(2)) {
-    return makeTableSet(exnrefTableName);    
+    return makeTableSet(exnrefTableName);
   } else {
+    assert(funcrefTableName);
     return makeTableSet(funcrefTableName);
   }
 }
