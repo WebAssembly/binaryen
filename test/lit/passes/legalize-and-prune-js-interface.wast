@@ -128,11 +128,13 @@
 
   ;; CHECK:      (type $3 (func (result i32 i32)))
 
-  ;; CHECK:      (type $4 (func (param i32)))
+  ;; CHECK:      (type $4 (func (result exnref)))
 
-  ;; CHECK:      (type $5 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $5 (func (param i32)))
 
-  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $4) (param i32)))
+  ;; CHECK:      (type $6 (func (param i32 i32) (result i32)))
+
+  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $5) (param i32)))
 
   ;; CHECK:      (export "export-64" (func $legalstub$export-64))
 
@@ -167,9 +169,17 @@
     ;; This will be pruned.
     (unreachable)
   )
+
+  ;; CHECK:      (func $export-exn (type $4) (result exnref)
+  ;; CHECK-NEXT:  (ref.null noexn)
+  ;; CHECK-NEXT: )
+  (func $export-exn (export "export-exn") (result exnref)
+    ;; This will be pruned.
+    (ref.null noexn)
+  )
 )
 
-;; CHECK:      (func $legalstub$export-64 (type $5) (param $0 i32) (param $1 i32) (result i32)
+;; CHECK:      (func $legalstub$export-64 (type $6) (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
 ;; CHECK-NEXT:   (call $export-64

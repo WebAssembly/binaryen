@@ -161,33 +161,29 @@
   ;; CHECK:      (export "func" (func $func))
 
   ;; CHECK:      (func $func (type $1)
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (call $throw
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (try_table (catch $tag $block)
+  ;; CHECK-NEXT:     (call $throw
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (export "func")
-    (try
-      (do
-        (call $throw
-          (i32.const 1)
+    (drop
+      ;; If we thought no i32 value could arrive here (if no exception were
+      ;; created of this tag) then we'd put an unreachable after it. As it is
+      ;; imported, a value might be there, so we do not.
+      (block $block (result i32)
+        (try_table (catch $tag $block)
+          (call $throw
+            (i32.const 1)
+          )
         )
-      )
-      (catch $tag
-        ;; If we thought no value was possible to pop here (if no exception were
-        ;; created of this tag) then we'd put an unreachable after it. As it is
-        ;; imported, a value might be there, so we do not.
-        (drop
-          (pop i32)
-        )
+        (return)
       )
     )
   )
@@ -195,16 +191,18 @@
 
 ;; As above, but with an exported tag. Also test a tag with multiple params.
 (module
-  ;; CHECK:      (type $0 (func (param i32 f64)))
+  ;; CHECK:      (type $0 (func (result i32 f64)))
 
-  ;; CHECK:      (type $1 (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32 f64)))
 
-  ;; CHECK:      (type $2 (func))
+  ;; CHECK:      (type $2 (func (param i32)))
 
-  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $1) (param i32)))
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $2) (param i32)))
   (import "fuzzing-support" "throw" (func $throw (param i32)))
 
-  ;; CHECK:      (tag $tag (type $0) (param i32 f64))
+  ;; CHECK:      (tag $tag (type $1) (param i32 f64))
   (tag $tag (param i32 f64))
 
   ;; CHECK:      (export "func" (func $func))
@@ -212,32 +210,28 @@
   ;; CHECK:      (export "tag" (tag $tag))
   (export "tag" (tag $tag))
 
-  ;; CHECK:      (func $func (type $2)
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (call $throw
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK:      (func $func (type $3)
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (block $block (type $0) (result i32 f64)
+  ;; CHECK-NEXT:    (try_table (catch $tag $block)
+  ;; CHECK-NEXT:     (call $throw
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (tuple.drop 2
-  ;; CHECK-NEXT:     (pop (tuple i32 f64))
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (export "func")
-    (try
-      (do
-        (call $throw
-          (i32.const 1)
+    ;; Once more, we do not optimize to unreachable here.
+    (tuple.drop 2
+      (block $block (result i32 f64)
+        (try_table (catch $tag $block)
+          (call $throw
+            (i32.const 1)
+          )
         )
-      )
-      (catch $tag
-        ;; Once more, we do not optimize to unreachable here.
-        (tuple.drop 2
-          (pop (tuple i32 f64))
-        )
+        (return)
       )
     )
   )
@@ -258,41 +252,33 @@
   ;; CHECK:      (export "func" (func $func))
 
   ;; CHECK:      (func $func (type $1)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (call $throw
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (try_table (catch $tag $block)
+  ;; CHECK-NEXT:       (call $throw
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (return)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (export "func")
-    (try
-      (do
-        (call $throw
-          (i32.const 1)
+    ;; The tag is neither imported nor exported, so we can optimize to
+    ;; unreachable.
+    (drop
+      (block $block (result i32)
+        (try_table (catch $tag $block)
+          (call $throw
+            (i32.const 1)
+          )
         )
-      )
-      (catch $tag
-        ;; The tag is neither imported nor exported, so we can optimize to
-        ;; unreachable.
-        (drop
-          (pop i32)
-        )
+        (return)
       )
     )
   )
