@@ -379,13 +379,30 @@
 
  ;; CHECK:      [fuzz-exec] calling do-sleep
  ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $do-sleep (export "do-sleep") (result i32)
   (call $sleep
    ;; A ridiculous amount of ms, but in the interpreter it is ignored anyhow.
    (i32.const -1)
    ;; An id, that is returned back to us.
    (i32.const 42)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling return-externref-exception
+ ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $return-externref-exception (export "return-externref-exception") (result externref)
+  ;; Call JS table.set in a way that throws (on out of bounds). The JS exception
+  ;; is caught and returned from the function, so we can see what it looks like
+  ;; to the fuzzer, which should be "object" (an exception object).
+  (block $block (result externref)
+   (try_table (catch $imported-js-tag $block)
+    (call $table.set
+     (i32.const 99990)
+     (ref.null func)
+    )
+   )
+   (unreachable)
   )
  )
 )
@@ -467,6 +484,9 @@
 
 ;; CHECK:      [fuzz-exec] calling do-sleep
 ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
+
+;; CHECK:      [fuzz-exec] calling return-externref-exception
+;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
 ;; CHECK-NEXT: [fuzz-exec] comparing catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
@@ -483,6 +503,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.rethrow
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.trap
+;; CHECK-NEXT: [fuzz-exec] comparing return-externref-exception
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing
