@@ -4825,10 +4825,28 @@ Expression* TranslateToFuzzReader::makeI31Get(Type type) {
 
 Expression* TranslateToFuzzReader::makeThrow(Type type) {
   assert(type == Type::unreachable);
-  if (wasm.tags.empty()) {
-    addTag();
+  Tag* tag;
+  if (trivialNesting) {
+    // We are nested under a makeTrivial call, so only emit something trivial.
+    // Get (or create) a trivial tag, so we have no operands (and will not call
+    // make(), below). Otherwise, we might recurse very deeply if we threw a
+    // tag that contains an exnref (for which we may end up creating yet another
+    // throw in a try).
+    if (!trivialTag) {
+      auto newTag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
+                                    Signature(Type::none, Type::none));
+      tag = wasm.addTag(std::move(newTag));
+      trivialTag = tag->name;
+    } else {
+      tag = wasm.getTag(trivialTag);
+    }
+  } else {
+    // Get a random tag, adding a random one if necessary.
+    if (wasm.tags.empty()) {
+      addTag();
+    }
+    tag = pick(wasm.tags).get();
   }
-  auto* tag = pick(wasm.tags).get();
   auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
