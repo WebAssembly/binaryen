@@ -4450,7 +4450,7 @@ Expression* TranslateToFuzzReader::makeTableGet(Type type) {
       index = make(table->addressType);
     } else {
       index = builder.makeConst(
-        Literal::makeFromInt32(table->initial, table->addressType));
+        Literal::makeFromInt32(upTo(table->initial), table->addressType));
     }
     return builder.makeTableGet(tableName, index, table->type);
   };
@@ -4475,7 +4475,7 @@ Expression* TranslateToFuzzReader::makeTableSet(Type type) {
       index = make(table->addressType);
     } else {
       index = builder.makeConst(
-        Literal::makeFromInt32(table->initial, table->addressType));
+        Literal::makeFromInt32(upTo(table->initial), table->addressType));
     }
     auto* value = make(table->type);
     return builder.makeTableSet(tableName, index, value);
