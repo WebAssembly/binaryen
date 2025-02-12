@@ -1945,7 +1945,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (heapType.isBasic()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeBasicRef);
-      if (type.isNullable()) {
+      if (type.isNullable() && funcContext) {
         if (heapType == HeapType::func) {
           options.add(FeatureSet::ReferenceTypes, &Self::makeTableGet);
         }
