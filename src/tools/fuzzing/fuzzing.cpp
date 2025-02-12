@@ -4454,7 +4454,7 @@ Expression* TranslateToFuzzReader::makeTableGet(Type type) {
     return builder.makeTableGet(tableName, index, table->type);
   };
   if (type.getHeapType() == HeapType::exn) {
-    return makeTableGet(exnrefTableName);    
+    return makeTableGet(exnrefTableName);
   } else {
     return makeTableGet(funcrefTableName);
   }
