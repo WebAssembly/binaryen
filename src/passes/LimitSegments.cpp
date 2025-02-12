@@ -22,11 +22,10 @@ namespace wasm {
 
 struct LimitSegments : public Pass {
   void run(Module* module) override {
-    uint32_t maxDataSegments;
-    if(hasArgument("limit-segments")) {
+    Index maxDataSegments;
+    if (hasArgument("limit-segments")) {
       maxDataSegments = std::stoul(getArgument("limit-segments", ""));
-    }
-    else {
+    } else {
       maxDataSegments = WebLimitations::MaxDataSegments;
     }
     if (!MemoryUtils::ensureLimitedSegments(*module, maxDataSegments)) {
