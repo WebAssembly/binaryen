@@ -851,12 +851,16 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 
   if (choice & 1) {
     // Given an export index, call it from JS.
+    // A second parameter has flags. The first bit determines whether we catch
+    // and rethrow all exceptions. (This ends up giving us the same signature
+    // and behavior as when we do not rethrow, so we just add the flags here
+    // rather than another export.)
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
     func->name = callExportImportName;
     func->module = "fuzzing-support";
     func->base = "call-export";
-    func->type = Signature({Type::i32}, Type::none);
+    func->type = Signature({Type::i32, Type::i32}, Type::none);
     wasm.addFunction(std::move(func));
   }
 
@@ -884,7 +888,10 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->name = callRefImportName;
       func->module = "fuzzing-support";
       func->base = "call-ref";
-      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      // As call-export, there is a flags param that allows us to catch+rethrow
+      // all exceptions.
+      func->type =
+        Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none);
       wasm.addFunction(std::move(func));
     }
 
@@ -1135,7 +1142,13 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
       // Most of the time make a non-nullable funcref, to avoid errors.
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-      return builder.makeCall(refTarget, {make(refType)}, type);
+      std::vector<Expression*> args = {make(refType)};
+      if (!catching) {
+        // Only the first bit matters here, so we can send anything (this is
+        // future-proof for later bits, and has no downside now).
+        args.push_back(make(Type::i32));
+      }
+      return builder.makeCall(refTarget, args, type);
     }
   }
 
@@ -1163,7 +1176,16 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     index = builder.makeBinary(
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-  return builder.makeCall(exportTarget, {index}, type);
+
+  // The non-catching variants send a flags argument, which says whether to
+  // catch+rethrow.
+  std::vector<Expression*> args = {index};
+  if (!catching) {
+    // Only the first bit matters here, so we can send anything (this is
+    // future-proof for later bits, and has no downside now).
+    args.push_back(make(Type::i32));
+  }
+  return builder.makeCall(exportTarget, args, type);
 }
 
 Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
