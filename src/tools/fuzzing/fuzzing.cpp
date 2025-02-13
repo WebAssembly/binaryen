@@ -2009,7 +2009,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
   options
     .add(FeatureSet::MVP,
          WeightedOption{&Self::makeBreak, Important},
-         WeightedOption{&Self::makeUnreachable},
+         &Self::makeUnreachable,
          &Self::makeCall,
          &Self::makeCallIndirect,
          &Self::makeSwitch,
