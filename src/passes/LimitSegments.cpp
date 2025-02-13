@@ -22,7 +22,13 @@ namespace wasm {
 
 struct LimitSegments : public Pass {
   void run(Module* module) override {
-    if (!MemoryUtils::ensureLimitedSegments(*module)) {
+    Index maxDataSegments;
+    if (hasArgument("limit-segments")) {
+      maxDataSegments = std::stoul(getArgument("limit-segments", ""));
+    } else {
+      maxDataSegments = WebLimitations::MaxDataSegments;
+    }
+    if (!MemoryUtils::ensureLimitedSegments(*module, maxDataSegments)) {
       std::cerr << "Unable to merge segments. "
                 << "wasm VMs may not accept this binary" << std::endl;
     }
