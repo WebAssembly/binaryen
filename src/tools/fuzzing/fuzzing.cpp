@@ -853,8 +853,8 @@ void TranslateToFuzzReader::addImportCallingSupport() {
     // Given an export index, call it from JS.
     // A second parameter has flags. The first bit determines whether we catch
     // and rethrow all exceptions. (This ends up giving us the same signature
-    // and behavior as the normal mode, so we just add the flags here rather
-    // than another export.)
+    // and behavior as when we do not rethrow, so we just add the flags here
+    // rather than another export.)
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
     func->name = callExportImportName;
