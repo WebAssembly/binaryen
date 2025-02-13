@@ -154,20 +154,27 @@ struct HeapTypeGeneratorImpl {
 
   HeapType::BasicHeapType generateBasicHeapType(Shareability share) {
     // Choose bottom types more rarely.
-    // TODO: string, exn, and cont types
+    // TODO: string and cont types
     if (rand.oneIn(16)) {
       HeapType ht =
         rand.pick(HeapType::noext, HeapType::nofunc, HeapType::none);
       return ht.getBasic(share);
     }
-    HeapType ht = rand.pick(HeapType::func,
-                            HeapType::ext,
-                            HeapType::any,
-                            HeapType::eq,
-                            HeapType::i31,
-                            HeapType::struct_,
-                            HeapType::array);
-    if (share == Unshared && features.hasSharedEverything() && rand.oneIn(2)) {
+
+    std::vector<HeapType> options{HeapType::func,
+                                  HeapType::ext,
+                                  HeapType::any,
+                                  HeapType::eq,
+                                  HeapType::i31,
+                                  HeapType::struct_,
+                                  HeapType::array};
+    // Avoid shared exn, which we cannot generate.
+    if (features.hasExceptionHandling() && share == Unshared) {
+      options.push_back(HeapType::exn);
+    }
+    auto ht = rand.pick(options);
+    if (share == Unshared && features.hasSharedEverything() &&
+        ht != HeapType::exn && rand.oneIn(2)) {
       share = Shared;
     }
     return ht.getBasic(share);
@@ -203,7 +210,15 @@ struct HeapTypeGeneratorImpl {
 
   Type generateRefType(Shareability share) {
     auto heapType = generateHeapType(share);
-    auto nullability = rand.oneIn(2) ? Nullable : NonNullable;
+    Nullability nullability;
+    if (heapType.isMaybeShared(HeapType::exn)) {
+      // Do not generate non-nullable exnrefs for now, as we cannot generate
+      // them in global positions (they cannot be created in wasm, nor imported
+      // from JS).
+      nullability = Nullable;
+    } else {
+      nullability = rand.oneIn(2) ? Nullable : NonNullable;
+    }
     return builder.getTempRefType(heapType, nullability);
   }
 
@@ -521,6 +536,12 @@ struct HeapTypeGeneratorImpl {
   };
 
   Ref generateSubRef(Ref super) {
+    if (super.type.isMaybeShared(HeapType::exn)) {
+      // Do not generate non-nullable exnrefs for now, as we cannot generate
+      // them in global positions (they cannot be created in wasm, nor imported
+      // from JS). There are also no subtypes to consider, so just return.
+      return super;
+    }
     auto nullability = super.nullability == NonNullable
                          ? NonNullable
                          : rand.oneIn(2) ? Nullable : NonNullable;

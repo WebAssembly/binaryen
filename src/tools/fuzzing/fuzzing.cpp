@@ -1857,8 +1857,10 @@ Expression* TranslateToFuzzReader::make(Type type) {
     assert(type == Type::unreachable);
     ret = _makeunreachable();
   }
-  // We should create the right type of thing.
-  assert(Type::isSubType(ret->type, type));
+  if (!Type::isSubType(ret->type, type)) {
+    Fatal() << "Did not generate the right subtype of " << type
+            << ", instead we have " << ret->type << " : " << *ret << '\n';
+  }
   nesting--;
   return ret;
 }
@@ -3273,13 +3275,13 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      // If nullable, we can emit a null. If not, generate an exnref using a
-      // throw in a try_table.
-      if (type.isNullable() && oneIn(2)) {
+      // If nullable, we can emit a null. If there is no function context, then
+      // we must do so, as the other option is a throw in a block, which are not
+      // possible outside of functions.
+      if ((type.isNullable() && oneIn(2)) || !funcContext) {
         return builder.makeRefNull(HeapTypes::exn.getBasic(share));
       }
 
-      // Make a catch_all_ref to a block.
       auto* throww = makeThrow(Type::unreachable);
       auto label = makeLabel();
       auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
@@ -5101,6 +5103,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::array:
         return pick(HeapTypes::array, HeapTypes::none).getBasic(share);
       case HeapType::exn:
+        assert(share == Unshared);
         return HeapTypes::exn.getBasic(share);
       case HeapType::string:
         assert(share == Unshared);
@@ -5133,7 +5136,13 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     }
     return Type(types);
   } else if (type.isRef()) {
-    auto heapType = getSubType(type.getHeapType());
+    auto heapType = type.getHeapType();
+    // Do not generate non-nullable exnrefs in global positions (they cannot be
+    // created in wasm, nor imported from JS).
+    if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
+      return type;
+    }
+    heapType = getSubType(heapType);
     auto nullability = getSubType(type.getNullability());
     auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
