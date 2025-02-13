@@ -2477,10 +2477,15 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   }
   StackSwitch curr(wasm.allocator);
   curr.tag = tag;
-  auto nparams = ct.getContinuation().type.getSignature().params.size();
+  Type params = ct.getContinuation().type.getSignature().params;
+  auto nparams = params.size();
   if (nparams < 1) {
     return Err{"arity mismatch: the continuation argument must have, at least, "
                "unary arity"};
+  }
+  if (!params[nparams - 1].isContinuation()) {
+    return Err{"the last argument of the continuation argument should be "
+               "itself a continuation"};
   }
 
   // The continuation argument of the continuation is synthetic,
