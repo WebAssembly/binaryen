@@ -1251,8 +1251,40 @@ int main(int argc, const char* argv[]) {
   const std::string WasmReduceOption = "wasm-reduce options";
 
   ToolOptions options("wasm-reduce",
-                      "Reduce a wasm file to a smaller one that has the same "
-                      "behavior on a given command");
+                      R"(Reduce a wasm file to a smaller one with the same behavior on a given command.
+
+Typical usage:
+
+  wasm-reduce original.wasm '--command=bash a.sh' -t t.wasm -w w.wasm
+
+The original file original.wasm is where we begin. Each time we test a small
+reduction of it, we write that reduction to the 'test file' which is specified
+by '-t'. We run the command, in this example 'bash a.sh', and that command
+should use the test file (and not the original file or any other one). Whenever
+the reduction works, we write that new smaller file to the 'working file', which
+is specified by '-w'. We consider the reduction to work so long as it preserves
+the behavior of the command on the original input, that is, we start with some
+initial output from running the command after copying the original file to the
+test file, and any time we find a small wasm file with the same behavior (same
+stdout, same return code).
+
+Comparison to creduce:
+
+1. creduce requires the command to return 0. wasm-reduce is often used to reduce
+   crashes, which have non-zero return codes, so it is natural to allow any
+   return code. As mentioned above, we preserve the return code as we reduce.
+2. creduce ignores stdout. wasm-reduce preserves stdout as it reduces, as part
+   of the principle of preserving the original behavior of the command.
+3. creduce tramples the original input file as it reduces. wasm-reduce never
+   modifies the input (to avoid mistakes that cause data loss). Instead,
+   when reductions work we write to the 'working file' as mentioned above, and
+   the final reduction will be there.
+4. creduce runs the command in a temp directory. That is safer in general, but
+   it is not how the original command ran, and in particular forces additional
+   work if you have multiple files (which, for wasm-reduce, is common, e.g. if
+   the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
+   command in the same directory.
+                      )");
   options
     .add("--command",
          "-cmd",
