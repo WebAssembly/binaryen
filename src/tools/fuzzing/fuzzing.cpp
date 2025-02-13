@@ -1144,7 +1144,8 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
       std::vector<Expression*> args = {make(refType)};
       if (!catching) {
-        // The first bit matters here, so we can send anything.
+        // Only the first bit matters here, so we can send anything (this is
+        // future-proof for later bits, and has no downside now).
         args.push_back(make(Type::i32));
       }
       return builder.makeCall(refTarget, args, type);
@@ -1180,7 +1181,8 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
   // catch+rethrow.
   std::vector<Expression*> args = {index};
   if (!catching) {
-    // The first bit matters here, so we can send anything.
+    // Only the first bit matters here, so we can send anything (this is
+    // future-proof for later bits, and has no downside now).
     args.push_back(make(Type::i32));
   }
   return builder.makeCall(exportTarget, args, type);
