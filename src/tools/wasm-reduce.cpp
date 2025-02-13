@@ -1250,8 +1250,9 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmReduceOption = "wasm-reduce options";
 
-  ToolOptions options("wasm-reduce",
-                      R"(Reduce a wasm file to a smaller one with the same behavior on a given command.
+  ToolOptions options(
+    "wasm-reduce",
+    R"(Reduce a wasm file to a smaller one with the same behavior on a given command.
 
 Typical usage:
 
