@@ -161,6 +161,7 @@ private:
   Name HANG_LIMIT_GLOBAL;
 
   Name funcrefTableName;
+  Name exnrefTableName;
 
   std::unordered_map<Type, Name> logImportNames;
   Name throwImportName;
@@ -462,6 +463,8 @@ private:
   Expression* makeSIMDShift();
   Expression* makeSIMDLoad();
   Expression* makeBulkMemory(Type type);
+  Expression* makeTableGet(Type type);
+  Expression* makeTableSet(Type type);
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
