@@ -1256,18 +1256,30 @@ int main(int argc, const char* argv[]) {
 
 Typical usage:
 
-  wasm-reduce original.wasm '--command=bash a.sh' -t t.wasm -w w.wasm
+  wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w w.wasm
 
-The original file original.wasm is where we begin. Each time we test a small
-reduction of it, we write that reduction to the 'test file' which is specified
-by '-t'. We run the command, in this example 'bash a.sh', and that command
+The original file orig.wasm is where we begin. Each repeatedly test a small
+reduction of it by writing that modification to the 'test file' (specified by
+'--test', and we run the command, in this example 'bash a.sh'. That command
 should use the test file (and not the original file or any other one). Whenever
-the reduction works, we write that new smaller file to the 'working file', which
-is specified by '-w'. We consider the reduction to work so long as it preserves
-the behavior of the command on the original input, that is, we start with some
-initial output from running the command after copying the original file to the
-test file, and any time we find a small wasm file with the same behavior (same
-stdout, same return code).
+the reduction works, we write that new smaller file to the 'working file'
+(specified by '--working'. The reduction 'works' if it correctly preserves the
+behavior of the command on the original input, specifically, that it has the
+same stdout and the result return code. Each time reduction works we continue to
+reduce from that point (and each time it fails, we go back and try something
+else).
+
+Note how the command should run on the test file. That is, the first thing that
+wasm-reduce does on the example above is
+
+  cp orig.wasm t.wasm
+  bash a.sh
+
+That is, it copies the original file to the test file, and runs the command.
+Whatever the command does, we will preserve as we copy progressively smaller
+files to t.wasm. As we make progress, the smallest file will be written to
+the working file, w.wasm, and when reduction is done you will find the final
+result there.
 
 Comparison to creduce:
 
