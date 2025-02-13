@@ -1260,7 +1260,7 @@ Typical usage:
 
 The original file orig.wasm is where we begin. Each repeatedly test a small
 reduction of it by writing that modification to the 'test file' (specified by
-'--test', and we run the command, in this example 'bash a.sh'. That command
+'--test'), and we run the command, in this example 'bash a.sh'. That command
 should use the test file (and not the original file or any other one). Whenever
 the reduction works, we write that new smaller file to the 'working file'
 (specified by '--working'. The reduction 'works' if it correctly preserves the

@@ -10,7 +10,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: The original file orig.wasm is where we begin. Each repeatedly test a small
 ;; CHECK-NEXT: reduction of it by writing that modification to the 'test file' (specified by
-;; CHECK-NEXT: '--test', and we run the command, in this example 'bash a.sh'. That command
+;; CHECK-NEXT: '--test'), and we run the command, in this example 'bash a.sh'. That command
 ;; CHECK-NEXT: should use the test file (and not the original file or any other one). Whenever
 ;; CHECK-NEXT: the reduction works, we write that new smaller file to the 'working file'
 ;; CHECK-NEXT: (specified by '--working'. The reduction 'works' if it correctly preserves the
