@@ -2000,22 +2000,19 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
   using Self = TranslateToFuzzReader;
   auto options = FeatureOptions<Expression* (Self::*)(Type)>();
   using WeightedOption = decltype(options)::WeightedOption;
+  // Many instructions can become unreachable if a child is unreachable. We
+  // create such code in mutate() (see |allowUnreachable| there). The list of
+  // instructions here are those that necessarily have unreachable type, and are
+  // only created here (though they might have other variations that are
+  // reachable, like br has br_if that is created elsewhere, and we have call
+  // here because of return calls, etc.).
   options
     .add(FeatureSet::MVP,
-         WeightedOption{&Self::makeLocalSet, VeryImportant},
-         WeightedOption{&Self::makeBlock, Important},
-         WeightedOption{&Self::makeIf, Important},
-         WeightedOption{&Self::makeLoop, Important},
          WeightedOption{&Self::makeBreak, Important},
-         WeightedOption{&Self::makeStore, Important},
-         WeightedOption{&Self::makeUnary, Important},
-         WeightedOption{&Self::makeBinary, Important},
-         WeightedOption{&Self::makeUnreachable, Important},
+         WeightedOption{&Self::makeUnreachable},
          &Self::makeCall,
          &Self::makeCallIndirect,
-         &Self::makeSelect,
          &Self::makeSwitch,
-         &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow, &Self::makeThrowRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
@@ -3568,13 +3565,6 @@ Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
 
 Expression* TranslateToFuzzReader::makeUnary(Type type) {
   assert(!type.isTuple());
-  if (type == Type::unreachable) {
-    if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
-      return builder.makeUnary(unary->op, make(Type::unreachable));
-    }
-    // give up
-    return makeTrivial(type);
-  }
   // There are no unary ops for reference types.
   // TODO: not quite true if you count struct.new and array.new.
   if (type.isRef()) {
@@ -3789,14 +3779,6 @@ Expression* TranslateToFuzzReader::buildBinary(const BinaryArgs& args) {
 
 Expression* TranslateToFuzzReader::makeBinary(Type type) {
   assert(!type.isTuple());
-  if (type == Type::unreachable) {
-    if (auto* binary = makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
-      return buildBinary(
-        {binary->op, make(Type::unreachable), make(Type::unreachable)});
-    }
-    // give up
-    return makeTrivial(type);
-  }
   // There are no binary ops for reference types.
   // TODO: Use struct.new
   if (type.isRef()) {
@@ -4077,8 +4059,7 @@ Expression* TranslateToFuzzReader::makeSwitch(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeDrop(Type type) {
-  return builder.makeDrop(
-    make(type == Type::unreachable ? type : getConcreteType()));
+  return builder.makeDrop(make(getConcreteType()));
 }
 
 Expression* TranslateToFuzzReader::makeReturn(Type type) {
