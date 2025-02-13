@@ -13,19 +13,19 @@
 ;; CHECK-NEXT: '--test'), and we run the command, in this example 'bash a.sh'. That command
 ;; CHECK-NEXT: should use the test file (and not the original file or any other one). Whenever
 ;; CHECK-NEXT: the reduction works, we write that new smaller file to the 'working file'
-;; CHECK-NEXT: (specified by '--working'. The reduction 'works' if it correctly preserves the
+;; CHECK-NEXT: (specified by '--working'). The reduction 'works' if it correctly preserves the
 ;; CHECK-NEXT: behavior of the command on the original input, specifically, that it has the
 ;; CHECK-NEXT: same stdout and the result return code. Each time reduction works we continue to
 ;; CHECK-NEXT: reduce from that point (and each time it fails, we go back and try something
 ;; CHECK-NEXT: else).
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Note how the command should run on the test file. That is, the first thing that
-;; CHECK-NEXT: wasm-reduce does on the example above is
+;; CHECK-NEXT: wasm-reduce does on the example above is, effectively,
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   cp orig.wasm t.wasm
 ;; CHECK-NEXT:   bash a.sh
 ;; CHECK-NEXT:
-;; CHECK-NEXT: That is, it copies the original file to the test file, and runs the command.
+;; CHECK-NEXT: In other words, it copies the original to the test file, and runs the command.
 ;; CHECK-NEXT: Whatever the command does, we will preserve as we copy progressively smaller
 ;; CHECK-NEXT: files to t.wasm. As we make progress, the smallest file will be written to
 ;; CHECK-NEXT: the working file, w.wasm, and when reduction is done you will find the final

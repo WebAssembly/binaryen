@@ -1263,19 +1263,19 @@ reduction of it by writing that modification to the 'test file' (specified by
 '--test'), and we run the command, in this example 'bash a.sh'. That command
 should use the test file (and not the original file or any other one). Whenever
 the reduction works, we write that new smaller file to the 'working file'
-(specified by '--working'. The reduction 'works' if it correctly preserves the
+(specified by '--working'). The reduction 'works' if it correctly preserves the
 behavior of the command on the original input, specifically, that it has the
 same stdout and the result return code. Each time reduction works we continue to
 reduce from that point (and each time it fails, we go back and try something
 else).
 
 Note how the command should run on the test file. That is, the first thing that
-wasm-reduce does on the example above is
+wasm-reduce does on the example above is, effectively,
 
   cp orig.wasm t.wasm
   bash a.sh
 
-That is, it copies the original file to the test file, and runs the command.
+In other words, it copies the original to the test file, and runs the command.
 Whatever the command does, we will preserve as we copy progressively smaller
 files to t.wasm. As we make progress, the smallest file will be written to
 the working file, w.wasm, and when reduction is done you will find the final
