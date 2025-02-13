@@ -183,7 +183,7 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
  ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $ref.calling.rethrow (export "ref.calling.rethrow")
-  ;; As with calling an export, when we set the flags to 0 exceptions are
+  ;; As with calling an export, when we set the flags to 1 exceptions are
   ;; caught and rethrown, but there is no noticeable difference here.
   (call $call.ref
    (ref.func $logging)
