@@ -178,6 +178,10 @@ function callFunc(func) {
     /* await */ func();
     return 0;
   } catch (e) {
+    // The exception must exist, and not behave oddly when we access a
+    // property on it. (VM bugs could cause errors here.)
+    e.a;
+
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
     // check for that first (wasm2js does not define RuntimeError, so use
@@ -211,11 +215,6 @@ function callFunc(func) {
     // exception, or a conversion error on the wasm/JS boundary, etc.). Rethrow
     // if we were asked to.
     if (rethrow) {
-      // The exception must exist, and not behave oddly when we access a
-      // property on it (the property itself might be null, though, as wasm
-      // exceptions have no stack by default).
-      assert(e);
-      e.stack;
       throw e;
     }
     return 1;
