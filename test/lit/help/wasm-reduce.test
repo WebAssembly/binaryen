@@ -2,8 +2,40 @@
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-reduce INFILE
 ;; CHECK-NEXT:
-;; CHECK-NEXT: Reduce a wasm file to a smaller one that has the same behavior on a given
-;; CHECK-NEXT: command
+;; CHECK-NEXT: Reduce a wasm file to a smaller one with the same behavior on a given command.
+;; CHECK-NEXT:
+;; CHECK-NEXT: Typical usage:
+;; CHECK-NEXT:
+;; CHECK-NEXT:   wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w w.wasm
+;; CHECK-NEXT:
+;; CHECK-NEXT: The original file orig.wasm is where we begin. Each time we test a small
+;; CHECK-NEXT: reduction of it, we write that reduction to the 'test file' which is specified
+;; CHECK-NEXT: by '-t'. We run the command, in this example 'bash a.sh', and that command
+;; CHECK-NEXT: should use the test file (and not the original file or any other one). Whenever
+;; CHECK-NEXT: the reduction works, we write that new smaller file to the 'working file', which
+;; CHECK-NEXT: is specified by '-w'. We consider the reduction to work so long as it preserves
+;; CHECK-NEXT: the behavior of the command on the original input, that is, we start with some
+;; CHECK-NEXT: initial output from running the command after copying the original file to the
+;; CHECK-NEXT: test file, and any time we find a small wasm file with the same behavior (same
+;; CHECK-NEXT: stdout, same return code).
+;; CHECK-NEXT:
+;; CHECK-NEXT: Comparison to creduce:
+;; CHECK-NEXT:
+;; CHECK-NEXT: 1. creduce requires the command to return 0. wasm-reduce is often used to reduce
+;; CHECK-NEXT:    crashes, which have non-zero return codes, so it is natural to allow any
+;; CHECK-NEXT:    return code. As mentioned above, we preserve the return code as we reduce.
+;; CHECK-NEXT: 2. creduce ignores stdout. wasm-reduce preserves stdout as it reduces, as part
+;; CHECK-NEXT:    of the principle of preserving the original behavior of the command.
+;; CHECK-NEXT: 3. creduce tramples the original input file as it reduces. wasm-reduce never
+;; CHECK-NEXT:    modifies the input (to avoid mistakes that cause data loss). Instead,
+;; CHECK-NEXT:    when reductions work we write to the 'working file' as mentioned above, and
+;; CHECK-NEXT:    the final reduction will be there.
+;; CHECK-NEXT: 4. creduce runs the command in a temp directory. That is safer in general, but
+;; CHECK-NEXT:    it is not how the original command ran, and in particular forces additional
+;; CHECK-NEXT:    work if you have multiple files (which, for wasm-reduce, is common, e.g. if
+;; CHECK-NEXT:    the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
+;; CHECK-NEXT:    command in the same directory.
+;; CHECK-NEXT:
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
