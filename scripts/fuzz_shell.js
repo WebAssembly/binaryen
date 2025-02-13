@@ -211,6 +211,11 @@ function callFunc(func) {
     // exception, or a conversion error on the wasm/JS boundary, etc.). Rethrow
     // if we were asked to.
     if (rethrow) {
+      // The exception must exist, and not behave oddly when we access a
+      // property on it (the property itself might be null, though, as wasm
+      // exceptions have no stack by default).
+      assert(e);
+      e.stack;
       throw e;
     }
     return 1;
