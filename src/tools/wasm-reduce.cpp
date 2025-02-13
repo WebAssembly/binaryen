@@ -1297,6 +1297,10 @@ Comparison to creduce:
    work if you have multiple files (which, for wasm-reduce, is common, e.g. if
    the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
    command in the same directory.
+
+More documentation can be found at
+
+  https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
                       )");
   options
     .add("--command",

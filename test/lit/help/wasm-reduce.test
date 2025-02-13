@@ -8,16 +8,28 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w w.wasm
 ;; CHECK-NEXT:
-;; CHECK-NEXT: The original file orig.wasm is where we begin. Each time we test a small
-;; CHECK-NEXT: reduction of it, we write that reduction to the 'test file' which is specified
-;; CHECK-NEXT: by '-t'. We run the command, in this example 'bash a.sh', and that command
+;; CHECK-NEXT: The original file orig.wasm is where we begin. Each repeatedly test a small
+;; CHECK-NEXT: reduction of it by writing that modification to the 'test file' (specified by
+;; CHECK-NEXT: '--test', and we run the command, in this example 'bash a.sh'. That command
 ;; CHECK-NEXT: should use the test file (and not the original file or any other one). Whenever
-;; CHECK-NEXT: the reduction works, we write that new smaller file to the 'working file', which
-;; CHECK-NEXT: is specified by '-w'. We consider the reduction to work so long as it preserves
-;; CHECK-NEXT: the behavior of the command on the original input, that is, we start with some
-;; CHECK-NEXT: initial output from running the command after copying the original file to the
-;; CHECK-NEXT: test file, and any time we find a small wasm file with the same behavior (same
-;; CHECK-NEXT: stdout, same return code).
+;; CHECK-NEXT: the reduction works, we write that new smaller file to the 'working file'
+;; CHECK-NEXT: (specified by '--working'. The reduction 'works' if it correctly preserves the
+;; CHECK-NEXT: behavior of the command on the original input, specifically, that it has the
+;; CHECK-NEXT: same stdout and the result return code. Each time reduction works we continue to
+;; CHECK-NEXT: reduce from that point (and each time it fails, we go back and try something
+;; CHECK-NEXT: else).
+;; CHECK-NEXT:
+;; CHECK-NEXT: Note how the command should run on the test file. That is, the first thing that
+;; CHECK-NEXT: wasm-reduce does on the example above is
+;; CHECK-NEXT:
+;; CHECK-NEXT:   cp orig.wasm t.wasm
+;; CHECK-NEXT:   bash a.sh
+;; CHECK-NEXT:
+;; CHECK-NEXT: That is, it copies the original file to the test file, and runs the command.
+;; CHECK-NEXT: Whatever the command does, we will preserve as we copy progressively smaller
+;; CHECK-NEXT: files to t.wasm. As we make progress, the smallest file will be written to
+;; CHECK-NEXT: the working file, w.wasm, and when reduction is done you will find the final
+;; CHECK-NEXT: result there.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Comparison to creduce:
 ;; CHECK-NEXT:
@@ -35,6 +47,10 @@
 ;; CHECK-NEXT:    work if you have multiple files (which, for wasm-reduce, is common, e.g. if
 ;; CHECK-NEXT:    the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
 ;; CHECK-NEXT:    command in the same directory.
+;; CHECK-NEXT:
+;; CHECK-NEXT: More documentation can be found at
+;; CHECK-NEXT:
+;; CHECK-NEXT:   https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
