@@ -36,10 +36,6 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
     random(std::move(input), wasm.features) {
 
-  // Half the time add no unreachable code so that we'll execute the most code
-  // as possible with no early exits.
-  allowAddingUnreachableCode = oneIn(2);
-
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging anyref because it is opaque
@@ -57,9 +53,13 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
   if (random.oneIn(2)) {
     // A typical random wasm input from fuzz_opt.py is fairly large (to minimize
     // the process creation overhead of all the things we run from python), and
-    // the defaults are tuned to that.
-    double size = random.remaining();
+    // the defaults are tuned to that. This corresponds to INPUT_SIZE_MEAN in
+    // scripts/fuzz_opt.py
     const double MEAN_SIZE = 40 * 1024;
+
+    // As we have not read anything from the input, the remaining size is its
+    // size.
+    double size = random.remaining();
     auto ratio = size / MEAN_SIZE;
 
     auto bits = random.get();
@@ -88,6 +88,10 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
       fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
     }
   }
+
+  // Half the time add no unreachable code so that we'll execute the most code
+  // as possible with no early exits.
+  allowAddingUnreachableCode = oneIn(2);
 }
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
