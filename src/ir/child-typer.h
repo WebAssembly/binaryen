@@ -81,8 +81,18 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(ptrp, wasm.getMemory(mem)->addressType);
   }
 
+  Table* getTable(Name table) {
+    if (table) {
+      return wasm.getTable(table);
+    }
+
+    // No table specified, so this is the default.
+    assert(!wasm.tables.empty());
+    return wasm.tables[0].get();
+  }
+
   void noteTableIndex(Expression** indexp, Name table) {
-    note(indexp, wasm.getTable(table)->addressType);
+    note(indexp, getTable(table)->addressType);
   }
 
   void noteAny(Expression** childp) { self().noteAnyType(childp); }
@@ -778,8 +788,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     noteTableIndex(&curr->source, curr->sourceTable);
 
     // The size depends on both dest and source.
-    auto* sourceTable = wasm.getTableOrNull(curr->sourceTable);
-    auto* destTable = wasm.getTableOrNull(curr->destTable);
+    auto* sourceTable = getTable(curr->sourceTable);
+    auto* destTable = getTable(curr->destTable);
     Type sizeType =
       sourceTable->is64() && destTable->is64() ? Type::i64 : Type::i32;
     note(&curr->size, sizeType);
