@@ -6,7 +6,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Typical usage:
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w w.wasm
+;; CHECK-NEXT:   wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: The original file orig.wasm is where we begin. Each repeatedly test a small
 ;; CHECK-NEXT: reduction of it by writing that modification to the 'test file' (specified by
