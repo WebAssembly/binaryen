@@ -63,6 +63,16 @@ public:
 
   bool finished() { return finishedInput; }
 
+  // How many bytes of data remain to be used.
+  size_t remaining() {
+    if (finishedInput) {
+      // We finished it and are cycling through it again (using xorFactor to try
+      // to improve the entropy).
+      return 0;
+    }
+    return bytes.size() - pos;
+  }
+
   // Pick from a vector-like container
   template<typename T> const typename T::value_type& pick(const T& vec) {
     assert(!vec.empty());
