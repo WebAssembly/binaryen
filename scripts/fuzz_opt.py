@@ -1718,7 +1718,10 @@ class Two(TestCaseHandler):
         # Make sure that fuzz_shell.js actually executed all exports from both
         # wasm files.
         exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
+        calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
+        if calls_in_output == 0:
+            print(f'warning: no calls in output. output:\n{output}')
+        assert calls_in_output == len(exports)
 
         output = fix_output(output)
 
