@@ -170,14 +170,18 @@ function callFunc(func) {
   return func.apply(null, args);
 }
 
-// Calls a given function in a try-catch, swallowing JS exceptions, and return 1
-// if we did in fact swallow an exception. Wasm traps are not swallowed (see
-// details below).
-/* async */ function tryCall(func) {
+// Calls a given function in a try-catch. Return 1 if an exception was thrown.
+// If |rethrow| is set, and an exception is thrown, it is caught and rethrown.
+// Wasm traps are not swallowed (see details below).
+/* async */ function tryCall(func, rethrow) {
   try {
     /* await */ func();
     return 0;
   } catch (e) {
+    // The exception must exist, and not behave oddly when we access a
+    // property on it. (VM bugs could cause errors here.)
+    e.a;
+
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
     // check for that first (wasm2js does not define RuntimeError, so use
@@ -208,7 +212,11 @@ function callFunc(func) {
       }
     }
     // Otherwise, this is a normal exception we want to catch (a wasm
-    // exception, or a conversion error on the wasm/JS boundary, etc.).
+    // exception, or a conversion error on the wasm/JS boundary, etc.). Rethrow
+    // if we were asked to.
+    if (rethrow) {
+      throw e;
+    }
     return 1;
   }
 }
@@ -270,9 +278,11 @@ var imports = {
     // Throw an exception from JS.
     'throw': (which) => {
       if (!which) {
-        throw 'some JS error';
+        // Throw a JS exception.
+        throw new Error('js exception');
       } else {
-        throw new WebAssembly.Exception(jsTag, which);
+        // Throw a wasm exception.
+        throw new WebAssembly.Exception(wasmTag, [which]);
       }
     },
 
@@ -285,19 +295,39 @@ var imports = {
     },
 
     // Export operations.
-    'call-export': /* async */ (index) => {
-      /* await */ callFunc(exportList[index].value);
+    'call-export': /* async */ (index, flags) => {
+      var rethrow = flags & 1;
+      if (JSPI) {
+        // TODO: Figure out why JSPI fails here.
+        rethrow = 0;
+      }
+      if (!rethrow) {
+        /* await */ callFunc(exportList[index].value);
+      } else {
+        tryCall(/* async */ () => /* await */ callFunc(exportList[index].value),
+                rethrow);
+      }
     },
     'call-export-catch': /* async */ (index) => {
       return tryCall(/* async */ () => /* await */ callFunc(exportList[index].value));
     },
 
     // Funcref operations.
-    'call-ref': /* async */ (ref) => {
+    'call-ref': /* async */ (ref, flags) => {
       // This is a direct function reference, and just like an export, it must
       // be wrapped for JSPI.
       ref = wrapExportForJSPI(ref);
-      /* await */ callFunc(ref);
+      var rethrow = flags & 1;
+      if (JSPI) {
+        // TODO: Figure out why JSPI fails here.
+        rethrow = 0;
+      }
+      if (!rethrow) {
+        /* await */ callFunc(ref);
+      } else {
+        tryCall(/* async */ () => /* await */ callFunc(ref),
+                rethrow);
+      }
     },
     'call-ref-catch': /* async */ (ref) => {
       ref = wrapExportForJSPI(ref);
@@ -333,9 +363,12 @@ var imports = {
 // If Tags are available, add some.
 if (typeof WebAssembly.Tag !== 'undefined') {
   // A tag for general use in the fuzzer.
-  var jsTag = imports['fuzzing-support']['tag'] = new WebAssembly.Tag({
+  var wasmTag = imports['fuzzing-support']['wasmtag'] = new WebAssembly.Tag({
     'parameters': ['i32']
   });
+
+  // The JSTag that represents a JS tag.
+  imports['fuzzing-support']['jstag'] = WebAssembly.JSTag;
 
   // This allows j2wasm content to run in the fuzzer.
   imports['imports'] = {

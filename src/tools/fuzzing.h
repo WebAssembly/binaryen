@@ -171,6 +171,7 @@ private:
   Name HANG_LIMIT_GLOBAL;
 
   Name funcrefTableName;
+  Name exnrefTableName;
 
   std::unordered_map<Type, Name> logImportNames;
   Name throwImportName;
@@ -209,6 +210,9 @@ private:
   std::vector<HeapType> mutableArrays;
 
   Index numAddedFunctions = 0;
+
+  // The name of an empty tag.
+  Name trivialTag;
 
   // RAII helper for managing the state used to create a single function.
   struct FunctionCreationContext {
@@ -472,6 +476,8 @@ private:
   Expression* makeSIMDShift();
   Expression* makeSIMDLoad();
   Expression* makeBulkMemory(Type type);
+  Expression* makeTableGet(Type type);
+  Expression* makeTableSet(Type type);
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
@@ -493,6 +499,7 @@ private:
   Expression* makeArrayBulkMemoryOp(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeThrow(Type type);
+  Expression* makeThrowRef(Type type);
 
   Expression* makeMemoryInit();
   Expression* makeDataDrop();

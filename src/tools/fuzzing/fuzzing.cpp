@@ -546,6 +546,22 @@ void TranslateToFuzzReader::setupTables() {
     segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
     wasm.addElementSegment(std::move(segment));
   }
+
+  // When EH is enabled, set up an exnref table.
+  if (wasm.features.hasExceptionHandling()) {
+    Type exnref = Type(HeapType::exn, Nullable);
+    Address initial = upTo(10);
+    Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
+    auto tablePtr =
+      builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
+                        exnref,
+                        initial,
+                        max,
+                        Type::i32); // TODO: wasm64
+    tablePtr->hasExplicitName = true;
+    table = wasm.addTable(std::move(tablePtr));
+    exnrefTableName = table->name;
+  }
 }
 
 void TranslateToFuzzReader::setupGlobals() {
@@ -650,13 +666,20 @@ void TranslateToFuzzReader::setupTags() {
     addTag();
   }
 
-  // Add the fuzzing support tag manually sometimes.
+  // Add the fuzzing support tags manually sometimes.
   if (!preserveImportsAndExports && oneIn(2)) {
-    auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag"),
-                               Signature(Type::i32, Type::none));
-    tag->module = "fuzzing-support";
-    tag->base = "tag";
-    wasm.addTag(std::move(tag));
+    auto wasmTag = builder.makeTag(Names::getValidTagName(wasm, "wasmtag"),
+                                   Signature(Type::i32, Type::none));
+    wasmTag->module = "fuzzing-support";
+    wasmTag->base = "wasmtag";
+    wasm.addTag(std::move(wasmTag));
+
+    auto externref = Type(HeapType::ext, Nullable);
+    auto jsTag = builder.makeTag(Names::getValidTagName(wasm, "jstag"),
+                                 Signature(externref, Type::none));
+    jsTag->module = "fuzzing-support";
+    jsTag->base = "jstag";
+    wasm.addTag(std::move(jsTag));
   }
 }
 
@@ -869,12 +892,16 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 
   if (choice & 1) {
     // Given an export index, call it from JS.
+    // A second parameter has flags. The first bit determines whether we catch
+    // and rethrow all exceptions. (This ends up giving us the same signature
+    // and behavior as when we do not rethrow, so we just add the flags here
+    // rather than another export.)
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
     func->name = callExportImportName;
     func->module = "fuzzing-support";
     func->base = "call-export";
-    func->type = Signature({Type::i32}, Type::none);
+    func->type = Signature({Type::i32, Type::i32}, Type::none);
     wasm.addFunction(std::move(func));
   }
 
@@ -902,7 +929,10 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->name = callRefImportName;
       func->module = "fuzzing-support";
       func->base = "call-ref";
-      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      // As call-export, there is a flags param that allows us to catch+rethrow
+      // all exceptions.
+      func->type =
+        Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none);
       wasm.addFunction(std::move(func));
     }
 
@@ -1163,7 +1193,13 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
       // Most of the time make a non-nullable funcref, to avoid errors.
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-      return builder.makeCall(refTarget, {make(refType)}, type);
+      std::vector<Expression*> args = {make(refType)};
+      if (!catching) {
+        // Only the first bit matters here, so we can send anything (this is
+        // future-proof for later bits, and has no downside now).
+        args.push_back(make(Type::i32));
+      }
+      return builder.makeCall(refTarget, args, type);
     }
   }
 
@@ -1191,7 +1227,16 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     index = builder.makeBinary(
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-  return builder.makeCall(exportTarget, {index}, type);
+
+  // The non-catching variants send a flags argument, which says whether to
+  // catch+rethrow.
+  std::vector<Expression*> args = {index};
+  if (!catching) {
+    // Only the first bit matters here, so we can send anything (this is
+    // future-proof for later bits, and has no downside now).
+    args.push_back(make(Type::i32));
+  }
+  return builder.makeCall(exportTarget, args, type);
 }
 
 Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
@@ -1892,8 +1937,10 @@ Expression* TranslateToFuzzReader::make(Type type) {
     assert(type == Type::unreachable);
     ret = _makeunreachable();
   }
-  // We should create the right type of thing.
-  assert(Type::isSubType(ret->type, type));
+  if (!Type::isSubType(ret->type, type)) {
+    Fatal() << "Did not generate the right subtype of " << type
+            << ", instead we have " << ret->type << " : " << *ret << '\n';
+  }
   nesting--;
   return ret;
 }
@@ -1964,6 +2011,14 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     if (heapType.isBasic()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeBasicRef);
+      if (type.isNullable() && funcContext) {
+        if (heapType == HeapType::func) {
+          options.add(FeatureSet::ReferenceTypes, &Self::makeTableGet);
+        }
+        if (heapType == HeapType::exn) {
+          options.add(FeatureSet::ExceptionHandling, &Self::makeTableGet);
+        }
+      }
     } else {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeCompoundRef);
@@ -2011,6 +2066,7 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
+    .add(FeatureSet::ReferenceTypes, &Self::makeTableSet)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
     .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
@@ -2033,24 +2089,21 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
   using Self = TranslateToFuzzReader;
   auto options = FeatureOptions<Expression* (Self::*)(Type)>();
   using WeightedOption = decltype(options)::WeightedOption;
+  // Many instructions can become unreachable if a child is unreachable. We
+  // create such code in mutate() (see |allowUnreachable| there). The list of
+  // instructions here are those that necessarily have unreachable type, and are
+  // only created here (though they might have other variations that are
+  // reachable, like br has br_if that is created elsewhere, and we have call
+  // here because of return calls, etc.).
   options
     .add(FeatureSet::MVP,
-         WeightedOption{&Self::makeLocalSet, VeryImportant},
-         WeightedOption{&Self::makeBlock, Important},
-         WeightedOption{&Self::makeIf, Important},
-         WeightedOption{&Self::makeLoop, Important},
          WeightedOption{&Self::makeBreak, Important},
-         WeightedOption{&Self::makeStore, Important},
-         WeightedOption{&Self::makeUnary, Important},
-         WeightedOption{&Self::makeBinary, Important},
-         WeightedOption{&Self::makeUnreachable, Important},
+         &Self::makeUnreachable,
          &Self::makeCall,
          &Self::makeCallIndirect,
-         &Self::makeSelect,
          &Self::makeSwitch,
-         &Self::makeDrop,
          &Self::makeReturn)
-    .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
+    .add(FeatureSet::ExceptionHandling, &Self::makeThrow, &Self::makeThrowRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
@@ -3308,12 +3361,17 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      auto null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
-      if (!type.isNullable()) {
-        assert(funcContext);
-        return builder.makeRefAs(RefAsNonNull, null);
+      // If nullable, we can emit a null. If there is no function context, then
+      // we must do so, as the other option is a throw in a block, which are not
+      // possible outside of functions.
+      if ((type.isNullable() && oneIn(2)) || !funcContext) {
+        return builder.makeRefNull(HeapTypes::exn.getBasic(share));
       }
-      return null;
+
+      auto* throww = makeThrow(Type::unreachable);
+      auto label = makeLabel();
+      auto* tryy = builder.makeTryTable(throww, {Name()}, {label}, {true});
+      return builder.makeBlock(label, tryy);
     }
     case HeapType::string: {
       // In non-function contexts all we can do is string.const.
@@ -3596,13 +3654,6 @@ Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
 
 Expression* TranslateToFuzzReader::makeUnary(Type type) {
   assert(!type.isTuple());
-  if (type == Type::unreachable) {
-    if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
-      return builder.makeUnary(unary->op, make(Type::unreachable));
-    }
-    // give up
-    return makeTrivial(type);
-  }
   // There are no unary ops for reference types.
   // TODO: not quite true if you count struct.new and array.new.
   if (type.isRef()) {
@@ -3817,14 +3868,6 @@ Expression* TranslateToFuzzReader::buildBinary(const BinaryArgs& args) {
 
 Expression* TranslateToFuzzReader::makeBinary(Type type) {
   assert(!type.isTuple());
-  if (type == Type::unreachable) {
-    if (auto* binary = makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
-      return buildBinary(
-        {binary->op, make(Type::unreachable), make(Type::unreachable)});
-    }
-    // give up
-    return makeTrivial(type);
-  }
   // There are no binary ops for reference types.
   // TODO: Use struct.new
   if (type.isRef()) {
@@ -4105,8 +4148,7 @@ Expression* TranslateToFuzzReader::makeSwitch(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeDrop(Type type) {
-  return builder.makeDrop(
-    make(type == Type::unreachable ? type : getConcreteType()));
+  return builder.makeDrop(make(getConcreteType()));
 }
 
 Expression* TranslateToFuzzReader::makeReturn(Type type) {
@@ -4441,6 +4483,58 @@ Expression* TranslateToFuzzReader::makeBulkMemory(Type type) {
       return makeMemoryFill();
   }
   WASM_UNREACHABLE("invalid value");
+}
+
+Expression* TranslateToFuzzReader::makeTableGet(Type type) {
+  // Emit a get from the funcref table (which always exists) or the exnref one
+  // (which might not, if EH is disabled).
+  auto makeTableGet = [&](Name tableName) {
+    auto* table = wasm.getTable(tableName);
+    // Usually emit in-bounds gets, to avoid trapping, but rarely allow
+    // anything.
+    Expression* index;
+    if (allowOOB && oneIn(10)) {
+      index = make(table->addressType);
+    } else {
+      index = builder.makeConst(
+        Literal::makeFromInt32(upTo(table->initial), table->addressType));
+    }
+    return builder.makeTableGet(tableName, index, table->type);
+  };
+  if (type.getHeapType() == HeapType::exn) {
+    return makeTableGet(exnrefTableName);
+  } else if (type.getHeapType() == HeapType::func) {
+    return makeTableGet(funcrefTableName);
+  } else {
+    WASM_UNREACHABLE("bad TableGet type");
+  }
+}
+
+Expression* TranslateToFuzzReader::makeTableSet(Type type) {
+  assert(type == Type::none);
+
+  // Emit a set to either the funcref table (which always exists) or the exnref
+  // one (which might not, if EH is disabled).
+  auto makeTableSet = [&](Name tableName) {
+    auto* table = wasm.getTable(tableName);
+    // Usually emit in-bounds sets, to avoid trapping, but rarely allow
+    // anything.
+    Expression* index;
+    if (allowOOB && oneIn(10)) {
+      index = make(table->addressType);
+    } else {
+      index = builder.makeConst(
+        Literal::makeFromInt32(upTo(table->initial), table->addressType));
+    }
+    auto* value = make(table->type);
+    return builder.makeTableSet(tableName, index, value);
+  };
+  if (exnrefTableName && oneIn(2)) {
+    return makeTableSet(exnrefTableName);
+  } else {
+    assert(funcrefTableName);
+    return makeTableSet(funcrefTableName);
+  }
 }
 
 Expression* TranslateToFuzzReader::makeRefIsNull(Type type) {
@@ -4855,16 +4949,43 @@ Expression* TranslateToFuzzReader::makeI31Get(Type type) {
 
 Expression* TranslateToFuzzReader::makeThrow(Type type) {
   assert(type == Type::unreachable);
-  if (wasm.tags.empty()) {
-    addTag();
+  Tag* tag;
+  if (trivialNesting) {
+    // We are nested under a makeTrivial call, so only emit something trivial.
+    // Get (or create) a trivial tag, so we have no operands (and will not call
+    // make(), below). Otherwise, we might recurse very deeply if we threw a
+    // tag that contains an exnref (for which we may end up creating yet another
+    // throw in a try).
+    if (!trivialTag) {
+      auto newTag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
+                                    Signature(Type::none, Type::none));
+      tag = wasm.addTag(std::move(newTag));
+      trivialTag = tag->name;
+    } else {
+      tag = wasm.getTag(trivialTag);
+    }
+  } else {
+    // Get a random tag, adding a random one if necessary.
+    if (wasm.tags.empty()) {
+      addTag();
+    }
+    tag = pick(wasm.tags).get();
   }
-  auto* tag = pick(wasm.tags).get();
   auto tagType = tag->params();
   std::vector<Expression*> operands;
   for (auto t : tagType) {
     operands.push_back(make(t));
   }
   return builder.makeThrow(tag, operands);
+}
+
+Expression* TranslateToFuzzReader::makeThrowRef(Type type) {
+  assert(type == Type::unreachable);
+  // Use a nullable type here to avoid the risk of trapping (when we find no way
+  // to make a non-nullable ref, we end up fixing validation with
+  // ref.as_non_null of a null, which validates but traps).
+  auto* ref = make(Type(HeapType::exn, Nullable));
+  return builder.makeThrowRef(ref);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryInit() {
@@ -4920,8 +5041,8 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
     auto nullability = getNullability();
     return Type(heapType, nullability);
   }
-  // Skip (ref func), (ref extern), and (ref i31) for now
-  // because there is no way to create them in globals. TODO.
+  // Skip (ref func|extern|i31|exn) because there is no way to create them in
+  // globals. TODO
   using WeightedOption = FeatureOptions<Type>::WeightedOption;
   return pick(FeatureOptions<Type>()
                 .add(FeatureSet::MVP,
@@ -4933,6 +5054,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                 .add(FeatureSet::ReferenceTypes,
                      Type(HeapType::func, Nullable),
                      Type(HeapType::ext, Nullable))
+                .add(FeatureSet::ExceptionHandling,
+                     // Type(HeapType::exn, NonNullable),
+                     Type(HeapType::exn, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      // Type(HeapType::func, NonNullable),
                      // Type(HeapType::ext, NonNullable),
@@ -5122,6 +5246,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::array:
         return pick(HeapTypes::array, HeapTypes::none).getBasic(share);
       case HeapType::exn:
+        assert(share == Unshared);
         return HeapTypes::exn.getBasic(share);
       case HeapType::string:
         assert(share == Unshared);
@@ -5154,7 +5279,13 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     }
     return Type(types);
   } else if (type.isRef()) {
-    auto heapType = getSubType(type.getHeapType());
+    auto heapType = type.getHeapType();
+    // Do not generate non-nullable exnrefs in global positions (they cannot be
+    // created in wasm, nor imported from JS).
+    if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
+      return type;
+    }
+    heapType = getSubType(heapType);
     auto nullability = getSubType(type.getNullability());
     auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so

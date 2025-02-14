@@ -1372,6 +1372,18 @@ class CtorEval(TestCaseHandler):
         return not wasm_notices_export_changes(wasm)
 
 
+# see https://github.com/WebAssembly/binaryen/issues/6823#issuecomment-2649122032
+# as the interpreter refers to tags by name, two imports of the same Tag give it
+# two different names, but they should behave as if they are one.
+def wasm_has_duplicate_tags(wasm):
+    # as with wasm_notices_export_changes, we could be more precise here and
+    # disassemble the wasm.
+    binary = open(wasm, 'rb').read()
+    # check if we import jstag or wasmtag, which are used in the wasm, so any
+    # duplication may hit the github issue mentioned above.
+    return binary.count(b'jstag') >= 2 or binary.count(b'wasmtag') >= 2
+
+
 # Tests wasm-merge
 class Merge(TestCaseHandler):
     frequency = 0.15
@@ -1423,6 +1435,10 @@ class Merge(TestCaseHandler):
         run([in_bin('wasm-merge'), wasm, 'first',
             abspath('second.wasm'), 'second', '-o', merged,
             '--skip-export-conflicts'] + FEATURE_OPTS + ['-all'])
+
+        if wasm_has_duplicate_tags(merged):
+            note_ignored_vm_run('dupe_tags')
+            return
 
         # sometimes also optimize the merged module
         if random.random() < 0.5:
