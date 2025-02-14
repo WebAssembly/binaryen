@@ -201,6 +201,9 @@ private:
 
   Index numAddedFunctions = 0;
 
+  // The name of an empty tag.
+  Name trivialTag;
+
   // RAII helper for managing the state used to create a single function.
   struct FunctionCreationContext {
     TranslateToFuzzReader& parent;
