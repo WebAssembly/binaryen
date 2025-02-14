@@ -1,12 +1,19 @@
 Metrics
 total
  [exports]      : 9       
+<<<<<<< HEAD
  [funcs]        : 10      
  [globals]      : 18      
  [imports]      : 8       
+=======
+ [funcs]        : 8       
+ [globals]      : 1       
+ [imports]      : 11      
+>>>>>>> origin/main
  [memories]     : 1       
  [memory-data]  : 49      
  [table-data]   : 0       
+<<<<<<< HEAD
  [tables]       : 1       
  [tags]         : 1       
  [total]        : 791     
@@ -55,3 +62,57 @@ total
  TupleMake      : 4       
  Unary          : 25      
  Unreachable    : 21      
+=======
+ [tables]       : 2       
+ [tags]         : 0       
+ [total]        : 738     
+ [vars]         : 40      
+ ArrayCopy      : 1       
+ ArrayFill      : 1       
+ ArrayLen       : 3       
+ ArrayNew       : 5       
+ ArrayNewFixed  : 1       
+ AtomicFence    : 2       
+ AtomicNotify   : 2       
+ AtomicRMW      : 1       
+ Binary         : 82      
+ Block          : 80      
+ BrOn           : 4       
+ Break          : 13      
+ Call           : 29      
+ CallRef        : 1       
+ Const          : 134     
+ Drop           : 15      
+ GlobalGet      : 26      
+ GlobalSet      : 26      
+ I31Get         : 3       
+ If             : 26      
+ Load           : 16      
+ LocalGet       : 85      
+ LocalSet       : 51      
+ Loop           : 6       
+ MemoryFill     : 2       
+ Nop            : 5       
+ Pop            : 4       
+ RefAs          : 10      
+ RefEq          : 1       
+ RefFunc        : 2       
+ RefI31         : 12      
+ RefIsNull      : 1       
+ RefNull        : 7       
+ RefTest        : 2       
+ Return         : 4       
+ SIMDExtract    : 7       
+ Select         : 7       
+ Store          : 1       
+ StringConst    : 3       
+ StringEncode   : 2       
+ StringMeasure  : 1       
+ StructGet      : 2       
+ StructNew      : 2       
+ StructSet      : 2       
+ Try            : 6       
+ TryTable       : 5       
+ Unary          : 24      
+ Unreachable    : 13      
+>>>>>>> origin/main

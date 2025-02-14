@@ -1,5 +1,6 @@
 Metrics
 total
+<<<<<<< HEAD
  [exports]      : 49      
  [funcs]        : 68      
  [globals]      : 11      
@@ -33,3 +34,38 @@ total
  Switch         : 2       
  Unary          : 464     
  Unreachable    : 219     
+=======
+ [exports]      : 84      
+ [funcs]        : 115     
+ [globals]      : 18      
+ [imports]      : 4       
+ [memories]     : 1       
+ [memory-data]  : 24      
+ [table-data]   : 49      
+ [tables]       : 1       
+ [tags]         : 0       
+ [total]        : 10300   
+ [vars]         : 325     
+ Binary         : 679     
+ Block          : 1736    
+ Break          : 323     
+ Call           : 340     
+ CallIndirect   : 93      
+ Const          : 1686    
+ Drop           : 129     
+ GlobalGet      : 882     
+ GlobalSet      : 665     
+ If             : 581     
+ Load           : 146     
+ LocalGet       : 738     
+ LocalSet       : 614     
+ Loop           : 211     
+ Nop            : 156     
+ RefFunc        : 49      
+ Return         : 111     
+ Select         : 67      
+ Store          : 83      
+ Switch         : 1       
+ Unary          : 680     
+ Unreachable    : 330     
+>>>>>>> origin/main
