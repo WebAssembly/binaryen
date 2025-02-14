@@ -867,12 +867,16 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 
   if (choice & 1) {
     // Given an export index, call it from JS.
+    // A second parameter has flags. The first bit determines whether we catch
+    // and rethrow all exceptions. (This ends up giving us the same signature
+    // and behavior as when we do not rethrow, so we just add the flags here
+    // rather than another export.)
     callExportImportName = Names::getValidFunctionName(wasm, "call-export");
     auto func = std::make_unique<Function>();
     func->name = callExportImportName;
     func->module = "fuzzing-support";
     func->base = "call-export";
-    func->type = Signature({Type::i32}, Type::none);
+    func->type = Signature({Type::i32, Type::i32}, Type::none);
     wasm.addFunction(std::move(func));
   }
 
@@ -900,7 +904,10 @@ void TranslateToFuzzReader::addImportCallingSupport() {
       func->name = callRefImportName;
       func->module = "fuzzing-support";
       func->base = "call-ref";
-      func->type = Signature({Type(HeapType::func, Nullable)}, Type::none);
+      // As call-export, there is a flags param that allows us to catch+rethrow
+      // all exceptions.
+      func->type =
+        Signature({Type(HeapType::func, Nullable), Type::i32}, Type::none);
       wasm.addFunction(std::move(func));
     }
 
@@ -1151,7 +1158,13 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     if ((catching && (!exportTarget || oneIn(2))) || (!catching && oneIn(4))) {
       // Most of the time make a non-nullable funcref, to avoid errors.
       auto refType = Type(HeapType::func, oneIn(10) ? Nullable : NonNullable);
-      return builder.makeCall(refTarget, {make(refType)}, type);
+      std::vector<Expression*> args = {make(refType)};
+      if (!catching) {
+        // Only the first bit matters here, so we can send anything (this is
+        // future-proof for later bits, and has no downside now).
+        args.push_back(make(Type::i32));
+      }
+      return builder.makeCall(refTarget, args, type);
     }
   }
 
@@ -1179,7 +1192,16 @@ Expression* TranslateToFuzzReader::makeImportCallCode(Type type) {
     index = builder.makeBinary(
       RemUInt32, index, builder.makeConst(int32_t(maxIndex)));
   }
-  return builder.makeCall(exportTarget, {index}, type);
+
+  // The non-catching variants send a flags argument, which says whether to
+  // catch+rethrow.
+  std::vector<Expression*> args = {index};
+  if (!catching) {
+    // Only the first bit matters here, so we can send anything (this is
+    // future-proof for later bits, and has no downside now).
+    args.push_back(make(Type::i32));
+  }
+  return builder.makeCall(exportTarget, args, type);
 }
 
 Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
@@ -2025,22 +2047,19 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
   using Self = TranslateToFuzzReader;
   auto options = FeatureOptions<Expression* (Self::*)(Type)>();
   using WeightedOption = decltype(options)::WeightedOption;
+  // Many instructions can become unreachable if a child is unreachable. We
+  // create such code in mutate() (see |allowUnreachable| there). The list of
+  // instructions here are those that necessarily have unreachable type, and are
+  // only created here (though they might have other variations that are
+  // reachable, like br has br_if that is created elsewhere, and we have call
+  // here because of return calls, etc.).
   options
     .add(FeatureSet::MVP,
-         WeightedOption{&Self::makeLocalSet, VeryImportant},
-         WeightedOption{&Self::makeBlock, Important},
-         WeightedOption{&Self::makeIf, Important},
-         WeightedOption{&Self::makeLoop, Important},
          WeightedOption{&Self::makeBreak, Important},
-         WeightedOption{&Self::makeStore, Important},
-         WeightedOption{&Self::makeUnary, Important},
-         WeightedOption{&Self::makeBinary, Important},
-         WeightedOption{&Self::makeUnreachable, Important},
+         &Self::makeUnreachable,
          &Self::makeCall,
          &Self::makeCallIndirect,
-         &Self::makeSelect,
          &Self::makeSwitch,
-         &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow, &Self::makeThrowRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
@@ -3593,13 +3612,6 @@ Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
 
 Expression* TranslateToFuzzReader::makeUnary(Type type) {
   assert(!type.isTuple());
-  if (type == Type::unreachable) {
-    if (auto* unary = makeUnary(getSingleConcreteType())->dynCast<Unary>()) {
-      return builder.makeUnary(unary->op, make(Type::unreachable));
-    }
-    // give up
-    return makeTrivial(type);
-  }
   // There are no unary ops for reference types.
   // TODO: not quite true if you count struct.new and array.new.
   if (type.isRef()) {
@@ -3814,14 +3826,6 @@ Expression* TranslateToFuzzReader::buildBinary(const BinaryArgs& args) {
 
 Expression* TranslateToFuzzReader::makeBinary(Type type) {
   assert(!type.isTuple());
-  if (type == Type::unreachable) {
-    if (auto* binary = makeBinary(getSingleConcreteType())->dynCast<Binary>()) {
-      return buildBinary(
-        {binary->op, make(Type::unreachable), make(Type::unreachable)});
-    }
-    // give up
-    return makeTrivial(type);
-  }
   // There are no binary ops for reference types.
   // TODO: Use struct.new
   if (type.isRef()) {
@@ -4102,8 +4106,7 @@ Expression* TranslateToFuzzReader::makeSwitch(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeDrop(Type type) {
-  return builder.makeDrop(
-    make(type == Type::unreachable ? type : getConcreteType()));
+  return builder.makeDrop(make(getConcreteType()));
 }
 
 Expression* TranslateToFuzzReader::makeReturn(Type type) {
