@@ -81,6 +81,10 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(ptrp, wasm.getMemory(mem)->addressType);
   }
 
+  void noteTableIndex(Expression** indexp, Name table) {
+    note(indexp, wasm.getTable(table)->addressType);
+  }
+
   void noteAny(Expression** childp) { self().noteAnyType(childp); }
 
   void noteAnyReference(Expression** childp) {
@@ -749,7 +753,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitTableGet(TableGet* curr) { note(&curr->index, Type::i32); }
 
   void visitTableSet(TableSet* curr) {
-    note(&curr->index, Type::i32);
+    noteTableIndex(&curr->index, curr->table);
     note(&curr->value, wasm.getTable(curr->table)->type);
   }
 

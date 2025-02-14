@@ -3,9 +3,28 @@
 
 (module
  (type $functype (func))
- (table $0 48 funcref)
+
+ (table $table 48 funcref)
+ (table $table64 i64 96 funcref)
+
  ;; a type that appears in the table and nowhere else. this test checks that
  ;; we do not crash during the roundtrip on seeing an unexpected type that
  ;; collectHeapTypes() did not scan.
- (elem (table $0) (i32.const 0) funcref (ref.null $functype))
+ (elem (table $table) (i32.const 0) funcref (ref.null $functype))
+
+ (func $set
+  (table.set $table64
+   (i64.const 0)
+   (block (result funcref)
+    ;; This unreachable code must not confuse the parser. Specifically the
+    ;; index should remain the i64(0) that is before us.
+    (i32.lt_u
+     (i32.const 0)
+     (unreachable)
+    )
+    (ref.null nofunc)
+   )
+  )
+ )
 )
+
