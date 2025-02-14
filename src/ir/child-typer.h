@@ -766,18 +766,18 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitTableSet(TableSet* curr) {
     noteTableIndex(&curr->index, curr->table);
-    note(&curr->value, wasm.getTable(curr->table)->type);
+    note(&curr->value, getTable(curr->table)->type);
   }
 
   void visitTableSize(TableSize* curr) {}
 
   void visitTableGrow(TableGrow* curr) {
-    note(&curr->value, wasm.getTable(curr->table)->type);
+    note(&curr->value, getTable(curr->table)->type);
     noteTableIndex(&curr->delta, curr->table);
   }
 
   void visitTableFill(TableFill* curr) {
-    auto type = wasm.getTable(curr->table)->type;
+    auto type = getTable(curr->table)->type;
     noteTableIndex(&curr->dest, curr->table);
     note(&curr->value, type);
     noteTableIndex(&curr->size, curr->table);
