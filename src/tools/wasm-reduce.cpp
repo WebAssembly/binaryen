@@ -1256,7 +1256,7 @@ int main(int argc, const char* argv[]) {
 
 Typical usage:
 
-  wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w w.wasm
+  wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
 
 The original file orig.wasm is where we begin. Each repeatedly test a small
 reduction of it by writing that modification to the 'test file' (specified by
