@@ -750,7 +750,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->right, eqref);
   }
 
-  void visitTableGet(TableGet* curr) { note(&curr->index, Type::i32); }
+  void visitTableGet(TableGet* curr) {
+    noteTableIndex(&curr->index, curr->table);
+  }
 
   void visitTableSet(TableSet* curr) {
     noteTableIndex(&curr->index, curr->table);
@@ -761,24 +763,30 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitTableGrow(TableGrow* curr) {
     note(&curr->value, wasm.getTable(curr->table)->type);
-    note(&curr->delta, Type::i32);
+    noteTableIndex(&curr->delta, curr->table);
   }
 
   void visitTableFill(TableFill* curr) {
     auto type = wasm.getTable(curr->table)->type;
-    note(&curr->dest, Type::i32);
+    noteTableIndex(&curr->dest, curr->table);
     note(&curr->value, type);
-    note(&curr->size, Type::i32);
+    noteTableIndex(&curr->size, curr->table);
   }
 
   void visitTableCopy(TableCopy* curr) {
-    note(&curr->dest, Type::i32);
-    note(&curr->source, Type::i32);
-    note(&curr->size, Type::i32);
+    noteTableIndex(&curr->dest, curr->destTable);
+    noteTableIndex(&curr->source, curr->sourceTable);
+
+    // The size depends on both dest and source.
+    auto* sourceTable = wasm.getTableOrNull(curr->sourceTable);
+    auto* destTable = wasm.getTableOrNull(curr->destTable);
+    Type sizeType =
+      sourceTable->is64() && destTable->is64() ? Type::i64 : Type::i32;
+    note(&curr->size, sizeType);
   }
 
   void visitTableInit(TableInit* curr) {
-    note(&curr->dest, wasm.getTable(curr->table)->addressType);
+    noteTableIndex(&curr->dest, curr->table);
     note(&curr->offset, Type::i32);
     note(&curr->size, Type::i32);
   }
