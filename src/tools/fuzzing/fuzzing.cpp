@@ -64,15 +64,15 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
 
     auto bits = random.get();
     if (bits & 1) {
-      fuzzParams->MAX_NEW_GC_TYPES = fuzzParams->MAX_NEW_GC_TYPES * ratio;
+      fuzzParams->MAX_NEW_GC_TYPES *= ratio;
     }
     if (bits & 2) {
-      fuzzParams->MAX_GLOBALS = fuzzParams->MAX_GLOBALS * ratio;
+      fuzzParams->MAX_GLOBALS *= ratio;
     }
     if (bits & 4) {
       // Only adjust the limit if there is one.
       if (fuzzParams->HANG_LIMIT) {
-        fuzzParams->HANG_LIMIT = fuzzParams->HANG_LIMIT * ratio;
+        fuzzParams->HANG_LIMIT *= ratio;
         // There is a limit, so keep it non-zero to actually prevent hangs.
         fuzzParams->HANG_LIMIT = std::max(fuzzParams->HANG_LIMIT, 1);
       }
@@ -81,11 +81,11 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
       // Only increase the number of tries. Trying fewer times does not help
       // find more interesting patterns.
       if (ratio > 1) {
-        fuzzParams->TRIES = fuzzParams->TRIES * ratio;
+        fuzzParams->TRIES *= ratio;
       }
     }
     if (bits & 16) {
-      fuzzParams->MAX_ARRAY_SIZE = fuzzParams->MAX_ARRAY_SIZE * ratio;
+      fuzzParams->MAX_ARRAY_SIZE *= ratio;
     }
   }
 
