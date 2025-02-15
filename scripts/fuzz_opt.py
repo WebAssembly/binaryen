@@ -1748,7 +1748,7 @@ class Two(TestCaseHandler):
         return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
 
 
-# Test --preserve-imports-exports, which never modifies imports or exports.
+# Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
 class PreserveImportsExports(TestCaseHandler):
     frequency = 0.1
 
