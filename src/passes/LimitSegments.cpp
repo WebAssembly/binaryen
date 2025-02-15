@@ -18,6 +18,17 @@
 #include "pass.h"
 #include "wasm.h"
 
+//
+// Attempt to merge segments to fit within a specified limit.
+//
+// By default this limit is equal to the one commonly used by wasm VMs
+// (see wasm-limits.h), but it can be changed with the option below:
+//
+//   --pass-arg=limit-segments@max-data-segments
+//
+//       Specify a custom maximum number of data segments.
+//
+
 namespace wasm {
 
 struct LimitSegments : public Pass {
