@@ -1750,7 +1750,7 @@ class Two(TestCaseHandler):
 
 # Test --preserve-imports-exports, which never modifies imports or exports.
 class PreserveImportsExports(TestCaseHandler):
-    frequency = 1 # 0.2
+    frequency = 0.1
 
     def handle(self, wasm):
         # Generate some random input data.
