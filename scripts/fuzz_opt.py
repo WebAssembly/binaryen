@@ -1753,6 +1753,19 @@ class PreserveImportsExports(TestCaseHandler):
     frequency = 0.1
 
     def handle(self, wasm):
+        # We will later verify that no imports or exports changed, by comparing
+        # to the unprocessed original text.
+        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
+
+        # We cannot run if the module has (ref exn) in globals (because we have
+        # no way to generate an exn in a non-function context). The fuzzer is
+        # careful not to emit that in testcases, but after the optimizer runs,
+        # we may end up with struct fields getting refined to that.
+        globs = [line for line in original.split('\n') if '(global ' in line]
+        if '(ref exn)' in '\n'.join(globs):
+            note_ignored_vm_run('has non-nullable exn in global')
+            return
+
         # Generate some random input data.
         data = abspath('preserve_input.dat')
         make_random_input(random_size(), data)
@@ -1764,10 +1777,6 @@ class PreserveImportsExports(TestCaseHandler):
             '--initial-fuzz=' + wasm,
             '--print',
         ])
-
-        # Verify no imports or exports changed, by comparing to unprocessed/
-        # original text.
-        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
 
         def get_relevant_lines(wat):
             # Imports and exports are relevant.
