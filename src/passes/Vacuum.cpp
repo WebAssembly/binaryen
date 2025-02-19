@@ -96,6 +96,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (self.hasUnremovableSideEffects()) {
         return curr;
       }
+if (curr->is<Call>()) {
+  std::cout << "call " << *curr << '\n';
+//return curr;
+}
       // The result isn't used, and this has no side effects itself, so we can
       // get rid of it. However, the children may have side effects.
       SmallVector<Expression*, 1> childrenWithEffects;

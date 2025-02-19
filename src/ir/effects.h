@@ -30,7 +30,7 @@ public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       trapsNeverHappen(passOptions.trapsNeverHappen),
-      funcEffectsMap(passOptions.funcEffectsMap), module(module),
+      module(module),
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
@@ -47,7 +47,6 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
-  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
 
@@ -523,13 +522,7 @@ private:
         return;
       }
 
-      const EffectAnalyzer* targetEffects = nullptr;
-      if (parent.funcEffectsMap) {
-        auto iter = parent.funcEffectsMap->find(curr->target);
-        if (iter != parent.funcEffectsMap->end()) {
-          targetEffects = &iter->second;
-        }
-      }
+      const auto* targetEffects = parent.module.getFunction(curr->name)->effects.get();
 
       if (curr->isReturn) {
         parent.branchesOut = true;

@@ -2137,6 +2137,9 @@ struct BinaryLocations {
   std::unordered_map<Function*, FunctionLocations> functions;
 };
 
+// Forward declaration for FuncEffectsMap.
+class EffectAnalyzer;
+
 class Function : public Importable {
 public:
   HeapType type = HeapType(Signature()); // parameters and return value
@@ -2182,6 +2185,13 @@ public:
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
+
+  // The effects for this function, if they have been computed. We use a shared
+  // ptr here to avoid compilation errors with the forward-declared
+  // EffectAnalyzer.
+  //
+  // See addsEffects() in pass.h for more details.
+  std::shared_ptr<EffectAnalyzer> effects;
 
   // Inlining metadata: whether to disallow full and/or partial inlining (for
   // details on what those mean, see Inlining.cpp).
