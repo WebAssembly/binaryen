@@ -847,8 +847,9 @@ void TranslateToFuzzReader::shuffleExports() {
   // we emit invokes for a function right after it (so we end up calling the
   // same code several times in succession, but interleaving it with others may
   // find more things). But we also keep a good chance for the natural order
-  // here, as it may help some initial content.
-  if (wasm.exports.empty() || oneIn(2)) {
+  // here, as it may help some initial content. Note we cannot do this if we are
+  // preserving the exports, as their order is something we must maintain.
+  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2)) {
     return;
   }
 
