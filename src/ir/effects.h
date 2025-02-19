@@ -29,8 +29,7 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
@@ -522,7 +521,8 @@ private:
         return;
       }
 
-      const auto* targetEffects = parent.module.getFunction(curr->name)->effects.get();
+      const auto* targetEffects =
+        parent.module.getFunction(curr->name)->effects.get();
 
       if (curr->isReturn) {
         parent.branchesOut = true;
