@@ -522,7 +522,7 @@ private:
       }
 
       const auto* targetEffects =
-        parent.module.getFunction(curr->name)->effects.get();
+        parent.module.getFunction(curr->target)->effects.get();
 
       if (curr->isReturn) {
         parent.branchesOut = true;
