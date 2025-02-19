@@ -521,8 +521,15 @@ private:
         return;
       }
 
-      const auto* targetEffects =
-        parent.module.getFunction(curr->target)->effects.get();
+      // Get the target's effects, if they exist. Note that we must handle the
+      // case of the function not yet existing (we may be executed in the middle
+      // of a pass, which may have built up calls but not the targets of those
+      // calls; in such a case, we do not find the targets and therefore assume
+      // we know nothing about the effects, which is safe).
+      const EffectAnalyzer* targetEffects = nullptr;
+      if (auto* target = parent.module.getFunctionOrNull(curr->target)) {
+        targetEffects = target->effects.get();
+      }
 
       if (curr->isReturn) {
         parent.branchesOut = true;
