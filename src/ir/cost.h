@@ -744,8 +744,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            maybeVisit(curr->end);
   }
   CostType visitStringConst(StringConst* curr) {
-    // We do not use AllocationCost here because such constants will end up
-    // imported as constants from the outside.
+    // We do not use AllocationCost here because these will end up imported as
+    // constants from the outside, after string lowering (and even natively, a
+    // VM can implement them as global constants).
     return 4;
   }
   CostType visitStringMeasure(StringMeasure* curr) {
