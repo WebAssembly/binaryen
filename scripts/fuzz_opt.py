@@ -1766,7 +1766,7 @@ class PreserveImportsExports(TestCaseHandler):
         # this extra check (which should be hit very rarely).
         structs = [line for line in original.split('\n') if '(struct ' in line]
         if '(ref exn)' in '\n'.join(structs):
-            note_ignored_vm_run('has non-nullable exn in global')
+            note_ignored_vm_run('has non-nullable exn in struct')
             return
 
         # Generate some random input data.
