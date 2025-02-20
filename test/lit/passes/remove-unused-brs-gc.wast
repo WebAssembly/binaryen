@@ -16,6 +16,9 @@
  ;; CHECK:      (type $struct-nn (struct (field (ref any))))
  (type $struct-nn (struct (field (ref any))))
 
+ ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
+ (global $struct (ref $struct) (struct.new $struct))
+
  ;; CHECK:      (func $br_on-if (type $8) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
@@ -868,8 +871,8 @@
  ;; CHECK:      (func $select-refinalize (type $13) (param $param (ref $struct)) (result (ref struct))
  ;; CHECK-NEXT:  (select (result (ref $struct))
  ;; CHECK-NEXT:   (select (result (ref $struct))
- ;; CHECK-NEXT:    (struct.new_default $struct)
- ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:    (global.get $struct)
+ ;; CHECK-NEXT:    (global.get $struct)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.get $param)
@@ -883,10 +886,10 @@
    (if (result (ref struct))
     (i32.const 0)
     (then
-     (struct.new_default $struct)
+     (global.get $struct)
     )
     (else
-     (struct.new_default $struct)
+     (global.get $struct)
     )
    )
    (local.get $param)
