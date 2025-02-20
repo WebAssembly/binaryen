@@ -43,8 +43,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   // but usually requires some loads and comparisons.
   static const CostType CastCost = 5;
 
-  // Generational GC can be very efficient, but even so an allocations have a
-  // cost even if just shortening the time to the next collection.
+  // Generational GC can be very efficient, but even so allocations have a high
+  // due to shortening the time to the next collection.
   static const CostType AllocationCost = 100;
 
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
