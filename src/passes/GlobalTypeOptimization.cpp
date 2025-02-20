@@ -532,15 +532,9 @@ struct GlobalTypeOptimization : public Pass {
           needEHFixups = true;
           Expression* replacement =
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, flipped));
-          if (curr->order == MemoryOrder::SeqCst) {
-            // If the removed set is sequentially consistent, we must insert a
-            // seqcst fence to preserve the effect on the global order of seqcst
-            // operations. No fence is necessary for release sets because there
-            // are no reads for them to synchronize with given that we are
-            // removing the field.
-            replacement =
-              builder.makeSequence(replacement, builder.makeAtomicFence());
-          }
+          // We only remove fields with no reads, so if this set is atomic,
+          // there are no reads it can possibly synchronize with and we do not
+          // need a fence.
           replaceCurrent(replacement);
         }
       }
