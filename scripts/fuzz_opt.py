@@ -1759,7 +1759,7 @@ class PreserveImportsExports(TestCaseHandler):
 
         # We leave if the module has (ref exn) in struct fields (because we have
         # no way to generate an exn in a non-function context, and if we picked
-        # that struct for a global, we'd end up needing a (ref enx) in the
+        # that struct for a global, we'd end up needing a (ref exn) in the
         # global scope, which is impossible). The fuzzer is designed to be
         # careful not to emit that in testcases, but after the optimizer runs,
         # we may end up with struct fields getting refined to that, so we need
