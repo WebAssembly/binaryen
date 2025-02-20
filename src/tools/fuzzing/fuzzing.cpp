@@ -1147,9 +1147,6 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   // fixup to ensure we validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 
-  if (parent.fuzzParams->HANG_LIMIT > 0) {
-    parent.addHangLimitChecks(func);
-  }
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
@@ -1344,6 +1341,15 @@ void TranslateToFuzzReader::processFunctions() {
       // in the code we just generated, and any changes could break that.
       if (allowOOB) {
         moddable.push_back(func);
+      }
+    }
+  }
+
+  // At the very end, add hang limit checks (so no modding can override them).
+  if (fuzzParams->HANG_LIMIT > 0) {
+    for (auto& func : wasm.functions) {
+      if (!func->imported()) {
+        addHangLimitChecks(func.get());
       }
     }
   }
