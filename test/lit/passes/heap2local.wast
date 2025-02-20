@@ -4678,7 +4678,6 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null (shared none))
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -4689,7 +4688,6 @@
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (atomic.fence)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $seqcst
@@ -4697,9 +4695,8 @@
     (local.set 0
       (struct.new_default $struct)
     )
-    ;; seqcst accesses participate in the global ordering of seqcst operations,
-    ;; so they need to be replaced with a seqcst fence to maintain that
-    ;; ordering.
+    ;; seqcst accesses also cannot synchronize with other threads, so we can
+    ;; still optimize normally.
     (drop
       (struct.atomic.get $struct 0
         (local.get 0)
