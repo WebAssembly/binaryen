@@ -343,8 +343,14 @@ private:
   Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
-  // Function creation
+  // Function operations. The main processFunctions() loop will call addFunction
+  // as well as modFunction().
+  void processFunctions();
+  // Add a new function.
   Function* addFunction();
+  // Modify an existing function.
+  void modFunction(Function* func);
+
   void addHangLimitChecks(Function* func);
 
   // Recombination and mutation

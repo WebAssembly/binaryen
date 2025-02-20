@@ -362,11 +362,7 @@ void TranslateToFuzzReader::build() {
   addImportCallingSupport();
   addImportSleepSupport();
   modifyInitialFunctions();
-  // keep adding functions until we run out of input
-  while (!random.finished()) {
-    auto* func = addFunction();
-    addInvocations(func);
-  }
+  processFunctions();
   if (fuzzParams->HANG_LIMIT > 0) {
     addHangLimitSupport();
   }
@@ -1296,6 +1292,61 @@ Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
   return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
+void TranslateToFuzzReader::processFunctions() {
+  // Functions that are eligible for being modded. We only do so once to each
+  // function, at most, so once we do we remove it from here.
+  std::vector<Function*> moddable;
+
+  // Initial functions are moddable.
+  for (auto& func : wasm.functions) {
+    moddable.push_back(func.get());
+  }
+
+  // Add invocations, which can help execute the code here even if the function
+  // was not exported (or was exported but with a signature that traps
+  // immediately, like receiving a non-nullable ref, that the fuzzer can't
+  // provide from JS). Note we cannot iterate on wasm.functions because
+  // addInvocations modifies that.
+  for (auto* func : moddable) {
+    addInvocations(func);
+  }
+
+  // We do not want to always mod in the same frequency. Pick a chance to mod a
+  // function. When the chance is maximal we will mod every single function, and
+  // immediately after creating it; when the chance is minimal we will not mod
+  // anything; values in the middle will end up randomly modding some functions,
+  // at random times (random times are useful because we might create function
+  // A, then B, then mod A, and since B has already been created, the modding of
+  // A may lead to calls to B).
+  const int RESOLUTION = 10;
+  auto chance = upTo(RESOLUTION + 1);
+std::cerr << "waka modchance " << chance << '\n';
+
+  // Keep working while we have random data.
+  while (!random.finished()) {
+    if (!moddable.empty() && upTo(RESOLUTION) < chance) {
+      // Mod an existing function.
+      auto index = upTo(moddable.size());
+      auto* func = moddable[index];
+std::cerr << "waka mod " << func->name << '\n';
+      modFunction(func);
+
+      // Remove this function from the vector by swapping the last item to its
+      // place, and truncating.
+      moddable[index] = moddable.back();
+      moddable.pop_back();
+    } else {
+      // Add a new function
+      auto* func = addFunction();
+      addInvocations(func);
+std::cerr << "waka add " << func->name << '\n';
+
+      // It may be modded later.
+      moddable.push_back(func);
+    }
+  }
+}
+
 // TODO: return std::unique_ptr<Function>
 Function* TranslateToFuzzReader::addFunction() {
   LOGGING_PERCENT = upToSquared(100);
@@ -1390,6 +1441,23 @@ Function* TranslateToFuzzReader::addFunction() {
   }
   numAddedFunctions++;
   return func;
+}
+
+void TranslateToFuzzReader::modFunction(Function* func) {
+  FunctionCreationContext context(*this, func);
+
+  dropToLog(func);
+  // Notice params as well as any locals generated above.
+  // TODO add some locals? and the rest of addFunction's operations?
+  context.computeTypeLocals();
+  // TODO: if we add OOB checks after creation, then we can do it on
+  //       initial contents too, and it may be nice to *not* run these
+  //       passes, like we don't run them on new functions. But, we may
+  //       still want to run them some of the time, at least, so that we
+  //       check variations on initial testcases even at the risk of OOB.
+  recombine(func);
+  mutate(func);
+  fixAfterChanges(func);
 }
 
 void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
@@ -1822,9 +1890,6 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   if (wasm.functions.empty()) {
     return;
   }
-  // Pick a chance to fuzz the contents of a function.
-  const int RESOLUTION = 10;
-  auto chance = upTo(RESOLUTION + 1);
   // Do not iterate directly on wasm.functions itself (that is, avoid
   //   for (x : wasm.functions)
   // ) as we may add to it as we go through the functions - make() can add new
@@ -1840,43 +1905,11 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
         (func->module == "fuzzing-support" || preserveImportsAndExports)) {
       continue;
     }
-    FunctionCreationContext context(*this, func);
     if (func->imported()) {
+      FunctionCreationContext context(*this, func);
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }
-    // Optionally, fuzz the function contents.
-    if (upTo(RESOLUTION) >= chance) {
-      dropToLog(func);
-      // Notice params as well as any locals generated above.
-      // TODO add some locals? and the rest of addFunction's operations?
-      context.computeTypeLocals();
-      // TODO: if we add OOB checks after creation, then we can do it on
-      //       initial contents too, and it may be nice to *not* run these
-      //       passes, like we don't run them on new functions. But, we may
-      //       still want to run them some of the time, at least, so that we
-      //       check variations on initial testcases even at the risk of OOB.
-      recombine(func);
-      mutate(func);
-      fixAfterChanges(func);
-      // TODO: This triad of functions appears in another place as well, and
-      //       could be handled by a single function. That function could also
-      //       decide to reorder recombine and mutate or even run more cycles of
-      //       them.
-    }
-  }
-
-  // Add invocations, which can help execute the code here even if the function
-  // was not exported (or was exported but with a signature that traps
-  // immediately, like receiving a non-nullable ref, that the fuzzer can't
-  // provide from JS). Note we need to use a temp vector for iteration, as
-  // addInvocations modifies wasm.functions.
-  std::vector<Function*> funcs;
-  for (auto& func : wasm.functions) {
-    funcs.push_back(func.get());
-  }
-  for (auto* func : funcs) {
-    addInvocations(func);
   }
 
   // Remove a start function - the fuzzing harness expects code to run only
