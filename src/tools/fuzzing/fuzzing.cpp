@@ -1322,7 +1322,6 @@ void TranslateToFuzzReader::processFunctions() {
   // A may lead to calls to B).
   const int RESOLUTION = 10;
   auto chance = upTo(RESOLUTION + 1);
-std::cerr << "waka modchance " << chance << '\n';
 
   // Keep working while we have random data.
   while (!random.finished()) {
@@ -1330,7 +1329,6 @@ std::cerr << "waka modchance " << chance << '\n';
       // Mod an existing function.
       auto index = upTo(moddable.size());
       auto* func = moddable[index];
-std::cerr << "waka mod " << func->name << '\n';
       modFunction(func);
 
       // Remove this function from the vector by swapping the last item to its
@@ -1341,10 +1339,12 @@ std::cerr << "waka mod " << func->name << '\n';
       // Add a new function
       auto* func = addFunction();
       addInvocations(func);
-std::cerr << "waka add " << func->name << '\n';
 
-      // It may be modded later.
-      moddable.push_back(func);
+      // It may be modded later, if we allow out-of-bounds: we emit OOB checks
+      // in the code we just generated, and any changes could break that.
+      if (allowOOB) {
+        moddable.push_back(func);
+      }
     }
   }
 }
@@ -1386,29 +1386,6 @@ Function* TranslateToFuzzReader::addFunction() {
     func->body = makeBlock(bodyType);
   } else {
     func->body = make(bodyType);
-  }
-  // Our OOB checks are already in the code, and if we recombine/mutate we
-  // may end up breaking them. TODO: do them after the fact, like with the
-  // hang limit checks.
-  if (allowOOB) {
-    // Notice the locals and their types again, as more may have been added
-    // during generation of the body. We want to be able to local.get from those
-    // as well.
-    // TODO: We could also add a "localize" phase here to stash even more things
-    //       in locals, so that they can be reused. But we would need to be
-    //       careful with non-nullable locals (which error if used before being
-    //       set, or trap if we make them nullable, both of which are bad).
-    context.computeTypeLocals();
-    // Recombinations create duplicate code patterns.
-    recombine(func);
-    // Mutations add random small changes, which can subtly break duplicate
-    // code patterns.
-    mutate(func);
-    // TODO: liveness operations on gets, with some prob alter a get to one
-    // with more possible sets.
-    // Recombination, mutation, etc. can break validation; fix things up
-    // after.
-    fixAfterChanges(func);
   }
 
   // Add hang limit checks after all other operations on the function body.
