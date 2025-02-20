@@ -20,6 +20,15 @@
       (i32.const 42)
     )
   )
+
+  (func $throwing-jstag-null (export "throwing-jstag-null")
+    ;; Throwing JSTag leads to the JS side receiving the externref as a JS
+    ;; value. A null must be handled properly while doing so, without error, and
+    ;; be logged as a null.
+    (throw $imported-js-tag
+      (ref.null noextern)
+    )
+  )
 )
 
 ;; Build to a binary wasm.
@@ -34,6 +43,8 @@
 ;; CHECK: exception thrown: Error: js exception
 ;; CHECK: [fuzz-exec] calling throwing-tag
 ;; CHECK: exception thrown: [object WebAssembly.Exception]
+;; CHECK: [fuzz-exec] calling throwing-jstag-null
+;; CHECK: exception thrown: null
 
 
 

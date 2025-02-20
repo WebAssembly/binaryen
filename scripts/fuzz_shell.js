@@ -178,9 +178,10 @@ function callFunc(func) {
     /* await */ func();
     return 0;
   } catch (e) {
-    // The exception must exist, and not behave oddly when we access a
-    // property on it. (VM bugs could cause errors here.)
-    e.a;
+    // The exception might be a JS null, but otherwise it must be valid to check
+    // if a property exists on it (VM bugs could cause errors here, specifically
+    // if a wasm exception is caught here, and it is not represented properly).
+    if (e !== null) e.a;
 
     // We only want to catch exceptions, not wasm traps: traps should still
     // halt execution. Handling this requires different code in wasm2js, so
