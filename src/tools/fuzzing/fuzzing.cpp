@@ -1297,9 +1297,11 @@ void TranslateToFuzzReader::processFunctions() {
   // function, at most, so once we do we remove it from here.
   std::vector<Function*> moddable;
 
-  // Initial functions are moddable.
+  // Defined initial functions are moddable.
   for (auto& func : wasm.functions) {
-    moddable.push_back(func.get());
+    if (!func->imported()) {
+      moddable.push_back(func.get());
+    }
   }
 
   // Add invocations, which can help execute the code here even if the function
