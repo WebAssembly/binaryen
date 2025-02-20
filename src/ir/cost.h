@@ -675,10 +675,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref);
   }
   CostType visitStructNew(StructNew* curr) {
-    // While allocation itself is almost free with generational GC, there is
-    // at least some baseline cost, plus writing the fields. (If we use default
-    // values for the fields, then it is possible they are all 0 and if so, we
-    // can get that almost for free as well, so don't add anything there.)
     CostType ret = AllocationCost + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
