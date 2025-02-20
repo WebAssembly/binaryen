@@ -1782,8 +1782,8 @@ class PreserveImportsExports(TestCaseHandler):
             # Imports and exports are relevant.
             lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
 
-            # Ignore type names, which may vary from $5 to $17 in uninteresting
-            # ways.
+            # Ignore type names, which may vary (e.g. one file may have $5 and
+            # another may call the same type $17).
             lines = [re.sub(r'[(]type [$][0-9a-zA-Z_$]+[)]', '', line) for line in lines]
 
             return '\n'.join(lines)
