@@ -1757,12 +1757,15 @@ class PreserveImportsExports(TestCaseHandler):
         # to the unprocessed original text.
         original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
 
-        # We cannot run if the module has (ref exn) in globals (because we have
-        # no way to generate an exn in a non-function context). The fuzzer is
+        # We leave if the module has (ref exn) in struct fields (because we have
+        # no way to generate an exn in a non-function context, and if we picked
+        # that struct for a global, we'd end up needing a (ref enx) in the
+        # global scope, which is impossible). The fuzzer is designed to be
         # careful not to emit that in testcases, but after the optimizer runs,
-        # we may end up with struct fields getting refined to that.
-        globs = [line for line in original.split('\n') if '(global ' in line]
-        if '(ref exn)' in '\n'.join(globs):
+        # we may end up with struct fields getting refined to that, so we need
+        # this extra check (which should be hit very rarely).
+        structs = [line for line in original.split('\n') if '(struct ' in line]
+        if '(ref exn)' in '\n'.join(structs):
             note_ignored_vm_run('has non-nullable exn in global')
             return
 
