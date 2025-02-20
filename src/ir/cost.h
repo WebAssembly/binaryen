@@ -43,6 +43,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   // but usually requires some loads and comparisons.
   static const CostType CastCost = 5;
 
+  // Generational GC can be very efficient, but even so an allocations have a
+  // cost even if just shortening the time to the next collection.
+  static const CostType AllocationCost = 100;
+
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
 
   CostType visitBlock(Block* curr) {
@@ -675,7 +679,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    CostType ret = 4 + curr->operands.size();
+    CostType ret = AllocationCost + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
@@ -696,16 +700,16 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
            visit(curr->expected) + visit(curr->replacement);
   }
   CostType visitArrayNew(ArrayNew* curr) {
-    return 4 + visit(curr->size) + maybeVisit(curr->init);
+    return AllocationCost + visit(curr->size) + maybeVisit(curr->init);
   }
   CostType visitArrayNewData(ArrayNewData* curr) {
-    return 4 + visit(curr->offset) + visit(curr->size);
+    return AllocationCost + visit(curr->offset) + visit(curr->size);
   }
   CostType visitArrayNewElem(ArrayNewElem* curr) {
-    return 4 + visit(curr->offset) + visit(curr->size);
+    return AllocationCost + visit(curr->offset) + visit(curr->size);
   }
   CostType visitArrayNewFixed(ArrayNewFixed* curr) {
-    CostType ret = 4;
+    CostType ret = AllocationCost;
     for (auto* child : curr->values) {
       ret += visit(child);
     }
@@ -743,15 +747,19 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 8 + visit(curr->ref) + maybeVisit(curr->start) +
            maybeVisit(curr->end);
   }
-  CostType visitStringConst(StringConst* curr) { return 4; }
+  CostType visitStringConst(StringConst* curr) {
+    // We do not use AllocationCost here because such constants will end up
+    // imported as constants from the outside.
+    return 4;
+  }
   CostType visitStringMeasure(StringMeasure* curr) {
     return 6 + visit(curr->ref);
   }
   CostType visitStringEncode(StringEncode* curr) {
-    return 6 + visit(curr->str) + visit(curr->array) + visit(curr->start);
+    return AllocationCost + 2 + visit(curr->str) + visit(curr->array) + visit(curr->start);
   }
   CostType visitStringConcat(StringConcat* curr) {
-    return 10 + visit(curr->left) + visit(curr->right);
+    return AllocationCost + 6 + visit(curr->left) + visit(curr->right);
   }
   CostType visitStringEq(StringEq* curr) {
     // "3" is chosen since strings might or might not be interned in the engine.
@@ -765,13 +773,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
 
   CostType visitContNew(ContNew* curr) {
-    // Some arbitrary "high" value, reflecting that this may allocate a stack
-    return 14 + visit(curr->func);
+    // This "high" value reflects that this may allocate a stack.
+    return AllocationCost + 10 + visit(curr->func);
   }
   CostType visitContBind(ContBind* curr) {
-    // Inspired by struct.new: The only cost of cont.bind is that it may need to
-    // allocate a buffer to hold the arguments.
-    CostType ret = 4;
+    // cont.bind may need to allocate a buffer to hold the arguments.
+    CostType ret = AllocationCost;
     ret += visit(curr->cont);
     for (auto* arg : curr->operands) {
       ret += visit(arg);
