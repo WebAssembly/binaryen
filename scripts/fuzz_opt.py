@@ -1673,6 +1673,13 @@ class ClusterFuzz(TestCaseHandler):
         tar.extractall(path=self.clusterfuzz_dir)
         tar.close()
 
+    def can_run_on_wasm(self, wasm):
+        # Do not run ClusterFuzz in the first seconds of fuzzing: the first time
+        # it runs is very slow (to build the bundle), which is annoying when you
+        # are just starting the fuzzer and looking for any obvious problems.
+        seconds = 30
+        return time.time() - start_time > seconds
+
 
 # Tests linking two wasm files at runtime, and that optimizations do not break
 # anything. This is similar to Split(), but rather than split a wasm file into
@@ -2058,6 +2065,8 @@ if not shared.V8:
     print('The v8 shell, d8, must be in the path')
     sys.exit(1)
 
+start_time = time.time()
+
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
     # run new ones until we fail
@@ -2083,7 +2092,6 @@ if __name__ == '__main__':
     total_wasm_size = 0
     total_input_size = 0
     total_input_size_squares = 0
-    start_time = time.time()
     while True:
         counter += 1
         if given_seed is not None:
