@@ -19,7 +19,7 @@
  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
  (global $struct (ref $struct) (struct.new $struct))
 
- ;; CHECK:      (func $br_on-if (type $8) (param $0 (ref struct))
+ ;; CHECK:      (func $br_on-if (type $9) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref struct))
@@ -168,7 +168,7 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on_cast (type $9) (result i31ref)
+ ;; CHECK:      (func $nested_br_on_cast (type $10) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -647,7 +647,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $10) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $8) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
@@ -784,6 +784,54 @@
       )
       (ref.null any)
      )
+    )
+    (else
+     (ref.null any)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $allocations-are-costly (type $8) (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result (ref null $struct))
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select (result nullref)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $allocations-are-costly (param $x i32)
+  ;; Allocations are too expensive for us to unconditionalize and selectify
+  ;; here.
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (then
+     (struct.new $struct)
+    )
+    (else
+     (ref.null any)
+    )
+   )
+  )
+  ;; But two nulls are fine.
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (then
+     (ref.null any)
     )
     (else
      (ref.null any)
