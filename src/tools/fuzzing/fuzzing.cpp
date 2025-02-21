@@ -1121,7 +1121,8 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
 }
 
-TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
+TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(
+  TranslateToFuzzReader& parent, Function* func)
   : parent(parent), func(func) {
   parent.funcContext = this;
 
