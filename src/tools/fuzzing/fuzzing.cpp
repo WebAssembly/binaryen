@@ -1134,7 +1134,7 @@ TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(Translat
     return;
   }
 
-  struct Finder : public PostWalker<Finder> {
+  struct Finder : public PostWalker<Finder, UnifiedExpressionVisitor<Finder>> {
     Index maxIndex = 0;
 
     void visitExpression(Expression* curr) {
@@ -1145,7 +1145,7 @@ TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(Translat
             auto str = name.toString();
             str = str.substr(6);
             Index index = atoi(str.c_str());
-            maxIndex = std::max(maxIndex, index);
+            maxIndex = std::max(maxIndex, index + 1);
           }
         }
       });
