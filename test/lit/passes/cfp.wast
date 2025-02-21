@@ -2870,24 +2870,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $shared 0
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   (struct.atomic.get $shared 0
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2898,13 +2887,14 @@
       )
     )
     (drop
-      ;; This can be optimzied and does not require a fence.
+      ;; This can be optimzied in principle, but our analysis cannot yet prove
+      ;; there is no synchronization. TODO.
       (struct.atomic.get acqrel $shared 0
         (local.get 0)
       )
     )
     (drop
-      ;; This can be optimized, but requires a seqcst fence.
+      ;; Same as above.
       (struct.atomic.get $shared 0
         (local.get 0)
       )
