@@ -857,13 +857,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       builder.makeLocalSet(localIndexes[curr->index], curr->value));
 
     // This struct.set cannot possibly synchronize with other threads via the
-    // read value, since the struct never escapes this function. But if the set
-    // is sequentially consistent, it still participates in the global order of
-    // sequentially consistent operations. Preserve this effect on the global
-    // ordering by inserting a fence.
-    if (curr->order == MemoryOrder::SeqCst) {
-      replacement = builder.blockify(replacement, builder.makeAtomicFence());
-    }
+    // read value, since the struct never escapes this function, so we don't
+    // need a fence.
     replaceCurrent(replacement);
   }
 
@@ -897,11 +892,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // for other opts to handle.
     value = Bits::makePackedFieldGet(value, field, curr->signed_, wasm);
     auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-    // See the note on seqcst struct.set. It is ok to insert the fence before
-    // the value here since we know the value is just a local.get.
-    if (curr->order == MemoryOrder::SeqCst) {
-      replacement = builder.blockify(replacement, builder.makeAtomicFence());
-    }
+    // Just like optimized struct.set, this struct.get cannot synchronize with
+    // anything, so we don't need a fence.
     replaceCurrent(builder.blockify(replacement, value));
   }
 
@@ -964,11 +956,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
     block->list.push_back(builder.makeLocalSet(local, newVal));
 
-    // See the notes on seqcst struct.get and struct.set.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
-
     // Unstash the old value.
     block->list.push_back(builder.makeLocalGet(oldScratch, type));
     block->type = type;
@@ -1019,11 +1006,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       builder.makeIf(pred,
                      builder.makeLocalSet(
                        local, builder.makeLocalGet(replacementScratch, type))));
-
-    // See the notes on seqcst struct.get and struct.set.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
 
     // Unstash the old value.
     block->list.push_back(builder.makeLocalGet(oldScratch, type));
