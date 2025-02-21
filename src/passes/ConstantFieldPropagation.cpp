@@ -133,27 +133,6 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     return PossibleConstantValues{};
   }
 
-  // Returns a block dropping the `ref` operand of the argument.
-  template<typename T> Block* makeRefDroppingBlock(T* curr) {
-    Builder builder(*getModule());
-    return builder.blockify(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
-  }
-
-  // If an optimized access is sequentially consistent, then it synchronizes
-  // with other threads at least by participating in the global order of
-  // sequentially consistent operations. Preserve that effect by replacing the
-  // access with a fence. On the other hand, if we're optimizing an
-  // acquire-release operation, then we know the accessed field is constant and
-  // will not be modified, so the operation does not necessarily synchronize
-  // with other threads and no fence is required.
-  Block* maybeAddFence(Block* block, MemoryOrder order) {
-    if (order == MemoryOrder::SeqCst) {
-      block->list.push_back(Builder(*getModule()).makeAtomicFence());
-    }
-    return block;
-  }
-
   // Given information about a constant value, and the struct type and
   // StructGet/RMW/Cmpxchg that reads it, create an expression for that value.
   template<typename T>
@@ -216,6 +195,16 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
+    if (curr->order != MemoryOrder::Unordered) {
+      // The analysis we're basing the optimization on is not precise enough to
+      // rule out the field being used to synchronize between a write of the
+      // constant value and a subsequent read on another thread. This
+      // synchronization is possible even when the write does not change the
+      // value of the field. For now, simply avoid optimizing this case.
+      // TODO: Track release and acquire operations in the analysis.
+      return;
+    }
+
     // If the value is not a constant, then it is unknown and we must give up
     // on simply applying a constant. However, we can try to use a ref.test, if
     // that is allowed.
@@ -231,69 +220,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     auto* value = makeExpression(info, heapType, curr);
-    auto* replacement = makeRefDroppingBlock(curr);
-    replacement = maybeAddFence(replacement, curr->order);
-    replacement->list.push_back(value);
-    replacement->type = value->type;
-    replaceCurrent(replacement);
-    changed = true;
-  }
-
-  template<typename T>
-  std::optional<std::pair<HeapType, PossibleConstantValues>>
-  shouldOptimizeRMW(T* curr) {
-    auto type = getRelevantHeapType(curr);
-    if (!type) {
-      return std::nullopt;
-    }
-    auto heapType = *type;
-
-    // Get the info about the field. Since RMWs can only copy or mutate the
-    // value, we always have something recorded.
-    PossibleConstantValues info = getInfo(heapType, curr->index);
-    assert(info.hasNoted() && "unexpected lack of info for RMW");
-
-    if (!info.isConstant()) {
-      // Optimizing using ref.test is not an option here because that only works
-      // on immutable fields, but RMW operations always access mutable fields.
-      return std::nullopt;
-    }
-
-    // We can optimize.
-    return std::pair(heapType, info);
-  }
-
-  void visitStructRMW(StructRMW* curr) {
-    auto typeAndInfo = shouldOptimizeRMW(curr);
-    if (!typeAndInfo) {
-      return;
-    }
-    // Only xchg allows the field to have a constant value.
-    assert(curr->op == RMWXchg && "unexpected op");
-    auto& [type, info] = *typeAndInfo;
-    Builder builder(*getModule());
-    auto* value = makeExpression(info, type, curr);
-    auto* replacement = makeRefDroppingBlock(curr);
-    replacement->list.push_back(builder.makeDrop(curr->value));
-    replacement = maybeAddFence(replacement, curr->order);
-    replacement->list.push_back(value);
-    replacement->type = value->type;
-    replaceCurrent(replacement);
-    changed = true;
-  }
-
-  void visitStructCmpxchg(StructCmpxchg* curr) {
-    auto typeAndInfo = shouldOptimizeRMW(curr);
-    if (!typeAndInfo) {
-      return;
-    }
-    auto& [type, info] = *typeAndInfo;
-    Builder builder(*getModule());
-    auto* value = makeExpression(info, type, curr);
-    auto* replacement = makeRefDroppingBlock(curr);
-    replacement->list.push_back(builder.makeDrop(curr->expected));
-    replacement->list.push_back(builder.makeDrop(curr->replacement));
-    replacement = maybeAddFence(replacement, curr->order);
+    auto* replacement = builder.blockify(
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
     replacement->list.push_back(value);
     replacement->type = value->type;
     replaceCurrent(replacement);
@@ -412,10 +340,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // disjoint. In general we could compute the LUB of each set and see if it
     // overlaps with the other, but for efficiency we only want to do this
     // optimization if the type we test on is closed/final, since ref.test on a
-    // final type can be fairly fast (perhaps constant time). We therefore look
-    // if one of the sets of types contains a single type and it is final, and
-    // if so then we'll test on it. (However, see a few lines below on how we
-    // test for finality.)
+    // final type can be fairly fast (perhaps constant time). We therefore
+    // look if one of the sets of types contains a single type and it is
+    // final, and if so then we'll test on it. (However, see a few lines below
+    // on how we test for finality.)
     // TODO: Consider adding a variation on this pass that uses non-final types.
     auto isProperTestType = [&](const Value& value) -> std::optional<HeapType> {
       auto& types = value.types;

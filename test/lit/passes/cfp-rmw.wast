@@ -42,9 +42,11 @@
       (local.get 0)
     )
   )
+
 )
 
-;; RMW xchg operations are optimizable like normal reads and writes, though.
+;; RMW xchg operations also cannot be optimized, even if they don't write new
+;; values. They may form cross-thread synchronization edges.
 (module
   ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
   (type $A (shared (struct (mut i32))))
@@ -61,65 +63,27 @@
   )
 
   ;; CHECK:      (func $rmw-xchg (type $1) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $A 0
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-xchg (param (ref $A)) (result i32)
-    ;; This xchg does not change the value, so allows optimization. Other RMW
-    ;; ops that cannot change values are optimized in OptimizeInstructions
-    ;; instead.
+    ;; This xchg does not change the value, but still cannot be optimized.
     (struct.atomic.rmw.xchg $A 0
       (local.get 0)
       (i32.const 0)
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-fallthrough (type $1) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: )
-  (func $rmw-xchg-fallthrough (param (ref $A)) (result i32)
-    ;; Same, and it works even with fallthrough.
-    (struct.atomic.rmw.xchg $A 0
-      (local.get 0)
-      (block (result i32)
-        (i32.const 0)
-      )
-    )
-  )
-
   ;; CHECK:      (func $rmw-xchg-acqrel (type $1) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $A 0
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-acqrel (param (ref $A)) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that we don't need a
-    ;; fence when we optimize.
+    ;; Making the accesses acqrel instead of seqcst doesn't make a difference.
     (struct.atomic.rmw.xchg acqrel acqrel $A 0
       (local.get 0)
       (i32.const 0)
@@ -135,14 +99,14 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $get (param (ref $A)) (result i32)
-    ;; This get is optimizable.
+    ;; This get is still optimizable.
     (struct.get $A 0
       (local.get 0)
     )
   )
 )
 
-;; A RMW xchg copy is still optimizable, too.
+;; A RMW xchg copy is also unoptimizable.
 (module
   ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
   (type $A (shared (struct (mut i32))))
@@ -161,27 +125,15 @@
   )
 
   ;; CHECK:      (func $rmw-xchg-copy (type $1) (param $0 (ref $A)) (param $1 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $A 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (struct.atomic.get $A 0
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-copy (param (ref $A) (ref $A)) (result i32)
-    ;; This is a copy from one A to another, so allows optimization.
+    ;; This is a copy from one A to another, but still cannot be optimized.
     (struct.atomic.rmw.xchg $A 0
       (local.get 0)
       (struct.atomic.get $A 0
@@ -190,61 +142,16 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-copy-fallthrough (type $1) (param $0 (ref $A)) (param $1 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (atomic.fence)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: )
-  (func $rmw-xchg-copy-fallthrough (param (ref $A) (ref $A)) (result i32)
-    ;; Same, and it works even with fallthrough.
-    (struct.atomic.rmw.xchg $A 0
-      (local.get 0)
-      (block (result i32)
-        (struct.atomic.get $A 0
-          (local.get 1)
-        )
-      )
-    )
-  )
-
   ;; CHECK:      (func $rmw-xchg-copy-acqrel (type $1) (param $0 (ref $A)) (param $1 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $A 0
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (struct.atomic.get acqrel $A 0
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-copy-acqrel (param (ref $A) (ref $A)) (result i32)
-    ;; Making the accesses acqrel instead of seqcst means that we don't need a
-    ;; fence when we optimize.
+    ;; Making the accesses acqrel instead of seqcst doesn't make a difference.
     (struct.atomic.rmw.xchg acqrel acqrel $A 0
       (local.get 0)
       (struct.atomic.get acqrel $A 0
@@ -269,193 +176,7 @@
   )
 )
 
-;; Not all rmw.xchg instructions are optimizable, though.
-(module
-  ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
-  (type $A (shared (struct (mut i32))))
-
-  ;; CHECK:      (type $1 (func (param (ref $A)) (result i32)))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (func $init (type $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $init
-    (drop
-      (struct.new_default $A)
-    )
-  )
-
-  ;; CHECK:      (func $rmw-xchg-mutate (type $1) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $rmw-xchg-mutate (param (ref $A)) (result i32)
-    ;; The xchg mutates $A, so it has more than one value and cannot be
-    ;; optimized out.
-    (struct.atomic.rmw.xchg $A 0
-      (local.get 0)
-      (i32.const 1)
-    )
-  )
-
-  ;; CHECK:      (func $get (type $1) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get (param (ref $A)) (result i32)
-    (struct.get $A 0
-      (local.get 0)
-    )
-  )
-)
-
-;; "Copies" across types are not optimizable.
-(module
-  ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
-  (type $A (shared (struct (mut i32))))
-  ;; CHECK:      (type $B (shared (struct (field i32))))
-  (type $B (shared (struct i32)))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (type $3 (func (param (ref $A) (ref $B)) (result i32)))
-
-  ;; CHECK:      (type $4 (func (param (ref $A)) (result i32)))
-
-  ;; CHECK:      (func $init (type $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $B
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $init
-    (drop
-      (struct.new_default $A)
-    )
-    (drop
-      (struct.new $B
-        (i32.const 1)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $rmw-xchg-no-copy (type $3) (param $0 (ref $A)) (param $1 (ref $B)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $rmw-xchg-no-copy (param (ref $A) (ref $B)) (result i32)
-    ;; The xchg mutates $A, so it has more than one value and cannot be
-    ;; optimized out (but the get of $B is optimized).
-    (struct.atomic.rmw.xchg $A 0
-      (local.get 0)
-      (struct.atomic.get $B 0
-        (local.get 1)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $get (type $4) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get (param (ref $A)) (result i32)
-    (struct.get $A 0
-      (local.get 0)
-    )
-  )
-)
-
-;; In principle this version of the previous case is optimizable because the
-;; values are the same, but we don't optimize it yet. TODO: optimize this.
-(module
-  ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
-  (type $A (shared (struct (mut i32))))
-  ;; CHECK:      (type $B (shared (struct (field i32))))
-  (type $B (shared (struct i32)))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (type $3 (func (param (ref $A) (ref $B)) (result i32)))
-
-  ;; CHECK:      (type $4 (func (param (ref $A)) (result i32)))
-
-  ;; CHECK:      (func $init (type $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $B)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $init
-    (drop
-      (struct.new_default $A)
-    )
-    ;; Now this is a struct.new_default to make the values match.
-    (drop
-      (struct.new_default $B)
-    )
-  )
-
-  ;; CHECK:      (func $rmw-xchg-copy-value (type $3) (param $0 (ref $A)) (param $1 (ref $B)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.xchg $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $rmw-xchg-copy-value (param (ref $A) (ref $B)) (result i32)
-    ;; The xchg uses different types, but cannot change the value.
-    (struct.atomic.rmw.xchg $A 0
-      (local.get 0)
-      (struct.atomic.get $B 0
-        (local.get 1)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $get (type $4) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get (param (ref $A)) (result i32)
-    (struct.get $A 0
-      (local.get 0)
-    )
-  )
-)
-
-;; Similarly, cmpxchg can be optimized.
+;; Similarly, cmpxchg cannot be optimized.
 (module
   ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
   (type $A (shared (struct (mut i32))))
@@ -474,22 +195,14 @@
   )
 
   ;; CHECK:      (func $rmw-cmpxchg (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg (param (ref $A) i32) (result i32)
-    ;; This cmpxchg does not change the value, so allows optimization.
+    ;; This cmpxchg does not change the value, but cannot be optimized.
     (struct.atomic.rmw.cmpxchg $A 0
       (local.get 0)
       (local.get 1)
@@ -497,51 +210,15 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-cmpxchg-fallthrough (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: )
-  (func $rmw-cmpxchg-fallthrough (param (ref $A) i32) (result i32)
-    ;; Same, and it works even with fallthrough.
-    (struct.atomic.rmw.cmpxchg $A 0
-      (local.get 0)
-      (local.get 1)
-      (block (result i32)
-        (i32.const 0)
-      )
-    )
-  )
-
   ;; CHECK:      (func $rmw-cmpxchg-acqrel (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-acqrel (param (ref $A) i32) (result i32)
-    ;; Acqrel accesses to constant fields do not synchronize with anything, so
-    ;; we can optimize without fences.
+    ;; Acqrel accesses do not make a difference.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
       (local.get 0)
       (local.get 1)
@@ -565,51 +242,38 @@
   )
 )
 
-;; cmpxchg copies can be optimized.
+;; cmpxchg copies also cannot be optimized.
 (module
   ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
   (type $A (shared (struct (mut i32))))
 
-  ;; CHECK:      (type $1 (func (param (ref $A) i32) (result i32)))
+  ;; CHECK:      (type $1 (func (result (ref $A))))
 
-  ;; CHECK:      (type $2 (func (result (ref $A))))
+  ;; CHECK:      (type $2 (func (param (ref $A) i32 (ref $A)) (result i32)))
 
-  ;; CHECK:      (type $3 (func (param (ref $A) i32 (ref $A)) (result i32)))
+  ;; CHECK:      (type $3 (func (param (ref $A) i32) (result i32)))
 
   ;; CHECK:      (type $4 (func (param (ref $A)) (result i32)))
 
-  ;; CHECK:      (func $init (type $2) (result (ref $A))
+  ;; CHECK:      (func $init (type $1) (result (ref $A))
   ;; CHECK-NEXT:  (struct.new_default $A)
   ;; CHECK-NEXT: )
   (func $init (result (ref $A))
     (struct.new_default $A)
   )
 
-  ;; CHECK:      (func $rmw-cmpxchg (type $3) (param $0 (ref $A)) (param $1 i32) (param $2 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $rmw-cmpxchg (type $2) (param $0 (ref $A)) (param $1 i32) (param $2 (ref $A)) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   (struct.atomic.get $A 0
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg (param (ref $A) i32 (ref $A)) (result i32)
-    ;; This cmpxchg copies the field, so does not change the value.
+    ;; This cmpxchg copies the field, so does not change the value. It can still
+    ;; not be optimized.
     (struct.atomic.rmw.cmpxchg $A 0
       (local.get 0)
       (local.get 1)
@@ -619,51 +283,15 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-cmpxchg-fallthrough (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK:      (func $rmw-cmpxchg-acqrel (type $3) (param $0 (ref $A)) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: )
-  (func $rmw-cmpxchg-fallthrough (param (ref $A) i32) (result i32)
-    ;; Same, and it works even with fallthrough.
-    (struct.atomic.rmw.cmpxchg $A 0
-      (local.get 0)
-      (local.get 1)
-      (block (result i32)
-        (i32.const 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $rmw-cmpxchg-acqrel (type $1) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-acqrel (param (ref $A) i32) (result i32)
-    ;; Acqrel accesses to constant fields do not synchronize with anything, so
-    ;; we can optimize without fences.
+    ;; Acqrel accesses to constant fields do not make a difference.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $A 0
       (local.get 0)
       (local.get 1)
@@ -687,198 +315,9 @@
   )
 )
 
-;; Mutating cmpxchg cannot be optimized.
-(module
-  ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
-  (type $A (shared (struct (mut i32))))
-
-  ;; CHECK:      (type $1 (func (result (ref $A))))
-
-  ;; CHECK:      (type $2 (func (param (ref $A) i32) (result i32)))
-
-  ;; CHECK:      (type $3 (func (param (ref $A)) (result i32)))
-
-  ;; CHECK:      (func $init (type $1) (result (ref $A))
-  ;; CHECK-NEXT:  (struct.new_default $A)
-  ;; CHECK-NEXT: )
-  (func $init (result (ref $A))
-    (struct.new_default $A)
-  )
-
-  ;; CHECK:      (func $rmw-cmpxchg-mutate (type $2) (param $0 (ref $A)) (param $1 i32) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $rmw-cmpxchg-mutate (param (ref $A) i32) (result i32)
-    ;; This cmpxchg changes the field if it writes, so cannot be optimized.
-    (struct.atomic.rmw.cmpxchg $A 0
-      (local.get 0)
-      (local.get 1)
-      (i32.const 1)
-    )
-  )
-
-  ;; CHECK:      (func $get (type $3) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get (param (ref $A)) (result i32)
-    ;; This get is not optimizable.
-    (struct.get $A 0
-      (local.get 0)
-    )
-  )
-)
-
-;; Cmpxchg "copies" across types are not optimizable.
-(module
-  ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
-  (type $A (shared (struct (mut i32))))
-  ;; CHECK:      (type $B (shared (struct (field i32))))
-  (type $B (shared (struct i32)))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (type $3 (func (param (ref $A) i32 (ref $B)) (result i32)))
-
-  ;; CHECK:      (type $4 (func (param (ref $A)) (result i32)))
-
-  ;; CHECK:      (func $init (type $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $B
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $init
-    (drop
-      (struct.new_default $A)
-    )
-    (drop
-      (struct.new $B
-        (i32.const 1)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $rmw-cmpxchg-no-copy (type $3) (param $0 (ref $A)) (param $1 i32) (param $2 (ref $B)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $rmw-cmpxchg-no-copy (param (ref $A) i32 (ref $B)) (result i32)
-    ;; The cmpxchg mutates $A, so it has more than one value and cannot be
-    ;; optimized out (but the get of $B is optimized).
-    (struct.atomic.rmw.cmpxchg $A 0
-      (local.get 0)
-      (local.get 1)
-      (struct.atomic.get $B 0
-        (local.get 2)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $get (type $4) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get (param (ref $A)) (result i32)
-    (struct.get $A 0
-      (local.get 0)
-    )
-  )
-)
-
-;; In principle this version of the previous case is optimizable because the
-;; values are the same, but we don't optimize it yet. TODO: optimize this.
-(module
-  ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
-  (type $A (shared (struct (mut i32))))
-  ;; CHECK:      (type $B (shared (struct (field i32))))
-  (type $B (shared (struct i32)))
-
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (type $3 (func (param (ref $A) i32 (ref $B)) (result i32)))
-
-  ;; CHECK:      (type $4 (func (param (ref $A)) (result i32)))
-
-  ;; CHECK:      (func $init (type $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $B)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $init
-    (drop
-      (struct.new_default $A)
-    )
-    ;; Now this is a struct.new_default to make the values match.
-    (drop
-      (struct.new_default $B)
-    )
-  )
-
-  ;; CHECK:      (func $rmw-cmpxchg-copy-value (type $3) (param $0 (ref $A)) (param $1 i32) (param $2 (ref $B)) (result i32)
-  ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $rmw-cmpxchg-copy-value (param (ref $A) i32 (ref $B)) (result i32)
-    ;; The cmpxchg uses different types, but cannot change the value.
-    (struct.atomic.rmw.cmpxchg $A 0
-      (local.get 0)
-      (local.get 1)
-      (struct.atomic.get $B 0
-        (local.get 2)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $get (type $4) (param $0 (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (struct.get $A 0
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $get (param (ref $A)) (result i32)
-    (struct.get $A 0
-      (local.get 0)
-    )
-  )
-)
-
-;; In principle this version can also be optimized because the cmpxchg will
-;; never perform a write. TODO: optimize this.
+;; In principle this version can be optimized because the cmpxchg will never
+;; perform a write and there are no other writes for it to synchronize with.
+;; TODO: optimize this.
 (module
   ;; CHECK:      (type $A (shared (struct (field (mut i32)))))
   (type $A (shared (struct (mut i32))))
