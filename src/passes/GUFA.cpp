@@ -153,10 +153,7 @@ struct GUFAOptimizer
     if (Properties::getMemoryOrder(curr) != MemoryOrder::Unordered) {
       // This load might synchronize with some store, and if we replaced the
       // load with a constant or with a load from a global, it would not
-      // synchronize with that store anymore. Since we know what value the store
-      // must write, and we know it is the same as every other store to the same
-      // location, it's possible that optimizing here would be allowable, but
-      // for now be conservative and do not optimize.
+      // synchronize with that store anymore.
       return;
     }
 

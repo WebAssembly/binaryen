@@ -6171,19 +6171,22 @@
     )
     (drop
       ;; This is optimizable. It reads from shared memory, but there is only one
-      ;; possible value that can be read.
+      ;; possible value that can be read and it is not atomic, so does not form
+      ;; a synchronization edge.
       (struct.get $A 0
         (local.get 0)
       )
     )
     (drop
-      ;; We do not (yet) optimize atomic gets.
+      ;; We do not optimize atomic gets, since they might synchronize with a
+      ;; write.
       (struct.atomic.get acqrel $A 0
         (local.get 0)
       )
     )
     (drop
-      ;; We do not (yet) optimize atomic gets.
+      ;; We do not optimize atomic gets, since they might synchronize with a
+      ;; write.
       (struct.atomic.get $A 0
         (local.get 0)
       )
