@@ -1127,7 +1127,7 @@ TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(Translat
 
   // Find the right index for labelIndex: we emit names like label$5, so we need
   // the index to be larger than all currently existing.
-  if (func->body) {
+  if (!func->body) {
     return;
   }
 
