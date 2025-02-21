@@ -614,10 +614,12 @@ void TranslateToFuzzReader::setupGlobals() {
   // run the wasm.
   for (auto& global : wasm.globals) {
     if (global->imported()) {
-      // Remove import info from imported globals, and give them a simple
-      // initializer.
-      global->module = global->base = Name();
-      global->init = makeConst(global->type);
+      if (!preserveImportsAndExports) {
+        // Remove import info from imported globals, and give them a simple
+        // initializer.
+        global->module = global->base = Name();
+        global->init = makeConst(global->type);
+      }
     } else {
       // If the initialization referred to an imported global, it no longer can
       // point to the same global after we make it a non-imported global unless
@@ -695,7 +697,7 @@ void TranslateToFuzzReader::setupTags() {
   // As in modifyInitialFunctions(), we can't allow arbitrary tag imports, which
   // would trap when the fuzzing infrastructure doesn't know what to provide.
   for (auto& tag : wasm.tags) {
-    if (tag->imported()) {
+    if (tag->imported() && !preserveImportsAndExports) {
       tag->module = tag->base = Name();
     }
   }
@@ -707,7 +709,7 @@ void TranslateToFuzzReader::setupTags() {
   }
 
   // Add the fuzzing support tags manually sometimes.
-  if (oneIn(2)) {
+  if (!preserveImportsAndExports && oneIn(2)) {
     auto wasmTag = builder.makeTag(Names::getValidTagName(wasm, "wasmtag"),
                                    Signature(Type::i32, Type::none));
     wasmTag->module = "fuzzing-support";
@@ -779,9 +781,12 @@ void TranslateToFuzzReader::finalizeMemory() {
     memory->max =
       std::min(Address(memory->initial + 1), Address(Memory::kMaxSize32));
   }
-  // Avoid an imported memory (which the fuzz harness would need to handle).
-  for (auto& memory : wasm.memories) {
-    memory->module = memory->base = Name();
+
+  if (!preserveImportsAndExports) {
+    // Avoid an imported memory (which the fuzz harness would need to handle).
+    for (auto& memory : wasm.memories) {
+      memory->module = memory->base = Name();
+    }
   }
 }
 
@@ -826,8 +831,11 @@ void TranslateToFuzzReader::finalizeTable() {
     assert(ReasonableMaxTableSize <= Table::kMaxSize);
 
     table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
-    // Avoid an imported table (which the fuzz harness would need to handle).
-    table->module = table->base = Name();
+
+    if (!preserveImportsAndExports) {
+      // Avoid an imported table (which the fuzz harness would need to handle).
+      table->module = table->base = Name();
+    }
   }
 }
 
@@ -841,8 +849,9 @@ void TranslateToFuzzReader::shuffleExports() {
   // we emit invokes for a function right after it (so we end up calling the
   // same code several times in succession, but interleaving it with others may
   // find more things). But we also keep a good chance for the natural order
-  // here, as it may help some initial content.
-  if (wasm.exports.empty() || oneIn(2)) {
+  // here, as it may help some initial content. Note we cannot do this if we are
+  // preserving the exports, as their order is something we must maintain.
+  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2)) {
     return;
   }
 
@@ -881,14 +890,24 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     Name baseName = std::string("log-") + type.toString();
     func->name = Names::getValidFunctionName(wasm, baseName);
     logImportNames[type] = func->name;
-    func->module = "fuzzing-support";
-    func->base = baseName;
+    if (!preserveImportsAndExports) {
+      func->module = "fuzzing-support";
+      func->base = baseName;
+    } else {
+      // We cannot add an import, so just make it a trivial function (this is
+      // simpler than avoiding calls to logging in all the rest of the logic).
+      func->body = builder.makeNop();
+    }
     func->type = Signature(type, Type::none);
     wasm.addFunction(std::move(func));
   }
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
+  if (preserveImportsAndExports) {
+    return;
+  }
+
   if (wasm.features.hasReferenceTypes() && closedWorld) {
     // In closed world mode we must *remove* the call-ref* imports, if they
     // exist in the initial content. These are not valid to call in closed-world
@@ -983,8 +1002,13 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   throwImportName = Names::getValidFunctionName(wasm, "throw");
   auto func = std::make_unique<Function>();
   func->name = throwImportName;
-  func->module = "fuzzing-support";
-  func->base = "throw";
+  if (!preserveImportsAndExports) {
+    func->module = "fuzzing-support";
+    func->base = "throw";
+  } else {
+    // As with logging, implement in a trivial way when we cannot add imports.
+    func->body = builder.makeNop();
+  }
   func->type = Signature(Type::i32, Type::none);
   wasm.addFunction(std::move(func));
 }
@@ -999,8 +1023,9 @@ void TranslateToFuzzReader::addImportTableSupport() {
   }
 
   // If a "table" export already exists, skip fuzzing these imports, as the
-  // current export may not contain a valid table for it.
-  if (wasm.getExportOrNull("table")) {
+  // current export may not contain a valid table for it. We also skip if we are
+  // not adding imports or exports.
+  if (wasm.getExportOrNull("table") || preserveImportsAndExports) {
     return;
   }
 
@@ -1033,8 +1058,9 @@ void TranslateToFuzzReader::addImportTableSupport() {
 }
 
 void TranslateToFuzzReader::addImportSleepSupport() {
-  if (!oneIn(4)) {
-    // Fuzz this somewhat rarely, as it may be slow.
+  // Fuzz this somewhat rarely, as it may be slow, and only when we can add
+  // imports.
+  if (preserveImportsAndExports || !oneIn(4)) {
     return;
   }
 
@@ -1087,12 +1113,15 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   auto* body = builder.makeBlock(contents);
   auto* hasher = wasm.addFunction(builder.makeFunction(
     "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
-  wasm.addExport(
-    builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
-  // Export memory so JS fuzzing can use it
-  if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport(
-      "memory", wasm.memories[0]->name, ExternalKind::Memory));
+
+  if (!preserveImportsAndExports) {
+    wasm.addExport(
+      builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+    // Export memory so JS fuzzing can use it
+    if (!wasm.getExportOrNull("memory")) {
+      wasm.addExport(builder.makeExport(
+        "memory", wasm.memories[0]->name, ExternalKind::Memory));
+    }
   }
 }
 
@@ -1340,7 +1369,7 @@ Function* TranslateToFuzzReader::addFunction() {
       return t.isDefaultable();
     });
   if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
-      !wasm.getExportOrNull(func->name)) {
+      !wasm.getExportOrNull(func->name) && !preserveImportsAndExports) {
     auto* export_ = new Export;
     export_->name = func->name;
     export_->value = func->name;
@@ -1805,8 +1834,10 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   for (Index i = 0; i < wasm.functions.size(); i++) {
     auto* func = wasm.functions[i].get();
     // We can't allow extra imports, as the fuzzing infrastructure wouldn't
-    // know what to provide. Keep only our own fuzzer imports.
-    if (func->imported() && func->module == "fuzzing-support") {
+    // know what to provide. Keep only our own fuzzer imports (or, if we are
+    // preserving imports, keep them all).
+    if (func->imported() &&
+        (func->module == "fuzzing-support" || preserveImportsAndExports)) {
       continue;
     }
     FunctionCreationContext context(*this, func);
@@ -1907,7 +1938,12 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   }
   body->list.set(invocations);
   wasm.addFunction(std::move(invoker));
-  wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
+
+  // Most of the benefit of invocations is lost when we do not add exports for
+  // them, but still, they might be called by existing functions.
+  if (!preserveImportsAndExports) {
+    wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
+  }
 }
 
 Expression* TranslateToFuzzReader::make(Type type) {
