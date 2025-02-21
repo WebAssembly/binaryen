@@ -272,8 +272,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg (param (ref $A) i32 (ref $A)) (result i32)
-    ;; This cmpxchg copies the field, so does not change the value. It can still
-    ;; not be optimized.
+    ;; This cmpxchg copies the field, so does not change the value. It still
+    ;; cannot be optimized.
     (struct.atomic.rmw.cmpxchg $A 0
       (local.get 0)
       (local.get 1)

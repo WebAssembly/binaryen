@@ -340,10 +340,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // disjoint. In general we could compute the LUB of each set and see if it
     // overlaps with the other, but for efficiency we only want to do this
     // optimization if the type we test on is closed/final, since ref.test on a
-    // final type can be fairly fast (perhaps constant time). We therefore
-    // look if one of the sets of types contains a single type and it is
-    // final, and if so then we'll test on it. (However, see a few lines below
-    // on how we test for finality.)
+    // final type can be fairly fast (perhaps constant time). We therefore look
+    // if one of the sets of types contains a single type and it is final, and
+    // if so then we'll test on it. (However, see a few lines below on how we
+    // test for finality.)
     // TODO: Consider adding a variation on this pass that uses non-final types.
     auto isProperTestType = [&](const Value& value) -> std::optional<HeapType> {
       auto& types = value.types;
