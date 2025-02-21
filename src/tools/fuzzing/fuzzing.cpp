@@ -1379,13 +1379,6 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
-  // Fix up after we finished all modifications.
-  for (auto& func : wasm.functions) {
-    if (!func->imported()) {
-      fixAfterChanges(func.get());
-    }
-  }
-
   // At the very end, add hang limit checks (so no modding can override them).
   if (fuzzParams->HANG_LIMIT > 0) {
     for (auto& func : wasm.functions) {
@@ -1480,6 +1473,7 @@ void TranslateToFuzzReader::modFunction(Function* func) {
   //       check variations on initial testcases even at the risk of OOB.
   recombine(func);
   mutate(func);
+  fixAfterChanges(func);
 }
 
 void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
