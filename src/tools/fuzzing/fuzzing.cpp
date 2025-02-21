@@ -1794,8 +1794,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
 }
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
-  FunctionCreationContext context(*this, func);
-
   struct Fixer
     : public ExpressionStackWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
