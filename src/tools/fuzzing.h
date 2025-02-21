@@ -128,6 +128,9 @@ public:
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
+  void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
+    preserveImportsAndExports = preserveImportsAndExports_;
+  }
 
   void build();
 
@@ -145,6 +148,13 @@ private:
   // Whether to emit loads, stores, and call_indirects that may be out
   // of bounds (which traps in wasm, and is undefined behavior in C).
   bool allowOOB = true;
+
+  // Whether we preserve imports and exports. Normally we add imports (for
+  // logging and other useful functionality for testing), and add exports of
+  // functions as we create them. With this set, we add neither imports nor
+  // exports, which is useful if the tool using us only wants us to mutate an
+  // existing testcase (using initial-content).
+  bool preserveImportsAndExports = false;
 
   // Whether we allow the fuzzer to add unreachable code when generating changes
   // to existing code. This is randomized during startup, but could be an option

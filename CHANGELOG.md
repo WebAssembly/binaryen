@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Add an option to preserve imports and exports in the fuzzer (for fuzzer
+   harnesses where they only want Binaryen to modify their given testcases, not
+   generate new things in them).
+
 v122
 ----
 

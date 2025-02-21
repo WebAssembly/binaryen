@@ -2149,7 +2149,7 @@
       )
     )
     (drop
-      ;; Even though this is seqcst, it still can't synchonrize with anything.
+      ;; Even though this is seqcst, it still can't synchronize with anything.
       (struct.atomic.get $two-same 0
         (local.get 0)
       )
