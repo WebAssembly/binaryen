@@ -1125,6 +1125,9 @@ TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(Translat
   : parent(parent), func(func) {
   parent.funcContext = this;
 
+  // Note the types of all locals.
+  computeTypeLocals();
+
   // Find the right index for labelIndex: we emit names like label$5, so we need
   // the index to be larger than all currently existing.
   if (!func->body) {
@@ -1399,8 +1402,6 @@ Function* TranslateToFuzzReader::addFunction() {
   auto allocation = std::make_unique<Function>();
   auto* func = allocation.get();
   func->name = Names::getValidFunctionName(wasm, "func");
-  FunctionCreationContext context(*this, func);
-  assert(funcContext->typeLocals.empty());
   Index numParams = upToSquared(fuzzParams->MAX_PARAMS);
   std::vector<Type> params;
   params.reserve(numParams);
@@ -1419,7 +1420,9 @@ Function* TranslateToFuzzReader::addFunction() {
     }
     func->vars.push_back(type);
   }
-  context.computeTypeLocals();
+  // Generate the function creation context after we filled in locals, which it
+  // will scan.
+  FunctionCreationContext context(*this, func);
   // with small chance, make the body unreachable
   auto bodyType = func->getResults();
   if (oneIn(10)) {
@@ -1470,9 +1473,6 @@ void TranslateToFuzzReader::modFunction(Function* func) {
   FunctionCreationContext context(*this, func);
 
   dropToLog(func);
-  // Notice params as well as any locals generated above.
-  // TODO add some locals? and the rest of addFunction's operations?
-  context.computeTypeLocals();
   // TODO: if we add OOB checks after creation, then we can do it on
   //       initial contents too, and it may be nice to *not* run these
   //       passes, like we don't run them on new functions. But, we may
