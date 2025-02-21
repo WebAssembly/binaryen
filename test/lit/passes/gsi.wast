@@ -2077,10 +2077,7 @@
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result (ref $two))
-  ;; CHECK-NEXT:      (atomic.fence)
-  ;; CHECK-NEXT:      (global.get $two-a)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $two-a)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2099,8 +2096,7 @@
       )
     )
     (drop
-      ;; This requires a fence to maintain its effect on the global order of
-      ;; seqcst operations.
+      ;; Even though this is seqcst, it still can't synchronize with anything.
       (struct.atomic.get $two 0
         (local.get 0)
       )
@@ -2135,7 +2131,6 @@
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (atomic.fence)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2154,8 +2149,7 @@
       )
     )
     (drop
-      ;; This requires a fence to maintain its effect on the global order of
-      ;; seqcst operations.
+      ;; Even though this is seqcst, it still can't synchronize with anything.
       (struct.atomic.get $two-same 0
         (local.get 0)
       )
