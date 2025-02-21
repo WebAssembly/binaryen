@@ -95,28 +95,32 @@ class HeapType {
   // should also be passed by value.
   uintptr_t id;
 
+  static constexpr int TypeBits = 3;
+  static constexpr int UsedBits = TypeBits + 1;
+  static constexpr int SharedMask = 1 << TypeBits;
+
 public:
-  // Bits 0 and 1 are used by the Type representation, so need to be left free.
-  // Bit 2 determines whether the basic heap type is shared (1) or unshared (0).
+  // Bits 0-2 are used by the Type representation, so need to be left free.
+  // Bit 3 determines whether the basic heap type is shared (1) or unshared (0).
   enum BasicHeapType : uint32_t {
-    ext = 1 << 3,
-    func = 2 << 3,
-    cont = 3 << 3,
-    any = 4 << 3,
-    eq = 5 << 3,
-    i31 = 6 << 3,
-    struct_ = 7 << 3,
-    array = 8 << 3,
-    exn = 9 << 3,
-    string = 10 << 3,
-    none = 11 << 3,
-    noext = 12 << 3,
-    nofunc = 13 << 3,
-    nocont = 14 << 3,
-    noexn = 15 << 3,
+    ext = 1 << UsedBits,
+    func = 2 << UsedBits,
+    cont = 3 << UsedBits,
+    any = 4 << UsedBits,
+    eq = 5 << UsedBits,
+    i31 = 6 << UsedBits,
+    struct_ = 7 << UsedBits,
+    array = 8 << UsedBits,
+    exn = 9 << UsedBits,
+    string = 10 << UsedBits,
+    none = 11 << UsedBits,
+    noext = 12 << UsedBits,
+    nofunc = 13 << UsedBits,
+    nocont = 14 << UsedBits,
+    noexn = 15 << UsedBits,
   };
   static constexpr BasicHeapType _last_basic_type =
-    BasicHeapType(noexn + (1 << 2));
+    BasicHeapType(noexn | SharedMask);
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -214,7 +218,8 @@ public:
   // Get the shared or unshared version of this basic heap type.
   constexpr BasicHeapType getBasic(Shareability share) const {
     assert(isBasic());
-    return BasicHeapType(share == Shared ? (id | 4) : (id & ~4));
+    return BasicHeapType(share == Shared ? (id | SharedMask)
+                                         : (id & ~SharedMask));
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
@@ -269,12 +274,16 @@ class Type {
   // bit 0 set. When that bit is masked off, they are pointers to the underlying
   // vectors of types. Otherwise, the type is a reference type, and is
   // represented as a heap type with bit 1 set iff the reference type is
-  // nullable.
+  // nullable and bit 2 set iff the reference type is exact.
   //
   // Since `Type` is really just a single integer, it should be passed by value.
   // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
   // 32-bit platforms.
   uintptr_t id;
+
+  static constexpr int TupleMask = 1 << 0;
+  static constexpr int NullMask = 1 << 1;
+  static constexpr int ExactMask = 1 << 2;
 
 public:
   enum BasicType : uint32_t {
@@ -306,7 +315,10 @@ public:
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
   Type(HeapType heapType, Nullability nullable)
-    : Type(heapType.getID() | (nullable == Nullable ? 2 : 0)) {}
+    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0)) {
+    assert(heapType.isBasic() ||
+           !(heapType.getID() & (TupleMask | NullMask | ExactMask)));
+  }
 
   // Predicates
   //                 Compound Concrete
@@ -345,18 +357,18 @@ public:
   // basic case for the underlying implementation.
 
   // TODO: Experiment with leaving bit 0 free in basic types.
-  bool isTuple() const { return !isBasic() && (id & 1); }
+  bool isTuple() const { return !isBasic() && (id & TupleMask); }
   const Tuple& getTuple() const {
     assert(isTuple());
-    return *(Tuple*)(id & ~1);
+    return *(Tuple*)(id & ~TupleMask);
   }
 
-  bool isRef() const { return !isBasic() && !(id & 1); }
-  bool isNullable() const { return isRef() && (id & 2); }
-  bool isNonNullable() const { return isRef() && !(id & 2); }
+  bool isRef() const { return !isBasic() && !(id & TupleMask); }
+  bool isNullable() const { return isRef() && (id & NullMask); }
+  bool isNonNullable() const { return isRef() && !(id & NullMask); }
   HeapType getHeapType() const {
     assert(isRef());
-    return HeapType(id & ~2);
+    return HeapType(id & ~(NullMask | ExactMask));
   }
 
   bool isFunction() const { return isRef() && getHeapType().isFunction(); }

@@ -876,7 +876,7 @@ bool HeapType::isOpen() const {
 
 Shareability HeapType::getShared() const {
   if (isBasic()) {
-    return (id & 4) != 0 ? Shared : Unshared;
+    return (id & SharedMask) != 0 ? Shared : Unshared;
   } else {
     return getHeapTypeInfo(*this)->share;
   }
