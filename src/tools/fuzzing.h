@@ -228,10 +228,7 @@ private:
     // type => list of locals with that type
     std::unordered_map<Type, std::vector<Index>> typeLocals;
 
-    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
-      : parent(parent), func(func) {
-      parent.funcContext = this;
-    }
+    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func);
 
     ~FunctionCreationContext();
 

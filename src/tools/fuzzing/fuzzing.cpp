@@ -1121,6 +1121,37 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
 }
 
+TranslateToFuzzReader::FunctionCreationContext::FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
+  : parent(parent), func(func) {
+  parent.funcContext = this;
+
+  // Find the right index for labelIndex: we emit names like label$5, so we need
+  // the index to be larger than all currently existing.
+  if (func->body) {
+    return;
+  }
+
+  struct Finder : public PostWalker<Finder> {
+    Index maxIndex = 0;
+
+    void visitExpression(Expression* curr) {
+      // Note all scope names, and fix up all uses.
+      BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (name.is()) {
+          if (name.startsWith("label$")) {
+            auto str = name.toString();
+            str = str.substr(6);
+            Index index = atoi(str.c_str());
+            maxIndex = std::max(maxIndex, index);
+          }
+        }
+      });
+    }
+  } finder;
+  finder.walk(func->body);
+  labelIndex = finder.maxIndex;
+}
+
 TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   // We must ensure non-nullable locals validate. Later down we'll run
   // TypeUpdating::handleNonDefaultableLocals which will make them validate by
