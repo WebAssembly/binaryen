@@ -71,8 +71,8 @@ jobs:
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "tarball=$tarball" >> $GITHUB_ENV
+        echo "shasum=$shasum" >> $GITHUB_ENV    
 
     - name: archive-arm64
       id: archive-arm64
@@ -87,8 +87,8 @@ jobs:
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "tarball=$tarball" >> $GITHUB_ENV
+        echo "shasum=$shasum" >> $GITHUB_ENV    
       if: matrix.os == 'macos-latest'
 
     - name: upload tarball
@@ -161,8 +161,8 @@ jobs:
         mv install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "tarball=$tarball" >> $GITHUB_ENV
+        echo "shasum=$shasum" >> $GITHUB_ENV    
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
@@ -227,8 +227,8 @@ jobs:
         cp out/bin/wasm-opt* binaryen-$VERSION/
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "tarball=$tarball" >> $GITHUB_ENV
+        echo "shasum=$shasum" >> $GITHUB_ENV    
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
