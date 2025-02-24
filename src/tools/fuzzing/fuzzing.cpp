@@ -1413,9 +1413,8 @@ void TranslateToFuzzReader::processFunctions() {
       if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
         auto* func = wasm.getFunction(exp->value);
         if (!func->imported()) {
-          auto* call = builder.makeCall(pick(noParamsOrResultFuncs),
-                                        {},
-                                        Type::none);
+          auto* call =
+            builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);
           func->body = builder.makeSequence(call, func->body);
         }
       }
