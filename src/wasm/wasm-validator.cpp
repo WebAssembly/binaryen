@@ -3958,6 +3958,17 @@ static void validateExports(Module& module, ValidationInfo& info) {
     }
   }
   std::unordered_set<Name> exportNames;
+  for (auto& exp : module.typeExports) {
+    info.shouldBeTrue(module.features.hasTypeImports(),
+                      exp->name,
+                      "Exported type requires type-imports "
+                      "[--enable-type-imports]");
+    Name exportName = exp->name;
+    info.shouldBeFalse(exportNames.count(exportName) > 0,
+                       exportName,
+                       "module exports must be unique");
+    exportNames.insert(exportName);
+  }
   for (auto& exp : module.exports) {
     Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
@@ -4292,6 +4303,8 @@ static void validateModuleMaps(Module& module, ValidationInfo& info) {
   // Module maps should be up to date.
   validateModuleMap(
     module, info, module.exports, &Module::getExportOrNull, "Export");
+  validateModuleMap(
+    module, info, module.typeExports, &Module::getTypeExportOrNull, "Export");
   validateModuleMap(
     module, info, module.functions, &Module::getFunctionOrNull, "Function");
   validateModuleMap(

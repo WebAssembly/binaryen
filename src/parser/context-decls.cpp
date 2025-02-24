@@ -33,7 +33,7 @@ Result<> addExports(Lexer& in,
                     const std::vector<Name>& exports,
                     ExternalKind kind) {
   for (auto name : exports) {
-    if (wasm.getExportOrNull(name)) {
+    if (wasm.getTypeExportOrNull(name) || wasm.getExportOrNull(name)) {
       // TODO: Fix error location
       return in.err("repeated export name");
     }

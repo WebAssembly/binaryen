@@ -156,6 +156,7 @@ inline std::optional<Field> getField(HeapType type, Index index = 0) {
       return type.getArray().element;
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Import:
     case HeapTypeKind::Basic:
       break;
   }

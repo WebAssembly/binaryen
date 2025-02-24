@@ -190,6 +190,7 @@ size_t shapeHash(HeapType a);
 size_t shapeHash(const Struct& a);
 size_t shapeHash(Array a);
 size_t shapeHash(Signature a);
+size_t shapeHash(Import a);
 size_t shapeHash(Field a);
 size_t shapeHash(Type a);
 size_t shapeHash(const Tuple& a);
@@ -572,6 +573,8 @@ bool shapeEq(HeapType a, HeapType b) {
       return shapeEq(a.getArray(), b.getArray());
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Import:
+      return false;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
   }
@@ -595,6 +598,9 @@ size_t shapeHash(HeapType a) {
       return digest;
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Import:
+      hash_combine(digest, shapeHash(a.getImport()));
+      return digest;
     case HeapTypeKind::Basic:
       break;
   }
@@ -634,6 +640,8 @@ size_t shapeHash(Signature a) {
   hash_combine(digest, shapeHash(a.results));
   return digest;
 }
+
+size_t shapeHash(Import a) { return shapeHash(a.bound); }
 
 bool shapeEq(Field a, Field b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&

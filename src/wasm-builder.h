@@ -150,6 +150,14 @@ public:
     return export_;
   }
 
+  static std::unique_ptr<TypeExport> makeTypeExport(Name name,
+                                                    HeapType heaptype) {
+    auto export_ = std::make_unique<TypeExport>();
+    export_->name = name;
+    export_->heaptype = heaptype;
+    return export_;
+  }
+
   enum Mutability { Mutable, Immutable };
 
   static std::unique_ptr<Global>

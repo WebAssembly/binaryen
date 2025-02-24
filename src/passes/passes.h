@@ -168,6 +168,7 @@ Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripProducersPass();
 Pass* createStripTargetFeaturesPass();
+Pass* createStripTypeExportsPass();
 Pass* createSouperifyPass();
 Pass* createSouperifySingleUsePass();
 Pass* createSpillPointersPass();

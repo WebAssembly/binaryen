@@ -935,6 +935,10 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
 
+  // Type imports: name, positions of type and import names.
+  std::vector<std::tuple<Name, std::vector<Name>, ImportNames, Index>>
+    typeImports;
+
   // Positions of export definitions.
   std::vector<Index> exportDefs;
 
@@ -957,6 +961,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
+  bool hasTypeDefinition = false;
 
   Result<> checkImport(Index pos, ImportNames* import) {
     if (import) {
@@ -978,9 +983,10 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void setOpen() {}
   void setShared() {}
   Result<> addSubtype(HeapTypeT) { return Ok{}; }
-  void finishTypeDef(Name name, Index pos) {
+  void finishTypeDef(Name name, const std::vector<Name>& exports, Index pos) {
     // TODO: type annotations
     typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
+    hasTypeDefinition = true;
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
@@ -1092,7 +1098,25 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                   TypeUseT type,
                   Index pos);
 
+  Result<> addTypeImport(Name name,
+                         const std::vector<Name>& exports,
+                         ImportNames* import,
+                         Index pos,
+                         Index typePos) {
+    if (hasTypeDefinition) {
+      return in.err(pos, "type import after type definitions");
+    }
+    typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
+    typeImports.push_back({name, exports, *import, typePos});
+    return Ok{};
+  }
+
   Result<> addExport(Index pos, Ok, Name, ExternalKind) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
+
+  Result<> addTypeExport(Index pos, Ok, Name) {
     exportDefs.push_back(pos);
     return Ok{};
   }
@@ -1108,12 +1132,15 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   // Parse the names of types and fields as we go.
   std::vector<TypeNames> names;
 
+  // Keep track of type exports
+  std::vector<std::vector<Name>> typeExports;
+
   // The index of the subtype definition we are parsing.
   Index index = 0;
 
   ParseTypeDefsCtx(Lexer& in, TypeBuilder& builder, const IndexMap& typeIndices)
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
-      names(builder.size()) {}
+      names(builder.size()), typeExports(builder.size()) {}
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
     return builder.getTempRefType(ht, nullability);
@@ -1154,7 +1181,18 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     return Ok{};
   }
 
-  void finishTypeDef(Name name, Index pos) { names[index++].name = name; }
+  void finishTypeDef(Name name, const std::vector<Name>& exports, Index pos) {
+    typeExports[index] = exports;
+    names[index++].name = name;
+  }
+
+  Result<> addTypeImport(Name name,
+                         const std::vector<Name>& exports,
+                         ImportNames* import,
+                         Index pos,
+                         Index typePos) {
+    return Ok{};
+  }
 
   size_t getRecGroupStartIndex() { return index; }
 
@@ -1401,6 +1439,14 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
       return in.err(pos, "tag type must be a signature");
     }
     t->type = use.type;
+    return Ok{};
+  }
+
+  Result<> addTypeImport(Name name,
+                         const std::vector<Name>& exports,
+                         ImportNames* import,
+                         Index pos,
+                         Index typePos) {
     return Ok{};
   }
 };
@@ -1757,11 +1803,27 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
+  Result<> addTypeImport(Name,
+                         const std::vector<Name> exports,
+                         ImportNames* import,
+                         Index pos,
+                         Index typePos) {
+    return Ok{};
+  }
+
   Result<> addExport(Index pos, Name value, Name name, ExternalKind kind) {
-    if (wasm.getExportOrNull(name)) {
+    if (wasm.getTypeExportOrNull(name) || wasm.getExportOrNull(name)) {
       return in.err(pos, "duplicate export");
     }
     wasm.addExport(builder.makeExport(name, value, kind));
+    return Ok{};
+  }
+
+  Result<> addTypeExport(Index pos, HeapType heaptype, Name name) {
+    if (wasm.getTypeExportOrNull(name) || wasm.getTypeExportOrNull(name)) {
+      return in.err(pos, "duplicate export");
+    }
+    wasm.addTypeExport(builder.makeTypeExport(name, heaptype));
     return Ok{};
   }
 

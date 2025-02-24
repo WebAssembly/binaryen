@@ -516,6 +516,10 @@ void TranslateToFuzzReader::setupHeapTypes() {
         break;
       case HeapTypeKind::Cont:
         WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Import:
+        interestingHeapSubTypes[type.getImport().bound].push_back(type);
+        // TODO: also the supertypes of the bound?
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -3608,6 +3612,8 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     }
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Import:
+      return _makeunreachable();
     case HeapTypeKind::Basic:
       break;
   }

@@ -59,6 +59,7 @@ const char* SharedEverythingFeature = "shared-everything";
 const char* FP16Feature = "fp16";
 const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
+const char* TypeImportsFeature = "type-imports";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -1540,6 +1541,10 @@ Export* Module::getExport(Name name) {
   return getModuleElement(exportsMap, name, "getExport");
 }
 
+TypeExport* Module::getTypeExport(Name name) {
+  return getModuleElement(typeExportsMap, name, "getTypeExport");
+}
+
 Function* Module::getFunction(Name name) {
   return getModuleElement(functionsMap, name, "getFunction");
 }
@@ -1579,6 +1584,10 @@ typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
 
 Export* Module::getExportOrNull(Name name) {
   return getModuleElementOrNull(exportsMap, name);
+}
+
+TypeExport* Module::getTypeExportOrNull(Name name) {
+  return getModuleElementOrNull(typeExportsMap, name);
 }
 
 Function* Module::getFunctionOrNull(Name name) {
@@ -1692,6 +1701,10 @@ Export* Module::addExport(Export* curr) {
   return addModuleElement(exports, exportsMap, curr, "addExport");
 }
 
+TypeExport* Module::addTypeExport(TypeExport* curr) {
+  return addModuleElement(typeExports, typeExportsMap, curr, "addTypeExport");
+}
+
 Function* Module::addFunction(Function* curr) {
   return addModuleElement(functions, functionsMap, curr, "addFunction");
 }
@@ -1706,6 +1719,11 @@ Tag* Module::addTag(Tag* curr) {
 
 Export* Module::addExport(std::unique_ptr<Export>&& curr) {
   return addModuleElement(exports, exportsMap, std::move(curr), "addExport");
+}
+
+TypeExport* Module::addTypeExport(std::unique_ptr<TypeExport>&& curr) {
+  return addModuleElement(
+    typeExports, typeExportsMap, std::move(curr), "addTypeExport");
 }
 
 Function* Module::addFunction(std::unique_ptr<Function>&& curr) {
@@ -1756,6 +1774,9 @@ void removeModuleElement(Vector& v, Map& m, Name name) {
 void Module::removeExport(Name name) {
   removeModuleElement(exports, exportsMap, name);
 }
+void Module::removeTypeExport(Name name) {
+  removeModuleElement(typeExports, typeExportsMap, name);
+}
 void Module::removeFunction(Name name) {
   removeModuleElement(functions, functionsMap, name);
 }
@@ -1794,6 +1815,9 @@ void removeModuleElements(Vector& v,
 
 void Module::removeExports(std::function<bool(Export*)> pred) {
   removeModuleElements(exports, exportsMap, pred);
+}
+void Module::removeTypeExports(std::function<bool(TypeExport*)> pred) {
+  removeModuleElements(typeExports, typeExportsMap, pred);
 }
 void Module::removeFunctions(std::function<bool(Function*)> pred) {
   removeModuleElements(functions, functionsMap, pred);

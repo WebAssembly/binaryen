@@ -357,7 +357,7 @@ Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> comptype(Ctx&);
 template<typename Ctx> Result<> sharecomptype(Ctx&);
 template<typename Ctx> Result<> subtype(Ctx&);
-template<typename Ctx> MaybeResult<> typedef_(Ctx&);
+template<typename Ctx> MaybeResult<> typedef_(Ctx&, bool inRecGroup);
 template<typename Ctx> MaybeResult<> rectype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
 template<typename Ctx> MaybeResult<> import_(Ctx&);
@@ -431,15 +431,10 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   return ctx.in.err("expected abstract heap type");
 }
 
-// heaptype ::= x:typeidx                      => types[x]
-//            | t:absheaptype                  => unshared t
-//            | '(' 'shared' t:absheaptype ')' => shared t
-template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
-  if (auto t = maybeTypeidx(ctx)) {
-    CHECK_ERR(t);
-    return *t;
-  }
-
+// shareabsheaptype ::= t:absheaptype                  => unshared t
+//                    | '(' 'shared' t:absheaptype ')' => shared t
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> sharedabsheaptype(Ctx& ctx) {
   auto share = ctx.in.takeSExprStart("shared"sv) ? Shared : Unshared;
   auto t = absheaptype(ctx, share);
   CHECK_ERR(t);
@@ -447,6 +442,17 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
     return ctx.in.err("expected end of shared abstract heap type");
   }
   return *t;
+}
+
+// heaptype ::= x:typeidx                      => types[x]
+//            | t:sharedabsheaptype            => t
+template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+  if (auto t = maybeTypeidx(ctx)) {
+    CHECK_ERR(t);
+    return *t;
+  }
+
+  return sharedabsheaptype(ctx);
 }
 
 // reftype ::= 'funcref'   => funcref
@@ -865,6 +871,22 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
   }
 
   return ctx.makeGlobalType(mutability, *type);
+}
+
+// typetype ::= ('(' 'sub' t:absheaptype ')')? => heaptype t
+template<typename Ctx> Result<typename Ctx::HeapTypeT> typetype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("sub"sv)) {
+    return ctx.makeAnyType(Unshared);
+  }
+
+  auto type = sharedabsheaptype(ctx);
+  CHECK_ERR(type);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of typetype");
+  }
+
+  return type;
 }
 
 // arity ::= x:u32    (if x >=2 )
@@ -2958,8 +2980,10 @@ template<typename Ctx> Result<> subtype(Ctx& ctx) {
   return Ok{};
 }
 
-// typedef ::= '(' 'type' id? subtype ')'
-template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx) {
+// typedef ::= '(' 'type' id? ('(' 'export' name ')')* subtype ')'
+//           | '(' 'type' id? ('(' 'export' name ')')*
+//                 '(' 'import' mod:name nm:name ')' typetype ')'
+template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx, bool inRecGroup) {
   auto pos = ctx.in.getPos();
 
   if (!ctx.in.takeSExprStart("type"sv)) {
@@ -2971,14 +2995,30 @@ template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx) {
     name = *id;
   }
 
-  auto sub = subtype(ctx);
-  CHECK_ERR(sub);
+  auto exports = inlineExports(ctx.in);
+  CHECK_ERR(exports);
+
+  auto import = inlineImport(ctx.in);
+  CHECK_ERR(import);
+
+  if (import) {
+    if (inRecGroup) {
+      return ctx.in.err("type import not allowed in recursive group");
+    }
+    auto typePos = ctx.in.getPos();
+    auto type = typetype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTypeImport(name, *exports, import.getPtr(), pos, typePos));
+  } else {
+    auto sub = subtype(ctx);
+    CHECK_ERR(sub);
+    ctx.finishTypeDef(name, *exports, pos);
+  }
 
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of type definition");
   }
 
-  ctx.finishTypeDef(name, pos);
   return Ok{};
 }
 
@@ -2990,7 +3030,7 @@ template<typename Ctx> MaybeResult<> rectype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("rec"sv)) {
     size_t startIndex = ctx.getRecGroupStartIndex();
     size_t groupLen = 0;
-    while (auto type = typedef_(ctx)) {
+    while (auto type = typedef_(ctx, true)) {
       CHECK_ERR(type);
       ++groupLen;
     }
@@ -2998,7 +3038,7 @@ template<typename Ctx> MaybeResult<> rectype(Ctx& ctx) {
       return ctx.in.err("expected type definition or end of recursion group");
     }
     ctx.addRecGroup(startIndex, groupLen);
-  } else if (auto type = typedef_(ctx)) {
+  } else if (auto type = typedef_(ctx, false)) {
     CHECK_ERR(type);
   } else {
     return {};
@@ -3045,6 +3085,7 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
 //              | '(' 'memory' id? memtype ')'
 //              | '(' 'global' id? globaltype ')'
 //              | '(' 'tag' id? typeuse ')'
+//              | '(' 'type' id? typetype ')'
 template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
   auto pos = ctx.in.getPos();
 
@@ -3091,6 +3132,13 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     auto type = typeuse(ctx);
     CHECK_ERR(type);
     CHECK_ERR(ctx.addTag(name ? *name : Name{}, {}, &names, *type, pos));
+  } else if (ctx.in.takeSExprStart("type"sv)) {
+    auto name = ctx.in.takeID();
+    auto typePos = ctx.in.getPos();
+    auto type = typetype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(
+      ctx.addTypeImport(name ? *name : Name{}, {}, &names, pos, typePos));
   } else {
     return ctx.in.err("expected import description");
   }
@@ -3345,6 +3393,7 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
 //              | '(' 'memory' x:memidx ')'
 //              | '(' 'global' x:globalidx ')'
 //              | '(' 'tag' x:tagidx ')'
+//              | '(' 'type' x:typeidx ')'
 template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
   auto pos = ctx.in.getPos();
   if (!ctx.in.takeSExprStart("export"sv)) {
@@ -3376,6 +3425,10 @@ template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
     auto idx = tagidx(ctx);
     CHECK_ERR(idx);
     CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Tag));
+  } else if (ctx.in.takeSExprStart("type"sv)) {
+    auto idx = heaptype(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addTypeExport(pos, *idx, *name));
   } else {
     return ctx.in.err("expected export description");
   }

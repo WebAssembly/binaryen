@@ -94,8 +94,10 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/type-updating.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/topological_sort.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -133,6 +135,8 @@ enum ExportMergeMode {
   SkipExportConflicts,
 } exportMergeMode = ErrorOnExportConflicts;
 
+bool stripTypeExports = false;
+
 // Merging two modules is mostly straightforward: copy the functions etc. of the
 // first module into the second, with some renaming to avoid name collisions.
 // The only other thing we need to handle is the mapping of imports to exports,
@@ -163,6 +167,7 @@ struct ExportInfo {
   Name baseName;
 };
 std::unordered_map<Export*, ExportInfo> exportModuleMap;
+std::unordered_map<TypeExport*, ExportInfo> typeExportModuleMap;
 
 // A map of [kind of thing in the module] to [old name => new name] for things
 // of that kind. For example, the NameUpdates for functions is a map of old
@@ -353,6 +358,28 @@ void copyModuleContents(Module& input, Name inputName) {
     // Add the export.
     merged.addExport(std::move(copy));
   }
+  for (auto& curr : input.typeExports) {
+    auto copy = std::make_unique<TypeExport>(*curr);
+
+    // Note the module origin and original name of this export, for later fusing
+    // of imports to exports.
+    typeExportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
+
+    // An export may already exist with that name, so fix it up.
+    copy->name = Names::getValidExportName(merged, copy->name);
+    if (copy->name != curr->name) {
+      if (exportMergeMode == ErrorOnExportConflicts) {
+        Fatal() << "Export name conflict: " << curr->name << " (consider"
+                << " --rename-export-conflicts or"
+                << " --skip-export-conflicts)\n";
+      } else if (exportMergeMode == SkipExportConflicts) {
+        // Skip the addTypeExport below us.
+        continue;
+      }
+    }
+    // Add the export.
+    merged.addTypeExport(std::move(copy));
+  }
 
   // Start functions must be merged.
   if (input.start.is()) {
@@ -411,6 +438,187 @@ void checkLimit(bool& valid, const char* kind, T* export_, T* import) {
                 << ".\n";
     }
   }
+}
+
+// Sort heap types to put children (rewritten by map) before heap type
+std::vector<HeapType> sortHeapTypes(std::vector<HeapType>& types,
+                                    std::function<HeapType(HeapType)> map) {
+  // Collect the rec groups.
+  std::unordered_map<RecGroup, size_t> groupIndices;
+  std::vector<RecGroup> groups;
+  for (auto& type : types) {
+    auto group = type.getRecGroup();
+    if (groupIndices.insert({group, groups.size()}).second) {
+      groups.push_back(group);
+    }
+  }
+
+  // Collect the reverse dependencies of each group.
+  std::vector<std::unordered_set<size_t>> depSets(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    for (auto type : groups[i]) {
+      for (auto child : type.getReferencedHeapTypes()) {
+        child = map(child);
+        if (child.isBasic()) {
+          continue;
+        }
+        auto childGroup = child.getRecGroup();
+        if (childGroup == groups[i]) {
+          continue;
+        }
+        depSets[groupIndices.at(childGroup)].insert(i);
+      }
+    }
+  }
+  TopologicalSort::Graph deps;
+  deps.reserve(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    deps.emplace_back(depSets[i].begin(), depSets[i].end());
+  }
+
+  auto sorted = TopologicalSort::sort(deps);
+
+  std::vector<HeapType> sortedTypes;
+  sortedTypes.reserve(types.size());
+  for (auto groupIndex : sorted) {
+    for (auto type : groups[groupIndex]) {
+      sortedTypes.push_back(type);
+    }
+  }
+  return sortedTypes;
+}
+
+// Find pairs of matching type imports and type exports, and make uses
+// of the import refer to the exported item (which has been merged
+// into the module).
+void fuseTypeImportsAndTypeExports() {
+  if (merged.typeExports.size() == 0) {
+    return;
+  }
+
+  // First, build for each module a mapping from each type export
+  // name to the exported heap type.
+  using ModuleTypeExportMap =
+    std::unordered_map<Name, std::unordered_map<Name, HeapType>>;
+  ModuleTypeExportMap moduleTypeExportMap;
+  for (auto& ex : merged.typeExports) {
+    assert(typeExportModuleMap.count(ex.get()));
+    ExportInfo& exportInfo = typeExportModuleMap[ex.get()];
+    moduleTypeExportMap[exportInfo.moduleName][exportInfo.baseName] =
+      ex->heaptype;
+  }
+  // For each type import, see whether it has a corresponding
+  // export, check that the imported type is a subtype of the import
+  // bound. Record the corresponding mapping.
+  bool valid = true;
+  std::unordered_map<HeapType, HeapType> typeUpdates;
+  std::vector<HeapType> heapTypes = ModuleUtils::collectHeapTypes(merged);
+
+  for (HeapType& heapType : heapTypes) {
+    if (heapType.isImport()) {
+      Import import = heapType.getImport();
+      if (auto newType = moduleTypeExportMap[import.module].find(import.base);
+          newType != moduleTypeExportMap[import.module].end()) {
+        // We found something to fuse! Add it to the maps for renaming.
+        typeUpdates[heapType] = newType->second;
+        if (!HeapType::isSubType(newType->second, import.bound)) {
+          Importable importable;
+          importable.module = import.module;
+          importable.base = import.base;
+          importable.name = merged.typeNames[heapType].name;
+          reportTypeMismatch(valid, "type", &importable);
+          std::cerr << "type " << newType->second << " is not a subtype of "
+                    << import.bound << ".\n";
+        }
+      }
+    }
+  }
+  if (!valid) {
+    Fatal() << "import/export mismatches";
+  }
+  if (typeUpdates.size() == 0) {
+    return;
+  }
+
+  // Resolve chains of imports/exports
+  for (auto& [oldType, newType] : typeUpdates) {
+    // Iteratively lookup the updated type.
+    std::unordered_set<HeapType> visited;
+    auto type = newType;
+    while (1) {
+      auto iter = typeUpdates.find(type);
+      if (iter == typeUpdates.end()) {
+        break;
+      }
+      if (visited.count(type)) {
+        // This is a loop of imports, which means we cannot resolve a useful
+        // type. Report an error.
+        Fatal() << "wasm-merge: infinite loop of imports on " << oldType;
+      }
+      visited.insert(type);
+      type = iter->second;
+    }
+    newType = type;
+  }
+
+  // Map from a heap type to the heap type it stands for
+  auto initialMap = [&](HeapType type) -> HeapType {
+    if (type.isBasic()) {
+      return type;
+    }
+    auto iter = typeUpdates.find(type);
+    if (iter != typeUpdates.end()) {
+      return iter->second;
+    }
+    return type;
+  };
+
+  // Sort heap types so that children are before
+  heapTypes = sortHeapTypes(heapTypes, initialMap);
+  std::unordered_map<HeapType, size_t> typeIndices;
+  TypeBuilder typeBuilder(heapTypes.size());
+  for (size_t i = 0; i < heapTypes.size(); i++) {
+    typeIndices[heapTypes[i]] = i;
+  }
+
+  // Map from a heap type to the corresponding temporary type
+  auto map = [&](HeapType type) -> HeapType {
+    type = initialMap(type);
+    if (type.isBasic()) {
+      return type;
+    }
+    return typeBuilder[typeIndices[type]];
+  };
+
+  // Build new types
+  std::optional<RecGroup> lastGroup = std::nullopt;
+  for (size_t i = 0; i < heapTypes.size(); i++) {
+    HeapType heapType = heapTypes[i];
+    typeBuilder[i].copy(heapType, map);
+    auto currGroup = heapType.getRecGroup();
+    if (lastGroup != currGroup && currGroup.size() > 1) {
+      typeBuilder.createRecGroup(i, currGroup.size());
+      lastGroup = currGroup;
+    }
+  }
+  auto buildResults = typeBuilder.build();
+  auto& newTypes = *buildResults;
+
+  // Map old types to the new ones.
+  GlobalTypeRewriter::TypeMap oldToNewTypes;
+  for (HeapType heapType : heapTypes) {
+    HeapType type = heapType;
+    type = initialMap(type);
+    if (!type.isBasic()) {
+      type = newTypes[typeIndices[type]];
+    }
+    oldToNewTypes[heapType] = type;
+  }
+
+  // Replace types everywhere
+  GlobalTypeRewriter rewriter(merged);
+  rewriter.mapTypeNamesAndIndices(oldToNewTypes);
+  rewriter.mapTypes(oldToNewTypes);
 }
 
 // Find pairs of matching imports and exports, and make uses of the import refer
@@ -647,6 +855,13 @@ Input source maps can be specified by adding an -ism option right after the modu
          [&](Options* o, const std::string& argument) {
            exportMergeMode = SkipExportConflicts;
          })
+    .add(
+      "--strip-type-exports",
+      "-ste",
+      "Do not emit type exports",
+      WasmMergeOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { stripTypeExports = true; })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
@@ -720,6 +935,9 @@ Input source maps can be specified by adding an -ism option right after the modu
       for (auto& curr : merged.exports) {
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
+      for (auto& curr : merged.typeExports) {
+        typeExportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
+      }
     } else {
       // This is a later module: do a full merge.
       mergeInto(*currModule, inputFileName);
@@ -735,6 +953,7 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Fuse imports and exports now that everything is all together in the merged
   // module.
+  fuseTypeImportsAndTypeExports();
   fuseImportsAndExports();
 
   {
@@ -749,6 +968,12 @@ Input source maps can be specified by adding an -ism option right after the modu
     // optimized out (while if we didn't optimize it out then instantiating the
     // module would still be forced to provide something for that import).
     passRunner.add("remove-unused-module-elements");
+    if (stripTypeExports) {
+      // Remove type exports. Useful if we have composed together
+      // several modules using type imports and exports, but want to
+      // emit a module which does not requires this extension.
+      passRunner.add("strip-type-exports");
+    }
     passRunner.run();
   }
 

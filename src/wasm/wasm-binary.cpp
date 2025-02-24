@@ -236,13 +236,37 @@ void WasmBinaryWriter::writeTypes() {
   // Count the number of recursion groups, which is the number of elements in
   // the type section.
   size_t numGroups = 0;
+  size_t numImports = 0;
   {
     std::optional<RecGroup> lastGroup;
     for (auto type : indexedTypes.types) {
       auto currGroup = type.getRecGroup();
       numGroups += lastGroup != currGroup;
       lastGroup = currGroup;
+      numImports += type.isImport();
     }
+  }
+
+  if (numImports > 0) {
+    auto start = startSection(BinaryConsts::Section::Import);
+    o << U32LEB(numImports);
+    for (Index i = 0; i < indexedTypes.types.size(); ++i) {
+      auto type = indexedTypes.types[i];
+      if (type.isImport()) {
+        Import import = type.getImport();
+        writeInlineString(import.module.str);
+        writeInlineString(import.base.str);
+        o << U32LEB(int32_t(ExternalKind::Type));
+        o << uint8_t(0); // Reserved 'kind' field. Always 0.
+        writeHeapType(import.bound);
+      }
+    }
+    finishSection(start);
+  }
+
+  numGroups -= numImports;
+  if (numGroups == 0) {
+    return;
   }
 
   // As a temporary measure, detect which types have subtypes and always use
@@ -262,6 +286,10 @@ void WasmBinaryWriter::writeTypes() {
   std::optional<RecGroup> lastGroup = std::nullopt;
   for (Index i = 0; i < indexedTypes.types.size(); ++i) {
     auto type = indexedTypes.types[i];
+    if (type.isImport()) {
+      // Type imports have already been written
+      continue;
+    }
     // Check whether we need to start a new recursion group. Recursion groups of
     // size 1 are implicit, so only emit a group header for larger groups.
     auto currGroup = type.getRecGroup();
@@ -316,6 +344,8 @@ void WasmBinaryWriter::writeTypes() {
         o << uint8_t(BinaryConsts::EncodedType::Cont);
         writeHeapType(type.getContinuation().type);
         break;
+      case HeapTypeKind::Import:
+        WASM_UNREACHABLE("unexpected kind");
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -597,7 +627,12 @@ void WasmBinaryWriter::writeExports() {
     return;
   }
   auto start = startSection(BinaryConsts::Section::Export);
-  o << U32LEB(wasm->exports.size());
+  o << U32LEB(wasm->typeExports.size() + wasm->exports.size());
+  for (auto& curr : wasm->typeExports) {
+    writeInlineString(curr->name.str);
+    o << U32LEB(int32_t(ExternalKind::Type));
+    writeHeapType(curr->heaptype);
+  }
   for (auto& curr : wasm->exports) {
     writeInlineString(curr->name.str);
     o << U32LEB(int32_t(curr->kind));
@@ -1358,6 +1393,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::BulkMemoryOptFeature;
       case FeatureSet::CallIndirectOverlong:
         return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
+      case FeatureSet::TypeImports:
+        return BinaryConsts::CustomSections::TypeImportsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -1826,7 +1863,10 @@ void WasmBinaryReader::read() {
 
     // Note the section in the list of seen sections, as almost no sections can
     // appear more than once, and verify those that shouldn't do not.
+    // We can have a import section containing type imports before the
+    // type section.
     if (sectionCode != BinaryConsts::Section::Custom &&
+        sectionCode != BinaryConsts::Section::Import &&
         !seenSections.insert(sectionCode).second) {
       throwError("section seen more than once: " + std::to_string(sectionCode));
     }
@@ -2311,7 +2351,8 @@ void WasmBinaryReader::readMemories() {
 }
 
 void WasmBinaryReader::readTypes() {
-  TypeBuilder builder(getU32LEB());
+  int typeImportCount = typebuilder.size();
+  typebuilder.grow(getU32LEB());
 
   auto readHeapType = [&]() -> HeapType {
     int64_t htCode = getS64LEB(); // TODO: Actually s33
@@ -2324,10 +2365,10 @@ void WasmBinaryReader::readTypes() {
     if (getBasicHeapType(htCode, ht)) {
       return ht.getBasic(share);
     }
-    if (size_t(htCode) >= builder.size()) {
+    if (size_t(htCode) >= typebuilder.size()) {
       throwError("invalid type index: " + std::to_string(htCode));
     }
-    return builder.getTempHeapType(size_t(htCode));
+    return typebuilder.getTempHeapType(size_t(htCode));
   };
   auto makeType = [&](int32_t typeCode) {
     Type type;
@@ -2347,7 +2388,7 @@ void WasmBinaryReader::readTypes() {
           return Type(ht, nullability);
         }
 
-        return builder.getTempRefType(ht, nullability);
+        return typebuilder.getTempRefType(ht, nullability);
       }
       default:
         throwError("unexpected type index: " + std::to_string(typeCode));
@@ -2367,8 +2408,8 @@ void WasmBinaryReader::readTypes() {
     for (size_t j = 0; j < numResults; j++) {
       results.push_back(readType());
     }
-    return Signature(builder.getTempTupleType(params),
-                     builder.getTempTupleType(results));
+    return Signature(typebuilder.getTempTupleType(params),
+                     typebuilder.getTempTupleType(results));
   };
 
   auto readContinuationDef = [&]() {
@@ -2417,7 +2458,7 @@ void WasmBinaryReader::readTypes() {
     return Struct(std::move(fields));
   };
 
-  for (size_t i = 0; i < builder.size(); i++) {
+  for (size_t i = typeImportCount; i < typebuilder.size(); i++) {
     auto form = getInt8();
     if (form == BinaryConsts::EncodedType::Rec) {
       uint32_t groupSize = getU32LEB();
@@ -2427,15 +2468,15 @@ void WasmBinaryReader::readTypes() {
       }
       // The group counts as one element in the type section, so we have to
       // allocate space for the extra types.
-      builder.grow(groupSize - 1);
-      builder.createRecGroup(i, groupSize);
+      typebuilder.grow(groupSize - 1);
+      typebuilder.createRecGroup(i, groupSize);
       form = getInt8();
     }
     std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
         form == BinaryConsts::EncodedType::SubFinal) {
       if (form == BinaryConsts::EncodedType::Sub) {
-        builder[i].setOpen();
+        typebuilder[i].setOpen();
       }
       uint32_t supers = getU32LEB();
       if (supers > 0) {
@@ -2448,30 +2489,30 @@ void WasmBinaryReader::readTypes() {
       form = getInt8();
     }
     if (form == BinaryConsts::SharedDef) {
-      builder[i].setShared();
+      typebuilder[i].setShared();
       form = getInt8();
     }
     if (form == BinaryConsts::EncodedType::Func) {
-      builder[i] = readSignatureDef();
+      typebuilder[i] = readSignatureDef();
     } else if (form == BinaryConsts::EncodedType::Cont) {
-      builder[i] = readContinuationDef();
+      typebuilder[i] = readContinuationDef();
     } else if (form == BinaryConsts::EncodedType::Struct) {
-      builder[i] = readStructDef();
+      typebuilder[i] = readStructDef();
     } else if (form == BinaryConsts::EncodedType::Array) {
-      builder[i] = Array(readFieldDef());
+      typebuilder[i] = Array(readFieldDef());
     } else {
       throwError("Bad type form " + std::to_string(form));
     }
     if (superIndex) {
-      if (*superIndex > builder.size()) {
+      if (*superIndex > typebuilder.size()) {
         throwError("Out of bounds supertype index " +
                    std::to_string(*superIndex));
       }
-      builder[i].subTypeOf(builder[*superIndex]);
+      typebuilder[i].subTypeOf(typebuilder[*superIndex]);
     }
   }
 
-  auto result = builder.build();
+  auto result = typebuilder.build();
   if (auto* err = result.getError()) {
     Fatal() << "Invalid type: " << err->reason << " at index " << err->index;
   }
@@ -2713,6 +2754,26 @@ void WasmBinaryReader::readImports() {
         curr->module = module;
         curr->base = base;
         wasm.addTag(std::move(curr));
+        break;
+      }
+      case ExternalKind::Type: {
+        if (seenSections.count(BinaryConsts::Section::Type)) {
+          throwError("type import after type section");
+        }
+        getInt8();                    // Reserved 'kind' field
+        int64_t htCode = getS64LEB(); // TODO: Actually s33
+        auto share = Unshared;
+        if (htCode == BinaryConsts::EncodedType::Shared) {
+          share = Shared;
+          htCode = getS64LEB(); // TODO: Actually s33
+        }
+        HeapType ht;
+        if (!getBasicHeapType(htCode, ht)) {
+          throwError("expected an abstract heap type");
+        }
+        typebuilder.grow(1);
+        typebuilder[typebuilder.size() - 1] =
+          Import(module, base, ht.getBasic(share));
         break;
       }
       default: {
@@ -4337,34 +4398,44 @@ void WasmBinaryReader::readExports() {
   size_t num = getU32LEB();
   std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
-    auto curr = std::make_unique<Export>();
-    curr->name = getInlineString();
-    if (!names.emplace(curr->name).second) {
+    Name name = getInlineString();
+    if (!names.emplace(name).second) {
       throwError("duplicate export name");
     }
-    curr->kind = (ExternalKind)getU32LEB();
-    auto* ex = wasm.addExport(std::move(curr));
-    auto index = getU32LEB();
-    switch (ex->kind) {
-      case ExternalKind::Function:
-        ex->value = getFunctionName(index);
-        continue;
-      case ExternalKind::Table:
-        ex->value = getTableName(index);
-        continue;
-      case ExternalKind::Memory:
-        ex->value = getMemoryName(index);
-        continue;
-      case ExternalKind::Global:
-        ex->value = getGlobalName(index);
-        continue;
-      case ExternalKind::Tag:
-        ex->value = getTagName(index);
-        continue;
-      case ExternalKind::Invalid:
-        break;
+    ExternalKind kind = (ExternalKind)getU32LEB();
+    if (kind == ExternalKind::Type) {
+      auto curr = std::make_unique<TypeExport>();
+      curr->name = name;
+      auto* ex = wasm.addTypeExport(std::move(curr));
+      ex->heaptype = getHeapType();
+    } else {
+      auto curr = std::make_unique<Export>();
+      curr->name = name;
+      curr->kind = kind;
+      auto* ex = wasm.addExport(std::move(curr));
+      auto index = getU32LEB();
+      switch (ex->kind) {
+        case ExternalKind::Function:
+          ex->value = getFunctionName(index);
+          continue;
+        case ExternalKind::Table:
+          ex->value = getTableName(index);
+          continue;
+        case ExternalKind::Memory:
+          ex->value = getMemoryName(index);
+          continue;
+        case ExternalKind::Global:
+          ex->value = getGlobalName(index);
+          continue;
+        case ExternalKind::Tag:
+          ex->value = getTagName(index);
+          continue;
+        case ExternalKind::Type:
+        case ExternalKind::Invalid:
+          break;
+      }
+      throwError("invalid export kind");
     }
-    throwError("invalid export kind");
   }
 }
 
@@ -4930,6 +5001,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::SharedEverything;
     } else if (name == BinaryConsts::CustomSections::FP16Feature) {
       feature = FeatureSet::FP16;
+    } else if (name == BinaryConsts::CustomSections::TypeImportsFeature) {
+      feature = FeatureSet::TypeImports;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

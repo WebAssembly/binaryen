@@ -489,6 +489,9 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   for (auto& curr : wasm.elementSegments) {
     info.note(curr->type);
   }
+  for (auto& curr : wasm.typeExports) {
+    info.note(curr->heaptype);
+  }
 
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<TypeInfos, Immutable, InsertOrderedMap>
@@ -655,10 +658,14 @@ void classifyTypeVisibility(Module& wasm,
       case ExternalKind::Tag:
         notePublic(wasm.getTag(ex->value)->type);
         continue;
+      case ExternalKind::Type:
       case ExternalKind::Invalid:
         break;
     }
     WASM_UNREACHABLE("unexpected export kind");
+  }
+  for (auto& ex : wasm.typeExports) {
+    notePublic(ex->heaptype);
   }
 
   // Ignorable public types are public.
@@ -793,6 +800,11 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
+  std::vector<bool> isImport(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    isImport[i] = groups[i][0].isImport();
+  }
+
   // If we've preserved the input type order on the module, we have to respect
   // that first. Use the index of the first type from each group. In principle
   // we could try to do something more robust like take the minimum index of all
@@ -812,7 +824,11 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
-  auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+  auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) -> bool {
+    // Imports should be first
+    if (isImport[a] != isImport[b]) {
+      return isImport[a];
+    }
     auto indexA = groupTypeIndices[a];
     auto indexB = groupTypeIndices[b];
     // Groups with indices must be sorted before groups without indices to
