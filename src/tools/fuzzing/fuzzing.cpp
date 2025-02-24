@@ -1336,6 +1336,8 @@ void TranslateToFuzzReader::processFunctions() {
     }
   }
 
+  auto numInitialExports = wasm.exports.size();
+
   // Add invocations, which can help execute the code here even if the function
   // was not exported (or was exported but with a signature that traps
   // immediately, like receiving a non-nullable ref, that the fuzzer can't
@@ -1376,6 +1378,42 @@ void TranslateToFuzzReader::processFunctions() {
       // in the code we just generated, and any changes could break that.
       if (allowOOB) {
         moddable.push_back(func);
+      }
+    }
+  }
+
+  // Interpose on initial exports. When initial content contains exports, it can
+  // be useful to add new code that executes in them, rather than just adding
+  // new exports later. To some extent modifying the initially-exported function
+  // gives us that, but typically these are small changes, not calls to entirely
+  // new code.
+  //
+  // Interpose with a call before the old code. We do a call here so that we end
+  // up running a useful amount of new code (rather than just make(none) which
+  // would only emit something local in the current function, and which depends
+  // on its contents).
+  // TODO: We could also interpose after, either in functions without results,
+  //       or by saving the results to a temp local as we call.
+  //
+  // Specifically, we will call functions, for simplicity, with no params or
+  // results. Such functions exist in abundance in general, because the
+  // invocations we add look exactly that way. First, find all such functions,
+  // and then find places to interpose calls to them.
+  std::vector<Name> noParamsOrResultFuncs;
+  for (auto& func : wasm.functions) {
+    if (func->getParams() == Type::none && func->getResults() == Type::none) {
+      noParamsOrResultFuncs.push_back(func->name);
+    }
+  }
+  if (!noParamsOrResultFuncs.empty()) {
+    for (Index i = 0; i < numInitialExports; i++) {
+      auto& exp = wasm.exports[i];
+      if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
+        auto* func = wasm.getFunction(exp->value);
+        auto* call = builder.makeCall(pick(noParamsOrResultFuncs),
+                                      {},
+                                      Type::none);
+        func->body = builder.makeSequence(call, func->body);
       }
     }
   }
