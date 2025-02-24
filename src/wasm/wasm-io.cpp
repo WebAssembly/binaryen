@@ -34,8 +34,11 @@ namespace wasm {
 
 #define DEBUG_TYPE "writer"
 
-static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
-  if (auto parsed = WATParser::parseModule(wasm, input);
+static void readTextData(std::optional<std::string> filename,
+                         std::string& input,
+                         Module& wasm,
+                         IRProfile profile) {
+  if (auto parsed = WATParser::parseModule(wasm, input, filename);
       auto err = parsed.getErr()) {
     Fatal() << err->msg;
   }
@@ -44,7 +47,7 @@ static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
 void ModuleReader::readText(std::string filename, Module& wasm) {
   BYN_TRACE("reading text from " << filename << "\n");
   auto input(read_file<std::string>(filename, Flags::Text));
-  readTextData(input, wasm, profile);
+  readTextData(filename, input, wasm, profile);
 }
 
 void ModuleReader::readBinaryData(std::vector<char>& input,
@@ -114,7 +117,7 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
     std::ostringstream s;
     s.write(input.data(), input.size());
     std::string input_str = s.str();
-    readTextData(input_str, wasm, profile);
+    readTextData(std::nullopt, input_str, wasm, profile);
   }
 }
 

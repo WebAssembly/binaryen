@@ -61,11 +61,15 @@ struct Lexer {
 private:
   size_t pos = 0;
   std::vector<Annotation> annotations;
+  std::optional<std::string> file;
 
 public:
   std::string_view buffer;
 
-  Lexer(std::string_view buffer) : buffer(buffer) { setPos(0); }
+  Lexer(std::string_view buffer, std::optional<std::string> file = std::nullopt)
+    : file(file), buffer(buffer) {
+    setPos(0);
+  }
 
   size_t getPos() const { return pos; }
 
@@ -169,6 +173,9 @@ public:
 
   [[nodiscard]] Err err(size_t pos, std::string reason) {
     std::stringstream msg;
+    if (file) {
+      msg << *file << ":";
+    }
     msg << position(pos) << ": error: " << reason;
     return Err{msg.str()};
   }

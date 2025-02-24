@@ -26,7 +26,9 @@
 namespace wasm::WATParser {
 
 // Parse a single WAT module.
-Result<> parseModule(Module& wasm, std::string_view in);
+Result<> parseModule(Module& wasm,
+                     std::string_view in,
+                     std::optional<std::string> filename = std::nullopt);
 
 // Parse a single WAT module that may have other things after it, as in a wast
 // file.
