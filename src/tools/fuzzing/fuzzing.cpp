@@ -1386,7 +1386,9 @@ void TranslateToFuzzReader::processFunctions() {
   // be useful to add new code that executes in them, rather than just adding
   // new exports later. To some extent modifying the initially-exported function
   // gives us that, but typically these are small changes, not calls to entirely
-  // new code.
+  // new code (and this is especially important when preserveImportsAndExports,
+  // as in that mode we do not add new exports, so this interposing is our main
+  // chance to run new code using the existing exports).
   //
   // Interpose with a call before the old code. We do a call here so that we end
   // up running a useful amount of new code (rather than just make(none) which
