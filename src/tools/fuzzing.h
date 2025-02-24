@@ -228,10 +228,7 @@ private:
     // type => list of locals with that type
     std::unordered_map<Type, std::vector<Index>> typeLocals;
 
-    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
-      : parent(parent), func(func) {
-      parent.funcContext = this;
-    }
+    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func);
 
     ~FunctionCreationContext();
 
@@ -343,8 +340,14 @@ private:
   Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
-  // Function creation
+  // Function operations. The main processFunctions() loop will call addFunction
+  // as well as modFunction().
+  void processFunctions();
+  // Add a new function.
   Function* addFunction();
+  // Modify an existing function.
+  void modFunction(Function* func);
+
   void addHangLimitChecks(Function* func);
 
   // Recombination and mutation
