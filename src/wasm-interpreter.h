@@ -2273,6 +2273,20 @@ public:
 
     Literals contents;
     if (endVal > startVal) {
+      // Check that the slice is valid; since we can assume that we have a valid
+      // UTF-16, we only need to check that it did not split surrgate pairs.
+      auto firstChar = refValues[startVal].getInteger();
+      if (firstChar >= 0xDC00 && firstChar <= 0xDFFF) {
+        // The first char cannot be a low surrogate.
+        return Flow(NONCONSTANT_FLOW);
+      }
+
+      auto lastChar = refValues[endVal - 1].getInteger();
+      if (lastChar >= 0xD800 && lastChar <= 0xDBFF) {
+        // The last char cannot be a high surrogate.
+        return Flow(NONCONSTANT_FLOW);
+      }
+
       contents.reserve(endVal - startVal);
       for (size_t i = startVal; i < endVal; i++) {
         if (i < refValues.size()) {

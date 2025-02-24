@@ -26,6 +26,10 @@
 
  ;; CHECK:      (export "slice-unicode" (func $slice-unicode))
 
+ ;; CHECK:      (export "slice-invalid-unicode-end" (func $slice-invalid-unicode-end))
+
+ ;; CHECK:      (export "slice-invalid-unicode-begin" (func $slice-invalid-unicode-begin))
+
  ;; CHECK:      (func $eq-no (type $0) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
@@ -224,6 +228,39 @@
    (i32.const 6)
   )
  )
+
+ ;; CHECK:      (func $slice-invalid-unicode-end (type $2) (result (ref string))
+ ;; CHECK-NEXT:  (stringview_wtf16.slice
+ ;; CHECK-NEXT:   (string.const "a\f0\90\8d\86b")
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $slice-invalid-unicode-end (export "slice-invalid-unicode-end") (result (ref string))
+  (stringview_wtf16.slice
+   ;; a𐍆b
+   (string.const "a\f0\90\8d\86b")
+   (i32.const 0)
+   (i32.const 2)
+  )
+ )
+
+ ;; CHECK:      (func $slice-invalid-unicode-begin (type $2) (result (ref string))
+ ;; CHECK-NEXT:  (stringview_wtf16.slice
+ ;; CHECK-NEXT:   (string.const "a\f0\90\8d\86b")
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $slice-invalid-unicode-begin (export "slice-invalid-unicode-begin") (result (ref string))
+  (stringview_wtf16.slice
+   ;; a𐍆b
+   (string.const "a\f0\90\8d\86b")
+   (i32.const 2)
+   (i32.const 4)
+  )
+ )
+
 
  ;; CHECK:      (func $string.new-mutable (type $3) (result anyref)
  ;; CHECK-NEXT:  (string.new_wtf16_array
