@@ -33,9 +33,9 @@ will emit
 
 We now have a JS file without the wasm (which includes the magic comments
 mentioned before) and one binary wasm file for each wasm. We can now re-embed
-them, created a merged JS file with JS + wasm, using
+them, creating a merged JS file containing JS + wasm, using
 
-  embed_wamss.py OUTFILE.js OUTFILE.0.wasm OUTFILE.1.wasm MERGED.js
+  embed_wasms.py OUTFILE.js OUTFILE.0.wasm OUTFILE.1.wasm MERGED.js
 
 The first argument is the input JS, then the wasm files, then the last argument
 is the output JS.
