@@ -962,7 +962,7 @@ private:
     bool expectLowSurrogate = false;
     for (auto& v : value.getGCData()->values) {
       auto c = v.getInteger();
-      if ( c >= 0xDC00 && c <= 0xDFFF) {
+      if (c >= 0xDC00 && c <= 0xDFFF) {
         if (expectLowSurrogate) {
           expectLowSurrogate = false;
           continue;
