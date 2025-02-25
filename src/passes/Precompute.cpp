@@ -942,7 +942,7 @@ private:
     if (type.isFunction()) {
       return true;
     }
-    // We can emit a StringConst for a string constant if the string is a 
+    // We can emit a StringConst for a string constant if the string is a
     // UTF-16 string.
     if (type.isString()) {
       return isValidUTF16Literal(value);
