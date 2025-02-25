@@ -68,7 +68,7 @@ def replace_wasm(text):
     return f'new Uint8Array([{bytes}])'
 
 
-js = js.replace('undefined /* extracted wasm */', replace_wasm)
+js = re.sub(r'undefined [/][*] extracted wasm [*][/]', replace_wasm, js)
 
 # Write out the new JS.
 with open(out_js, 'w') as f:
