@@ -17,7 +17,7 @@
 Reverse script for extract_wasms.py: That one extracts wasm files from a
 JavaScript testcase (which has wasm files embedded as arrays of numbers), and
 this one re-embeds them back. To do so, we use the magic comments that the
-extractor uses, replacing each wasm array with
+extractor uses: it replaces each wasm array with
 
   'undefined /* extracted wasm */'
 
