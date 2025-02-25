@@ -144,6 +144,22 @@ TEST(InterpreterTest, DivF32) {
   EXPECT_EQ(results, expected);
 }
 
+TEST(InterpreterTest, SqrtF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(5.0))).getErr());
+  ASSERT_FALSE(builder.makeUnary(SqrtFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(2.2360679775))};
+
+  EXPECT_EQ(results, expected);
+}
+
 TEST(InterpreterTest, CeilF32) {
   Module wasm;
   IRBuilder builder(wasm);
