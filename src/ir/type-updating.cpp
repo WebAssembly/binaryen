@@ -150,8 +150,12 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
         typeBuilder[i] = newArray;
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        auto newCont = HeapType(typeBuilder[i]).getContinuation();
+        modifyContinuation(type, newCont);
+        typeBuilder[i] = newCont;
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
