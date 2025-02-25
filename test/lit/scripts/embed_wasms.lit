@@ -1,0 +1,28 @@
+;; Test extracting wasm files from JS.
+
+;; A proper wasm start sequence (\0asm), so we will extract it.
+;; RUN: echo "good1(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 0x01]));" > %t.js
+
+;; A difference in the second byte, so we won't.
+;; RUN: echo "bad1(new Uint8Array([0x00, 0xff, 0x73, 0x6D, 0x01]));" >> %t.js
+
+;; The last byte is unparseable as an integer, so we won't.
+;; RUN: echo "bad2(new Uint8Array([0x00, 0x61, 0x73, 0x6D, 6Dx0]));" >> %t.js
+
+;; This is not a Uint8Array, so we do nothing.
+;; RUN: echo "bad3(new Uint16Array([0x00, 0x61, 0x73, 0x6D, 0x01]));" >> %t.js
+
+;; Another proper one. Note the second number is in base 10, which works too,
+;; & there is various odd whitespace which we also ignore.
+;; RUN: echo "good2(new Uint8Array([0x00,97,   0x73, 0x6D,0x01]));" >> %t.js
+
+;; RUN: python %S/../../../scripts/clusterfuzz/extract_wasms.py %t.js %t.out
+;; RUN: cat %t.out.js | filecheck %s
+;;
+;; We extracted the good but not the bad.
+;; CHECK: good1(undefined /* extracted wasm */)
+;; CHECK: bad1(new Uint8Array
+;; CHECK: bad2(new Uint8Array
+;; CHECK: bad3(new Uint16Array
+;; CHECK: good2(undefined /* extracted wasm */)
+
