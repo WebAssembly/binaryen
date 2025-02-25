@@ -958,6 +958,9 @@ private:
     return true;
   }
 
+  // TODO: move this logic to src/support/string, and refactor to share code
+  // with wasm/literal.cpp string printing's conversion from a Literal to a raw
+  // string.
   bool isValidUTF16Literal(const Literal& value) {
     bool expectLowSurrogate = false;
     for (auto& v : value.getGCData()->values) {
