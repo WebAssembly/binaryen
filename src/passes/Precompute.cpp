@@ -960,21 +960,21 @@ private:
 
   bool isValidUTF16Literal(const Literal& value) {
     bool expectLowSurrogate = false;
-    for (auto v : value.getGCData()->values) {
+    for (auto& v : value.getGCData()->values) {
       auto c = v.getInteger();
       if ( c >= 0xDC00 && c <= 0xDFFF) {
         if (expectLowSurrogate) {
           expectLowSurrogate = false;
           continue;
         }
-        // We got a low surrogate but werent expecting one.
+        // We got a low surrogate but weren't expecting one.
         return false;
       }
       if (expectLowSurrogate) {
         // We are expecting a low surrogate but didn't get one.
         return false;
       }
-      if ( c >= 0xD800 && c <= 0xDBFF) {
+      if (c >= 0xD800 && c <= 0xDBFF) {
         expectLowSurrogate = true;
       }
     }
