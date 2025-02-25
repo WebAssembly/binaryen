@@ -100,7 +100,10 @@ unfuzzable = [
     'stack_switching_suspend.wast',
     'stack_switching_resume.wast',
     'stack_switching_resume_throw.wast',
-    'stack_switching_switch.wast'
+    'stack_switching_switch.wast',
+    # TODO: fuzzer support for type imports
+    'type-imports.wast',
+    'type-imports.wat'
 ]
 
 
