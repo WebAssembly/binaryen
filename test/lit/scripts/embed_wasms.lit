@@ -1,0 +1,25 @@
+;; Test embedding wasm files into JS.
+
+;; Wasm files replace undefined + magical comments, like these:
+;; RUN: echo "good1(undefined /* extracted wasm */);" > %t.js
+
+;; Slight changes mean we ignore the pattern.
+;; RUN: echo "bad(undefinedey /* random stuff */);" >> %t.js
+
+;; Add a second valid one.
+;; RUN: echo "good2(undefined /* extracted wasm */);" >> %t.js
+
+;; Generate two valid wasm files to embed.
+;; RUN: echo "(module)" > %t.1.wat
+;; RUN: echo "(module (func $foo))" > %t.2.wat
+
+;; RUN: wasm-as %t.1.wat -o %t.1.wasm
+;; RUN: wasm-as %t.2.wat -o %t.2.wasm
+
+;; RUN: python %S/../../../scripts/clusterfuzz/embed_wasms.py %t.js %t.1.wasm %t.2.wasm %t.out.js
+;; RUN: cat %t.out.js | filecheck %s
+;;
+;; CHECK: good1(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+;; CHECK: bad(undefinedey
+;; CHECK: good2(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 10, 4, 1, 2, 0, 11]));
+
