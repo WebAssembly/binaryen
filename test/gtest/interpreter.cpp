@@ -75,3 +75,135 @@ TEST(InterpreterTest, MulI32) {
 
   EXPECT_EQ(results, expected);
 }
+
+TEST(InterpreterTest, AddF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(0.0))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
+  ASSERT_FALSE(builder.makeBinary(AddFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(1.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, SubF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
+  ASSERT_FALSE(builder.makeBinary(SubFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(-1.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, MulF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
+  ASSERT_FALSE(builder.makeBinary(MulFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(3.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, DivF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(5.0))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
+  ASSERT_FALSE(builder.makeBinary(DivFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(2.5))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, CeilF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
+  ASSERT_FALSE(builder.makeUnary(CeilFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(2.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, FloorF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
+  ASSERT_FALSE(builder.makeUnary(FloorFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(1.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, TruncF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(2.017281))).getErr());
+  ASSERT_FALSE(builder.makeUnary(TruncFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(2.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, NearF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(2.5))).getErr());
+  ASSERT_FALSE(builder.makeUnary(NearestFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(float(2.0))};
+
+  EXPECT_EQ(results, expected);
+}
