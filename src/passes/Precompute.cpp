@@ -240,6 +240,38 @@ public:
     // string.encode_wtf16_array anyhow.)
     return Flow(NONCONSTANT_FLOW);
   }
+
+  Flow visitStringSliceWTF(StringSliceWTF* curr) {
+    auto flow = Super::visitStringSliceWTF(curr);
+    if (flow.breaking()) {
+      return flow;
+    }
+
+    auto refData = flow.getSingleValue().getGCData();
+    if (!refData) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    auto& refValues = refData->values;
+    if (refValues.size() == 0) {
+      return flow;
+    }
+
+    // Check that the slice is valid; since we can assume that we have a valid
+    // UTF-16, we only need to check that it did not split surrogate pairs.
+    auto firstChar = refValues[0].getInteger();
+    if (firstChar >= 0xDC00 && firstChar <= 0xDFFF) {
+      // The first char cannot be a low surrogate.
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    auto lastChar = refValues[refValues.size() - 1].getInteger();
+    if (lastChar >= 0xD800 && lastChar <= 0xDBFF) {
+      // The last char cannot be a high surrogate.
+      return Flow(NONCONSTANT_FLOW);
+    }
+    return flow;
+  }
 };
 
 struct Precompute
