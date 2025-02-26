@@ -284,7 +284,7 @@
   )
 )
 
-;; Test handling of uninhabitable types.
+;; Test pre-filtering.
 (module
   ;; CHECK:      (type $A (func))
   (type $A (func))
@@ -310,19 +310,29 @@
   ;; CHECK-NEXT: )
   (func $test (type $A)
     ;; This block is declared as having type $A. Two values appear to reach it:
-    ;; one from a br_if, and one from a br_on_non_null. The br_if sends a
-    ;; ref.func, while the br_on_non_null sends (ref nofunc), that is, it casts
-    ;; the null input it has to non-nullable, if it takes the branch. That value
-    ;; is of course uninhabitable, so we can ignore it. As a result, the only
-    ;; possible value is the ref.func, which we can apply.
+    ;; one from a br that sends a ref.func, and one from a br_on_non_null which
+    ;; sends a null with the type (ref nofunc) (in practice that branch is not
+    ;; taken, of course, but GUFA does see all branches; later optimizations
+    ;; would optimize the branch away).
+    ;;
+    ;; We see the ref.func first, so the block $block begins with that type.
+    ;; Then we see the null arrive. Immediately combining the null with a
+    ;; ref.func gives us a cone - the best shape we have that can allow both a
+    ;; null and a ref.func. We later filter the result to the block, which is
+    ;; non-nullable, making the cone-non-nullable too - but it is a cone now,
+    ;; and not the original ref.func, preventing us from applying the constant
+    ;; value of the ref.func in the output. Early filtering of the arriving
+    ;; content fixes this: the null is immediately filtered into nothing, since
+    ;; it is null and the location can only contain non-nullable contents.
     (drop
       (block $block (result (ref $A))
-        (br_on_non_null $block
-          (ref.null nofunc)
-        )
         (br $block
           (ref.func $test)
         )
+        (br_on_non_null $block
+          (ref.null nofunc)
+        )
+        (unreachable)
       )
     )
   )
