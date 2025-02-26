@@ -2423,7 +2423,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // combine 0 and 0x100 first and get "unknown integer"; only by filtering
   // 0x100 to 0 beforehand (since 0x100 & 0xff => 0) will we combine 0 and 0 and
   // not change anything, which is correct.
-  //
+  // TODO update
   // For efficiency reasons we aim to only filter once, depending on the type of
   // filtering. Most can be filtered a single time afterwards, while for data
   // locations, where the issue is packed integer fields, it's necessary to do
@@ -2451,8 +2451,26 @@ bool Flower::updateContents(LocationIndex locationIndex,
       std::cout << '\n';
 #endif
     }
-  }
 
+    // Pre-filtering is necessary in some situations, because our categories
+    // have limited precision, for example, we have cone types but not arbitrary
+    // shapes (say, including some children but not others, rather than all
+    // children and up to a specific depth). For example, if we have a ref.func
+    // literal already, and a ref.null arrives, then combining them leads to a
+    // cone of that function type that allows null. That is normally fine, but
+    // imagine that the location we are writing to is non-nullable. The
+    // filtering we do afterwards would make the cone non-nullable, but it would
+    // still be a cone, and not the literal ref.func we began with. If we filter
+    // the arriving contents first then the ref.null becomes None, and we change
+    // nothing.
+    //
+    // The outcome of this filtering does not affect wiether it is worth sending
+    // more later (we compute that at the end), so use a temp out var for that.
+    bool worthSendingMoreTemp = true;
+    filterExpressionContents(newContents, *exprLoc, worthSendingMoreTemp);
+  } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
+    filterGlobalContents(newContents, *globalLoc);
+  }
   contents.combine(newContents);
 
   if (contents.isNone()) {

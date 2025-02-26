@@ -284,3 +284,47 @@
   )
 )
 
+;; Test handling of uninhabitable types.
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block (result (ref $A))
+  ;; CHECK-NEXT:      (br_on_non_null $block
+  ;; CHECK-NEXT:       (ref.null nofunc)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $block
+  ;; CHECK-NEXT:       (ref.func $test)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (type $A)
+    ;; This block is declared as having type $A. Two values appear to reach it:
+    ;; one from a br_if, and one from a br_on_non_null. The br_if sends a
+    ;; ref.func, while the br_on_non_null sends (ref nofunc), that is, it casts
+    ;; the null input it has to non-nullable, if it takes the branch. That value
+    ;; is of course uninhabitable, so we can ignore it. As a result, the only
+    ;; possible value is the ref.func, which we can apply.
+    (drop
+      (block $block (result (ref $A))
+        (br_on_non_null $block
+          (ref.null nofunc)
+        )
+        (br $block
+          (ref.func $test)
+        )
+      )
+    )
+  )
+)
+
