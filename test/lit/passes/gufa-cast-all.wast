@@ -327,25 +327,26 @@
     ;; taken, of course, but GUFA does see all branches; later optimizations
     ;; would optimize the branch away).
     ;;
-    ;; We see the ref.func first, so the block $block begins with that type.
+    ;; We see the ref.func first, so the block $block begins with that content.
     ;; Then we see the null arrive. Immediately combining the null with a
-    ;; ref.func gives us a cone - the best shape we have that can allow both a
-    ;; null and a ref.func. We later filter the result to the block, which is
-    ;; non-nullable, making the cone-non-nullable too - but it is a cone now,
+    ;; ref.func would give a cone - the best shape we have that can allow both a
+    ;; null and a ref.func. If we later filter the result to the block, which is
+    ;; non-nullable, the cone becomes non-nullable too - but it is a cone now,
     ;; and not the original ref.func, preventing us from applying the constant
     ;; value of the ref.func in the output. Early filtering of the arriving
     ;; content fixes this: the null is immediately filtered into nothing, since
-    ;; it is null and the location can only contain non-nullable contents.
+    ;; it is null and the location can only contain non-nullable contents. As a
+    ;; result, we can optimize the block (and the br_if) to return a ref.func.
     (drop
       (block $block (result (ref $A))
-        (br_on_non_null $block
-          (ref.null nofunc)
-        )
         (drop
           (br_if $block
             (ref.func $test)
             (global.get $global)
           )
+        )
+        (br_on_non_null $block
+          (ref.null nofunc)
         )
         (unreachable)
       )
