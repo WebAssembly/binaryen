@@ -119,16 +119,19 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     // TODO: add support for all operations.
     switch (curr->op) {
       case AddInt32:
+      case AddInt64:
       case AddFloat32:
       case AddFloat64:
         push(lhs.add(rhs));
         return {};
       case SubInt32:
+      case SubInt64:
       case SubFloat32:
       case SubFloat64:
         push(lhs.sub(rhs));
         return {};
       case MulInt32:
+      case MulInt64:
       case MulFloat32:
       case MulFloat64:
         push(lhs.mul(rhs));
@@ -136,6 +139,28 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
       case DivFloat32:
       case DivFloat64:
         push(lhs.div(rhs));
+        return {};
+      case EqInt32:
+      case EqInt64:
+      case EqFloat32:
+      case EqFloat64:
+        push(lhs.eq(rhs));
+        return {};
+      case LtSInt32:
+      case LtSInt64:
+        push(lhs.ltS(rhs));
+        return {};
+      case LtUInt32:
+      case LtUInt64:
+        push(lhs.ltU(rhs));
+        return {};
+      case GtSInt32:
+      case GtSInt64:
+        push(lhs.gtS(rhs));
+        return {};
+      case GtUInt32:
+      case GtUInt64:
+        push(lhs.gtU(rhs));
         return {};
       case MinFloat32:
       case MinFloat64:

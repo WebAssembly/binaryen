@@ -77,6 +77,230 @@ TEST(InterpreterTest, MulI32) {
   EXPECT_EQ(results, expected);
 }
 
+TEST(InterpreterTest, EqI32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(EqInt32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, LtUI32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(LtUInt32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(1))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, GtUI32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(GtUInt32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+// sInt32
+TEST(InterpreterTest, LtSI32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(int32_t(-1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(int32_t(-2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(LtSInt32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(int32_t(0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, GtSI32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(int32_t(-3))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(int32_t(-4))).getErr());
+  ASSERT_FALSE(builder.makeBinary(GtSInt32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(int32_t(1))};
+
+  EXPECT_EQ(results, expected);
+}
+
+// uInt64
+TEST(InterpreterTest, AddI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(AddInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint64_t(3))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, SubI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(SubInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint64_t(-1))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, MulI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(MulInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint64_t(2))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, EqI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(EqInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, LtUI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(LtSInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(1))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, GtUI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(GtSInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+// sInt64
+TEST(InterpreterTest, LtSI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(int64_t(-1))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(int64_t(-2))).getErr());
+  ASSERT_FALSE(builder.makeBinary(LtSInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(int32_t(0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, GtSI64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(int64_t(-3))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(int64_t(-4))).getErr());
+  ASSERT_FALSE(builder.makeBinary(GtSInt64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(int32_t(1))};
+
+  EXPECT_EQ(results, expected);
+}
+
 // Float32
 TEST(InterpreterTest, AddF32) {
   Module wasm;
@@ -142,6 +366,23 @@ TEST(InterpreterTest, DivF32) {
 
   auto results = Interpreter{}.run(*expr);
   std::vector<Literal> expected{Literal(float(2.5))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, EqF32) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
+  ASSERT_FALSE(builder.makeBinary(EqFloat32).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
 }
@@ -291,6 +532,23 @@ TEST(InterpreterTest, DivF64) {
 
   auto results = Interpreter{}.run(*expr);
   std::vector<Literal> expected{Literal(double(2.5))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, EqF64) {
+  Module wasm;
+  IRBuilder builder(wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(double(1.0))).getErr());
+  ASSERT_FALSE(builder.makeConst(Literal(double(2.0))).getErr());
+  ASSERT_FALSE(builder.makeBinary(EqFloat64).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  auto results = Interpreter{}.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
 }
