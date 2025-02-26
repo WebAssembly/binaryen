@@ -296,22 +296,27 @@
 
   ;; CHECK:      (func $test (type $A)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref $A))
+  ;; CHECK-NEXT:   (block (result (ref $A))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $A))
+  ;; CHECK-NEXT:     (block $block (result (ref $A))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br_if $block
+  ;; CHECK-NEXT:       (block (result (ref $A))
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (br_if $block
+  ;; CHECK-NEXT:          (ref.func $test)
+  ;; CHECK-NEXT:          (global.get $global)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (ref.func $test)
-  ;; CHECK-NEXT:        (global.get $global)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (ref.func $test)
+  ;; CHECK-NEXT:      (br_on_non_null $block
+  ;; CHECK-NEXT:       (ref.null nofunc)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br_on_non_null $block
-  ;; CHECK-NEXT:     (ref.null nofunc)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.func $test)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
