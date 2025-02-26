@@ -2456,7 +2456,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
 #endif
     }
 
-    // The outcome of this filtering does not affect wether it is worth sending
+    // The outcome of this filtering does not affect whether it is worth sending
     // more later (we compute that at the end), so use a temp out var for that.
     bool worthSendingMoreTemp = true;
     filterExpressionContents(newContents, *exprLoc, worthSendingMoreTemp);
