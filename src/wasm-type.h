@@ -62,6 +62,7 @@ using Tuple = TypeList;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
+enum Exactness { Inexact, Exact };
 
 // HeapType name information used for printing.
 struct TypeNames {
@@ -314,10 +315,10 @@ public:
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType heapType, Nullability nullable)
-    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0)) {
-    assert(heapType.isBasic() ||
-           !(heapType.getID() & (TupleMask | NullMask | ExactMask)));
+  Type(HeapType heapType, Nullability nullable, Exactness exact = Inexact)
+    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
+           (exact == Exact ? ExactMask : 0)) {
+    assert(!(heapType.getID() & (TupleMask | NullMask | ExactMask)));
   }
 
   // Predicates
@@ -366,6 +367,8 @@ public:
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
   bool isNullable() const { return isRef() && (id & NullMask); }
   bool isNonNullable() const { return isRef() && !(id & NullMask); }
+  bool isExact() const { return isRef() && (id & ExactMask); }
+  bool isInexact() const { return isRef() && !(id & ExactMask); }
   HeapType getHeapType() const {
     assert(isRef());
     return HeapType(id & ~(NullMask | ExactMask));
@@ -389,6 +392,10 @@ public:
   // TODO: Allow this only for reference types.
   Nullability getNullability() const {
     return isNullable() ? Nullable : NonNullable;
+  }
+  Exactness getExactness() const {
+    assert(isRef());
+    return isExact() ? Exact : Inexact;
   }
 
 private:
@@ -755,7 +762,9 @@ struct TypeBuilder {
   // TypeBuilder's HeapTypes. For Ref types, the HeapType may be a temporary
   // HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
-  Type getTempRefType(HeapType heapType, Nullability nullable);
+  Type getTempRefType(HeapType heapType,
+                      Nullability nullable,
+                      Exactness exact = Inexact);
 
   // Declare the HeapType being built at index `i` to be an immediate subtype of
   // the given HeapType.
