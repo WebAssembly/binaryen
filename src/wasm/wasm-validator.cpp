@@ -3963,6 +3963,12 @@ static void validateExports(Module& module, ValidationInfo& info) {
                       exp->name,
                       "Exported type requires type-imports "
                       "[--enable-type-imports]");
+    auto feats = exp->heaptype.getFeatures();
+    if (!info.shouldBeTrue(feats <= module.features,
+                           exp->name,
+                           "Export type requires additional features")) {
+      info.getStream(nullptr) << getMissingFeaturesList(module, feats) << '\n';
+    }
     Name exportName = exp->name;
     info.shouldBeFalse(exportNames.count(exportName) > 0,
                        exportName,

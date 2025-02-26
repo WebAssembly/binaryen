@@ -60,6 +60,10 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-stack-switching',
                            ['--enable-gc', '--enable-reference-types', '--enable-exception-handling'])
 
+    def check_type_imports(self, module, error):
+        self.check_feature(module, error, '--enable-type-imports',
+                           ['--enable-reference-types'])
+
     def test_v128_signature(self):
         module = '''
         (module
@@ -329,6 +333,23 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         check_nop('--enable-call-indirect-overlong')
         check_nop('--disable-call-indirect-overlong')
 
+    def test_type_imports_export(self):
+        module = '''
+        (module
+         (export "foo" (type extern))
+        )
+        '''
+        self.check_type_imports(module, 'Exported type requires type-imports')
+
+    def test_type_imports_import(self):
+        module = '''
+        (module
+         (import "env" "foo" (type $foo (sub extern)))
+         (func $f (param (ref $foo)))
+        )
+        '''
+        self.check_type_imports(module, 'all used types should be allowed')
+
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_atomics(self):
@@ -451,4 +472,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-shared-everything',
             '--enable-fp16',
             '--enable-bulk-memory-opt',
+            '--enable-type-imports',
         ], p2.stdout.splitlines())
