@@ -90,18 +90,23 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     auto value = pop();
     switch (curr->op) {
       case SqrtFloat32:
+      case SqrtFloat64:
         push(value.sqrt());
         return {};
       case CeilFloat32:
+      case CeilFloat64:
         push(value.ceil());
         return {};
       case FloorFloat32:
+      case FloorFloat64:
         push(value.floor());
         return {};
       case TruncFloat32:
+      case TruncFloat64:
         push(value.trunc());
         return {};
       case NearestFloat32:
+      case NearestFloat64:
         push(value.nearbyint());
         return {};
       default:
@@ -115,23 +120,29 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     switch (curr->op) {
       case AddInt32:
       case AddFloat32:
+      case AddFloat64:
         push(lhs.add(rhs));
         return {};
       case SubInt32:
       case SubFloat32:
+      case SubFloat64:
         push(lhs.sub(rhs));
         return {};
       case MulInt32:
       case MulFloat32:
+      case MulFloat64:
         push(lhs.mul(rhs));
         return {};
       case DivFloat32:
+      case DivFloat64:
         push(lhs.div(rhs));
         return {};
       case MinFloat32:
+      case MinFloat64:
         push(lhs.min(rhs));
         return {};
       case MaxFloat32:
+      case MaxFloat64:
         push(lhs.max(rhs));
         return {};
       default:
