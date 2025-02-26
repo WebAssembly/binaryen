@@ -1189,21 +1189,12 @@ TEST_F(TypeTest, TestTypeRelations) {
       auto htA = a.getHeapType();                                              \
       auto htB = b.getHeapType();                                              \
                                                                                \
-      if (a == b) {                                                            \
-        EXPECT_EQ(htA.getTop(), htB.getTop());                                 \
-        EXPECT_EQ(htA.getBottom(), htB.getBottom());                           \
-      } else if (lub == b) {                                                   \
-        EXPECT_EQ(htA.getTop(), htB.getTop());                                 \
-        EXPECT_EQ(htA.getBottom(), htB.getBottom());                           \
-      } else if (lub == a) {                                                   \
-        EXPECT_EQ(htA.getTop(), htB.getTop());                                 \
-        EXPECT_EQ(htA.getBottom(), htB.getBottom());                           \
-      } else if (lub != Type::none) {                                          \
-        EXPECT_EQ(htA.getTop(), htB.getTop());                                 \
-        EXPECT_EQ(htA.getBottom(), htB.getBottom());                           \
-      } else {                                                                 \
+      if (lub == Type::none) {                                                 \
         EXPECT_NE(htA.getTop(), htB.getTop());                                 \
         EXPECT_NE(htA.getBottom(), htB.getBottom());                           \
+      } else {                                                                 \
+        EXPECT_EQ(htA.getTop(), htB.getTop());                                 \
+        EXPECT_EQ(htA.getBottom(), htB.getBottom());                           \
       }                                                                        \
     }                                                                          \
   }
