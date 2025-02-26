@@ -289,6 +289,9 @@
   ;; CHECK:      (type $A (func))
   (type $A (func))
 
+  ;; CHECK:      (import "a" "b" (global $global i32))
+  (import "a" "b" (global $global i32))
+
   ;; CHECK:      (elem declare func $test)
 
   ;; CHECK:      (func $test (type $A)
@@ -299,9 +302,18 @@
   ;; CHECK-NEXT:      (br_on_non_null $block
   ;; CHECK-NEXT:       (ref.null nofunc)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (br $block
-  ;; CHECK-NEXT:       (ref.func $test)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref $A))
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (br_if $block
+  ;; CHECK-NEXT:          (ref.func $test)
+  ;; CHECK-NEXT:          (global.get $global)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.func $test)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.func $test)
@@ -326,11 +338,14 @@
     ;; it is null and the location can only contain non-nullable contents.
     (drop
       (block $block (result (ref $A))
-        (br $block
-          (ref.func $test)
-        )
         (br_on_non_null $block
           (ref.null nofunc)
+        )
+        (drop
+          (br_if $block
+            (ref.func $test)
+            (global.get $global)
+          )
         )
         (unreachable)
       )
