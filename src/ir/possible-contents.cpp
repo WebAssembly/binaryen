@@ -2413,30 +2413,35 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto location = getLocation(locationIndex);
 
   // Handle special cases: Some locations can only contain certain contents, so
-  // filter accordingly. In principle we need to filter both before and after
-  // combining with existing content; filtering afterwards is obviously
-  // necessary as combining two things will create something larger than both,
-  // and our representation has limitations (e.g. two different ref types will
-  // result in a cone, potentially a very large one). Filtering beforehand is
-  // also necessary, in general: consider for example a location that contains
-  // an i8 which is sent a 0 and then 0x100. If we filter only after, then we'd
-  // combine 0 and 0x100 first and get "unknown integer"; only by filtering
-  // 0x100 to 0 beforehand (since 0x100 & 0xff => 0) will we combine 0 and 0 and
-  // not change anything, which is correct.
+  // filter accordingly. For example, if anyref arrives to a non-nullable
+  // location, we know it must be (ref any). As a result, each time we update
+  // the contents at a location we are both merging in the new contents, and
+  // filtering based on what we know of the location.
   //
-  // Another reason we must filter before is due to the limited precision of
-  // the PossibleContents forms. For example, we have cones but not arbitrary
-  // shapes (say, including some children but not others, rather than all
-  // children and up to a specific depth). As a result, if we start e.g. with a
-  // ref.func literal, and a ref.null arrives, then combining them leads to a
-  // cone of that function type that allows null. That is normally fine, but
-  // imagine that the location we are writing to is non-nullable. Filtering
-  // afterwards would make the cone non-nullable, but it would still be a cone,
-  // and not the literal ref.func we began with. Filtering before fixes that
-  // issue as the ref.null becomes None, so nothing new is added.
+  // The operation of merging in new content and also filtering is *not*
+  // commutative. Set intersection and union of course is, but the shapes we
+  // work with here are limited, e.g. we have cones which include all children
+  // up to a fixed depth (and not specific children or each with a different
+  // depth). For example, if we start e.g. with a ref.func literal, and a
+  // ref.null arrives, then merging results in a cone that allows null, as that
+  // is the best shape we have that includes both. If the location is non-
+  // nullable then the cone becomes non-nullable, so we ended up with something
+  // worse than the original ref.func literal. In contrast, if we filtered the
+  // new contents first, the null would vanish (as no null is possible in the
+  // non-nullable location), so that order ends up better.
+  //
+  // For those reasons we filter the new contents arriving and also the merged
+  // contents afterwards, to try to get the best results. This also avoids some
+  // nondeterminism hazards with different orders. TODO: This does not avoid
+  // them all, in principle, due to lack of commutativity. Using a deterministic
+  // order (like abstract interpretation) would fix that.
   if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
-    // As mentioned above, data locations can have packed reads, which require
-    // filtering.
+    // Filtering data contents is especially important to do before, and not
+    // necessary afterwards. For example, imagine a location that contains an
+    // i8 which is sent a 0 and then 0x100. If we filter only after, then we'd
+    // combine 0 and 0x100 first and get "unknown integer"; only by filtering
+    // 0x100 to 0 beforehand (since 0x100 & 0xff => 0) will we combine 0 and 0
+    // and not change anything, which is best.
     filterDataContents(newContents, *dataLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  pre-filtered data contents:\n";
@@ -2446,8 +2451,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     if (exprLoc->expr->is<StructGet>() || exprLoc->expr->is<ArrayGet>()) {
       // As mentioned above, data locations can have packed reads, which require
-      // filtering. Note that there is no need to filter atomic RMW operations
-      // here because they always do unsigned reads.
+      // filtering before. Note that there is no need to filter atomic RMW
+      // operations here because they always do unsigned reads.
       filterPackedDataReads(newContents, *exprLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  pre-filtered packed read contents:\n";
@@ -2456,11 +2461,14 @@ bool Flower::updateContents(LocationIndex locationIndex,
 #endif
     }
 
+    // Generic filtering. We do this both before and after.
+    //
     // The outcome of this filtering does not affect whether it is worth sending
     // more later (we compute that at the end), so use a temp out var for that.
     bool worthSendingMoreTemp = true;
     filterExpressionContents(newContents, *exprLoc, worthSendingMoreTemp);
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
+    // Generic filtering. We do this both before and after.
     filterGlobalContents(newContents, *globalLoc);
   }
 
