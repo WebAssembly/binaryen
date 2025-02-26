@@ -2418,18 +2418,25 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // necessary as combining two things will create something larger than both,
   // and our representation has limitations (e.g. two different ref types will
   // result in a cone, potentially a very large one). Filtering beforehand is
-  // necessary for the a more subtle reason: consider a location that contains
+  // also necessary, in general: consider for example a location that contains
   // an i8 which is sent a 0 and then 0x100. If we filter only after, then we'd
   // combine 0 and 0x100 first and get "unknown integer"; only by filtering
   // 0x100 to 0 beforehand (since 0x100 & 0xff => 0) will we combine 0 and 0 and
   // not change anything, which is correct.
-  // TODO update
-  // For efficiency reasons we aim to only filter once, depending on the type of
-  // filtering. Most can be filtered a single time afterwards, while for data
-  // locations, where the issue is packed integer fields, it's necessary to do
-  // it before as we've mentioned, and also sufficient (see details in
-  // filterDataContents).
+  //
+  // Another reason we must filter before is due to the limited precision of
+  // the PossibleContents forms. For example, we have cones but not arbitrary
+  // shapes (say, including some children but not others, rather than all
+  // children and up to a specific depth). As a result, if we start e.g. with a
+  // ref.func literal, and a ref.null arrives, then combining them leads to a
+  // cone of that function type that allows null. That is normally fine, but
+  // imagine that the location we are writing to is non-nullable. Filtering
+  // afterwards would make the cone non-nullable, but it would still be a cone,
+  // and not the literal ref.func we began with. Filtering before fixes that
+  // issue as the ref.null becomes None, so nothing new is added.
   if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    // As mentioned above, data locations can have packed reads, which require
+    // filtering.
     filterDataContents(newContents, *dataLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
     std::cout << "  pre-filtered data contents:\n";
@@ -2438,12 +2445,9 @@ bool Flower::updateContents(LocationIndex locationIndex,
 #endif
   } else if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     if (exprLoc->expr->is<StructGet>() || exprLoc->expr->is<ArrayGet>()) {
-      // Packed data reads must be filtered before the combine() operation, as
-      // we must only combine the filtered contents (e.g. if 0xff arrives which
-      // as a signed read is truly 0xffffffff then we cannot first combine the
-      // existing 0xffffffff with the new 0xff, as they are different, and the
-      // result will no longer be a constant). There is no need to filter atomic
-      // RMW operations here because they always do unsigned reads.
+      // As mentioned above, data locations can have packed reads, which require
+      // filtering. Note that there is no need to filter atomic RMW operations
+      // here because they always do unsigned reads.
       filterPackedDataReads(newContents, *exprLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
       std::cout << "  pre-filtered packed read contents:\n";
@@ -2452,25 +2456,15 @@ bool Flower::updateContents(LocationIndex locationIndex,
 #endif
     }
 
-    // Pre-filtering is necessary in some situations, because our categories
-    // have limited precision, for example, we have cone types but not arbitrary
-    // shapes (say, including some children but not others, rather than all
-    // children and up to a specific depth). For example, if we have a ref.func
-    // literal already, and a ref.null arrives, then combining them leads to a
-    // cone of that function type that allows null. That is normally fine, but
-    // imagine that the location we are writing to is non-nullable. The
-    // filtering we do afterwards would make the cone non-nullable, but it would
-    // still be a cone, and not the literal ref.func we began with. If we filter
-    // the arriving contents first then the ref.null becomes None, and we change
-    // nothing.
-    //
-    // The outcome of this filtering does not affect wiether it is worth sending
+    // The outcome of this filtering does not affect wether it is worth sending
     // more later (we compute that at the end), so use a temp out var for that.
     bool worthSendingMoreTemp = true;
     filterExpressionContents(newContents, *exprLoc, worthSendingMoreTemp);
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(newContents, *globalLoc);
   }
+
+  // After filtering newContents, combine it onto the existing contents.
   contents.combine(newContents);
 
   if (contents.isNone()) {
