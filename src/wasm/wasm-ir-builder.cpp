@@ -1974,6 +1974,9 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
     case BrOnCast:
     case BrOnCastFail:
       // Modeled as sending one value.
+      if (extraArity == 0) {
+        return Err{"br_on target does not expect a value"};
+      }
       extraArity -= 1;
       break;
   }
