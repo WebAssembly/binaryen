@@ -97,7 +97,6 @@
 #include "ir/type-updating.h"
 #include "support/colors.h"
 #include "support/file.h"
-#include "support/topological_sort.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
