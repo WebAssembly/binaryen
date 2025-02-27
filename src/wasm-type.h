@@ -800,6 +800,8 @@ struct TypeBuilder {
     InvalidFuncType,
     // A type import has an invalid bound.
     InvalidBoundType,
+    // Type import in recursive group
+    ImportInRecGroup,
     // A non-shared field of a shared heap type.
     InvalidUnsharedField,
   };

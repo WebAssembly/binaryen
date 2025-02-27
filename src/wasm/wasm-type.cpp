@@ -1441,6 +1441,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReason::InvalidBoundType:
       return os << "Type import has invalid bound type";
+    case TypeBuilder::ErrorReason::ImportInRecGroup:
+      return os << "Type import in recursive group";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
   }
@@ -2316,6 +2318,7 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
     case HeapTypeKind::Array:
       return typer.isSubType(sub.array, super.array);
     case HeapTypeKind::Import:
+      return false;
     case HeapTypeKind::Basic:
       break;
   }
@@ -2323,7 +2326,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 }
 
 std::optional<TypeBuilder::ErrorReason>
-validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
+validateType(HeapTypeInfo& info,
+             std::unordered_set<HeapType>& seenTypes,
+             bool inRecGroup) {
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
@@ -2338,6 +2343,14 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
   if (info.isContinuation()) {
     if (!info.continuation.type.isSignature()) {
       return TypeBuilder::ErrorReason::InvalidFuncType;
+    }
+  }
+  if (info.isImport()) {
+    if (!info.import.bound.isBasic()) {
+      return TypeBuilder::ErrorReason::InvalidBoundType;
+    }
+    if (inRecGroup) {
+      return TypeBuilder::ErrorReason::ImportInRecGroup;
     }
   }
   if (info.share == Shared) {
@@ -2365,9 +2378,8 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
         break;
       }
       case HeapTypeKind::Import:
-        if (!info.import.bound.isShared()) {
-          return TypeBuilder::ErrorReason::InvalidBoundType;
-        }
+        // The sharedness is inherited (see buildRecGroup below).
+        assert(info.import.bound.isShared());
         break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
@@ -2440,7 +2452,11 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
-    if (auto err = validateType(*info, seenTypes)) {
+    if (info->isImport()) {
+      // Sharedness is inherited from the bound
+      info->share = info->import.bound.getShared();
+    }
+    if (auto err = validateType(*info, seenTypes, typeInfos.size() > 1)) {
       return {TypeBuilder::Error{i, *err}};
     }
     seenTypes.insert(asHeapType(info));

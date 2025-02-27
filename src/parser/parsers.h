@@ -357,7 +357,7 @@ Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> comptype(Ctx&);
 template<typename Ctx> Result<> sharecomptype(Ctx&);
 template<typename Ctx> Result<> subtype(Ctx&);
-template<typename Ctx> MaybeResult<> typedef_(Ctx&, bool inRecGroup);
+template<typename Ctx> MaybeResult<> typedef_(Ctx&);
 template<typename Ctx> MaybeResult<> rectype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
 template<typename Ctx> MaybeResult<> import_(Ctx&);
@@ -2983,7 +2983,7 @@ template<typename Ctx> Result<> subtype(Ctx& ctx) {
 // typedef ::= '(' 'type' id? ('(' 'export' name ')')* subtype ')'
 //           | '(' 'type' id? ('(' 'export' name ')')*
 //                 '(' 'import' mod:name nm:name ')' typetype ')'
-template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx, bool inRecGroup) {
+template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx) {
   auto pos = ctx.in.getPos();
 
   if (!ctx.in.takeSExprStart("type"sv)) {
@@ -3002,9 +3002,6 @@ template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx, bool inRecGroup) {
   CHECK_ERR(import);
 
   if (import) {
-    if (inRecGroup) {
-      return ctx.in.err("type import not allowed in recursive group");
-    }
     auto typePos = ctx.in.getPos();
     auto type = typetype(ctx);
     CHECK_ERR(type);
@@ -3030,7 +3027,7 @@ template<typename Ctx> MaybeResult<> rectype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("rec"sv)) {
     size_t startIndex = ctx.getRecGroupStartIndex();
     size_t groupLen = 0;
-    while (auto type = typedef_(ctx, true)) {
+    while (auto type = typedef_(ctx)) {
       CHECK_ERR(type);
       ++groupLen;
     }
@@ -3038,7 +3035,7 @@ template<typename Ctx> MaybeResult<> rectype(Ctx& ctx) {
       return ctx.in.err("expected type definition or end of recursion group");
     }
     ctx.addRecGroup(startIndex, groupLen);
-  } else if (auto type = typedef_(ctx, false)) {
+  } else if (auto type = typedef_(ctx)) {
     CHECK_ERR(type);
   } else {
     return {};
