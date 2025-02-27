@@ -1,14 +1,17 @@
 ;; RUN: not wasm-opt %s -all 2>&1 | filecheck %s
 
-(module
-  (type $struct (struct (field (mut i32))))
+;; Check we error properly when a block has no value, but a br_on with a value
+;; targets it.
 
-  ;; CHECK: 8:5: error: struct.atomic.rmw memory orders must be identical
-  (func $cmpxchg (param (ref null $struct))
-    (struct.atomic.rmw.cmpxchg seqcst acqrel 0
-      (local.get 0)
-      (i32.const 1)
-      (i32.const 2)
+(module
+  ;; CHECK: 10:7: error: br_on target does not expect a value
+  (func $f
+    (block $foo
+      (br_on_cast $foo (ref eq) (ref eq)
+        (ref.i31
+          (i32.const 0)
+        )
+      )
     )
   )
 )
