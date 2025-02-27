@@ -140,6 +140,38 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
       case DivFloat64:
         push(lhs.div(rhs));
         return {};
+      case AndInt32:
+      case AndInt64:
+        push(lhs.and_(rhs));
+        return {};
+      case OrInt32:
+      case OrInt64:
+        push(lhs.or_(rhs));
+        return {};
+      case XorInt32:
+      case XorInt64:
+        push(lhs.xor_(rhs));
+        return {};
+      case ShlInt32:
+      case ShlInt64:
+        push(lhs.shl(rhs));
+        return {};
+      case ShrUInt32:
+      case ShrUInt64:
+        push(lhs.shrU(rhs));
+        return {};
+      case ShrSInt32:
+      case ShrSInt64:
+        push(lhs.shrS(rhs));
+        return {};
+      case RotLInt32:
+      case RotLInt64:
+        push(lhs.rotL(rhs));
+        return {};
+      case RotRInt32:
+      case RotRInt64:
+        push(lhs.rotR(rhs));
+        return {};
       case EqInt32:
       case EqInt64:
       case EqFloat32:
