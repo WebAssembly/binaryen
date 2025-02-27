@@ -1441,8 +1441,12 @@ void StackSwitch::finalize() {
   }
 
   assert(this->cont->type.isContinuation());
-  type =
+  Type params =
     this->cont->type.getHeapType().getContinuation().type.getSignature().params;
+  assert(params.size() > 0);
+  Type cont = params[params.size() - 1];
+  assert(cont.isContinuation());
+  type = cont.getHeapType().getContinuation().type.getSignature().params;
 }
 
 size_t Function::getNumParams() { return getParams().size(); }
