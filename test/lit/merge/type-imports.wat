@@ -21,29 +21,90 @@
   (import "second" "g" (func $g (param (ref $t2))))
 
   ;; Check that the function parameters are updated
-  (func (export "f") (param (ref $t1) (ref $t2) (ref $t3) (ref $t4))
+  ;; CHECK:      (type $t2 (array i8))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $r1 (struct (field (ref $r1)) (field (ref $r2)) (field (ref eq))))
+
+  ;; CHECK:       (type $r2 (struct (field (ref $r1)) (field (ref $r2)) (field (ref $t2))))
+
+  ;; CHECK:      (type $5 (func (param (ref eq) (ref $t2) (ref $t3) (ref $t4))))
+
+  ;; CHECK:      (type $6 (func (param (ref any)) (result (ref eq))))
+
+  ;; CHECK:      (type $7 (func (param (ref any)) (result (ref $t2))))
+
+  ;; CHECK:      (type $8 (func (param (ref any)) (result (ref $t3))))
+
+  ;; CHECK:      (type $9 (func (param (ref any)) (result (ref $t4))))
+
+  ;; CHECK:      (type $10 (func (param (ref eq)) (result (ref $r1))))
+
+  ;; CHECK:      (type $11 (func (param (ref $t2))))
+
+  ;; CHECK:      (export "t2" (type $t2))
+
+  ;; CHECK:      (export "t3" (type $t3))
+
+  ;; CHECK:      (export "f" (func $f))
+
+  ;; CHECK:      (export "g1" (func $g1))
+
+  ;; CHECK:      (export "g2" (func $g2))
+
+  ;; CHECK:      (export "g3" (func $g3))
+
+  ;; CHECK:      (export "g4" (func $g4))
+
+  ;; CHECK:      (export "h" (func $h))
+
+  ;; CHECK:      (export "g" (func $g_7))
+
+  ;; CHECK:      (func $f (type $5) (param $0 (ref eq)) (param $1 (ref $t2)) (param $2 (ref $t3)) (param $3 (ref $t4))
+  ;; CHECK-NEXT: )
+  (func $f (export "f") (param (ref $t1) (ref $t2) (ref $t3) (ref $t4))
   )
 
   ;; Check that types in instructions are also updated
-  (func (export "g1") (param $x (ref any)) (result (ref $t1))
+  ;; CHECK:      (func $g1 (type $6) (param $x (ref any)) (result (ref eq))
+  ;; CHECK-NEXT:  (ref.cast (ref eq)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $g1 (export "g1") (param $x (ref any)) (result (ref $t1))
    (ref.cast (ref $t1)
     (local.get $x)
    )
   )
 
-  (func (export "g2") (param $x (ref any)) (result (ref $t2))
+  ;; CHECK:      (func $g2 (type $7) (param $x (ref any)) (result (ref $t2))
+  ;; CHECK-NEXT:  (ref.cast (ref $t2)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $g2 (export "g2") (param $x (ref any)) (result (ref $t2))
    (ref.cast (ref $t2)
     (local.get $x)
    )
   )
 
-  (func (export "g3") (param $x (ref any)) (result (ref $t3))
+  ;; CHECK:      (func $g3 (type $8) (param $x (ref any)) (result (ref $t3))
+  ;; CHECK-NEXT:  (ref.cast (ref $t3)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $g3 (export "g3") (param $x (ref any)) (result (ref $t3))
    (ref.cast (ref $t3)
     (local.get $x)
    )
   )
 
-  (func (export "g4") (param $x (ref any)) (result (ref $t4))
+  ;; CHECK:      (func $g4 (type $9) (param $x (ref any)) (result (ref $t4))
+  ;; CHECK-NEXT:  (ref.cast (ref $t4)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $g4 (export "g4") (param $x (ref any)) (result (ref $t4))
    (ref.cast (ref $t4)
     (local.get $x)
    )
@@ -51,83 +112,18 @@
 
   ;; Check that recursive types are preserved
   (rec
-     ;; CHECK:      (type $t2 (array i8))
-
-     ;; CHECK:      (rec
-     ;; CHECK-NEXT:  (type $r1 (struct (field (ref $r1)) (field (ref $r2)) (field (ref eq))))
      (type $r1 (struct (field (ref $r1) (ref $r2) (ref $t1))))
-     ;; CHECK:       (type $r2 (struct (field (ref $r1)) (field (ref $r2)) (field (ref $t2))))
      (type $r2 (struct (field (ref $r1) (ref $r2) (ref $t2))))
   )
 
-  (func (export "h") (param $x (ref eq)) (result (ref $r1))
+  ;; CHECK:      (func $h (type $10) (param $x (ref eq)) (result (ref $r1))
+  ;; CHECK-NEXT:  (ref.cast (ref $r1)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $h (export "h") (param $x (ref eq)) (result (ref $r1))
      (ref.cast (ref $r1) (local.get $x)))
 )
-
-;; CHECK:      (type $5 (func (param (ref eq) (ref $t2) (ref $t3) (ref $t4))))
-
-;; CHECK:      (type $6 (func (param (ref any)) (result (ref eq))))
-
-;; CHECK:      (type $7 (func (param (ref any)) (result (ref $t2))))
-
-;; CHECK:      (type $8 (func (param (ref any)) (result (ref $t3))))
-
-;; CHECK:      (type $9 (func (param (ref any)) (result (ref $t4))))
-
-;; CHECK:      (type $10 (func (param (ref eq)) (result (ref $r1))))
-
-;; CHECK:      (type $11 (func (param (ref $t2))))
-
-;; CHECK:      (export "t2" (type $t2))
-
-;; CHECK:      (export "t3" (type $t3))
-
-;; CHECK:      (export "f" (func $0))
-
-;; CHECK:      (export "g1" (func $1))
-
-;; CHECK:      (export "g2" (func $2))
-
-;; CHECK:      (export "g3" (func $3))
-
-;; CHECK:      (export "g4" (func $4))
-
-;; CHECK:      (export "h" (func $5))
-
-;; CHECK:      (export "g" (func $g_7))
-
-;; CHECK:      (func $0 (type $5) (param $0 (ref eq)) (param $1 (ref $t2)) (param $2 (ref $t3)) (param $3 (ref $t4))
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $1 (type $6) (param $x (ref any)) (result (ref eq))
-;; CHECK-NEXT:  (ref.cast (ref eq)
-;; CHECK-NEXT:   (local.get $x)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $2 (type $7) (param $x (ref any)) (result (ref $t2))
-;; CHECK-NEXT:  (ref.cast (ref $t2)
-;; CHECK-NEXT:   (local.get $x)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $3 (type $8) (param $x (ref any)) (result (ref $t3))
-;; CHECK-NEXT:  (ref.cast (ref $t3)
-;; CHECK-NEXT:   (local.get $x)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $4 (type $9) (param $x (ref any)) (result (ref $t4))
-;; CHECK-NEXT:  (ref.cast (ref $t4)
-;; CHECK-NEXT:   (local.get $x)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $5 (type $10) (param $x (ref eq)) (result (ref $r1))
-;; CHECK-NEXT:  (ref.cast (ref $r1)
-;; CHECK-NEXT:   (local.get $x)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 
 ;; CHECK:      (func $g_7 (type $11) (param $0 (ref $t2))
 ;; CHECK-NEXT: )

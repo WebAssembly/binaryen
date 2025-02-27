@@ -19,7 +19,7 @@
  ;; CHECK:      (import "env" "t2" (type $t2 (sub any)))
  (import "env" "t2" (type $t2))
 
- ;; Alternative synyax with both import and export
+ ;; Alternative syntax with both import and export
  (type $t3 (export "t3") (import "env" "t3") (sub struct))
 
  ;; Use an imported type in a type
@@ -42,7 +42,26 @@
  (import "env" "g" (func $g (param (ref $t1)) (result (ref $t2))))
 
  ;; Cast and function call involving imported types
- (func (export "f1")
+ ;; CHECK:      (export "t3" (type $t3))
+
+ ;; CHECK:      (export "t5" (type $t5))
+
+ ;; CHECK:      (export "t2" (type $t2))
+
+ ;; CHECK:      (export "t4" (type $t4))
+
+ ;; CHECK:      (export "f1" (func $f1))
+
+ ;; CHECK:      (export "f2" (func $f2))
+
+ ;; CHECK:      (func $f1 (type $6) (param $x (ref eq)) (param $1 (ref $t2)) (param $2 (ref $t3)) (param $3 (ref $t4)) (result (ref $t2))
+ ;; CHECK-NEXT:  (call $g
+ ;; CHECK-NEXT:   (ref.cast (ref $t1)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $f1 (export "f1")
   (param $x (ref eq)) (param (ref $t2) (ref $t3) (ref $t4)) (result (ref $t2))
   (call $g
    (ref.cast (ref $t1)
@@ -52,41 +71,22 @@
  )
 
  ;; Check that the imported type is a subtype of its bound
- (func (export "f2") (param $x (ref $t3)) (result (ref struct))
+ ;; CHECK:      (func $f2 (type $7) (param $x (ref $t3)) (result (ref struct))
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ (func $f2 (export "f2") (param $x (ref $t3)) (result (ref struct))
   (local.get $x)
  )
 
  ;; Reexport an imported type
- ;; CHECK:      (export "t3" (type $t3))
-
- ;; CHECK:      (export "t5" (type $t5))
-
- ;; CHECK:      (export "t2" (type $t2))
  (export "t2" (type $t2))
 
  ;; Export a type defined in this module
- ;; CHECK:      (export "t4" (type $t4))
  (export "t4" (type $t4))
 
  ;; Export an abstract heap type
  (export "t6" (type extern))
 )
-;; CHECK:      (export "f1" (func $0))
-
-;; CHECK:      (export "f2" (func $1))
-
-;; CHECK:      (func $0 (type $6) (param $x (ref eq)) (param $1 (ref $t2)) (param $2 (ref $t3)) (param $3 (ref $t4)) (result (ref $t2))
-;; CHECK-NEXT:  (call $g
-;; CHECK-NEXT:   (ref.cast (ref $t1)
-;; CHECK-NEXT:    (local.get $x)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $1 (type $7) (param $x (ref $t3)) (result (ref struct))
-;; CHECK-NEXT:  (local.get $x)
-;; CHECK-NEXT: )
-
 ;; CHECK-BIN-NODEBUG:      (import "env" "t1" (type $0 (sub eq)))
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "t2" (type $1 (sub any)))
