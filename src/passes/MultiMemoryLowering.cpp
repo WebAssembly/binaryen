@@ -473,7 +473,7 @@ struct MultiMemoryLowering : public Pass {
     // Ensuring only the first memory is an exported memory
     for (auto& exp : wasm->exports) {
       if (exp->kind == ExternalKind::Memory &&
-          exp->value == getFirstMemory().name) {
+          exp->getInternalName() == getFirstMemory().name) {
         isExported = true;
       } else if (exp->kind == ExternalKind::Memory) {
         Fatal() << "MultiMemoryLowering: only the first memory can be exported";

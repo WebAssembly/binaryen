@@ -111,7 +111,7 @@ static void exportFunction(Module& wasm, Name name, bool must_export) {
     return; // Already exported
   }
   auto exp = new Export;
-  exp->name = exp->value = name;
+  exp->value = exp->name = name;
   exp->kind = ExternalKind::Function;
   wasm.addExport(exp);
 }

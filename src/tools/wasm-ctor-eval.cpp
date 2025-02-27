@@ -210,12 +210,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       if (it != linkedInstances.end()) {
         auto* inst = it->second.get();
         auto* globalExport = inst->wasm.getExportOrNull(global->base);
-        if (!globalExport) {
+        if (!globalExport || globalExport->kind != ExternalKind::Global) {
           throw FailToEvalException(std::string("importGlobals: ") +
                                     global->module.toString() + "." +
                                     global->base.toString());
         }
-        globals[global->name] = inst->globals[globalExport->value];
+        globals[global->name] = inst->globals[globalExport->getInternalName()];
       } else {
         throw FailToEvalException(std::string("importGlobals: ") +
                                   global->module.toString() + "." +
@@ -1295,10 +1295,10 @@ void evalCtors(Module& wasm,
         std::cout << "trying to eval " << ctor << '\n';
       }
       Export* ex = wasm.getExportOrNull(ctor);
-      if (!ex) {
+      if (!ex || ex->kind != ExternalKind::Function) {
         Fatal() << "export not found: " << ctor;
       }
-      auto funcName = ex->value;
+      auto funcName = ex->getInternalName();
       auto outcome = evalCtor(instance, interface, funcName, ctor);
       if (!outcome) {
         if (!quiet) {
@@ -1319,7 +1319,8 @@ void evalCtors(Module& wasm,
       } else {
         // We are keeping around the export, which should now refer to an
         // empty function since calling the export should do nothing.
-        auto* func = wasm.getFunction(exp->value);
+        assert(exp->kind == ExternalKind::Function);
+        auto* func = wasm.getFunction(exp->getInternalName());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
         auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
         if (func->getResults() == Type::none) {

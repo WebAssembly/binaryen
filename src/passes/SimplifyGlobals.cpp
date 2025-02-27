@@ -515,7 +515,7 @@ struct SimplifyGlobals : public Pass {
     }
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Global) {
-        map[ex->value].exported = true;
+        map[ex->getInternalName()].exported = true;
       }
     }
 

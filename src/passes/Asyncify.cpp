@@ -1668,7 +1668,7 @@ struct Asyncify : public Pass {
         for (auto& theExport : module->exports) {
           if (theExport->kind == ExternalKind::Memory &&
               theExport->name == asyncifyMemoryValue) {
-            asyncifyMemory = theExport->value;
+            asyncifyMemory = theExport->getInternalName();
             break;
           }
         }
@@ -1901,7 +1901,9 @@ struct ModAsyncify
   void doWalkFunction(Function* func) {
     // Find the asyncify state name.
     auto* unwind = this->getModule()->getExport(ASYNCIFY_STOP_UNWIND);
-    auto* unwindFunc = this->getModule()->getFunction(unwind->value);
+    assert(unwind->kind == ExternalKind::Function);
+    auto* unwindFunc =
+      this->getModule()->getFunction(unwind->getInternalName());
     FindAll<GlobalSet> sets(unwindFunc->body);
     assert(sets.list.size() == 1);
     asyncifyStateName = sets.list[0]->name;

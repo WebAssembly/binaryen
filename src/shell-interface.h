@@ -125,11 +125,11 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       auto inst = getImportInstance(import);
       auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
-      if (!exportedGlobal) {
+      if (!exportedGlobal || exportedGlobal->kind != ExternalKind::Global) {
         Fatal() << "importGlobals: unknown import: " << import->module.str
                 << "." << import->name.str;
       }
-      globals[import->name] = inst->globals[exportedGlobal->value];
+      globals[import->name] = inst->globals[exportedGlobal->getInternalName()];
     });
   }
 

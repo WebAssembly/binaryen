@@ -5925,7 +5925,7 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
   return ((Export*)export_)->name.str.data();
 }
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
-  return ((Export*)export_)->value.str.data();
+  return ((Export*)export_)->getInternalName().str.data();
 }
 
 //

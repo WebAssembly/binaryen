@@ -356,8 +356,10 @@ void ModuleSplitter::setupJSPI() {
   // secondary module export.
   // TODO: remove this when the new JSPI API is only supported.
   if (primary.getExportOrNull(LOAD_SECONDARY_MODULE)) {
+    assert(primary.getExport(LOAD_SECONDARY_MODULE)->kind ==
+           ExternalKind::Function);
     internalLoadSecondaryModule =
-      primary.getExport(LOAD_SECONDARY_MODULE)->value;
+      primary.getExport(LOAD_SECONDARY_MODULE)->getInternalName();
     // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
     // internally.
     primary.removeExport(LOAD_SECONDARY_MODULE);
@@ -471,7 +473,7 @@ ModuleSplitter::initExportedPrimaryFuncs(const Module& primary) {
   std::map<Name, Name> functionExportNames;
   for (auto& ex : primary.exports) {
     if (ex->kind == ExternalKind::Function) {
-      functionExportNames[ex->value] = ex->name;
+      functionExportNames[ex->getInternalName()] = ex->name;
     }
   }
   return functionExportNames;
@@ -527,10 +529,10 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !secondaryFuncs.count(ex->value)) {
+        !secondaryFuncs.count(ex->getInternalName())) {
       continue;
     }
-    Name secondaryFunc = ex->value;
+    Name secondaryFunc = ex->getInternalName();
     if (primary.getFunctionOrNull(secondaryFunc)) {
       // We've already created a thunk for this function
       continue;
@@ -820,7 +822,9 @@ void ModuleSplitter::shareImportableItems() {
   // Map internal names to (one of) their corresponding export names. Don't
   // consider functions because they have already been imported and exported as
   // necessary.
-  std::unordered_map<std::pair<ExternalKind, Name>, Name> exports;
+  std::unordered_map<std::pair<ExternalKind, std::variant<Name, HeapType>>,
+                     Name>
+    exports;
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function) {
       exports[std::make_pair(ex->kind, ex->value)] = ex->name;
