@@ -516,6 +516,14 @@ void TranslateToFuzzReader::setupHeapTypes() {
         break;
       case HeapTypeKind::Cont:
         WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Import: {
+        for (std::optional<HeapType> heaptype = type.getImport().bound;
+             heaptype;
+             heaptype = getSuperType(*heaptype)) {
+          interestingHeapSubTypes[*heaptype].push_back(type);
+        }
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -3649,6 +3657,9 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     }
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Import:
+      assert(funcContext);
+      return _makeunreachable();
     case HeapTypeKind::Basic:
       break;
   }

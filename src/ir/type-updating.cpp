@@ -152,6 +152,9 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
       }
       case HeapTypeKind::Cont:
         WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Import: {
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -301,6 +304,9 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   }
   for (auto& tag : wasm.tags) {
     tag->type = updater.getNew(tag->type);
+  }
+  for (auto& exp : wasm.typeExports) {
+    exp->heaptype = updater.getNew(exp->heaptype);
   }
 }
 

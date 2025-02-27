@@ -299,6 +299,17 @@ public:
   void apply() {
     // Remove the unused exports
     std::vector<Name> toRemove;
+    for (auto& exp : wasm.typeExports) {
+      auto name = exp->name;
+      auto dceName = exportToDCENode[name];
+      if (reached.find(dceName) == reached.end()) {
+        toRemove.push_back(name);
+      }
+    }
+    for (auto name : toRemove) {
+      wasm.removeTypeExport(name);
+    }
+    toRemove.clear();
     for (auto& exp : wasm.exports) {
       auto name = exp->name;
       auto dceName = exportToDCENode[name];

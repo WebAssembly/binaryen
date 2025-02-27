@@ -398,6 +398,7 @@ extern const char* SharedEverythingFeature;
 extern const char* FP16Feature;
 extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
+extern const char* TypeImportsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1449,6 +1450,7 @@ class WasmBinaryReader {
   size_t codeSectionLocation;
   std::unordered_set<uint8_t> seenSections;
 
+  TypeBuilder typebuilder;
   IRBuilder builder;
   SourceMapReader sourceMapReader;
 

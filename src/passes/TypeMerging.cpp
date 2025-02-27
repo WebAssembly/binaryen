@@ -181,6 +181,7 @@ struct TypeMerging : public Pass {
 bool shapeEq(HeapType a, HeapType b);
 bool shapeEq(const Struct& a, const Struct& b);
 bool shapeEq(Array a, Array b);
+bool shapeEq(TypeImport a, TypeImport b);
 bool shapeEq(Signature a, Signature b);
 bool shapeEq(Field a, Field b);
 bool shapeEq(Type a, Type b);
@@ -190,6 +191,7 @@ size_t shapeHash(HeapType a);
 size_t shapeHash(const Struct& a);
 size_t shapeHash(Array a);
 size_t shapeHash(Signature a);
+size_t shapeHash(TypeImport a);
 size_t shapeHash(Field a);
 size_t shapeHash(Type a);
 size_t shapeHash(const Tuple& a);
@@ -572,6 +574,8 @@ bool shapeEq(HeapType a, HeapType b) {
       return shapeEq(a.getArray(), b.getArray());
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Import:
+      return shapeEq(a.getImport(), b.getImport());
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
   }
@@ -595,6 +599,9 @@ size_t shapeHash(HeapType a) {
       return digest;
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Import:
+      hash_combine(digest, shapeHash(a.getImport()));
+      return digest;
     case HeapTypeKind::Basic:
       break;
   }
@@ -632,6 +639,17 @@ bool shapeEq(Signature a, Signature b) {
 size_t shapeHash(Signature a) {
   auto digest = shapeHash(a.params);
   hash_combine(digest, shapeHash(a.results));
+  return digest;
+}
+
+bool shapeEq(TypeImport a, TypeImport b) {
+  return a.module == b.module && a.base == b.base && shapeEq(a.bound, b.bound);
+}
+
+size_t shapeHash(TypeImport a) {
+  size_t digest = shapeHash(a.bound);
+  hash_combine(digest, wasm::hash(a.module));
+  hash_combine(digest, wasm::hash(a.base));
   return digest;
 }
 

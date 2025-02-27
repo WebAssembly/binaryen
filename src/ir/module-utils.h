@@ -492,6 +492,12 @@ struct IndexedHeapTypes {
   std::unordered_map<HeapType, Index> indices;
 };
 
+// Orders the types to be valid (after renaming by the map function)
+// and sorts the types by frequency of use to minimize code size.
+IndexedHeapTypes sortHeapTypes(Module& wasm,
+                               InsertOrderedMap<HeapType, HeapTypeInfo>& counts,
+                               std::function<HeapType(HeapType)> map);
+
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
 // type as well. Also orders the types to be valid and sorts the types by
 // frequency of use to minimize code size.

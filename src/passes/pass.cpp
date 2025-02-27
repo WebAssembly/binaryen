@@ -545,6 +545,9 @@ void PassRegistry::registerPasses() {
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
+  registerPass("strip-type-exports",
+               "strip the wasm type exports",
+               createStripTypeExportsPass);
   registerPass("translate-to-new-eh",
                "deprecated; same as translate-to-exnref",
                createTranslateToExnrefPass);

@@ -163,6 +163,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-type-imports                Enable type imports
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-type-imports               Disable type imports
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag

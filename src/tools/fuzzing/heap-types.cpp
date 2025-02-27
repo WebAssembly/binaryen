@@ -146,6 +146,7 @@ struct HeapTypeGeneratorImpl {
           case wasm::HeapTypeKind::Cont:
             WASM_UNREACHABLE("TODO: cont");
           case wasm::HeapTypeKind::Basic:
+          case wasm::HeapTypeKind::Import:
             WASM_UNREACHABLE("unexpected kind");
         }
       }
@@ -942,6 +943,8 @@ std::vector<HeapType> Inhabitator::build() {
       }
       case HeapTypeKind::Cont:
         WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Import:
+        WASM_UNREACHABLE("TODO: type imports");
       case HeapTypeKind::Basic:
         break;
     }
@@ -1032,6 +1035,8 @@ bool isUninhabitable(HeapType type,
   switch (type.getKind()) {
     case HeapTypeKind::Basic:
       return false;
+    case HeapTypeKind::Import:
+      return true;
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
       // Function types are always inhabitable.
@@ -1063,6 +1068,7 @@ bool isUninhabitable(HeapType type,
     case HeapTypeKind::Basic:
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Import:
       WASM_UNREACHABLE("unexpected kind");
   }
   visiting.erase(it);

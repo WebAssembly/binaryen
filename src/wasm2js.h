@@ -842,6 +842,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         break;
       }
       case ExternalKind::Tag:
+      case ExternalKind::Type:
       case ExternalKind::Invalid:
         Fatal() << "unsupported export type: " << export_->name << "\n";
     }

@@ -2235,6 +2235,7 @@ enum class ExternalKind {
   Memory = 2,
   Global = 3,
   Tag = 4,
+  Type = 5,
   Invalid = -1
 };
 
@@ -2260,6 +2261,14 @@ public:
   Name name;
   Name value; // internal name
   ExternalKind kind;
+};
+
+class TypeExport {
+public:
+  // exported name - note that this is the key, as the heap type is
+  // non-unique (can have multiple exports for a same heap type)
+  Name name;
+  HeapType heaptype; // exported type
 };
 
 class ElementSegment : public Named {
@@ -2376,6 +2385,7 @@ public:
   // wasm contents (generally you shouldn't access these from outside, except
   // maybe for iterating; use add*() and the get() functions)
   std::vector<std::unique_ptr<Export>> exports;
+  std::vector<std::unique_ptr<TypeExport>> typeExports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Tag>> tags;
@@ -2415,6 +2425,7 @@ private:
   // methods are not needed
   // exports map is by the *exported* name, which is unique
   std::unordered_map<Name, Export*> exportsMap;
+  std::unordered_map<Name, TypeExport*> typeExportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
   std::unordered_map<Name, Memory*> memoriesMap;
@@ -2427,6 +2438,7 @@ public:
   Module() = default;
 
   Export* getExport(Name name);
+  TypeExport* getTypeExport(Name name);
   Function* getFunction(Name name);
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
@@ -2436,6 +2448,7 @@ public:
   Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
+  TypeExport* getTypeExportOrNull(Name name);
   Table* getTableOrNull(Name name);
   Memory* getMemoryOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
@@ -2452,11 +2465,13 @@ public:
   Importable* getImportOrNull(ModuleItemKind kind, Name name);
 
   Export* addExport(Export* curr);
+  TypeExport* addTypeExport(TypeExport* curr);
   Function* addFunction(Function* curr);
   Global* addGlobal(Global* curr);
   Tag* addTag(Tag* curr);
 
   Export* addExport(std::unique_ptr<Export>&& curr);
+  TypeExport* addTypeExport(std::unique_ptr<TypeExport>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
@@ -2468,6 +2483,7 @@ public:
   void addStart(const Name& s);
 
   void removeExport(Name name);
+  void removeTypeExport(Name name);
   void removeFunction(Name name);
   void removeTable(Name name);
   void removeElementSegment(Name name);
@@ -2477,6 +2493,7 @@ public:
   void removeTag(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
+  void removeTypeExports(std::function<bool(TypeExport*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);

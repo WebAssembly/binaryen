@@ -88,6 +88,9 @@ private:
 
     if (minifyExports) {
       // Minify the exported names.
+      for (auto& curr : module->typeExports) {
+        process(curr->name);
+      }
       for (auto& curr : module->exports) {
         process(curr->name);
       }
