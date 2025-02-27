@@ -305,8 +305,10 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   for (auto& tag : wasm.tags) {
     tag->type = updater.getNew(tag->type);
   }
-  for (auto& exp : wasm.typeExports) {
-    exp->heaptype = updater.getNew(exp->heaptype);
+  for (auto& exp : wasm.exports) {
+    if (auto* heapType = exp->getHeapType()) {
+      *heapType = updater.getNew(*heapType);
+    }
   }
 }
 

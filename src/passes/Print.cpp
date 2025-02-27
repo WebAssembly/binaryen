@@ -431,7 +431,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Module-level visitors
   void handleSignature(Function* curr, bool printImplicitNames = false);
   void visitExport(Export* curr);
-  void visitTypeExport(TypeExport* curr);
   void emitImportHeader(Importable* curr);
   void visitGlobal(Global* curr);
   void emitGlobalType(Global* curr);
@@ -3085,21 +3084,17 @@ void PrintSExpression::visitExport(Export* curr) {
       o << "tag";
       break;
     case ExternalKind::Type:
+      o << "type";
+      break;
     case ExternalKind::Invalid:
       WASM_UNREACHABLE("invalid ExternalKind");
   }
   o << ' ';
-  // TODO: specific case for type exports
-  curr->getInternalName()->print(o) << "))";
-}
-
-void PrintSExpression::visitTypeExport(TypeExport* curr) {
-  o << '(';
-  printMedium(o, "export ");
-  std::stringstream escaped;
-  String::printEscaped(escaped, curr->name.str);
-  printText(o, escaped.str(), false) << " (type ";
-  printHeapType(curr->heaptype);
+  if (auto* name = curr->getInternalName()) {
+    name->print(o);
+  } else {
+    printHeapType(*curr->getHeapType());
+  }
   o << "))";
 }
 
@@ -3520,11 +3515,6 @@ void PrintSExpression::visitModule(Module* curr) {
     o << ')' << maybeNewLine;
   }
   ModuleUtils::iterDefinedTags(*curr, [&](Tag* tag) { visitTag(tag); });
-  for (auto& child : curr->typeExports) {
-    doIndent(o, indent);
-    visitTypeExport(child.get());
-    o << maybeNewLine;
-  }
   for (auto& child : curr->exports) {
     doIndent(o, indent);
     visitExport(child.get());

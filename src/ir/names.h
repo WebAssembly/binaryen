@@ -70,10 +70,8 @@ inline Name getValidName(Name root,
 inline Name getValidExportName(Module& module, Name root) {
   return getValidName(
     root,
-    [&](Name test) {
-      return !module.getTypeExportOrNull(test) && !module.getExportOrNull(test);
-    },
-    module.typeExports.size() + module.exports.size());
+    [&](Name test) { return !module.getExportOrNull(test); },
+    module.exports.size());
 }
 inline Name getValidGlobalName(Module& module, Name root) {
   return getValidName(

@@ -46,7 +46,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
 
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
-  ReturnType visitTypeExport(TypeExport* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
   ReturnType visitTable(Table* curr) { return ReturnType(); }
@@ -208,9 +207,6 @@ struct Walker : public VisitorType {
     SubType* self = static_cast<SubType*>(this);
     for (auto& curr : module->exports) {
       self->visitExport(curr.get());
-    }
-    for (auto& curr : module->typeExports) {
-      self->visitTypeExport(curr.get());
     }
     for (auto& curr : module->globals) {
       if (curr->imported()) {

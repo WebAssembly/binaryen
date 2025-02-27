@@ -59,13 +59,12 @@ Result<> parseTypeDefs(
   }
   for (size_t i = 0; i < types.size(); ++i) {
     for (Name& name : ctx.typeExports[i]) {
-      if (decls.wasm.getTypeExportOrNull(name) ||
-          decls.wasm.getExportOrNull(name)) {
+      if (decls.wasm.getExportOrNull(name)) {
         // TODO: Fix error location
         return ctx.in.err("repeated export name");
       }
-      decls.wasm.addTypeExport(
-        Builder(decls.wasm).makeTypeExport(name, types[i]));
+      decls.wasm.addExport(
+        Builder(decls.wasm).makeExport(name, types[i], ExternalKind::Type));
     }
   }
   return Ok{};

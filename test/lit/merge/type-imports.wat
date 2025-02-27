@@ -42,10 +42,6 @@
 
   ;; CHECK:      (type $11 (func (param (ref $t2))))
 
-  ;; CHECK:      (export "t2" (type $t2))
-
-  ;; CHECK:      (export "t3" (type $t3))
-
   ;; CHECK:      (export "f" (func $f))
 
   ;; CHECK:      (export "g1" (func $g1))
@@ -59,6 +55,10 @@
   ;; CHECK:      (export "h" (func $h))
 
   ;; CHECK:      (export "g" (func $g_7))
+
+  ;; CHECK:      (export "t2" (type $t2))
+
+  ;; CHECK:      (export "t3" (type $t3))
 
   ;; CHECK:      (func $f (type $5) (param $0 (ref eq)) (param $1 (ref $t2)) (param $2 (ref $t3)) (param $3 (ref $t4))
   ;; CHECK-NEXT: )

@@ -2717,6 +2717,10 @@ BINARYEN_API BinaryenExportRef BinaryenAddGlobalExport(
 BINARYEN_API BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
                                                     const char* internalName,
                                                     const char* externalName);
+// Adds a type export to the module.
+BINARYEN_API BinaryenExportRef BinaryenAddTypeExport(BinaryenModuleRef module,
+                                                     BinaryenHeapType type,
+                                                     const char* externalName);
 // Gets an export reference by external name. Returns NULL if the export does
 // not exist.
 BINARYEN_API BinaryenExportRef BinaryenGetExport(BinaryenModuleRef module,
@@ -2729,26 +2733,6 @@ BINARYEN_API BinaryenIndex BinaryenGetNumExports(BinaryenModuleRef module);
 // Gets the export at the specified index.
 BINARYEN_API BinaryenExportRef
 BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenIndex index);
-
-// Type exports
-
-BINARYEN_REF(TypeExport);
-
-// Adds a type export to the module.
-BINARYEN_API BinaryenTypeExportRef BinaryenAddTypeExport(
-  BinaryenModuleRef module, BinaryenHeapType type, const char* externalName);
-// Gets a type export reference by external name. Returns NULL if the export
-// does not exist.
-BINARYEN_API BinaryenTypeExportRef
-BinaryenGetTypeExport(BinaryenModuleRef module, const char* externalName);
-// Removes a type export by external name.
-BINARYEN_API void BinaryenRemoveTypeExport(BinaryenModuleRef module,
-                                           const char* externalName);
-// Gets the number of type exports in the module.
-BINARYEN_API BinaryenIndex BinaryenGetNumTypeExports(BinaryenModuleRef module);
-// Gets the type export at the specified index.
-BINARYEN_API BinaryenTypeExportRef
-BinaryenGetTypeExportByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // Globals
 
@@ -3339,17 +3323,9 @@ BinaryenExportGetKind(BinaryenExportRef export_);
 BINARYEN_API const char* BinaryenExportGetName(BinaryenExportRef export_);
 // Gets the internal name of the specified export.
 BINARYEN_API const char* BinaryenExportGetValue(BinaryenExportRef export_);
-
-//
-// ========== Type Export Operations ==========
-//
-
-// Gets the external name of the specified export.
-BINARYEN_API const char*
-BinaryenTypeExportGetName(BinaryenTypeExportRef export_);
-// Gets the internal name of the specified export.
+// Gets the heap type of the specified type export.
 BINARYEN_API BinaryenHeapType
-BinaryenTypeExportGetHeapType(BinaryenTypeExportRef export_);
+BinaryenTypeExportGetHeapType(BinaryenExportRef export_);
 
 //
 // ========= Custom sections =========

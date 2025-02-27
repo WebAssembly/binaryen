@@ -627,12 +627,7 @@ void WasmBinaryWriter::writeExports() {
     return;
   }
   auto start = startSection(BinaryConsts::Section::Export);
-  o << U32LEB(wasm->typeExports.size() + wasm->exports.size());
-  for (auto& curr : wasm->typeExports) {
-    writeInlineString(curr->name.str);
-    o << U32LEB(int32_t(ExternalKind::Type));
-    writeHeapType(curr->heaptype);
-  }
+  o << U32LEB(wasm->exports.size());
   for (auto& curr : wasm->exports) {
     writeInlineString(curr->name.str);
     o << U32LEB(int32_t(curr->kind));
@@ -651,6 +646,9 @@ void WasmBinaryWriter::writeExports() {
         break;
       case ExternalKind::Tag:
         o << U32LEB(getTagIndex(*curr->getInternalName()));
+        break;
+     case ExternalKind::Type:
+        writeHeapType(*curr->getHeapType());
         break;
       default:
         WASM_UNREACHABLE("unexpected extern kind");
@@ -4459,35 +4457,30 @@ void WasmBinaryReader::readExports() {
       throwError("duplicate export name");
     }
     ExternalKind kind = (ExternalKind)getU32LEB();
-    if (kind == ExternalKind::Type) {
-      auto curr = std::make_unique<TypeExport>();
-      curr->name = name;
-      auto* ex = wasm.addTypeExport(std::move(curr));
-      ex->heaptype = getHeapType();
-    } else {
-      std::variant<Name, HeapType> value;
-      switch (kind) {
-        case ExternalKind::Function:
-          value = getFunctionName(getU32LEB());
-          break;
-        case ExternalKind::Table:
-          value = getTableName(getU32LEB());
-          break;
-        case ExternalKind::Memory:
-          value = getMemoryName(getU32LEB());
-          break;
-        case ExternalKind::Global:
-          value = getGlobalName(getU32LEB());
-          break;
-        case ExternalKind::Tag:
-          value = getTagName(getU32LEB());
-          break;
-        case ExternalKind::Type:
-        case ExternalKind::Invalid:
-          throwError("invalid export kind");
-      }
-      wasm.addExport(new Export(name, kind, value));
+    std::variant<Name, HeapType> value;
+    switch (kind) {
+    case ExternalKind::Function:
+      value = getFunctionName(getU32LEB());
+      break;
+    case ExternalKind::Table:
+      value = getTableName(getU32LEB());
+      break;
+    case ExternalKind::Memory:
+      value = getMemoryName(getU32LEB());
+      break;
+    case ExternalKind::Global:
+      value = getGlobalName(getU32LEB());
+      break;
+    case ExternalKind::Tag:
+      value = getTagName(getU32LEB());
+      break;
+    case ExternalKind::Type:
+      value = getHeapType();
+      break;
+    case ExternalKind::Invalid:
+      throwError("invalid export kind");
     }
+    wasm.addExport(new Export(name, kind, value));
   }
 }
 

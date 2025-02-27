@@ -489,8 +489,10 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   for (auto& curr : wasm.elementSegments) {
     info.note(curr->type);
   }
-  for (auto& curr : wasm.typeExports) {
-    info.note(curr->heaptype);
+  for (auto& curr : wasm.exports) {
+    if (auto* heapType = curr->getHeapType()) {
+      info.note(*heapType);
+    }
   }
 
   // Collect info from functions in parallel.
@@ -659,13 +661,12 @@ void classifyTypeVisibility(Module& wasm,
         notePublic(wasm.getTag(*ex->getInternalName())->type);
         continue;
       case ExternalKind::Type:
+        notePublic(*ex->getHeapType());
+        continue;
       case ExternalKind::Invalid:
         break;
     }
     WASM_UNREACHABLE("unexpected export kind");
-  }
-  for (auto& ex : wasm.typeExports) {
-    notePublic(ex->heaptype);
   }
 
   // Ignorable public types are public.

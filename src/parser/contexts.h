@@ -1820,7 +1820,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<> addExport(Index pos, Name value, Name name, ExternalKind kind) {
-    if (wasm.getTypeExportOrNull(name) || wasm.getExportOrNull(name)) {
+    if (wasm.getExportOrNull(name)) {
       return in.err(pos, "duplicate export");
     }
     wasm.addExport(builder.makeExport(name, value, kind));
@@ -1828,10 +1828,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<> addTypeExport(Index pos, HeapType heaptype, Name name) {
-    if (wasm.getTypeExportOrNull(name) || wasm.getTypeExportOrNull(name)) {
+    if (wasm.getExportOrNull(name)) {
       return in.err(pos, "duplicate export");
     }
-    wasm.addTypeExport(builder.makeTypeExport(name, heaptype));
+    wasm.addExport(builder.makeExport(name, heaptype, ExternalKind::Type));
     return Ok{};
   }
 

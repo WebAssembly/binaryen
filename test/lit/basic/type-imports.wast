@@ -42,6 +42,10 @@
  (import "env" "g" (func $g (param (ref $t1)) (result (ref $t2))))
 
  ;; Cast and function call involving imported types
+ ;; CHECK:      (export "f1" (func $f1))
+
+ ;; CHECK:      (export "f2" (func $f2))
+
  ;; CHECK:      (export "t3" (type $t3))
 
  ;; CHECK:      (export "t5" (type $t5))
@@ -49,10 +53,6 @@
  ;; CHECK:      (export "t2" (type $t2))
 
  ;; CHECK:      (export "t4" (type $t4))
-
- ;; CHECK:      (export "f1" (func $f1))
-
- ;; CHECK:      (export "f2" (func $f2))
 
  ;; CHECK:      (func $f1 (type $6) (param $x (ref eq)) (param $1 (ref $t2)) (param $2 (ref $t3)) (param $3 (ref $t4)) (result (ref $t2))
  ;; CHECK-NEXT:  (call $g
@@ -105,6 +105,10 @@
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "g" (func $fimport$0 (type $5) (param (ref $0)) (result (ref $1))))
 
+;; CHECK-BIN-NODEBUG:      (export "f1" (func $0))
+
+;; CHECK-BIN-NODEBUG:      (export "f2" (func $1))
+
 ;; CHECK-BIN-NODEBUG:      (export "t3" (type $2))
 
 ;; CHECK-BIN-NODEBUG:      (export "t5" (type $4))
@@ -112,10 +116,6 @@
 ;; CHECK-BIN-NODEBUG:      (export "t2" (type $1))
 
 ;; CHECK-BIN-NODEBUG:      (export "t4" (type $3))
-
-;; CHECK-BIN-NODEBUG:      (export "f1" (func $0))
-
-;; CHECK-BIN-NODEBUG:      (export "f2" (func $1))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $6) (param $0 (ref eq)) (param $1 (ref $1)) (param $2 (ref $2)) (param $3 (ref $3)) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $fimport$0

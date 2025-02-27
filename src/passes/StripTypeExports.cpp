@@ -22,7 +22,8 @@ struct StripTypeExports : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
-    module->removeTypeExports([&](TypeExport* curr) { return true; });
+    module->removeExports(
+      [&](Export* curr) { return curr->kind == ExternalKind::Type; });
   }
 };
 

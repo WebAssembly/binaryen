@@ -4019,23 +4019,6 @@ static void validateExports(Module& module, ValidationInfo& info) {
     }
   }
   std::unordered_set<Name> exportNames;
-  for (auto& exp : module.typeExports) {
-    info.shouldBeTrue(module.features.hasTypeImports(),
-                      exp->name,
-                      "Exported type requires type-imports "
-                      "[--enable-type-imports]");
-    auto feats = exp->heaptype.getFeatures();
-    if (!info.shouldBeTrue(feats <= module.features,
-                           exp->name,
-                           "Export type requires additional features")) {
-      info.getStream(nullptr) << getMissingFeaturesList(module, feats) << '\n';
-    }
-    Name exportName = exp->name;
-    info.shouldBeFalse(exportNames.count(exportName) > 0,
-                       exportName,
-                       "module exports must be unique");
-    exportNames.insert(exportName);
-  }
   for (auto& exp : module.exports) {
     if (exp->kind == ExternalKind::Function) {
       Name name = *exp->getInternalName();
@@ -4061,6 +4044,18 @@ static void validateExports(Module& module, ValidationInfo& info) {
       Name name = *exp->getInternalName();
       info.shouldBeTrue(
         module.getTagOrNull(name), name, "module tag exports must be found");
+    } else if (exp->kind == ExternalKind::Type) {
+      info.shouldBeTrue(module.features.hasTypeImports(),
+                        exp->name,
+                        "Exported type requires type-imports "
+                        "[--enable-type-imports]");
+      auto feats = exp->getHeapType()->getFeatures();
+      if (!info.shouldBeTrue(feats <= module.features,
+                             exp->name,
+                             "Export type requires additional features")) {
+        info.getStream(nullptr)
+          << getMissingFeaturesList(module, feats) << '\n';
+      }
     } else {
       WASM_UNREACHABLE("invalid ExternalKind");
     }
@@ -4374,8 +4369,6 @@ static void validateModuleMaps(Module& module, ValidationInfo& info) {
   // Module maps should be up to date.
   validateModuleMap(
     module, info, module.exports, &Module::getExportOrNull, "Export");
-  validateModuleMap(
-    module, info, module.typeExports, &Module::getTypeExportOrNull, "Export");
   validateModuleMap(
     module, info, module.functions, &Module::getFunctionOrNull, "Function");
   validateModuleMap(

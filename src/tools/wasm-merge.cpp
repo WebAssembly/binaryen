@@ -166,7 +166,6 @@ struct ExportInfo {
   Name baseName;
 };
 std::unordered_map<Export*, ExportInfo> exportModuleMap;
-std::unordered_map<TypeExport*, ExportInfo> typeExportModuleMap;
 
 // A map of [kind of thing in the module] to [old name => new name] for things
 // of that kind. For example, the NameUpdates for functions is a map of old
@@ -360,28 +359,6 @@ void copyModuleContents(Module& input, Name inputName) {
     // Add the export.
     merged.addExport(std::move(copy));
   }
-  for (auto& curr : input.typeExports) {
-    auto copy = std::make_unique<TypeExport>(*curr);
-
-    // Note the module origin and original name of this export, for later fusing
-    // of imports to exports.
-    typeExportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
-
-    // An export may already exist with that name, so fix it up.
-    copy->name = Names::getValidExportName(merged, copy->name);
-    if (copy->name != curr->name) {
-      if (exportMergeMode == ErrorOnExportConflicts) {
-        Fatal() << "Export name conflict: " << curr->name << " (consider"
-                << " --rename-export-conflicts or"
-                << " --skip-export-conflicts)\n";
-      } else if (exportMergeMode == SkipExportConflicts) {
-        // Skip the addTypeExport below us.
-        continue;
-      }
-    }
-    // Add the export.
-    merged.addTypeExport(std::move(copy));
-  }
 
   // Start functions must be merged.
   if (input.start.is()) {
@@ -446,20 +423,21 @@ void checkLimit(bool& valid, const char* kind, T* export_, T* import) {
 // of the import refer to the exported item (which has been merged
 // into the module).
 void fuseTypeImportsAndTypeExports() {
-  if (merged.typeExports.size() == 0) {
-    return;
-  }
-
   // First, build for each module a mapping from each type export
   // name to the exported heap type.
   using ModuleTypeExportMap =
     std::unordered_map<Name, std::unordered_map<Name, HeapType>>;
   ModuleTypeExportMap moduleTypeExportMap;
-  for (auto& ex : merged.typeExports) {
-    assert(typeExportModuleMap.count(ex.get()));
-    ExportInfo& exportInfo = typeExportModuleMap[ex.get()];
-    moduleTypeExportMap[exportInfo.moduleName][exportInfo.baseName] =
-      ex->heaptype;
+  for (auto& ex : merged.exports) {
+    if (ex->kind == ExternalKind::Type) {
+      assert(exportModuleMap.count(ex.get()));
+      ExportInfo& exportInfo = exportModuleMap[ex.get()];
+      moduleTypeExportMap[exportInfo.moduleName][exportInfo.baseName] =
+        *ex->getHeapType();
+    }
+  }
+  if (moduleTypeExportMap.size() == 0) {
+    return;
   }
 
   auto heapTypeInfo = ModuleUtils::collectHeapTypeInfo(merged);
@@ -890,9 +868,6 @@ Input source maps can be specified by adding an -ism option right after the modu
       // The only other operation we need to do is note the exports for later.
       for (auto& curr : merged.exports) {
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
-      }
-      for (auto& curr : merged.typeExports) {
-        typeExportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
     } else {
       // This is a later module: do a full merge.

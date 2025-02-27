@@ -4940,6 +4940,13 @@ BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
   ((Module*)module)->addExport(ret);
   return ret;
 }
+BinaryenExportRef BinaryenAddTypeExport(BinaryenModuleRef module,
+                                        BinaryenHeapType type,
+                                        const char* externalName) {
+  auto* ret = new Export(externalName, ExternalKind::Type, HeapType(type));
+  ((Module*)module)->addExport(ret);
+  return ret;
+}
 BinaryenExportRef BinaryenGetExport(BinaryenModuleRef module,
                                     const char* externalName) {
   return ((Module*)module)->getExportOrNull(externalName);
@@ -4953,37 +4960,6 @@ BinaryenIndex BinaryenGetNumExports(BinaryenModuleRef module) {
 BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
                                            BinaryenIndex index) {
   const auto& exports = ((Module*)module)->exports;
-  if (exports.size() <= index) {
-    Fatal() << "invalid export index.";
-  }
-  return exports[index].get();
-}
-
-// Type Exports
-
-BinaryenTypeExportRef BinaryenAddTypeExport(BinaryenModuleRef module,
-                                            BinaryenHeapType type,
-                                            const char* externalName) {
-  auto* ret = new TypeExport();
-  ret->heaptype = HeapType(type);
-  ret->name = externalName;
-  ((Module*)module)->addTypeExport(ret);
-  return ret;
-}
-BinaryenTypeExportRef BinaryenGetTypeExport(BinaryenModuleRef module,
-                                            const char* externalName) {
-  return ((Module*)module)->getTypeExportOrNull(externalName);
-}
-void BinaryenRemoveTypeExport(BinaryenModuleRef module,
-                              const char* externalName) {
-  ((Module*)module)->removeTypeExport(externalName);
-}
-BinaryenIndex BinaryenGetNumTypeExports(BinaryenModuleRef module) {
-  return ((Module*)module)->typeExports.size();
-}
-BinaryenTypeExportRef BinaryenGetTypeExportByIndex(BinaryenModuleRef module,
-                                                   BinaryenIndex index) {
-  const auto& exports = ((Module*)module)->typeExports;
   if (exports.size() <= index) {
     Fatal() << "invalid export index.";
   }
@@ -5955,16 +5931,8 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   return ((Export*)export_)->getInternalName()->str.data();
 }
-
-//
-// =========== Type export operations ===========
-//
-
-const char* BinaryenTypeExportGetName(BinaryenTypeExportRef export_) {
-  return ((TypeExport*)export_)->name.str.data();
-}
-BinaryenHeapType BinaryenTypeExportGetHeapType(BinaryenTypeExportRef export_) {
-  return ((TypeExport*)export_)->heaptype.getID();
+BinaryenHeapType BinaryenExportGetHeapType(BinaryenExportRef export_) {
+  return ((Export*)export_)->getHeapType()->getID();
 }
 
 //
