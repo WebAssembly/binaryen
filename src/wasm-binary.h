@@ -1518,7 +1518,6 @@ public:
   Name getMemoryName(Index index);
   Name getGlobalName(Index index);
   Name getTagName(Index index);
-  Name getTypeName(Index index);
   Name getDataName(Index index);
   Name getElemName(Index index);
 

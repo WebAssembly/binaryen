@@ -935,7 +935,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
 
-  // Type imports: name, positions of type and import names.
+  // Type imports: name, export names, import names, and positions.
   std::vector<std::tuple<Name, std::vector<Name>, ImportNames, Index>>
     typeImports;
 

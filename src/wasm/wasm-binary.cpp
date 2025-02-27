@@ -1865,6 +1865,9 @@ void WasmBinaryReader::read() {
     // appear more than once, and verify those that shouldn't do not.
     // We can have a import section containing type imports before the
     // type section.
+    // TODO: We should check that the sections are ordered properly and
+    // that there is at most two import sections (one with only type
+    // imports, the other with no type imports).
     if (sectionCode != BinaryConsts::Section::Custom &&
         sectionCode != BinaryConsts::Section::Import &&
         !seenSections.insert(sectionCode).second) {
@@ -2760,7 +2763,10 @@ void WasmBinaryReader::readImports() {
         if (seenSections.count(BinaryConsts::Section::Type)) {
           throwError("type import after type section");
         }
-        getInt8();                    // Reserved 'kind' field
+        auto kind = getInt8(); // Reserved 'kind' field
+        if (kind != 0) {
+          throwError("type import with non-zero kind");
+        }
         int64_t htCode = getS64LEB(); // TODO: Actually s33
         auto share = Unshared;
         if (htCode == BinaryConsts::EncodedType::Shared) {
