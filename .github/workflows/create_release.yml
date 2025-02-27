@@ -71,8 +71,8 @@ jobs:
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
     - name: archive-arm64
       id: archive-arm64
@@ -87,8 +87,8 @@ jobs:
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
       if: matrix.os == 'macos-latest'
 
     - name: upload tarball
@@ -96,10 +96,10 @@ jobs:
       with:
         draft: true
         files: |
-          ${{ steps.archive.outputs.tarball }}
-          ${{ steps.archive.outputs.shasum }}
-          ${{ steps.archive-arm64.outputs.tarball }}
-          ${{ steps.archive-arm64.outputs.shasum }}
+          ${{ steps.archive.outputs.TARBALL }}
+          ${{ steps.archive.outputs.SHASUM }}
+          ${{ steps.archive-arm64.outputs.TARBALL }}
+          ${{ steps.archive-arm64.outputs.SHASUM }}
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
@@ -161,16 +161,16 @@ jobs:
         mv install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         files: |
-          ${{ steps.archive.outputs.tarball }}
-          ${{ steps.archive.outputs.shasum }}
+          ${{ steps.archive.outputs.TARBALL }}
+          ${{ steps.archive.outputs.SHASUM }}
 
   # Build using Emscripten to JavaScript+WebAssembly.
   build-node:
@@ -227,13 +227,13 @@ jobs:
         cp out/bin/wasm-opt* binaryen-$VERSION/
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         files: |
-          ${{ steps.archive.outputs.tarball }}
-          ${{ steps.archive.outputs.shasum }}
+          ${{ steps.archive.outputs.TARBALL }}
+          ${{ steps.archive.outputs.SHASUM }}
