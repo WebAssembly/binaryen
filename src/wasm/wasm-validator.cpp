@@ -48,8 +48,9 @@ printModuleComponent(T curr, std::ostringstream& stream, Module& wasm) {
 }
 
 // Extra overload for Expressions, to print their contents.
-inline std::ostream&
-printModuleComponent(Expression* curr, std::ostringstream& stream, Module& wasm) {
+inline std::ostream& printModuleComponent(Expression* curr,
+                                          std::ostringstream& stream,
+                                          Module& wasm) {
   if (curr) {
     // Print the full expression if we can, but avoid doing so if the output is
     // already very large. This avoids quadratic output in some cases (e.g. if
