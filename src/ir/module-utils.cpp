@@ -737,9 +737,9 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
   return types;
 }
 
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
-
+IndexedHeapTypes sortHeapTypes(Module& wasm,
+                               InsertOrderedMap<HeapType, HeapTypeInfo>& counts,
+                               std::function<HeapType(HeapType)> map) {
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;
   std::vector<RecGroup> groups;
@@ -766,6 +766,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   for (size_t i = 0; i < groups.size(); ++i) {
     for (auto type : groups[i]) {
       for (auto child : type.getReferencedHeapTypes()) {
+        child = map(child);
         if (child.isBasic()) {
           continue;
         }
@@ -860,6 +861,12 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   }
   setIndices(indexedTypes);
   return indexedTypes;
+}
+
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
+  return sortHeapTypes(
+    wasm, counts, [](HeapType type) -> HeapType { return type; });
 }
 
 } // namespace wasm::ModuleUtils
