@@ -181,6 +181,7 @@ struct TypeMerging : public Pass {
 bool shapeEq(HeapType a, HeapType b);
 bool shapeEq(const Struct& a, const Struct& b);
 bool shapeEq(Array a, Array b);
+bool shapeEq(Import a, Import b);
 bool shapeEq(Signature a, Signature b);
 bool shapeEq(Field a, Field b);
 bool shapeEq(Type a, Type b);
@@ -574,7 +575,7 @@ bool shapeEq(HeapType a, HeapType b) {
     case HeapTypeKind::Cont:
       WASM_UNREACHABLE("TODO: cont");
     case HeapTypeKind::Import:
-      return false;
+      return shapeEq(a.getImport(), b.getImport());
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
   }
@@ -641,7 +642,16 @@ size_t shapeHash(Signature a) {
   return digest;
 }
 
-size_t shapeHash(Import a) { return shapeHash(a.bound); }
+bool shapeEq(Import a, Import b) {
+  return a.module == b.module && a.base == b.base && shapeEq(a.bound, b.bound);
+}
+
+size_t shapeHash(Import a) {
+  size_t digest = shapeHash(a.bound);
+  hash_combine(digest, wasm::hash(a.module));
+  hash_combine(digest, wasm::hash(a.base));
+  return digest;
+}
 
 bool shapeEq(Field a, Field b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&

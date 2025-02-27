@@ -119,7 +119,15 @@ template<typename CompareTypes> struct RecGroupComparator {
     return compare(a.type, b.type);
   }
 
-  Comparison compare(Import a, Import b) { return compare(a.bound, b.bound); }
+  Comparison compare(Import a, Import b) {
+    if (a.module != b.module) {
+      return a.module < b.module ? LT : GT;
+    }
+    if (a.base != b.base) {
+      return a.base < b.base ? LT : GT;
+    }
+    return compare(a.bound, b.bound);
+  }
 
   Comparison compare(Field a, Field b) {
     if (a.mutable_ != b.mutable_) {
@@ -247,7 +255,7 @@ struct RecGroupHasher {
         hash_combine(digest, hash(type.getContinuation()));
         return digest;
       case HeapTypeKind::Import:
-        assert(type.isContinuation());
+        assert(type.isImport());
         wasm::rehash(digest, 1077427175);
         hash_combine(digest, hash(type.getImport()));
         return digest;
@@ -275,7 +283,12 @@ struct RecGroupHasher {
 
   size_t hash(Continuation cont) { return hash(cont.type); }
 
-  size_t hash(Import import) { return hash(import.bound); }
+  size_t hash(Import import) {
+    size_t digest = hash(import.bound);
+    hash_combine(digest, wasm::hash(import.module));
+    hash_combine(digest, wasm::hash(import.base));
+    return digest;
+  }
 
   size_t hash(Field field) {
     size_t digest = wasm::hash(field.mutable_);
