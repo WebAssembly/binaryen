@@ -55,13 +55,13 @@ printModuleComponent(Expression* curr, std::ostringstream& stream, Module& wasm)
     // already very large. This avoids quadratic output in some cases (e.g. if
     // we have many nested expressions in each other, all of which fail to
     // validate).
-    const std::ostringstream::pos_type MAX_OUTPUT = 1024 * 1024;
+    const std::ostringstream::pos_type MAX_OUTPUT = 100 * 1024;
     if (stream.tellp() < MAX_OUTPUT) {
       stream << ModuleExpression(wasm, curr) << '\n';
     } else {
       // Print something, at least.
       stream << "[not printing " << getExpressionName(curr)
-             << " because output is already very large\n";
+             << " because output is already very large]\n";
     }
   }
   return stream;
