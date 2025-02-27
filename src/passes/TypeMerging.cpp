@@ -181,7 +181,7 @@ struct TypeMerging : public Pass {
 bool shapeEq(HeapType a, HeapType b);
 bool shapeEq(const Struct& a, const Struct& b);
 bool shapeEq(Array a, Array b);
-bool shapeEq(Import a, Import b);
+bool shapeEq(TypeImport a, TypeImport b);
 bool shapeEq(Signature a, Signature b);
 bool shapeEq(Field a, Field b);
 bool shapeEq(Type a, Type b);
@@ -191,7 +191,7 @@ size_t shapeHash(HeapType a);
 size_t shapeHash(const Struct& a);
 size_t shapeHash(Array a);
 size_t shapeHash(Signature a);
-size_t shapeHash(Import a);
+size_t shapeHash(TypeImport a);
 size_t shapeHash(Field a);
 size_t shapeHash(Type a);
 size_t shapeHash(const Tuple& a);
@@ -642,11 +642,11 @@ size_t shapeHash(Signature a) {
   return digest;
 }
 
-bool shapeEq(Import a, Import b) {
+bool shapeEq(TypeImport a, TypeImport b) {
   return a.module == b.module && a.base == b.base && shapeEq(a.bound, b.bound);
 }
 
-size_t shapeHash(Import a) {
+size_t shapeHash(TypeImport a) {
   size_t digest = shapeHash(a.bound);
   hash_combine(digest, wasm::hash(a.module));
   hash_combine(digest, wasm::hash(a.base));

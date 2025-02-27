@@ -253,7 +253,7 @@ void WasmBinaryWriter::writeTypes() {
     for (Index i = 0; i < indexedTypes.types.size(); ++i) {
       auto type = indexedTypes.types[i];
       if (type.isImport()) {
-        Import import = type.getImport();
+        TypeImport import = type.getImport();
         writeInlineString(import.module.str);
         writeInlineString(import.base.str);
         o << U32LEB(int32_t(ExternalKind::Type));
@@ -2779,7 +2779,7 @@ void WasmBinaryReader::readImports() {
         }
         typebuilder.grow(1);
         typebuilder[typebuilder.size() - 1] =
-          Import(module, base, ht.getBasic(share));
+          TypeImport(module, base, ht.getBasic(share));
         break;
       }
       default: {

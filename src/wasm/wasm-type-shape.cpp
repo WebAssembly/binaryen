@@ -119,7 +119,7 @@ template<typename CompareTypes> struct RecGroupComparator {
     return compare(a.type, b.type);
   }
 
-  Comparison compare(Import a, Import b) {
+  Comparison compare(TypeImport a, TypeImport b) {
     if (a.module != b.module) {
       return a.module < b.module ? LT : GT;
     }
@@ -283,7 +283,7 @@ struct RecGroupHasher {
 
   size_t hash(Continuation cont) { return hash(cont.type); }
 
-  size_t hash(Import import) {
+  size_t hash(TypeImport import) {
     size_t digest = hash(import.bound);
     hash_combine(digest, wasm::hash(import.module));
     hash_combine(digest, wasm::hash(import.base));

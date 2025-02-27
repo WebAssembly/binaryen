@@ -64,7 +64,7 @@ struct HeapTypeInfo {
     Continuation continuation;
     Struct struct_;
     Array array;
-    Import import;
+    TypeImport import;
   };
 
   HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
@@ -75,7 +75,8 @@ struct HeapTypeInfo {
   HeapTypeInfo(Struct&& struct_)
     : kind(HeapTypeKind::Struct), struct_(std::move(struct_)) {}
   HeapTypeInfo(Array array) : kind(HeapTypeKind::Array), array(array) {}
-  HeapTypeInfo(Import import) : kind(HeapTypeKind::Import), import(import) {}
+  HeapTypeInfo(TypeImport import)
+    : kind(HeapTypeKind::Import), import(import) {}
   ~HeapTypeInfo();
 
   constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
@@ -130,7 +131,7 @@ struct TypePrinter {
   std::ostream& print(const Struct& struct_,
                       const std::unordered_map<Index, Name>& fieldNames);
   std::ostream& print(const Array& array);
-  std::ostream& print(const Import& import);
+  std::ostream& print(const TypeImport& import);
 };
 
 struct RecGroupHasher {
@@ -156,7 +157,7 @@ struct RecGroupHasher {
   size_t hash(const Continuation& sig) const;
   size_t hash(const Struct& struct_) const;
   size_t hash(const Array& array) const;
-  size_t hash(const Import& import) const;
+  size_t hash(const TypeImport& import) const;
 };
 
 struct RecGroupEquator {
@@ -183,7 +184,7 @@ struct RecGroupEquator {
   bool eq(const Continuation& a, const Continuation& b) const;
   bool eq(const Struct& a, const Struct& b) const;
   bool eq(const Array& a, const Array& b) const;
-  bool eq(const Import& a, const Import& b) const;
+  bool eq(const TypeImport& a, const TypeImport& b) const;
 };
 
 // A wrapper around a RecGroup that provides equality and hashing based on the
@@ -478,7 +479,7 @@ HeapTypeInfo::~HeapTypeInfo() {
       array.~Array();
       return;
     case HeapTypeKind::Import:
-      import.~Import();
+      import.~TypeImport();
       return;
     case HeapTypeKind::Basic:
       break;
@@ -918,7 +919,7 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
-Import HeapType::getImport() const {
+TypeImport HeapType::getImport() const {
   assert(isImport());
   return getHeapTypeInfo(*this)->import;
 }
@@ -1392,7 +1393,7 @@ std::string Signature::toString() const { return genericToString(*this); }
 std::string Continuation::toString() const { return genericToString(*this); }
 std::string Struct::toString() const { return genericToString(*this); }
 std::string Array::toString() const { return genericToString(*this); }
-std::string Import::toString() const { return genericToString(*this); }
+std::string TypeImport::toString() const { return genericToString(*this); }
 
 std::ostream& operator<<(std::ostream& os, Type type) {
   return TypePrinter(os).print(type);
@@ -1424,7 +1425,7 @@ std::ostream& operator<<(std::ostream& os, Struct struct_) {
 std::ostream& operator<<(std::ostream& os, Array array) {
   return TypePrinter(os).print(array);
 }
-std::ostream& operator<<(std::ostream& os, Import import) {
+std::ostream& operator<<(std::ostream& os, TypeImport import) {
   return TypePrinter(os).print(import);
 }
 std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
@@ -1737,7 +1738,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   auto names = generator(type);
 
   if (type.isImport()) {
-    Import import = type.getImport();
+    TypeImport import = type.getImport();
     os << "(";
     printMedium(os, "import ");
     std::stringstream escapedModule, escapedBase;
@@ -1883,7 +1884,7 @@ std::ostream& TypePrinter::print(const Array& array) {
   return os << ')';
 }
 
-std::ostream& TypePrinter::print(const Import& import) {
+std::ostream& TypePrinter::print(const TypeImport& import) {
   os << "(sub ";
   printHeapTypeName(import.bound);
   return os << ')';
@@ -2013,7 +2014,7 @@ size_t RecGroupHasher::hash(const Array& array) const {
   return hash(array.element);
 }
 
-size_t RecGroupHasher::hash(const Import& import) const {
+size_t RecGroupHasher::hash(const TypeImport& import) const {
   size_t digest = hash(import.bound);
   hash_combine(digest, wasm::hash(import.module));
   hash_combine(digest, wasm::hash(import.base));
@@ -2145,7 +2146,7 @@ bool RecGroupEquator::eq(const Array& a, const Array& b) const {
   return eq(a.element, b.element);
 }
 
-bool RecGroupEquator::eq(const Import& a, const Import& b) const {
+bool RecGroupEquator::eq(const TypeImport& a, const TypeImport& b) const {
   return a.module == b.module && a.base == b.base && eq(a.bound, b.bound);
 }
 
@@ -2242,7 +2243,7 @@ void TypeBuilder::setHeapType(size_t i, Array array) {
   impl->entries[i].set(array);
 }
 
-void TypeBuilder::setHeapType(size_t i, Import import) {
+void TypeBuilder::setHeapType(size_t i, TypeImport import) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].set(import);
 }

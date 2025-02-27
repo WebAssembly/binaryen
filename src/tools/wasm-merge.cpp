@@ -469,7 +469,7 @@ void fuseTypeImportsAndTypeExports() {
   std::unordered_map<HeapType, HeapType> typeUpdates;
   for (auto& [heapType, _] : heapTypeInfo) {
     if (heapType.isImport()) {
-      Import import = heapType.getImport();
+      TypeImport import = heapType.getImport();
       if (auto newType = moduleTypeExportMap[import.module].find(import.base);
           newType != moduleTypeExportMap[import.module].end()) {
         // We found something to fuse! Add it to the maps for renaming.

@@ -30,7 +30,7 @@ Result<> parseTypeDefs(
     WithPosition with(ctx, pos);
     auto heaptype = typetype(ctx);
     CHECK_ERR(heaptype);
-    builder[ctx.index] = Import(importNames.mod, importNames.nm, *heaptype);
+    builder[ctx.index] = TypeImport(importNames.mod, importNames.nm, *heaptype);
     ctx.typeExports[ctx.index] = exports;
     ctx.names[ctx.index++].name = name;
   }
