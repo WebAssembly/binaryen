@@ -944,6 +944,7 @@ std::vector<HeapType> Inhabitator::build() {
       case HeapTypeKind::Cont:
         WASM_UNREACHABLE("TODO: cont");
       case HeapTypeKind::Import:
+        WASM_UNREACHABLE("TODO: type imports");
       case HeapTypeKind::Basic:
         break;
     }
