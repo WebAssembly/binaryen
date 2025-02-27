@@ -52,3 +52,4 @@
 [Improve compile times]: https://github.com/WebAssembly/binaryen/issues/4165
 [Fuzzing]: https://github.com/WebAssembly/binaryen/wiki/Fuzzing
 [ClusterFuzz integration]: https://github.com/WebAssembly/binaryen/blob/main/scripts/bundle_clusterfuzz.py
+
