@@ -97,6 +97,11 @@
 
 namespace wasm {
 
+// Web limits allow up to 1000 function parameters, but other implementations,
+// such as those on the JVM, only allow up to 255. Do not merge similar
+// functions if the result would require more than this many parameters.
+static constexpr int MaxParams = 255;
+
 // A set of constant values of an instruction different between each functions
 // in an EquivalentClass
 using ConstDiff = std::variant<Literals, std::vector<Name>>;
@@ -490,6 +495,14 @@ void EquivalentClass::merge(Module* module,
 // than the reduced size.
 bool EquivalentClass::hasMergeBenefit(Module* module,
                                       const std::vector<ParamInfo>& params) {
+  if (params.size() + primaryFunction->getNumParams() > MaxParams) {
+    // It requires too many parameters to merge this equivalence class. In
+    // principle, we could try splitting the class into smaller classes of
+    // functions that share more constants with each other, but that could
+    // be expensive. TODO: investigate splitting the class.
+    return false;
+  }
+
   size_t funcCount = functions.size();
   Index exprSize = Measurer::measure(primaryFunction->body);
   size_t thunkCount = funcCount;
