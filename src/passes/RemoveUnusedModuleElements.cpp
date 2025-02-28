@@ -622,15 +622,15 @@ struct RemoveUnusedModuleElements : public Pass {
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         roots.emplace_back(ModuleElementKind::Function,
-                           curr->getInternalName());
+                           *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Global) {
-        roots.emplace_back(ModuleElementKind::Global, curr->getInternalName());
+        roots.emplace_back(ModuleElementKind::Global, *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Tag) {
-        roots.emplace_back(ModuleElementKind::Tag, curr->getInternalName());
+        roots.emplace_back(ModuleElementKind::Tag, *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Table) {
-        roots.emplace_back(ModuleElementKind::Table, curr->getInternalName());
+        roots.emplace_back(ModuleElementKind::Table, *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Memory) {
-        roots.emplace_back(ModuleElementKind::Memory, curr->getInternalName());
+        roots.emplace_back(ModuleElementKind::Memory, *curr->getInternalName());
       }
     }
 
@@ -786,7 +786,7 @@ struct RemoveUnusedModuleElements : public Pass {
         continue;
       }
 
-      auto* func = module->getFunction(exp->getInternalName());
+      auto* func = module->getFunction(*exp->getInternalName());
       if (!func->body) {
         continue;
       }

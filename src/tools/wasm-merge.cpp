@@ -220,11 +220,10 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
     // the module scope.
     void mapModuleFields(Module& wasm) {
       for (auto& curr : wasm.exports) {
-        if (!curr->hasInternalName()) {
-          // skip type exports
-          continue;
+        // skip type exports
+        if (auto* name = curr->getInternalName()) {
+          mapName(ModuleItemKind(curr->kind), *name);
         }
-        mapName(ModuleItemKind(curr->kind), curr->getInternalName());
       }
       for (auto& curr : wasm.elementSegments) {
         mapName(ModuleItemKind::Table, curr->table);
@@ -444,14 +443,13 @@ void fuseImportsAndExports() {
   KindModuleExportMaps kindModuleExportMaps;
 
   for (auto& ex : merged.exports) {
-    if (!ex->hasInternalName()) {
-      // skip type exports
-      continue;
+    // skip type exports
+    if (auto* name = ex->getInternalName()) {
+      assert(exportModuleMap.count(ex.get()));
+      ExportInfo& exportInfo = exportModuleMap[ex.get()];
+      kindModuleExportMaps[ex->kind][exportInfo.moduleName]
+                          [exportInfo.baseName] = *name;
     }
-    assert(exportModuleMap.count(ex.get()));
-    ExportInfo& exportInfo = exportModuleMap[ex.get()];
-    kindModuleExportMaps[ex->kind][exportInfo.moduleName][exportInfo.baseName] =
-      ex->getInternalName();
   }
 
   // Find all the imports and see which have corresponding exports, which means

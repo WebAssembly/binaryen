@@ -359,7 +359,7 @@ void ModuleSplitter::setupJSPI() {
     assert(primary.getExport(LOAD_SECONDARY_MODULE)->kind ==
            ExternalKind::Function);
     internalLoadSecondaryModule =
-      primary.getExport(LOAD_SECONDARY_MODULE)->getInternalName();
+      *primary.getExport(LOAD_SECONDARY_MODULE)->getInternalName();
     // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
     // internally.
     primary.removeExport(LOAD_SECONDARY_MODULE);
@@ -473,7 +473,7 @@ ModuleSplitter::initExportedPrimaryFuncs(const Module& primary) {
   std::map<Name, Name> functionExportNames;
   for (auto& ex : primary.exports) {
     if (ex->kind == ExternalKind::Function) {
-      functionExportNames[ex->getInternalName()] = ex->name;
+      functionExportNames[*ex->getInternalName()] = ex->name;
     }
   }
   return functionExportNames;
@@ -529,10 +529,10 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !secondaryFuncs.count(ex->getInternalName())) {
+        !secondaryFuncs.count(*ex->getInternalName())) {
       continue;
     }
-    Name secondaryFunc = ex->getInternalName();
+    Name secondaryFunc = *ex->getInternalName();
     if (primary.getFunctionOrNull(secondaryFunc)) {
       // We've already created a thunk for this function
       continue;

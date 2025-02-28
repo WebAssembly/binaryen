@@ -30,7 +30,7 @@ inline std::string generateSpecWrapper(Module& wasm) {
     if (exp->kind != ExternalKind::Function) {
       continue; // something exported other than a function
     }
-    auto* func = wasm.getFunctionOrNull(exp->getInternalName());
+    auto* func = wasm.getFunctionOrNull(*exp->getInternalName());
     ret += std::string("(invoke \"") + exp->name.toString() + "\" ";
     for (const auto& param : func->getParams()) {
       // zeros in arguments TODO more?

@@ -260,7 +260,7 @@ struct DAE : public Pass {
     // Exports are considered unseen calls.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        hasUnseenCalls.insert(curr->getInternalName());
+        hasUnseenCalls.insert(*curr->getInternalName());
       }
     }
 

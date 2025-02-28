@@ -135,7 +135,7 @@ static void removeSegment(Module& wasm, Name segment) {
 
 static Address getExportedAddress(Module& wasm, Export* export_) {
   assert(export_->kind == ExternalKind::Global);
-  Global* g = wasm.getGlobal(export_->getInternalName());
+  Global* g = wasm.getGlobal(*export_->getInternalName());
   auto* addrConst = g->init->dynCast<Const>();
   return addrConst->value.getUnsigned();
 }
@@ -241,10 +241,10 @@ struct PostEmscripten : public Pass {
     walker.walkModule(&module);
     for (Export& exp : walker.toRemove) {
       if (exp.kind == ExternalKind::Function) {
-        module.removeFunction(exp.getInternalName());
+        module.removeFunction(*exp.getInternalName());
       } else {
         assert(exp.kind == ExternalKind::Global);
-        module.removeGlobal(exp.getInternalName());
+        module.removeGlobal(*exp.getInternalName());
       }
       module.removeExport(exp.name);
     }

@@ -133,20 +133,19 @@ struct Metrics
         baseline = sizeAfterGlobalCleanup(&test);
       }
       for (auto& exp : module->exports) {
-        if (!exp->hasInternalName()) {
-          // Removing a type export will not remove any code
-          continue;
+        // Removing a type export will not remove any code
+        if (auto* name = exp->getInternalName()) {
+          // create a test module where we remove the export and then see how much
+          // can be removed thanks to that
+          Module test;
+          ModuleUtils::copyModule(*module, test);
+          test.removeExport(exp->name);
+          counts.clear();
+          counts["[removable-bytes-without-it]"] =
+            baseline - sizeAfterGlobalCleanup(&test);
+          printCounts(std::string("export: ") + exp->name.toString() + " (" +
+                      name->toString() + ')');
         }
-        // create a test module where we remove the export and then see how much
-        // can be removed thanks to that
-        Module test;
-        ModuleUtils::copyModule(*module, test);
-        test.removeExport(exp->name);
-        counts.clear();
-        counts["[removable-bytes-without-it]"] =
-          baseline - sizeAfterGlobalCleanup(&test);
-        printCounts(std::string("export: ") + exp->name.toString() + " (" +
-                    exp->getInternalName().toString() + ')');
       }
       // check how much size depends on the start method
       if (!module->start.isNull()) {

@@ -215,7 +215,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                                     global->module.toString() + "." +
                                     global->base.toString());
         }
-        globals[global->name] = inst->globals[globalExport->getInternalName()];
+        globals[global->name] = inst->globals[*globalExport->getInternalName()];
       } else {
         throw FailToEvalException(std::string("importGlobals: ") +
                                   global->module.toString() + "." +
@@ -1298,7 +1298,7 @@ void evalCtors(Module& wasm,
       if (!ex || ex->kind != ExternalKind::Function) {
         Fatal() << "export not found: " << ctor;
       }
-      auto funcName = ex->getInternalName();
+      auto funcName = *ex->getInternalName();
       auto outcome = evalCtor(instance, interface, funcName, ctor);
       if (!outcome) {
         if (!quiet) {
@@ -1320,7 +1320,7 @@ void evalCtors(Module& wasm,
         // We are keeping around the export, which should now refer to an
         // empty function since calling the export should do nothing.
         assert(exp->kind == ExternalKind::Function);
-        auto* func = wasm.getFunction(exp->getInternalName());
+        auto* func = wasm.getFunction(*exp->getInternalName());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
         auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
         if (func->getResults() == Type::none) {

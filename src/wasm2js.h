@@ -89,7 +89,7 @@ bool isTableExported(Module& wasm) {
   }
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Table &&
-        ex->getInternalName() == wasm.tables[0]->name) {
+        *ex->getInternalName() == wasm.tables[0]->name) {
       return true;
     }
   }
@@ -343,7 +343,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // Scan the wasm for important things.
   for (auto& exp : wasm->exports) {
     if (exp->kind == ExternalKind::Function) {
-      functionsCallableFromOutside.insert(exp->getInternalName());
+      functionsCallableFromOutside.insert(*exp->getInternalName());
     }
   }
   ElementUtils::iterAllElementFunctionNames(
@@ -767,7 +767,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
           exports,
           fromName(export_->name, NameScope::Export),
           ValueBuilder::makeName(
-            fromName(export_->getInternalName(), NameScope::Top)));
+            fromName(*export_->getInternalName(), NameScope::Top)));
         break;
       }
       case ExternalKind::Memory: {
@@ -810,7 +810,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         Ref object = ValueBuilder::makeObject();
 
         IString identName =
-          fromName(export_->getInternalName(), NameScope::Top);
+          fromName(*export_->getInternalName(), NameScope::Top);
 
         // getter
         {

@@ -1411,7 +1411,7 @@ void TranslateToFuzzReader::processFunctions() {
     for (Index i = 0; i < numInitialExports; i++) {
       auto& exp = wasm.exports[i];
       if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
-        auto* func = wasm.getFunction(exp->getInternalName());
+        auto* func = wasm.getFunction(*exp->getInternalName());
         if (!func->imported()) {
           auto* call =
             builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);

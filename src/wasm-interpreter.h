@@ -2913,7 +2913,7 @@ public:
     if (!export_ || export_->kind != ExternalKind::Function) {
       externalInterface->trap("callExport not found");
     }
-    return callFunction(export_->getInternalName(), arguments);
+    return callFunction(*export_->getInternalName(), arguments);
   }
 
   Literals callExport(Name name) { return callExport(name, Literals()); }
@@ -2924,7 +2924,7 @@ public:
     if (!export_ || export_->kind != ExternalKind::Global) {
       externalInterface->trap("getExport external not found");
     }
-    Name internalName = export_->getInternalName();
+    Name internalName = *export_->getInternalName();
     auto iter = globals.find(internalName);
     if (iter == globals.end()) {
       externalInterface->trap("getExport internal not found");
@@ -2967,7 +2967,7 @@ private:
       auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
       return importedInstance->getTableInstanceInfo(
-        tableExport->getInternalName());
+        *tableExport->getInternalName());
     }
 
     return TableInstanceInfo{self(), name};
@@ -3023,7 +3023,7 @@ private:
       auto& importedInstance = linkedInstances.at(memory->module);
       auto* memoryExport = importedInstance->wasm.getExport(memory->base);
       return importedInstance->getMemoryInstanceInfo(
-        memoryExport->getInternalName());
+        *memoryExport->getInternalName());
     }
 
     return MemoryInstanceInfo{self(), name};
@@ -3163,7 +3163,7 @@ protected:
     while (global->imported()) {
       inst = inst->linkedInstances.at(global->module).get();
       Export* globalExport = inst->wasm.getExport(global->base);
-      global = inst->wasm.getGlobal(globalExport->getInternalName());
+      global = inst->wasm.getGlobal(*globalExport->getInternalName());
     }
 
     return inst->globals[global->name];

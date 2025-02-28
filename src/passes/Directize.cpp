@@ -223,7 +223,7 @@ struct Directize : public Pass {
 
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Table) {
-        tables[ex->getInternalName()].mayBeModified = true;
+        tables[*ex->getInternalName()].mayBeModified = true;
       }
     }
 

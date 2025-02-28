@@ -1271,7 +1271,7 @@ struct Inlining : public Pass {
     }
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
-        infos[ex->getInternalName()].usedGlobally = true;
+        infos[*ex->getInternalName()].usedGlobally = true;
       }
     }
     if (module->start.is()) {

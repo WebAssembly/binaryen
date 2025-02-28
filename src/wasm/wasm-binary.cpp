@@ -603,19 +603,19 @@ void WasmBinaryWriter::writeExports() {
     o << U32LEB(int32_t(curr->kind));
     switch (curr->kind) {
       case ExternalKind::Function:
-        o << U32LEB(getFunctionIndex(curr->getInternalName()));
+        o << U32LEB(getFunctionIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Table:
-        o << U32LEB(getTableIndex(curr->getInternalName()));
+        o << U32LEB(getTableIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Memory:
-        o << U32LEB(getMemoryIndex(curr->getInternalName()));
+        o << U32LEB(getMemoryIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Global:
-        o << U32LEB(getGlobalIndex(curr->getInternalName()));
+        o << U32LEB(getGlobalIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Tag:
-        o << U32LEB(getTagIndex(curr->getInternalName()));
+        o << U32LEB(getTagIndex(*curr->getInternalName()));
         break;
       default:
         WASM_UNREACHABLE("unexpected extern kind");

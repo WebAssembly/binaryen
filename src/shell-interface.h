@@ -129,7 +129,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
         Fatal() << "importGlobals: unknown import: " << import->module.str
                 << "." << import->name.str;
       }
-      globals[import->name] = inst->globals[exportedGlobal->getInternalName()];
+      globals[import->name] = inst->globals[*exportedGlobal->getInternalName()];
     });
   }
 

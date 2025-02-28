@@ -161,7 +161,7 @@ struct SafeHeap : public Pass {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       assert(existing->kind == ExternalKind::Function);
-      getSbrkPtr = existing->getInternalName();
+      getSbrkPtr = *existing->getInternalName();
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {

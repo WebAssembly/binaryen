@@ -2261,8 +2261,7 @@ public:
   Name name;
   std::variant<Name, HeapType> value; // internal name or exported type
   ExternalKind kind;
-  Name& getInternalName() { return std::get<Name>(value); }
-  bool hasInternalName() { return std::get_if<Name>(&value); }
+  Name* getInternalName() { return std::get_if<Name>(&value); }
 };
 
 class ElementSegment : public Named {

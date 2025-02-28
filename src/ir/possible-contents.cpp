@@ -2165,7 +2165,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Table) {
-      shared.publicTables.insert(ex->getInternalName());
+      shared.publicTables.insert(*ex->getInternalName());
     }
   }
 
@@ -2277,7 +2277,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Exports can be modified from the outside.
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
-      calledFromOutside(ex->getInternalName());
+      calledFromOutside(*ex->getInternalName());
     } else if (ex->kind == ExternalKind::Table) {
       // If any table is exported, assume any function in any table (including
       // other tables) can be called from the outside.
@@ -2301,7 +2301,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     } else if (ex->kind == ExternalKind::Global) {
       // Exported mutable globals are roots, since the outside may write any
       // value to them.
-      auto name = ex->getInternalName();
+      auto name = *ex->getInternalName();
       auto* global = wasm.getGlobal(name);
       if (global->mutable_) {
         roots[GlobalLocation{name}] = PossibleContents::fromType(global->type);
@@ -2319,7 +2319,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   }
   for (auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Tag) {
-      publicTags.insert(ex->getInternalName());
+      publicTags.insert(*ex->getInternalName());
     }
   }
   for (auto tag : publicTags) {

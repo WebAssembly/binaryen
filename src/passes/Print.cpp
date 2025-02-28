@@ -3088,7 +3088,7 @@ void PrintSExpression::visitExport(Export* curr) {
   }
   o << ' ';
   // TODO: specific case for type exports
-  curr->getInternalName().print(o) << "))";
+  curr->getInternalName()->print(o) << "))";
 }
 
 void PrintSExpression::emitImportHeader(Importable* curr) {
