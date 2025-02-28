@@ -1358,6 +1358,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::BulkMemoryOptFeature;
       case FeatureSet::CallIndirectOverlong:
         return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
+      case FeatureSet::CustomDescriptors:
+        return BinaryConsts::CustomSections::CustomDescriptorsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
