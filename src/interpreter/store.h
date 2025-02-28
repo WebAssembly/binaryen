@@ -25,13 +25,16 @@
 
 namespace wasm::interpreter {
 
+struct Instance {
+  Module* wasm;
+  std::unordered_map<Name, Literal*> globalValues;
+};
+
 // A frame of execution for a function call.
 struct Frame {
-  // TODO: Reference to current instance to find referenced functions, globals,
-  // tables, memories, etc.
-
-  std::vector<Literal> locals;
-  std::vector<Literal> valueStack;
+  Instance *instance;
+  Literals locals;
+  Literals valueStack;
   ExpressionIterator exprs;
 
   // TODO: Map loops to ExpressionIterators so we can branch backwards.
