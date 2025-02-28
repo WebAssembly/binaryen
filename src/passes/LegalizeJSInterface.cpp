@@ -193,8 +193,9 @@ private:
     if (!setTempRet0) {
       if (exportedHelpers) {
         auto* ex = module->getExport(SET_TEMP_RET_EXPORT);
-        assert(ex->kind == ExternalKind::Function);
-        setTempRet0 = module->getFunction(*ex->getInternalName());
+        setTempRet0 = module->getFunction((ex->kind == ExternalKind::Function)
+                                            ? *ex->getInternalName()
+                                            : Name());
       } else {
         setTempRet0 = getFunctionOrImport(
           module, SET_TEMP_RET_IMPORT, Type::i32, Type::none);
@@ -207,8 +208,9 @@ private:
     if (!getTempRet0) {
       if (exportedHelpers) {
         auto* ex = module->getExport(GET_TEMP_RET_EXPORT);
-        assert(ex->kind == ExternalKind::Function);
-        getTempRet0 = module->getFunction(*ex->getInternalName());
+        getTempRet0 = module->getFunction((ex->kind == ExternalKind::Function)
+                                            ? *ex->getInternalName()
+                                            : Name());
       } else {
         getTempRet0 = getFunctionOrImport(
           module, GET_TEMP_RET_IMPORT, Type::none, Type::i32);

@@ -1901,9 +1901,9 @@ struct ModAsyncify
   void doWalkFunction(Function* func) {
     // Find the asyncify state name.
     auto* unwind = this->getModule()->getExport(ASYNCIFY_STOP_UNWIND);
-    assert(unwind->kind == ExternalKind::Function);
-    auto* unwindFunc =
-      this->getModule()->getFunction(*unwind->getInternalName());
+    auto* unwindFunc = this->getModule()->getFunction(
+      ((unwind->kind == ExternalKind::Function)) ? *unwind->getInternalName()
+                                                 : Name());
     FindAll<GlobalSet> sets(unwindFunc->body);
     assert(sets.list.size() == 1);
     asyncifyStateName = sets.list[0]->name;

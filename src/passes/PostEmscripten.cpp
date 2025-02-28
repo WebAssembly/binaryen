@@ -134,8 +134,9 @@ static void removeSegment(Module& wasm, Name segment) {
 }
 
 static Address getExportedAddress(Module& wasm, Export* export_) {
-  assert(export_->kind == ExternalKind::Global);
-  Global* g = wasm.getGlobal(*export_->getInternalName());
+  Global* g = wasm.getGlobal((export_->kind == ExternalKind::Global)
+                               ? *export_->getInternalName()
+                               : Name());
   auto* addrConst = g->init->dynCast<Const>();
   return addrConst->value.getUnsigned();
 }

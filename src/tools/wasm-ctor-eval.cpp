@@ -1319,8 +1319,9 @@ void evalCtors(Module& wasm,
       } else {
         // We are keeping around the export, which should now refer to an
         // empty function since calling the export should do nothing.
-        assert(exp->kind == ExternalKind::Function);
-        auto* func = wasm.getFunction(*exp->getInternalName());
+        auto* func = wasm.getFunction((exp->kind == ExternalKind::Function)
+                                        ? *exp->getInternalName()
+                                        : Name());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
         auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
         if (func->getResults() == Type::none) {
