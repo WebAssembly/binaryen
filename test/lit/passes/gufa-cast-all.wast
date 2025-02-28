@@ -284,3 +284,73 @@
   )
 )
 
+;; Test pre-filtering.
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
+
+  ;; CHECK:      (import "a" "b" (global $global i32))
+  (import "a" "b" (global $global i32))
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block (result (ref $A))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref $A))
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (br_if $block
+  ;; CHECK-NEXT:          (ref.func $test)
+  ;; CHECK-NEXT:          (global.get $global)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.func $test)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br_on_non_null $block
+  ;; CHECK-NEXT:       (ref.null nofunc)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (type $A)
+    ;; This block is declared as having type $A. Two values appear to reach it:
+    ;; one from a br that sends a ref.func, and one from a br_on_non_null which
+    ;; sends a null with the type (ref nofunc) (in practice that branch is not
+    ;; taken, of course, but GUFA does see all branches; later optimizations
+    ;; would optimize the branch away).
+    ;;
+    ;; We see the ref.func first, so the block $block begins with that content.
+    ;; Then we see the null arrive. Immediately combining the null with a
+    ;; ref.func would give a cone - the best shape we have that can allow both a
+    ;; null and a ref.func. If we later filter the result to the block, which is
+    ;; non-nullable, the cone becomes non-nullable too - but it is a cone now,
+    ;; and not the original ref.func, preventing us from applying the constant
+    ;; value of the ref.func in the output. Early filtering of the arriving
+    ;; content fixes this: the null is immediately filtered into nothing, since
+    ;; it is null and the location can only contain non-nullable contents. As a
+    ;; result, we can optimize the block (and the br_if) to return a ref.func.
+    (drop
+      (block $block (result (ref $A))
+        (drop
+          (br_if $block
+            (ref.func $test)
+            (global.get $global)
+          )
+        )
+        (br_on_non_null $block
+          (ref.null nofunc)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
