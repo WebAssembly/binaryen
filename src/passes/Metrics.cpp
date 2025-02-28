@@ -135,8 +135,8 @@ struct Metrics
       for (auto& exp : module->exports) {
         // Removing a type export will not remove any code
         if (auto* name = exp->getInternalName()) {
-          // create a test module where we remove the export and then see how much
-          // can be removed thanks to that
+          // create a test module where we remove the export and then see how
+          // much can be removed thanks to that
           Module test;
           ModuleUtils::copyModule(*module, test);
           test.removeExport(exp->name);
