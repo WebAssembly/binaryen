@@ -54,11 +54,12 @@ struct FeatureSet {
     // that we can automatically generate tool flags that set it, but otherwise
     // it does nothing. Binaryen always accepts LEB call-indirect encodings.
     CallIndirectOverlong = 1 << 20,
+    CustomDescriptors = 1 << 21,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 21) - 1,
+    All = (1 << 22) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -105,9 +106,14 @@ struct FeatureSet {
         return "bulk-memory-opt";
       case CallIndirectOverlong:
         return "call-indirect-overlong";
-      default:
-        WASM_UNREACHABLE("unexpected feature");
+      case CustomDescriptors:
+        return "custom-descriptors";
+      case MVP:
+      case Default:
+      case All:
+        break;
     }
+    WASM_UNREACHABLE("unexpected feature");
   }
 
   std::string toString() const {
@@ -159,6 +165,9 @@ struct FeatureSet {
     assert(has || !hasBulkMemory());
     return has;
   }
+  bool hasCustomDescriptors() const {
+    return (features & CustomDescriptors) != 0;
+  }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -184,6 +193,7 @@ struct FeatureSet {
   void setSharedEverything(bool v = true) { set(SharedEverything, v); }
   void setFP16(bool v = true) { set(FP16, v); }
   void setBulkMemoryOpt(bool v = true) { set(BulkMemoryOpt, v); }
+  void setCustomDescriptors(bool v = true) { set(CustomDescriptors, v); }
   void setMVP() { features = MVP; }
   void setAll() { features = All; }
 

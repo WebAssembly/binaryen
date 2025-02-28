@@ -28,8 +28,8 @@ Name RETURN_FLOW("*return:)*");
 Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 
-namespace BinaryConsts {
-namespace CustomSections {
+namespace BinaryConsts::CustomSections {
+
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
@@ -59,8 +59,9 @@ const char* SharedEverythingFeature = "shared-everything";
 const char* FP16Feature = "fp16";
 const char* BulkMemoryOptFeature = "bulk-memory-opt";
 const char* CallIndirectOverlongFeature = "call-indirect-overlong";
-} // namespace CustomSections
-} // namespace BinaryConsts
+const char* CustomDescriptorsFeature = "custom-descriptors";
+
+} // namespace BinaryConsts::CustomSections
 
 Name STACK_POINTER("__stack_pointer");
 Name MODULE("module");
