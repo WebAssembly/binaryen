@@ -28,8 +28,8 @@ using namespace wasm;
 // Int32
 
 TEST(InterpreterTest, AddI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
@@ -38,15 +38,17 @@ TEST(InterpreterTest, AddI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(3))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, SubI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
@@ -55,15 +57,17 @@ TEST(InterpreterTest, SubI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(-1))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, MulI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
@@ -72,15 +76,17 @@ TEST(InterpreterTest, MulI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(2))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, EqI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
@@ -89,7 +95,9 @@ TEST(InterpreterTest, EqI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
@@ -200,8 +208,8 @@ TEST(InterpreterTest, RotRI32) {
 // uInt32
 
 TEST(InterpreterTest, LtUI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
@@ -210,15 +218,17 @@ TEST(InterpreterTest, LtUI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(1))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, GtUI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(2))).getErr());
@@ -227,7 +237,9 @@ TEST(InterpreterTest, GtUI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
@@ -253,8 +265,8 @@ TEST(InterpreterTest, ShrUI32) {
 // sInt32
 
 TEST(InterpreterTest, LtSI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int32_t(-1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(int32_t(-2))).getErr());
@@ -263,15 +275,17 @@ TEST(InterpreterTest, LtSI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, GtSI32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int32_t(-3))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(int32_t(-4))).getErr());
@@ -280,7 +294,9 @@ TEST(InterpreterTest, GtSI32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(1))};
 
   EXPECT_EQ(results, expected);
@@ -306,8 +322,8 @@ TEST(InterpreterTest, ShrSI32) {
 // Int64
 
 TEST(InterpreterTest, AddI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
@@ -316,15 +332,17 @@ TEST(InterpreterTest, AddI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint64_t(3))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, SubI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
@@ -333,15 +351,17 @@ TEST(InterpreterTest, SubI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint64_t(-1))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, MulI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
@@ -350,15 +370,17 @@ TEST(InterpreterTest, MulI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint64_t(2))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, EqI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
@@ -367,7 +389,9 @@ TEST(InterpreterTest, EqI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
@@ -478,8 +502,8 @@ TEST(InterpreterTest, RotRI64) {
 // uInt64
 
 TEST(InterpreterTest, LtUI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
@@ -488,15 +512,17 @@ TEST(InterpreterTest, LtUI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(1))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, GtUI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(2))).getErr());
@@ -505,7 +531,9 @@ TEST(InterpreterTest, GtUI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
@@ -531,8 +559,8 @@ TEST(InterpreterTest, ShrUI64) {
 // sInt64
 
 TEST(InterpreterTest, LtSI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int64_t(-1))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(int64_t(-2))).getErr());
@@ -541,15 +569,17 @@ TEST(InterpreterTest, LtSI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, GtSI64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int64_t(-3))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(int64_t(-4))).getErr());
@@ -558,7 +588,9 @@ TEST(InterpreterTest, GtSI64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(1))};
 
   EXPECT_EQ(results, expected);
@@ -584,8 +616,8 @@ TEST(InterpreterTest, ShrSI64) {
 // Float32
 
 TEST(InterpreterTest, AddF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(0.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
@@ -594,15 +626,17 @@ TEST(InterpreterTest, AddF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(1.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, SubF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
@@ -611,15 +645,17 @@ TEST(InterpreterTest, SubF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(-1.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, MulF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
@@ -628,15 +664,17 @@ TEST(InterpreterTest, MulF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(3.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, DivF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(5.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
@@ -645,15 +683,17 @@ TEST(InterpreterTest, DivF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.5))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, EqF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(float(2.0))).getErr());
@@ -662,15 +702,17 @@ TEST(InterpreterTest, EqF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, SqrtF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(5.0))).getErr());
   ASSERT_FALSE(builder.makeUnary(SqrtFloat32).getErr());
@@ -678,15 +720,17 @@ TEST(InterpreterTest, SqrtF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.2360679775))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, CeilF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
   ASSERT_FALSE(builder.makeUnary(CeilFloat32).getErr());
@@ -694,15 +738,17 @@ TEST(InterpreterTest, CeilF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, FloorF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
   ASSERT_FALSE(builder.makeUnary(FloorFloat32).getErr());
@@ -710,15 +756,17 @@ TEST(InterpreterTest, FloorF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(1.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, TruncF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(2.017281))).getErr());
   ASSERT_FALSE(builder.makeUnary(TruncFloat32).getErr());
@@ -726,15 +774,17 @@ TEST(InterpreterTest, TruncF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, NearF32) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(2.5))).getErr());
   ASSERT_FALSE(builder.makeUnary(NearestFloat32).getErr());
@@ -742,7 +792,9 @@ TEST(InterpreterTest, NearF32) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.0))};
 
   EXPECT_EQ(results, expected);
@@ -751,8 +803,8 @@ TEST(InterpreterTest, NearF32) {
 // Float 64
 
 TEST(InterpreterTest, AddF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(0.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(double(1.0))).getErr());
@@ -761,15 +813,17 @@ TEST(InterpreterTest, AddF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(1.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, SubF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(double(2.0))).getErr());
@@ -778,15 +832,17 @@ TEST(InterpreterTest, SubF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(-1.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, MulF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.5))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(double(2.0))).getErr());
@@ -795,15 +851,17 @@ TEST(InterpreterTest, MulF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(3.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, DivF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(5.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(double(2.0))).getErr());
@@ -812,15 +870,17 @@ TEST(InterpreterTest, DivF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.5))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, EqF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.0))).getErr());
   ASSERT_FALSE(builder.makeConst(Literal(double(2.0))).getErr());
@@ -829,15 +889,17 @@ TEST(InterpreterTest, EqF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, SqrtF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(5.0))).getErr());
   ASSERT_FALSE(builder.makeUnary(SqrtFloat64).getErr());
@@ -845,15 +907,17 @@ TEST(InterpreterTest, SqrtF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.23606797749979))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, CeilF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.5))).getErr());
   ASSERT_FALSE(builder.makeUnary(CeilFloat64).getErr());
@@ -861,15 +925,17 @@ TEST(InterpreterTest, CeilF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, FloorF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.5))).getErr());
   ASSERT_FALSE(builder.makeUnary(FloorFloat64).getErr());
@@ -877,15 +943,17 @@ TEST(InterpreterTest, FloorF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(1.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, TruncF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(2.017281))).getErr());
   ASSERT_FALSE(builder.makeUnary(TruncFloat64).getErr());
@@ -893,15 +961,17 @@ TEST(InterpreterTest, TruncF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.0))};
 
   EXPECT_EQ(results, expected);
 }
 
 TEST(InterpreterTest, NearF64) {
-  Module wasm;
-  IRBuilder builder(wasm);
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(2.5))).getErr());
   ASSERT_FALSE(builder.makeUnary(NearestFloat64).getErr());
@@ -909,8 +979,29 @@ TEST(InterpreterTest, NearF64) {
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());
 
-  auto results = Interpreter{}.run(*expr);
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.0))};
+
+  EXPECT_EQ(results, expected);
+}
+
+TEST(InterpreterTest, Globali32) {
+  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  IRBuilder builder(*wasm);
+
+  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(5))).getErr());
+  ASSERT_FALSE(builder.makeGlobalSet(Name("$global")).getErr());
+  ASSERT_FALSE(builder.makeGlobalGet(Name("$global")).getErr());
+
+  auto expr = builder.build();
+  ASSERT_FALSE(expr.getErr());
+
+  Interpreter interpreter;
+  auto result = interpreter.addInstance(Name("a"), wasm);
+  auto results = interpreter.run(*expr);
+  std::vector<Literal> expected{Literal(uint32_t(5))};
 
   EXPECT_EQ(results, expected);
 }
