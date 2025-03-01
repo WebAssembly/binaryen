@@ -25,17 +25,23 @@
 
 namespace wasm::interpreter {
 
+// Contains the runtime representation of a wasm module
 struct Instance {
-  Module* wasm;
-  std::unordered_map<Name, Literal*> globalValues;
+  std::shared_ptr<Module> wasm;
+  std::unordered_map<Name, Literal> globalValues;
+
+  Instance(std::shared_ptr<Module> wasm) : wasm(wasm) {};
 };
 
 // A frame of execution for a function call.
 struct Frame {
-  Instance *instance;
-  Literals locals;
-  Literals valueStack;
+  Instance& instance;
+  std::vector<Literal> locals;
+  std::vector<Literal> valueStack;
   ExpressionIterator exprs;
+
+  Frame(Instance& instance, ExpressionIterator exprs)
+    : instance(instance), exprs(exprs) {};
 
   // TODO: Map loops to ExpressionIterators so we can branch backwards.
 
@@ -58,6 +64,7 @@ struct WasmStore {
   // TODO: Storage for memories, tables, globals, heap objects, etc.
   // TODO: Map instances and import names to other instances to find imports.
   std::vector<Frame> callStack;
+  std::unordered_map<Name, Instance> instances;
 
   Frame& getFrame() {
     assert(!callStack.empty());

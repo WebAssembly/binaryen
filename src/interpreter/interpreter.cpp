@@ -29,6 +29,9 @@ public:
   static WasmStore& getStore(Interpreter& interpreter) {
     return interpreter.store;
   }
+  static Frame& getFrame(Interpreter& interpreter) {
+    return interpreter.store.callStack.back();
+  }
 };
 
 namespace {
@@ -47,6 +50,8 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   ExpressionInterpreter(Interpreter& parent) : parent(parent) {}
 
   WasmStore& store() { return InterpreterImpl::getStore(parent); }
+  Frame& frame() { return InterpreterImpl::getFrame(parent); }
+
   void push(Literal val) { store().push(val); }
   Literal pop() { return store().pop(); }
 
@@ -60,8 +65,16 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalGet(LocalGet* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalSet(LocalSet* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitGlobalGet(GlobalGet* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitGlobalSet(GlobalSet* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitGlobalGet(GlobalGet* curr) {
+    push(frame().instance.globalValues[curr->name]);
+    return {};
+  }
+  Flow visitGlobalSet(GlobalSet* curr) {
+    auto value = pop();
+    std::cerr << value;
+    frame().instance.globalValues[curr->name] = value;
+    return {};
+  }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("TODO"); }
@@ -240,14 +253,27 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
 
 } // anonymous namespace
 
+Result<> Interpreter::addInstance(Name name, std::shared_ptr<Module> wasm) {
+  if (store.instances.find(name) != store.instances.end()) {
+    return Err{"existing instance with name"};
+  }
+
+  Instance instance(wasm);
+  store.instances.insert({name, instance});
+  lastModule = name;
+  return Ok{};
+}
+
 std::vector<Literal> Interpreter::run(Expression* root) {
   // Create a fresh store and execution frame, then run the expression to
   // completion.
-  store = WasmStore();
-  store.callStack.emplace_back();
-  store.callStack.back().exprs = ExpressionIterator(root);
 
+  // TODO: error if no lastModule
+
+  auto instance = store.instances.at(lastModule);
+  store.callStack.emplace_back(instance, ExpressionIterator(root));
   ExpressionInterpreter interpreter(*this);
+
   while (auto& it = store.callStack.back().exprs) {
     if (auto flow = interpreter.visit(*it)) {
       // TODO: Handle control flow transfers.
