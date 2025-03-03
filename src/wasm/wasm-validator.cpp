@@ -42,16 +42,28 @@ template<typename T,
            Expression,
            typename std::remove_pointer<T>::type>::value>::type* = nullptr>
 inline std::ostream&
-printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
+printModuleComponent(T curr, std::ostringstream& stream, Module& wasm) {
   stream << curr << std::endl;
   return stream;
 }
 
 // Extra overload for Expressions, to print their contents.
-inline std::ostream&
-printModuleComponent(Expression* curr, std::ostream& stream, Module& wasm) {
+inline std::ostream& printModuleComponent(Expression* curr,
+                                          std::ostringstream& stream,
+                                          Module& wasm) {
   if (curr) {
-    stream << ModuleExpression(wasm, curr) << '\n';
+    // Print the full expression if we can, but avoid doing so if the output is
+    // already very large. This avoids quadratic output in some cases (e.g. if
+    // we have many nested expressions in each other, all of which fail to
+    // validate).
+    const std::ostringstream::pos_type MAX_OUTPUT = 16 * 1024;
+    if (stream.tellp() < MAX_OUTPUT) {
+      stream << ModuleExpression(wasm, curr) << '\n';
+    } else {
+      // Print something, at least.
+      stream << "[not printing " << getExpressionName(curr)
+             << " because output is already very large]\n";
+    }
   }
   return stream;
 }
@@ -98,7 +110,7 @@ struct ValidationInfo {
     return printModuleComponent(curr, ret, wasm);
   }
 
-  std::ostream& printFailureHeader(Function* func) {
+  std::ostringstream& printFailureHeader(Function* func) {
     auto& stream = getStream(func);
     if (quiet) {
       return stream;
