@@ -327,6 +327,7 @@ enum EncodedType {
   eqref = -0x13,        // 0x6d
   nonnullable = -0x1c,  // 0x64
   nullable = -0x1d,     // 0x63
+  exact = -0x1e,        // 0x62
   contref = -0x18,      // 0x68
   nullcontref = -0x0b,  // 0x75
   // exception handling
@@ -1497,6 +1498,7 @@ public:
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int code);
+  Type getTypeNoExact(int code);
   HeapType getHeapType();
   HeapType getIndexedHeapType();
 
