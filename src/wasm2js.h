@@ -535,11 +535,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
                         {},
                         builder.makeReturn(builder.makeGlobalGet(
                           INT64_TO_32_HIGH_BITS, Type::i32))))));
-    auto e = new Export();
-    e->name = WASM_FETCH_HIGH_BITS;
-    e->value = WASM_FETCH_HIGH_BITS;
-    e->kind = ExternalKind::Function;
-    wasm->addExport(e);
+    wasm->addExport(new Export(
+      WASM_FETCH_HIGH_BITS, ExternalKind::Function, WASM_FETCH_HIGH_BITS));
   }
   if (flags.emscripten) {
     asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));

@@ -822,12 +822,12 @@ void ModuleSplitter::shareImportableItems() {
   // Map internal names to (one of) their corresponding export names. Don't
   // consider functions because they have already been imported and exported as
   // necessary.
-  std::unordered_map<std::pair<ExternalKind, std::variant<Name, HeapType>>,
-                     Name>
-    exports;
+  std::unordered_map<std::pair<ExternalKind, Name>, Name> exports;
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function) {
-      exports[std::make_pair(ex->kind, ex->value)] = ex->name;
+      if (auto* name = ex->getInternalName()) {
+        exports[std::make_pair(ex->kind, *name)] = ex->name;
+      }
     }
   }
 
@@ -847,7 +847,7 @@ void ModuleSplitter::shareImportableItems() {
                                     ? minified.getName()
                                     : genericExportName);
       Name exportName = Names::getValidExportName(primary, baseName);
-      primary.addExport(new Export{exportName, primaryItem.name, kind});
+      primary.addExport(new Export(exportName, kind, primaryItem.name));
       secondaryItem.base = exportName;
     }
   };

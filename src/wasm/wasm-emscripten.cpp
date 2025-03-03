@@ -35,10 +35,8 @@ namespace wasm {
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
-  auto export_ = new Export;
-  export_->value = export_->name = function->name;
-  export_->kind = ExternalKind::Function;
-  wasm.addExport(export_);
+  wasm.addExport(
+    new Export(function->name, ExternalKind::Function, function->name));
 }
 
 Global* getStackPointerGlobal(Module& wasm) {

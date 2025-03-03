@@ -786,7 +786,8 @@ struct RemoveUnusedModuleElements : public Pass {
         continue;
       }
 
-      auto* func = module->getFunction(*exp->getInternalName());
+      auto* name = exp->getInternalName();
+      auto* func = module->getFunction(*name);
       if (!func->body) {
         continue;
       }
@@ -813,7 +814,7 @@ struct RemoveUnusedModuleElements : public Pass {
         }
       }
       if (ok) {
-        exp->value = calledFunc->name;
+        *name = calledFunc->name;
       }
     }
   }

@@ -1182,7 +1182,7 @@ start_eval:
          (localExprs.size() && func->getParams() != Type::none))) {
       auto originalFuncType = wasm.getFunction(funcName)->type;
       auto copyName = Names::getValidFunctionName(wasm, funcName);
-      wasm.getExport(exportName)->value = copyName;
+      *wasm.getExport(exportName)->getInternalName() = copyName;
 
       if (func->imported()) {
         // We must have return-called this imported function. Generate a new
@@ -1329,7 +1329,7 @@ void evalCtors(Module& wasm,
         } else {
           copyFunc->body = interface.getSerialization(*outcome);
         }
-        wasm.getExport(exp->name)->value = copyName;
+        *wasm.getExport(exp->name)->getInternalName() = copyName;
       }
     }
   } catch (FailToEvalException& fail) {

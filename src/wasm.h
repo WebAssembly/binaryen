@@ -2259,8 +2259,16 @@ public:
   // or the exported type, is non-unique (can have multiple exports for an
   // internal, also over kinds)
   Name name;
-  std::variant<Name, HeapType> value; // internal name or exported type
   ExternalKind kind;
+
+private:
+  std::variant<Name, HeapType> value; // internal name or exported type
+
+public:
+  Export(Name name, ExternalKind kind, std::variant<Name, HeapType> value)
+    : name(name), kind(kind), value(value) {
+    assert(std::get_if<Name>(&value));
+  }
   Name* getInternalName() { return std::get_if<Name>(&value); }
 };
 

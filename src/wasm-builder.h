@@ -143,11 +143,7 @@ public:
 
   static std::unique_ptr<Export>
   makeExport(Name name, std::variant<Name, HeapType> value, ExternalKind kind) {
-    auto export_ = std::make_unique<Export>();
-    export_->name = name;
-    export_->value = value;
-    export_->kind = kind;
-    return export_;
+    return std::make_unique<Export>(name, kind, value);
   }
 
   enum Mutability { Mutable, Immutable };

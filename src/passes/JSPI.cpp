@@ -126,7 +126,8 @@ struct JSPI : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function &&
           canChangeState(ex->name.toString(), listedExports)) {
-        auto* func = module->getFunction(*ex->getInternalName());
+        auto* name = ex->getInternalName();
+        auto* func = module->getFunction(*name);
         Name wrapperName;
         auto iter = wrappedExports.find(func->name);
         if (iter == wrappedExports.end()) {
@@ -135,7 +136,7 @@ struct JSPI : public Pass {
         } else {
           wrapperName = iter->second;
         }
-        ex->value = wrapperName;
+        *name = wrapperName;
       }
     }
 

@@ -71,11 +71,12 @@ struct LegalizeJSInterface : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
-        auto* func = module->getFunction(*ex->getInternalName());
+        auto* name = ex->getInternalName();
+        auto* func = module->getFunction(*name);
         if (isIllegal(func)) {
           // Provide a legal function for the export.
           auto legalName = makeLegalStub(func, module);
-          ex->value = legalName;
+          *name = legalName;
           if (exportOriginals) {
             // Also export the original function, before legalization. This is
             // not normally useful for JS, except in cases like dynamic linking

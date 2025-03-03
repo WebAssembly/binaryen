@@ -52,11 +52,12 @@ struct EncloseWorld : public Pass {
     std::vector<std::unique_ptr<Export>> newExports;
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
-        auto* func = module->getFunction(*ex->getInternalName());
+        auto* name = ex->getInternalName();
+        auto* func = module->getFunction(*name);
         // If this opens up types, replace it with an enclosed stub.
         if (opensTypes(func)) {
           auto stubName = makeStubStubForExport(func, module);
-          ex->value = stubName;
+          *name = stubName;
         }
       }
     }
