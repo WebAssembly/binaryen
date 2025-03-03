@@ -84,6 +84,7 @@
 #include "pass.h"
 #include "support/hash.h"
 #include "support/utilities.h"
+#include "wasm-limits.h"
 #include "wasm.h"
 #include <algorithm>
 #include <cassert>
@@ -96,11 +97,6 @@
 #include <vector>
 
 namespace wasm {
-
-// Web limits allow up to 1000 function parameters, but other implementations,
-// such as those on the JVM, only allow up to 255. Do not merge similar
-// functions if the result would require more than this many parameters.
-static constexpr int MaxParams = 255;
 
 // A set of constant values of an instruction different between each functions
 // in an EquivalentClass
@@ -495,7 +491,8 @@ void EquivalentClass::merge(Module* module,
 // than the reduced size.
 bool EquivalentClass::hasMergeBenefit(Module* module,
                                       const std::vector<ParamInfo>& params) {
-  if (params.size() + primaryFunction->getNumParams() > MaxParams) {
+  if (params.size() + primaryFunction->getNumParams() >
+      MaxSyntheticFunctionParams) {
     // It requires too many parameters to merge this equivalence class. In
     // principle, we could try splitting the class into smaller classes of
     // functions that share more constants with each other, but that could
