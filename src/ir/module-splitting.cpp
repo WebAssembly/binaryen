@@ -355,9 +355,9 @@ void ModuleSplitter::setupJSPI() {
   // Support the first version of JSPI, where the JSPI pass added the load
   // secondary module export.
   // TODO: remove this when the new JSPI API is only supported.
-  if (primary.getExportOrNull(LOAD_SECONDARY_MODULE)) {
-    internalLoadSecondaryModule =
-      primary.getExport(LOAD_SECONDARY_MODULE)->value;
+  if (auto* loadSecondary = primary.getExportOrNull(LOAD_SECONDARY_MODULE);
+      loadSecondary && loadSecondary->kind == ExternalKind::Function) {
+    internalLoadSecondaryModule = *loadSecondary->getInternalName();
     // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
     // internally.
     primary.removeExport(LOAD_SECONDARY_MODULE);
@@ -471,7 +471,7 @@ ModuleSplitter::initExportedPrimaryFuncs(const Module& primary) {
   std::map<Name, Name> functionExportNames;
   for (auto& ex : primary.exports) {
     if (ex->kind == ExternalKind::Function) {
-      functionExportNames[ex->value] = ex->name;
+      functionExportNames[*ex->getInternalName()] = ex->name;
     }
   }
   return functionExportNames;
@@ -527,10 +527,10 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        !secondaryFuncs.count(ex->value)) {
+        !secondaryFuncs.count(*ex->getInternalName())) {
       continue;
     }
-    Name secondaryFunc = ex->value;
+    Name secondaryFunc = *ex->getInternalName();
     if (primary.getFunctionOrNull(secondaryFunc)) {
       // We've already created a thunk for this function
       continue;
@@ -823,7 +823,9 @@ void ModuleSplitter::shareImportableItems() {
   std::unordered_map<std::pair<ExternalKind, Name>, Name> exports;
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function) {
-      exports[std::make_pair(ex->kind, ex->value)] = ex->name;
+      if (auto* name = ex->getInternalName()) {
+        exports[std::make_pair(ex->kind, *name)] = ex->name;
+      }
     }
   }
 
@@ -843,7 +845,7 @@ void ModuleSplitter::shareImportableItems() {
                                     ? minified.getName()
                                     : genericExportName);
       Name exportName = Names::getValidExportName(primary, baseName);
-      primary.addExport(new Export{exportName, primaryItem.name, kind});
+      primary.addExport(new Export(exportName, kind, primaryItem.name));
       secondaryItem.base = exportName;
     }
   };

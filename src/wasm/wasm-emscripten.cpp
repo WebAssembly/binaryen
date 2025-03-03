@@ -35,20 +35,8 @@ namespace wasm {
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
-  auto export_ = new Export;
-  export_->name = export_->value = function->name;
-  export_->kind = ExternalKind::Function;
-  wasm.addExport(export_);
-}
-
-// TODO(sbc): There should probably be a better way to do this.
-bool isExported(Module& wasm, Name name) {
-  for (auto& ex : wasm.exports) {
-    if (ex->value == name) {
-      return true;
-    }
-  }
-  return false;
+  wasm.addExport(
+    new Export(function->name, ExternalKind::Function, function->name));
 }
 
 Global* getStackPointerGlobal(Module& wasm) {

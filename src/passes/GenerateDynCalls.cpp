@@ -110,10 +110,7 @@ static void exportFunction(Module& wasm, Name name, bool must_export) {
   if (wasm.getExportOrNull(name)) {
     return; // Already exported
   }
-  auto exp = new Export;
-  exp->name = exp->value = name;
-  exp->kind = ExternalKind::Function;
-  wasm.addExport(exp);
+  wasm.addExport(new Export(name, ExternalKind::Function, name));
 }
 
 void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
