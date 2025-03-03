@@ -775,11 +775,11 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-fp16                                Disable float 16 operations
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-custom-descriptors                   Enable custom descriptors and
-;; CHECK-NEXT:                                                 exact references
+;; CHECK-NEXT:   --enable-custom-descriptors                   Enable custom descriptors (RTTs)
+;; CHECK-NEXT:                                                 and exact references
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors and
-;; CHECK-NEXT:                                                 exact references
+;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
+;; CHECK-NEXT:                                                 (RTTs) and exact references
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:
