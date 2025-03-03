@@ -398,6 +398,7 @@ extern const char* SharedEverythingFeature;
 extern const char* FP16Feature;
 extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
+extern const char* CustomDescriptorsFeature;
 
 enum Subsection {
   NameModule = 0,
