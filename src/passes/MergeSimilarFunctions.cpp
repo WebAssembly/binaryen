@@ -84,6 +84,7 @@
 #include "pass.h"
 #include "support/hash.h"
 #include "support/utilities.h"
+#include "wasm-limits.h"
 #include "wasm.h"
 #include <algorithm>
 #include <cassert>
@@ -490,6 +491,15 @@ void EquivalentClass::merge(Module* module,
 // than the reduced size.
 bool EquivalentClass::hasMergeBenefit(Module* module,
                                       const std::vector<ParamInfo>& params) {
+  if (params.size() + primaryFunction->getNumParams() >
+      MaxSyntheticFunctionParams) {
+    // It requires too many parameters to merge this equivalence class. In
+    // principle, we could try splitting the class into smaller classes of
+    // functions that share more constants with each other, but that could
+    // be expensive. TODO: investigate splitting the class.
+    return false;
+  }
+
   size_t funcCount = functions.size();
   Index exprSize = Measurer::measure(primaryFunction->body);
   size_t thunkCount = funcCount;

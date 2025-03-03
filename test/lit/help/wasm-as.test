@@ -128,11 +128,11 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors and exact
-;; CHECK-NEXT:                                        references
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors and exact
-;; CHECK-NEXT:                                        references
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
