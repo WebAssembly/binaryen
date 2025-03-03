@@ -355,11 +355,9 @@ void ModuleSplitter::setupJSPI() {
   // Support the first version of JSPI, where the JSPI pass added the load
   // secondary module export.
   // TODO: remove this when the new JSPI API is only supported.
-  if (primary.getExportOrNull(LOAD_SECONDARY_MODULE) &&
-      primary.getExport(LOAD_SECONDARY_MODULE)->kind ==
-        ExternalKind::Function) {
-    internalLoadSecondaryModule =
-      *primary.getExport(LOAD_SECONDARY_MODULE)->getInternalName();
+  if (auto* loadSecondary = primary.getExportOrNull(LOAD_SECONDARY_MODULE);
+      loadSecondary && loadSecondary->kind == ExternalKind::Function) {
+    internalLoadSecondaryModule = *loadSecondary->getInternalName();
     // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
     // internally.
     primary.removeExport(LOAD_SECONDARY_MODULE);
