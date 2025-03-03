@@ -56,7 +56,7 @@ inline std::ostream& printModuleComponent(Expression* curr,
     // already very large. This avoids quadratic output in some cases (e.g. if
     // we have many nested expressions in each other, all of which fail to
     // validate).
-    const std::ostringstream::pos_type MAX_OUTPUT = 100 * 1024;
+    const std::ostringstream::pos_type MAX_OUTPUT = 16 * 1024;
     if (stream.tellp() < MAX_OUTPUT) {
       stream << ModuleExpression(wasm, curr) << '\n';
     } else {
