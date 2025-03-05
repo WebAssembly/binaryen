@@ -27,7 +27,7 @@ using namespace wasm;
 
 // uInt32
 TEST(InterpreterTest, AddI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
@@ -46,7 +46,7 @@ TEST(InterpreterTest, AddI32) {
 }
 
 TEST(InterpreterTest, SubI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
@@ -65,7 +65,7 @@ TEST(InterpreterTest, SubI32) {
 }
 
 TEST(InterpreterTest, MulI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
@@ -84,7 +84,7 @@ TEST(InterpreterTest, MulI32) {
 }
 
 TEST(InterpreterTest, EqI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
@@ -103,7 +103,7 @@ TEST(InterpreterTest, EqI32) {
 }
 
 TEST(InterpreterTest, LtUI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
@@ -122,7 +122,7 @@ TEST(InterpreterTest, LtUI32) {
 }
 
 TEST(InterpreterTest, GtUI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(1))).getErr());
@@ -142,7 +142,7 @@ TEST(InterpreterTest, GtUI32) {
 
 // sInt32
 TEST(InterpreterTest, LtSI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int32_t(-1))).getErr());
@@ -161,7 +161,7 @@ TEST(InterpreterTest, LtSI32) {
 }
 
 TEST(InterpreterTest, GtSI32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int32_t(-3))).getErr());
@@ -181,7 +181,7 @@ TEST(InterpreterTest, GtSI32) {
 
 // uInt64
 TEST(InterpreterTest, AddI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
@@ -200,7 +200,7 @@ TEST(InterpreterTest, AddI64) {
 }
 
 TEST(InterpreterTest, SubI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
@@ -219,7 +219,7 @@ TEST(InterpreterTest, SubI64) {
 }
 
 TEST(InterpreterTest, MulI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
@@ -238,7 +238,7 @@ TEST(InterpreterTest, MulI64) {
 }
 
 TEST(InterpreterTest, EqI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
@@ -257,7 +257,7 @@ TEST(InterpreterTest, EqI64) {
 }
 
 TEST(InterpreterTest, LtUI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
@@ -276,7 +276,7 @@ TEST(InterpreterTest, LtUI64) {
 }
 
 TEST(InterpreterTest, GtUI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint64_t(1))).getErr());
@@ -296,7 +296,7 @@ TEST(InterpreterTest, GtUI64) {
 
 // sInt64
 TEST(InterpreterTest, LtSI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int64_t(-1))).getErr());
@@ -315,7 +315,7 @@ TEST(InterpreterTest, LtSI64) {
 }
 
 TEST(InterpreterTest, GtSI64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(int64_t(-3))).getErr());
@@ -335,7 +335,7 @@ TEST(InterpreterTest, GtSI64) {
 
 // Float32
 TEST(InterpreterTest, AddF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(0.0))).getErr());
@@ -354,7 +354,7 @@ TEST(InterpreterTest, AddF32) {
 }
 
 TEST(InterpreterTest, SubF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
@@ -373,7 +373,7 @@ TEST(InterpreterTest, SubF32) {
 }
 
 TEST(InterpreterTest, MulF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
@@ -392,7 +392,7 @@ TEST(InterpreterTest, MulF32) {
 }
 
 TEST(InterpreterTest, DivF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(5.0))).getErr());
@@ -411,7 +411,7 @@ TEST(InterpreterTest, DivF32) {
 }
 
 TEST(InterpreterTest, EqF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.0))).getErr());
@@ -430,7 +430,7 @@ TEST(InterpreterTest, EqF32) {
 }
 
 TEST(InterpreterTest, SqrtF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(5.0))).getErr());
@@ -448,7 +448,7 @@ TEST(InterpreterTest, SqrtF32) {
 }
 
 TEST(InterpreterTest, CeilF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
@@ -466,7 +466,7 @@ TEST(InterpreterTest, CeilF32) {
 }
 
 TEST(InterpreterTest, FloorF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(1.5))).getErr());
@@ -484,7 +484,7 @@ TEST(InterpreterTest, FloorF32) {
 }
 
 TEST(InterpreterTest, TruncF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(2.017281))).getErr());
@@ -502,7 +502,7 @@ TEST(InterpreterTest, TruncF32) {
 }
 
 TEST(InterpreterTest, NearF32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(float(2.5))).getErr());
@@ -521,7 +521,7 @@ TEST(InterpreterTest, NearF32) {
 
 // Float 64
 TEST(InterpreterTest, AddF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(0.0))).getErr());
@@ -540,7 +540,7 @@ TEST(InterpreterTest, AddF64) {
 }
 
 TEST(InterpreterTest, SubF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.0))).getErr());
@@ -559,7 +559,7 @@ TEST(InterpreterTest, SubF64) {
 }
 
 TEST(InterpreterTest, MulF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.5))).getErr());
@@ -578,7 +578,7 @@ TEST(InterpreterTest, MulF64) {
 }
 
 TEST(InterpreterTest, DivF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(5.0))).getErr());
@@ -597,7 +597,7 @@ TEST(InterpreterTest, DivF64) {
 }
 
 TEST(InterpreterTest, EqF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.0))).getErr());
@@ -616,7 +616,7 @@ TEST(InterpreterTest, EqF64) {
 }
 
 TEST(InterpreterTest, SqrtF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(5.0))).getErr());
@@ -634,7 +634,7 @@ TEST(InterpreterTest, SqrtF64) {
 }
 
 TEST(InterpreterTest, CeilF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.5))).getErr());
@@ -652,7 +652,7 @@ TEST(InterpreterTest, CeilF64) {
 }
 
 TEST(InterpreterTest, FloorF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(1.5))).getErr());
@@ -670,7 +670,7 @@ TEST(InterpreterTest, FloorF64) {
 }
 
 TEST(InterpreterTest, TruncF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(2.017281))).getErr());
@@ -688,7 +688,7 @@ TEST(InterpreterTest, TruncF64) {
 }
 
 TEST(InterpreterTest, NearF64) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(double(2.5))).getErr());
@@ -705,13 +705,13 @@ TEST(InterpreterTest, NearF64) {
   EXPECT_EQ(results, expected);
 }
 
-TEST(InterpreterTest, Globali32) {
-  std::shared_ptr<Module> wasm = std::make_shared<Module>();
+TEST(InterpreterTest, GlobalI32) {
+  auto wasm = std::make_shared<Module>();
   IRBuilder builder(*wasm);
 
   ASSERT_FALSE(builder.makeConst(Literal(uint32_t(5))).getErr());
-  ASSERT_FALSE(builder.makeGlobalSet(Name("$global")).getErr());
-  ASSERT_FALSE(builder.makeGlobalGet(Name("$global")).getErr());
+  ASSERT_FALSE(builder.makeGlobalSet("global").getErr());
+  ASSERT_FALSE(builder.makeGlobalGet("global").getErr());
 
   auto expr = builder.build();
   ASSERT_FALSE(expr.getErr());

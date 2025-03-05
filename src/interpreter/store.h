@@ -30,7 +30,7 @@ struct Instance {
   std::shared_ptr<Module> wasm;
   std::unordered_map<Name, Literal> globalValues;
 
-  Instance(std::shared_ptr<Module> wasm) : wasm(wasm) {};
+  Instance(std::shared_ptr<Module> wasm) : wasm(std::move(wasm)) {};
 };
 
 // A frame of execution for a function call.

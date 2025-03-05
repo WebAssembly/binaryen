@@ -278,7 +278,9 @@ std::vector<Literal> Interpreter::run(Expression* root) {
     }
   }
 
-  return store.callStack.back().valueStack;
+  auto valueStack = store.callStack.back().valueStack;
+  store.callStack.pop_back();
+  return valueStack;
 }
 
 } // namespace wasm
