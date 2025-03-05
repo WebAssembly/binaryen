@@ -155,6 +155,8 @@ struct Shell {
     auto instanceInfo = instantiate(*wasm);
     CHECK_ERR(instanceInfo);
 
+    // add the instance to the Interpreter
+
     auto& [interface, instance] = *instanceInfo;
     lastModule = wasm->name;
     modules[lastModule] = std::move(wasm);

@@ -40,8 +40,8 @@ struct Frame {
   std::vector<Literal> valueStack;
   ExpressionIterator exprs;
 
-  Frame(Instance& instance, ExpressionIterator exprs)
-    : instance(instance), exprs(exprs) {};
+  Frame(Instance& instance, ExpressionIterator&& exprs)
+    : instance(instance), exprs(std::move(exprs)) {};
 
   // TODO: Map loops to ExpressionIterators so we can branch backwards.
 

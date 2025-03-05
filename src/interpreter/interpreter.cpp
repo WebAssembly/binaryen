@@ -29,9 +29,6 @@ public:
   static WasmStore& getStore(Interpreter& interpreter) {
     return interpreter.store;
   }
-  static Frame& getFrame(Interpreter& interpreter) {
-    return interpreter.store.callStack.back();
-  }
 };
 
 namespace {
@@ -50,7 +47,8 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   ExpressionInterpreter(Interpreter& parent) : parent(parent) {}
 
   WasmStore& store() { return InterpreterImpl::getStore(parent); }
-  Frame& frame() { return InterpreterImpl::getFrame(parent); }
+  Frame& frame() { return store().callStack.back(); }
+  Instance& instance() { return frame().instance; }
 
   void push(Literal val) { store().push(val); }
   Literal pop() { return store().pop(); }
@@ -66,13 +64,11 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitLocalGet(LocalGet* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalSet(LocalSet* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitGlobalGet(GlobalGet* curr) {
-    push(frame().instance.globalValues[curr->name]);
+    push(instance().globalValues[curr->name]);
     return {};
   }
   Flow visitGlobalSet(GlobalSet* curr) {
-    auto value = pop();
-    std::cerr << value;
-    frame().instance.globalValues[curr->name] = value;
+    instance().globalValues[curr->name] = pop();
     return {};
   }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("TODO"); }
