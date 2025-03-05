@@ -1126,6 +1126,8 @@ enum ASTNodes {
   I31GetS = 0x1d,
   I31GetU = 0x1e,
   RefI31Shared = 0x1f,
+  RefTestRT = 0x20,
+  RefCastRT = 0x21,
 
   // Shared GC Opcodes
 

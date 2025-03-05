@@ -2260,22 +2260,36 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->castType.isNullable()) {
-    o << U32LEB(BinaryConsts::RefTestNull);
+  if (curr->castType.isExact()) {
+    // Fall back to the general form with a reftype immediate.
+    o << U32LEB(BinaryConsts::RefTestRT);
+    parent.writeType(curr->castType);
   } else {
-    o << U32LEB(BinaryConsts::RefTest);
+    // Use the special-case form with heap type immediate.
+    if (curr->castType.isNullable()) {
+      o << U32LEB(BinaryConsts::RefTestNull);
+    } else {
+      o << U32LEB(BinaryConsts::RefTest);
+    }
+    parent.writeHeapType(curr->castType.getHeapType());
   }
-  parent.writeHeapType(curr->castType.getHeapType());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->type.isNullable()) {
-    o << U32LEB(BinaryConsts::RefCastNull);
+  if (curr->type.isExact()) {
+    // Fall back to the general form with a reftype immediate.
+    o << U32LEB(BinaryConsts::RefTestRT);
+    parent.writeType(curr->type);
   } else {
-    o << U32LEB(BinaryConsts::RefCast);
+    // Use the special-case form with heap type immediate.
+    if (curr->type.isNullable()) {
+      o << U32LEB(BinaryConsts::RefCastNull);
+    } else {
+      o << U32LEB(BinaryConsts::RefCast);
+    }
+    parent.writeHeapType(curr->type.getHeapType());
   }
-  parent.writeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -2298,8 +2312,15 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       }
       assert(curr->ref->type.isRef());
       assert(Type::isSubType(curr->castType, curr->ref->type));
+      bool srcExact = false;
+      bool dstExact = false;
+      if (parent.getModule()->features.hasCustomDescriptors()) {
+        srcExact = curr->ref->type.isExact();
+        dstExact = curr->castType.isExact();
+      }
       uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
-                      (curr->castType.isNullable() ? 2 : 0);
+                      (curr->castType.isNullable() ? 2 : 0) |
+                      (srcExact ? 4 : 0) | (dstExact ? 8 : 0);
       o << flags;
       o << U32LEB(getBreakIndex(curr->name));
       parent.writeHeapType(curr->ref->type.getHeapType());
