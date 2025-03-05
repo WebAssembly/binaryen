@@ -249,25 +249,19 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
 
 } // anonymous namespace
 
-Result<> Interpreter::addInstance(Name name, std::shared_ptr<Module> wasm) {
-  if (store.instances.find(name) != store.instances.end()) {
-    return Err{"existing instance with name"};
-  }
-
-  Instance instance(wasm);
-  store.instances.insert({name, instance});
-  lastModule = name;
+Result<> Interpreter::addInstance(std::shared_ptr<Module> wasm) {
+  store.instances.emplace_back(wasm);
   return Ok{};
 }
 
 std::vector<Literal> Interpreter::run(Expression* root) {
   // Create a fresh store and execution frame, then run the expression to
   // completion.
+  static Instance dummyInstance = Instance(std::make_shared<Module>());
 
-  // TODO: error if no lastModule
-
-  auto instance = store.instances.at(lastModule);
-  store.callStack.emplace_back(instance, ExpressionIterator(root));
+  store.callStack.emplace_back(store.instances.empty() ? dummyInstance
+                                                       : store.instances.back(),
+                               ExpressionIterator(root));
   ExpressionInterpreter interpreter(*this);
 
   while (auto& it = store.callStack.back().exprs) {

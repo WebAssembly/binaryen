@@ -27,12 +27,11 @@ public:
   // TODO: Methods to instantiate modules.
   // TODO: Methods to run exported functions.
 
-  Result<> addInstance(Name module, std::shared_ptr<Module> wasm);
+  Result<> addInstance(std::shared_ptr<Module> wasm);
   std::vector<Literal> run(Expression* root);
 
 private:
   interpreter::WasmStore store;
-  Name lastModule;
   friend class InterpreterImpl;
 };
 

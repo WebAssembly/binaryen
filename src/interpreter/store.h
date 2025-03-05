@@ -64,7 +64,7 @@ struct WasmStore {
   // TODO: Storage for memories, tables, globals, heap objects, etc.
   // TODO: Map instances and import names to other instances to find imports.
   std::vector<Frame> callStack;
-  std::unordered_map<Name, Instance> instances;
+  std::vector<Instance> instances;
 
   Frame& getFrame() {
     assert(!callStack.empty());
