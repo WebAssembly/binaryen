@@ -2355,7 +2355,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types [--enable-reference-types]");
-  if (!shouldBeTrue(curr->type.isRef() && curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
                     "ref.func should have a non-nullable reference type")) {
     return;
@@ -2856,7 +2856,7 @@ void FunctionValidator::visitRefI31(RefI31* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->type.isRef() && curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
                     "ref.i31 should have a non-nullable reference type")) {
     return;
@@ -2988,7 +2988,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(curr->type.isRef() && curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
                     "struct.new should have a non-nullable reference type")) {
     return;
@@ -3226,7 +3226,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeTrue(curr->type.isRef() && curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
                     "array.new should have a non-nullable reference type")) {
     return;
@@ -3665,7 +3665,7 @@ void FunctionValidator::visitContNew(ContNew* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->type.isRef() && curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
                     "cont.new should have a non-nullable reference type")) {
     return;
@@ -3701,7 +3701,7 @@ void FunctionValidator::visitContBind(ContBind* curr) {
     return;
   }
 
-  if (!shouldBeTrue(curr->type.isRef() && curr->type.isNonNullable(),
+  if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
                     "cont.bind should have a non-nullable reference type")) {
     return;
