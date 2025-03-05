@@ -2279,7 +2279,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isExact()) {
     // Fall back to the general form with a reftype immediate.
-    o << U32LEB(BinaryConsts::RefTestRT);
+    o << U32LEB(BinaryConsts::RefCastRT);
     parent.writeType(curr->type);
   } else {
     // Use the special-case form with heap type immediate.

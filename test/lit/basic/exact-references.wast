@@ -128,34 +128,34 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $ref-cast (type $3) (param $0 (exact eqref))
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (ref.test (ref exact eq)
+  ;; CHECK-BIN-NEXT:   (ref.cast (ref exact eq)
   ;; CHECK-BIN-NEXT:    (local.get $0)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (ref.test (exact eqref)
+  ;; CHECK-BIN-NEXT:   (ref.cast (exact eqref)
   ;; CHECK-BIN-NEXT:    (local.get $0)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (ref.test (ref exact none)
+  ;; CHECK-BIN-NEXT:   (ref.cast (ref exact none)
   ;; CHECK-BIN-NEXT:    (local.get $0)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   ;; NO-EXACT:      (func $ref-cast (type $3) (param $0 eqref)
   ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.test (ref eq)
+  ;; NO-EXACT-NEXT:   (ref.cast (ref eq)
   ;; NO-EXACT-NEXT:    (local.get $0)
   ;; NO-EXACT-NEXT:   )
   ;; NO-EXACT-NEXT:  )
   ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.test eqref
+  ;; NO-EXACT-NEXT:   (ref.cast eqref
   ;; NO-EXACT-NEXT:    (local.get $0)
   ;; NO-EXACT-NEXT:   )
   ;; NO-EXACT-NEXT:  )
   ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.test (ref none)
+  ;; NO-EXACT-NEXT:   (ref.cast (ref none)
   ;; NO-EXACT-NEXT:    (local.get $0)
   ;; NO-EXACT-NEXT:   )
   ;; NO-EXACT-NEXT:  )
@@ -367,17 +367,17 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $3) (param $0 (exact eqref))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.test (ref exact eq)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.cast (ref exact eq)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.test (exact eqref)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.cast (exact eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.test (ref exact none)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.cast (ref exact none)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
