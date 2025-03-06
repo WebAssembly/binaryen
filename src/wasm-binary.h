@@ -304,6 +304,13 @@ enum SegmentFlag {
   UsesExpressions = 1 << 2
 };
 
+enum BrOnCastFlag {
+  InputNullable = 1 << 0,
+  OutputNullable = 1 << 1,
+  InputExact = 1 << 2,
+  OutputExact = 1 << 3,
+};
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f

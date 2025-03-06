@@ -4263,10 +4263,16 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::BrOnCastFail: {
           auto flags = getInt8();
           auto label = getU32LEB();
-          auto srcNull = (flags & 1) ? Nullable : NonNullable;
-          auto dstNull = (flags & 2) ? Nullable : NonNullable;
-          auto srcExact = (flags & 4) ? Exact : Inexact;
-          auto dstExact = (flags & 8) ? Exact : Inexact;
+          auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto dstNull = (flags & BinaryConsts::BrOnCastFlag::OutputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto srcExact =
+            (flags & BinaryConsts::BrOnCastFlag::InputExact) ? Exact : Inexact;
+          auto dstExact =
+            (flags & BinaryConsts::BrOnCastFlag::OutputExact) ? Exact : Inexact;
           auto in = Type(getHeapType(), srcNull, srcExact);
           auto cast = Type(getHeapType(), dstNull, dstExact);
           auto kind = op == BinaryConsts::BrOnCast ? BrOnCast : BrOnCastFail;

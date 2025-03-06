@@ -2314,15 +2314,24 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       }
       assert(curr->ref->type.isRef());
       assert(Type::isSubType(curr->castType, curr->ref->type));
-      bool srcExact = false;
-      bool dstExact = false;
-      if (parent.getModule()->features.hasCustomDescriptors()) {
-        srcExact = curr->ref->type.isExact();
-        dstExact = curr->castType.isExact();
+      uint8_t flags = 0;
+      if (curr->ref->type.isNullable()) {
+        flags |= BinaryConsts::BrOnCastFlag::InputNullable;
       }
-      uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
-                      (curr->castType.isNullable() ? 2 : 0) |
-                      (srcExact ? 4 : 0) | (dstExact ? 8 : 0);
+      if (curr->castType.isNullable()) {
+        flags |= BinaryConsts::BrOnCastFlag::OutputNullable;
+      }
+      if (parent.getModule()->features.hasCustomDescriptors()) {
+        // If custom descriptors (and therefore exact references) are not
+        // enabled, then these flags wouldn't be recognized, and we will be
+        // generalizing all exact references to be non-exact anyway.
+        if (curr->ref->type.isExact()) {
+          flags |= BinaryConsts::BrOnCastFlag::InputExact;
+        }
+        if (curr->castType.isExact()) {
+          flags |= BinaryConsts::BrOnCastFlag::OutputExact;
+        }
+      }
       o << flags;
       o << U32LEB(getBreakIndex(curr->name));
       parent.writeHeapType(curr->ref->type.getHeapType());

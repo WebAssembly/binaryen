@@ -12,8 +12,8 @@
 ;; Also check that if we emit a binary without custom descriptors enabled, the
 ;; types are generalized to be inexact.
 
-;; RUN: wasm-opt %s -all --disable-custom-descriptors -g -o - | wasm-opt -all -S -o - \
-;; RUN:     | filecheck %s --check-prefix=NO-EXACT
+;; RUN: wasm-opt %s -all --disable-custom-descriptors -g -o %t.noexact.wasm
+;; RUN: wasm-opt %t.noexact.wasm -all -S -o - | filecheck %s --check-prefix=NO-EXACT
 
 (module
   ;; CHECK-TEXT:      (type $foo (struct (field (exact anyref)) (field (ref exact any)) (field (ref null exact $foo)) (field (ref exact $foo))))
