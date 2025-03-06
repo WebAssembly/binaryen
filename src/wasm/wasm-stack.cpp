@@ -2260,7 +2260,8 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->castType.isExact()) {
+  if (curr->castType.isExact() &&
+      parent.getModule()->features.hasCustomDescriptors()) {
     // Fall back to the general form with a reftype immediate.
     o << U32LEB(BinaryConsts::RefTestRT);
     parent.writeType(curr->castType);
@@ -2277,7 +2278,8 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->type.isExact()) {
+  if (curr->type.isExact() &&
+      parent.getModule()->features.hasCustomDescriptors()) {
     // Fall back to the general form with a reftype immediate.
     o << U32LEB(BinaryConsts::RefCastRT);
     parent.writeType(curr->type);
