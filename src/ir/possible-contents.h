@@ -61,8 +61,8 @@ namespace wasm {
 //                     not track what they might be, so we must assume the worst
 //                     in the calling code.
 //
-// This is almost but not quite a lattice. In particular, we lack the
-// distributive property:
+// This is a lattice, but it is not a distributive lattice
+// (https://en.wikipedia.org/wiki/Lattice_(order)#Distributivity):
 //
 //   Cone(ref func) ^ [(ref.func $foo) u (ref.null func)] =
 //   Cone(ref func) ^ Cone(ref null func) =            ;; best shape that can
