@@ -38,7 +38,6 @@ TEST(InterpreterTest, AddI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(3))};
 
@@ -57,7 +56,6 @@ TEST(InterpreterTest, SubI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(-1))};
 
@@ -76,7 +74,6 @@ TEST(InterpreterTest, MulI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(2))};
 
@@ -95,7 +92,6 @@ TEST(InterpreterTest, EqI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
@@ -114,7 +110,6 @@ TEST(InterpreterTest, LtUI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(1))};
 
@@ -133,7 +128,6 @@ TEST(InterpreterTest, GtUI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
@@ -153,7 +147,6 @@ TEST(InterpreterTest, LtSI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(0))};
 
@@ -172,7 +165,6 @@ TEST(InterpreterTest, GtSI32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(1))};
 
@@ -192,7 +184,6 @@ TEST(InterpreterTest, AddI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint64_t(3))};
 
@@ -211,7 +202,6 @@ TEST(InterpreterTest, SubI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint64_t(-1))};
 
@@ -230,7 +220,6 @@ TEST(InterpreterTest, MulI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint64_t(2))};
 
@@ -249,7 +238,6 @@ TEST(InterpreterTest, EqI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
@@ -268,7 +256,6 @@ TEST(InterpreterTest, LtUI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(1))};
 
@@ -287,7 +274,6 @@ TEST(InterpreterTest, GtUI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
@@ -307,7 +293,6 @@ TEST(InterpreterTest, LtSI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(0))};
 
@@ -326,7 +311,6 @@ TEST(InterpreterTest, GtSI64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(int32_t(1))};
 
@@ -346,7 +330,6 @@ TEST(InterpreterTest, AddF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(1.0))};
 
@@ -365,7 +348,6 @@ TEST(InterpreterTest, SubF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(-1.0))};
 
@@ -384,7 +366,6 @@ TEST(InterpreterTest, MulF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(3.0))};
 
@@ -403,7 +384,6 @@ TEST(InterpreterTest, DivF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.5))};
 
@@ -422,7 +402,6 @@ TEST(InterpreterTest, EqF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
@@ -440,7 +419,6 @@ TEST(InterpreterTest, SqrtF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.2360679775))};
 
@@ -458,7 +436,6 @@ TEST(InterpreterTest, CeilF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.0))};
 
@@ -476,7 +453,6 @@ TEST(InterpreterTest, FloorF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(1.0))};
 
@@ -494,7 +470,6 @@ TEST(InterpreterTest, TruncF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.0))};
 
@@ -512,7 +487,6 @@ TEST(InterpreterTest, NearF32) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(float(2.0))};
 
@@ -532,7 +506,6 @@ TEST(InterpreterTest, AddF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(1.0))};
 
@@ -570,7 +543,6 @@ TEST(InterpreterTest, MulF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(3.0))};
 
@@ -589,7 +561,6 @@ TEST(InterpreterTest, DivF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.5))};
 
@@ -608,7 +579,6 @@ TEST(InterpreterTest, EqF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(uint32_t(0))};
 
@@ -626,7 +596,6 @@ TEST(InterpreterTest, SqrtF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.23606797749979))};
 
@@ -644,7 +613,6 @@ TEST(InterpreterTest, CeilF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(2.0))};
 
@@ -662,7 +630,6 @@ TEST(InterpreterTest, FloorF64) {
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
-
   auto results = interpreter.run(*expr);
   std::vector<Literal> expected{Literal(double(1.0))};
 
@@ -704,24 +671,30 @@ TEST(InterpreterTest, NearF64) {
   EXPECT_EQ(results, expected);
 }
 
-/*TEST(InterpreterTest, GlobalI32) {
+TEST(InterpreterTest, GlobalI32) {
   auto wasm = std::make_shared<Module>();
   Builder builder(*wasm);
-  IRBuilder builder(*wasm);
-  builder.makeGlobal("global",
-  wasm.addGlobal(
+  IRBuilder irBuilder(*wasm);
+  wasm->addGlobal(
+    builder.makeGlobal("global",
+                       Type::i32,
+                       builder.makeConst(Literal::makeZero(Type::i32)),
+                       Builder::Mutable));
 
-  ASSERT_FALSE(builder.makeConst(Literal(uint32_t(5))).getErr());
-  ASSERT_FALSE(builder.makeGlobalSet("global").getErr());
-  ASSERT_FALSE(builder.makeGlobalGet("global").getErr());
+  ASSERT_FALSE(
+    irBuilder.makeBlock(Name{}, Signature(Type::none, Type::i32)).getErr());
+  ASSERT_FALSE(irBuilder.makeConst(Literal(int32_t(5))).getErr());
+  ASSERT_FALSE(irBuilder.makeGlobalSet("global").getErr());
+  ASSERT_FALSE(irBuilder.makeGlobalGet("global").getErr());
+  ASSERT_FALSE(irBuilder.visitEnd().getErr());
 
-  auto expr = builder.build();
+  auto expr = irBuilder.build();
   ASSERT_FALSE(expr.getErr());
 
   Interpreter interpreter;
   auto result = interpreter.addInstance(wasm);
   auto results = interpreter.run(*expr);
-  std::vector<Literal> expected{Literal(uint32_t(5))};
+  std::vector<Literal> expected{Literal(int32_t(5))};
 
   EXPECT_EQ(results, expected);
-}*/
+}

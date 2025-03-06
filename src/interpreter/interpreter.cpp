@@ -54,7 +54,7 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Literal pop() { return store().pop(); }
 
   Flow visitNop(Nop* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitBlock(Block* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitBlock(Block* curr) { return {}; }
   Flow visitIf(If* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitBreak(Break* curr) { WASM_UNREACHABLE("TODO"); }
