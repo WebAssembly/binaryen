@@ -4251,16 +4251,30 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeRefTest(Type(getHeapType(), NonNullable));
         case BinaryConsts::RefTestNull:
           return builder.makeRefTest(Type(getHeapType(), Nullable));
+        case BinaryConsts::RefTestRT:
+          return builder.makeRefTest(getType());
         case BinaryConsts::RefCast:
           return builder.makeRefCast(Type(getHeapType(), NonNullable));
         case BinaryConsts::RefCastNull:
           return builder.makeRefCast(Type(getHeapType(), Nullable));
+        case BinaryConsts::RefCastRT:
+          return builder.makeRefCast(getType());
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail: {
           auto flags = getInt8();
           auto label = getU32LEB();
-          auto in = Type(getHeapType(), (flags & 1) ? Nullable : NonNullable);
-          auto cast = Type(getHeapType(), (flags & 2) ? Nullable : NonNullable);
+          auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto dstNull = (flags & BinaryConsts::BrOnCastFlag::OutputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto srcExact =
+            (flags & BinaryConsts::BrOnCastFlag::InputExact) ? Exact : Inexact;
+          auto dstExact =
+            (flags & BinaryConsts::BrOnCastFlag::OutputExact) ? Exact : Inexact;
+          auto in = Type(getHeapType(), srcNull, srcExact);
+          auto cast = Type(getHeapType(), dstNull, dstExact);
           auto kind = op == BinaryConsts::BrOnCast ? BrOnCast : BrOnCastFail;
           return builder.makeBrOn(label, kind, in, cast);
         }

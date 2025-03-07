@@ -304,6 +304,13 @@ enum SegmentFlag {
   UsesExpressions = 1 << 2
 };
 
+enum BrOnCastFlag {
+  InputNullable = 1 << 0,
+  OutputNullable = 1 << 1,
+  InputExact = 1 << 2,
+  OutputExact = 1 << 3,
+};
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
@@ -1126,6 +1133,8 @@ enum ASTNodes {
   I31GetS = 0x1d,
   I31GetU = 0x1e,
   RefI31Shared = 0x1f,
+  RefTestRT = 0x20,
+  RefCastRT = 0x21,
 
   // Shared GC Opcodes
 
