@@ -19,9 +19,10 @@
  )
  ;; CHECK:      (func $cast-null-to-exact-none (type $1) (result (exact nullref))
  ;; CHECK-NEXT:  (local $0 nullref)
- ;; CHECK-NEXT:  (ref.cast (exact nullref)
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: )
  (func $cast-null-to-exact-none (result (exact nullref))
   (local nullref)
