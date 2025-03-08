@@ -800,6 +800,7 @@ void MemoryGrow::finalize() {
 
 void RefNull::finalize(HeapType heapType) {
   assert(heapType.isBottom());
+  // TODO: Make this exact.
   type = Type(heapType, Nullable);
 }
 
@@ -922,6 +923,7 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
   // wasm spec defines when GC is enabled (=== non-nullable types are allowed).
   // If GC is not enabled then we emit a nullable type in the binary format in
   // WasmBinaryWriter::writeType.
+  // TODO: Make this exact.
   Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
@@ -976,6 +978,7 @@ void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     assert(type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31));
   }
 }
@@ -1011,10 +1014,12 @@ void CallRef::finalize() {
     // unreachable instead (and similar in other GC accessors), although this
     // would currently cause the parser to admit more invalid modules.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     } else if (type.isTuple()) {
       Tuple elems;
       for (auto t : type) {
+        // TODO: Make this exact.
         elems.push_back(
           t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
       }
@@ -1071,7 +1076,8 @@ void BrOn::finalize() {
   switch (op) {
     case BrOnNull:
       // If we do not branch, we flow out the existing value as non-null.
-      type = Type(ref->type.getHeapType(), NonNullable);
+      type =
+        Type(ref->type.getHeapType(), NonNullable, ref->type.getExactness());
       break;
     case BrOnNonNull:
       // If we do not branch, we flow out nothing (the spec could also have had
@@ -1081,7 +1087,8 @@ void BrOn::finalize() {
     case BrOnCast:
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
-        type = Type(ref->type.getHeapType(), NonNullable);
+        type =
+          Type(ref->type.getHeapType(), NonNullable, ref->type.getExactness());
       } else {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
@@ -1092,7 +1099,9 @@ void BrOn::finalize() {
       if (castType.isNullable()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
-        type = Type(castType.getHeapType(), ref->type.getNullability());
+        type = Type(castType.getHeapType(),
+                    ref->type.getNullability(),
+                    castType.getExactness());
       } else {
         // Nulls take the branch, so the result is non-nullable.
         type = castType;
@@ -1115,11 +1124,14 @@ Type BrOn::getSentType() {
         return Type::unreachable;
       }
       // BrOnNonNull sends the non-nullable type on the branch.
-      return Type(ref->type.getHeapType(), NonNullable);
+      return Type(
+        ref->type.getHeapType(), NonNullable, ref->type.getExactness());
     case BrOnCast:
       // The same as the result type of br_on_cast_fail.
       if (castType.isNullable()) {
-        return Type(castType.getHeapType(), ref->type.getNullability());
+        return Type(castType.getHeapType(),
+                    ref->type.getNullability(),
+                    castType.getExactness());
       } else {
         return castType;
       }
@@ -1129,7 +1141,8 @@ Type BrOn::getSentType() {
         return Type::unreachable;
       }
       if (castType.isNullable()) {
-        return Type(ref->type.getHeapType(), NonNullable);
+        return Type(
+          ref->type.getHeapType(), NonNullable, ref->type.getExactness());
       } else {
         return ref->type;
       }
@@ -1150,6 +1163,7 @@ void StructGet::finalize() {
   } else if (ref->type.isNull()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     }
   } else {
@@ -1225,6 +1239,7 @@ void ArrayGet::finalize() {
   } else if (ref->type.isNull()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     }
   } else {
@@ -1300,17 +1315,20 @@ void RefAs::finalize() {
     return;
   }
   auto valHeapType = value->type.getHeapType();
+  auto exactness = value->type.getExactness();
   switch (op) {
     case RefAsNonNull:
-      type = Type(valHeapType, NonNullable);
+      type = Type(valHeapType, NonNullable, exactness);
       break;
     case AnyConvertExtern:
       type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
-                  value->type.getNullability());
+                  value->type.getNullability(),
+                  Inexact);
       break;
     case ExternConvertAny:
       type = Type(HeapTypes::ext.getBasic(valHeapType.getShared()),
-                  value->type.getNullability());
+                  value->type.getNullability(),
+                  Inexact);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
@@ -1323,11 +1341,15 @@ void StringNew::finalize() {
       (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
 
-void StringConst::finalize() { type = Type(HeapType::string, NonNullable); }
+void StringConst::finalize() {
+  // TODO: Make this exact.
+  type = Type(HeapType::string, NonNullable);
+}
 
 void StringMeasure::finalize() {
   if (ref->type == Type::unreachable) {
@@ -1350,6 +1372,7 @@ void StringConcat::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
@@ -1375,6 +1398,7 @@ void StringSliceWTF::finalize() {
       end->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
