@@ -104,6 +104,7 @@ unfuzzable = [
     # TODO: fuzzer support for exact references
     'exact-references.wast',
     'optimize-instructions-exact.wast',
+    'local-subtyping-exact.wast',
 ]
 
 
