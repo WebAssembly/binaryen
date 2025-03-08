@@ -106,6 +106,7 @@ unfuzzable = [
     'optimize-instructions-exact.wast',
     'local-subtyping-exact.wast',
     'remove-unused-types-exact.wast',
+    'coalesce-locals-exact.wast',
 ]
 
 

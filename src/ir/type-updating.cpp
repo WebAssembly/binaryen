@@ -467,7 +467,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 Type getValidLocalType(Type type, FeatureSet features) {
   assert(type.isConcrete());
   if (type.isNonNullable()) {
-    return Type(type.getHeapType(), Nullable);
+    return Type(type.getHeapType(), Nullable, type.getExactness());
   }
   if (type.isTuple()) {
     std::vector<Type> elems(type.size());
