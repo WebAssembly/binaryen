@@ -22,25 +22,41 @@
   (type $foo (struct (field (exact anyref) (ref exact any) (ref null exact $foo) (ref exact $foo))))
 
 
-  ;; CHECK-TEXT:      (type $1 (func (param anyref) (result anyref)))
+  ;; CHECK-TEXT:      (type $1 (func (param (exact anyref)) (result (ref exact any))))
 
-  ;; CHECK-TEXT:      (type $2 (func (param (exact i31ref))))
+  ;; CHECK-TEXT:      (type $2 (func (param anyref) (result anyref)))
 
-  ;; CHECK-TEXT:      (type $3 (func (param (exact eqref))))
+  ;; CHECK-TEXT:      (type $3 (func (param (exact i31ref))))
+
+  ;; CHECK-TEXT:      (type $4 (func (param (exact eqref))))
+
+  ;; CHECK-TEXT:      (type $5 (func (param (exact anyref))))
+
+  ;; CHECK-TEXT:      (type $6 (func (param (exact anyref)) (result (exact anyref))))
 
   ;; CHECK-TEXT:      (import "" "g1" (global $g1 (exact anyref)))
-  ;; CHECK-BIN:      (type $1 (func (param anyref) (result anyref)))
+  ;; CHECK-BIN:      (type $1 (func (param (exact anyref)) (result (ref exact any))))
 
-  ;; CHECK-BIN:      (type $2 (func (param (exact i31ref))))
+  ;; CHECK-BIN:      (type $2 (func (param anyref) (result anyref)))
 
-  ;; CHECK-BIN:      (type $3 (func (param (exact eqref))))
+  ;; CHECK-BIN:      (type $3 (func (param (exact i31ref))))
+
+  ;; CHECK-BIN:      (type $4 (func (param (exact eqref))))
+
+  ;; CHECK-BIN:      (type $5 (func (param (exact anyref))))
+
+  ;; CHECK-BIN:      (type $6 (func (param (exact anyref)) (result (exact anyref))))
 
   ;; CHECK-BIN:      (import "" "g1" (global $g1 (exact anyref)))
   ;; NO-EXACT:      (type $1 (func (param anyref) (result anyref)))
 
-  ;; NO-EXACT:      (type $2 (func (param i31ref)))
+  ;; NO-EXACT:      (type $2 (func (param anyref) (result (ref any))))
 
-  ;; NO-EXACT:      (type $3 (func (param eqref)))
+  ;; NO-EXACT:      (type $3 (func (param i31ref)))
+
+  ;; NO-EXACT:      (type $4 (func (param eqref)))
+
+  ;; NO-EXACT:      (type $5 (func (param anyref)))
 
   ;; NO-EXACT:      (import "" "g1" (global $g1 anyref))
   (import "" "g1" (global $g1 (exact anyref)))
@@ -60,7 +76,7 @@
   ;; NO-EXACT:      (import "" "g4" (global $g4 (ref $foo)))
   (import "" "g4" (global $g4 (ref exact $foo)))
 
-  ;; CHECK-TEXT:      (func $ref-test (type $2) (param $0 (exact i31ref))
+  ;; CHECK-TEXT:      (func $ref-test (type $3) (param $0 (exact i31ref))
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (ref.test (ref exact i31)
   ;; CHECK-TEXT-NEXT:    (local.get $0)
@@ -72,7 +88,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-test (type $2) (param $0 (exact i31ref))
+  ;; CHECK-BIN:      (func $ref-test (type $3) (param $0 (exact i31ref))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.test (ref exact i31)
   ;; CHECK-BIN-NEXT:    (local.get $0)
@@ -84,7 +100,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $ref-test (type $2) (param $0 i31ref)
+  ;; NO-EXACT:      (func $ref-test (type $3) (param $0 i31ref)
   ;; NO-EXACT-NEXT:  (drop
   ;; NO-EXACT-NEXT:   (ref.test (ref i31)
   ;; NO-EXACT-NEXT:    (local.get $0)
@@ -109,7 +125,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $ref-cast (type $3) (param $0 (exact eqref))
+  ;; CHECK-TEXT:      (func $ref-cast (type $4) (param $0 (exact eqref))
   ;; CHECK-TEXT-NEXT:  (drop
   ;; CHECK-TEXT-NEXT:   (ref.cast (ref exact eq)
   ;; CHECK-TEXT-NEXT:    (local.get $0)
@@ -126,7 +142,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast (type $3) (param $0 (exact eqref))
+  ;; CHECK-BIN:      (func $ref-cast (type $4) (param $0 (exact eqref))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.cast (ref exact eq)
   ;; CHECK-BIN-NEXT:    (local.get $0)
@@ -143,7 +159,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $ref-cast (type $3) (param $0 eqref)
+  ;; NO-EXACT:      (func $ref-cast (type $4) (param $0 eqref)
   ;; NO-EXACT-NEXT:  (drop
   ;; NO-EXACT-NEXT:   (ref.cast (ref eq)
   ;; NO-EXACT-NEXT:    (local.get $0)
@@ -178,7 +194,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $br-on-cast (type $1) (param $0 anyref) (result anyref)
+  ;; CHECK-TEXT:      (func $br-on-cast (type $2) (param $0 anyref) (result anyref)
   ;; CHECK-TEXT-NEXT:  (block $label (result anyref)
   ;; CHECK-TEXT-NEXT:   (drop
   ;; CHECK-TEXT-NEXT:    (br_on_cast $label anyref (exact eqref)
@@ -198,7 +214,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $0)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br-on-cast (type $1) (param $0 anyref) (result anyref)
+  ;; CHECK-BIN:      (func $br-on-cast (type $2) (param $0 anyref) (result anyref)
   ;; CHECK-BIN-NEXT:  (block $block (result anyref)
   ;; CHECK-BIN-NEXT:   (drop
   ;; CHECK-BIN-NEXT:    (br_on_cast $block anyref (exact eqref)
@@ -257,7 +273,7 @@
     (local.get 0)
   )
 
-  ;; CHECK-TEXT:      (func $br-on-cast-fail (type $1) (param $0 anyref) (result anyref)
+  ;; CHECK-TEXT:      (func $br-on-cast-fail (type $2) (param $0 anyref) (result anyref)
   ;; CHECK-TEXT-NEXT:  (block $label (result anyref)
   ;; CHECK-TEXT-NEXT:   (drop
   ;; CHECK-TEXT-NEXT:    (br_on_cast_fail $label anyref (exact eqref)
@@ -277,7 +293,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $0)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br-on-cast-fail (type $1) (param $0 anyref) (result anyref)
+  ;; CHECK-BIN:      (func $br-on-cast-fail (type $2) (param $0 anyref) (result anyref)
   ;; CHECK-BIN-NEXT:  (block $block (result anyref)
   ;; CHECK-BIN-NEXT:   (drop
   ;; CHECK-BIN-NEXT:    (br_on_cast_fail $block anyref (exact eqref)
@@ -335,14 +351,197 @@
     )
     (local.get 0)
   )
+
+  ;; CHECK-TEXT:      (func $valid-ref-as-non-null (type $1) (param $0 (exact anyref)) (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:  (ref.as_non_null
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $valid-ref-as-non-null (type $1) (param $0 (exact anyref)) (result (ref exact any))
+  ;; CHECK-BIN-NEXT:  (ref.as_non_null
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  ;; NO-EXACT:      (func $valid-ref-as-non-null (type $2) (param $0 anyref) (result (ref any))
+  ;; NO-EXACT-NEXT:  (ref.as_non_null
+  ;; NO-EXACT-NEXT:   (local.get $0)
+  ;; NO-EXACT-NEXT:  )
+  ;; NO-EXACT-NEXT: )
+  (func $valid-ref-as-non-null (param (ref null exact any)) (result (ref exact any))
+    (ref.as_non_null
+      (local.get 0)
+    )
+  )
+
+  ;; CHECK-TEXT:      (func $valid-br-on-null (type $5) (param $0 (exact anyref))
+  ;; CHECK-TEXT-NEXT:  (block $label
+  ;; CHECK-TEXT-NEXT:   (drop
+  ;; CHECK-TEXT-NEXT:    (block (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:     (br_on_null $label
+  ;; CHECK-TEXT-NEXT:      (local.get $0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $valid-br-on-null (type $5) (param $0 (exact anyref))
+  ;; CHECK-BIN-NEXT:  (block $block
+  ;; CHECK-BIN-NEXT:   (drop
+  ;; CHECK-BIN-NEXT:    (br_on_null $block
+  ;; CHECK-BIN-NEXT:     (local.get $0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  ;; NO-EXACT:      (func $valid-br-on-null (type $5) (param $0 anyref)
+  ;; NO-EXACT-NEXT:  (block $block
+  ;; NO-EXACT-NEXT:   (drop
+  ;; NO-EXACT-NEXT:    (br_on_null $block
+  ;; NO-EXACT-NEXT:     (local.get $0)
+  ;; NO-EXACT-NEXT:    )
+  ;; NO-EXACT-NEXT:   )
+  ;; NO-EXACT-NEXT:  )
+  ;; NO-EXACT-NEXT: )
+  (func $valid-br-on-null (param (ref null exact any))
+    (drop
+      (block (result (ref exact any))
+        (br_on_null 1
+          (local.get 0)
+        )
+      )
+    )
+  )
+
+  ;; CHECK-TEXT:      (func $valid-br-on-non-null (type $1) (param $0 (exact anyref)) (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:  (block $label (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:   (br_on_non_null $label
+  ;; CHECK-TEXT-NEXT:    (local.get $0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (unreachable)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $valid-br-on-non-null (type $1) (param $0 (exact anyref)) (result (ref exact any))
+  ;; CHECK-BIN-NEXT:  (block $block (result (ref exact any))
+  ;; CHECK-BIN-NEXT:   (br_on_non_null $block
+  ;; CHECK-BIN-NEXT:    (local.get $0)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (unreachable)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  ;; NO-EXACT:      (func $valid-br-on-non-null (type $2) (param $0 anyref) (result (ref any))
+  ;; NO-EXACT-NEXT:  (block $block (result (ref any))
+  ;; NO-EXACT-NEXT:   (br_on_non_null $block
+  ;; NO-EXACT-NEXT:    (local.get $0)
+  ;; NO-EXACT-NEXT:   )
+  ;; NO-EXACT-NEXT:   (unreachable)
+  ;; NO-EXACT-NEXT:  )
+  ;; NO-EXACT-NEXT: )
+  (func $valid-br-on-non-null (param (ref null exact any)) (result (ref exact any))
+    (br_on_non_null 0
+      (local.get 0)
+    )
+    (unreachable)
+  )
+
+  ;; CHECK-TEXT:      (func $valid-br-on-cast (type $6) (param $0 (exact anyref)) (result (exact anyref))
+  ;; CHECK-TEXT-NEXT:  (block $label (result (exact anyref))
+  ;; CHECK-TEXT-NEXT:   (drop
+  ;; CHECK-TEXT-NEXT:    (block (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:     (br_on_cast $label (exact anyref) (exact anyref)
+  ;; CHECK-TEXT-NEXT:      (local.get $0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (unreachable)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $valid-br-on-cast (type $6) (param $0 (exact anyref)) (result (exact anyref))
+  ;; CHECK-BIN-NEXT:  (block $block (result (exact anyref))
+  ;; CHECK-BIN-NEXT:   (drop
+  ;; CHECK-BIN-NEXT:    (br_on_cast $block (exact anyref) (exact anyref)
+  ;; CHECK-BIN-NEXT:     (local.get $0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (unreachable)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  ;; NO-EXACT:      (func $valid-br-on-cast (type $1) (param $0 anyref) (result anyref)
+  ;; NO-EXACT-NEXT:  (block $block (result anyref)
+  ;; NO-EXACT-NEXT:   (drop
+  ;; NO-EXACT-NEXT:    (br_on_cast $block anyref anyref
+  ;; NO-EXACT-NEXT:     (local.get $0)
+  ;; NO-EXACT-NEXT:    )
+  ;; NO-EXACT-NEXT:   )
+  ;; NO-EXACT-NEXT:   (unreachable)
+  ;; NO-EXACT-NEXT:  )
+  ;; NO-EXACT-NEXT: )
+  (func $valid-br-on-cast (param (ref null exact any)) (result (ref null exact any))
+    (drop
+      (block (result (ref exact any))
+        (br_on_cast 1 (ref null exact any) (ref null exact any)
+          (local.get 0)
+        )
+      )
+    )
+    (unreachable)
+  )
+
+  ;; CHECK-TEXT:      (func $valid-br-on-cast-fail (type $1) (param $0 (exact anyref)) (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:  (block $label (result (ref exact any))
+  ;; CHECK-TEXT-NEXT:   (drop
+  ;; CHECK-TEXT-NEXT:    (block (result (exact anyref))
+  ;; CHECK-TEXT-NEXT:     (br_on_cast_fail $label (exact anyref) (exact anyref)
+  ;; CHECK-TEXT-NEXT:      (local.get $0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (unreachable)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $valid-br-on-cast-fail (type $1) (param $0 (exact anyref)) (result (ref exact any))
+  ;; CHECK-BIN-NEXT:  (block $block (result (ref exact any))
+  ;; CHECK-BIN-NEXT:   (drop
+  ;; CHECK-BIN-NEXT:    (br_on_cast_fail $block (exact anyref) (exact anyref)
+  ;; CHECK-BIN-NEXT:     (local.get $0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (unreachable)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  ;; NO-EXACT:      (func $valid-br-on-cast-fail (type $2) (param $0 anyref) (result (ref any))
+  ;; NO-EXACT-NEXT:  (block $block (result (ref any))
+  ;; NO-EXACT-NEXT:   (drop
+  ;; NO-EXACT-NEXT:    (br_on_cast_fail $block anyref anyref
+  ;; NO-EXACT-NEXT:     (local.get $0)
+  ;; NO-EXACT-NEXT:    )
+  ;; NO-EXACT-NEXT:   )
+  ;; NO-EXACT-NEXT:   (unreachable)
+  ;; NO-EXACT-NEXT:  )
+  ;; NO-EXACT-NEXT: )
+  (func $valid-br-on-cast-fail (param (ref null exact any)) (result (ref exact any))
+    (drop
+      (block (result (ref null exact any))
+        (br_on_cast_fail 1 (ref null exact any) (ref null exact any)
+          (local.get 0)
+        )
+      )
+    )
+    (unreachable)
+  )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (struct (field (exact anyref)) (field (ref exact any)) (field (ref null exact $0)) (field (ref exact $0))))
 
-;; CHECK-BIN-NODEBUG:      (type $1 (func (param anyref) (result anyref)))
+;; CHECK-BIN-NODEBUG:      (type $1 (func (param (exact anyref)) (result (ref exact any))))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (param (exact i31ref))))
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param anyref) (result anyref)))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (param (exact eqref))))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (param (exact i31ref))))
+
+;; CHECK-BIN-NODEBUG:      (type $4 (func (param (exact eqref))))
+
+;; CHECK-BIN-NODEBUG:      (type $5 (func (param (exact anyref))))
+
+;; CHECK-BIN-NODEBUG:      (type $6 (func (param (exact anyref)) (result (exact anyref))))
 
 ;; CHECK-BIN-NODEBUG:      (import "" "g1" (global $gimport$0 (exact anyref)))
 
@@ -352,7 +551,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (import "" "g4" (global $gimport$3 (ref exact $0)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (exact i31ref))
+;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (exact i31ref))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.test (ref exact i31)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
@@ -365,7 +564,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $3) (param $0 (exact eqref))
+;; CHECK-BIN-NODEBUG:      (func $1 (type $4) (param $0 (exact eqref))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.cast (ref exact eq)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
@@ -383,7 +582,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $1) (param $0 anyref) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 anyref) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:   (drop
 ;; CHECK-BIN-NODEBUG-NEXT:    (br_on_cast $block anyref (exact eqref)
@@ -404,7 +603,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $1) (param $0 anyref) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $3 (type $2) (param $0 anyref) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:   (drop
 ;; CHECK-BIN-NODEBUG-NEXT:    (br_on_cast_fail $block anyref (exact eqref)
@@ -422,5 +621,52 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $4 (type $1) (param $0 (exact anyref)) (result (ref exact any))
+;; CHECK-BIN-NODEBUG-NEXT:  (ref.as_non_null
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $5 (type $5) (param $0 (exact anyref))
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block
+;; CHECK-BIN-NODEBUG-NEXT:   (drop
+;; CHECK-BIN-NODEBUG-NEXT:    (br_on_null $block
+;; CHECK-BIN-NODEBUG-NEXT:     (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $6 (type $1) (param $0 (exact anyref)) (result (ref exact any))
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result (ref exact any))
+;; CHECK-BIN-NODEBUG-NEXT:   (br_on_non_null $block
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $7 (type $6) (param $0 (exact anyref)) (result (exact anyref))
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result (exact anyref))
+;; CHECK-BIN-NODEBUG-NEXT:   (drop
+;; CHECK-BIN-NODEBUG-NEXT:    (br_on_cast $block (exact anyref) (exact anyref)
+;; CHECK-BIN-NODEBUG-NEXT:     (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $8 (type $1) (param $0 (exact anyref)) (result (ref exact any))
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block (result (ref exact any))
+;; CHECK-BIN-NODEBUG-NEXT:   (drop
+;; CHECK-BIN-NODEBUG-NEXT:    (br_on_cast_fail $block (exact anyref) (exact anyref)
+;; CHECK-BIN-NODEBUG-NEXT:     (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
