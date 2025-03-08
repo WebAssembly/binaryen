@@ -473,7 +473,7 @@ struct MultiMemoryLowering : public Pass {
     // Ensuring only the first memory is an exported memory
     for (auto& exp : wasm->exports) {
       if (exp->kind == ExternalKind::Memory &&
-          exp->value == getFirstMemory().name) {
+          *exp->getInternalName() == getFirstMemory().name) {
         isExported = true;
       } else if (exp->kind == ExternalKind::Memory) {
         Fatal() << "MultiMemoryLowering: only the first memory can be exported";
@@ -706,7 +706,7 @@ struct MultiMemoryLowering : public Pass {
         // We checked in prepCombinedMemory that any memory exports are for
         // the first memory, so setting the exports to the combinedMemory means
         // calling JS will not have to worry about offsets
-        exp->value = combinedMemory;
+        *exp->getInternalName() = combinedMemory;
       }
     }
   }

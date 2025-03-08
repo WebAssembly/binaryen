@@ -603,19 +603,19 @@ void WasmBinaryWriter::writeExports() {
     o << U32LEB(int32_t(curr->kind));
     switch (curr->kind) {
       case ExternalKind::Function:
-        o << U32LEB(getFunctionIndex(curr->value));
+        o << U32LEB(getFunctionIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Table:
-        o << U32LEB(getTableIndex(curr->value));
+        o << U32LEB(getTableIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Memory:
-        o << U32LEB(getMemoryIndex(curr->value));
+        o << U32LEB(getMemoryIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Global:
-        o << U32LEB(getGlobalIndex(curr->value));
+        o << U32LEB(getGlobalIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Tag:
-        o << U32LEB(getTagIndex(curr->value));
+        o << U32LEB(getTagIndex(*curr->getInternalName()));
         break;
       default:
         WASM_UNREACHABLE("unexpected extern kind");
@@ -4387,34 +4387,33 @@ void WasmBinaryReader::readExports() {
   size_t num = getU32LEB();
   std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
-    auto curr = std::make_unique<Export>();
-    curr->name = getInlineString();
-    if (!names.emplace(curr->name).second) {
+    Name name = getInlineString();
+    if (!names.emplace(name).second) {
       throwError("duplicate export name");
     }
-    curr->kind = (ExternalKind)getU32LEB();
-    auto* ex = wasm.addExport(std::move(curr));
+    ExternalKind kind = (ExternalKind)getU32LEB();
+    std::variant<Name, HeapType> value;
     auto index = getU32LEB();
-    switch (ex->kind) {
+    switch (kind) {
       case ExternalKind::Function:
-        ex->value = getFunctionName(index);
-        continue;
-      case ExternalKind::Table:
-        ex->value = getTableName(index);
-        continue;
-      case ExternalKind::Memory:
-        ex->value = getMemoryName(index);
-        continue;
-      case ExternalKind::Global:
-        ex->value = getGlobalName(index);
-        continue;
-      case ExternalKind::Tag:
-        ex->value = getTagName(index);
-        continue;
-      case ExternalKind::Invalid:
+        value = getFunctionName(index);
         break;
+      case ExternalKind::Table:
+        value = getTableName(index);
+        break;
+      case ExternalKind::Memory:
+        value = getMemoryName(index);
+        break;
+      case ExternalKind::Global:
+        value = getGlobalName(index);
+        break;
+      case ExternalKind::Tag:
+        value = getTagName(index);
+        break;
+      case ExternalKind::Invalid:
+        throwError("invalid export kind");
     }
-    throwError("invalid export kind");
+    wasm.addExport(new Export(name, kind, value));
   }
 }
 

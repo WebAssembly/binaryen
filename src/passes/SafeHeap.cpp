@@ -159,8 +159,9 @@ struct SafeHeap : public Pass {
     auto addressType = module->memories[0]->addressType;
     if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
-    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
-      getSbrkPtr = existing->value;
+    } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR);
+               existing && existing->kind == ExternalKind::Function) {
+      getSbrkPtr = *existing->getInternalName();
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {

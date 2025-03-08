@@ -591,8 +591,12 @@ Expression* AssertionEmitter::translateInvoke(InvokeAction& invoke,
   for (auto& arg : invoke.args) {
     args.push_back(builder.makeConstantExpression(arg));
   }
-  Type type =
-    wasm.getFunction(wasm.getExport(invoke.name)->value)->getResults();
+  Export* exp = wasm.getExport(invoke.name);
+  Type type = wasm
+                .getFunction((exp->kind == ExternalKind::Function)
+                               ? *exp->getInternalName()
+                               : Name())
+                ->getResults();
   return builder.makeCall(invoke.name, args, type);
 }
 
