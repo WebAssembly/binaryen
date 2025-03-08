@@ -47,11 +47,14 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   ExpressionInterpreter(Interpreter& parent) : parent(parent) {}
 
   WasmStore& store() { return InterpreterImpl::getStore(parent); }
+  Frame& frame() { return store().callStack.back(); }
+  Instance& instance() { return frame().instance; }
+
   void push(Literal val) { store().push(val); }
   Literal pop() { return store().pop(); }
 
   Flow visitNop(Nop* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitBlock(Block* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitBlock(Block* curr) { return {}; }
   Flow visitIf(If* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitBreak(Break* curr) { WASM_UNREACHABLE("TODO"); }
@@ -60,8 +63,14 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalGet(LocalGet* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalSet(LocalSet* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitGlobalGet(GlobalGet* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitGlobalSet(GlobalSet* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitGlobalGet(GlobalGet* curr) {
+    push(instance().globalValues[curr->name]);
+    return {};
+  }
+  Flow visitGlobalSet(GlobalSet* curr) {
+    instance().globalValues[curr->name] = pop();
+    return {};
+  }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("TODO"); }
@@ -272,14 +281,21 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
 
 } // anonymous namespace
 
+Result<> Interpreter::addInstance(std::shared_ptr<Module> wasm) {
+  store.instances.emplace_back(wasm);
+  return Ok{};
+}
+
 std::vector<Literal> Interpreter::run(Expression* root) {
   // Create a fresh store and execution frame, then run the expression to
   // completion.
-  store = WasmStore();
-  store.callStack.emplace_back();
-  store.callStack.back().exprs = ExpressionIterator(root);
+  static Instance dummyInstance = Instance(std::make_shared<Module>());
 
+  store.callStack.emplace_back(store.instances.empty() ? dummyInstance
+                                                       : store.instances.back(),
+                               ExpressionIterator(root));
   ExpressionInterpreter interpreter(*this);
+
   while (auto& it = store.callStack.back().exprs) {
     if (auto flow = interpreter.visit(*it)) {
       // TODO: Handle control flow transfers.
@@ -288,7 +304,9 @@ std::vector<Literal> Interpreter::run(Expression* root) {
     }
   }
 
-  return store.callStack.back().valueStack;
+  auto valueStack = store.callStack.back().valueStack;
+  store.callStack.pop_back();
+  return valueStack;
 }
 
 } // namespace wasm
