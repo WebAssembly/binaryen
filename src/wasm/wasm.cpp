@@ -1315,10 +1315,9 @@ void RefAs::finalize() {
     return;
   }
   auto valHeapType = value->type.getHeapType();
-  auto exactness = value->type.getExactness();
   switch (op) {
     case RefAsNonNull:
-      type = Type(valHeapType, NonNullable, exactness);
+      type = Type(valHeapType, NonNullable, value->type.getExactness());
       break;
     case AnyConvertExtern:
       type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
