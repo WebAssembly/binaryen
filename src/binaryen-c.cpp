@@ -427,20 +427,20 @@ BinaryenFeatures BinaryenFeatureMVP(void) {
 BinaryenFeatures BinaryenFeatureAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Atomics);
 }
-BinaryenFeatures BinaryenFeatureBulkMemory(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemory);
-}
 BinaryenFeatures BinaryenFeatureMutableGlobals(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::MutableGlobals);
 }
 BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::TruncSat);
 }
-BinaryenFeatures BinaryenFeatureSignExt(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::SignExt);
-}
 BinaryenFeatures BinaryenFeatureSIMD128(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::SIMD);
+}
+BinaryenFeatures BinaryenFeatureBulkMemory(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemory);
+}
+BinaryenFeatures BinaryenFeatureSignExt(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::SignExt);
 }
 BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::ExceptionHandling);
@@ -471,6 +471,21 @@ BinaryenFeatures BinaryenFeatureStrings(void) {
 }
 BinaryenFeatures BinaryenFeatureMultiMemory(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::MultiMemory);
+}
+BinaryenFeatures BinaryenFeatureStackSwitching(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::StackSwitching);
+}
+BinaryenFeatures BinaryenFeatureSharedEverything(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::SharedEverything);
+}
+BinaryenFeatures BinaryenFeatureFP16(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::FP16);
+}
+BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemoryOpt);
+}
+BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CallIndirectOverlong);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
