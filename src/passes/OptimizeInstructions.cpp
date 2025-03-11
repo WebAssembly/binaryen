@@ -2346,18 +2346,20 @@ struct OptimizeInstructions
       }
         [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
-        auto nullType = Type(curr->type.getHeapType().getBottom(), Nullable);
         // The cast either returns null or traps. In trapsNeverHappen mode
         // we know the result, since by assumption it will not trap.
         if (getPassOptions().trapsNeverHappen) {
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
-            curr->type));
+          replaceCurrent(
+            builder.makeBlock({builder.makeDrop(curr->ref),
+                               builder.makeRefNull(curr->type.getHeapType())},
+                              curr->type));
           return;
         }
         // Otherwise, we should have already refined the cast type to cast
-        // directly to null.
-        assert(curr->type == nullType);
+        // directly to null. We do not further refine the cast type to exact
+        // null because the extra precision is not useful and doing so would
+        // increase the size of the instruction encoding.
+        assert(curr->type.isNull());
         break;
       }
       case GCTypeUtils::Unreachable:
