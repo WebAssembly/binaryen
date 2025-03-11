@@ -145,11 +145,11 @@ function initializeConstants() {
   Module['Features'] = {};
   [ 'MVP',
     'Atomics',
-    'BulkMemory',
     'MutableGlobals',
     'NontrappingFPToInt',
-    'SignExt',
     'SIMD128',
+    'BulkMemory',
+    'SignExt',
     'ExceptionHandling',
     'TailCall',
     'ReferenceTypes',
@@ -160,6 +160,11 @@ function initializeConstants() {
     'ExtendedConst',
     'Strings',
     'MultiMemory',
+    'StackSwitching',
+    'SharedEverything',
+    'FP16',
+    'BulkMemoryOpt',
+    'CallIndirectOverlong',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
