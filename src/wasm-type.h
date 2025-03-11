@@ -398,6 +398,17 @@ public:
     return isExact() ? Exact : Inexact;
   }
 
+  // Return a new reference type with some part updated to the specified value.
+  Type with(HeapType heapType) {
+    return Type(heapType, getNullability(), getExactness());
+  }
+  Type with(Nullability nullability) {
+    return Type(getHeapType(), nullability, getExactness());
+  }
+  Type with(Exactness exactness) {
+    return Type(getHeapType(), getNullability(), exactness);
+  }
+
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
     for (const auto& type : *this) {

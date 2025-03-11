@@ -1076,8 +1076,7 @@ void BrOn::finalize() {
   switch (op) {
     case BrOnNull:
       // If we do not branch, we flow out the existing value as non-null.
-      type =
-        Type(ref->type.getHeapType(), NonNullable, ref->type.getExactness());
+      type = ref->type.with(NonNullable);
       break;
     case BrOnNonNull:
       // If we do not branch, we flow out nothing (the spec could also have had
@@ -1087,8 +1086,7 @@ void BrOn::finalize() {
     case BrOnCast:
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
-        type =
-          Type(ref->type.getHeapType(), NonNullable, ref->type.getExactness());
+        type = ref->type.with(NonNullable);
       } else {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
@@ -1099,9 +1097,7 @@ void BrOn::finalize() {
       if (castType.isNullable()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
-        type = Type(castType.getHeapType(),
-                    ref->type.getNullability(),
-                    castType.getExactness());
+        type = castType.with(ref->type.getNullability());
       } else {
         // Nulls take the branch, so the result is non-nullable.
         type = castType;
@@ -1124,14 +1120,11 @@ Type BrOn::getSentType() {
         return Type::unreachable;
       }
       // BrOnNonNull sends the non-nullable type on the branch.
-      return Type(
-        ref->type.getHeapType(), NonNullable, ref->type.getExactness());
+      return ref->type.with(NonNullable);
     case BrOnCast:
       // The same as the result type of br_on_cast_fail.
       if (castType.isNullable()) {
-        return Type(castType.getHeapType(),
-                    ref->type.getNullability(),
-                    castType.getExactness());
+        return castType.with(ref->type.getNullability());
       } else {
         return castType;
       }
@@ -1141,8 +1134,7 @@ Type BrOn::getSentType() {
         return Type::unreachable;
       }
       if (castType.isNullable()) {
-        return Type(
-          ref->type.getHeapType(), NonNullable, ref->type.getExactness());
+        return ref->type.with(NonNullable);
       } else {
         return ref->type;
       }
@@ -1317,7 +1309,7 @@ void RefAs::finalize() {
   auto valHeapType = value->type.getHeapType();
   switch (op) {
     case RefAsNonNull:
-      type = Type(valHeapType, NonNullable, value->type.getExactness());
+      type = value->type.with(NonNullable);
       break;
     case AnyConvertExtern:
       type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
