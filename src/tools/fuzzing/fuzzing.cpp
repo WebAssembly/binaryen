@@ -1107,8 +1107,9 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
+  auto name = Names::getValidFunctionName(wasm, "hashMemory");
   auto* hasher = wasm.addFunction(builder.makeFunction(
-    "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
+    name, Signature(Type::none, Type::i32), {Type::i32}, body));
 
   if (!preserveImportsAndExports) {
     wasm.addExport(
