@@ -709,7 +709,8 @@ struct TypeBuilder {
         return t;
       }
       assert(t.isRef());
-      return getTempRefType(map(t.getHeapType()), t.getNullability());
+      return getTempRefType(
+        map(t.getHeapType()), t.getNullability(), t.getExactness());
     };
     auto copyType = [&](Type t) -> Type {
       if (t.isTuple()) {
