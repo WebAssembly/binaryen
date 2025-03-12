@@ -255,8 +255,8 @@ Result<> Interpreter::addInstance(std::shared_ptr<Module> wasm) {
 }
 
 std::vector<Literal> Interpreter::run(Expression* root) {
-  // Create a fresh store and execution frame, then run the expression to
-  // completion.
+  // This is a temporary convenience while stil using gTests to validate this
+  // interpreter. Once spec tests can run, this shall be deleted.
   static Instance dummyInstance = Instance(std::make_shared<Module>());
 
   store.callStack.emplace_back(store.instances.empty() ? dummyInstance
