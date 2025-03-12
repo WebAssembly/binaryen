@@ -1553,11 +1553,11 @@ void TNHOracle::scan(Function* func,
     //    (ref.cast (local.get $x)) ;; this is no longer casting the actual
     //                              ;; parameter
     //
-    std::unordered_set<Index> writtenLocals;
+    std::unordered_set<Index> writtenParams;
 
     void visitLocalSet(LocalSet* curr) {
       if (getFunction()->isParam(curr->index)) {
-        writtenLocals.insert(curr->index);
+        writtenParams.insert(curr->index);
       }
     }
 
@@ -1594,7 +1594,7 @@ void TNHOracle::scan(Function* func,
         // the only one to exist there, so it's ok to keep things simple here.
         if (getFunction()->isParam(get->index) && type != get->type &&
             info.castParams.count(get->index) == 0 &&
-            !writtenLocals.count(get->index)) {
+            !writtenParams.count(get->index)) {
           info.castParams[get->index] = type;
         }
       }
