@@ -22,6 +22,7 @@
 
 #include "expression-iterator.h"
 #include "literal.h"
+#include "support/result.h"
 
 namespace wasm::interpreter {
 
@@ -65,6 +66,15 @@ struct WasmStore {
   // TODO: Map instances and import names to other instances to find imports.
   std::vector<Frame> callStack;
   std::vector<Instance> instances;
+
+  Result<> instantiate(std::shared_ptr<Module> wasm) {
+    instances.emplace_back(wasm);
+    for (auto& global : wasm->globals) {
+      callStack.emplace_back(instances.back(),
+                             ExpressionIterator(global->init));
+    }
+    return Ok{};
+  }
 
   Frame& getFrame() {
     assert(!callStack.empty());
