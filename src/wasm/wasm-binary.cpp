@@ -3537,7 +3537,7 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStructCmpxchg(type, field, order);
         }
       }
-      return Err{"unknown atomic operation"};
+      return Err{"unknown atomic operation " + std::to_string(op)};
     }
     case BinaryConsts::MiscPrefix: {
       auto op = getU32LEB();
@@ -3597,7 +3597,7 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStore(2, offset, align, Type::f32, mem);
         }
       }
-      return Err{"unknown misc operation"};
+      return Err{"unknown misc operation: " + std::to_string(op)};
     }
     case BinaryConsts::SIMDPrefix: {
       auto op = getU32LEB();
@@ -4234,7 +4234,7 @@ Result<> WasmBinaryReader::readInst() {
             Store64LaneVec128, offset, align, getLaneIndex(2), mem);
         }
       }
-      return Err{"unknown SIMD operation"};
+      return Err{"unknown SIMD operation " + std::to_string(op)};
     }
     case BinaryConsts::GCPrefix: {
       auto op = getU32LEB();
@@ -4377,10 +4377,10 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::ExternConvertAny:
           return builder.makeRefAs(ExternConvertAny);
       }
-      return Err{"unknown GC operation"};
+      return Err{"unknown GC operation " + std::to_string(op)};
     }
   }
-  return Err{"unknown operation"};
+  return Err{"unknown operation " + std::to_string(code)};
 }
 
 void WasmBinaryReader::readExports() {
