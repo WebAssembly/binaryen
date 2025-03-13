@@ -504,6 +504,48 @@ TEST_F(TypeTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[4], built[5]);
 }
 
+TEST_F(TypeTest, CanonicalizeDescriptors) {
+  TypeBuilder builder(8);
+  builder.createRecGroup(0, 4);
+  builder.createRecGroup(4, 4);
+
+  // Types that vary in their descriptor and described types are different.
+  builder[0] = Struct();
+  builder[1].descriptor(builder[2]) = Struct();
+  builder[2].describes(builder[1]).descriptor(builder[3]) = Struct();
+  builder[3].describes(builder[2]) = Struct();
+
+  auto translate = [&](HeapType t) -> HeapType {
+    for (int i = 0; i < 4; ++i) {
+      if (t == builder[i]) {
+        return builder[i + 4];
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
+  };
+
+  builder[4].copy(builder[0], translate);
+  builder[5].copy(builder[1], translate);
+  builder[6].copy(builder[2], translate);
+  builder[7].copy(builder[3], translate);
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[0], built[4]);
+  EXPECT_EQ(built[1], built[5]);
+  EXPECT_EQ(built[2], built[6]);
+  EXPECT_EQ(built[3], built[7]);
+
+  EXPECT_NE(built[0], built[1]);
+  EXPECT_NE(built[0], built[2]);
+  EXPECT_NE(built[0], built[3]);
+  EXPECT_NE(built[1], built[2]);
+  EXPECT_NE(built[1], built[3]);
+  EXPECT_NE(built[2], built[3]);
+}
+
 TEST_F(TypeTest, CanonicalizeFinal) {
   // Types are different if their finality flag is different.
   TypeBuilder builder(2);
