@@ -96,6 +96,7 @@ set(passes_SOURCES
   SignaturePruning.cpp
   SignatureRefining.cpp
   SignExtLowering.cpp
+  StringLifting.cpp
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
