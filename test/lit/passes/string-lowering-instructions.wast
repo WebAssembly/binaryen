@@ -236,7 +236,7 @@
     (if (result stringref)
       (i32.const 0)
       (then
-        (ref.null none) ;; this will turn into noextern
+        (ref.null noextern)
       )
       (else
         (local.get $ref)
@@ -263,7 +263,7 @@
         (local.get $ref)
       )
       (else
-        (ref.null none)
+        (ref.null noextern)
       )
     )
   )
@@ -381,7 +381,7 @@
     ;; Test lowering of struct fields from stringref to externref.
     (drop
       (struct.new $struct-of-string
-        (ref.null none) ;; This null must be fixed to be ext.
+        (ref.null noextern)
         (i32.const 10)
         (ref.null none) ;; Nothing to do here (field remains anyref).
       )
