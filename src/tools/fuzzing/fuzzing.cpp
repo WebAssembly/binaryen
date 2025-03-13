@@ -1571,28 +1571,21 @@ void TranslateToFuzzReader::recombine(Function* func) {
 
       std::vector<Type> ret;
       ret.push_back(type);
-      auto heapType = type.getHeapType();
-      auto nullability = type.getNullability();
-      auto exactness = type.getExactness();
 
-      if (nullability == NonNullable) {
-        auto nullable = getRelevantTypes(Type(heapType, Nullable, exactness));
+      if (type.isNonNullable()) {
+        auto nullable = getRelevantTypes(type.with(Nullable));
         ret.insert(ret.end(), nullable.begin(), nullable.end());
       }
-      if (exactness == Exact) {
-        auto inexact = getRelevantTypes(Type(heapType, nullability, Inexact));
+      if (type.isExact()) {
+        auto inexact = getRelevantTypes(type.with(Inexact));
         ret.insert(ret.end(), inexact.begin(), inexact.end());
         // Do not consider exact references to supertypes.
         return ret;
       }
 
-      while (1) {
-        ret.push_back(Type(heapType, nullability, exactness));
-        auto super = heapType.getSuperType();
-        if (!super) {
-          break;
-        }
-        heapType = *super;
+      for (auto heapType = type.getHeapType().getSuperType(); heapType;
+           heapType = heapType->getSuperType()) {
+        ret.push_back(type.with(*heapType));
       }
 
       return ret;
@@ -4921,7 +4914,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
   // are better supported.
   Type refType = ref->type;
   if (refType.isExact()) {
-    refType = Type(refType.getHeapType(), refType.getNullability(), Inexact);
+    refType = refType.with(Inexact);
   }
   auto tempRef = builder.addVar(func, refType);
   auto tempIndex = builder.addVar(func, index->type);
