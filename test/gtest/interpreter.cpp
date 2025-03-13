@@ -670,7 +670,7 @@ TEST(InterpreterTest, GlobalInitI32) {
     "global",
     Type::i32,
     builder.makeBinary(
-      AddInt32, builder.makeConst(int32_t(1)), builder.makeConst(int32_t(2))),
+      AddInt32, builder.makeConst(int32_t(2)), builder.makeConst(int32_t(3))),
     Builder::Mutable));
 
   ASSERT_FALSE(
@@ -684,7 +684,7 @@ TEST(InterpreterTest, GlobalInitI32) {
   Interpreter interpreter;
   auto result = interpreter.addInstance(wasm);
   auto results = interpreter.runTest(*expr);
-  std::vector<Literal> expected{Literal(int32_t(3))};
+  std::vector<Literal> expected{Literal(int32_t(5))};
 
   EXPECT_EQ(results, expected);
 }
