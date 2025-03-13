@@ -1506,7 +1506,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
       case HeapType::i31:
         return aUnshared == HeapType::none;
       case HeapType::string:
-        return false;
+        return aUnshared == HeapType::noext;
       case HeapType::struct_:
         return aUnshared == HeapType::none || a.isStruct();
       case HeapType::array:
