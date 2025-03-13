@@ -2429,7 +2429,7 @@ void WasmBinaryReader::readTypes() {
       if (!type.isRef()) {
         throwError("unexpected exact prefix on non-reference type");
       }
-      return builder.getTempRefType(
+      return typebuilder.getTempRefType(
         type.getHeapType(), type.getNullability(), Exact);
     }
     return makeTypeNoExact(typeCode);
@@ -4459,30 +4459,35 @@ void WasmBinaryReader::readExports() {
       throwError("duplicate export name");
     }
     ExternalKind kind = (ExternalKind)getU32LEB();
-    std::variant<Name, HeapType> value;
-    switch (kind) {
-      case ExternalKind::Function:
-        value = getFunctionName(getU32LEB());
-        break;
-      case ExternalKind::Table:
-        value = getTableName(getU32LEB());
-        break;
-      case ExternalKind::Memory:
-        value = getMemoryName(getU32LEB());
-        break;
-      case ExternalKind::Global:
-        value = getGlobalName(getU32LEB());
-        break;
-      case ExternalKind::Tag:
-        value = getTagName(getU32LEB());
-        break;
-      case ExternalKind::Type:
-        value = getHeapType();
-        break;
-      case ExternalKind::Invalid:
-        throwError("invalid export kind");
+    if (kind == ExternalKind::Type) {
+      auto curr = std::make_unique<TypeExport>();
+      curr->name = name;
+      auto* ex = wasm.addTypeExport(std::move(curr));
+      ex->heaptype = getHeapType();
+    } else {
+      std::variant<Name, HeapType> value;
+      switch (kind) {
+        case ExternalKind::Function:
+          value = getFunctionName(getU32LEB());
+          break;
+        case ExternalKind::Table:
+          value = getTableName(getU32LEB());
+          break;
+        case ExternalKind::Memory:
+          value = getMemoryName(getU32LEB());
+          break;
+        case ExternalKind::Global:
+          value = getGlobalName(getU32LEB());
+          break;
+        case ExternalKind::Tag:
+          value = getTagName(getU32LEB());
+          break;
+        case ExternalKind::Type:
+        case ExternalKind::Invalid:
+          throwError("invalid export kind");
+      }
+      wasm.addExport(new Export(name, kind, value));
     }
-    wasm.addExport(new Export(name, kind, value));
   }
 }
 
