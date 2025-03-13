@@ -427,20 +427,20 @@ BinaryenFeatures BinaryenFeatureMVP(void) {
 BinaryenFeatures BinaryenFeatureAtomics(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Atomics);
 }
-BinaryenFeatures BinaryenFeatureBulkMemory(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemory);
-}
 BinaryenFeatures BinaryenFeatureMutableGlobals(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::MutableGlobals);
 }
 BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::TruncSat);
 }
-BinaryenFeatures BinaryenFeatureSignExt(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::SignExt);
-}
 BinaryenFeatures BinaryenFeatureSIMD128(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::SIMD);
+}
+BinaryenFeatures BinaryenFeatureBulkMemory(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemory);
+}
+BinaryenFeatures BinaryenFeatureSignExt(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::SignExt);
 }
 BinaryenFeatures BinaryenFeatureExceptionHandling(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::ExceptionHandling);
@@ -471,6 +471,21 @@ BinaryenFeatures BinaryenFeatureStrings(void) {
 }
 BinaryenFeatures BinaryenFeatureMultiMemory(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::MultiMemory);
+}
+BinaryenFeatures BinaryenFeatureStackSwitching(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::StackSwitching);
+}
+BinaryenFeatures BinaryenFeatureSharedEverything(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::SharedEverything);
+}
+BinaryenFeatures BinaryenFeatureFP16(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::FP16);
+}
+BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::BulkMemoryOpt);
+}
+BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CallIndirectOverlong);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -4893,50 +4908,35 @@ WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module,
 BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module,
                                             const char* internalName,
                                             const char* externalName) {
-  auto* ret = new Export();
-  ret->value = internalName;
-  ret->name = externalName;
-  ret->kind = ExternalKind::Function;
+  auto* ret = new Export(externalName, ExternalKind::Function, internalName);
   ((Module*)module)->addExport(ret);
   return ret;
 }
 BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module,
                                          const char* internalName,
                                          const char* externalName) {
-  auto* ret = new Export();
-  ret->value = internalName;
-  ret->name = externalName;
-  ret->kind = ExternalKind::Table;
+  auto* ret = new Export(externalName, ExternalKind::Table, internalName);
   ((Module*)module)->addExport(ret);
   return ret;
 }
 BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module,
                                           const char* internalName,
                                           const char* externalName) {
-  auto* ret = new Export();
-  ret->value = internalName;
-  ret->name = externalName;
-  ret->kind = ExternalKind::Memory;
+  auto* ret = new Export(externalName, ExternalKind::Memory, internalName);
   ((Module*)module)->addExport(ret);
   return ret;
 }
 BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
                                           const char* internalName,
                                           const char* externalName) {
-  auto* ret = new Export();
-  ret->value = internalName;
-  ret->name = externalName;
-  ret->kind = ExternalKind::Global;
+  auto* ret = new Export(externalName, ExternalKind::Global, internalName);
   ((Module*)module)->addExport(ret);
   return ret;
 }
 BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
                                        const char* internalName,
                                        const char* externalName) {
-  auto* ret = new Export();
-  ret->value = internalName;
-  ret->name = externalName;
-  ret->kind = ExternalKind::Tag;
+  auto* ret = new Export(externalName, ExternalKind::Tag, internalName);
   ((Module*)module)->addExport(ret);
   return ret;
 }
@@ -5118,11 +5118,8 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   memory->shared = shared;
   memory->addressType = memory64 ? Type::i64 : Type::i32;
   if (exportName) {
-    auto memoryExport = std::make_unique<Export>();
-    memoryExport->name = exportName;
-    memoryExport->value = memory->name;
-    memoryExport->kind = ExternalKind::Memory;
-    ((Module*)module)->addExport(memoryExport.release());
+    ((Module*)module)
+      ->addExport(new Export(exportName, ExternalKind::Memory, memory->name));
   }
   ((Module*)module)->removeDataSegments([&](DataSegment* curr) {
     return true;
@@ -5956,7 +5953,7 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
   return ((Export*)export_)->name.str.data();
 }
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
-  return ((Export*)export_)->value.str.data();
+  return ((Export*)export_)->getInternalName()->str.data();
 }
 
 //

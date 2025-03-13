@@ -240,38 +240,6 @@ public:
     // string.encode_wtf16_array anyhow.)
     return Flow(NONCONSTANT_FLOW);
   }
-
-  Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    auto flow = Super::visitStringSliceWTF(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-
-    auto refData = flow.getSingleValue().getGCData();
-    if (!refData) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-
-    auto& refValues = refData->values;
-    if (refValues.size() == 0) {
-      return flow;
-    }
-
-    // Check that the slice is valid; since we can assume that we have a valid
-    // UTF-16, we only need to check that it did not split surrogate pairs.
-    auto firstChar = refValues[0].getInteger();
-    if (firstChar >= 0xDC00 && firstChar <= 0xDFFF) {
-      // The first char cannot be a low surrogate.
-      return Flow(NONCONSTANT_FLOW);
-    }
-
-    auto lastChar = refValues[refValues.size() - 1].getInteger();
-    if (lastChar >= 0xD800 && lastChar <= 0xDBFF) {
-      // The last char cannot be a high surrogate.
-      return Flow(NONCONSTANT_FLOW);
-    }
-    return flow;
-  }
 };
 
 struct Precompute
@@ -967,18 +935,17 @@ private:
     if (value.isNull()) {
       return true;
     }
-    return canEmitConstantFor(value.type);
-  }
 
-  bool canEmitConstantFor(Type type) {
+    auto type = value.type;
     // A function is fine to emit a constant for - we'll emit a RefFunc, which
     // is compact and immutable, so there can't be a problem.
     if (type.isFunction()) {
       return true;
     }
-    // We can emit a StringConst for a string constant.
+    // We can emit a StringConst for a string constant if the string is a
+    // UTF-16 string.
     if (type.isString()) {
-      return true;
+      return isValidUTF16Literal(value);
     }
     // All other reference types cannot be precomputed. Even an immutable GC
     // reference is not currently something this pass can handle, as it will
@@ -989,6 +956,32 @@ private:
     }
 
     return true;
+  }
+
+  // TODO: move this logic to src/support/string, and refactor to share code
+  // with wasm/literal.cpp string printing's conversion from a Literal to a raw
+  // string.
+  bool isValidUTF16Literal(const Literal& value) {
+    bool expectLowSurrogate = false;
+    for (auto& v : value.getGCData()->values) {
+      auto c = v.getInteger();
+      if (c >= 0xDC00 && c <= 0xDFFF) {
+        if (expectLowSurrogate) {
+          expectLowSurrogate = false;
+          continue;
+        }
+        // We got a low surrogate but weren't expecting one.
+        return false;
+      }
+      if (expectLowSurrogate) {
+        // We are expecting a low surrogate but didn't get one.
+        return false;
+      }
+      if (c >= 0xD800 && c <= 0xDBFF) {
+        expectLowSurrogate = true;
+      }
+    }
+    return !expectLowSurrogate;
   }
 
   // Helpers for partial precomputing.

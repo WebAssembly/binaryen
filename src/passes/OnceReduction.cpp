@@ -372,7 +372,7 @@ struct OnceReduction : public Pass {
         // An exported global cannot be "once" since the outside may read and
         // write to it in ways we are unaware.
         // TODO: See comment above on mutability.
-        optInfo.onceGlobals[ex->value] = false;
+        optInfo.onceGlobals[*ex->getInternalName()] = false;
       }
     }
 

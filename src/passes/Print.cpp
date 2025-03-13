@@ -3089,7 +3089,8 @@ void PrintSExpression::visitExport(Export* curr) {
       WASM_UNREACHABLE("invalid ExternalKind");
   }
   o << ' ';
-  curr->value.print(o) << "))";
+  // TODO: specific case for type exports
+  curr->getInternalName()->print(o) << "))";
 }
 
 void PrintSExpression::visitTypeExport(TypeExport* curr) {

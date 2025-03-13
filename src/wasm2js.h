@@ -88,7 +88,8 @@ bool isTableExported(Module& wasm) {
     return false;
   }
   for (auto& ex : wasm.exports) {
-    if (ex->kind == ExternalKind::Table && ex->value == wasm.tables[0]->name) {
+    if (ex->kind == ExternalKind::Table &&
+        *ex->getInternalName() == wasm.tables[0]->name) {
       return true;
     }
   }
@@ -342,7 +343,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // Scan the wasm for important things.
   for (auto& exp : wasm->exports) {
     if (exp->kind == ExternalKind::Function) {
-      functionsCallableFromOutside.insert(exp->value);
+      functionsCallableFromOutside.insert(*exp->getInternalName());
     }
   }
   ElementUtils::iterAllElementFunctionNames(
@@ -534,11 +535,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
                         {},
                         builder.makeReturn(builder.makeGlobalGet(
                           INT64_TO_32_HIGH_BITS, Type::i32))))));
-    auto e = new Export();
-    e->name = WASM_FETCH_HIGH_BITS;
-    e->value = WASM_FETCH_HIGH_BITS;
-    e->kind = ExternalKind::Function;
-    wasm->addExport(e);
+    wasm->addExport(new Export(
+      WASM_FETCH_HIGH_BITS, ExternalKind::Function, WASM_FETCH_HIGH_BITS));
   }
   if (flags.emscripten) {
     asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));
@@ -765,7 +763,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
         ValueBuilder::appendToObjectWithQuotes(
           exports,
           fromName(export_->name, NameScope::Export),
-          ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
+          ValueBuilder::makeName(
+            fromName(*export_->getInternalName(), NameScope::Top)));
         break;
       }
       case ExternalKind::Memory: {
@@ -807,7 +806,8 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       case ExternalKind::Global: {
         Ref object = ValueBuilder::makeObject();
 
-        IString identName = fromName(export_->value, NameScope::Top);
+        IString identName =
+          fromName(*export_->getInternalName(), NameScope::Top);
 
         // getter
         {

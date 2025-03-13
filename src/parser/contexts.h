@@ -127,7 +127,9 @@ struct NullTypeParserCtx {
   TypeT makeF64() { return Ok{}; }
   TypeT makeV128() { return Ok{}; }
 
-  TypeT makeRefType(HeapTypeT, Nullability) { return Ok{}; }
+  TypeT makeRefType(HeapTypeT, Nullability, Exactness) { return Ok{}; }
+
+  HeapTypeT getHeapTypeFromRefType(TypeT) { return Ok{}; }
 
   TupleElemListT makeTupleElemList() { return Ok{}; }
   void appendTupleElem(TupleElemListT&, TypeT) {}
@@ -257,9 +259,12 @@ template<typename Ctx> struct TypeParserCtx {
   TypeT makeF64() { return Type::f64; }
   TypeT makeV128() { return Type::v128; }
 
-  TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return Type(ht, nullability);
+  TypeT
+  makeRefType(HeapTypeT ht, Nullability nullability, Exactness exactness) {
+    return Type(ht, nullability, exactness);
   }
+
+  HeapTypeT getHeapTypeFromRefType(TypeT t) { return t.getHeapType(); }
 
   std::vector<Type> makeTupleElemList() { return {}; }
   void appendTupleElem(std::vector<Type>& elems, Type elem) {
@@ -1142,9 +1147,12 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()), typeExports(builder.size()) {}
 
-  TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return builder.getTempRefType(ht, nullability);
+  TypeT
+  makeRefType(HeapTypeT ht, Nullability nullability, Exactness exactness) {
+    return builder.getTempRefType(ht, nullability, exactness);
   }
+
+  HeapTypeT getHeapTypeFromRefType(TypeT t) { return t.getHeapType(); }
 
   TypeT makeTupleType(const std::vector<Type> types) {
     return builder.getTempTupleType(types);

@@ -123,14 +123,18 @@ struct MetaDCEGraph {
       nodes[dceName] = DCENode(dceName);
     });
     for (auto& exp : wasm.exports) {
-      if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
-        auto dceName = getName("export", exp->name.toString());
-        exportToDCENode[exp->name] = dceName;
-        nodes[dceName] = DCENode(dceName);
+      // skip type exports
+      // TODO: shall we keep track of type dependencies?
+      if (auto* name = exp->getInternalName()) {
+        if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
+          auto dceName = getName("export", exp->name.toString());
+          exportToDCENode[exp->name] = dceName;
+          nodes[dceName] = DCENode(dceName);
+        }
+        // we can also link the export to the thing being exported
+        auto& node = nodes[exportToDCENode[exp->name]];
+        node.reaches.push_back(getDCEName(ModuleItemKind(exp->kind), *name));
       }
-      // we can also link the export to the thing being exported
-      auto& node = nodes[exportToDCENode[exp->name]];
-      node.reaches.push_back(getDCEName(ModuleItemKind(exp->kind), exp->value));
     }
     // Add initializer dependencies
     // if we provide a parent DCE name, that is who can reach what we see

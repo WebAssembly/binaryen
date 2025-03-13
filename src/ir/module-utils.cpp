@@ -635,12 +635,12 @@ void classifyTypeVisibility(Module& wasm,
   for (auto& ex : wasm.exports) {
     switch (ex->kind) {
       case ExternalKind::Function: {
-        auto* func = wasm.getFunction(ex->value);
+        auto* func = wasm.getFunction(*ex->getInternalName());
         notePublic(func->type);
         continue;
       }
       case ExternalKind::Table: {
-        auto* table = wasm.getTable(ex->value);
+        auto* table = wasm.getTable(*ex->getInternalName());
         assert(table->type.isRef());
         notePublic(table->type.getHeapType());
         continue;
@@ -649,14 +649,14 @@ void classifyTypeVisibility(Module& wasm,
         // Never a reference type.
         continue;
       case ExternalKind::Global: {
-        auto* global = wasm.getGlobal(ex->value);
+        auto* global = wasm.getGlobal(*ex->getInternalName());
         if (global->type.isRef()) {
           notePublic(global->type.getHeapType());
         }
         continue;
       }
       case ExternalKind::Tag:
-        notePublic(wasm.getTag(ex->value)->type);
+        notePublic(wasm.getTag(*ex->getInternalName())->type);
         continue;
       case ExternalKind::Type:
       case ExternalKind::Invalid:

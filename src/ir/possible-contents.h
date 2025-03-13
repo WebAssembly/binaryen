@@ -61,6 +61,25 @@ namespace wasm {
 //                     not track what they might be, so we must assume the worst
 //                     in the calling code.
 //
+// This is a lattice, but it is not a distributive lattice
+// (https://en.wikipedia.org/wiki/Lattice_(order)#Distributivity):
+//
+//   Cone(ref func) ^ [(ref.func $foo) u (ref.null func)] =
+//   Cone(ref func) ^ Cone(ref null func) =            ;; best shape that can
+//                                                     ;; hold both a ref.func
+//                                                     ;; and a null
+//   Cone(ref func)
+//
+// while
+//
+//   [Cone(ref func) ^ (ref.func $foo)] u [Cone(ref func) ^ (ref.null func)] =
+//   (ref.func $foo) u none =
+//   (ref.func $foo)
+//
+// "Fixing" this would require us to support a shape that includes both a
+// ref.func and a null, and does not "forget" the ref.func as Cone does. It is
+// not clear if that would be worth the complexity and overhead.
+//
 class PossibleContents {
   struct None : public std::monostate {};
 

@@ -84,6 +84,7 @@
 #include "pass.h"
 #include "support/hash.h"
 #include "support/utilities.h"
+#include "wasm-limits.h"
 #include "wasm.h"
 #include <algorithm>
 #include <cassert>
@@ -164,7 +165,8 @@ struct EquivalentClass {
                              Function* target,
                              Function* shared,
                              const std::vector<ParamInfo>& params,
-                             const std::vector<Expression*>& extraArgs);
+                             const std::vector<Expression*>& extraArgs,
+                             bool isReturn);
 
   bool deriveParams(Module* module,
                     std::vector<ParamInfo>& params,
@@ -479,7 +481,12 @@ void EquivalentClass::merge(Module* module,
     for (auto& param : params) {
       extraArgs.push_back(param.lowerToExpression(builder, module, i));
     }
-    replaceWithThunk(builder, func, sharedFn, params, extraArgs);
+    replaceWithThunk(builder,
+                     func,
+                     sharedFn,
+                     params,
+                     extraArgs,
+                     module->features.hasTailCall());
   }
   return;
 }
@@ -490,6 +497,15 @@ void EquivalentClass::merge(Module* module,
 // than the reduced size.
 bool EquivalentClass::hasMergeBenefit(Module* module,
                                       const std::vector<ParamInfo>& params) {
+  if (params.size() + primaryFunction->getNumParams() >
+      MaxSyntheticFunctionParams) {
+    // It requires too many parameters to merge this equivalence class. In
+    // principle, we could try splitting the class into smaller classes of
+    // functions that share more constants with each other, but that could
+    // be expensive. TODO: investigate splitting the class.
+    return false;
+  }
+
   size_t funcCount = functions.size();
   Index exprSize = Measurer::measure(primaryFunction->body);
   size_t thunkCount = funcCount;
@@ -607,7 +623,8 @@ EquivalentClass::replaceWithThunk(Builder& builder,
                                   Function* target,
                                   Function* shared,
                                   const std::vector<ParamInfo>& params,
-                                  const std::vector<Expression*>& extraArgs) {
+                                  const std::vector<Expression*>& extraArgs,
+                                  bool isReturn) {
   std::vector<Expression*> callOperands;
   Type targetParams = target->getParams();
   for (Index i = 0; i < targetParams.size(); i++) {
@@ -618,8 +635,8 @@ EquivalentClass::replaceWithThunk(Builder& builder,
     callOperands.push_back(value);
   }
 
-  // TODO: make a return_call when possible?
-  auto ret = builder.makeCall(shared->name, callOperands, target->getResults());
+  auto ret = builder.makeCall(
+    shared->name, callOperands, target->getResults(), isReturn);
   target->vars.clear();
   target->body = ret;
   return target;

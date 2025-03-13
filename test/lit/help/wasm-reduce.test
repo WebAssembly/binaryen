@@ -160,6 +160,11 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:   --enable-type-imports                Enable type imports
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-type-imports               Disable type imports

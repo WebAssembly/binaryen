@@ -86,20 +86,121 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     push(curr->value);
     return {};
   }
-  Flow visitUnary(Unary* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitUnary(Unary* curr) {
+    auto value = pop();
+    switch (curr->op) {
+      case SqrtFloat32:
+      case SqrtFloat64:
+        push(value.sqrt());
+        return {};
+      case CeilFloat32:
+      case CeilFloat64:
+        push(value.ceil());
+        return {};
+      case FloorFloat32:
+      case FloorFloat64:
+        push(value.floor());
+        return {};
+      case TruncFloat32:
+      case TruncFloat64:
+        push(value.trunc());
+        return {};
+      case NearestFloat32:
+      case NearestFloat64:
+        push(value.nearbyint());
+        return {};
+      default:
+        WASM_UNREACHABLE("TODO");
+    }
+  }
   Flow visitBinary(Binary* curr) {
     auto rhs = pop();
     auto lhs = pop();
     // TODO: add support for all operations.
     switch (curr->op) {
       case AddInt32:
+      case AddInt64:
+      case AddFloat32:
+      case AddFloat64:
         push(lhs.add(rhs));
         return {};
       case SubInt32:
+      case SubInt64:
+      case SubFloat32:
+      case SubFloat64:
         push(lhs.sub(rhs));
         return {};
       case MulInt32:
+      case MulInt64:
+      case MulFloat32:
+      case MulFloat64:
         push(lhs.mul(rhs));
+        return {};
+      case DivFloat32:
+      case DivFloat64:
+        push(lhs.div(rhs));
+        return {};
+      case AndInt32:
+      case AndInt64:
+        push(lhs.and_(rhs));
+        return {};
+      case OrInt32:
+      case OrInt64:
+        push(lhs.or_(rhs));
+        return {};
+      case XorInt32:
+      case XorInt64:
+        push(lhs.xor_(rhs));
+        return {};
+      case ShlInt32:
+      case ShlInt64:
+        push(lhs.shl(rhs));
+        return {};
+      case ShrUInt32:
+      case ShrUInt64:
+        push(lhs.shrU(rhs));
+        return {};
+      case ShrSInt32:
+      case ShrSInt64:
+        push(lhs.shrS(rhs));
+        return {};
+      case RotLInt32:
+      case RotLInt64:
+        push(lhs.rotL(rhs));
+        return {};
+      case RotRInt32:
+      case RotRInt64:
+        push(lhs.rotR(rhs));
+        return {};
+      case EqInt32:
+      case EqInt64:
+      case EqFloat32:
+      case EqFloat64:
+        push(lhs.eq(rhs));
+        return {};
+      case LtSInt32:
+      case LtSInt64:
+        push(lhs.ltS(rhs));
+        return {};
+      case LtUInt32:
+      case LtUInt64:
+        push(lhs.ltU(rhs));
+        return {};
+      case GtSInt32:
+      case GtSInt64:
+        push(lhs.gtS(rhs));
+        return {};
+      case GtUInt32:
+      case GtUInt64:
+        push(lhs.gtU(rhs));
+        return {};
+      case MinFloat32:
+      case MinFloat64:
+        push(lhs.min(rhs));
+        return {};
+      case MaxFloat32:
+      case MaxFloat64:
+        push(lhs.max(rhs));
         return {};
       default:
         WASM_UNREACHABLE("TODO");

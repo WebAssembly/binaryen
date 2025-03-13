@@ -104,6 +104,13 @@ unfuzzable = [
     # TODO: fuzzer support for type imports
     'type-imports.wast',
     'type-imports.wat'
+    # TODO: fuzzer support for exact references
+    'exact-references.wast',
+    'optimize-instructions-exact.wast',
+    'local-subtyping-exact.wast',
+    'remove-unused-types-exact.wast',
+    'coalesce-locals-exact.wast',
+    'remove-unused-brs-exact.wast',
 ]
 
 

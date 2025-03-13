@@ -426,7 +426,7 @@ jobs:
   build-cxx20:
     name: c++20
     # Make sure we can still build on older Ubuntu
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CC: "gcc"
       CXX: "g++"
