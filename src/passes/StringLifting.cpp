@@ -66,6 +66,8 @@ struct StringLifting : public Pass {
       void visitGlobalGet(GlobalGet* curr) {
         auto iter = parent.importedStrings.find(curr->name);
         if (iter != parent.importedStrings.end()) {
+          // XXX type changes from externref to stringref
+          // Need type imports, then rewrite types like StringLowering?
           replaceCurrent(Builder(*getModule()).makeStringConst(iter->second));
         }
       }
