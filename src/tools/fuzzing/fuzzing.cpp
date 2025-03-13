@@ -5342,7 +5342,7 @@ Exactness TranslateToFuzzReader::getExactness() {
   // exact references because the binary writer can always generalize the exact
   // reference types away.
   //
-  // if (wasm.features.hasGC() && oneIn(2)) {
+  // if (wasm.features.hasGC() && oneIn(8)) {
   //   return Exact;
   // }
   //
@@ -5457,8 +5457,9 @@ Type TranslateToFuzzReader::getSubType(Type type) {
       return type;
     }
     if (type.isExact()) {
-      // The only other possible heap type is bottom.
-      if (!heapType.isBottom() && oneIn(8)) {
+      // The only other possible heap type is bottom, but we don't want to
+      // generate too many bottom types.
+      if (!heapType.isBottom() && oneIn(20)) {
         heapType = heapType.getBottom();
       }
     } else {
