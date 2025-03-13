@@ -655,7 +655,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(ext, i31, {});
   assertLUB(ext, struct_, {});
   assertLUB(ext, array, {});
-  assertLUB(ext, string, {});
+  assertLUB(ext, string, ext);
   assertLUB(ext, none, {});
   assertLUB(ext, noext, ext);
   assertLUB(ext, nofunc, {});
@@ -728,7 +728,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(any, i31, any);
   assertLUB(any, struct_, any);
   assertLUB(any, array, any);
-  assertLUB(any, string, any);
+  assertLUB(any, string, {});
   assertLUB(any, none, any);
   assertLUB(any, noext, {});
   assertLUB(any, nofunc, {});
@@ -751,7 +751,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(eq, i31, eq);
   assertLUB(eq, struct_, eq);
   assertLUB(eq, array, eq);
-  assertLUB(eq, string, any);
+  assertLUB(eq, string, {});
   assertLUB(eq, none, eq);
   assertLUB(eq, noext, {});
   assertLUB(eq, nofunc, {});
@@ -773,7 +773,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(i31, cont, {});
   assertLUB(i31, struct_, eq);
   assertLUB(i31, array, eq);
-  assertLUB(i31, string, any);
+  assertLUB(i31, string, {});
   assertLUB(i31, none, i31);
   assertLUB(i31, noext, {});
   assertLUB(i31, nofunc, {});
@@ -794,7 +794,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(struct_, struct_, struct_);
   assertLUB(struct_, cont, {});
   assertLUB(struct_, array, eq);
-  assertLUB(struct_, string, any);
+  assertLUB(struct_, string, {});
   assertLUB(struct_, none, struct_);
   assertLUB(struct_, noext, {});
   assertLUB(struct_, nofunc, {});
@@ -814,7 +814,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
 
   assertLUB(array, array, array);
   assertLUB(array, cont, {});
-  assertLUB(array, string, any);
+  assertLUB(array, string, {});
   assertLUB(array, none, array);
   assertLUB(array, noext, {});
   assertLUB(array, nofunc, {});
@@ -840,8 +840,8 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(string, nocont, {});
   assertLUB(string, defFunc, {});
   assertLUB(string, defCont, {});
-  assertLUB(string, defStruct, any);
-  assertLUB(string, defArray, any);
+  assertLUB(string, defStruct, {});
+  assertLUB(string, defArray, {});
   assertLUB(string, sharedAny, {});
   assertLUB(string, sharedEq, {});
   assertLUB(string, sharedI31, {});
@@ -1599,7 +1599,7 @@ TEST_F(TypeTest, TestDepth) {
   EXPECT_EQ(HeapTypes::ext.getDepth(), 0U);
 
   EXPECT_EQ(HeapTypes::i31.getDepth(), 2U);
-  EXPECT_EQ(HeapTypes::string.getDepth(), 2U);
+  EXPECT_EQ(HeapTypes::string.getDepth(), 1U);
 
   EXPECT_EQ(HeapTypes::none.getDepth(), size_t(-1));
   EXPECT_EQ(HeapTypes::nofunc.getDepth(), size_t(-1));
