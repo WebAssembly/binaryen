@@ -647,8 +647,6 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     }
   };
 
-std::cout << "a1\n";
-
   assertLUB(ext, ext, ext);
   assertLUB(ext, func, {});
   assertLUB(ext, cont, {});
@@ -674,7 +672,6 @@ std::cout << "a1\n";
   assertLUB(ext, sharedDefStruct, {});
   assertLUB(ext, sharedDefFunc, {});
 
-std::cout << "a2\n";
   assertLUB(func, func, func);
   assertLUB(func, cont, {});
   assertLUB(func, any, {});
@@ -699,8 +696,6 @@ std::cout << "a2\n";
   assertLUB(func, sharedFunc, {});
   assertLUB(func, sharedDefStruct, {});
   assertLUB(func, sharedDefFunc, {});
-
-std::cout << "a3\n";
 
   assertLUB(cont, cont, cont);
   assertLUB(cont, func, {});
@@ -727,8 +722,6 @@ std::cout << "a3\n";
   assertLUB(cont, sharedDefStruct, {});
   assertLUB(cont, sharedDefFunc, {});
 
-std::cout << "a4\n";
-
   assertLUB(any, any, any);
   assertLUB(any, cont, {});
   assertLUB(any, eq, any);
@@ -753,8 +746,6 @@ std::cout << "a4\n";
   assertLUB(any, sharedDefStruct, {});
   assertLUB(any, sharedDefFunc, {});
 
-std::cout << "a5\n";
-
   assertLUB(eq, eq, eq);
   assertLUB(eq, cont, {});
   assertLUB(eq, i31, eq);
@@ -778,8 +769,6 @@ std::cout << "a5\n";
   assertLUB(eq, sharedDefStruct, {});
   assertLUB(eq, sharedDefFunc, {});
 
-std::cout << "a6\n";
-
   assertLUB(i31, i31, i31);
   assertLUB(i31, cont, {});
   assertLUB(i31, struct_, eq);
@@ -802,8 +791,6 @@ std::cout << "a6\n";
   assertLUB(i31, sharedDefStruct, {});
   assertLUB(i31, sharedDefFunc, {});
 
-std::cout << "a7\n";
-
   assertLUB(struct_, struct_, struct_);
   assertLUB(struct_, cont, {});
   assertLUB(struct_, array, eq);
@@ -825,8 +812,6 @@ std::cout << "a7\n";
   assertLUB(struct_, sharedDefStruct, {});
   assertLUB(struct_, sharedDefFunc, {});
 
-std::cout << "a8\n";
-
   assertLUB(array, array, array);
   assertLUB(array, cont, {});
   assertLUB(array, string, {});
@@ -847,45 +832,24 @@ std::cout << "a8\n";
   assertLUB(array, sharedDefStruct, {});
   assertLUB(array, sharedDefFunc, {});
 
-std::cout << "a9\n";
-
   assertLUB(string, string, string);
-std::cout << "a10\n";
   assertLUB(string, cont, {});
-std::cout << "a11\n";
   assertLUB(string, none, {});
-std::cout << "a12\n";
-  assertLUB(string, noext, {});
-std::cout << "a13\n";
+  assertLUB(string, noext, string);
   assertLUB(string, nofunc, {});
-std::cout << "a14\n";
   assertLUB(string, nocont, {});
-std::cout << "a15\n";
   assertLUB(string, defFunc, {});
-std::cout << "a16\n";
   assertLUB(string, defCont, {});
-std::cout << "a17\n";
   assertLUB(string, defStruct, {});
-std::cout << "a18\n";
   assertLUB(string, defArray, {});
-std::cout << "a19\n";
   assertLUB(string, sharedAny, {});
-std::cout << "a1a\n";
   assertLUB(string, sharedEq, {});
-std::cout << "a1b\n";
   assertLUB(string, sharedI31, {});
-std::cout << "a1c\n";
   assertLUB(string, sharedStruct, {});
-std::cout << "a1d\n";
   assertLUB(string, sharedNone, {});
-std::cout << "a1e\n";
   assertLUB(string, sharedFunc, {});
-std::cout << "a1f\n";
   assertLUB(string, sharedDefStruct, {});
-std::cout << "a1g\n";
   assertLUB(string, sharedDefFunc, {});
-
-std::cout << "a1000\n";
 
   assertLUB(none, none, none);
   assertLUB(none, noext, {});
