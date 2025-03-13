@@ -6259,8 +6259,12 @@ bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
   auto* B = (TypeBuilder*)builder;
   auto result = B->build();
   if (auto err = result.getError()) {
-    *errorIndex = err->index;
-    *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+    if (errorIndex) {
+      *errorIndex = err->index;
+    }
+    if (errorReason) {
+      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+    }
     delete B;
     return false;
   }

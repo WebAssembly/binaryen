@@ -2364,23 +2364,21 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
                     "ref.func should have a non-nullable reference type")) {
     return;
   }
+  if (!shouldBeTrue(curr->type.isSignature(),
+                    curr,
+                    "ref.func must have a function reference type")) {
+    return;
+  }
   if (!info.validateGlobally) {
     return;
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
-  shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  shouldBeTrue(curr->type.isFunction(),
+  if (!shouldBeTrue(!!func, curr, "function argument of ref.func must exist")) {
+    return;
+  }
+  shouldBeTrue(func->type == curr->type.getHeapType(),
                curr,
-               "ref.func must have a function reference type");
-  shouldBeTrue(
-    !curr->type.isNullable(), curr, "ref.func must have non-nullable type");
-  // TODO: verify it also has a typed function references type, and the right
-  // one,
-  //   curr->type.getHeapType().getSignature()
-  // That is blocked on having the ability to create signature types in the C
-  // API (for now those users create the type with funcref). This also needs to
-  // be fixed in LegalizeJSInterface and FuncCastEmulation and other places that
-  // update function types.
+               "function reference type must match referenced function type");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {

@@ -108,22 +108,14 @@ struct LegalizeJSInterface : public Pass {
     // for each illegal import, we must call a legalized stub instead
     for (auto* im : originalFunctions) {
       if (im->imported() && isIllegal(im)) {
-        auto funcName = makeLegalStubForCalledImport(im, module);
-        illegalImportsToLegal[im->name] = funcName;
-        // we need to use the legalized version in the tables, as the import
-        // from JS is legal for JS. Our stub makes it look like a native wasm
-        // function.
-        ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
-          if (name == im->name) {
-            name = funcName;
-          }
-        });
+        auto* func = makeLegalStubForCalledImport(im, module);
+        illegalImportsToLegal[im->name] = func;
       }
     }
 
     if (!illegalImportsToLegal.empty()) {
-      // fix up imports: call_import of an illegal must be turned to a call of a
-      // legal. the same must be done with ref.funcs.
+      // fix up imports: call of an illegal import must be turned to a call of a
+      // legal import. the same must be done with ref.funcs.
       struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
@@ -131,34 +123,37 @@ struct LegalizeJSInterface : public Pass {
           return std::make_unique<Fixer>(illegalImportsToLegal);
         }
 
-        std::map<Name, Name>* illegalImportsToLegal;
+        std::unordered_map<Name, Function*>& illegalImportsToLegal;
 
-        Fixer(std::map<Name, Name>* illegalImportsToLegal)
+        Fixer(std::unordered_map<Name, Function*>& illegalImportsToLegal)
           : illegalImportsToLegal(illegalImportsToLegal) {}
 
         void visitCall(Call* curr) {
-          auto iter = illegalImportsToLegal->find(curr->target);
-          if (iter == illegalImportsToLegal->end()) {
+          auto iter = illegalImportsToLegal.find(curr->target);
+          if (iter == illegalImportsToLegal.end()) {
             return;
           }
 
-          replaceCurrent(
-            Builder(*getModule())
-              .makeCall(
-                iter->second, curr->operands, curr->type, curr->isReturn));
+          replaceCurrent(Builder(*getModule())
+                           .makeCall(iter->second->name,
+                                     curr->operands,
+                                     curr->type,
+                                     curr->isReturn));
         }
 
         void visitRefFunc(RefFunc* curr) {
-          auto iter = illegalImportsToLegal->find(curr->func);
-          if (iter == illegalImportsToLegal->end()) {
+          auto iter = illegalImportsToLegal.find(curr->func);
+          if (iter == illegalImportsToLegal.end()) {
             return;
           }
 
-          curr->func = iter->second;
+          curr->func = iter->second->name;
+          // TODO: Make this exact.
+          curr->type = Type(iter->second->type, NonNullable);
         }
       };
 
-      Fixer fixer(&illegalImportsToLegal);
+      Fixer fixer(illegalImportsToLegal);
       fixer.run(getPassRunner(), module);
       fixer.runOnModuleCode(getPassRunner(), module);
 
@@ -174,7 +169,7 @@ struct LegalizeJSInterface : public Pass {
 
 private:
   // map of illegal to legal names for imports
-  std::map<Name, Name> illegalImportsToLegal;
+  std::unordered_map<Name, Function*> illegalImportsToLegal;
   bool exportedHelpers = false;
   Function* getTempRet0 = nullptr;
   Function* setTempRet0 = nullptr;
@@ -274,7 +269,7 @@ private:
 
   // wasm calls the import, so it must call a stub that calls the actual legal
   // JS import
-  Name makeLegalStubForCalledImport(Function* im, Module* module) {
+  Function* makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
     auto legalIm = std::make_unique<Function>();
     legalIm->name = Name(std::string("legalimport$") + im->name.toString());
@@ -315,14 +310,14 @@ private:
     }
     legalIm->type = Signature(Type(params), call->type);
 
-    const auto& stubName = stub->name;
-    if (!module->getFunctionOrNull(stubName)) {
+    auto* stubPtr = stub.get();
+    if (!module->getFunctionOrNull(stub->name)) {
       module->addFunction(std::move(stub));
     }
     if (!module->getFunctionOrNull(legalIm->name)) {
       module->addFunction(std::move(legalIm));
     }
-    return stubName;
+    return stubPtr;
   }
 
   static Function*

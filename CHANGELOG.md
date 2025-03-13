@@ -18,6 +18,8 @@ Current Trunk
  - Add an option to preserve imports and exports in the fuzzer (for fuzzer
    harnesses where they only want Binaryen to modify their given testcases, not
    generate new things in them).
+ - Require the type of RefFunc expressions to match the type of the referenced
+   function. It is no longer valid to type them as anyref in the IR.
 
 v122
 ----

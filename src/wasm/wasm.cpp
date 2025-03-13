@@ -818,6 +818,7 @@ void RefIsNull::finalize() {
 void RefFunc::finalize() {
   // No-op. We assume that the full proper typed function type has been applied
   // previously.
+  assert(type.isSignature());
 }
 
 void RefFunc::finalize(Type type_) { type = type_; }
