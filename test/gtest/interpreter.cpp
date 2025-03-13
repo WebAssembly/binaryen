@@ -435,7 +435,7 @@ TEST(InterpreterTest, FloorF32) {
   EXPECT_EQ(results, expected);
 }
 
-TEST(InterpreterTest, TrunTestcF32) {
+TEST(InterpreterTest, TruncF32) {
   Module wasm;
   IRBuilder builder(wasm);
 
@@ -601,7 +601,7 @@ TEST(InterpreterTest, FloorF64) {
   EXPECT_EQ(results, expected);
 }
 
-TEST(InterpreterTest, TrunTestcF64) {
+TEST(InterpreterTest, TruncF64) {
   Module wasm;
   IRBuilder builder(wasm);
 
