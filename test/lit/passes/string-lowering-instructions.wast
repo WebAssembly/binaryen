@@ -236,7 +236,8 @@
     (if (result stringref)
       (i32.const 0)
       (then
-        (ref.null noextern)
+        (ref.null noextern) ;; The change from stringref to externref does not
+                            ;; cause problems here, nothing needs to change.
       )
       (else
         (local.get $ref)
