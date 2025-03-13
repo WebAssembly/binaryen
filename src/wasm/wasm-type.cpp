@@ -403,6 +403,11 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   HeapType lubUnshared;
   switch (HeapType(a).getBasic(Unshared)) {
     case HeapType::ext:
+      if (bUnshared != HeapType::string) {
+        return std::nullopt;
+      }
+      lubUnshared = HeapType::ext;
+      break;
     case HeapType::func:
     case HeapType::cont:
     case HeapType::exn:
