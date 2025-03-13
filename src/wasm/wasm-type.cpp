@@ -433,15 +433,17 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       }
       break;
     case HeapType::array:
-    case HeapType::string:
       lubUnshared = HeapType::any;
       break;
+    case HeapType::string:
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn:
-      // Bottom types already handled.
+      // Bottom types already handled (including string as the switch value,
+      // which implies the other value is bottom, which again would have been
+      // handled).
       WASM_UNREACHABLE("unexpected basic type");
   }
   auto share = HeapType(a).getShared();
@@ -949,8 +951,9 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case none:
       case exn:
       case noexn:
-      case string:
         return {};
+      case string:
+        return HeapType(ext).getBasic(share);
       case eq:
         return HeapType(any).getBasic(share);
       case i31:
@@ -997,12 +1000,12 @@ size_t HeapType::getDepth() const {
         case HeapType::exn:
           break;
         case HeapType::eq:
+        case HeapType::string:
           depth++;
           break;
         case HeapType::i31:
         case HeapType::struct_:
         case HeapType::array:
-        case HeapType::string:
           depth += 2;
           break;
         case HeapType::none:
@@ -1046,9 +1049,9 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
       case i31:
       case struct_:
       case array:
-      case string:
       case none:
         return none;
+      case string:
       case noext:
         return noext;
       case nofunc:
@@ -1496,8 +1499,9 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
                aUnshared == HeapType::struct_ || aUnshared == HeapType::array ||
                a.isStruct() || a.isArray();
       case HeapType::i31:
-      case HeapType::string:
         return aUnshared == HeapType::none;
+      case HeapType::string:
+        return false;
       case HeapType::struct_:
         return aUnshared == HeapType::none || a.isStruct();
       case HeapType::array:
