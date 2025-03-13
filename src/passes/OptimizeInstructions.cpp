@@ -2297,11 +2297,6 @@ struct OptimizeInstructions
           // we need to check exactness. We can replace the cast with a drop
           // followed by a direct return of the value, though.
           if (ref->type.isNull()) {
-            // TODO: Remove this once we type ref.null as exact.
-            if (needsExactCast) {
-              return;
-            }
-
             // We can materialize the resulting null value directly.
             //
             // The type must be nullable for us to do that, which it normally
