@@ -505,45 +505,54 @@ TEST_F(TypeTest, CanonicalizeSupertypes) {
 }
 
 TEST_F(TypeTest, CanonicalizeDescriptors) {
-  TypeBuilder builder(8);
-  builder.createRecGroup(0, 4);
-  builder.createRecGroup(4, 4);
+  constexpr int numGroups = 3;
+  constexpr int groupSize = 4;
+  TypeBuilder builder(numGroups * groupSize);
 
-  // Types that vary in their descriptor and described types are different.
-  builder[0] = Struct();
-  builder[1].descriptor(builder[2]) = Struct();
-  builder[2].describes(builder[1]).descriptor(builder[3]) = Struct();
-  builder[3].describes(builder[2]) = Struct();
+  for (int i = 0; i < numGroups; ++i) {
+    builder.createRecGroup(i * groupSize, groupSize);
+  }
+  for (int i = 0; i < numGroups * groupSize; ++i) {
+    builder[i] = Struct();
+  }
+
+  // A B A' B'
+  builder[0].descriptor(builder[1]);
+  builder[1].describes(builder[0]);
+  builder[2].descriptor(builder[3]);
+  builder[3].describes(builder[2]);
+
+  // A' A B B'
+  builder[4].descriptor(builder[7]);
+  builder[5].descriptor(builder[6]);
+  builder[6].describes(builder[5]);
+  builder[7].describes(builder[4]);
 
   auto translate = [&](HeapType t) -> HeapType {
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < groupSize; ++i) {
       if (t == builder[i]) {
-        return builder[i + 4];
+        return builder[2 * groupSize + i];
       }
     }
     WASM_UNREACHABLE("unexpected type");
   };
 
-  builder[4].copy(builder[0], translate);
-  builder[5].copy(builder[1], translate);
-  builder[6].copy(builder[2], translate);
-  builder[7].copy(builder[3], translate);
+  // A B A' B' again
+  builder[8].copy(builder[0], translate);
+  builder[9].copy(builder[1], translate);
+  builder[10].copy(builder[2], translate);
+  builder[11].copy(builder[3], translate);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
   auto built = *result;
 
-  EXPECT_EQ(built[0], built[4]);
-  EXPECT_EQ(built[1], built[5]);
-  EXPECT_EQ(built[2], built[6]);
-  EXPECT_EQ(built[3], built[7]);
+  EXPECT_EQ(built[0], built[8]);
+  EXPECT_EQ(built[1], built[9]);
+  EXPECT_EQ(built[2], built[10]);
+  EXPECT_EQ(built[3], built[11]);
 
-  EXPECT_NE(built[0], built[1]);
-  EXPECT_NE(built[0], built[2]);
-  EXPECT_NE(built[0], built[3]);
-  EXPECT_NE(built[1], built[2]);
-  EXPECT_NE(built[1], built[3]);
-  EXPECT_NE(built[2], built[3]);
+  EXPECT_NE(built[0].getRecGroup(), built[4].getRecGroup());
 }
 
 TEST_F(TypeTest, CanonicalizeFinal) {
