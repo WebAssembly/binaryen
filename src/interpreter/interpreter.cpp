@@ -258,7 +258,6 @@ Result<> Interpreter::instantiate(Instance& instance) {
     store.callStack.emplace_back(instance, ExpressionIterator(global->init));
     auto results = run();
     instance.globalValues[global->name] = results[0];
-    std::cerr << &instance << std::endl;
   }
   return Ok{};
 }
