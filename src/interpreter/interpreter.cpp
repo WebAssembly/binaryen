@@ -250,19 +250,31 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
 } // anonymous namespace
 
 Result<> Interpreter::addInstance(std::shared_ptr<Module> wasm) {
-  return store.instantiate(wasm);
+  return instantiate(store.instances.emplace_back(wasm));
+}
+
+Result<> Interpreter::instantiate(Instance& instance) {
+  for (auto& global : instance.wasm->globals) {
+    store.callStack.emplace_back(instance, ExpressionIterator(global->init));
+    auto results = run();
+    store.instances.back().globalValues[global->name] = results[0];
+  }
+  return Ok{};
 }
 
 // This is a temporary convenience while stil using gTests to validate this
 // interpreter. Once spec tests can run, this shall be deleted.
-std::vector<Literal> Interpreter::run(Expression* root) {
+std::vector<Literal> Interpreter::runTest(Expression* root) {
   static std::shared_ptr<wasm::Module> dummyModule = std::make_shared<Module>();
   if (store.instances.empty()) {
-    auto result = store.instantiate(dummyModule);
+    auto result = addInstance(dummyModule);
   }
   store.callStack.emplace_back(store.instances.back(),
                                ExpressionIterator(root));
+  return run();
+}
 
+std::vector<Literal> Interpreter::run() {
   ExpressionInterpreter interpreter(*this);
 
   while (auto& it = store.callStack.back().exprs) {

@@ -28,11 +28,14 @@ public:
   // TODO: Methods to run exported functions.
 
   Result<> addInstance(std::shared_ptr<Module> wasm);
-  std::vector<Literal> run(Expression* root);
+  std::vector<Literal> runTest(Expression* root);
+  std::vector<Literal> run();
 
 private:
   interpreter::WasmStore store;
   friend class InterpreterImpl;
+
+  Result<> instantiate(interpreter::Instance& instance);
 };
 
 } // namespace wasm

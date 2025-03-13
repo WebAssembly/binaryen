@@ -67,15 +67,6 @@ struct WasmStore {
   std::vector<Frame> callStack;
   std::vector<Instance> instances;
 
-  Result<> instantiate(std::shared_ptr<Module> wasm) {
-    instances.emplace_back(wasm);
-    for (auto& global : wasm->globals) {
-      callStack.emplace_back(instances.back(),
-                             ExpressionIterator(global->init));
-    }
-    return Ok{};
-  }
-
   Frame& getFrame() {
     assert(!callStack.empty());
     return callStack.back();
