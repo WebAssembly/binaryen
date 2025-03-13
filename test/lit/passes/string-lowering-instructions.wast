@@ -378,10 +378,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct-of-string
-    ;; Test lowering of struct fields from stringref to externref.
+    ;; Test lowering of struct fields from stringref to externref. This was more
+    ;; useful of a test when stringref was a subtype of anyref, but it is still
+    ;; useful to verify nothing here goes wrong. (Now we convert stringref to
+    ;; externref, a supertype, which is much simpler - same bottom type, etc.)
     (drop
       (struct.new $struct-of-string
-        (ref.null noextern)
+        (ref.null noextern) ;; This null is already of the right type.
         (i32.const 10)
         (ref.null none) ;; Nothing to do here (field remains anyref).
       )
