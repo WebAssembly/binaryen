@@ -1412,7 +1412,7 @@ void TranslateToFuzzReader::processFunctions() {
     for (Index i = 0; i < numInitialExports; i++) {
       auto& exp = wasm.exports[i];
       if (exp->kind == ExternalKind::Function && upTo(RESOLUTION) < chance) {
-        auto* func = wasm.getFunction(exp->value);
+        auto* func = wasm.getFunction(*exp->getInternalName());
         if (!func->imported()) {
           auto* call =
             builder.makeCall(pick(noParamsOrResultFuncs), {}, Type::none);
@@ -1483,11 +1483,7 @@ Function* TranslateToFuzzReader::addFunction() {
     });
   if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
       !wasm.getExportOrNull(func->name) && !preserveImportsAndExports) {
-    auto* export_ = new Export;
-    export_->name = func->name;
-    export_->value = func->name;
-    export_->kind = ExternalKind::Function;
-    wasm.addExport(export_);
+    wasm.addExport(new Export(func->name, ExternalKind::Function, func->name));
   }
   // add some to an elem segment
   while (oneIn(3) && !random.finished()) {

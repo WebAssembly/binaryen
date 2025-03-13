@@ -2255,11 +2255,21 @@ enum class ModuleItemKind {
 
 class Export {
 public:
-  // exported name - note that this is the key, as the internal name is
-  // non-unique (can have multiple exports for an internal, also over kinds)
+  // exported name - note that this is the key, as the internal name,
+  // or the exported type, is non-unique (can have multiple exports for an
+  // internal, also over kinds)
   Name name;
-  Name value; // internal name
   ExternalKind kind;
+
+private:
+  std::variant<Name, HeapType> value; // internal name or exported type
+
+public:
+  Export(Name name, ExternalKind kind, std::variant<Name, HeapType> value)
+    : name(name), kind(kind), value(value) {
+    assert(std::get_if<Name>(&value));
+  }
+  Name* getInternalName() { return std::get_if<Name>(&value); }
 };
 
 class ElementSegment : public Named {
