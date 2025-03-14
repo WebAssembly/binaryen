@@ -55,11 +55,12 @@ struct FeatureSet {
     // it does nothing. Binaryen always accepts LEB call-indirect encodings.
     CallIndirectOverlong = 1 << 20,
     CustomDescriptors = 1 << 21,
+    TypeImports = 1 << 22,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 22) - 1,
+    All = (1 << 23) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -108,6 +109,8 @@ struct FeatureSet {
         return "call-indirect-overlong";
       case CustomDescriptors:
         return "custom-descriptors";
+      case TypeImports:
+        return "type-imports";
       case MVP:
       case Default:
       case All:
@@ -168,6 +171,7 @@ struct FeatureSet {
   bool hasCustomDescriptors() const {
     return (features & CustomDescriptors) != 0;
   }
+  bool hasTypeImports() const { return (features & TypeImports) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -195,6 +199,7 @@ struct FeatureSet {
   void setBulkMemoryOpt(bool v = true) { set(BulkMemoryOpt, v); }
   void setCustomDescriptors(bool v = true) { set(CustomDescriptors, v); }
   void setMVP() { features = MVP; }
+  void setTypeImports(bool v = true) { set(TypeImports, v); }
   void setAll() { features = All; }
 
   void enable(const FeatureSet& other) { features |= other.features; }

@@ -3083,12 +3083,19 @@ void PrintSExpression::visitExport(Export* curr) {
     case ExternalKind::Tag:
       o << "tag";
       break;
+    case ExternalKind::Type:
+      o << "type";
+      break;
     case ExternalKind::Invalid:
       WASM_UNREACHABLE("invalid ExternalKind");
   }
   o << ' ';
-  // TODO: specific case for type exports
-  curr->getInternalName()->print(o) << "))";
+  if (auto* name = curr->getInternalName()) {
+    name->print(o);
+  } else {
+    printHeapType(*curr->getHeapType());
+  }
+  o << "))";
 }
 
 void PrintSExpression::emitImportHeader(Importable* curr) {

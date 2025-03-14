@@ -40,6 +40,8 @@
 ;; CHECK-NEXT:   --skip-export-conflicts,-sec         Skip exports that conflict with previous
 ;; CHECK-NEXT:                                        ones
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-type-exports,-ste            Do not emit type exports
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
 ;; CHECK-NEXT:                                        output file
 ;; CHECK-NEXT:
@@ -156,6 +158,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
 ;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-type-imports                Enable type imports
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-type-imports               Disable type imports
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

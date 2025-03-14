@@ -127,6 +127,9 @@ struct SubTypes {
           break;
         case HeapTypeKind::Cont:
           WASM_UNREACHABLE("TODO: cont");
+        case HeapTypeKind::Import:
+          basic = type.getImport().bound;
+          break;
         case HeapTypeKind::Basic:
           WASM_UNREACHABLE("unexpected kind");
       }

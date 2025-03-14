@@ -1,0 +1,7 @@
+(module
+  (export "t1" (type eq))
+  (import "third" "t3" (type $t3 (sub struct)))
+  (type $t2 (export "t2") (array i8))
+  (export "t3" (type $t3))
+  (func $g (export "g") (param (ref $t2)))
+)

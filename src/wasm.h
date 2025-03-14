@@ -2235,6 +2235,7 @@ enum class ExternalKind {
   Memory = 2,
   Global = 3,
   Tag = 4,
+  Type = 5,
   Invalid = -1
 };
 
@@ -2267,9 +2268,10 @@ private:
 public:
   Export(Name name, ExternalKind kind, std::variant<Name, HeapType> value)
     : name(name), kind(kind), value(value) {
-    assert(std::get_if<Name>(&value));
+    assert((kind == ExternalKind::Type) == !std::get_if<Name>(&value));
   }
   Name* getInternalName() { return std::get_if<Name>(&value); }
+  HeapType* getHeapType() { return std::get_if<HeapType>(&value); }
 };
 
 class ElementSegment : public Named {

@@ -309,6 +309,7 @@ void Fuzzer::checkCanonicalization() {
             continue;
           case HeapTypeKind::Cont:
             WASM_UNREACHABLE("TODO: cont");
+          case HeapTypeKind::Import:
           case HeapTypeKind::Basic:
             break;
         }

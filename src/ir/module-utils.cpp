@@ -489,6 +489,11 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   for (auto& curr : wasm.elementSegments) {
     info.note(curr->type);
   }
+  for (auto& curr : wasm.exports) {
+    if (auto* heapType = curr->getHeapType()) {
+      info.note(*heapType);
+    }
+  }
 
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<TypeInfos, Immutable, InsertOrderedMap>
@@ -655,6 +660,9 @@ void classifyTypeVisibility(Module& wasm,
       case ExternalKind::Tag:
         notePublic(wasm.getTag(*ex->getInternalName())->type);
         continue;
+      case ExternalKind::Type:
+        notePublic(*ex->getHeapType());
+        continue;
       case ExternalKind::Invalid:
         break;
     }
@@ -730,9 +738,9 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
   return types;
 }
 
-IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
-
+IndexedHeapTypes sortHeapTypes(Module& wasm,
+                               InsertOrderedMap<HeapType, HeapTypeInfo>& counts,
+                               std::function<HeapType(HeapType)> map) {
   // Collect the rec groups.
   std::unordered_map<RecGroup, size_t> groupIndices;
   std::vector<RecGroup> groups;
@@ -759,6 +767,7 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   for (size_t i = 0; i < groups.size(); ++i) {
     for (auto type : groups[i]) {
       for (auto child : type.getReferencedHeapTypes()) {
+        child = map(child);
         if (child.isBasic()) {
           continue;
         }
@@ -793,6 +802,11 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
+  std::vector<bool> isImport(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    isImport[i] = groups[i][0].isImport();
+  }
+
   // If we've preserved the input type order on the module, we have to respect
   // that first. Use the index of the first type from each group. In principle
   // we could try to do something more robust like take the minimum index of all
@@ -812,7 +826,11 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
-  auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+  auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) -> bool {
+    // Imports should be first
+    if (isImport[a] != isImport[b]) {
+      return isImport[a];
+    }
     auto indexA = groupTypeIndices[a];
     auto indexB = groupTypeIndices[b];
     // Groups with indices must be sorted before groups without indices to
@@ -844,6 +862,12 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   }
   setIndices(indexedTypes);
   return indexedTypes;
+}
+
+IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
+  auto counts = collectHeapTypeInfo(wasm, TypeInclusion::BinaryTypes);
+  return sortHeapTypes(
+    wasm, counts, [](HeapType type) -> HeapType { return type; });
 }
 
 } // namespace wasm::ModuleUtils

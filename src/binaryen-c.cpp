@@ -4940,6 +4940,13 @@ BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
   ((Module*)module)->addExport(ret);
   return ret;
 }
+BinaryenExportRef BinaryenAddTypeExport(BinaryenModuleRef module,
+                                        BinaryenHeapType type,
+                                        const char* externalName) {
+  auto* ret = new Export(externalName, ExternalKind::Type, HeapType(type));
+  ((Module*)module)->addExport(ret);
+  return ret;
+}
 BinaryenExportRef BinaryenGetExport(BinaryenModuleRef module,
                                     const char* externalName) {
   return ((Module*)module)->getExportOrNull(externalName);
@@ -5923,6 +5930,9 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
 }
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   return ((Export*)export_)->getInternalName()->str.data();
+}
+BinaryenHeapType BinaryenExportGetHeapType(BinaryenExportRef export_) {
+  return ((Export*)export_)->getHeapType()->getID();
 }
 
 //

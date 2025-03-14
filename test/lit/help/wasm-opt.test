@@ -530,6 +530,8 @@
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features
 ;; CHECK-NEXT:                                                 section
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-type-exports                          strip the wasm type exports
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --stub-unsupported-js                         stub out unsupported JS
 ;; CHECK-NEXT:                                                 operations
 ;; CHECK-NEXT:
@@ -792,6 +794,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
 ;; CHECK-NEXT:                                                 (RTTs) and exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-type-imports                         Enable type imports
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-type-imports                        Disable type imports
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:
