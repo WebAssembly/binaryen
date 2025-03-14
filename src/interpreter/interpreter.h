@@ -18,6 +18,7 @@
 #define interpreter_interpreter_h
 
 #include "store.h"
+#include "support/result.h"
 
 namespace wasm {
 
@@ -25,11 +26,16 @@ class Interpreter {
 public:
   // TODO: Methods to instantiate modules.
   // TODO: Methods to run exported functions.
-  std::vector<Literal> run(Expression* root);
+
+  Result<> addInstance(std::shared_ptr<Module> wasm);
+  std::vector<Literal> runTest(Expression* root);
+  std::vector<Literal> run();
 
 private:
   interpreter::WasmStore store;
   friend class InterpreterImpl;
+
+  Result<> instantiate(interpreter::Instance& instance);
 };
 
 } // namespace wasm
