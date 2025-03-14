@@ -930,8 +930,7 @@ TEST(InterpreterTest, GlobalI32) {
   ASSERT_FALSE(irBuilder.makeConst(Literal(int32_t(5))).getErr());
   ASSERT_FALSE(irBuilder.makeGlobalSet("global").getErr());
   ASSERT_FALSE(irBuilder.makeGlobalGet("global").getErr());
-  ASSERT_FALSE(irBuilder.
-               visitEnd().getErr());
+  ASSERT_FALSE(irBuilder.visitEnd().getErr());
 
   auto expr = irBuilder.build();
   ASSERT_FALSE(expr.getErr());
