@@ -9,14 +9,14 @@
 
  (export "test" (func $test))
 
- (func $test (result anyref)
+ (func $test (result externref)
   (global.get $global)
  )
 )
-;; CHECK:      (type $0 (func (result anyref)))
+;; CHECK:      (type $0 (func (result externref)))
 
 ;; CHECK:      (export "test" (func $test_1))
 
-;; CHECK:      (func $test_1 (type $0) (result anyref)
+;; CHECK:      (func $test_1 (type $0) (result externref)
 ;; CHECK-NEXT:  (string.const "one")
 ;; CHECK-NEXT: )

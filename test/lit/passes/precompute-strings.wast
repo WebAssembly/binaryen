@@ -12,7 +12,7 @@
 
  ;; CHECK:      (type $2 (func (result (ref string))))
 
- ;; CHECK:      (type $3 (func (result anyref)))
+ ;; CHECK:      (type $3 (func (result externref)))
 
  ;; CHECK:      (type $4 (func (result (ref any))))
 
@@ -262,7 +262,7 @@
  )
 
 
- ;; CHECK:      (func $string.new-mutable (type $3) (result anyref)
+ ;; CHECK:      (func $string.new-mutable (type $3) (result externref)
  ;; CHECK-NEXT:  (string.new_wtf16_array
  ;; CHECK-NEXT:   (array.new_fixed $array16 4
  ;; CHECK-NEXT:    (i32.const 65)
@@ -274,7 +274,7 @@
  ;; CHECK-NEXT:   (i32.const 4)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $string.new-mutable (result anyref)
+ (func $string.new-mutable (result externref)
   ;; We do not precompute this because the array is mutable, and we do not yet
   ;; do an analysis to see that it does not "escape" into places that modify it.
   (string.new_wtf16_array
@@ -289,10 +289,10 @@
   )
  )
 
- ;; CHECK:      (func $string.new-immutable (type $3) (result anyref)
+ ;; CHECK:      (func $string.new-immutable (type $3) (result externref)
  ;; CHECK-NEXT:  (string.const "ABCD")
  ;; CHECK-NEXT: )
- (func $string.new-immutable (result anyref)
+ (func $string.new-immutable (result externref)
   ;; This array is immutable and we can optimize here.
   (string.new_wtf16_array
    (array.new_fixed $array16-imm 4

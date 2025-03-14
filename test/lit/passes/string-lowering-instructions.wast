@@ -236,7 +236,8 @@
     (if (result stringref)
       (i32.const 0)
       (then
-        (ref.null none) ;; this will turn into noextern
+        (ref.null noextern) ;; The change from stringref to externref does not
+                            ;; cause problems here, nothing needs to change.
       )
       (else
         (local.get $ref)
@@ -263,7 +264,7 @@
         (local.get $ref)
       )
       (else
-        (ref.null none)
+        (ref.null noextern)
       )
     )
   )
@@ -378,10 +379,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct-of-string
-    ;; Test lowering of struct fields from stringref to externref.
+    ;; Test lowering of struct fields from stringref to externref. This was more
+    ;; useful of a test when stringref was a subtype of anyref, but it is still
+    ;; useful to verify nothing here goes wrong. (Now we convert stringref to
+    ;; externref, a supertype, which is much simpler - same bottom type, etc.)
     (drop
       (struct.new $struct-of-string
-        (ref.null none) ;; This null must be fixed to be ext.
+        (ref.null noextern) ;; This null is already of the right type.
         (i32.const 10)
         (ref.null none) ;; Nothing to do here (field remains anyref).
       )
