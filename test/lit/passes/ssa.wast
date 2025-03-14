@@ -36,9 +36,9 @@
 
  ;; CHECK:      (func $refine-to-null (type $3) (result (ref $A))
  ;; CHECK-NEXT:  (local $0 (ref null $A))
- ;; CHECK-NEXT:  (block $label (result (ref none))
+ ;; CHECK-NEXT:  (block $label (result (ref exact none))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $label nullref (ref none)
+ ;; CHECK-NEXT:    (br_on_cast $label (exact nullref) (ref exact none)
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

@@ -100,7 +100,15 @@ unfuzzable = [
     'stack_switching_suspend.wast',
     'stack_switching_resume.wast',
     'stack_switching_resume_throw.wast',
-    'stack_switching_switch.wast'
+    'stack_switching_switch.wast',
+    # TODO: fuzzer support for exact references
+    'exact-references.wast',
+    'optimize-instructions-exact.wast',
+    'local-subtyping-exact.wast',
+    'remove-unused-types-exact.wast',
+    'coalesce-locals-exact.wast',
+    'remove-unused-brs-exact.wast',
+    'exact.wast',
 ]
 
 

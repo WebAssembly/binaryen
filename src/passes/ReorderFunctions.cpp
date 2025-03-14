@@ -76,7 +76,9 @@ struct ReorderFunctions : public Pass {
       counts[module->start]++;
     }
     for (auto& curr : module->exports) {
-      counts[curr->value]++;
+      if (curr->kind == ExternalKind::Function) {
+        counts[*curr->getInternalName()]++;
+      }
     }
     ElementUtils::iterAllElementFunctionNames(
       module, [&](Name& name) { counts[name]++; });

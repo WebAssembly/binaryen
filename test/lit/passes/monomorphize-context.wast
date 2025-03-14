@@ -277,7 +277,7 @@
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (local.set $21
-;; ALWAYS-NEXT:   (ref.cast nullref
+;; ALWAYS-NEXT:   (ref.cast (exact nullref)
 ;; ALWAYS-NEXT:    (ref.null none)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
@@ -555,7 +555,7 @@
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (local.set $21
-;; ALWAYS-NEXT:     (ref.cast nullref
+;; ALWAYS-NEXT:     (ref.cast (exact nullref)
 ;; ALWAYS-NEXT:      (ref.null none)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )

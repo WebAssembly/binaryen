@@ -103,7 +103,7 @@
   ;; CHECK:      (elem declare func $return_a $return_b)
 
   ;; CHECK:      (func $return_call_a (type $0) (result i32)
-  ;; CHECK-NEXT:  (call $byn$mgfn-shared$return_call_a
+  ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$return_call_a
   ;; CHECK-NEXT:   (ref.func $return_a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -115,7 +115,7 @@
   )
 
   ;; CHECK:      (func $return_call_b (type $0) (result i32)
-  ;; CHECK-NEXT:  (call $byn$mgfn-shared$return_call_a
+  ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$return_call_a
   ;; CHECK-NEXT:   (ref.func $return_b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

@@ -205,7 +205,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 
     Type getNew(Type type) {
       if (type.isRef()) {
-        return Type(getNew(type.getHeapType()), type.getNullability());
+        return type.with(getNew(type.getHeapType()));
       }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
@@ -342,6 +342,7 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
+      // TODO: Handle exactness.
       return typeBuilder.getTempRefType(typeBuilder[it->second],
                                         type.getNullability());
     }
@@ -465,7 +466,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 Type getValidLocalType(Type type, FeatureSet features) {
   assert(type.isConcrete());
   if (type.isNonNullable()) {
-    return Type(type.getHeapType(), Nullable);
+    return type.with(Nullable);
   }
   if (type.isTuple()) {
     std::vector<Type> elems(type.size());

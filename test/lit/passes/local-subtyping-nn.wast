@@ -8,7 +8,7 @@
   (import "out" "i32" (func $i32 (result i32)))
 
   ;; CHECK:      (func $non-nullable (type $1)
-  ;; CHECK-NEXT:  (local $x (ref none))
+  ;; CHECK-NEXT:  (local $x (ref exact none))
   ;; CHECK-NEXT:  (local $y (ref $0))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -41,7 +41,7 @@
   )
 
   ;; CHECK:      (func $uses-default (type $2) (param $i i32)
-  ;; CHECK-NEXT:  (local $x nullref)
+  ;; CHECK-NEXT:  (local $x (exact nullref))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)
   ;; CHECK-NEXT:   (then

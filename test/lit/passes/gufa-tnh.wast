@@ -2063,3 +2063,76 @@
   )
  )
 )
+
+;; Test writes to locals that interfere with inferences about casts.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $top (sub (struct)))
+  (type $top (sub (struct)))
+  ;; CHECK:       (type $bot (sub $top (struct)))
+  (type $bot (sub $top (struct)))
+ )
+
+ ;; CHECK:      (type $2 (func (param (ref $top))))
+
+ ;; CHECK:      (type $3 (func (param (ref extern))))
+
+ ;; CHECK:      (export "$invokeMain" (func $invokeMain))
+
+ ;; CHECK:      (func $main-set (type $2) (param $0 (ref $top))
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (struct.new_default $bot)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast (ref $bot)
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $main-set (param (ref $top))
+  ;; We receive a top as input, but write a bot to it, trampling the ignored
+  ;; parameter. Thanks to the trampling, the cast below will succeed, and so we
+  ;; should not make anything unreachable in the caller - nothing traps here.
+  (local.set 0
+   (struct.new $bot)
+  )
+  (drop
+   (ref.cast (ref $bot)
+    (local.get 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $main-noset (type $2) (param $0 (ref $top))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $main-noset (param (ref $top))
+  ;; As above, but without the local.set. Here we will trap, so the caller can
+  ;; optimize to unreachable.
+  (drop
+   (ref.cast (ref $bot)
+    (local.get 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $invokeMain (type $3) (param $0 (ref extern))
+ ;; CHECK-NEXT:  (call $main-set
+ ;; CHECK-NEXT:   (struct.new_default $top)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $main-noset
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $invokeMain (export "$invokeMain") (param (ref extern))
+  (call $main-set
+   (struct.new $top)
+  )
+  (call $main-noset
+   (struct.new $top)
+  )
+ )
+)

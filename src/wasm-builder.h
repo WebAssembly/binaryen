@@ -142,12 +142,8 @@ public:
   }
 
   static std::unique_ptr<Export>
-  makeExport(Name name, Name value, ExternalKind kind) {
-    auto export_ = std::make_unique<Export>();
-    export_->name = name;
-    export_->value = value;
-    export_->kind = kind;
-    return export_;
+  makeExport(Name name, std::variant<Name, HeapType> value, ExternalKind kind) {
+    return std::make_unique<Export>(name, kind, value);
   }
 
   enum Mutability { Mutable, Immutable };
@@ -674,11 +670,11 @@ public:
   }
   RefNull* makeRefNull(HeapType type) {
     auto* ret = wasm.allocator.alloc<RefNull>();
-    ret->finalize(Type(type.getBottom(), Nullable));
+    ret->finalize(Type(type.getBottom(), Nullable, Exact));
     return ret;
   }
   RefNull* makeRefNull(Type type) {
-    assert(type.isNullable() && type.isNull());
+    assert(type.isNullable() && type.isNull() && type.isExact());
     auto* ret = wasm.allocator.alloc<RefNull>();
     ret->finalize(type);
     return ret;
@@ -1274,7 +1270,7 @@ public:
       return makeConst(value);
     }
     if (value.isNull()) {
-      return makeRefNull(type);
+      return makeRefNull(type.getHeapType());
     }
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
@@ -1439,8 +1435,8 @@ public:
       return maybeWrap(makeConstantExpression(Literal::makeZeros(curr->type)));
     }
     if (curr->type.isNullable()) {
-      return maybeWrap(ExpressionManipulator::refNull(
-        curr, Type(curr->type.getHeapType().getBottom(), Nullable)));
+      return maybeWrap(
+        ExpressionManipulator::refNull(curr, curr->type.getHeapType()));
     }
     if (curr->type.isRef() &&
         curr->type.getHeapType().isMaybeShared(HeapType::i31)) {
