@@ -168,6 +168,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
 ;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-type-imports                Enable type imports
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-type-imports               Disable type imports
