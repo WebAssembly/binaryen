@@ -162,17 +162,26 @@ struct FuncCastEmulation : public Pass {
     HeapType ABIType(
       Signature(Type(std::vector<Type>(numParams, Type::i64)), Type::i64));
     // Add a thunk for each function in the table, and do the call through it.
-    std::unordered_map<Name, Name> funcThunks;
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
-      auto iter = funcThunks.find(name);
-      if (iter == funcThunks.end()) {
-        auto thunk = makeThunk(name, module, numParams);
-        funcThunks[name] = thunk;
-        name = thunk;
-      } else {
-        name = iter->second;
+    std::unordered_map<Name, Function*> funcThunks;
+    for (auto& segment : module->elementSegments) {
+      if (!segment->type.isFunction()) {
+        continue;
       }
-    });
+      for (Index i = 0; i < segment->data.size(); ++i) {
+        auto* ref = segment->data[i]->dynCast<RefFunc>();
+        if (!ref) {
+          continue;
+        }
+        auto [iter, inserted] = funcThunks.insert({ref->func, nullptr});
+        if (inserted) {
+          iter->second = makeThunk(ref->func, module, numParams);
+        }
+        auto* thunk = iter->second;
+        ref->func = thunk->name;
+        // TODO: Make this exact.
+        ref->type = Type(thunk->type, NonNullable);
+      }
+    }
 
     // update call_indirects
     ParallelFuncCastEmulation(ABIType, numParams).run(getPassRunner(), module);
@@ -180,7 +189,7 @@ struct FuncCastEmulation : public Pass {
 
 private:
   // Creates a thunk for a function, casting args and return value as needed.
-  Name makeThunk(Name name, Module* module, Index numParams) {
+  Function* makeThunk(Name name, Module* module, Index numParams) {
     Name thunk = std::string("byn$fpcast-emu$") + name.toString();
     if (module->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in "
@@ -207,8 +216,7 @@ private:
                            {}, // no vars
                            toABI(call, module));
     thunkFunc->hasExplicitName = true;
-    module->addFunction(std::move(thunkFunc));
-    return thunk;
+    return module->addFunction(std::move(thunkFunc));
   }
 };
 

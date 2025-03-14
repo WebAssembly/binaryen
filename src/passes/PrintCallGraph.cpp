@@ -96,7 +96,7 @@ struct PrintCallGraph : public Pass {
     CallPrinter printer(module);
 
     // Indirect Targets
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name name) {
       auto* func = module->getFunction(name);
       o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
     });

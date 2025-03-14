@@ -2117,7 +2117,7 @@ BinaryenFeatureAll: 4194303
        )
       )
       (drop
-       (select (result funcref)
+       (select (result (ref null $2))
         (ref.null nofunc)
         (ref.func $"kitchen()sinker")
         (i32.const 1)
