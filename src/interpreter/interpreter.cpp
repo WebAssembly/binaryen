@@ -289,6 +289,7 @@ Result<> Interpreter::instantiate(Instance& instance) {
   for (auto& global : instance.wasm->globals) {
     store.callStack.emplace_back(instance, ExpressionIterator(global->init));
     auto results = run();
+    assert(results.size == 1);
     instance.globalValues[global->name] = results[0];
   }
   return Ok{};
@@ -308,7 +309,6 @@ std::vector<Literal> Interpreter::runTest(Expression* root) {
 
 std::vector<Literal> Interpreter::run() {
   ExpressionInterpreter interpreter(*this);
-
   while (auto& it = store.callStack.back().exprs) {
     if (auto flow = interpreter.visit(*it)) {
       // TODO: Handle control flow transfers.

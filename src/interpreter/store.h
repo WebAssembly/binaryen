@@ -26,7 +26,7 @@
 
 namespace wasm::interpreter {
 
-// Contains the runtime representation of a wasm module
+// Contains the runtime representation of an instance of a Wasm module.
 struct Instance {
   std::shared_ptr<Module> wasm;
   std::unordered_map<Name, Literal> globalValues;
