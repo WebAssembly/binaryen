@@ -192,6 +192,10 @@ public:
   // as well, just like |getDeclaredSuperType|.
   std::optional<HeapType> getSuperType() const;
 
+  // Get this type's descriptor or described types if they exist.
+  std::optional<HeapType> getDescriptorType() const;
+  std::optional<HeapType> getDescribedType() const;
+
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.
   size_t getDepth() const;
@@ -712,6 +716,12 @@ struct TypeBuilder {
     if (auto super = type.getDeclaredSuperType()) {
       setSubType(i, map(*super));
     }
+    if (auto desc = type.getDescriptorType()) {
+      setDescriptor(i, map(*desc));
+    }
+    if (auto desc = type.getDescribedType()) {
+      setDescribed(i, map(*desc));
+    }
     setOpen(i, type.isOpen());
     setShared(i, type.getShared());
 
@@ -781,6 +791,10 @@ struct TypeBuilder {
   // Declare the HeapType being built at index `i` to be an immediate subtype of
   // the given HeapType.
   void setSubType(size_t i, std::optional<HeapType> super);
+
+  // Set the descriptor or described type for the type at index `i`.
+  void setDescriptor(size_t i, std::optional<HeapType> desc);
+  void setDescribed(size_t i, std::optional<HeapType> desc);
 
   // Create a new recursion group covering slots [i, i + length). Groups must
   // not overlap or go out of bounds.
@@ -856,6 +870,14 @@ struct TypeBuilder {
     }
     Entry& subTypeOf(std::optional<HeapType> other) {
       builder.setSubType(index, other);
+      return *this;
+    }
+    Entry& descriptor(std::optional<HeapType> other) {
+      builder.setDescriptor(index, other);
+      return *this;
+    }
+    Entry& describes(std::optional<HeapType> other) {
+      builder.setDescribed(index, other);
       return *this;
     }
     Entry& setOpen(bool open = true) {

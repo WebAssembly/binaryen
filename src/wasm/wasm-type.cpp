@@ -52,6 +52,10 @@ struct HeapTypeInfo {
   Shareability share = Unshared;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
+  // The descriptor of this HeapType, if it exists.
+  HeapTypeInfo* descriptor = nullptr;
+  // The HeapType described by this one, if it exists.
+  HeapTypeInfo* described = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
   // (i.e. contains only this type).
   RecGroupInfo* recGroup = nullptr;
@@ -976,6 +980,26 @@ std::optional<HeapType> HeapType::getSuperType() const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+std::optional<HeapType> HeapType::getDescriptorType() const {
+  if (isBasic()) {
+    return std::nullopt;
+  }
+  if (auto* desc = getHeapTypeInfo(*this)->descriptor) {
+    return HeapType(uintptr_t(desc));
+  }
+  return std::nullopt;
+}
+
+std::optional<HeapType> HeapType::getDescribedType() const {
+  if (isBasic()) {
+    return std::nullopt;
+  }
+  if (auto* desc = getHeapTypeInfo(*this)->described) {
+    return HeapType(uintptr_t(desc));
+  }
+  return std::nullopt;
+}
+
 size_t HeapType::getDepth() const {
   size_t depth = 0;
   std::optional<HeapType> super;
@@ -1149,6 +1173,12 @@ std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
   if (auto super = getDeclaredSuperType()) {
     types.push_back(*super);
   }
+  if (auto desc = getDescriptorType()) {
+    types.push_back(*desc);
+  }
+  if (auto desc = getDescribedType()) {
+    types.push_back(*desc);
+  }
   return types;
 }
 
@@ -1278,6 +1308,10 @@ FeatureSet HeapType::getFeatures() const {
       if (heapType.getRecGroup().size() > 1 ||
           heapType.getDeclaredSuperType() || heapType.isOpen()) {
         feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+      }
+
+      if (heapType.getDescriptorType() || heapType.getDescribedType()) {
+        feats |= FeatureSet::CustomDescriptors;
       }
 
       if (heapType.isStruct() || heapType.isArray()) {
@@ -1765,6 +1799,16 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (type.isShared()) {
     os << "(shared ";
   }
+  if (auto desc = type.getDescribedType()) {
+    os << "(describes ";
+    printHeapTypeName(*desc);
+    os << ' ';
+  }
+  if (auto desc = type.getDescriptorType()) {
+    os << "(descriptor ";
+    printHeapTypeName(*desc);
+    os << ' ';
+  }
   switch (type.getKind()) {
     case HeapTypeKind::Func:
       print(type.getSignature());
@@ -1780,6 +1824,12 @@ std::ostream& TypePrinter::print(HeapType type) {
       break;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
+  }
+  if (type.getDescriptorType()) {
+    os << ')';
+  }
+  if (type.getDescribedType()) {
+    os << ')';
   }
   if (type.isShared()) {
     os << ')';
@@ -1927,8 +1977,17 @@ size_t RecGroupHasher::hash(HeapType type) const {
 
 size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   size_t digest = wasm::hash(bool(info.supertype));
+  wasm::rehash(digest, !!info.supertype);
   if (info.supertype) {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
+  }
+  wasm::rehash(digest, !!info.descriptor);
+  if (info.descriptor) {
+    hash_combine(digest, hash(HeapType(uintptr_t(info.descriptor))));
+  }
+  wasm::rehash(digest, !!info.described);
+  if (info.described) {
+    hash_combine(digest, hash(HeapType(uintptr_t(info.described))));
   }
   wasm::rehash(digest, info.isOpen);
   wasm::rehash(digest, info.share);
@@ -2051,13 +2110,33 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
 }
 
 bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
-  if (bool(a.supertype) != bool(b.supertype)) {
+  if (!!a.supertype != !!b.supertype) {
     return false;
   }
   if (a.supertype) {
     HeapType superA(uintptr_t(a.supertype));
     HeapType superB(uintptr_t(b.supertype));
     if (!eq(superA, superB)) {
+      return false;
+    }
+  }
+  if (!!a.descriptor != !!b.descriptor) {
+    return false;
+  }
+  if (a.descriptor) {
+    HeapType descA(uintptr_t(a.descriptor));
+    HeapType descB(uintptr_t(b.descriptor));
+    if (!eq(descA, descB)) {
+      return false;
+    }
+  }
+  if (!!a.described != !!b.described) {
+    return false;
+  }
+  if (a.described) {
+    HeapType descA(uintptr_t(a.described));
+    HeapType descB(uintptr_t(b.described));
+    if (!eq(descA, descB)) {
       return false;
     }
   }
@@ -2227,6 +2306,16 @@ void TypeBuilder::setSubType(size_t i, std::optional<HeapType> super) {
   HeapTypeInfo* sub = impl->entries[i].info.get();
   sub->supertype = super ? getHeapTypeInfo(*super) : nullptr;
 }
+void TypeBuilder::setDescriptor(size_t i, std::optional<HeapType> desc) {
+  assert(i < size() && "index out of bounds");
+  HeapTypeInfo* info = impl->entries[i].info.get();
+  info->descriptor = desc ? getHeapTypeInfo(*desc) : nullptr;
+}
+void TypeBuilder::setDescribed(size_t i, std::optional<HeapType> desc) {
+  assert(i < size() && "index out of bounds");
+  HeapTypeInfo* info = impl->entries[i].info.get();
+  info->described = desc ? getHeapTypeInfo(*desc) : nullptr;
+}
 
 void TypeBuilder::createRecGroup(size_t index, size_t length) {
   assert(index <= size() && index + length <= size() && "group out of bounds");
@@ -2380,6 +2469,20 @@ void updateReferencedHeapTypes(
     HeapType super(uintptr_t(info->supertype));
     if (auto it = canonicalized.find(super); it != canonicalized.end()) {
       info->supertype = getHeapTypeInfo(it->second);
+    }
+  }
+
+  // Update the descriptor and described types.
+  if (info->descriptor) {
+    HeapType desc(uintptr_t(info->descriptor));
+    if (auto it = canonicalized.find(desc); it != canonicalized.end()) {
+      info->descriptor = getHeapTypeInfo(it->second);
+    }
+  }
+  if (info->described) {
+    HeapType desc(uintptr_t(info->described));
+    if (auto it = canonicalized.find(desc); it != canonicalized.end()) {
+      info->described = getHeapTypeInfo(it->second);
     }
   }
 }
