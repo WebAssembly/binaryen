@@ -2,7 +2,6 @@
 
 set -o errexit
 set -o pipefail
-set -x
 
 if [ -n "$1" ]; then
   BRANCH="$1"
