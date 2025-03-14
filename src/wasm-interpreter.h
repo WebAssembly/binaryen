@@ -3824,7 +3824,7 @@ public:
     if (ptrFlow.breaking()) {
       return ptrFlow;
     }
-    NOTE_EVAL1(flow);
+    NOTE_EVAL1(ptrFlow);
     Flow vecFlow = self()->visit(curr->vec);
     if (vecFlow.breaking()) {
       return vecFlow;
