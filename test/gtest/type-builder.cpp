@@ -504,6 +504,57 @@ TEST_F(TypeTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[4], built[5]);
 }
 
+TEST_F(TypeTest, CanonicalizeDescriptors) {
+  constexpr int numGroups = 3;
+  constexpr int groupSize = 4;
+  TypeBuilder builder(numGroups * groupSize);
+
+  for (int i = 0; i < numGroups; ++i) {
+    builder.createRecGroup(i * groupSize, groupSize);
+  }
+  for (int i = 0; i < numGroups * groupSize; ++i) {
+    builder[i] = Struct();
+  }
+
+  // A B A' B'
+  builder[0].descriptor(builder[1]);
+  builder[1].describes(builder[0]);
+  builder[2].descriptor(builder[3]);
+  builder[3].describes(builder[2]);
+
+  // A' A B B'
+  builder[4].descriptor(builder[7]);
+  builder[5].descriptor(builder[6]);
+  builder[6].describes(builder[5]);
+  builder[7].describes(builder[4]);
+
+  auto translate = [&](HeapType t) -> HeapType {
+    for (int i = 0; i < groupSize; ++i) {
+      if (t == builder[i]) {
+        return builder[2 * groupSize + i];
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
+  };
+
+  // A B A' B' again
+  builder[8].copy(builder[0], translate);
+  builder[9].copy(builder[1], translate);
+  builder[10].copy(builder[2], translate);
+  builder[11].copy(builder[3], translate);
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_EQ(built[0], built[8]);
+  EXPECT_EQ(built[1], built[9]);
+  EXPECT_EQ(built[2], built[10]);
+  EXPECT_EQ(built[3], built[11]);
+
+  EXPECT_NE(built[0].getRecGroup(), built[4].getRecGroup());
+}
+
 TEST_F(TypeTest, CanonicalizeFinal) {
   // Types are different if their finality flag is different.
   TypeBuilder builder(2);
