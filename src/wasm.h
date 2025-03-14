@@ -24,7 +24,6 @@
 #ifndef wasm_wasm_h
 #define wasm_wasm_h
 
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <map>
@@ -32,6 +31,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 #include "literal.h"
 #include "mixed_arena.h"
