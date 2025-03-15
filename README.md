@@ -1029,6 +1029,10 @@ under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**.
 However, Visual Studio 2017 may now be required. Help would be appreciated on
 Windows and OS X as most of the core devs are on Linux.
 
+* Is there a roadmap for the project?
+
+Yes: [roadmap]
+
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
 [win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md
 [C API]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api
@@ -1039,3 +1043,4 @@ Windows and OS X as most of the core devs are on Linux.
 [minification]: https://kripken.github.io/talks/binaryen.html#/2
 [unreachable]: https://github.com/WebAssembly/binaryen/issues/903
 [binaryen_ir]: https://github.com/WebAssembly/binaryen/issues/663
+[roadmap]: https://github.com/WebAssembly/binaryen/blob/main/ROADMAP.md
