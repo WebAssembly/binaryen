@@ -15,3 +15,7 @@ endif()
 if(BUILD_LLVM_DWARF)
   add_subdirectory(llvm-project)
 endif()
+
+if(BUILD_STATIC_LIB)
+  add_subdirectory(mimalloc)
+endif()
