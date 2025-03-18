@@ -441,14 +441,17 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       lubUnshared = HeapType::any;
       break;
     case HeapType::string:
+      // String has already been handled: we sorted before in a way that ensures
+      // the type the string is compared to is of a higher index, which means it
+      // is a bottom type (string is the last type that is not a bottom type),
+      // but we have handled the case of either a or b being a bottom type
+      // earlier already.
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn:
-      // Bottom types already handled (including string as the switch value,
-      // which implies the other value is bottom, which again would have been
-      // handled).
+      // Bottom types already handled.
       WASM_UNREACHABLE("unexpected basic type");
   }
   auto share = HeapType(a).getShared();
