@@ -117,37 +117,23 @@ jobs:
       with:
         submodules: true
 
-    - name: start docker
-      run: |
-        if [[ "${{ matrix.docker_platform }}" == "ubuntu-24.04-arm" ]]; then
-          platform="--platform=linux/arm64"
-        fi
-        docker run -w /src -dit $platform --name alpine -v $PWD:/src node:lts-alpine
-        echo 'docker exec alpine "$@";' > ./alpine.sh
-        chmod +x ./alpine.sh
-
     - name: install packages
       run: |
-        ./alpine.sh apk update
-        ./alpine.sh apk add build-base cmake git python3 clang ninja py3-pip
-
-    - name: avoid d8 tests (jsvu is not compatible with alpine)
-      run: |
-        ./alpine.sh rm -Rf test/lit/d8
+        sudo apt-get install ninja-build clang lld
 
     - name: install python dev dependencies
-      run: ./alpine.sh pip3 install --break-system-packages -r requirements-dev.txt
+      run: pip3 install -r requirements-dev.txt
 
     - name: cmake
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
+        cmake . -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install -DBYN_ENABLE_LTO=ON
 
     - name: build
       run: |
-        ./alpine.sh ninja install
+        ninja install
 
     - name: test
-      run: ./alpine.sh python3 ./check.py
+      run: python3 ./check.py
 
     - name: archive
       id: archive
