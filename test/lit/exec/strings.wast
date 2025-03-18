@@ -604,7 +604,6 @@
 
 ;; CHECK:      [fuzz-exec] calling string.measure
 ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
-
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
