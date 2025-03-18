@@ -16,6 +16,14 @@ if(BUILD_LLVM_DWARF)
   add_subdirectory(llvm-project)
 endif()
 
-if(BUILD_STATIC_LIB)
+if(MIMALLOC_STATIC)
+  # Using a C++ compiler avoids warnings about -fno-rtti with a C compiler.
+  set(MI_USE_CXX ON)
+  # We only need the static library, nothing else.
+  set(MI_BUILD_STATIC ON)
+  set(MI_BUILD_SHARED OFF)
+  set(MI_BUILD_OBJECT OFF)
+  set(MI_BUILD_TESTS OFF)
+  
   add_subdirectory(mimalloc)
 endif()
