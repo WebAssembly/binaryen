@@ -5344,8 +5344,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
         auto options = FeatureOptions<HeapType>()
-                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                       .add(FeatureSet::GC, HeapType::noext);
+                         .add(FeatureSet::ReferenceTypes, HeapType::ext)
+                         .add(FeatureSet::GC, HeapType::noext);
         if (share == Unshared) {
           // Shared strings not yet supported.
           options.add(FeatureSet::Strings, HeapType::string);
