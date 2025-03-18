@@ -6,6 +6,7 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -101,10 +102,8 @@ jobs:
           ${{ steps.archive-arm64.outputs.TARBALL }}
           ${{ steps.archive-arm64.outputs.SHASUM }}
 
-  # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
-  # Note: Alpine uses musl libc.
-  build-alpine:
-    name: alpine
+  build-linux:
+    name: Linux
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -139,24 +138,24 @@ jobs:
       id: archive
       run: |
         VERSION=$GITHUB_REF_NAME
-        ARCH=$(./alpine.sh uname -m)
+        ARCH=$(uname -m)
         PKGNAME="binaryen-$VERSION-$ARCH-linux"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        ./alpine.sh find install/ -type f -perm -u=x -exec strip {} +
+        find install/ -type f -perm -u=x -exec strip {} +
         mv install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
         echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
-    - name: upload tarball
-      uses: softprops/action-gh-release@v1
-      with:
-        draft: true
-        files: |
-          ${{ steps.archive.outputs.TARBALL }}
-          ${{ steps.archive.outputs.SHASUM }}
+    #- name: upload tarball
+    #  uses: softprops/action-gh-release@v1
+    #  with:
+    #    draft: true
+    #    files: |
+    #      ${{ steps.archive.outputs.TARBALL }}
+    #      ${{ steps.archive.outputs.SHASUM }}
 
   # Build using Emscripten to JavaScript+WebAssembly.
   build-node:
@@ -216,10 +215,10 @@ jobs:
         echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
         echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
-    - name: upload tarball
-      uses: softprops/action-gh-release@v1
-      with:
-        draft: true
-        files: |
-          ${{ steps.archive.outputs.TARBALL }}
-          ${{ steps.archive.outputs.SHASUM }}
+    #- name: upload tarball
+    #  uses: softprops/action-gh-release@v1
+    #  with:
+    #    draft: true
+    #    files: |
+    #      ${{ steps.archive.outputs.TARBALL }}
+    #      ${{ steps.archive.outputs.SHASUM }}
