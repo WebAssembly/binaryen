@@ -125,9 +125,14 @@ jobs:
     - name: install python dev dependencies
       run: pip3 install -r requirements-dev.txt
 
+    - name: download sysroot
+      run: |
+        wget https://wasm.storage.googleapis.com/sysroot_debian_stretch_amd64_v2.tar.xz
+        tar xaf sysroot_debian_stretch_amd64_v2.tar.xz
+
     - name: cmake
       run: |
-        cmake . -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install -DBYN_ENABLE_LTO=ON
+        cmake . -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_AR=llvm-ar -DCMAKE_SYSROOT=$(pwd)/sysroot_debian_stretch_amd64_v2 -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install -DBYN_ENABLE_LTO=ON
 
     - name: build
       run: |
