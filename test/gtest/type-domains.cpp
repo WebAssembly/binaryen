@@ -598,6 +598,9 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
       case HeapType::array:
       case HeapType::string:
         return fuzztest::Just(
+          HeapTypePlan{HeapType(HeapTypes::any.getBasic(share))});
+      case HeapType::string:
+        return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::ext.getBasic(share))});
       case HeapType::none:
         return matchingOrAbstract(
@@ -1024,27 +1027,37 @@ std::vector<HeapType> BuildHeapTypes(TypeBuilderPlan plan) {
 
   for (size_t i = 0; i < plan.size; ++i) {
     if (auto* f = plan.defs[i].getFunc()) {
+//std::cout << "func " << f << '\n';
       builder[i] = func(*f);
     } else if (auto* s = plan.defs[i].getStruct()) {
+//std::cout << "struct " << s << '\n';
       builder[i] = struct_(*s);
     } else if (auto* a = plan.defs[i].getArray()) {
+//std::cout << "array " << a << '\n';
       builder[i] = array(*a);
     } else if (auto* c = plan.defs[i].getCont()) {
+//std::cout << "cont " << c << '\n';
       builder[i] = cont(*c, plan.kinds[i].shared);
     } else {
       WASM_UNREACHABLE("unexpected variant");
     }
 
     if (auto super = plan.supertypes[i]) {
+//std::cout << " super is " << *super << '\n';
       builder[i].subTypeOf(builder[*super]);
     }
+//std::cout << " open: " << !plan.kinds[i].final << '\n';
     builder[i].setOpen(!plan.kinds[i].final);
+//std::cout << " shared: " << plan.kinds[i].shared << '\n';
     builder[i].setShared(plan.kinds[i].shared ? Shared : Unshared);
   }
   auto built = builder.build();
   if (auto* err = built.getError()) {
     std::cerr << err->index << ": " << err->reason << "\n";
-    ;
+
+    std::cout << plan << '\n';
+
+    builder.dump();
   }
   assert(built);
   return *built;
