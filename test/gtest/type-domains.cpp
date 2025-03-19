@@ -486,6 +486,7 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
 
     switch (type->getBasic(Unshared)) {
       case HeapType::ext:
+        // TODO: strings
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::noext.getBasic(share))});
       case HeapType::func:
@@ -501,7 +502,6 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
           [](auto kind) { return kind == StructKind || kind == ArrayKind; },
           fuzztest::ElementOf({HeapType(HeapTypes::eq.getBasic(share)),
                                HeapType(HeapTypes::i31.getBasic(share)),
-                               HeapType(HeapTypes::string.getBasic(share)),
                                HeapType(HeapTypes::struct_.getBasic(share)),
                                HeapType(HeapTypes::array.getBasic(share)),
                                HeapType(HeapTypes::none.getBasic(share))}));
@@ -523,10 +523,10 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
       case HeapType::exn:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::noexn.getBasic(share))});
-      case HeapType::string:
       case HeapType::i31:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::none.getBasic(share))});
+      case HeapType::string:
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
@@ -596,14 +596,13 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
       case HeapType::array:
       case HeapType::string:
         return fuzztest::Just(
-          HeapTypePlan{HeapType(HeapTypes::any.getBasic(share))});
+          HeapTypePlan{HeapType(HeapTypes::ext.getBasic(share))});
       case HeapType::none:
         return matchingOrAbstract(
           [](auto kind) { return kind == StructKind || kind == ArrayKind; },
           fuzztest::ElementOf({HeapType(HeapTypes::any.getBasic(share)),
                                HeapType(HeapTypes::eq.getBasic(share)),
                                HeapType(HeapTypes::i31.getBasic(share)),
-                               HeapType(HeapTypes::string.getBasic(share)),
                                HeapType(HeapTypes::struct_.getBasic(share)),
                                HeapType(HeapTypes::array.getBasic(share))}));
       case HeapType::noext:
