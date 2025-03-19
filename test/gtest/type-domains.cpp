@@ -527,6 +527,8 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::none.getBasic(share))});
       case HeapType::string:
+        return fuzztest::Just(
+          HeapTypePlan{HeapType(HeapTypes::noext.getBasic(share))});
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
