@@ -725,7 +725,7 @@ fuzztest::Domain<TypePlan> AvailableType(TypeBuilderPlan plan) {
 
 fuzztest::Domain<TypePlan> AvailableSubType(TypeBuilderPlan plan,
                                             TypePlan super) {
-  if (auto* type = super.getNonRef()) {
+  if (super.getNonRef()) {
     // No subtyping among non-ref types.
     return fuzztest::Just(super);
   } else if (auto* ref = super.getRef()) {
@@ -1046,7 +1046,7 @@ std::vector<HeapType> BuildHeapTypes(TypeBuilderPlan plan) {
     ;
   }
   assert(built);
-  return std::move(*built);
+  return *built;
 }
 
 auto ArbitraryDefinedHeapTypesAndPlan() {
