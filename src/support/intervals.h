@@ -34,7 +34,12 @@ struct Interval {
     : start(start), end(end), weight(weight) {}
 
   bool operator<(const Interval& other) const {
-    return start < other.start && end < other.end && weight < other.weight;
+    /*return weight != other.weight ? weight < other.weight
+             : end != other.end ? end < other.end
+             : start < other.start;*/
+    return end != other.end ? end < other.end
+             : weight != other.weight ? weight < other.weight
+             : start < other.start;
   }
 
   bool operator==(const Interval& other) const {
