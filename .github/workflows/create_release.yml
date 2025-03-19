@@ -94,15 +94,15 @@ jobs:
         echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
       if: matrix.os == 'macos-latest'
 
-    - name: upload tarball
-      uses: softprops/action-gh-release@v1
-      with:
-        draft: true
-        files: |
-          ${{ steps.archive.outputs.TARBALL }}
-          ${{ steps.archive.outputs.SHASUM }}
-          ${{ steps.archive-arm64.outputs.TARBALL }}
-          ${{ steps.archive-arm64.outputs.SHASUM }}
+  #  - name: upload tarball
+  #    uses: softprops/action-gh-release@v1
+  #    with:
+  #      draft: true
+  #      files: |
+  #        ${{ steps.archive.outputs.TARBALL }}
+  #        ${{ steps.archive.outputs.SHASUM }}
+  #        ${{ steps.archive-arm64.outputs.TARBALL }}
+  #        ${{ steps.archive-arm64.outputs.SHASUM }}
 
   build-linux:
     name: Linux
@@ -127,7 +127,7 @@ jobs:
 
     - name: cmake
       run: |
-        cmake . -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install -DBYN_ENABLE_LTO=ON
+        cmake . -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install -DBYN_ENABLE_LTO=ON
 
     - name: build
       run: |
