@@ -596,7 +596,6 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
       case HeapType::i31:
       case HeapType::struct_:
       case HeapType::array:
-      case HeapType::string:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::any.getBasic(share))});
       case HeapType::string:
