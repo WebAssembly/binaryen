@@ -476,6 +476,24 @@
       (string.const "five!")
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling string.to.any
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any => string("six")
+  (func $string.to.any (export "string.to.any") (result anyref)
+    (any.convert_extern
+      (string.const "six")
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling string.to.any.and.back
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any.and.back => string("seven")
+  (func $string.to.any.and.back (export "string.to.any.and.back") (result externref)
+    (extern.convert_any
+      (any.convert_extern
+        (string.const "seven")
+      )
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -604,6 +622,12 @@
 
 ;; CHECK:      [fuzz-exec] calling string.measure
 ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
+
+;; CHECK:      [fuzz-exec] calling string.to.any
+;; CHECK-NEXT: [fuzz-exec] note result: string.to.any => string("six")
+
+;; CHECK:      [fuzz-exec] calling string.to.any.and.back
+;; CHECK-NEXT: [fuzz-exec] note result: string.to.any.and.back => string("seven")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -642,6 +666,8 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing string.measure
+;; CHECK-NEXT: [fuzz-exec] comparing string.to.any
+;; CHECK-NEXT: [fuzz-exec] comparing string.to.any.and.back
 ;; CHECK-NEXT: [fuzz-exec] comparing surrogate_pair_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing unsigned_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing weird_code_point

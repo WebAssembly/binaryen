@@ -303,9 +303,17 @@ struct ExecutionResults {
   }
 
   void printValue(Literal value) {
-    // Unwrap an externalized value to get the actual value.
-    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable))) {
+    // Unwrap an externalized GC value to get the actual value, but not strings,
+    // which are normally a subtype of ext.
+    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable)) &&
+        !value.type.isString()) {
       value = value.internalize();
+    }
+
+    // An anyref literal is a string.
+    if (value.type.isRef() &&
+        value.type.getHeapType().isMaybeShared(HeapType::any)) {
+      value = value.externalize();
     }
 
     // Don't print most reference values, as e.g. funcref(N) contains an index,
