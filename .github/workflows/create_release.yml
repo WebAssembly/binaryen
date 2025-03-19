@@ -129,6 +129,8 @@ jobs:
       run: |
         wget https://wasm.storage.googleapis.com/sysroot_debian_stretch_amd64_v2.tar.xz
         tar xaf sysroot_debian_stretch_amd64_v2.tar.xz
+        pwd
+        ls
 
     - name: cmake
       run: |
