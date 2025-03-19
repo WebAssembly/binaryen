@@ -497,6 +497,7 @@ public:
     auto heapType = type.getHeapType();
     auto iter = mapping.find(heapType);
     if (iter != mapping.end()) {
+      // TODO: Handle exactness.
       return getTempType(Type(iter->second, type.getNullability()));
     }
     return getTempType(type);

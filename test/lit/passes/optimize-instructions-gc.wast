@@ -1570,7 +1570,7 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.tee $a
   ;; CHECK-NEXT:      (ref.null none)
@@ -1590,7 +1590,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (ref.cast nullref

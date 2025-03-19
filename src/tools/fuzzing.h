@@ -360,6 +360,10 @@ private:
   // instruction for EH is supposed to exist only at the beginning of a 'catch'
   // block, so it shouldn't be moved around or deleted freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
+    // TODO: Remove this once we better support exact references.
+    if (curr->type.isExact()) {
+      return false;
+    }
     return curr->type.isDefaultable() &&
            !EHUtils::containsValidDanglingPop(curr);
   }
@@ -521,7 +525,9 @@ private:
   Type getLoggableType();
   bool isLoggableType(Type type);
   Nullability getNullability();
+  Exactness getExactness();
   Nullability getSubType(Nullability nullability);
+  Exactness getSubType(Exactness exactness);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
   Nullability getSuperType(Nullability nullability);

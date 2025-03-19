@@ -3581,8 +3581,8 @@
   ;; CHECK:      (func $subtype (type $7) (result anyref)
   ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 nullref)
-  ;; CHECK-NEXT:  (local $3 nullref)
+  ;; CHECK-NEXT:  (local $2 (exact nullref))
+  ;; CHECK-NEXT:  (local $3 (exact nullref))
   ;; CHECK-NEXT:  (local $4 eqref)
   ;; CHECK-NEXT:  (local $5 eqref)
   ;; CHECK-NEXT:  (local $6 eqref)
@@ -3680,7 +3680,7 @@
  ;; CHECK:      (type $0 (func (result funcref)))
 
  ;; CHECK:      (func $0 (type $0) (result funcref)
- ;; CHECK-NEXT:  (local $0 (ref nofunc))
+ ;; CHECK-NEXT:  (local $0 (ref exact nofunc))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (ref.null nofunc)
