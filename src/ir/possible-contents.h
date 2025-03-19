@@ -662,6 +662,13 @@ namespace wasm {
 // analysis the user of this class can ask which contents are possible at any
 // location.
 //
+// This algorithm is so simple as to not really be worth a name, but if you are
+// familiar with Abstract Interpretation then it can be seen as an efficient way
+// to implement Abstract Interpretation with a transfer function that mostly
+// just combines values. A more detailed comparison between the algorithms can
+// be found in the PDF at /media/just_flow_stuff.pdf (the algorithm implemented
+// here is called "Just Flow Stuff").
+//
 // This focuses on useful information for the typical user of this API.
 // Specifically, we find out:
 //
