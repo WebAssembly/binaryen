@@ -114,9 +114,14 @@ find_package(Threads REQUIRED)
 
 function(add_compile_flag value)
   message(STATUS "Building with ${value}")
-  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-    set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  endforeach(variable)
+  # You can use the optional second argument to suppress passing C++-only flags to the C compiler.
+  if(ARGV1 STREQUAL "CXX_ONLY")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
+  else()
+    foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+      set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
+    endforeach(variable)
+  endif()
 endfunction()
 
 function(add_debug_compile_flag value)
@@ -269,7 +274,7 @@ else() # MSVC
   add_compile_flag("-fno-omit-frame-pointer")
   if(NOT BUILD_FUZZTEST)
     # fuzztest depends on RTTIs.
-    add_compile_flag("-fno-rtti")
+    add_compile_flag("-fno-rtti" "CXX_ONLY")
   endif()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
