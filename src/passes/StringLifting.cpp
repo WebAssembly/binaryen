@@ -58,10 +58,16 @@ struct StringLifting : public Pass {
       return;
     }
 
-    struct StringApplier : public PostWalker<StringApplier> {
+    struct StringApplier : public WalkerPass<PostWalker<StringApplier>> {
+      bool isFunctionParallel() override { return true; }
+
       const StringLifting& parent;
 
       StringApplier(const StringLifting& parent) : parent(parent) {}
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<StringApplier>(parent);
+      }
 
       void visitGlobalGet(GlobalGet* curr) {
         auto iter = parent.importedStrings.find(curr->name);
@@ -73,19 +79,9 @@ struct StringLifting : public Pass {
       }
     };
 
-    struct Empty() {}; // XXX
-
-    ModuleUtils::ParallelFunctionAnalysis<Empty> analysis(
-      *module, [&](Function* func, Empty& empty) {
-        if (!func->imported()) {
-          StringApplier(Empty).walk(func->body);
-        }
-      });
-
-    // Also walk the global module code (for simplicity, also add it to the
-    // function map, using a "function" key of nullptr).
-    auto& globalStrings = analysis.map[nullptr];
-    StringApplier(globalStrings).walkModuleCode(module);
+    StringApplier scanner(infos);
+    scanner.run(getPassRunner(), module);
+    scanner.walkModuleCode(module);
   }
 };
 
