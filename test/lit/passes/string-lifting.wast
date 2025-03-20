@@ -3,24 +3,60 @@
 ;; RUN: foreach %s %t wasm-opt -all --string-lifting -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array (mut i16)))
+
+  ;; CHECK:      (type $1 (func (param externref externref) (result i32)))
+
+  ;; CHECK:      (type $2 (func (param externref) (result i32)))
+
+  ;; CHECK:      (type $3 (func (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (type $4 (func (param (ref null $array16) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (type $5 (func (param i32) (result (ref extern))))
+
+  ;; CHECK:      (type $6 (func (param externref (ref null $array16) i32) (result i32)))
+
+  ;; CHECK:      (type $7 (func (param externref i32) (result i32)))
+
+  ;; CHECK:      (type $8 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (type $9 (func))
+
+  ;; CHECK:      (type $10 (func (param (ref $array16))))
+
+  ;; CHECK:      (type $11 (func (result externref)))
+
+  ;; CHECK:      (type $12 (func (param externref (ref $array16)) (result i32)))
+
+  ;; CHECK:      (type $13 (func (param externref) (result externref)))
 
   ;; CHECK:      (import "\'" "foo" (global $string_foo (ref extern)))
   (import "\'" "foo" (global $string_foo (ref extern)))
   ;; CHECK:      (import "\'" "bar" (global $string_bar (ref extern)))
   (import "\'" "bar" (global $string_bar (ref extern)))
 
+  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $array16) i32 i32) (result (ref extern))))
   (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (param (ref null $array16) i32 i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $5) (param i32) (result (ref extern))))
   (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (param i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $3) (param externref externref) (result (ref extern))))
   (import "wasm:js-string" "concat" (func $concat (param externref externref) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $array16) i32) (result i32)))
   (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (param externref (ref null $array16) i32) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
   (import "wasm:js-string" "equals" (func $equals (param externref externref) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
   (import "wasm:js-string" "compare" (func $compare (param externref externref) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $2) (param externref) (result i32)))
   (import "wasm:js-string" "length" (func $length (param externref) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $7) (param externref i32) (result i32)))
   (import "wasm:js-string" "charCodeAt" (func $charCodeAt (param externref i32) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $8) (param externref i32 i32) (result (ref extern))))
   (import "wasm:js-string" "substring" (func $substring (param externref i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (func $func (type $0)
+  ;; CHECK:      (func $func (type $9)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.const "foo")
   ;; CHECK-NEXT:  )
@@ -46,6 +82,15 @@
     )
   )
 
+  ;; CHECK:      (func $string.new.gc (type $10) (param $ref (ref $array16))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $fromCharCodeArray
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 7)
+  ;; CHECK-NEXT:    (i32.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.new.gc (param $ref (ref $array16))
     (drop
       (call $fromCharCodeArray
@@ -56,12 +101,23 @@
     )
   )
 
+  ;; CHECK:      (func $string.from_code_point (type $11) (result externref)
+  ;; CHECK-NEXT:  (call $fromCodePoint
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.from_code_point (result externref)
-    (call $fromCodePoint_18
+    (call $fromCodePoint
       (i32.const 1)
     )
   )
 
+  ;; CHECK:      (func $string.concat (type $3) (param $a externref) (param $b externref) (result (ref extern))
+  ;; CHECK-NEXT:  (call $concat
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.concat (param $a externref) (param $b externref) (result (ref extern))
     (call $concat
       (local.get $a)
@@ -69,6 +125,13 @@
     )
   )
 
+  ;; CHECK:      (func $string.encode (type $12) (param $ref externref) (param $array16 (ref $array16)) (result i32)
+  ;; CHECK-NEXT:  (call $intoCharCodeArray
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (local.get $array16)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.encode (param $ref externref) (param $array16 (ref $array16)) (result i32)
     (call $intoCharCodeArray
       (local.get $ref)
@@ -77,6 +140,12 @@
     )
   )
 
+  ;; CHECK:      (func $string.eq (type $1) (param $a externref) (param $b externref) (result i32)
+  ;; CHECK-NEXT:  (call $equals
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.eq (param $a externref) (param $b externref) (result i32)
     (call $equals
       (local.get $a)
@@ -84,6 +153,12 @@
     )
   )
 
+  ;; CHECK:      (func $string.compare (type $1) (param $a externref) (param $b externref) (result i32)
+  ;; CHECK-NEXT:  (call $compare
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (local.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.compare (param $a externref) (param $b externref) (result i32)
     (call $compare
       (local.get $a)
@@ -91,12 +166,23 @@
     )
   )
 
+  ;; CHECK:      (func $string.length (type $2) (param $ref externref) (result i32)
+  ;; CHECK-NEXT:  (call $length
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.length (param $ref externref) (result i32)
     (call $length
       (local.get $ref)
     )
   )
 
+  ;; CHECK:      (func $string.get_codeunit (type $2) (param $ref externref) (result i32)
+  ;; CHECK-NEXT:  (call $charCodeAt
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.get_codeunit (param $ref externref) (result i32)
     (call $charCodeAt
       (local.get $ref)
@@ -104,6 +190,13 @@
     )
   )
 
+  ;; CHECK:      (func $string.slice (type $13) (param $ref externref) (result externref)
+  ;; CHECK-NEXT:  (call $substring
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.slice (param $ref externref) (result externref)
     (call $substring
       (local.get $ref)
