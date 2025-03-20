@@ -150,9 +150,11 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
-  // Substring has a 1 to many relationship with Interval, i.e., 1 substring is
-  // represented by n intervals. Each interval represents an occurrence of when
-  // the substring repeats.
+  // A substring represents a contiguous set of instructions that appear more
+  // than once in a Wasm binary. For each appearance of the substring, an
+  // Interval is created that lacks a connection back to its originating
+  // substring. To fix, upon Interval creation, a second vector is populated with
+  // the index of the corresponding substring.
   std::vector<Interval> intervals;
   std::vector<int> substringIdxs;
 
