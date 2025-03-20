@@ -20,6 +20,7 @@
 #include "support/index.h"
 #include <algorithm>
 #include <iostream>
+#include <optional>
 
 using namespace wasm;
 
@@ -36,28 +37,29 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
   }
 
   std::sort(
-    intIntervals.begin(), intIntervals.end(), [](const auto& a, const auto& b) {
-      return a.first.start < b.first.start;
-    });
+    intIntervals.begin(), intIntervals.end());
 
-  std::vector<int> result;
-  Index formerInterval = 0;
-  // Look for overlapping intervals
-  for (Index latterInterval = 1; latterInterval <= intIntervals.size();
-       latterInterval++) {
-    if (latterInterval == intIntervals.size() ||
-        intIntervals[formerInterval].first.end <=
-          intIntervals[latterInterval].first.start) {
-      result.push_back(intIntervals[formerInterval].second);
-      formerInterval = latterInterval;
+  std::vector<std::pair<Interval, int>> kept;
+  kept.push_back(intIntervals[0]);
+  for (auto& candidate : intIntervals) {
+    auto& former = kept.back();
+    if (former.first.end <= candidate.first.start) {
+      kept.push_back(candidate);
       continue;
     }
 
-    // Keep the interval with the higher weight
-    if (intIntervals[latterInterval].first.weight >
-        intIntervals[formerInterval].first.weight) {
-      formerInterval = latterInterval;
+    // former overlaps with candidate
+    // replace former if the weights are the same but the candidate ends earlier
+    if (former.first.weight == candidate.first.weight && former.first.end > candidate.first.end) {
+      former = candidate;
+    } else if (former.first.weight < candidate.first.weight) {
+      former = candidate;
     }
+  }
+
+  std::vector<int> result;
+  for (auto& intPair : kept) {
+    result.push_back(intPair.second);
   }
 
   return result;
