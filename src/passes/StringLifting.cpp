@@ -78,7 +78,7 @@ struct StringLifting : public Pass {
           // Encode from WTF-8 to WTF-16.
           auto wtf8 = iter->second;
           std::stringstream wtf16;
-          auto bool valid = String::convertWTF8ToWTF16(wtf16, wtf8.str);
+          bool valid = String::convertWTF8ToWTF16(wtf16, wtf8.str);
           if (!valid) {
             Fatal() << "Bad string to lift: " << wtf8;
           }

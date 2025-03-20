@@ -3,9 +3,24 @@
 ;; RUN: foreach %s %t wasm-opt -all --string-lifting -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "\'" "foo" (global $string_foo (ref extern)))
   (import "\'" "foo" (global $string_foo (ref extern)))
+  ;; CHECK:      (import "\'" "bar" (global $string_bar (ref extern)))
   (import "\'" "bar" (global $string_bar (ref extern)))
 
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "foo")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "bar")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "bar")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func
     (drop
       (global.get $string_foo)
