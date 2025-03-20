@@ -53,6 +53,7 @@ set(passes_SOURCES
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
+  InstrumentMemoryGrow.cpp
   Intrinsics.cpp
   J2CLItableMerging.cpp
   J2CLOpts.cpp
