@@ -15,6 +15,7 @@ FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   param-utils.cpp
   pass.cpp
+  string-utils.cpp
   test_passes.cpp
   AbstractTypeRefining.cpp
   AlignmentLowering.cpp
