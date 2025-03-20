@@ -20,14 +20,6 @@
 // back down.
 //
 
-// TODO: which of these?
-#include <algorithm>
-
-// TODO: which of these?
-#include "ir/module-utils.h"
-#include "ir/names.h"
-#include "ir/subtype-exprs.h"
-#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/string-utils.h"
