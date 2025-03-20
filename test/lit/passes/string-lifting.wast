@@ -3,19 +3,19 @@
 ;; RUN: foreach %s %t wasm-opt -all --string-lifting -S -o - | filecheck %s
 
 (module
-  (import "\'" "foo" (global $string1 (ref extern)))
-  (import "\'" "bar" (global $string1 (ref extern)))
+  (import "\'" "foo" (global $string_foo (ref extern)))
+  (import "\'" "bar" (global $string_bar (ref extern)))
 
   (func $func
     (drop
-      (global.get $foo)
+      (global.get $string_foo)
     )
     ;; Test multiple uses of the same constant.
     (drop
-      (global.get $bar)
+      (global.get $string_bar)
     )
     (drop
-      (global.get $bar)
+      (global.get $string_bar)
     )
   )
 )
