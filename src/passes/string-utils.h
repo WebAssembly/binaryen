@@ -27,7 +27,7 @@ extern const Name WasmStringsModule;
 
 // The name of the module to import string constants from, for magical imported
 // JS strings.
-extern const Name WasmStringConstsModule = "'";
+extern const Name WasmStringConstsModule;
 
 } // namespace wasm
 

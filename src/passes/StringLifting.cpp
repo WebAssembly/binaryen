@@ -30,6 +30,7 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "passes/string-utils.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
