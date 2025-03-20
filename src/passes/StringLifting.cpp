@@ -140,13 +140,21 @@ struct StringLifting : public Pass {
         if (curr->target == fromCharCodeArrayImport) {
           Builder(*getModule()).makeStringNew(StringNewWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]);
         } else if (curr->target == fromCodePointImport) {
+          Builder(*getModule()).makeStringNew(StringNewFromCodePoint, curr->operands[0]);
         } else if (curr->target == concatImport) {
+          Builder(*getModule()).makeStringConcat(curr->operands[0], curr->operands[1]);
         } else if (curr->target == intoCharCodeArrayImport) {
+          Builder(*getModule()).makeStringEncode(StringEncodeWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]);
         } else if (curr->target == equalsImport) {
+          Builder(*getModule()).makeStringEq(StringEqEqual, curr->operands[0], curr->operands[1]);
         } else if (curr->target == compareImport) {
+          Builder(*getModule()).makeStringEq(StringEqCompare, curr->operands[0], curr->operands[1]);
         } else if (curr->target == lengthImport) {
+          Builder(*getModule()).makeStringMeasure(curr->operands[0]);
         } else if (curr->target == charCodeAtImport) {
+          Builder(*getModule()).makeStringWTF16Get(curr->operands[0], curr->operands[1]);
         } else if (curr->target == substringImport) {
+          Builder(*getModule()).makeStringSlice(StringSliceWTF, curr->operands[0], curr->operands[1], curr->operands[2]);
         }
       }
 
