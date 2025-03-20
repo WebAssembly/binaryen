@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "support/name.h"
 #include "passes/string-utils.h"
+#include "support/name.h"
 
 namespace wasm {
 
@@ -24,4 +24,3 @@ const Name WasmStringsModule = "wasm:js-string";
 const Name WasmStringConstsModule = "'";
 
 } // namespace wasm
-

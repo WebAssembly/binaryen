@@ -144,23 +144,48 @@ struct StringLifting : public Pass {
 
       void visitCall(Call* curr) {
         if (curr->target == parent.fromCharCodeArrayImport) {
-          replaceCurrent(Builder(*getModule()).makeStringNew(StringNewWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]));
+          replaceCurrent(Builder(*getModule())
+                           .makeStringNew(StringNewWTF16Array,
+                                          curr->operands[0],
+                                          curr->operands[1],
+                                          curr->operands[2]));
         } else if (curr->target == parent.fromCodePointImport) {
-          replaceCurrent(Builder(*getModule()).makeStringNew(StringNewFromCodePoint, curr->operands[0]));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeStringNew(StringNewFromCodePoint, curr->operands[0]));
         } else if (curr->target == parent.concatImport) {
-          replaceCurrent(Builder(*getModule()).makeStringConcat(curr->operands[0], curr->operands[1]));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeStringConcat(curr->operands[0], curr->operands[1]));
         } else if (curr->target == parent.intoCharCodeArrayImport) {
-          replaceCurrent(Builder(*getModule()).makeStringEncode(StringEncodeWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]));
+          replaceCurrent(Builder(*getModule())
+                           .makeStringEncode(StringEncodeWTF16Array,
+                                             curr->operands[0],
+                                             curr->operands[1],
+                                             curr->operands[2]));
         } else if (curr->target == parent.equalsImport) {
-          replaceCurrent(Builder(*getModule()).makeStringEq(StringEqEqual, curr->operands[0], curr->operands[1]));
+          replaceCurrent(Builder(*getModule())
+                           .makeStringEq(StringEqEqual,
+                                         curr->operands[0],
+                                         curr->operands[1]));
         } else if (curr->target == parent.compareImport) {
-          replaceCurrent(Builder(*getModule()).makeStringEq(StringEqCompare, curr->operands[0], curr->operands[1]));
+          replaceCurrent(Builder(*getModule())
+                           .makeStringEq(StringEqCompare,
+                                         curr->operands[0],
+                                         curr->operands[1]));
         } else if (curr->target == parent.lengthImport) {
-          replaceCurrent(Builder(*getModule()).makeStringMeasure(StringMeasureWTF16, curr->operands[0]));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeStringMeasure(StringMeasureWTF16, curr->operands[0]));
         } else if (curr->target == parent.charCodeAtImport) {
-          replaceCurrent(Builder(*getModule()).makeStringWTF16Get(curr->operands[0], curr->operands[1]));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeStringWTF16Get(curr->operands[0], curr->operands[1]));
         } else if (curr->target == parent.substringImport) {
-          replaceCurrent(Builder(*getModule()).makeStringSliceWTF(curr->operands[0], curr->operands[1], curr->operands[2]));
+          replaceCurrent(Builder(*getModule())
+                           .makeStringSliceWTF(curr->operands[0],
+                                               curr->operands[1],
+                                               curr->operands[2]));
         }
       }
 
