@@ -84,7 +84,7 @@
 
   ;; CHECK:      (func $string.new.gc (type $10) (param $ref (ref $array16))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $fromCharCodeArray
+  ;; CHECK-NEXT:   (string.new_wtf16_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 7)
   ;; CHECK-NEXT:    (i32.const 8)
@@ -102,7 +102,7 @@
   )
 
   ;; CHECK:      (func $string.from_code_point (type $11) (result externref)
-  ;; CHECK-NEXT:  (call $fromCodePoint
+  ;; CHECK-NEXT:  (string.from_code_point
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -113,7 +113,7 @@
   )
 
   ;; CHECK:      (func $string.concat (type $3) (param $a externref) (param $b externref) (result (ref extern))
-  ;; CHECK-NEXT:  (call $concat
+  ;; CHECK-NEXT:  (string.concat
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
@@ -126,7 +126,7 @@
   )
 
   ;; CHECK:      (func $string.encode (type $12) (param $ref externref) (param $array16 (ref $array16)) (result i32)
-  ;; CHECK-NEXT:  (call $intoCharCodeArray
+  ;; CHECK-NEXT:  (string.encode_wtf16_array
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (local.get $array16)
   ;; CHECK-NEXT:   (i32.const 10)
@@ -141,7 +141,7 @@
   )
 
   ;; CHECK:      (func $string.eq (type $1) (param $a externref) (param $b externref) (result i32)
-  ;; CHECK-NEXT:  (call $equals
+  ;; CHECK-NEXT:  (string.eq
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
@@ -154,7 +154,7 @@
   )
 
   ;; CHECK:      (func $string.compare (type $1) (param $a externref) (param $b externref) (result i32)
-  ;; CHECK-NEXT:  (call $compare
+  ;; CHECK-NEXT:  (string.compare
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
@@ -167,7 +167,7 @@
   )
 
   ;; CHECK:      (func $string.length (type $2) (param $ref externref) (result i32)
-  ;; CHECK-NEXT:  (call $length
+  ;; CHECK-NEXT:  (string.measure_wtf16
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -178,7 +178,7 @@
   )
 
   ;; CHECK:      (func $string.get_codeunit (type $2) (param $ref externref) (result i32)
-  ;; CHECK-NEXT:  (call $charCodeAt
+  ;; CHECK-NEXT:  (stringview_wtf16.get_codeunit
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
@@ -191,7 +191,7 @@
   )
 
   ;; CHECK:      (func $string.slice (type $13) (param $ref externref) (result externref)
-  ;; CHECK-NEXT:  (call $substring
+  ;; CHECK-NEXT:  (stringview_wtf16.slice
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.const 3)
