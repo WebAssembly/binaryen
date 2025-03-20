@@ -69,19 +69,30 @@ struct StringLifting : public Pass {
         return std::make_unique<StringApplier>(parent);
       }
 
+      bool modified = false;
+
       void visitGlobalGet(GlobalGet* curr) {
         auto iter = parent.importedStrings.find(curr->name);
         if (iter != parent.importedStrings.end()) {
           // XXX type changes from externref to stringref
           // Need type imports, then rewrite types like StringLowering?
           replaceCurrent(Builder(*getModule()).makeStringConst(iter->second));
+          modified = true;
+        }
+      }
+
+      void visitFunction(Function* curr) {
+        // If we made modifications then we need to refinalize, as we replace
+        // externrefs with stringrefs, a subtype.
+        if (modified) {
+          ReFinalize().walkFunctionInModule(curr, getModule());
         }
       }
     };
 
-    StringApplier scanner(infos);
-    scanner.run(getPassRunner(), module);
-    scanner.walkModuleCode(module);
+    StringApplier applier(*this);
+    applier.run(getPassRunner(), module);
+    applier.walkModuleCode(module);
   }
 };
 
