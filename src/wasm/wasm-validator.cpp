@@ -2288,6 +2288,10 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
         curr->type.isNullable(), curr, "ref.null types must be nullable")) {
     return;
   }
+  if (!shouldBeTrue(
+        curr->type.isExact(), curr, "ref.null types must be exact")) {
+    return;
+  }
   shouldBeTrue(
     curr->type.isNull(), curr, "ref.null must have a bottom heap type");
 }
@@ -3990,7 +3994,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& curr : module.exports) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
-        Function* f = module.getFunction(curr->value);
+        Function* f = module.getFunction(*curr->getInternalName());
         for (const auto& param : f->getParams()) {
           info.shouldBeUnequal(
             param,
@@ -4006,7 +4010,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
         }
       }
     } else if (curr->kind == ExternalKind::Global) {
-      if (Global* g = module.getGlobalOrNull(curr->value)) {
+      if (Global* g = module.getGlobalOrNull(*curr->getInternalName())) {
         if (!module.features.hasMutableGlobals()) {
           info.shouldBeFalse(g->mutable_,
                              g->name,
@@ -4020,24 +4024,28 @@ static void validateExports(Module& module, ValidationInfo& info) {
   }
   std::unordered_set<Name> exportNames;
   for (auto& exp : module.exports) {
-    Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getFunctionOrNull(name),
                         name,
                         "module function exports must be found");
     } else if (exp->kind == ExternalKind::Global) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getGlobalOrNull(name),
                         name,
                         "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getTableOrNull(name),
                         name,
                         "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getMemoryOrNull(name),
                         name,
                         "module memory exports must be found");
     } else if (exp->kind == ExternalKind::Tag) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(
         module.getTagOrNull(name), name, "module tag exports must be found");
     } else {

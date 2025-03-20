@@ -22,17 +22,27 @@
 
 #include "expression-iterator.h"
 #include "literal.h"
+#include "support/result.h"
 
 namespace wasm::interpreter {
 
+// Contains the runtime representation of an instance of a Wasm module.
+struct Instance {
+  std::shared_ptr<Module> wasm;
+  std::unordered_map<Name, Literal> globalValues;
+
+  Instance(std::shared_ptr<Module> wasm) : wasm(std::move(wasm)){};
+};
+
 // A frame of execution for a function call.
 struct Frame {
-  // TODO: Reference to current instance to find referenced functions, globals,
-  // tables, memories, etc.
-
+  Instance& instance;
   std::vector<Literal> locals;
   std::vector<Literal> valueStack;
   ExpressionIterator exprs;
+
+  Frame(Instance& instance, ExpressionIterator&& exprs)
+    : instance(instance), exprs(std::move(exprs)){};
 
   // TODO: Map loops to ExpressionIterators so we can branch backwards.
 
@@ -55,6 +65,7 @@ struct WasmStore {
   // TODO: Storage for memories, tables, globals, heap objects, etc.
   // TODO: Map instances and import names to other instances to find imports.
   std::vector<Frame> callStack;
+  std::vector<Instance> instances;
 
   Frame& getFrame() {
     assert(!callStack.empty());

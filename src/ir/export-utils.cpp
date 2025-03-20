@@ -28,7 +28,8 @@ std::vector<T*> getExportedByKind(Module& wasm, G getModuleItem) {
   std::vector<T*> ret;
   for (auto& ex : wasm.exports) {
     if (ex->kind == K) {
-      ret.push_back(getModuleItem(ex->value));
+      // The kind is either ExternalKind::Function or ExternalKind::Global
+      ret.push_back(getModuleItem(*ex->getInternalName()));
     }
   }
   return ret;

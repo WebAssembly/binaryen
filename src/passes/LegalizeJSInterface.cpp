@@ -71,11 +71,12 @@ struct LegalizeJSInterface : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
-        auto* func = module->getFunction(ex->value);
+        auto* name = ex->getInternalName();
+        auto* func = module->getFunction(*name);
         if (isIllegal(func)) {
           // Provide a legal function for the export.
           auto legalName = makeLegalStub(func, module);
-          ex->value = legalName;
+          *name = legalName;
           if (exportOriginals) {
             // Also export the original function, before legalization. This is
             // not normally useful for JS, except in cases like dynamic linking
@@ -193,7 +194,9 @@ private:
     if (!setTempRet0) {
       if (exportedHelpers) {
         auto* ex = module->getExport(SET_TEMP_RET_EXPORT);
-        setTempRet0 = module->getFunction(ex->value);
+        setTempRet0 = module->getFunction((ex->kind == ExternalKind::Function)
+                                            ? *ex->getInternalName()
+                                            : Name());
       } else {
         setTempRet0 = getFunctionOrImport(
           module, SET_TEMP_RET_IMPORT, Type::i32, Type::none);
@@ -206,7 +209,9 @@ private:
     if (!getTempRet0) {
       if (exportedHelpers) {
         auto* ex = module->getExport(GET_TEMP_RET_EXPORT);
-        getTempRet0 = module->getFunction(ex->value);
+        getTempRet0 = module->getFunction((ex->kind == ExternalKind::Function)
+                                            ? *ex->getInternalName()
+                                            : Name());
       } else {
         getTempRet0 = getFunctionOrImport(
           module, GET_TEMP_RET_IMPORT, Type::none, Type::i32);
@@ -361,7 +366,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
     std::unordered_map<Name, Name> exportedFunctions;
     for (auto& exp : module->exports) {
       if (exp->kind == ExternalKind::Function) {
-        exportedFunctions[exp->value] = exp->name;
+        exportedFunctions[*exp->getInternalName()] = exp->name;
       }
     }
 

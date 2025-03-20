@@ -28,7 +28,7 @@
  ;; CHECK:      (func $test-fallthrough (type $func-return-i32) (result i32)
  ;; CHECK-NEXT:  (local $x funcref)
  ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (block (result nullfuncref)
+ ;; CHECK-NEXT:   (block (result (exact nullfuncref))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (call $test-fallthrough)
  ;; CHECK-NEXT:    )

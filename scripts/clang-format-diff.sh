@@ -15,7 +15,7 @@ LLVM_VERSION=${LLVM_VERSION:=17}
 
 MERGE_BASE=$(git merge-base $BRANCH HEAD)
 FORMAT_ARGS="--binary=clang-format-${LLVM_VERSION} ${MERGE_BASE}"
-FORMAT_MSG=$(git clang-format ${FORMAT_ARGS} -q --diff)
+FORMAT_MSG=$(git clang-format ${FORMAT_ARGS} -q --diff || true)
 if [ -n "$FORMAT_MSG" -a "$FORMAT_MSG" != "no modified files to format" ]
 then
   echo "Please run git clang-format with clang-format-${LLVM_VERSION} before committing, or apply this diff:"
