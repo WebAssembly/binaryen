@@ -53,13 +53,15 @@ struct StringLifting : public Pass {
   Name substringImport;
 
   void run(Module* module) override {
+    // Whether we found any work to do.
+    bool found = false;
+
     // Imported string constants look like
     //
     //   (import "\'" "bar" (global $string.bar.internal.name (ref extern)))
     //
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
-    bool found = false;
     for (auto& global : module->globals) {
       if (!global->imported()) {
         continue;
@@ -68,35 +70,37 @@ struct StringLifting : public Pass {
         importedStrings[global->name] = global->base;
         found = true;
       }
-      if (global->module != WasmStringsModule) {
+    }
+    for (auto& func : module->functions) {
+      if (!func->imported() || func->module != WasmStringsModule) {
         continue;
       }
-      if (global->base == "fromCharCodeArray") {
-        fromCharCodeArrayImport = global->name;
+      if (func->base == "fromCharCodeArray") {
+        fromCharCodeArrayImport = func->name;
         found = true;
-      } else if (global->base == "fromCodePoint") {
-        fromCodePointImport = global->name;
+      } else if (func->base == "fromCodePoint") {
+        fromCodePointImport = func->name;
         found = true;
-      } else if (global->base == "concat") {
-        concatImport = global->name;
+      } else if (func->base == "concat") {
+        concatImport = func->name;
         found = true;
-      } else if (global->base == "intoCharCodeArray") {
-        intoCharCodeArrayImport = global->name;
+      } else if (func->base == "intoCharCodeArray") {
+        intoCharCodeArrayImport = func->name;
         found = true;
-      } else if (global->base == "equals") {
-        equalsImport = global->name;
+      } else if (func->base == "equals") {
+        equalsImport = func->name;
         found = true;
-      } else if (global->base == "compare") {
-        compareImport = global->name;
+      } else if (func->base == "compare") {
+        compareImport = func->name;
         found = true;
-      } else if (global->base == "length") {
-        lengthImport = global->name;
+      } else if (func->base == "length") {
+        lengthImport = func->name;
         found = true;
-      } else if (global->base == "charCodeAt") {
-        charCodeAtImport = global->name;
+      } else if (func->base == "charCodeAt") {
+        charCodeAtImport = func->name;
         found = true;
-      } else if (global->base == "substring") {
-        substringImport = global->name;
+      } else if (func->base == "substring") {
+        substringImport = func->name;
         found = true;
       }
     }
@@ -138,23 +142,23 @@ struct StringLifting : public Pass {
 
       void visitCall(Call* curr) {
         if (curr->target == parent.fromCharCodeArrayImport) {
-          Builder(*getModule()).makeStringNew(StringNewWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]);
+          replaceCurrent(Builder(*getModule()).makeStringNew(StringNewWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]));
         } else if (curr->target == parent.fromCodePointImport) {
-          Builder(*getModule()).makeStringNew(StringNewFromCodePoint, curr->operands[0]);
+          replaceCurrent(Builder(*getModule()).makeStringNew(StringNewFromCodePoint, curr->operands[0]));
         } else if (curr->target == parent.concatImport) {
-          Builder(*getModule()).makeStringConcat(curr->operands[0], curr->operands[1]);
+          replaceCurrent(Builder(*getModule()).makeStringConcat(curr->operands[0], curr->operands[1]));
         } else if (curr->target == parent.intoCharCodeArrayImport) {
-          Builder(*getModule()).makeStringEncode(StringEncodeWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]);
+          replaceCurrent(Builder(*getModule()).makeStringEncode(StringEncodeWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]));
         } else if (curr->target == parent.equalsImport) {
-          Builder(*getModule()).makeStringEq(StringEqEqual, curr->operands[0], curr->operands[1]);
+          replaceCurrent(Builder(*getModule()).makeStringEq(StringEqEqual, curr->operands[0], curr->operands[1]));
         } else if (curr->target == parent.compareImport) {
-          Builder(*getModule()).makeStringEq(StringEqCompare, curr->operands[0], curr->operands[1]);
+          replaceCurrent(Builder(*getModule()).makeStringEq(StringEqCompare, curr->operands[0], curr->operands[1]));
         } else if (curr->target == parent.lengthImport) {
-          Builder(*getModule()).makeStringMeasure(StringMeasureWTF16, curr->operands[0]);
+          replaceCurrent(Builder(*getModule()).makeStringMeasure(StringMeasureWTF16, curr->operands[0]));
         } else if (curr->target == parent.charCodeAtImport) {
-          Builder(*getModule()).makeStringWTF16Get(curr->operands[0], curr->operands[1]);
+          replaceCurrent(Builder(*getModule()).makeStringWTF16Get(curr->operands[0], curr->operands[1]));
         } else if (curr->target == parent.substringImport) {
-          Builder(*getModule()).makeStringSliceWTF(curr->operands[0], curr->operands[1], curr->operands[2]);
+          replaceCurrent(Builder(*getModule()).makeStringSliceWTF(curr->operands[0], curr->operands[1], curr->operands[2]));
         }
       }
 
