@@ -1008,11 +1008,6 @@
 )
 
 ;; Test that no attempt is made to outline overlapping repeat substrings
-;; TODO: The repeat substrings are:
-;; (drop (i32.const 0))
-;; (drop (i32.const 1))
-;; (drop (i32.const 2))
-;; (drop (i32.const 3))
 (module
   ;; CHECK:      (type $0 (func))
 
@@ -1048,17 +1043,29 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a
-    (drop (i32.const 0))
-    (drop (i32.const 1))
-    (drop (i32.const 2))
-    (drop (i32.const 3))
-    (drop (i32.const 0))
-    (drop (i32.const 1))
-    (drop (i32.const 2))
-    (drop (i32.const 3))
-    (drop (i32.const 1))
-    (drop (i32.const 2))
-    (drop (i32.const 1))
-    (drop (i32.const 2))
+    i32.const 0 ;; Begin substring 1
+    drop
+    i32.const 1
+    drop
+    i32.const 2
+    drop
+    i32.const 3
+    drop        ;; End substring 1
+    i32.const 0 ;; Begin substring 1 repeat
+    drop
+    i32.const 1
+    drop
+    i32.const 2
+    drop
+    i32.const 3
+    drop        ;; End substring 1 repeat && Begin substring 2
+    i32.const 1
+    drop
+    i32.const 2
+    drop        ;; End substring 2 && Begin substring 2 repeat
+    i32.const 1
+    drop
+    i32.const 2
+    drop        ;; End substring 2 repeat
   )
 )
