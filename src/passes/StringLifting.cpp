@@ -102,6 +102,8 @@ struct StringLifting : public Pass {
       } else if (func->base == "substring") {
         substringImport = func->name;
         found = true;
+      } else {
+        std::cerr << "warning: unknown strings import: " << func->base << '\n';
       }
     }
 
