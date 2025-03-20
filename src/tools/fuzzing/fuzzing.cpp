@@ -3399,6 +3399,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   auto share = heapType.getShared();
   switch (heapType.getBasic(Unshared)) {
     case HeapType::ext: {
+      if (wasm.features.hasStrings() && share == Unshared && oneIn(2)) {
+        // Shared strings not yet supported.
+        return makeConst(Type(HeapType::string, NonNullable));
+      }
       auto null = builder.makeRefNull(HeapTypes::ext.getBasic(share));
       // TODO: support actual non-nullable externrefs via imported globals or
       // similar.
@@ -3429,10 +3433,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         HeapType::i31,
         HeapType::struct_,
         HeapType::array);
-      if (share == Unshared) {
-        // Shared strings not yet supported.
-        subtypeOpts.add(FeatureSet::Strings, HeapType::string);
-      }
       auto subtype = pick(subtypeOpts).getBasic(share);
       return makeConst(Type(subtype, nullability));
     }
@@ -5376,11 +5376,16 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
-      case HeapType::ext:
-        return pick(FeatureOptions<HeapType>()
-                      .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                      .add(FeatureSet::GC, HeapType::noext))
-          .getBasic(share);
+      case HeapType::ext: {
+        auto options = FeatureOptions<HeapType>()
+                         .add(FeatureSet::ReferenceTypes, HeapType::ext)
+                         .add(FeatureSet::GC, HeapType::noext);
+        if (share == Unshared) {
+          // Shared strings not yet supported.
+          options.add(FeatureSet::Strings, HeapType::string);
+        }
+        return pick(options).getBasic(share);
+      }
       case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
@@ -5391,10 +5396,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                                                       HeapType::struct_,
                                                       HeapType::array,
                                                       HeapType::none);
-        if (share == Unshared) {
-          // Shared strings not yet supported.
-          options.add(FeatureSet::Strings, HeapType::string);
-        }
         return pick(options).getBasic(share);
       }
       case HeapType::eq:

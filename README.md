@@ -105,6 +105,13 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      Binaryen IR is more structured than WebAssembly as noted earlier). Note
      that Binaryen does support unreachable code in .wat text files, since as we
      saw Binaryen only supports s-expressions there, which are structured.
+   * Binaryen supports a `stringref` type. This is similar to the currently-
+     frozen [stringref proposal], with the difference that the string type is a
+     subtype of `externref` rather than `anyref`. Doing so allows toolchains to
+     emit code in a form that uses [js string builtins] which Binaryen can then
+     "lift" into stringref in its internal IR, optimize (for example, a
+     concatenation of "a" and "b" can be optimized at compile time to "ab"), and
+     then "lower" that into js string builtins once more.
  * Blocks
    * Binaryen IR has only one node that contains a variable-length list of
      operands: the block. WebAssembly on the other hand allows lists in loops,
@@ -1039,3 +1046,5 @@ Windows and OS X as most of the core devs are on Linux.
 [minification]: https://kripken.github.io/talks/binaryen.html#/2
 [unreachable]: https://github.com/WebAssembly/binaryen/issues/903
 [binaryen_ir]: https://github.com/WebAssembly/binaryen/issues/663
+[stringref proposal]: https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md
+[js string builtins]: https://github.com/WebAssembly/js-string-builtins/blob/main/proposals/js-string-builtins/Overview.md
