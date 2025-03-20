@@ -193,6 +193,9 @@ struct StringLifting : public Pass {
     StringApplier applier(*this);
     applier.run(getPassRunner(), module);
     applier.walkModuleCode(module);
+
+    // Enable the feature so the module validates.
+    module->features.enable(FeatureSet::Strings);
   }
 };
 
