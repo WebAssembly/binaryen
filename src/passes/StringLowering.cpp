@@ -243,7 +243,7 @@ struct StringLowering : public StringGathering {
           std::stringstream utf8;
           if (useMagicImports &&
               String::convertUTF16ToUTF8(utf8, c->string.str)) {
-            global->module = "'";
+            global->module = WasmStringConstsModule;
             global->base = Name(utf8.str());
           } else {
             if (assertUTF8) {
@@ -358,9 +358,6 @@ struct StringLowering : public StringGathering {
   Name lengthImport;
   Name charCodeAtImport;
   Name substringImport;
-
-  // The name of the module to import string functions from.
-  Name WasmStringsModule = "wasm:js-string";
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).

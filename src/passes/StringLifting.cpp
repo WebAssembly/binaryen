@@ -47,10 +47,8 @@ struct StringLifting : public Pass {
     //
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
-    const Name STRING_CONST_MODULE = "'";
-
     for (auto& global : module->globals) {
-      if (global->imported() && global->module == STRING_CONST_MODULE) {
+      if (global->imported() && global->module == WasmStringConstsModule) {
         importedStrings[global->name] = global->base;
       }
     }
@@ -115,9 +113,6 @@ struct StringLifting : public Pass {
   Name lengthImport;
   Name charCodeAtImport;
   Name substringImport;
-
-  // The name of the module to import string functions from.
-  Name WasmStringsModule = "wasm:js-string";
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).

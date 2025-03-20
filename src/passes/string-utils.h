@@ -23,7 +23,11 @@ namespace wasm {
 
 // The name of the module to import from, for imported JS strings. See
 // https://github.com/WebAssembly/js-string-builtins/blob/main/proposals/js-string-builtins/Overview.md
-extern Name WasmStringsModule;
+extern const Name WasmStringsModule;
+
+// The name of the module to import string constants from, for magical imported
+// JS strings.
+extern const Name WasmStringConstsModule = "'";
 
 } // namespace wasm
 
