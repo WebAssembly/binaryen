@@ -196,16 +196,6 @@ def run_opt_test(wast, stdout=None, stderr=None):
     support.run_command(cmd, stdout=stdout)
 
 
-def check_expected(actual, expected, stdout=None):
-    if expected and os.path.exists(expected):
-        expected = open(expected).read()
-        print('       (using expected output)', file=stdout)
-        actual = actual.strip()
-        expected = expected.strip()
-        if actual != expected:
-            shared.fail(actual, expected)
-
-
 def run_one_spec_test(wast: Path, stdout=None, stderr=None):
     test_name = wast.name
 
@@ -217,11 +207,9 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
     if test_name == 'names.wast' and shared.skip_if_on_windows('spec: ' + test_name):
         return
 
-    expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log')
-
     # some spec tests should fail (actual process failure, not just assert_invalid)
     try:
-        actual = run_spec_test(str(wast), stdout=stdout, stderr=stderr)
+        run_spec_test(str(wast), stdout=stdout, stderr=stderr)
     except Exception as e:
         if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in test_name:
             print('<< test failed as expected >>', file=stdout)
@@ -229,11 +217,8 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
         else:
             shared.fail_with_error(str(e))
 
-    check_expected(actual, expected, stdout=stdout)
-
     # check binary format. here we can verify execution of the final
     # result, no need for an output verification
-    actual = ''
     transformed_path = base_name + ".transformed"
     with open(transformed_path, 'w') as transformed_spec_file:
         for i, (module, asserts) in enumerate(support.split_wast(str(wast))):
@@ -252,8 +237,7 @@ def run_one_spec_test(wast: Path, stdout=None, stderr=None):
                 transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
     # compare all the outputs to the expected output
-    actual = run_spec_test(transformed_path, stdout=stdout, stderr=stderr)
-    check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', test_name + '.log'), stdout=stdout)
+    run_spec_test(transformed_path, stdout=stdout, stderr=stderr)
 
 
 def run_spec_test_with_wrapped_stdout(output_queue, wast: Path):

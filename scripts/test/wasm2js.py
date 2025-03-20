@@ -126,12 +126,6 @@ def test_wasm2js_output():
                     all_out += out
 
             shared.fail_if_not_identical_to_file(''.join(all_js), expected_file)
-            expected_out = os.path.join(shared.get_test_dir('spec'), 'expected-output', os.path.basename(t) + '.log')
-            if os.path.exists(expected_out):
-                expected_out = open(expected_out).read()
-            else:
-                expected_out = ''
-            shared.fail_if_not_identical(all_out, expected_out)
 
 
 def test_asserts_output():

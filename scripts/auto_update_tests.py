@@ -124,24 +124,6 @@ def update_reduce_tests():
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', expected])
 
 
-def update_spec_tests():
-    print('\n[ updating wasm-shell spec testcases... ]\n')
-
-    for t in shared.options.spec_tests:
-        print('..', os.path.basename(t))
-
-        cmd = shared.WASM_SHELL + [t]
-        expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', os.path.basename(t) + '.log')
-        if os.path.isfile(expected):
-            stdout = support.run_command(cmd, stderr=subprocess.PIPE)
-            # filter out binaryen interpreter logging that the spec suite
-            # doesn't expect
-            filtered = [line for line in stdout.splitlines() if not line.startswith('[trap')]
-            stdout = '\n'.join(filtered) + '\n'
-            with open(expected, 'w') as o:
-                o.write(stdout)
-
-
 def update_lit_tests():
     print('\n[ updating lit testcases... ]\n')
     script = os.path.join(shared.options.binaryen_root,
@@ -170,7 +152,6 @@ TEST_SUITES = OrderedDict([
     ('ctor-eval', update_ctor_eval_tests),
     ('wasm-metadce', update_metadce_tests),
     ('wasm-reduce', update_reduce_tests),
-    ('spec', update_spec_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
     ('binaryenjs', binaryenjs.update_binaryen_js_tests),

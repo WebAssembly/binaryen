@@ -400,9 +400,7 @@ os.chdir(options.out_dir)
 # skip-list and preserved old ones by renaming them to 'old_[FILENAME].wast'
 # not to lose coverage. When the cause of the error is fixed or the unsupported
 # construct gets support so the new test passes, we can delete the
-# corresponding 'old_[FILENAME].wast' file. When you fix the new file and
-# delete the old file, make sure you rename the corresponding .wast.log file in
-# expected-output/ if any.
+# corresponding 'old_[FILENAME].wast' file.
 # Paths are relative to the test/spec directory
 SPEC_TESTS_TO_SKIP = [
     # Requires us to write our own floating point parser
