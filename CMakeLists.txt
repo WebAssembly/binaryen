@@ -468,7 +468,7 @@ if(BUILD_LLVM_DWARF)
 endif()
 
 if(MIMALLOC_STATIC)
-  if(NOT(LINUX AND BUILD_STATIC_LIB) OR EMSCRIPTEN)
+  if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND BUILD_STATIC_LIB) OR EMSCRIPTEN)
     message(FATAL_ERROR "Statically linking mimalloc is only supported when building as a native, statically linked library on Linux.")
   endif()
   message(STATUS "Building with statically linked mimalloc allocator.")

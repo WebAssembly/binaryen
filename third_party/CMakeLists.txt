@@ -26,5 +26,5 @@ if(MIMALLOC_STATIC)
   # (They can still be enabled via MIMALLOC_VERBOSE=1 wasm-opt ...)
   add_compile_definitions(MI_DEBUG=0)
   
-  add_subdirectory(mimalloc)
+  add_subdirectory(mimalloc EXCLUDE_FROM_ALL)
 endif()
