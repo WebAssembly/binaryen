@@ -20,6 +20,8 @@ Current Trunk
    generate new things in them).
  - Require the type of RefFunc expressions to match the type of the referenced
    function. It is no longer valid to type them as anyref in the IR.
+ - The C and JS APIs for creating RefFunc expressions now take a HeapType
+   instead of a Type.
 
 v122
 ----
