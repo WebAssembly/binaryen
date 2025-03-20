@@ -137,24 +137,24 @@ struct StringLifting : public Pass {
       }
 
       void visitCall(Call* curr) {
-        if (curr->target == fromCharCodeArrayImport) {
+        if (curr->target == parent.fromCharCodeArrayImport) {
           Builder(*getModule()).makeStringNew(StringNewWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]);
-        } else if (curr->target == fromCodePointImport) {
+        } else if (curr->target == parent.fromCodePointImport) {
           Builder(*getModule()).makeStringNew(StringNewFromCodePoint, curr->operands[0]);
-        } else if (curr->target == concatImport) {
+        } else if (curr->target == parent.concatImport) {
           Builder(*getModule()).makeStringConcat(curr->operands[0], curr->operands[1]);
-        } else if (curr->target == intoCharCodeArrayImport) {
+        } else if (curr->target == parent.intoCharCodeArrayImport) {
           Builder(*getModule()).makeStringEncode(StringEncodeWTF16Array, curr->operands[0], curr->operands[1], curr->operands[2]);
-        } else if (curr->target == equalsImport) {
+        } else if (curr->target == parent.equalsImport) {
           Builder(*getModule()).makeStringEq(StringEqEqual, curr->operands[0], curr->operands[1]);
-        } else if (curr->target == compareImport) {
+        } else if (curr->target == parent.compareImport) {
           Builder(*getModule()).makeStringEq(StringEqCompare, curr->operands[0], curr->operands[1]);
-        } else if (curr->target == lengthImport) {
-          Builder(*getModule()).makeStringMeasure(curr->operands[0]);
-        } else if (curr->target == charCodeAtImport) {
+        } else if (curr->target == parent.lengthImport) {
+          Builder(*getModule()).makeStringMeasure(StringMeasureWTF16, curr->operands[0]);
+        } else if (curr->target == parent.charCodeAtImport) {
           Builder(*getModule()).makeStringWTF16Get(curr->operands[0], curr->operands[1]);
-        } else if (curr->target == substringImport) {
-          Builder(*getModule()).makeStringSlice(StringSliceWTF, curr->operands[0], curr->operands[1], curr->operands[2]);
+        } else if (curr->target == parent.substringImport) {
+          Builder(*getModule()).makeStringSliceWTF(curr->operands[0], curr->operands[1], curr->operands[2]);
         }
       }
 
