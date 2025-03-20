@@ -15,22 +15,24 @@
   ;; CHECK-NEXT:   (string.const "foo")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.const "bar")
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.const "bar")
+  ;; CHECK-NEXT:   (select (result (ref string))
+  ;; CHECK-NEXT:    (string.const "bar")
+  ;; CHECK-NEXT:    (string.const "bar")
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func
     (drop
       (global.get $string_foo)
     )
-    ;; Test multiple uses of the same constant.
+    ;; Test multiple uses of the same constant, and that we update types.
     (drop
-      (global.get $string_bar)
-    )
-    (drop
-      (global.get $string_bar)
+      (select (result externref)
+        (global.get $string_bar)
+        (global.get $string_bar)
+        (i32.const 1)
+      )
     )
   )
 )
