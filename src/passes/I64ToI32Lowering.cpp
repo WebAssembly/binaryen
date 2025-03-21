@@ -300,33 +300,35 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitRefFunc(RefFunc* curr) {
     auto sig = curr->type.getHeapType().getSignature();
 
-    auto lowerTypes = [](Type types) {
-      bool hasI64 = false;
-      for (auto t : types) {
-        if (t == Type::i64) {
-          hasI64 = true;
-          break;
-        }
+    bool hasI64Param = false;
+    for (auto t : sig.params) {
+      if (t == Type::i64) {
+        hasI64Param = true;
+        break;
       }
-      if (!hasI64) {
-        return types;
-      }
-      std::vector<Type> newTypes;
-      for (auto t : types) {
+    }
+    auto params = sig.params;
+    if (hasI64Param) {
+      std::vector<Type> newParams;
+      for (auto t : sig.params) {
         if (t == Type::i64) {
-          newTypes.push_back(Type::i32);
-          newTypes.push_back(Type::i32);
+          newParams.push_back(Type::i32);
+          newParams.push_back(Type::i32);
         } else {
-          newTypes.push_back(t);
+          newParams.push_back(t);
         }
       }
-      return Type(newTypes);
+      params = Type(newParams);
     };
+    auto results = sig.results;
+    // Update the results the same way we do when visiting functions. We use a
+    // global rather than multivalue to lower i64 results.
+    if (results == Type::i64) {
+      results = Type::i32;
+    }
 
-    auto newParams = lowerTypes(sig.params);
-    auto newResults = lowerTypes(sig.results);
-    if (newParams != sig.params || newResults != sig.results) {
-      curr->type = curr->type.with(HeapType(Signature(newParams, newResults)));
+    if (params != sig.params || results != sig.results) {
+      curr->type = curr->type.with(HeapType(Signature(params, results)));
     }
   }
 
