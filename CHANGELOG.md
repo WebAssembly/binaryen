@@ -22,7 +22,7 @@ Current Trunk
    transformations for strings, like an inverse of StringLowering, but will
    error on codebases that depend on being able to pass strings into anyrefs.
  - Require the type of RefFunc expressions to match the type of the referenced
-   function. It is no longer valid to type them as anyref in the IR.
+   function. It is no longer valid to type them as funcref in the IR.
  - The C and JS APIs for creating RefFunc expressions now take a HeapType
    instead of a Type.
 
