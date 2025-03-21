@@ -54,6 +54,8 @@ struct StringLifting : public Pass {
     //
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
+    //
+    // TODO: parse the strings section for non-UTF16 strings.
     for (auto& global : module->globals) {
       if (!global->imported()) {
         continue;
