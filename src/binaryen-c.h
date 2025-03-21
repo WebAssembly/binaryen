@@ -961,7 +961,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
                                                  BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                                    const char* func,
-                                                   BinaryenType type);
+                                                   BinaryenHeapType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);

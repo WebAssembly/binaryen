@@ -1606,12 +1606,11 @@ BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRefAs(RefAsOp(op), (Expression*)value));
 }
 
-BinaryenExpressionRef
-BinaryenRefFunc(BinaryenModuleRef module, const char* func, BinaryenType type) {
-  // TODO: consider changing the C API to receive a heap type
-  Type type_(type);
+BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
+                                      const char* func,
+                                      BinaryenHeapType type) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefFunc(func, type_.getHeapType()));
+    Builder(*(Module*)module).makeRefFunc(func, HeapType(type)));
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
@@ -6259,8 +6258,12 @@ bool TypeBuilderBuildAndDispose(TypeBuilderRef builder,
   auto* B = (TypeBuilder*)builder;
   auto result = B->build();
   if (auto err = result.getError()) {
-    *errorIndex = err->index;
-    *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+    if (errorIndex) {
+      *errorIndex = err->index;
+    }
+    if (errorReason) {
+      *errorReason = static_cast<TypeBuilderErrorReason>(err->reason);
+    }
     delete B;
     return false;
   }
