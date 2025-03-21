@@ -19,6 +19,7 @@ CMakeFiles
 /*.ninja
 /.ninja_deps
 /.ninja_log
+/.ninja_log.last_upload
 /bin/
 /lib/
 /_deps/

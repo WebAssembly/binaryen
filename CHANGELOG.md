@@ -21,6 +21,10 @@ Current Trunk
  - `string` is now a subtype of `ext` (rather than `any`). This allows better
    transformations for strings, like an inverse of StringLowering, but will
    error on codebases that depend on being able to pass strings into anyrefs.
+ - Require the type of RefFunc expressions to match the type of the referenced
+   function. It is no longer valid to type them as funcref in the IR.
+ - The C and JS APIs for creating RefFunc expressions now take a HeapType
+   instead of a Type.
  - Add a `--string-lifting` pass that raises imported string operations and
    constants into stringref in Binaryen IR (which can then be fully optimized,
    and typically lowered back down with `--string-lowering`).

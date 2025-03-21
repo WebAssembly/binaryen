@@ -450,6 +450,15 @@ void test_core() {
                            BinaryenTypeFloat64()};
   BinaryenType iIfF = BinaryenTypeCreate(iIfF_, 4);
 
+  TypeBuilderRef typeBuilder = TypeBuilderCreate(1);
+  TypeBuilderSetSignatureType(typeBuilder, 0, iIfF, BinaryenTypeInt32());
+  BinaryenHeapType kitchenSinkerType;
+  bool builtType =
+    TypeBuilderBuildAndDispose(typeBuilder, &kitchenSinkerType, NULL, NULL);
+  assert(builtType);
+  BinaryenType kitchenSinkerRefType =
+    BinaryenTypeFromHeapType(kitchenSinkerType, false);
+
   BinaryenExpressionRef temp1 = makeInt32(module, 1),
                         temp2 = makeInt32(module, 2),
                         temp3 = makeInt32(module, 3),
@@ -471,7 +480,7 @@ void test_core() {
   BinaryenExpressionRef funcrefExpr =
     BinaryenRefNull(module, BinaryenTypeNullFuncref());
   funcrefExpr =
-    BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
+    BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
   BinaryenExpressionRef i31refExpr =
     BinaryenRefI31(module, makeInt32(module, 1));
 
@@ -1040,7 +1049,7 @@ void test_core() {
       module,
       temp10,
       BinaryenRefNull(module, BinaryenTypeNullFuncref()),
-      BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref())),
+      BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType)),
     // GC
     BinaryenRefEq(module,
                   BinaryenRefNull(module, BinaryenTypeNullref()),
@@ -1331,7 +1340,7 @@ void test_core() {
   BinaryenRemoveElementSegment(module, "p2");
 
   BinaryenExpressionRef funcrefExpr1 =
-    BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
+    BinaryenRefFunc(module, "kitchen()sinker", kitchenSinkerRefType);
 
   BinaryenExpressionPrint(BinaryenTableSet(
     module, "0", BinaryenConst(module, BinaryenLiteralInt32(0)), funcrefExpr1));

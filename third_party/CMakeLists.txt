@@ -17,8 +17,6 @@ if(BUILD_LLVM_DWARF)
 endif()
 
 if(MIMALLOC_STATIC)
-  # Using a C++ compiler avoids warnings about -fno-rtti with a C compiler.
-  set(MI_USE_CXX ON)
   # We only need the static library, nothing else.
   set(MI_BUILD_STATIC ON)
   set(MI_BUILD_SHARED OFF)
@@ -28,5 +26,5 @@ if(MIMALLOC_STATIC)
   # (They can still be enabled via MIMALLOC_VERBOSE=1 wasm-opt ...)
   add_compile_definitions(MI_DEBUG=0)
   
-  add_subdirectory(mimalloc)
+  add_subdirectory(mimalloc EXCLUDE_FROM_ALL)
 endif()

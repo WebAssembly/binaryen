@@ -225,25 +225,24 @@ def run_spec_tests():
 
         # check binary format. here we can verify execution of the final
         # result, no need for an output verification
-        split_num = 0
         actual = ''
-        with open('spec.wast', 'w') as transformed_spec_file:
-            for module, asserts in support.split_wast(wast):
+        with open(base, 'w') as transformed_spec_file:
+            for i, (module, asserts) in enumerate(support.split_wast(wast)):
                 if not module:
                     # Skip any initial assertions that don't have a module
                     continue
-                print('        testing split module', split_num)
-                split_num += 1
-                support.write_wast('split.wast', module)
-                run_opt_test('split.wast')    # also that our optimizer doesn't break on it
-                result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False)
+                print(f'        testing split module {i}')
+                split_name = os.path.splitext(base)[0] + f'_split{i}.wast'
+                support.write_wast(split_name, module)
+                run_opt_test(split_name)    # also that our optimizer doesn't break on it
+                result_wast_file = shared.binary_format_check(split_name, verify_final_result=False)
                 with open(result_wast_file) as f:
                     result_wast = f.read()
                     # add the asserts, and verify that the test still passes
                     transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
         # compare all the outputs to the expected output
-        actual = run_spec_test('spec.wast')
+        actual = run_spec_test(base)
         check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
 
 

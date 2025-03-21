@@ -3275,6 +3275,7 @@ Module['getFunctionInfo'] = function(func) {
     'name': UTF8ToString(Module['_BinaryenFunctionGetName'](func)),
     'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](func)),
     'base': UTF8ToString(Module['_BinaryenFunctionImportGetBase'](func)),
+    'type': Module['_BinaryenFunctionGetType'](func),
     'params': Module['_BinaryenFunctionGetParams'](func),
     'results': Module['_BinaryenFunctionGetResults'](func),
     'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
@@ -4893,6 +4894,9 @@ Module['Function'] = (() => {
   Function['getName'] = function(func) {
     return UTF8ToString(Module['_BinaryenFunctionGetName'](func));
   };
+  Function['getType'] = function(func) {
+    return Module['_BinaryenFunctionGetType'](func);
+  }
   Function['getParams'] = function(func) {
     return Module['_BinaryenFunctionGetParams'](func);
   };

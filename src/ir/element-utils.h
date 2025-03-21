@@ -42,7 +42,7 @@ template<typename T>
 inline void iterAllElementFunctionNames(const Module* wasm, T visitor) {
   for (auto& segment : wasm->elementSegments) {
     iterElementSegmentFunctionNames(
-      segment.get(), [&](Name& name, Index i) { visitor(name); });
+      segment.get(), [&](const Name& name, Index i) { visitor(name); });
   }
 }
 
