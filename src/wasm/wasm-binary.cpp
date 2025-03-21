@@ -285,7 +285,15 @@ void WasmBinaryWriter::writeTypes() {
       }
     }
     if (type.isShared()) {
-      o << uint8_t(BinaryConsts::EncodedType::SharedDef);
+      o << uint8_t(BinaryConsts::EncodedType::Shared);
+    }
+    if (auto desc = type.getDescribedType()) {
+      o << uint8_t(BinaryConsts::EncodedType::Describes);
+      writeHeapType(*desc);
+    }
+    if (auto desc = type.getDescriptorType()) {
+      o << uint8_t(BinaryConsts::EncodedType::Descriptor);
+      writeHeapType(*desc);
     }
     switch (type.getKind()) {
       case HeapTypeKind::Func: {
@@ -1680,7 +1688,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
 
   int ret = 0;
   if (type.isShared()) {
-    o << S32LEB(BinaryConsts::EncodedType::Shared);
+    o << uint8_t(BinaryConsts::EncodedType::Shared);
   }
   switch (type.getBasic(Unshared)) {
     case HeapType::ext:
@@ -2206,7 +2214,7 @@ HeapType WasmBinaryReader::getHeapType() {
     return types[type];
   }
   auto share = Unshared;
-  if (type == BinaryConsts::EncodedType::Shared) {
+  if (type == BinaryConsts::EncodedType::SharedLEB) {
     share = Shared;
     type = getS64LEB(); // TODO: Actually s33
   }
@@ -2467,7 +2475,6 @@ void WasmBinaryReader::readTypes() {
       builder.createRecGroup(i, groupSize);
       form = getInt8();
     }
-    std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
         form == BinaryConsts::EncodedType::SubFinal) {
       if (form == BinaryConsts::EncodedType::Sub) {
@@ -2479,12 +2486,32 @@ void WasmBinaryReader::readTypes() {
           throwError("Invalid type definition with " + std::to_string(supers) +
                      " supertypes");
         }
-        superIndex = getU32LEB();
+        auto superIdx = getU32LEB();
+        if (superIdx >= builder.size()) {
+          throwError("invalid supertype index: " + std::to_string(superIdx));
+        }
+        builder[i].subTypeOf(builder[superIdx]);
       }
       form = getInt8();
     }
-    if (form == BinaryConsts::SharedDef) {
+    if (form == BinaryConsts::EncodedType::Shared) {
       builder[i].setShared();
+      form = getInt8();
+    }
+    if (form == BinaryConsts::EncodedType::Describes) {
+      auto descIdx = getU32LEB();
+      if (descIdx >= builder.size()) {
+        throwError("invalid described type index: " + std::to_string(descIdx));
+      }
+      builder[i].describes(builder[descIdx]);
+      form = getInt8();
+    }
+    if (form == BinaryConsts::EncodedType::Descriptor) {
+      auto descIdx = getU32LEB();
+      if (descIdx >= builder.size()) {
+        throwError("invalid descriptor type index: " + std::to_string(descIdx));
+      }
+      builder[i].descriptor(builder[descIdx]);
       form = getInt8();
     }
     if (form == BinaryConsts::EncodedType::Func) {
@@ -2497,13 +2524,6 @@ void WasmBinaryReader::readTypes() {
       builder[i] = Array(readFieldDef());
     } else {
       throwError("Bad type form " + std::to_string(form));
-    }
-    if (superIndex) {
-      if (*superIndex > builder.size()) {
-        throwError("Out of bounds supertype index " +
-                   std::to_string(*superIndex));
-      }
-      builder[i].subTypeOf(builder[*superIndex]);
     }
   }
 
