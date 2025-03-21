@@ -63,6 +63,8 @@ struct StringLifting : public Pass {
         found = true;
       }
     }
+
+    // Find imported string functions.
     for (auto& func : module->functions) {
       if (!func->imported() || func->module != WasmStringsModule) {
         continue;
@@ -118,6 +120,7 @@ struct StringLifting : public Pass {
       bool modified = false;
 
       void visitGlobalGet(GlobalGet* curr) {
+        // Replace global.gets of imported strings with string.const.
         auto iter = parent.importedStrings.find(curr->name);
         if (iter != parent.importedStrings.end()) {
           // Encode from WTF-8 to WTF-16.
@@ -128,13 +131,13 @@ struct StringLifting : public Pass {
             Fatal() << "Bad string to lift: " << wtf8;
           }
 
-          // Replace the global.get with a string.const.
           replaceCurrent(Builder(*getModule()).makeStringConst(wtf16.str()));
           modified = true;
         }
       }
 
       void visitCall(Call* curr) {
+        // Replace calls of imported string methods with stringref operations.
         if (curr->target == parent.fromCharCodeArrayImport) {
           replaceCurrent(Builder(*getModule())
                            .makeStringNew(StringNewWTF16Array,
@@ -197,7 +200,7 @@ struct StringLifting : public Pass {
     // TODO: Add casts. We generate new string.* instructions, and all their
     //       string inputs should be stringref, not externref, but we have not
     //       converted all externrefs to stringrefs (since some externrefs might
-    //       be something else. It is not urgent to fix this as the validator
+    //       be something else). It is not urgent to fix this as the validator
     //       accepts externrefs there atm, and since toolchains will lower
     //       strings out at the end anyhow (which would remove such casts). Note
     //       that if we add a type import for stringref then this problem would
