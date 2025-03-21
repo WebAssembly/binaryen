@@ -194,6 +194,15 @@ struct StringLifting : public Pass {
     applier.run(getPassRunner(), module);
     applier.walkModuleCode(module);
 
+    // TODO: Add casts. We generate new string.* instructions, and all their
+    //       string inputs should be stringref, not externref, but we have not
+    //       converted all externrefs to stringrefs (since some externrefs might
+    //       be something else. It is not urgent to fix this as the validator
+    //       accepts externrefs there atm, and since toolchains will lower
+    //       strings out at the end anyhow (which would remove such casts). Note
+    //       that if we add a type import for stringref then this problem would
+    //       become a lot simpler (we'd convert that type to stringref).
+
     // Enable the feature so the module validates.
     module->features.enable(FeatureSet::Strings);
   }
