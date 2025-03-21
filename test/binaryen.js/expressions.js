@@ -1475,22 +1475,20 @@ console.log("# RefAs");
 console.log("# RefFunc");
 (function testRefFunc() {
   const module = new binaryen.Module();
+  module.addFunction("a", binaryen.none, binaryen.none, [], module.nop());
+  var type = binaryen.Function(module.getFunction("a")).type;
 
   var func = "a";
-  const theRefFunc = binaryen.RefFunc(module.ref.func(func, binaryen.funcref));
+  const theRefFunc = binaryen.RefFunc(module.ref.func(func, type));
   assert(theRefFunc instanceof binaryen.RefFunc);
   assert(theRefFunc instanceof binaryen.Expression);
   assert(theRefFunc.func === func);
-  // TODO: check the type. the type is (ref func), that is, a non-nullable func,
-  //       which differs from funcref. we don't have the ability to create such
-  //       a type in the C/JS APIs yet.
+  assert(theRefFunc.type === type);
 
   theRefFunc.func = func = "b";
   assert(theRefFunc.func === func);
-  theRefFunc.type = binaryen.f64;
   theRefFunc.finalize();
-  // TODO The type is a subtype of funcref, but we can't check that in the JS
-  //      API atm.
+  assert(theRefFunc.type === type);
 
   console.log(theRefFunc.toText());
   assert(

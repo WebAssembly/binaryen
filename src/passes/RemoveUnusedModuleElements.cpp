@@ -694,7 +694,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // For now, all functions that can be called indirectly are marked as roots.
     // TODO: Compute this based on which ElementSegments are actually used,
     //       and which functions have a call_indirect of the proper type.
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name name) {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
 
