@@ -10,17 +10,17 @@
 
   ;; CHECK:      (type $2 (func (param externref) (result i32)))
 
-  ;; CHECK:      (type $3 (func (param externref externref) (result (ref extern))))
+  ;; CHECK:      (type $3 (func (param externref i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (type $4 (func (param (ref null $array16) i32 i32) (result (ref extern))))
+  ;; CHECK:      (type $4 (func (param externref externref) (result (ref extern))))
 
-  ;; CHECK:      (type $5 (func (param i32) (result (ref extern))))
+  ;; CHECK:      (type $5 (func (param (ref null $array16) i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (type $6 (func (param externref (ref null $array16) i32) (result i32)))
+  ;; CHECK:      (type $6 (func (param i32) (result (ref extern))))
 
-  ;; CHECK:      (type $7 (func (param externref i32) (result i32)))
+  ;; CHECK:      (type $7 (func (param externref (ref null $array16) i32) (result i32)))
 
-  ;; CHECK:      (type $8 (func (param externref i32 i32) (result (ref extern))))
+  ;; CHECK:      (type $8 (func (param externref i32) (result i32)))
 
   ;; CHECK:      (type $9 (func))
 
@@ -32,18 +32,20 @@
 
   ;; CHECK:      (type $13 (func (param externref) (result externref)))
 
+  ;; CHECK:      (type $14 (func (param externref)))
+
   ;; CHECK:      (import "\'" "foo" (global $string_foo (ref extern)))
   (import "\'" "foo" (global $string_foo (ref extern)))
   ;; CHECK:      (import "\'" "bar" (global $string_bar (ref extern)))
   (import "\'" "bar" (global $string_bar (ref extern)))
 
-  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $array16) i32 i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $5) (param (ref null $array16) i32 i32) (result (ref extern))))
   (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (param (ref null $array16) i32 i32) (result (ref extern))))
-  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $5) (param i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $6) (param i32) (result (ref extern))))
   (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (param i32) (result (ref extern))))
-  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $3) (param externref externref) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $4) (param externref externref) (result (ref extern))))
   (import "wasm:js-string" "concat" (func $concat (param externref externref) (result (ref extern))))
-  ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $array16) i32) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $7) (param externref (ref null $array16) i32) (result i32)))
   (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (param externref (ref null $array16) i32) (result i32)))
   ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
   (import "wasm:js-string" "equals" (func $equals (param externref externref) (result i32)))
@@ -51,10 +53,18 @@
   (import "wasm:js-string" "compare" (func $compare (param externref externref) (result i32)))
   ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $2) (param externref) (result i32)))
   (import "wasm:js-string" "length" (func $length (param externref) (result i32)))
-  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $7) (param externref i32) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
   (import "wasm:js-string" "charCodeAt" (func $charCodeAt (param externref i32) (result i32)))
-  ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $8) (param externref i32 i32) (result (ref extern))))
-  (import "wasm:js-string" "substring" (func $substring (param externref i32 i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "substring" (func $substring_foo (type $3) (param externref i32 i32) (result (ref extern))))
+  (import "wasm:js-string" "substring" (func $substring_foo (param externref i32 i32) (result (ref extern))))
+
+  ;; A function from the right module, but an unsupported name.
+  ;; CHECK:      (import "wasm:js-string" "wrong-name" (func $wrong-base (type $3) (param externref i32 i32) (result (ref extern))))
+  (import "wasm:js-string" "wrong-name" (func $wrong-base (param externref i32 i32) (result (ref extern))))
+
+  ;; A function that is right in all ways but the module.
+  ;; CHECK:      (import "oops" "substring" (func $wrong-module (type $3) (param externref i32 i32) (result (ref extern))))
+  (import "oops" "substring" (func $wrong-module (param externref i32 i32) (result (ref extern))))
 
   ;; CHECK:      (func $func (type $9)
   ;; CHECK-NEXT:  (drop
@@ -112,7 +122,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.concat (type $3) (param $a externref) (param $b externref) (result (ref extern))
+  ;; CHECK:      (func $string.concat (type $4) (param $a externref) (param $b externref) (result (ref extern))
   ;; CHECK-NEXT:  (string.concat
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (local.get $b)
@@ -198,10 +208,46 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.slice (param $ref externref) (result externref)
-    (call $substring
+    ;; Note how the internal name has _foo appended, but that does not confuse
+    ;; use - the module and base names of the import are what matter.
+    (call $substring_foo
       (local.get $ref)
       (i32.const 2)
       (i32.const 3)
+    )
+  )
+
+  ;; CHECK:      (func $wrong (type $14) (param $ref externref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $wrong-base
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $wrong-module
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:    (i32.const 7)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $wrong (param $ref externref)
+    ;; We do nothing with functions with the wrong base or module name.
+    (drop
+      (call $wrong-base
+        (local.get $ref)
+        (i32.const 4)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (call $wrong-module
+        (local.get $ref)
+        (i32.const 6)
+        (i32.const 7)
+      )
     )
   )
 )
