@@ -15,3 +15,16 @@ endif()
 if(BUILD_LLVM_DWARF)
   add_subdirectory(llvm-project)
 endif()
+
+if(MIMALLOC_STATIC)
+  # We only need the static library, nothing else.
+  set(MI_BUILD_STATIC ON)
+  set(MI_BUILD_SHARED OFF)
+  set(MI_BUILD_OBJECT OFF)
+  set(MI_BUILD_TESTS OFF)
+  # Do not show debug and warning messages of the allocator by default.
+  # (They can still be enabled via MIMALLOC_VERBOSE=1 wasm-opt ...)
+  add_compile_definitions(MI_DEBUG=0)
+  
+  add_subdirectory(mimalloc EXCLUDE_FROM_ALL)
+endif()

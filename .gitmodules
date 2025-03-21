@@ -7,3 +7,6 @@
 [submodule "third_party/fuzztest"]
 	path = third_party/fuzztest
 	url = https://github.com/google/fuzztest
+[submodule "third_party/mimalloc"]
+	path = third_party/mimalloc
+	url = https://github.com/microsoft/mimalloc.git

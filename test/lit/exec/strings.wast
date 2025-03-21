@@ -477,20 +477,20 @@
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling extern
-  ;; CHECK-NEXT: [fuzz-exec] note result: extern => string("string")
-  (func $extern (export "extern") (result externref)
-    (extern.convert_any
-      (string.const "string")
+  ;; CHECK:      [fuzz-exec] calling string.to.any
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any => string("six")
+  (func $string.to.any (export "string.to.any") (result anyref)
+    (any.convert_extern
+      (string.const "six")
     )
   )
 
-  ;; CHECK:      [fuzz-exec] calling extern-intern
-  ;; CHECK-NEXT: [fuzz-exec] note result: extern-intern => string("string")
-  (func $extern-intern (export "extern-intern") (result anyref)
-    (any.convert_extern
-      (extern.convert_any
-        (string.const "string")
+  ;; CHECK:      [fuzz-exec] calling string.to.any.and.back
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.to.any.and.back => string("seven")
+  (func $string.to.any.and.back (export "string.to.any.and.back") (result externref)
+    (extern.convert_any
+      (any.convert_extern
+        (string.const "seven")
       )
     )
   )
@@ -623,11 +623,11 @@
 ;; CHECK:      [fuzz-exec] calling string.measure
 ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
 
-;; CHECK:      [fuzz-exec] calling extern
-;; CHECK-NEXT: [fuzz-exec] note result: extern => string("string")
+;; CHECK:      [fuzz-exec] calling string.to.any
+;; CHECK-NEXT: [fuzz-exec] note result: string.to.any => string("six")
 
-;; CHECK:      [fuzz-exec] calling extern-intern
-;; CHECK-NEXT: [fuzz-exec] note result: extern-intern => string("string")
+;; CHECK:      [fuzz-exec] calling string.to.any.and.back
+;; CHECK-NEXT: [fuzz-exec] note result: string.to.any.and.back => string("seven")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -648,8 +648,6 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
-;; CHECK-NEXT: [fuzz-exec] comparing extern
-;; CHECK-NEXT: [fuzz-exec] comparing extern-intern
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing invalid_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing isolated_high_code_point
@@ -668,6 +666,8 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing string.measure
+;; CHECK-NEXT: [fuzz-exec] comparing string.to.any
+;; CHECK-NEXT: [fuzz-exec] comparing string.to.any.and.back
 ;; CHECK-NEXT: [fuzz-exec] comparing surrogate_pair_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing unsigned_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing weird_code_point

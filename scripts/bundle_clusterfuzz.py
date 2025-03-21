@@ -107,6 +107,7 @@ features = [
     '--disable-shared-everything',
     '--disable-fp16',
     '--disable-custom-descriptors',
+    '--disable-strings',
 ]
 
 with tarfile.open(output_file, "w:gz") as tar:

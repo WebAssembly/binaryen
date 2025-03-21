@@ -486,8 +486,10 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
 
     switch (type->getBasic(Unshared)) {
       case HeapType::ext:
-        return fuzztest::Just(
-          HeapTypePlan{HeapType(HeapTypes::noext.getBasic(share))});
+        return matchingOrAbstract(
+          [](auto kind) { return false; },
+          fuzztest::ElementOf({HeapType(HeapTypes::string.getBasic(share)),
+                               HeapType(HeapTypes::noext.getBasic(share))}));
       case HeapType::func:
         return matchingOrAbstract(
           [](auto kind) { return kind == FuncKind; },
@@ -501,7 +503,6 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
           [](auto kind) { return kind == StructKind || kind == ArrayKind; },
           fuzztest::ElementOf({HeapType(HeapTypes::eq.getBasic(share)),
                                HeapType(HeapTypes::i31.getBasic(share)),
-                               HeapType(HeapTypes::string.getBasic(share)),
                                HeapType(HeapTypes::struct_.getBasic(share)),
                                HeapType(HeapTypes::array.getBasic(share)),
                                HeapType(HeapTypes::none.getBasic(share))}));
@@ -523,10 +524,12 @@ fuzztest::Domain<HeapTypePlan> AvailableStrictSubHeapType(TypeBuilderPlan plan,
       case HeapType::exn:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::noexn.getBasic(share))});
-      case HeapType::string:
       case HeapType::i31:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::none.getBasic(share))});
+      case HeapType::string:
+        return fuzztest::Just(
+          HeapTypePlan{HeapType(HeapTypes::noext.getBasic(share))});
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
@@ -594,16 +597,17 @@ AvailableStrictSuperHeapType(TypeBuilderPlan plan, HeapTypePlan sub) {
       case HeapType::i31:
       case HeapType::struct_:
       case HeapType::array:
-      case HeapType::string:
         return fuzztest::Just(
           HeapTypePlan{HeapType(HeapTypes::any.getBasic(share))});
+      case HeapType::string:
+        return fuzztest::Just(
+          HeapTypePlan{HeapType(HeapTypes::ext.getBasic(share))});
       case HeapType::none:
         return matchingOrAbstract(
           [](auto kind) { return kind == StructKind || kind == ArrayKind; },
           fuzztest::ElementOf({HeapType(HeapTypes::any.getBasic(share)),
                                HeapType(HeapTypes::eq.getBasic(share)),
                                HeapType(HeapTypes::i31.getBasic(share)),
-                               HeapType(HeapTypes::string.getBasic(share)),
                                HeapType(HeapTypes::struct_.getBasic(share)),
                                HeapType(HeapTypes::array.getBasic(share))}));
       case HeapType::noext:
@@ -725,7 +729,7 @@ fuzztest::Domain<TypePlan> AvailableType(TypeBuilderPlan plan) {
 
 fuzztest::Domain<TypePlan> AvailableSubType(TypeBuilderPlan plan,
                                             TypePlan super) {
-  if (auto* type = super.getNonRef()) {
+  if (super.getNonRef()) {
     // No subtyping among non-ref types.
     return fuzztest::Just(super);
   } else if (auto* ref = super.getRef()) {
@@ -1043,10 +1047,10 @@ std::vector<HeapType> BuildHeapTypes(TypeBuilderPlan plan) {
   auto built = builder.build();
   if (auto* err = built.getError()) {
     std::cerr << err->index << ": " << err->reason << "\n";
-    ;
+    std::cerr << "Plan: " << plan << '\n';
   }
   assert(built);
-  return std::move(*built);
+  return *built;
 }
 
 auto ArbitraryDefinedHeapTypesAndPlan() {
