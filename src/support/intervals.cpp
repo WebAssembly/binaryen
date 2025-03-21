@@ -36,8 +36,7 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
     intIntervals.push_back({interval, i});
   }
 
-  std::sort(
-    intIntervals.begin(), intIntervals.end());
+  std::sort(intIntervals.begin(), intIntervals.end());
 
   std::vector<std::pair<Interval, int>> kept;
   kept.push_back(intIntervals[0]);
@@ -50,7 +49,8 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
 
     // former overlaps with candidate
     // replace former if the weights are the same but the candidate ends earlier
-    if (former.first.weight == candidate.first.weight && former.first.end > candidate.first.end) {
+    if (former.first.weight == candidate.first.weight &&
+        former.first.end > candidate.first.end) {
       former = candidate;
     } else if (former.first.weight < candidate.first.weight) {
       former = candidate;

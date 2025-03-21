@@ -153,8 +153,8 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   // A substring represents a contiguous set of instructions that appear more
   // than once in a Wasm binary. For each appearance of the substring, an
   // Interval is created that lacks a connection back to its originating
-  // substring. To fix, upon Interval creation, a second vector is populated with
-  // the index of the corresponding substring.
+  // substring. To fix, upon Interval creation, a second vector is populated
+  // with the index of the corresponding substring.
   std::vector<Interval> intervals;
   std::vector<int> substringIdxs;
 
