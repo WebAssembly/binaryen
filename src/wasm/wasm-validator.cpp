@@ -4046,6 +4046,18 @@ static void validateExports(Module& module, ValidationInfo& info) {
       Name name = *exp->getInternalName();
       info.shouldBeTrue(
         module.getTagOrNull(name), name, "module tag exports must be found");
+    } else if (exp->kind == ExternalKind::Type) {
+      info.shouldBeTrue(module.features.hasTypeImports(),
+                        exp->name,
+                        "Exported type requires type-imports "
+                        "[--enable-type-imports]");
+      auto feats = exp->getHeapType()->getFeatures();
+      if (!info.shouldBeTrue(feats <= module.features,
+                             exp->name,
+                             "Export type requires additional features")) {
+        info.getStream(nullptr)
+          << getMissingFeaturesList(module, feats) << '\n';
+      }
     } else {
       WASM_UNREACHABLE("invalid ExternalKind");
     }

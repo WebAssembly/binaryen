@@ -53,6 +53,7 @@ class HeapType;
 class RecGroup;
 struct Signature;
 struct Continuation;
+struct TypeImport;
 struct Field;
 struct Struct;
 struct Array;
@@ -87,6 +88,7 @@ enum class HeapTypeKind {
   Struct,
   Array,
   Cont,
+  Import,
 };
 
 class HeapType {
@@ -165,6 +167,7 @@ public:
   bool isArray() const { return getKind() == HeapTypeKind::Array; }
   bool isExn() const { return isMaybeShared(HeapType::exn); }
   bool isString() const { return isMaybeShared(HeapType::string); }
+  bool isImport() const { return getKind() == HeapTypeKind::Import; }
   bool isBottom() const;
   bool isOpen() const;
   bool isShared() const { return getShared() == Shared; }
@@ -182,6 +185,7 @@ public:
 
   const Struct& getStruct() const;
   Array getArray() const;
+  TypeImport getImport() const;
 
   // If there is a nontrivial (i.e. non-basic, one that was declared by the
   // module) nominal supertype, return it, else an empty optional.
@@ -609,6 +613,17 @@ struct Continuation {
   std::string toString() const;
 };
 
+struct TypeImport {
+  Name module, base;
+  HeapType bound;
+  TypeImport(Name module, Name base, HeapType bound)
+    : module(module), base(base), bound(bound) {}
+  bool operator==(const TypeImport& other) const {
+    return module == other.module && base == other.base && bound == other.bound;
+  }
+  std::string toString() const;
+};
+
 struct Field {
   Type type;
   enum PackedType {
@@ -707,6 +722,7 @@ struct TypeBuilder {
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
+  void setHeapType(size_t i, TypeImport import);
 
   // Sets the heap type at index `i` to be a copy of the given heap type with
   // its referenced HeapTypes to be replaced according to the provided mapping
@@ -771,6 +787,9 @@ struct TypeBuilder {
       case HeapTypeKind::Cont:
         setHeapType(i, Continuation(map(type.getContinuation().type)));
         return;
+      case HeapTypeKind::Import:
+        setHeapType(i, type.getImport());
+        return;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -814,6 +833,10 @@ struct TypeBuilder {
     ForwardChildReference,
     // A continuation reference that does not refer to a function type.
     InvalidFuncType,
+    // A type import has an invalid bound.
+    InvalidBoundType,
+    // Type import in recursive group
+    ImportInRecGroup,
     // A non-shared field of a shared heap type.
     InvalidUnsharedField,
   };
@@ -866,6 +889,10 @@ struct TypeBuilder {
     }
     Entry& operator=(Array array) {
       builder.setHeapType(index, array);
+      return *this;
+    }
+    Entry& operator=(TypeImport import) {
+      builder.setHeapType(index, import);
       return *this;
     }
     Entry& subTypeOf(std::optional<HeapType> other) {
@@ -926,6 +953,7 @@ std::ostream& operator<<(std::ostream&, Continuation);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
+std::ostream& operator<<(std::ostream&, TypeImport);
 std::ostream& operator<<(std::ostream&, TypeBuilder::ErrorReason);
 
 // Inline some nontrivial methods here for performance reasons.

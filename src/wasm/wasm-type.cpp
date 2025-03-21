@@ -30,6 +30,8 @@
 #include "wasm-features.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
+#include <pretty_printing.h>
+#include <support/string.h>
 
 #define TRACE_CANONICALIZATION 0
 
@@ -66,6 +68,7 @@ struct HeapTypeInfo {
     Continuation continuation;
     Struct struct_;
     Array array;
+    TypeImport import;
   };
 
   HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
@@ -76,12 +79,15 @@ struct HeapTypeInfo {
   HeapTypeInfo(Struct&& struct_)
     : kind(HeapTypeKind::Struct), struct_(std::move(struct_)) {}
   HeapTypeInfo(Array array) : kind(HeapTypeKind::Array), array(array) {}
+  HeapTypeInfo(TypeImport import)
+    : kind(HeapTypeKind::Import), import(import) {}
   ~HeapTypeInfo();
 
   constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
   constexpr bool isContinuation() const { return kind == HeapTypeKind::Cont; }
   constexpr bool isStruct() const { return kind == HeapTypeKind::Struct; }
   constexpr bool isArray() const { return kind == HeapTypeKind::Array; }
+  constexpr bool isImport() const { return kind == HeapTypeKind::Import; }
   constexpr bool isData() const { return isStruct() || isArray(); }
 };
 
@@ -129,6 +135,7 @@ struct TypePrinter {
   std::ostream& print(const Struct& struct_,
                       const std::unordered_map<Index, Name>& fieldNames);
   std::ostream& print(const Array& array);
+  std::ostream& print(const TypeImport& import);
 };
 
 struct RecGroupHasher {
@@ -154,6 +161,7 @@ struct RecGroupHasher {
   size_t hash(const Continuation& sig) const;
   size_t hash(const Struct& struct_) const;
   size_t hash(const Array& array) const;
+  size_t hash(const TypeImport& import) const;
 };
 
 struct RecGroupEquator {
@@ -180,6 +188,7 @@ struct RecGroupEquator {
   bool eq(const Continuation& a, const Continuation& b) const;
   bool eq(const Struct& a, const Struct& b) const;
   bool eq(const Array& a, const Array& b) const;
+  bool eq(const TypeImport& a, const TypeImport& b) const;
 };
 
 // A wrapper around a RecGroup that provides equality and hashing based on the
@@ -295,6 +304,9 @@ protected:
       case HeapTypeKind::Array:
         taskList.push_back(Task::scan(&info->array.element.type));
         break;
+      case HeapTypeKind::Import:
+        taskList.push_back(Task::scan(&info->import.bound));
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -379,6 +391,8 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
       return HeapTypes::struct_.getBasic(info->share);
     case HeapTypeKind::Array:
       return HeapTypes::array.getBasic(info->share);
+    case HeapTypeKind::Import:
+      return info->import.bound.getBasic(info->share);
     case HeapTypeKind::Basic:
       break;
   }
@@ -477,6 +491,9 @@ HeapTypeInfo::~HeapTypeInfo() {
       return;
     case HeapTypeKind::Array:
       array.~Array();
+      return;
+    case HeapTypeKind::Import:
+      import.~TypeImport();
       return;
     case HeapTypeKind::Basic:
       break;
@@ -931,6 +948,11 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
+TypeImport HeapType::getImport() const {
+  assert(isImport());
+  return getHeapTypeInfo(*this)->import;
+}
+
 std::optional<HeapType> HeapType::getDeclaredSuperType() const {
   if (isBasic()) {
     return {};
@@ -985,6 +1007,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
       return HeapType(struct_).getBasic(share);
     case HeapTypeKind::Array:
       return HeapType(array).getBasic(share);
+    case HeapTypeKind::Import:
+      return info->import.bound;
     case HeapTypeKind::Basic:
       break;
   }
@@ -1051,6 +1075,7 @@ size_t HeapType::getDepth() const {
       break;
     case HeapTypeKind::Func:
     case HeapTypeKind::Cont:
+    case HeapTypeKind::Import:
       ++depth;
       break;
     case HeapTypeKind::Struct:
@@ -1103,6 +1128,8 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
     case HeapTypeKind::Struct:
     case HeapTypeKind::Array:
       return none;
+    case HeapTypeKind::Import:
+      return info->import.bound.getUnsharedBottom();
     case HeapTypeKind::Basic:
       break;
   }
@@ -1168,6 +1195,8 @@ std::vector<Type> HeapType::getTypeChildren() const {
     case HeapTypeKind::Array:
       return {getArray().element.type};
     case HeapTypeKind::Cont:
+      return {};
+    case HeapTypeKind::Import:
       return {};
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -1342,6 +1371,8 @@ FeatureSet HeapType::getFeatures() const {
         }
       } else if (heapType.isContinuation()) {
         feats |= FeatureSet::StackSwitching;
+      } else if (heapType.isImport()) {
+        feats |= FeatureSet::TypeImports;
       }
 
       // In addition, scan their non-ref children, to add dependencies on
@@ -1400,6 +1431,9 @@ TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
       case HeapTypeKind::Cont:
         stream << "cont." << contCount++;
         break;
+      case HeapTypeKind::Import:
+        stream << "import." << importCount++;
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -1419,6 +1453,7 @@ std::string Signature::toString() const { return genericToString(*this); }
 std::string Continuation::toString() const { return genericToString(*this); }
 std::string Struct::toString() const { return genericToString(*this); }
 std::string Array::toString() const { return genericToString(*this); }
+std::string TypeImport::toString() const { return genericToString(*this); }
 
 std::ostream& operator<<(std::ostream& os, Type type) {
   return TypePrinter(os).print(type);
@@ -1450,6 +1485,9 @@ std::ostream& operator<<(std::ostream& os, Struct struct_) {
 std::ostream& operator<<(std::ostream& os, Array array) {
   return TypePrinter(os).print(array);
 }
+std::ostream& operator<<(std::ostream& os, TypeImport import) {
+  return TypePrinter(os).print(import);
+}
 std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
   switch (reason) {
     case TypeBuilder::ErrorReason::SelfSupertype:
@@ -1462,6 +1500,10 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an undeclared child";
     case TypeBuilder::ErrorReason::InvalidFuncType:
       return os << "Continuation has invalid function type";
+    case TypeBuilder::ErrorReason::InvalidBoundType:
+      return os << "Type import has invalid bound type";
+    case TypeBuilder::ErrorReason::ImportInRecGroup:
+      return os << "Type import in recursive group";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
   }
@@ -1521,6 +1563,9 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   }
   if (a.isShared() != b.isShared()) {
     return false;
+  }
+  if (a.isImport()) {
+    return isSubType(a.getImport().bound, b);
   }
   if (b.isBasic()) {
     auto aTop = a.getUnsharedTop();
@@ -1788,6 +1833,21 @@ std::ostream& TypePrinter::print(HeapType type) {
 
   auto names = generator(type);
 
+  if (type.isImport()) {
+    TypeImport import = type.getImport();
+    os << "(";
+    printMedium(os, "import ");
+    std::stringstream escapedModule, escapedBase;
+    String::printEscaped(escapedModule, import.module.str);
+    String::printEscaped(escapedBase, import.base.str);
+    printText(os, escapedModule.str(), false) << ' ';
+    printText(os, escapedBase.str(), false) << ' ';
+    os << "(type ";
+    names.name.print(os) << ' ';
+    print(import);
+    return os << "))";
+  }
+
   os << "(type ";
   names.name.print(os) << ' ';
 
@@ -1833,6 +1893,9 @@ std::ostream& TypePrinter::print(HeapType type) {
       break;
     case HeapTypeKind::Cont:
       print(type.getContinuation());
+      break;
+    case HeapTypeKind::Import:
+      print(type.getImport());
       break;
     case HeapTypeKind::Basic:
       WASM_UNREACHABLE("unexpected kind");
@@ -1933,6 +1996,12 @@ std::ostream& TypePrinter::print(const Array& array) {
   return os << ')';
 }
 
+std::ostream& TypePrinter::print(const TypeImport& import) {
+  os << "(sub ";
+  printHeapTypeName(import.bound);
+  return os << ')';
+}
+
 size_t RecGroupHasher::operator()() const {
   size_t digest = wasm::hash(group.size());
   for (auto type : group) {
@@ -2017,6 +2086,9 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
     case HeapTypeKind::Array:
       hash_combine(digest, hash(info.array));
       return digest;
+    case HeapTypeKind::Import:
+      hash_combine(digest, hash(info.import));
+      return digest;
     case HeapTypeKind::Basic:
       break;
   }
@@ -2062,6 +2134,13 @@ size_t RecGroupHasher::hash(const Struct& struct_) const {
 
 size_t RecGroupHasher::hash(const Array& array) const {
   return hash(array.element);
+}
+
+size_t RecGroupHasher::hash(const TypeImport& import) const {
+  size_t digest = hash(import.bound);
+  hash_combine(digest, wasm::hash(import.module));
+  hash_combine(digest, wasm::hash(import.base));
+  return digest;
 }
 
 bool RecGroupEquator::operator()() const {
@@ -2170,6 +2249,8 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
       return eq(a.struct_, b.struct_);
     case HeapTypeKind::Array:
       return eq(a.array, b.array);
+    case HeapTypeKind::Import:
+      return eq(a.import, b.import);
     case HeapTypeKind::Basic:
       break;
   }
@@ -2208,6 +2289,10 @@ bool RecGroupEquator::eq(const Array& a, const Array& b) const {
   return eq(a.element, b.element);
 }
 
+bool RecGroupEquator::eq(const TypeImport& a, const TypeImport& b) const {
+  return a.module == b.module && a.base == b.base && eq(a.bound, b.bound);
+}
+
 } // anonymous namespace
 
 struct TypeBuilder::Impl {
@@ -2243,6 +2328,9 @@ struct TypeBuilder::Impl {
           break;
         case HeapTypeKind::Array:
           info->array = hti.array;
+          break;
+        case HeapTypeKind::Import:
+          info->import = hti.import;
           break;
         case HeapTypeKind::Basic:
           WASM_UNREACHABLE("unexpected kind");
@@ -2296,6 +2384,11 @@ void TypeBuilder::setHeapType(size_t i, Struct&& struct_) {
 void TypeBuilder::setHeapType(size_t i, Array array) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].set(array);
+}
+
+void TypeBuilder::setHeapType(size_t i, TypeImport import) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].set(import);
 }
 
 HeapType TypeBuilder::getTempHeapType(size_t i) {
@@ -2380,6 +2473,8 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return typer.isSubType(sub.struct_, super.struct_);
     case HeapTypeKind::Array:
       return typer.isSubType(sub.array, super.array);
+    case HeapTypeKind::Import:
+      return false;
     case HeapTypeKind::Basic:
       break;
   }
@@ -2387,7 +2482,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 }
 
 std::optional<TypeBuilder::ErrorReason>
-validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
+validateType(HeapTypeInfo& info,
+             std::unordered_set<HeapType>& seenTypes,
+             bool inRecGroup) {
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
@@ -2402,6 +2499,14 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
   if (info.isContinuation()) {
     if (!info.continuation.type.isSignature()) {
       return TypeBuilder::ErrorReason::InvalidFuncType;
+    }
+  }
+  if (info.isImport()) {
+    if (!info.import.bound.isBasic()) {
+      return TypeBuilder::ErrorReason::InvalidBoundType;
+    }
+    if (inRecGroup) {
+      return TypeBuilder::ErrorReason::ImportInRecGroup;
     }
   }
   if (info.share == Shared) {
@@ -2428,6 +2533,10 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
         }
         break;
       }
+      case HeapTypeKind::Import:
+        // The sharedness is inherited (see buildRecGroup below).
+        assert(info.import.bound.isShared());
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -2513,7 +2622,11 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
-    if (auto err = validateType(*info, seenTypes)) {
+    if (info->isImport()) {
+      // Sharedness is inherited from the bound
+      info->share = info->import.bound.getShared();
+    }
+    if (auto err = validateType(*info, seenTypes, typeInfos.size() > 1)) {
       return {TypeBuilder::Error{i, *err}};
     }
     seenTypes.insert(asHeapType(info));

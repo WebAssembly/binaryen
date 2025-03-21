@@ -26,6 +26,14 @@ Result<> parseTypeDefs(
   std::unordered_map<HeapType, std::unordered_map<Name, Index>>& typeNames) {
   TypeBuilder builder(decls.typeDefs.size());
   ParseTypeDefsCtx ctx(input, builder, typeIndices);
+  for (auto& [name, exports, importNames, pos] : decls.typeImports) {
+    WithPosition with(ctx, pos);
+    auto heaptype = typetype(ctx);
+    CHECK_ERR(heaptype);
+    builder[ctx.index] = TypeImport(importNames.mod, importNames.nm, *heaptype);
+    ctx.typeExports[ctx.index] = exports;
+    ctx.names[ctx.index++].name = name;
+  }
   for (auto& recType : decls.recTypeDefs) {
     WithPosition with(ctx, recType.pos);
     CHECK_ERR(rectype(ctx));
@@ -47,6 +55,16 @@ Result<> parseTypeDefs(
       for (auto [idx, name] : fieldNames) {
         fieldIdxMap.insert({name, idx});
       }
+    }
+  }
+  for (size_t i = 0; i < types.size(); ++i) {
+    for (Name& name : ctx.typeExports[i]) {
+      if (decls.wasm.getExportOrNull(name)) {
+        // TODO: Fix error location
+        return ctx.in.err("repeated export name");
+      }
+      decls.wasm.addExport(
+        Builder(decls.wasm).makeExport(name, types[i], ExternalKind::Type));
     }
   }
   return Ok{};

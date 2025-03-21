@@ -94,6 +94,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/type-updating.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-builder.h"
@@ -132,6 +133,8 @@ enum ExportMergeMode {
   // but not to the outside.
   SkipExportConflicts,
 } exportMergeMode = ErrorOnExportConflicts;
+
+bool stripTypeExports = false;
 
 // Merging two modules is mostly straightforward: copy the functions etc. of the
 // first module into the second, with some renaming to avoid name collisions.
@@ -416,6 +419,139 @@ void checkLimit(bool& valid, const char* kind, T* export_, T* import) {
   }
 }
 
+// Find pairs of matching type imports and type exports, and make uses
+// of the import refer to the exported item (which has been merged
+// into the module).
+void fuseTypeImportsAndTypeExports() {
+  // First, build for each module a mapping from each type export
+  // name to the exported heap type.
+  using ModuleTypeExportMap =
+    std::unordered_map<Name, std::unordered_map<Name, HeapType>>;
+  ModuleTypeExportMap moduleTypeExportMap;
+  for (auto& ex : merged.exports) {
+    if (ex->kind == ExternalKind::Type) {
+      assert(exportModuleMap.count(ex.get()));
+      ExportInfo& exportInfo = exportModuleMap[ex.get()];
+      moduleTypeExportMap[exportInfo.moduleName][exportInfo.baseName] =
+        *ex->getHeapType();
+    }
+  }
+  if (moduleTypeExportMap.size() == 0) {
+    return;
+  }
+
+  auto heapTypeInfo = ModuleUtils::collectHeapTypeInfo(merged);
+
+  // For each type import, see whether it has a corresponding
+  // export, check that the imported type is a subtype of the import
+  // bound. Record the corresponding mapping.
+  bool valid = true;
+  std::unordered_map<HeapType, HeapType> typeUpdates;
+  for (auto& [heapType, _] : heapTypeInfo) {
+    if (heapType.isImport()) {
+      TypeImport import = heapType.getImport();
+      if (auto newType = moduleTypeExportMap[import.module].find(import.base);
+          newType != moduleTypeExportMap[import.module].end()) {
+        // We found something to fuse! Add it to the maps for renaming.
+        typeUpdates[heapType] = newType->second;
+        if (!HeapType::isSubType(newType->second, import.bound)) {
+          Importable importable;
+          importable.module = import.module;
+          importable.base = import.base;
+          importable.name = merged.typeNames[heapType].name;
+          reportTypeMismatch(valid, "type", &importable);
+          std::cerr << "type " << newType->second << " is not a subtype of "
+                    << import.bound << ".\n";
+        }
+      }
+    }
+  }
+  if (!valid) {
+    Fatal() << "import/export mismatches";
+  }
+  if (typeUpdates.size() == 0) {
+    return;
+  }
+
+  // Resolve chains of imports/exports
+  for (auto& [oldType, newType] : typeUpdates) {
+    // Iteratively lookup the updated type.
+    std::unordered_set<HeapType> visited;
+    auto type = newType;
+    while (1) {
+      auto iter = typeUpdates.find(type);
+      if (iter == typeUpdates.end()) {
+        break;
+      }
+      if (visited.count(type)) {
+        // This is a loop of imports, which means we cannot resolve a useful
+        // type. Report an error.
+        Fatal() << "wasm-merge: infinite loop of imports on " << oldType;
+      }
+      visited.insert(type);
+      type = iter->second;
+    }
+    newType = type;
+  }
+
+  // Map from a heap type to the heap type it stands for
+  auto initialMap = [&](HeapType type) -> HeapType {
+    if (type.isBasic()) {
+      return type;
+    }
+    auto iter = typeUpdates.find(type);
+    if (iter != typeUpdates.end()) {
+      return iter->second;
+    }
+    return type;
+  };
+
+  // Sort heap types so that children are before
+  ModuleUtils::IndexedHeapTypes indexedTypes =
+    ModuleUtils::sortHeapTypes(merged, heapTypeInfo, initialMap);
+
+  TypeBuilder typeBuilder(indexedTypes.types.size());
+
+  // Map from a heap type to the corresponding temporary type
+  auto map = [&](HeapType type) -> HeapType {
+    type = initialMap(type);
+    if (type.isBasic()) {
+      return type;
+    }
+    return typeBuilder[indexedTypes.indices[type]];
+  };
+
+  // Build new types
+  std::optional<RecGroup> lastGroup = std::nullopt;
+  for (size_t i = 0; i < indexedTypes.types.size(); i++) {
+    HeapType heapType = indexedTypes.types[i];
+    typeBuilder[i].copy(heapType, map);
+    auto currGroup = heapType.getRecGroup();
+    if (lastGroup != currGroup && currGroup.size() > 1) {
+      typeBuilder.createRecGroup(i, currGroup.size());
+      lastGroup = currGroup;
+    }
+  }
+  auto buildResults = typeBuilder.build();
+  auto& newTypes = *buildResults;
+
+  // Map old types to the new ones.
+  GlobalTypeRewriter::TypeMap oldToNewTypes;
+  for (HeapType heapType : indexedTypes.types) {
+    HeapType type = heapType;
+    type = initialMap(type);
+    if (!type.isBasic()) {
+      type = newTypes[indexedTypes.indices[type]];
+    }
+    oldToNewTypes[heapType] = type;
+  }
+
+  // Replace types everywhere
+  GlobalTypeRewriter rewriter(merged);
+  rewriter.mapTypeNamesAndIndices(oldToNewTypes);
+  rewriter.mapTypes(oldToNewTypes);
+}
+
 // Find pairs of matching imports and exports, and make uses of the import refer
 // to the exported item (which has been merged into the module).
 void fuseImportsAndExports() {
@@ -653,6 +789,13 @@ Input source maps can be specified by adding an -ism option right after the modu
          [&](Options* o, const std::string& argument) {
            exportMergeMode = SkipExportConflicts;
          })
+    .add(
+      "--strip-type-exports",
+      "-ste",
+      "Do not emit type exports",
+      WasmMergeOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { stripTypeExports = true; })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
@@ -741,6 +884,7 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Fuse imports and exports now that everything is all together in the merged
   // module.
+  fuseTypeImportsAndTypeExports();
   fuseImportsAndExports();
 
   {
@@ -755,6 +899,12 @@ Input source maps can be specified by adding an -ism option right after the modu
     // optimized out (while if we didn't optimize it out then instantiating the
     // module would still be forced to provide something for that import).
     passRunner.add("remove-unused-module-elements");
+    if (stripTypeExports) {
+      // Remove type exports. Useful if we have composed together
+      // several modules using type imports and exports, but want to
+      // emit a module which does not requires this extension.
+      passRunner.add("strip-type-exports");
+    }
     passRunner.run();
   }
 

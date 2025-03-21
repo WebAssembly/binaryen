@@ -56,6 +56,7 @@ struct DefaultTypeNameGenerator
   size_t contCount = 0;
   size_t structCount = 0;
   size_t arrayCount = 0;
+  size_t importCount = 0;
 
   // Cached names for types that have already been seen.
   std::unordered_map<HeapType, TypeNames> nameCache;
