@@ -2349,7 +2349,7 @@ void WasmBinaryReader::readTypes() {
   auto readHeapType = [&]() -> HeapType {
     int64_t htCode = getS64LEB(); // TODO: Actually s33
     auto share = Unshared;
-    if (htCode == BinaryConsts::EncodedType::Shared) {
+    if (htCode == BinaryConsts::EncodedType::SharedLEB) {
       share = Shared;
       htCode = getS64LEB(); // TODO: Actually s33
     }
