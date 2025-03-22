@@ -1464,6 +1464,20 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Continuation has invalid function type";
     case TypeBuilder::ErrorReason::InvalidUnsharedField:
       return os << "Heap type has an invalid unshared field";
+    case TypeBuilder::ErrorReason::NonStructDescribes:
+      return os << "Describes clause on a non-struct type";
+    case TypeBuilder::ErrorReason::ForwardDescribesReference:
+      return os << "Describes clause is a forward reference";
+    case TypeBuilder::ErrorReason::MismatchedDescribes:
+      return os << "Described type is not a matching descriptor";
+    case TypeBuilder::ErrorReason::NonStructDescriptor:
+      return os << "Descriptor clause on a non-struct type";
+    case TypeBuilder::ErrorReason::MismatchedDescriptor:
+      return os << "Descriptor type does not describe heap type";
+    case TypeBuilder::ErrorReason::InvalidUnsharedDescriptor:
+      return os << "Heap type has an invalid unshared descriptor";
+    case TypeBuilder::ErrorReason::InvalidUnsharedDescribes:
+      return os << "Heap type describes an invalid unshared type";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -2370,6 +2384,25 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   if (sub.kind != super.kind) {
     return false;
   }
+  if (sub.descriptor) {
+    // A supertype of a type with a (descriptor $x) must either not have a
+    // descriptor or have a (descriptor $y) where $y is the declared supertype
+    // of $x.
+    if (super.descriptor && sub.descriptor->supertype != super.descriptor) {
+      return false;
+    }
+  } else {
+    // A supertype of a type without a descriptor must also not have a
+    // descriptor.
+    if (super.descriptor) {
+      return false;
+    }
+  }
+  // A supertype of a type must have a describes clause iff the type has a
+  // describes clause.
+  if (bool(sub.described) != bool(super.described)) {
+    return false;
+  }
   SubTyper typer;
   switch (sub.kind) {
     case HeapTypeKind::Func:
@@ -2399,12 +2432,38 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
       return TypeBuilder::ErrorReason::InvalidSupertype;
     }
   }
+  if (auto* desc = info.described) {
+    if (info.kind != HeapTypeKind::Struct) {
+      return TypeBuilder::ErrorReason::NonStructDescribes;
+    }
+    assert(desc->isTemp && "unexpected canonical described type");
+    if (!seenTypes.count(HeapType(uintptr_t(desc)))) {
+      return TypeBuilder::ErrorReason::ForwardDescribesReference;
+    }
+    if (desc->descriptor != &info) {
+      return TypeBuilder::ErrorReason::MismatchedDescribes;
+    }
+  }
+  if (auto* desc = info.descriptor) {
+    if (info.kind != HeapTypeKind::Struct) {
+      return TypeBuilder::ErrorReason::NonStructDescriptor;
+    }
+    if (desc->described != &info) {
+      return TypeBuilder::ErrorReason::MismatchedDescriptor;
+    }
+  }
   if (info.isContinuation()) {
     if (!info.continuation.type.isSignature()) {
       return TypeBuilder::ErrorReason::InvalidFuncType;
     }
   }
   if (info.share == Shared) {
+    if (info.described && info.described->share != Shared) {
+      return TypeBuilder::ErrorReason::InvalidUnsharedDescribes;
+    }
+    if (info.descriptor && info.descriptor->share != Shared) {
+      return TypeBuilder::ErrorReason::InvalidUnsharedDescriptor;
+    }
     switch (info.kind) {
       case HeapTypeKind::Func:
         // TODO: Figure out and enforce shared function rules.
