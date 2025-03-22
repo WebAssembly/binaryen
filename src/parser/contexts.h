@@ -982,7 +982,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addArrayType(ArrayT) {}
   void setOpen() {}
   void setShared() {}
-  Result<> addSubtype(HeapTypeT) { return Ok{}; }
+  void setDescribes(HeapTypeT) {}
+  void setDescriptor(HeapTypeT) {}
+  void setSupertype(HeapTypeT) {}
   void finishTypeDef(Name name, Index pos) {
     // TODO: type annotations
     typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
@@ -1157,10 +1159,11 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setShared() { builder[index].setShared(); }
 
-  Result<> addSubtype(HeapTypeT super) {
-    builder[index].subTypeOf(super);
-    return Ok{};
-  }
+  void setDescribes(HeapTypeT desc) { builder[index].describes(desc); }
+
+  void setDescriptor(HeapTypeT desc) { builder[index].descriptor(desc); }
+
+  void setSupertype(HeapTypeT super) { builder[index].subTypeOf(super); }
 
   void finishTypeDef(Name name, Index pos) { names[index++].name = name; }
 

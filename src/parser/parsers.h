@@ -357,6 +357,8 @@ Result<typename Ctx::TypeUseT> typeuse(Ctx&, bool allowNames = true);
 MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> comptype(Ctx&);
+template<typename Ctx> Result<> describedcomptype(Ctx&);
+template<typename Ctx> Result<> describingcomptype(Ctx&);
 template<typename Ctx> Result<> sharecomptype(Ctx&);
 template<typename Ctx> Result<> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> typedef_(Ctx&);
@@ -2940,19 +2942,50 @@ template<typename Ctx> Result<> comptype(Ctx& ctx) {
   return ctx.in.err("expected type description");
 }
 
-// sharecomptype ::= '(' 'shared' t:comptype ')' => shared t
-//                 | t:comptype => unshared t
+// describedcomptype ::= '(' 'descriptor' typeidx ct:comptype ')'
+//                     | ct:comptype
+template<typename Ctx> Result<> describedcomptype(Ctx& ctx) {
+  if (ctx.in.takeSExprStart("descriptor"sv)) {
+    auto x = typeidx(ctx);
+    CHECK_ERR(x);
+    ctx.setDescriptor(*x);
+    CHECK_ERR(comptype(ctx));
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of described type");
+    }
+    return Ok{};
+  }
+  return comptype(ctx);
+}
+
+// describingcomptype ::= '(' 'describes' typeidx ct:describedcomptype ')'
+//                      | ct: describedcomptype
+template<typename Ctx> Result<> describingcomptype(Ctx& ctx) {
+  if (ctx.in.takeSExprStart("describes"sv)) {
+    auto x = typeidx(ctx);
+    CHECK_ERR(x);
+    ctx.setDescribes(*x);
+    CHECK_ERR(describedcomptype(ctx));
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of describing type");
+    }
+    return Ok{};
+  }
+  return describedcomptype(ctx);
+}
+
+// sharecomptype ::= '(' 'shared' t:describingcomptype ')' => shared t
+//                 | t:describingcomptype => unshared t
 template<typename Ctx> Result<> sharecomptype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("shared"sv)) {
     ctx.setShared();
-    CHECK_ERR(comptype(ctx));
+    CHECK_ERR(describingcomptype(ctx));
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of shared comptype");
     }
-  } else {
-    CHECK_ERR(comptype(ctx));
+    return Ok{};
   }
-  return Ok{};
+  return describingcomptype(ctx);
 }
 
 // subtype ::= '(' 'sub' typeidx? sharecomptype ')'  | sharecomptype
@@ -2963,7 +2996,7 @@ template<typename Ctx> Result<> subtype(Ctx& ctx) {
     }
     if (auto super = maybeTypeidx(ctx)) {
       CHECK_ERR(super);
-      CHECK_ERR(ctx.addSubtype(*super));
+      ctx.setSupertype(*super);
     }
 
     CHECK_ERR(sharecomptype(ctx));
