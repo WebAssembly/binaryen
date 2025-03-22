@@ -93,6 +93,9 @@ unfuzzable = [
     'names.wast',
     # huge amount of locals that make it extremely slow
     'too_much_for_liveness.wasm',
+    # has (ref extern) imports, which the fuzzer cannot create values for when
+    # it removes unknown imports
+    'string-lifting.wast',
     # TODO: fuzzer support for stack switching
     'stack_switching.wast',
     'stack_switching_contnew.wast',

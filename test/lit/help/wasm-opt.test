@@ -504,6 +504,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-gathering                            gathers wasm strings to globals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lifting                              lift string imports to wasm
+;; CHECK-NEXT:                                                 strings
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-lowering                             lowers wasm strings and
 ;; CHECK-NEXT:                                                 operations to imports
 ;; CHECK-NEXT:

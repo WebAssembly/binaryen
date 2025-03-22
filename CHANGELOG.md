@@ -25,6 +25,9 @@ Current Trunk
    function. It is no longer valid to type them as funcref in the IR.
  - The C and JS APIs for creating RefFunc expressions now take a HeapType
    instead of a Type.
+ - Add a `--string-lifting` pass that raises imported string operations and
+   constants into stringref in Binaryen IR (which can then be fully optimized,
+   and typically lowered back down with `--string-lowering`).
 
 v122
 ----
