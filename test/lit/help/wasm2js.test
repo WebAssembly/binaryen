@@ -180,6 +180,10 @@
 ;; CHECK-NEXT:                                                 to intercept all loads and
 ;; CHECK-NEXT:                                                 stores
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --instrument-memory-grow                      instrument the build with code
+;; CHECK-NEXT:                                                 to intercept all memory.grow
+;; CHECK-NEXT:                                                 operations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --intrinsic-lowering                          lower away binaryen intrinsics
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --jspi                                        wrap imports and exports for

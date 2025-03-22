@@ -264,6 +264,10 @@ void PassRegistry::registerPasses() {
     "instrument the build with code to intercept all loads and stores",
     createInstrumentMemoryPass);
   registerPass(
+    "instrument-memory-grow",
+    "instrument the build with code to intercept all memory.grow operations",
+    createInstrumentMemoryGrowPass);
+  registerPass(
     "licm", "loop invariant code motion", createLoopInvariantCodeMotionPass);
   registerPass("limit-segments",
                "attempt to merge segments to fit within web limits",
