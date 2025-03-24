@@ -66,36 +66,69 @@ struct StringLifting : public Pass {
       }
     }
 
+    auto array16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+    auto refExtern = Type(HeapType::ext, NonNullable);
+    auto externref = Type(HeapType::ext, Nullable);
+    auto i32 = Type::i32;
+
     // Find imported string functions.
     for (auto& func : module->functions) {
       if (!func->imported() || func->module != WasmStringsModule) {
         continue;
       }
+      auto sig = func->type.getSignature();
       if (func->base == "fromCharCodeArray") {
+        if (sig != Signature({array16, i32, i32}, refExtern)) {
+          Fatal() << "StringLifting: bad signature for fromCharCodeArray: " << sig;
+        }
         fromCharCodeArrayImport = func->name;
         found = true;
       } else if (func->base == "fromCodePoint") {
+        if (sig != Signature(i32, refExtern)) {
+          Fatal() << "StringLifting: bad signature for fromCodePoint: " << sig;
+        }
         fromCodePointImport = func->name;
         found = true;
       } else if (func->base == "concat") {
+        if (sig != Signature({externref, externref}, refExtern)) {
+          Fatal() << "StringLifting: bad signature for concta: " << sig;
+        }
         concatImport = func->name;
         found = true;
       } else if (func->base == "intoCharCodeArray") {
+        if (sig != Signature({externref, array16, i32}, i32)) {
+          Fatal() << "StringLifting: bad signature for intoCharCodeArray: " << sig;
+        }
         intoCharCodeArrayImport = func->name;
         found = true;
       } else if (func->base == "equals") {
+        if (sig != Signature({externref, externref}, i32)) {
+          Fatal() << "StringLifting: bad signature for equals: " << sig;
+        }
         equalsImport = func->name;
         found = true;
       } else if (func->base == "compare") {
+        if (sig != Signature({externref, externref}, i32)) {
+          Fatal() << "StringLifting: bad signature for compare: " << sig;
+        }
         compareImport = func->name;
         found = true;
       } else if (func->base == "length") {
+        if (sig != Signature({externref}, i32)) {
+          Fatal() << "StringLifting: bad signature for length: " << sig;
+        }
         lengthImport = func->name;
         found = true;
       } else if (func->base == "charCodeAt") {
+        if (sig != Signature({externref, i32}, i32)) {
+          Fatal() << "StringLifting: bad signature for charCodeAt: " << sig;
+        }
         charCodeAtImport = func->name;
         found = true;
       } else if (func->base == "substring") {
+        if (sig != Signature({externref, i32, i32}, refExtern)) {
+          Fatal() << "StringLifting: bad signature for substring: " << sig;
+        }
         substringImport = func->name;
         found = true;
       } else {
