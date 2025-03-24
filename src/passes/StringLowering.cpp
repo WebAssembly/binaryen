@@ -235,7 +235,8 @@ struct StringLowering : public StringGathering {
   }
 
   void makeImports(Module* module) {
-    Name stringConstsModule = getPassOptions().getArgumentOrDefault("string-lowering-const-module", WasmStringConstsModule);
+    Name stringConstsModule = getPassOptions().getArgumentOrDefault(
+      "string-lowering-const-module", WasmStringConstsModule);
     Index jsonImportIndex = 0;
     std::stringstream json;
     bool first = true;
