@@ -5,7 +5,63 @@
 ;; RUN: foreach %s %t wasm-opt -all --string-lowering --string-lifting -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (array (mut i16)))
+
+  ;; CHECK:      (type $1 (func (param externref externref) (result i32)))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (type $4 (func (param i32) (result (ref extern))))
+
+  ;; CHECK:      (type $5 (func (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (type $6 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; CHECK:      (type $7 (func (param externref) (result i32)))
+
+  ;; CHECK:      (type $8 (func (param externref i32) (result i32)))
+
+  ;; CHECK:      (type $9 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "string.const" "0" (global $"string.const_\"bar\"" (ref extern)))
+
+  ;; CHECK:      (import "string.const" "1" (global $"string.const_\"foo\"" (ref extern)))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $4) (param i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $5) (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $0) i32) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $7) (param externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (func $consts (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "foo")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "bar")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "foo")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $consts
+    ;; These strings get lowered into the custom section, then lifted back up,
+    ;; so they do not change. We will see above the imported globals that were
+    ;; created for them (and not cleaned up), two imports from "string.const".
     (drop
       (string.const "foo")
     )
