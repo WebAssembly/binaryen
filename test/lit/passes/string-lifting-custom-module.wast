@@ -6,10 +6,22 @@
 ;; RUN: foreach %s %t wasm-opt -all --string-lifting --pass-arg=string-lifting-const-module@strings -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "\'" "foo" (global $string_foo (ref extern)))
   (import "\'" "foo" (global $string_foo (ref extern)))
 
+  ;; CHECK:      (import "strings" "bar" (global $string_bar (ref extern)))
   (import "strings" "bar" (global $string_bar (ref extern)))
 
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string_foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "bar")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $func
     ;; The first string has the default "'" module name, but we overrode it, so
     ;; nothing changes.
