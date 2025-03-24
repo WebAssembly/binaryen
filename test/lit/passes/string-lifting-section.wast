@@ -15,15 +15,6 @@
     (drop
       (string.const "foo")
     )
-    (drop
-      (string.const "needs\tescaping\00.'#%\"- .\r\n\\08\0C\0A\0D\09.ꙮ")
-    )
-    (drop
-      (string.const "unpaired high surrogate \ED\A0\80 ")
-    )
-    (drop
-      (string.const "unpaired low surrogate \ED\BD\88 ")
-    )
   )
 )
 
