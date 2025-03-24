@@ -15,16 +15,24 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v123
+----
+
+ - Use mimalloc allocator for Linux static builds, making our official release
+   binaries a lot faster. (#7378)
  - Add an option to preserve imports and exports in the fuzzer (for fuzzer
    harnesses where they only want Binaryen to modify their given testcases, not
-   generate new things in them).
+   generate new things in them). (#7300)
  - `string` is now a subtype of `ext` (rather than `any`). This allows better
    transformations for strings, like an inverse of StringLowering, but will
    error on codebases that depend on being able to pass strings into anyrefs.
+   (#7373)
  - Require the type of RefFunc expressions to match the type of the referenced
-   function. It is no longer valid to type them as funcref in the IR.
+   function. It is no longer valid to type them as funcref in the IR. (#7376)
  - The C and JS APIs for creating RefFunc expressions now take a HeapType
    instead of a Type.
+ - MergeSimilarFunctions: Do a return_call when possible (necessary for
+   correctness in wasm files that depend on calls for control flow). (#7350)
 
 v122
 ----
