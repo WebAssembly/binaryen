@@ -23,6 +23,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/string-utils.h"
+#include "support/json.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -54,8 +55,6 @@ struct StringLifting : public Pass {
     //
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
-    //
-    // TODO: parse the strings section for non-UTF16 strings.
     Name stringConstsModule = getArgumentOrDefault(
       "string-lifting-const-module", WasmStringConstsModule);
     for (auto& global : module->globals) {
@@ -65,6 +64,27 @@ struct StringLifting : public Pass {
       if (global->module == stringConstsModule) {
         importedStrings[global->name] = global->base;
         found = true;
+      }
+    }
+
+    // Imported strings may also be found in the string section.
+    for (auto& section : module->customSections) {
+      if (section->name == "string.consts") {
+        auto copy = section->data;
+        json::Value array;
+        array.parse(copy);
+        if (!array.isArray()) {
+          Fatal() << "StringLifting: malformed string.const section (!array)";
+        }
+        auto size = array.size();
+        for (Index i = 0; i < size; i++) {
+          auto item = array[i];
+          if (!item->isString()) {
+            Fatal() << "StringLifting: malformed string.const section (!str)";
+          }
+          item->getIString();
+        }
+        break;
       }
     }
 
