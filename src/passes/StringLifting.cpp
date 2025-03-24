@@ -69,11 +69,11 @@ struct StringLifting : public Pass {
 
     // Imported strings may also be found in the string section.
     for (auto& section : module->customSections) {
-      if (section->name == "string.consts") {
+      if (section.name == "string.consts") {
         // We found the string consts section. Parse it.
-        auto copy = section->data;
+        auto copy = section.data;
         json::Value array;
-        array.parse(copy);
+        array.parse(copy.data());
         if (!array.isArray()) {
           Fatal() << "StringLifting: bad string.const section (!array)";
         }
@@ -85,11 +85,11 @@ struct StringLifting : public Pass {
             continue;
           }
           // The index in the array is the basename.
-          auto index = std::stoi(global->base.str);
+          auto index = std::stoi(std::string(global->base.str));
           if (index >= array.size()) {
             Fatal() << "StringLifting: bad string.const section (index)";
           }
-          auto item = array[i];
+          auto item = array[index];
           if (!item->isString()) {
             Fatal() << "StringLifting: bad string.const section (!string)";
           }
