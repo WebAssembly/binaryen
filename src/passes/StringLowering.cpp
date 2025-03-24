@@ -235,6 +235,7 @@ struct StringLowering : public StringGathering {
   }
 
   void makeImports(Module* module) {
+    Name stringConstsModule = getPassOptions().getArgumentOrDefault("string-lowering-const-module", WasmStringConstsModule);
     Index jsonImportIndex = 0;
     std::stringstream json;
     bool first = true;
@@ -244,7 +245,7 @@ struct StringLowering : public StringGathering {
           std::stringstream utf8;
           if (useMagicImports &&
               String::convertUTF16ToUTF8(utf8, c->string.str)) {
-            global->module = WasmStringConstsModule;
+            global->module = stringConstsModule;
             global->base = Name(utf8.str());
           } else {
             if (assertUTF8) {

@@ -56,11 +56,12 @@ struct StringLifting : public Pass {
     // actual string. Find them all so we can apply them.
     //
     // TODO: parse the strings section for non-UTF16 strings.
+    Name stringConstsModule = getPassOptions().getArgumentOrDefault("string-lifting-const-module", WasmStringConstsModule);
     for (auto& global : module->globals) {
       if (!global->imported()) {
         continue;
       }
-      if (global->module == WasmStringConstsModule) {
+      if (global->module == stringConstsModule) {
         importedStrings[global->name] = global->base;
         found = true;
       }
