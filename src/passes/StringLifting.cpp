@@ -70,19 +70,30 @@ struct StringLifting : public Pass {
     // Imported strings may also be found in the string section.
     for (auto& section : module->customSections) {
       if (section->name == "string.consts") {
+        // We found the string consts section. Parse it.
         auto copy = section->data;
         json::Value array;
         array.parse(copy);
         if (!array.isArray()) {
-          Fatal() << "StringLifting: malformed string.const section (!array)";
+          Fatal() << "StringLifting: bad string.const section (!array)";
         }
-        auto size = array.size();
-        for (Index i = 0; i < size; i++) {
+
+        // We have the array of constants from the section. Find globals that
+        // refer to it.
+        for (auto& global : module->globals) {
+          if (!global->imported() || global->module != "string.const") {
+            continue;
+          }
+          // The index in the array is the basename.
+          auto index = std::stoi(global->base.str);
+          if (index >= array.size()) {
+            Fatal() << "StringLifting: bad string.const section (index)";
+          }
           auto item = array[i];
           if (!item->isString()) {
-            Fatal() << "StringLifting: malformed string.const section (!str)";
+            Fatal() << "StringLifting: bad string.const section (!string)";
           }
-          item->getIString();
+          importedStrings[global->name] = item->getIString();
         }
         break;
       }
