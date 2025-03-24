@@ -79,7 +79,8 @@ struct StringLifting : public Pass {
       auto sig = func->type.getSignature();
       if (func->base == "fromCharCodeArray") {
         if (sig != Signature({array16, i32, i32}, refExtern)) {
-          Fatal() << "StringLifting: bad signature for fromCharCodeArray: " << sig;
+          Fatal() << "StringLifting: bad signature for fromCharCodeArray: "
+                  << sig;
         }
         fromCharCodeArrayImport = func->name;
         found = true;
@@ -97,7 +98,8 @@ struct StringLifting : public Pass {
         found = true;
       } else if (func->base == "intoCharCodeArray") {
         if (sig != Signature({externref, array16, i32}, i32)) {
-          Fatal() << "StringLifting: bad signature for intoCharCodeArray: " << sig;
+          Fatal() << "StringLifting: bad signature for intoCharCodeArray: "
+                  << sig;
         }
         intoCharCodeArrayImport = func->name;
         found = true;
