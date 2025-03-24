@@ -71,6 +71,7 @@
     (drop
       (string.const "foo")
     )
+    ;; TODO: test utf-8 etc.
   )
 )
 
