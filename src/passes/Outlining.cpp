@@ -208,7 +208,6 @@ struct ReconstructStringifyWalker
     Function* outlinedFunc =
       getModule()->getFunction(sequences[seqCounter].func);
     ASSERT_OK(outlinedBuilder.visitFunctionStart(outlinedFunc));
-
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
     // function. This maintains the unreachable type in the original scope
