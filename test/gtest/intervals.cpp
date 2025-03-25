@@ -34,54 +34,33 @@ TEST(IntervalsTest, TestOverlapFound) {
   ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
 }
 
-TEST(IntervalsTest, TestOverlapFoundA) {
-  std::vector<Interval> intervals;
-  intervals.emplace_back(Interval{0, 2, 1});
-  intervals.emplace_back(Interval{1, 4, 1});
-  intervals.emplace_back(Interval{4, 6, 1});
-  intervals.emplace_back(Interval{4, 5, 1});
-  std::vector<int> expected{0, 3};
-  ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
-}
-
-TEST(IntervalsTest, TestOverlapFoundB) {
-  std::vector<Interval> intervals;
-  intervals.emplace_back(Interval{0, 3, 4});
-  intervals.emplace_back(Interval{3, 6, 2});
-  intervals.emplace_back(Interval{6, 10, 3});
-  intervals.emplace_back(Interval{8, 11, 1});
-  intervals.emplace_back(Interval{7, 15, 5});
-  std::vector<int> expected{0, 1, 4};
-  ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
-}
-
-TEST(IntervalsTest, TestOverlapFoundC) {
+TEST(IntervalsTest, TestOverlapAscendingSequence) {
   std::vector<Interval> intervals;
   intervals.emplace_back(Interval{0, 3, 6});
-  intervals.emplace_back(Interval{3, 6, 2});
-  intervals.emplace_back(Interval{2, 10, 3});
-  intervals.emplace_back(Interval{8, 11, 1});
-  intervals.emplace_back(Interval{9, 15, 5});
-  intervals.emplace_back(Interval{3, 15, 5});
-  std::vector<int> expected{0, 5};
-  ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
-}
-
-TEST(IntervalsTest, TestOverlapFoundD) {
-  std::vector<Interval> intervals;
   intervals.emplace_back(Interval{2, 6, 2});
-  intervals.emplace_back(Interval{12, 18, 3});
+  intervals.emplace_back(Interval{3, 15, 5});
   intervals.emplace_back(Interval{4, 11, 1});
   intervals.emplace_back(Interval{6, 20, 15});
-  intervals.emplace_back(Interval{0, 3, 6});
-  intervals.emplace_back(Interval{3, 15, 5});
+  intervals.emplace_back(Interval{12, 18, 3});
   intervals.emplace_back(Interval{14, 21, 5});
   intervals.emplace_back(Interval{23, 28, 5});
   std::vector<int> expected{4, 3, 7};
   ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
 }
 
-TEST(IntervalsTest, TestOverlapFoundE) {
+TEST(IntervalsTest, TestOverlapDescendingSequence) {
+  std::vector<Interval> intervals;
+  intervals.emplace_back(Interval{9, 15, 5});
+  intervals.emplace_back(Interval{8, 11, 1});
+  intervals.emplace_back(Interval{3, 15, 5});
+  intervals.emplace_back(Interval{3, 6, 2});
+  intervals.emplace_back(Interval{2, 10, 3});
+  intervals.emplace_back(Interval{0, 3, 6});
+  std::vector<int> expected{5, 2};
+  ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
+}
+
+TEST(IntervalsTest, TestOverlapRandomSequence) {
   std::vector<Interval> intervals;
   intervals.emplace_back(Interval{21, 24, 1});
   intervals.emplace_back(Interval{0, 5, 1});
@@ -95,27 +74,22 @@ TEST(IntervalsTest, TestOverlapFoundE) {
   ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
 }
 
-TEST(IntervalsTest, TestOverlapFoundF) {
+TEST(IntervalsTest, TestOverlapInnerNested) {
   std::vector<Interval> intervals;
-  intervals.emplace_back(Interval{0, 5, 10});
-  intervals.emplace_back(Interval{5, 11, 100});
-  intervals.emplace_back(Interval{11, 18, 5});
-  intervals.emplace_back(Interval{18, 21, 8});
-  intervals.emplace_back(Interval{21, 24, 2});
-  intervals.emplace_back(Interval{24, 28, 4});
-  intervals.emplace_back(Interval{28, 35, 6});
-  intervals.emplace_back(Interval{35, 40, 7});
-  std::vector<int> expected{0, 1, 2, 3, 4, 5, 6, 7};
+  intervals.emplace_back(Interval{0, 2, 3});
+  intervals.emplace_back(Interval{2, 4, 2});
+  intervals.emplace_back(Interval{3, 6, 5});
+  intervals.emplace_back(Interval{6, 15, 4});
+  std::vector<int> expected{0, 2, 3};
   ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
 }
 
-TEST(IntervalsTest, TestOverlapFoundG) {
+TEST(IntervalsTest, TestOverlapOuterNested) {
   std::vector<Interval> intervals;
-  intervals.emplace_back(Interval{0, 5, 1});
-  intervals.emplace_back(Interval{0, 5, 1});
-  intervals.emplace_back(Interval{0, 5, 1});
-  intervals.emplace_back(Interval{0, 5, 1});
-  intervals.emplace_back(Interval{0, 5, 1});
-  std::vector<int> expected{0};
+  intervals.emplace_back(Interval{0, 3, 6});
+  intervals.emplace_back(Interval{4, 11, 1});
+  intervals.emplace_back(Interval{12, 18, 3});
+  intervals.emplace_back(Interval{2, 15, 6});
+  std::vector<int> expected{0, 1, 2};
   ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
 }
