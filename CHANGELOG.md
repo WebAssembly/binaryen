@@ -18,6 +18,12 @@ Current Trunk
 v123
 ----
 
+ - We now support "exact" references from the custom descriptors proposal,
+   and emit such references when the feature is enabled. As a result, using
+   `-all` will enable that feature (among all others), and cause GC-using
+   binaries to use that feature, which most VMs do not yet support. To avoid
+   such VM errors, either enable only the features you want, or disable it:
+   `-all --disable-custom-descriptors`.
  - Use mimalloc allocator for Linux static builds, making our official release
    binaries a lot faster. (#7378)
  - Add an option to preserve imports and exports in the fuzzer (for fuzzer
@@ -33,7 +39,6 @@ v123
    instead of a Type.
  - MergeSimilarFunctions: Do a return_call when possible (necessary for
    correctness in wasm files that depend on calls for control flow). (#7350)
- - We now use "exact" references from the custom descriptors proposal internally, even for modules that do not explicitly use custom descriptors. Enabling the custom-descriptors feature, for example with `--all-features`, might now unexpectedly emit new uses of the feature.
 
 v122
 ----
