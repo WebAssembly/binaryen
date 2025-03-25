@@ -102,9 +102,9 @@ class HeapType {
   static constexpr int ExactMask = SharedMask;
 
 public:
-  // Bits 0-1 are used by the Type representation, so need to be left free.
-  // Bit 2 determines whether basic heap type is shared (1) or unshared (0).
-  // For non-basic heap types, bit 2 determines whether the type is exact.
+  // Bits 0-1 are used by the Type representation, so need to be left free. Bit
+  // 2 determines whether a basic heap type is shared (1) or unshared (0). For
+  // non-basic heap types, bit 2 determines whether the type is exact instead.
   enum BasicHeapType : uint32_t {
     ext = 1 << UsedBits,
     func = 2 << UsedBits,
