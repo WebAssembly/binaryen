@@ -45,7 +45,9 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
       continue;
     }
 
-    // Former overlaps with candidate. Replace former if the weights are the same but the candidate ends earlier.
+    // When two intervals overlap with the same weight, prefer to keep the
+    // interval that ends sooner under the presumption that it will overlap with
+    // fewer subsequent intervals.
     if (former.first.weight == candidate.first.weight &&
         former.first.end > candidate.first.end) {
       former = candidate;
