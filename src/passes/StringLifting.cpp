@@ -19,6 +19,10 @@
 // fully optimized. Typically StringLowering would be run later to lower them
 // back down.
 //
+// A pass argument allows customizing the module name for string constants:
+//
+//   --pass-arg=string-lifting-const-module@MODULE_NAME
+//
 
 #include "ir/utils.h"
 #include "pass.h"
