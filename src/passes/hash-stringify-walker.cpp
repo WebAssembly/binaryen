@@ -160,7 +160,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
 
   // Construct intervals
   for (Index i = 0; i < substrings.size(); i++) {
-    auto substring = substrings[i];
+    auto& substring = substrings[i];
     for (auto startIdx : substring.StartIndices) {
       auto interval =
         Interval(startIdx, startIdx + substring.Length, substring.Length);

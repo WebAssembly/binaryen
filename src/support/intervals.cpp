@@ -19,8 +19,6 @@
 #include "intervals.h"
 #include "support/index.h"
 #include <algorithm>
-#include <iostream>
-#include <optional>
 
 using namespace wasm;
 
@@ -47,8 +45,7 @@ IntervalProcessor::filterOverlaps(std::vector<Interval>& intervals) {
       continue;
     }
 
-    // former overlaps with candidate
-    // replace former if the weights are the same but the candidate ends earlier
+    // Former overlaps with candidate. Replace former if the weights are the same but the candidate ends earlier.
     if (former.first.weight == candidate.first.weight &&
         former.first.end > candidate.first.end) {
       former = candidate;

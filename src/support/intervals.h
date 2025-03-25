@@ -46,7 +46,7 @@ struct Interval {
 
 struct IntervalProcessor {
   // Given a vector of Interval, returns a vector of the indices that, mapping
-  // back to the original input vector, do not overlap with each other, ie: the
+  // back to the original input vector, do not overlap with each other, i.e. the
   // interval indexes with overlapping interval indexes already removed.
   static std::vector<int> filterOverlaps(std::vector<Interval>&);
 };
