@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Add a `--string-lifting` pass that raises imported string operations and
+   constants into stringref in Binaryen IR (which can then be fully optimized,
+   and typically lowered back down with `--string-lowering`).
+
 v123
 ----
 

@@ -518,6 +518,9 @@ void PassRegistry::registerPasses() {
   registerPass("string-gathering",
                "gathers wasm strings to globals",
                createStringGatheringPass);
+  registerPass("string-lifting",
+               "lift string imports to wasm strings",
+               createStringLiftingPass);
   registerPass("string-lowering",
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
