@@ -209,10 +209,11 @@ struct ReconstructStringifyWalker
       getModule()->getFunction(sequences[seqCounter].func);
     ASSERT_OK(outlinedBuilder.visitFunctionStart(outlinedFunc));
 
-     // If the last instruction of the outlined sequence is unreachable, insert
+    // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
-    // function.
-    if (sequences[seqCounter].endsUnreachable) {
+    // function. This maintains the unreachable type in the original scope
+    // of the outlined sequence.
+    if (sequences[seqCounter].endsTypeUnreachable) {
       ASSERT_OK(existingBuilder.makeUnreachable());
     }
 
@@ -234,8 +235,9 @@ struct ReconstructStringifyWalker
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
-    // function.
-    if (sequences[seqCounter].endsUnreachable) {
+    // function. This maintains the unreachable type in the original scope
+    // of the outlined sequence.
+    if (sequences[seqCounter].endsTypeUnreachable) {
       ASSERT_OK(existingBuilder.makeUnreachable());
     }
     DBG(std::cerr << "\nstarting to skip instructions "
@@ -349,7 +351,8 @@ struct Outlining : public Pass {
   using Sequences =
     std::unordered_map<Name, std::vector<wasm::OutliningSequence>>;
 
-  bool endsUnreachable(unsigned hashIdx, const HashStringifyWalker& stringify) {
+  bool endsTypeUnreachable(unsigned hashIdx,
+                           const HashStringifyWalker& stringify) {
     Expression* expr = stringify.exprs[hashIdx - 1];
     return expr->type == Type::unreachable;
   }
@@ -369,8 +372,11 @@ struct Outlining : public Pass {
         // sequence relative to its function is better for outlining because we
         // walk functions.
         auto [relativeIdx, existingFunc] = stringify.makeRelative(seqIdx);
-        auto seq =
-          OutliningSequence(relativeIdx, relativeIdx + substring.Length, func, endsUnreachable(seqIdx + substring.Length, stringify));
+        auto seq = OutliningSequence(
+          relativeIdx,
+          relativeIdx + substring.Length,
+          func,
+          endsTypeUnreachable(seqIdx + substring.Length, stringify));
         seqByFunc[existingFunc].push_back(seq);
       }
     }
