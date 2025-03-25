@@ -1008,6 +1008,11 @@
 )
 
 ;; Test that no attempt is made to outline overlapping repeat substrings
+;; In the below module, the Outlining optimization identifies two substrings
+;; that each repeat twice. During filtering, one of the repeat substrings is
+;; found to have an overlapping interval with itself. Because an interval is
+;; dropped, only one of the substrings repeats enough times (minimum twice)
+;; to warrant outlining.
 (module
   ;; CHECK:      (type $0 (func))
 
