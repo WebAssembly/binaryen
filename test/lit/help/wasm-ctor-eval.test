@@ -9,7 +9,7 @@
 ;; CHECK-NEXT: wasm-ctor-eval options:
 ;; CHECK-NEXT: -----------------------
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:   --output,-o                          Output file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
 ;; CHECK-NEXT:                                        output file
