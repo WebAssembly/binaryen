@@ -349,9 +349,11 @@ enum EncodedType {
   Array = 0x5e,
   Sub = 0x50,
   SubFinal = 0x4f,
-  SharedDef = 0x65,
-  Shared = -0x1b, // Also 0x65 as an SLEB128
+  Shared = 0x65,
+  SharedLEB = -0x1b, // Also 0x65 as an SLEB128
   Rec = 0x4e,
+  Descriptor = 0x4d,
+  Describes = 0x4c,
   // block_type
   Empty = -0x40, // 0x40
 };

@@ -1197,58 +1197,57 @@ TEST_F(TypeTest, TestTypeRelations) {
   Type i32 = Type::i32;
   Type unreachable = Type::unreachable;
 
-#define assertLUB(a, b, lub, glb)                                              \
-  {                                                                            \
-    auto lub1 = Type::getLeastUpperBound(a, b);                                \
-    auto lub2 = Type::getLeastUpperBound(b, a);                                \
-    EXPECT_EQ(lub, lub1);                                                      \
-    EXPECT_EQ(lub1, lub2);                                                     \
-    if (lub != Type::none) {                                                   \
-      EXPECT_TRUE(Type::isSubType(a, lub));                                    \
-      EXPECT_TRUE(Type::isSubType(b, lub));                                    \
-    }                                                                          \
-    auto glb1 = Type::getGreatestLowerBound(a, b);                             \
-    auto glb2 = Type::getGreatestLowerBound(b, a);                             \
-    EXPECT_EQ(glb, glb1);                                                      \
-    EXPECT_EQ(glb, glb2);                                                      \
-    EXPECT_TRUE(Type::isSubType(glb, a));                                      \
-    EXPECT_TRUE(Type::isSubType(glb, b));                                      \
-    if (a == b) {                                                              \
-      EXPECT_TRUE(Type::isSubType(a, b));                                      \
-      EXPECT_TRUE(Type::isSubType(b, a));                                      \
-      EXPECT_EQ(lub, a);                                                       \
-      EXPECT_EQ(glb, a);                                                       \
-    } else if (lub == b) {                                                     \
-      EXPECT_TRUE(Type::isSubType(a, b));                                      \
-      EXPECT_FALSE(Type::isSubType(b, a));                                     \
-      EXPECT_EQ(glb, a);                                                       \
-    } else if (lub == a) {                                                     \
-      EXPECT_FALSE(Type::isSubType(a, b));                                     \
-      EXPECT_TRUE(Type::isSubType(b, a));                                      \
-      EXPECT_EQ(glb, b);                                                       \
-    } else if (lub != Type::none) {                                            \
-      EXPECT_FALSE(Type::isSubType(a, b));                                     \
-      EXPECT_FALSE(Type::isSubType(b, a));                                     \
-      EXPECT_NE(glb, a);                                                       \
-      EXPECT_NE(glb, b);                                                       \
-    } else {                                                                   \
-      EXPECT_FALSE(Type::isSubType(a, b));                                     \
-      EXPECT_FALSE(Type::isSubType(b, a));                                     \
-    }                                                                          \
-                                                                               \
-    if (a.isRef() && b.isRef()) {                                              \
-      auto htA = a.getHeapType();                                              \
-      auto htB = b.getHeapType();                                              \
-                                                                               \
-      if (lub == Type::none) {                                                 \
-        EXPECT_NE(htA.getTop(), htB.getTop());                                 \
-        EXPECT_NE(htA.getBottom(), htB.getBottom());                           \
-      } else {                                                                 \
-        EXPECT_EQ(htA.getTop(), htB.getTop());                                 \
-        EXPECT_EQ(htA.getBottom(), htB.getBottom());                           \
-      }                                                                        \
-    }                                                                          \
-  }
+  auto assertLUB = [](Type a, Type b, Type lub, Type glb) {
+    auto lub1 = Type::getLeastUpperBound(a, b);
+    auto lub2 = Type::getLeastUpperBound(b, a);
+    EXPECT_EQ(lub, lub1);
+    EXPECT_EQ(lub1, lub2);
+    if (lub != Type::none) {
+      EXPECT_TRUE(Type::isSubType(a, lub));
+      EXPECT_TRUE(Type::isSubType(b, lub));
+    }
+    auto glb1 = Type::getGreatestLowerBound(a, b);
+    auto glb2 = Type::getGreatestLowerBound(b, a);
+    EXPECT_EQ(glb, glb1);
+    EXPECT_EQ(glb, glb2);
+    EXPECT_TRUE(Type::isSubType(glb, a));
+    EXPECT_TRUE(Type::isSubType(glb, b));
+    if (a == b) {
+      EXPECT_TRUE(Type::isSubType(a, b));
+      EXPECT_TRUE(Type::isSubType(b, a));
+      EXPECT_EQ(lub, a);
+      EXPECT_EQ(glb, a);
+    } else if (lub == b) {
+      EXPECT_TRUE(Type::isSubType(a, b));
+      EXPECT_FALSE(Type::isSubType(b, a));
+      EXPECT_EQ(glb, a);
+    } else if (lub == a) {
+      EXPECT_FALSE(Type::isSubType(a, b));
+      EXPECT_TRUE(Type::isSubType(b, a));
+      EXPECT_EQ(glb, b);
+    } else if (lub != Type::none) {
+      EXPECT_FALSE(Type::isSubType(a, b));
+      EXPECT_FALSE(Type::isSubType(b, a));
+      EXPECT_NE(glb, a);
+      EXPECT_NE(glb, b);
+    } else {
+      EXPECT_FALSE(Type::isSubType(a, b));
+      EXPECT_FALSE(Type::isSubType(b, a));
+    }
+
+    if (a.isRef() && b.isRef()) {
+      auto htA = a.getHeapType();
+      auto htB = b.getHeapType();
+
+      if (lub == Type::none) {
+        EXPECT_NE(htA.getTop(), htB.getTop());
+        EXPECT_NE(htA.getBottom(), htB.getBottom());
+      } else {
+        EXPECT_EQ(htA.getTop(), htB.getTop());
+        EXPECT_EQ(htA.getBottom(), htB.getBottom());
+      }
+    }
+  };
 
   assertLUB(any, any, any, any);
   assertLUB(any, nullAny, nullAny, any);
