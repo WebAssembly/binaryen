@@ -23,7 +23,10 @@
 //
 // StringLowering does the same, and also replaces those new globals with
 // imported globals of type externref, for use with the string imports proposal.
-// String operations will likewise need to be lowered. TODO
+//
+// A pass argument allows customizing the module name for string constants:
+//
+//   --pass-arg=string-lowering-const-module@MODULE_NAME
 //
 // Specs:
 // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md
