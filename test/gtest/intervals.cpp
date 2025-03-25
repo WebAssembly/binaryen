@@ -76,10 +76,10 @@ TEST(IntervalsTest, TestOverlapRandomSequence) {
 
 TEST(IntervalsTest, TestOverlapInnerNested) {
   std::vector<Interval> intervals;
-  intervals.emplace_back(0, 2, 3);
+  intervals.emplace_back(0, 12, 3);
   intervals.emplace_back(2, 4, 2);
   intervals.emplace_back(3, 6, 5);
-  intervals.emplace_back(6, 15, 4);
+  intervals.emplace_back(12, 15, 4);
   std::vector<int> expected{0, 2, 3};
   ASSERT_EQ(IntervalProcessor::filterOverlaps(intervals), expected);
 }
