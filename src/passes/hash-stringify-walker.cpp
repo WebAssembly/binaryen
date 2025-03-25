@@ -162,7 +162,8 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
   for (Index i = 0; i < substrings.size(); i++) {
     auto& substring = substrings[i];
     for (auto startIdx : substring.StartIndices) {
-      intervals.emplace_back(startIdx, startIdx + substring.Length, substring.Length);
+      intervals.emplace_back(
+          startIdx, startIdx + substring.Length, substring.Length);
       substringIdxs.push_back(i);
     }
   }
