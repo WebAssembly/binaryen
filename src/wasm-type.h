@@ -99,10 +99,12 @@ class HeapType {
   static constexpr int TypeBits = 3;
   static constexpr int UsedBits = TypeBits + 1;
   static constexpr int SharedMask = 1 << TypeBits;
+  static constexpr int ExactMask = SharedMask;
 
 public:
-  // Bits 0-2 are used by the Type representation, so need to be left free.
-  // Bit 3 determines whether the basic heap type is shared (1) or unshared (0).
+  // Bits 0-1 are used by the Type representation, so need to be left free.
+  // Bit 2 determines whether basic heap type is shared (1) or unshared (0).
+  // For non-basic heap types, bit 2 determines whether the type is exact.
   enum BasicHeapType : uint32_t {
     ext = 1 << UsedBits,
     func = 2 << UsedBits,
@@ -168,8 +170,12 @@ public:
   bool isBottom() const;
   bool isOpen() const;
   bool isShared() const { return getShared() == Shared; }
+  bool isExact() const { return getExactness() == Exact; }
 
   Shareability getShared() const;
+  Exactness getExactness() const {
+    return !isBasic() && (id & ExactMask) ? Exact : Inexact;
+  }
 
   // Check if the type is a given basic heap type, while ignoring whether it is
   // shared or not.
@@ -225,6 +231,12 @@ public:
     assert(isBasic());
     return BasicHeapType(share == Shared ? (id | SharedMask)
                                          : (id & ~SharedMask));
+  }
+
+  HeapType with(Exactness exactness) const {
+    assert((!isBasic() || exactness == Inexact) &&
+           "abstract types cannot be exact");
+    return HeapType(exactness == Exact ? (id | ExactMask) : (id & ~ExactMask));
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it

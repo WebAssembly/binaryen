@@ -228,7 +228,7 @@ namespace {
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
-  return (HeapTypeInfo*)ht.getID();
+  return (HeapTypeInfo*)(ht.with(Inexact).getID());
 }
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
@@ -1262,7 +1262,7 @@ RecGroup HeapType::getRecGroup() const {
   } else {
     // Mark the low bit to signify that this is a trivial recursion group and
     // points to a heap type info rather than a vector of heap types.
-    return RecGroup(id | 1);
+    return RecGroup(this->with(Inexact).id | 1);
   }
 }
 
@@ -1633,14 +1633,20 @@ bool SubTyper::isSubType(const Array& a, const Array& b) {
 }
 
 void TypePrinter::printHeapTypeName(HeapType type) {
+  if (type.isExact()) {
+    os << "(exact ";
+  }
   if (type.isBasic()) {
     print(type);
-    return;
-  }
-  generator(type).name.print(os);
+  } else {
+    generator(type).name.print(os);
 #if TRACE_CANONICALIZATION
-  os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
+    os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
+  }
+  if (type.isExact()) {
+    os << ')';
+  }
 }
 
 std::ostream& TypePrinter::print(Type type) {
@@ -1993,8 +1999,10 @@ size_t RecGroupHasher::hash(HeapType type) const {
     wasm::rehash(digest, type.getID());
     return digest;
   }
+  wasm::rehash(digest, type.isExact());
   wasm::rehash(digest, type.getRecGroupIndex());
   auto currGroup = type.getRecGroup();
+  wasm::rehash(digest, currGroup != group);
   if (currGroup != group) {
     wasm::rehash(digest, currGroup.getID());
   }
@@ -2124,6 +2132,9 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   // comparing, in which case the structure is still equivalent.
   if (a.isBasic() || b.isBasic()) {
     return a == b;
+  }
+  if (a.getExactness() != b.getExactness()) {
+    return false;
   }
   if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
     return false;
@@ -2510,8 +2521,10 @@ void updateReferencedHeapTypes(
       isTopLevel = false;
       if (type->isRef()) {
         auto ht = type->getHeapType();
+        auto exact = ht.getExactness();
+        ht = ht.with(Inexact);
         if (auto it = canonicalized.find(ht); it != canonicalized.end()) {
-          *type = Type(it->second, type->getNullability());
+          *type = Type(it->second.with(exact), type->getNullability());
         }
       } else if (type->isTuple()) {
         TypeGraphWalkerBase<ChildUpdater>::scanType(type);
@@ -2519,6 +2532,7 @@ void updateReferencedHeapTypes(
     }
 
     void scanHeapType(HeapType* type) {
+      assert(!type->isExact() && "unexpected exact type in definition");
       if (isTopLevel) {
         isTopLevel = false;
         TypeGraphWalkerBase<ChildUpdater>::scanHeapType(type);
@@ -2583,7 +2597,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto type = asHeapType(typeInfos[i]);
     for (auto child : type.getHeapTypeChildren()) {
-      if (isTemp(child) && !seenTypes.count(child)) {
+      if (isTemp(child) && !seenTypes.count(child.with(Inexact))) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReason::ForwardChildReference}};
       }
