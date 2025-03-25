@@ -816,6 +816,20 @@ struct TypeBuilder {
     InvalidFuncType,
     // A non-shared field of a shared heap type.
     InvalidUnsharedField,
+    // A describes clause on a non-struct type.
+    NonStructDescribes,
+    // The described type is an invalid forward reference.
+    ForwardDescribesReference,
+    // The described type does not have this type as a descriptor.
+    MismatchedDescribes,
+    // A descriptor clause on a non-struct type.
+    NonStructDescriptor,
+    // The descriptor type does not describe this type.
+    MismatchedDescriptor,
+    // A non-shared descriptor on a shared type.
+    InvalidUnsharedDescriptor,
+    // A non-shared type described by a shared type.
+    InvalidUnsharedDescribes,
   };
 
   struct Error {

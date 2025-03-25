@@ -665,3 +665,26 @@
   )
  )
 )
+
+;; Make sure we update the ref.func in the table with the correct return type.
+(module
+ (table 1 1 funcref)
+
+ (elem (i32.const 0) $f)
+
+ ;; CHECK:      (type $0 (func (result i32)))
+
+ ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
+
+ ;; CHECK:      (table $0 1 1 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 0) $f)
+
+ ;; CHECK:      (func $f (type $0) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $f (result i64)
+  (unreachable)
+ )
+)
