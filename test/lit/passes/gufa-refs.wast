@@ -955,7 +955,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $child 1
   ;; CHECK-NEXT:      (local.get $child)
@@ -970,7 +970,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $parent 0
   ;; CHECK-NEXT:      (local.get $parent)
@@ -1072,9 +1072,9 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block (result nullref)
+  ;; CHECK-NEXT:     (block $block (result (exact nullref))
   ;; CHECK-NEXT:      (br $block
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
@@ -1085,9 +1085,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block0 (result nullref)
+  ;; CHECK-NEXT:     (block $block0 (result (exact nullref))
   ;; CHECK-NEXT:      (br $block0
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
@@ -1098,13 +1098,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block1 (result nullref)
+  ;; CHECK-NEXT:     (block $block1 (result (exact nullref))
   ;; CHECK-NEXT:      (br $block1
-  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:       (block (result (exact nullref))
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.cast nullref
+  ;; CHECK-NEXT:         (ref.cast (exact nullref)
   ;; CHECK-NEXT:          (ref.null none)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -1237,7 +1237,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:     (block (result (exact nullref))
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (struct.get $child 0
   ;; CHECK-NEXT:        (local.get $child)
@@ -1577,7 +1577,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:     (block (result (exact nullref))
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (array.get $null
   ;; CHECK-NEXT:        (array.new_default $null
@@ -1775,10 +1775,10 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $x
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.new $storage
-  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:      (block (result (exact nullref))
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $pass-through
   ;; CHECK-NEXT:         (ref.null none)
@@ -1928,7 +1928,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:       (block (result (exact nullref))
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
@@ -2153,7 +2153,7 @@
   ;; CHECK-NEXT:     (pop (tuple anyref anyref))
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:     (block (result (exact nullref))
   ;; CHECK-NEXT:      (tuple.drop 2
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
@@ -2213,7 +2213,7 @@
 
   ;; CHECK:      (func $func (type $1) (result (ref $"{}"))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref none))
+  ;; CHECK-NEXT:   (block $block (result (ref exact none))
   ;; CHECK-NEXT:    (br_on_non_null $block
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -2539,10 +2539,10 @@
 
   ;; CHECK:      (func $test-nulls (type $2)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast nullref
-  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:     (ref.cast (exact nullref)
+  ;; CHECK-NEXT:      (block (result (exact nullref))
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $import)
   ;; CHECK-NEXT:       )
@@ -2554,9 +2554,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast nullref
+  ;; CHECK-NEXT:     (ref.cast (exact nullref)
   ;; CHECK-NEXT:      (select (result i31ref)
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:       (ref.i31
@@ -3256,7 +3256,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:    (block (result (exact nullref))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $import)
   ;; CHECK-NEXT:     )
@@ -3793,7 +3793,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (array.get $chars
   ;; CHECK-NEXT:      (local.get $chars)
@@ -6056,7 +6056,7 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (result i64 nullref i32)))
+  ;; CHECK:      (type $0 (func (result i64 (exact nullref) i32)))
 
   ;; CHECK:      (type $array (sub (array (mut i8))))
   (type $array (sub (array (mut i8))))
@@ -6096,7 +6096,7 @@
 
   ;; CHECK:      (func $loop-tuple-br_on (type $2)
   ;; CHECK-NEXT:  (tuple.drop 3
-  ;; CHECK-NEXT:   (loop $loop (type $0) (result i64 nullref i32)
+  ;; CHECK-NEXT:   (loop $loop (type $0) (result i64 (exact nullref) i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
@@ -6171,19 +6171,22 @@
     )
     (drop
       ;; This is optimizable. It reads from shared memory, but there is only one
-      ;; possible value that can be read.
+      ;; possible value that can be read and it is not atomic, so does not form
+      ;; a synchronization edge.
       (struct.get $A 0
         (local.get 0)
       )
     )
     (drop
-      ;; We do not (yet) optimize atomic gets.
+      ;; We do not optimize atomic gets, since they might synchronize with a
+      ;; write.
       (struct.atomic.get acqrel $A 0
         (local.get 0)
       )
     )
     (drop
-      ;; We do not (yet) optimize atomic gets.
+      ;; We do not optimize atomic gets, since they might synchronize with a
+      ;; write.
       (struct.atomic.get $A 0
         (local.get 0)
       )

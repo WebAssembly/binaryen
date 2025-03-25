@@ -19,8 +19,8 @@
 #include "ir/gc-type-utils.h"
 #include "ir/subtypes.h"
 #include "support/insert_ordered.h"
+#include "tools/fuzzing.h"
 #include "tools/fuzzing/heap-types.h"
-#include "tools/fuzzing/parameters.h"
 
 namespace wasm {
 
@@ -53,6 +53,8 @@ struct HeapTypeGeneratorImpl {
 
   // The index of the type we are currently generating.
   Index index = 0;
+
+  FuzzParams params;
 
   HeapTypeGeneratorImpl(Random& rand, FeatureSet features, size_t n)
     : result{TypeBuilder(n),
@@ -152,20 +154,27 @@ struct HeapTypeGeneratorImpl {
 
   HeapType::BasicHeapType generateBasicHeapType(Shareability share) {
     // Choose bottom types more rarely.
-    // TODO: string, exn, and cont types
+    // TODO: string and cont types
     if (rand.oneIn(16)) {
       HeapType ht =
         rand.pick(HeapType::noext, HeapType::nofunc, HeapType::none);
       return ht.getBasic(share);
     }
-    HeapType ht = rand.pick(HeapType::func,
-                            HeapType::ext,
-                            HeapType::any,
-                            HeapType::eq,
-                            HeapType::i31,
-                            HeapType::struct_,
-                            HeapType::array);
-    if (share == Unshared && features.hasSharedEverything() && rand.oneIn(2)) {
+
+    std::vector<HeapType> options{HeapType::func,
+                                  HeapType::ext,
+                                  HeapType::any,
+                                  HeapType::eq,
+                                  HeapType::i31,
+                                  HeapType::struct_,
+                                  HeapType::array};
+    // Avoid shared exn, which we cannot generate.
+    if (features.hasExceptionHandling() && share == Unshared) {
+      options.push_back(HeapType::exn);
+    }
+    auto ht = rand.pick(options);
+    if (share == Unshared && features.hasSharedEverything() &&
+        ht != HeapType::exn && rand.oneIn(2)) {
       share = Shared;
     }
     return ht.getBasic(share);
@@ -201,7 +210,15 @@ struct HeapTypeGeneratorImpl {
 
   Type generateRefType(Shareability share) {
     auto heapType = generateHeapType(share);
-    auto nullability = rand.oneIn(2) ? Nullable : NonNullable;
+    Nullability nullability;
+    if (heapType.isMaybeShared(HeapType::exn)) {
+      // Do not generate non-nullable exnrefs for now, as we cannot generate
+      // them in global positions (they cannot be created in wasm, nor imported
+      // from JS).
+      nullability = Nullable;
+    } else {
+      nullability = rand.oneIn(2) ? Nullable : NonNullable;
+    }
     return builder.getTempRefType(heapType, nullability);
   }
 
@@ -216,7 +233,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Type generateTupleType(Shareability share) {
-    std::vector<Type> types(2 + rand.upTo(MAX_TUPLE_SIZE - 1));
+    std::vector<Type> types(2 + rand.upTo(params.MAX_TUPLE_SIZE - 1));
     for (auto& type : types) {
       type = generateSingleType(share);
     }
@@ -234,7 +251,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Signature generateSignature() {
-    std::vector<Type> types(rand.upToSquared(MAX_PARAMS));
+    std::vector<Type> types(rand.upToSquared(params.MAX_PARAMS));
     for (auto& type : types) {
       type = generateSingleType(Unshared);
     }
@@ -252,7 +269,7 @@ struct HeapTypeGeneratorImpl {
   }
 
   Struct generateStruct(Shareability share) {
-    std::vector<Field> fields(rand.upTo(MAX_STRUCT_SIZE + 1));
+    std::vector<Field> fields(rand.upTo(params.MAX_STRUCT_SIZE + 1));
     for (auto& field : fields) {
       field = generateField(share);
     }
@@ -493,7 +510,7 @@ struct HeapTypeGeneratorImpl {
         candidates.push_back(HeapTypes::any.getBasic(share));
         break;
       case HeapType::string:
-        candidates.push_back(HeapTypes::any.getBasic(share));
+        candidates.push_back(HeapTypes::ext.getBasic(share));
         break;
       case HeapType::none:
         return pickSubAny(share);
@@ -519,6 +536,12 @@ struct HeapTypeGeneratorImpl {
   };
 
   Ref generateSubRef(Ref super) {
+    if (super.type.isMaybeShared(HeapType::exn)) {
+      // Do not generate non-nullable exnrefs for now, as we cannot generate
+      // them in global positions (they cannot be created in wasm, nor imported
+      // from JS). There are also no subtypes to consider, so just return.
+      return super;
+    }
     auto nullability = super.nullability == NonNullable
                          ? NonNullable
                          : rand.oneIn(2) ? Nullable : NonNullable;
@@ -595,7 +618,7 @@ struct HeapTypeGeneratorImpl {
       fields.push_back(generateSubField(field));
     }
     // Width subtyping
-    Index extra = rand.upTo(MAX_STRUCT_SIZE + 1 - fields.size());
+    Index extra = rand.upTo(params.MAX_STRUCT_SIZE + 1 - fields.size());
     for (Index i = 0; i < extra; ++i) {
       fields.push_back(generateField(share));
     }

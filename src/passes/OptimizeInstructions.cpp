@@ -1872,14 +1872,27 @@ struct OptimizeInstructions
       return;
     }
 
+    // We generally can't optimize seqcst RMWs on shared memory because they can
+    // act as both the source and sink of synchronization edges, even if they
+    // don't modify the in-memory value.
+    if (curr->ref->type.getHeapType().isShared() &&
+        curr->order == MemoryOrder::SeqCst) {
+      return;
+    }
+
     Builder builder(*getModule());
 
-    // Even when the RMW access is to shared memory, we can optimize out the
-    // modify and write parts if we know that the modified value is the same as
-    // the original value. This is valid because reads from writes that don't
-    // change the in-memory value can be considered to be reads from the
-    // previous write to the same location instead. That means there is no read
-    // that necessarily synchronizes with the write.
+    // This RMW is either to non-shared memory or has acquire-release ordering.
+    // In the former case, it trivially does not synchronize with other threads
+    // and we can optimize to our heart's content. In the latter case, if we
+    // know the RMW does not change the value in memory, then we can consider
+    // all subsequent reads as reading from the previous write rather than from
+    // this RMW op, which means this RMW does not synchronize with later reads
+    // and we can optimize out the write part. This optimization wouldn't be
+    // valid for sequentially consistent RMW ops because the next reads from
+    // this location in the total order of seqcst ops would have to be
+    // considered to be reading from this RMW and therefore would synchronize
+    // with it.
     auto* value =
       Properties::getFallthrough(curr->value, getPassOptions(), *getModule());
     if (Properties::isSingleConstantExpression(value)) {
@@ -1909,6 +1922,7 @@ struct OptimizeInstructions
       }
     }
 
+    // No further optimizations possible on RMWs to shared memory.
     if (curr->ref->type.getHeapType().isShared()) {
       return;
     }
@@ -1967,12 +1981,6 @@ struct OptimizeInstructions
                             newVal,
                             MemoryOrder::Unordered));
 
-    // We must maintain this operation's effect on the global order of seqcst
-    // operations.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
-
     block->list.push_back(builder.makeLocalGet(result, curr->type));
     block->type = curr->type;
     replaceCurrent(block);
@@ -1990,9 +1998,17 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
-    // Just like other RMW operations, cmpxchg can be optimized to just a read
-    // if it is known not to change the in-memory value. This is the case when
-    // `expected` and `replacement` are known to be the same.
+    // As with other RMW operations, we cannot optimize if the RMW is
+    // sequentially consistent and to shared memory.
+    if (curr->ref->type.getHeapType().isShared() &&
+        curr->order == MemoryOrder::SeqCst) {
+      return;
+    }
+
+    // Just like other RMW operations, unshared or release-acquire cmpxchg can
+    // be optimized to just a read if it is known not to change the in-memory
+    // value. This is the case when `expected` and `replacement` are known to be
+    // the same.
     if (areConsecutiveInputsEqual(curr->expected, curr->replacement)) {
       auto* ref = getResultOfFirst(
         curr->ref,
@@ -2038,12 +2054,6 @@ struct OptimizeInstructions
                             builder.makeLocalGet(ref, curr->ref->type),
                             builder.makeLocalGet(replacement, curr->type),
                             MemoryOrder::Unordered)));
-
-    // We must maintain this operation's effect on the global order of seqcst
-    // operations.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
 
     block->list.push_back(builder.makeLocalGet(result, curr->type));
     block->type = curr->type;
@@ -2267,10 +2277,14 @@ struct OptimizeInstructions
           // emit a null check.
           bool needsNullCheck = ref->type.getNullability() == Nullable &&
                                 curr->type.getNullability() == NonNullable;
+          // Same with exactness.
+          bool needsExactCast = ref->type.getExactness() == Inexact &&
+                                curr->type.getExactness() == Exact;
           // If the best value to propagate is the argument to the cast, we can
           // simply remove the cast (or downgrade it to a null check if
-          // necessary).
-          if (ref == curr->ref) {
+          // necessary). This does not work if we need a cast to prove
+          // exactness.
+          if (ref == curr->ref && !needsExactCast) {
             if (needsNullCheck) {
               replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
             } else {
@@ -2279,9 +2293,9 @@ struct OptimizeInstructions
             return;
           }
           // Otherwise we can't just remove the cast and replace it with `ref`
-          // because the intermediate expressions might have had side effects.
-          // We can replace the cast with a drop followed by a direct return of
-          // the value, though.
+          // because the intermediate expressions might have had side effects or
+          // we need to check exactness. We can replace the cast with a drop
+          // followed by a direct return of the value, though.
           if (ref->type.isNull()) {
             // We can materialize the resulting null value directly.
             //
@@ -2289,7 +2303,7 @@ struct OptimizeInstructions
             // would be, aside from the interesting corner case of
             // uninhabitable types:
             //
-            //  (ref.cast func
+            //  (ref.cast (ref func)
             //    (block (result (ref nofunc))
             //      (unreachable)
             //    )
@@ -2336,18 +2350,20 @@ struct OptimizeInstructions
       }
         [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
-        auto nullType = Type(curr->type.getHeapType().getBottom(), Nullable);
         // The cast either returns null or traps. In trapsNeverHappen mode
         // we know the result, since by assumption it will not trap.
         if (getPassOptions().trapsNeverHappen) {
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
-            curr->type));
+          replaceCurrent(
+            builder.makeBlock({builder.makeDrop(curr->ref),
+                               builder.makeRefNull(curr->type.getHeapType())},
+                              curr->type));
           return;
         }
         // Otherwise, we should have already refined the cast type to cast
-        // directly to null.
-        assert(curr->type == nullType);
+        // directly to null. We do not further refine the cast type to exact
+        // null because the extra precision is not useful and doing so would
+        // increase the size of the instruction encoding.
+        assert(curr->type.isNull());
         break;
       }
       case GCTypeUtils::Unreachable:

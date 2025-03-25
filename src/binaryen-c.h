@@ -210,11 +210,11 @@ typedef uint32_t BinaryenFeatures;
 
 BINARYEN_API BinaryenFeatures BinaryenFeatureMVP(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAtomics(void);
-BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemory(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMutableGlobals(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureNontrappingFPToInt(void);
-BINARYEN_API BinaryenFeatures BinaryenFeatureSignExt(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureSIMD128(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemory(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureSignExt(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureExceptionHandling(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureTailCall(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureReferenceTypes(void);
@@ -225,6 +225,11 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedSIMD(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureExtendedConst(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureStrings(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureMultiMemory(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureStackSwitching(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureSharedEverything(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureFP16(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -956,7 +961,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
                                                  BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                                    const char* func,
-                                                   BinaryenType type);
+                                                   BinaryenHeapType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);

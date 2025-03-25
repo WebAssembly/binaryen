@@ -20,17 +20,17 @@ BinaryenTypeAuto: -1
 BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
 BinaryenPackedTypeInt16: 2
-BinaryenHeapTypeExt: 8
-BinaryenHeapTypeFunc: 16
-BinaryenHeapTypeAny: 32
-BinaryenHeapTypeEq: 40
-BinaryenHeapTypeI31: 48
-BinaryenHeapTypeStruct: 56
-BinaryenHeapTypeArray: 64
-BinaryenHeapTypeString: 80
-BinaryenHeapTypeNone: 88
-BinaryenHeapTypeNoext: 96
-BinaryenHeapTypeNofunc: 104
+BinaryenHeapTypeExt: 16
+BinaryenHeapTypeFunc: 32
+BinaryenHeapTypeAny: 64
+BinaryenHeapTypeEq: 80
+BinaryenHeapTypeI31: 96
+BinaryenHeapTypeStruct: 112
+BinaryenHeapTypeArray: 128
+BinaryenHeapTypeString: 160
+BinaryenHeapTypeNone: 176
+BinaryenHeapTypeNoext: 192
+BinaryenHeapTypeNofunc: 208
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -47,7 +47,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureAll: 2097151
+BinaryenFeatureAll: 4194303
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -2117,7 +2117,7 @@ BinaryenFeatureAll: 2097151
        )
       )
       (drop
-       (select (result funcref)
+       (select (result (ref null $2))
         (ref.null nofunc)
         (ref.func $"kitchen()sinker")
         (i32.const 1)

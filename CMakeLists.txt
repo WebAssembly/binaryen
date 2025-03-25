@@ -31,7 +31,7 @@ endif()
 # more useful error reports from users.
 option(BYN_ENABLE_ASSERTIONS "Enable assertions" ON)
 
-option(BYN_ENABLE_LTO "Build with LTO" Off)
+option(BYN_ENABLE_LTO "Build with LTO" ${EMSCRIPTEN})
 
 # Turn this off to avoid the dependency on gtest.
 option(BUILD_TESTS "Build GTest-based tests" ON)
@@ -49,14 +49,21 @@ endif()
 
 option(BUILD_STATIC_LIB "Build as a static library" OFF)
 if(MSVC)
-  # We don't have dllexport declarations set up for windows yet.
+  # We don't have dllexport declarations set up for Windows yet.
   set(BUILD_STATIC_LIB ON)
 endif()
 
-# Turn this off to install only tools and not static/dynamic libs
+# Advised to turn on when statically linking against musl libc (e.g., in the
+# Alpine Linux build we use for producing official Linux binaries), because
+# musl libc's allocator has very bad performance on heavily multi-threaded
+# workloads / high core count machines.
+# See https://github.com/WebAssembly/binaryen/issues/5561.
+option(MIMALLOC_STATIC "Build with statically linked mimalloc allocator" OFF)
+
+# Turn this off to install only tools and not static/dynamic libs.
 option(INSTALL_LIBS "Install libraries" ON)
 
-# Turn this on to build only the subset of tools needed for emscripten
+# Turn this on to build only the subset of tools needed for Emscripten.
 option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
 
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
@@ -107,9 +114,14 @@ find_package(Threads REQUIRED)
 
 function(add_compile_flag value)
   message(STATUS "Building with ${value}")
-  foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
-    set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
-  endforeach(variable)
+  # You can use the optional second argument to suppress passing C++-only flags to the C compiler.
+  if(ARGV1 STREQUAL "CXX_ONLY")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${value}" PARENT_SCOPE)
+  else()
+    foreach(variable CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+      set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
+    endforeach(variable)
+  endif()
 endfunction()
 
 function(add_debug_compile_flag value)
@@ -262,7 +274,7 @@ else() # MSVC
   add_compile_flag("-fno-omit-frame-pointer")
   if(NOT BUILD_FUZZTEST)
     # fuzztest depends on RTTIs.
-    add_compile_flag("-fno-rtti")
+    add_compile_flag("-fno-rtti" "CXX_ONLY")
   endif()
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
@@ -341,13 +353,15 @@ if(EMSCRIPTEN)
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
   endif()
+  if (BYN_ENABLE_LTO)
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
     add_nondebug_compile_flag("-flto")
-    if(EMSCRIPTEN_ENABLE_WASM64)
-      add_compile_flag("-sMEMORY64 -Wno-experimental")
-      add_link_flag("-sMEMORY64")
-    endif()
   endif()
+  if(EMSCRIPTEN_ENABLE_WASM64)
+    add_compile_flag("-sMEMORY64 -Wno-experimental")
+    add_link_flag("-sMEMORY64")
+  endif()
+endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
@@ -453,6 +467,14 @@ if(BUILD_LLVM_DWARF)
   target_link_libraries(binaryen llvm_dwarf)
 endif()
 
+if(MIMALLOC_STATIC)
+  if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND BUILD_STATIC_LIB) OR EMSCRIPTEN)
+    message(FATAL_ERROR "Statically linking mimalloc is only supported when building as a native, statically linked library on Linux.")
+  endif()
+  message(STATUS "Building with statically linked mimalloc allocator.")
+  target_link_libraries(binaryen mimalloc-static)
+endif()
+
 add_subdirectory(src/ir)
 add_subdirectory(src/asmjs)
 add_subdirectory(src/cfg)
@@ -523,7 +545,9 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm PRIVATE optimized "--closure=1")
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_wasm PRIVATE optimized "-Wno-error=closure")
-  target_link_libraries(binaryen_wasm PRIVATE optimized "-flto")
+  if (BYN_ENABLE_LTO)
+    target_link_libraries(binaryen_wasm PRIVATE optimized "-flto")
+  endif()
   target_link_libraries(binaryen_wasm PRIVATE debug "--profiling")
   # Avoid catching exit as that can confuse error reporting in Node,
   # see https://github.com/emscripten-core/emscripten/issues/17228
@@ -575,7 +599,9 @@ if(EMSCRIPTEN)
   endif()
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_js PRIVATE optimized "-Wno-error=closure")
-  target_link_libraries(binaryen_js PRIVATE optimized "-flto")
+  if(BYN_ENABLE_LTO)
+    target_link_libraries(binaryen_js PRIVATE optimized "-flto")
+  endif()
   target_link_libraries(binaryen_js PRIVATE debug "--profiling")
   target_link_libraries(binaryen_js PRIVATE debug "-sASSERTIONS")
   # Avoid catching exit as that can confuse error reporting in Node,

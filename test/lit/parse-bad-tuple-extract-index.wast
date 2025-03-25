@@ -2,7 +2,7 @@
 
 ;; RUN: not wasm-opt %s 2>&1 | filecheck %s
 
-;; CHECK: Fatal: 9:3: error: tuple index out of bounds
+;; CHECK: Fatal: {{.*}}:9:3: error: tuple index out of bounds
 
 (module
  (func

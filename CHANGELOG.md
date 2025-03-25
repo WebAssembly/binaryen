@@ -15,6 +15,17 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Add an option to preserve imports and exports in the fuzzer (for fuzzer
+   harnesses where they only want Binaryen to modify their given testcases, not
+   generate new things in them).
+ - `string` is now a subtype of `ext` (rather than `any`). This allows better
+   transformations for strings, like an inverse of StringLowering, but will
+   error on codebases that depend on being able to pass strings into anyrefs.
+ - Require the type of RefFunc expressions to match the type of the referenced
+   function. It is no longer valid to type them as funcref in the IR.
+ - The C and JS APIs for creating RefFunc expressions now take a HeapType
+   instead of a Type.
+
 v122
 ----
 

@@ -50,7 +50,7 @@
   ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $struct 0
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -74,7 +74,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -93,7 +93,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-add-i32 (result i32)
@@ -108,7 +107,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -127,7 +126,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-sub-i32 (result i32)
@@ -142,7 +140,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -161,7 +159,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-and-i32 (result i32)
@@ -176,7 +173,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -195,7 +192,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-or-i32 (result i32)
@@ -210,7 +206,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -229,7 +225,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-xor-i32 (result i32)
@@ -244,7 +239,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -260,7 +255,6 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-i32 (result i32)
@@ -276,7 +270,7 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -303,7 +297,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-i32 (result i32)
@@ -319,7 +312,7 @@
   ;; CHECK-NEXT:  (local $1 i64)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -338,7 +331,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-add-i64 (result i64)
@@ -353,7 +345,7 @@
   ;; CHECK-NEXT:  (local $1 i64)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -372,7 +364,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-sub-i64 (result i64)
@@ -387,7 +378,7 @@
   ;; CHECK-NEXT:  (local $1 i64)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -406,7 +397,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-and-i64 (result i64)
@@ -421,7 +411,7 @@
   ;; CHECK-NEXT:  (local $1 i64)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -440,7 +430,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-or-i64 (result i64)
@@ -455,7 +444,7 @@
   ;; CHECK-NEXT:  (local $1 i64)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -474,7 +463,6 @@
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-xor-i64 (result i64)
@@ -489,7 +477,7 @@
   ;; CHECK-NEXT:  (local $1 i64)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -505,7 +493,6 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-i64 (result i64)
@@ -521,7 +508,7 @@
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i64.const 0)
   ;; CHECK-NEXT:    )
@@ -548,7 +535,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-i64 (result i64)
@@ -564,7 +550,7 @@
   ;; CHECK-NEXT:  (local $2 (ref null $struct))
   ;; CHECK-NEXT:  (local $3 (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -580,7 +566,6 @@
   ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
   (func $rmw-xchg-ref (param (ref null $struct)) (result (ref null $struct))
@@ -596,7 +581,7 @@
   ;; CHECK-NEXT:  (local $4 (ref null $struct))
   ;; CHECK-NEXT:  (local $5 (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -623,7 +608,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (local.get $3)
   ;; CHECK-NEXT: )
   (func $rmw-cmpxchg-ref (param (ref null $struct) (ref null $struct)) (result (ref null $struct))
@@ -639,7 +623,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -661,7 +645,6 @@
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $rmw-acqrel (result i32)
-    ;; The replacement for an acqrel rmw does not need a fence.
     (struct.atomic.rmw.add acqrel acqrel $i32 0
       (struct.new_default $i32)
       (i32.const 1)
@@ -674,7 +657,7 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:   (block (result (exact nullref))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -704,7 +687,6 @@
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT: )
   (func $cmpxchg-acqrel (result i32)
-    ;; The replacement for an acqrel rmw does not need a fence.
     (struct.atomic.rmw.cmpxchg acqrel acqrel $i32 0
       (struct.new_default $i32)
       (i32.const 1)

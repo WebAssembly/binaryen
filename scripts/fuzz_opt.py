@@ -151,8 +151,12 @@ def randomize_feature_opts():
 
         # The shared-everything feature is new and we want to fuzz it, but it
         # also currently disables fuzzing V8, so disable it most of the time.
+        # Same with custom descriptors and strings - all these cannot be run in
+        # V8 for now.
         if random.random() < 0.9:
             FEATURE_OPTS.append('--disable-shared-everything')
+            FEATURE_OPTS.append('--disable-custom-descriptors')
+            FEATURE_OPTS.append('--disable-strings')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -813,8 +817,9 @@ class CompareVMs(TestCaseHandler):
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
                 # shared-everything enabled, so do not fuzz shared-everything
-                # for now.
-                return all_disallowed(['shared-everything'])
+                # for now. It also does not yet support custom descriptors, nor
+                # strings.
+                return all_disallowed(['shared-everything', 'custom-descriptors', 'strings'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
@@ -864,7 +869,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
+                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors'])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -1165,7 +1170,7 @@ class Wasm2JS(TestCaseHandler):
         # implement wasm suspending using JS async/await.
         if JSPI:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors'])
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
@@ -1372,6 +1377,18 @@ class CtorEval(TestCaseHandler):
         return not wasm_notices_export_changes(wasm)
 
 
+# see https://github.com/WebAssembly/binaryen/issues/6823#issuecomment-2649122032
+# as the interpreter refers to tags by name, two imports of the same Tag give it
+# two different names, but they should behave as if they are one.
+def wasm_has_duplicate_tags(wasm):
+    # as with wasm_notices_export_changes, we could be more precise here and
+    # disassemble the wasm.
+    binary = open(wasm, 'rb').read()
+    # check if we import jstag or wasmtag, which are used in the wasm, so any
+    # duplication may hit the github issue mentioned above.
+    return binary.count(b'jstag') >= 2 or binary.count(b'wasmtag') >= 2
+
+
 # Tests wasm-merge
 class Merge(TestCaseHandler):
     frequency = 0.15
@@ -1423,6 +1440,10 @@ class Merge(TestCaseHandler):
         run([in_bin('wasm-merge'), wasm, 'first',
             abspath('second.wasm'), 'second', '-o', merged,
             '--skip-export-conflicts'] + FEATURE_OPTS + ['-all'])
+
+        if wasm_has_duplicate_tags(merged):
+            note_ignored_vm_run('dupe_tags')
+            return
 
         # sometimes also optimize the merged module
         if random.random() < 0.5:
@@ -1555,7 +1576,7 @@ class Split(TestCaseHandler):
             return False
 
         # see D8.can_run
-        return all_disallowed(['shared-everything'])
+        return all_disallowed(['shared-everything', 'custom-descriptors', 'strings'])
 
 
 # Check that the text format round-trips without error.
@@ -1633,7 +1654,6 @@ class ClusterFuzz(TestCaseHandler):
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say).
         if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
-
             assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
@@ -1656,6 +1676,13 @@ class ClusterFuzz(TestCaseHandler):
         tar = tarfile.open(bundle, "r:gz")
         tar.extractall(path=self.clusterfuzz_dir)
         tar.close()
+
+    def can_run_on_wasm(self, wasm):
+        # Do not run ClusterFuzz in the first seconds of fuzzing: the first time
+        # it runs is very slow (to build the bundle), which is annoying when you
+        # are just starting the fuzzer and looking for any obvious problems.
+        seconds = 30
+        return time.time() - start_time > seconds
 
 
 # Tests linking two wasm files at runtime, and that optimizations do not break
@@ -1702,7 +1729,10 @@ class Two(TestCaseHandler):
         # Make sure that fuzz_shell.js actually executed all exports from both
         # wasm files.
         exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
+        calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
+        if calls_in_output == 0:
+            print(f'warning: no calls in output. output:\n{output}')
+        assert calls_in_output == len(exports)
 
         output = fix_output(output)
 
@@ -1727,7 +1757,57 @@ class Two(TestCaseHandler):
         # mode. We also cannot run shared-everything code in d8 yet. We also
         # cannot compare if there are NaNs (as optimizations can lead to
         # different outputs).
-        return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
+        if CLOSED_WORLD:
+            return False
+        if NANS:
+            return False
+        return all_disallowed(['shared-everything', 'custom-descriptors', 'strings'])
+
+
+# Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
+class PreserveImportsExports(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        # We will later verify that no imports or exports changed, by comparing
+        # to the unprocessed original text.
+        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
+
+        # We leave if the module has (ref exn) in struct fields (because we have
+        # no way to generate an exn in a non-function context, and if we picked
+        # that struct for a global, we'd end up needing a (ref exn) in the
+        # global scope, which is impossible). The fuzzer is designed to be
+        # careful not to emit that in testcases, but after the optimizer runs,
+        # we may end up with struct fields getting refined to that, so we need
+        # this extra check (which should be hit very rarely).
+        structs = [line for line in original.split('\n') if '(struct ' in line]
+        if '(ref exn)' in '\n'.join(structs):
+            note_ignored_vm_run('has non-nullable exn in struct')
+            return
+
+        # Generate some random input data.
+        data = abspath('preserve_input.dat')
+        make_random_input(random_size(), data)
+
+        # Process the existing wasm file.
+        processed = run([in_bin('wasm-opt'), data] + FEATURE_OPTS + [
+            '-ttf',
+            '--fuzz-preserve-imports-exports',
+            '--initial-fuzz=' + wasm,
+            '--print',
+        ])
+
+        def get_relevant_lines(wat):
+            # Imports and exports are relevant.
+            lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
+
+            # Ignore type names, which may vary (e.g. one file may have $5 and
+            # another may call the same type $17).
+            lines = [re.sub(r'[(]type [$][0-9a-zA-Z_$]+[)]', '', line) for line in lines]
+
+            return '\n'.join(lines)
+
+        compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
 # The global list of all test case handlers
@@ -1744,6 +1824,7 @@ testcase_handlers = [
     RoundtripText(),
     ClusterFuzz(),
     Two(),
+    PreserveImportsExports(),
 ]
 
 
@@ -2039,6 +2120,8 @@ if not shared.V8:
     print('The v8 shell, d8, must be in the path')
     sys.exit(1)
 
+start_time = time.time()
+
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
     # run new ones until we fail
@@ -2064,7 +2147,6 @@ if __name__ == '__main__':
     total_wasm_size = 0
     total_input_size = 0
     total_input_size_squares = 0
-    start_time = time.time()
     while True:
         counter += 1
         if given_seed is not None:

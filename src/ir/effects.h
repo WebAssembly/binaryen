@@ -29,8 +29,7 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      funcEffectsMap(passOptions.funcEffectsMap), module(module),
+      trapsNeverHappen(passOptions.trapsNeverHappen), module(module),
       features(module.features) {}
 
   EffectAnalyzer(const PassOptions& passOptions,
@@ -47,7 +46,6 @@ public:
 
   bool ignoreImplicitTraps;
   bool trapsNeverHappen;
-  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
 
@@ -523,12 +521,14 @@ private:
         return;
       }
 
+      // Get the target's effects, if they exist. Note that we must handle the
+      // case of the function not yet existing (we may be executed in the middle
+      // of a pass, which may have built up calls but not the targets of those
+      // calls; in such a case, we do not find the targets and therefore assume
+      // we know nothing about the effects, which is safe).
       const EffectAnalyzer* targetEffects = nullptr;
-      if (parent.funcEffectsMap) {
-        auto iter = parent.funcEffectsMap->find(curr->target);
-        if (iter != parent.funcEffectsMap->end()) {
-          targetEffects = &iter->second;
-        }
+      if (auto* target = parent.module.getFunctionOrNull(curr->target)) {
+        targetEffects = target->effects.get();
       }
 
       if (curr->isReturn) {

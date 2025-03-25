@@ -57,6 +57,9 @@ class Literal {
     // Externalized i31 references have a gcData containing the internal i31
     // reference as its sole value even though internal i31 references do not
     // have a gcData.
+    //
+    // Note that strings can be internalized, in which case they keep the same
+    // gcData, but their type becomes anyref.
     std::shared_ptr<GCData> gcData;
     // A reference to Exn data.
     std::shared_ptr<ExnData> exnData;
@@ -243,7 +246,7 @@ public:
     }
   }
   static Literal makeNull(HeapType type) {
-    return Literal(Type(type.getBottom(), Nullable));
+    return Literal(Type(type.getBottom(), Nullable, Exact));
   }
   static Literal makeFunc(Name func, HeapType type) {
     return Literal(func, type);

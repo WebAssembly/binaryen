@@ -127,7 +127,9 @@ struct NullTypeParserCtx {
   TypeT makeF64() { return Ok{}; }
   TypeT makeV128() { return Ok{}; }
 
-  TypeT makeRefType(HeapTypeT, Nullability) { return Ok{}; }
+  TypeT makeRefType(HeapTypeT, Nullability, Exactness) { return Ok{}; }
+
+  HeapTypeT getHeapTypeFromRefType(TypeT) { return Ok{}; }
 
   TupleElemListT makeTupleElemList() { return Ok{}; }
   void appendTupleElem(TupleElemListT&, TypeT) {}
@@ -257,9 +259,12 @@ template<typename Ctx> struct TypeParserCtx {
   TypeT makeF64() { return Type::f64; }
   TypeT makeV128() { return Type::v128; }
 
-  TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return Type(ht, nullability);
+  TypeT
+  makeRefType(HeapTypeT ht, Nullability nullability, Exactness exactness) {
+    return Type(ht, nullability, exactness);
   }
+
+  HeapTypeT getHeapTypeFromRefType(TypeT t) { return t.getHeapType(); }
 
   std::vector<Type> makeTupleElemList() { return {}; }
   void appendTupleElem(std::vector<Type>& elems, Type elem) {
@@ -977,7 +982,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addArrayType(ArrayT) {}
   void setOpen() {}
   void setShared() {}
-  Result<> addSubtype(HeapTypeT) { return Ok{}; }
+  void setDescribes(HeapTypeT) {}
+  void setDescriptor(HeapTypeT) {}
+  void setSupertype(HeapTypeT) {}
   void finishTypeDef(Name name, Index pos) {
     // TODO: type annotations
     typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
@@ -1115,9 +1122,12 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()) {}
 
-  TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return builder.getTempRefType(ht, nullability);
+  TypeT
+  makeRefType(HeapTypeT ht, Nullability nullability, Exactness exactness) {
+    return builder.getTempRefType(ht, nullability, exactness);
   }
+
+  HeapTypeT getHeapTypeFromRefType(TypeT t) { return t.getHeapType(); }
 
   TypeT makeTupleType(const std::vector<Type> types) {
     return builder.getTempTupleType(types);
@@ -1149,10 +1159,11 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setShared() { builder[index].setShared(); }
 
-  Result<> addSubtype(HeapTypeT super) {
-    builder[index].subTypeOf(super);
-    return Ok{};
-  }
+  void setDescribes(HeapTypeT desc) { builder[index].describes(desc); }
+
+  void setDescriptor(HeapTypeT desc) { builder[index].descriptor(desc); }
+
+  void setSupertype(HeapTypeT super) { builder[index].subTypeOf(super); }
 
   void finishTypeDef(Name name, Index pos) { names[index++].name = name; }
 
@@ -1213,6 +1224,14 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     std::vector<Type> resultTypes;
     if (results) {
       resultTypes = *results;
+    }
+
+    for (auto& v : {paramTypes, resultTypes}) {
+      for (auto t : v) {
+        if (!t.isSingle()) {
+          return in.err("tuple types not allowed in signature");
+        }
+      }
     }
 
     auto sig = Signature(Type(paramTypes), Type(resultTypes));

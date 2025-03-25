@@ -1593,18 +1593,15 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (block (result (ref $A))
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (atomic.fence)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $sets (param (ref $A))
@@ -1619,8 +1616,7 @@
       (local.get 0)
       (i32.const 1)
     )
-    ;; This requires a fence to keep the effect on the global order of seqcst
-    ;; operations.
+    ;; Same with a seqcst set.
     (struct.atomic.set $A 0
       (local.get 0)
       (i32.const 1)
@@ -1631,15 +1627,15 @@
 ;; A struct with a pop, which requires EH fixups to avoid popping in a nested
 ;; block.
 (module
-  (type $i32 (func (param i32)))
-
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))
-  (type $struct (struct (field (mut i32))))
 
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $i32 (func (param i32)))
+  (type $i32 (func (param i32)))
+
+  (type $struct (struct (field (mut i32))))
 
   ;; CHECK:      (tag $tag (type $i32) (param i32))
   (tag $tag (type $i32) (param i32))

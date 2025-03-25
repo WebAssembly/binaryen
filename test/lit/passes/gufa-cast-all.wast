@@ -146,3 +146,211 @@
     )
   )
 )
+
+;; Imported tags may be written to from places we do not see.
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $0) (param i32)))
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+  ;; CHECK:      (import "fuzzing-support" "tag" (tag $tag (type $0) (param i32)))
+  (import "fuzzing-support" "tag" (tag $tag (param i32)))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (try_table (catch $tag $block)
+  ;; CHECK-NEXT:     (call $throw
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func")
+    (drop
+      ;; If we thought no i32 value could arrive here (if no exception were
+      ;; created of this tag) then we'd put an unreachable after it. As it is
+      ;; imported, a value might be there, so we do not.
+      (block $block (result i32)
+        (try_table (catch $tag $block)
+          (call $throw
+            (i32.const 1)
+          )
+        )
+        (return)
+      )
+    )
+  )
+)
+
+;; As above, but with an exported tag. Also test a tag with multiple params.
+(module
+  ;; CHECK:      (type $0 (func (result i32 f64)))
+
+  ;; CHECK:      (type $1 (func (param i32 f64)))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $2) (param i32)))
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+
+  ;; CHECK:      (tag $tag (type $1) (param i32 f64))
+  (tag $tag (param i32 f64))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (export "tag" (tag $tag))
+  (export "tag" (tag $tag))
+
+  ;; CHECK:      (func $func (type $3)
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (block $block (type $0) (result i32 f64)
+  ;; CHECK-NEXT:    (try_table (catch $tag $block)
+  ;; CHECK-NEXT:     (call $throw
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func")
+    ;; Once more, we do not optimize to unreachable here.
+    (tuple.drop 2
+      (block $block (result i32 f64)
+        (try_table (catch $tag $block)
+          (call $throw
+            (i32.const 1)
+          )
+        )
+        (return)
+      )
+    )
+  )
+)
+
+;; Private tags are optimizable.
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "throw" (func $throw (type $0) (param i32)))
+  (import "fuzzing-support" "throw" (func $throw (param i32)))
+
+  ;; CHECK:      (tag $tag (type $0) (param i32))
+  (tag $tag (param i32))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (try_table (catch $tag $block)
+  ;; CHECK-NEXT:       (call $throw
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func")
+    ;; The tag is neither imported nor exported, so we can optimize to
+    ;; unreachable.
+    (drop
+      (block $block (result i32)
+        (try_table (catch $tag $block)
+          (call $throw
+            (i32.const 1)
+          )
+        )
+        (return)
+      )
+    )
+  )
+)
+
+;; Test pre-filtering.
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
+
+  ;; CHECK:      (import "a" "b" (global $global i32))
+  (import "a" "b" (global $global i32))
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block $block (result (ref $A))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result (ref $A))
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (br_if $block
+  ;; CHECK-NEXT:          (ref.func $test)
+  ;; CHECK-NEXT:          (global.get $global)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.func $test)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br_on_non_null $block
+  ;; CHECK-NEXT:       (ref.null nofunc)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (type $A)
+    ;; This block is declared as having type $A. Two values appear to reach it:
+    ;; one from a br that sends a ref.func, and one from a br_on_non_null which
+    ;; sends a null with the type (ref nofunc) (in practice that branch is not
+    ;; taken, of course, but GUFA does see all branches; later optimizations
+    ;; would optimize the branch away).
+    ;;
+    ;; We see the ref.func first, so the block $block begins with that content.
+    ;; Then we see the null arrive. Immediately combining the null with a
+    ;; ref.func would give a cone - the best shape we have that can allow both a
+    ;; null and a ref.func. If we later filter the result to the block, which is
+    ;; non-nullable, the cone becomes non-nullable too - but it is a cone now,
+    ;; and not the original ref.func, preventing us from applying the constant
+    ;; value of the ref.func in the output. Early filtering of the arriving
+    ;; content fixes this: the null is immediately filtered into nothing, since
+    ;; it is null and the location can only contain non-nullable contents. As a
+    ;; result, we can optimize the block (and the br_if) to return a ref.func.
+    (drop
+      (block $block (result (ref $A))
+        (drop
+          (br_if $block
+            (ref.func $test)
+            (global.get $global)
+          )
+        )
+        (br_on_non_null $block
+          (ref.null nofunc)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+

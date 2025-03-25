@@ -84,6 +84,9 @@ unfuzzable = [
     'shared-structs.wast',
     'heap2local-rmw.wast',
     'optimize-instructions-struct-rmw.wast',
+    'gto-removals-rmw.wast',
+    'type-refining-rmw.wast',
+    'cfp-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
     # https://github.com/WebAssembly/binaryen/issues/7176
@@ -104,6 +107,16 @@ unfuzzable = [
     'dce-stack-switching.wast',
     'precompute-stack-switching.wast',
     'vacuum-stack-switching.wast'
+    # TODO: fuzzer support for exact references
+    'exact-references.wast',
+    'optimize-instructions-exact.wast',
+    'local-subtyping-exact.wast',
+    'remove-unused-types-exact.wast',
+    'coalesce-locals-exact.wast',
+    'remove-unused-brs-exact.wast',
+    'exact.wast',
+    # TODO: fuzzer support for custom descriptors
+    'custom-descriptors.wast',
 ]
 
 

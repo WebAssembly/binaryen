@@ -76,6 +76,11 @@ struct FieldInfoScanner
     // Nothing to do for a read, we just care about written values.
   }
 
+  void noteRMW(Expression* expr, HeapType type, Index index, FieldInfo& info) {
+    // We must not refine past the RMW value type.
+    info.note(expr->type);
+  }
+
   Properties::FallthroughBehavior getFallthroughBehavior() {
     // Looking at fallthrough values may be dangerous here, because it ignores
     // intermediate steps. Consider this:

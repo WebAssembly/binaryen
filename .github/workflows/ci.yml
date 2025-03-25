@@ -9,6 +9,10 @@ on:
       - kripken/*
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   lint:
@@ -246,7 +250,7 @@ jobs:
 
     - name: cmake
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
+        ./alpine.sh cmake . -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DMIMALLOC_STATIC=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |
@@ -422,7 +426,7 @@ jobs:
   build-cxx20:
     name: c++20
     # Make sure we can still build on older Ubuntu
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CC: "gcc"
       CXX: "g++"

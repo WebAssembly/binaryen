@@ -935,18 +935,17 @@ private:
     if (value.isNull()) {
       return true;
     }
-    return canEmitConstantFor(value.type);
-  }
 
-  bool canEmitConstantFor(Type type) {
+    auto type = value.type;
     // A function is fine to emit a constant for - we'll emit a RefFunc, which
     // is compact and immutable, so there can't be a problem.
     if (type.isFunction()) {
       return true;
     }
-    // We can emit a StringConst for a string constant.
+    // We can emit a StringConst for a string constant if the string is a
+    // UTF-16 string.
     if (type.isString()) {
-      return true;
+      return isValidUTF16Literal(value);
     }
     // All other reference types cannot be precomputed. Even an immutable GC
     // reference is not currently something this pass can handle, as it will
@@ -957,6 +956,32 @@ private:
     }
 
     return true;
+  }
+
+  // TODO: move this logic to src/support/string, and refactor to share code
+  // with wasm/literal.cpp string printing's conversion from a Literal to a raw
+  // string.
+  bool isValidUTF16Literal(const Literal& value) {
+    bool expectLowSurrogate = false;
+    for (auto& v : value.getGCData()->values) {
+      auto c = v.getInteger();
+      if (c >= 0xDC00 && c <= 0xDFFF) {
+        if (expectLowSurrogate) {
+          expectLowSurrogate = false;
+          continue;
+        }
+        // We got a low surrogate but weren't expecting one.
+        return false;
+      }
+      if (expectLowSurrogate) {
+        // We are expecting a low surrogate but didn't get one.
+        return false;
+      }
+      if (c >= 0xD800 && c <= 0xDBFF) {
+        expectLowSurrogate = true;
+      }
+    }
+    return !expectLowSurrogate;
   }
 
   // Helpers for partial precomputing.

@@ -21,7 +21,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -71,8 +71,8 @@ jobs:
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
     - name: archive-arm64
       id: archive-arm64
@@ -87,8 +87,8 @@ jobs:
         tar -czf $TARBALL binaryen-$VERSION
         # on Windows, MSYS2 will strip the carriage return from CMake output
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
       if: matrix.os == 'macos-latest'
 
     - name: upload tarball
@@ -96,10 +96,10 @@ jobs:
       with:
         draft: true
         files: |
-          ${{ steps.archive.outputs.tarball }}
-          ${{ steps.archive.outputs.shasum }}
-          ${{ steps.archive-arm64.outputs.tarball }}
-          ${{ steps.archive-arm64.outputs.shasum }}
+          ${{ steps.archive.outputs.TARBALL }}
+          ${{ steps.archive.outputs.SHASUM }}
+          ${{ steps.archive-arm64.outputs.TARBALL }}
+          ${{ steps.archive-arm64.outputs.SHASUM }}
 
   # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
   # Note: Alpine uses musl libc.
@@ -110,16 +110,19 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: start docker
       run: |
-        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        if [[ "${{ matrix.docker_platform }}" == "ubuntu-24.04-arm" ]]; then
+          platform="--platform=linux/arm64"
+        fi
+        docker run -w /src -dit $platform --name alpine -v $PWD:/src node:lts-alpine
         echo 'docker exec alpine "$@";' > ./alpine.sh
         chmod +x ./alpine.sh
 
@@ -137,7 +140,7 @@ jobs:
 
     - name: cmake
       run: |
-        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DMIMALLOC_STATIC=ON -DCMAKE_INSTALL_PREFIX=install
 
     - name: build
       run: |
@@ -158,16 +161,16 @@ jobs:
         mv install binaryen-$VERSION
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         files: |
-          ${{ steps.archive.outputs.tarball }}
-          ${{ steps.archive.outputs.shasum }}
+          ${{ steps.archive.outputs.TARBALL }}
+          ${{ steps.archive.outputs.SHASUM }}
 
   # Build using Emscripten to JavaScript+WebAssembly.
   build-node:
@@ -177,7 +180,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - uses: actions/checkout@v1
@@ -224,13 +227,13 @@ jobs:
         cp out/bin/wasm-opt* binaryen-$VERSION/
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
-        echo "::set-output name=tarball::$TARBALL"
-        echo "::set-output name=shasum::$SHASUM"
+        echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
+        echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         files: |
-          ${{ steps.archive.outputs.tarball }}
-          ${{ steps.archive.outputs.shasum }}
+          ${{ steps.archive.outputs.TARBALL }}
+          ${{ steps.archive.outputs.SHASUM }}

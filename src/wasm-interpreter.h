@@ -2924,10 +2924,10 @@ public:
   // call an exported function
   Literals callExport(Name name, const Literals& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
-    if (!export_) {
+    if (!export_ || export_->kind != ExternalKind::Function) {
       externalInterface->trap("callExport not found");
     }
-    return callFunction(export_->value, arguments);
+    return callFunction(*export_->getInternalName(), arguments);
   }
 
   Literals callExport(Name name) { return callExport(name, Literals()); }
@@ -2935,10 +2935,10 @@ public:
   // get an exported global
   Literals getExport(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
-    if (!export_) {
+    if (!export_ || export_->kind != ExternalKind::Global) {
       externalInterface->trap("getExport external not found");
     }
-    Name internalName = export_->value;
+    Name internalName = *export_->getInternalName();
     auto iter = globals.find(internalName);
     if (iter == globals.end()) {
       externalInterface->trap("getExport internal not found");
@@ -2980,7 +2980,8 @@ private:
     if (table->imported()) {
       auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
-      return importedInstance->getTableInstanceInfo(tableExport->value);
+      return importedInstance->getTableInstanceInfo(
+        *tableExport->getInternalName());
     }
 
     return TableInstanceInfo{self(), name};
@@ -3035,7 +3036,8 @@ private:
     if (memory->imported()) {
       auto& importedInstance = linkedInstances.at(memory->module);
       auto* memoryExport = importedInstance->wasm.getExport(memory->base);
-      return importedInstance->getMemoryInstanceInfo(memoryExport->value);
+      return importedInstance->getMemoryInstanceInfo(
+        *memoryExport->getInternalName());
     }
 
     return MemoryInstanceInfo{self(), name};
@@ -3175,7 +3177,7 @@ protected:
     while (global->imported()) {
       inst = inst->linkedInstances.at(global->module).get();
       Export* globalExport = inst->wasm.getExport(global->base);
-      global = inst->wasm.getGlobal(globalExport->value);
+      global = inst->wasm.getGlobal(*globalExport->getInternalName());
     }
 
     return inst->globals[global->name];
@@ -3836,7 +3838,7 @@ public:
     if (ptrFlow.breaking()) {
       return ptrFlow;
     }
-    NOTE_EVAL1(flow);
+    NOTE_EVAL1(ptrFlow);
     Flow vecFlow = self()->visit(curr->vec);
     if (vecFlow.breaking()) {
       return vecFlow;

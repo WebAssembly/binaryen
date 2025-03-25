@@ -16,7 +16,10 @@
  ;; CHECK:      (type $struct-nn (struct (field (ref any))))
  (type $struct-nn (struct (field (ref any))))
 
- ;; CHECK:      (func $br_on-if (type $8) (param $0 (ref struct))
+ ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
+ (global $struct (ref $struct) (struct.new $struct))
+
+ ;; CHECK:      (func $br_on-if (type $9) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref struct))
@@ -60,7 +63,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:    (block (result (exact nullref))
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.get $struct)
  ;; CHECK-NEXT:     )
@@ -116,7 +119,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:    (block (result (exact nullref))
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (ref.cast (ref null $struct)
  ;; CHECK-NEXT:       (local.tee $any
@@ -165,7 +168,7 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on_cast (type $9) (result i31ref)
+ ;; CHECK:      (func $nested_br_on_cast (type $10) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -435,7 +438,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:    (block (result (exact nullref))
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.get $nullable-struct2)
  ;; CHECK-NEXT:     )
@@ -504,7 +507,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:    (block (result (exact nullref))
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.tee $any
  ;; CHECK-NEXT:       (local.get $nullable-struct2)
@@ -644,13 +647,13 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $10) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $8) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (then
- ;; CHECK-NEXT:     (ref.test (ref none)
+ ;; CHECK-NEXT:     (ref.test (ref exact none)
  ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -660,13 +663,13 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result nullref)
+ ;; CHECK-NEXT:   (if (result (exact nullref))
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
- ;; CHECK-NEXT:     (ref.cast nullref
+ ;; CHECK-NEXT:     (ref.cast (exact nullref)
  ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -678,7 +681,7 @@
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (block $something (result (ref null $struct))
  ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (block (result nullref)
+ ;; CHECK-NEXT:       (block (result (exact nullref))
  ;; CHECK-NEXT:        (br_on_non_null $something
  ;; CHECK-NEXT:         (local.get $struct)
  ;; CHECK-NEXT:        )
@@ -694,8 +697,8 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result nullref)
- ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:   (select (result (exact nullref))
+ ;; CHECK-NEXT:    (block (result (exact nullref))
  ;; CHECK-NEXT:     (block $nothing
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (block
@@ -789,6 +792,54 @@
   )
  )
 
+ ;; CHECK:      (func $allocations-are-costly (type $8) (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result (ref null $struct))
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (select (result (exact nullref))
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $allocations-are-costly (param $x i32)
+  ;; Allocations are too expensive for us to unconditionalize and selectify
+  ;; here.
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (then
+     (struct.new $struct)
+    )
+    (else
+     (ref.null any)
+    )
+   )
+  )
+  ;; But two nulls are fine.
+  (drop
+   (if (result anyref)
+    (local.get $x)
+    (then
+     (ref.null any)
+    )
+    (else
+     (ref.null any)
+    )
+   )
+  )
+ )
+
  ;; CHECK:      (func $threading (type $11) (param $x anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (block $inner
@@ -868,8 +919,8 @@
  ;; CHECK:      (func $select-refinalize (type $13) (param $param (ref $struct)) (result (ref struct))
  ;; CHECK-NEXT:  (select (result (ref $struct))
  ;; CHECK-NEXT:   (select (result (ref $struct))
- ;; CHECK-NEXT:    (struct.new_default $struct)
- ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:    (global.get $struct)
+ ;; CHECK-NEXT:    (global.get $struct)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.get $param)
@@ -883,10 +934,10 @@
    (if (result (ref struct))
     (i32.const 0)
     (then
-     (struct.new_default $struct)
+     (global.get $struct)
     )
     (else
-     (struct.new_default $struct)
+     (global.get $struct)
     )
    )
    (local.get $param)

@@ -47,11 +47,14 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   ExpressionInterpreter(Interpreter& parent) : parent(parent) {}
 
   WasmStore& store() { return InterpreterImpl::getStore(parent); }
+  Frame& frame() { return store().callStack.back(); }
+  Instance& instance() { return frame().instance; }
+
   void push(Literal val) { store().push(val); }
   Literal pop() { return store().pop(); }
 
   Flow visitNop(Nop* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitBlock(Block* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitBlock(Block* curr) { return {}; }
   Flow visitIf(If* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitBreak(Break* curr) { WASM_UNREACHABLE("TODO"); }
@@ -60,8 +63,14 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalGet(LocalGet* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitLocalSet(LocalSet* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitGlobalGet(GlobalGet* curr) { WASM_UNREACHABLE("TODO"); }
-  Flow visitGlobalSet(GlobalSet* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitGlobalGet(GlobalGet* curr) {
+    push(instance().globalValues[curr->name]);
+    return {};
+  }
+  Flow visitGlobalSet(GlobalSet* curr) {
+    instance().globalValues[curr->name] = pop();
+    return {};
+  }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("TODO"); }
@@ -86,19 +95,125 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
     push(curr->value);
     return {};
   }
-  Flow visitUnary(Unary* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitUnary(Unary* curr) {
+    auto value = pop();
+    switch (curr->op) {
+      case SqrtFloat32:
+      case SqrtFloat64:
+        push(value.sqrt());
+        return {};
+      case CeilFloat32:
+      case CeilFloat64:
+        push(value.ceil());
+        return {};
+      case FloorFloat32:
+      case FloorFloat64:
+        push(value.floor());
+        return {};
+      case TruncFloat32:
+      case TruncFloat64:
+        push(value.trunc());
+        return {};
+      case NearestFloat32:
+      case NearestFloat64:
+        push(value.nearbyint());
+        return {};
+      default:
+        WASM_UNREACHABLE("TODO");
+    }
+  }
   Flow visitBinary(Binary* curr) {
     auto rhs = pop();
     auto lhs = pop();
-    // TODO: switch-case over all operations.
-    if (curr->op == AddInt32) {
-      push(lhs.add(rhs));
-      return {};
-    } else if (curr->op == SubInt32) {
-      push(lhs.sub(rhs));
-      return {};
+    // TODO: add support for all operations.
+    switch (curr->op) {
+      case AddInt32:
+      case AddInt64:
+      case AddFloat32:
+      case AddFloat64:
+        push(lhs.add(rhs));
+        return {};
+      case SubInt32:
+      case SubInt64:
+      case SubFloat32:
+      case SubFloat64:
+        push(lhs.sub(rhs));
+        return {};
+      case MulInt32:
+      case MulInt64:
+      case MulFloat32:
+      case MulFloat64:
+        push(lhs.mul(rhs));
+        return {};
+      case DivFloat32:
+      case DivFloat64:
+        push(lhs.div(rhs));
+        return {};
+      case AndInt32:
+      case AndInt64:
+        push(lhs.and_(rhs));
+        return {};
+      case OrInt32:
+      case OrInt64:
+        push(lhs.or_(rhs));
+        return {};
+      case XorInt32:
+      case XorInt64:
+        push(lhs.xor_(rhs));
+        return {};
+      case ShlInt32:
+      case ShlInt64:
+        push(lhs.shl(rhs));
+        return {};
+      case ShrUInt32:
+      case ShrUInt64:
+        push(lhs.shrU(rhs));
+        return {};
+      case ShrSInt32:
+      case ShrSInt64:
+        push(lhs.shrS(rhs));
+        return {};
+      case RotLInt32:
+      case RotLInt64:
+        push(lhs.rotL(rhs));
+        return {};
+      case RotRInt32:
+      case RotRInt64:
+        push(lhs.rotR(rhs));
+        return {};
+      case EqInt32:
+      case EqInt64:
+      case EqFloat32:
+      case EqFloat64:
+        push(lhs.eq(rhs));
+        return {};
+      case LtSInt32:
+      case LtSInt64:
+        push(lhs.ltS(rhs));
+        return {};
+      case LtUInt32:
+      case LtUInt64:
+        push(lhs.ltU(rhs));
+        return {};
+      case GtSInt32:
+      case GtSInt64:
+        push(lhs.gtS(rhs));
+        return {};
+      case GtUInt32:
+      case GtUInt64:
+        push(lhs.gtU(rhs));
+        return {};
+      case MinFloat32:
+      case MinFloat64:
+        push(lhs.min(rhs));
+        return {};
+      case MaxFloat32:
+      case MaxFloat64:
+        push(lhs.max(rhs));
+        return {};
+      default:
+        WASM_UNREACHABLE("TODO");
     }
-    WASM_UNREACHABLE("TODO");
   }
   Flow visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitDrop(Drop* curr) { WASM_UNREACHABLE("TODO"); }
@@ -166,13 +281,33 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
 
 } // anonymous namespace
 
-std::vector<Literal> Interpreter::run(Expression* root) {
-  // Create a fresh store and execution frame, then run the expression to
-  // completion.
-  store = WasmStore();
-  store.callStack.emplace_back();
-  store.callStack.back().exprs = ExpressionIterator(root);
+Result<> Interpreter::addInstance(std::shared_ptr<Module> wasm) {
+  return instantiate(store.instances.emplace_back(wasm));
+}
 
+Result<> Interpreter::instantiate(Instance& instance) {
+  for (auto& global : instance.wasm->globals) {
+    store.callStack.emplace_back(instance, ExpressionIterator(global->init));
+    auto results = run();
+    assert(results.size() == 1);
+    instance.globalValues[global->name] = results[0];
+  }
+  return Ok{};
+}
+
+// This is a temporary convenience while stil using gTests to validate this
+// interpreter. Once spec tests can run, this shall be deleted.
+std::vector<Literal> Interpreter::runTest(Expression* root) {
+  static std::shared_ptr<wasm::Module> dummyModule = std::make_shared<Module>();
+  if (store.instances.empty()) {
+    auto result = addInstance(dummyModule);
+  }
+  store.callStack.emplace_back(store.instances.back(),
+                               ExpressionIterator(root));
+  return run();
+}
+
+std::vector<Literal> Interpreter::run() {
   ExpressionInterpreter interpreter(*this);
   while (auto& it = store.callStack.back().exprs) {
     if (auto flow = interpreter.visit(*it)) {
@@ -182,7 +317,9 @@ std::vector<Literal> Interpreter::run(Expression* root) {
     }
   }
 
-  return store.callStack.back().valueStack;
+  auto valueStack = store.callStack.back().valueStack;
+  store.callStack.pop_back();
+  return valueStack;
 }
 
 } // namespace wasm

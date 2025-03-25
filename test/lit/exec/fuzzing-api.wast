@@ -8,18 +8,21 @@
  (import "fuzzing-support" "log-i32" (func $log-i32 (param i32)))
  (import "fuzzing-support" "log-f64" (func $log-f64 (param f64)))
 
- (import "fuzzing-support" "throw" (func $throw))
+ (import "fuzzing-support" "throw" (func $throw (param i32)))
 
  (import "fuzzing-support" "table-set" (func $table.set (param i32 funcref)))
  (import "fuzzing-support" "table-get" (func $table.get (param i32) (result funcref)))
 
- (import "fuzzing-support" "call-export" (func $call.export (param i32)))
+ (import "fuzzing-support" "call-export" (func $call.export (param i32 i32)))
  (import "fuzzing-support" "call-export-catch" (func $call.export.catch (param i32) (result i32)))
 
- (import "fuzzing-support" "call-ref" (func $call.ref (param funcref)))
+ (import "fuzzing-support" "call-ref" (func $call.ref (param funcref i32)))
  (import "fuzzing-support" "call-ref-catch" (func $call.ref.catch (param funcref) (result i32)))
 
  (import "fuzzing-support" "sleep" (func $sleep (param i32 i32) (result i32)))
+
+ (import "fuzzing-support" "wasmtag" (tag $imported-wasm-tag (param i32)))
+ (import "fuzzing-support" "jstag" (tag $imported-js-tag (param externref)))
 
  (table $table 10 20 funcref)
 
@@ -40,13 +43,25 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling throwing
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $throwing (export "throwing")
-  (call $throw)
+  ;; Throwing 0 throws a JS ("private") exception.
+  (call $throw
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling throwing-tag
+ ;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
+ (func $throwing-tag (export "throwing-tag")
+  ;; Throwing non-0 throws using the tag we imported.
+  (call $throw
+   (i32.const 42)
+  )
  )
 
  ;; CHECK:      [fuzz-exec] calling table.setting
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $table.setting (export "table.setting")
   (call $table.set
    (i32.const 5)
@@ -62,7 +77,7 @@
  ;; CHECK:      [fuzz-exec] calling table.getting
  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $table.getting (export "table.getting")
   ;; There is a non-null value at 5, and a null at 6.
   (call $log-i32
@@ -90,15 +105,37 @@
  ;; CHECK:      [fuzz-exec] calling export.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $export.calling (export "export.calling")
   ;; At index 0 in the exports we have $logging, so we will do those loggings.
   (call $call.export
+   (i32.const 0)
+   ;; First bit unset in the flags means a normal call.
    (i32.const 0)
   )
   ;; At index 999 we have nothing, so we'll error.
   (call $call.export
    (i32.const 999)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling export.calling.rethrow
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+ (func $export.calling.rethrow (export "export.calling.rethrow")
+  ;; As above, but the second param is different.
+  (call $call.export
+   (i32.const 0)
+   ;; First bit set in the flags means a catch+rethrow. There is no visible
+   ;; effect here, but there might be in JS VMs.
+   (i32.const 1)
+  )
+  ;; At index 999 we have nothing, so we'll error.
+  (call $call.export
+   (i32.const 999)
+   (i32.const 1)
   )
  )
 
@@ -126,15 +163,36 @@
  ;; CHECK:      [fuzz-exec] calling ref.calling
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
- ;; CHECK-NEXT: [exception thrown: __private ()]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
  (func $ref.calling (export "ref.calling")
   ;; This will emit some logging.
   (call $call.ref
    (ref.func $logging)
+   ;; Normal call.
+   (i32.const 0)
   )
   ;; This will throw.
   (call $call.ref
    (ref.null func)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+ ;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+ (func $ref.calling.rethrow (export "ref.calling.rethrow")
+  ;; As with calling an export, when we set the flags to 1 exceptions are
+  ;; caught and rethrown, but there is no noticeable difference here.
+  (call $call.ref
+   (ref.func $logging)
+   (i32.const 1)
+  )
+  ;; This will throw.
+  (call $call.ref
+   (ref.null func)
+   (i32.const 1)
   )
  )
 
@@ -180,6 +238,7 @@
   ;; logging from the function, "12".
   (call $call.ref
    (ref.func $legal)
+   (i32.const 1)
   )
  )
 
@@ -296,9 +355,30 @@
   )
  )
 
+ ;; CHECK:      [fuzz-exec] calling catch-js-tag
+ ;; CHECK-NEXT: [fuzz-exec] note result: catch-js-tag => 100
+ (func $catch-js-tag (export "catch-js-tag") (result i32)
+  ;; The table.set out of bounds will throw a JS exception, so it will be caught
+  ;; by the catch here, and we'll return the number at the end.
+  (drop
+   (block $out (result externref)
+    (try_table (catch $imported-js-tag $out)
+     (call $table.set
+      (i32.const 9999)
+      (ref.func $table.setting)
+     )
+     (return
+      (i32.const -1)
+     )
+    )
+   )
+  )
+  (i32.const 100)
+ )
+
+
  ;; CHECK:      [fuzz-exec] calling do-sleep
  ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
- ;; CHECK-NEXT: warning: no passes specified, not doing any work
  (func $do-sleep (export "do-sleep") (result i32)
   (call $sleep
    ;; A ridiculous amount of ms, but in the interpreter it is ignored anyhow.
@@ -307,26 +387,52 @@
    (i32.const 42)
   )
  )
+
+ ;; CHECK:      [fuzz-exec] calling return-externref-exception
+ ;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
+ ;; CHECK-NEXT: warning: no passes specified, not doing any work
+ (func $return-externref-exception (export "return-externref-exception") (result externref)
+  ;; Call JS table.set in a way that throws (on out of bounds). The JS exception
+  ;; is caught and returned from the function, so we can see what it looks like
+  ;; to the fuzzer, which should be "object" (an exception object).
+  (block $block (result externref)
+   (try_table (catch $imported-js-tag $block)
+    (call $table.set
+     (i32.const 99990)
+     (ref.null func)
+    )
+   )
+   (unreachable)
+  )
+ )
 )
 ;; CHECK:      [fuzz-exec] calling logging
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
 
 ;; CHECK:      [fuzz-exec] calling throwing
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+
+;; CHECK:      [fuzz-exec] calling throwing-tag
+;; CHECK-NEXT: [exception thrown: imported-wasm-tag 42]
 
 ;; CHECK:      [fuzz-exec] calling table.setting
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling table.getting
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+
+;; CHECK:      [fuzz-exec] calling export.calling.rethrow
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling export.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -337,7 +443,12 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
-;; CHECK-NEXT: [exception thrown: __private ()]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
+
+;; CHECK:      [fuzz-exec] calling ref.calling.rethrow
+;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+;; CHECK-NEXT: [LoggingExternalInterface logging 3.14159]
+;; CHECK-NEXT: [exception thrown: imported-js-tag externref]
 
 ;; CHECK:      [fuzz-exec] calling ref.calling.catching
 ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
@@ -368,11 +479,19 @@
 ;; CHECK:      [fuzz-exec] calling ref.calling.trap
 ;; CHECK-NEXT: [trap unreachable]
 
+;; CHECK:      [fuzz-exec] calling catch-js-tag
+;; CHECK-NEXT: [fuzz-exec] note result: catch-js-tag => 100
+
 ;; CHECK:      [fuzz-exec] calling do-sleep
 ;; CHECK-NEXT: [fuzz-exec] note result: do-sleep => 42
+
+;; CHECK:      [fuzz-exec] calling return-externref-exception
+;; CHECK-NEXT: [fuzz-exec] note result: return-externref-exception => object
+;; CHECK-NEXT: [fuzz-exec] comparing catch-js-tag
 ;; CHECK-NEXT: [fuzz-exec] comparing do-sleep
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing export.calling.catching
+;; CHECK-NEXT: [fuzz-exec] comparing export.calling.rethrow
 ;; CHECK-NEXT: [fuzz-exec] comparing logging
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.catching
@@ -382,7 +501,10 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.illegal-v128
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.legal-result
+;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.rethrow
 ;; CHECK-NEXT: [fuzz-exec] comparing ref.calling.trap
+;; CHECK-NEXT: [fuzz-exec] comparing return-externref-exception
 ;; CHECK-NEXT: [fuzz-exec] comparing table.getting
 ;; CHECK-NEXT: [fuzz-exec] comparing table.setting
 ;; CHECK-NEXT: [fuzz-exec] comparing throwing
+;; CHECK-NEXT: [fuzz-exec] comparing throwing-tag

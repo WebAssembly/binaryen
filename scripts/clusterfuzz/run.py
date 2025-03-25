@@ -87,6 +87,8 @@ FUZZER_ARGS = [
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',
+    '--disable-custom-descriptors',
+    '--disable-strings',
 ]
 
 
