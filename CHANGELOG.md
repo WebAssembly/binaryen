@@ -33,6 +33,7 @@ v123
    instead of a Type.
  - MergeSimilarFunctions: Do a return_call when possible (necessary for
    correctness in wasm files that depend on calls for control flow). (#7350)
+ - We now use "exact" references from the custom descriptors proposal internally, even for modules that do not explicitly use custom descriptors. Enabling the custom-descriptors feature, for example with `--all-features`, might now unexpectedly emit new uses of the feature.
 
 v122
 ----
