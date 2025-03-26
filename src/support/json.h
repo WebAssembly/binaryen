@@ -434,28 +434,48 @@ private:
       }
 
       // Escaped character.
-      char c;
-      switch (str[i + 1]) {
-        case 'b':
-          c = '\b';
-          break;
-        case 'f':
-          c = '\f';
-          break;
-        case 'n':
-          c = '\n';
-          break;
-        case 'r':
-          c = '\r';
-          break;
-        case 't':
-          c = '\t';
-          break;
-        default:
-          c = str[i + 1];
+      char c = str[i + 1];
+      if (c != 'u') {
+        switch (c) {
+          case 'b':
+            c = '\b';
+            break;
+          case 'f':
+            c = '\f';
+            break;
+          case 'n':
+            c = '\n';
+            break;
+          case 'r':
+            c = '\r';
+            break;
+          case 't':
+            c = '\t';
+            break;
+          }
+        }
+        unescaped.push_back(c);
+        i += 2;
+      } else {
+        // \uXXXX, 4-digit hex number. First, read the hex.
+        unsigned int x;
+        std::stringstream unhex;
+        unhex << std::hex << std::string_view(str + i + 2, 4);
+        unhex >> x;
+
+        // Next, write out the contents.
+        auto emit = [&](unsigned int y) {
+xx
+          std::stringstream str;
+          str << std::hex << '\\' << (x / 16) << (x % 16) << std::dec;
+        };
+        emit(x & 0xff);
+        x >>= 8;
+        if (x) {
+          emit(x);
+        }
+xx        i += 6;
       }
-      unescaped.push_back(c);
-      i += 2;
     }
 
     // Intern and return that.
