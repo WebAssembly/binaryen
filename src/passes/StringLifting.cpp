@@ -75,7 +75,6 @@ struct StringLifting : public Pass {
     for (auto& section : module->customSections) {
       if (section.name == "string.consts") {
         // We found the string consts section. Parse it.
-        std::cout << "data " << (char*)section.data.data() << '\n';
         auto copy = section.data;
         json::Value array;
         array.parse(copy.data());
