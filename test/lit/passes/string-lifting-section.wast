@@ -71,7 +71,12 @@
     (drop
       (string.const "foo")
     )
-    ;; TODO: test utf-8 etc.
+  )
+
+  (func $tricky
+    (drop
+      (string.const "needs\tescaping\00.'#%\"")
+    )
   )
 )
 

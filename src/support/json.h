@@ -260,11 +260,17 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      curr++;
-      char* close = strchr(curr, '"');
+      // Start close at the opening ", and in the loop below we will always
+      // begin looking at the first character after.
+      char* close = curr;
+      // Skip escaped "
+      do {
+        close = strchr(close + 1, '"');
+      } while (*(close - 1) == '\\');
       assert(close);
       *close = 0; // end this string, and reuse it straight from the input
-      setString(curr);
+      char* raw = curr + 1;
+      setString(unescape(raw));
       curr = close + 1;
     } else if (*curr == '[') {
       // Array
@@ -402,6 +408,58 @@ struct Value {
   bool has(IString x) {
     assert(isObject());
     return obj->count(x) > 0;
+  }
+
+private:
+  // When we unescape a string, we store its contents here.
+  std::string unescaped;
+
+  // If the string has no escaped characters, return it as-is (this efficiently
+  // lets us reuse strings from the input). If it does have escaping, unescape
+  // it.
+  const char* unescape(char *str) {
+    if (!strchr(str, '\\')) {
+      // No escaping slash.
+      return str;
+    }
+
+    // Otherwise, we may need to escape, so do the work for that.
+    size_t i = 0;
+    while (str[i]) {
+      if (str[i] != '\\') {
+        // Normal character.
+        unescaped.push_back(str[i]);
+        i++;
+        continue;
+      }
+
+      // Escaped character.
+      char c;
+      switch (str[i + 1]) {
+        case 'b':
+          c = '\b';
+          break;
+        case 'f':
+          c = '\f';
+          break;
+        case 'n':
+          c = '\n';
+          break;
+        case 'r':
+          c = '\r';
+          break;
+        case 't':
+          c = '\t';
+          break;
+        default:
+          c = str[i + 1];
+      }
+      unescaped.push_back(c);
+      i += 2;
+    }
+
+    // Intern and return that.
+    return unescaped.c_str();
   }
 };
 
