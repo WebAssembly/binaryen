@@ -79,7 +79,8 @@ struct StringLifting : public Pass {
         json::Value array;
         array.parse(copy.data());
         if (!array.isArray()) {
-          Fatal() << "StringLifting: string.const section should be a JSON array";
+          Fatal()
+            << "StringLifting: string.const section should be a JSON array";
         }
 
         // We have the array of constants from the section. Find globals that
@@ -95,7 +96,8 @@ struct StringLifting : public Pass {
           }
           auto item = array[index];
           if (!item->isString()) {
-            Fatal() << "StringLifting: string.const section entry is not a string";
+            Fatal()
+              << "StringLifting: string.const section entry is not a string";
           }
           importedStrings[global->name] = item->getIString();
         }
