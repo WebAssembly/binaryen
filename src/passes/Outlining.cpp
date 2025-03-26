@@ -350,12 +350,6 @@ struct Outlining : public Pass {
   using Sequences =
     std::unordered_map<Name, std::vector<wasm::OutliningSequence>>;
 
-  bool endsTypeUnreachable(unsigned hashIdx,
-                           const HashStringifyWalker& stringify) {
-    Expression* expr = stringify.exprs[hashIdx - 1];
-    return expr->type == Type::unreachable;
-  }
-
   // Converts an array of SuffixTree::RepeatedSubstring to a mapping of original
   // functions to repeated sequences they contain. These sequences are ordered
   // by start index by construction because the substring's start indices are
@@ -375,7 +369,8 @@ struct Outlining : public Pass {
           relativeIdx,
           relativeIdx + substring.Length,
           func,
-          endsTypeUnreachable(seqIdx + substring.Length, stringify));
+          stringify.exprs[seqIdx + substring.Length - 1]->type ==
+            Type::unreachable);
         seqByFunc[existingFunc].push_back(seq);
       }
     }
