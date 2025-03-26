@@ -374,10 +374,10 @@ TEST_F(StringifyTest, FilterBranches) {
 TEST_F(StringifyTest, FilterReturn) {
   static auto branchesModuleText = R"wasm(
   (module
-    (func $a
+    (func $a (result i32)
       (return (i32.const 0))
     )
-    (func $b
+    (func $b (result i32)
       (return (i32.const 0))
     )
    )
