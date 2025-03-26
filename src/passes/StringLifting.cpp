@@ -95,7 +95,7 @@ struct StringLifting : public Pass {
           }
           auto item = array[index];
           if (!item->isString()) {
-            Fatal() << "StringLifting: bad string.const section (!string)";
+            Fatal() << "StringLifting: string.const section entry is not a string";
           }
           importedStrings[global->name] = item->getIString();
         }
