@@ -27,6 +27,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/string-utils.h"
+#include "support/json.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -58,8 +59,6 @@ struct StringLifting : public Pass {
     //
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
-    //
-    // TODO: parse the strings section for non-UTF16 strings.
     Name stringConstsModule =
       getArgumentOrDefault("string-constants-module", WasmStringConstsModule);
     for (auto& global : module->globals) {
@@ -69,6 +68,44 @@ struct StringLifting : public Pass {
       if (global->module == stringConstsModule) {
         importedStrings[global->name] = global->base;
         found = true;
+      }
+    }
+
+    // Imported strings may also be found in the string section.
+    for (auto& section : module->customSections) {
+      if (section.name == "string.consts") {
+        // We found the string consts section. Parse it.
+        auto copy = section.data;
+        json::Value array;
+        array.parse(copy.data());
+        if (!array.isArray()) {
+          Fatal()
+            << "StringLifting: string.const section should be a JSON array";
+        }
+
+        // We have the array of constants from the section. Find globals that
+        // refer to it.
+        for (auto& global : module->globals) {
+          if (!global->imported() || global->module != "string.const") {
+            continue;
+          }
+          // The index in the array is the basename.
+          Index index = std::stoi(std::string(global->base.str));
+          if (index >= array.size()) {
+            Fatal() << "StringLifting: bad index in string.const section";
+          }
+          auto item = array[index];
+          if (!item->isString()) {
+            Fatal()
+              << "StringLifting: string.const section entry is not a string";
+          }
+          if (importedStrings.count(global->name)) {
+            Fatal()
+              << "StringLifting: string.const section tramples other const";
+          }
+          importedStrings[global->name] = item->getIString();
+        }
+        break;
       }
     }
 
