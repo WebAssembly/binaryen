@@ -91,7 +91,7 @@ struct StringLifting : public Pass {
           // The index in the array is the basename.
           Index index = std::stoi(std::string(global->base.str));
           if (index >= array.size()) {
-            Fatal() << "StringLifting: bad string.const section (index)";
+            Fatal() << "StringLifting: bad index in string.const section";
           }
           auto item = array[index];
           if (!item->isString()) {
