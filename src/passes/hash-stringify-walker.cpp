@@ -15,6 +15,7 @@
  */
 
 #include "stringify-walker.h"
+#include "support/intervals.h"
 
 namespace wasm {
 
@@ -141,6 +142,47 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
     if (!seenEndIdx) {
       seen.insert(idxToInsert.begin(), idxToInsert.end());
       result.push_back(substring);
+    }
+  }
+
+  return result;
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
+  // A substring represents a contiguous set of instructions that appear more
+  // than once in a Wasm binary. For each appearance of the substring, an
+  // Interval is created that lacks a connection back to its originating
+  // substring. To fix, upon Interval creation, a second vector is populated
+  // with the index of the corresponding substring.
+  std::vector<Interval> intervals;
+  std::vector<int> substringIdxs;
+
+  // Construct intervals
+  for (Index i = 0; i < substrings.size(); i++) {
+    auto& substring = substrings[i];
+    for (auto startIdx : substring.StartIndices) {
+      intervals.emplace_back(
+        startIdx, startIdx + substring.Length, substring.Length);
+      substringIdxs.push_back(i);
+    }
+  }
+
+  // Get the overlapping intervals
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  std::vector<std::vector<Index>> startIndices(substrings.size());
+  std::vector<int> indices = IntervalProcessor::filterOverlaps(intervals);
+  for (auto i : indices) {
+    // i is the idx of the Interval in the intervals vector
+    // i in substringIdxs returns the idx of the substring that needs to be
+    // included in result
+    auto substringIdx = substringIdxs[i];
+    startIndices[substringIdx].push_back(intervals[i].start);
+  }
+  for (Index i = 0; i < startIndices.size(); i++) {
+    if (startIndices[i].size() > 1) {
+      result.emplace_back(SuffixTree::RepeatedSubstring(
+        {substrings[i].Length, std::move(startIndices[i])}));
     }
   }
 
