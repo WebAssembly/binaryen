@@ -270,7 +270,7 @@ struct Value {
       assert(close);
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
-      setString(unescape(raw));
+      unescapeAndSetString(raw);
       curr = close + 1;
     } else if (*curr == '[') {
       // Array
@@ -411,19 +411,18 @@ struct Value {
   }
 
 private:
-  // When we unescape a string, we store its contents here.
-  std::string unescaped;
-
-  // If the string has no escaped characters, return it as-is (this efficiently
+  // If the string has no escaped characters, XXXurn it as-is (this efficiently
   // lets us reuse strings from the input). If it does have escaping, unescape
   // it.
-  const char* unescape(char *str) {
+  void unescapeAndSetString(char *str) {
     if (!strchr(str, '\\')) {
       // No escaping slash.
-      return str;
+      setString(str);
+      return;
     }
 
     // Otherwise, we may need to escape, so do the work for that.
+    std::vector<char> unescaped;
     size_t i = 0;
     while (str[i]) {
       if (str[i] != '\\') {
@@ -452,7 +451,6 @@ private:
           case 't':
             c = '\t';
             break;
-          }
         }
         unescaped.push_back(c);
         i += 2;
@@ -463,21 +461,18 @@ private:
         unhex << std::hex << std::string_view(str + i + 2, 4);
         unhex >> x;
 
-        // Next, write out the contents.
-        auto emit = [&](unsigned int y) {
-          unescaped << std::hex << '\\' << (x / 16) << (x % 16) << std::dec;
-        };
-        emit(x & 0xff);
+        // Write out the results.
+        unescaped.push_back(x & 0xff);
         x >>= 8;
         if (x) {
-          emit(x);
+          unescaped.push_back(x);
         }
+
         i += 6;
       }
     }
 
-    // Intern and return that.
-    return unescaped.c_str();
+    setString(IString(std::string_view(unescaped.data(), unescaped.size())));
   }
 };
 
