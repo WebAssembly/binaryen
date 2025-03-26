@@ -414,7 +414,7 @@ private:
   // If the string has no escaped characters, XXXurn it as-is (this efficiently
   // lets us reuse strings from the input). If it does have escaping, unescape
   // it.
-  void unescapeAndSetString(char *str) {
+  void unescapeAndSetString(char* str) {
     if (!strchr(str, '\\')) {
       // No escaping slash.
       setString(str);
@@ -472,8 +472,8 @@ private:
       }
     }
 
-    setString(IString(std::string_view(unescaped.data(), unescaped.size()),
-                      false));
+    setString(
+      IString(std::string_view(unescaped.data(), unescaped.size()), false));
   }
 };
 
