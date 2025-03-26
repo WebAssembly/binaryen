@@ -208,13 +208,6 @@ struct ReconstructStringifyWalker
     Function* outlinedFunc =
       getModule()->getFunction(sequences[seqCounter].func);
     ASSERT_OK(outlinedBuilder.visitFunctionStart(outlinedFunc));
-    // If the last instruction of the outlined sequence is unreachable, insert
-    // an unreachable instruction immediately after the call to the outlined
-    // function. This maintains the unreachable type in the original scope
-    // of the outlined sequence.
-    if (sequences[seqCounter].endsTypeUnreachable) {
-      ASSERT_OK(existingBuilder.makeUnreachable());
-    }
 
     // Add a local.get instruction for every parameter of the outlined function.
     Signature sig = outlinedFunc->type.getSignature();
@@ -226,6 +219,14 @@ struct ReconstructStringifyWalker
     // call will replace the instructions moved to the outlined function.
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
     DBG(std::cerr << "\ncreated outlined fn: " << outlinedFunc->name << "\n");
+
+    // If the last instruction of the outlined sequence is unreachable, insert
+    // an unreachable instruction immediately after the call to the outlined
+    // function. This maintains the unreachable type in the original scope
+    // of the outlined sequence.
+    if (sequences[seqCounter].endsTypeUnreachable) {
+      ASSERT_OK(existingBuilder.makeUnreachable());
+    }
   }
 
   void transitionToInSkipSeq() {

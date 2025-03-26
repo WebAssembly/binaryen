@@ -1100,7 +1100,6 @@
     unreachable
   )
   ;; CHECK:      (func $b (type $2) (result i32)
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
