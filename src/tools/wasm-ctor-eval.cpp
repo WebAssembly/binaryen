@@ -1374,7 +1374,7 @@ int main(int argc, const char* argv[]) {
   options
     .add("--output",
          "-o",
-         "Output file (stdout if not specified)",
+         "Output file",
          WasmCtorEvalOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
