@@ -343,47 +343,59 @@ TEST_F(StringifyTest, FilterLocalSets) {
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 16})}}));
 }
 
-// TODO: Switching to the new parser broke this test. Fix it.
+// TODO: Add support for outlining the below block. This block is valid to
+// outline because the branch within has a target that would also be included
+// in the outlined function.
+TEST_F(StringifyTest, FilterBranches) {
+  static auto branchesModuleText = R"wasm(
+  (module
+    (func $a
+      (block $top
+        (br $top)
+      )
+    )
+    (func $b
+      (block $top
+        (br $top)
+      )
+    )
+   )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, branchesModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+  auto substrings =
+  StringifyProcessor::repeatSubstrings(stringify.hashString);
+  auto result =
+  StringifyProcessor::filterBranches(substrings, stringify.exprs);
 
-// TEST_F(StringifyTest, FilterBranches) {
-//   static auto branchesModuleText = R"wasm(
-//   (module
-//     (func $a (result i32)
-//       (block $top (result i32)
-//         (br $top)
-//       )
-//       (i32.const 7)
-//       (i32.const 1)
-//       (i32.const 2)
-//       (i32.const 4)
-//       (i32.const 3)
-//       (return)
-//     )
-//     (func $b (result i32)
-//       (block $top (result i32)
-//         (br $top)
-//       )
-//       (i32.const 0)
-//       (i32.const 1)
-//       (i32.const 2)
-//       (i32.const 5)
-//       (i32.const 3)
-//       (return)
-//     )
-//   )
-//   )wasm";
-//   Module wasm;
-//   parseWast(wasm, branchesModuleText);
-//   HashStringifyWalker stringify = HashStringifyWalker();
-//   stringify.walkModule(&wasm);
-//   auto substrings =
-//   StringifyProcessor::repeatSubstrings(stringify.hashString);
-//   auto result =
-//   StringifyProcessor::filterBranches(substrings, stringify.exprs);
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{}));
+}
 
-//   EXPECT_EQ(
-//     result,
-//     (std::vector<SuffixTree::RepeatedSubstring>{
-//       // sequence i32.const 1, i32.const 2 is at idx 6 and 21
-//       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 21})}}));
-// }
+TEST_F(StringifyTest, FilterReturn) {
+  static auto branchesModuleText = R"wasm(
+  (module
+    (func $a
+      (return)
+    )
+    (func $b
+      (return)
+    )
+   )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, branchesModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+  auto substrings =
+  StringifyProcessor::repeatSubstrings(stringify.hashString);
+  auto result =
+  StringifyProcessor::filterBranches(substrings, stringify.exprs);
+
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{}));
+}
