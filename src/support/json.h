@@ -465,16 +465,14 @@ private:
 
         // Next, write out the contents.
         auto emit = [&](unsigned int y) {
-xx
-          std::stringstream str;
-          str << std::hex << '\\' << (x / 16) << (x % 16) << std::dec;
+          unescaped << std::hex << '\\' << (x / 16) << (x % 16) << std::dec;
         };
         emit(x & 0xff);
         x >>= 8;
         if (x) {
           emit(x);
         }
-xx        i += 6;
+        i += 6;
       }
     }
 
