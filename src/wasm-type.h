@@ -237,6 +237,11 @@ public:
     return HeapType(exactness == Exact ? (id | ExactMask) : (id & ~ExactMask));
   }
 
+  // The ID is the numeric representation of the heap type and can be used in
+  // FFI or hashing applications. The "raw" ID is the numeric representation of
+  // the plain version of the type without exactness or any other attributes we
+  // might add in the future. It's useful in contexts where all heap types using
+  // the same type definition need to be treated identically.
   constexpr TypeID getID() const { return id; }
   constexpr TypeID getRawID() const {
     return isBasic() ? id : with(Inexact).id;
