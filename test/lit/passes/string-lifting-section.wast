@@ -58,8 +58,22 @@
   ;; CHECK-NEXT:   (string.const "foo")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  (func $consts
+    ;; These strings get lowered into the custom section, then lifted back up,
+    ;; so they do not change. We will see above the imported globals that were
+    ;; created for them (and not cleaned up), two imports from "string.const".
+    (drop
+      (string.const "foo")
+    )
+    (drop
+      (string.const "bar")
+    )
+    (drop
+      (string.const "foo")
+    )
+  )
 
-  (func $tricky
+  (func $tricky-consts
     (drop
       (string.const "needs\tescaping\00.'#%\"")
     )

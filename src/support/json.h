@@ -472,7 +472,8 @@ private:
       }
     }
 
-    setString(IString(std::string_view(unescaped.data(), unescaped.size())));
+    setString(IString(std::string_view(unescaped.data(), unescaped.size()),
+                      false));
   }
 };
 
