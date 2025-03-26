@@ -262,7 +262,7 @@
  )
  ;; This function is called in ways that allow us to make the first parameter
  ;; non-nullable.
- ;; CHECK:      (func $various-params-null (type $13) (param $x (ref exact none)) (param $y (ref null $"{i32}"))
+ ;; CHECK:      (func $various-params-null (type $13) (param $x (ref none)) (param $y (ref null $"{i32}"))
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)

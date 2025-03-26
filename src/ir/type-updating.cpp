@@ -342,7 +342,6 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
-      // TODO: Handle exactness.
       return typeBuilder.getTempRefType(typeBuilder[it->second],
                                         type.getNullability());
     }

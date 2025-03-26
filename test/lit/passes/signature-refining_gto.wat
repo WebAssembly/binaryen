@@ -9,11 +9,11 @@
  ;; CHECK-NOT: (type $A
  (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      (type $0 (func (param (ref exact none))))
+ ;; CHECK:      (type $0 (func (param (ref none))))
 
  ;; CHECK:      (type $1 (func (param funcref i32)))
 
- ;; CHECK:      (func $struct.get (type $0) (param $0 (ref exact none))
+ ;; CHECK:      (func $struct.get (type $0) (param $0 (ref none))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )

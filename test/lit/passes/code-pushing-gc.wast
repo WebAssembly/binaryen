@@ -7,7 +7,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result (ref func))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $out (exact nullfuncref) (ref exact nofunc)
+  ;; CHECK-NEXT:     (br_on_cast $out nullfuncref (ref nofunc)
   ;; CHECK-NEXT:      (ref.null nofunc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -48,7 +48,7 @@
   ;; CHECK-NEXT:     (ref.func $br_on_no)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $out (exact nullfuncref) (ref exact nofunc)
+  ;; CHECK-NEXT:     (br_on_cast $out nullfuncref (ref nofunc)
   ;; CHECK-NEXT:      (ref.null nofunc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

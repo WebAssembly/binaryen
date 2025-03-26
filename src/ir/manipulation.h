@@ -40,9 +40,10 @@ template<typename InputType> inline Nop* nop(InputType* target) {
 }
 
 template<typename InputType>
-inline RefNull* refNull(InputType* target, HeapType type) {
+inline RefNull* refNull(InputType* target, Type type) {
+  assert(type.isNullable() && type.getHeapType().isBottom());
   auto* ret = convert<InputType, RefNull>(target);
-  ret->finalize(Type(type.getBottom(), Nullable, Exact));
+  ret->finalize(type);
   return ret;
 }
 
