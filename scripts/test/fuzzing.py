@@ -96,6 +96,7 @@ unfuzzable = [
     # has (ref extern) imports, which the fuzzer cannot create values for when
     # it removes unknown imports
     'string-lifting.wast',
+    'string-lifting-custom-module.wast',
     # TODO: fuzzer support for stack switching
     'stack_switching.wast',
     'stack_switching_contnew.wast',

@@ -25,9 +25,9 @@ namespace wasm {
 // https://github.com/WebAssembly/js-string-builtins/blob/main/proposals/js-string-builtins/Overview.md
 extern const Name WasmStringsModule;
 
-// The name of the module to import string constants from, for magical imported
-// JS strings.
-extern const Name WasmStringConstsModule;
+// The default module to import string constants from, for magical imported JS
+// strings.
+extern const char* WasmStringConstsModule;
 
 } // namespace wasm
 

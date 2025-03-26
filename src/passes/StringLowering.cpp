@@ -23,7 +23,10 @@
 //
 // StringLowering does the same, and also replaces those new globals with
 // imported globals of type externref, for use with the string imports proposal.
-// String operations will likewise need to be lowered. TODO
+//
+// A pass argument allows customizing the module name for string constants:
+//
+//   --pass-arg=string-constants-module@MODULE_NAME
 //
 // Specs:
 // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md
@@ -235,6 +238,8 @@ struct StringLowering : public StringGathering {
   }
 
   void makeImports(Module* module) {
+    Name stringConstsModule =
+      getArgumentOrDefault("string-constants-module", WasmStringConstsModule);
     Index jsonImportIndex = 0;
     std::stringstream json;
     bool first = true;
@@ -244,7 +249,7 @@ struct StringLowering : public StringGathering {
           std::stringstream utf8;
           if (useMagicImports &&
               String::convertUTF16ToUTF8(utf8, c->string.str)) {
-            global->module = WasmStringConstsModule;
+            global->module = stringConstsModule;
             global->base = Name(utf8.str());
           } else {
             if (assertUTF8) {

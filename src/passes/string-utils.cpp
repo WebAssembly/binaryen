@@ -21,6 +21,6 @@ namespace wasm {
 
 const Name WasmStringsModule = "wasm:js-string";
 
-const Name WasmStringConstsModule = "'";
+const char* WasmStringConstsModule = "'";
 
 } // namespace wasm
