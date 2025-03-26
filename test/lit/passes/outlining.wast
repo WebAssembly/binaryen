@@ -1015,6 +1015,7 @@
 ;; to warrant outlining.
 (module
   ;; CHECK:      (type $0 (func))
+
   ;; CHECK:      (func $outline$ (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1073,6 +1074,19 @@
     drop        ;; End substring 2 repeat
   )
 )
+
+;; Tests unreachable type handling
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result f32)))
+
+  ;; CHECK:      (type $2 (func (result i32)))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
 
@@ -1080,7 +1094,6 @@
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-(module
   (func $a (result f32)
     i32.const 0
     drop
