@@ -7,9 +7,9 @@
 (module
   ;; CHECK:      (type $0 (array (mut i16)))
 
-  ;; CHECK:      (type $1 (func (param externref externref) (result i32)))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $2 (func))
+  ;; CHECK:      (type $2 (func (param externref externref) (result i32)))
 
   ;; CHECK:      (type $3 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -29,6 +29,8 @@
 
   ;; CHECK:      (import "string.const" "1" (global $"string.const_\"foo\"" (ref extern)))
 
+  ;; CHECK:      (import "string.const" "2" (global $"string.const_\"needs\\tescaping\\00.\\\'#%\\\"\"" (ref extern)))
+
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
 
   ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $4) (param i32) (result (ref extern))))
@@ -37,9 +39,9 @@
 
   ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $0) i32) (result i32)))
 
-  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $2) (param externref externref) (result i32)))
 
-  ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $2) (param externref externref) (result i32)))
 
   ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $7) (param externref) (result i32)))
 
@@ -47,7 +49,7 @@
 
   ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (func $consts (type $2)
+  ;; CHECK:      (func $consts (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.const "foo")
   ;; CHECK-NEXT:  )
@@ -73,6 +75,11 @@
     )
   )
 
+  ;; CHECK:      (func $tricky-consts (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "needs\tescaping\00.\'#%\"")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $tricky-consts
     (drop
       (string.const "needs\tescaping\00.'#%\"")
