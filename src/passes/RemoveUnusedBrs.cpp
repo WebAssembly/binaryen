@@ -859,8 +859,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (Type::isSubType(expr->type, type)) {
             return expr;
           }
-          if (type.isNonNullable() && expr->type.isNullable() &&
-              Type::isSubType(expr->type.with(NonNullable), type)) {
+          if (HeapType::isSubType(expr->type.getHeapType(),
+                                  type.getHeapType())) {
             return builder.makeRefAs(RefAsNonNull, expr);
           }
           return builder.makeRefCast(expr, type);

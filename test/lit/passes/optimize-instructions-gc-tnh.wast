@@ -509,7 +509,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (block
   ;; TNH-NEXT:   (drop
-  ;; TNH-NEXT:    (block (result (exact nullref))
+  ;; TNH-NEXT:    (block (result nullref)
   ;; TNH-NEXT:     (drop
   ;; TNH-NEXT:      (call $get-i32)
   ;; TNH-NEXT:     )
@@ -532,7 +532,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (block
   ;; NO_TNH-NEXT:   (drop
-  ;; NO_TNH-NEXT:    (block (result (exact nullref))
+  ;; NO_TNH-NEXT:    (block (result nullref)
   ;; NO_TNH-NEXT:     (drop
   ;; NO_TNH-NEXT:      (call $get-i32)
   ;; NO_TNH-NEXT:     )

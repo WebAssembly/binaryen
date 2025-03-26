@@ -1566,22 +1566,20 @@ void TranslateToFuzzReader::recombine(Function* func) {
       }
 
       std::vector<Type> ret;
-      ret.push_back(type);
+      auto heapType = type.getHeapType();
+      auto nullability = type.getNullability();
 
-      if (type.isNonNullable()) {
-        auto nullable = getRelevantTypes(type.with(Nullable));
-        ret.insert(ret.end(), nullable.begin(), nullable.end());
-      }
-      if (type.isExact()) {
-        auto inexact = getRelevantTypes(type.with(Inexact));
-        ret.insert(ret.end(), inexact.begin(), inexact.end());
-        // Do not consider exact references to supertypes.
-        return ret;
+      if (nullability == NonNullable) {
+        ret = getRelevantTypes(Type(heapType, Nullable));
       }
 
-      for (auto heapType = type.getHeapType().getSuperType(); heapType;
-           heapType = heapType->getSuperType()) {
-        ret.push_back(type.with(*heapType));
+      while (1) {
+        ret.push_back(Type(heapType, nullability));
+        auto super = heapType.getSuperType();
+        if (!super) {
+          break;
+        }
+        heapType = *super;
       }
 
       return ret;
@@ -4904,17 +4902,9 @@ static auto makeArrayBoundsCheck(Expression* ref,
                                  Function* func,
                                  Builder& builder,
                                  Expression* length = nullptr) {
-  // The reference might be a RefNull, in which case its type is exact. But we
-  // want to avoid creating exact-typed locals until we support them more widely
-  // in the fuzzer, so adjust the type. TODO: remove this once exact references
-  // are better supported.
-  Type refType = ref->type;
-  if (refType.isExact()) {
-    refType = refType.with(Inexact);
-  }
-  auto tempRef = builder.addVar(func, refType);
+  auto tempRef = builder.addVar(func, ref->type);
   auto tempIndex = builder.addVar(func, index->type);
-  auto* teeRef = builder.makeLocalTee(tempRef, ref, refType);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
 
@@ -4941,7 +4931,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
-              builder.makeLocalGet(tempRef, refType),
+              builder.makeLocalGet(tempRef, ref->type),
               builder.makeLocalGet(tempIndex, index->type),
               getLength};
   return result;
@@ -5330,35 +5320,11 @@ Nullability TranslateToFuzzReader::getNullability() {
   return Nullable;
 }
 
-Exactness TranslateToFuzzReader::getExactness() {
-  // Without GC, the only heap types are func and extern, neither of which is
-  // exactly inhabitable. To avoid introducing uninhabitable types, only
-  // generate exact references when GC is enabled. We don't need custom
-  // descriptors to be enabled even though that is the feature that introduces
-  // exact references because the binary writer can always generalize the exact
-  // reference types away.
-  //
-  // if (wasm.features.hasGC() && oneIn(8)) {
-  //   return Exact;
-  // }
-  //
-  // However, we cannot yet handle creating exact references in general, so for
-  // now we always generate inexact references when given the choice. TODO.
-  return Inexact;
-}
-
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   if (nullability == NonNullable) {
     return NonNullable;
   }
   return getNullability();
-}
-
-Exactness TranslateToFuzzReader::getSubType(Exactness exactness) {
-  if (exactness == Exact) {
-    return Exact;
-  }
-  return getExactness();
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
@@ -5453,18 +5419,9 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
       return type;
     }
-    if (type.isExact()) {
-      // The only other possible heap type is bottom, but we don't want to
-      // generate too many bottom types.
-      if (!heapType.isBottom() && oneIn(20)) {
-        heapType = heapType.getBottom();
-      }
-    } else {
-      heapType = getSubType(heapType);
-    }
+    heapType = getSubType(heapType);
     auto nullability = getSubType(type.getNullability());
-    auto exactness = getSubType(type.getExactness());
-    auto subType = Type(heapType, nullability, exactness);
+    auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.

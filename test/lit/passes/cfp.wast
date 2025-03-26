@@ -1034,7 +1034,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (exact nullref))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $struct3)
@@ -1233,7 +1233,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (exact nullref))
+  ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $struct3)

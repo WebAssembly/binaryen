@@ -1101,7 +1101,7 @@
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (exact nullref))
+  ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1180,7 +1180,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (mut (exact nullref)))))
+    ;; CHECK-NEXT:  (type $A (struct (field (mut nullref))))
     (type $A (struct (field (mut anyref))))
     ;; CHECK:       (type $B (struct (field (mut nullref))))
     (type $B (struct (field (mut (ref null $A)))))
@@ -1234,7 +1234,7 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct (field (mut (ref exact noextern)))))
+  ;; CHECK-NEXT:  (type $A (struct (field (mut (ref noextern)))))
   (type $A (struct (field (mut externref))))
 
   ;; CHECK:       (type $1 (func))
@@ -1252,7 +1252,7 @@
 
   ;; CHECK:      (func $struct.new (type $2) (param $extern externref) (result anyref)
   ;; CHECK-NEXT:  (struct.new $A
-  ;; CHECK-NEXT:   (ref.cast (ref exact noextern)
+  ;; CHECK-NEXT:   (ref.cast (ref noextern)
   ;; CHECK-NEXT:    (try (result externref)
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (struct.get $A 0
@@ -1304,7 +1304,7 @@
   ;; CHECK:      (func $struct.set (type $3) (param $ref (ref $A)) (param $extern externref)
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (ref.cast (ref exact noextern)
+  ;; CHECK-NEXT:   (ref.cast (ref noextern)
   ;; CHECK-NEXT:    (try (result externref)
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (struct.get $A 0
@@ -1581,7 +1581,7 @@
  (type $never (sub (struct (field i32))))
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $optimizable (struct (field (mut (exact nullfuncref)))))
+ ;; CHECK-NEXT:  (type $optimizable (struct (field (mut nullfuncref))))
  (type $optimizable (struct (field (mut (ref null func)))))
 
  ;; CHECK:       (type $2 (func))
@@ -1604,7 +1604,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block (result (ref exact none))
+ ;; CHECK-NEXT:     (block (result (ref none))
  ;; CHECK-NEXT:      (ref.as_non_null
  ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
