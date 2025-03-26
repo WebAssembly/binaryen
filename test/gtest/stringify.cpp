@@ -365,14 +365,10 @@ TEST_F(StringifyTest, FilterBranches) {
   parseWast(wasm, branchesModuleText);
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
-  auto substrings =
-  StringifyProcessor::repeatSubstrings(stringify.hashString);
-  auto result =
-  StringifyProcessor::filterBranches(substrings, stringify.exprs);
+  auto substrings = StringifyProcessor::repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::filterBranches(substrings, stringify.exprs);
 
-  EXPECT_EQ(
-    result,
-    (std::vector<SuffixTree::RepeatedSubstring>{}));
+  EXPECT_EQ(result, (std::vector<SuffixTree::RepeatedSubstring>{}));
 }
 
 TEST_F(StringifyTest, FilterReturn) {
@@ -390,12 +386,8 @@ TEST_F(StringifyTest, FilterReturn) {
   parseWast(wasm, branchesModuleText);
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
-  auto substrings =
-  StringifyProcessor::repeatSubstrings(stringify.hashString);
-  auto result =
-  StringifyProcessor::filterBranches(substrings, stringify.exprs);
+  auto substrings = StringifyProcessor::repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::filterBranches(substrings, stringify.exprs);
 
-  EXPECT_EQ(
-    result,
-    (std::vector<SuffixTree::RepeatedSubstring>{}));
+  EXPECT_EQ(result, (std::vector<SuffixTree::RepeatedSubstring>{}));
 }
