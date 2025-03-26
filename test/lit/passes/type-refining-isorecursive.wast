@@ -5,11 +5,11 @@
  ;; The types should be refined to a set of three mutually recursive types.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $2 (sub (struct (field (exact nullexternref)) (field (ref $0)))))
+ ;; CHECK-NEXT:  (type $2 (sub (struct (field nullexternref) (field (ref $0)))))
 
- ;; CHECK:       (type $1 (sub (struct (field (exact nullfuncref)) (field (ref $2)))))
+ ;; CHECK:       (type $1 (sub (struct (field nullfuncref) (field (ref $2)))))
 
- ;; CHECK:       (type $0 (sub (struct (field (exact nullref)) (field (ref $1)))))
+ ;; CHECK:       (type $0 (sub (struct (field nullref) (field (ref $1)))))
  (type $0 (sub (struct nullref anyref)))
  (type $1 (sub (struct nullfuncref anyref)))
  (type $2 (sub (struct nullexternref anyref)))
