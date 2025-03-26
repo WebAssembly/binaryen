@@ -428,32 +428,6 @@ TEST_F(TypeTest, CanonicalizeUses) {
   EXPECT_NE(built[4], built[6]);
 }
 
-TEST_F(TypeTest, CanonicalizeExactRefs) {
-  TypeBuilder builder(4);
-
-  // Types that vary in exactness or nullability of references are different.
-  Type a = builder.getTempRefType(builder[0], Nullable, Inexact);
-  Type b = builder.getTempRefType(builder[1], NonNullable, Inexact);
-  Type c = builder.getTempRefType(builder[2], Nullable, Exact);
-  Type d = builder.getTempRefType(builder[3], NonNullable, Exact);
-
-  builder[0] = Struct({Field(a, Mutable)});
-  builder[1] = Struct({Field(b, Mutable)});
-  builder[2] = Struct({Field(c, Mutable)});
-  builder[3] = Struct({Field(d, Mutable)});
-
-  auto result = builder.build();
-  ASSERT_TRUE(result);
-  auto built = *result;
-
-  EXPECT_NE(built[0], built[1]);
-  EXPECT_NE(built[0], built[2]);
-  EXPECT_NE(built[0], built[3]);
-  EXPECT_NE(built[1], built[2]);
-  EXPECT_NE(built[1], built[3]);
-  EXPECT_NE(built[2], built[3]);
-}
-
 TEST_F(TypeTest, CanonicalizeExactHeapTypes) {
   TypeBuilder builder(8);
 
@@ -1260,26 +1234,18 @@ FUZZ_TEST(TypeFuzzTest, TestHeapTypeRelationsFuzz)
 #endif // FUZZTEST
 
 TEST_F(TypeTest, TestTypeRelations) {
-  Type any = Type(HeapType::any, NonNullable, Inexact);
-  Type nullAny = Type(HeapType::any, Nullable, Inexact);
-  Type exactAny = Type(HeapType::any, NonNullable, Exact);
-  Type nullExactAny = Type(HeapType::any, Nullable, Exact);
+  Type any = Type(HeapType::any, NonNullable);
+  Type nullAny = Type(HeapType::any, Nullable);
 
   HeapType defined = Struct();
-  Type def = Type(defined, NonNullable, Inexact);
-  Type nullDef = Type(defined, Nullable, Inexact);
-  Type exactDef = Type(defined, NonNullable, Exact);
-  Type nullExactDef = Type(defined, Nullable, Exact);
+  Type def = Type(defined, NonNullable);
+  Type nullDef = Type(defined, Nullable);
 
-  Type none = Type(HeapType::none, NonNullable, Inexact);
-  Type nullNone = Type(HeapType::none, Nullable, Inexact);
-  Type exactNone = Type(HeapType::none, NonNullable, Exact);
-  Type nullExactNone = Type(HeapType::none, Nullable, Exact);
+  Type none = Type(HeapType::none, NonNullable);
+  Type nullNone = Type(HeapType::none, Nullable);
 
-  Type func = Type(HeapType::func, NonNullable, Inexact);
-  Type nullFunc = Type(HeapType::func, Nullable, Inexact);
-  Type exactFunc = Type(HeapType::func, NonNullable, Exact);
-  Type nullExactFunc = Type(HeapType::func, Nullable, Exact);
+  Type func = Type(HeapType::func, NonNullable);
+  Type nullFunc = Type(HeapType::func, Nullable);
 
   Type i32 = Type::i32;
   Type unreachable = Type::unreachable;
@@ -1338,165 +1304,54 @@ TEST_F(TypeTest, TestTypeRelations) {
 
   assertLUB(any, any, any, any);
   assertLUB(any, nullAny, nullAny, any);
-  assertLUB(any, exactAny, any, exactAny);
-  assertLUB(any, nullExactAny, nullAny, exactAny);
   assertLUB(any, def, any, def);
   assertLUB(any, nullDef, nullAny, def);
-  assertLUB(any, exactDef, any, exactDef);
-  assertLUB(any, nullExactDef, nullAny, exactDef);
   assertLUB(any, none, any, none);
   assertLUB(any, nullNone, nullAny, none);
-  assertLUB(any, exactNone, any, exactNone);
-  assertLUB(any, nullExactNone, nullAny, exactNone);
   assertLUB(any, func, Type(Type::none), unreachable);
   assertLUB(any, nullFunc, Type(Type::none), unreachable);
-  assertLUB(any, exactFunc, Type(Type::none), unreachable);
-  assertLUB(any, nullExactFunc, Type(Type::none), unreachable);
   assertLUB(any, i32, Type(Type::none), unreachable);
   assertLUB(any, unreachable, any, unreachable);
 
   assertLUB(nullAny, nullAny, nullAny, nullAny);
-  assertLUB(nullAny, exactAny, nullAny, exactAny);
-  assertLUB(nullAny, nullExactAny, nullAny, nullExactAny);
   assertLUB(nullAny, def, nullAny, def);
   assertLUB(nullAny, nullDef, nullAny, nullDef);
-  assertLUB(nullAny, exactDef, nullAny, exactDef);
-  assertLUB(nullAny, nullExactDef, nullAny, nullExactDef);
   assertLUB(nullAny, none, nullAny, none);
   assertLUB(nullAny, nullNone, nullAny, nullNone);
-  assertLUB(nullAny, exactNone, nullAny, exactNone);
-  assertLUB(nullAny, nullExactNone, nullAny, nullExactNone);
   assertLUB(nullAny, func, Type(Type::none), unreachable);
   assertLUB(nullAny, nullFunc, Type(Type::none), unreachable);
-  assertLUB(nullAny, exactFunc, Type(Type::none), unreachable);
-  assertLUB(nullAny, nullExactFunc, Type(Type::none), unreachable);
   assertLUB(nullAny, i32, Type(Type::none), unreachable);
   assertLUB(nullAny, unreachable, nullAny, unreachable);
 
-  assertLUB(exactAny, exactAny, exactAny, exactAny);
-  assertLUB(exactAny, nullExactAny, nullExactAny, exactAny);
-  assertLUB(exactAny, def, any, exactNone);
-  assertLUB(exactAny, nullDef, nullAny, exactNone);
-  assertLUB(exactAny, exactDef, any, exactNone);
-  assertLUB(exactAny, nullExactDef, nullAny, exactNone);
-  assertLUB(exactAny, none, any, exactNone);
-  assertLUB(exactAny, nullNone, nullAny, exactNone);
-  assertLUB(exactAny, exactNone, exactAny, exactNone);
-  assertLUB(exactAny, nullExactNone, nullExactAny, exactNone);
-  assertLUB(exactAny, func, Type(Type::none), unreachable);
-  assertLUB(exactAny, nullFunc, Type(Type::none), unreachable);
-  assertLUB(exactAny, exactFunc, Type(Type::none), unreachable);
-  assertLUB(exactAny, nullExactFunc, Type(Type::none), unreachable);
-  assertLUB(exactAny, i32, Type(Type::none), unreachable);
-  assertLUB(exactAny, unreachable, exactAny, unreachable);
-
-  assertLUB(nullExactAny, nullExactAny, nullExactAny, nullExactAny);
-  assertLUB(nullExactAny, def, nullAny, exactNone);
-  assertLUB(nullExactAny, nullDef, nullAny, nullExactNone);
-  assertLUB(nullExactAny, exactDef, nullAny, exactNone);
-  assertLUB(nullExactAny, nullExactDef, nullAny, nullExactNone);
-  assertLUB(nullExactAny, none, nullAny, exactNone);
-  assertLUB(nullExactAny, nullNone, nullAny, nullExactNone);
-  assertLUB(nullExactAny, exactNone, nullExactAny, exactNone);
-  assertLUB(nullExactAny, nullExactNone, nullExactAny, nullExactNone);
-  assertLUB(nullExactAny, func, Type(Type::none), unreachable);
-  assertLUB(nullExactAny, nullFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactAny, exactFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactAny, nullExactFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactAny, i32, Type(Type::none), unreachable);
-  assertLUB(nullExactAny, unreachable, nullExactAny, unreachable);
-
   assertLUB(def, def, def, def);
   assertLUB(def, nullDef, nullDef, def);
-  assertLUB(def, exactDef, def, exactDef);
-  assertLUB(def, nullExactDef, nullDef, exactDef);
   assertLUB(def, none, def, none);
   assertLUB(def, nullNone, nullDef, none);
-  assertLUB(def, exactNone, def, exactNone);
-  assertLUB(def, nullExactNone, nullDef, exactNone);
   assertLUB(def, func, Type(Type::none), unreachable);
   assertLUB(def, nullFunc, Type(Type::none), unreachable);
-  assertLUB(def, exactFunc, Type(Type::none), unreachable);
-  assertLUB(def, nullExactFunc, Type(Type::none), unreachable);
   assertLUB(def, i32, Type(Type::none), unreachable);
   assertLUB(def, unreachable, def, unreachable);
 
   assertLUB(nullDef, nullDef, nullDef, nullDef);
-  assertLUB(nullDef, exactDef, nullDef, exactDef);
-  assertLUB(nullDef, nullExactDef, nullDef, nullExactDef);
   assertLUB(nullDef, none, nullDef, none);
   assertLUB(nullDef, nullNone, nullDef, nullNone);
-  assertLUB(nullDef, exactNone, nullDef, exactNone);
-  assertLUB(nullDef, nullExactNone, nullDef, nullExactNone);
   assertLUB(nullDef, func, Type(Type::none), unreachable);
   assertLUB(nullDef, nullFunc, Type(Type::none), unreachable);
-  assertLUB(nullDef, exactFunc, Type(Type::none), unreachable);
-  assertLUB(nullDef, nullExactFunc, Type(Type::none), unreachable);
   assertLUB(nullDef, i32, Type(Type::none), unreachable);
   assertLUB(nullDef, unreachable, nullDef, unreachable);
 
-  assertLUB(exactDef, exactDef, exactDef, exactDef);
-  assertLUB(exactDef, nullExactDef, nullExactDef, exactDef);
-  assertLUB(exactDef, none, def, exactNone);
-  assertLUB(exactDef, nullNone, nullDef, exactNone);
-  assertLUB(exactDef, exactNone, exactDef, exactNone);
-  assertLUB(exactDef, nullExactNone, nullExactDef, exactNone);
-  assertLUB(exactDef, func, Type(Type::none), unreachable);
-  assertLUB(exactDef, nullFunc, Type(Type::none), unreachable);
-  assertLUB(exactDef, exactFunc, Type(Type::none), unreachable);
-  assertLUB(exactDef, nullExactFunc, Type(Type::none), unreachable);
-  assertLUB(exactDef, i32, Type(Type::none), unreachable);
-  assertLUB(exactDef, unreachable, exactDef, unreachable);
-
-  assertLUB(nullExactDef, nullExactDef, nullExactDef, nullExactDef);
-  assertLUB(nullExactDef, none, nullDef, exactNone);
-  assertLUB(nullExactDef, nullNone, nullDef, nullExactNone);
-  assertLUB(nullExactDef, exactNone, nullExactDef, exactNone);
-  assertLUB(nullExactDef, nullExactNone, nullExactDef, nullExactNone);
-  assertLUB(nullExactDef, func, Type(Type::none), unreachable);
-  assertLUB(nullExactDef, nullFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactDef, exactFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactDef, nullExactFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactDef, i32, Type(Type::none), unreachable);
-  assertLUB(nullExactDef, unreachable, nullExactDef, unreachable);
-
   assertLUB(none, none, none, none);
   assertLUB(none, nullNone, nullNone, none);
-  assertLUB(none, exactNone, none, exactNone);
-  assertLUB(none, nullExactNone, nullNone, exactNone);
   assertLUB(none, func, Type(Type::none), unreachable);
   assertLUB(none, nullFunc, Type(Type::none), unreachable);
-  assertLUB(none, exactFunc, Type(Type::none), unreachable);
-  assertLUB(none, nullExactFunc, Type(Type::none), unreachable);
   assertLUB(none, i32, Type(Type::none), unreachable);
   assertLUB(none, unreachable, none, unreachable);
 
   assertLUB(nullNone, nullNone, nullNone, nullNone);
-  assertLUB(nullNone, exactNone, nullNone, exactNone);
-  assertLUB(nullNone, nullExactNone, nullNone, nullExactNone);
   assertLUB(nullNone, func, Type(Type::none), unreachable);
   assertLUB(nullNone, nullFunc, Type(Type::none), unreachable);
-  assertLUB(nullNone, exactFunc, Type(Type::none), unreachable);
-  assertLUB(nullNone, nullExactFunc, Type(Type::none), unreachable);
   assertLUB(nullNone, i32, Type(Type::none), unreachable);
   assertLUB(nullNone, unreachable, nullNone, unreachable);
-
-  assertLUB(exactNone, exactNone, exactNone, exactNone);
-  assertLUB(exactNone, nullExactNone, nullExactNone, exactNone);
-  assertLUB(exactNone, func, Type(Type::none), unreachable);
-  assertLUB(exactNone, nullFunc, Type(Type::none), unreachable);
-  assertLUB(exactNone, exactFunc, Type(Type::none), unreachable);
-  assertLUB(exactNone, nullExactFunc, Type(Type::none), unreachable);
-  assertLUB(exactNone, i32, Type(Type::none), unreachable);
-  assertLUB(exactNone, unreachable, exactNone, unreachable);
-
-  assertLUB(nullExactNone, nullExactNone, nullExactNone, nullExactNone);
-  assertLUB(nullExactNone, func, Type(Type::none), unreachable);
-  assertLUB(nullExactNone, nullFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactNone, exactFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactNone, nullExactFunc, Type(Type::none), unreachable);
-  assertLUB(nullExactNone, i32, Type(Type::none), unreachable);
-  assertLUB(nullExactNone, unreachable, nullExactNone, unreachable);
 }
 
 TEST_F(TypeTest, TestSubtypeErrors) {

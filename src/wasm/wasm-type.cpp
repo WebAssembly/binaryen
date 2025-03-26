@@ -790,19 +790,11 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     return Type(elems);
   }
   if (a.isRef() && b.isRef()) {
-    auto heapTypeA = a.getHeapType();
-    auto heapTypeB = b.getHeapType();
-    if (auto heapType = HeapType::getLeastUpperBound(heapTypeA, heapTypeB)) {
+    if (auto heapType =
+          HeapType::getLeastUpperBound(a.getHeapType(), b.getHeapType())) {
       auto nullability =
         (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
-      auto exactness = (a.isInexact() || b.isInexact()) ? Inexact : Exact;
-      // The LUB can only be exact if the heap types are the same or one of them
-      // is bottom.
-      if (heapTypeA != heapTypeB && !heapTypeA.isBottom() &&
-          !heapTypeB.isBottom()) {
-        exactness = Inexact;
-      }
-      return Type(*heapType, nullability, exactness);
+      return Type(*heapType, nullability);
     }
   }
   return Type::none;
@@ -836,7 +828,6 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   }
   auto nullability =
     (a.isNonNullable() || b.isNonNullable()) ? NonNullable : Nullable;
-  auto exactness = (a.isExact() || b.isExact()) ? Exact : Inexact;
   HeapType heapType;
   if (HeapType::isSubType(heapA, heapB)) {
     heapType = heapA;
@@ -845,13 +836,7 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   } else {
     heapType = heapA.getBottom();
   }
-  // If one of the types is exact, but the GLB heap type is different than its
-  // heap type, then we must make the GLB heap type bottom.
-  if ((a.isExact() && heapType != heapA) ||
-      (b.isExact() && heapType != heapB)) {
-    heapType = heapA.getBottom();
-  }
-  return Type(heapType, nullability, exactness);
+  return Type(heapType, nullability);
 }
 
 const Type& Type::Iterator::operator*() const {
@@ -1506,24 +1491,14 @@ bool SubTyper::isSubType(Type a, Type b) {
   if (a == Type::unreachable) {
     return true;
   }
+  if (a.isRef() && b.isRef()) {
+    return (a.isNullable() == b.isNullable() || !a.isNullable()) &&
+           isSubType(a.getHeapType(), b.getHeapType());
+  }
   if (a.isTuple() && b.isTuple()) {
     return isSubType(a.getTuple(), b.getTuple());
   }
-  if (!a.isRef() || !b.isRef()) {
-    return false;
-  }
-  if (a.isNullable() && !b.isNullable()) {
-    return false;
-  }
-  if (a.isInexact() && !b.isInexact()) {
-    return false;
-  }
-  auto heapTypeA = a.getHeapType();
-  auto heapTypeB = b.getHeapType();
-  if (b.isExact() && !heapTypeA.isBottom()) {
-    return heapTypeA == heapTypeB;
-  }
-  return isSubType(heapTypeA, heapTypeB);
+  return false;
 }
 
 bool SubTyper::isSubType(HeapType a, HeapType b) {
@@ -1677,68 +1652,43 @@ std::ostream& TypePrinter::print(Type type) {
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
-      if (type.isExact()) {
-        os << "(exact ";
-      }
       // Print shorthands for certain basic heap types.
       switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
-          os << "externref";
-          break;
+          return os << "externref";
         case HeapType::func:
-          os << "funcref";
-          break;
+          return os << "funcref";
         case HeapType::cont:
-          os << "contref";
-          break;
+          return os << "contref";
         case HeapType::any:
-          os << "anyref";
-          break;
+          return os << "anyref";
         case HeapType::eq:
-          os << "eqref";
-          break;
+          return os << "eqref";
         case HeapType::i31:
-          os << "i31ref";
-          break;
+          return os << "i31ref";
         case HeapType::struct_:
-          os << "structref";
-          break;
+          return os << "structref";
         case HeapType::array:
-          os << "arrayref";
-          break;
+          return os << "arrayref";
         case HeapType::exn:
-          os << "exnref";
-          break;
+          return os << "exnref";
         case HeapType::string:
-          os << "stringref";
-          break;
+          return os << "stringref";
         case HeapType::none:
-          os << "nullref";
-          break;
+          return os << "nullref";
         case HeapType::noext:
-          os << "nullexternref";
-          break;
+          return os << "nullexternref";
         case HeapType::nofunc:
-          os << "nullfuncref";
-          break;
+          return os << "nullfuncref";
         case HeapType::nocont:
-          os << "nullcontref";
-          break;
+          return os << "nullcontref";
         case HeapType::noexn:
-          os << "nullexnref";
-          break;
+          return os << "nullexnref";
       }
-      if (type.isExact()) {
-        os << ')';
-      }
-      return os;
     }
     os << "(ref ";
     if (type.isNullable()) {
       os << "null ";
-    }
-    if (type.isExact()) {
-      os << "exact ";
     }
     printHeapTypeName(heapType);
     os << ')';
@@ -1983,9 +1933,8 @@ size_t RecGroupHasher::hash(Type type) const {
     return digest;
   }
   assert(type.isRef());
-  wasm::rehash(digest, type.getNullability());
-  wasm::rehash(digest, type.getExactness());
-  hash_combine(digest, hash(type.getHeapType()));
+  rehash(digest, type.getNullability());
+  rehash(digest, hash(type.getHeapType()));
   return digest;
 }
 
@@ -2118,7 +2067,6 @@ bool RecGroupEquator::eq(Type a, Type b) const {
   }
   if (a.isRef() && b.isRef()) {
     return a.getNullability() == b.getNullability() &&
-           a.getExactness() == b.getExactness() &&
            eq(a.getHeapType(), b.getHeapType());
   }
   return false;
@@ -2332,10 +2280,8 @@ Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
   return impl->tupleStore.insert(tuple);
 }
 
-Type TypeBuilder::getTempRefType(HeapType type,
-                                 Nullability nullable,
-                                 Exactness exact) {
-  return Type(type, nullable, exact);
+Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
+  return Type(type, nullable);
 }
 
 void TypeBuilder::setSubType(size_t i, std::optional<HeapType> super) {

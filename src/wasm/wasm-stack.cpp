@@ -2260,38 +2260,22 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->castType.isExact() &&
-      parent.getModule()->features.hasCustomDescriptors()) {
-    // Fall back to the general form with a reftype immediate.
-    o << U32LEB(BinaryConsts::RefTestRT);
-    parent.writeType(curr->castType);
+  if (curr->castType.isNullable()) {
+    o << U32LEB(BinaryConsts::RefTestNull);
   } else {
-    // Use the special-case form with heap type immediate.
-    if (curr->castType.isNullable()) {
-      o << U32LEB(BinaryConsts::RefTestNull);
-    } else {
-      o << U32LEB(BinaryConsts::RefTest);
-    }
-    parent.writeHeapType(curr->castType.getHeapType());
+    o << U32LEB(BinaryConsts::RefTest);
   }
+  parent.writeHeapType(curr->castType.getHeapType());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->type.isExact() &&
-      parent.getModule()->features.hasCustomDescriptors()) {
-    // Fall back to the general form with a reftype immediate.
-    o << U32LEB(BinaryConsts::RefCastRT);
-    parent.writeType(curr->type);
+  if (curr->type.isNullable()) {
+    o << U32LEB(BinaryConsts::RefCastNull);
   } else {
-    // Use the special-case form with heap type immediate.
-    if (curr->type.isNullable()) {
-      o << U32LEB(BinaryConsts::RefCastNull);
-    } else {
-      o << U32LEB(BinaryConsts::RefCast);
-    }
-    parent.writeHeapType(curr->type.getHeapType());
+    o << U32LEB(BinaryConsts::RefCast);
   }
+  parent.writeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -2314,24 +2298,8 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       }
       assert(curr->ref->type.isRef());
       assert(Type::isSubType(curr->castType, curr->ref->type));
-      uint8_t flags = 0;
-      if (curr->ref->type.isNullable()) {
-        flags |= BinaryConsts::BrOnCastFlag::InputNullable;
-      }
-      if (curr->castType.isNullable()) {
-        flags |= BinaryConsts::BrOnCastFlag::OutputNullable;
-      }
-      if (parent.getModule()->features.hasCustomDescriptors()) {
-        // If custom descriptors (and therefore exact references) are not
-        // enabled, then these flags wouldn't be recognized, and we will be
-        // generalizing all exact references to be non-exact anyway.
-        if (curr->ref->type.isExact()) {
-          flags |= BinaryConsts::BrOnCastFlag::InputExact;
-        }
-        if (curr->castType.isExact()) {
-          flags |= BinaryConsts::BrOnCastFlag::OutputExact;
-        }
-      }
+      uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
+                      (curr->castType.isNullable() ? 2 : 0);
       o << flags;
       o << U32LEB(getBreakIndex(curr->name));
       parent.writeHeapType(curr->ref->type.getHeapType());

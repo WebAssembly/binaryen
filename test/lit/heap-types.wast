@@ -12,7 +12,7 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test (ref exact none)
+  ;; CHECK-NEXT:   (ref.test (ref none)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -29,7 +29,7 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (exact nullref)
+  ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
