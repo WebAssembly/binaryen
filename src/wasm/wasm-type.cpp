@@ -228,7 +228,7 @@ namespace {
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
-  return (HeapTypeInfo*)(ht.with(Inexact).getID());
+  return (HeapTypeInfo*)(ht.getRawID());
 }
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
@@ -1247,7 +1247,7 @@ RecGroup HeapType::getRecGroup() const {
   } else {
     // Mark the low bit to signify that this is a trivial recursion group and
     // points to a heap type info rather than a vector of heap types.
-    return RecGroup(this->with(Inexact).id | 1);
+    return RecGroup(getRawID() | 1);
   }
 }
 
@@ -2543,7 +2543,8 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto type = asHeapType(typeInfos[i]);
     for (auto child : type.getHeapTypeChildren()) {
-      if (isTemp(child) && !seenTypes.count(child.with(Inexact))) {
+      HeapType rawChild(child.getRawID());
+      if (isTemp(rawChild) && !seenTypes.count(rawChild)) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReason::ForwardChildReference}};
       }

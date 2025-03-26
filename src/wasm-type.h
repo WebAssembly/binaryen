@@ -129,7 +129,7 @@ public:
   constexpr HeapType(BasicHeapType id) : id(id) {}
 
   // But converting raw TypeID is more dangerous, so make it explicit
-  explicit HeapType(TypeID id) : id(id) {}
+  explicit constexpr HeapType(TypeID id) : id(id) {}
 
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
@@ -224,8 +224,6 @@ public:
   // Get the index of this non-basic type within its recursion group.
   size_t getRecGroupIndex() const;
 
-  constexpr TypeID getID() const { return id; }
-
   // Get the shared or unshared version of this basic heap type.
   constexpr BasicHeapType getBasic(Shareability share) const {
     assert(isBasic());
@@ -233,10 +231,15 @@ public:
                                          : (id & ~SharedMask));
   }
 
-  HeapType with(Exactness exactness) const {
+  constexpr HeapType with(Exactness exactness) const {
     assert((!isBasic() || exactness == Inexact) &&
            "abstract types cannot be exact");
     return HeapType(exactness == Exact ? (id | ExactMask) : (id & ~ExactMask));
+  }
+
+  constexpr TypeID getID() const { return id; }
+  constexpr TypeID getRawID() const {
+    return isBasic() ? id : with(Inexact).id;
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
