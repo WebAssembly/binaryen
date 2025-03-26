@@ -59,8 +59,8 @@ struct StringLifting : public Pass {
     //
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
-    Name stringConstsModule = getArgumentOrDefault(
-      "string-constants-module", WasmStringConstsModule);
+    Name stringConstsModule =
+      getArgumentOrDefault("string-constants-module", WasmStringConstsModule);
     for (auto& global : module->globals) {
       if (!global->imported()) {
         continue;
