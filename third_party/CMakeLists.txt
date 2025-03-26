@@ -17,7 +17,7 @@ if(BUILD_LLVM_DWARF)
 endif()
 
 if(BUILD_MIMALLOC)
-  # We only need the static library, nothing else.
+  # Match static/dynamic linking between libbinaryen and mimalloc
   set(MI_BUILD_STATIC ${BUILD_STATIC_LIB})
   if (BUILD_STATIC_LIB)
     set(MI_BUILD_SHARED OFF)
@@ -30,6 +30,7 @@ if(BUILD_MIMALLOC)
   add_compile_definitions(MI_DEBUG=0)
   
   if(BUILD_STATIC_LIB)
+    # No need to install libmimalloc.a when it's linked statically into the tools.
     add_subdirectory(mimalloc EXCLUDE_FROM_ALL)
   else()
     add_subdirectory(mimalloc)

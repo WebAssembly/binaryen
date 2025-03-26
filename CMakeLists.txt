@@ -57,7 +57,7 @@ endif()
 # Alpine Linux build we use for producing official Linux binaries), because
 # musl libc's allocator has very bad performance on heavily multi-threaded
 # workloads / high core count machines. But it also works with dynamic linking
-# with a small performance advantage over the glibc allocator.
+# with a small performance advantage in some cases over the glibc allocator.
 # See https://github.com/WebAssembly/binaryen/issues/5561.
 option(BUILD_MIMALLOC "Build with mimalloc allocator" OFF)
 
@@ -470,7 +470,7 @@ endif()
 
 if(BUILD_MIMALLOC)
   if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux") OR EMSCRIPTEN)
-    message(FATAL_ERROR "Statically linking mimalloc is only supported when building as a native, statically linked library on Linux.")
+    message(FATAL_ERROR "Linking mimalloc is only supported on Linux.")
   endif()
   message(STATUS "Building with mimalloc allocator.")
   if(BUILD_STATIC_LIB)
