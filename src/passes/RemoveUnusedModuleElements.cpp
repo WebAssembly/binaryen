@@ -546,8 +546,8 @@ struct Analyzer {
     for (auto element : finder.elements) {
       // Avoid repeated work. Note that globals with multiple references to
       // previous globals can lead to exponential work, so this is important.
-      // (If C refers twice to B, and B refers twice to C, then when we process
-      // C we would, naively, scan B twice and C four times.)
+      // (If C refers twice to B, and B refers twice to A, then when we process
+      // C we would, naively, scan B twice and A four times.)
       auto [_, inserted] = referenced.insert(element);
       if (!inserted) {
         continue;
