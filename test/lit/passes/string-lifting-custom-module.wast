@@ -3,7 +3,7 @@
 ;; Similar to string-lifting but the strings are imported from a
 ;; custom module name.
 
-;; RUN: foreach %s %t wasm-opt -all --string-lifting --pass-arg=string-lifting-const-module@strings -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt -all --string-lifting --pass-arg=string-constants-module@strings -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $0 (func))

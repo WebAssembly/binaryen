@@ -21,7 +21,7 @@
 //
 // A pass argument allows customizing the module name for string constants:
 //
-//   --pass-arg=string-lifting-const-module@MODULE_NAME
+//   --pass-arg=string-constants-module@MODULE_NAME
 //
 
 #include "ir/utils.h"
@@ -60,7 +60,7 @@ struct StringLifting : public Pass {
     // That is, they are imported from module "'" and the basename is the
     // actual string. Find them all so we can apply them.
     Name stringConstsModule = getArgumentOrDefault(
-      "string-lifting-const-module", WasmStringConstsModule);
+      "string-constants-module", WasmStringConstsModule);
     for (auto& global : module->globals) {
       if (!global->imported()) {
         continue;
