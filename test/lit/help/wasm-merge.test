@@ -25,7 +25,7 @@
 ;; CHECK-NEXT: wasm-merge options:
 ;; CHECK-NEXT: -------------------
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:   --output,-o                          Output file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source maps from the specified
 ;; CHECK-NEXT:                                        files

@@ -9,8 +9,7 @@
 ;; CHECK-NEXT: wasm-opt options:
 ;; CHECK-NEXT: -----------------
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                                   Output file (stdout if not
-;; CHECK-NEXT:                                                 specified)
+;; CHECK-NEXT:   --output,-o                                   Output file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                                Emit text instead of binary for
 ;; CHECK-NEXT:                                                 the output file
@@ -503,6 +502,9 @@
 ;; CHECK-NEXT:                                                 __stack_pointer global
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-gathering                            gathers wasm strings to globals
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lifting                              lift string imports to wasm
+;; CHECK-NEXT:                                                 strings
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-lowering                             lowers wasm strings and
 ;; CHECK-NEXT:                                                 operations to imports
