@@ -126,7 +126,8 @@ struct SubTypes {
           basic = HeapTypes::array.getBasic(share);
           break;
         case HeapTypeKind::Cont:
-          WASM_UNREACHABLE("TODO: cont");
+          basic = HeapTypes::cont.getBasic(share);
+          break;
         case HeapTypeKind::Basic:
           WASM_UNREACHABLE("unexpected kind");
       }

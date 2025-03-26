@@ -104,6 +104,12 @@ unfuzzable = [
     'stack_switching_resume.wast',
     'stack_switching_resume_throw.wast',
     'stack_switching_switch.wast',
+    'stack_switching_switch_2.wast',
+    'O3_stack-switching.wast',
+    'coalesce-locals-stack-switching.wast',
+    'dce-stack-switching.wast',
+    'precompute-stack-switching.wast',
+    'vacuum-stack-switching.wast'
     # TODO: fuzzer support for exact references
     'exact-references.wast',
     'optimize-instructions-exact.wast',
