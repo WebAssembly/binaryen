@@ -79,7 +79,7 @@ struct StringLifting : public Pass {
         json::Value array;
         array.parse(copy.data());
         if (!array.isArray()) {
-          Fatal() << "StringLifting: bad string.const section (!array)";
+          Fatal() << "StringLifting: string.const section should be a JSON array";
         }
 
         // We have the array of constants from the section. Find globals that
