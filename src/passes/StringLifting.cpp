@@ -99,6 +99,10 @@ struct StringLifting : public Pass {
             Fatal()
               << "StringLifting: string.const section entry is not a string";
           }
+          if (importedStrings.count(global->name)) {
+            Fatal()
+              << "StringLifting: string.const section tramples other const";
+          }
           importedStrings[global->name] = item->getIString();
         }
         break;
