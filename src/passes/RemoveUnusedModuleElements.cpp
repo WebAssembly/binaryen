@@ -544,7 +544,10 @@ struct Analyzer {
     finder.walk(curr);
 
     for (auto element : finder.elements) {
-      referenced.insert(element);
+      auto [_, inserted] = referenced.insert(element);
+      if (!inserted) {
+        continue;
+      }
 
       auto& [kind, value] = element;
       if (kind == ModuleElementKind::Global) {
