@@ -26,7 +26,7 @@
 //
 // A pass argument allows customizing the module name for string constants:
 //
-//   --pass-arg=string-lowering-const-module@MODULE_NAME
+//   --pass-arg=string-constants-module@MODULE_NAME
 //
 // Specs:
 // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md
@@ -239,7 +239,7 @@ struct StringLowering : public StringGathering {
 
   void makeImports(Module* module) {
     Name stringConstsModule = getArgumentOrDefault(
-      "string-lowering-const-module", WasmStringConstsModule);
+      "string-constants-module", WasmStringConstsModule);
     Index jsonImportIndex = 0;
     std::stringstream json;
     bool first = true;

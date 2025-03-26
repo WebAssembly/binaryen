@@ -4,7 +4,7 @@
 ;; custom module name. The string constant should be imported from "strings", as
 ;; the pass-arg specifies.
 
-;; RUN: wasm-opt %s -all --string-lowering-magic-imports --pass-arg=string-lowering-const-module@strings -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --string-lowering-magic-imports --pass-arg=string-constants-module@strings -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $0 (array (mut i16)))
