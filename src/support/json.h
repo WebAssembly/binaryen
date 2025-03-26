@@ -260,7 +260,7 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      // Start close at the opening ", and in the loop below we will always
+      // Start |close| at the opening ", and in the loop below we will always
       // begin looking at the first character after.
       char* close = curr;
       // Skip escaped "
@@ -411,9 +411,9 @@ struct Value {
   }
 
 private:
-  // If the string has no escaped characters, XXXurn it as-is (this efficiently
-  // lets us reuse strings from the input). If it does have escaping, unescape
-  // it.
+  // If the string has no escaped characters, setString() the char* directly. If
+  // it does require escaping, do that and intern a new string with those
+  // contents.
   void unescapeAndSetString(char* str) {
     if (!strchr(str, '\\')) {
       // No escaping slash.
@@ -454,22 +454,24 @@ private:
         }
         unescaped.push_back(c);
         i += 2;
-      } else {
-        // \uXXXX, 4-digit hex number. First, read the hex.
-        unsigned int x;
-        std::stringstream unhex;
-        unhex << std::hex << std::string_view(str + i + 2, 4);
-        unhex >> x;
-
-        // Write out the results.
-        unescaped.push_back(x & 0xff);
-        x >>= 8;
-        if (x) {
-          unescaped.push_back(x);
-        }
-
-        i += 6;
+        continue;
       }
+
+      // \uXXXX, 4-digit hex number. First, read the hex.
+      unsigned int x;
+      std::stringstream unhex;
+      unhex << std::hex << std::string_view(str + i + 2, 4);
+      unhex >> x;
+
+      // Write out the results.
+      unescaped.push_back(x & 0xff);
+      x >>= 8;
+      if (x) {
+        unescaped.push_back(x);
+      }
+      // TODO UTF stuff
+
+      i += 6;
     }
 
     setString(
