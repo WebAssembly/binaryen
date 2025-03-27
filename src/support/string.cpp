@@ -462,6 +462,8 @@ std::vector<char> unescapeJSON(const char* str) {
         case 't':
           c = '\t';
           break;
+        case 0:
+          Fatal() << "Invalid escaped JSON ends in slash";
       }
       unescaped.push_back(c);
       i += 2;
@@ -471,6 +473,9 @@ std::vector<char> unescapeJSON(const char* str) {
     // \uXXXX, 4-digit hex number. First, read the hex.
     unsigned int x;
     std::stringstream unhex;
+    if (!str[i + 2] || !str[i + 3] || !str[i + 4] || !str[i + 5]) {
+      Fatal() << "Invalid escaped JSON \uXXXX";
+    }
     unhex << std::hex << std::string_view(str + i + 2, 4);
     unhex >> x;
 
