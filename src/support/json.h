@@ -39,6 +39,7 @@
 
 #include "support/istring.h"
 #include "support/safe_integer.h"
+#include "support/string.h"
 
 namespace json {
 
@@ -421,58 +422,7 @@ private:
       return;
     }
 
-    // Otherwise, we may need to escape, so do the work for that.
-    std::vector<char> unescaped;
-    size_t i = 0;
-    while (str[i]) {
-      if (str[i] != '\\') {
-        // Normal character.
-        unescaped.push_back(str[i]);
-        i++;
-        continue;
-      }
-
-      // Escaped character.
-      char c = str[i + 1];
-      if (c != 'u') {
-        switch (c) {
-          case 'b':
-            c = '\b';
-            break;
-          case 'f':
-            c = '\f';
-            break;
-          case 'n':
-            c = '\n';
-            break;
-          case 'r':
-            c = '\r';
-            break;
-          case 't':
-            c = '\t';
-            break;
-        }
-        unescaped.push_back(c);
-        i += 2;
-        continue;
-      }
-
-      // \uXXXX, 4-digit hex number. First, read the hex.
-      unsigned int x;
-      std::stringstream unhex;
-      unhex << std::hex << std::string_view(str + i + 2, 4);
-      unhex >> x;
-
-      // Write out the results.
-      unescaped.push_back(x & 0xff);
-      x >>= 8;
-      if (x) {
-        unescaped.push_back(x);
-      }
-      // TODO UTF stuff
-
-      i += 6;
-    }
+    auto unescaped = wasm::String::unescapeJSON(str);
 
     setString(
       IString(std::string_view(unescaped.data(), unescaped.size()), false));
