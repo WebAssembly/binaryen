@@ -17,6 +17,10 @@
       (string.const "needs\tescaping\00.'#%\"- .\r\n\\08\0C\0A\0D\09.ꙮ")
     )
     (drop
+      ;; GOTHIC LETTER HWAIR: 𐍈 has code point 0x10348 and is \uD800 \uDF48 in UTF-16.
+      (string.const "surrogate pair \F0\90\8D\88 ")
+    )
+    (drop
       (string.const "unpaired high surrogate \ED\A0\80 ")
     )
     (drop
@@ -40,7 +44,7 @@
 ;; RUN: not wasm-opt %s --string-lowering-magic-imports-assert -all -S -o - \
 ;; RUN:     2>&1 | filecheck %s --check-prefix=ASSERT
 ;;
-;; CHECK: custom section "string.consts", size 136, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\08\\f\\n\\r\\t.\\ua66e\",\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
+;; CHECK: custom section "string.consts", size 167, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\08\\f\\n\\r\\t.\\ua66e\",\"surrogate pair \\ud800\\udf48 \",\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
 ;;
 ;; MAGIC: custom section "string.consts", size 68, contents: "[\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
 ;;
@@ -53,6 +57,6 @@
 ;; RUN: wasm-opt %s --string-lowering --remove-unused-module-elements -all -o %t.wasm
 ;; RUN: node %S/string-lowering.js %t.wasm | filecheck %s --check-prefix=CHECK-JS
 ;;
-;; CHECK-JS: string: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.\ua66e","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
+;; CHECK-JS: string: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.\ua66e","surrogate pair \ud800\udf48 ","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
 ;;
-;; CHECK-JS: JSON: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.ꙮ","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
+;; CHECK-JS: JSON: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\08\f\n\r\t.ꙮ","surrogate pair 𐍈 ","unpaired high surrogate \ud800 ","unpaired low surrogate \udf48 "]
