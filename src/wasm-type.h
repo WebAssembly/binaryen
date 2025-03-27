@@ -234,7 +234,9 @@ public:
   constexpr HeapType with(Exactness exactness) const {
     assert((!isBasic() || exactness == Inexact) &&
            "abstract types cannot be exact");
-    return HeapType(exactness == Exact ? (id | ExactMask) : (id & ~ExactMask));
+    return isBasic() ? *this
+                     : HeapType(exactness == Exact ? (id | ExactMask)
+                                                   : (id & ~ExactMask));
   }
 
   // The ID is the numeric representation of the heap type and can be used in

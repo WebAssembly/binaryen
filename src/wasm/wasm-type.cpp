@@ -798,7 +798,6 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
   }
   return Type::none;
-  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::getGreatestLowerBound(Type a, Type b) {
@@ -1195,6 +1194,9 @@ std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
     return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
                                getBasicHeapSupertype(b));
   }
+  if (a.with(Inexact) == b.with(Inexact)) {
+    return a.with(Inexact);
+  }
 
   auto* infoA = getHeapTypeInfo(a);
   auto* infoB = getHeapTypeInfo(b);
@@ -1505,7 +1507,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   // See:
   // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
   // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
-  if (a == b) {
+  if (a == b || a.with(Inexact) == b) {
     return true;
   }
   if (a.isShared() != b.isShared()) {
@@ -1549,6 +1551,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // Basic HeapTypes are only subtypes of compound HeapTypes if they are
     // bottom types.
     return a == b.getBottom();
+  }
+  if (b.isExact()) {
+    // The only subtypes of an exact type are itself and bottom, both of which
+    // we have ruled out.
+    return false;
   }
   // Subtyping must be declared rather than derived from structure, so we will
   // not recurse. TODO: optimize this search with some form of caching.
