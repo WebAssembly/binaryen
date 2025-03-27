@@ -1109,3 +1109,34 @@
     unreachable
   )
 )
+
+;; Tests that restricted expressions (local.set) are filtered from outlining
+;; even when nested within control flow.
+ (module
+   (func $a
+      (local $x i32)
+      (block
+        (if
+          (i32.const 0)
+          (then
+            (local.set $x
+              (i32.const 1)
+            )
+          )
+        )
+      )
+   )
+   (func $b
+      (local $x i32)
+      (block
+        (if
+          (i32.const 0)
+          (then
+            (local.set $x
+              (i32.const 1)
+            )
+          )
+        )
+      )
+     )
+)

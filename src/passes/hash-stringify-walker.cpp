@@ -204,6 +204,9 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
     void walk(Expression* curr) {
       hasFilterValue = false;
       Super::walk(curr);
+      while (!controlFlowQueue.empty()) {
+        dequeueControlFlow();
+      }
     }
 
     void addUniqueSymbol(SeparatorReason reason) {}
