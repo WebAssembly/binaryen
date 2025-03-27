@@ -102,8 +102,8 @@ bool convertUTF16ToUTF8(std::ostream& os, std::string_view str);
 // Whether the string is valid UTF-8.
 bool isUTF8(std::string_view str);
 
-// Given a string of properly-escaped JSON, unescape it.
-std::vector<char> unescapeJSONToWTF16(const char* str);
+// Given a string of properly-escaped JSON in UTF8, unescape it into WTF16.
+std::vector<char> unescapeUTF8JSONtoWTF16(const char* str);
 
 } // namespace wasm::String
 

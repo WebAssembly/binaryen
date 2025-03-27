@@ -432,8 +432,7 @@ bool isUTF8(std::string_view str) {
   return true;
 }
 
-//std::vector<char> unescapeJSONinUTF8toWTF16(const char* str) {
-std::vector<char> unescapeJSONToWTF16(const char* str) {
+std::vector<char> unescapeUTF8JSONtoWTF16(const char* str) {
   std::vector<char> unescaped;
   size_t i = 0;
   while (str[i]) {
