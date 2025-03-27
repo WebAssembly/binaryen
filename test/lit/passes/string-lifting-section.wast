@@ -91,7 +91,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tricky-consts
-    ;; This tricky string should remain exactly the same after lowering and
+    ;; These tricky strings should remain exactly the same after lowering and
     ;; lifting.
     (drop
       (string.const "needs\tescaping\00.'#%\"- .\r\n\\08\0C\0A\0D\09.ꙮ")
