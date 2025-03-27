@@ -304,6 +304,20 @@ struct OptimizeInstructions
     return EffectAnalyzer::canReorder(getPassOptions(), *getModule(), a, b);
   }
 
+  // If an expression can only have zero bits, return a constant 0 (or null if
+  // we cannot optimize).
+  Expression* replaceZeroBitsWithZero(Expression* curr) {
+    // We should never be called with a constant.
+    assert(!curr->is<Const>());
+
+    if (!curr->type.isInteger() || Bits::getMaxBits(curr, this) != 0) {
+      return nullptr;
+    }
+
+    auto zero = Builder(*getModule()).makeConst(Literal::makeZero(curr->type));
+    return getDroppedChildrenAndAppend(curr, zero);
+  }
+
   void visitBinary(Binary* curr) {
     // If this contains dead code, don't bother trying to optimize it, the type
     // might change (if might not be unreachable if just one arm is, for
@@ -838,6 +852,10 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    // see if we can infer this is a zero
+    if (auto* ret = replaceZeroBitsWithZero(curr)) {
+      return replaceCurrent(ret);
+    }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
     if (!effects(curr->left).hasSideEffects()) {
@@ -1099,6 +1117,10 @@ struct OptimizeInstructions
     }
 
     if (auto* ret = simplifyRoundingsAndConversions(curr)) {
+      return replaceCurrent(ret);
+    }
+
+    if (auto* ret = replaceZeroBitsWithZero(curr)) {
       return replaceCurrent(ret);
     }
   }
