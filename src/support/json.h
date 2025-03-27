@@ -422,7 +422,7 @@ private:
       return;
     }
 
-    auto unescaped = wasm::String::unescapeJSON(str);
+    auto unescaped = wasm::String::unescapeJSONToWTF8(str);
 
     setString(
       IString(std::string_view(unescaped.data(), unescaped.size()), false));
