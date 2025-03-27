@@ -518,7 +518,7 @@ int main(int argc, const char* argv[]) {
   auto graphInput(read_file<std::string>(graphFile, Flags::Text));
   auto* copy = strdup(graphInput.c_str());
   json::Value outside;
-  outside.parse(copy);
+  outside.parse(copy, json::Value::ASCII);
 
   // parse the JSON into our graph, doing all the JSON parsing here, leaving
   // the abstract computation for the class itself

@@ -84,7 +84,7 @@ struct StringLifting : public Pass {
         // We found the string consts section. Parse it.
         auto copy = section.data;
         json::Value array;
-        array.parse(copy.data());
+        array.parse(copy.data(), json::Value::WTF16);
         if (!array.isArray()) {
           Fatal()
             << "StringLifting: string.const section should be a JSON array";

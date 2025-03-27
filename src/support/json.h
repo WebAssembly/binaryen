@@ -249,7 +249,16 @@ struct Value {
     return true;
   }
 
-  char* parse(char* curr) {
+  // The encoding into which we parse strings. The input encoding is always
+  // UTF8, but we can parse into ASCII (very quickly, and without many small
+  // allocations), or we can parse into WTF16 (which is the format used by
+  // StringConst).
+  enum StringEncoding {
+    ASCII,
+    WTF16,
+  };
+
+  char* parse(char* curr, StringEncoding stringEncoding) {
 #define is_json_space(x)                                                       \
   (x == 32 || x == 9 || x == 10 ||                                             \
    x == 13) /* space, tab, linefeed/newline, or return */
@@ -271,7 +280,13 @@ struct Value {
       assert(close);
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
-      unescapeAndSetString(raw);
+      if (stringEncoding == ASCII) {
+        // Just use the current string.
+        setString(raw);
+      } else {
+        assert(stringEncoding == WTF16);
+        unescapeIntoWTF16(raw);
+      }
       curr = close + 1;
     } else if (*curr == '[') {
       // Array
@@ -281,7 +296,7 @@ struct Value {
       while (*curr != ']') {
         Ref temp = Ref(new Value());
         arr->push_back(temp);
-        curr = temp->parse(curr);
+        curr = temp->parse(curr, stringEncoding);
         skip();
         if (*curr == ']') {
           break;
@@ -324,7 +339,7 @@ struct Value {
         curr++;
         skip();
         Ref value = Ref(new Value());
-        curr = value->parse(curr);
+        curr = value->parse(curr, stringEncoding);
         (*obj)[key] = value;
         skip();
         if (*curr == '}') {
@@ -413,7 +428,7 @@ struct Value {
 
 private:
   // Unescape the input (UTF8) string into one of our internal strings (WTF16).
-  void unescapeAndSetString(char* str) {
+  void unescapeIntoWTF16(char* str) {
     // TODO: Optimize the unescaped path? But it is impossible to avoid an
     //       allocation here.
     auto unescaped = wasm::String::unescapeJSONToWTF16(str);
