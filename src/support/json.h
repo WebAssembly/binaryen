@@ -412,18 +412,11 @@ struct Value {
   }
 
 private:
-  // If the string has no escaped characters, setString() the char* directly. If
-  // it does require escaping, do that and intern a new string with those
-  // contents.
+  // Unescape the input (UTF8) string into one of our internal strings (WTF16).
   void unescapeAndSetString(char* str) {
-    if (!strchr(str, '\\')) {
-      // No escaping slash.
-      setString(str);
-      return;
-    }
-
+    // TODO: Optimize the unescaped path? But it is impossible to avoid an
+    //       allocation here.
     auto unescaped = wasm::String::unescapeJSONToWTF16(str);
-
     setString(
       IString(std::string_view(unescaped.data(), unescaped.size()), false));
   }

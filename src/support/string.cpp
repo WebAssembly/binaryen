@@ -432,6 +432,7 @@ bool isUTF8(std::string_view str) {
   return true;
 }
 
+//std::vector<char> unescapeJSONinUTF8toWTF16(const char* str) {
 std::vector<char> unescapeJSONToWTF16(const char* str) {
   std::vector<char> unescaped;
   size_t i = 0;
@@ -439,6 +440,7 @@ std::vector<char> unescapeJSONToWTF16(const char* str) {
     if (str[i] != '\\') {
       // Normal character.
       unescaped.push_back(str[i]);
+      unescaped.push_back(0);
       i++;
       continue;
     }
@@ -466,6 +468,7 @@ std::vector<char> unescapeJSONToWTF16(const char* str) {
           Fatal() << "Invalid escaped JSON ends in slash";
       }
       unescaped.push_back(c);
+      unescaped.push_back(0);
       i += 2;
       continue;
     }
@@ -482,9 +485,7 @@ std::vector<char> unescapeJSONToWTF16(const char* str) {
     // Write out the results.
     unescaped.push_back(x & 0xff);
     x >>= 8;
-    if (x) {
-      unescaped.push_back(x);
-    }
+    unescaped.push_back(x);
 
     i += 6;
   }
