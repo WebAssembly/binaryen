@@ -470,44 +470,23 @@ std::vector<char> unescapeJSONToWTF16(const char* str) {
       continue;
     }
 
-    // \uXXXX, escaped unicode. Either a single 4-digit hex number, or a
-    // surrogate pair.
-    auto readSlashU = [&]() {
-      // Read one \uXXXX item, and return the number represented.
-      unsigned int x;
-      std::stringstream unhex;
-      if (!str[i + 2] || !str[i + 3] || !str[i + 4] || !str[i + 5]) {
-        Fatal() << "Invalid escaped JSON \\uXXXX";
-      }
-      unhex << std::hex << std::string_view(str + i + 2, 4);
-      unhex >> x;
-      i += 6;
-      return x;
-    };
+    // \uXXXX, 4-digit hex number. First, read the hex.
+    unsigned int x;
+    std::stringstream unhex;
+    if (!str[i + 2] || !str[i + 3] || !str[i + 4] || !str[i + 5]) {
+      Fatal() << "Invalid escaped JSON \\uXXXX";
+    }
+    unhex << std::hex << std::string_view(str + i + 2, 4);
+    unhex >> x;
 
-    auto u = readSlashU();
-    if (u <= 0xFF) {
-      unescaped.push_back(u);
-      continue;
+    // Write out the results.
+    unescaped.push_back(x & 0xff);
+    x >>= 8;
+    if (x) {
+      unescaped.push_back(x);
     }
 
-    if (u < 0xD800) {
-      // 16-bit value, not a surrogate pair.
-      unescaped.push_back(u & 0xFF);
-      u >>= 8;
-      unescaped.push_back(u);
-      continue;
-    }
-
-    // Surrogate pair. There must be another \uXXXX right after us.
-    if (str[i] != '\\' || str[i] != 'u') {
-      Fatal() << "Partial surrogate pair";
-    }
-    i += 2;
-    auto v = readSlashU();
-    if (v < 0xDC00) {
-      Fatal() << "Bad surrogate pair";
-    }
+    i += 6;
   }
 
   return unescaped;
