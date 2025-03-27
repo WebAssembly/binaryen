@@ -254,9 +254,14 @@ struct OutliningSequence {
   unsigned startIdx;
   unsigned endIdx;
   Name func;
+  bool endsTypeUnreachable;
 
-  OutliningSequence(unsigned startIdx, unsigned endIdx, Name func)
-    : startIdx(startIdx), endIdx(endIdx), func(func) {}
+  OutliningSequence(unsigned startIdx,
+                    unsigned endIdx,
+                    Name func,
+                    bool endsTypeUnreachable)
+    : startIdx(startIdx), endIdx(endIdx), func(func),
+      endsTypeUnreachable(endsTypeUnreachable) {}
 };
 
 using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
