@@ -428,6 +428,93 @@ TEST_F(TypeTest, CanonicalizeUses) {
   EXPECT_NE(built[4], built[6]);
 }
 
+TEST_F(TypeTest, CanonicalizeExactHeapTypes) {
+  TypeBuilder builder(8);
+
+  HeapType inexact = HeapType(builder[0]).with(Inexact);
+  HeapType exact = HeapType(builder[1]).with(Exact);
+
+  Type inexactRef = builder.getTempRefType(inexact, Nullable);
+  Type exactRef = builder.getTempRefType(exact, Nullable);
+
+  // Types that vary in exactness of the referenced heap type are different.
+  builder[0] = Struct({Field(inexactRef, Mutable)});
+  builder[1] = Struct({Field(exactRef, Mutable)});
+  builder[2] = Signature(Type({inexactRef, exactRef}), Type::none);
+  builder[3] = Signature(Type::none, Type({exactRef, inexactRef}));
+
+  auto translate = [&](HeapType t) {
+    for (int i = 0; i < 4; ++i) {
+      if (t.with(Inexact) == builder[i]) {
+        return HeapType(builder[4 + i]).with(t.getExactness());
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
+  };
+
+  builder[4].copy(builder[0], translate);
+  builder[5].copy(builder[1], translate);
+  builder[6].copy(builder[2], translate);
+  builder[7].copy(builder[3], translate);
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  // Different types should be different.
+  EXPECT_NE(built[0], built[1]);
+  EXPECT_NE(built[0], built[2]);
+  EXPECT_NE(built[0], built[3]);
+  EXPECT_NE(built[1], built[2]);
+  EXPECT_NE(built[1], built[3]);
+  EXPECT_NE(built[2], built[3]);
+
+  // Copies of the types should match.
+  EXPECT_EQ(built[0], built[4]);
+  EXPECT_EQ(built[1], built[5]);
+  EXPECT_EQ(built[2], built[6]);
+  EXPECT_EQ(built[3], built[7]);
+
+  // A type is inexact by default.
+  EXPECT_EQ(built[0], built[0].with(Inexact));
+  EXPECT_EQ(built[1], built[1].with(Inexact));
+  EXPECT_EQ(built[2], built[2].with(Inexact));
+  EXPECT_EQ(built[3], built[3].with(Inexact));
+
+  // We can freely convert between exact and inexact.
+  EXPECT_EQ(built[0], built[0].with(Exact).with(Inexact));
+  EXPECT_EQ(built[0].with(Exact),
+            built[0].with(Exact).with(Inexact).with(Exact));
+
+  // Conversions are idempotent.
+  EXPECT_EQ(built[0].with(Exact), built[0].with(Exact).with(Exact));
+  EXPECT_EQ(built[0], built[0].with(Inexact));
+
+  // An exact version of a type is not the same as its inexact version.
+  EXPECT_NE(built[0].with(Exact), built[0].with(Inexact));
+
+  // But they have the same rec group.
+  EXPECT_EQ(built[0].with(Exact).getRecGroup(),
+            built[0].with(Inexact).getRecGroup());
+
+  // Looking up the inner structure works either way.
+  ASSERT_TRUE(built[0].with(Exact).isStruct());
+  ASSERT_TRUE(built[0].with(Inexact).isStruct());
+  EXPECT_EQ(built[0].with(Exact).getStruct(),
+            built[0].with(Inexact).getStruct());
+
+  // The exactness of children types is preserved.
+  EXPECT_EQ(built[0], built[0].getStruct().fields[0].type.getHeapType());
+  EXPECT_EQ(built[1].with(Exact),
+            built[1].getStruct().fields[0].type.getHeapType());
+  EXPECT_EQ(built[0], built[2].getSignature().params[0].getHeapType());
+  EXPECT_EQ(built[1].with(Exact),
+            built[2].getSignature().params[1].getHeapType());
+  EXPECT_EQ(built[0], built[3].getSignature().results[1].getHeapType());
+  EXPECT_EQ(built[1].with(Exact),
+            built[3].getSignature().results[0].getHeapType());
+}
+
 TEST_F(TypeTest, CanonicalizeSelfReferences) {
   TypeBuilder builder(5);
   // Single self-reference
