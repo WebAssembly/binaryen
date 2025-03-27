@@ -474,7 +474,7 @@ std::vector<char> unescapeJSONToWTF8(const char* str) {
     unsigned int x;
     std::stringstream unhex;
     if (!str[i + 2] || !str[i + 3] || !str[i + 4] || !str[i + 5]) {
-      Fatal() << "Invalid escaped JSON \uXXXX";
+      Fatal() << "Invalid escaped JSON \\uXXXX";
     }
     unhex << std::hex << std::string_view(str + i + 2, 4);
     unhex >> x;
