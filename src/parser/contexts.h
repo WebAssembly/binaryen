@@ -167,6 +167,8 @@ struct NullTypeParserCtx {
   Result<Index> getTypeIndex(Name) { return 1; }
   Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
 
+  HeapTypeT makeExact(HeapTypeT) { return Ok{}; }
+
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
 
@@ -250,6 +252,8 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeNocontType(Shareability share) {
     return HeapTypes::nocont.getBasic(share);
   }
+
+  HeapTypeT makeExact(HeapTypeT type) { return type.with(Exact); }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
