@@ -2833,18 +2833,33 @@
     )
   )
   ;; CHECK:      (func $sext-24-div (result i32)
-  ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $sext-24-div (result i32)
     (i32.shr_s
       (i32.shl
-        (i32.div_s ;; this could be optimizable in theory, but currently we don't look into adds etc.
-          (i32.const 1)
-          (i32.const 2)
+        (i32.div_s      ;; we don't precompute this, but we do know the limit on
+          (i32.const 1) ;; max bits, and the sign bit cannot be 1, so this all
+          (i32.const 2) ;; ends up as zero.
         )
+        (i32.const 24)
+      )
+      (i32.const 24)
+    )
+  )
+  ;; CHECK:      (func $sext-24-param (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.shr_s
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 24)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 24)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sext-24-param (param $x i32) (result i32)
+    (i32.shr_s
+      (i32.shl
+        (local.get $x) ;; we don't know what this is, and so optimize nothing
         (i32.const 24)
       )
       (i32.const 24)
@@ -3178,13 +3193,7 @@
     )
   )
   ;; CHECK:      (func $sext-24-shr_s-and-masked-sign (result i32)
-  ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.const -1)
-  ;; CHECK-NEXT:    (i32.const 2147483647)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 31)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $sext-24-shr_s-and-masked-sign (result i32)
     (i32.shr_s
@@ -3194,8 +3203,8 @@
             (i32.const -1)
             (i32.const 2147483647)
           )
-          (i32.const 31) ;; adjusted after we fixed shift computation to just look at lower 5 bits
-        )
+          (i32.const 31) ;; no sign bit, so the shift zeroes us out, and
+        )                ;; later shifts cannot add bits, so the result is 0
         (i32.const 24)
       )
       (i32.const 24)
@@ -6281,7 +6290,7 @@
   ;; CHECK:      (func $mix-shifts (result i32)
   ;; CHECK-NEXT:  (i32.shr_u
   ;; CHECK-NEXT:   (i32.shl
-  ;; CHECK-NEXT:    (i32.const 23)
+  ;; CHECK-NEXT:    (i32.const 65535)
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 8)
@@ -6290,7 +6299,7 @@
   (func $mix-shifts (result i32)
     (i32.shr_s
       (i32.shl
-        (i32.const 23)
+        (i32.const 65535)
         (i32.const -61)
       )
       (i32.const 168)
@@ -8407,9 +8416,11 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (call $andZero
-  ;; CHECK-NEXT:     (i32.const 1234)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $andZero
+  ;; CHECK-NEXT:      (i32.const 1234)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -8425,7 +8436,8 @@
     )
     (drop
       (i32.and
-        (call $andZero (i32.const 1234)) ;; side effects
+        (call $andZero (i32.const 1234)) ;; side effects, we must keep this, but
+                                         ;; can drop it.
         (i32.const 0)
       )
     )
@@ -11114,9 +11126,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.extend_i32_s
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
