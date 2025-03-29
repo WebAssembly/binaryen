@@ -1109,3 +1109,58 @@
     unreachable
   )
 )
+
+;; Tests that restricted expressions (local.set) are filtered from outlining
+;; even when nested within control flow.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    (local $x i32)
+    (block
+      (if
+        (i32.const 0)
+        (then
+          (local.set $x
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b
+    (local $x i32)
+    (block
+      (if
+        (i32.const 0)
+        (then
+          (local.set $x
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+)
