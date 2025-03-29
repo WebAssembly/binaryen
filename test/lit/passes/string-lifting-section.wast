@@ -29,7 +29,13 @@
 
   ;; CHECK:      (import "string.const" "1" (global $"string.const_\"foo\"" (ref extern)))
 
-  ;; CHECK:      (import "string.const" "2" (global $"string.const_\"needs\\tescaping\\00.\\\'#%\\\"\"" (ref extern)))
+  ;; CHECK:      (import "string.const" "2" (global $"string.const_\"needs\\tescaping\\00.\\\'#%\\\"- .\\r\\n\\\\08\\0c\\n\\r\\t.\\ea\\99\\ae\"" (ref extern)))
+
+  ;; CHECK:      (import "string.const" "3" (global $"string.const_\"surrogate pair \\f0\\90\\8d\\88 \"" (ref extern)))
+
+  ;; CHECK:      (import "string.const" "4" (global $"string.const_\"unpaired high surrogate \\ed\\a0\\80 \"" (ref extern)))
+
+  ;; CHECK:      (import "string.const" "5" (global $"string.const_\"unpaired low surrogate \\ed\\bd\\88 \"" (ref extern)))
 
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -77,14 +83,32 @@
 
   ;; CHECK:      (func $tricky-consts (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.const "needs\tescaping\00.\'#%\"")
+  ;; CHECK-NEXT:   (string.const "needs\tescaping\00.\'#%\"- .\r\n\\08\0c\n\r\t.\ea\99\ae")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "surrogate pair \f0\90\8d\88 ")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "unpaired high surrogate \ed\a0\80 ")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "unpaired low surrogate \ed\bd\88 ")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tricky-consts
-    ;; This tricky string should remain exactly the same after lowering and
+    ;; These tricky strings should remain exactly the same after lowering and
     ;; lifting.
     (drop
-      (string.const "needs\tescaping\00.'#%\"")
+      (string.const "needs\tescaping\00.'#%\"- .\r\n\\08\0C\0A\0D\09.ꙮ")
+    )
+    (drop
+      (string.const "surrogate pair \F0\90\8D\88 ")
+    )
+    (drop
+      (string.const "unpaired high surrogate \ED\A0\80 ")
+    )
+    (drop
+      (string.const "unpaired low surrogate \ED\BD\88 ")
     )
   )
 )

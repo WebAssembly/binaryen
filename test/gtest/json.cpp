@@ -8,7 +8,7 @@ TEST_F(JSONTest, Stringify) {
   auto input = "[\"hello\",\"world\"]";
   auto* copy = strdup(input);
   json::Value value;
-  value.parse(copy);
+  value.parse(copy, json::Value::ASCII);
   std::stringstream ss;
   value.stringify(ss);
   EXPECT_EQ(ss.str(), input);
