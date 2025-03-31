@@ -3,7 +3,6 @@
 ;; RUN:  | filecheck %s
 
 (module
- (tag $tag (param i32))
 
  (rec
   ;; CHECK:      (rec
@@ -19,6 +18,10 @@
  (type $struct-nn (struct (field (ref any))))
 
  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
+
+ ;; CHECK:      (tag $tag (type $4) (param i32))
+ (tag $tag (param i32))
+
  (global $struct (ref $struct) (struct.new $struct))
 
  ;; CHECK:      (func $br_on-if (type $9) (param $0 (ref struct))
@@ -56,7 +59,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $5) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $6) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -107,7 +110,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-fallthrough (type $5) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $6) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
@@ -198,7 +201,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $6) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $7) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -252,7 +255,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $6) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $7) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -496,8 +499,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (local.tee $any
- ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     (ref.as_non_null
+ ;; CHECK-NEXT:      (local.tee $any
+ ;; CHECK-NEXT:       (struct.new_default $struct2)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -554,7 +559,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-unreachable (type $7) (param $i31ref i31ref) (result anyref)
+ ;; CHECK:      (func $br_on_cast-unreachable (type $8) (param $i31ref i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -610,7 +615,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-unreachable (type $7) (param $0 i31ref) (result anyref)
+ ;; CHECK:      (func $fallthrough-unreachable (type $8) (param $0 i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
@@ -649,7 +654,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $8) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $4) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
@@ -794,7 +799,7 @@
   )
  )
 
- ;; CHECK:      (func $allocations-are-costly (type $8) (param $x i32)
+ ;; CHECK:      (func $allocations-are-costly (type $4) (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result (ref null $struct))
  ;; CHECK-NEXT:    (local.get $x)
@@ -947,6 +952,25 @@
   )
  )
 
+ ;; CHECK:      (func $br_on_cast_fail-sent_type (type $14) (result (ref eq))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (ref.as_non_null
+ ;; CHECK-NEXT:      (try (result (ref null $struct))
+ ;; CHECK-NEXT:       (do
+ ;; CHECK-NEXT:        (struct.new_default $struct)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (catch_all
+ ;; CHECK-NEXT:        (ref.null none)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $br_on_cast_fail-sent_type (result (ref eq))
   (block $block (result (ref eq))
    (drop
