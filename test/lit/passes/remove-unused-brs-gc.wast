@@ -3,6 +3,8 @@
 ;; RUN:  | filecheck %s
 
 (module
+ (tag $tag (param i32))
+
  (rec
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct)))
@@ -942,6 +944,42 @@
    )
    (local.get $param)
    (i32.const 0)
+  )
+ )
+
+ (func $br_on_cast_fail-sent_type (result (ref eq))
+  (block $block (result (ref eq))
+   (drop
+    ;; The try's body never throws, so we always return a non-null value (from
+    ;; the struct.new_default). That means the cast here always fails, so we can
+    ;; convert it to an unconditional br.
+    ;;
+    ;; Separately, we might think we have a chance to refine the cast type of
+    ;; the br_on_cast_fail, given the fallthrough is non-nullable, but refining
+    ;; the cast type would *un*refine the sent type (we send what *fails* to
+    ;; cast), so we must leave the nullref as it is. It vanishes after the
+    ;; optimization to a br, but we would error internally if we made a mistake
+    ;; here.
+    ;;
+    ;; Note for when we remove Try from the IR: it does not seem like we have
+    ;; any other instruction that can trigger this error. The key property is
+    ;; that with a Try we can both (1) naively see that the do and the catch
+    ;; arms have a LUB of (ref null $struct), as refinalize etc. has - that is
+    ;; the proper value for wasm - but also (2) we can easily see that the body
+    ;; does not throw, so the fallthrough value is the do arm, which is non-
+    ;; nullable.
+    (br_on_cast_fail $block (ref null $struct) nullref
+     (try (result (ref null $struct))
+      (do
+       (struct.new_default $struct)
+      )
+      (catch_all
+       (ref.null none)
+      )
+     )
+    )
+   )
+   (unreachable)
   )
  )
 )
