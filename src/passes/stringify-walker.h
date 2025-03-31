@@ -191,6 +191,11 @@ struct StringifyWalker
   static void scan(SubType* self, Expression** currp);
   static void doVisitExpression(SubType* self, Expression** currp);
 
+  void flushControlFlowQueue() {
+    while (!controlFlowQueue.empty()) {
+      dequeueControlFlow();
+    }
+  }
   void dequeueControlFlow();
 };
 

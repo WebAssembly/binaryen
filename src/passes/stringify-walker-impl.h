@@ -42,9 +42,7 @@ inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
   addUniqueSymbol(SeparatorReason::makeFuncStart(func));
   Super::walk(func->body);
   addUniqueSymbol(SeparatorReason::makeEnd());
-  while (!controlFlowQueue.empty()) {
-    dequeueControlFlow();
-  }
+  flushControlFlowQueue();
 }
 
 template<typename SubType>
