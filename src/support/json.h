@@ -434,8 +434,7 @@ private:
     std::stringstream ss;
     wasm::String::unescapeUTF8JSONtoWTF16(ss, str);
     auto ssStr = ss.str();
-    setString(
-      IString(std::string_view(ssStr.data(), ssStr.size()), false));
+    setString(IString(std::string_view(ssStr.data(), ssStr.size()), false));
   }
 };
 
