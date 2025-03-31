@@ -533,7 +533,10 @@
     )
    )
    (drop
-    ;; Ditto.
+    ;; Ditto, but also add a ref.as_non_null, as we must keep sending a non-
+    ;; null value to the block (the block would still validate either way, but
+    ;; we do not want to un-refine the sent value). See the next function for a
+    ;; test with a non-nullable block.
     (br_on_cast_fail $block anyref (ref null $struct)
      (local.tee $any (struct.new $struct2))
     )
