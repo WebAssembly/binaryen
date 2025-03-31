@@ -431,9 +431,11 @@ private:
   void unescapeIntoWTF16(char* str) {
     // TODO: Optimize the unescaped path? But it is impossible to avoid an
     //       allocation here.
-    auto unescaped = wasm::String::unescapeUTF8JSONtoWTF16(str);
+    std::stringstream ss;
+    wasm::String::unescapeUTF8JSONtoWTF16(ss, str);
+    auto ssStr = ss.str();
     setString(
-      IString(std::string_view(unescaped.data(), unescaped.size()), false));
+      IString(std::string_view(ssStr.data(), ssStr.size()), false));
   }
 };
 

@@ -432,14 +432,12 @@ bool isUTF8(std::string_view str) {
   return true;
 }
 
-std::vector<char> unescapeUTF8JSONtoWTF16(const char* str) {
-  std::vector<char> unescaped;
+std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str) {
   size_t i = 0;
   while (str[i]) {
     if (str[i] != '\\') {
       // Normal character.
-      unescaped.push_back(str[i]);
-      unescaped.push_back(0);
+      writeWTF16CodePoint(os, str[i]);
       i++;
       continue;
     }
@@ -466,8 +464,7 @@ std::vector<char> unescapeUTF8JSONtoWTF16(const char* str) {
         case 0:
           Fatal() << "Invalid escaped JSON ends in slash";
       }
-      unescaped.push_back(c);
-      unescaped.push_back(0);
+      writeWTF16CodePoint(os, c);
       i += 2;
       continue;
     }
@@ -482,14 +479,12 @@ std::vector<char> unescapeUTF8JSONtoWTF16(const char* str) {
     unhex >> x;
 
     // Write out the results.
-    unescaped.push_back(x & 0xff);
-    x >>= 8;
-    unescaped.push_back(x);
+    writeWTF16CodePoint(os, x);
 
     i += 6;
   }
 
-  return unescaped;
+  return os;
 }
 
 } // namespace wasm::String
