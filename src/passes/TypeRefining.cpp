@@ -19,6 +19,7 @@
 // writes to that field in the entire program allow doing so.
 //
 
+#include "ir/possible-contents.h"
 #include "ir/lubs.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
@@ -139,6 +140,30 @@ struct TypeRefining : public Pass {
     // Combine everything together.
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
+
+
+    // XXX begin
+
+    // GUFA! wipe old data, write out own.
+    finalInfos.clear();
+std::cout << "GUFA...\n";
+    ContentOracle oracle(*module, getPassOptions());
+std::cout << "       !\n";
+    auto allTypes = ModuleUtils::collectHeapTypes(*module);
+    for (auto type : allTypes) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& infos = finalInfos[type];
+        for (Index i = 0; i < fields.size(); i++) {
+          auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
+          infos[i] = LUBFinder(gufaType);
+        }
+      }
+      // TODO arrays. wait did this pass ever do that?
+    }
+
+    // XXX end
+
 
     // While we do the following work, see if we have anything to optimize, so
     // that we can avoid wasteful work later if not.
