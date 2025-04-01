@@ -2594,6 +2594,9 @@ function wrapModule(module, self = {}) {
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };
+  self['getStart'] = function() {
+    return Module['_BinaryenGetStart'](module);
+  };
   self['getFeatures'] = function() {
     return Module['_BinaryenModuleGetFeatures'](module);
   };
