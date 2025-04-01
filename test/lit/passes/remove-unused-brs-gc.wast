@@ -557,7 +557,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough-non-null (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough-non-null (type $11) (result (ref any))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref any))
@@ -893,7 +893,7 @@
   )
  )
 
- ;; CHECK:      (func $threading (type $11) (param $x anyref)
+ ;; CHECK:      (func $threading (type $12) (param $x anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (block $inner
  ;; CHECK-NEXT:    (drop
@@ -917,7 +917,7 @@
   )
  )
 
- ;; CHECK:      (func $test (type $12) (param $x (ref any))
+ ;; CHECK:      (func $test (type $13) (param $x (ref any))
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref $struct-nn))
@@ -969,7 +969,7 @@
   )
  )
 
- ;; CHECK:      (func $select-refinalize (type $13) (param $param (ref $struct)) (result (ref struct))
+ ;; CHECK:      (func $select-refinalize (type $14) (param $param (ref $struct)) (result (ref struct))
  ;; CHECK-NEXT:  (select (result (ref $struct))
  ;; CHECK-NEXT:   (select (result (ref $struct))
  ;; CHECK-NEXT:    (global.get $struct)
