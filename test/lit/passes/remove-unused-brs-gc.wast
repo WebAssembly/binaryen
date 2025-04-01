@@ -583,12 +583,12 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_fail_unrelated-fallthrough-non-null (result anyref)
+ (func $br_on_cast_fail_unrelated-fallthrough-non-null (result (ref any))
   ;; Same as above, but the block is now non-nullable. Only the branches that
   ;; work with that are tested.
   (local $any anyref)
   (local $nullable-struct2 (ref null $struct2))
-  (block $block (result (ref any)) ;; this changed
+  (block $block (result (ref any)) ;; this changed, and the function's results
    (drop
     ;; Will definitely take the branch.
     (br_on_cast_fail $block anyref (ref null $struct)
