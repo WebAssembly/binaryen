@@ -905,47 +905,48 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // information from all the fallthrough values here. We can continue to
         // further optimizations after this, and those optimizations might even
         // benefit from this improvement.
-        //
-        // We cannot refine castType if doing so unrefines the sent type, which
-        // is the case for br_on_cast_fail.
-        if (curr->op != BrOnCastFail) {
-          auto glb = Type::getGreatestLowerBound(curr->castType, refType);
-          if (glb != Type::unreachable && glb != curr->castType) {
-            [[maybe_unused]] auto oldSentType = curr->getSentType();
+        auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+        if (curr->op == BrOnCastFail) {
+          // BrOnCastFail sends the input type, with adjusted nullability. The
+          // input heap type makes sense for the branch target, and we will not
+          // change it anyhow, but we need to be careful with nullability: if
+          // the cast type was nullable, then we were sending a non-nullable
+          // value to the branch, and if we refined the cast type to non-
+          // nullable, we would no longer be doing that. In other words, we must
+          // not refine the nullability, as that would *un*refine the send type.
+          if (curr->castType.isNullable() && glb.isNonNullable()) {
+            glb = glb.with(Nullable);
+          }
+        }
+        if (glb != Type::unreachable && glb != curr->castType) {
+          curr->castType = glb;
+          auto oldType = curr->type;
+          curr->finalize();
+          worked = true;
 
-            curr->castType = glb;
-            auto oldType = curr->type;
-            curr->finalize();
-            worked = true;
-
-            // As mentioned above, the sent type must not unrefine.
-            [[maybe_unused]] auto newSentType = curr->getSentType();
-            assert(Type::isSubType(newSentType, oldSentType));
-
-            // We refined the castType, which may *un*-refine the BrOn itself.
-            // Imagine the castType was nullable before, then nulls would go on
-            // the branch, and so the BrOn could only flow out a non-nullable
-            // value, and that was its type. If we refine the castType to be
-            // non-nullable then nulls no longer go through, making the BrOn
-            // itself nullable. This should not normally happen, but can occur
-            // because we look at the fallthrough of the ref:
-            //
-            //   (br_on_cast
-            //     (local.tee $unrefined
-            //       (refined
-            //
-            // That is, we may see a more refined type for our GLB computation
-            // than the wasm type system does, if a local.tee or such ends up
-            // unrefining the type.
-            //
-            // To check for this and fix it, see if we need a cast in order to
-            // be a subtype of the old type.
-            auto* rep = maybeCast(curr, oldType);
-            if (rep != curr) {
-              replaceCurrent(rep);
-              // Exit after doing so, leaving further work for other cycles.
-              return;
-            }
+          // We refined the castType, which may *un*-refine the BrOn itself.
+          // Imagine the castType was nullable before, then nulls would go on
+          // the branch, and so the BrOn could only flow out a non-nullable
+          // value, and that was its type. If we refine the castType to be
+          // non-nullable then nulls no longer go through, making the BrOn
+          // itself nullable. This should not normally happen, but can occur
+          // because we look at the fallthrough of the ref:
+          //
+          //   (br_on_cast
+          //     (local.tee $unrefined
+          //       (refined
+          //
+          // That is, we may see a more refined type for our GLB computation
+          // than the wasm type system does, if a local.tee or such ends up
+          // unrefining the type.
+          //
+          // To check for this and fix it, see if we need a cast in order to
+          // be a subtype of the old type.
+          auto* rep = maybeCast(curr, oldType);
+          if (rep != curr) {
+            replaceCurrent(rep);
+            // Exit after doing so, leaving further work for other cycles.
+            return;
           }
         }
 
