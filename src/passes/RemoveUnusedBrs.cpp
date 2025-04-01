@@ -940,8 +940,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // than the wasm type system does, if a local.tee or such ends up
           // unrefining the type.
           //
-          // To check for this and fix it, see if we need a cast in order to
-          // be a subtype of the old type.
+          // To check for this and fix it, see if we need a cast in order to be
+          // a subtype of the old type.
           auto* rep = maybeCast(curr, oldType);
           if (rep != curr) {
             replaceCurrent(rep);
