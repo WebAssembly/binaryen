@@ -550,7 +550,7 @@ struct PrintExpressionContents
     if (parent.currModule) {
       auto* func = parent.currModule->getFunction(curr->target);
       if (func->imported()) {
-        o << " (; " << func->module << " :: " << func->base << " ;)";
+//        o << " (; " << func->module << " :: " << func->base << " ;)";
       }
     }
   }

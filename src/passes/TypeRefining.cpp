@@ -116,6 +116,7 @@ struct TypeRefining : public Pass {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
+#if 0
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
@@ -140,11 +141,15 @@ struct TypeRefining : public Pass {
     // Combine everything together.
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
-
+#endif
 
     // XXX begin
 
     // GUFA! wipe old data, write out own.
+    // TODO: if this makes sense, gufa variant that only does types, not
+    // constants or globals?
+    // IN CONCLUSION: this works, and helps a little over normal TypeRefining,
+    // but very very little...
     finalInfos.clear();
 std::cout << "GUFA...\n";
     ContentOracle oracle(*module, getPassOptions());
@@ -156,11 +161,16 @@ std::cout << "       !\n";
         auto& infos = finalInfos[type];
         for (Index i = 0; i < fields.size(); i++) {
           auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
+//std::cout << module->typeNames[type].name << "[" << i << "] inferred to " << gufaType << '\n';
           infos[i] = LUBFinder(gufaType);
         }
       }
       // TODO arrays. wait did this pass ever do that?
     }
+
+    // Propagate to supertypes, so no field is less refined than its super.
+    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
+    propagator.propagateToSuperTypes(finalInfos);
 
     // XXX end
 
@@ -211,6 +221,7 @@ std::cout << "       !\n";
         auto& info = finalInfos[type][i];
         if (!info.noted()) {
           info = LUBFinder(oldType);
+//std::cout << "DEFAULT " << module->typeNames[type].name << "[" << i << "] inferred to " << oldType << '\n';
         }
       }
 
@@ -246,6 +257,7 @@ std::cout << "       !\n";
             // problem that this code path fixes: we just need to get $C's type
             // to be identical to its super so that validation works.
             info = LUBFinder(newSuperType);
+//std::cout << "newSUPER1 " << module->typeNames[type].name << "[" << i << "] inferred to " << newSuperType << '\n'; // XXX we are missing the back propagation...
           } else if (fields[i].mutable_ == Mutable) {
             // Mutable fields must have identical types, so we cannot
             // specialize.
@@ -254,6 +266,7 @@ std::cout << "       !\n";
             //       types, which would also handle more things added to fields
             //       in the future.
             info = LUBFinder(newSuperType);
+//std::cout << "newSUPER2 " << module->typeNames[type].name << "[" << i << "] inferred to " << newSuperType << '\n';
           }
         }
       }
