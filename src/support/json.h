@@ -433,8 +433,8 @@ private:
     //       allocation here.
     std::stringstream ss;
     wasm::String::unescapeUTF8JSONtoWTF16(ss, str);
-    auto ssStr = ss.str();
-    setString(IString(std::string_view(ssStr.data(), ssStr.size()), false));
+    // TODO: Use ss.view() once we have C++20.
+    setString(ss.str(), false));
   }
 };
 
