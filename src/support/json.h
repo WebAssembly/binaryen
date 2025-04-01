@@ -434,7 +434,7 @@ private:
     std::stringstream ss;
     wasm::String::unescapeUTF8JSONtoWTF16(ss, str);
     // TODO: Use ss.view() once we have C++20.
-    setString(ss.str(), false));
+    setString(ss.str());
   }
 };
 
