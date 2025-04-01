@@ -66,7 +66,14 @@ struct StringLifting : public Pass {
         continue;
       }
       if (global->module == stringConstsModule) {
-        importedStrings[global->name] = global->base;
+        // Encode from WTF-8 to WTF-16.
+        auto wtf8 = global->base;
+        std::stringstream wtf16;
+        bool valid = String::convertWTF8ToWTF16(wtf16, wtf8.str);
+        if (!valid) {
+          Fatal() << "Bad string to lift: " << wtf8;
+        }
+        importedStrings[global->name] = wtf16.str();
         found = true;
       }
     }
@@ -77,7 +84,7 @@ struct StringLifting : public Pass {
         // We found the string consts section. Parse it.
         auto copy = section.data;
         json::Value array;
-        array.parse(copy.data());
+        array.parse(copy.data(), json::Value::WTF16);
         if (!array.isArray()) {
           Fatal()
             << "StringLifting: string.const section should be a JSON array";
@@ -203,15 +210,8 @@ struct StringLifting : public Pass {
         // Replace global.gets of imported strings with string.const.
         auto iter = parent.importedStrings.find(curr->name);
         if (iter != parent.importedStrings.end()) {
-          // Encode from WTF-8 to WTF-16.
-          auto wtf8 = iter->second;
-          std::stringstream wtf16;
-          bool valid = String::convertWTF8ToWTF16(wtf16, wtf8.str);
-          if (!valid) {
-            Fatal() << "Bad string to lift: " << wtf8;
-          }
-
-          replaceCurrent(Builder(*getModule()).makeStringConst(wtf16.str()));
+          auto wtf16 = iter->second;
+          replaceCurrent(Builder(*getModule()).makeStringConst(wtf16.str));
           modified = true;
         }
       }
