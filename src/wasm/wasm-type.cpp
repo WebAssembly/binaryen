@@ -1621,9 +1621,9 @@ void TypePrinter::printHeapTypeName(HeapType type) {
   if (type.isBasic()) {
     print(type);
   } else {
-    generator(type).name.print(os);
+    generator(type.with(Inexact)).name.print(os);
 #if TRACE_CANONICALIZATION
-    os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
+    os << "(;" << ((type.with(Inexact).getID() >> 4) % 1000) << ";) ";
 #endif
   }
   if (type.isExact()) {

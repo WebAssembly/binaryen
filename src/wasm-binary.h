@@ -343,6 +343,8 @@ enum EncodedType {
   SubFinal = 0x4f,
   Shared = 0x65,
   SharedLEB = -0x1b, // Also 0x65 as an SLEB128
+  Exact = 0x62,
+  ExactLEB = -0x1e, // Also 0x62 as an SLEB128
   Rec = 0x4e,
   Descriptor = 0x4d,
   Describes = 0x4c,

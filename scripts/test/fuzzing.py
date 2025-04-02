@@ -113,6 +113,8 @@ unfuzzable = [
     'vacuum-stack-switching.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
+    # TODO: fuzzer support for exact heap types
+    'exact.wast',
 ]
 
 
