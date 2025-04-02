@@ -760,6 +760,7 @@ function test_core() {
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
   module.setStart(starter);
+  assert(module.getStart() == starter);
 
   var features = binaryen.Features.All;
   module.setFeatures(features);
