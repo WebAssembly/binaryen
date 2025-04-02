@@ -11366,7 +11366,27 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i64.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
@@ -11595,8 +11615,20 @@
       (local.get $x)
       (i32.const 0)
     ))
+    (drop (i32.ge_u
+      (i32.load
+       (i32.const 0)
+      )
+      (i32.const 0)
+    ))
     (drop (i64.ge_u
       (local.get $y)
+      (i64.const 0)
+    ))
+    (drop (i64.ge_u
+      (i64.load
+       (i32.const 0)
+      )
       (i64.const 0)
     ))
 
@@ -17336,20 +17368,21 @@
     )
   )
 
-  ;; CHECK:      (func $skip-added-constants-zero-b (result i32)
-  ;; CHECK-NEXT:  (i32.ge_u
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.load
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK:       (func $skip-added-constants-zero-b (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (i32.load
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+
   (func $skip-added-constants-zero-b (result i32)
     ;; Parallel case to the above, with a zero in the added constant. We do not
     ;; optimize.
