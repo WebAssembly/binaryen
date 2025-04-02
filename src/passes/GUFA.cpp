@@ -401,35 +401,7 @@ struct GUFAPass : public Pass {
 
   void run(Module* module) override {
     ContentOracle oracle(*module, getPassOptions());
-
-    // Function-level optimizations.
     GUFAOptimizer(oracle, optimizing, castAll).run(getPassRunner(), module);
-
-    // Whole-module optimizations.
-    // TODO: globals, locals, params, etc.
-
-    // Given the type of a data location, and what the oracle inferred for it,
-    // see if the oracle has useful information. Anything here is an
-    // optimization opportunity.
-    auto compare = [&](HeapType type, Index index, const Field& field, PossibleContents oracleContents) {
-      if (field.mutable_ != Immutable) return;
-      if (oracleContents.getType() != field.type) {
-        std::cout << "found: " << module->typeNames[type].name << " : " << index << " : " << ModuleType{*module, field.type} << " inferred as " << ModuleType{*module, oracleContents.getType()} << '\n';
-      }
-    };
-
-    auto types = ModuleUtils::collectHeapTypes(*module);
-    for (auto type : types) {
-      if (type.isStruct()) {
-        auto& fields = type.getStruct().fields;
-        for (Index i = 0; i < fields.size(); i++) {
-          compare(type, i, fields[i], oracle.getContents(DataLocation{type, i}));
-        }
-      } else if (type.isArray()) {
-        compare(type, 0, type.getArray().element,
-                oracle.getContents(DataLocation{type, 0}));
-      }
-    }
   }
 };
 
