@@ -503,7 +503,7 @@ public:
     if (!type.isRef()) {
       return type;
     }
-    return getTempType(type.with(getNewHeapType(type.getHeapType()));
+    return getTempType(type.with(getNewHeapType(type.getHeapType())));
   }
 
   void modifyStruct(HeapType oldType, Struct& struct_) override {
