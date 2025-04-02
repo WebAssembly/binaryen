@@ -491,25 +491,19 @@ public:
     mapTypes(newMapping);
   }
 
-  Type getNewType(Type type) {
-    if (!type.isRef()) {
-      return type;
-    }
-    auto heapType = type.getHeapType();
-    auto iter = mapping.find(heapType);
-    if (iter != mapping.end()) {
-      // TODO: Handle exactness.
-      return getTempType(Type(iter->second, type.getNullability()));
-    }
-    return getTempType(type);
-  }
-
   HeapType getNewHeapType(HeapType type) {
     auto iter = mapping.find(type);
     if (iter != mapping.end()) {
       return iter->second;
     }
     return type;
+  }
+
+  Type getNewType(Type type) {
+    if (!type.isRef()) {
+      return type;
+    }
+    return getTempType(type.with(getNewHeapType(type.getHeapType()));
   }
 
   void modifyStruct(HeapType oldType, Struct& struct_) override {
