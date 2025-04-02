@@ -46,11 +46,11 @@
   ;; O3O3:      (global $any (mut structref) (ref.null none))
   (global $any (mut anyref) (ref.null any))
 
-  ;; NRML:      (export "get_global" (func $get_global))
+  ;; NRML:      (export "get_from_global" (func $get_from_global))
 
   ;; NRML:      (export "work" (func $work))
 
-  ;; NRML:      (func $get_global (type $2) (param $x i32) (result anyref)
+  ;; NRML:      (func $get_from_global (type $2) (param $x i32) (result anyref)
   ;; NRML-NEXT:  (if (result anyref)
   ;; NRML-NEXT:   (local.get $x)
   ;; NRML-NEXT:   (then
@@ -69,11 +69,11 @@
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:  )
   ;; NRML-NEXT: )
-  ;; GUFA:      (export "get_global" (func $get_global))
+  ;; GUFA:      (export "get_from_global" (func $get_from_global))
 
   ;; GUFA:      (export "work" (func $work))
 
-  ;; GUFA:      (func $get_global (type $2) (param $x i32) (result anyref)
+  ;; GUFA:      (func $get_from_global (type $2) (param $x i32) (result anyref)
   ;; GUFA-NEXT:  (if (result (ref null $A))
   ;; GUFA-NEXT:   (local.get $x)
   ;; GUFA-NEXT:   (then
@@ -92,11 +92,11 @@
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT: )
-  ;; O3O3:      (export "get_global" (func $get_global))
+  ;; O3O3:      (export "get_from_global" (func $get_from_global))
 
   ;; O3O3:      (export "work" (func $work))
 
-  ;; O3O3:      (func $get_global (type $2) (param $0 i32) (result anyref)
+  ;; O3O3:      (func $get_from_global (type $2) (param $0 i32) (result anyref)
   ;; O3O3-NEXT:  (if (result (ref null $A))
   ;; O3O3-NEXT:   (local.get $0)
   ;; O3O3-NEXT:   (then
@@ -116,7 +116,7 @@
   ;; O3O3-NEXT:   )
   ;; O3O3-NEXT:  )
   ;; O3O3-NEXT: )
-  (func $get_global (export "get_global") (param $x i32) (result anyref)
+  (func $get_from_global (export "get_from_global") (param $x i32) (result anyref)
     ;; Read from the global, casting in a way that depends on the parameter.
     ;; By storing objects in the global + having this function, we prevent -O3
     ;; from being able to trivially clear out the entire module.
