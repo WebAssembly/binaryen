@@ -5289,6 +5289,10 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
   ((Module*)module)->addStart(((Function*)start)->name);
 }
 
+BinaryenFunctionRef BinaryenGetStart(BinaryenModuleRef module) {
+  return ((Module*)module)->getFunctionOrNull(((Module*)module)->start);
+}
+
 // Features
 
 BinaryenFeatures BinaryenModuleGetFeatures(BinaryenModuleRef module) {

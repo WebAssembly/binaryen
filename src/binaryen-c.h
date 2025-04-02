@@ -2869,6 +2869,8 @@ BINARYEN_API void BinaryenAddDataSegment(BinaryenModuleRef module,
 BINARYEN_API void BinaryenSetStart(BinaryenModuleRef module,
                                    BinaryenFunctionRef start);
 
+BINARYEN_API BinaryenFunctionRef BinaryenGetStart(BinaryenModuleRef module);
+
 // Features
 
 // These control what features are allowed when validation and in passes.
