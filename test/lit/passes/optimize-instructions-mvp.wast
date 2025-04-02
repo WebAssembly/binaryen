@@ -11372,18 +11372,28 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:        (i32.load
-  ;; CHECK-NEXT:          (i32.const 0)
-  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       (i32.load
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i64.load
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
@@ -11603,6 +11613,12 @@
     ))
     (drop (i64.lt_u
       (local.get $y)
+      (i64.const 0)
+    ))
+    (drop (i64.lt_u
+      (i64.load
+       (i32.const 0)
+      )
       (i64.const 0)
     ))
 
