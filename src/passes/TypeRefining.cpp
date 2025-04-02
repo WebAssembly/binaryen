@@ -132,7 +132,8 @@ struct TypeRefining : public Pass {
 
     Propagator propagator(*module);
 
-    // Compute our main data structure, finalInfos
+    // Compute our main data structure, finalInfos, either normally or using
+    // GUFA.
     if (!gufa) {
       computeFinalInfos(module, propagator);
     } else {
