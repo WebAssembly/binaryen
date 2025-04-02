@@ -1376,6 +1376,7 @@ void test_core() {
                                                     0,
                                                     BinaryenNop(module));
   BinaryenSetStart(module, starter);
+  assert(BinaryenGetStart(module) == starter);
 
   BinaryenFeatures features = BinaryenFeatureAll();
   BinaryenModuleSetFeatures(module, features);
