@@ -151,6 +151,9 @@ struct ReconstructStringifyWalker
     } else if (reason.getCatchAllStart()) {
       ASSERT_OK(existingBuilder.visitCatchAll());
       DBG(desc = "Catch All Start at");
+    } else if (auto curr = reason.getTryTableStart()) {
+      ODBG(desc = "Try Table Start at ");
+      ASSERT_OK(existingBuilder.visitTryTableStart(curr->tryt));
     } else if (reason.getEnd()) {
       ODBG(desc = "End at ");
       ASSERT_OK(existingBuilder.visitEnd());
