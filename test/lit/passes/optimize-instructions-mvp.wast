@@ -11372,6 +11372,16 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:        (i32.load
+  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -11583,6 +11593,12 @@
     ;; (unsigned)x < 0  =>  i32(0)
     (drop (i32.lt_u
       (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i32.lt_u
+      (i32.load
+       (i32.const 0)
+      )
       (i32.const 0)
     ))
     (drop (i64.lt_u
