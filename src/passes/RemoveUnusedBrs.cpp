@@ -906,6 +906,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // further optimizations after this, and those optimizations might even
         // benefit from this improvement.
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+        if (curr->op == BrOnCastFail) {
+          // BrOnCastFail sends the input type, with adjusted nullability. The
+          // input heap type makes sense for the branch target, and we will not
+          // change it anyhow, but we need to be careful with nullability: if
+          // the cast type was nullable, then we were sending a non-nullable
+          // value to the branch, and if we refined the cast type to non-
+          // nullable, we would no longer be doing that. In other words, we must
+          // not refine the nullability, as that would *un*refine the send type.
+          if (curr->castType.isNullable() && glb.isNonNullable()) {
+            glb = glb.with(Nullable);
+          }
+        }
         if (glb != Type::unreachable && glb != curr->castType) {
           curr->castType = glb;
           auto oldType = curr->type;

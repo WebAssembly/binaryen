@@ -494,8 +494,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (local.tee $any
- ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     (ref.as_non_null
+ ;; CHECK-NEXT:      (local.tee $any
+ ;; CHECK-NEXT:       (struct.new_default $struct2)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -531,7 +533,10 @@
     )
    )
    (drop
-    ;; Ditto.
+    ;; Ditto, but also add a ref.as_non_null, as we must keep sending a non-
+    ;; null value to the block (the block would still validate either way, but
+    ;; we do not want to un-refine the sent value). See the next function for a
+    ;; test with a non-nullable block.
     (br_on_cast_fail $block anyref (ref null $struct)
      (local.tee $any (struct.new $struct2))
     )
@@ -540,6 +545,54 @@
     ;; Ditto.
     (br_on_cast_fail $block anyref (ref $struct)
      (local.tee $any (local.get $nullable-struct2))
+    )
+   )
+   (drop
+    ;; Still has to do a null check.
+    (br_on_cast_fail $block anyref (ref null $struct)
+     (local.tee $any (local.get $nullable-struct2))
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough-non-null (type $11) (result (ref any))
+ ;; CHECK-NEXT:  (local $any anyref)
+ ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
+ ;; CHECK-NEXT:  (block $block (result (ref any))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (ref.as_non_null
+ ;; CHECK-NEXT:      (local.tee $any
+ ;; CHECK-NEXT:       (struct.new_default $struct2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (local.tee $any
+ ;; CHECK-NEXT:       (local.get $nullable-struct2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_unrelated-fallthrough-non-null (result (ref any))
+  ;; Same as above, but the block is now non-nullable. Only the branches that
+  ;; work with that are tested.
+  (local $any anyref)
+  (local $nullable-struct2 (ref null $struct2))
+  (block $block (result (ref any)) ;; this changed, and the function's results
+   (drop
+    ;; Will definitely take the branch.
+    (br_on_cast_fail $block anyref (ref null $struct)
+     (local.tee $any (struct.new $struct2))
     )
    )
    (drop
@@ -840,7 +893,7 @@
   )
  )
 
- ;; CHECK:      (func $threading (type $11) (param $x anyref)
+ ;; CHECK:      (func $threading (type $12) (param $x anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (block $inner
  ;; CHECK-NEXT:    (drop
@@ -864,7 +917,7 @@
   )
  )
 
- ;; CHECK:      (func $test (type $12) (param $x (ref any))
+ ;; CHECK:      (func $test (type $13) (param $x (ref any))
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref $struct-nn))
@@ -916,7 +969,7 @@
   )
  )
 
- ;; CHECK:      (func $select-refinalize (type $13) (param $param (ref $struct)) (result (ref struct))
+ ;; CHECK:      (func $select-refinalize (type $14) (param $param (ref $struct)) (result (ref struct))
  ;; CHECK-NEXT:  (select (result (ref $struct))
  ;; CHECK-NEXT:   (select (result (ref $struct))
  ;; CHECK-NEXT:    (global.get $struct)
