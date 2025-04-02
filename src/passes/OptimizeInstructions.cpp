@@ -557,11 +557,11 @@ struct OptimizeInstructions
         //       if pure.
         Const* c;
         Expression* x;
-        if (matches(curr, binary(GeU, pure(&x), ival(&c))) &&
+        if (matches(curr, binary(GeU, any(&x), ival(&c))) &&
             c->value.isZero()) {
           c->value = Literal::makeOne(Type::i32);
           c->type = Type::i32;
-          return replaceCurrent(c);
+          return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
         }
         // unsigned(x) < 0   =>   i32(0)
         if (matches(curr, binary(LtU, any(&x), ival(&c))) &&
