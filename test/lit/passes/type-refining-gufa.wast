@@ -40,11 +40,17 @@
 
   ;; NRML:      (type $2 (func (param i32) (result anyref)))
 
+  ;; NRML:      (type $3 (func (param i32)))
+
   ;; NRML:      (global $any (mut anyref) (ref.null none))
   ;; GUFA:      (type $2 (func (param i32) (result anyref)))
 
+  ;; GUFA:      (type $3 (func (param i32)))
+
   ;; GUFA:      (global $any (mut anyref) (ref.null none))
   ;; O3O3:      (type $2 (func (param i32) (result anyref)))
+
+  ;; O3O3:      (type $3 (func (param i32)))
 
   ;; O3O3:      (global $any (mut structref) (ref.null none))
   (global $any (mut anyref) (ref.null any))
@@ -142,7 +148,7 @@
     )
   )
 
-  ;; NRML:      (func $work (type $2) (param $x i32) (result anyref)
+  ;; NRML:      (func $work (type $3) (param $x i32)
   ;; NRML-NEXT:  (local $a anyref)
   ;; NRML-NEXT:  (local $b (ref null $B))
   ;; NRML-NEXT:  (local.set $a
@@ -173,9 +179,8 @@
   ;; NRML-NEXT:    )
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:  )
-  ;; NRML-NEXT:  (local.get $b)
   ;; NRML-NEXT: )
-  ;; GUFA:      (func $work (type $2) (param $x i32) (result anyref)
+  ;; GUFA:      (func $work (type $3) (param $x i32)
   ;; GUFA-NEXT:  (local $a anyref)
   ;; GUFA-NEXT:  (local $b (ref null $B))
   ;; GUFA-NEXT:  (local.set $a
@@ -210,9 +215,8 @@
   ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:  )
-  ;; GUFA-NEXT:  (local.get $b)
   ;; GUFA-NEXT: )
-  ;; O3O3:      (func $work (type $2) (param $0 i32) (result anyref)
+  ;; O3O3:      (func $work (type $3) (param $0 i32)
   ;; O3O3-NEXT:  (local $1 (ref $B))
   ;; O3O3-NEXT:  (local.set $1
   ;; O3O3-NEXT:   (struct.new $B
@@ -249,9 +253,8 @@
   ;; O3O3-NEXT:    )
   ;; O3O3-NEXT:   )
   ;; O3O3-NEXT:  )
-  ;; O3O3-NEXT:  (local.get $1)
   ;; O3O3-NEXT: )
-  (func $work (export "work") (param $x i32) (result anyref)
+  (func $work (export "work") (param $x i32)
     (local $a anyref)
     (local $b (ref null $B))
     ;; $A's field contains null.
@@ -290,7 +293,6 @@
         )
       )
     )
-    (local.get $b)
   )
 )
 
