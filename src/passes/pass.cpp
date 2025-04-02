@@ -214,6 +214,10 @@ void PassRegistry::registerPasses() {
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
+  registerPass("type-refining-gufa",
+               "apply more specific subtypes to type fields where possible "
+               "(using GUFA)",
+               createTypeRefiningGUFAPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass("heap-store-optimization",

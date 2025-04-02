@@ -18,6 +18,12 @@
 // Apply more specific subtypes to type fields where possible, where all the
 // writes to that field in the entire program allow doing so.
 //
+// TODO: handle arrays and not just structs.
+//
+// The GUFA variant of this uses GUFA to infer types, which performs a (slow)
+// whole-program inference, rather than just scan struct/array operations by
+// themselves.
+//
 
 #include "ir/possible-contents.h"
 #include "ir/lubs.h"
@@ -105,7 +111,15 @@ struct TypeRefining : public Pass {
   // Only affects GC type declarations and struct.gets.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  bool gufa;
+
+  TypeRefining(bool gufa) : gufa(gufa) {}
+
+  // The final information we inferred about struct usage, that we then use to
+  // optimize.
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
+
+  using Propagator = StructUtils::TypeHierarchyPropagator<FieldInfo>;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -116,7 +130,19 @@ struct TypeRefining : public Pass {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
-#if 0
+    Propagator propagator(*module);
+
+    // Compute our main data structure, finalInfos
+    if (!gufa) {
+      computeFinalInfos(module, propagator);
+    } else {
+      computeFinalInfosGUFA(module, propagator);
+    }
+
+    useFinalInfos(module, propagator);
+  }
+
+  void computeFinalInfos(Module* module, Propagator& propagator) {
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
@@ -134,26 +160,22 @@ struct TypeRefining : public Pass {
     // able to contain that type. Propagate things written using set to subtypes
     // as well, as the reference might be to a supertype if the field is present
     // there.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Combine everything together.
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
-#endif
+  }
 
-    // XXX begin
-
-    // GUFA! wipe old data, write out own.
-    // TODO: if this makes sense, gufa variant that only does types, not
-    // constants or globals?
-    // IN CONCLUSION: this works, and helps a little over normal TypeRefining,
-    // but very very little...
-    finalInfos.clear();
-std::cout << "GUFA...\n";
+  void computeFinalInfosGUFA(Module* module, Propagator& propagator) {
+    // Compute the oracle, then simply apply it.
+    // TODO: Consider doing this in GUFA.cpp, where we already computed the
+    //       oracle. That would require refactoring out the rest of this pass to
+    //       a shared location. Alternatively, perhaps we can reuse the computed
+    //       oracle, but any pass that changes anything would need to invalidate
+    //       it...
     ContentOracle oracle(*module, getPassOptions());
-std::cout << "       !\n";
     auto allTypes = ModuleUtils::collectHeapTypes(*module);
     for (auto type : allTypes) {
       if (type.isStruct()) {
@@ -161,20 +183,16 @@ std::cout << "       !\n";
         auto& infos = finalInfos[type];
         for (Index i = 0; i < fields.size(); i++) {
           auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
-//std::cout << module->typeNames[type].name << "[" << i << "] inferred to " << gufaType << '\n';
           infos[i] = LUBFinder(gufaType);
         }
       }
-      // TODO arrays. wait did this pass ever do that?
     }
 
     // Propagate to supertypes, so no field is less refined than its super.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(finalInfos);
+  }
 
-    // XXX end
-
-
+  void useFinalInfos(Module* module, Propagator& propagator) {
     // While we do the following work, see if we have anything to optimize, so
     // that we can avoid wasteful work later if not.
     bool canOptimize = false;
@@ -465,6 +483,7 @@ std::cout << "       !\n";
 
 } // anonymous namespace
 
-Pass* createTypeRefiningPass() { return new TypeRefining(); }
+Pass* createTypeRefiningPass() { return new TypeRefining(false); }
+Pass* createTypeRefiningGUFAPass() { return new TypeRefining(true); }
 
 } // namespace wasm

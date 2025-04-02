@@ -183,6 +183,7 @@ Pass* createTrapModeJS();
 Pass* createTupleOptimizationPass();
 Pass* createTypeGeneralizingPass();
 Pass* createTypeRefiningPass();
+Pass* createTypeRefiningGUFAPass();
 Pass* createTypeFinalizingPass();
 Pass* createTypeMergingPass();
 Pass* createTypeSSAPass();

@@ -2005,6 +2005,7 @@ opt_choices = [
     ("--tuple-optimization",),
     ("--type-finalizing",),
     ("--type-refining",),
+    ("--type-refining-gufa",),
     ("--type-merging",),
     ("--type-ssa",),
     ("--type-unfinalizing",),
@@ -2014,6 +2015,7 @@ opt_choices = [
 
 # TODO: Fix these passes so that they still work without --closed-world!
 requires_closed_world = {("--type-refining",),
+                         ("--type-refining-gufa",),
                          ("--signature-pruning",),
                          ("--signature-refining",),
                          ("--gto",),
