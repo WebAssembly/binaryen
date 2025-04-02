@@ -9,7 +9,7 @@
 
 ;; A module that requires GUFA to fully optimize, as we must track type
 ;; information through locals etc. We will do nothing for $A, but $B's field can
-;; be fully refined to (ref $B) despite the challenges in the code below, but
+;; be fully refined to (ref $A) despite the challenges in the code below, but
 ;; only with GUFA.
 (module
   (rec
@@ -19,7 +19,7 @@
     ;; GUFA-NEXT:  (type $A (sub (struct (field (mut nullref)))))
     (type $A (sub (struct (field (mut anyref)))))
     ;; NRML:       (type $B (sub (struct (field (mut anyref)))))
-    ;; GUFA:       (type $B (sub (struct (field (mut (ref struct))))))
+    ;; GUFA:       (type $B (sub (struct (field (mut (ref $A))))))
     (type $B (sub (struct (field (mut anyref)))))
   )
 
@@ -34,11 +34,6 @@
   ;; NRML-NEXT:  (local.set $b
   ;; NRML-NEXT:   (struct.new $B
   ;; NRML-NEXT:    (local.get $a)
-  ;; NRML-NEXT:   )
-  ;; NRML-NEXT:  )
-  ;; NRML-NEXT:  (local.set $b
-  ;; NRML-NEXT:   (struct.new $B
-  ;; NRML-NEXT:    (local.get $b)
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:  )
   ;; NRML-NEXT:  (local.set $b
@@ -59,15 +54,8 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT:  (local.set $b
   ;; GUFA-NEXT:   (struct.new $B
-  ;; GUFA-NEXT:    (ref.cast (ref struct)
+  ;; GUFA-NEXT:    (ref.cast (ref $A)
   ;; GUFA-NEXT:     (local.get $a)
-  ;; GUFA-NEXT:    )
-  ;; GUFA-NEXT:   )
-  ;; GUFA-NEXT:  )
-  ;; GUFA-NEXT:  (local.set $b
-  ;; GUFA-NEXT:   (struct.new $B
-  ;; GUFA-NEXT:    (ref.cast (ref $B)
-  ;; GUFA-NEXT:     (local.get $b)
   ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:  )
@@ -91,13 +79,6 @@
     (local.set $b
       (struct.new $B
         (local.get $a)
-      )
-    )
-    ;; Another write to $B's field, of $b, which is a nullable $B, but we can
-    ;; tell it is non-nullable.
-    (local.set $b
-      (struct.new $B
-        (local.get $b)
       )
     )
     ;; Another write to $B's field, reading from it, which forms a cycle. This
