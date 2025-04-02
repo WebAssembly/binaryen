@@ -15,6 +15,7 @@ FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   param-utils.cpp
   pass.cpp
+  string-utils.cpp
   test_passes.cpp
   AbstractTypeRefining.cpp
   AlignmentLowering.cpp
@@ -96,6 +97,7 @@ set(passes_SOURCES
   SignaturePruning.cpp
   SignatureRefining.cpp
   SignExtLowering.cpp
+  StringLifting.cpp
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp

@@ -110,7 +110,7 @@
  )
 
  ;; CHECK:      (func $bar (type $2) (param $0 i31ref)
- ;; CHECK-NEXT:  (local $1 (exact nullref))
+ ;; CHECK-NEXT:  (local $1 nullref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )

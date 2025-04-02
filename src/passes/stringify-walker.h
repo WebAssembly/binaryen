@@ -21,6 +21,7 @@
 #include "ir/module-utils.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
+#include "support/intervals.h"
 #include "support/suffix_tree.h"
 #include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
@@ -253,9 +254,14 @@ struct OutliningSequence {
   unsigned startIdx;
   unsigned endIdx;
   Name func;
+  bool endsTypeUnreachable;
 
-  OutliningSequence(unsigned startIdx, unsigned endIdx, Name func)
-    : startIdx(startIdx), endIdx(endIdx), func(func) {}
+  OutliningSequence(unsigned startIdx,
+                    unsigned endIdx,
+                    Name func,
+                    bool endsTypeUnreachable)
+    : startIdx(startIdx), endIdx(endIdx), func(func),
+      endsTypeUnreachable(endsTypeUnreachable) {}
 };
 
 using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
@@ -264,6 +270,7 @@ using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
 struct StringifyProcessor {
   static Substrings repeatSubstrings(std::vector<uint32_t>& hashString);
   static Substrings dedupe(const Substrings& substrings);
+  static Substrings filterOverlaps(const Substrings& substrings);
   // Filter is the general purpose function backing subsequent filter functions.
   // It can be used directly, but generally prefer a wrapper function
   // to encapsulate your condition and make it available for tests.

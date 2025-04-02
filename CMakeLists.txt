@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.16.3)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 122)
+project(binaryen LANGUAGES C CXX VERSION 123)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -56,9 +56,10 @@ endif()
 # Advised to turn on when statically linking against musl libc (e.g., in the
 # Alpine Linux build we use for producing official Linux binaries), because
 # musl libc's allocator has very bad performance on heavily multi-threaded
-# workloads / high core count machines.
+# workloads / high core count machines. But it also works with dynamic linking
+# with a small performance advantage in some cases over the glibc allocator.
 # See https://github.com/WebAssembly/binaryen/issues/5561.
-option(MIMALLOC_STATIC "Build with statically linked mimalloc allocator" OFF)
+option(BUILD_MIMALLOC "Build with mimalloc allocator" OFF)
 
 # Turn this off to install only tools and not static/dynamic libs.
 option(INSTALL_LIBS "Install libraries" ON)
@@ -467,12 +468,16 @@ if(BUILD_LLVM_DWARF)
   target_link_libraries(binaryen llvm_dwarf)
 endif()
 
-if(MIMALLOC_STATIC)
-  if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND BUILD_STATIC_LIB) OR EMSCRIPTEN)
-    message(FATAL_ERROR "Statically linking mimalloc is only supported when building as a native, statically linked library on Linux.")
+if(BUILD_MIMALLOC)
+  if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux") OR EMSCRIPTEN)
+    message(FATAL_ERROR "Linking mimalloc is only supported on Linux.")
   endif()
-  message(STATUS "Building with statically linked mimalloc allocator.")
-  target_link_libraries(binaryen mimalloc-static)
+  message(STATUS "Building with mimalloc allocator.")
+  if(BUILD_STATIC_LIB)
+    target_link_libraries(binaryen mimalloc-static)
+  else()
+    target_link_libraries(binaryen mimalloc)
+  endif()
 endif()
 
 add_subdirectory(src/ir)

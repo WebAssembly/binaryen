@@ -93,6 +93,10 @@ unfuzzable = [
     'names.wast',
     # huge amount of locals that make it extremely slow
     'too_much_for_liveness.wasm',
+    # has (ref extern) imports, which the fuzzer cannot create values for when
+    # it removes unknown imports
+    'string-lifting.wast',
+    'string-lifting-custom-module.wast',
     # TODO: fuzzer support for stack switching
     'stack_switching.wast',
     'stack_switching_contnew.wast',
@@ -107,14 +111,6 @@ unfuzzable = [
     'dce-stack-switching.wast',
     'precompute-stack-switching.wast',
     'vacuum-stack-switching.wast'
-    # TODO: fuzzer support for exact references
-    'exact-references.wast',
-    'optimize-instructions-exact.wast',
-    'local-subtyping-exact.wast',
-    'remove-unused-types-exact.wast',
-    'coalesce-locals-exact.wast',
-    'remove-unused-brs-exact.wast',
-    'exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
 ]

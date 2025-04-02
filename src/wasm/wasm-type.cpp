@@ -228,7 +228,7 @@ namespace {
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
-  return (HeapTypeInfo*)ht.getID();
+  return (HeapTypeInfo*)(ht.getRawID());
 }
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
@@ -790,23 +790,14 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     return Type(elems);
   }
   if (a.isRef() && b.isRef()) {
-    auto heapTypeA = a.getHeapType();
-    auto heapTypeB = b.getHeapType();
-    if (auto heapType = HeapType::getLeastUpperBound(heapTypeA, heapTypeB)) {
+    if (auto heapType =
+          HeapType::getLeastUpperBound(a.getHeapType(), b.getHeapType())) {
       auto nullability =
         (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
-      auto exactness = (a.isInexact() || b.isInexact()) ? Inexact : Exact;
-      // The LUB can only be exact if the heap types are the same or one of them
-      // is bottom.
-      if (heapTypeA != heapTypeB && !heapTypeA.isBottom() &&
-          !heapTypeB.isBottom()) {
-        exactness = Inexact;
-      }
-      return Type(*heapType, nullability, exactness);
+      return Type(*heapType, nullability);
     }
   }
   return Type::none;
-  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::getGreatestLowerBound(Type a, Type b) {
@@ -836,7 +827,6 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   }
   auto nullability =
     (a.isNonNullable() || b.isNonNullable()) ? NonNullable : Nullable;
-  auto exactness = (a.isExact() || b.isExact()) ? Exact : Inexact;
   HeapType heapType;
   if (HeapType::isSubType(heapA, heapB)) {
     heapType = heapA;
@@ -845,13 +835,7 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   } else {
     heapType = heapA.getBottom();
   }
-  // If one of the types is exact, but the GLB heap type is different than its
-  // heap type, then we must make the GLB heap type bottom.
-  if ((a.isExact() && heapType != heapA) ||
-      (b.isExact() && heapType != heapB)) {
-    heapType = heapA.getBottom();
-  }
-  return Type(heapType, nullability, exactness);
+  return Type(heapType, nullability);
 }
 
 const Type& Type::Iterator::operator*() const {
@@ -1210,6 +1194,9 @@ std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
     return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
                                getBasicHeapSupertype(b));
   }
+  if (a.with(Inexact) == b.with(Inexact)) {
+    return a.with(Inexact);
+  }
 
   auto* infoA = getHeapTypeInfo(a);
   auto* infoB = getHeapTypeInfo(b);
@@ -1262,7 +1249,7 @@ RecGroup HeapType::getRecGroup() const {
   } else {
     // Mark the low bit to signify that this is a trivial recursion group and
     // points to a heap type info rather than a vector of heap types.
-    return RecGroup(id | 1);
+    return RecGroup(getRawID() | 1);
   }
 }
 
@@ -1506,31 +1493,21 @@ bool SubTyper::isSubType(Type a, Type b) {
   if (a == Type::unreachable) {
     return true;
   }
+  if (a.isRef() && b.isRef()) {
+    return (a.isNullable() == b.isNullable() || !a.isNullable()) &&
+           isSubType(a.getHeapType(), b.getHeapType());
+  }
   if (a.isTuple() && b.isTuple()) {
     return isSubType(a.getTuple(), b.getTuple());
   }
-  if (!a.isRef() || !b.isRef()) {
-    return false;
-  }
-  if (a.isNullable() && !b.isNullable()) {
-    return false;
-  }
-  if (a.isInexact() && !b.isInexact()) {
-    return false;
-  }
-  auto heapTypeA = a.getHeapType();
-  auto heapTypeB = b.getHeapType();
-  if (b.isExact() && !heapTypeA.isBottom()) {
-    return heapTypeA == heapTypeB;
-  }
-  return isSubType(heapTypeA, heapTypeB);
+  return false;
 }
 
 bool SubTyper::isSubType(HeapType a, HeapType b) {
   // See:
   // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
   // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
-  if (a == b) {
+  if (a == b || a.with(Inexact) == b) {
     return true;
   }
   if (a.isShared() != b.isShared()) {
@@ -1574,6 +1551,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // Basic HeapTypes are only subtypes of compound HeapTypes if they are
     // bottom types.
     return a == b.getBottom();
+  }
+  if (b.isExact()) {
+    // The only subtypes of an exact type are itself and bottom, both of which
+    // we have ruled out.
+    return false;
   }
   // Subtyping must be declared rather than derived from structure, so we will
   // not recurse. TODO: optimize this search with some form of caching.
@@ -1633,14 +1615,20 @@ bool SubTyper::isSubType(const Array& a, const Array& b) {
 }
 
 void TypePrinter::printHeapTypeName(HeapType type) {
+  if (type.isExact()) {
+    os << "(exact ";
+  }
   if (type.isBasic()) {
     print(type);
-    return;
-  }
-  generator(type).name.print(os);
+  } else {
+    generator(type).name.print(os);
 #if TRACE_CANONICALIZATION
-  os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
+    os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
+  }
+  if (type.isExact()) {
+    os << ')';
+  }
 }
 
 std::ostream& TypePrinter::print(Type type) {
@@ -1671,68 +1659,43 @@ std::ostream& TypePrinter::print(Type type) {
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
-      if (type.isExact()) {
-        os << "(exact ";
-      }
       // Print shorthands for certain basic heap types.
       switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
-          os << "externref";
-          break;
+          return os << "externref";
         case HeapType::func:
-          os << "funcref";
-          break;
+          return os << "funcref";
         case HeapType::cont:
-          os << "contref";
-          break;
+          return os << "contref";
         case HeapType::any:
-          os << "anyref";
-          break;
+          return os << "anyref";
         case HeapType::eq:
-          os << "eqref";
-          break;
+          return os << "eqref";
         case HeapType::i31:
-          os << "i31ref";
-          break;
+          return os << "i31ref";
         case HeapType::struct_:
-          os << "structref";
-          break;
+          return os << "structref";
         case HeapType::array:
-          os << "arrayref";
-          break;
+          return os << "arrayref";
         case HeapType::exn:
-          os << "exnref";
-          break;
+          return os << "exnref";
         case HeapType::string:
-          os << "stringref";
-          break;
+          return os << "stringref";
         case HeapType::none:
-          os << "nullref";
-          break;
+          return os << "nullref";
         case HeapType::noext:
-          os << "nullexternref";
-          break;
+          return os << "nullexternref";
         case HeapType::nofunc:
-          os << "nullfuncref";
-          break;
+          return os << "nullfuncref";
         case HeapType::nocont:
-          os << "nullcontref";
-          break;
+          return os << "nullcontref";
         case HeapType::noexn:
-          os << "nullexnref";
-          break;
+          return os << "nullexnref";
       }
-      if (type.isExact()) {
-        os << ')';
-      }
-      return os;
     }
     os << "(ref ";
     if (type.isNullable()) {
       os << "null ";
-    }
-    if (type.isExact()) {
-      os << "exact ";
     }
     printHeapTypeName(heapType);
     os << ')';
@@ -1977,9 +1940,8 @@ size_t RecGroupHasher::hash(Type type) const {
     return digest;
   }
   assert(type.isRef());
-  wasm::rehash(digest, type.getNullability());
-  wasm::rehash(digest, type.getExactness());
-  hash_combine(digest, hash(type.getHeapType()));
+  rehash(digest, type.getNullability());
+  rehash(digest, hash(type.getHeapType()));
   return digest;
 }
 
@@ -1993,8 +1955,10 @@ size_t RecGroupHasher::hash(HeapType type) const {
     wasm::rehash(digest, type.getID());
     return digest;
   }
+  wasm::rehash(digest, type.isExact());
   wasm::rehash(digest, type.getRecGroupIndex());
   auto currGroup = type.getRecGroup();
+  wasm::rehash(digest, currGroup != group);
   if (currGroup != group) {
     wasm::rehash(digest, currGroup.getID());
   }
@@ -2110,7 +2074,6 @@ bool RecGroupEquator::eq(Type a, Type b) const {
   }
   if (a.isRef() && b.isRef()) {
     return a.getNullability() == b.getNullability() &&
-           a.getExactness() == b.getExactness() &&
            eq(a.getHeapType(), b.getHeapType());
   }
   return false;
@@ -2124,6 +2087,9 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   // comparing, in which case the structure is still equivalent.
   if (a.isBasic() || b.isBasic()) {
     return a == b;
+  }
+  if (a.getExactness() != b.getExactness()) {
+    return false;
   }
   if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
     return false;
@@ -2321,10 +2287,8 @@ Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
   return impl->tupleStore.insert(tuple);
 }
 
-Type TypeBuilder::getTempRefType(HeapType type,
-                                 Nullability nullable,
-                                 Exactness exact) {
-  return Type(type, nullable, exact);
+Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
+  return Type(type, nullable);
 }
 
 void TypeBuilder::setSubType(size_t i, std::optional<HeapType> super) {
@@ -2510,8 +2474,10 @@ void updateReferencedHeapTypes(
       isTopLevel = false;
       if (type->isRef()) {
         auto ht = type->getHeapType();
+        auto exact = ht.getExactness();
+        ht = ht.with(Inexact);
         if (auto it = canonicalized.find(ht); it != canonicalized.end()) {
-          *type = Type(it->second, type->getNullability());
+          *type = Type(it->second.with(exact), type->getNullability());
         }
       } else if (type->isTuple()) {
         TypeGraphWalkerBase<ChildUpdater>::scanType(type);
@@ -2519,6 +2485,7 @@ void updateReferencedHeapTypes(
     }
 
     void scanHeapType(HeapType* type) {
+      assert(!type->isExact() && "unexpected exact type in definition");
       if (isTopLevel) {
         isTopLevel = false;
         TypeGraphWalkerBase<ChildUpdater>::scanHeapType(type);
@@ -2583,7 +2550,8 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto type = asHeapType(typeInfos[i]);
     for (auto child : type.getHeapTypeChildren()) {
-      if (isTemp(child) && !seenTypes.count(child)) {
+      HeapType rawChild(child.getRawID());
+      if (isTemp(rawChild) && !seenTypes.count(rawChild)) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReason::ForwardChildReference}};
       }

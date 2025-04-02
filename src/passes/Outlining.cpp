@@ -219,12 +219,27 @@ struct ReconstructStringifyWalker
     // call will replace the instructions moved to the outlined function.
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
     DBG(std::cerr << "\ncreated outlined fn: " << outlinedFunc->name << "\n");
+
+    // If the last instruction of the outlined sequence is unreachable, insert
+    // an unreachable instruction immediately after the call to the outlined
+    // function. This maintains the unreachable type in the original scope
+    // of the outlined sequence.
+    if (sequences[seqCounter].endsTypeUnreachable) {
+      ASSERT_OK(existingBuilder.makeUnreachable());
+    }
   }
 
   void transitionToInSkipSeq() {
     Function* outlinedFunc =
       getModule()->getFunction(sequences[seqCounter].func);
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
+    // If the last instruction of the outlined sequence is unreachable, insert
+    // an unreachable instruction immediately after the call to the outlined
+    // function. This maintains the unreachable type in the original scope
+    // of the outlined sequence.
+    if (sequences[seqCounter].endsTypeUnreachable) {
+      ASSERT_OK(existingBuilder.makeUnreachable());
+    }
     DBG(std::cerr << "\nstarting to skip instructions "
                   << sequences[seqCounter].startIdx << " - "
                   << sequences[seqCounter].endIdx - 1 << " to "
@@ -280,6 +295,8 @@ struct Outlining : public Pass {
     DBG(printHashString(stringify.hashString, stringify.exprs));
     // Remove substrings that are substrings of longer repeat substrings.
     substrings = StringifyProcessor::dedupe(substrings);
+    // Remove substrings with overlapping indices.
+    substrings = StringifyProcessor::filterOverlaps(substrings);
     // Remove substrings with branch and return instructions until an analysis
     // is performed to see if the intended destination of the branch is included
     // in the substring to be outlined.
@@ -349,8 +366,12 @@ struct Outlining : public Pass {
         // sequence relative to its function is better for outlining because we
         // walk functions.
         auto [relativeIdx, existingFunc] = stringify.makeRelative(seqIdx);
-        auto seq =
-          OutliningSequence(relativeIdx, relativeIdx + substring.Length, func);
+        auto seq = OutliningSequence(
+          relativeIdx,
+          relativeIdx + substring.Length,
+          func,
+          stringify.exprs[seqIdx + substring.Length - 1]->type ==
+            Type::unreachable);
         seqByFunc[existingFunc].push_back(seq);
       }
     }

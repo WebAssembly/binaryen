@@ -670,11 +670,11 @@ public:
   }
   RefNull* makeRefNull(HeapType type) {
     auto* ret = wasm.allocator.alloc<RefNull>();
-    ret->finalize(Type(type.getBottom(), Nullable, Exact));
+    ret->finalize(Type(type.getBottom(), Nullable));
     return ret;
   }
   RefNull* makeRefNull(Type type) {
-    assert(type.isNullable() && type.isNull() && type.isExact());
+    assert(type.isNullable() && type.isNull());
     auto* ret = wasm.allocator.alloc<RefNull>();
     ret->finalize(type);
     return ret;
@@ -1270,7 +1270,7 @@ public:
       return makeConst(value);
     }
     if (value.isNull()) {
-      return makeRefNull(type.getHeapType());
+      return makeRefNull(type);
     }
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
@@ -1435,8 +1435,8 @@ public:
       return maybeWrap(makeConstantExpression(Literal::makeZeros(curr->type)));
     }
     if (curr->type.isNullable()) {
-      return maybeWrap(
-        ExpressionManipulator::refNull(curr, curr->type.getHeapType()));
+      return maybeWrap(ExpressionManipulator::refNull(
+        curr, Type(curr->type.getHeapType().getBottom(), Nullable)));
     }
     if (curr->type.isRef() &&
         curr->type.getHeapType().isMaybeShared(HeapType::i31)) {

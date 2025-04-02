@@ -39,6 +39,7 @@
 
 #include "support/istring.h"
 #include "support/safe_integer.h"
+#include "support/string.h"
 
 namespace json {
 
@@ -260,11 +261,17 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      curr++;
-      char* close = strchr(curr, '"');
+      // Start |close| at the opening ", and in the loop below we will always
+      // begin looking at the first character after.
+      char* close = curr;
+      // Skip escaped "
+      do {
+        close = strchr(close + 1, '"');
+      } while (*(close - 1) == '\\');
       assert(close);
       *close = 0; // end this string, and reuse it straight from the input
-      setString(curr);
+      char* raw = curr + 1;
+      unescapeAndSetString(raw);
       curr = close + 1;
     } else if (*curr == '[') {
       // Array
@@ -402,6 +409,23 @@ struct Value {
   bool has(IString x) {
     assert(isObject());
     return obj->count(x) > 0;
+  }
+
+private:
+  // If the string has no escaped characters, setString() the char* directly. If
+  // it does require escaping, do that and intern a new string with those
+  // contents.
+  void unescapeAndSetString(char* str) {
+    if (!strchr(str, '\\')) {
+      // No escaping slash.
+      setString(str);
+      return;
+    }
+
+    auto unescaped = wasm::String::unescapeJSONToWTF8(str);
+
+    setString(
+      IString(std::string_view(unescaped.data(), unescaped.size()), false));
   }
 };
 

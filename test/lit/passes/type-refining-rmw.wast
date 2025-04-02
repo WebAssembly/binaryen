@@ -6,7 +6,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $null (shared (struct (field (mut (ref null exact (shared none)))))))
+    ;; CHECK-NEXT:  (type $null (shared (struct (field (mut (ref null (shared none)))))))
     (type $null (shared (struct (field (mut (ref null (shared any)))))))
 
     ;; CHECK:       (type $i31 (shared (struct (field (mut (ref (shared i31)))))))
@@ -75,7 +75,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $null (shared (struct (field (mut (ref null exact (shared none)))))))
+    ;; CHECK-NEXT:  (type $null (shared (struct (field (mut (ref null (shared none)))))))
     (type $null (shared (struct (field (mut (ref null (shared eq)))))))
 
     ;; CHECK:       (type $i31 (shared (struct (field (mut (ref (shared i31)))))))
