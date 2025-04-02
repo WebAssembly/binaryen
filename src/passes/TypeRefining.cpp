@@ -25,8 +25,8 @@
 // themselves.
 //
 
-#include "ir/possible-contents.h"
 #include "ir/lubs.h"
+#include "ir/possible-contents.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -183,7 +183,6 @@ struct TypeRefining : public Pass {
         auto& infos = finalInfos[type];
         for (Index i = 0; i < fields.size(); i++) {
           auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
-//std::cout << "GUFA saw " << type << "[" << i << "] = " << gufaType << '\n';
           infos[i] = LUBFinder(gufaType);
         }
       }
@@ -240,7 +239,6 @@ struct TypeRefining : public Pass {
         auto& info = finalInfos[type][i];
         if (!info.noted()) {
           info = LUBFinder(oldType);
-//std::cout << "DEFAULT " << module->typeNames[type].name << "[" << i << "] inferred to " << oldType << '\n';
         }
       }
 
@@ -276,7 +274,6 @@ struct TypeRefining : public Pass {
             // problem that this code path fixes: we just need to get $C's type
             // to be identical to its super so that validation works.
             info = LUBFinder(newSuperType);
-//std::cout << "newSUPER1 " << module->typeNames[type].name << "[" << i << "] inferred to " << newSuperType << '\n'; // XXX we are missing the back propagation...
           } else if (fields[i].mutable_ == Mutable) {
             // Mutable fields must have identical types, so we cannot
             // specialize.
@@ -285,7 +282,6 @@ struct TypeRefining : public Pass {
             //       types, which would also handle more things added to fields
             //       in the future.
             info = LUBFinder(newSuperType);
-//std::cout << "newSUPER2 " << module->typeNames[type].name << "[" << i << "] inferred to " << newSuperType << '\n';
           }
         }
       }
