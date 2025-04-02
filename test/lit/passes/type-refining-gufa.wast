@@ -75,7 +75,7 @@
       (struct.new_default $A)
     )
     ;; $B's field contains a reference to $A, even though the local's type is
-    ;; anyref.
+    ;; anyref. When we refine the field in GUFA, a cast will be added here.
     (local.set $b
       (struct.new $B
         (local.get $a)
