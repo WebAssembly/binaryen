@@ -17,9 +17,12 @@
 ;; In NRML mode (normal type-refining), we can improve $A's field to nullref,
 ;; but can do nothing for $B.
 ;;
-;; In GUFA mode we can also turn $B's field to (ref $A).
+;; In GUFA mode we can also turn $B's field to (ref null $A).
 ;;
-;; -O3 -O3 can remove the field from $A, but ...
+;; -O3 -O3 can remove the field from $A, and we can make $B's field immutable,
+;; but because of the cyclic nature of the dataflow graph, iteratively running
+;; separate refinement passes for globals, types, locals, etc. is not able to
+;; refine the type of $B's field.
 (module
   (rec
     ;; NRML:      (rec
@@ -30,8 +33,8 @@
     ;; O3O3-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct (field (mut anyref)))))
     ;; NRML:       (type $B (sub (struct (field (mut anyref)))))
-    ;; GUFA:       (type $B (sub (struct (field (mut (ref $A))))))
-    ;; O3O3:       (type $B (sub (struct (field (ref $A)))))
+    ;; GUFA:       (type $B (sub (struct (field (mut (ref null $A))))))
+    ;; O3O3:       (type $B (sub (struct (field anyref))))
     (type $B (sub (struct (field (mut anyref)))))
   )
 
@@ -97,7 +100,7 @@
   ;; O3O3:      (export "work" (func $work))
 
   ;; O3O3:      (func $get_from_global (type $2) (param $0 i32) (result anyref)
-  ;; O3O3-NEXT:  (if (result (ref null $A))
+  ;; O3O3-NEXT:  (if (result anyref)
   ;; O3O3-NEXT:   (local.get $0)
   ;; O3O3-NEXT:   (then
   ;; O3O3-NEXT:    (drop
@@ -152,8 +155,8 @@
   ;; NRML-NEXT:  )
   ;; NRML-NEXT:  (local.set $b
   ;; NRML-NEXT:   (struct.new $B
-  ;; NRML-NEXT:    (struct.get $B 0
-  ;; NRML-NEXT:     (local.get $b)
+  ;; NRML-NEXT:    (call $get_from_global
+  ;; NRML-NEXT:     (local.get $x)
   ;; NRML-NEXT:    )
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:  )
@@ -180,15 +183,17 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT:  (local.set $b
   ;; GUFA-NEXT:   (struct.new $B
-  ;; GUFA-NEXT:    (ref.cast (ref $A)
+  ;; GUFA-NEXT:    (ref.cast (ref null $A)
   ;; GUFA-NEXT:     (local.get $a)
   ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT:  (local.set $b
   ;; GUFA-NEXT:   (struct.new $B
-  ;; GUFA-NEXT:    (struct.get $B 0
-  ;; GUFA-NEXT:     (local.get $b)
+  ;; GUFA-NEXT:    (ref.cast (ref null $A)
+  ;; GUFA-NEXT:     (call $get_from_global
+  ;; GUFA-NEXT:      (local.get $x)
+  ;; GUFA-NEXT:     )
   ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:  )
@@ -209,11 +214,25 @@
   ;; GUFA-NEXT: )
   ;; O3O3:      (func $work (type $2) (param $0 i32) (result anyref)
   ;; O3O3-NEXT:  (local $1 (ref $B))
-  ;; O3O3-NEXT:  (local $2 (ref $A))
   ;; O3O3-NEXT:  (local.set $1
   ;; O3O3-NEXT:   (struct.new $B
-  ;; O3O3-NEXT:    (local.tee $2
-  ;; O3O3-NEXT:     (struct.new_default $A)
+  ;; O3O3-NEXT:    (if (result anyref)
+  ;; O3O3-NEXT:     (local.get $0)
+  ;; O3O3-NEXT:     (then
+  ;; O3O3-NEXT:      (drop
+  ;; O3O3-NEXT:       (ref.cast (ref $A)
+  ;; O3O3-NEXT:        (global.get $any)
+  ;; O3O3-NEXT:       )
+  ;; O3O3-NEXT:      )
+  ;; O3O3-NEXT:      (ref.null none)
+  ;; O3O3-NEXT:     )
+  ;; O3O3-NEXT:     (else
+  ;; O3O3-NEXT:      (struct.get $B 0
+  ;; O3O3-NEXT:       (ref.cast (ref $B)
+  ;; O3O3-NEXT:        (global.get $any)
+  ;; O3O3-NEXT:       )
+  ;; O3O3-NEXT:      )
+  ;; O3O3-NEXT:     )
   ;; O3O3-NEXT:    )
   ;; O3O3-NEXT:   )
   ;; O3O3-NEXT:  )
@@ -221,7 +240,7 @@
   ;; O3O3-NEXT:   (local.get $0)
   ;; O3O3-NEXT:   (then
   ;; O3O3-NEXT:    (global.set $any
-  ;; O3O3-NEXT:     (local.get $2)
+  ;; O3O3-NEXT:     (struct.new_default $A)
   ;; O3O3-NEXT:    )
   ;; O3O3-NEXT:   )
   ;; O3O3-NEXT:   (else
@@ -246,12 +265,13 @@
         (local.get $a)
       )
     )
-    ;; Another write to $B's field, reading from it, which forms a cycle. This
-    ;; does not prevent us from optimizing.
+    ;; Another write to $B's field, using $get_from_global, which reads from
+    ;; either an $A (which always contains null) or a $B (cyclic dependency, but
+    ;; in the end only an $A is written there).
     (local.set $b
       (struct.new $B
-        (struct.get $B 0
-          (local.get $b)
+        (call $get_from_global
+          (local.get $x)
         )
       )
     )
