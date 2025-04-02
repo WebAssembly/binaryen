@@ -3,9 +3,9 @@
 ;; Compare the normal type refining pass to the GUFA variant.
 
 ;; RUN: foreach %s %t wasm-opt -all --closed-world --preserve-type-order \
-;; RUN:     --type-refining-gufa      -S -o - | fileNRML %s --NRML-prefix=NRML
+;; RUN:     --type-refining      -S -o - | filecheck %s --check-prefix=NRML
 ;; RUN: foreach %s %t wasm-opt -all --closed-world --preserve-type-order \
-;; RUN:     --type-refining-gufa -S -o - | fileNRML %s --NRML-prefix=GUFA
+;; RUN:     --type-refining-gufa -S -o - | filecheck %s --check-prefix=GUFA
 
 ;; A module that requires GUFA to fully optimize, as we must track type
 ;; information through locals etc. We will do nothing for $A, but $B's field can
@@ -13,11 +13,73 @@
 ;; only with GUFA.
 (module
   (rec
+    ;; NRML:      (rec
+    ;; NRML-NEXT:  (type $A (sub (struct (field (mut nullref)))))
+    ;; GUFA:      (rec
+    ;; GUFA-NEXT:  (type $A (sub (struct (field (mut nullref)))))
     (type $A (sub (struct (field (mut anyref)))))
+    ;; NRML:       (type $B (sub (struct (field (mut anyref)))))
+    ;; GUFA:       (type $B (sub (struct (field (mut (ref struct))))))
     (type $B (sub (struct (field (mut anyref)))))
   )
 
-  (func $work (param $struct (ref $struct))
+  ;; NRML:       (type $2 (func))
+
+  ;; NRML:      (func $work (type $2)
+  ;; NRML-NEXT:  (local $a anyref)
+  ;; NRML-NEXT:  (local $b (ref null $B))
+  ;; NRML-NEXT:  (local.set $a
+  ;; NRML-NEXT:   (struct.new_default $A)
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT:  (local.set $b
+  ;; NRML-NEXT:   (struct.new $B
+  ;; NRML-NEXT:    (local.get $a)
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT:  (local.set $b
+  ;; NRML-NEXT:   (struct.new $B
+  ;; NRML-NEXT:    (local.get $b)
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT:  (local.set $b
+  ;; NRML-NEXT:   (struct.new $B
+  ;; NRML-NEXT:    (struct.get $B 0
+  ;; NRML-NEXT:     (local.get $b)
+  ;; NRML-NEXT:    )
+  ;; NRML-NEXT:   )
+  ;; NRML-NEXT:  )
+  ;; NRML-NEXT: )
+  ;; GUFA:       (type $2 (func))
+
+  ;; GUFA:      (func $work (type $2)
+  ;; GUFA-NEXT:  (local $a anyref)
+  ;; GUFA-NEXT:  (local $b (ref null $B))
+  ;; GUFA-NEXT:  (local.set $a
+  ;; GUFA-NEXT:   (struct.new_default $A)
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT:  (local.set $b
+  ;; GUFA-NEXT:   (struct.new $B
+  ;; GUFA-NEXT:    (ref.cast (ref struct)
+  ;; GUFA-NEXT:     (local.get $a)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT:  (local.set $b
+  ;; GUFA-NEXT:   (struct.new $B
+  ;; GUFA-NEXT:    (ref.cast (ref $B)
+  ;; GUFA-NEXT:     (local.get $b)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT:  (local.set $b
+  ;; GUFA-NEXT:   (struct.new $B
+  ;; GUFA-NEXT:    (struct.get $B 0
+  ;; GUFA-NEXT:     (local.get $b)
+  ;; GUFA-NEXT:    )
+  ;; GUFA-NEXT:   )
+  ;; GUFA-NEXT:  )
+  ;; GUFA-NEXT: )
+  (func $work
     (local $a anyref)
     (local $b (ref null $B))
     ;; $A's field contains null.
