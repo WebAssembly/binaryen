@@ -110,7 +110,7 @@ unfuzzable = [
     'coalesce-locals-stack-switching.wast',
     'dce-stack-switching.wast',
     'precompute-stack-switching.wast',
-    'vacuum-stack-switching.wast'
+    'vacuum-stack-switching.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
 ]
