@@ -183,6 +183,7 @@ struct TypeRefining : public Pass {
         auto& infos = finalInfos[type];
         for (Index i = 0; i < fields.size(); i++) {
           auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
+std::cout << "GUFA saw " << type << "[" << i << "] = " << gufaType << '\n';
           infos[i] = LUBFinder(gufaType);
         }
       }
