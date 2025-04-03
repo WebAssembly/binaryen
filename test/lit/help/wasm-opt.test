@@ -566,6 +566,10 @@
 ;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
 ;; CHECK-NEXT:                                                 type fields where possible
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-refining-gufa                          apply more specific subtypes to
+;; CHECK-NEXT:                                                 type fields where possible
+;; CHECK-NEXT:                                                 (using GUFA)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
 ;; CHECK-NEXT:                                                 other optimizations
 ;; CHECK-NEXT:
