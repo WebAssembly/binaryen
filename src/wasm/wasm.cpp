@@ -821,7 +821,9 @@ void RefFunc::finalize() {
   assert(type.isSignature());
 }
 
-void RefFunc::finalize(Type type_) { type = type_; }
+void RefFunc::finalize(HeapType heapType) {
+  type = Type(heapType, NonNullable);
+}
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
