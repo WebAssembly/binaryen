@@ -3831,12 +3831,88 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         }
         case Type::v128: {
           assert(wasm.features.hasSIMD());
-          // TODO: Add the other SIMD unary ops
-          return buildUnary({pick(AnyTrueVec128,
-                                  AllTrueVecI8x16,
-                                  AllTrueVecI16x8,
-                                  AllTrueVecI32x4),
-                             make(Type::v128)});
+          auto op =
+            pick(FeatureOptions<UnaryOp>()
+                   .add(FeatureSet::SIMD,
+  NotVec128,
+  AnyTrueVec128,
+  AbsVecI8x16,
+  NegVecI8x16,
+  AllTrueVecI8x16,
+  BitmaskVecI8x16,
+  PopcntVecI8x16,
+  AbsVecI16x8,
+  NegVecI16x8,
+  AllTrueVecI16x8,
+  BitmaskVecI16x8,
+  AbsVecI32x4,
+  NegVecI32x4,
+  AllTrueVecI32x4,
+  BitmaskVecI32x4,
+  AbsVecI64x2,
+  NegVecI64x2,
+  AllTrueVecI64x2,
+  BitmaskVecI64x2,
+  AbsVecF16x8,
+  NegVecF16x8,
+  SqrtVecF16x8,
+  CeilVecF16x8,
+  FloorVecF16x8,
+  TruncVecF16x8,
+  NearestVecF16x8,
+  AbsVecF32x4,
+  NegVecF32x4,
+  SqrtVecF32x4,
+  CeilVecF32x4,
+  FloorVecF32x4,
+  TruncVecF32x4,
+  NearestVecF32x4,
+  AbsVecF64x2,
+  NegVecF64x2,
+  SqrtVecF64x2,
+  CeilVecF64x2,
+  FloorVecF64x2,
+  TruncVecF64x2,
+  NearestVecF64x2,
+  ExtAddPairwiseSVecI8x16ToI16x8,
+  ExtAddPairwiseUVecI8x16ToI16x8,
+  ExtAddPairwiseSVecI16x8ToI32x4,
+  ExtAddPairwiseUVecI16x8ToI32x4,
+
+  // SIMD conversions
+  TruncSatSVecF32x4ToVecI32x4,
+  TruncSatUVecF32x4ToVecI32x4,
+  ConvertSVecI32x4ToVecF32x4,
+  ConvertUVecI32x4ToVecF32x4,
+  ExtendLowSVecI8x16ToVecI16x8,
+  ExtendHighSVecI8x16ToVecI16x8,
+  ExtendLowUVecI8x16ToVecI16x8,
+  ExtendHighUVecI8x16ToVecI16x8,
+  ExtendLowSVecI16x8ToVecI32x4,
+  ExtendHighSVecI16x8ToVecI32x4,
+  ExtendLowUVecI16x8ToVecI32x4,
+  ExtendHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI32x4ToVecI64x2,
+  ExtendHighSVecI32x4ToVecI64x2,
+  ExtendLowUVecI32x4ToVecI64x2,
+  ExtendHighUVecI32x4ToVecI64x2,
+
+  ConvertLowSVecI32x4ToVecF64x2,
+  ConvertLowUVecI32x4ToVecF64x2,
+  TruncSatZeroSVecF64x2ToVecI32x4,
+  TruncSatZeroUVecF64x2ToVecI32x4,
+  DemoteZeroVecF64x2ToVecF32x4,
+  PromoteLowVecF32x4ToVecF64x2,
+
+
+                        )
+                        .add(FeatureSet::RelaxedSIMD,
+  RelaxedTruncSVecF32x4ToVecI32x4,
+  RelaxedTruncUVecF32x4ToVecI32x4,
+  RelaxedTruncZeroSVecF64x2ToVecI32x4,
+  RelaxedTruncZeroUVecF64x2ToVecI32x4,
+                        ));
+          return buildUnary({op, make(Type::v128)});
         }
         case Type::none:
         case Type::unreachable:
