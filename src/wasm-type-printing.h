@@ -50,12 +50,14 @@ template<typename Subclass> struct TypeNameGeneratorBase {
 
 private:
   constexpr void assertValidUsage() {
+#if !defined(__GNUC__) || __GNUC__ >= 14
     // Check that the subclass provides `getNames` with the correct type.
     using Self = TypeNameGeneratorBase<Subclass>;
     static_assert(
       static_cast<TypeNames (Self::*)(HeapTypeDef)>(&Self::getNames) !=
         static_cast<TypeNames (Self::*)(HeapTypeDef)>(&Subclass::getNames),
       "Derived class must implement getNames");
+#endif
   }
 };
 
