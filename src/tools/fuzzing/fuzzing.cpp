@@ -3952,12 +3952,6 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 4:
           return buildUnary({pick(FeatureOptions<UnaryOp>()
                                     .add(FeatureSet::SIMD,
-                                         SplatVecI8x16,
-                                         SplatVecI16x8,
-                                         SplatVecI32x4,
-                                         SplatVecI64x2,
-                                         SplatVecF32x4,
-                                         SplatVecF64x2,
                                          NotVec128,
                                          AbsVecI8x16,
                                          AbsVecI16x8,
