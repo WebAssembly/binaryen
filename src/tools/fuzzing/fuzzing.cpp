@@ -4296,7 +4296,7 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MulVecF16x8,
                                       DivVecF16x8,
                                       MinVecF16x8,
-                                      MaxVecF16x8
+                                      MaxVecF16x8,
                                       PMinVecF16x8,
                                       PMaxVecF16x8)),
                           make(Type::v128),
