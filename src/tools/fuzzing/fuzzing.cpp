@@ -3831,12 +3831,17 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         }
         case Type::v128: {
           assert(wasm.features.hasSIMD());
-          // TODO: Add the other SIMD unary ops
-          return buildUnary({pick(AnyTrueVec128,
-                                  AllTrueVecI8x16,
-                                  AllTrueVecI16x8,
-                                  AllTrueVecI32x4),
-                             make(Type::v128)});
+          auto op = pick(FeatureOptions<UnaryOp>().add(FeatureSet::SIMD,
+                                                       AnyTrueVec128,
+                                                       AllTrueVecI8x16,
+                                                       AllTrueVecI16x8,
+                                                       AllTrueVecI32x4,
+                                                       AllTrueVecI64x2,
+                                                       BitmaskVecI8x16,
+                                                       BitmaskVecI16x8,
+                                                       BitmaskVecI32x4,
+                                                       BitmaskVecI64x2));
+          return buildUnary({op, make(Type::v128)});
         }
         case Type::none:
         case Type::unreachable:
@@ -3945,46 +3950,76 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 3:
           return buildUnary({SplatVecF64x2, make(Type::f64)});
         case 4:
-          return buildUnary(
-            {pick(FeatureOptions<UnaryOp>()
-                    .add(FeatureSet::SIMD,
-                         NotVec128,
-                         // TODO: add additional SIMD instructions
-                         NegVecI8x16,
-                         NegVecI16x8,
-                         NegVecI32x4,
-                         NegVecI64x2,
-                         AbsVecF32x4,
-                         NegVecF32x4,
-                         SqrtVecF32x4,
-                         AbsVecF64x2,
-                         NegVecF64x2,
-                         SqrtVecF64x2,
-                         TruncSatSVecF32x4ToVecI32x4,
-                         TruncSatUVecF32x4ToVecI32x4,
-                         ConvertSVecI32x4ToVecF32x4,
-                         ConvertUVecI32x4ToVecF32x4,
-                         ExtendLowSVecI8x16ToVecI16x8,
-                         ExtendHighSVecI8x16ToVecI16x8,
-                         ExtendLowUVecI8x16ToVecI16x8,
-                         ExtendHighUVecI8x16ToVecI16x8,
-                         ExtendLowSVecI16x8ToVecI32x4,
-                         ExtendHighSVecI16x8ToVecI32x4,
-                         ExtendLowUVecI16x8ToVecI32x4,
-                         ExtendHighUVecI16x8ToVecI32x4)
-                    .add(FeatureSet::FP16,
-                         AbsVecF16x8,
-                         NegVecF16x8,
-                         SqrtVecF16x8,
-                         CeilVecF16x8,
-                         FloorVecF16x8,
-                         TruncVecF16x8,
-                         NearestVecF16x8,
-                         TruncSatSVecF16x8ToVecI16x8,
-                         TruncSatUVecF16x8ToVecI16x8,
-                         ConvertSVecI16x8ToVecF16x8,
-                         ConvertUVecI16x8ToVecF16x8)),
-             make(Type::v128)});
+          return buildUnary({pick(FeatureOptions<UnaryOp>()
+                                    .add(FeatureSet::SIMD,
+                                         NotVec128,
+                                         AbsVecI8x16,
+                                         AbsVecI16x8,
+                                         AbsVecI32x4,
+                                         AbsVecI64x2,
+                                         PopcntVecI8x16,
+                                         NegVecI8x16,
+                                         NegVecI16x8,
+                                         NegVecI32x4,
+                                         NegVecI64x2,
+                                         AbsVecF32x4,
+                                         NegVecF32x4,
+                                         SqrtVecF32x4,
+                                         CeilVecF32x4,
+                                         FloorVecF32x4,
+                                         TruncVecF32x4,
+                                         NearestVecF32x4,
+                                         AbsVecF64x2,
+                                         NegVecF64x2,
+                                         SqrtVecF64x2,
+                                         CeilVecF64x2,
+                                         FloorVecF64x2,
+                                         TruncVecF64x2,
+                                         NearestVecF64x2,
+                                         ExtAddPairwiseSVecI8x16ToI16x8,
+                                         ExtAddPairwiseUVecI8x16ToI16x8,
+                                         ExtAddPairwiseSVecI16x8ToI32x4,
+                                         ExtAddPairwiseUVecI16x8ToI32x4,
+                                         TruncSatSVecF32x4ToVecI32x4,
+                                         TruncSatUVecF32x4ToVecI32x4,
+                                         ConvertSVecI32x4ToVecF32x4,
+                                         ConvertUVecI32x4ToVecF32x4,
+                                         ExtendLowSVecI8x16ToVecI16x8,
+                                         ExtendHighSVecI8x16ToVecI16x8,
+                                         ExtendLowUVecI8x16ToVecI16x8,
+                                         ExtendHighUVecI8x16ToVecI16x8,
+                                         ExtendLowSVecI16x8ToVecI32x4,
+                                         ExtendHighSVecI16x8ToVecI32x4,
+                                         ExtendLowUVecI16x8ToVecI32x4,
+                                         ExtendHighUVecI16x8ToVecI32x4,
+                                         ExtendLowSVecI32x4ToVecI64x2,
+                                         ExtendHighSVecI32x4ToVecI64x2,
+                                         ExtendLowUVecI32x4ToVecI64x2,
+                                         ExtendHighUVecI32x4ToVecI64x2,
+                                         ConvertLowSVecI32x4ToVecF64x2,
+                                         ConvertLowUVecI32x4ToVecF64x2,
+                                         TruncSatZeroSVecF64x2ToVecI32x4,
+                                         TruncSatZeroUVecF64x2ToVecI32x4,
+                                         DemoteZeroVecF64x2ToVecF32x4,
+                                         PromoteLowVecF32x4ToVecF64x2)
+                                    .add(FeatureSet::RelaxedSIMD,
+                                         RelaxedTruncSVecF32x4ToVecI32x4,
+                                         RelaxedTruncUVecF32x4ToVecI32x4,
+                                         RelaxedTruncZeroSVecF64x2ToVecI32x4,
+                                         RelaxedTruncZeroUVecF64x2ToVecI32x4)
+                                    .add(FeatureSet::FP16,
+                                         AbsVecF16x8,
+                                         NegVecF16x8,
+                                         SqrtVecF16x8,
+                                         CeilVecF16x8,
+                                         FloorVecF16x8,
+                                         TruncVecF16x8,
+                                         NearestVecF16x8,
+                                         TruncSatSVecF16x8ToVecI16x8,
+                                         TruncSatUVecF16x8ToVecI16x8,
+                                         ConvertSVecI16x8ToVecF16x8,
+                                         ConvertUVecI16x8ToVecF16x8)),
+                             make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
     }
@@ -4146,6 +4181,12 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       LeUVecI32x4,
                                       GeSVecI32x4,
                                       GeUVecI32x4,
+                                      EqVecI64x2,
+                                      NeVecI64x2,
+                                      LtSVecI64x2,
+                                      GtSVecI64x2,
+                                      LeSVecI64x2,
+                                      GeSVecI64x2,
                                       EqVecF32x4,
                                       NeVecF32x4,
                                       LtVecF32x4,
@@ -4158,6 +4199,8 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       GtVecF64x2,
                                       LeVecF64x2,
                                       GeVecF64x2,
+
+                                      // SIMD arithmetic
                                       AndVec128,
                                       OrVec128,
                                       XorVec128,
@@ -4172,9 +4215,7 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MinUVecI8x16,
                                       MaxSVecI8x16,
                                       MaxUVecI8x16,
-                                      // TODO: avgr_u
-                                      // TODO: q15mulr_sat_s
-                                      // TODO: extmul
+                                      AvgrUVecI8x16,
                                       AddVecI16x8,
                                       AddSatSVecI16x8,
                                       AddSatUVecI16x8,
@@ -4186,6 +4227,12 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MinUVecI16x8,
                                       MaxSVecI16x8,
                                       MaxUVecI16x8,
+                                      AvgrUVecI16x8,
+                                      Q15MulrSatSVecI16x8,
+                                      ExtMulLowSVecI16x8,
+                                      ExtMulHighSVecI16x8,
+                                      ExtMulLowUVecI16x8,
+                                      ExtMulHighUVecI16x8,
                                       AddVecI32x4,
                                       SubVecI32x4,
                                       MulVecI32x4,
@@ -4194,24 +4241,41 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MaxSVecI32x4,
                                       MaxUVecI32x4,
                                       DotSVecI16x8ToVecI32x4,
+                                      ExtMulLowSVecI32x4,
+                                      ExtMulHighSVecI32x4,
+                                      ExtMulLowUVecI32x4,
+                                      ExtMulHighUVecI32x4,
                                       AddVecI64x2,
                                       SubVecI64x2,
+                                      MulVecI64x2,
+                                      ExtMulLowSVecI64x2,
+                                      ExtMulHighSVecI64x2,
+                                      ExtMulLowUVecI64x2,
+                                      ExtMulHighUVecI64x2,
                                       AddVecF32x4,
                                       SubVecF32x4,
                                       MulVecF32x4,
                                       DivVecF32x4,
                                       MinVecF32x4,
                                       MaxVecF32x4,
+                                      PMinVecF32x4,
+                                      PMaxVecF32x4,
                                       AddVecF64x2,
                                       SubVecF64x2,
                                       MulVecF64x2,
                                       DivVecF64x2,
                                       MinVecF64x2,
                                       MaxVecF64x2,
+                                      PMinVecF64x2,
+                                      PMaxVecF64x2,
+
+                                      // SIMD Conversion
                                       NarrowSVecI16x8ToVecI8x16,
                                       NarrowUVecI16x8ToVecI8x16,
                                       NarrowSVecI32x4ToVecI16x8,
                                       NarrowUVecI32x4ToVecI16x8,
+
+                                      // SIMD Swizzle
                                       SwizzleVecI8x16)
                                  .add(FeatureSet::FP16,
                                       EqVecF16x8,
@@ -4226,7 +4290,9 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MulVecF16x8,
                                       DivVecF16x8,
                                       MinVecF16x8,
-                                      MaxVecF16x8)),
+                                      MaxVecF16x8,
+                                      PMinVecF16x8,
+                                      PMaxVecF16x8)),
                           make(Type::v128),
                           make(Type::v128)});
     }
@@ -4559,7 +4625,6 @@ Expression* TranslateToFuzzReader::makeSIMDShift() {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDLoad() {
-  // TODO: add Load{32,64}Zero if merged to proposal
   SIMDLoadOp op = pick(Load8SplatVec128,
                        Load16SplatVec128,
                        Load32SplatVec128,
@@ -4569,7 +4634,9 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
                        Load16x4SVec128,
                        Load16x4UVec128,
                        Load32x2SVec128,
-                       Load32x2UVec128);
+                       Load32x2UVec128,
+                       Load32ZeroVec128,
+                       Load64ZeroVec128);
   Address offset = logify(get());
   Address align;
   switch (op) {
@@ -4592,8 +4659,11 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
       align = pick(1, 2, 4, 8);
       break;
     case Load32ZeroVec128:
+      align = 4;
+      break;
     case Load64ZeroVec128:
-      WASM_UNREACHABLE("Unexpected SIMD loads");
+      align = 8;
+      break;
   }
   Expression* ptr = makePointer();
   return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
