@@ -4648,7 +4648,6 @@ Expression* TranslateToFuzzReader::makeSIMDShift() {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDLoad() {
-  // TODO: add Load{32,64}Zero if merged to proposal
   SIMDLoadOp op = pick(Load8SplatVec128,
                        Load16SplatVec128,
                        Load32SplatVec128,
@@ -4658,7 +4657,9 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
                        Load16x4SVec128,
                        Load16x4UVec128,
                        Load32x2SVec128,
-                       Load32x2UVec128);
+                       Load32x2UVec128,
+                       Load32ZeroVec128,
+                       Load64ZeroVec128);
   Address offset = logify(get());
   Address align;
   switch (op) {
@@ -4681,8 +4682,11 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
       align = pick(1, 2, 4, 8);
       break;
     case Load32ZeroVec128:
+      align = 4;
+      break;
     case Load64ZeroVec128:
-      WASM_UNREACHABLE("Unexpected SIMD loads");
+      align = 8;
+      break;
   }
   Expression* ptr = makePointer();
   return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
