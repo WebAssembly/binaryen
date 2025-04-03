@@ -32,10 +32,9 @@ namespace wasm {
 // ability to use the generator as a function to print Types and HeapTypes to
 // streams.
 template<typename Subclass> struct TypeNameGeneratorBase {
+  TypeNameGeneratorBase() { assertValidUsage(); }
+
   TypeNames getNames(HeapTypeDef type) {
-    static_assert(&TypeNameGeneratorBase<Subclass>::getNames !=
-                    &Subclass::getNames,
-                  "Derived class must implement getNames");
     WASM_UNREACHABLE("Derived class must implement getNames");
   }
   HeapType::Printed operator()(HeapTypeDef type) {
@@ -47,6 +46,16 @@ template<typename Subclass> struct TypeNameGeneratorBase {
     return type.print([&](HeapTypeDef ht) {
       return static_cast<Subclass*>(this)->getNames(ht);
     });
+  }
+
+private:
+  constexpr void assertValidUsage() {
+    // Check that the subclass provides `getNames` with the correct type.
+    using Self = TypeNameGeneratorBase<Subclass>;
+    static_assert(
+      static_cast<TypeNames (Self::*)(HeapTypeDef)>(&Self::getNames) !=
+        static_cast<TypeNames (Self::*)(HeapTypeDef)>(&Subclass::getNames),
+      "Derived class must implement getNames");
   }
 };
 
@@ -73,7 +82,7 @@ struct IndexedTypeNameGenerator
   : TypeNameGeneratorBase<IndexedTypeNameGenerator<FallbackGenerator>> {
   DefaultTypeNameGenerator defaultGenerator;
   FallbackGenerator& fallback;
-  std::unordered_map<HeapType, TypeNames> names;
+  std::unordered_map<HeapTypeDef, TypeNames> names;
 
   template<typename T>
   IndexedTypeNameGenerator(T& types,
@@ -88,7 +97,7 @@ struct IndexedTypeNameGenerator
   IndexedTypeNameGenerator(T& types, const std::string& prefix = "")
     : IndexedTypeNameGenerator(types, defaultGenerator, prefix) {}
 
-  TypeNames getNames(HeapType type) {
+  TypeNames getNames(HeapTypeDef type) {
     if (auto it = names.find(type); it != names.end()) {
       return it->second;
     } else {
@@ -119,7 +128,7 @@ struct ModuleTypeNameGenerator
     std::enable_if_t<std::is_same_v<T, DefaultTypeNameGenerator>>* = nullptr)
     : ModuleTypeNameGenerator(wasm, defaultGenerator) {}
 
-  TypeNames getNames(HeapType type) {
+  TypeNames getNames(HeapTypeDef type) {
     if (auto it = wasm.typeNames.find(type); it != wasm.typeNames.end()) {
       return it->second;
     }
