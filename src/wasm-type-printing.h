@@ -32,19 +32,21 @@ namespace wasm {
 // ability to use the generator as a function to print Types and HeapTypes to
 // streams.
 template<typename Subclass> struct TypeNameGeneratorBase {
-  TypeNames getNames(HeapType type) {
+  TypeNames getNames(HeapTypeDef type) {
     static_assert(&TypeNameGeneratorBase<Subclass>::getNames !=
                     &Subclass::getNames,
                   "Derived class must implement getNames");
     WASM_UNREACHABLE("Derived class must implement getNames");
   }
-  HeapType::Printed operator()(HeapType type) {
-    return type.print(
-      [&](HeapType ht) { return static_cast<Subclass*>(this)->getNames(ht); });
+  HeapType::Printed operator()(HeapTypeDef type) {
+    return type.print([&](HeapTypeDef ht) {
+      return static_cast<Subclass*>(this)->getNames(ht);
+    });
   }
   Type::Printed operator()(Type type) {
-    return type.print(
-      [&](HeapType ht) { return static_cast<Subclass*>(this)->getNames(ht); });
+    return type.print([&](HeapTypeDef ht) {
+      return static_cast<Subclass*>(this)->getNames(ht);
+    });
   }
 };
 
@@ -60,7 +62,7 @@ struct DefaultTypeNameGenerator
   // Cached names for types that have already been seen.
   std::unordered_map<HeapType, TypeNames> nameCache;
 
-  TypeNames getNames(HeapType type);
+  TypeNames getNames(HeapTypeDef type);
 };
 
 // Generates names based on the indices of types in some collection, falling

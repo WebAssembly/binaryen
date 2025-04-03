@@ -1369,7 +1369,7 @@ size_t RecGroup::size() const {
   }
 }
 
-TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
+TypeNames DefaultTypeNameGenerator::getNames(HeapTypeDef type) {
   auto [it, inserted] = nameCache.insert({type, {}});
   if (inserted) {
     // Generate a new name for this type we have not previously seen.
@@ -2766,6 +2766,10 @@ size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
 
 size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
   return wasm::hash(heapType.getID());
+}
+
+size_t hash<wasm::HeapTypeDef>::operator()(const wasm::HeapTypeDef& def) const {
+  return wasm::hash(def.getID());
 }
 
 size_t hash<wasm::RecGroup>::operator()(const wasm::RecGroup& group) const {

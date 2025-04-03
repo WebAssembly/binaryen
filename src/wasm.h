@@ -2415,8 +2415,8 @@ public:
   // Module name, if specified. Serves a documentary role only.
   Name name;
 
-  std::unordered_map<HeapType, TypeNames> typeNames;
-  std::unordered_map<HeapType, Index> typeIndices;
+  std::unordered_map<HeapTypeDef, TypeNames> typeNames;
+  std::unordered_map<HeapTypeDef, Index> typeIndices;
 
   MixedArena allocator;
 
