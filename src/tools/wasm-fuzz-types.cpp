@@ -97,7 +97,7 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
   std::cout << "Built " << types.size() << " types:\n";
   struct FatalTypeNameGenerator
     : TypeNameGeneratorBase<FatalTypeNameGenerator> {
-    TypeNames getNames(HeapType type) {
+    TypeNames getNames(HeapTypeDef type) {
       Fatal() << "trying to print unknown heap type";
     }
   } fatalGenerator;

@@ -198,7 +198,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
     }
 
-    TypeNames getNames(HeapType type) {
+    TypeNames getNames(HeapTypeDef type) {
       if (parent.currModule) {
         if (auto it = parent.currModule->typeNames.find(type);
             it != parent.currModule->typeNames.end()) {

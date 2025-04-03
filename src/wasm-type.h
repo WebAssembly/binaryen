@@ -50,6 +50,7 @@ void destroyAllTypesForTestingPurposesOnly();
 // data.
 class Type;
 class HeapType;
+class HeapTypeDef;
 class RecGroup;
 struct Signature;
 struct Continuation;
@@ -73,7 +74,7 @@ struct TypeNames {
 };
 
 // Used to generate HeapType names.
-using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
+using HeapTypeNameGenerator = std::function<TypeNames(HeapTypeDef)>;
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
@@ -292,6 +293,16 @@ public:
   }
 
   std::string toString() const;
+};
+
+// Like `HeapType`, but used to represent heap type definitions and abstract
+// heap types rather than arbitrary heap types. Use this whenever it would be a
+// category error to use an exact heap type.
+class HeapTypeDef : public HeapType {
+public:
+  // Allow implicit conversions from HeapType.
+  constexpr HeapTypeDef(HeapType type) : HeapType(type.with(Inexact)) {}
+  constexpr HeapTypeDef() = default;
 };
 
 class Type {
@@ -1006,6 +1017,10 @@ public:
 template<> class hash<wasm::HeapType> {
 public:
   size_t operator()(const wasm::HeapType&) const;
+};
+template<> class hash<wasm::HeapTypeDef> {
+public:
+  size_t operator()(const wasm::HeapTypeDef&) const;
 };
 template<> class hash<wasm::RecGroup> {
 public:
