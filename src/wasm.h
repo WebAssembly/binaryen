@@ -1364,7 +1364,7 @@ public:
   Name func;
 
   void finalize();
-  void finalize(Type type_);
+  void finalize(HeapType heapType);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {

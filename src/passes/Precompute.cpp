@@ -313,7 +313,7 @@ struct Precompute
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             auto heapType = getModule()->getFunction(r->func)->type;
-            r->finalize(Type(heapType, NonNullable));
+            r->finalize(heapType);
             curr->finalize();
             return;
           }
