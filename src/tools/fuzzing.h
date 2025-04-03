@@ -191,11 +191,12 @@ private:
   std::vector<Type> loggableTypes;
 
   // The heap types we can pick from to generate instructions.
-  std::vector<HeapType> interestingHeapTypes;
+  std::vector<HeapTypeDef> interestingHeapTypes;
 
   // A mapping of a heap type to the subset of interestingHeapTypes that are
   // subtypes of it.
-  std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
+  std::unordered_map<HeapTypeDef, std::vector<HeapTypeDef>>
+    interestingHeapSubTypes;
 
   // Type => list of struct fields that have that type.
   std::unordered_map<Type, std::vector<StructField>> typeStructFields;

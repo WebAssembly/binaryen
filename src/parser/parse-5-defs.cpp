@@ -22,9 +22,9 @@ Result<> parseDefinitions(
   ParseDeclsCtx& decls,
   Lexer& input,
   IndexMap& typeIndices,
-  std::vector<HeapType>& types,
-  std::unordered_map<Index, HeapType>& implicitTypes,
-  std::unordered_map<HeapType, std::unordered_map<Name, Index>>& typeNames) {
+  std::vector<HeapTypeDef>& types,
+  std::unordered_map<Index, HeapTypeDef>& implicitTypes,
+  std::unordered_map<HeapTypeDef, std::unordered_map<Name, Index>>& typeNames) {
   // Parse definitions.
   // TODO: Parallelize this.
   ParseDefsCtx ctx(input,

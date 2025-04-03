@@ -2574,7 +2574,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
       canonicalized.insert({group[i], canonical[i]});
     }
     // Return the canonical types.
-    return {std::vector<HeapType>(canonical.begin(), canonical.end())};
+    return {std::vector<HeapTypeDef>(canonical.begin(), canonical.end())};
   }
 
   // The group was successfully moved to the global rec group store, so it is
@@ -2588,7 +2588,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
     }
   }
 
-  std::vector<HeapType> results(group.begin(), group.end());
+  std::vector<HeapTypeDef> results(group.begin(), group.end());
 
   // We need to make the tuples canonical as well, but right now there is no way
   // to move them to their global store, so we have to create new tuples and
@@ -2622,7 +2622,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
 TypeBuilder::BuildResult TypeBuilder::build() {
   size_t entryCount = impl->entries.size();
 
-  std::vector<HeapType> results;
+  std::vector<HeapTypeDef> results;
   results.reserve(entryCount);
 
   // Map temporary HeapTypes to their canonicalized versions so they can be

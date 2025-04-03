@@ -28,7 +28,7 @@ namespace wasm {
 //
 // This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
-  SubTypes(const std::vector<HeapType>& types) : types(types) {
+  SubTypes(const std::vector<HeapTypeDef>& types) : types(types) {
     for (auto type : types) {
       note(type);
     }
@@ -198,11 +198,11 @@ struct SubTypes {
 
   // All the types in the program. This is computed here anyhow, and can be
   // useful for callers to iterate on, so it is public.
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
 
 private:
   // Add a type to the graph.
-  void note(HeapType type) {
+  void note(HeapTypeDef type) {
     if (auto super = type.getDeclaredSuperType()) {
       typeSubTypes[*super].push_back(type);
     }

@@ -855,14 +855,14 @@ struct TypeBuilder {
     ErrorReason reason;
   };
 
-  struct BuildResult : std::variant<std::vector<HeapType>, Error> {
+  struct BuildResult : std::variant<std::vector<HeapTypeDef>, Error> {
     operator bool() const {
-      return bool(std::get_if<std::vector<HeapType>>(this));
+      return bool(std::get_if<std::vector<HeapTypeDef>>(this));
     }
-    const std::vector<HeapType>& operator*() const {
-      return std::get<std::vector<HeapType>>(*this);
+    const std::vector<HeapTypeDef>& operator*() const {
+      return std::get<std::vector<HeapTypeDef>>(*this);
     }
-    const std::vector<HeapType>* operator->() const { return &*(*this); }
+    const std::vector<HeapTypeDef>* operator->() const { return &*(*this); }
     const Error* getError() const { return std::get_if<Error>(this); }
   };
 
