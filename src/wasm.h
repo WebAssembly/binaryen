@@ -2173,6 +2173,10 @@ public:
                ? columnNumber < other.columnNumber
                : symbolNameIndex < other.symbolNameIndex;
     }
+    void dump() {
+      std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) <<
+       " @ " << fileIndex << ":" << lineNumber << ":" << columnNumber << "\n";
+    }
   };
   // One can explicitly set the debug location of an expression to
   // nullopt to stop the propagation of debug locations.

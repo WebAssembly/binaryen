@@ -1774,7 +1774,7 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input,
-                                   const std::vector<char>& sourceMap)
+                                   std::vector<char>& sourceMap)
   : wasm(wasm), allocator(wasm.allocator), input(input), builder(wasm),
     sourceMapReader(sourceMap) {
   wasm.features = features;
@@ -1824,7 +1824,7 @@ void WasmBinaryReader::read() {
   }
 
   readHeader();
-  sourceMapReader.readHeader(wasm);
+  sourceMapReader.parse(wasm);
 
   // Read sections until the end
   while (more()) {

@@ -1464,7 +1464,7 @@ public:
   WasmBinaryReader(Module& wasm,
                    FeatureSet features,
                    const std::vector<char>& input,
-                   const std::vector<char>& sourceMap = defaultEmptySourceMap);
+                   std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
