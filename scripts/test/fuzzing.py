@@ -115,6 +115,7 @@ unfuzzable = [
     'custom-descriptors.wast',
     # TODO: fuzzer support for exact heap types
     'exact.wast',
+    'remove-unused-types-exact.wast',
 ]
 
 
