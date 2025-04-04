@@ -302,7 +302,9 @@
 ;; validates. (Alternatively, we could need to refine the global's type at the
 ;; same time we refine the struct, but this pass only refines structs.) The type
 ;; of the struct's field should only refine as much as is valid, which is the
-;; type of the global, (ref func), and not the declared type $func.
+;; type of the global, (ref func), and not the declared type $func. Both GUFA
+;; and normal type refining succeed here (-O3 removes the entire module, and is
+;; not interesting here).
 (module
   ;; NRML:      (rec
   ;; NRML-NEXT:  (type $struct (struct (field (ref func))))
@@ -336,6 +338,8 @@
   )
 )
 
+;; As above, but now the global has a refined type. Now GUFA can optimize while
+;; normal type refining cannot.
 (module
   ;; NRML:      (rec
   ;; NRML-NEXT:  (type $struct (struct (field (ref func))))
