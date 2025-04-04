@@ -4025,10 +4025,10 @@ private:
       return right;
     }
     // (unsigned)x <= -1  ==>   i32(1)
-    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(LeU, any(&left), ival(-1)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
-      return right;
+      return getDroppedChildrenAndAppend(curr, right);
     }
     // (unsigned)x > -1   ==>   i32(0)
     if (matches(curr, binary(GtU, pure(&left), ival(-1)))) {
