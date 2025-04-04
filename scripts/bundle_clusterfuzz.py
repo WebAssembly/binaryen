@@ -135,11 +135,17 @@ with tarfile.open(output_file, "w:gz") as tar:
             tar.add(libbinaryen, arcname=f'lib/libbinaryen{suffix}')
 
             # The emsdk build also includes some more necessary files.
-            for name in [f'libc++{suffix}', f'libc++{suffix}.2', f'libc++{suffix}.2.0']:
-                path = os.path.join(binaryen_lib, name)
-                if os.path.exists(path):
-                    print(f'  ......... : {path}')
-                    tar.add(path, arcname=f'lib/{name}')
+            for lib in ['libc++', 'libmimalloc']:
+                for name in [
+                    f'{lib}{suffix}',
+                    f'{lib}{suffix}.2',
+                    f'{lib}{suffix}.2.0',
+                    f'{lib}{suffix}.2.2',
+                ]:
+                    path = os.path.join(binaryen_lib, name)
+                    if os.path.exists(path):
+                        print(f'  ......... : {path}')
+                        tar.add(path, arcname=f'lib/{name}')
 
     # Add tests we will use as initial content under initial/. We put all the
     # tests from the test suite there.
