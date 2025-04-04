@@ -553,8 +553,6 @@ struct OptimizeInstructions
       }
       {
         // unsigned(x) >= 0   =>   i32(1)
-        // TODO: Use getDroppedChildrenAndAppend() here, so we can optimize even
-        //       if pure.
         Const* c;
         Expression* x;
         if (matches(curr, binary(GeU, any(&x), ival(&c))) &&
