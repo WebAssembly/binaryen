@@ -25,6 +25,7 @@
 // themselves.
 //
 
+#include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/possible-contents.h"
 #include "ir/struct-utils.h"
@@ -191,6 +192,41 @@ struct TypeRefining : public Pass {
 
     // Propagate to supertypes, so no field is less refined than its super.
     propagator.propagateToSuperTypes(finalInfos);
+
+    // Take into account possible problems. This pass only refines struct
+    // fields, and when we refine in a way that exceeds the wasm type system
+    // then we fix that up with a cast (see below). However, we cannot use casts
+    // in all places, specifically in globals, so we must account for that.
+    for (auto& global : module->globals) {
+      if (global->imported()) {
+        continue;
+      }
+
+      // Find StructNews, which are the one thing that can appear in a global
+      // init that is affected by our optimizations.
+      for (auto* structNew : FindAll<StructNew>(global->init).list) {
+        if (structNew->isWithDefault()) {
+          continue;
+        }
+
+        auto type = structNew->type.getHeapType();
+        auto& infos = finalInfos[type];
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          // We are in a situation like this:
+          //
+          //  (struct.new $A
+          //   (global.get or such
+          //
+          // To avoid ending up requiring a cast later, the type of our child
+          // must fit perfectly in the field it is written to.
+          auto childType = structNew->operands[i]->type;
+std::cout << "pre  " << infos[i].getLUB() << '\n';
+          infos[i].note(childType);
+std::cout << "post " << infos[i].getLUB() << '\n';
+        }
+      }
+    }
   }
 
   void useFinalInfos(Module* module, Propagator& propagator) {

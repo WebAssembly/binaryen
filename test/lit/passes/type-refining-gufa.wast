@@ -296,3 +296,87 @@
   )
 )
 
+;; We can infer the first global contains a null, so the struct type's field
+;; can be a null. However, doing so would require adding a cast from the
+;; global's declared type (funcref) to the refined type, so that the struct.new
+;; validates. (Alternatively, we could need to refine the global's type at the
+;; same time we refine the struct, but this pass only refines structs.) The type
+;; of the struct's field should only refine as much as is valid, which is the
+;; type of the global, (ref func), and not the declared type $func.
+(module
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $struct (struct (field (ref func))))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $struct (struct (field (ref func))))
+  (type $struct (struct (field funcref)))
+
+  ;; NRML:       (type $func (func))
+  ;; GUFA:       (type $func (func))
+  (type $func (func))
+
+  ;; NRML:      (global $A (ref func) (ref.func $func))
+  ;; GUFA:      (global $A (ref func) (ref.func $func))
+  (global $A (ref func) (ref.func $func))
+
+  ;; NRML:      (global $B (ref $struct) (struct.new $struct
+  ;; NRML-NEXT:  (global.get $A)
+  ;; NRML-NEXT: ))
+  ;; GUFA:      (global $B (ref $struct) (struct.new $struct
+  ;; GUFA-NEXT:  (global.get $A)
+  ;; GUFA-NEXT: ))
+  (global $B (ref $struct) (struct.new $struct
+    (global.get $A)
+  ))
+
+  ;; NRML:      (func $func (type $func)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $func (type $func)
+  ;; GUFA-NEXT: )
+  (func $func (type $func)
+  )
+)
+
+(module
+  ;; NRML:      (rec
+  ;; NRML-NEXT:  (type $struct (struct (field (ref func))))
+  ;; GUFA:      (rec
+  ;; GUFA-NEXT:  (type $struct (struct (field (ref func))))
+  (type $struct (struct (field funcref)))
+
+  ;; NRML:       (type $func (func))
+  ;; GUFA:       (type $func (func))
+  (type $func (func))
+
+  ;; NRML:      (global $A (ref func) (ref.func $func))
+  ;; GUFA:      (global $A (ref func) (ref.func $func))
+  (global $A (ref func) (ref.func $func))
+
+  ;; NRML:      (global $B (ref $struct) (struct.new $struct
+  ;; NRML-NEXT:  (global.get $A)
+  ;; NRML-NEXT: ))
+  ;; GUFA:      (global $B (ref $struct) (struct.new $struct
+  ;; GUFA-NEXT:  (global.get $A)
+  ;; GUFA-NEXT: ))
+  (global $B (ref $struct) (struct.new $struct
+    (global.get $A)
+  ))
+
+  ;; NRML:      (func $func (type $func)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $func (type $func)
+  ;; GUFA-NEXT: )
+  (func $func (type $func)
+  )
+)
+
+;; Check we do not error on struct.new_default in a global. Here we can refine
+;; the field to nullref.
+(module
+  ;; NRML:      (type $struct (struct (field nullfuncref)))
+  ;; GUFA:      (type $struct (struct (field nullfuncref)))
+  (type $struct (struct (field funcref)))
+
+  ;; NRML:      (global $C (ref $struct) (struct.new_default $struct))
+  ;; GUFA:      (global $C (ref $struct) (struct.new_default $struct))
+  (global $C (ref $struct) (struct.new_default $struct))
+)
