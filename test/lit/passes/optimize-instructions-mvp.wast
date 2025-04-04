@@ -9438,9 +9438,11 @@
   ;; CHECK-NEXT:   (i32.const -1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.or
-  ;; CHECK-NEXT:    (local.tee $x
-  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const -1)
   ;; CHECK-NEXT:   )
@@ -9450,6 +9452,16 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.const -1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (i64.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const -1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $all_ones (param $x i32) (param $y i64)
@@ -9482,6 +9494,14 @@
     (drop
       (i64.or
         (local.get $y)
+        (i64.const -1)
+      )
+    )
+    (drop
+      (i64.or
+        (local.tee $y
+          (i64.const 1337)
+        )
         (i64.const -1)
       )
     )

@@ -3993,8 +3993,8 @@ private:
       return left;
     }
     // x | -1   ==>   -1
-    if (matches(curr, binary(Or, pure(&left), ival(-1)))) {
-      return right;
+    if (matches(curr, binary(Or, any(&left), ival(-1)))) {
+      return getDroppedChildrenAndAppend(curr, right);
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(RemS, pure(&left), ival(-1)))) {
