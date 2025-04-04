@@ -296,10 +296,10 @@
   )
 )
 
-;; We can infer the first global contains a null, so the struct type's field
-;; can be a null. However, doing so would require adding a cast from the
-;; global's declared type (funcref) to the refined type, so that the struct.new
-;; validates. (Alternatively, we could need to refine the global's type at the
+;; GUFA can infer the first global contains a $func, so the struct type's field
+;; can be refined. However, doing so would require adding a cast from the
+;; global's declared type (ref func) to the refined type, so that the struct.new
+;; validates. (Alternatively, we would need to refine the global's type at the
 ;; same time we refine the struct, but this pass only refines structs.) The type
 ;; of the struct's field should only refine as much as is valid, which is the
 ;; type of the global, (ref func), and not the declared type $func. Both GUFA
@@ -338,22 +338,21 @@
   )
 )
 
-;; As above, but now the global has a refined type. Now GUFA can optimize while
-;; normal type refining cannot.
+;; As above, but now the global has a refined type, so we can refine fully.
 (module
   ;; NRML:      (rec
-  ;; NRML-NEXT:  (type $struct (struct (field (ref func))))
+  ;; NRML-NEXT:  (type $struct (struct (field (ref $func))))
   ;; GUFA:      (rec
-  ;; GUFA-NEXT:  (type $struct (struct (field (ref func))))
+  ;; GUFA-NEXT:  (type $struct (struct (field (ref $func))))
   (type $struct (struct (field funcref)))
 
   ;; NRML:       (type $func (func))
   ;; GUFA:       (type $func (func))
   (type $func (func))
 
-  ;; NRML:      (global $A (ref func) (ref.func $func))
-  ;; GUFA:      (global $A (ref func) (ref.func $func))
-  (global $A (ref func) (ref.func $func))
+  ;; NRML:      (global $A (ref $func) (ref.func $func))
+  ;; GUFA:      (global $A (ref $func) (ref.func $func))
+  (global $A (ref $func) (ref.func $func))  ;; the type here changed
 
   ;; NRML:      (global $B (ref $struct) (struct.new $struct
   ;; NRML-NEXT:  (global.get $A)
