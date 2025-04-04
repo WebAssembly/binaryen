@@ -138,6 +138,9 @@ with tarfile.open(output_file, "w:gz") as tar:
             # The emsdk build also includes some more necessary files.
             for lib in ['libc++', 'libmimalloc']:
                 # Include the main name plus any NAME.2.0 and such.
+                # TODO: Using ldd/otool would be better, to find the actual
+                #       dependencies of libbinaryen. Using glob like this will
+                #       pick up stale contents in the directory.
                 full_lib = os.path.join(binaryen_lib, lib) + suffix
                 for path in glob.glob(f'{full_lib}*'):
                     print(f'  ............. : {path}')
