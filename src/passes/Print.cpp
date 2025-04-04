@@ -82,20 +82,20 @@ std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 // Print a name from the type section, if available. Otherwise print the type
 // normally.
 void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
-  if (type.isRef() && wasm) {
-    auto heapType = type.getHeapType();
-    auto iter = wasm->typeNames.find(heapType);
-    if (iter != wasm->typeNames.end()) {
-      o << iter->second.name;
-      if (type.isNullable()) {
-        o << " null";
+  struct Printer : TypeNameGeneratorBase<Printer> {
+    Module* wasm;
+    DefaultTypeNameGenerator fallback;
+    Printer(Module* wasm) : wasm(wasm) {}
+    TypeNames getNames(HeapTypeDef type) {
+      if (wasm) {
+        if (auto it = wasm->typeNames.find(type); it != wasm->typeNames.end()) {
+          return it->second;
+        }
       }
-      return;
+      return fallback.getNames(type);
     }
-  }
-
-  // No luck with a name, just print the test as best we can.
-  o << type;
+  } print{wasm};
+  o << print(type);
 }
 
 } // anonymous namespace

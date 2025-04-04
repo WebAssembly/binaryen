@@ -47,10 +47,10 @@
   ;; CHECK-NEXT:     ;;@
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      ;;@ local.c:30:3
-  ;; CHECK-NEXT:      (local.get $struct) (; struct null ;)
-  ;; CHECK-NEXT:     ) (; struct ;)
+  ;; CHECK-NEXT:      (local.get $struct) (; (ref null $struct) ;)
+  ;; CHECK-NEXT:     ) (; (ref $struct) ;)
   ;; CHECK-NEXT:     ;;@
-  ;; CHECK-NEXT:     (global.get $global1) (; struct ;)
+  ;; CHECK-NEXT:     (global.get $global1) (; (ref $struct) ;)
   ;; CHECK-NEXT:    ) (; i32 ;)
   ;; CHECK-NEXT:   ) (; i32 ;)
   ;; CHECK-NEXT:  ) (; none ;)
