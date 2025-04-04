@@ -70,6 +70,7 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
      up). Note that these may take longer to show up than 1 and 2.
 '''
 
+import glob
 import os
 import subprocess
 import sys
@@ -136,16 +137,11 @@ with tarfile.open(output_file, "w:gz") as tar:
 
             # The emsdk build also includes some more necessary files.
             for lib in ['libc++', 'libmimalloc']:
-                for name in [
-                    f'{lib}{suffix}',
-                    f'{lib}{suffix}.2',
-                    f'{lib}{suffix}.2.0',
-                    f'{lib}{suffix}.2.2',
-                ]:
-                    path = os.path.join(binaryen_lib, name)
-                    if os.path.exists(path):
-                        print(f'  ......... : {path}')
-                        tar.add(path, arcname=f'lib/{name}')
+                # Include the main name plus any NAME.2.0 and such.
+                full_lib = os.path.join(binaryen_lib, lib) + suffix
+                for path in glob.glob(f'{full_lib}*'):
+                    print(f'  ............. : {path}')
+                    tar.add(path, arcname=f'lib/{os.path.basename(path)}')
 
     # Add tests we will use as initial content under initial/. We put all the
     # tests from the test suite there.
