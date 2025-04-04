@@ -35,7 +35,7 @@ class Random {
   bool finishedInput = false;
   // After we finish the input, we start going through it again, but xoring
   // so it's not identical.
-  int xorFactor = 0;
+  unsigned int xorFactor = 0;
   // Features used for picking among FeatureOptions.
   FeatureSet features;
 
