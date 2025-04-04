@@ -221,9 +221,7 @@ struct TypeRefining : public Pass {
           // To avoid ending up requiring a cast later, the type of our child
           // must fit perfectly in the field it is written to.
           auto childType = structNew->operands[i]->type;
-std::cout << "pre  " << infos[i].getLUB() << '\n';
           infos[i].note(childType);
-std::cout << "post " << infos[i].getLUB() << '\n';
         }
       }
     }
