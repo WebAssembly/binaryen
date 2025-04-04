@@ -152,11 +152,13 @@ def randomize_feature_opts():
         # The shared-everything feature is new and we want to fuzz it, but it
         # also currently disables fuzzing V8, so disable it most of the time.
         # Same with custom descriptors and strings - all these cannot be run in
-        # V8 for now.
+        # V8 for now. Relaxed SIMD's nondeterminism disables much but not all of
+        # our V8 fuzzing, so avoid it too.
         if random.random() < 0.9:
             FEATURE_OPTS.append('--disable-shared-everything')
             FEATURE_OPTS.append('--disable-custom-descriptors')
             FEATURE_OPTS.append('--disable-strings')
+            FEATURE_OPTS.append('--disable-relaxed-simd')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -823,13 +825,15 @@ class CompareVMs(TestCaseHandler):
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
-                # can compare to themselves after opts in that case.
-                return not NANS
+                # can compare to themselves after opts in that case. Relaxed
+                # SIMD allows similar types of nondeterminism
+                return not NANS and all_disallowed(['relaxed-simd'])
 
             def can_compare_to_others(self):
                 # If not legalized, the JS will fail immediately, so no point to
                 # compare to others.
-                return LEGALIZE and not NANS
+                return self.can_compare_to_self() and LEGALIZE
+
 
         class D8Liftoff(D8):
             name = 'd8_liftoff'
