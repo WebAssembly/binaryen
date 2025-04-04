@@ -185,7 +185,7 @@ TEST_F(TypeTest, Basics) {
 
   auto result = builder.build();
   ASSERT_TRUE(result);
-  std::vector<HeapType> built = *result;
+  std::vector<HeapTypeDef> built = *result;
   ASSERT_EQ(built.size(), size_t{3});
 
   // The built types should have the correct kinds.

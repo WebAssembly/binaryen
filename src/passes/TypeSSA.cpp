@@ -69,11 +69,11 @@ namespace {
 // way to ensure that the new types are in fact in a new rec group.
 //
 // TODO: Move this outside if we find more uses.
-std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
-                                                  Module& wasm) {
+std::vector<HeapTypeDef> ensureTypesAreInNewRecGroup(RecGroup recGroup,
+                                                     Module& wasm) {
   auto num = recGroup.size();
 
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
   types.reserve(num);
   for (auto type : recGroup) {
     types.push_back(type);
@@ -81,8 +81,8 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
 
   // Find all the heap types present before we create the new ones. The new
   // types must not appear in |existingSet|.
-  std::vector<HeapType> existing = ModuleUtils::collectHeapTypes(wasm);
-  std::unordered_set<HeapType> existingSet(existing.begin(), existing.end());
+  std::vector<HeapTypeDef> existing = ModuleUtils::collectHeapTypes(wasm);
+  std::unordered_set<HeapTypeDef> existingSet(existing.begin(), existing.end());
 
   // Check for a collision with an existing rec group. Note that it is enough to
   // check one of the types: either the entire rec group gets merged, so they

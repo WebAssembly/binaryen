@@ -347,7 +347,7 @@ namespace {
 
 // Helper for collecting HeapTypes and their frequencies.
 struct TypeInfos {
-  InsertOrderedMap<HeapType, HeapTypeInfo> info;
+  InsertOrderedMap<HeapTypeDef, HeapTypeInfo> info;
 
   // Multivalue control flow structures need a function type, but the identity
   // of the function type (i.e. what recursion group it is in or whether it is
@@ -355,7 +355,7 @@ struct TypeInfos {
   // existing function type with the necessary signature.
   InsertOrderedMap<Signature, size_t> controlFlowSignatures;
 
-  void note(HeapType type) {
+  void note(HeapTypeDef type) {
     if (!type.isBasic()) {
       ++info[type].useCount;
     }
@@ -366,7 +366,7 @@ struct TypeInfos {
     }
   }
   // Ensure a type is included without increasing its count.
-  void include(HeapType type) {
+  void include(HeapTypeDef type) {
     if (!type.isBasic()) {
       info[type];
     }
@@ -388,7 +388,7 @@ struct TypeInfos {
       note(sig.results);
     }
   }
-  bool contains(HeapType type) { return info.count(type); }
+  bool contains(HeapTypeDef type) { return info.count(type); }
 };
 
 struct CodeScanner
@@ -468,11 +468,11 @@ struct CodeScanner
 };
 
 void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types);
+                            InsertOrderedMap<HeapTypeDef, HeapTypeInfo>& types);
 
 } // anonymous namespace
 
-InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
+InsertOrderedMap<HeapTypeDef, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm, TypeInclusion inclusion, VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
@@ -523,9 +523,9 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   // track which recursion groups we've already processed to avoid quadratic
   // behavior when there is a single large group.
   // TODO: Use a vector here, since we never try to add the same type twice.
-  UniqueNonrepeatingDeferredQueue<HeapType> newTypes;
-  std::unordered_map<Signature, HeapType> seenSigs;
-  auto noteNewType = [&](HeapType type) {
+  UniqueNonrepeatingDeferredQueue<HeapTypeDef> newTypes;
+  std::unordered_map<Signature, HeapTypeDef> seenSigs;
+  auto noteNewType = [&](HeapTypeDef type) {
     newTypes.push(type);
     if (type.isSignature()) {
       seenSigs.insert({type.getSignature(), type});
@@ -588,14 +588,14 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
 
 namespace {
 
-void classifyTypeVisibility(Module& wasm,
-                            InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
+void classifyTypeVisibility(
+  Module& wasm, InsertOrderedMap<HeapTypeDef, HeapTypeInfo>& types) {
   // We will need to traverse the types used by public types and mark them
   // public as well.
-  std::vector<HeapType> workList;
+  std::vector<HeapTypeDef> workList;
   std::unordered_set<RecGroup> publicGroups;
 
-  auto notePublic = [&](HeapType type) {
+  auto notePublic = [&](HeapTypeDef type) {
     if (type.isBasic()) {
       return;
     }
@@ -694,9 +694,9 @@ void setIndices(IndexedHeapTypes& indexedTypes) {
 
 } // anonymous namespace
 
-std::vector<HeapType> collectHeapTypes(Module& wasm) {
+std::vector<HeapTypeDef> collectHeapTypes(Module& wasm) {
   auto info = collectHeapTypeInfo(wasm);
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
   types.reserve(info.size());
   for (auto& [type, _] : info) {
     types.push_back(type);
@@ -704,10 +704,10 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
   return types;
 }
 
-std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
+std::vector<HeapTypeDef> getPublicHeapTypes(Module& wasm) {
   auto info = collectHeapTypeInfo(
     wasm, TypeInclusion::BinaryTypes, VisibilityHandling::FindVisibility);
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
   types.reserve(info.size());
   for (auto& [type, typeInfo] : info) {
     if (typeInfo.visibility == Visibility::Public) {
@@ -717,10 +717,10 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
   return types;
 }
 
-std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
+std::vector<HeapTypeDef> getPrivateHeapTypes(Module& wasm) {
   auto info = collectHeapTypeInfo(
     wasm, TypeInclusion::UsedIRTypes, VisibilityHandling::FindVisibility);
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
   types.reserve(info.size());
   for (auto& [type, typeInfo] : info) {
     if (typeInfo.visibility == Visibility::Private) {

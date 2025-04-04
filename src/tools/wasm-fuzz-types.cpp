@@ -39,7 +39,7 @@ struct Fuzzer {
   bool verbose;
 
   // Initialized by `run` for checkers and possible later inspection
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
   std::vector<std::vector<Index>> subtypeIndices;
   Random rand;
 
@@ -48,7 +48,7 @@ struct Fuzzer {
   // Generate types and run checkers on them.
   void run(uint64_t seed);
 
-  static void printTypes(const std::vector<HeapType>&);
+  static void printTypes(const std::vector<HeapTypeDef>&);
 
   // Checkers for various properties.
   void checkSubtypes() const;
@@ -93,7 +93,7 @@ void Fuzzer::run(uint64_t seed) {
   checkRecGroupShapes();
 }
 
-void Fuzzer::printTypes(const std::vector<HeapType>& types) {
+void Fuzzer::printTypes(const std::vector<HeapTypeDef>& types) {
   std::cout << "Built " << types.size() << " types:\n";
   struct FatalTypeNameGenerator
     : TypeNameGeneratorBase<FatalTypeNameGenerator> {
@@ -233,7 +233,7 @@ void Fuzzer::checkCanonicalization() {
   // between canonical and temporary components.
   struct Copier {
     Random& rand;
-    const std::vector<HeapType>& types;
+    const std::vector<HeapTypeDef>& types;
     TypeBuilder& builder;
 
     // For each type, the indices in `types` at which it appears.
@@ -479,7 +479,8 @@ void Fuzzer::checkCanonicalization() {
 }
 
 void Fuzzer::checkInhabitable() {
-  std::vector<HeapType> inhabitable = HeapTypeGenerator::makeInhabitable(types);
+  std::vector<HeapTypeDef> inhabitable =
+    HeapTypeGenerator::makeInhabitable(types);
   if (verbose) {
     std::cout << "\nInhabitable types:\n\n";
     printTypes(inhabitable);

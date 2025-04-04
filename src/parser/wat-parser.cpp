@@ -100,11 +100,11 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
   auto typeIndices = createIndexMap(decls.in, decls.typeDefs);
   CHECK_ERR(typeIndices);
 
-  std::vector<HeapType> types;
-  std::unordered_map<HeapType, std::unordered_map<Name, Index>> typeNames;
+  std::vector<HeapTypeDef> types;
+  std::unordered_map<HeapTypeDef, std::unordered_map<Name, Index>> typeNames;
   CHECK_ERR(parseTypeDefs(decls, input, *typeIndices, types, typeNames));
 
-  std::unordered_map<Index, HeapType> implicitTypes;
+  std::unordered_map<Index, HeapTypeDef> implicitTypes;
   CHECK_ERR(
     parseImplicitTypeDefs(decls, input, *typeIndices, types, implicitTypes));
 

@@ -940,7 +940,7 @@ fuzztest::Domain<TypeBuilderPlan> StepTypeDefinition(TypeBuilderPlan plan) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-std::vector<HeapType> BuildHeapTypes(TypeBuilderPlan plan) {
+std::vector<HeapTypeDef> BuildHeapTypes(TypeBuilderPlan plan) {
   // Continuation types without reachable function types need a fallback.
   TypeBuilder fallbackBuilder(2);
   fallbackBuilder[0] = Signature();
@@ -1062,7 +1062,7 @@ auto ArbitraryDefinedHeapTypesAndPlan() {
     ArbitraryTypeBuilderPlan());
 }
 
-void TestBuiltTypes(std::pair<std::vector<HeapType>, TypeBuilderPlan> pair) {
+void TestBuiltTypes(std::pair<std::vector<HeapTypeDef>, TypeBuilderPlan> pair) {
   auto types = std::move(pair.first);
   auto plan = std::move(pair.second);
 
@@ -1138,7 +1138,7 @@ void TestBuiltTypes(std::pair<std::vector<HeapType>, TypeBuilderPlan> pair) {
     }
   };
 
-  auto checkDef = [&](TypeDefPlan& plan, HeapType type) {
+  auto checkDef = [&](TypeDefPlan& plan, HeapTypeDef type) {
     if (auto* f = plan.getFunc()) {
       checkFunc(*f, type);
     } else if (auto* s = plan.getStruct()) {
@@ -1168,6 +1168,19 @@ void TestBuiltTypes(std::pair<std::vector<HeapType>, TypeBuilderPlan> pair) {
 FUZZ_TEST(TypeBuilderDomainsTest, TestBuiltTypes)
   .WithDomains(ArbitraryDefinedHeapTypesAndPlan());
 
+fuzztest::Domain<std::vector<HeapTypeDef>> ArbitraryDefinedHeapTypeDefs() {
+  return fuzztest::Map(BuildHeapTypes, ArbitraryTypeBuilderPlan());
+}
+
+std::vector<HeapType> convertToHeapTypes(std::vector<HeapTypeDef> defs) {
+  std::vector<HeapType> types;
+  types.reserve(defs.size());
+  for (auto def : defs) {
+    types.push_back(HeapType(def));
+  }
+  return types;
+}
+
 } // anonymous namespace
 
 fuzztest::Domain<TypeBuilderPlan> ArbitraryTypeBuilderPlan() {
@@ -1177,7 +1190,7 @@ fuzztest::Domain<TypeBuilderPlan> ArbitraryTypeBuilderPlan() {
 }
 
 fuzztest::Domain<std::vector<HeapType>> ArbitraryDefinedHeapTypes() {
-  return fuzztest::Map(BuildHeapTypes, ArbitraryTypeBuilderPlan());
+  return fuzztest::Map(convertToHeapTypes, ArbitraryDefinedHeapTypeDefs());
 }
 
 fuzztest::Domain<std::pair<HeapType, HeapType>> ArbitraryHeapTypePair() {

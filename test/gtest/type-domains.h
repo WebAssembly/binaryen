@@ -134,7 +134,7 @@ struct TypeBuilderPlan {
   std::vector<TypeDefPlan> defs;
 
   // Built types.
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
 
   friend std::ostream& operator<<(std::ostream& o, const TypeBuilderPlan& plan);
 };

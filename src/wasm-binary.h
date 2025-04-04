@@ -1458,7 +1458,7 @@ class WasmBinaryReader {
   SourceMapReader sourceMapReader;
 
   // All types defined in the type section
-  std::vector<HeapType> types;
+  std::vector<HeapTypeDef> types;
 
 public:
   WasmBinaryReader(Module& wasm,

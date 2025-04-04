@@ -141,7 +141,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Used to print delegate's depth argument when it throws to the caller
   int controlFlowDepth = 0;
 
-  std::vector<HeapType> heapTypes;
+  std::vector<HeapTypeDef> heapTypes;
   std::unordered_map<Signature, HeapType> signatureTypes;
 
   // Track the print indent so that we can see when it changes. That affects how
@@ -173,7 +173,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     DefaultTypeNameGenerator fallback;
     std::unordered_map<HeapType, TypeNames> fallbackNames;
 
-    TypePrinter(PrintSExpression& parent, const std::vector<HeapType>& types)
+    TypePrinter(PrintSExpression& parent, const std::vector<HeapTypeDef>& types)
       : parent(parent) {
       if (!parent.currModule) {
         return;
