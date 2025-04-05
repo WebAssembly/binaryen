@@ -2333,6 +2333,12 @@ function wrapModule(module, self = {}) {
     },
     'eq'(left, right) {
       return Module['_BinaryenRefEq'](module, left, right);
+    },
+    'test'(value, castType) {
+      return Module['_BinaryenRefTest'](module, value, castType);
+    },
+    'cast'(value, castType) {
+      return Module['_BinaryenRefCast'](module, value, castType);
     }
   };
 
@@ -2387,14 +2393,85 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  // TODO: any.convert_extern
-  // TODO: extern.convert_any
-  // TODO: ref.test
-  // TODO: ref.cast
-  // TODO: br_on_*
-  // TODO: struct.*
-  // TODO: array.*
+  self['any'] = {
+    'convert_extern'() {
+      return Module['_BinaryenRefAsAnyConvertExtern']();
+    }
+  };
+
+  self['extern'] = {
+    'convert_any'() {
+      return Module['_BinaryenRefAsExternConvertAny']();
+    }
+  };
+
+  self['br_on_null'] = function(name, value, castType) {
+    return Module['_BinaryenBrOn'](module, Module['BrOnNull'], strToStack(name), value, castType);
+  };
+
+  self['br_on_non_null'] = function(name, value, castType) {
+    return Module['_BinaryenBrOn'](module, Module['BrOnNonNull'], strToStack(name), value, castType);
+  };
+
+  self['br_on_cast'] = function(name, value, castType) {
+    return Module['_BinaryenBrOn'](module, Module['BrOnCast'], strToStack(name), value, castType);
+  };
+
+  self['br_on_cast_fail'] = function(name, value, castType) {
+    return Module['_BinaryenBrOn'](module, Module['BrOnCastFail'], strToStack(name), value, castType);
+  };
+
+  self['struct'] = {
+    'new'(operands, type) {
+      return Module['_BinaryenStructNew'](module, i32sToStack(operands), operands.length, type);
+    },
+    'new_default'(type) {
+      // Passing in null for |operands| (and 0 for |numOperands|) implies this is
+      // struct.new_default.
+      return Module['_BinaryenStructNew'](module, 0, 0, type);
+    },
+    'get'(index, ref, type, isSigned) {
+      return Module['_BinaryenStructGet'](module, index, ref, type, isSigned);
+    },
+    'set'(index, ref, value) {
+      return Module['_BinaryenStructSet'](module, index, ref, value);
+    }
+  };
+
+  self['array'] = {
+    'new'(type, size, init) {
+      return Module['_BinaryenArrayNew'](module, type, size, init);
+    },
+    'new_default'(type, size) {
+      return Module['_BinaryenArrayNew'](module, type, size, 0);
+    },
+    'new_fixed'(type, values) {
+      return Module['_BinaryenArrayNewFixed'](module, type, i32sToStack(values), values.length);
+    },
+    'new_data'(type, name, offset, size) {
+      return Module['_BinaryenArrayNewData'](module, type, strToStack(name), offset, size);
+    },
+    // TODO: array.new_elem
+    'get'(ref, index, type, isSigned) {
+      return Module['_BinaryenArrayGet'](module, ref, index, type, isSigned);
+    },
+    'set'(ref, index, value) {
+      return Module['_BinaryenArraySet'](module, ref, index, value);
+    },
+    'len'(ref) {
+      return Module['_BinaryenArrayLen'](module, ref);
+    },
+    // TODO: array.fill
+    'copy'(destRef, destIndex, srcRef, srcIndex, length) {
+      return Module['_BinaryenArrayCopy'](destRef, destIndex, srcRef, srcIndex, length);
+    },
+    // TODO: array.init_data
+    // TODO: array.init_elem
+  };
+  
   // TODO: string.*
+
+  // TODO: API for creating and modifying GC types
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {
