@@ -17351,8 +17351,8 @@
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $skip-added-constants-zero-b (result i32)
-    ;; Parallel case to the above, with a zero in the added constant. We do not
-    ;; optimize.
+    ;; Parallel case to the above, with a zero in the added constant, but we
+    ;; do optimize the outer i32.ge_u away.
     (i32.ge_u
       (i32.add
         (i32.shr_u
