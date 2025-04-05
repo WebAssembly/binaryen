@@ -123,7 +123,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 
   // Create the temporary heap types.
   i = 0;
-  auto map = [&](HeapType type) -> HeapType {
+  auto map = [&](HeapTypeDef type) -> HeapType {
     if (auto it = typeIndices.find(type); it != typeIndices.end()) {
       return typeBuilder[it->second];
     }
@@ -225,6 +225,12 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       auto iter = oldToNewTypes.find(type);
       if (iter != oldToNewTypes.end()) {
         return iter->second;
+      }
+      if (type.isExact()) {
+        iter = oldToNewTypes.find(type.with(Inexact));
+        if (iter != oldToNewTypes.end()) {
+          return iter->second.with(Exact);
+        }
       }
       return type;
     }

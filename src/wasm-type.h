@@ -729,9 +729,9 @@ struct TypeBuilder {
   void setHeapType(size_t i, Array array);
 
   // Sets the heap type at index `i` to be a copy of the given heap type with
-  // its referenced HeapTypes to be replaced according to the provided mapping
+  // its referenced HeapTypeDef to be replaced according to the provided mapping
   // function.
-  template<typename F> void copyHeapType(size_t i, HeapType type, F map) {
+  template<typename F> void copyHeapType(size_t i, HeapTypeDef type, F map) {
     assert(!type.isBasic());
     if (auto super = type.getDeclaredSuperType()) {
       setSubType(i, map(*super));
@@ -750,7 +750,9 @@ struct TypeBuilder {
         return t;
       }
       assert(t.isRef());
-      return getTempRefType(map(t.getHeapType()), t.getNullability());
+      auto ht = t.getHeapType();
+      return getTempRefType(map(ht).with(ht.getExactness()),
+                            t.getNullability());
     };
     auto copyType = [&](Type t) -> Type {
       if (t.isTuple()) {
@@ -797,7 +799,7 @@ struct TypeBuilder {
 
   // Gets the temporary HeapType at index `i`. This HeapType should only be used
   // to construct temporary Types using the methods below.
-  HeapType getTempHeapType(size_t i);
+  HeapTypeDef getTempHeapType(size_t i);
 
   // Gets a temporary type or heap type for use in initializing the
   // TypeBuilder's HeapTypes. For Ref types, the HeapType may be a temporary
@@ -878,7 +880,7 @@ struct TypeBuilder {
   struct Entry {
     TypeBuilder& builder;
     size_t index;
-    operator HeapType() const { return builder.getTempHeapType(index); }
+    operator HeapTypeDef() const { return builder.getTempHeapType(index); }
     Entry& operator=(Signature signature) {
       builder.setHeapType(index, signature);
       return *this;
@@ -919,7 +921,7 @@ struct TypeBuilder {
       builder.setShared(index, share);
       return *this;
     }
-    template<typename F> Entry& copy(HeapType type, F map) {
+    template<typename F> Entry& copy(HeapTypeDef type, F map) {
       builder.copyHeapType(index, type, map);
       return *this;
     }

@@ -2278,7 +2278,7 @@ void TypeBuilder::setHeapType(size_t i, Array array) {
   impl->entries[i].set(array);
 }
 
-HeapType TypeBuilder::getTempHeapType(size_t i) {
+HeapTypeDef TypeBuilder::getTempHeapType(size_t i) {
   assert(i < size() && "index out of bounds");
   return impl->entries[i].get();
 }
