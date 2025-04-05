@@ -17336,20 +17336,20 @@
     )
   )
 
-  ;; CHECK:       (func $skip-added-constants-zero-b (result i32)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (i32.shr_u
-  ;; CHECK-NEXT:      (i32.load
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK:      (func $skip-added-constants-zero-b (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
   (func $skip-added-constants-zero-b (result i32)
     ;; Parallel case to the above, with a zero in the added constant. We do not
     ;; optimize.
