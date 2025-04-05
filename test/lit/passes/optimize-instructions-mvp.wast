@@ -11372,28 +11372,28 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i32.load
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.load
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (i64.load
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i64.load
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.ne
   ;; CHECK-NEXT:    (local.get $x)
