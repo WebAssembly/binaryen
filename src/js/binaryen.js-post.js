@@ -2685,6 +2685,16 @@ function wrapModule(module, self = {}) {
   self['setFeatures'] = function(features) {
     Module['_BinaryenModuleSetFeatures'](module, features);
   };
+  self['setTypeName'] = function(heapType, name) {
+    return preserveStack(() =>
+      Module['_BinaryenModuleSetTypeName'](module, heapType, strToStack(name))
+    );
+  };
+  self['setFieldName'] = function(heapType, index, name) {
+    return preserveStack(() =>
+      Module['_BinaryenModuleSetFieldName'](module, heapType, index, strToStack(name))
+    );
+  };
   self['addCustomSection'] = function(name, contents) {
     return preserveStack(() =>
       Module['_BinaryenAddCustomSection'](module, strToStack(name), i8sToStack(contents), contents.length)
@@ -2844,6 +2854,26 @@ Module['TypeBuilder'] = function(size) {
     Module['_TypeBuilderSetArrayType'](builder,
       index, elementType, elementPackedType, elementMutable
     );
+  };
+  this['getTempHeapType'] = function(index) {
+    return Module['_TypeBuilderGetTempHeapType'](builder, index);
+  };
+  this['getTempTupleType'] = function(types) {
+    return preserveStack(() => {
+      return Module['_TypeBuilderGetTempTupleType'](builder, i32sToStack(types), types.length);
+    });
+  };
+  this['getTempRefType'] = function(heapType, nullable) {
+    return Module['_TypeBuilderGetTempRefType'](builder, heapType, nullable);
+  };
+  this['setSubType'] = function(index, superType) {
+    Module['_TypeBuilderSetSubType'](builder, index, superType);
+  };
+  this['setOpen'] = function(index) {
+    Module['_TypeBuilderSetOpen'](builder, index);
+  };
+  this['createRecGroup'] = function(index, length) {
+    Module['_TypeBuilderCreateRecGroup'](builder, index, length);
   };
   this['buildAndDispose'] = function() {
     return preserveStack(() => {
