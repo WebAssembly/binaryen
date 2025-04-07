@@ -455,7 +455,8 @@ struct Outlining : public Pass {
                         Name existingFunc,
                         const std::vector<OutliningSequence>& seqs) {
     std::cerr << "\n\nReconstructing existing fn: " << existingFunc << "\n";
-    std::cerr << "moving sequences: " << "\n";
+    std::cerr << "moving sequences: "
+              << "\n";
     for (auto& seq : seqs) {
       for (Index idx = seq.originalIdx; idx < seq.originalIdx + seq.length;
            idx++) {
