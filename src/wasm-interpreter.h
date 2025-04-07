@@ -240,9 +240,7 @@ public:
   }
   virtual ~ExpressionRunner() = default;
 
-  void setRelaxedBehavior(RelaxedBehavior value) {
-    relaxedBehavior = value;
-  }
+  void setRelaxedBehavior(RelaxedBehavior value) { relaxedBehavior = value; }
 
   Flow visit(Expression* curr) {
     depth++;
