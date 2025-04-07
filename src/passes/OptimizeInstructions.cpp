@@ -856,14 +856,11 @@ struct OptimizeInstructions
     if (auto* ret = replaceZeroBitsWithZero(curr)) {
       return replaceCurrent(ret);
     }
-    // finally, try more expensive operations on the curr in
-    // the case that they have no side effects
-    if (!effects(curr->left).hasSideEffects()) {
-      if (ExpressionAnalyzer::equal(curr->left, curr->right)) {
-        if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
-          return replaceCurrent(ret);
-        }
-      }
+    // finally, try more expensive operations on the curr
+    // regardless of whether they have side effects or not.
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
+      if (auto* ret = optimizeBinaryWithEqualChildren(curr)) {
+        return replaceCurrent(ret); 
     }
 
     if (auto* ret = deduplicateBinary(curr)) {
@@ -5177,9 +5174,9 @@ private:
     return nullptr;
   }
 
-  // given a binary expression with equal children and no side effects in
-  // either, we can fold various things
-  Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
+  // given a binary expression with equal children, we can fold various things
+  // regardless of side effects.
+  Expression* optimizeBinaryWithEqualChildren(Binary* binary) {
     // TODO add: perhaps worth doing 2*x if x is quite large?
     switch (binary->op) {
       case SubInt32:
