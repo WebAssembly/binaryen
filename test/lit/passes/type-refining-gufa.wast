@@ -383,3 +383,45 @@
   ;; GUFA:      (global $C (ref $struct) (struct.new_default $struct))
   (global $C (ref $struct) (struct.new_default $struct))
 )
+
+;; As above, but $struct has a supertype. We must propagate restrictions on it
+;; to its supertype. After doing so, we can refine the field to (ref func) in
+;; both, but no further, because of the restriction of global.get $A, which has
+;; that type.
+(module
+  (rec
+    ;; NRML:      (rec
+    ;; NRML-NEXT:  (type $super (sub (struct (field (ref func)))))
+    ;; GUFA:      (rec
+    ;; GUFA-NEXT:  (type $super (sub (struct (field (ref func)))))
+    (type $super (sub (struct (field funcref))))
+    ;; NRML:       (type $struct (sub $super (struct (field (ref func)))))
+    ;; GUFA:       (type $struct (sub $super (struct (field (ref func)))))
+    (type $struct (sub $super (struct (field funcref))))
+  )
+
+  ;; NRML:       (type $func (func))
+  ;; GUFA:       (type $func (func))
+  (type $func (func))
+
+  ;; NRML:      (global $A (ref func) (ref.func $func))
+  ;; GUFA:      (global $A (ref func) (ref.func $func))
+  (global $A (ref func) (ref.func $func))
+
+  ;; NRML:      (global $B (ref $struct) (struct.new $struct
+  ;; NRML-NEXT:  (global.get $A)
+  ;; NRML-NEXT: ))
+  ;; GUFA:      (global $B (ref $struct) (struct.new $struct
+  ;; GUFA-NEXT:  (global.get $A)
+  ;; GUFA-NEXT: ))
+  (global $B (ref $struct) (struct.new $struct
+    (global.get $A)
+  ))
+
+  ;; NRML:      (func $func (type $func)
+  ;; NRML-NEXT: )
+  ;; GUFA:      (func $func (type $func)
+  ;; GUFA-NEXT: )
+  (func $func (type $func)
+  )
+)
