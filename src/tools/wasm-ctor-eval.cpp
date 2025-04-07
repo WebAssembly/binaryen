@@ -1287,6 +1287,7 @@ void evalCtors(Module& wasm,
   try {
     // create an instance for evalling
     EvallingModuleRunner instance(wasm, &interface, linkedInstances);
+    instance.start();
     interface.instanceInitialized = true;
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?

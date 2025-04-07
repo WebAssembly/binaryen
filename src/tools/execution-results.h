@@ -271,6 +271,7 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      instance.start();
       interface.setModuleRunner(&instance);
       // execute all exported methods (that are therefore preserved through
       // opts)
@@ -430,6 +431,7 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      instance.start();
       interface.setModuleRunner(&instance);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
