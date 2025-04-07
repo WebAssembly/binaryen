@@ -2900,7 +2900,12 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
-      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
+      externalInterface(externalInterface), linkedInstances(linkedInstances_) {}
+
+  // Start up this instance. This must be called before doing anything else.
+  // (This is separate from the constructor so that it does not occur
+  // synchronously, which makes some code patterns harder to write.)
+  void instantiate() {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // generate internal (non-imported) globals

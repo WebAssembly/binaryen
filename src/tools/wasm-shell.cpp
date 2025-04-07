@@ -139,6 +139,7 @@ struct Shell {
         std::make_shared<ShellExternalInterface>(linkedInstances);
       auto instance =
         std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
+      instance->instantiate();
       return {{std::move(interface), std::move(instance)}};
     } catch (...) {
       return Err{"failed to instantiate module"};
