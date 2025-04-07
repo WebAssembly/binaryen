@@ -435,8 +435,7 @@ struct Outlining : public Pass {
                Sequences seqByFunc,
                const HashStringifyWalker& stringify) {
 #else
-  void outline(Module* module,
-               Sequences seqByFunc) {
+  void outline(Module* module, Sequences seqByFunc) {
 #endif
     // TODO: Make this a function-parallel sub-pass.
     std::vector<Name> keys(seqByFunc.size());
