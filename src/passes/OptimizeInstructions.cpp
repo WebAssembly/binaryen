@@ -856,11 +856,13 @@ struct OptimizeInstructions
     if (auto* ret = replaceZeroBitsWithZero(curr)) {
       return replaceCurrent(ret);
     }
-    // finally, try more expensive operations on the curr
-    // regardless of whether they have side effects or not.
-    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
-      if (auto* ret = optimizeBinaryWithEqualChildren(curr)) {
-        return replaceCurrent(ret);
+    // finally, try more expensive operations on the curr in
+    // the case that they have no side effects
+    if (!effects(curr->left).hasSideEffects()) {
+      if (ExpressionAnalyzer::equal(curr->left, curr->right)) {
+        if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
+          return replaceCurrent(ret);
+        }
       }
     }
 
@@ -5175,17 +5177,18 @@ private:
     return nullptr;
   }
 
-  // given a binary expression with equal children, we can fold various things
-  // regardless of side effects.
-  Expression* optimizeBinaryWithEqualChildren(Binary* binary) {
+  // given a binary expression with equal children and no side effects in
+  // either, we can fold various things
+  Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
     // TODO add: perhaps worth doing 2*x if x is quite large?
     switch (binary->op) {
       case SubInt32:
       case XorInt32:
       case SubInt64:
       case XorInt64:
-        return getDroppedChildrenAndAppend(binary->left,
-            LiteralUtils::makeZero(binary->left->type, *getModule()));
+        return getDroppedChildrenAndAppend(
+          binary->left,
+          LiteralUtils::makeZero(binary->left->type, *getModule()));
       case NeInt32:
       case LtSInt32:
       case LtUInt32:
@@ -5196,8 +5199,8 @@ private:
       case LtUInt64:
       case GtSInt64:
       case GtUInt64:
-        return getDroppedChildrenAndAppend(binary->left,
-            LiteralUtils::makeZero(Type::i32, *getModule()));
+        return getDroppedChildrenAndAppend(
+          binary->left, LiteralUtils::makeZero(Type::i32, *getModule()));
       case AndInt32:
       case OrInt32:
       case AndInt64:
@@ -5213,8 +5216,9 @@ private:
       case LeUInt64:
       case GeSInt64:
       case GeUInt64:
-        return getDroppedChildrenAndAppend(binary->left,
-            LiteralUtils::makeFromInt32(1, Type::i32, *getModule()));
+        return getDroppedChildrenAndAppend(
+          binary->left,
+          LiteralUtils::makeFromInt32(1, Type::i32, *getModule()));
       default:
         return nullptr;
     }
