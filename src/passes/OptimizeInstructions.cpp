@@ -859,8 +859,8 @@ struct OptimizeInstructions
     // finally, try more expensive operations on the curr
     // regardless of whether they have side effects or not.
     if (areConsecutiveInputsEqual(curr->left, curr->right)) {
-      if (auto* ret = optimizeBinaryWithEqualChildren(curr)) {
-        return replaceCurrent(ret); 
+      if (auto *ret = optimizeBinaryWithEqualChildren(curr)) {
+        return replaceCurrent(ret);
       }
     }
 
