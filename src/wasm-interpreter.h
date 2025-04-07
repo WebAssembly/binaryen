@@ -2905,7 +2905,7 @@ public:
   // Start up this instance. This must be called before doing anything else.
   // (This is separate from the constructor so that it does not occur
   // synchronously, which makes some code patterns harder to write.)
-  void start() {
+  void instantiate() {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // generate internal (non-imported) globals
