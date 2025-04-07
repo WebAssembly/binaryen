@@ -295,6 +295,7 @@ struct Outlining : public Pass {
     HashStringifyWalker stringify;
     // Walk the module and create a "string representation" of the program.
     stringify.walkModule(module);
+    ODBG(printHashString(stringify.hashString, stringify.exprs));
     // Collect all of the substrings of the string representation that appear
     // more than once in the program.
     auto substrings =
@@ -435,6 +436,19 @@ struct Outlining : public Pass {
   }
 
 #if OUTLINING_DEBUG
+  void printHashString(const std::vector<uint32_t>& hashString,
+                       const std::vector<Expression*>& exprs) {
+    std::cerr << "\n\n";
+    for (Index idx = 0; idx < hashString.size(); idx++) {
+      Expression* expr = exprs[idx];
+      if (expr) {
+        std::cerr << idx << " - " << hashString[idx] << ": "
+                  << ShallowExpression{expr} << "\n";
+      } else {
+        std::cerr << idx << ": unique symbol\n";
+      }
+    }
+  }
   void printReconstruct(Module* module,
                         const std::vector<uint32_t>& hashString,
                         const std::vector<Expression*>& exprs,
