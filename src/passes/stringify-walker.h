@@ -254,25 +254,6 @@ private:
   std::map<uint32_t, Name> idxToFuncName;
 };
 
-struct OutliningSequence {
-  unsigned startIdx;
-  unsigned endIdx;
-  Name func;
-  bool endsTypeUnreachable;
-  unsigned originalIdx;
-  unsigned length;
-
-  OutliningSequence(unsigned startIdx,
-                    unsigned endIdx,
-                    Name func,
-                    bool endsTypeUnreachable,
-                    unsigned originalIdx,
-                    unsigned length)
-    : startIdx(startIdx), endIdx(endIdx), func(func),
-      endsTypeUnreachable(endsTypeUnreachable), originalIdx(originalIdx),
-      length(length) {}
-};
-
 using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
 
 // Functions that filter vectors of SuffixTree::RepeatedSubstring
