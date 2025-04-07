@@ -32,7 +32,7 @@ struct NameTypes : public Pass {
 
   void run(Module* module) override {
     // Find all the types.
-    std::vector<HeapTypeDef> types = ModuleUtils::collectHeapTypes(*module);
+    std::vector<HeapType> types = ModuleUtils::collectHeapTypes(*module);
 
     std::unordered_set<Name> used;
 

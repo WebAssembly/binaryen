@@ -86,7 +86,7 @@ void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
     Module* wasm;
     DefaultTypeNameGenerator fallback;
     Printer(Module* wasm) : wasm(wasm) {}
-    TypeNames getNames(HeapTypeDef type) {
+    TypeNames getNames(HeapType type) {
       if (wasm) {
         if (auto it = wasm->typeNames.find(type); it != wasm->typeNames.end()) {
           return it->second;
@@ -141,7 +141,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Used to print delegate's depth argument when it throws to the caller
   int controlFlowDepth = 0;
 
-  std::vector<HeapTypeDef> heapTypes;
+  std::vector<HeapType> heapTypes;
   std::unordered_map<Signature, HeapType> signatureTypes;
 
   // Track the print indent so that we can see when it changes. That affects how
@@ -173,7 +173,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     DefaultTypeNameGenerator fallback;
     std::unordered_map<HeapType, TypeNames> fallbackNames;
 
-    TypePrinter(PrintSExpression& parent, const std::vector<HeapTypeDef>& types)
+    TypePrinter(PrintSExpression& parent, const std::vector<HeapType>& types)
       : parent(parent) {
       if (!parent.currModule) {
         return;
@@ -198,7 +198,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
     }
 
-    TypeNames getNames(HeapTypeDef type) {
+    TypeNames getNames(HeapType type) {
       if (parent.currModule) {
         if (auto it = parent.currModule->typeNames.find(type);
             it != parent.currModule->typeNames.end()) {

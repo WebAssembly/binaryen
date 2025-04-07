@@ -672,7 +672,7 @@ namespace {
 // supertypes in which they appear.
 struct Inhabitator {
   // Uniquely identify fields as an index into a type.
-  using FieldPos = std::pair<HeapTypeDef, Index>;
+  using FieldPos = std::pair<HeapType, Index>;
 
   // When we make a reference nullable, we typically need to make the same
   // reference in other types nullable to maintain valid subtyping. Which types
@@ -685,14 +685,14 @@ struct Inhabitator {
   enum Variance { Invariant, Covariant };
 
   // The input types.
-  const std::vector<HeapTypeDef>& types;
+  const std::vector<HeapType>& types;
 
   // The fields we will make nullable.
   std::unordered_set<FieldPos> nullables;
 
   SubTypes subtypes;
 
-  Inhabitator(const std::vector<HeapTypeDef>& types)
+  Inhabitator(const std::vector<HeapType>& types)
     : types(types), subtypes(types) {}
 
   Variance getVariance(FieldPos fieldPos);
@@ -701,7 +701,7 @@ struct Inhabitator {
   void markExternRefsNullable();
   void breakNonNullableCycles();
 
-  std::vector<HeapTypeDef> build();
+  std::vector<HeapType> build();
 };
 
 Inhabitator::Variance Inhabitator::getVariance(FieldPos fieldPos) {
@@ -752,7 +752,7 @@ void Inhabitator::markNullable(FieldPos field) {
       // this extra `index` variable once we have C++20. It's a workaround for
       // lambdas being unable to capture structured bindings.
       const size_t index = idx;
-      subtypes.iterSubTypes(curr, [&](HeapTypeDef type, Index) {
+      subtypes.iterSubTypes(curr, [&](HeapType type, Index) {
         nullables.insert({type, index});
       });
       break;
@@ -803,13 +803,13 @@ void Inhabitator::markExternRefsNullable() {
 // the cycle to be made non-nullable.
 void Inhabitator::breakNonNullableCycles() {
   // Types we've finished visiting. We don't need to visit them again.
-  std::unordered_set<HeapTypeDef> visited;
+  std::unordered_set<HeapType> visited;
 
   // The path of types we are currently visiting. If one of them comes back up,
   // we've found a cycle. Map the types to the other types they reference and
   // our current index into that list so we can track where we are in each level
   // of the search.
-  InsertOrderedMap<HeapTypeDef, std::pair<std::vector<Type>, Index>> visiting;
+  InsertOrderedMap<HeapType, std::pair<std::vector<Type>, Index>> visiting;
 
   for (auto root : types) {
     if (visited.count(root)) {
@@ -884,8 +884,8 @@ void Inhabitator::breakNonNullableCycles() {
   }
 }
 
-std::vector<HeapTypeDef> Inhabitator::build() {
-  std::unordered_map<HeapTypeDef, size_t> typeIndices;
+std::vector<HeapType> Inhabitator::build() {
+  std::unordered_map<HeapType, size_t> typeIndices;
   for (size_t i = 0; i < types.size(); ++i) {
     typeIndices.insert({types[i], i});
   }
@@ -978,16 +978,16 @@ std::vector<HeapTypeDef> Inhabitator::build() {
 
 } // anonymous namespace
 
-std::vector<HeapTypeDef>
-HeapTypeGenerator::makeInhabitable(const std::vector<HeapTypeDef>& types) {
+std::vector<HeapType>
+HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   if (types.empty()) {
     return {};
   }
 
   // Remove duplicate and basic types. We will insert them back at the end.
-  std::unordered_map<HeapTypeDef, size_t> typeIndices;
+  std::unordered_map<HeapType, size_t> typeIndices;
   std::vector<size_t> deduplicatedIndices;
-  std::vector<HeapTypeDef> deduplicated;
+  std::vector<HeapType> deduplicated;
   for (auto type : types) {
     if (type.isBasic()) {
       deduplicatedIndices.push_back(-1);
@@ -1009,7 +1009,7 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapTypeDef>& types) {
   deduplicated = inhabitator.build();
 
   // Re-duplicate and re-insert basic types as necessary.
-  std::vector<HeapTypeDef> result;
+  std::vector<HeapType> result;
   for (size_t i = 0; i < types.size(); ++i) {
     if (deduplicatedIndices[i] == (size_t)-1) {
       assert(types[i].isBasic());
@@ -1024,14 +1024,14 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapTypeDef>& types) {
 namespace {
 
 bool isUninhabitable(Type type,
-                     std::unordered_set<HeapTypeDef>& visited,
-                     std::unordered_set<HeapTypeDef>& visiting);
+                     std::unordered_set<HeapType>& visited,
+                     std::unordered_set<HeapType>& visiting);
 
 // Simple recursive DFS through non-nullable references to see if we find any
 // cycles.
-bool isUninhabitable(HeapTypeDef type,
-                     std::unordered_set<HeapTypeDef>& visited,
-                     std::unordered_set<HeapTypeDef>& visiting) {
+bool isUninhabitable(HeapType type,
+                     std::unordered_set<HeapType>& visited,
+                     std::unordered_set<HeapType>& visiting) {
   switch (type.getKind()) {
     case HeapTypeKind::Basic:
       return false;
@@ -1074,8 +1074,8 @@ bool isUninhabitable(HeapTypeDef type,
 }
 
 bool isUninhabitable(Type type,
-                     std::unordered_set<HeapTypeDef>& visited,
-                     std::unordered_set<HeapTypeDef>& visiting) {
+                     std::unordered_set<HeapType>& visited,
+                     std::unordered_set<HeapType>& visiting) {
   if (type.isRef() && type.isNonNullable()) {
     if (type.getHeapType().isBottom() ||
         type.getHeapType().isMaybeShared(HeapType::ext)) {
@@ -1088,10 +1088,10 @@ bool isUninhabitable(Type type,
 
 } // anonymous namespace
 
-std::vector<HeapTypeDef>
-HeapTypeGenerator::getInhabitable(const std::vector<HeapTypeDef>& types) {
-  std::unordered_set<HeapTypeDef> visited, visiting;
-  std::vector<HeapTypeDef> inhabitable;
+std::vector<HeapType>
+HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
+  std::unordered_set<HeapType> visited, visiting;
+  std::vector<HeapType> inhabitable;
   for (auto type : types) {
     if (!isUninhabitable(type, visited, visiting)) {
       inhabitable.push_back(type);

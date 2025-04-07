@@ -42,12 +42,12 @@ struct HeapTypeGenerator {
   // Given a sequence of newly-built heap types, produce a sequence of similar
   // or identical types that are all inhabitable, i.e. that are possible to
   // create values for.
-  static std::vector<HeapTypeDef>
-  makeInhabitable(const std::vector<HeapTypeDef>& types);
+  static std::vector<HeapType>
+  makeInhabitable(const std::vector<HeapType>& types);
 
   // Returns the types in the input that are inhabitable.
-  static std::vector<HeapTypeDef>
-  getInhabitable(const std::vector<HeapTypeDef>& types);
+  static std::vector<HeapType>
+  getInhabitable(const std::vector<HeapType>& types);
 };
 
 } // namespace wasm

@@ -719,7 +719,7 @@ uint32_t WasmBinaryWriter::getElementSegmentIndex(Name name) const {
 }
 
 uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
-  auto it = indexedTypes.indices.find(type.with(Inexact));
+  auto it = indexedTypes.indices.find(type);
 #ifndef NDEBUG
   if (it == indexedTypes.indices.end()) {
     std::cout << "Missing type: " << type << '\n';
@@ -1683,10 +1683,8 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
   if (!wasm->features.hasGC()) {
     type = type.getTop();
   }
+
   if (!type.isBasic()) {
-    if (type.isExact()) {
-      o << uint8_t(BinaryConsts::EncodedType::Exact);
-    }
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
@@ -2200,20 +2198,12 @@ Type WasmBinaryReader::getType() { return getType(getS32LEB()); }
 
 HeapType WasmBinaryReader::getHeapType() {
   auto type = getS64LEB(); // TODO: Actually s33
-  auto exactness = Inexact;
-  if (type == BinaryConsts::EncodedType::ExactLEB) {
-    exactness = Exact;
-    type = getS64LEB(); // TODO: Actually s33
-  }
   // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
     if (size_t(type) >= types.size()) {
-      throwError("invalid type index: " + std::to_string(type));
+      throwError("invalid signature index: " + std::to_string(type));
     }
-    return types[type].with(exactness);
-  }
-  if (exactness == Exact) {
-    throwError("invalid type index: " + std::to_string(type));
+    return types[type];
   }
   auto share = Unshared;
   if (type == BinaryConsts::EncodedType::SharedLEB) {
@@ -2223,8 +2213,10 @@ HeapType WasmBinaryReader::getHeapType() {
   HeapType ht;
   if (getBasicHeapType(type, ht)) {
     return ht.getBasic(share);
+  } else {
+    throwError("invalid wasm heap type: " + std::to_string(type));
   }
-  throwError("invalid wasm heap type: " + std::to_string(type));
+  WASM_UNREACHABLE("unexpected type");
 }
 
 HeapType WasmBinaryReader::getIndexedHeapType() {
@@ -2348,20 +2340,6 @@ void WasmBinaryReader::readTypes() {
 
   auto readHeapType = [&]() -> HeapType {
     int64_t htCode = getS64LEB(); // TODO: Actually s33
-    auto exactness = Inexact;
-    if (htCode == BinaryConsts::EncodedType::ExactLEB) {
-      exactness = Exact;
-      htCode = getS64LEB(); // TODO: Actually s33
-    }
-    if (htCode >= 0) {
-      if (size_t(htCode) >= builder.size()) {
-        throwError("invalid type index: " + std::to_string(htCode));
-      }
-      return builder.getTempHeapType(size_t(htCode)).with(exactness);
-    }
-    if (exactness == Exact) {
-      throwError("invalid type index: " + std::to_string(htCode));
-    }
     auto share = Unshared;
     if (htCode == BinaryConsts::EncodedType::SharedLEB) {
       share = Shared;
@@ -2371,7 +2349,10 @@ void WasmBinaryReader::readTypes() {
     if (getBasicHeapType(htCode, ht)) {
       return ht.getBasic(share);
     }
-    throwError("invalid wasm heap type: " + std::to_string(htCode));
+    if (size_t(htCode) >= builder.size()) {
+      throwError("invalid type index: " + std::to_string(htCode));
+    }
+    return builder.getTempHeapType(size_t(htCode));
   };
   auto makeType = [&](int32_t typeCode) {
     Type type;
