@@ -861,6 +861,7 @@ struct OptimizeInstructions
     if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       if (auto* ret = optimizeBinaryWithEqualChildren(curr)) {
         return replaceCurrent(ret); 
+      }
     }
 
     if (auto* ret = deduplicateBinary(curr)) {
