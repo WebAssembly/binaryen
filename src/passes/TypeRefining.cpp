@@ -190,9 +190,6 @@ struct TypeRefining : public Pass {
       }
     }
 
-    // Propagate to supertypes, so no field is less refined than its super.
-    propagator.propagateToSuperTypes(finalInfos);
-
     // Take into account possible problems. This pass only refines struct
     // fields, and when we refine in a way that exceeds the wasm type system
     // then we fix that up with a cast (see below). However, we cannot use casts
@@ -225,6 +222,9 @@ struct TypeRefining : public Pass {
         }
       }
     }
+
+    // Propagate to supertypes, so no field is less refined than its super.
+    propagator.propagateToSuperTypes(finalInfos);
   }
 
   void useFinalInfos(Module* module, Propagator& propagator) {
