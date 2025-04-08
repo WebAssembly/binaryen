@@ -67,7 +67,7 @@ private:
   char peek() {
     if (pos == mappings.size()) {
       return '"';
-    }  else if (pos > mappings.size()) {
+    } else if (pos > mappings.size()) {
       throw MapParseException("unexpected end of source map");
     }
     return mappings[pos];

@@ -40,8 +40,10 @@ protected:
   }
 
   void ExpectDbgLocEq(size_t location,
-    BinaryLocation file, BinaryLocation line, BinaryLocation col,
-    std::optional<BinaryLocation> sym) {
+                      BinaryLocation file,
+                      BinaryLocation line,
+                      BinaryLocation col,
+                      std::optional<BinaryLocation> sym) {
     auto loc_str = std::stringstream() << "location: " << location;
     SCOPED_TRACE(loc_str.str());
     auto loc = reader->readDebugLocationAt(location);
@@ -52,7 +54,6 @@ protected:
     EXPECT_EQ(loc->symbolNameIndex, sym);
   }
 };
-
 
 // Check that debug location parsers can handle single-segment mappings.
 TEST_F(SourceMapTest, SourceMappingSingleSegment) {
@@ -84,7 +85,6 @@ TEST_F(SourceMapTest, BadSourceMap) {
   EXPECT_THROW(ParseMap(sourceMap), MapParseException);
 }
 
-
 TEST_F(SourceMapTest, SourcesAndNames) {
   std::string sourceMap = R"(
     {
@@ -104,7 +104,6 @@ TEST_F(SourceMapTest, SourcesAndNames) {
   EXPECT_EQ(wasm.debugInfoSymbolNames[1], "bar");
 }
 
-
 TEST_F(SourceMapTest, OptionalFields) {
   // The "names" field is optional.
   std::string sourceMap = R"(
@@ -116,7 +115,6 @@ TEST_F(SourceMapTest, OptionalFields) {
   )";
   ParseMap(sourceMap);
 }
-
 
 // This map is taken from test/fib-dbg.wasm
 TEST_F(SourceMapTest, Fibonacci) {
@@ -140,7 +138,7 @@ TEST_F(SourceMapTest, Fibonacci) {
   // First location
   ExpectDbgLocEq(643, 0, 3, 0, std::nullopt);
   // locations in between records have the same value as the previous one.
-  for(size_t l = 644; l < 671; l++) {
+  for (size_t l = 644; l < 671; l++) {
     ExpectDbgLocEq(l, 0, 3, 0, std::nullopt);
   }
   // Subsequent ones are on record boundaries
@@ -151,6 +149,7 @@ TEST_F(SourceMapTest, Fibonacci) {
   ExpectDbgLocEq(732, 0, 8, 0, std::nullopt);
   // Entries after the last record have the same value as the last one.
   ExpectDbgLocEq(733, 0, 8, 0, std::nullopt);
-  // Should we return empty values for locations that are past the end of the program?
+  // Should we return empty values for locations that are past the end of the
+  // program?
   ExpectDbgLocEq(9999, 0, 8, 0, std::nullopt);
 }

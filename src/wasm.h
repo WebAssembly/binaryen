@@ -2174,8 +2174,9 @@ public:
                : symbolNameIndex < other.symbolNameIndex;
     }
     void dump() {
-      std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) <<
-       " @ " << fileIndex << ":" << lineNumber << ":" << columnNumber << "\n";
+      std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) << " @ "
+                << fileIndex << ":" << lineNumber << ":" << columnNumber
+                << "\n";
     }
   };
   // One can explicitly set the debug location of an expression to

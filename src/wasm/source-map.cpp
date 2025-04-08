@@ -43,7 +43,8 @@ void SourceMapReader::parse(Module& wasm) {
   if (!sm_json.isObject()) {
     throw MapParseException("Source map is not valid JSON");
   }
-  if (!(sm_json.has("version") && sm_json["version"]->isNumber() && sm_json["version"]->getInteger() == 3)) {
+  if (!(sm_json.has("version") && sm_json["version"]->isNumber() &&
+        sm_json["version"]->getInteger() == 3)) {
     throw MapParseException("Source map version missing or is not 3");
   }
   if (!(sm_json.has("sources") && sm_json["sources"]->isArray())) {
