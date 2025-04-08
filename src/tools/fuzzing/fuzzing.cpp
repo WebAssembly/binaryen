@@ -3426,11 +3426,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      auto subtypeOpts = FeatureOptions<HeapType>().add(
-        FeatureSet::ReferenceTypes | FeatureSet::GC,
+      auto subtypeOpts = {
         HeapType::i31,
         HeapType::struct_,
-        HeapType::array);
+        HeapType::array};
       auto subtype = pick(subtypeOpts).getBasic(share);
       return makeConst(Type(subtype, nullability));
     }

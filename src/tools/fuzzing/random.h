@@ -53,8 +53,9 @@ public:
   double getDouble();
 
   // Choose an integer value in [0, x). This doesn't use a perfectly uniform
-  // distribution, but it's fast and reasonable.
+  // distribution, but it's fast and reasonable. upTo(0) is defined as 0.
   uint32_t upTo(uint32_t x);
+  // Returns true with probability 1 in x. oneIn(0) is defined as true.
   bool oneIn(uint32_t x) { return upTo(x) == 0; }
 
   // Apply upTo twice, generating a skewed distribution towards
