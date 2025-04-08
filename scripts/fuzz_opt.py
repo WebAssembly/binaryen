@@ -831,7 +831,8 @@ class CompareVMs(TestCaseHandler):
             def can_compare_to_others(self):
                 # If not legalized, the JS will fail immediately, so no point to
                 # compare to others. Relaxed SIMD allows different behavior
-                # between VMs.
+                # between VMs (in principle we could compare to other D8
+                # variants, though TODO).
                 return self.can_compare_to_self() and LEGALIZE and all_disallowed(['relaxed-simd'])
 
 
