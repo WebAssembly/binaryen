@@ -3426,11 +3426,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      auto subtypeOpts = {
-        HeapType::i31,
+      auto subtype = pick(HeapType::i31,
         HeapType::struct_,
-        HeapType::array};
-      auto subtype = pick(subtypeOpts).getBasic(share);
+        HeapType::array).getBasic(share);
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -5405,15 +5403,17 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
+        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
-                      .add(FeatureSet::ReferenceTypes, HeapType::func)
+                      .add(HeapType::func)
                       .add(FeatureSet::GC, HeapType::nofunc))
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
+        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
-                         .add(FeatureSet::ReferenceTypes, HeapType::ext)
+                         .add(HeapType::ext)
                          .add(FeatureSet::GC, HeapType::noext);
         if (share == Unshared) {
           // Shared strings not yet supported.
@@ -5424,14 +5424,12 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        auto options = FeatureOptions<HeapType>().add(FeatureSet::GC,
-                                                      HeapType::any,
+        return pick(HeapType::any,
                                                       HeapType::eq,
                                                       HeapType::i31,
                                                       HeapType::struct_,
                                                       HeapType::array,
-                                                      HeapType::none);
-        return pick(options).getBasic(share);
+                                                      HeapType::none).getBasic(share);
       }
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
