@@ -38,19 +38,19 @@ void SourceMapReader::parse(Module& wasm) {
   if (buffer.empty()) {
     return;
   }
-  json::Value sm_json;
-  sm_json.parse(buffer.data(), json::Value::ASCII);
-  if (!sm_json.isObject()) {
+  json::Value json;
+  json.parse(buffer.data(), json::Value::ASCII);
+  if (!json.isObject()) {
     throw MapParseException("Source map is not valid JSON");
   }
-  if (!(sm_json.has("version") && sm_json["version"]->isNumber() &&
-        sm_json["version"]->getInteger() == 3)) {
+  if (!(json.has("version") && json["version"]->isNumber() &&
+        json["version"]->getInteger() == 3)) {
     throw MapParseException("Source map version missing or is not 3");
   }
-  if (!(sm_json.has("sources") && sm_json["sources"]->isArray())) {
+  if (!(json.has("sources") && json["sources"]->isArray())) {
     throw MapParseException("Source map sources missing or not an array");
   }
-  json::Ref s = sm_json["sources"];
+  json::Ref s = json["sources"];
   for (size_t i = 0; i < s->size(); i++) {
     json::Ref v = s[i];
     if (!(s[i]->isString())) {
@@ -59,8 +59,8 @@ void SourceMapReader::parse(Module& wasm) {
     wasm.debugInfoFileNames.push_back(v->getCString());
   }
 
-  if (sm_json.has("names")) {
-    json::Ref n = sm_json["names"];
+  if (json.has("names")) {
+    json::Ref n = json["names"];
     if (!n->isArray()) {
       throw MapParseException("Source map names is not an array");
     }
@@ -73,10 +73,10 @@ void SourceMapReader::parse(Module& wasm) {
     }
   }
 
-  if (!sm_json.has("mappings")) {
+  if (!json.has("mappings")) {
     throw MapParseException("Source map mappings missing");
   }
-  json::Ref m = sm_json["mappings"];
+  json::Ref m = json["mappings"];
   if (!m->isString()) {
     throw MapParseException("Source map mappings is not a string");
   }

@@ -33,7 +33,7 @@ protected:
     parseWast(wasm, "(module)");
   }
 
-  void ParseMap(std::string& sourceMap) {
+  void parseMap(std::string& sourceMap) {
     buffer = {sourceMap.begin(), sourceMap.end()};
     reader.reset(new SourceMapReader(buffer));
     reader->parse(wasm);
@@ -67,7 +67,7 @@ TEST_F(SourceMapTest, SourceMappingSingleSegment) {
           "mappings": "A"
       }
   )";
-  ParseMap(sourceMap);
+  parseMap(sourceMap);
 
   auto loc = reader->readDebugLocationAt(0);
   EXPECT_FALSE(loc.has_value());
@@ -82,7 +82,7 @@ TEST_F(SourceMapTest, BadSourceMap) {
       "mappings": "A"
     }
   )";
-  EXPECT_THROW(ParseMap(sourceMap), MapParseException);
+  EXPECT_THROW(parseMap(sourceMap), MapParseException);
 }
 
 TEST_F(SourceMapTest, SourcesAndNames) {
@@ -94,7 +94,7 @@ TEST_F(SourceMapTest, SourcesAndNames) {
       "mappings": ""
     }
   )";
-  ParseMap(sourceMap);
+  parseMap(sourceMap);
 
   EXPECT_EQ(wasm.debugInfoFileNames.size(), 2);
   EXPECT_EQ(wasm.debugInfoFileNames[0], "foo.c");
@@ -113,7 +113,7 @@ TEST_F(SourceMapTest, OptionalFields) {
       "mappings": "A"
     }
   )";
-  ParseMap(sourceMap);
+  parseMap(sourceMap);
 }
 
 // This map is taken from test/fib-dbg.wasm
@@ -127,7 +127,7 @@ TEST_F(SourceMapTest, Fibonacci) {
       "mappings": "moBAEA,4BAKA,QAJA,OADA,OAAA,uCAKA"
     }
   )";
-  ParseMap(sourceMap);
+  parseMap(sourceMap);
 
   // Location before the first record has no value
   auto loc = reader->readDebugLocationAt(642);
