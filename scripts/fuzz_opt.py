@@ -835,7 +835,6 @@ class CompareVMs(TestCaseHandler):
                 # variants, though TODO).
                 return self.can_compare_to_self() and LEGALIZE and all_disallowed(['relaxed-simd'])
 
-
         class D8Liftoff(D8):
             name = 'd8_liftoff'
 
