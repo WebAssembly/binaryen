@@ -115,6 +115,13 @@ public:
 #endif
 
   template<typename T> struct FeatureOptions {
+    FeatureOptions<T>& add(HeapType::BasicHeapType option) {
+      // Using FeatureOptions with BasicHeapTypes is risky as BasicHeapType
+      // is an enum, which can convert into FeatureSet implicitly (which would
+      // then be ambiguous with add(FeatureSet) below). Use HeapType instead.
+      static_assert(false);
+    }
+
     // An option without a feature is applied in all cases.
     FeatureOptions<T>& add(T option) {
       options[FeatureSet::MVP].push_back(option);
