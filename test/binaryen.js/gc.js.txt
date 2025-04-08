@@ -1,3 +1,64 @@
 (module
+ (type $0 (array (mut i32)))
+ (type $1 (struct (field (mut i32)) (field (mut f64))))
+ (type $2 (func))
+ (global $global-struct.new (mut (ref $1)) (struct.new $1
+  (i32.const 123)
+  (f64.const 123.456)
+ ))
+ (global $global-struct.new_default (mut (ref $1)) (struct.new_default $1))
+ (global $global-array.new (mut (ref $0)) (array.new $0
+  (i32.const 123)
+  (i32.const 4)
+ ))
+ (global $global-array.new_default (mut (ref $0)) (array.new_default $0
+  (i32.const 4)
+ ))
+ (global $global-array.new_fixed (mut (ref $0)) (array.new_fixed $0 4
+  (i32.const 1)
+  (i32.const 2)
+  (i32.const 3)
+  (i32.const 4)
+ ))
+ (memory $0 1)
+ (data $0 (i32.const 0) "\04\03\02\01")
+ (func $main (type $2)
+  (local $0 i32)
+  (local $1 f64)
+  (global.set $global-array.new_default
+   (array.new_data $0 $0
+    (i32.const 0)
+    (i32.const 4)
+   )
+  )
+  (array.copy $0 $0
+   (global.get $global-array.new_fixed)
+   (i32.const 0)
+   (global.get $global-array.new_default)
+   (i32.const 0)
+   (array.len
+    (global.get $global-array.new_default)
+   )
+  )
+  (array.set $0
+   (global.get $global-array.new)
+   (i32.const 2)
+   (array.get $0
+    (global.get $global-array.new_default)
+    (i32.const 0)
+   )
+  )
+  (local.set $0
+   (struct.get $1 0
+    (global.get $global-struct.new)
+   )
+  )
+  (struct.set $1 1
+   (global.get $global-struct.new_default)
+   (f64.convert_i32_u
+    (local.get $0)
+   )
+  )
+ )
 )
 

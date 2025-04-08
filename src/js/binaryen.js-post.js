@@ -2470,7 +2470,7 @@ function wrapModule(module, self = {}) {
     },
     // TODO: array.fill
     'copy'(destRef, destIndex, srcRef, srcIndex, length) {
-      return Module['_BinaryenArrayCopy'](destRef, destIndex, srcRef, srcIndex, length);
+      return Module['_BinaryenArrayCopy'](module, destRef, destIndex, srcRef, srcIndex, length);
     },
     // TODO: array.init_data
     // TODO: array.init_elem
@@ -2831,22 +2831,24 @@ Module['TypeBuilder'] = function(size) {
   this['setSignatureType'] = function(index, paramTypes, resultTypes) {
     Module['_TypeBuilderSetSignatureType'](builder, index, paramTypes, resultTypes);
   };
-  this['setStructType'] = function(index, fields) {
+  this['setStructType'] = function(index, fields = []) {
+    // fields are assumed to be { type: type ref, packedType: type ref, mutable: bool }
     preserveStack(() => {
       const numFields = fields.length;
       const types = new Array(numFields);
       const packedTypes = new Array(numFields);
       const mutables = new Array(numFields);
       for (let i = 0; i < numFields; i++) {
-        const { type, packedType, mutable } = fields[i];
+        const { ['type']: type, ['packedType']: packedType, ['mutable']: mutable } = fields[i];
         types[i] = type;
-        packedTypes[i] = packedType ?? Module['notPacked'];
+        packedTypes[i] = packedType;
         mutables[i] = mutable;
       }
       Module['_TypeBuilderSetStructType'](builder,
         index,
         i32sToStack(types), i32sToStack(packedTypes),
-        i8sToStack(mutables)
+        i8sToStack(mutables),
+        numFields
       );
     });
   };
@@ -2879,7 +2881,8 @@ Module['TypeBuilder'] = function(size) {
     return preserveStack(() => {
       const numTypes = this['getSize']();
       const array = stackAlloc(numTypes << 2);
-      Module['_TypeBuilderBuildAndDispose'](builder, array, 0, 0); // TODO: Handle errors
+      if (!Module['_TypeBuilderBuildAndDispose'](builder, array, 0, 0))
+        throw new TypeError('TypeBuilder.buildAndDispose failed');
       const types = new Array(numTypes);
       for (let i = 0; i < numTypes; i++) {
         types[i] = HEAPU32[(array >>> 2) + i];
