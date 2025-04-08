@@ -28,7 +28,7 @@
     ;; NRML:      (rec
     ;; NRML-NEXT:  (type $A (sub (struct (field (mut nullref)))))
     ;; GUFA:      (rec
-    ;; GUFA-NEXT:  (type $A (sub (struct (field (mut (exact nullref))))))
+    ;; GUFA-NEXT:  (type $A (sub (struct (field (mut nullref)))))
     ;; O3O3:      (rec
     ;; O3O3-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct (field (mut anyref)))))

@@ -42,7 +42,7 @@ template<typename InputType> inline Nop* nop(InputType* target) {
 template<typename InputType>
 inline RefNull* refNull(InputType* target, HeapType type) {
   auto* ret = convert<InputType, RefNull>(target);
-  ret->finalize(Type(type.getBottom(), Nullable, Exact));
+  ret->finalize(Type(type.getBottom(), Nullable));
   return ret;
 }
 

@@ -11131,13 +11131,13 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.load
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -11319,7 +11319,7 @@
       (i32.const -1)
     ))
     (drop (i32.le_u
-      (i32.load 
+      (i32.load
         (i32.const 0)
       )
       (i32.const -1)
@@ -11329,7 +11329,7 @@
       (i64.const -1)
     ))
     (drop (i64.le_u
-      (i64.load 
+      (i64.load
         (i32.const 0)
       )
       (i64.const -1)

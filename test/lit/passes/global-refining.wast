@@ -11,8 +11,8 @@
   ;; CLOSD:      (type $foo_t (func))
   (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut (exact nullfuncref)) (ref.null nofunc))
-  ;; CLOSD:      (global $func-null-init (mut (exact nullfuncref)) (ref.null nofunc))
+  ;; CHECK:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
+  ;; CLOSD:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
   ;; CHECK:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
   ;; CLOSD:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
@@ -32,8 +32,8 @@
   ;; CLOSD:      (type $foo_t (func))
   (type $foo_t (func))
 
-  ;; CHECK:      (global $func-null-init (mut (exact nullfuncref)) (ref.null nofunc))
-  ;; CLOSD:      (global $func-null-init (mut (exact nullfuncref)) (ref.null nofunc))
+  ;; CHECK:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
+  ;; CLOSD:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
   ;; CHECK:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
   ;; CLOSD:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
@@ -202,16 +202,16 @@
 ;; (ref null func) to nullfuncref only when not exported, and if exported, then
 ;; only when immutable in open world.
 (module
-  ;; CHECK:      (global $mut (mut (exact nullfuncref)) (ref.null nofunc))
-  ;; CLOSD:      (global $mut (mut (exact nullfuncref)) (ref.null nofunc))
+  ;; CHECK:      (global $mut (mut nullfuncref) (ref.null nofunc))
+  ;; CLOSD:      (global $mut (mut nullfuncref) (ref.null nofunc))
   (global $mut (mut (ref null func)) (ref.null nofunc))
-  ;; CHECK:      (global $imm (exact nullfuncref) (ref.null nofunc))
-  ;; CLOSD:      (global $imm (exact nullfuncref) (ref.null nofunc))
+  ;; CHECK:      (global $imm nullfuncref (ref.null nofunc))
+  ;; CLOSD:      (global $imm nullfuncref (ref.null nofunc))
   (global $imm (ref null func) (ref.null nofunc))
   ;; CHECK:      (global $mut-exp (mut funcref) (ref.null nofunc))
   ;; CLOSD:      (global $mut-exp (mut funcref) (ref.null nofunc))
   (global $mut-exp (mut (ref null func)) (ref.null nofunc))
-  ;; CHECK:      (global $imm-exp (exact nullfuncref) (ref.null nofunc))
+  ;; CHECK:      (global $imm-exp nullfuncref (ref.null nofunc))
   ;; CLOSD:      (global $imm-exp funcref (ref.null nofunc))
   (global $imm-exp (ref null func) (ref.null nofunc))
 

@@ -63,7 +63,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result (exact nullref))
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.get $struct)
  ;; CHECK-NEXT:     )
@@ -119,7 +119,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result (exact nullref))
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (ref.cast (ref null $struct)
  ;; CHECK-NEXT:       (local.tee $any
@@ -438,7 +438,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result (exact nullref))
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.get $nullable-struct2)
  ;; CHECK-NEXT:     )
@@ -509,7 +509,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result (exact nullref))
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.tee $any
  ;; CHECK-NEXT:       (local.get $nullable-struct2)
@@ -571,7 +571,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result (exact nullref))
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
  ;; CHECK-NEXT:      (local.tee $any
  ;; CHECK-NEXT:       (local.get $nullable-struct2)
@@ -706,7 +706,7 @@
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (then
- ;; CHECK-NEXT:     (ref.test (ref exact none)
+ ;; CHECK-NEXT:     (ref.test (ref none)
  ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -716,13 +716,13 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result (exact nullref))
+ ;; CHECK-NEXT:   (if (result nullref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
- ;; CHECK-NEXT:     (ref.cast (exact nullref)
+ ;; CHECK-NEXT:     (ref.cast nullref
  ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -734,7 +734,7 @@
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (block $something (result (ref null $struct))
  ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (block (result (exact nullref))
+ ;; CHECK-NEXT:       (block (result nullref)
  ;; CHECK-NEXT:        (br_on_non_null $something
  ;; CHECK-NEXT:         (local.get $struct)
  ;; CHECK-NEXT:        )
@@ -750,8 +750,8 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result (exact nullref))
- ;; CHECK-NEXT:    (block (result (exact nullref))
+ ;; CHECK-NEXT:   (select (result nullref)
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (block $nothing
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (block
@@ -858,7 +858,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result (exact nullref))
+ ;; CHECK-NEXT:   (select (result nullref)
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (local.get $x)
