@@ -3427,8 +3427,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
       assert(wasm.features.hasGC());
-      auto subtype =
-        pick(HeapTypes::i31, HeapTypes::struct_, HeapTypes::array);
+      auto subtype = pick(HeapTypes::i31, HeapTypes::struct_, HeapTypes::array);
       return makeConst(Type(subtype.getBasic(share), nullability));
     }
     case HeapType::eq: {
