@@ -825,14 +825,14 @@ class CompareVMs(TestCaseHandler):
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
-                # can compare to themselves after opts in that case. Relaxed
-                # SIMD allows similar types of nondeterminism
-                return not NANS and all_disallowed(['relaxed-simd'])
+                # can compare to themselves after opts in that case.
+                return not NANS
 
             def can_compare_to_others(self):
                 # If not legalized, the JS will fail immediately, so no point to
-                # compare to others.
-                return self.can_compare_to_self() and LEGALIZE
+                # compare to others. Relaxed SIMD allows different behavior
+                # between VMs.
+                return self.can_compare_to_self() and LEGALIZE and all_disallowed(['relaxed-simd'])
 
 
         class D8Liftoff(D8):
