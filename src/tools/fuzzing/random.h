@@ -115,6 +115,12 @@ public:
 #endif
 
   template<typename T> struct FeatureOptions {
+    // An option without a feature is applied in all cases.
+    FeatureOptions<T>& add(T option) {
+      options[FeatureSet::MVP].push_back(option);
+      return *this;
+    }
+
     template<typename... Ts>
     FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
       options[feature].push_back(option);

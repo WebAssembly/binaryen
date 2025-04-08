@@ -5404,16 +5404,16 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         // TODO: Typed function references.
         assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
-                      .add(HeapType::func)
-                      .add(FeatureSet::GC, HeapType::nofunc))
+                      .add(HeapTypes::func)
+                      .add(FeatureSet::GC, HeapTypes::nofunc))
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
         assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
-                         .add(HeapType::ext)
-                         .add(FeatureSet::GC, HeapType::noext);
+                         .add(HeapTypes::ext)
+                         .add(FeatureSet::GC, HeapTypes::noext);
         if (share == Unshared) {
           // Shared strings not yet supported.
           options.add(FeatureSet::Strings, HeapType::string);
