@@ -219,12 +219,28 @@ public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
 
+  enum RelaxedBehavior {
+    // Consider relaxed SIMD instructions non-constant. This is suitable for
+    // optimizations, as we bake the results of optimizations into the output,
+    // but relaxed operations must behave according to the host semantics, not
+    // ours, so we do not want to optimize such expressions.
+    NonConstant,
+    // Execute relaxed SIMD instructions.
+    Execute,
+  };
+
+protected:
+  RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
+
+public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
   }
   virtual ~ExpressionRunner() = default;
+
+  void setRelaxedBehavior(RelaxedBehavior value) { relaxedBehavior = value; }
 
   Flow visit(Expression* curr) {
     depth++;
@@ -584,11 +600,21 @@ public:
         return value.extAddPairwiseToSI32x4();
       case ExtAddPairwiseUVecI16x8ToI32x4:
         return value.extAddPairwiseToUI32x4();
-      case TruncSatSVecF32x4ToVecI32x4:
       case RelaxedTruncSVecF32x4ToVecI32x4:
+        // TODO: We could do this only if the actual values are in the relaxed
+        //       range.
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
-      case TruncSatUVecF32x4ToVecI32x4:
       case RelaxedTruncUVecF32x4ToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
@@ -622,11 +648,19 @@ public:
         return value.convertLowSToF64x2();
       case ConvertLowUVecI32x4ToVecF64x2:
         return value.convertLowUToF64x2();
-      case TruncSatZeroSVecF64x2ToVecI32x4:
       case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatZeroSVecF64x2ToVecI32x4:
         return value.truncSatZeroSToI32x4();
-      case TruncSatZeroUVecF64x2ToVecI32x4:
       case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatZeroUVecF64x2ToVecI32x4:
         return value.truncSatZeroUToI32x4();
       case DemoteZeroVecF64x2ToVecF32x4:
         return value.demoteZeroToF32x4();
@@ -989,8 +1023,12 @@ public:
         return left.maxUI16x8(right);
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
-      case Q15MulrSatSVecI16x8:
       case RelaxedQ15MulrSVecI16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case Q15MulrSatSVecI16x8:
         return left.q15MulrSatSI16x8(right);
       case ExtMulLowSVecI16x8:
         return left.extMulLowSI16x8(right);
@@ -1064,11 +1102,19 @@ public:
         return left.mulF32x4(right);
       case DivVecF32x4:
         return left.divF32x4(right);
-      case MinVecF32x4:
       case RelaxedMinVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MinVecF32x4:
         return left.minF32x4(right);
-      case MaxVecF32x4:
       case RelaxedMaxVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MaxVecF32x4:
         return left.maxF32x4(right);
       case PMinVecF32x4:
         return left.pminF32x4(right);
@@ -1082,11 +1128,19 @@ public:
         return left.mulF64x2(right);
       case DivVecF64x2:
         return left.divF64x2(right);
-      case MinVecF64x2:
       case RelaxedMinVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MinVecF64x2:
         return left.minF64x2(right);
-      case MaxVecF64x2:
       case RelaxedMaxVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MaxVecF64x2:
         return left.maxF64x2(right);
       case PMinVecF64x2:
         return left.pminF64x2(right);
@@ -1102,8 +1156,12 @@ public:
       case NarrowUVecI32x4ToVecI16x8:
         return left.narrowUToI16x8(right);
 
-      case SwizzleVecI8x16:
       case RelaxedSwizzleVecI8x16:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case SwizzleVecI8x16:
         return left.swizzleI8x16(right);
 
       case DotI8x16I7x16SToVecI16x8:
@@ -1213,16 +1271,34 @@ public:
         return c.bitselectV128(a, b);
 
       case RelaxedMaddVecF16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedMaddF16x8(b, c);
       case RelaxedNmaddVecF16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedNmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedMaddF32x4(b, c);
       case RelaxedNmaddVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedNmaddF32x4(b, c);
       case RelaxedMaddVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedMaddF64x2(b, c);
       case RelaxedNmaddVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedNmaddF64x2(b, c);
       default:
         // TODO: implement signselect and dot_add
