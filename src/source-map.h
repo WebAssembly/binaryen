@@ -18,7 +18,6 @@
 #define wasm_source_map_h
 
 #include <optional>
-#include <unordered_map>
 
 #include "wasm.h"
 
@@ -32,7 +31,8 @@ struct MapParseException {
 };
 
 class SourceMapReader {
-  const std::vector<char>& buffer;
+  std::vector<char>& buffer;
+  std::string_view mappings;
 
   // Current position in the source map buffer.
   size_t pos = 0;
@@ -53,9 +53,9 @@ class SourceMapReader {
   bool hasSymbol = false;
 
 public:
-  SourceMapReader(const std::vector<char>& buffer) : buffer(buffer) {}
+  SourceMapReader(std::vector<char>& buffer) : buffer(buffer) {}
 
-  void readHeader(Module& wasm);
+  void parse(Module& wasm);
 
   std::optional<Function::DebugLocation>
   readDebugLocationAt(size_t currLocation);
@@ -65,32 +65,18 @@ public:
 
 private:
   char peek() {
-    if (pos >= buffer.size()) {
+    if (pos == mappings.size()) {
+      return '"';
+    } else if (pos > mappings.size()) {
       throw MapParseException("unexpected end of source map");
     }
-    return buffer[pos];
+    return mappings[pos];
   }
 
   char get() {
     char c = peek();
     ++pos;
     return c;
-  }
-
-  bool maybeGet(char c) {
-    if (pos < buffer.size() && peek() == c) {
-      ++pos;
-      return true;
-    }
-    return false;
-  }
-
-  void expect(char c) {
-    using namespace std::string_literals;
-    char got = get();
-    if (got != c) {
-      throw MapParseException("expected '"s + c + "', got '" + got + "'");
-    }
   }
 
   int32_t readBase64VLQ();

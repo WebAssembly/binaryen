@@ -5651,6 +5651,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
 void BinaryenModuleInterpret(BinaryenModuleRef module) {
   ShellExternalInterface interface;
   ModuleRunner instance(*(Module*)module, &interface, {});
+  instance.instantiate();
 }
 
 BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,

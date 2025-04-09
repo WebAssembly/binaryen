@@ -271,6 +271,10 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      // This is not an optimization: we want to execute anything, even relaxed
+      // SIMD instructions.
+      instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
+      instance.instantiate();
       interface.setModuleRunner(&instance);
       // execute all exported methods (that are therefore preserved through
       // opts)
@@ -430,6 +434,8 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
+      instance.instantiate();
       interface.setModuleRunner(&instance);
       return run(func, wasm, instance);
     } catch (const TrapException&) {

@@ -1226,25 +1226,40 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
   }
 
-  *sourceMap << "\"sources\":[";
-  for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
-    if (i > 0) {
-      *sourceMap << ",";
+  auto writeOptionalString = [&](const char* name, const std::string& str) {
+    if (!str.empty()) {
+      *sourceMap << "\"" << name << "\":\"" << str << "\",";
     }
-    // TODO respect JSON string encoding, e.g. quotes and control chars.
-    *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
-  }
-  *sourceMap << "],\"names\":[";
+  };
 
-  for (size_t i = 0; i < wasm->debugInfoSymbolNames.size(); i++) {
-    if (i > 0) {
-      *sourceMap << ",";
+  writeOptionalString("file", wasm->debugInfoFile);
+  writeOptionalString("sourceRoot", wasm->debugInfoSourceRoot);
+
+  auto writeStringVector = [&](const char* name,
+                               const std::vector<std::string>& vec) {
+    *sourceMap << "\"" << name << "\":[";
+    for (size_t i = 0; i < vec.size(); i++) {
+      if (i > 0) {
+        *sourceMap << ",";
+      }
+      *sourceMap << "\"" << vec[i] << "\"";
     }
-    // TODO respect JSON string encoding, e.g. quotes and control chars.
-    *sourceMap << "\"" << wasm->debugInfoSymbolNames[i] << "\"";
+    *sourceMap << "],";
+  };
+
+  writeStringVector("sources", wasm->debugInfoFileNames);
+
+  if (!wasm->debugInfoSourcesContent.empty()) {
+    writeStringVector("sourcesContent", wasm->debugInfoSourcesContent);
   }
 
-  *sourceMap << "],\"mappings\":\"";
+  // TODO: This field is optional; maybe we should omit if it's empty.
+  // TODO: Binaryen actually does not correctly preserve symbol names when it
+  // rewrites the mappings. We should maybe just drop them, or else handle
+  // them correctly.
+  writeStringVector("names", wasm->debugInfoSymbolNames);
+
+  *sourceMap << "\"mappings\":\"";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
@@ -1774,7 +1789,7 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input,
-                                   const std::vector<char>& sourceMap)
+                                   std::vector<char>& sourceMap)
   : wasm(wasm), allocator(wasm.allocator), input(input), builder(wasm),
     sourceMapReader(sourceMap) {
   wasm.features = features;
@@ -1824,7 +1839,7 @@ void WasmBinaryReader::read() {
   }
 
   readHeader();
-  sourceMapReader.readHeader(wasm);
+  sourceMapReader.parse(wasm);
 
   // Read sections until the end
   while (more()) {
