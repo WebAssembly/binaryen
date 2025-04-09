@@ -46,7 +46,6 @@
 #include <support/threads.h>
 #include <wasm.h>
 
-#include "asmjs/shared-constants.h"
 #include "call-utils.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
