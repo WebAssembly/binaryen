@@ -153,3 +153,38 @@ TEST_F(SourceMapTest, Fibonacci) {
   // program?
   ExpectDbgLocEq(9999, 0, 8, 0, std::nullopt);
 }
+
+TEST_F(SourceMapTest, SourceMapSourceRootFile) {
+  std::string sourceMap = R"(
+    {
+      "version":3,
+      "file": "foo.wasm",
+      "sources":[],
+      "names":[],
+      "mappings": "",
+      "sourceRoot": "/foo/bar"
+    }
+  )";
+  parseMap(sourceMap);
+  EXPECT_EQ(wasm.debugInfoSourceRoot, "/foo/bar");
+  EXPECT_EQ(wasm.debugInfoFile, "foo.wasm");
+}
+
+TEST_F(SourceMapTest, SourcesContent) {
+  // The backslash escapes appear in the JSON encoding, and are preserved in
+  // the internal representation. The string values are uninterpreted in
+  // Binaryen, and they are written directly back out without re-encoding.
+  std::string sourceMap = R"(
+   {
+     "version": 3,
+     "sources": ["foo.c"],
+     "sourcesContent": ["#include <stdio.h> int main()\n{ printf(\"Gr\u00fc\u00df Gott, Welt!\"); return 0;}"],
+     "mappings" : ""
+   }
+  )";
+  parseMap(sourceMap);
+  ASSERT_EQ(wasm.debugInfoSourcesContent.size(), 1);
+  EXPECT_EQ(wasm.debugInfoSourcesContent[0],
+            "#include <stdio.h> int main()\\n{ printf(\\\"Gr\\u00fc\\u00df "
+            "Gott, Welt!\\\"); return 0;}");
+}

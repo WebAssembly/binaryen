@@ -2406,9 +2406,15 @@ public:
   // Optional user section IR representation.
   std::unique_ptr<DylinkSection> dylinkSection;
 
-  // Source maps debug info.
+  // Source maps debug info. All of these fields are read directly in from the
+  // source map and are encoded as in the original JSON (UTF-8 encoded with
+  // with escaped quotes and slashes). The string values are uninterpreted in
+  // Binaryen, and they are written directly back out without re-encoding.
   std::vector<std::string> debugInfoFileNames;
   std::vector<std::string> debugInfoSymbolNames;
+  std::string debugInfoSourceRoot;
+  std::string debugInfoFile;
+  std::vector<std::string> debugInfoSourcesContent;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.

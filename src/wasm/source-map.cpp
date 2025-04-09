@@ -59,6 +59,16 @@ void SourceMapReader::parse(Module& wasm) {
     wasm.debugInfoFileNames.push_back(v->getCString());
   }
 
+  if (json.has("sourcesContent")) {
+    json::Ref sc = json["sourcesContent"];
+    if (!sc->isArray()) {
+      throw MapParseException("Source map sourcesContent is not an array");
+    }
+    for (size_t i = 0; i < sc->size(); i++) {
+      wasm.debugInfoSourcesContent.push_back(sc[i]->getCString());
+    }
+  }
+
   if (json.has("names")) {
     json::Ref n = json["names"];
     if (!n->isArray()) {
@@ -71,6 +81,22 @@ void SourceMapReader::parse(Module& wasm) {
       }
       wasm.debugInfoSymbolNames.push_back(v->getCString());
     }
+  }
+
+  if (json.has("sourceRoot")) {
+    json::Ref sr = json["sourceRoot"];
+    if (!sr->isString()) {
+      throw MapParseException("Source map sourceRoot is not a string");
+    }
+    wasm.debugInfoSourceRoot = sr->getCString();
+  }
+
+  if (json.has("file")) {
+    json::Ref f = json["file"];
+    if (!f->isString()) {
+      throw MapParseException("Source map file is not a string");
+    }
+    wasm.debugInfoFile = f->getCString();
   }
 
   if (!json.has("mappings")) {
