@@ -10541,13 +10541,11 @@
   )
   ;; CHECK:      (func $add-sub-zero-reorder-2 (param $temp i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.tee $temp
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $temp)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
@@ -10558,8 +10556,8 @@
      (local.tee $temp ;; in this order, the tee already comes first, so all is good for the optimization
       (i32.const 1)
      )
-     (i32.sub         ;; replace optimized sub with a const zero because the operations are identical
-      (i32.const 0)   ;; while preserving the side effect
+     (i32.sub
+      (i32.const 0)
       (local.get $temp)
      )
     )
@@ -13876,8 +13874,11 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.or
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.tee $x
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -13895,13 +13896,11 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.xor
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (i32.xor
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

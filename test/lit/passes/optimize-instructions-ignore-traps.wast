@@ -563,11 +563,9 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.tee $1
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:     (i32.ne
+  ;; CHECK-NEXT:      (local.tee $1
+  ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -620,26 +618,26 @@
   ;; CHECK:      (func $invalidate-conditionalizeExpensiveOnBitwise-ok (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.tee $1
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.tee $1
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.lt_u
-  ;; CHECK-NEXT:      (i32.and
-  ;; CHECK-NEXT:       (i32.extend8_s
-  ;; CHECK-NEXT:        (i32.sub
-  ;; CHECK-NEXT:         (local.get $0)
-  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (i32.lt_u
+  ;; CHECK-NEXT:       (i32.and
+  ;; CHECK-NEXT:        (i32.extend8_s
+  ;; CHECK-NEXT:         (i32.sub
+  ;; CHECK-NEXT:          (local.get $0)
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 255)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 255)
+  ;; CHECK-NEXT:       (i32.const 3)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
