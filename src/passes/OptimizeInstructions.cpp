@@ -265,11 +265,6 @@ struct OptimizeInstructions
   bool inReplaceCurrent = false;
 
   void replaceCurrent(Expression* rep) {
-    // Avoid self-replacement;
-    if (rep == getCurrent()) {
-      return;
-    }
-
     if (rep->type != getCurrent()->type) {
       // This operation will change the type, so refinalize.
       refinalize = true;
@@ -5191,8 +5186,7 @@ private:
       case SubInt64:
       case XorInt64:
         return getDroppedChildrenAndAppend(
-          binary->left,
-          LiteralUtils::makeZero(binary->left->type, *getModule()));
+          binary, LiteralUtils::makeZero(binary->left->type, *getModule()));
       case NeInt32:
       case LtSInt32:
       case LtUInt32:
@@ -5204,7 +5198,7 @@ private:
       case GtSInt64:
       case GtUInt64:
         return getDroppedChildrenAndAppend(
-          binary->left, LiteralUtils::makeZero(Type::i32, *getModule()));
+          binary, LiteralUtils::makeZero(Type::i32, *getModule()));
       case AndInt32:
       case OrInt32:
       case AndInt64:
@@ -5214,7 +5208,7 @@ private:
             return binary->left;
           }
         }
-        return binary;
+        return nullptr;
       };
       case EqInt32:
       case LeSInt32:
@@ -5227,8 +5221,7 @@ private:
       case GeSInt64:
       case GeUInt64:
         return getDroppedChildrenAndAppend(
-          binary->left,
-          LiteralUtils::makeFromInt32(1, Type::i32, *getModule()));
+          binary, LiteralUtils::makeFromInt32(1, Type::i32, *getModule()));
       default:
         return nullptr;
     }
