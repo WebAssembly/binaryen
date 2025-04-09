@@ -1796,7 +1796,16 @@ BinaryenExpressionRef BinaryenArrayNewData(BinaryenModuleRef module,
       .makeArrayNewData(
         HeapType(type), name, (Expression*)offset, (Expression*)size));
 }
-
+BinaryenExpressionRef BinaryenArrayNewElem(BinaryenModuleRef module,
+                                           BinaryenHeapType type,
+                                           const char* name,
+                                           BinaryenExpressionRef offset,
+                                           BinaryenExpressionRef size) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArrayNewElem(
+        HeapType(type), name, (Expression*)offset, (Expression*)size));
+}
 BinaryenExpressionRef BinaryenArrayNewFixed(BinaryenModuleRef module,
                                             BinaryenHeapType type,
                                             BinaryenExpressionRef* values,
@@ -1842,6 +1851,37 @@ BinaryenExpressionRef BinaryenArrayCopy(BinaryenModuleRef module,
                                                    (Expression*)srcRef,
                                                    (Expression*)srcIndex,
                                                    (Expression*)length));
+}
+BinaryenExpressionRef BinaryenArrayFill(BinaryenModuleRef module,
+                                        BinaryenExpressionRef ref,
+                                        BinaryenExpressionRef index,
+                                        BinaryenExpressionRef value,
+                                        BinaryenExpressionRef size) {
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeArrayFill((Expression*)ref,
+                                                   (Expression*)index,
+                                                   (Expression*)value,
+                                                   (Expression*)size));
+}
+BinaryenExpressionRef BinaryenArrayInitData(BinaryenModuleRef module,
+                                            const char* name,
+                                            BinaryenExpressionRef ref,
+                                            BinaryenExpressionRef index,
+                                            BinaryenExpressionRef offset,
+                                            BinaryenExpressionRef size) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArrayInitData(name, (Expression*)ref, (Expression*)index, (Expression*)offset, (Expression*)size));
+}
+BinaryenExpressionRef BinaryenArrayInitElem(BinaryenModuleRef module,
+                                            const char* seg,
+                                            BinaryenExpressionRef ref,
+                                            BinaryenExpressionRef index,
+                                            BinaryenExpressionRef offset,
+                                            BinaryenExpressionRef size) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArrayInitElem(seg, (Expression*)ref, (Expression*)index, (Expression*)offset, (Expression*)size));
 }
 BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                         BinaryenOp op,

@@ -1050,11 +1050,16 @@ BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenHeapType type,
                                                     BinaryenExpressionRef size,
                                                     BinaryenExpressionRef init);
-
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayNewData(BinaryenModuleRef module,
                      BinaryenHeapType type,
                      const char* name,
+                     BinaryenExpressionRef offset,
+                     BinaryenExpressionRef size);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewElem(BinaryenModuleRef module,
+                     BinaryenHeapType type,
+                     const char* seg,
                      BinaryenExpressionRef offset,
                      BinaryenExpressionRef size);
 BINARYEN_API BinaryenExpressionRef
@@ -1082,11 +1087,31 @@ BinaryenArrayCopy(BinaryenModuleRef module,
                   BinaryenExpressionRef srcIndex,
                   BinaryenExpressionRef length);
 BINARYEN_API BinaryenExpressionRef
+BinaryenArrayFill(BinaryenModuleRef module,
+                  BinaryenExpressionRef ref,
+                  BinaryenExpressionRef index,
+                  BinaryenExpressionRef value,
+                  BinaryenExpressionRef size);
+BINARYEN_API BinaryenExpressionRef
 BinaryenStringNew(BinaryenModuleRef module,
                   BinaryenOp op,
                   BinaryenExpressionRef ref,
                   BinaryenExpressionRef start,
                   BinaryenExpressionRef end);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitData(BinaryenModuleRef module,
+                      const char* name,
+                      BinaryenExpressionRef ref,
+                      BinaryenExpressionRef index,
+                      BinaryenExpressionRef offset,
+                      BinaryenExpressionRef size);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitElem(BinaryenModuleRef module,
+                      const char* seg,
+                      BinaryenExpressionRef ref,
+                      BinaryenExpressionRef index,
+                      BinaryenExpressionRef offset,
+                      BinaryenExpressionRef size);
 BINARYEN_API BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                                        const char* name);
 BINARYEN_API BinaryenExpressionRef BinaryenStringMeasure(

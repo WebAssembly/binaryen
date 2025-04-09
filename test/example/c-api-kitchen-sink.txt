@@ -2327,10 +2327,28 @@ BinaryenFeatureAll: 4194303
         (global.get $i8Array-global)
        )
       )
+      (array.fill $0
+       (global.get $i8Array-global)
+       (i32.const 0)
+       (i32.const 1)
+       (i32.const 2)
+      )
       (array.copy $0 $0
        (global.get $i8Array-global)
        (i32.const 0)
        (global.get $i8Array-global)
+       (i32.const 1)
+       (i32.const 2)
+      )
+      (array.init_data $0 $0
+       (global.get $i8Array-global)
+       (i32.const 0)
+       (i32.const 1)
+       (i32.const 2)
+      )
+      (array.init_elem $0 $0
+       (global.get $i8Array-global)
+       (i32.const 0)
        (i32.const 1)
        (i32.const 2)
       )
