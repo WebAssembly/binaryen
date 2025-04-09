@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -o errexit
 set -o pipefail
 
 if [ -n "$1" ]; then
