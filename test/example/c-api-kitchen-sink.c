@@ -518,13 +518,16 @@ void test_core() {
   BinaryenType v128 = BinaryenTypeVec128();
   BinaryenType i8Array;
   BinaryenType i16Array;
+  BinaryenType kitchenSinkerArray;
   BinaryenType i32Struct;
   {
-    TypeBuilderRef tb = TypeBuilderCreate(3);
+    TypeBuilderRef tb = TypeBuilderCreate(4);
     TypeBuilderSetArrayType(
       tb, 0, BinaryenTypeInt32(), BinaryenPackedTypeInt8(), true);
     TypeBuilderSetArrayType(
       tb, 1, BinaryenTypeInt32(), BinaryenPackedTypeInt16(), true);
+    TypeBuilderSetArrayType(
+      tb, 2, kitchenSinkerRefType, BinaryenPackedTypeNotPacked(), true);
     TypeBuilderSetStructType(
       tb,
       2,
@@ -1189,7 +1192,7 @@ void test_core() {
                           makeInt32(module, 2)),
     BinaryenArrayInitElem(module,
                           "0",
-                          BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                          BinaryenGlobalGet(module, "kitchenSinkerArray-global", kitchenSinkerArray),
                           makeInt32(module, 0),
                           makeInt32(module, 1),
                           makeInt32(module, 2)),
@@ -1319,6 +1322,13 @@ void test_core() {
     true,
     BinaryenArrayNew(
       module, BinaryenTypeGetHeapType(i16Array), makeInt32(module, 0), 0));
+  BinaryenAddGlobal(
+    module,
+    "kitchenSinkerArray-global",
+    kitchenSinkerArray,
+    true,
+    BinaryenArrayNew(
+      module, BinaryenTypeGetHeapType(kitchenSinkerArray), makeInt32(module, 0), BinaryenRefNull(module, kitchenSinkerRefType)));
   BinaryenAddGlobal(
     module,
     "i32Struct-global",
