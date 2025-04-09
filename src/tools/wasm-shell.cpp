@@ -139,6 +139,9 @@ struct Shell {
         std::make_shared<ShellExternalInterface>(linkedInstances);
       auto instance =
         std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
+      // This is not an optimization: we want to execute anything, even relaxed
+      // SIMD instructions.
+      instance->setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
       instance->instantiate();
       return {{std::move(interface), std::move(instance)}};
     } catch (...) {

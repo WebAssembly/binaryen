@@ -20,32 +20,136 @@
 
 using namespace wasm;
 
-using SourceMapTest = PrintTest;
+class SourceMapTest : public PrintTest {
+  std::vector<char> buffer;
+
+protected:
+  Module wasm;
+  std::unique_ptr<SourceMapReader> reader;
+
+  void SetUp() override {
+    PrintTest::SetUp();
+    reader.reset();
+    parseWast(wasm, "(module)");
+  }
+
+  void parseMap(std::string& sourceMap) {
+    buffer = {sourceMap.begin(), sourceMap.end()};
+    reader.reset(new SourceMapReader(buffer));
+    reader->parse(wasm);
+  }
+
+  void ExpectDbgLocEq(size_t location,
+                      BinaryLocation file,
+                      BinaryLocation line,
+                      BinaryLocation col,
+                      std::optional<BinaryLocation> sym) {
+    auto loc_str = std::stringstream() << "location: " << location;
+    SCOPED_TRACE(loc_str.str());
+    auto loc = reader->readDebugLocationAt(location);
+    ASSERT_TRUE(loc.has_value());
+    EXPECT_EQ(loc->fileIndex, file);
+    EXPECT_EQ(loc->lineNumber, line);
+    EXPECT_EQ(loc->columnNumber, col);
+    EXPECT_EQ(loc->symbolNameIndex, sym);
+  }
+};
 
 // Check that debug location parsers can handle single-segment mappings.
 TEST_F(SourceMapTest, SourceMappingSingleSegment) {
-  auto text = "(module)";
-  Module wasm;
-  parseWast(wasm, text);
-
   // A single-segment mapping starting at offset 0.
   std::string sourceMap = R"(
       {
           "version": 3,
           "sources": [],
+          "sourcesContent": [],
           "names": [],
           "mappings": "A"
       }
   )";
-  std::vector<char> buffer(sourceMap.begin(), sourceMap.end());
+  parseMap(sourceMap);
 
-  SourceMapReader reader(buffer);
+  auto loc = reader->readDebugLocationAt(0);
+  EXPECT_FALSE(loc.has_value());
+}
 
-  // Test `readSourceMapHeader` (only check for errors, as there is no mapping
-  // to print).
-  reader.readHeader(wasm);
+TEST_F(SourceMapTest, BadSourceMap) {
+  // This source map is missing the version field.
+  std::string sourceMap = R"(
+    {
+      "sources": [],
+      "names": [],
+      "mappings": "A"
+    }
+  )";
+  EXPECT_THROW(parseMap(sourceMap), MapParseException);
+}
 
-  // Test `readNextDebugLocation`.
-  // TODO: Actually check the result.
-  reader.readDebugLocationAt(1);
+TEST_F(SourceMapTest, SourcesAndNames) {
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["foo.c", "bar.c"],
+      "names": ["foo", "bar"],
+      "mappings": ""
+    }
+  )";
+  parseMap(sourceMap);
+
+  EXPECT_EQ(wasm.debugInfoFileNames.size(), 2);
+  EXPECT_EQ(wasm.debugInfoFileNames[0], "foo.c");
+  EXPECT_EQ(wasm.debugInfoFileNames[1], "bar.c");
+  EXPECT_EQ(wasm.debugInfoSymbolNames.size(), 2);
+  EXPECT_EQ(wasm.debugInfoSymbolNames[0], "foo");
+  EXPECT_EQ(wasm.debugInfoSymbolNames[1], "bar");
+}
+
+TEST_F(SourceMapTest, OptionalFields) {
+  // The "names" field is optional.
+  std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": [],
+      "mappings": "A"
+    }
+  )";
+  parseMap(sourceMap);
+}
+
+// This map is taken from test/fib-dbg.wasm
+TEST_F(SourceMapTest, Fibonacci) {
+  // Test mapping parsing and debug locs
+  std::string sourceMap = R"(
+    {
+      "version":3,
+      "sources":["fib.c"],
+      "names":[],
+      "mappings": "moBAEA,4BAKA,QAJA,OADA,OAAA,uCAKA"
+    }
+  )";
+  parseMap(sourceMap);
+
+  // Location before the first record has no value
+  auto loc = reader->readDebugLocationAt(642);
+  EXPECT_FALSE(loc.has_value());
+
+  // TODO: These column numbers show as 0 but emsymbolizer.py prints them as 1.
+  // Figure out which is right.
+  // First location
+  ExpectDbgLocEq(643, 0, 3, 0, std::nullopt);
+  // locations in between records have the same value as the previous one.
+  for (size_t l = 644; l < 671; l++) {
+    ExpectDbgLocEq(l, 0, 3, 0, std::nullopt);
+  }
+  // Subsequent ones are on record boundaries
+  ExpectDbgLocEq(671, 0, 8, 0, std::nullopt);
+  ExpectDbgLocEq(679, 0, 4, 0, std::nullopt);
+  ExpectDbgLocEq(686, 0, 3, 0, std::nullopt);
+  ExpectDbgLocEq(693, 0, 3, 0, std::nullopt);
+  ExpectDbgLocEq(732, 0, 8, 0, std::nullopt);
+  // Entries after the last record have the same value as the last one.
+  ExpectDbgLocEq(733, 0, 8, 0, std::nullopt);
+  // Should we return empty values for locations that are past the end of the
+  // program?
+  ExpectDbgLocEq(9999, 0, 8, 0, std::nullopt);
 }
