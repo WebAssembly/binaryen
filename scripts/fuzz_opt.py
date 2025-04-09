@@ -848,7 +848,10 @@ class CompareVMs(TestCaseHandler):
             name = 'd8_turboshaft'
 
             def run(self, wasm):
-                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=['--no-liftoff'])
+                flags = ['--no-liftoff']
+                if random.random() < 0.5:
+                    flags += ['--no-wasm-generic-wrapper']
+                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=flags)
 
         class Wasm2C:
             name = 'wasm2c'
