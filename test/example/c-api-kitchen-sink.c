@@ -1192,7 +1192,9 @@ void test_core() {
                           makeInt32(module, 2)),
     BinaryenArrayInitElem(module,
                           "0",
-                          BinaryenGlobalGet(module, "kitchenSinkerArray-global", kitchenSinkerArray),
+                          BinaryenGlobalGet(module,
+                                            "kitchenSinkerArray-global",
+                                            kitchenSinkerArray),
                           makeInt32(module, 0),
                           makeInt32(module, 1),
                           makeInt32(module, 2)),
@@ -1327,8 +1329,10 @@ void test_core() {
     "kitchenSinkerArray-global",
     kitchenSinkerArray,
     true,
-    BinaryenArrayNew(
-      module, BinaryenTypeGetHeapType(kitchenSinkerArray), makeInt32(module, 0), BinaryenRefNull(module, kitchenSinkerRefType)));
+    BinaryenArrayNew(module,
+                     BinaryenTypeGetHeapType(kitchenSinkerArray),
+                     makeInt32(module, 0),
+                     BinaryenRefNull(module, kitchenSinkerRefType)));
   BinaryenAddGlobal(
     module,
     "i32Struct-global",

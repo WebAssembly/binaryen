@@ -2347,7 +2347,7 @@ BinaryenFeatureAll: 4194303
        (i32.const 2)
       )
       (array.init_elem $0 $0
-       (global.get $i8Array-global)
+       (global.get $kitchenSinkerArray-global)
        (i32.const 0)
        (i32.const 1)
        (i32.const 2)
