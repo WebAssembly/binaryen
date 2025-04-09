@@ -51,15 +51,18 @@ struct OutliningSequence {
                     Name func,
                     bool endsTypeUnreachable
 #if OUTLINING_DEBUG
-                    , unsigned programIdx
+                    ,
+                    unsigned programIdx
 #endif
                     )
     : startIdx(startIdx), endIdx(endIdx), func(func),
       endsTypeUnreachable(endsTypeUnreachable)
 #if OUTLINING_DEBUG
-      , programIdx(programIdx)
+      ,
+      programIdx(programIdx)
 #endif
-    {}
+  {
+  }
 };
 
 // Instances of this walker are intended to walk a function at a time, at the
@@ -349,11 +352,13 @@ struct Outlining : public Pass {
     // are relative to the enclosing function while substrings have indices
     // relative to the entire program.
     auto sequences = makeSequences(module, substrings, stringify);
-    outline(module, sequences
+    outline(module,
+            sequences
 #if OUTLINING_DEBUG
-            , stringify
+            ,
+            stringify
 #endif
-           );
+    );
     // Position the outlined functions first in the functions vector to make
     // the outlining lit tests far more readable.
     moveOutlinedFunctions(module, substrings.size());
@@ -409,9 +414,10 @@ struct Outlining : public Pass {
           stringify.exprs[seqIdx + substring.Length - 1]->type ==
             Type::unreachable
 #if OUTLINING_DEBUG
-          , seqIdx
+          ,
+          seqIdx
 #endif
-          );
+        );
         seqByFunc[existingFunc].push_back(seq);
       }
     }
@@ -421,9 +427,10 @@ struct Outlining : public Pass {
   void outline(Module* module,
                Sequences seqByFunc
 #if OUTLINING_DEBUG
-               , const HashStringifyWalker& stringify
+               ,
+               const HashStringifyWalker& stringify
 #endif
-              ) {
+  ) {
     // TODO: Make this a function-parallel sub-pass.
     std::vector<Name> keys(seqByFunc.size());
     std::transform(seqByFunc.begin(),
@@ -492,7 +499,8 @@ struct Outlining : public Pass {
     std::cerr << "moving sequences: "
               << "\n";
     for (auto& seq : seqs) {
-      for (Index idx = seq.programIdx; idx < seq.programIdx + (seq.endIdx - seq.startIdx);
+      for (Index idx = seq.programIdx;
+           idx < seq.programIdx + (seq.endIdx - seq.startIdx);
            idx++) {
         Expression* expr = exprs[idx];
         if (expr == nullptr) {
