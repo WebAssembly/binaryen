@@ -1869,9 +1869,12 @@ BinaryenExpressionRef BinaryenArrayInitData(BinaryenModuleRef module,
                                             BinaryenExpressionRef index,
                                             BinaryenExpressionRef offset,
                                             BinaryenExpressionRef size) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeArrayInitData(name, (Expression*)ref, (Expression*)index, (Expression*)offset, (Expression*)size));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeArrayInitData(name,
+                                                       (Expression*)ref,
+                                                       (Expression*)index,
+                                                       (Expression*)offset,
+                                                       (Expression*)size));
 }
 BinaryenExpressionRef BinaryenArrayInitElem(BinaryenModuleRef module,
                                             const char* seg,
@@ -1879,9 +1882,12 @@ BinaryenExpressionRef BinaryenArrayInitElem(BinaryenModuleRef module,
                                             BinaryenExpressionRef index,
                                             BinaryenExpressionRef offset,
                                             BinaryenExpressionRef size) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeArrayInitElem(seg, (Expression*)ref, (Expression*)index, (Expression*)offset, (Expression*)size));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeArrayInitElem(seg,
+                                                       (Expression*)ref,
+                                                       (Expression*)index,
+                                                       (Expression*)offset,
+                                                       (Expression*)size));
 }
 BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                         BinaryenOp op,
