@@ -69,7 +69,6 @@ void SourceMapReader::parse(Module& wasm) {
     }
   }
 
-
   if (json.has("names")) {
     json::Ref n = json["names"];
     if (!n->isArray()) {

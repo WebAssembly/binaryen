@@ -170,7 +170,6 @@ TEST_F(SourceMapTest, SourceMapSourceRootFile) {
   EXPECT_EQ(wasm.debugInfoFile, "foo.wasm");
 }
 
-
 TEST_F(SourceMapTest, SourcesContent) {
   // The backslash escapes appear in the JSON encoding, and are preserved in
   // the internal representation. The string values are uninterpreted in
@@ -186,5 +185,6 @@ TEST_F(SourceMapTest, SourcesContent) {
   parseMap(sourceMap);
   ASSERT_EQ(wasm.debugInfoSourcesContent.size(), 1);
   EXPECT_EQ(wasm.debugInfoSourcesContent[0],
-    "#include <stdio.h> int main()\\n{ printf(\\\"Gr\\u00fc\\u00df Gott, Welt!\\\"); return 0;}");
+            "#include <stdio.h> int main()\\n{ printf(\\\"Gr\\u00fc\\u00df "
+            "Gott, Welt!\\\"); return 0;}");
 }
