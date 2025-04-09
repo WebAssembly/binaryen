@@ -530,7 +530,7 @@ void test_core() {
       tb, 2, kitchenSinkerRefType, BinaryenPackedTypeNotPacked(), true);
     TypeBuilderSetStructType(
       tb,
-      2,
+      3,
       (BinaryenType[]){BinaryenTypeInt32()},
       (BinaryenPackedType[]){BinaryenPackedTypeNotPacked()},
       (bool[]){true},
@@ -539,7 +539,8 @@ void test_core() {
     TypeBuilderBuildAndDispose(tb, (BinaryenHeapType*)&builtHeapTypes, 0, 0);
     i8Array = BinaryenTypeFromHeapType(builtHeapTypes[0], true);
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
-    i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
+    kitchenSinkerArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
+    i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[3], true);
   }
 
   // Memory. Add it before creating any memory-using instructions.
