@@ -800,7 +800,7 @@ void MemoryGrow::finalize() {
 
 void RefNull::finalize(HeapType heapType) {
   assert(heapType.isBottom());
-  type = Type(heapType, Nullable, Exact);
+  type = Type(heapType, Nullable);
 }
 
 void RefNull::finalize(Type type_) { type = type_; }

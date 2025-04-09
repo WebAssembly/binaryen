@@ -4,13 +4,16 @@
 
 ;; Test that a simple type rewrite handles exact references in heap type
 ;; definitions correctly. In particular, the function should continue returning
-;; an exact nullref and the call expression should have the same type.
+;; an exact reference and the call expression should have the same type.
 
 (module
-  ;; CHECK:      (func $return-exact (type $0) (result (exact nullref))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+  (type $struct (struct))
+  ;; CHECK:      (func $return-exact (type $1) (result (ref null exact $struct))
   ;; CHECK-NEXT:  (call $return-exact)
   ;; CHECK-NEXT: )
-  (func $return-exact (result (exact nullref))
+  (func $return-exact (result (ref null exact $struct))
     (call $return-exact)
   )
 )

@@ -7,8 +7,10 @@
 ;; RUN: wasm-opt %s -all --coalesce-locals -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $test (type $0) (param $0 (exact i31ref)) (result (ref exact i31))
- ;; CHECK-NEXT:  (local $1 (exact i31ref))
+ ;; CHECK:      (type $struct (struct))
+ (type $struct (struct))
+ ;; CHECK:      (func $test (type $1) (param $0 (ref null exact $struct)) (result (ref exact $struct))
+ ;; CHECK-NEXT:  (local $1 (ref null exact $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (local.get $0)
@@ -25,8 +27,8 @@
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $test (param (exact i31ref)) (result (ref exact i31))
-  (local $l (ref exact i31))
+ (func $test (param (ref null exact $struct)) (result (ref exact $struct))
+  (local $l (ref exact $struct))
   ;; This dead set will be optimized out.
   (local.set $l
    (ref.as_non_null

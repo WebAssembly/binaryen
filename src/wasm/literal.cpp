@@ -72,9 +72,8 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
-  : gcData(gcData),
-    type(type, gcData ? NonNullable : Nullable, gcData ? Inexact : Exact) {
-  // TODO: Use exact types for more than just nulls.
+  : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
+  // TODO: Use exact types for GC data
   // The type must be a proper type for GC data: either a struct, array, or
   // string; or an externalized version of the same; or a null; or an
   // internalized string (which appears as an anyref).

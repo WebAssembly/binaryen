@@ -323,6 +323,7 @@ public:
     : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
            (exact == Exact ? ExactMask : 0)) {
     assert(!(heapType.getID() & (TupleMask | NullMask | ExactMask)));
+    assert(!heapType.isBasic() || exact == Inexact);
   }
 
   // Predicates

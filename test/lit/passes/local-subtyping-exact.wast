@@ -7,8 +7,11 @@
 ;; RUN: wasm-opt %s -all --local-subtyping -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $test (type $0) (param $0 (exact nullref)) (result anyref)
- ;; CHECK-NEXT:  (local $1 (exact nullref))
+ ;; CHECK:      (type $struct (struct))
+ (type $struct (struct))
+
+ ;; CHECK:      (func $test (type $1) (param $0 (ref exact $struct)) (result (ref null $struct))
+ ;; CHECK-NEXT:  (local $1 (ref null exact $struct))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (then
@@ -21,13 +24,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $1)
  ;; CHECK-NEXT: )
- (func $test (param (exact nullref)) (result anyref)
-  (local (exact nullref))
+ (func $test (param (ref exact $struct)) (result (ref null $struct))
+  (local (ref null exact $struct))
   (if
    (i32.const 0)
    (then
     (local.set 1
-     ;; This would let the local be (ref exact none) if it dominated the get.
+     ;; This would let the local be (ref (exact $struct)) if it dominated the get.
      (ref.as_non_null
       (local.get 0)
      )
