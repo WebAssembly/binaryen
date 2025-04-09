@@ -119,7 +119,11 @@ public:
       // Using FeatureOptions with BasicHeapTypes is risky as BasicHeapType
       // is an enum, which can convert into FeatureSet implicitly (which would
       // then be ambiguous with add(FeatureSet) below). Use HeapType instead.
-      static_assert(false);
+      //
+      // Use a weird static assert on something other than |false| because of
+      // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2593r1.html
+      // (older compilers may error without this workaround).
+      static_assert(sizeof(T) == 0);
     }
 
     // An option without a feature is applied in all cases.
