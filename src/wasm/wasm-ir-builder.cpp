@@ -964,7 +964,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  CHECK_ERR(pushScope(ScopeCtx::makeCatch(tryy, originalLabel, index, label)));
+  CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy, index)));
   // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->params();
   if (params != Type::none) {
@@ -1147,6 +1147,8 @@ Result<> IRBuilder::visitEnd() {
       tryy->catchBodies.resize(index + 1);
     }
     tryy->catchBodies[index] = *expr;
+    tryy->finalize(tryy->type);
+    push(maybeWrapForLabel(tryy));
   } else if (auto* trytable = scope.getTryTable()) {
     trytable->body = *expr;
     trytable->finalize(trytable->type, &wasm);
