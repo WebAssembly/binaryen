@@ -24,9 +24,9 @@
 #define OUTLINING_DEBUG 0
 
 #if OUTLINING_DEBUG
-#define DBG(statement) statement
+#define ODBG(statement) statement
 #else
-#define DBG(statement)
+#define ODBG(statement)
 #endif
 
 // Check a Result or MaybeResult for error and call Fatal() if the error exists.
@@ -37,6 +37,34 @@
 
 namespace wasm {
 
+struct OutliningSequence {
+  unsigned startIdx;
+  unsigned endIdx;
+  Name func;
+  bool endsTypeUnreachable;
+#if OUTLINING_DEBUG
+  unsigned programIdx;
+#endif
+
+  OutliningSequence(unsigned startIdx,
+                    unsigned endIdx,
+                    Name func,
+                    bool endsTypeUnreachable
+#if OUTLINING_DEBUG
+                    ,
+                    unsigned programIdx
+#endif
+                    )
+    : startIdx(startIdx), endIdx(endIdx), func(func),
+      endsTypeUnreachable(endsTypeUnreachable)
+#if OUTLINING_DEBUG
+      ,
+      programIdx(programIdx)
+#endif
+  {
+  }
+};
+
 // Instances of this walker are intended to walk a function at a time, at the
 // behest of the owner of the instance.
 struct ReconstructStringifyWalker
@@ -45,8 +73,8 @@ struct ReconstructStringifyWalker
   ReconstructStringifyWalker(Module* wasm, Function* func)
     : existingBuilder(*wasm), outlinedBuilder(*wasm), func(func) {
     this->setModule(wasm);
-    DBG(std::cerr << "\nexistingBuilder: " << &existingBuilder
-                  << " outlinedBuilder: " << &outlinedBuilder << "\n");
+    ODBG(std::cerr << "\nexistingBuilder: " << &existingBuilder
+                   << " outlinedBuilder: " << &outlinedBuilder << "\n");
   }
 
   // As we reconstruct the IR during outlining, we need to know what
@@ -91,25 +119,26 @@ struct ReconstructStringifyWalker
     // starting a new function, as that resets the counters back to 0.
     instrCounter++;
 
-    DBG(std::string desc);
+    ODBG(std::string desc);
     if (auto curr = reason.getBlockStart()) {
+      ODBG(desc = "Block Start at ");
       ASSERT_OK(existingBuilder.visitBlockStart(curr->block));
-      DBG(desc = "Block Start at ");
     } else if (auto curr = reason.getIfStart()) {
       // IR builder needs the condition of the If pushed onto the builder before
       // visitIfStart(), which will expect to be able to pop the condition.
       // This is always okay to do because the correct condition was installed
       // onto the If when the outer scope was visited.
       existingBuilder.push(curr->iff->condition);
+      ODBG(desc = "If Start at ");
       ASSERT_OK(existingBuilder.visitIfStart(curr->iff));
-      DBG(desc = "If Start at ");
     } else if (reason.getElseStart()) {
+      ODBG(desc = "Else Start at ");
       ASSERT_OK(existingBuilder.visitElse());
-      DBG(desc = "Else Start at ");
     } else if (auto curr = reason.getLoopStart()) {
+      ODBG(desc = "Loop Start at ");
       ASSERT_OK(existingBuilder.visitLoopStart(curr->loop));
-      DBG(desc = "Loop Start at ");
     } else if (reason.getEnd()) {
+      ODBG(desc = "End at ");
       ASSERT_OK(existingBuilder.visitEnd());
       // Reset the function in case we just ended the function scope.
       existingBuilder.setFunction(func);
@@ -122,12 +151,11 @@ struct ReconstructStringifyWalker
       // its expressions off the stack, so we must call build() after visitEnd()
       // to clear the internal stack IRBuilder manages.
       ASSERT_OK(existingBuilder.build());
-      DBG(desc = "End at ");
     } else {
-      DBG(desc = "addUniqueSymbol for unimplemented control flow ");
+      ODBG(desc = "addUniqueSymbol for unimplemented control flow ");
       WASM_UNREACHABLE("unimplemented control flow");
     }
-    DBG(printAddUniqueSymbol(desc));
+    ODBG(printAddUniqueSymbol(desc));
   }
 
   void visitExpression(Expression* curr) {
@@ -151,7 +179,7 @@ struct ReconstructStringifyWalker
         ASSERT_OK(builder->visit(curr));
       }
     }
-    DBG(printVisitExpression(curr));
+    ODBG(printVisitExpression(curr));
 
     if (state == InSeq || state == InSkipSeq) {
       maybeEndSeq();
@@ -165,9 +193,9 @@ struct ReconstructStringifyWalker
     instrCounter = 0;
     seqCounter = 0;
     state = NotInSeq;
-    DBG(std::cerr << "\n"
-                  << "Func Start to $" << func->name << " at "
-                  << &existingBuilder << "\n");
+    ODBG(std::cerr << "\n"
+                   << "Func Start to $" << func->name << " at "
+                   << &existingBuilder << "\n");
   }
 
   ReconstructState getCurrState() {
@@ -209,29 +237,41 @@ struct ReconstructStringifyWalker
       getModule()->getFunction(sequences[seqCounter].func);
     ASSERT_OK(outlinedBuilder.visitFunctionStart(outlinedFunc));
 
-    // Add a local.get instruction for every parameter of the outlined function.
-    Signature sig = outlinedFunc->type.getSignature();
-    for (Index i = 0; i < sig.params.size(); i++) {
-      ASSERT_OK(outlinedBuilder.makeLocalGet(i));
-    }
-
     // Make a call from the existing function to the outlined function. This
     // call will replace the instructions moved to the outlined function.
+    ODBG(std::cerr << "\nadding call " << outlinedFunc->name << " to "
+                   << &existingBuilder << "\n");
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
-    DBG(std::cerr << "\ncreated outlined fn: " << outlinedFunc->name << "\n");
 
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
     // function. This maintains the unreachable type in the original scope
     // of the outlined sequence.
     if (sequences[seqCounter].endsTypeUnreachable) {
+      ODBG(std::cerr << "\nadding endsUnreachable to " << &existingBuilder
+                     << "\n");
       ASSERT_OK(existingBuilder.makeUnreachable());
+    }
+
+    // Add a local.get instruction for every parameter of the outlined function.
+    Signature sig = outlinedFunc->type.getSignature();
+    ODBG(std::cerr << outlinedFunc->name << " takes " << sig.params.size()
+                   << " parameters\n");
+    for (Index i = 0; i < sig.params.size(); i++) {
+      ODBG(std::cerr << "adding local.get $" << i << " to " << &outlinedBuilder
+                     << "\n");
+      ASSERT_OK(outlinedBuilder.makeLocalGet(i));
     }
   }
 
   void transitionToInSkipSeq() {
     Function* outlinedFunc =
       getModule()->getFunction(sequences[seqCounter].func);
+    ODBG(std::cerr << "\nstarting to skip instructions "
+                   << sequences[seqCounter].startIdx << " - "
+                   << sequences[seqCounter].endIdx - 1 << " to "
+                   << sequences[seqCounter].func
+                   << " and adding call() instead\n");
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
@@ -240,11 +280,6 @@ struct ReconstructStringifyWalker
     if (sequences[seqCounter].endsTypeUnreachable) {
       ASSERT_OK(existingBuilder.makeUnreachable());
     }
-    DBG(std::cerr << "\nstarting to skip instructions "
-                  << sequences[seqCounter].startIdx << " - "
-                  << sequences[seqCounter].endIdx - 1 << " to "
-                  << sequences[seqCounter].func
-                  << " and adding call() instead\n");
   }
 
   void maybeEndSeq() {
@@ -255,12 +290,12 @@ struct ReconstructStringifyWalker
   }
 
   void transitionToNotInSeq() {
-    DBG(std::cerr << "End of sequence ");
+    ODBG(std::cerr << "End of sequence ");
     if (state == InSeq) {
+      ODBG(std::cerr << "to " << &outlinedBuilder);
       ASSERT_OK(outlinedBuilder.visitEnd());
-      DBG(std::cerr << "to " << &outlinedBuilder);
     }
-    DBG(std::cerr << "\n\n");
+    ODBG(std::cerr << "\n\n");
     // Completed a sequence so increase the seqCounter and reset the state.
     seqCounter++;
   }
@@ -288,11 +323,11 @@ struct Outlining : public Pass {
     HashStringifyWalker stringify;
     // Walk the module and create a "string representation" of the program.
     stringify.walkModule(module);
+    ODBG(printHashString(stringify.hashString, stringify.exprs));
     // Collect all of the substrings of the string representation that appear
     // more than once in the program.
     auto substrings =
       StringifyProcessor::repeatSubstrings(stringify.hashString);
-    DBG(printHashString(stringify.hashString, stringify.exprs));
     // Remove substrings that are substrings of longer repeat substrings.
     substrings = StringifyProcessor::dedupe(substrings);
     // Remove substrings with overlapping indices.
@@ -317,7 +352,13 @@ struct Outlining : public Pass {
     // are relative to the enclosing function while substrings have indices
     // relative to the entire program.
     auto sequences = makeSequences(module, substrings, stringify);
-    outline(module, sequences);
+    outline(module,
+            sequences
+#if OUTLINING_DEBUG
+            ,
+            stringify
+#endif
+    );
     // Position the outlined functions first in the functions vector to make
     // the outlining lit tests far more readable.
     moveOutlinedFunctions(module, substrings.size());
@@ -371,14 +412,25 @@ struct Outlining : public Pass {
           relativeIdx + substring.Length,
           func,
           stringify.exprs[seqIdx + substring.Length - 1]->type ==
-            Type::unreachable);
+            Type::unreachable
+#if OUTLINING_DEBUG
+          ,
+          seqIdx
+#endif
+        );
         seqByFunc[existingFunc].push_back(seq);
       }
     }
     return seqByFunc;
   }
 
-  void outline(Module* module, Sequences seqByFunc) {
+  void outline(Module* module,
+               Sequences seqByFunc
+#if OUTLINING_DEBUG
+               ,
+               const HashStringifyWalker& stringify
+#endif
+  ) {
     // TODO: Make this a function-parallel sub-pass.
     std::vector<Name> keys(seqByFunc.size());
     std::transform(seqByFunc.begin(),
@@ -398,6 +450,11 @@ struct Outlining : public Pass {
                 });
       ReconstructStringifyWalker reconstruct(module, module->getFunction(func));
       reconstruct.sequences = std::move(seqByFunc[func]);
+      ODBG(printReconstruct(module,
+                            stringify.hashString,
+                            stringify.exprs,
+                            func,
+                            reconstruct.sequences));
       reconstruct.doWalkFunction(module->getFunction(func));
     }
   }
@@ -431,6 +488,32 @@ struct Outlining : public Pass {
       } else {
         std::cerr << idx << ": unique symbol\n";
       }
+    }
+  }
+  void printReconstruct(Module* module,
+                        const std::vector<uint32_t>& hashString,
+                        const std::vector<Expression*>& exprs,
+                        Name existingFunc,
+                        const std::vector<OutliningSequence>& seqs) {
+    std::cerr << "\n\nReconstructing existing fn: " << existingFunc << "\n";
+    std::cerr << "moving sequences: "
+              << "\n";
+    for (auto& seq : seqs) {
+      for (Index idx = seq.programIdx;
+           idx < seq.programIdx + (seq.endIdx - seq.startIdx);
+           idx++) {
+        Expression* expr = exprs[idx];
+        if (expr == nullptr) {
+          std::cerr << "unique symbol\n";
+        } else {
+          std::cerr << idx << " - " << hashString[idx] << " - " << seq.startIdx
+                    << " : " << ShallowExpression{expr} << "\n";
+        }
+      }
+      std::cerr << "to outlined function: " << seq.func << "\n";
+      auto outlinedFunction = module->getFunction(seq.func);
+      std::cerr << "with signature: " << outlinedFunction->type.toString()
+                << "\n";
     }
   }
 #endif
