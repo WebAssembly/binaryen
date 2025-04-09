@@ -46,6 +46,7 @@
 #include <support/threads.h>
 #include <wasm.h>
 
+#include "asmjs/shared-constants.h"
 #include "call-utils.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
@@ -264,6 +265,11 @@ struct OptimizeInstructions
   bool inReplaceCurrent = false;
 
   void replaceCurrent(Expression* rep) {
+    // Avoid self-replacement;
+    if (rep == getCurrent()) {
+      return;
+    }
+
     if (rep->type != getCurrent()->type) {
       // This operation will change the type, so refinalize.
       refinalize = true;
@@ -5185,7 +5191,8 @@ private:
       case SubInt64:
       case XorInt64:
         return getDroppedChildrenAndAppend(
-          binary, LiteralUtils::makeZero(binary->left->type, *getModule()));
+          binary->left,
+          LiteralUtils::makeZero(binary->left->type, *getModule()));
       case NeInt32:
       case LtSInt32:
       case LtUInt32:
@@ -5197,7 +5204,7 @@ private:
       case GtSInt64:
       case GtUInt64:
         return getDroppedChildrenAndAppend(
-          binary, LiteralUtils::makeZero(Type::i32, *getModule()));
+          binary->left, LiteralUtils::makeZero(Type::i32, *getModule()));
       case AndInt32:
       case OrInt32:
       case AndInt64:
@@ -5220,7 +5227,8 @@ private:
       case GeSInt64:
       case GeUInt64:
         return getDroppedChildrenAndAppend(
-          binary, LiteralUtils::makeFromInt32(1, Type::i32, *getModule()));
+          binary->left,
+          LiteralUtils::makeFromInt32(1, Type::i32, *getModule()));
       default:
         return nullptr;
     }
