@@ -310,6 +310,7 @@ private:
     struct CatchScope {
       Try* tryy;
       Name originalLabel;
+      Index index;
     };
     struct CatchAllScope {
       Try* tryy;
@@ -397,6 +398,10 @@ private:
     }
     static ScopeCtx makeTry(Try* tryy, Name originalLabel, Type inputType) {
       return ScopeCtx(TryScope{tryy, originalLabel}, inputType);
+    }
+    static ScopeCtx
+    makeCatch(Try* tryy, Name originalLabel, Index index, Name label) {
+      return ScopeCtx(CatchScope{tryy, originalLabel, index}, label);
     }
     static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
       scope.scope = CatchScope{tryy, scope.getOriginalLabel()};
@@ -527,6 +532,12 @@ private:
       }
       if (auto* trytable = getTryTable()) {
         return trytable->type;
+      }
+      WASM_UNREACHABLE("unexpected scope kind");
+    }
+    Index getIndex() {
+      if (auto* catchScope = std::get_if<CatchScope>(&scope)) {
+        return catchScope->index;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }

@@ -943,20 +943,28 @@ Result<> IRBuilder::visitCatch(Name tag) {
     return Err{"unexpected catch"};
   }
   auto expr = finishScope();
+  size_t index = 0;
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    tryy->catchBodies.push_back(*expr);
+    index = scope.getIndex();
+    if (index > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(index + 1);
+    }
+    tryy->catchBodies[index] = *expr;
   }
-  tryy->catchTags.push_back(tag);
+  if (index > tryy->catchTags.size()) {
+    tryy->catchTags.resize(index + 1);
+  }
+  tryy->catchTags[index] = tag;
 
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
+  CHECK_ERR(pushScope(ScopeCtx::makeCatch(tryy, originalLabel, index, label)));
   // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->params();
   if (params != Type::none) {
@@ -985,7 +993,11 @@ Result<> IRBuilder::visitCatchAll() {
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    tryy->catchBodies.push_back(*expr);
+    size_t lastTagIdx = tryy->catchTags.size();
+    if (lastTagIdx > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(lastTagIdx + 1);
+    }
+    tryy->catchBodies[lastTagIdx] = *expr;
   }
 
   if (binaryPos && func) {
@@ -1121,12 +1133,20 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try * tryy;
-             (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
-    tryy->catchBodies.push_back(*expr);
-    tryy->name = scope.label;
+  } else if (Try* tryy; (tryy = scope.getCatch())) {
+    auto index = scope.getIndex();
+    if (index > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(index + 1);
+    }
+    tryy->catchBodies[index] = *expr;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
+  } else if (Try* tryy; (tryy = scope.getCatchAll())) {
+    auto index = tryy->catchTags.size();
+    if (index > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(index + 1);
+    }
+    tryy->catchBodies[index] = *expr;
   } else if (auto* trytable = scope.getTryTable()) {
     trytable->body = *expr;
     trytable->finalize(trytable->type, &wasm);

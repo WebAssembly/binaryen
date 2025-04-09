@@ -21,7 +21,7 @@
 #include "support/suffix_tree.h"
 #include "wasm.h"
 
-#define OUTLINING_DEBUG 0
+#define OUTLINING_DEBUG 1
 
 #if OUTLINING_DEBUG
 #define ODBG(statement) statement
