@@ -1359,7 +1359,7 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = {BinaryenFunctionGetName(sinker)};
-  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "0", 1, 1, kitchenSinkerRefType);
   BinaryenAddActiveElementSegment(
     module,
     "0",
