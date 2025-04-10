@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -o errexit
 set -o pipefail
 
 if [ -n "$1" ]; then
@@ -28,7 +29,7 @@ if [ ! -e "$CLANG_TIDY_DIFF" ]; then
   echo "Failed to find clang-tidy-diff.py ($CLANG_TIDY_DIFF)"
   exit 1
 fi
-TIDY_MSG=$(git diff -U0 $BRANCH... | $CLANG_TIDY_DIFF $ARG 2> /dev/null)
+TIDY_MSG=$(git diff -U0 $BRANCH... | $CLANG_TIDY_DIFF $ARG 2> /dev/null || true)
 if [ -n "$TIDY_MSG" -a "$TIDY_MSG" != "No relevant changes found." ]; then
   echo "Please fix clang-tidy errors before committing"
   echo
