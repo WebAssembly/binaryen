@@ -127,9 +127,7 @@ struct NullTypeParserCtx {
   TypeT makeF64() { return Ok{}; }
   TypeT makeV128() { return Ok{}; }
 
-  TypeT makeRefType(HeapTypeT, Nullability, Exactness) { return Ok{}; }
-
-  HeapTypeT getHeapTypeFromRefType(TypeT) { return Ok{}; }
+  TypeT makeRefType(HeapTypeT, Nullability) { return Ok{}; }
 
   TupleElemListT makeTupleElemList() { return Ok{}; }
   void appendTupleElem(TupleElemListT&, TypeT) {}
@@ -169,6 +167,8 @@ struct NullTypeParserCtx {
   Result<Index> getTypeIndex(Name) { return 1; }
   Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
 
+  HeapTypeT makeExact(HeapTypeT) { return Ok{}; }
+
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
 
@@ -182,8 +182,18 @@ struct NullTypeParserCtx {
 };
 
 template<typename Ctx> struct TypeParserCtx {
+  // Exactness is syntactically part of the heap type, but it is not part of the
+  // HeapType in our IR, so we have to store it separately.
+  struct HeapTypeT {
+    HeapType type;
+    Exactness exactness = Inexact;
+    // Implicitly convert to and from HeapType.
+    HeapTypeT(HeapType::BasicHeapType type) : type(type) {}
+    HeapTypeT(HeapType type) : type(type) {}
+    operator HeapType() { return type; }
+  };
+
   using IndexT = Index;
-  using HeapTypeT = HeapType;
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
   using ResultsT = std::vector<Type>;
@@ -253,18 +263,20 @@ template<typename Ctx> struct TypeParserCtx {
     return HeapTypes::nocont.getBasic(share);
   }
 
+  HeapTypeT makeExact(HeapTypeT type) {
+    type.exactness = Exact;
+    return type;
+  }
+
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
   TypeT makeF32() { return Type::f32; }
   TypeT makeF64() { return Type::f64; }
   TypeT makeV128() { return Type::v128; }
 
-  TypeT
-  makeRefType(HeapTypeT ht, Nullability nullability, Exactness exactness) {
-    return Type(ht, nullability, exactness);
+  TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
+    return Type(ht.type, nullability, ht.exactness);
   }
-
-  HeapTypeT getHeapTypeFromRefType(TypeT t) { return t.getHeapType(); }
 
   std::vector<Type> makeTupleElemList() { return {}; }
   void appendTupleElem(std::vector<Type>& elems, Type elem) {
@@ -1122,12 +1134,9 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()) {}
 
-  TypeT
-  makeRefType(HeapTypeT ht, Nullability nullability, Exactness exactness) {
-    return builder.getTempRefType(ht, nullability, exactness);
+  TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
+    return builder.getTempRefType(ht.type, nullability, ht.exactness);
   }
-
-  HeapTypeT getHeapTypeFromRefType(TypeT t) { return t.getHeapType(); }
 
   TypeT makeTupleType(const std::vector<Type> types) {
     return builder.getTempTupleType(types);
@@ -1235,7 +1244,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     }
 
     auto sig = Signature(Type(paramTypes), Type(resultTypes));
-    auto [it, inserted] = sigTypes.insert({sig, HeapType::func});
+    auto [it, inserted] = sigTypes.insert({sig, HeapType(HeapType::func)});
     if (inserted) {
       auto type = HeapType(sig);
       it->second = type;

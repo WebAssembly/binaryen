@@ -30,8 +30,6 @@ using namespace std::string_view_literals;
 template<typename Ctx>
 Result<typename Ctx::HeapTypeT> absheaptype(Ctx&, Shareability);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
-template<typename Ctx>
-MaybeResult<typename Ctx::TypeT> maybeReftypeAbbrev(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeReftype(Ctx&);
 template<typename Ctx> Result<typename Ctx::RefTypeT> reftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
@@ -436,12 +434,22 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
 }
 
 // heaptype ::= x:typeidx                      => types[x]
+//            | '(' 'exact' x:typeidx ')'      => exact types[x]
 //            | t:absheaptype                  => unshared t
 //            | '(' 'shared' t:absheaptype ')' => shared t
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (auto t = maybeTypeidx(ctx)) {
     CHECK_ERR(t);
     return *t;
+  }
+
+  if (ctx.in.takeSExprStart("exact"sv)) {
+    auto t = typeidx(ctx);
+    CHECK_ERR(t);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of exact heap type");
+    }
+    return ctx.makeExact(*t);
   }
 
   auto share = ctx.in.takeSExprStart("shared"sv) ? Shared : Unshared;
@@ -460,85 +468,68 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | 'i31ref'    => i31ref
 //           | 'structref' => structref
 //           | 'arrayref'  => arrayref
-//           | ...
-template<typename Ctx>
-MaybeResult<typename Ctx::TypeT> maybeReftypeAbbrev(Ctx& ctx) {
+//           | '(' ref null? t:heaptype ')' => ref null? t
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
-    return ctx.makeRefType(ctx.makeFuncType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeFuncType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("externref"sv)) {
-    return ctx.makeRefType(ctx.makeExternType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeExternType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("anyref"sv)) {
-    return ctx.makeRefType(ctx.makeAnyType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeAnyType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("eqref"sv)) {
-    return ctx.makeRefType(ctx.makeEqType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeEqType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31Type(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeI31Type(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("structref"sv)) {
-    return ctx.makeRefType(ctx.makeStructType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeStructType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
-    return ctx.makeRefType(ctx.makeArrayType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeArrayType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("exnref"sv)) {
-    return ctx.makeRefType(ctx.makeExnType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeExnType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("stringref"sv)) {
-    return ctx.makeRefType(ctx.makeStringType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeStringType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("contref"sv)) {
-    return ctx.makeRefType(ctx.makeContType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeContType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullref"sv)) {
-    return ctx.makeRefType(ctx.makeNoneType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeNoneType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullexternref"sv)) {
-    return ctx.makeRefType(ctx.makeNoextType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeNoextType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullfuncref"sv)) {
-    return ctx.makeRefType(ctx.makeNofuncType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeNofuncType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullexnref"sv)) {
-    return ctx.makeRefType(ctx.makeNoexnType(Unshared), Nullable, Inexact);
+    return ctx.makeRefType(ctx.makeNoexnType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullcontref"sv)) {
-    return ctx.makeRefType(ctx.makeNocontType(Unshared), Nullable, Inexact);
-  }
-  return {};
-}
-
-// reftype ::= ...
-//           | '(' 'exact' (ref null ht):shorthand ')' => ref null exact ht
-//           | '(' ref null? exact? ht:heaptype ')' => ref null? t
-template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
-  if (ctx.in.takeSExprStart("exact"sv)) {
-    auto rt = maybeReftypeAbbrev(ctx);
-    CHECK_ERR(rt);
-    if (!rt) {
-      return ctx.in.err("expected reftype shorthand");
-    }
-    if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of reftype");
-    }
-    return ctx.makeRefType(ctx.getHeapTypeFromRefType(*rt), Nullable, Exact);
+    return ctx.makeRefType(ctx.makeNocontType(Unshared), Nullable);
   }
 
-  if (ctx.in.takeSExprStart("ref"sv)) {
-    auto nullability = ctx.in.takeKeyword("null"sv) ? Nullable : NonNullable;
-    auto exactness = ctx.in.takeKeyword("exact"sv) ? Exact : Inexact;
-    auto type = heaptype(ctx);
-    CHECK_ERR(type);
-    if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of reftype");
-    }
-    return ctx.makeRefType(*type, nullability, exactness);
+  if (!ctx.in.takeSExprStart("ref"sv)) {
+    return {};
   }
 
-  return maybeReftypeAbbrev(ctx);
+  auto nullability = ctx.in.takeKeyword("null"sv) ? Nullable : NonNullable;
+
+  auto type = heaptype(ctx);
+  CHECK_ERR(type);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of reftype");
+  }
+
+  return ctx.makeRefType(*type, nullability);
 }
 
 template<typename Ctx> Result<typename Ctx::TypeT> reftype(Ctx& ctx) {

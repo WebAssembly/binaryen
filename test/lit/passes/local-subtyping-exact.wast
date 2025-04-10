@@ -10,8 +10,8 @@
  ;; CHECK:      (type $struct (struct))
  (type $struct (struct))
 
- ;; CHECK:      (func $test (type $1) (param $0 (ref exact $struct)) (result (ref null $struct))
- ;; CHECK-NEXT:  (local $1 (ref null exact $struct))
+ ;; CHECK:      (func $test (type $1) (param $0 (ref (exact $struct))) (result (ref null $struct))
+ ;; CHECK-NEXT:  (local $1 (ref null (exact $struct)))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (then
@@ -24,8 +24,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $1)
  ;; CHECK-NEXT: )
- (func $test (param (ref exact $struct)) (result (ref null $struct))
-  (local (ref null exact $struct))
+ (func $test (param (ref (exact $struct))) (result (ref null $struct))
+  (local (ref null (exact $struct)))
   (if
    (i32.const 0)
    (then

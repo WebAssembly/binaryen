@@ -10,10 +10,10 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct))
   (type $struct (struct))
-  ;; CHECK:      (func $return-exact (type $1) (result (ref null exact $struct))
+  ;; CHECK:      (func $return-exact (type $1) (result (ref null (exact $struct)))
   ;; CHECK-NEXT:  (call $return-exact)
   ;; CHECK-NEXT: )
-  (func $return-exact (result (ref null exact $struct))
+  (func $return-exact (result (ref null (exact $struct)))
     (call $return-exact)
   )
 )

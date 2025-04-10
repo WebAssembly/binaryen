@@ -36,7 +36,7 @@ ParseDefsCtx::makeTypeUse(Index pos,
 
     auto sig = Signature(Type(paramTypes), Type(resultTypes));
 
-    if (!type->isSignature() || type->getSignature() != sig) {
+    if (!type->type.isSignature() || type->type.getSignature() != sig) {
       return in.err(pos, "type does not match provided signature");
     }
   }
