@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "wasm-features.h"
-#include "wasm-type.h"
+//#include "wasm-type.h"
 
 namespace wasm {
 
