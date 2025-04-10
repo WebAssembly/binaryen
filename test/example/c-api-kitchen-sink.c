@@ -518,7 +518,7 @@ void test_core() {
   BinaryenType v128 = BinaryenTypeVec128();
   BinaryenType i8Array;
   BinaryenType i16Array;
-  BinaryenType kitchenSinkerArray;
+  BinaryenType funcArray;
   BinaryenType i32Struct;
   {
     TypeBuilderRef tb = TypeBuilderCreate(4);
@@ -527,7 +527,7 @@ void test_core() {
     TypeBuilderSetArrayType(
       tb, 1, BinaryenTypeInt32(), BinaryenPackedTypeInt16(), true);
     TypeBuilderSetArrayType(
-      tb, 2, kitchenSinkerRefType, BinaryenPackedTypeNotPacked(), true);
+      tb, 2, BinaryenTypeFuncref(), BinaryenPackedTypeNotPacked(), true);
     TypeBuilderSetStructType(
       tb,
       3,
@@ -539,7 +539,7 @@ void test_core() {
     TypeBuilderBuildAndDispose(tb, (BinaryenHeapType*)&builtHeapTypes, 0, 0);
     i8Array = BinaryenTypeFromHeapType(builtHeapTypes[0], true);
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
-    kitchenSinkerArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
+    funcArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
     i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[3], true);
   }
 
@@ -1194,8 +1194,8 @@ void test_core() {
     BinaryenArrayInitElem(module,
                           "0",
                           BinaryenGlobalGet(module,
-                                            "kitchenSinkerArray-global",
-                                            kitchenSinkerArray),
+                                            "funcArray-global",
+                                            funcArray),
                           makeInt32(module, 0),
                           makeInt32(module, 1),
                           makeInt32(module, 2)),
@@ -1327,11 +1327,11 @@ void test_core() {
       module, BinaryenTypeGetHeapType(i16Array), makeInt32(module, 0), 0));
   BinaryenAddGlobal(
     module,
-    "kitchenSinkerArray-global",
-    kitchenSinkerArray,
+    "funcArray-global",
+    funcArray,
     true,
     BinaryenArrayNew(module,
-                     BinaryenTypeGetHeapType(kitchenSinkerArray),
+                     BinaryenTypeGetHeapType(funcArray),
                      makeInt32(module, 0),
                      BinaryenRefNull(module, BinaryenTypeNullFuncref())));
   BinaryenAddGlobal(
@@ -1359,7 +1359,7 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = {BinaryenFunctionGetName(sinker)};
-  BinaryenAddTable(module, "0", 1, 1, kitchenSinkerRefType);
+  BinaryenAddTable(module, "0", 1, 1, BinaryenTypeFuncref());
   BinaryenAddActiveElementSegment(
     module,
     "0",
