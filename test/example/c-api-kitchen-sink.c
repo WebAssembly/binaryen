@@ -535,7 +535,7 @@ void test_core() {
       (BinaryenPackedType[]){BinaryenPackedTypeNotPacked()},
       (bool[]){true},
       1);
-    BinaryenHeapType builtHeapTypes[3];
+    BinaryenHeapType builtHeapTypes[4];
     TypeBuilderBuildAndDispose(tb, (BinaryenHeapType*)&builtHeapTypes, 0, 0);
     i8Array = BinaryenTypeFromHeapType(builtHeapTypes[0], true);
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
