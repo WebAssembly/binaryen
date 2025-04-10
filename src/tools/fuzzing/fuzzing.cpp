@@ -3426,13 +3426,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      auto subtypeOpts = FeatureOptions<HeapType>().add(
-        FeatureSet::ReferenceTypes | FeatureSet::GC,
-        HeapType::i31,
-        HeapType::struct_,
-        HeapType::array);
-      auto subtype = pick(subtypeOpts).getBasic(share);
-      return makeConst(Type(subtype, nullability));
+      assert(wasm.features.hasGC());
+      auto subtype = pick(HeapTypes::i31, HeapTypes::struct_, HeapTypes::array);
+      return makeConst(Type(subtype.getBasic(share), nullability));
     }
     case HeapType::eq: {
       if (!wasm.features.hasGC()) {
@@ -5406,16 +5402,18 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
+        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
-                      .add(FeatureSet::ReferenceTypes, HeapType::func)
-                      .add(FeatureSet::GC, HeapType::nofunc))
+                      .add(HeapTypes::func)
+                      .add(FeatureSet::GC, HeapTypes::nofunc))
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
+        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
-                         .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                         .add(FeatureSet::GC, HeapType::noext);
+                         .add(HeapTypes::ext)
+                         .add(FeatureSet::GC, HeapTypes::noext);
         if (share == Unshared) {
           // Shared strings not yet supported.
           options.add(FeatureSet::Strings, HeapType::string);
@@ -5425,14 +5423,13 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        auto options = FeatureOptions<HeapType>().add(FeatureSet::GC,
-                                                      HeapType::any,
-                                                      HeapType::eq,
-                                                      HeapType::i31,
-                                                      HeapType::struct_,
-                                                      HeapType::array,
-                                                      HeapType::none);
-        return pick(options).getBasic(share);
+        return pick(HeapTypes::any,
+                    HeapTypes::eq,
+                    HeapTypes::i31,
+                    HeapTypes::struct_,
+                    HeapTypes::array,
+                    HeapTypes::none)
+          .getBasic(share);
       }
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
