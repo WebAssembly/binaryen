@@ -299,7 +299,7 @@ struct OptimizeInstructions
     return Properties::getFallthrough(curr, getPassOptions(), *getModule());
   }
 
-  Expression* getFallthroughType(Expression* curr) {
+  Type getFallthroughType(Expression* curr) {
     return Properties::getFallthroughType(curr, getPassOptions(), *getModule());
   }
 
@@ -1824,7 +1824,6 @@ struct OptimizeInstructions
       return;
     }
 
-    auto& passOptions = getPassOptions();
     const auto& fields = curr->type.getHeapType().getStruct().fields;
     assert(fields.size() == curr->operands.size());
 
@@ -2109,7 +2108,6 @@ struct OptimizeInstructions
     }
 
     // The value must be the default/zero.
-    auto& passOptions = getPassOptions();
     auto zero = Literal::makeZero(type);
     auto* value = getFallthrough(curr->init);
     if (!Properties::isSingleConstantExpression(value) ||
@@ -2135,8 +2133,6 @@ struct OptimizeInstructions
       //       can use ArrayNew or ArrayNewFixed there. Measure which is best.
       return;
     }
-
-    auto& passOptions = getPassOptions();
 
     // If all the values are equal then we can optimize, either to
     // array.new_default (if they are all equal to the default) or array.new (if
@@ -2607,7 +2603,6 @@ private:
     // NoTeeBrIf as we do not want to look through the tee). We cannot do this
     // on the second, however, as there could be effects in the middle.
     // TODO: Use effects here perhaps.
-    auto& passOptions = getPassOptions();
     left =
       Properties::getFallthrough(left,
                                  getPassOptions(),
