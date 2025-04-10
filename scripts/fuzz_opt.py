@@ -674,7 +674,7 @@ def get_v8_extra_flags():
     # do not allow mixed old and new wasm EH. Our fuzzer will very frequently
     # mix those instructions in a module, so we must use the flag to allow that.
     # FIXME This is not great, as the majority of the wasm files we test on are
-    #       not actually valid in VMs. We do get coverage this way for runtime
+    #       not actually valid in VMs. But we get coverage this way for runtime
     #       linking of old and new EH (which VMs allow), that is, our compile-
     #       time combination of old and new simulates runtime linking to some
     #       extent.
