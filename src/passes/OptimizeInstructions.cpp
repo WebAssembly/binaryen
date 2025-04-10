@@ -2922,6 +2922,19 @@ private:
             return binary;
           }
         }
+      } else if (binary->op == LtUInt32) {
+        auto value = Properties::getFallthrough(
+          binary->right, getPassOptions(), *getModule());
+        if (Properties::isConstantExpression(value)) {
+          if (Properties::getLiteral(value).isZero()) {
+            // Hoist potential zero to be good for constant propagation
+            // in case of being blocked by side effect.
+            // (unsigned)x < 0   ==>  i32(0)
+            Builder builder(*getModule());
+            return getDroppedChildrenAndAppend(
+              binary, LiteralUtils::makeZero(Type::i32, *getModule()));
+          }
+        }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
