@@ -1333,7 +1333,7 @@ void test_core() {
     BinaryenArrayNew(module,
                      BinaryenTypeGetHeapType(kitchenSinkerArray),
                      makeInt32(module, 0),
-                     BinaryenRefNull(module, kitchenSinkerRefType)));
+                     BinaryenRefNull(module, BinaryenTypeNullFuncref())));
   BinaryenAddGlobal(
     module,
     "i32Struct-global",
