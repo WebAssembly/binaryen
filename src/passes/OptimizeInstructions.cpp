@@ -2608,7 +2608,11 @@ private:
     // on the second, however, as there could be effects in the middle.
     // TODO: Use effects here perhaps.
     auto& passOptions = getPassOptions();
-    left = Properties::getFallthrough(left, getPassOptions(), *getModule(), Properties::FallthroughBehavior::NoTeeBrIf);
+    left =
+      Properties::getFallthrough(left,
+                                 getPassOptions(),
+                                 *getModule(),
+                                 Properties::FallthroughBehavior::NoTeeBrIf);
     if (areMatchingTeeAndGet(left, right)) {
       return true;
     }
