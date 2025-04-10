@@ -21,6 +21,9 @@
 #include <map>
 #include <vector>
 
+#include "wasm-features.h"
+#include "wasm-type.h"
+
 namespace wasm {
 
 class Random {
@@ -158,9 +161,10 @@ public:
   template<typename T> std::vector<T> items(FeatureOptions<T>& picker) {
     std::vector<T> matches;
     for (const auto& item : picker.options) {
-      if (features.has(item.first))
+      if (features.has(item.first)) {
         matches.reserve(matches.size() + item.second.size());
-      matches.insert(matches.end(), item.second.begin(), item.second.end());
+        matches.insert(matches.end(), item.second.begin(), item.second.end());
+      }
     }
     return matches;
   }
