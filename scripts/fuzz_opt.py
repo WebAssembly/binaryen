@@ -676,7 +676,7 @@ def get_v8_extra_flags():
     return ['--future'] if random.random() < 0.5 else []
 
 
-V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
+V8_LIFTOFF_ARGS = ['--liftoff']
 
 
 # Default to running with liftoff enabled, because we need to pick either
@@ -848,7 +848,10 @@ class CompareVMs(TestCaseHandler):
             name = 'd8_turboshaft'
 
             def run(self, wasm):
-                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=['--no-liftoff', '--turboshaft-wasm', '--turboshaft-wasm-instruction-selection-staged'])
+                flags = ['--no-liftoff']
+                if random.random() < 0.5:
+                    flags += ['--no-wasm-generic-wrapper']
+                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=flags)
 
         class Wasm2C:
             name = 'wasm2c'
