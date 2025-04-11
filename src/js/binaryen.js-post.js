@@ -5073,6 +5073,149 @@ Module['StructSet'] = makeExpressionWrapper({
   }
 });
 
+// TODO: Tests in expressions.js
+
+Module['ArrayNew'] = makeExpressionWrapper({
+  'getInit'(expr) {
+    return Module['_BinaryenArrayNewGetInit'](expr);
+  },
+  'setInit'(expr, init) {
+    Module['_BinaryenArrayNewSetInit'](expr, init);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayNewGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayNewSetSize'](expr, size);
+  }
+});
+
+Module['ArrayNewFixed'] = makeExpressionWrapper({
+  'getNumValues'(expr) {
+    return Module['_BinaryenArrayNewFixedGetNumValues'](expr);
+  },
+  'getValues'(expr) {
+    return getAllNested(expr,
+                        Module['_BinaryenArrayNewFixedGetNumValues'],
+                        Module['_BinaryenArrayNewFixedGetValueAt']);
+  },
+  'setValues'(expr, values) {
+    setAllNested(
+      expr,
+      values,
+      Module['_BinaryenArrayNewFixedGetNumValues'],
+      Module['_BinaryenArrayNewFixedSetValueAt'],
+      Module['_BinaryenArrayNewFixedAppendValue'],
+      Module['_BinaryenArrayNewFixedRemoveValueAt']
+    );
+  },
+  'getValueAt'(expr, index) {
+    return Module['_BinaryenArrayNewFixedGetValueAt'](expr, index);
+  },
+  'setValueAt'(expr, index, valueExpr) {
+    Module['_BinaryenArrayNewFixedSetValueAt'](expr, index, valueExpr);
+  },
+  'appendValue'(expr, valueExpr) {
+    return Module['_BinaryenArrayNewFixedAppendValue'](expr, valueExpr);
+  },
+  'insertValueAt'(expr, index, valueExpr) {
+    Module['_BinaryenArrayNewFixedInsertValueAt'](expr, index, valueExpr);
+  },
+  'removeValueAt'(expr, index) {
+    return Module['_BinaryenArrayNewFixedRemoveValueAt'](expr, index);
+  }
+});
+
+Module['ArrayGet'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArrayGetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayGetSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayGetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayGetSetIndex'](expr, index);
+  },
+  'getSigned'(expr) {
+    return Boolean(Module['_BinaryenArrayGetIsSigned'](expr));
+  },
+  'setSigned'(expr, signed) {
+    Module['_BinaryenArrayGetSetSigned'](expr, signed);
+  }
+});
+
+Module['ArraySet'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArraySetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArraySetSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArraySetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArraySetSetIndex'](expr, index);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenArraySetGetValue'](expr);
+  },
+  'setValue'(expr, value) {
+    Module['_BinaryenArraySetSetValue'](expr, value);
+  }
+});
+
+Module['ArrayLen'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArrayLenGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayLenSetRef'](expr, ref);
+  }
+});
+
+// TODO: ArrayFill
+
+Module['ArrayCopy'] = makeExpressionWrapper({
+  'getDestRef'(expr) {
+    return Module['_BinaryenArrayCopyGetDestRef'](expr);
+  },
+  'setDestRef'(expr, ref) {
+    Module['_BinaryenArrayCopySetDestRef'](expr, ref);
+  },
+  'getDestIndex'(expr) {
+    return Module['_BinaryenArrayCopyGetDestIndex'](expr);
+  },
+  'setDestIndex'(expr, index) {
+    Module['_BinaryenArrayCopySetDestIndex'](expr, index);
+  },
+  'getSrcRef'(expr) {
+    return Module['_BinaryenArrayCopyGetSrcRef'](expr);
+  },
+  'setSrcRef'(expr, ref) {
+    Module['_BinaryenArrayCopySetSrcRef'](expr, ref);
+  },
+  'getSrcIndex'(expr) {
+    return Module['_BinaryenArrayCopyGetSrcIndex'](expr);
+  },
+  'setSrcIndex'(expr, index) {
+    Module['_BinaryenArrayCopySetSrcIndex'](expr, index);
+  },
+  'getLength'(expr) {
+    return Module['_BinaryenArrayCopyGetLength'](expr);
+  },
+  'setLength'(expr, length) {
+    Module['_BinaryenArrayCopySetLength'](expr, length);
+  }
+});
+
+// TODO: ArrayInitData
+
+// TODO: ArrayInitElem
+
 Module['Try'] = makeExpressionWrapper({
   'getName'(expr) {
     const name = Module['_BinaryenTryGetName'](expr);

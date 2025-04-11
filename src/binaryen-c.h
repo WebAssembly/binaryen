@@ -2469,6 +2469,9 @@ BinaryenArrayNewFixedInsertValueAt(BinaryenExpressionRef expr,
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNewFixedRemoveValueAt(
   BinaryenExpressionRef expr, BinaryenIndex index);
 
+// TODO: ArrayNewData
+// TODO: ArrayNewElem
+
 // ArrayGet
 
 BINARYEN_API BinaryenExpressionRef
@@ -2505,6 +2508,8 @@ BinaryenArrayLenGetRef(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenArrayLenSetRef(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef refExpr);
 
+// TODO: ArrayFill
+
 // ArrayCopy
 
 BINARYEN_API BinaryenExpressionRef
@@ -2530,6 +2535,10 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenArrayCopyGetLength(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenArrayCopySetLength(BinaryenExpressionRef expr,
                                              BinaryenExpressionRef lengthExpr);
+
+// TODO: ArrayInitData
+
+// TODO: ArrayInitElem
 
 // StringNew
 
