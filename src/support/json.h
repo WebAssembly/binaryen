@@ -273,10 +273,21 @@ struct Value {
       // Start |close| at the opening ", and in the loop below we will always
       // begin looking at the first character after.
       char* close = curr;
-      // Skip escaped "
-      do {
+      // Skip escaped ". An even number of \ means we're not escaped.
+      while (true) {
         close = strchr(close + 1, '"');
-      } while (*(close - 1) == '\\');
+        bool escaped = false;
+        for (char* p = close - 1; p > curr; --p) {
+          if (*p == '\\') {
+            escaped = !escaped;
+          } else {
+            break;
+          }
+        }
+        if (!escaped) {
+          break;
+        }
+      }
       assert(close);
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
@@ -424,6 +435,16 @@ struct Value {
   bool has(IString x) {
     assert(isObject());
     return obj->count(x) > 0;
+  }
+
+  Ref maybeGet(IString x) {
+    if (!isObject()) {
+      return {};
+    }
+    if (auto it = obj->find(x); it != obj->end()) {
+      return it->second;
+    }
+    return {};
   }
 
 private:

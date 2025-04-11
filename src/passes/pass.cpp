@@ -220,6 +220,10 @@ void PassRegistry::registerPasses() {
                createTypeRefiningGUFAPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
+  registerPass("heap-snapshot-analysis",
+               "Ingest a Chrome DevTools heap snapshot and analysize the "
+               "memory usage due to each type",
+               createHeapSnapshotAnalysisPass);
   registerPass("heap-store-optimization",
                "optimize heap (GC) stores",
                createHeapStoreOptimizationPass);
