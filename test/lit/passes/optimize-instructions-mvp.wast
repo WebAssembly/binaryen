@@ -175,6 +175,63 @@
       )
     )
   )
+
+  ;; CHECK:      (func $if-lt_u-side-effect (param $i1 i32) (param $i2 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.load
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (i32.store
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-lt_u-side-effect (param $i1 i32) (param $i2 i32)
+    (if
+      (i32.lt_u
+        (i32.load
+          (i32.const 0)
+        )
+        (block (result i32)
+          (i32.store
+            (i32.const 0)
+            (i32.const 0)
+          )
+          (i32.const 0)
+        )
+      )
+      (then
+        (drop
+          (i32.const 1)
+        )
+      )
+      (else
+        (drop
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $eqz-gt_s (result i32)
   ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (i32.const 0)
