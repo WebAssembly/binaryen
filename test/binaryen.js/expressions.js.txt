@@ -239,6 +239,21 @@
  (local.get $3)
 )
 
+# RefTest
+(ref.test externref
+ (local.get $2)
+)
+
+# RefCast
+(ref.cast externref
+ (local.get $2)
+)
+
+# BrOn
+(br_on_cast $br2 anyref i31ref
+ (local.get $1)
+)
+
 # Try
 (try (result i32)
  (do
