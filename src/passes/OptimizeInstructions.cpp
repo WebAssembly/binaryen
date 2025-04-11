@@ -2928,11 +2928,10 @@ private:
           Properties::getFallthrough(block, getPassOptions(), *getModule());
         if (auto* c = fallthrough->dynCast<Const>()) {
           Builder builder(*getModule());
-          auto ret = getDroppedChildrenAndAppend(
+          return getDroppedChildrenAndAppend(
             binary,
             LiteralUtils::makeFromInt32(
               c->value.geti32(), Type::i32, *getModule()));
-          return ret;
         }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {
