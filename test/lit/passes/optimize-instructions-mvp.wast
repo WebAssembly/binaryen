@@ -11452,6 +11452,38 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.load
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i64.extend_i32_u
+  ;; CHECK-NEXT:      (i64.eqz
+  ;; CHECK-NEXT:       (i64.load
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.load
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -11692,6 +11724,40 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -9223372036854775808)
+    ))
+
+    ;; bool(x) | 1  ==>  1
+    (drop (i32.or
+      (i32.eqz
+        (local.get $x)
+      )
+      (i32.const 1)
+    ))
+    (drop (i32.or
+      (i32.eqz
+        (i32.load
+          (i32.const 0)
+        )
+      )
+      (i32.const 1)
+    ))
+    (drop (i64.or
+      (i64.extend_i32_u
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+      (i64.const 1)
+    ))
+    (drop (i64.or
+      (i64.extend_i32_u
+        (i64.eqz
+          (i64.load
+            (i32.const 0)
+          )
+        )
+      )
+      (i64.const 1)
     ))
 
     ;; (unsigned)x >= 0  =>  i32(1)
