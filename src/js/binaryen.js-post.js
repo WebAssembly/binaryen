@@ -2472,12 +2472,12 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['br_on_null'] = function(name, value, castType) {
-    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnNull'], strToStack(name), value, castType));
+  self['br_on_null'] = function(name, value) {
+    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnNull'], strToStack(name), value, Module['unreachable']));
   };
 
-  self['br_on_non_null'] = function(name, value, castType) {
-    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnNonNull'], strToStack(name), value, castType));
+  self['br_on_non_null'] = function(name, value) {
+    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnNonNull'], strToStack(name), value, Module['unreachable']));
   };
 
   self['br_on_cast'] = function(name, value, castType) {
@@ -4940,6 +4940,60 @@ Module['RefEq'] = makeExpressionWrapper({
   },
   'setRight'(expr, rightExpr) {
     return Module['_BinaryenRefEqSetRight'](expr, rightExpr);
+  }
+});
+
+Module['RefTest'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenRefTestGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenRefTestSetRef'](expr, ref);
+  },
+  'getCastType'(expr) {
+    return Module['_BinaryenRefTestGetCastType'](expr);
+  },
+  'setCastType'(expr, castType) {
+    Module['_BinaryenRefTestSetCastType'](expr, castType);
+  }
+});
+
+Module['RefCast'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenRefCastGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenRefCastSetRef'](expr, ref);
+  }
+});
+
+// TODO: any.convert_extern
+// TODO: extern.convert_any
+
+Module['BrOn'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenBrOnGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenBrOnSetOp'](expr, op);
+  },
+  'getName'(expr) {
+    return UTF8ToString(Module['_BinaryenBrOnGetName'](expr));
+  },
+  'setName'(expr, name) {
+    preserveStack(() => Module['_BinaryenBrOnSetName'](expr, strToStack(name)));
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenBrOnGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenBrOnSetRef'](expr, ref);
+  },
+  'getCastType'(expr) {
+    return Module['_BinaryenBrOnGetCastType'](expr);
+  },
+  'setCastType'(expr, castType) {
+    Module['_BinaryenBrOnSetCastType'](expr, castType);
   }
 });
 

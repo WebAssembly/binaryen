@@ -1531,6 +1531,103 @@ console.log("# RefEq");
   module.dispose();
 })();
 
+console.log("# RefTest");
+(function testRefTest() {
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, binaryen.anyref);
+  var castType = binaryen.anyref;
+  const theRefTest = binaryen.RefTest(module.ref.test(ref, castType));
+  assert(theRefTest instanceof binaryen.RefTest);
+  assert(theRefTest instanceof binaryen.Expression);
+  assert(theRefTest.ref === ref);
+  assert(theRefTest.castType === castType);
+  assert(theRefTest.type === binaryen.i32);
+
+  theRefTest.ref = ref = module.local.get(2, binaryen.externref);
+  assert(theRefTest.ref === ref);
+  theRefTest.castType = castType = binaryen.externref;
+  assert(theRefTest.castType === castType);
+  theRefTest.type = binaryen.f64;
+  theRefTest.finalize();
+  assert(theRefTest.type === binaryen.i32);
+
+  console.log(theRefTest.toText());
+  assert(
+    theRefTest.toText()
+    ==
+    "(ref.test externref\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# RefCast");
+(function testRefCast() {
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, binaryen.anyref);
+  var type = binaryen.anyref;
+  const theRefCast = binaryen.RefCast(module.ref.cast(ref, type));
+  assert(theRefCast instanceof binaryen.RefCast);
+  assert(theRefCast instanceof binaryen.Expression);
+  assert(theRefCast.ref === ref);
+  assert(theRefCast.type === type);
+
+  theRefCast.ref = ref = module.local.get(2, binaryen.externref);
+  assert(theRefCast.ref === ref);
+  theRefCast.type = type = binaryen.externref;
+  theRefCast.finalize();
+  assert(theRefCast.type === type);
+
+  console.log(theRefCast.toText());
+  assert(
+    theRefCast.toText()
+    ==
+    "(ref.cast externref\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# BrOn");
+(function testBrOn() {
+  const module = new binaryen.Module();
+
+  var name = "br";
+  var ref = module.local.get(0, binaryen.externref);
+  var op = binaryen.Operations.BrOnNull;
+  var castType = binaryen.unreachable;
+  const theBrOn = binaryen.BrOn(module.br_on_null(name, ref));
+  assert(theBrOn instanceof binaryen.BrOn);
+  assert(theBrOn instanceof binaryen.Expression);
+  assert(theBrOn.name === name);
+  assert(theBrOn.ref === ref);
+  assert(theBrOn.op === op);
+  assert(theBrOn.castType === castType);
+
+  // TODO: What should theBrOn.type be equal to?
+
+  theBrOn.name = name = "br2";
+  assert(theBrOn.name === name);
+  theBrOn.ref = ref = module.local.get(1, binaryen.anyref);
+  assert(theBrOn.ref === ref);
+  theBrOn.op = op = binaryen.Operations.BrOnCast;
+  assert(theBrOn.op === op);
+  theBrOn.castType = castType = binaryen.i31ref;
+  assert(theBrOn.castType === castType);
+  theBrOn.finalize();
+
+  console.log(theBrOn.toText());
+  assert(
+    theBrOn.toText()
+    ==
+    "(br_on_cast $br2 anyref i31ref\n (local.get $1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
