@@ -26,6 +26,10 @@
 
   ;; CHECK:      (type $8 (func (param (ref $array))))
 
+  ;; CHECK:      (import "env" "memory_grow_pre" (func $memory_grow_pre (type $0) (param i32 i32) (result i32)))
+
+  ;; CHECK:      (import "env" "memory_grow_post" (func $memory_grow_post (type $0) (param i32 i32) (result i32)))
+
   ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (type $6) (param i32 i32 i32 i32) (result i32)))
 
   ;; CHECK:      (import "env" "load_val_i32" (func $load_val_i32 (type $0) (param i32 i32) (result i32)))
