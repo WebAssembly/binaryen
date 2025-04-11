@@ -117,6 +117,44 @@ struct HeapSnapshotAnalysis : Pass {
       auto [name, allocs] = topTypesByAllocations[i];
       std::cout << "  " << name << ": " << allocs << " objects\n";
     }
+
+    // Measure the savings of removing vtable pointers. Assume any object that
+    // contains an edge to another object that contains an edge to a "system /
+    // WasmFuncRef" contains a vtable pointer.
+    IString funcrefName = "system / WasmFuncRef";
+    std::unordered_set<Index> vtableIndices;
+    for (Index i = 0; i < nodes.size(); ++i) {
+      for (Index j = 0; j < nodes[i].edges.size(); ++j) {
+        auto dest = nodes[i].edges[j];
+        if (dest >= nodes.size()) {
+          Fatal() << "Unexpected out-of-bounds edge (" << dest
+                  << " >= " << nodes.size() << ")";
+        }
+        if (nodes[dest].name == funcrefName) {
+          vtableIndices.insert(i);
+          break;
+        }
+      }
+    }
+    Index objectsWithVtableCount = 0;
+    for (Index i = 0; i < nodes.size(); ++i) {
+      for (Index j = 0; j < nodes[i].edges.size(); ++j) {
+        auto dest = nodes[i].edges[j];
+        assert(dest < nodes.size());
+        if (vtableIndices.count(dest)) {
+          ++objectsWithVtableCount;
+          break;
+        }
+      }
+    }
+
+    Index vtableSavings = objectsWithVtableCount * 4;
+    std::cout << "\nRemoving vtable fields would save " << vtableSavings
+              << " bytes ("
+              << (double(vtableSavings) / double(totalWasmHeapSize) * 100)
+              << "% wasm heap, "
+              << (double(vtableSavings) / double(totalHeapSize) * 100)
+              << "% total heap)\n";
   }
 
   void validateSnapshotMeta(json::Value& snapshotRoot) {
