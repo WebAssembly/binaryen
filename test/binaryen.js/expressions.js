@@ -1628,6 +1628,160 @@ console.log("# BrOn");
   module.dispose();
 })();
 
+console.log("# StructNew");
+(function testStructNew() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  builder.setStructType(1, [
+    { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
+    { type: binaryen.i64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [
+    struct0Type,
+    struct1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var operands = [
+    module.i32.const(1),
+    module.i32.const(2)
+  ];
+  var type = struct0Type;
+  const theStructNew = binaryen.StructNew(module.struct.new(operands, type));
+  assert(theStructNew instanceof binaryen.StructNew);
+  assert(theStructNew instanceof binaryen.Expression);
+  assertDeepEqual(theStructNew.operands, operands);
+  assertDeepEqual(theStructNew.getOperands(), operands);
+  assert(theStructNew.type === type);
+
+  theStructNew.operands = operands = [
+    module.i32.const(3), // set
+    module.i32.const(4), // set
+    module.i32.const(5)  // append
+  ];
+  assertDeepEqual(theStructNew.operands, operands);
+  operands = [
+    module.i32.const(6) // set
+    // remove
+    // remove
+  ];
+  theStructNew.setOperands(operands);
+  assertDeepEqual(theStructNew.operands, operands);
+  theStructNew.insertOperandAt(0, module.i32.const(7));
+  theStructNew.type = type = struct1Type;
+  theStructNew.finalize();
+  assert(theStructNew.type === type);
+
+  console.log(theStructNew.toText());
+  assert(
+    theStructNew.toText()
+    ==
+    "(struct.new $struct.0\n (i32.const 7)\n (i32.const 6)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# StructGet");
+(function testStructGet() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  builder.setStructType(1, [
+    { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
+    { type: binaryen.i64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [
+    struct0Type,
+    struct1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var index = 0;
+  var ref = module.local.get(0, struct0Type);
+  var type = binaryen.i32;
+  var signed = false;
+  const theStructGet = binaryen.StructGet(module.struct.get(index, ref, type, signed));
+  assert(theStructGet instanceof binaryen.StructGet);
+  assert(theStructGet instanceof binaryen.Expression);
+  assert(theStructGet.index === index);
+  assert(theStructGet.ref === ref);
+  assert(theStructGet.signed === signed);
+  assert(theStructGet.type === type);
+
+  theStructGet.index = index = 1;
+  assert(theStructGet.index === index);
+  theStructGet.ref = ref = module.local.get(1, struct1Type);
+  assert(theStructGet.ref === ref);
+  theStructGet.signed = signed = true;
+  assert(theStructGet.signed === signed);
+  theStructGet.type = type = binaryen.i64;
+  theStructGet.finalize();
+  assert(theStructGet.type === type);
+
+  console.log(theStructGet.toText());
+  assert(
+    theStructGet.toText()
+    ==
+    "(struct.get $struct.0 1\n (local.get $1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# StructSet");
+(function testStructSet() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  builder.setStructType(1, [
+    { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
+    { type: binaryen.i64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [
+    struct0Type,
+    struct1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var index = 0;
+  var ref = module.local.get(0, struct0Type);
+  var value = module.local.get(1, binaryen.i32);
+  const theStructSet = binaryen.StructSet(module.struct.set(index, ref, value));
+  assert(theStructSet instanceof binaryen.StructSet);
+  assert(theStructSet instanceof binaryen.Expression);
+  assert(theStructSet.index === index);
+  assert(theStructSet.ref === ref);
+  assert(theStructSet.value === value);
+  assert(theStructSet.type === binaryen.none);
+
+  theStructSet.index = index = 1;
+  assert(theStructSet.index === index);
+  theStructSet.ref = ref = module.local.get(2, struct1Type);
+  assert(theStructSet.ref === ref);
+  theStructSet.value = value = module.local.get(3, binaryen.i64);
+  assert(theStructSet.value === value);
+  theStructSet.type = binaryen.f64;
+  theStructSet.finalize();
+  assert(theStructSet.type === binaryen.none);
+
+  console.log(theStructSet.toText());
+  assert(
+    theStructSet.toText()
+    ==
+    "(struct.set $struct.0 1\n (local.get $2)\n (local.get $3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();

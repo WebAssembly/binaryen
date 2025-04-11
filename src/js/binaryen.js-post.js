@@ -4997,6 +4997,82 @@ Module['BrOn'] = makeExpressionWrapper({
   }
 });
 
+Module['StructNew'] = makeExpressionWrapper({
+  'getNumOperands'(expr) {
+    return Module['_BinaryenStructNewGetNumOperands'](expr);
+  },
+  'getOperands'(expr) {
+    return getAllNested(expr, Module['_BinaryenStructNewGetNumOperands'], Module['_BinaryenStructNewGetOperandAt']);
+  },
+  'setOperands'(expr, operands) {
+    setAllNested(
+      expr,
+      operands,
+      Module['_BinaryenStructNewGetNumOperands'],
+      Module['_BinaryenStructNewSetOperandAt'],
+      Module['_BinaryenStructNewAppendOperand'],
+      Module['_BinaryenStructNewRemoveOperandAt']
+    );
+  },
+  'getOperandAt'(expr, index) {
+    return Module['_BinaryenStructNewGetOperandAt'](expr, index);
+  },
+  'setOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenStructNewSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand'(expr, operandExpr) {
+    return Module['_BinaryenStructNewAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenStructNewInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt'(expr, index) {
+    return Module['_BinaryenStructNewRemoveOperandAt'](expr, index);
+  }
+});
+
+Module['StructGet'] = makeExpressionWrapper({
+  'getIndex'(expr) {
+    return Module['_BinaryenStructGetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenStructGetSetIndex'](expr, index);
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenStructGetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenStructGetSetRef'](expr, ref);
+  },
+  'getSigned'(expr) {
+    return Boolean(Module['_BinaryenStructGetIsSigned'](expr));
+  },
+  'setSigned'(expr, signed) {
+    Module['_BinaryenStructGetSetSigned'](expr, signed);
+  }
+});
+
+Module['StructSet'] = makeExpressionWrapper({
+  'getIndex'(expr) {
+    return Module['_BinaryenStructSetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenStructSetSetIndex'](expr, index);
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenStructSetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenStructSetSetRef'](expr, ref);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenStructSetGetValue'](expr);
+  },
+  'setValue'(expr, value) {
+    Module['_BinaryenStructSetSetValue'](expr, value);
+  }
+});
+
 Module['Try'] = makeExpressionWrapper({
   'getName'(expr) {
     const name = Module['_BinaryenTryGetName'](expr);

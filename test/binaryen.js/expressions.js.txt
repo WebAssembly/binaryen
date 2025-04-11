@@ -254,6 +254,23 @@
  (local.get $1)
 )
 
+# StructNew
+(struct.new $struct.0
+ (i32.const 7)
+ (i32.const 6)
+)
+
+# StructGet
+(struct.get $struct.0 1
+ (local.get $1)
+)
+
+# StructSet
+(struct.set $struct.0 1
+ (local.get $2)
+ (local.get $3)
+)
+
 # Try
 (try (result i32)
  (do
