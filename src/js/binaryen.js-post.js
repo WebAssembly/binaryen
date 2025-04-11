@@ -40,6 +40,9 @@ function initializeConstants() {
     ['i31ref', 'I31ref'],
     ['structref', 'Structref'],
     ['stringref', 'Stringref'],
+    ['nullref', 'Nullref'],
+    ['nullexternref', 'NullExternref'],
+    ['nullfuncref', 'NullFuncref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -2515,7 +2518,9 @@ function wrapModule(module, self = {}) {
     'new_data'(type, name, offset, size) {
       return preserveStack(() => Module['_BinaryenArrayNewData'](module, type, strToStack(name), offset, size));
     },
-    // TODO: array.new_elem
+    'new_elem'(type, name, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayNewElem'](module, type, strToStack(name), offset, size));
+    },
     'get'(ref, index, type, isSigned) {
       return Module['_BinaryenArrayGet'](module, ref, index, type, isSigned);
     },
@@ -2525,12 +2530,18 @@ function wrapModule(module, self = {}) {
     'len'(ref) {
       return Module['_BinaryenArrayLen'](module, ref);
     },
-    // TODO: array.fill
+    'fill'(ref, index, value, size) {
+      return Module['_BinaryenArrayFill'](module, ref, index, value, size);
+    },
     'copy'(destRef, destIndex, srcRef, srcIndex, length) {
       return Module['_BinaryenArrayCopy'](module, destRef, destIndex, srcRef, srcIndex, length);
     },
-    // TODO: array.init_data
-    // TODO: array.init_elem
+    'init_data'(name, ref, index, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayInitData'](module, strToStack(name), ref, index, offset, size));
+    },
+    'init_elem'(name, ref, index, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayInitElem'](module, strToStack(name), ref, index, offset, size));
+    }
   };
   
   // TODO: string.*
