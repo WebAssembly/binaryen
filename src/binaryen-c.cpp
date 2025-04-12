@@ -4322,6 +4322,76 @@ BinaryenArrayNewFixedRemoveValueAt(BinaryenExpressionRef expr,
   assert(expression->is<ArrayNewFixed>());
   return static_cast<ArrayNewFixed*>(expression)->values.removeAt(index);
 }
+// ArrayNewData
+const char* BinaryenArrayNewDataGetSegment(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewData>());
+  return static_cast<ArrayNewData*>(expression)->segment.str.data();
+}
+void BinaryenArrayNewDataSetSegment(BinaryenExpressionRef expr,
+                                    const char* segment) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewData>());
+  static_cast<ArrayNewData*>(expression)->segment = Name(segment);
+}
+BinaryenExpressionRef
+BinaryenArrayNewDataGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewData>());
+  return static_cast<ArrayNewData*>(expression)->offset;
+}
+void BinaryenArrayNewDataSetOffset(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewData>());
+  static_cast<ArrayNewData*>(expression)->offset = offset;
+}
+BinaryenExpressionRef BinaryenArrayNewDataGetSize(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewData>());
+  return static_cast<ArrayNewData*>(expression)->size;
+}
+void BinaryenArrayNewDataSetSize(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef size) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewData>());
+  static_cast<ArrayNewData*>(expression)->size = size;
+}
+// ArrayNewElem
+const char* BinaryenArrayNewElemGetSegment(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewElem>());
+  return static_cast<ArrayNewElem*>(expression)->segment.str.data();
+}
+void BinaryenArrayNewElemSetSegment(BinaryenExpressionRef expr,
+                                    const char* segment) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewElem>());
+  static_cast<ArrayNewElem*>(expression)->segment = Name(segment);
+}
+BinaryenExpressionRef
+BinaryenArrayNewElemGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewElem>());
+  return static_cast<ArrayNewElem*>(expression)->offset;
+}
+void BinaryenArrayNewElemSetOffset(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewElem>());
+  static_cast<ArrayNewElem*>(expression)->offset = offset;
+}
+BinaryenExpressionRef BinaryenArrayNewElemGetSize(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewElem>());
+  return static_cast<ArrayNewElem*>(expression)->size;
+}
+void BinaryenArrayNewElemSetSize(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef size) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewElem>());
+  static_cast<ArrayNewElem*>(expression)->size = size;
+}
 // ArrayGet
 BinaryenExpressionRef BinaryenArrayGetGetRef(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

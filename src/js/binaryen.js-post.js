@@ -5126,6 +5126,48 @@ Module['ArrayNewFixed'] = makeExpressionWrapper({
   }
 });
 
+Module['ArrayNewData'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayNewDataGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayNewDataSetSegment'](expr, strToStack(segment)));
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayNewDataGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayNewDataSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayNewDataGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayNewDataSetSize'](expr, size);
+  }
+});
+
+Module['ArrayNewElem'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayNewElemGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayNewElemSetSegment'](expr, strToStack(segment)));
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayNewElemGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayNewElemSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayNewElemGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayNewElemSetSize'](expr, size);
+  }
+});
+
 Module['ArrayGet'] = makeExpressionWrapper({
   'getRef'(expr) {
     return Module['_BinaryenArrayGetGetRef'](expr);

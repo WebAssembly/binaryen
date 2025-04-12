@@ -2469,8 +2469,35 @@ BinaryenArrayNewFixedInsertValueAt(BinaryenExpressionRef expr,
 BINARYEN_API BinaryenExpressionRef BinaryenArrayNewFixedRemoveValueAt(
   BinaryenExpressionRef expr, BinaryenIndex index);
 
-// TODO: ArrayNewData
-// TODO: ArrayNewElem
+// ArrayNewData
+
+BINARYEN_API const char*
+BinaryenArrayNewDataGetSegment(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayNewDataSetSegment(BinaryenExpressionRef expr,
+                                                 const char* segment);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewDataGetOffset(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayNewDataSetOffset(BinaryenExpressionRef expr,
+                                                BinaryenExpressionRef offset);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewDataGetSize(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayNewDataSetSize(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef size);
+
+// ArrayNewElem
+
+BINARYEN_API const char*
+BinaryenArrayNewElemGetSegment(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayNewElemSetSegment(BinaryenExpressionRef expr,
+                                                 const char* segment);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewElemGetOffset(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayNewElemSetOffset(BinaryenExpressionRef expr,
+                                                BinaryenExpressionRef offset);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewElemGetSize(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayNewElemSetSize(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef size);
 
 // ArrayGet
 
