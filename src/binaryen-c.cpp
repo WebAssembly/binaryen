@@ -4588,6 +4588,122 @@ void BinaryenArrayCopySetLength(BinaryenExpressionRef expr,
   assert(lengthExpr);
   static_cast<ArrayCopy*>(expression)->length = (Expression*)lengthExpr;
 }
+// ArrayInitData
+const char* BinaryenArrayInitDataGetSegment(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  return static_cast<ArrayInitData*>(expression)->segment.str.data();
+}
+void BinaryenArrayInitDataSetSegment(BinaryenExpressionRef expr,
+                                     const char* segment) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  static_cast<ArrayInitData*>(expression)->segment = Name(segment);
+}
+BinaryenExpressionRef BinaryenArrayInitDataGetRef(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  return static_cast<ArrayInitData*>(expression)->ref;
+}
+void BinaryenArrayInitDataSetRef(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef ref) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  static_cast<ArrayInitData*>(expression)->ref = ref;
+}
+BinaryenExpressionRef
+BinaryenArrayInitDataGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  return static_cast<ArrayInitData*>(expression)->index;
+}
+void BinaryenArrayInitDataSetIndex(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  static_cast<ArrayInitData*>(expression)->index = index;
+}
+BinaryenExpressionRef
+BinaryenArrayInitDataGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  return static_cast<ArrayInitData*>(expression)->offset;
+}
+void BinaryenArrayInitDataSetOffset(BinaryenExpressionRef expr,
+                                    BinaryenExpressionRef offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  static_cast<ArrayInitData*>(expression)->offset = offset;
+}
+BinaryenExpressionRef BinaryenArrayInitDataGetSize(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  return static_cast<ArrayInitData*>(expression)->size;
+}
+void BinaryenArrayInitDataSetSize(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef size) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitData>());
+  static_cast<ArrayInitData*>(expression)->size = size;
+}
+// ArrayInitElem
+const char* BinaryenArrayInitElemGetSegment(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  return static_cast<ArrayInitElem*>(expression)->segment.str.data();
+}
+void BinaryenArrayInitElemSetSegment(BinaryenExpressionRef expr,
+                                     const char* segment) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  static_cast<ArrayInitElem*>(expression)->segment = Name(segment);
+}
+BinaryenExpressionRef BinaryenArrayInitElemGetRef(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  return static_cast<ArrayInitElem*>(expression)->ref;
+}
+void BinaryenArrayInitElemSetRef(BinaryenExpressionRef expr,
+                                 BinaryenExpressionRef ref) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  static_cast<ArrayInitElem*>(expression)->ref = ref;
+}
+BinaryenExpressionRef
+BinaryenArrayInitElemGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  return static_cast<ArrayInitElem*>(expression)->index;
+}
+void BinaryenArrayInitElemSetIndex(BinaryenExpressionRef expr,
+                                   BinaryenExpressionRef index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  static_cast<ArrayInitElem*>(expression)->index = index;
+}
+BinaryenExpressionRef
+BinaryenArrayInitElemGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  return static_cast<ArrayInitElem*>(expression)->offset;
+}
+void BinaryenArrayInitElemSetOffset(BinaryenExpressionRef expr,
+                                    BinaryenExpressionRef offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  static_cast<ArrayInitElem*>(expression)->offset = offset;
+}
+BinaryenExpressionRef BinaryenArrayInitElemGetSize(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  return static_cast<ArrayInitElem*>(expression)->size;
+}
+void BinaryenArrayInitElemSetSize(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef size) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayInitElem>());
+  static_cast<ArrayInitElem*>(expression)->size = size;
+}
 // StringNew
 BinaryenOp BinaryenStringNewGetOp(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

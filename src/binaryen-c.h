@@ -2580,9 +2580,51 @@ BinaryenArrayCopyGetLength(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenArrayCopySetLength(BinaryenExpressionRef expr,
                                              BinaryenExpressionRef lengthExpr);
 
-// TODO: ArrayInitData
+// ArrayInitData
 
-// TODO: ArrayInitElem
+BINARYEN_API const char*
+BinaryenArrayInitDataGetSegment(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitDataSetSegment(BinaryenExpressionRef expr,
+                                                  const char* segment);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitDataGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitDataSetRef(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef ref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitDataGetIndex(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitDataSetIndex(BinaryenExpressionRef expr,
+                                                BinaryenExpressionRef index);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitDataGetOffset(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitDataSetOffset(BinaryenExpressionRef expr,
+                                                 BinaryenExpressionRef offset);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitDataGetSize(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitDataSetSize(BinaryenExpressionRef expr,
+                                               BinaryenExpressionRef size);
+
+// ArrayInitElem
+
+BINARYEN_API const char*
+BinaryenArrayInitElemGetSegment(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitElemSetSegment(BinaryenExpressionRef expr,
+                                                  const char* segment);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitElemGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitElemSetRef(BinaryenExpressionRef expr,
+                                              BinaryenExpressionRef ref);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitElemGetIndex(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitElemSetIndex(BinaryenExpressionRef expr,
+                                                BinaryenExpressionRef index);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitElemGetOffset(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitElemSetOffset(BinaryenExpressionRef expr,
+                                                 BinaryenExpressionRef offset);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayInitElemGetSize(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayInitElemSetSize(BinaryenExpressionRef expr,
+                                               BinaryenExpressionRef size);
 
 // StringNew
 

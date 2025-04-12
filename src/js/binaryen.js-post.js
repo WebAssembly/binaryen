@@ -5282,9 +5282,71 @@ Module['ArrayCopy'] = makeExpressionWrapper({
   }
 });
 
-// TODO: ArrayInitData
+Module['ArrayInitData'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayInitDataGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayInitDataSetSegment'](expr, strToStack(segment)));
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenArrayInitDataGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayInitDataSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayInitDataGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayInitDataSetIndex'](expr, index);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayInitDataGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayInitDataSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayInitDataGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayInitDataSetSize'](expr, size);
+  }
+});
 
-// TODO: ArrayInitElem
+Module['ArrayInitElem'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayInitElemGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayInitElemSetSegment'](expr, strToStack(segment)));
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenArrayInitElemGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayInitElemSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayInitElemGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayInitElemSetIndex'](expr, index);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayInitElemGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayInitElemSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayInitElemGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayInitElemSetSize'](expr, size);
+  }
+});
 
 Module['Try'] = makeExpressionWrapper({
   'getName'(expr) {

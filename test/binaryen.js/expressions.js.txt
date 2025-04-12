@@ -330,6 +330,22 @@
  (i32.const 2)
 )
 
+# ArrayInitData
+(array.init_data $array.0 $1
+ (local.get $1)
+ (i32.const 3)
+ (i32.const 4)
+ (i32.const 5)
+)
+
+# ArrayInitElem
+(array.init_elem $array.0 $1
+ (local.get $1)
+ (i32.const 3)
+ (i32.const 4)
+ (i32.const 5)
+)
+
 # Try
 (try (result i32)
  (do

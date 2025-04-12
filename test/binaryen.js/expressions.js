@@ -2182,6 +2182,108 @@ console.log("# ArrayCopy");
   module.dispose();
 })();
 
+console.log("# ArrayInitData");
+(function testArrayInitData() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var segment = "0";
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayInitData = binaryen.ArrayInitData(module.array.init_data(segment, ref, index, offset, size));
+  assert(theArrayInitData instanceof binaryen.ArrayInitData);
+  assert(theArrayInitData instanceof binaryen.Expression);
+  assert(theArrayInitData.segment === segment);
+  assert(theArrayInitData.ref === ref);
+  assert(theArrayInitData.index === index);
+  assert(theArrayInitData.offset === offset);
+  assert(theArrayInitData.size === size);
+  assert(theArrayInitData.type === binaryen.none);
+
+  theArrayInitData.segment = segment = "1";
+  assert(theArrayInitData.segment === segment);
+  theArrayInitData.ref = ref = module.local.get(1, array1Type);
+  assert(theArrayInitData.ref === ref);
+  theArrayInitData.index = index = module.i32.const(3);
+  assert(theArrayInitData.index === index);
+  theArrayInitData.offset = offset = module.i32.const(4);
+  assert(theArrayInitData.offset === offset);
+  theArrayInitData.size = size = module.i32.const(5);
+  assert(theArrayInitData.size === size);
+  theArrayInitData.type = binaryen.i64;
+  theArrayInitData.finalize();
+  assert(theArrayInitData.type === binaryen.none);
+
+  console.log(theArrayInitData.toText());
+  assert(
+    theArrayInitData.toText()
+    ==
+    "(array.init_data $array.0 $1\n (local.get $1)\n (i32.const 3)\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayInitElem");
+(function testArrayInitElem() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var segment = "0";
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayInitElem = binaryen.ArrayInitElem(module.array.init_elem(segment, ref, index, offset, size));
+  assert(theArrayInitElem instanceof binaryen.ArrayInitElem);
+  assert(theArrayInitElem instanceof binaryen.Expression);
+  assert(theArrayInitElem.segment === segment);
+  assert(theArrayInitElem.ref === ref);
+  assert(theArrayInitElem.index === index);
+  assert(theArrayInitElem.offset === offset);
+  assert(theArrayInitElem.size === size);
+  assert(theArrayInitElem.type === binaryen.none);
+
+  theArrayInitElem.segment = segment = "1";
+  assert(theArrayInitElem.segment === segment);
+  theArrayInitElem.ref = ref = module.local.get(1, array1Type);
+  assert(theArrayInitElem.ref === ref);
+  theArrayInitElem.index = index = module.i32.const(3);
+  assert(theArrayInitElem.index === index);
+  theArrayInitElem.offset = offset = module.i32.const(4);
+  assert(theArrayInitElem.offset === offset);
+  theArrayInitElem.size = size = module.i32.const(5);
+  assert(theArrayInitElem.size === size);
+  theArrayInitElem.type = binaryen.i64;
+  theArrayInitElem.finalize();
+  assert(theArrayInitElem.type === binaryen.none);
+
+  console.log(theArrayInitElem.toText());
+  assert(
+    theArrayInitElem.toText()
+    ==
+    "(array.init_elem $array.0 $1\n (local.get $1)\n (i32.const 3)\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
