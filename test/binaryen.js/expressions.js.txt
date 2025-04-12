@@ -277,6 +277,24 @@
  (i32.const 4)
 )
 
+# ArrayNewFixed
+(array.new_fixed $array.0 2
+ (i32.const 7)
+ (i32.const 6)
+)
+
+# ArrayNewData
+(array.new_data $array.0 $3
+ (i32.const 4)
+ (i32.const 5)
+)
+
+# ArrayNewElem
+(array.new_elem $array.0 $3
+ (i32.const 4)
+ (i32.const 5)
+)
+
 # Try
 (try (result i32)
  (do

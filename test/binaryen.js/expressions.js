@@ -1822,6 +1822,146 @@ console.log("# ArrayNew");
   module.dispose();
 })();
 
+console.log("# ArrayNewFixed");
+(function testArrayNewFixed() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var values = [
+    module.i32.const(1),
+    module.i32.const(2)
+  ];
+  const theArrayNewFixed = binaryen.ArrayNewFixed(module.array.new_fixed(type, values));
+  assert(theArrayNewFixed instanceof binaryen.ArrayNewFixed);
+  assert(theArrayNewFixed instanceof binaryen.Expression);
+  assertDeepEqual(theArrayNewFixed.values, values);
+  assertDeepEqual(theArrayNewFixed.getValues(), values);
+  assert(theArrayNewFixed.type === type);
+
+  theArrayNewFixed.values = values = [
+    module.i32.const(3), // set
+    module.i32.const(4), // set
+    module.i32.const(5)  // append
+  ];
+  assertDeepEqual(theArrayNewFixed.values, values);
+  values = [
+    module.i32.const(6) // set
+    // remove
+    // remove
+  ];
+  theArrayNewFixed.setValues(values);
+  assertDeepEqual(theArrayNewFixed.values, values);
+  theArrayNewFixed.insertValueAt(0, module.i32.const(7));
+  theArrayNewFixed.type = type = array1Type;
+  theArrayNewFixed.finalize();
+  assert(theArrayNewFixed.type === type);
+
+  console.log(theArrayNewFixed.toText());
+  assert(
+    theArrayNewFixed.toText()
+    ==
+    "(array.new_fixed $array.0 2\n (i32.const 7)\n (i32.const 6)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayNewData");
+(function testArrayNewData() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var segment = "0";
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayNewData = binaryen.ArrayNewData(module.array.new_data(type, segment, offset, size));
+  assert(theArrayNewData instanceof binaryen.ArrayNewData);
+  assert(theArrayNewData instanceof binaryen.Expression);
+  assert(theArrayNewData.segment === segment);
+  assert(theArrayNewData.offset === offset);
+  assert(theArrayNewData.size === size);
+  assert(theArrayNewData.type === type);
+
+  theArrayNewData.segment = segment = "3";
+  assert(theArrayNewData.segment === segment);
+  theArrayNewData.offset = offset = module.i32.const(4);
+  assert(theArrayNewData.offset === offset);
+  theArrayNewData.size = size = module.i32.const(5);
+  assert(theArrayNewData.size === size);
+  theArrayNewData.type = type = array1Type;
+  theArrayNewData.finalize();
+  assert(theArrayNewData.type === type);
+
+  console.log(theArrayNewData.toText());
+  assert(
+    theArrayNewData.toText()
+    ==
+    "(array.new_data $array.0 $3\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayNewElem");
+(function testArrayNewElem() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var segment = "0";
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayNewElem = binaryen.ArrayNewElem(module.array.new_elem(type, segment, offset, size));
+  assert(theArrayNewElem instanceof binaryen.ArrayNewElem);
+  assert(theArrayNewElem instanceof binaryen.Expression);
+  assert(theArrayNewElem.segment === segment);
+  assert(theArrayNewElem.offset === offset);
+  assert(theArrayNewElem.size === size);
+  assert(theArrayNewElem.type === type);
+
+  theArrayNewElem.segment = segment = "3";
+  assert(theArrayNewElem.segment === segment);
+  theArrayNewElem.offset = offset = module.i32.const(4);
+  assert(theArrayNewElem.offset === offset);
+  theArrayNewElem.size = size = module.i32.const(5);
+  assert(theArrayNewElem.size === size);
+  theArrayNewElem.type = type = array1Type;
+  theArrayNewElem.finalize();
+  assert(theArrayNewElem.type === type);
+
+  console.log(theArrayNewElem.toText());
+  assert(
+    theArrayNewElem.toText()
+    ==
+    "(array.new_elem $array.0 $3\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
