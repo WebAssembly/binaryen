@@ -2535,7 +2535,24 @@ BinaryenArrayLenGetRef(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenArrayLenSetRef(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef refExpr);
 
-// TODO: ArrayFill
+// ArrayFill
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayFillGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayFillSetRef(BinaryenExpressionRef expr,
+                                          BinaryenExpressionRef refExpr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayFillGetIndex(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayFillSetIndex(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef indexExpr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayFillGetValue(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayFillSetValue(BinaryenExpressionRef expr,
+                                            BinaryenExpressionRef valueExpr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayFillGetSize(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenArrayFillSetSize(BinaryenExpressionRef expr,
+                                           BinaryenExpressionRef sizeExpr);
 
 // ArrayCopy
 

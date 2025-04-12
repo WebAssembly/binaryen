@@ -313,6 +313,14 @@
  (local.get $1)
 )
 
+# ArrayFill
+(array.fill $array.0
+ (local.get $2)
+ (i32.const 2)
+ (local.get $3)
+ (i32.const 3)
+)
+
 # Try
 (try (result i32)
  (do

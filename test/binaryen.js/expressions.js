@@ -2084,6 +2084,53 @@ console.log("# ArrayLen");
   module.dispose();
 })();
 
+console.log("# ArrayFill");
+(function testArrayFill() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var value = module.local.get(1, binaryen.i32);
+  var size = module.i32.const(1);
+  const theArrayFill = binaryen.ArrayFill(module.array.fill(ref, index, value, size));
+  assert(theArrayFill instanceof binaryen.ArrayFill);
+  assert(theArrayFill instanceof binaryen.Expression);
+  assert(theArrayFill.ref === ref);
+  assert(theArrayFill.index === index);
+  assert(theArrayFill.value === value);
+  assert(theArrayFill.size === size);
+  assert(theArrayFill.type === binaryen.none);
+
+  theArrayFill.ref = ref = module.local.get(2, array1Type);
+  assert(theArrayFill.ref === ref);
+  theArrayFill.index = index = module.i32.const(2);
+  assert(theArrayFill.index === index);
+  theArrayFill.value = value = module.local.get(3, binaryen.i64);
+  assert(theArrayFill.value = value);
+  theArrayFill.size = size = module.i32.const(3);
+  assert(theArrayFill.size === size);
+  theArrayFill.type = binaryen.i64;
+  theArrayFill.finalize();
+  assert(theArrayFill.type === binaryen.none);
+
+  console.log(theArrayFill.toText());
+  assert(
+    theArrayFill.toText()
+    ==
+    "(array.fill $array.0\n (local.get $2)\n (i32.const 2)\n (local.get $3)\n (i32.const 3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();

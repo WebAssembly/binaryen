@@ -5222,7 +5222,32 @@ Module['ArrayLen'] = makeExpressionWrapper({
   }
 });
 
-// TODO: ArrayFill
+Module['ArrayFill'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArrayFillGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayFillSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayFillGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayFillSetIndex'](expr, index);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenArrayFillGetValue'](expr);
+  },
+  'setValue'(expr, value) {
+    Module['_BinaryenArrayFillSetValue'](expr, value);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayFillGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayFillSetSize'](expr, size);
+  }
+});
 
 Module['ArrayCopy'] = makeExpressionWrapper({
   'getDestRef'(expr) {

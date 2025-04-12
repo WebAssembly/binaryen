@@ -4477,6 +4477,55 @@ void BinaryenArrayLenSetRef(BinaryenExpressionRef expr,
   assert(refExpr);
   static_cast<ArrayLen*>(expression)->ref = (Expression*)refExpr;
 }
+// ArrayFill
+BinaryenExpressionRef BinaryenArrayFillGetRef(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  return static_cast<ArrayFill*>(expression)->ref;
+}
+void BinaryenArrayFillSetRef(BinaryenExpressionRef expr,
+                             BinaryenExpressionRef refExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  assert(refExpr);
+  static_cast<ArrayFill*>(expression)->ref = (Expression*)refExpr;
+}
+BinaryenExpressionRef BinaryenArrayFillGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  return static_cast<ArrayFill*>(expression)->index;
+}
+void BinaryenArrayFillSetIndex(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef indexExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  assert(indexExpr);
+  static_cast<ArrayFill*>(expression)->index = (Expression*)indexExpr;
+}
+BinaryenExpressionRef BinaryenArrayFillGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  return static_cast<ArrayFill*>(expression)->value;
+}
+void BinaryenArrayFillSetValue(BinaryenExpressionRef expr,
+                               BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  assert(valueExpr);
+  static_cast<ArrayFill*>(expression)->value = (Expression*)valueExpr;
+}
+BinaryenExpressionRef BinaryenArrayFillGetSize(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  return static_cast<ArrayFill*>(expression)->size;
+}
+void BinaryenArrayFillSetSize(BinaryenExpressionRef expr,
+                              BinaryenExpressionRef sizeExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayFill>());
+  assert(sizeExpr);
+  static_cast<ArrayFill*>(expression)->size = (Expression*)sizeExpr;
+}
 // ArrayCopy
 BinaryenExpressionRef BinaryenArrayCopyGetDestRef(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
