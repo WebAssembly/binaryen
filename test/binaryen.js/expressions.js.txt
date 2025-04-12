@@ -271,6 +271,12 @@
  (local.get $3)
 )
 
+# ArrayNew
+(array.new $array.0
+ (i32.const 3)
+ (i32.const 4)
+)
+
 # Try
 (try (result i32)
  (do

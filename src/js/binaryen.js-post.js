@@ -123,10 +123,15 @@ function initializeConstants() {
     'StructSet',
     'ArrayNew',
     'ArrayNewFixed',
+    'ArrayNewData',
+    'ArrayNewElem',
     'ArrayGet',
     'ArraySet',
     'ArrayLen',
+    'ArrayFill',
     'ArrayCopy',
+    'ArrayInitData',
+    'ArrayInitElem',
     'RefAs',
     'StringNew',
     'StringConst',
@@ -5072,8 +5077,6 @@ Module['StructSet'] = makeExpressionWrapper({
     Module['_BinaryenStructSetSetValue'](expr, value);
   }
 });
-
-// TODO: Tests in expressions.js
 
 Module['ArrayNew'] = makeExpressionWrapper({
   'getInit'(expr) {

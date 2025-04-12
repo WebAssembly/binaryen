@@ -1782,6 +1782,46 @@ console.log("# StructSet");
   module.dispose();
 })();
 
+console.log("# ArrayNew");
+(function testArrayNew() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var size = module.i32.const(2);
+  var init = module.i32.const(1);
+  const theArrayNew = binaryen.ArrayNew(module.array.new(type, size, init));
+  assert(theArrayNew instanceof binaryen.ArrayNew);
+  assert(theArrayNew instanceof binaryen.Expression);
+  assert(theArrayNew.size === size);
+  assert(theArrayNew.init === init);
+  assert(theArrayNew.type === type);
+
+  theArrayNew.size = size = module.i32.const(4);
+  assert(theArrayNew.size === size);
+  theArrayNew.init = init = module.i32.const(3);
+  assert(theArrayNew.init === init);
+  theArrayNew.type = type = array1Type;
+  theArrayNew.finalize();
+  assert(theArrayNew.type === type);
+
+  console.log(theArrayNew.toText());
+  assert(
+    theArrayNew.toText()
+    ==
+    "(array.new $array.0\n (i32.const 3)\n (i32.const 4)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
