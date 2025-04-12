@@ -295,6 +295,24 @@
  (i32.const 5)
 )
 
+# ArrayGet
+(array.get $array.0
+ (local.get $1)
+ (i32.const 1)
+)
+
+# ArraySet
+(array.set $array.0
+ (local.get $2)
+ (i32.const 1)
+ (local.get $3)
+)
+
+# ArrayLen
+(array.len
+ (local.get $1)
+)
+
 # Try
 (try (result i32)
  (do
