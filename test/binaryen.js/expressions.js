@@ -2131,6 +2131,57 @@ console.log("# ArrayFill");
   module.dispose();
 })();
 
+console.log("# ArrayCopy");
+(function testArrayCopy() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var destRef = module.local.get(0, array0Type);
+  var destIndex = module.i32.const(0);
+  var srcRef = module.local.get(1, array0Type);
+  var srcIndex = module.i32.const(1);
+  var length = module.i32.const(1);
+  const theArrayCopy = binaryen.ArrayCopy(module.array.copy(destRef, destIndex, srcRef, srcIndex, length));
+  assert(theArrayCopy instanceof binaryen.ArrayCopy);
+  assert(theArrayCopy instanceof binaryen.Expression);
+  assert(theArrayCopy.destRef === destRef);
+  assert(theArrayCopy.destIndex === destIndex);
+  assert(theArrayCopy.srcRef === srcRef);
+  assert(theArrayCopy.srcIndex === srcIndex);
+  assert(theArrayCopy.length === length);
+  assert(theArrayCopy.type === binaryen.none);
+
+  theArrayCopy.destRef = destRef = module.local.get(2, array1Type);
+  assert(theArrayCopy.destRef === destRef);
+  theArrayCopy.destIndex = destIndex = module.i32.const(2);
+  assert(theArrayCopy.destIndex === destIndex);
+  theArrayCopy.srcRef = srcRef = module.local.get(3, array1Type);
+  assert(theArrayCopy.srcRef === srcRef);
+  theArrayCopy.srcIndex = srcIndex = module.i32.const(3);
+  assert(theArrayCopy.srcIndex === srcIndex);
+  theArrayCopy.length = length = module.i32.const(2);
+  assert(theArrayCopy.length === length);
+  theArrayCopy.type = binaryen.i64;
+  theArrayCopy.finalize();
+  assert(theArrayCopy.type === binaryen.none);
+
+  console.log(theArrayCopy.toText());
+  assert(
+    theArrayCopy.toText()
+    ==
+    "(array.copy $array.0 $array.0\n (local.get $2)\n (i32.const 2)\n (local.get $3)\n (i32.const 3)\n (i32.const 2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();

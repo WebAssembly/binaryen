@@ -321,6 +321,15 @@
  (i32.const 3)
 )
 
+# ArrayCopy
+(array.copy $array.0 $array.0
+ (local.get $2)
+ (i32.const 2)
+ (local.get $3)
+ (i32.const 3)
+ (i32.const 2)
+)
+
 # Try
 (try (result i32)
  (do
