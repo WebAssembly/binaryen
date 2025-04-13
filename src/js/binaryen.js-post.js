@@ -5049,7 +5049,7 @@ Module['StructGet'] = makeExpressionWrapper({
   'setRef'(expr, ref) {
     Module['_BinaryenStructGetSetRef'](expr, ref);
   },
-  'getSigned'(expr) {
+  'isSigned'(expr) {
     return Boolean(Module['_BinaryenStructGetIsSigned'](expr));
   },
   'setSigned'(expr, signed) {
@@ -5184,7 +5184,7 @@ Module['ArrayGet'] = makeExpressionWrapper({
   'setIndex'(expr, index) {
     Module['_BinaryenArrayGetSetIndex'](expr, index);
   },
-  'getSigned'(expr) {
+  'isSigned'(expr) {
     return Boolean(Module['_BinaryenArrayGetIsSigned'](expr));
   },
   'setSigned'(expr, signed) {
