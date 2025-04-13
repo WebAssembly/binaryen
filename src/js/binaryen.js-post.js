@@ -3058,7 +3058,7 @@ Module['getExpressionType'] = function(expr) {
 Module['getExpressionInfo'] = function(expr) {
   const id = Module['_BinaryenExpressionGetId'](expr);
   const type = Module['_BinaryenExpressionGetType'](expr);
-  switch (id) {
+  switch (id) { // TODO: GC instructions
     case Module['BlockId']:
       return {
         'id': id,
