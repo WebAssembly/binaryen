@@ -55,8 +55,7 @@ std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 // that we cannot properly evaluate at compile time (e.g. if it refers to an
 // import, or we are optimizing and it uses relaxed SIMD).
 // TODO: use a flow with a special name, as this is likely very slow
-struct NonconstantException {
-};
+struct NonconstantException {};
 
 // Utilities
 
