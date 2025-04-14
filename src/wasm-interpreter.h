@@ -51,6 +51,13 @@ struct WasmException {
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
+// An exception thrown when we try to execute non-constant code, that is, code
+// that we cannot properly evaluate at compile time (e.g. if it refers to an
+// import, or we are optimizing and it uses relaxed SIMD).
+// TODO: use a flow with a special name, as this is likely very slow
+struct NonconstantException {
+};
+
 // Utilities
 
 extern Name WASM, RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
@@ -2457,9 +2464,6 @@ protected:
   std::unordered_map<Name, Literals> globalValues;
 
 public:
-  struct NonconstantException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
   ConstantExpressionRunner(Module* module,
                            Flags flags,
                            Index maxDepth,
@@ -4538,6 +4542,10 @@ public:
       name = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
+    }
+
+    if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
+      throw NonconstantException();
     }
 
     // cannot still be breaking, it means we missed our stop
