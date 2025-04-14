@@ -6,20 +6,45 @@
 ;; optimize nothing here, and should not error.
 
 (module
+ ;; CHECK:      (type $0 (func (result v128)))
+
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (export "drop" (func $drop))
+
+ ;; CHECK:      (export "passthrough" (func $passthrough))
+
+ ;; CHECK:      (func $return (type $0) (result v128)
+ ;; CHECK-NEXT:  (f32x4.relaxed_max
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $return (export "return") (result v128)
+  ;; This function returns a nonconstant value directly.
   (f32x4.relaxed_max
    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   )
  )
 
+ ;; CHECK:      (func $drop (type $1)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $return)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $drop (export "drop")
+  ;; This function swallows a nonconstant value.
   (drop
    (call $return)
   )
  )
 
+ ;; CHECK:      (func $passthrough (type $0) (result v128)
+ ;; CHECK-NEXT:  (call $return)
+ ;; CHECK-NEXT: )
  (func $passthrough (export "passthrough") (result v128)
+  ;; This function passes through a nonconstant value.
   (call $return)
  )
 )
