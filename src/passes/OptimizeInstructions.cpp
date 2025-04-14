@@ -3972,9 +3972,9 @@ private:
       return result;
     }
     // bool(x) | 1  ==>  1
-    if (matches(curr, binary(Or, pure(&left), ival(1))) &&
+    if (matches(curr, binary(Or, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
-      return right;
+      return getDroppedChildrenAndAppend(curr, right);
     }
 
     // Operations on all 1s
