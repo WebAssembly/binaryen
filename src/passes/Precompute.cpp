@@ -728,7 +728,7 @@ private:
       flow = PrecomputingExpressionRunner(
                getModule(), getValues, heapValues, replaceExpression)
                .visit(curr);
-    } catch (PrecomputingExpressionRunner::NonconstantException&) {
+    } catch (NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
     // If we are replacing the expression, then the resulting value must be of

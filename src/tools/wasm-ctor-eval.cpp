@@ -1113,6 +1113,11 @@ start_eval:
           }
         }
         break;
+      } catch (NonconstantException& fail) {
+        if (!quiet) {
+          std::cout << "  ...stopping due to non-constant code\n";
+        }
+        break;
       }
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
