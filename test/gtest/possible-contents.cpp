@@ -349,7 +349,7 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
     std::vector<PossibleContents> vec(set.begin(), set.end());
 
     // Find the maximum depths for the normalized cone tests later down.
-    std::unordered_set<HeapTypeDef> heapTypes;
+    std::unordered_set<HeapType> heapTypes;
     for (auto& contents : set) {
       auto type = contents.getType();
       if (type.isRef()) {
@@ -359,7 +359,7 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
         }
       }
     }
-    std::vector<HeapTypeDef> heapTypesVec(heapTypes.begin(), heapTypes.end());
+    std::vector<HeapType> heapTypesVec(heapTypes.begin(), heapTypes.end());
     SubTypes subTypes(heapTypesVec);
     auto maxDepths = subTypes.getMaxDepths();
 

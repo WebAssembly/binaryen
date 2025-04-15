@@ -228,7 +228,7 @@ namespace {
 
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
-  return (HeapTypeInfo*)(ht.getRawID());
+  return (HeapTypeInfo*)ht.getID();
 }
 
 HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
@@ -798,6 +798,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
   }
   return Type::none;
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::getGreatestLowerBound(Type a, Type b) {
@@ -1194,9 +1195,6 @@ std::optional<HeapType> HeapType::getLeastUpperBound(HeapType a, HeapType b) {
     return getBasicHeapTypeLUB(getBasicHeapSupertype(a),
                                getBasicHeapSupertype(b));
   }
-  if (a.with(Inexact) == b.with(Inexact)) {
-    return a.with(Inexact);
-  }
 
   auto* infoA = getHeapTypeInfo(a);
   auto* infoB = getHeapTypeInfo(b);
@@ -1249,7 +1247,7 @@ RecGroup HeapType::getRecGroup() const {
   } else {
     // Mark the low bit to signify that this is a trivial recursion group and
     // points to a heap type info rather than a vector of heap types.
-    return RecGroup(getRawID() | 1);
+    return RecGroup(id | 1);
   }
 }
 
@@ -1369,7 +1367,7 @@ size_t RecGroup::size() const {
   }
 }
 
-TypeNames DefaultTypeNameGenerator::getNames(HeapTypeDef type) {
+TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
   auto [it, inserted] = nameCache.insert({type, {}});
   if (inserted) {
     // Generate a new name for this type we have not previously seen.
@@ -1507,7 +1505,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   // See:
   // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
   // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
-  if (a == b || a.with(Inexact) == b) {
+  if (a == b) {
     return true;
   }
   if (a.isShared() != b.isShared()) {
@@ -1551,11 +1549,6 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     // Basic HeapTypes are only subtypes of compound HeapTypes if they are
     // bottom types.
     return a == b.getBottom();
-  }
-  if (b.isExact()) {
-    // The only subtypes of an exact type are itself and bottom, both of which
-    // we have ruled out.
-    return false;
   }
   // Subtyping must be declared rather than derived from structure, so we will
   // not recurse. TODO: optimize this search with some form of caching.
@@ -1615,20 +1608,14 @@ bool SubTyper::isSubType(const Array& a, const Array& b) {
 }
 
 void TypePrinter::printHeapTypeName(HeapType type) {
-  if (type.isExact()) {
-    os << "(exact ";
-  }
   if (type.isBasic()) {
     print(type);
-  } else {
-    generator(type.with(Inexact)).name.print(os);
+    return;
+  }
+  generator(type).name.print(os);
 #if TRACE_CANONICALIZATION
-    os << "(;" << ((type.with(Inexact).getID() >> 4) % 1000) << ";) ";
+  os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
-  }
-  if (type.isExact()) {
-    os << ')';
-  }
 }
 
 std::ostream& TypePrinter::print(Type type) {
@@ -1955,10 +1942,8 @@ size_t RecGroupHasher::hash(HeapType type) const {
     wasm::rehash(digest, type.getID());
     return digest;
   }
-  wasm::rehash(digest, type.isExact());
   wasm::rehash(digest, type.getRecGroupIndex());
   auto currGroup = type.getRecGroup();
-  wasm::rehash(digest, currGroup != group);
   if (currGroup != group) {
     wasm::rehash(digest, currGroup.getID());
   }
@@ -2087,9 +2072,6 @@ bool RecGroupEquator::eq(HeapType a, HeapType b) const {
   // comparing, in which case the structure is still equivalent.
   if (a.isBasic() || b.isBasic()) {
     return a == b;
-  }
-  if (a.getExactness() != b.getExactness()) {
-    return false;
   }
   if (a.getRecGroupIndex() != b.getRecGroupIndex()) {
     return false;
@@ -2474,10 +2456,8 @@ void updateReferencedHeapTypes(
       isTopLevel = false;
       if (type->isRef()) {
         auto ht = type->getHeapType();
-        auto exact = ht.getExactness();
-        ht = ht.with(Inexact);
         if (auto it = canonicalized.find(ht); it != canonicalized.end()) {
-          *type = Type(it->second.with(exact), type->getNullability());
+          *type = Type(it->second, type->getNullability());
         }
       } else if (type->isTuple()) {
         TypeGraphWalkerBase<ChildUpdater>::scanType(type);
@@ -2485,7 +2465,6 @@ void updateReferencedHeapTypes(
     }
 
     void scanHeapType(HeapType* type) {
-      assert(!type->isExact() && "unexpected exact type in definition");
       if (isTopLevel) {
         isTopLevel = false;
         TypeGraphWalkerBase<ChildUpdater>::scanHeapType(type);
@@ -2550,8 +2529,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto type = asHeapType(typeInfos[i]);
     for (auto child : type.getHeapTypeChildren()) {
-      HeapType rawChild(child.getRawID());
-      if (isTemp(rawChild) && !seenTypes.count(rawChild)) {
+      if (isTemp(child) && !seenTypes.count(child)) {
         return {TypeBuilder::Error{
           i, TypeBuilder::ErrorReason::ForwardChildReference}};
       }
@@ -2574,7 +2552,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
       canonicalized.insert({group[i], canonical[i]});
     }
     // Return the canonical types.
-    return {std::vector<HeapTypeDef>(canonical.begin(), canonical.end())};
+    return {std::vector<HeapType>(canonical.begin(), canonical.end())};
   }
 
   // The group was successfully moved to the global rec group store, so it is
@@ -2588,7 +2566,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
     }
   }
 
-  std::vector<HeapTypeDef> results(group.begin(), group.end());
+  std::vector<HeapType> results(group.begin(), group.end());
 
   // We need to make the tuples canonical as well, but right now there is no way
   // to move them to their global store, so we have to create new tuples and
@@ -2622,7 +2600,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
 TypeBuilder::BuildResult TypeBuilder::build() {
   size_t entryCount = impl->entries.size();
 
-  std::vector<HeapTypeDef> results;
+  std::vector<HeapType> results;
   results.reserve(entryCount);
 
   // Map temporary HeapTypes to their canonicalized versions so they can be
@@ -2766,10 +2744,6 @@ size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
 
 size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
   return wasm::hash(heapType.getID());
-}
-
-size_t hash<wasm::HeapTypeDef>::operator()(const wasm::HeapTypeDef& def) const {
-  return wasm::hash(def.getID());
 }
 
 size_t hash<wasm::RecGroup>::operator()(const wasm::RecGroup& group) const {

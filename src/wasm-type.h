@@ -50,7 +50,6 @@ void destroyAllTypesForTestingPurposesOnly();
 // data.
 class Type;
 class HeapType;
-class HeapTypeDef;
 class RecGroup;
 struct Signature;
 struct Continuation;
@@ -63,7 +62,6 @@ using Tuple = TypeList;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
-enum Exactness { Inexact, Exact };
 
 // HeapType name information used for printing.
 struct TypeNames {
@@ -74,7 +72,7 @@ struct TypeNames {
 };
 
 // Used to generate HeapType names.
-using HeapTypeNameGenerator = std::function<TypeNames(HeapTypeDef)>;
+using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
@@ -100,12 +98,10 @@ class HeapType {
   static constexpr int TypeBits = 2;
   static constexpr int UsedBits = TypeBits + 1;
   static constexpr int SharedMask = 1 << TypeBits;
-  static constexpr int ExactMask = SharedMask;
 
 public:
-  // Bits 0-1 are used by the Type representation, so need to be left free. Bit
-  // 2 determines whether a basic heap type is shared (1) or unshared (0). For
-  // non-basic heap types, bit 2 determines whether the type is exact instead.
+  // Bits 0-1 are used by the Type representation, so need to be left free.
+  // Bit 2 determines whether the basic heap type is shared (1) or unshared (0).
   enum BasicHeapType : uint32_t {
     ext = 1 << UsedBits,
     func = 2 << UsedBits,
@@ -130,7 +126,7 @@ public:
   constexpr HeapType(BasicHeapType id) : id(id) {}
 
   // But converting raw TypeID is more dangerous, so make it explicit
-  explicit constexpr HeapType(TypeID id) : id(id) {}
+  explicit HeapType(TypeID id) : id(id) {}
 
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
@@ -171,12 +167,8 @@ public:
   bool isBottom() const;
   bool isOpen() const;
   bool isShared() const { return getShared() == Shared; }
-  bool isExact() const { return getExactness() == Exact; }
 
   Shareability getShared() const;
-  Exactness getExactness() const {
-    return !isBasic() && (id & ExactMask) ? Exact : Inexact;
-  }
 
   // Check if the type is a given basic heap type, while ignoring whether it is
   // shared or not.
@@ -225,29 +217,13 @@ public:
   // Get the index of this non-basic type within its recursion group.
   size_t getRecGroupIndex() const;
 
+  constexpr TypeID getID() const { return id; }
+
   // Get the shared or unshared version of this basic heap type.
   constexpr BasicHeapType getBasic(Shareability share) const {
     assert(isBasic());
     return BasicHeapType(share == Shared ? (id | SharedMask)
                                          : (id & ~SharedMask));
-  }
-
-  constexpr HeapType with(Exactness exactness) const {
-    assert((!isBasic() || exactness == Inexact) &&
-           "abstract types cannot be exact");
-    return isBasic() ? *this
-                     : HeapType(exactness == Exact ? (id | ExactMask)
-                                                   : (id & ~ExactMask));
-  }
-
-  // The ID is the numeric representation of the heap type and can be used in
-  // FFI or hashing applications. The "raw" ID is the numeric representation of
-  // the plain version of the type without exactness or any other attributes we
-  // might add in the future. It's useful in contexts where all heap types using
-  // the same type definition need to be treated identically.
-  constexpr TypeID getID() const { return id; }
-  constexpr TypeID getRawID() const {
-    return isBasic() ? id : with(Inexact).id;
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
@@ -293,16 +269,6 @@ public:
   }
 
   std::string toString() const;
-};
-
-// Like `HeapType`, but used to represent heap type definitions and abstract
-// heap types rather than arbitrary heap types. Use this whenever it would be a
-// category error to use an exact heap type.
-class HeapTypeDef : public HeapType {
-public:
-  // Allow implicit conversions from HeapType.
-  constexpr HeapTypeDef(HeapType type) : HeapType(type.with(Inexact)) {}
-  constexpr HeapTypeDef() = default;
 };
 
 class Type {
@@ -855,14 +821,14 @@ struct TypeBuilder {
     ErrorReason reason;
   };
 
-  struct BuildResult : std::variant<std::vector<HeapTypeDef>, Error> {
+  struct BuildResult : std::variant<std::vector<HeapType>, Error> {
     operator bool() const {
-      return bool(std::get_if<std::vector<HeapTypeDef>>(this));
+      return bool(std::get_if<std::vector<HeapType>>(this));
     }
-    const std::vector<HeapTypeDef>& operator*() const {
-      return std::get<std::vector<HeapTypeDef>>(*this);
+    const std::vector<HeapType>& operator*() const {
+      return std::get<std::vector<HeapType>>(*this);
     }
-    const std::vector<HeapTypeDef>* operator->() const { return &*(*this); }
+    const std::vector<HeapType>* operator->() const { return &*(*this); }
     const Error* getError() const { return std::get_if<Error>(this); }
   };
 
@@ -1017,10 +983,6 @@ public:
 template<> class hash<wasm::HeapType> {
 public:
   size_t operator()(const wasm::HeapType&) const;
-};
-template<> class hash<wasm::HeapTypeDef> {
-public:
-  size_t operator()(const wasm::HeapTypeDef&) const;
 };
 template<> class hash<wasm::RecGroup> {
 public:

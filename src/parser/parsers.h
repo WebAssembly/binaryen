@@ -434,22 +434,12 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
 }
 
 // heaptype ::= x:typeidx                      => types[x]
-//            | '(' 'exact' x:typeidx ')'      => exact types[x]
 //            | t:absheaptype                  => unshared t
 //            | '(' 'shared' t:absheaptype ')' => shared t
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (auto t = maybeTypeidx(ctx)) {
     CHECK_ERR(t);
     return *t;
-  }
-
-  if (ctx.in.takeSExprStart("exact"sv)) {
-    auto t = typeidx(ctx);
-    CHECK_ERR(t);
-    if (!ctx.in.takeRParen()) {
-      return ctx.in.err("expected end of exact heap type");
-    }
-    return ctx.makeExact(*t);
   }
 
   auto share = ctx.in.takeSExprStart("shared"sv) ? Shared : Unshared;

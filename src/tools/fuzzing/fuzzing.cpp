@@ -484,11 +484,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
     // Basic types must be handled directly, since subTypes doesn't look at
     // those.
     auto share = type.getShared();
-    HeapType struct_ = HeapTypes::struct_.getBasic(share);
-    HeapType array = HeapTypes::array.getBasic(share);
-    HeapType eq = HeapTypes::eq.getBasic(share);
-    HeapType any = HeapTypes::any.getBasic(share);
-    HeapType func = HeapTypes::func.getBasic(share);
+    auto struct_ = HeapTypes::struct_.getBasic(share);
+    auto array = HeapTypes::array.getBasic(share);
+    auto eq = HeapTypes::eq.getBasic(share);
+    auto any = HeapTypes::any.getBasic(share);
+    auto func = HeapTypes::func.getBasic(share);
     switch (type.getKind()) {
       case HeapTypeKind::Func:
         interestingHeapSubTypes[func].push_back(type);

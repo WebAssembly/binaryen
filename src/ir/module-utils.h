@@ -470,26 +470,26 @@ struct HeapTypeInfo {
   Visibility visibility = Visibility::Unknown;
 };
 
-InsertOrderedMap<HeapTypeDef, HeapTypeInfo> collectHeapTypeInfo(
+InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   Module& wasm,
   TypeInclusion inclusion = TypeInclusion::AllTypes,
   VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
-std::vector<HeapTypeDef> collectHeapTypes(Module& wasm);
+std::vector<HeapType> collectHeapTypes(Module& wasm);
 
 // Collect all the heap types visible on the module boundary that cannot be
 // changed. TODO: For open world use cases, this needs to include all subtypes
 // of public types as well.
-std::vector<HeapTypeDef> getPublicHeapTypes(Module& wasm);
+std::vector<HeapType> getPublicHeapTypes(Module& wasm);
 
 // getHeapTypes - getPublicHeapTypes
-std::vector<HeapTypeDef> getPrivateHeapTypes(Module& wasm);
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm);
 
 struct IndexedHeapTypes {
-  std::vector<HeapTypeDef> types;
-  std::unordered_map<HeapTypeDef, Index> indices;
+  std::vector<HeapType> types;
+  std::unordered_map<HeapType, Index> indices;
 };
 
 // Similar to `collectHeapTypes`, but provides fast lookup of the index for each
