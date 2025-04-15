@@ -795,6 +795,9 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     if (auto heapType = HeapType::getLeastUpperBound(heapTypeA, heapTypeB)) {
       auto nullability =
         (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+      // If one heap type is bottom, then the exactness comes from the other
+      // heap type. Otherwise, the LUB can only be exact if both of the inputs
+      // are the same exact heap type.
       auto exactness = heapTypeA.isBottom()               ? b.getExactness()
                        : heapTypeB.isBottom()             ? a.getExactness()
                        : (a.isInexact() || b.isInexact()) ? Inexact
