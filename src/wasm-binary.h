@@ -307,8 +307,6 @@ enum SegmentFlag {
 enum BrOnCastFlag {
   InputNullable = 1 << 0,
   OutputNullable = 1 << 1,
-  InputExact = 1 << 2,
-  OutputExact = 1 << 3,
 };
 
 enum EncodedType {
@@ -334,7 +332,6 @@ enum EncodedType {
   eqref = -0x13,        // 0x6d
   nonnullable = -0x1c,  // 0x64
   nullable = -0x1d,     // 0x63
-  exact = -0x1e,        // 0x62
   contref = -0x18,      // 0x68
   nullcontref = -0x0b,  // 0x75
   // exception handling
@@ -351,6 +348,8 @@ enum EncodedType {
   SubFinal = 0x4f,
   Shared = 0x65,
   SharedLEB = -0x1b, // Also 0x65 as an SLEB128
+  Exact = 0x62,
+  ExactLEB = -0x1e, // Also 0x62 as an SLEB128
   Rec = 0x4e,
   Descriptor = 0x4d,
   Describes = 0x4c,
@@ -1135,8 +1134,6 @@ enum ASTNodes {
   I31GetS = 0x1d,
   I31GetU = 0x1e,
   RefI31Shared = 0x1f,
-  RefTestRT = 0x20,
-  RefCastRT = 0x21,
 
   // Shared GC Opcodes
 
@@ -1378,7 +1375,7 @@ public:
 
   // Writes an arbitrary heap type, which may be indexed or one of the
   // basic types like funcref.
-  void writeHeapType(HeapType type);
+  void writeHeapType(HeapType type, Exactness exact);
   // Writes an indexed heap type. Note that this is encoded differently than a
   // general heap type because it does not allow negative values for basic heap
   // types.
@@ -1509,8 +1506,7 @@ public:
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int code);
-  Type getTypeNoExact(int code);
-  HeapType getHeapType();
+  std::pair<HeapType, Exactness> getHeapType();
   HeapType getIndexedHeapType();
 
   Type getConcreteType();
