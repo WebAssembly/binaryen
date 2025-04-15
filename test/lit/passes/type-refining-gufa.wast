@@ -376,7 +376,7 @@
 ;; the field to nullref.
 (module
   ;; NRML:      (type $struct (struct (field nullfuncref)))
-  ;; GUFA:      (type $struct (struct (field (exact nullfuncref))))
+  ;; GUFA:      (type $struct (struct (field nullfuncref)))
   (type $struct (struct (field funcref)))
 
   ;; NRML:      (global $C (ref $struct) (struct.new_default $struct))
