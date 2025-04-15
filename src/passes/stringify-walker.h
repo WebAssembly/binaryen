@@ -99,6 +99,10 @@ struct StringifyWalker
 
     struct CatchAllStart {};
 
+    struct TryTableStart {
+      TryTable* tryt;
+    };
+
     struct End {
       Expression* curr;
     };
@@ -110,6 +114,7 @@ struct StringifyWalker
                                    TryStart,
                                    CatchStart,
                                    CatchAllStart,
+                                   TryTableStart,
                                    End>;
 
     Separator reason;
@@ -140,6 +145,9 @@ struct StringifyWalker
     static SeparatorReason makeCatchAllStart() {
       return SeparatorReason(CatchAllStart{});
     }
+    static SeparatorReason makeTryTableStart(TryTable* tryt) {
+      return SeparatorReason(TryTableStart{tryt});
+    }
     static SeparatorReason makeEnd() { return SeparatorReason(End{}); }
     FuncStart* getFuncStart() { return std::get_if<FuncStart>(&reason); }
     BlockStart* getBlockStart() { return std::get_if<BlockStart>(&reason); }
@@ -150,6 +158,9 @@ struct StringifyWalker
     CatchStart* getCatchStart() { return std::get_if<CatchStart>(&reason); }
     CatchAllStart* getCatchAllStart() {
       return std::get_if<CatchAllStart>(&reason);
+    }
+    TryTableStart* getTryTableStart() {
+      return std::get_if<TryTableStart>(&reason);
     }
     End* getEnd() { return std::get_if<End>(&reason); }
   };
@@ -173,6 +184,8 @@ struct StringifyWalker
       return o << "Catch Start";
     } else if (reason.getCatchAllStart()) {
       return o << "Catch All Start";
+    } else if (reason.getTryTableStart()) {
+      return o << "Try Table Start";
     } else if (reason.getEnd()) {
       return o << "End";
     }

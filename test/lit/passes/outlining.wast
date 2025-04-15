@@ -1164,3 +1164,35 @@
     )
   )
 )
+
+;; Tests TryTable instructions are correctly filtered from being outlined.
+;; The (drop (i32.const 0)) instructions were added to form an outlineable
+;; sequence with the block that contains the try_table.
+(module
+  (type $0 (func))
+  (tag $tag$0 (type $0))
+  (func $a (result (ref exn))
+    (loop $label1 (result (ref exn))
+      (drop
+        (i32.const 0)
+      )
+      (block (result (ref exn))
+        (try_table (catch_all $label1)
+          (throw $tag$0)
+        )
+      )
+    )
+  )
+  (func $b (result (ref exn))
+    (loop $label1 (result (ref exn))
+      (drop
+        (i32.const 0)
+      )
+      (block (result (ref exn))
+        (try_table (catch_all $label1)
+          (throw $tag$0)
+        )
+      )
+    )
+  )
+)

@@ -118,6 +118,13 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
       addUniqueSymbol(SeparatorReason::makeEnd());
       break;
     }
+    case Expression::Id::TryTableId: {
+      auto* tryt = curr->cast<TryTable>();
+      addUniqueSymbol(SeparatorReason::makeTryTableStart(tryt));
+      Super::walk(tryt->body);
+      addUniqueSymbol(SeparatorReason::makeEnd());
+      break;
+    }
     default: {
       assert(Properties::isControlFlowStructure(curr));
       WASM_UNREACHABLE("unexpected expression");
