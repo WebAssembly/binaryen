@@ -62,6 +62,7 @@ using Tuple = TypeList;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
+enum Exactness { Inexact, Exact };
 
 // HeapType name information used for printing.
 struct TypeNames {
@@ -95,13 +96,13 @@ class HeapType {
   // should also be passed by value.
   uintptr_t id;
 
-  static constexpr int TypeBits = 2;
+  static constexpr int TypeBits = 3;
   static constexpr int UsedBits = TypeBits + 1;
   static constexpr int SharedMask = 1 << TypeBits;
 
 public:
-  // Bits 0-1 are used by the Type representation, so need to be left free.
-  // Bit 2 determines whether the basic heap type is shared (1) or unshared (0).
+  // Bits 0-2 are used by the Type representation, so need to be left free.
+  // Bit 3 determines whether the basic heap type is shared (1) or unshared (0).
   enum BasicHeapType : uint32_t {
     ext = 1 << UsedBits,
     func = 2 << UsedBits,
@@ -278,7 +279,7 @@ class Type {
   // bit 0 set. When that bit is masked off, they are pointers to the underlying
   // vectors of types. Otherwise, the type is a reference type, and is
   // represented as a heap type with bit 1 set iff the reference type is
-  // nullable.
+  // nullable and bit 2 set iff the reference type is exact.
   //
   // Since `Type` is really just a single integer, it should be passed by value.
   // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
@@ -287,6 +288,7 @@ class Type {
 
   static constexpr int TupleMask = 1 << 0;
   static constexpr int NullMask = 1 << 1;
+  static constexpr int ExactMask = 1 << 2;
 
 public:
   enum BasicType : uint32_t {
@@ -317,9 +319,10 @@ public:
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType heapType, Nullability nullable)
-    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0)) {
-    assert(heapType.isBasic() || !(heapType.getID() & (TupleMask | NullMask)));
+  Type(HeapType heapType, Nullability nullable, Exactness exact = Inexact)
+    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
+           (exact == Exact ? ExactMask : 0)) {
+    assert(!(heapType.getID() & (TupleMask | NullMask | ExactMask)));
   }
 
   // Predicates
@@ -368,9 +371,11 @@ public:
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
   bool isNullable() const { return isRef() && (id & NullMask); }
   bool isNonNullable() const { return isRef() && !(id & NullMask); }
+  bool isExact() const { return isRef() && (id & ExactMask); }
+  bool isInexact() const { return isRef() && !(id & ExactMask); }
   HeapType getHeapType() const {
     assert(isRef());
-    return HeapType(id & ~NullMask);
+    return HeapType(id & ~(NullMask | ExactMask));
   }
 
   bool isFunction() const { return isRef() && getHeapType().isFunction(); }
@@ -392,11 +397,20 @@ public:
   Nullability getNullability() const {
     return isNullable() ? Nullable : NonNullable;
   }
+  Exactness getExactness() const {
+    assert(isRef());
+    return isExact() ? Exact : Inexact;
+  }
 
   // Return a new reference type with some part updated to the specified value.
-  Type with(HeapType heapType) { return Type(heapType, getNullability()); }
+  Type with(HeapType heapType) {
+    return Type(heapType, getNullability(), getExactness());
+  }
   Type with(Nullability nullability) {
-    return Type(getHeapType(), nullability);
+    return Type(getHeapType(), nullability, getExactness());
+  }
+  Type with(Exactness exactness) {
+    return Type(getHeapType(), getNullability(), exactness);
   }
 
 private:
@@ -716,7 +730,8 @@ struct TypeBuilder {
         return t;
       }
       assert(t.isRef());
-      return getTempRefType(map(t.getHeapType()), t.getNullability());
+      return getTempRefType(
+        map(t.getHeapType()), t.getNullability(), t.getExactness());
     };
     auto copyType = [&](Type t) -> Type {
       if (t.isTuple()) {
@@ -769,7 +784,9 @@ struct TypeBuilder {
   // TypeBuilder's HeapTypes. For Ref types, the HeapType may be a temporary
   // HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
-  Type getTempRefType(HeapType heapType, Nullability nullable);
+  Type getTempRefType(HeapType heapType,
+                      Nullability nullable,
+                      Exactness exact = Inexact);
 
   // Declare the HeapType being built at index `i` to be an immediate subtype of
   // the given HeapType.

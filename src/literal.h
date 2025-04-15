@@ -246,7 +246,7 @@ public:
     }
   }
   static Literal makeNull(HeapType type) {
-    return Literal(Type(type.getBottom(), Nullable));
+    return Literal(Type(type.getBottom(), Nullable, Exact));
   }
   static Literal makeFunc(Name func, HeapType type) {
     return Literal(func, type);

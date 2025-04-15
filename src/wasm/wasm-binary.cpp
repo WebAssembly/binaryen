@@ -1574,6 +1574,12 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
+    // Exact references are introduced by the custom descriptors feature, but
+    // can be used internally even when it is not enabled. In that case, we have
+    // to generalize the types to be inexact before writing them.
+    if (!wasm->features.hasCustomDescriptors()) {
+      type = Type(type.getHeapType(), type.getNullability(), Inexact);
+    }
     // The only reference types allowed without GC are funcref, externref, and
     // exnref. We internally use more refined versions of those types, but we
     // cannot emit those without GC.
@@ -1589,6 +1595,12 @@ void WasmBinaryWriter::writeType(Type type) {
         // nullable version.
         type = Type(type.getHeapType().getTop(), Nullable);
       }
+    }
+    // If the type is exact, emit the exact prefix and continue on without
+    // considering exactness.
+    if (type.isExact()) {
+      o << S32LEB(BinaryConsts::EncodedType::exact);
+      type = Type(type.getHeapType(), type.getNullability(), Inexact);
     }
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
@@ -2178,7 +2190,7 @@ Signature WasmBinaryReader::getBlockType() {
   return Signature(Type::none, getType(code));
 }
 
-Type WasmBinaryReader::getType(int code) {
+Type WasmBinaryReader::getTypeNoExact(int code) {
   Type type;
   if (getBasicType(code, type)) {
     return type;
@@ -2192,6 +2204,17 @@ Type WasmBinaryReader::getType(int code) {
       throwError("invalid wasm type: " + std::to_string(code));
   }
   WASM_UNREACHABLE("unexpected type");
+}
+
+Type WasmBinaryReader::getType(int code) {
+  if (code == BinaryConsts::EncodedType::exact) {
+    auto type = getTypeNoExact(getS32LEB());
+    if (!type.isRef()) {
+      throwError("invalid exact prefix on non-reference type");
+    }
+    return Type(type.getHeapType(), type.getNullability(), Exact);
+  }
+  return getTypeNoExact(code);
 }
 
 Type WasmBinaryReader::getType() { return getType(getS32LEB()); }
@@ -2354,7 +2377,7 @@ void WasmBinaryReader::readTypes() {
     }
     return builder.getTempHeapType(size_t(htCode));
   };
-  auto makeType = [&](int32_t typeCode) {
+  auto makeTypeNoExact = [&](int32_t typeCode) {
     Type type;
     if (getBasicType(typeCode, type)) {
       return type;
@@ -2378,6 +2401,17 @@ void WasmBinaryReader::readTypes() {
         throwError("unexpected type index: " + std::to_string(typeCode));
     }
     WASM_UNREACHABLE("unexpected type");
+  };
+  auto makeType = [&](int32_t typeCode) {
+    if (typeCode == BinaryConsts::EncodedType::exact) {
+      auto type = makeTypeNoExact(getS32LEB());
+      if (!type.isRef()) {
+        throwError("unexpected exact prefix on non-reference type");
+      }
+      return builder.getTempRefType(
+        type.getHeapType(), type.getNullability(), Exact);
+    }
+    return makeTypeNoExact(typeCode);
   };
   auto readType = [&]() { return makeType(getS32LEB()); };
 
@@ -4252,16 +4286,30 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeRefTest(Type(getHeapType(), NonNullable));
         case BinaryConsts::RefTestNull:
           return builder.makeRefTest(Type(getHeapType(), Nullable));
+        case BinaryConsts::RefTestRT:
+          return builder.makeRefTest(getType());
         case BinaryConsts::RefCast:
           return builder.makeRefCast(Type(getHeapType(), NonNullable));
         case BinaryConsts::RefCastNull:
           return builder.makeRefCast(Type(getHeapType(), Nullable));
+        case BinaryConsts::RefCastRT:
+          return builder.makeRefCast(getType());
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail: {
           auto flags = getInt8();
           auto label = getU32LEB();
-          auto in = Type(getHeapType(), (flags & 1) ? Nullable : NonNullable);
-          auto cast = Type(getHeapType(), (flags & 2) ? Nullable : NonNullable);
+          auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto dstNull = (flags & BinaryConsts::BrOnCastFlag::OutputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto srcExact =
+            (flags & BinaryConsts::BrOnCastFlag::InputExact) ? Exact : Inexact;
+          auto dstExact =
+            (flags & BinaryConsts::BrOnCastFlag::OutputExact) ? Exact : Inexact;
+          auto in = Type(getHeapType(), srcNull, srcExact);
+          auto cast = Type(getHeapType(), dstNull, dstExact);
           auto kind = op == BinaryConsts::BrOnCast ? BrOnCast : BrOnCastFail;
           return builder.makeBrOn(label, kind, in, cast);
         }

@@ -2288,6 +2288,10 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
         curr->type.isNullable(), curr, "ref.null types must be nullable")) {
     return;
   }
+  if (!shouldBeTrue(
+        curr->type.isExact(), curr, "ref.null types must be exact")) {
+    return;
+  }
   shouldBeTrue(
     curr->type.isNull(), curr, "ref.null must have a bottom heap type");
 }
