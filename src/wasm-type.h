@@ -382,7 +382,7 @@ public:
   bool isExact() const {
     return isRef() && !getHeapType().isBasic() && (id & ExactMask);
   }
-  bool isInexact() const { return isRef() && !(id & ExactMask); }
+  bool isInexact() const { return isRef() && !isExact(); }
   HeapType getHeapType() const {
     assert(isRef());
     HeapType masked(id & ~NullMask);
