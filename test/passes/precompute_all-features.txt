@@ -286,7 +286,7 @@
    )
   )
   (drop
-   (block $l2 (result (exact nullexternref))
+   (block $l2 (result nullexternref)
     (drop
      (block $l3
       (global.set $global-mut

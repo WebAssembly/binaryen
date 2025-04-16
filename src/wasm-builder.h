@@ -670,7 +670,7 @@ public:
   }
   RefNull* makeRefNull(HeapType type) {
     auto* ret = wasm.allocator.alloc<RefNull>();
-    ret->finalize(Type(type.getBottom(), Nullable, Exact));
+    ret->finalize(Type(type.getBottom(), Nullable));
     return ret;
   }
   RefNull* makeRefNull(Type type) {
