@@ -1672,11 +1672,12 @@ class ClusterFuzz(TestCaseHandler):
         # a crash).
         output = run_vm(cmd)
 
-        # Verify that we called something. The fuzzer should always emit at
-        # least one exported function (unless we've decided to ignore the entire
+        # Verify that we called something, if the fuzzer emitted a func export
+        # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
-        # to a testcase with a segment out of bounds, say).
-        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+        # to a testcase with a segment out of bounds, say.
+        if get_exports(wasm, ['func']) and output != IGNORE and not \
+           output.startswith(INSTANTIATE_ERROR):
             assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
