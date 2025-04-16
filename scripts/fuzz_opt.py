@@ -1655,6 +1655,9 @@ class ClusterFuzz(TestCaseHandler):
         assert os.path.exists(fuzz_file)
         assert os.path.exists(flags_file)
 
+        # We'll use the fuzz file a few times below in commands.
+        fuzz_file = os.path.abspath(fuzz_file)
+
         # Run the testcase in V8, similarly to how ClusterFuzz does.
         cmd = [shared.V8]
         # The flags are given in the flags file - we do *not* use our normal
@@ -1668,7 +1671,6 @@ class ClusterFuzz(TestCaseHandler):
         cmd += get_v8_extra_flags()
         # Run the fuzz file, which contains a modified fuzz_shell.js - we do
         # *not* run fuzz_shell.js normally.
-        fuzz_file = os.path.abspath(fuzz_file)
         cmd.append(fuzz_file)
         # No wasm file needs to be provided: it is hardcoded into the JS. Note
         # that we use run_vm(), which will ignore known issues in our output and
