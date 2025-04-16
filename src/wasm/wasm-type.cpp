@@ -1736,9 +1736,12 @@ std::ostream& TypePrinter::print(Type type) {
       os << "null ";
     }
     if (type.isExact()) {
-      os << "exact ";
+      os << "(exact ";
     }
     printHeapTypeName(heapType);
+    if (type.isExact()) {
+      os << ')';
+    }
     os << ')';
   } else {
     WASM_UNREACHABLE("unexpected type");

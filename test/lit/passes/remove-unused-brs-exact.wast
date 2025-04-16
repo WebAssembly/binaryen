@@ -9,12 +9,12 @@
 (module
  ;; CHECK:      (type $struct (struct))
  (type $struct (struct))
- ;; CHECK:      (func $br_on_cast_fail (type $1) (param $0 (ref null exact $struct))
+ ;; CHECK:      (func $br_on_cast_fail (type $1) (param $0 (ref null (exact $struct)))
  ;; CHECK-NEXT:  (local $1 (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (ref.cast (ref null exact $struct)
+ ;; CHECK-NEXT:     (ref.cast (ref null (exact $struct))
  ;; CHECK-NEXT:      (local.tee $1
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
@@ -24,7 +24,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_fail (param (ref null exact $struct))
+ (func $br_on_cast_fail (param (ref null (exact $struct)))
   (local $1 (ref null $struct))
   (drop
    (block $block (result (ref $struct))
