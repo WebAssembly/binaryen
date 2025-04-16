@@ -1258,6 +1258,43 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           tablify(curr);
           // Pattern-patch ifs, recreating them when it makes sense.
           restructureIf(curr);
+
+          // A potential optimization opportunity:
+          // Optimize block tails where a dropped `br_if`'s value is redundant
+          // consider for example:
+          // (block $block (result i32)
+          // ..
+          //   (drop
+          //     (br_if $block
+          //       (value)
+          //       (condition)
+          //     )
+          //   )
+          //   (value)
+          // )
+          // =>
+          // (block $block (result i32)
+          // ..
+          //   (drop
+          //     (condition)
+          //   )
+          //   (value)
+          // )
+          const size_t size = curr->list.size();
+          auto* secondLast = curr->list[size - 2];
+          auto* last = curr->list[size - 1];
+
+          if (auto* drop = secondLast->dynCast<Drop>()) {
+            if (auto* brk = drop->value->dynCast<Break>()) {
+              if (!EffectAnalyzer(passOptions, *getModule(), brk->value)
+                     .hasSideEffects()) {
+                if (ExpressionAnalyzer::equal(brk->value, last)) {
+                  // All conditions met, perform the update
+                  drop->value = brk->condition;
+                }
+              }
+            }
+          }
         }
       }
 
