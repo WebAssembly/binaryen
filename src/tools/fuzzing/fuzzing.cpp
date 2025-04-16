@@ -595,7 +595,7 @@ void TranslateToFuzzReader::setupTables() {
       });
     if (iter != wasm.tables.end()) {
       // Use the existing one.
-      exnrefTableName = iter->name;
+      exnrefTableName = iter->get()->name;
     } else {
       // Create a new exnref table.
       Address initial = upTo(10);
