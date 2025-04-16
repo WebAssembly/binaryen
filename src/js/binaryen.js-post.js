@@ -3058,7 +3058,7 @@ Module['getExpressionType'] = function(expr) {
 Module['getExpressionInfo'] = function(expr) {
   const id = Module['_BinaryenExpressionGetId'](expr);
   const type = Module['_BinaryenExpressionGetType'](expr);
-  switch (id) { // TODO: GC instructions
+  switch (id) {
     case Module['BlockId']:
       return {
         'id': id,
@@ -3113,7 +3113,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
-        'table': Module['_BinaryenCallIndirectGetTable'](expr),
+        'table': UTF8ToString(Module['_BinaryenCallIndirectGetTable'](expr)),
         'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
       };
     case Module['LocalGetId']:
@@ -3446,17 +3446,151 @@ Module['getExpressionInfo'] = function(expr) {
         'left': Module['_BinaryenRefEqGetLeft'](expr),
         'right': Module['_BinaryenRefEqGetRight'](expr)
       };
+    case Module['RefTestId']:
+      return {
+        'id': id,
+        'type': type,
+        'ref': Module['_BinaryenRefTestGetRef'](expr),
+        'castType': Module['_BinaryenRefTestGetCastType'](expr)
+      };
+    case Module['RefCastId']:
+      return {
+        'id': id,
+        'type': type,
+        'ref': Module['_BinaryenRefCastGetRef'](expr)
+      };
+    case Module['BrOnId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenBrOnGetOp'](expr),
+        'name': UTF8ToString(Module['_BinaryenBrOnGetName'](expr)),
+        'ref': Module['_BinaryenBrOnGetRef'](expr),
+        'castType': Module['_BinaryenBrOnGetCastType'](expr)
+      };
+    case Module['StructNewId']:
+      return {
+        'id': id,
+        'type': type,
+        'operands': getAllNested(expr, Module['_BinaryenStructNewGetNumOperands'], Module['_BinaryenStructNewGetOperandAt']),
+      };
+    case Module['StructGetId']:
+      return {
+        'id': id,
+        'type': type,
+        'index': Module['_BinaryenStructGetGetIndex'](expr),
+        'ref': Module['_BinaryenStructGetGetRef'](expr),
+        'isSigned': Boolean(Module['_BinaryenStructGetIsSigned'](expr))
+      };
+    case Module['StructSetId']:
+      return {
+        'id': id,
+        'type': type,
+        'index': Module['_BinaryenStructSetGetIndex'](expr),
+        'ref': Module['_BinaryenStructSetGetRef'](expr),
+        'value': Module['_BinaryenStructSetGetValue'](expr)
+      };
+    case Module['ArrayNewId']:
+      return {
+        'id': id,
+        'type': type,
+        'getInit': Module['_BinaryenArrayNewGetInit'](expr),
+        'getSize': Module['_BinaryenArrayNewGetSize'](expr)
+      };
+    case Module['ArrayNewFixedId']:
+      return {
+        'id': id,
+        'type': type,
+        'values': getAllNested(expr, Module['_BinaryenArrayNewFixedGetNumValues'], Module['_BinaryenArrayNewFixedGetValueAt'])
+      };
+    case Module['ArrayNewDataId']:
+      return {
+        'id': id,
+        'type': type,
+        'segment': UTF8ToString(Module['_BinaryenArrayNewDataGetSegment'](expr)),
+        'offset': Module['_BinaryenArrayNewDataGetOffset'](expr),
+        'size': Module['_BinaryenArrayNewDataGetSize'](expr)
+      };
+    case Module['ArrayNewElemId']:
+      return {
+        'id': id,
+        'type': type,
+        'segment': UTF8ToString(Module['_BinaryenArrayNewElemGetSegment'](expr)),
+        'offset': Module['_BinaryenArrayNewElemGetOffset'](expr),
+        'size': Module['_BinaryenArrayNewElemGetSize'](expr)
+      };
+    case Module['ArrayGetId']:
+      return {
+        'id': id,
+        'type': type,
+        'ref': Module['_BinaryenArrayGetGetRef'](expr),
+        'index': Module['_BinaryenArrayGetGetIndex'](expr),
+        'isSigned': Boolean(Module['_BinaryenArrayGetIsSigned'](expr))
+      };
+    case Module['ArraySetId']:
+      return {
+        'id': id,
+        'type': type,
+        'ref': Module['_BinaryenArraySetGetRef'](expr),
+        'index': Module['_BinaryenArraySetGetIndex'](expr),
+        'value': Module['_BinaryenArraySetGetValue'](expr)
+      };
+    case Module['ArrayLenId']:
+      return {
+        'id': id,
+        'type': type,
+        'ref': Module['_BinaryenArrayLenGetRef'](expr)
+      };
+    case Module['ArrayFillId']:
+      return {
+        'id': id,
+        'type': type,
+        'ref': Module['_BinaryenArrayFillGetRef'](expr),
+        'index': Module['_BinaryenArrayFillGetIndex'](expr),
+        'value': Module['_BinaryenArrayFillGetValue'](expr),
+        'size': Module['_BinaryenArrayFillGetSize'](expr)
+      };
+    case Module['ArrayCopyId']:
+      return {
+        'id': id,
+        'type': type,
+        'destRef': Module['_BinaryenArrayCopyGetDestRef'](expr),
+        'destIndex': Module['_BinaryenArrayCopyGetDestIndex'](expr),
+        'srcRef': Module['_BinaryenArrayCopyGetSrcRef'](expr),
+        'srcIndex': Module['_BinaryenArrayCopyGetSrcIndex'](expr),
+        'length': Module['_BinaryenArrayCopyGetLength'](expr)
+      };
+    case Module['ArrayInitDataId']:
+      return {
+        'id': id,
+        'type': type,
+        'segment': UTF8ToString(Module['_BinaryenArrayInitDataGetSegment'](expr)),
+        'ref': Module['_BinaryenArrayInitDataGetRef'](expr),
+        'index': Module['_BinaryenArrayInitDataGetIndex'](expr),
+        'offset': Module['_BinaryenArrayInitDataGetOffset'](expr),
+        'size': Module['_BinaryenArrayInitDataGetSize'](expr)
+      };
+    case Module['ArrayInitElemId']:
+      return {
+        'id': id,
+        'type': type,
+        'segment': UTF8ToString(Module['_BinaryenArrayInitElemGetSegment'](expr)),
+        'ref': Module['_BinaryenArrayInitElemGetRef'](expr),
+        'index': Module['_BinaryenArrayInitElemGetIndex'](expr),
+        'offset': Module['_BinaryenArrayInitElemGetOffset'](expr),
+        'size': Module['_BinaryenArrayInitElemGetSize'](expr)
+      };
     case Module['TryId']:
       return {
         'id': id,
         'type': type,
         'name': UTF8ToString(Module['_BinaryenTryGetName'](expr)),
         'body': Module['_BinaryenTryGetBody'](expr),
-        'catchTags': getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
+        'catchTags': getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']).map(p => UTF8ToString(p)),
         'catchBodies': getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
-        'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expr),
+        'hasCatchAll': Boolean(Module['_BinaryenTryHasCatchAll'](expr)),
         'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expr)),
-        'isDelegate': Module['_BinaryenTryIsDelegate'](expr)
+        'isDelegate': Boolean(Module['_BinaryenTryIsDelegate'](expr))
       };
     case Module['ThrowId']:
       return {
