@@ -96,9 +96,10 @@ class HeapType {
   // should also be passed by value.
   uintptr_t id;
 
-  static constexpr int TypeBits = 3;
+  static constexpr int TypeBits = 2;
   static constexpr int UsedBits = TypeBits + 1;
   static constexpr int SharedMask = 1 << TypeBits;
+  friend class Type;
 
 public:
   // Bits 0-2 are used by the Type representation, so need to be left free.
@@ -290,6 +291,11 @@ class Type {
   static constexpr int NullMask = 1 << 1;
   static constexpr int ExactMask = 1 << 2;
 
+  // Only abstract heap types store sharedness as a bit in the representation
+  // and only non-abstract heap types can be exact, so exactness and sharedness
+  // can use the same bit.
+  static_assert(ExactMask == HeapType::SharedMask);
+
 public:
   enum BasicType : uint32_t {
     none = 0,
@@ -322,7 +328,8 @@ public:
   Type(HeapType heapType, Nullability nullable, Exactness exact = Inexact)
     : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
            (exact == Exact ? ExactMask : 0)) {
-    assert(!(heapType.getID() & (TupleMask | NullMask | ExactMask)));
+    assert(!(heapType.getID() &
+             (TupleMask | NullMask | (heapType.isBasic() ? 0 : ExactMask))));
     assert(!heapType.isBasic() || exact == Inexact);
   }
 
@@ -372,11 +379,18 @@ public:
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
   bool isNullable() const { return isRef() && (id & NullMask); }
   bool isNonNullable() const { return isRef() && !(id & NullMask); }
-  bool isExact() const { return isRef() && (id & ExactMask); }
+  bool isExact() const {
+    return isRef() && !getHeapType().isBasic() && (id & ExactMask);
+  }
   bool isInexact() const { return isRef() && !(id & ExactMask); }
   HeapType getHeapType() const {
     assert(isRef());
-    return HeapType(id & ~(NullMask | ExactMask));
+    HeapType masked(id & ~NullMask);
+    // Avoid masking off the shared bit on basic heap types.
+    if (!masked.isBasic()) {
+      masked = HeapType(masked.id & ~ExactMask);
+    }
+    return masked;
   }
 
   bool isFunction() const { return isRef() && getHeapType().isFunction(); }
