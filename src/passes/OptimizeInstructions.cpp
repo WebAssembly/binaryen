@@ -2924,15 +2924,6 @@ private:
           }
         }
       }
-      if (auto* block = binary->right->dynCast<Block>()) {
-        auto fallthrough =
-          Properties::getFallthrough(block, getPassOptions(), *getModule());
-        if (auto* c = fallthrough->dynCast<Const>()) {
-          Builder builder(*getModule());
-          return getDroppedChildrenAndAppend(binary,
-                                             builder.makeConst(c->value));
-        }
-      }
       if (auto* ext = Properties::getSignExtValue(binary)) {
         // use a cheaper zero-extent, we just care about the boolean value
         // anyhow
