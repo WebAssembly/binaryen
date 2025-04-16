@@ -673,12 +673,6 @@ public:
     ret->finalize(Type(type.getBottom(), Nullable));
     return ret;
   }
-  RefNull* makeRefNull(Type type) {
-    assert(type.isNullable() && type.isNull() && type.isExact());
-    auto* ret = wasm.allocator.alloc<RefNull>();
-    ret->finalize(type);
-    return ret;
-  }
   RefIsNull* makeRefIsNull(Expression* value) {
     auto* ret = wasm.allocator.alloc<RefIsNull>();
     ret->value = value;

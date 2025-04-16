@@ -1531,6 +1531,759 @@ console.log("# RefEq");
   module.dispose();
 })();
 
+console.log("# RefTest");
+(function testRefTest() {
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, binaryen.anyref);
+  var castType = binaryen.anyref;
+  const theRefTest = binaryen.RefTest(module.ref.test(ref, castType));
+  assert(theRefTest instanceof binaryen.RefTest);
+  assert(theRefTest instanceof binaryen.Expression);
+  assert(theRefTest.ref === ref);
+  assert(theRefTest.castType === castType);
+  assert(theRefTest.type === binaryen.i32);
+
+  theRefTest.ref = ref = module.local.get(2, binaryen.externref);
+  assert(theRefTest.ref === ref);
+  theRefTest.castType = castType = binaryen.externref;
+  assert(theRefTest.castType === castType);
+  theRefTest.type = binaryen.f64;
+  theRefTest.finalize();
+  assert(theRefTest.type === binaryen.i32);
+
+  console.log(theRefTest.toText());
+  assert(
+    theRefTest.toText()
+    ==
+    "(ref.test externref\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# RefCast");
+(function testRefCast() {
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, binaryen.anyref);
+  var type = binaryen.anyref;
+  const theRefCast = binaryen.RefCast(module.ref.cast(ref, type));
+  assert(theRefCast instanceof binaryen.RefCast);
+  assert(theRefCast instanceof binaryen.Expression);
+  assert(theRefCast.ref === ref);
+  assert(theRefCast.type === type);
+
+  theRefCast.ref = ref = module.local.get(2, binaryen.externref);
+  assert(theRefCast.ref === ref);
+  theRefCast.type = type = binaryen.externref;
+  theRefCast.finalize();
+  assert(theRefCast.type === type);
+
+  console.log(theRefCast.toText());
+  assert(
+    theRefCast.toText()
+    ==
+    "(ref.cast externref\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# BrOn");
+(function testBrOn() {
+  const module = new binaryen.Module();
+
+  var name = "br";
+  var ref = module.local.get(0, binaryen.externref);
+  var op = binaryen.Operations.BrOnNull;
+  var castType = binaryen.unreachable;
+  const theBrOn = binaryen.BrOn(module.br_on_null(name, ref));
+  assert(theBrOn instanceof binaryen.BrOn);
+  assert(theBrOn instanceof binaryen.Expression);
+  assert(theBrOn.name === name);
+  assert(theBrOn.ref === ref);
+  assert(theBrOn.op === op);
+  assert(theBrOn.castType === castType);
+
+  // TODO: What should theBrOn.type be equal to?
+
+  theBrOn.name = name = "br2";
+  assert(theBrOn.name === name);
+  theBrOn.ref = ref = module.local.get(1, binaryen.anyref);
+  assert(theBrOn.ref === ref);
+  theBrOn.op = op = binaryen.Operations.BrOnCast;
+  assert(theBrOn.op === op);
+  theBrOn.castType = castType = binaryen.i31ref;
+  assert(theBrOn.castType === castType);
+  theBrOn.finalize();
+
+  console.log(theBrOn.toText());
+  assert(
+    theBrOn.toText()
+    ==
+    "(br_on_cast $br2 anyref i31ref\n (local.get $1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# StructNew");
+(function testStructNew() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  builder.setStructType(1, [
+    { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
+    { type: binaryen.i64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [
+    struct0Type,
+    struct1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var operands = [
+    module.i32.const(1),
+    module.i32.const(2)
+  ];
+  var type = struct0Type;
+  const theStructNew = binaryen.StructNew(module.struct.new(operands, type));
+  assert(theStructNew instanceof binaryen.StructNew);
+  assert(theStructNew instanceof binaryen.Expression);
+  assertDeepEqual(theStructNew.operands, operands);
+  assertDeepEqual(theStructNew.getOperands(), operands);
+  assert(theStructNew.type === type);
+
+  theStructNew.operands = operands = [
+    module.i32.const(3), // set
+    module.i32.const(4), // set
+    module.i32.const(5)  // append
+  ];
+  assertDeepEqual(theStructNew.operands, operands);
+  operands = [
+    module.i32.const(6) // set
+    // remove
+    // remove
+  ];
+  theStructNew.setOperands(operands);
+  assertDeepEqual(theStructNew.operands, operands);
+  theStructNew.insertOperandAt(0, module.i32.const(7));
+  theStructNew.type = type = struct1Type;
+  theStructNew.finalize();
+  assert(theStructNew.type === type);
+
+  console.log(theStructNew.toText());
+  assert(
+    theStructNew.toText()
+    ==
+    "(struct.new $struct.0\n (i32.const 7)\n (i32.const 6)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# StructGet");
+(function testStructGet() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  builder.setStructType(1, [
+    { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
+    { type: binaryen.i64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [
+    struct0Type,
+    struct1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var index = 0;
+  var ref = module.local.get(0, struct0Type);
+  var type = binaryen.i32;
+  var signed = false;
+  const theStructGet = binaryen.StructGet(module.struct.get(index, ref, type, signed));
+  assert(theStructGet instanceof binaryen.StructGet);
+  assert(theStructGet instanceof binaryen.Expression);
+  assert(theStructGet.index === index);
+  assert(theStructGet.ref === ref);
+  assert(theStructGet.signed === signed);
+  assert(theStructGet.type === type);
+
+  theStructGet.index = index = 1;
+  assert(theStructGet.index === index);
+  theStructGet.ref = ref = module.local.get(1, struct1Type);
+  assert(theStructGet.ref === ref);
+  theStructGet.signed = signed = true;
+  assert(theStructGet.signed === signed);
+  theStructGet.type = type = binaryen.i64;
+  theStructGet.finalize();
+  assert(theStructGet.type === type);
+
+  console.log(theStructGet.toText());
+  assert(
+    theStructGet.toText()
+    ==
+    "(struct.get $struct.0 1\n (local.get $1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# StructSet");
+(function testStructSet() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setStructType(0, [
+    { type: binaryen.i32, packedType: binaryen.notPacked, mutable: true },
+  ]);
+  builder.setStructType(1, [
+    { type: binaryen.i32, packedType: binaryen.i16, mutable: true },
+    { type: binaryen.i64, packedType: binaryen.notPacked, mutable: true }
+  ]);
+  var [
+    struct0Type,
+    struct1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var index = 0;
+  var ref = module.local.get(0, struct0Type);
+  var value = module.local.get(1, binaryen.i32);
+  const theStructSet = binaryen.StructSet(module.struct.set(index, ref, value));
+  assert(theStructSet instanceof binaryen.StructSet);
+  assert(theStructSet instanceof binaryen.Expression);
+  assert(theStructSet.index === index);
+  assert(theStructSet.ref === ref);
+  assert(theStructSet.value === value);
+  assert(theStructSet.type === binaryen.none);
+
+  theStructSet.index = index = 1;
+  assert(theStructSet.index === index);
+  theStructSet.ref = ref = module.local.get(2, struct1Type);
+  assert(theStructSet.ref === ref);
+  theStructSet.value = value = module.local.get(3, binaryen.i64);
+  assert(theStructSet.value === value);
+  theStructSet.type = binaryen.f64;
+  theStructSet.finalize();
+  assert(theStructSet.type === binaryen.none);
+
+  console.log(theStructSet.toText());
+  assert(
+    theStructSet.toText()
+    ==
+    "(struct.set $struct.0 1\n (local.get $2)\n (local.get $3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayNew");
+(function testArrayNew() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var size = module.i32.const(2);
+  var init = module.i32.const(1);
+  const theArrayNew = binaryen.ArrayNew(module.array.new(type, size, init));
+  assert(theArrayNew instanceof binaryen.ArrayNew);
+  assert(theArrayNew instanceof binaryen.Expression);
+  assert(theArrayNew.size === size);
+  assert(theArrayNew.init === init);
+  assert(theArrayNew.type === type);
+
+  theArrayNew.size = size = module.i32.const(4);
+  assert(theArrayNew.size === size);
+  theArrayNew.init = init = module.i32.const(3);
+  assert(theArrayNew.init === init);
+  theArrayNew.type = type = array1Type;
+  theArrayNew.finalize();
+  assert(theArrayNew.type === type);
+
+  console.log(theArrayNew.toText());
+  assert(
+    theArrayNew.toText()
+    ==
+    "(array.new $array.0\n (i32.const 3)\n (i32.const 4)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayNewFixed");
+(function testArrayNewFixed() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var values = [
+    module.i32.const(1),
+    module.i32.const(2)
+  ];
+  const theArrayNewFixed = binaryen.ArrayNewFixed(module.array.new_fixed(type, values));
+  assert(theArrayNewFixed instanceof binaryen.ArrayNewFixed);
+  assert(theArrayNewFixed instanceof binaryen.Expression);
+  assertDeepEqual(theArrayNewFixed.values, values);
+  assertDeepEqual(theArrayNewFixed.getValues(), values);
+  assert(theArrayNewFixed.type === type);
+
+  theArrayNewFixed.values = values = [
+    module.i32.const(3), // set
+    module.i32.const(4), // set
+    module.i32.const(5)  // append
+  ];
+  assertDeepEqual(theArrayNewFixed.values, values);
+  values = [
+    module.i32.const(6) // set
+    // remove
+    // remove
+  ];
+  theArrayNewFixed.setValues(values);
+  assertDeepEqual(theArrayNewFixed.values, values);
+  theArrayNewFixed.insertValueAt(0, module.i32.const(7));
+  theArrayNewFixed.type = type = array1Type;
+  theArrayNewFixed.finalize();
+  assert(theArrayNewFixed.type === type);
+
+  console.log(theArrayNewFixed.toText());
+  assert(
+    theArrayNewFixed.toText()
+    ==
+    "(array.new_fixed $array.0 2\n (i32.const 7)\n (i32.const 6)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayNewData");
+(function testArrayNewData() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var segment = "0";
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayNewData = binaryen.ArrayNewData(module.array.new_data(type, segment, offset, size));
+  assert(theArrayNewData instanceof binaryen.ArrayNewData);
+  assert(theArrayNewData instanceof binaryen.Expression);
+  assert(theArrayNewData.segment === segment);
+  assert(theArrayNewData.offset === offset);
+  assert(theArrayNewData.size === size);
+  assert(theArrayNewData.type === type);
+
+  theArrayNewData.segment = segment = "3";
+  assert(theArrayNewData.segment === segment);
+  theArrayNewData.offset = offset = module.i32.const(4);
+  assert(theArrayNewData.offset === offset);
+  theArrayNewData.size = size = module.i32.const(5);
+  assert(theArrayNewData.size === size);
+  theArrayNewData.type = type = array1Type;
+  theArrayNewData.finalize();
+  assert(theArrayNewData.type === type);
+
+  console.log(theArrayNewData.toText());
+  assert(
+    theArrayNewData.toText()
+    ==
+    "(array.new_data $array.0 $3\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayNewElem");
+(function testArrayNewElem() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var type = array0Type;
+  var segment = "0";
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayNewElem = binaryen.ArrayNewElem(module.array.new_elem(type, segment, offset, size));
+  assert(theArrayNewElem instanceof binaryen.ArrayNewElem);
+  assert(theArrayNewElem instanceof binaryen.Expression);
+  assert(theArrayNewElem.segment === segment);
+  assert(theArrayNewElem.offset === offset);
+  assert(theArrayNewElem.size === size);
+  assert(theArrayNewElem.type === type);
+
+  theArrayNewElem.segment = segment = "3";
+  assert(theArrayNewElem.segment === segment);
+  theArrayNewElem.offset = offset = module.i32.const(4);
+  assert(theArrayNewElem.offset === offset);
+  theArrayNewElem.size = size = module.i32.const(5);
+  assert(theArrayNewElem.size === size);
+  theArrayNewElem.type = type = array1Type;
+  theArrayNewElem.finalize();
+  assert(theArrayNewElem.type === type);
+
+  console.log(theArrayNewElem.toText());
+  assert(
+    theArrayNewElem.toText()
+    ==
+    "(array.new_elem $array.0 $3\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayGet");
+(function testArrayGet() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var type = binaryen.i32;
+  var signed = false;
+  const theArrayGet = binaryen.ArrayGet(module.array.get(ref, index, type, signed));
+  assert(theArrayGet instanceof binaryen.ArrayGet);
+  assert(theArrayGet instanceof binaryen.Expression);
+  assert(theArrayGet.ref === ref);
+  assert(theArrayGet.index === index);
+  assert(theArrayGet.signed === signed);
+  assert(theArrayGet.type === type);
+
+  theArrayGet.ref = ref = module.local.get(1, array1Type);
+  assert(theArrayGet.ref === ref);
+  theArrayGet.index = index = module.i32.const(1);
+  assert(theArrayGet.index === index);
+  theArrayGet.signed = signed = true;
+  assert(theArrayGet.signed === signed);
+  theArrayGet.type = type = binaryen.i64;
+  theArrayGet.finalize();
+  assert(theArrayGet.type === type);
+
+  console.log(theArrayGet.toText());
+  assert(
+    theArrayGet.toText()
+    ==
+    "(array.get $array.0\n (local.get $1)\n (i32.const 1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArraySet");
+(function testArraySet() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var value = module.local.get(1, binaryen.i32);
+  const theArraySet = binaryen.ArraySet(module.array.set(ref, index, value));
+  assert(theArraySet instanceof binaryen.ArraySet);
+  assert(theArraySet instanceof binaryen.Expression);
+  assert(theArraySet.ref === ref);
+  assert(theArraySet.index === index);
+  assert(theArraySet.value === value);
+  assert(theArraySet.type === binaryen.none);
+
+  theArraySet.ref = ref = module.local.get(2, array1Type);
+  assert(theArraySet.ref === ref);
+  theArraySet.index = index = module.i32.const(1);
+  assert(theArraySet.index === index);
+  theArraySet.value = value = module.local.get(3, binaryen.i64);
+  assert(theArraySet.value === value);
+  theArraySet.type = binaryen.i64;
+  theArraySet.finalize();
+  assert(theArraySet.type === binaryen.none);
+
+  console.log(theArraySet.toText());
+  assert(
+    theArraySet.toText()
+    ==
+    "(array.set $array.0\n (local.get $2)\n (i32.const 1)\n (local.get $3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayLen");
+(function testArrayLen() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, array0Type);
+  const theArrayLen = binaryen.ArrayLen(module.array.len(ref));
+  assert(theArrayLen instanceof binaryen.ArrayLen);
+  assert(theArrayLen instanceof binaryen.Expression);
+  assert(theArrayLen.ref === ref);
+  assert(theArrayLen.type === binaryen.i32);
+
+  theArrayLen.ref = ref = module.local.get(1, array1Type);
+  assert(theArrayLen.ref === ref);
+  theArrayLen.type = binaryen.i64;
+  theArrayLen.finalize();
+  assert(theArrayLen.type === binaryen.i32);
+
+  console.log(theArrayLen.toText());
+  assert(
+    theArrayLen.toText()
+    ==
+    "(array.len\n (local.get $1)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayFill");
+(function testArrayFill() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var value = module.local.get(1, binaryen.i32);
+  var size = module.i32.const(1);
+  const theArrayFill = binaryen.ArrayFill(module.array.fill(ref, index, value, size));
+  assert(theArrayFill instanceof binaryen.ArrayFill);
+  assert(theArrayFill instanceof binaryen.Expression);
+  assert(theArrayFill.ref === ref);
+  assert(theArrayFill.index === index);
+  assert(theArrayFill.value === value);
+  assert(theArrayFill.size === size);
+  assert(theArrayFill.type === binaryen.none);
+
+  theArrayFill.ref = ref = module.local.get(2, array1Type);
+  assert(theArrayFill.ref === ref);
+  theArrayFill.index = index = module.i32.const(2);
+  assert(theArrayFill.index === index);
+  theArrayFill.value = value = module.local.get(3, binaryen.i64);
+  assert(theArrayFill.value = value);
+  theArrayFill.size = size = module.i32.const(3);
+  assert(theArrayFill.size === size);
+  theArrayFill.type = binaryen.i64;
+  theArrayFill.finalize();
+  assert(theArrayFill.type === binaryen.none);
+
+  console.log(theArrayFill.toText());
+  assert(
+    theArrayFill.toText()
+    ==
+    "(array.fill $array.0\n (local.get $2)\n (i32.const 2)\n (local.get $3)\n (i32.const 3)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayCopy");
+(function testArrayCopy() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i64, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var destRef = module.local.get(0, array0Type);
+  var destIndex = module.i32.const(0);
+  var srcRef = module.local.get(1, array0Type);
+  var srcIndex = module.i32.const(1);
+  var length = module.i32.const(1);
+  const theArrayCopy = binaryen.ArrayCopy(module.array.copy(destRef, destIndex, srcRef, srcIndex, length));
+  assert(theArrayCopy instanceof binaryen.ArrayCopy);
+  assert(theArrayCopy instanceof binaryen.Expression);
+  assert(theArrayCopy.destRef === destRef);
+  assert(theArrayCopy.destIndex === destIndex);
+  assert(theArrayCopy.srcRef === srcRef);
+  assert(theArrayCopy.srcIndex === srcIndex);
+  assert(theArrayCopy.length === length);
+  assert(theArrayCopy.type === binaryen.none);
+
+  theArrayCopy.destRef = destRef = module.local.get(2, array1Type);
+  assert(theArrayCopy.destRef === destRef);
+  theArrayCopy.destIndex = destIndex = module.i32.const(2);
+  assert(theArrayCopy.destIndex === destIndex);
+  theArrayCopy.srcRef = srcRef = module.local.get(3, array1Type);
+  assert(theArrayCopy.srcRef === srcRef);
+  theArrayCopy.srcIndex = srcIndex = module.i32.const(3);
+  assert(theArrayCopy.srcIndex === srcIndex);
+  theArrayCopy.length = length = module.i32.const(2);
+  assert(theArrayCopy.length === length);
+  theArrayCopy.type = binaryen.i64;
+  theArrayCopy.finalize();
+  assert(theArrayCopy.type === binaryen.none);
+
+  console.log(theArrayCopy.toText());
+  assert(
+    theArrayCopy.toText()
+    ==
+    "(array.copy $array.0 $array.0\n (local.get $2)\n (i32.const 2)\n (local.get $3)\n (i32.const 3)\n (i32.const 2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayInitData");
+(function testArrayInitData() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var segment = "0";
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayInitData = binaryen.ArrayInitData(module.array.init_data(segment, ref, index, offset, size));
+  assert(theArrayInitData instanceof binaryen.ArrayInitData);
+  assert(theArrayInitData instanceof binaryen.Expression);
+  assert(theArrayInitData.segment === segment);
+  assert(theArrayInitData.ref === ref);
+  assert(theArrayInitData.index === index);
+  assert(theArrayInitData.offset === offset);
+  assert(theArrayInitData.size === size);
+  assert(theArrayInitData.type === binaryen.none);
+
+  theArrayInitData.segment = segment = "1";
+  assert(theArrayInitData.segment === segment);
+  theArrayInitData.ref = ref = module.local.get(1, array1Type);
+  assert(theArrayInitData.ref === ref);
+  theArrayInitData.index = index = module.i32.const(3);
+  assert(theArrayInitData.index === index);
+  theArrayInitData.offset = offset = module.i32.const(4);
+  assert(theArrayInitData.offset === offset);
+  theArrayInitData.size = size = module.i32.const(5);
+  assert(theArrayInitData.size === size);
+  theArrayInitData.type = binaryen.i64;
+  theArrayInitData.finalize();
+  assert(theArrayInitData.type === binaryen.none);
+
+  console.log(theArrayInitData.toText());
+  assert(
+    theArrayInitData.toText()
+    ==
+    "(array.init_data $array.0 $1\n (local.get $1)\n (i32.const 3)\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# ArrayInitElem");
+(function testArrayInitElem() {
+  const builder = new binaryen.TypeBuilder(2);
+  builder.setArrayType(0, binaryen.i32, binaryen.i16, true);
+  builder.setArrayType(1, binaryen.i32, binaryen.notPacked, true);
+  var [
+    array0Type,
+    array1Type
+  ] = builder.buildAndDispose();
+
+  const module = new binaryen.Module();
+
+  var segment = "0";
+  var ref = module.local.get(0, array0Type);
+  var index = module.i32.const(0);
+  var offset = module.i32.const(1);
+  var size = module.i32.const(2);
+  const theArrayInitElem = binaryen.ArrayInitElem(module.array.init_elem(segment, ref, index, offset, size));
+  assert(theArrayInitElem instanceof binaryen.ArrayInitElem);
+  assert(theArrayInitElem instanceof binaryen.Expression);
+  assert(theArrayInitElem.segment === segment);
+  assert(theArrayInitElem.ref === ref);
+  assert(theArrayInitElem.index === index);
+  assert(theArrayInitElem.offset === offset);
+  assert(theArrayInitElem.size === size);
+  assert(theArrayInitElem.type === binaryen.none);
+
+  theArrayInitElem.segment = segment = "1";
+  assert(theArrayInitElem.segment === segment);
+  theArrayInitElem.ref = ref = module.local.get(1, array1Type);
+  assert(theArrayInitElem.ref === ref);
+  theArrayInitElem.index = index = module.i32.const(3);
+  assert(theArrayInitElem.index === index);
+  theArrayInitElem.offset = offset = module.i32.const(4);
+  assert(theArrayInitElem.offset === offset);
+  theArrayInitElem.size = size = module.i32.const(5);
+  assert(theArrayInitElem.size === size);
+  theArrayInitElem.type = binaryen.i64;
+  theArrayInitElem.finalize();
+  assert(theArrayInitElem.type === binaryen.none);
+
+  console.log(theArrayInitElem.toText());
+  assert(
+    theArrayInitElem.toText()
+    ==
+    "(array.init_elem $array.0 $1\n (local.get $1)\n (i32.const 3)\n (i32.const 4)\n (i32.const 5)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
