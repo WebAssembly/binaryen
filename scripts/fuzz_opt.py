@@ -1627,7 +1627,11 @@ INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
 class ClusterFuzz(TestCaseHandler):
     frequency = 0.1
 
-    def handle(self, wasm):
+    # Use handle_pair over handle because we don't use these wasm files anyhow,
+    # we generate our own using run.py. If we used handle, we'd be called twice
+    # for each iteration (once for each of the wasm files we ignore), which is
+    # confusing.
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.ensure()
 
         # run.py() should emit these two files. Delete them to make sure they
@@ -1664,7 +1668,8 @@ class ClusterFuzz(TestCaseHandler):
         cmd += get_v8_extra_flags()
         # Run the fuzz file, which contains a modified fuzz_shell.js - we do
         # *not* run fuzz_shell.js normally.
-        cmd.append(os.path.abspath(fuzz_file))
+        fuzz_file = os.path.abspath(fuzz_file)
+        cmd.append(fuzz_file)
         # No wasm file needs to be provided: it is hardcoded into the JS. Note
         # that we use run_vm(), which will ignore known issues in our output and
         # in V8. Those issues may cause V8 to e.g. reject a binary we emit that
@@ -1676,9 +1681,15 @@ class ClusterFuzz(TestCaseHandler):
         # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
         # to a testcase with a segment out of bounds, say.
-        if get_exports(wasm, ['func']) and output != IGNORE and not \
-           output.startswith(INSTANTIATE_ERROR):
-            assert FUZZ_EXEC_CALL_PREFIX in output
+        if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
+            # Do the work to find if there were function exports: extract the
+            # wasm from the JS, and process it.
+            run([sys.executable,
+                 in_binaryen('scripts', 'clusterfuzz', 'extract_wasms.py'),
+                 fuzz_file,
+                 'extracted'])
+            if get_exports('extracted.0.wasm', ['func']):
+                assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
