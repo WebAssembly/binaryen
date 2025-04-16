@@ -118,7 +118,6 @@ unfuzzable = [
     'remove-unused-types-exact.wast',
     'coalesce-locals-exact.wast',
     'remove-unused-brs-exact.wast',
-    'exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
 ]
