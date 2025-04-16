@@ -6,14 +6,16 @@
 ;; RUN: wasm-opt %s -all --optimize-instructions -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $cast-any-to-exact-none (type $0) (param $0 anyref) (result (exact nullref))
- ;; CHECK-NEXT:  (ref.cast (exact nullref)
+ ;; CHECK:      (type $struct (struct))
+ (type $struct (struct))
+ ;; CHECK:      (func $cast-to-exact (type $1) (param $0 anyref) (result (ref exact $struct))
+ ;; CHECK-NEXT:  (ref.cast (ref exact $struct)
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast-any-to-exact-none (param anyref) (result (exact nullref))
+ (func $cast-to-exact (param anyref) (result (ref exact $struct))
   ;; This will not be changed, but should not trigger an assertion.
-  (ref.cast (exact nullref)
+  (ref.cast (ref exact $struct)
    (local.get 0)
   )
  )

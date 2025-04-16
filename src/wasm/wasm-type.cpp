@@ -795,13 +795,14 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     if (auto heapType = HeapType::getLeastUpperBound(heapTypeA, heapTypeB)) {
       auto nullability =
         (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
-      auto exactness = (a.isInexact() || b.isInexact()) ? Inexact : Exact;
-      // The LUB can only be exact if the heap types are the same or one of them
-      // is bottom.
-      if (heapTypeA != heapTypeB && !heapTypeA.isBottom() &&
-          !heapTypeB.isBottom()) {
-        exactness = Inexact;
-      }
+      // If one heap type is bottom, then the exactness comes from the other
+      // heap type. Otherwise, the LUB can only be exact if both of the inputs
+      // are the same exact heap type.
+      auto exactness = heapTypeA.isBottom()               ? b.getExactness()
+                       : heapTypeB.isBottom()             ? a.getExactness()
+                       : (a.isInexact() || b.isInexact()) ? Inexact
+                       : (heapTypeA != heapTypeB)         ? Inexact
+                                                          : Exact;
       return Type(*heapType, nullability, exactness);
     }
   }
@@ -850,6 +851,7 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   if ((a.isExact() && heapType != heapA) ||
       (b.isExact() && heapType != heapB)) {
     heapType = heapA.getBottom();
+    exactness = Inexact;
   }
   return Type(heapType, nullability, exactness);
 }
@@ -1515,13 +1517,15 @@ bool SubTyper::isSubType(Type a, Type b) {
   if (a.isNullable() && !b.isNullable()) {
     return false;
   }
-  if (a.isInexact() && !b.isInexact()) {
-    return false;
-  }
   auto heapTypeA = a.getHeapType();
   auto heapTypeB = b.getHeapType();
-  if (b.isExact() && !heapTypeA.isBottom()) {
-    return heapTypeA == heapTypeB;
+  if (b.isExact()) {
+    if (a.isExact()) {
+      return heapTypeA == heapTypeB;
+    }
+    if (!heapTypeA.isBottom()) {
+      return false;
+    }
   }
   return isSubType(heapTypeA, heapTypeB);
 }
