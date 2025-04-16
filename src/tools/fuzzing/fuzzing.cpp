@@ -1083,6 +1083,11 @@ void TranslateToFuzzReader::addImportSleepSupport() {
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
+  // Don't always add this.
+  if (oneIn(2)) {
+    return;
+  }
+
   // Add memory hasher helper (for the hash, see hash.h). The function looks
   // like:
   // function hashMemory() {
@@ -1117,13 +1122,13 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
-  auto name = Names::getValidFunctionName(wasm, "hashMemory");
+  hashMemoryName = Names::getValidFunctionName(wasm, "hashMemory");
   auto* hasher = wasm.addFunction(builder.makeFunction(
-    name, Signature(Type::none, Type::i32), {Type::i32}, body));
+    hashMemoryName, Signature(Type::none, Type::i32), {Type::i32}, body));
 
-  if (!preserveImportsAndExports) {
+  if (!preserveImportsAndExports && !wasm.getExportOrNull("hashMemory")) {
     wasm.addExport(
-      builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+      builder.makeExport("hashMemory", hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
     if (!wasm.getExportOrNull("memory")) {
       wasm.addExport(builder.makeExport(
@@ -1331,7 +1336,7 @@ Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
-  auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
+  auto* hash = builder.makeCall(hashMemoryName, {}, Type::i32);
   return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
@@ -2029,7 +2034,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
     }
     invocations.push_back(invoke);
     // log out memory in some cases
-    if (oneIn(2)) {
+    if (hashMemoryName && oneIn(2)) {
       invocations.push_back(makeMemoryHashLogging());
     }
   }
@@ -2187,7 +2192,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
 Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
-    if (choice < LOGGING_PERCENT / 2) {
+    if (!hashMemoryName || choice < LOGGING_PERCENT / 2) {
       return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
