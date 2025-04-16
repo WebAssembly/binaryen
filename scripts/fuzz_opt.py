@@ -670,15 +670,10 @@ def run_bynterp(wasm, args):
 # Enable even more things than V8_OPTS. V8_OPTS are the flags we want to use
 # when testing, on our fixed test suite, but when fuzzing we may want more.
 def get_v8_extra_flags():
-    # Due to https://github.com/WebAssembly/exception-handling/issues/344 , VMs
-    # do not allow mixed old and new wasm EH. Our fuzzer will very frequently
-    # mix those instructions in a module, so we must use the flag to allow that.
-    # FIXME This is not great, as the majority of the wasm files we test on are
-    #       not actually valid in VMs. But we get coverage this way for runtime
-    #       linking of old and new EH (which VMs allow), that is, our compile-
-    #       time combination of old and new simulates runtime linking to some
-    #       extent.
-    flags = ['--wasm-allow-mixed-eh-for-testing']
+    # It is important to use the --fuzzing flag because it does things like
+    # enable mixed old and new EH (which is an issue since
+    # https://github.com/WebAssembly/exception-handling/issues/344 )
+    flags += ['--fuzzing']
 
     # Sometimes add --future, which may enable new JITs and such, which is good
     # to fuzz for V8's sake.
@@ -1663,6 +1658,10 @@ class ClusterFuzz(TestCaseHandler):
         with open(flags_file, 'r') as f:
             flags = f.read()
         cmd += flags.split(' ')
+        # Get V8's extra fuzzing flags, the same as the ClusterFuzz runner does
+        # (as can be seen from the testcases having --fuzzing and a lot of other
+        # flags as well).
+        cmd += get_v8_extra_flags()
         # Run the fuzz file, which contains a modified fuzz_shell.js - we do
         # *not* run fuzz_shell.js normally.
         cmd.append(os.path.abspath(fuzz_file))

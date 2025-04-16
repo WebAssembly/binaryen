@@ -33,9 +33,7 @@ import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
-#
-# We also allow mixed EH, see the comment on the same flag in fuzz_opt.py
-FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging --wasm-allow-mixed-eh-for-testing'
+FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
 
 # Maximum size of the random data that we feed into wasm-opt -ttf. This is
 # smaller than fuzz_opt.py's INPUT_SIZE_MAX because that script is tuned for
