@@ -589,9 +589,10 @@ void TranslateToFuzzReader::setupTables() {
   // When EH is enabled, set up an exnref table.
   if (wasm.features.hasExceptionHandling()) {
     Type exnref = Type(HeapType::exn, Nullable);
-    auto iter = std::find_if(wasm.tables.begin(),
-                             wasm.tables.end(),
-                             [&](auto& table) { return table->type == exnref; });
+    auto iter =
+      std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+        return table->type == exnref;
+      });
     if (iter != wasm.tables.end()) {
       // Use the existing one.
       exnrefTableName = iter->name;
