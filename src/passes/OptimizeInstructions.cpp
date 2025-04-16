@@ -837,6 +837,9 @@ struct OptimizeInstructions
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
         }
+        if (auto* ret = optimizeAndBooleanWithEvenConstant(curr)) {
+          return replaceCurrent(ret);
+        }
       }
       // for or, we can potentially combine
       if (curr->op == OrInt32) {
@@ -3544,6 +3547,29 @@ private:
         by->right = y;
         bx->left = by;
         return bx;
+      }
+    }
+    return nullptr;
+  }
+
+  // Bitwise AND of a boolean result (0 or 1) with any value
+  // whose LSB is guaranteed to be 0 always yields 0.
+  Expression* optimizeAndBooleanWithEvenConstant(Binary* curr) {
+    assert(curr->op == AndInt32);
+
+    using namespace Abstract;
+    using namespace Match;
+    auto leftMaxBits = Bits::getMaxBits(curr->left, this);
+    auto type = curr->left->type;
+    if (curr->op == Abstract::getBinary(type, And)) {
+      if (leftMaxBits == 1) {
+        // boolean & (No overlap with boolean's LSB)  ==> 0
+        if (auto* c = curr->right->dynCast<Const>()) {
+          if ((1 & c->value.getInteger()) == 0) {
+            replaceCurrent(getDroppedChildrenAndAppend(
+              curr, LiteralUtils::makeZero(c->value.type, *getModule())));
+          }
+        }
       }
     }
     return nullptr;
