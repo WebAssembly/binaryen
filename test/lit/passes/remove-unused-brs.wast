@@ -340,6 +340,29 @@
     )
   )
 
+  ;; CHECK:      (func $restructure-br_if-value-redundant (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $get-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant (result i32)
+    (block $x (result i32)
+      (call $nothing)
+      (drop
+        (br_if $x
+          (i32.const 1)
+          (call $get-i32)
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+
   ;; CHECK:      (func $restructure-select-no-multivalue (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $block (type $2) (result i32 i32)
