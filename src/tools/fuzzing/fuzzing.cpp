@@ -26,10 +26,6 @@
 
 namespace wasm {
 
-namespace {
-
-} // anonymous namespace
-
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
@@ -395,9 +391,12 @@ void TranslateToFuzzReader::setupMemory() {
 
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
-    size_t memCovered = 0;
+    size_t numSegments = upTo(8);
     // need at least one segment for memory.inits
-    size_t numSegments = upTo(8) + 1;
+    if (wasm.dataSegments.empty() && !numSegments) {
+      numSegments = 1;
+    }
+    size_t memCovered = 0;
     for (size_t i = 0; i < numSegments; i++) {
       auto segment = builder.makeDataSegment();
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
@@ -417,19 +416,21 @@ void TranslateToFuzzReader::setupMemory() {
       wasm.addDataSegment(std::move(segment));
     }
   } else {
-    // init some data
-    auto segment = builder.makeDataSegment();
-    segment->memory = memory->name;
-    segment->offset =
-      builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
-    segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
-                     false);
-    auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
-    for (size_t i = 0; i < num; i++) {
-      auto value = upTo(512);
-      segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
+    // init some data, especially if none exists before
+    if (!oneIn(wasm.dataSegments.empty() ? 10 : 2)) {
+      auto segment = builder.makeDataSegment();
+      segment->memory = memory->name;
+      segment->offset =
+        builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
+      segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
+                       false);
+      auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
+      for (size_t i = 0; i < num; i++) {
+        auto value = upTo(512);
+        segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
+      }
+      wasm.addDataSegment(std::move(segment));
     }
-    wasm.addDataSegment(std::move(segment));
   }
 }
 
@@ -588,17 +589,26 @@ void TranslateToFuzzReader::setupTables() {
   // When EH is enabled, set up an exnref table.
   if (wasm.features.hasExceptionHandling()) {
     Type exnref = Type(HeapType::exn, Nullable);
-    Address initial = upTo(10);
-    Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
-    auto tablePtr =
-      builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
-                        exnref,
-                        initial,
-                        max,
-                        Type::i32); // TODO: wasm64
-    tablePtr->hasExplicitName = true;
-    table = wasm.addTable(std::move(tablePtr));
-    exnrefTableName = table->name;
+    auto iter = std::find_if(wasm.tables.begin(),
+                             wasm.tables.end(),
+                             [&](auto& table) { return table->type == exnref; });
+    if (iter != wasm.tables.end()) {
+      // Use the existing one.
+      exnrefTableName = iter->name;
+    } else {
+      // Create a new exnref table.
+      Address initial = upTo(10);
+      Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
+      auto tablePtr =
+        builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
+                          exnref,
+                          initial,
+                          max,
+                          Type::i32); // TODO: wasm64
+      tablePtr->hasExplicitName = true;
+      table = wasm.addTable(std::move(tablePtr));
+      exnrefTableName = table->name;
+    }
   }
 }
 
