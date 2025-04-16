@@ -673,7 +673,7 @@ def get_v8_extra_flags():
     # It is important to use the --fuzzing flag because it does things like
     # enable mixed old and new EH (which is an issue since
     # https://github.com/WebAssembly/exception-handling/issues/344 )
-    flags += ['--fuzzing']
+    flags = ['--fuzzing']
 
     # Sometimes add --future, which may enable new JITs and such, which is good
     # to fuzz for V8's sake.
