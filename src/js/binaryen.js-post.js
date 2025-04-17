@@ -3059,13 +3059,15 @@ Module['getExpressionInfo'] = function(expr) {
   const id = Module['_BinaryenExpressionGetId'](expr);
   const type = Module['_BinaryenExpressionGetType'](expr);
   switch (id) {
-    case Module['BlockId']:
+    case Module['BlockId']: {
+      const name = Module['_BinaryenBlockGetName'](expr);
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenBlockGetName'](expr)),
+        'name': name ? UTF8ToString(name) : null,
         'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt'])
       };
+    }
     case Module['IfId']:
       return {
         'id': id,
@@ -3074,21 +3076,25 @@ Module['getExpressionInfo'] = function(expr) {
         'ifTrue': Module['_BinaryenIfGetIfTrue'](expr),
         'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)
       };
-    case Module['LoopId']:
+    case Module['LoopId']: {
+      const name = Module['_BinaryenLoopGetName'](expr);
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenLoopGetName'](expr)),
+        'name': name ? UTF8ToString(name) : null,
         'body': Module['_BinaryenLoopGetBody'](expr)
       };
-    case Module['BreakId']:
+    }
+    case Module['BreakId']: {
+      const name = Module['_BinaryenBreakGetName'](expr);
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenBreakGetName'](expr)),
+        'name': name ? UTF8ToString(name) : null,
         'condition': Module['_BinaryenBreakGetCondition'](expr),
         'value': Module['_BinaryenBreakGetValue'](expr)
       };
+    }
     case Module['SwitchId']:
       return {
         'id': id,
@@ -3114,7 +3120,9 @@ Module['getExpressionInfo'] = function(expr) {
         'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
         'table': UTF8ToString(Module['_BinaryenCallIndirectGetTable'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
+        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt']),
+        'params': Module['_BinaryenCallIndirectGetParams'](expr),
+        'results': Module['_BinaryenCallIndirectGetResults'](expr)
       };
     case Module['LocalGetId']:
       return {
@@ -3192,7 +3200,8 @@ Module['getExpressionInfo'] = function(expr) {
         'bytes': Module['_BinaryenStoreGetBytes'](expr),
         'align': Module['_BinaryenStoreGetAlign'](expr),
         'ptr': Module['_BinaryenStoreGetPtr'](expr),
-        'value': Module['_BinaryenStoreGetValue'](expr)
+        'value': Module['_BinaryenStoreGetValue'](expr),
+        'valueType': Module['_BinaryenStoreGetValueType'](expr)
       };
     case Module['ConstId']: {
       let value;
@@ -3386,11 +3395,13 @@ Module['getExpressionInfo'] = function(expr) {
         'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr),
         'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr),
         'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr),
-        'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr)
+        'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr),
+        'isStore': Boolean(Module['_BinaryenSIMDLoadStoreLaneIsStore'](expr))
       };
     case Module['MemoryInitId']:
       return {
         'id': id,
+        'type': type,
         'segment': UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expr)),
         'dest': Module['_BinaryenMemoryInitGetDest'](expr),
         'offset': Module['_BinaryenMemoryInitGetOffset'](expr),
@@ -3399,11 +3410,13 @@ Module['getExpressionInfo'] = function(expr) {
     case Module['DataDropId']:
       return {
         'id': id,
+        'type': type,
         'segment': UTF8ToString(Module['_BinaryenDataDropGetSegment'](expr)),
       };
     case Module['MemoryCopyId']:
       return {
         'id': id,
+        'type': type,
         'dest': Module['_BinaryenMemoryCopyGetDest'](expr),
         'source': Module['_BinaryenMemoryCopyGetSource'](expr),
         'size': Module['_BinaryenMemoryCopyGetSize'](expr)
@@ -3411,6 +3424,7 @@ Module['getExpressionInfo'] = function(expr) {
     case Module['MemoryFillId']:
       return {
         'id': id,
+        'type': type,
         'dest': Module['_BinaryenMemoryFillGetDest'](expr),
         'value': Module['_BinaryenMemoryFillGetValue'](expr),
         'size': Module['_BinaryenMemoryFillGetSize'](expr)
@@ -3494,8 +3508,8 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'getInit': Module['_BinaryenArrayNewGetInit'](expr),
-        'getSize': Module['_BinaryenArrayNewGetSize'](expr)
+        'init': Module['_BinaryenArrayNewGetInit'](expr),
+        'size': Module['_BinaryenArrayNewGetSize'](expr)
       };
     case Module['ArrayNewFixedId']:
       return {
@@ -3580,18 +3594,21 @@ Module['getExpressionInfo'] = function(expr) {
         'offset': Module['_BinaryenArrayInitElemGetOffset'](expr),
         'size': Module['_BinaryenArrayInitElemGetSize'](expr)
       };
-    case Module['TryId']:
+    case Module['TryId']: {
+      const name = Module['_BinaryenTryGetName'](expr);
+      const delegateTarget = Module['_BinaryenTryGetDelegateTarget'](expr);
       return {
         'id': id,
         'type': type,
-        'name': UTF8ToString(Module['_BinaryenTryGetName'](expr)),
+        'name': name ? UTF8ToString(name) : null,
         'body': Module['_BinaryenTryGetBody'](expr),
         'catchTags': getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']).map(p => UTF8ToString(p)),
         'catchBodies': getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
         'hasCatchAll': Boolean(Module['_BinaryenTryHasCatchAll'](expr)),
-        'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expr)),
+        'delegateTarget': delegateTarget ? UTF8ToString(delegateTarget) : null,
         'isDelegate': Boolean(Module['_BinaryenTryIsDelegate'](expr))
       };
+    }
     case Module['ThrowId']:
       return {
         'id': id,

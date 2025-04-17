@@ -7,11 +7,6 @@ function assertDeepEqual(x, y) {
   }
 }
 
-function assertInfoEqual(wrapper, info) {
-  for (let i in info)
-    assertDeepEqual(typeof wrapper[i] === "function" ? wrapper[i]() : wrapper[i], info[i]);
-}
-
 console.log("# Expression");
 (function testWrapper() {
   var theExpression = binaryen.Block(42); // works without new
@@ -32,10 +27,15 @@ console.log("# Block");
   const theBlock = binaryen.Block(module.block(null, []));
   assert(theBlock instanceof binaryen.Block);
   assert(theBlock instanceof binaryen.Expression);
-  assertInfoEqual(theBlock, binaryen.getExpressionInfo(theBlock));
   assert(theBlock.id === binaryen.BlockId);
   assert(theBlock.name === null);
   assert(theBlock.type === binaryen.none);
+  
+  var info = binaryen.getExpressionInfo(theBlock);
+  assert(info.id === theBlock.id);
+  assert(info.type === theBlock.type);
+  assert(info.name === theBlock.name);
+  assertDeepEqual(info.children, theBlock.children);
 
   theBlock.name ="theName";
   assert(theBlock.name === "theName");
@@ -75,6 +75,10 @@ console.log("# Block");
   assert(theBlock.getChildAt(0) === child0);
   theBlock.finalize();
 
+  info = binaryen.getExpressionInfo(theBlock);
+  assert(info.name === theBlock.name);
+  assertDeepEqual(info.children, theBlock.children);
+
   console.log(theBlock.toText());
   assert(
     theBlock.toText()
@@ -97,12 +101,18 @@ console.log("# If");
   const theIf = binaryen.If(module.if(condition, ifTrue, ifFalse));
   assert(theIf instanceof binaryen.If);
   assert(theIf instanceof binaryen.Expression);
-  assertInfoEqual(theIf, binaryen.getExpressionInfo(theIf));
   assert(theIf.id === binaryen.IfId);
   assert(theIf.condition === condition);
   assert(theIf.ifTrue === ifTrue);
   assert(theIf.ifFalse === ifFalse);
   assert(theIf.type == binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theIf);
+  assert(info.id === theIf.id);
+  assert(info.type === theIf.type);
+  assert(info.condition === theIf.condition);
+  assert(info.ifTrue === theIf.ifTrue);
+  assert(info.ifFalse === theIf.ifFalse);
 
   theIf.condition = condition = module.i32.const(4);
   assert(theIf.condition === condition);
@@ -111,6 +121,11 @@ console.log("# If");
   theIf.ifFalse = ifFalse = module.i32.const(6);
   assert(theIf.ifFalse === ifFalse);
   theIf.finalize();
+
+  info = binaryen.getExpressionInfo(theIf);
+  assert(info.condition === theIf.condition);
+  assert(info.ifTrue === theIf.ifTrue);
+  assert(info.ifFalse === theIf.ifFalse);
 
   console.log(theIf.toText());
   assert(
@@ -121,6 +136,10 @@ console.log("# If");
 
   theIf.ifFalse = null;
   assert(!theIf.ifFalse);
+
+  info = binaryen.getExpressionInfo(theIf);
+  assert(info.ifFalse === theIf.ifFalse);
+
   console.log(theIf.toText());
   assert(
     theIf.toText()
@@ -140,11 +159,16 @@ console.log("# Loop");
   const theLoop = binaryen.Loop(module.loop(name, body));
   assert(theLoop instanceof binaryen.Loop);
   assert(theLoop instanceof binaryen.Expression);
-  assertInfoEqual(theLoop, binaryen.getExpressionInfo(theLoop));
   assert(theLoop.id === binaryen.LoopId);
   assert(theLoop.name === name);
   assert(theLoop.body === body);
   assert(theLoop.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theLoop);
+  assert(info.id === theLoop.id);
+  assert(info.type === theLoop.type);
+  assert(info.name === theLoop.name);
+  assert(info.body === theLoop.body);
 
   theLoop.name = name = "theName";
   assert(theLoop.name === name);
@@ -152,6 +176,11 @@ console.log("# Loop");
   assert(theLoop.body === body);
   theLoop.finalize();
   assert(theLoop.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theLoop);
+  assert(info.type === theLoop.type);
+  assert(info.name === theLoop.name);
+  assert(info.body === theLoop.body);
 
   console.log(theLoop.toText());
   assert(
@@ -173,11 +202,17 @@ console.log("# Break");
   const theBreak = binaryen.Break(module.br(name, condition, value));
   assert(theBreak instanceof binaryen.Break);
   assert(theBreak instanceof binaryen.Expression);
-  assertInfoEqual(theBreak, binaryen.getExpressionInfo(theBreak));
   assert(theBreak.name === name);
   assert(theBreak.condition === condition);
   assert(theBreak.value === value);
   assert(theBreak.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theBreak);
+  assert(info.id === theBreak.id);
+  assert(info.type === theBreak.type);
+  assert(info.name === theBreak.name);
+  assert(info.condition === theBreak.condition);
+  assert(info.value === theBreak.value);
 
   theBreak.name = name = "theNewName";
   assert(theBreak.name === "theNewName");
@@ -186,6 +221,11 @@ console.log("# Break");
   theBreak.value = value = module.i32.const(4);
   assert(theBreak.value === value);
   theBreak.finalize();
+
+  info = binaryen.getExpressionInfo(theBreak);
+  assert(info.name === theBreak.name);
+  assert(info.condition === theBreak.condition);
+  assert(info.value === theBreak.value);
 
   console.log(theBreak.toText());
   assert(
@@ -208,13 +248,20 @@ console.log("# Switch");
   const theSwitch = binaryen.Switch(module.switch(names, defaultName, condition, value));
   assert(theSwitch instanceof binaryen.Switch);
   assert(theSwitch instanceof binaryen.Expression);
-  assertInfoEqual(theSwitch, binaryen.getExpressionInfo(theSwitch));
   assert(theSwitch.numNames === 2);
   assertDeepEqual(theSwitch.names, names);
   assert(theSwitch.defaultName === defaultName);
   assert(theSwitch.condition === condition);
   assert(theSwitch.value === value);
   assert(theSwitch.type === binaryen.unreachable);
+
+  var info = binaryen.getExpressionInfo(theSwitch);
+  assert(info.id === theSwitch.id);
+  assert(info.type === theSwitch.type);
+  assertDeepEqual(info.names, theSwitch.names);
+  assert(info.defaultName === theSwitch.defaultName);
+  assert(info.condition === theSwitch.condition);
+  assert(info.value === theSwitch.value);
 
   names = [
     "1", // set
@@ -236,6 +283,12 @@ console.log("# Switch");
   theSwitch.value = value = module.i32.const(4);
   assert(theSwitch.value === value);
   theSwitch.finalize();
+
+  info = binaryen.getExpressionInfo(theSwitch);
+  assertDeepEqual(info.names, theSwitch.names);
+  assert(info.defaultName === theSwitch.defaultName);
+  assert(info.condition === theSwitch.condition);
+  assert(info.value === theSwitch.value);
 
   console.log(theSwitch.toText());
   assert(
@@ -259,12 +312,18 @@ console.log("# Call");
   const theCall = binaryen.Call(module.call(target, operands, binaryen.i32));
   assert(theCall instanceof binaryen.Call);
   assert(theCall instanceof binaryen.Expression);
-  assertInfoEqual(theCall, binaryen.getExpressionInfo(theCall));
   assert(theCall.target === target);
   assertDeepEqual(theCall.operands, operands);
   assertDeepEqual(theCall.getOperands(), operands);
   assert(theCall.return === false);
   assert(theCall.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theCall);
+  assert(info.id === theCall.id);
+  assert(info.type === theCall.type);
+  assert(info.target === theCall.target);
+  assertDeepEqual(info.operands, theCall.operands);
+  assert(info.isReturn === theCall.return);
 
   theCall.target = "bar";
   assert(theCall.target === "bar");
@@ -287,10 +346,20 @@ console.log("# Call");
   theCall.finalize();
   assert(theCall.type === binaryen.unreachable); // finalized tail call
 
+  info = binaryen.getExpressionInfo(theCall);
+  assert(info.type === theCall.type);
+  assert(info.target === theCall.target);
+  assertDeepEqual(info.operands, theCall.operands);
+  assert(info.isReturn === theCall.return);
+
   theCall.return = false;
   theCall.type = binaryen.i32;
   theCall.finalize();
   assert(theCall.type === binaryen.i32); // finalized call
+
+  info = binaryen.getExpressionInfo(theCall);
+  assert(info.type === theCall.type);
+  assert(info.isReturn === theCall.return);
 
   console.log(theCall.toText());
   assert(
@@ -317,7 +386,6 @@ console.log("# CallIndirect");
   const theCallIndirect = binaryen.CallIndirect(module.call_indirect(table, target, operands, params, results));
   assert(theCallIndirect instanceof binaryen.CallIndirect);
   assert(theCallIndirect instanceof binaryen.Expression);
-  assertInfoEqual(theCallIndirect, binaryen.getExpressionInfo(theCallIndirect));
   assert(theCallIndirect.table === table);
   assert(theCallIndirect.target === target);
   assertDeepEqual(theCallIndirect.operands, operands);
@@ -325,6 +393,16 @@ console.log("# CallIndirect");
   assert(theCallIndirect.results === results);
   assert(theCallIndirect.return === false);
   assert(theCallIndirect.type === theCallIndirect.results);
+
+  var info = binaryen.getExpressionInfo(theCallIndirect);
+  assert(info.id === theCallIndirect.id);
+  assert(info.type === theCallIndirect.type);
+  assert(info.table === theCallIndirect.table);
+  assert(info.target === theCallIndirect.target);
+  assertDeepEqual(info.operands, theCallIndirect.operands);
+  assert(info.params === theCallIndirect.params);
+  assert(info.results === theCallIndirect.results);
+  assert(info.isReturn === theCallIndirect.return);
 
   theCallIndirect.target = target = module.i32.const(9000);
   assert(theCallIndirect.target === target);
@@ -352,9 +430,20 @@ console.log("# CallIndirect");
   theCallIndirect.finalize();
   assert(theCallIndirect.type === binaryen.unreachable); // finalized tail call
 
+  info = binaryen.getExpressionInfo(theCallIndirect);
+  assert(info.type === theCallIndirect.type);
+  assert(info.target === theCallIndirect.target);
+  assertDeepEqual(info.operands, theCallIndirect.operands);
+  assert(info.params === theCallIndirect.params);
+  assert(info.results === theCallIndirect.results);
+  assert(info.isReturn === theCallIndirect.return);
+
   theCallIndirect.return = false;
   theCallIndirect.finalize();
   assert(theCallIndirect.type === results); // finalized call
+
+  info = binaryen.getExpressionInfo(theCallIndirect);
+  assert(info.isReturn === theCallIndirect.return);
 
   console.log(theCallIndirect.toText());
   assert(
@@ -375,15 +464,23 @@ console.log("# LocalGet");
   const theLocalGet = binaryen.LocalGet(module.local.get(index, type));
   assert(theLocalGet instanceof binaryen.LocalGet);
   assert(theLocalGet instanceof binaryen.Expression);
-  assertInfoEqual(theLocalGet, binaryen.getExpressionInfo(theLocalGet));
   assert(theLocalGet.index === index);
   assert(theLocalGet.type === type);
+
+  var info = binaryen.getExpressionInfo(theLocalGet);
+  assert(info.id === theLocalGet.id);
+  assert(info.type === theLocalGet.type);
+  assert(info.index === theLocalGet.index);
 
   theLocalGet.index = index = 2;
   assert(theLocalGet.index === index);
   theLocalGet.type = type = binaryen.f64;
   assert(theLocalGet.type === type);
   theLocalGet.finalize();
+
+  info = binaryen.getExpressionInfo(theLocalGet);
+  assert(info.type === theLocalGet.type);
+  assert(info.index === theLocalGet.index);
 
   console.log(theLocalGet.toText());
   assert(
@@ -404,11 +501,17 @@ console.log("# LocalSet");
   const theLocalSet = binaryen.LocalSet(module.local.set(index, value));
   assert(theLocalSet instanceof binaryen.LocalSet);
   assert(theLocalSet instanceof binaryen.Expression);
-  assertInfoEqual(theLocalSet, binaryen.getExpressionInfo(theLocalSet));
   assert(theLocalSet.index === index);
   assert(theLocalSet.value === value);
   assert(theLocalSet.tee === false);
   assert(theLocalSet.type == binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theLocalSet);
+  assert(info.id === theLocalSet.id);
+  assert(info.type === theLocalSet.type);
+  assert(info.index === theLocalSet.index);
+  assert(info.value === theLocalSet.value);
+  assert(info.isTee === theLocalSet.tee)
 
   theLocalSet.index = index = 2;
   assert(theLocalSet.index === index);
@@ -419,6 +522,12 @@ console.log("# LocalSet");
   assert(theLocalSet.tee === true);
   theLocalSet.type = binaryen.none;
   theLocalSet.finalize();
+
+  info = binaryen.getExpressionInfo(theLocalSet);
+  assert(info.type === theLocalSet.type);
+  assert(info.index === theLocalSet.index);
+  assert(info.value === theLocalSet.value);
+  assert(info.isTee === theLocalSet.tee)
 
   console.log(theLocalSet.toText());
   assert(
@@ -439,15 +548,23 @@ console.log("# GlobalGet");
   const theGlobalGet = binaryen.GlobalGet(module.global.get(name, type));
   assert(theGlobalGet instanceof binaryen.GlobalGet);
   assert(theGlobalGet instanceof binaryen.Expression);
-  assertInfoEqual(theGlobalGet, binaryen.getExpressionInfo(theGlobalGet));
   assert(theGlobalGet.name === name);
   assert(theGlobalGet.type === type);
+
+  var info = binaryen.getExpressionInfo(theGlobalGet);
+  assert(info.id === theGlobalGet.id);
+  assert(info.type === theGlobalGet.type);
+  assert(info.name === theGlobalGet.name);
 
   theGlobalGet.name = name = "b";
   assert(theGlobalGet.name === name);
   theGlobalGet.type = type = binaryen.f64;
   assert(theGlobalGet.type === type);
   theGlobalGet.finalize();
+
+  info = binaryen.getExpressionInfo(theGlobalGet);
+  assert(info.type === theGlobalGet.type);
+  assert(info.name === theGlobalGet.name);
 
   console.log(theGlobalGet.toText());
   assert(
@@ -468,16 +585,25 @@ console.log("# GlobalSet");
   const theGlobalSet = binaryen.GlobalSet(module.global.set(name, value));
   assert(theGlobalSet instanceof binaryen.GlobalSet);
   assert(theGlobalSet instanceof binaryen.Expression);
-  assertInfoEqual(theGlobalSet, binaryen.getExpressionInfo(theGlobalSet));
   assert(theGlobalSet.name === name);
   assert(theGlobalSet.value === value);
   assert(theGlobalSet.type == binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theGlobalSet);
+  assert(info.id === theGlobalSet.id);
+  assert(info.type === theGlobalSet.type);
+  assert(info.name === theGlobalSet.name);
+  assert(info.value === theGlobalSet.value);
 
   theGlobalSet.name = name = "b";
   assert(theGlobalSet.name === name);
   theGlobalSet.value = value = module.f64.const(3);
   assert(theGlobalSet.value === value);
   theGlobalSet.finalize();
+
+  info = binaryen.getExpressionInfo(theGlobalSet);
+  assert(info.name === theGlobalSet.name);
+  assert(info.value === theGlobalSet.value);
 
   console.log(theGlobalSet.toText());
   assert(
@@ -497,9 +623,12 @@ console.log("# MemorySize");
   const theMemorySize = binaryen.MemorySize(module.memory.size());
   assert(theMemorySize instanceof binaryen.MemorySize);
   assert(theMemorySize instanceof binaryen.Expression);
-  assertInfoEqual(theMemorySize, binaryen.getExpressionInfo(theMemorySize));
   assert(theMemorySize.type === type);
   theMemorySize.finalize();
+
+  var info = binaryen.getExpressionInfo(theMemorySize);
+  assert(info.id === theMemorySize.id);
+  assert(info.type === theMemorySize.type);
 
   console.log(theMemorySize.toText());
   assert(
@@ -521,13 +650,20 @@ console.log("# MemoryGrow");
   const theMemoryGrow = binaryen.MemoryGrow(module.memory.grow(delta));
   assert(theMemoryGrow instanceof binaryen.MemoryGrow);
   assert(theMemoryGrow instanceof binaryen.Expression);
-  assertInfoEqual(theMemoryGrow, binaryen.getExpressionInfo(theMemoryGrow));
   assert(theMemoryGrow.delta === delta);
   assert(theMemoryGrow.type === type);
+
+  var info = binaryen.getExpressionInfo(theMemoryGrow);
+  assert(info.id === theMemoryGrow.id);
+  assert(info.type === theMemoryGrow.type);
+  assert(info.delta === theMemoryGrow.delta);
 
   theMemoryGrow.delta = delta = module.i32.const(2);
   assert(theMemoryGrow.delta === delta);
   theMemoryGrow.finalize();
+
+  info = binaryen.getExpressionInfo(theMemoryGrow);
+  assert(info.delta === theMemoryGrow.delta);
 
   console.log(theMemoryGrow.toText());
   assert(
@@ -550,7 +686,6 @@ console.log("# Load");
   const theLoad = binaryen.Load(module.i32.load(offset, align, ptr));
   assert(theLoad instanceof binaryen.Load);
   assert(theLoad instanceof binaryen.Expression);
-  assertInfoEqual(theLoad, binaryen.getExpressionInfo(theLoad));
   assert(theLoad.offset === offset);
   assert(theLoad.align === align);
   assert(theLoad.ptr === ptr);
@@ -558,6 +693,16 @@ console.log("# Load");
   assert(theLoad.signed === true);
   assert(theLoad.atomic === false);
   assert(theLoad.type == binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theLoad);
+  assert(info.id === theLoad.id);
+  assert(info.type === theLoad.type);
+  assert(info.offset === theLoad.offset);
+  assert(info.align === theLoad.align);
+  assert(info.ptr === theLoad.ptr);
+  assert(info.bytes === theLoad.bytes);
+  assert(info.isSigned === theLoad.signed);
+  assert(info.isAtomic === theLoad.atomic);
 
   theLoad.offset = offset = 32;
   assert(theLoad.offset === offset);
@@ -575,6 +720,14 @@ console.log("# Load");
   assert(theLoad.atomic === true);
   theLoad.finalize();
   assert(theLoad.align === 4);
+
+  info = binaryen.getExpressionInfo(theLoad);
+  assert(info.offset === theLoad.offset);
+  assert(info.align === theLoad.align);
+  assert(info.ptr === theLoad.ptr);
+  assert(info.bytes === theLoad.bytes);
+  assert(info.isSigned === theLoad.signed);
+  assert(info.isAtomic === theLoad.atomic);
 
   console.log(theLoad.toText());
   assert(
@@ -598,7 +751,6 @@ console.log("# Store");
   const theStore = binaryen.Store(module.i32.store(offset, align, ptr, value));
   assert(theStore instanceof binaryen.Store);
   assert(theStore instanceof binaryen.Expression);
-  assertInfoEqual(theStore, binaryen.getExpressionInfo(theStore));
   assert(theStore.offset === offset);
   assert(theStore.align === align);
   assert(theStore.ptr === ptr);
@@ -607,6 +759,17 @@ console.log("# Store");
   assert(theStore.atomic === false);
   assert(theStore.valueType === binaryen.i32);
   assert(theStore.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theStore);
+  assert(info.id === theStore.id);
+  assert(info.type === theStore.type);
+  assert(info.offset === theStore.offset);
+  assert(info.align === theStore.align);
+  assert(info.ptr === theStore.ptr);
+  assert(info.value === theStore.value);
+  assert(info.bytes === theStore.bytes);
+  assert(info.isAtomic === theStore.atomic);
+  assert(info.valueType === theStore.valueType);
 
   theStore.offset = offset = 32;
   assert(theStore.offset === offset);
@@ -626,6 +789,15 @@ console.log("# Store");
   assert(theStore.atomic === true);
   theStore.finalize();
   assert(theStore.align === 4);
+
+  info = binaryen.getExpressionInfo(theStore);
+  assert(info.offset === theStore.offset);
+  assert(info.align === theStore.align);
+  assert(info.ptr === theStore.ptr);
+  assert(info.value === theStore.value);
+  assert(info.bytes === theStore.bytes);
+  assert(info.isAtomic === theStore.atomic);
+  assert(info.valueType === theStore.valueType);
 
   console.log(theStore.toText());
   assert(
@@ -647,35 +819,51 @@ console.log("# Const");
   assert(theConst.valueI32 === 1);
   theConst.valueI32 = 2;
   assert(theConst.valueI32 === 2);
-  assert(theConst.valueI32 === binaryen.getExpressionInfo(theConst).value);
   assert(theConst.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theConst);
+  assert(info.id === theConst.id);
+  assert(info.type === theConst.type);
+  assert(info.value === theConst.valueI32);
 
   theConst.valueI64Low = 3;
   assert(theConst.valueI64Low === 3);
   theConst.valueI64High = 4;
   assert(theConst.valueI64High === 4);
   theConst.finalize();
-  assert(theConst.valueI64Low === binaryen.getExpressionInfo(theConst).value.low);
-  assert(theConst.valueI64High === binaryen.getExpressionInfo(theConst).value.high);
   assert(theConst.type == binaryen.i64);
+
+  info = binaryen.getExpressionInfo(theConst);
+  assert(info.type === theConst.type);
+  assert(info.value.low === theConst.valueI64Low);
+  assert(info.value.high === theConst.valueI64High);
 
   theConst.valueF32 = 5;
   assert(theConst.valueF32 === 5);
   theConst.finalize();
-  assert(theConst.valueF32 === binaryen.getExpressionInfo(theConst).value);
   assert(theConst.type === binaryen.f32);
+
+  info = binaryen.getExpressionInfo(theConst);
+  assert(info.type === theConst.type);
+  assert(info.value === theConst.valueF32);
 
   theConst.valueF64 = 6;
   assert(theConst.valueF64 === 6);
   theConst.finalize();
-  assert(theConst.valueF64 === binaryen.getExpressionInfo(theConst).value);
   assert(theConst.type === binaryen.f64);
+
+  info = binaryen.getExpressionInfo(theConst);
+  assert(info.type === theConst.type);
+  assert(info.value === theConst.valueF64);
 
   theConst.valueV128 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16];
   assertDeepEqual(theConst.valueV128, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
   theConst.finalize();
-  assertDeepEqual(theConst.valueV128, binaryen.getExpressionInfo(theConst).value);
   assert(theConst.type === binaryen.v128);
+
+  info = binaryen.getExpressionInfo(theConst);
+  assert(info.type === theConst.type);
+  assertDeepEqual(info.value, theConst.valueV128);
 
   console.log(theConst.toText());
   assert(
@@ -696,10 +884,15 @@ console.log("# Unary");
   const theUnary = binaryen.Unary(module.i32.eqz(value));
   assert(theUnary instanceof binaryen.Unary);
   assert(theUnary instanceof binaryen.Expression);
-  assertInfoEqual(theUnary, binaryen.getExpressionInfo(theUnary));
   assert(theUnary.op === op);
   assert(theUnary.value === value);
   assert(theUnary.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theUnary);
+  assert(info.id === theUnary.id);
+  assert(info.type === theUnary.type);
+  assert(info.op === theUnary.op);
+  assert(info.value === theUnary.value);
 
   theUnary.op = op = binaryen.Operations.EqZInt64;
   assert(theUnary.op === op);
@@ -708,6 +901,11 @@ console.log("# Unary");
   theUnary.type = binaryen.f32;
   theUnary.finalize();
   assert(theUnary.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theUnary);
+  assert(info.type === theUnary.type);
+  assert(info.op === theUnary.op);
+  assert(info.value === theUnary.value);
 
   console.log(theUnary.toText());
   assert(
@@ -729,11 +927,17 @@ console.log("# Binary");
   const theBinary = binaryen.Binary(module.i32.add(left, right));
   assert(theBinary instanceof binaryen.Binary);
   assert(theBinary instanceof binaryen.Expression);
-  assertInfoEqual(theBinary, binaryen.getExpressionInfo(theBinary));
   assert(theBinary.op === op);
   assert(theBinary.left === left);
   assert(theBinary.right === right);
-  assert(theBinary.type === binaryen.i32);
+  assert(theBinary.type === binaryen.i32)
+
+  var info = binaryen.getExpressionInfo(theBinary);
+  assert(info.id === theBinary.id);
+  assert(info.type === theBinary.type);
+  assert(info.op === theBinary.op);
+  assert(info.left === theBinary.left);
+  assert(info.right === theBinary.right);
 
   theBinary.op = op = binaryen.Operations.AddInt64;
   assert(theBinary.op === op);
@@ -744,6 +948,12 @@ console.log("# Binary");
   theBinary.type = binaryen.f32;
   theBinary.finalize();
   assert(theBinary.type === binaryen.i64);
+
+  info = binaryen.getExpressionInfo(theBinary);
+  assert(info.type === theBinary.type);
+  assert(info.op === theBinary.op);
+  assert(info.left === theBinary.left);
+  assert(info.right === theBinary.right);
 
   console.log(theBinary.toText());
   assert(
@@ -765,11 +975,17 @@ console.log("# Select");
   const theSelect = binaryen.Select(module.select(condition, ifTrue, ifFalse));  assert(theSelect.ifTrue === ifTrue);
   assert(theSelect instanceof binaryen.Select);
   assert(theSelect instanceof binaryen.Expression);
-  assertInfoEqual(theSelect, binaryen.getExpressionInfo(theSelect));
   assert(theSelect.condition === condition);
   assert(theSelect.ifTrue === ifTrue);
   assert(theSelect.ifFalse === ifFalse);
   assert(theSelect.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theSelect);
+  assert(info.id === theSelect.id);
+  assert(info.type === theSelect.type);
+  assert(info.condition === theSelect.condition);
+  assert(info.ifTrue === theSelect.ifTrue);
+  assert(info.ifFalse === theSelect.ifFalse);
 
   theSelect.condition = condition = module.i32.const(4);
   assert(theSelect.condition === condition);
@@ -779,6 +995,12 @@ console.log("# Select");
   assert(theSelect.ifFalse === ifFalse);
   theSelect.finalize();
   assert(theSelect.type === binaryen.i64);
+
+  info = binaryen.getExpressionInfo(theSelect);
+  assert(info.type === theSelect.type);
+  assert(info.condition === theSelect.condition);
+  assert(info.ifTrue === theSelect.ifTrue);
+  assert(info.ifFalse === theSelect.ifFalse);
 
   console.log(theSelect.toText());
   assert(
@@ -798,15 +1020,23 @@ console.log("# Drop");
   const theDrop = binaryen.Drop(module.drop(value));
   assert(theDrop instanceof binaryen.Drop);
   assert(theDrop instanceof binaryen.Expression);
-  assertInfoEqual(theDrop, binaryen.getExpressionInfo(theDrop));
   assert(theDrop.value === value);
   assert(theDrop.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theDrop);
+  assert(info.id === theDrop.id);
+  assert(info.type === theDrop.type);
+  assert(info.value === theDrop.value);
 
   theDrop.value = value = module.i32.const(2);
   assert(theDrop.value === value);
 
   theDrop.finalize();
   assert(theDrop.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theDrop);
+  assert(info.type === theDrop.type);
+  assert(info.value === theDrop.value);
 
   console.log(theDrop.toText());
   assert(
@@ -826,15 +1056,23 @@ console.log("# Return");
   const theReturn = binaryen.Return(module.return(value));
   assert(theReturn instanceof binaryen.Return);
   assert(theReturn instanceof binaryen.Expression);
-  assertInfoEqual(theReturn, binaryen.getExpressionInfo(theReturn));
   assert(theReturn.value === value);
   assert(theReturn.type === binaryen.unreachable);
+
+  var info = binaryen.getExpressionInfo(theReturn);
+  assert(info.id === theReturn.id);
+  assert(info.type === theReturn.type);
+  assert(info.value === theReturn.value);
 
   theReturn.value = value = module.i32.const(2);
   assert(theReturn.value === value);
 
   theReturn.finalize();
   assert(theReturn.type === binaryen.unreachable);
+
+  info = binaryen.getExpressionInfo(theReturn);
+  assert(info.type === theReturn.type);
+  assert(info.value === theReturn.value);
 
   console.log(theReturn.toText());
   assert(
@@ -858,13 +1096,21 @@ console.log("# AtomicRMW");
   const theAtomicRMW = binaryen.AtomicRMW(module.i32.atomic.rmw.add(offset, ptr, value));
   assert(theAtomicRMW instanceof binaryen.AtomicRMW);
   assert(theAtomicRMW instanceof binaryen.Expression);
-  assertInfoEqual(theAtomicRMW, binaryen.getExpressionInfo(theAtomicRMW));
   assert(theAtomicRMW.op === op);
   assert(theAtomicRMW.bytes === 4);
   assert(theAtomicRMW.offset === offset);
   assert(theAtomicRMW.ptr === ptr);
   assert(theAtomicRMW.value === value);
   assert(theAtomicRMW.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theAtomicRMW);
+  assert(info.id === theAtomicRMW.id);
+  assert(info.type === theAtomicRMW.type);
+  assert(info.op === theAtomicRMW.op);
+  assert(info.bytes === theAtomicRMW.bytes);
+  assert(info.offset === theAtomicRMW.offset);
+  assert(info.ptr === theAtomicRMW.ptr);
+  assert(info.value === theAtomicRMW.value);
 
   theAtomicRMW.op = op = binaryen.Operations.AtomicRMWSub;
   assert(theAtomicRMW.op === op);
@@ -879,6 +1125,14 @@ console.log("# AtomicRMW");
   theAtomicRMW.type = binaryen.i64;
   theAtomicRMW.finalize();
   assert(theAtomicRMW.type === binaryen.i64);
+
+  info = binaryen.getExpressionInfo(theAtomicRMW);
+  assert(info.type === theAtomicRMW.type);
+  assert(info.op === theAtomicRMW.op);
+  assert(info.bytes === theAtomicRMW.bytes);
+  assert(info.offset === theAtomicRMW.offset);
+  assert(info.ptr === theAtomicRMW.ptr);
+  assert(info.value === theAtomicRMW.value);
 
   console.log(theAtomicRMW.toText());
   assert(
@@ -902,13 +1156,21 @@ console.log("# AtomicCmpxchg");
   const theAtomicCmpxchg = binaryen.AtomicCmpxchg(module.i32.atomic.rmw.cmpxchg(offset, ptr, expected, replacement));
   assert(theAtomicCmpxchg instanceof binaryen.AtomicCmpxchg);
   assert(theAtomicCmpxchg instanceof binaryen.Expression);
-  assertInfoEqual(theAtomicCmpxchg, binaryen.getExpressionInfo(theAtomicCmpxchg));
   assert(theAtomicCmpxchg.bytes === 4);
   assert(theAtomicCmpxchg.offset === offset);
   assert(theAtomicCmpxchg.ptr === ptr);
   assert(theAtomicCmpxchg.expected === expected);
   assert(theAtomicCmpxchg.replacement === replacement);
   assert(theAtomicCmpxchg.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theAtomicCmpxchg);
+  assert(info.id === theAtomicCmpxchg.id);
+  assert(info.type === theAtomicCmpxchg.type);
+  assert(info.bytes === theAtomicCmpxchg.bytes);
+  assert(info.offset === theAtomicCmpxchg.offset);
+  assert(info.ptr === theAtomicCmpxchg.ptr);
+  assert(info.expected === theAtomicCmpxchg.expected);
+  assert(info.replacement === theAtomicCmpxchg.replacement);
 
   theAtomicCmpxchg.bytes = 2;
   assert(theAtomicCmpxchg.bytes === 2);
@@ -923,6 +1185,14 @@ console.log("# AtomicCmpxchg");
   theAtomicCmpxchg.type = binaryen.i64;
   theAtomicCmpxchg.finalize();
   assert(theAtomicCmpxchg.type === binaryen.i64);
+
+  info = binaryen.getExpressionInfo(theAtomicCmpxchg);
+  assert(info.type === theAtomicCmpxchg.type);
+  assert(info.bytes === theAtomicCmpxchg.bytes);
+  assert(info.offset === theAtomicCmpxchg.offset);
+  assert(info.ptr === theAtomicCmpxchg.ptr);
+  assert(info.expected === theAtomicCmpxchg.expected);
+  assert(info.replacement === theAtomicCmpxchg.replacement);
 
   console.log(theAtomicCmpxchg.toText());
   assert(
@@ -945,12 +1215,19 @@ console.log("# AtomicWait");
   const theAtomicWait = binaryen.AtomicWait(module.memory.atomic.wait32(ptr, expected, timeout));
   assert(theAtomicWait instanceof binaryen.AtomicWait);
   assert(theAtomicWait instanceof binaryen.Expression);
-  assertInfoEqual(theAtomicWait, binaryen.getExpressionInfo(theAtomicWait));
   assert(theAtomicWait.ptr === ptr);
   assert(theAtomicWait.expected === expected);
   assert(theAtomicWait.expectedType === binaryen.i32);
   assert(theAtomicWait.timeout === timeout);
   assert(theAtomicWait.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theAtomicWait);
+  assert(info.id === theAtomicWait.id);
+  assert(info.type === theAtomicWait.type);
+  assert(info.ptr === theAtomicWait.ptr);
+  assert(info.expected === theAtomicWait.expected);
+  assert(info.expectedType === theAtomicWait.expectedType);
+  assert(info.timeout === theAtomicWait.timeout);
 
   theAtomicWait.ptr = ptr = module.i32.const(5);
   assert(theAtomicWait.ptr === ptr);
@@ -963,6 +1240,13 @@ console.log("# AtomicWait");
   theAtomicWait.type = binaryen.f64;
   theAtomicWait.finalize();
   assert(theAtomicWait.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theAtomicWait);
+  assert(info.type === theAtomicWait.type);
+  assert(info.ptr === theAtomicWait.ptr);
+  assert(info.expected === theAtomicWait.expected);
+  assert(info.expectedType === theAtomicWait.expectedType);
+  assert(info.timeout === theAtomicWait.timeout);
 
   console.log(theAtomicWait.toText());
   assert(
@@ -984,10 +1268,15 @@ console.log("# AtomicNotify");
   const theAtomicNotify = binaryen.AtomicNotify(module.memory.atomic.notify(ptr, notifyCount));
   assert(theAtomicNotify instanceof binaryen.AtomicNotify);
   assert(theAtomicNotify instanceof binaryen.Expression);
-  assertInfoEqual(theAtomicNotify, binaryen.getExpressionInfo(theAtomicNotify));
   assert(theAtomicNotify.ptr === ptr);
   assert(theAtomicNotify.notifyCount === notifyCount);
   assert(theAtomicNotify.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theAtomicNotify);
+  assert(info.id === theAtomicNotify.id);
+  assert(info.type === theAtomicNotify.type);
+  assert(info.ptr === theAtomicNotify.ptr);
+  assert(info.notifyCount === theAtomicNotify.notifyCount);
 
   theAtomicNotify.ptr = ptr = module.i32.const(3);
   assert(theAtomicNotify.ptr === ptr);
@@ -996,6 +1285,11 @@ console.log("# AtomicNotify");
   theAtomicNotify.type = binaryen.f64;
   theAtomicNotify.finalize();
   assert(theAtomicNotify.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theAtomicNotify);
+  assert(info.type === theAtomicNotify.type);
+  assert(info.ptr === theAtomicNotify.ptr);
+  assert(info.notifyCount === theAtomicNotify.notifyCount);
 
   console.log(theAtomicNotify.toText());
   assert(
@@ -1014,15 +1308,23 @@ console.log("# AtomicFence");
   const theAtomicFence = binaryen.AtomicFence(module.atomic.fence());
   assert(theAtomicFence instanceof binaryen.AtomicFence);
   assert(theAtomicFence instanceof binaryen.Expression);
-  assertInfoEqual(theAtomicFence, binaryen.getExpressionInfo(theAtomicFence));
   assert(theAtomicFence.order === 0); // reserved, not yet used
   assert(theAtomicFence.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theAtomicFence);
+  assert(info.id === theAtomicFence.id);
+  assert(info.type === theAtomicFence.type);
+  assert(info.order === theAtomicFence.order);
 
   theAtomicFence.order = 1;
   assert(theAtomicFence.order === 1);
   theAtomicFence.type = binaryen.f64;
   theAtomicFence.finalize();
   assert(theAtomicFence.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theAtomicFence);
+  assert(info.type === theAtomicFence.type);
+  assert(info.order === theAtomicFence.order);
 
   console.log(theAtomicFence.toText());
   assert(
@@ -1044,11 +1346,17 @@ console.log("# SIMDExtract");
   const theSIMDExtract = binaryen.SIMDExtract(module.i8x16.extract_lane_s(vec, index));
   assert(theSIMDExtract instanceof binaryen.SIMDExtract);
   assert(theSIMDExtract instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDExtract, binaryen.getExpressionInfo(theSIMDExtract));
   assert(theSIMDExtract.op === op);
   assert(theSIMDExtract.vec === vec);
   assert(theSIMDExtract.index === index);
   assert(theSIMDExtract.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theSIMDExtract);
+  assert(info.id === theSIMDExtract.id);
+  assert(info.type === theSIMDExtract.type);
+  assert(info.op === theSIMDExtract.op);
+  assert(info.vec === theSIMDExtract.vec);
+  assert(info.index === theSIMDExtract.index);
 
   theSIMDExtract.op = op = binaryen.Operations.ExtractLaneSVecI16x8;
   assert(theSIMDExtract.op === op);
@@ -1059,6 +1367,12 @@ console.log("# SIMDExtract");
   theSIMDExtract.type = binaryen.f64;
   theSIMDExtract.finalize();
   assert(theSIMDExtract.type === binaryen.i32);
+  
+  info = binaryen.getExpressionInfo(theSIMDExtract);
+  assert(info.type === theSIMDExtract.type);
+  assert(info.op === theSIMDExtract.op);
+  assert(info.vec === theSIMDExtract.vec);
+  assert(info.index === theSIMDExtract.index);
 
   console.log(theSIMDExtract.toText());
   assert(
@@ -1081,12 +1395,19 @@ console.log("# SIMDReplace");
   const theSIMDReplace = binaryen.SIMDReplace(module.i8x16.replace_lane(vec, index, value));
   assert(theSIMDReplace instanceof binaryen.SIMDReplace);
   assert(theSIMDReplace instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDReplace, binaryen.getExpressionInfo(theSIMDReplace));
   assert(theSIMDReplace.op === op);
   assert(theSIMDReplace.vec === vec);
   assert(theSIMDReplace.index === index);
   assert(theSIMDReplace.value === value);
   assert(theSIMDReplace.type === binaryen.v128);
+
+  var info = binaryen.getExpressionInfo(theSIMDReplace);
+  assert(info.id === theSIMDReplace.id);
+  assert(info.type === theSIMDReplace.type);
+  assert(info.op === theSIMDReplace.op);
+  assert(info.vec === theSIMDReplace.vec);
+  assert(info.index === theSIMDReplace.index);
+  assert(info.value === theSIMDReplace.value);
 
   theSIMDReplace.op = op = binaryen.Operations.ReplaceLaneVecI16x8;
   assert(theSIMDReplace.op === op);
@@ -1099,6 +1420,13 @@ console.log("# SIMDReplace");
   theSIMDReplace.type = binaryen.f64;
   theSIMDReplace.finalize();
   assert(theSIMDReplace.type === binaryen.v128);
+
+  info = binaryen.getExpressionInfo(theSIMDReplace);
+  assert(info.type === theSIMDReplace.type);
+  assert(info.op === theSIMDReplace.op);
+  assert(info.vec === theSIMDReplace.vec);
+  assert(info.index === theSIMDReplace.index);
+  assert(info.value === theSIMDReplace.value);
 
   console.log(theSIMDReplace.toText());
   assert(
@@ -1120,11 +1448,17 @@ console.log("# SIMDShuffle");
   const theSIMDShuffle = binaryen.SIMDShuffle(module.i8x16.shuffle(left, right, mask));
   assert(theSIMDShuffle instanceof binaryen.SIMDShuffle);
   assert(theSIMDShuffle instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDShuffle, binaryen.getExpressionInfo(theSIMDShuffle));
   assert(theSIMDShuffle.left === left);
   assert(theSIMDShuffle.right === right);
   assertDeepEqual(theSIMDShuffle.mask, mask);
   assert(theSIMDShuffle.type === binaryen.v128);
+
+  var info = binaryen.getExpressionInfo(theSIMDShuffle);
+  assert(info.id === theSIMDShuffle.id);
+  assert(info.type === theSIMDShuffle.type);
+  assert(info.left === theSIMDShuffle.left);
+  assert(info.right === theSIMDShuffle.right);
+  assertDeepEqual(info.mask, theSIMDShuffle.mask);
 
   theSIMDShuffle.left = left = module.v128.const([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
   assert(theSIMDShuffle.left === left);
@@ -1135,6 +1469,12 @@ console.log("# SIMDShuffle");
   theSIMDShuffle.type = binaryen.f64;
   theSIMDShuffle.finalize();
   assert(theSIMDShuffle.type === binaryen.v128);
+
+  info = binaryen.getExpressionInfo(theSIMDShuffle);
+  assert(info.type === theSIMDShuffle.type);
+  assert(info.left === theSIMDShuffle.left);
+  assert(info.right === theSIMDShuffle.right);
+  assertDeepEqual(info.mask, theSIMDShuffle.mask);
 
   console.log(theSIMDShuffle.toText());
   assert(
@@ -1157,12 +1497,19 @@ console.log("# SIMDTernary");
   const theSIMDTernary = binaryen.SIMDTernary(module.v128.bitselect(a, b, c));
   assert(theSIMDTernary instanceof binaryen.SIMDTernary);
   assert(theSIMDTernary instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDTernary, binaryen.getExpressionInfo(theSIMDTernary));
   assert(theSIMDTernary.op === op);
   assert(theSIMDTernary.a === a);
   assert(theSIMDTernary.b === b);
   assert(theSIMDTernary.c === c);
   assert(theSIMDTernary.type === binaryen.v128);
+
+  var info = binaryen.getExpressionInfo(theSIMDTernary);
+  assert(info.id === theSIMDTernary.id);
+  assert(info.type === theSIMDTernary.type);
+  assert(info.op === theSIMDTernary.op);
+  assert(info.a === theSIMDTernary.a);
+  assert(info.b === theSIMDTernary.b);
+  assert(info.c === theSIMDTernary.c);
 
   console.log(theSIMDTernary.toText() + "\n");
   assert(
@@ -1184,11 +1531,17 @@ console.log("# SIMDShift");
   const theSIMDShift = binaryen.SIMDShift(module.i8x16.shl(vec, shift));
   assert(theSIMDShift instanceof binaryen.SIMDShift);
   assert(theSIMDShift instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDShift, binaryen.getExpressionInfo(theSIMDShift));
   assert(theSIMDShift.op === op);
   assert(theSIMDShift.vec === vec);
   assert(theSIMDShift.shift === shift);
   assert(theSIMDShift.type === binaryen.v128);
+
+  var info = binaryen.getExpressionInfo(theSIMDShift);
+  assert(info.id === theSIMDShift.id);
+  assert(info.type === theSIMDShift.type);
+  assert(info.op === theSIMDShift.op);
+  assert(info.vec === theSIMDShift.vec);
+  assert(info.shift === theSIMDShift.shift);
 
   theSIMDShift.op = op = binaryen.Operations.ShrSVecI8x16;
   assert(theSIMDShift.op === op);
@@ -1199,6 +1552,12 @@ console.log("# SIMDShift");
   theSIMDShift.type = binaryen.f64;
   theSIMDShift.finalize();
   assert(theSIMDShift.type === binaryen.v128);
+
+  info = binaryen.getExpressionInfo(theSIMDShift);
+  assert(info.type === theSIMDShift.type);
+  assert(info.op === theSIMDShift.op);
+  assert(info.vec === theSIMDShift.vec);
+  assert(info.shift === theSIMDShift.shift);
 
   console.log(theSIMDShift.toText());
   assert(
@@ -1222,11 +1581,17 @@ console.log("# SIMDLoad");
   const theSIMDLoad = binaryen.SIMDLoad(module.v128.load8x8_s(offset, align, ptr));
   assert(theSIMDLoad instanceof binaryen.SIMDLoad);
   assert(theSIMDLoad instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDLoad, binaryen.getExpressionInfo(theSIMDLoad));
   assert(theSIMDLoad.offset === offset);
   assert(theSIMDLoad.align === align);
   assert(theSIMDLoad.ptr === ptr);
   assert(theSIMDLoad.type === binaryen.v128);
+
+  var info = binaryen.getExpressionInfo(theSIMDLoad);
+  assert(info.id === theSIMDLoad.id);
+  assert(info.type === theSIMDLoad.type);
+  assert(info.offset === theSIMDLoad.offset);
+  assert(info.align === theSIMDLoad.align);
+  assert(info.ptr === theSIMDLoad.ptr);
 
   theSIMDLoad.op = op = binaryen.Operations.Load8SplatVec128;
   assert(theSIMDLoad.op === op);
@@ -1239,6 +1604,12 @@ console.log("# SIMDLoad");
   theSIMDLoad.type = binaryen.f64;
   theSIMDLoad.finalize();
   assert(theSIMDLoad.type === binaryen.v128);
+
+  info = binaryen.getExpressionInfo(theSIMDLoad);
+  assert(info.type === theSIMDLoad.type);
+  assert(info.offset === theSIMDLoad.offset);
+  assert(info.align === theSIMDLoad.align);
+  assert(info.ptr === theSIMDLoad.ptr);
 
   console.log(theSIMDLoad.toText());
   assert(
@@ -1264,7 +1635,6 @@ console.log("# SIMDLoadStoreLane");
   const theSIMDLoadStoreLane = binaryen.SIMDLoadStoreLane(module.v128.load8_lane(offset, align, index, ptr, vec));
   assert(theSIMDLoadStoreLane instanceof binaryen.SIMDLoadStoreLane);
   assert(theSIMDLoadStoreLane instanceof binaryen.Expression);
-  assertInfoEqual(theSIMDLoadStoreLane, binaryen.getExpressionInfo(theSIMDLoadStoreLane));
   assert(theSIMDLoadStoreLane.op === op);
   assert(theSIMDLoadStoreLane.offset === offset);
   assert(theSIMDLoadStoreLane.align === align);
@@ -1273,6 +1643,17 @@ console.log("# SIMDLoadStoreLane");
   assert(theSIMDLoadStoreLane.vec === vec);
   assert(theSIMDLoadStoreLane.type === binaryen.v128);
   assert(theSIMDLoadStoreLane.store === false);
+
+  var info = binaryen.getExpressionInfo(theSIMDLoadStoreLane);
+  assert(info.id === theSIMDLoadStoreLane.id);
+  assert(info.type === theSIMDLoadStoreLane.type);
+  assert(info.op === theSIMDLoadStoreLane.op);
+  assert(info.offset === theSIMDLoadStoreLane.offset);
+  assert(info.align === theSIMDLoadStoreLane.align);
+  assert(info.index === theSIMDLoadStoreLane.index);
+  assert(info.ptr === theSIMDLoadStoreLane.ptr);
+  assert(info.vec === theSIMDLoadStoreLane.vec);
+  assert(info.isStore === theSIMDLoadStoreLane.store);
 
   theSIMDLoadStoreLane.op = op = binaryen.Operations.Load16LaneVec128;
   assert(theSIMDLoadStoreLane.op === op);
@@ -1290,6 +1671,15 @@ console.log("# SIMDLoadStoreLane");
   theSIMDLoadStoreLane.finalize();
   assert(theSIMDLoadStoreLane.type === binaryen.v128);
 
+  info = binaryen.getExpressionInfo(theSIMDLoadStoreLane);
+  assert(info.type === theSIMDLoadStoreLane.type);
+  assert(info.op === theSIMDLoadStoreLane.op);
+  assert(info.offset === theSIMDLoadStoreLane.offset);
+  assert(info.align === theSIMDLoadStoreLane.align);
+  assert(info.index === theSIMDLoadStoreLane.index);
+  assert(info.ptr === theSIMDLoadStoreLane.ptr);
+  assert(info.vec === theSIMDLoadStoreLane.vec);
+
   console.log(theSIMDLoadStoreLane.toText());
   assert(
     theSIMDLoadStoreLane.toText()
@@ -1303,6 +1693,11 @@ console.log("# SIMDLoadStoreLane");
   assert(theSIMDLoadStoreLane.store === true);
   theSIMDLoadStoreLane.finalize();
   assert(theSIMDLoadStoreLane.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theSIMDLoadStoreLane);
+  assert(info.type === theSIMDLoadStoreLane.type);
+  assert(info.op === theSIMDLoadStoreLane.op);
+  assert(info.isStore === theSIMDLoadStoreLane.store);
 
   console.log(theSIMDLoadStoreLane.toText());
   assert(
@@ -1326,12 +1721,19 @@ console.log("# MemoryInit");
   const theMemoryInit = binaryen.MemoryInit(module.memory.init(segment, dest, offset, size));
   assert(theMemoryInit instanceof binaryen.MemoryInit);
   assert(theMemoryInit instanceof binaryen.Expression);
-  assertInfoEqual(theMemoryInit, binaryen.getExpressionInfo(theMemoryInit));
   assert(theMemoryInit.segment === segment);
   assert(theMemoryInit.dest === dest);
   assert(theMemoryInit.offset === offset);
   assert(theMemoryInit.size === size);
   assert(theMemoryInit.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theMemoryInit);
+  assert(info.id === theMemoryInit.id);
+  assert(info.type === theMemoryInit.type);
+  assert(info.segment === theMemoryInit.segment);
+  assert(info.dest === theMemoryInit.dest);
+  assert(info.offset === theMemoryInit.offset);
+  assert(info.size === theMemoryInit.size);
 
   theMemoryInit.segment = segment = "5";
   assert(theMemoryInit.segment === "5");
@@ -1344,6 +1746,13 @@ console.log("# MemoryInit");
   theMemoryInit.type = binaryen.f64;
   theMemoryInit.finalize();
   assert(theMemoryInit.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theMemoryInit);
+  assert(info.type === theMemoryInit.type);
+  assert(info.segment === theMemoryInit.segment);
+  assert(info.dest === theMemoryInit.dest);
+  assert(info.offset === theMemoryInit.offset);
+  assert(info.size === theMemoryInit.size);
 
   console.log(theMemoryInit.toText());
   assert(
@@ -1363,15 +1772,23 @@ console.log("# DataDrop");
   const theDataDrop = binaryen.DataDrop(module.data.drop(segment));
   assert(theDataDrop instanceof binaryen.DataDrop);
   assert(theDataDrop instanceof binaryen.Expression);
-  assertInfoEqual(theDataDrop, binaryen.getExpressionInfo(theDataDrop));
   assert(theDataDrop.segment === segment);
   assert(theDataDrop.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theDataDrop);
+  assert(info.id === theDataDrop.id);
+  assert(info.type === theDataDrop.type);
+  assert(info.segment === theDataDrop.segment);
 
   theDataDrop.segment = segment = "2";
   assert(theDataDrop.segment === "2");
   theDataDrop.type = binaryen.f64;
   theDataDrop.finalize();
   assert(theDataDrop.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theDataDrop);
+  assert(info.type === theDataDrop.type);
+  assert(info.segment === theDataDrop.segment);
 
   console.log(theDataDrop.toText());
   assert(
@@ -1394,11 +1811,17 @@ console.log("# MemoryCopy");
   const theMemoryCopy = binaryen.MemoryCopy(module.memory.copy(dest, source, size));
   assert(theMemoryCopy instanceof binaryen.MemoryCopy);
   assert(theMemoryCopy instanceof binaryen.Expression);
-  assertInfoEqual(theMemoryCopy, binaryen.getExpressionInfo(theMemoryCopy));
   assert(theMemoryCopy.dest === dest);
   assert(theMemoryCopy.source === source);
   assert(theMemoryCopy.size === size);
   assert(theMemoryCopy.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theMemoryCopy);
+  assert(info.id === theMemoryCopy.id);
+  assert(info.type === theMemoryCopy.type);
+  assert(info.dest === theMemoryCopy.dest);
+  assert(info.source === theMemoryCopy.source);
+  assert(info.size === theMemoryCopy.size);
 
   theMemoryCopy.dest = dest = module.i32.const(4);
   assert(theMemoryCopy.dest === dest);
@@ -1409,6 +1832,12 @@ console.log("# MemoryCopy");
   theMemoryCopy.type = binaryen.f64;
   theMemoryCopy.finalize();
   assert(theMemoryCopy.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theMemoryCopy);
+  assert(info.type === theMemoryCopy.type);
+  assert(info.dest === theMemoryCopy.dest);
+  assert(info.source === theMemoryCopy.source);
+  assert(info.size === theMemoryCopy.size);
 
   console.log(theMemoryCopy.toText());
   assert(
@@ -1431,11 +1860,17 @@ console.log("# MemoryFill");
   const theMemoryFill = binaryen.MemoryFill(module.memory.fill(dest, value, size));
   assert(theMemoryFill instanceof binaryen.MemoryFill);
   assert(theMemoryFill instanceof binaryen.Expression);
-  assertInfoEqual(theMemoryFill, binaryen.getExpressionInfo(theMemoryFill));
   assert(theMemoryFill.dest === dest);
   assert(theMemoryFill.value === value);
   assert(theMemoryFill.size === size);
   assert(theMemoryFill.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theMemoryFill);
+  assert(info.id === theMemoryFill.id);
+  assert(info.type === theMemoryFill.type);
+  assert(info.dest === theMemoryFill.dest);
+  assert(info.value === theMemoryFill.value);
+  assert(info.size === theMemoryFill.size);
 
   theMemoryFill.dest = dest = module.i32.const(4);
   assert(theMemoryFill.dest === dest);
@@ -1446,6 +1881,12 @@ console.log("# MemoryFill");
   theMemoryFill.type = binaryen.f64;
   theMemoryFill.finalize();
   assert(theMemoryFill.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theMemoryFill);
+  assert(info.type === theMemoryFill.type);
+  assert(info.dest === theMemoryFill.dest);
+  assert(info.value === theMemoryFill.value);
+  assert(info.size === theMemoryFill.size);
 
   console.log(theMemoryFill.toText());
   assert(
@@ -1465,15 +1906,23 @@ console.log("# RefIsNull");
   const theRefIsNull = binaryen.RefIsNull(module.ref.is_null(value));
   assert(theRefIsNull instanceof binaryen.RefIsNull);
   assert(theRefIsNull instanceof binaryen.Expression);
-  assertInfoEqual(theRefIsNull, binaryen.getExpressionInfo(theRefIsNull));
   assert(theRefIsNull.value === value);
   assert(theRefIsNull.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theRefIsNull);
+  assert(info.id === theRefIsNull.id);
+  assert(info.type === theRefIsNull.type);
+  assert(info.value === theRefIsNull.value);
 
   theRefIsNull.value = value = module.local.get(2, binaryen.externref);
   assert(theRefIsNull.value === value);
   theRefIsNull.type = binaryen.f64;
   theRefIsNull.finalize();
   assert(theRefIsNull.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theRefIsNull);
+  assert(info.type === theRefIsNull.type);
+  assert(info.value === theRefIsNull.value);
 
   console.log(theRefIsNull.toText());
   assert(
@@ -1495,10 +1944,15 @@ console.log("# RefAs");
   const theRefAs = binaryen.RefAs(module.ref.as_non_null(value));
   assert(theRefAs instanceof binaryen.RefAs);
   assert(theRefAs instanceof binaryen.Expression);
-  assertInfoEqual(theRefAs, binaryen.getExpressionInfo(theRefAs));
   assert(theRefAs.op === op);
   assert(theRefAs.value === value);
   assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
+
+  var info = binaryen.getExpressionInfo(theRefAs);
+  assert(info.id === theRefAs.id);
+  assert(info.type === theRefAs.type);
+  assert(info.op === theRefAs.op);
+  assert(info.value === theRefAs.value);
 
   theRefAs.op = op = binaryen.Operations.RefAsExternConvertAny;
   assert(theRefAs.op === op);
@@ -1508,6 +1962,11 @@ console.log("# RefAs");
   theRefAs.type = binaryen.f64;
   theRefAs.finalize();
   assert(theRefAs.type !== binaryen.f64); // TODO: === (ref any)
+
+  info = binaryen.getExpressionInfo(theRefAs);
+  assert(info.type === theRefAs.type);
+  assert(info.op === theRefAs.op);
+  assert(info.value === theRefAs.value);
 
   console.log(theRefAs.toText());
   assert(
@@ -1531,14 +1990,22 @@ console.log("# RefFunc");
   const theRefFunc = binaryen.RefFunc(module.ref.func(func, type));
   assert(theRefFunc instanceof binaryen.RefFunc);
   assert(theRefFunc instanceof binaryen.Expression);
-  assertInfoEqual(theRefFunc, binaryen.getExpressionInfo(theRefFunc));
   assert(theRefFunc.func === func);
   assert(theRefFunc.type === type);
+
+  var info = binaryen.getExpressionInfo(theRefFunc);
+  assert(info.id === theRefFunc.id);
+  assert(info.type === theRefFunc.type);
+  assert(info.func === theRefFunc.func);
 
   theRefFunc.func = func = "b";
   assert(theRefFunc.func === func);
   theRefFunc.finalize();
   assert(theRefFunc.type === type);
+
+  info = binaryen.getExpressionInfo(theRefFunc);
+  assert(info.type === theRefFunc.type);
+  assert(info.func === theRefFunc.func);
 
   console.log(theRefFunc.toText());
   assert(
@@ -1559,10 +2026,15 @@ console.log("# RefEq");
   const theRefEq = binaryen.RefEq(module.ref.eq(left, right));
   assert(theRefEq instanceof binaryen.RefEq);
   assert(theRefEq instanceof binaryen.Expression);
-  assertInfoEqual(theRefEq, binaryen.getExpressionInfo(theRefEq));
   assert(theRefEq.left === left);
   assert(theRefEq.right === right);
   assert(theRefEq.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theRefEq);
+  assert(info.id === theRefEq.id);
+  assert(info.type === theRefEq.type);
+  assert(info.left === theRefEq.left);
+  assert(info.right === theRefEq.right);
 
   theRefEq.left = left = module.local.get(2, binaryen.eqref);
   assert(theRefEq.left === left);
@@ -1571,6 +2043,11 @@ console.log("# RefEq");
   theRefEq.type = binaryen.f64;
   theRefEq.finalize();
   assert(theRefEq.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theRefEq);
+  assert(info.type === theRefEq.type);
+  assert(info.left === theRefEq.left);
+  assert(info.right === theRefEq.right);
 
   console.log(theRefEq.toText());
   assert(
@@ -1591,10 +2068,15 @@ console.log("# RefTest");
   const theRefTest = binaryen.RefTest(module.ref.test(ref, castType));
   assert(theRefTest instanceof binaryen.RefTest);
   assert(theRefTest instanceof binaryen.Expression);
-  assertInfoEqual(theRefTest, binaryen.getExpressionInfo(theRefTest));
   assert(theRefTest.ref === ref);
   assert(theRefTest.castType === castType);
   assert(theRefTest.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theRefTest);
+  assert(info.id === theRefTest.id);
+  assert(info.type === theRefTest.type);
+  assert(info.ref === theRefTest.ref);
+  assert(info.castType === theRefTest.castType);
 
   theRefTest.ref = ref = module.local.get(2, binaryen.externref);
   assert(theRefTest.ref === ref);
@@ -1603,6 +2085,11 @@ console.log("# RefTest");
   theRefTest.type = binaryen.f64;
   theRefTest.finalize();
   assert(theRefTest.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theRefTest);
+  assert(info.type === theRefTest.type);
+  assert(info.ref === theRefTest.ref);
+  assert(info.castType === theRefTest.castType);
 
   console.log(theRefTest.toText());
   assert(
@@ -1623,15 +2110,23 @@ console.log("# RefCast");
   const theRefCast = binaryen.RefCast(module.ref.cast(ref, type));
   assert(theRefCast instanceof binaryen.RefCast);
   assert(theRefCast instanceof binaryen.Expression);
-  assertInfoEqual(theRefCast, binaryen.getExpressionInfo(theRefCast));
   assert(theRefCast.ref === ref);
   assert(theRefCast.type === type);
+
+  var info = binaryen.getExpressionInfo(theRefCast);
+  assert(info.id === theRefCast.id);
+  assert(info.type === theRefCast.type);
+  assert(info.ref === theRefCast.ref);
 
   theRefCast.ref = ref = module.local.get(2, binaryen.externref);
   assert(theRefCast.ref === ref);
   theRefCast.type = type = binaryen.externref;
   theRefCast.finalize();
   assert(theRefCast.type === type);
+
+  info = binaryen.getExpressionInfo(theRefCast);
+  assert(info.type === theRefCast.type);
+  assert(info.ref === theRefCast.ref);
 
   console.log(theRefCast.toText());
   assert(
@@ -1654,13 +2149,20 @@ console.log("# BrOn");
   const theBrOn = binaryen.BrOn(module.br_on_null(name, ref));
   assert(theBrOn instanceof binaryen.BrOn);
   assert(theBrOn instanceof binaryen.Expression);
-  assertInfoEqual(theBrOn, binaryen.getExpressionInfo(theBrOn));
   assert(theBrOn.name === name);
   assert(theBrOn.ref === ref);
   assert(theBrOn.op === op);
   assert(theBrOn.castType === castType);
 
   // TODO: What should theBrOn.type be equal to?
+
+  var info = binaryen.getExpressionInfo(theBrOn);
+  assert(info.id === theBrOn.id);
+  assert(info.type === theBrOn.type);
+  assert(info.name === theBrOn.name);
+  assert(info.ref === theBrOn.ref);
+  assert(info.op === theBrOn.op);
+  assert(info.castType === theBrOn.castType);
 
   theBrOn.name = name = "br2";
   assert(theBrOn.name === name);
@@ -1671,6 +2173,12 @@ console.log("# BrOn");
   theBrOn.castType = castType = binaryen.i31ref;
   assert(theBrOn.castType === castType);
   theBrOn.finalize();
+
+  info = binaryen.getExpressionInfo(theBrOn);
+  assert(info.name === theBrOn.name);
+  assert(info.ref === theBrOn.ref);
+  assert(info.op === theBrOn.op);
+  assert(info.castType === theBrOn.castType);
 
   console.log(theBrOn.toText());
   assert(
@@ -1707,10 +2215,14 @@ console.log("# StructNew");
   const theStructNew = binaryen.StructNew(module.struct.new(operands, type));
   assert(theStructNew instanceof binaryen.StructNew);
   assert(theStructNew instanceof binaryen.Expression);
-  assertInfoEqual(theStructNew, binaryen.getExpressionInfo(theStructNew));
   assertDeepEqual(theStructNew.operands, operands);
   assertDeepEqual(theStructNew.getOperands(), operands);
   assert(theStructNew.type === type);
+
+  var info = binaryen.getExpressionInfo(theStructNew);
+  assert(info.id === theStructNew.id);
+  assert(info.type === theStructNew.type);
+  assertDeepEqual(info.operands, theStructNew.operands);
 
   theStructNew.operands = operands = [
     module.i32.const(3), // set
@@ -1729,6 +2241,10 @@ console.log("# StructNew");
   theStructNew.type = type = struct1Type;
   theStructNew.finalize();
   assert(theStructNew.type === type);
+
+  info = binaryen.getExpressionInfo(theStructNew);
+  assert(info.type === theStructNew.type);
+  assertDeepEqual(info.operands, theStructNew.operands);
 
   console.log(theStructNew.toText());
   assert(
@@ -1764,11 +2280,17 @@ console.log("# StructGet");
   const theStructGet = binaryen.StructGet(module.struct.get(index, ref, type, signed));
   assert(theStructGet instanceof binaryen.StructGet);
   assert(theStructGet instanceof binaryen.Expression);
-  assertInfoEqual(theStructGet, binaryen.getExpressionInfo(theStructGet));
   assert(theStructGet.index === index);
   assert(theStructGet.ref === ref);
   assert(theStructGet.signed === signed);
   assert(theStructGet.type === type);
+
+  var info = binaryen.getExpressionInfo(theStructGet);
+  assert(info.id === theStructGet.id);
+  assert(info.type === theStructGet.type);
+  assert(info.index === theStructGet.index);
+  assert(info.ref === theStructGet.ref);
+  assert(info.isSigned === theStructGet.signed);
 
   theStructGet.index = index = 1;
   assert(theStructGet.index === index);
@@ -1779,6 +2301,12 @@ console.log("# StructGet");
   theStructGet.type = type = binaryen.i64;
   theStructGet.finalize();
   assert(theStructGet.type === type);
+
+  info = binaryen.getExpressionInfo(theStructGet);
+  assert(info.type === theStructGet.type);
+  assert(info.index === theStructGet.index);
+  assert(info.ref === theStructGet.ref);
+  assert(info.isSigned === theStructGet.signed);
 
   console.log(theStructGet.toText());
   assert(
@@ -1813,11 +2341,17 @@ console.log("# StructSet");
   const theStructSet = binaryen.StructSet(module.struct.set(index, ref, value));
   assert(theStructSet instanceof binaryen.StructSet);
   assert(theStructSet instanceof binaryen.Expression);
-  assertInfoEqual(theStructSet, binaryen.getExpressionInfo(theStructSet));
   assert(theStructSet.index === index);
   assert(theStructSet.ref === ref);
   assert(theStructSet.value === value);
   assert(theStructSet.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theStructSet);
+  assert(info.id === theStructSet.id);
+  assert(info.type === theStructSet.type);
+  assert(info.index === theStructSet.index);
+  assert(info.ref === theStructSet.ref);
+  assert(info.value === theStructSet.value);
 
   theStructSet.index = index = 1;
   assert(theStructSet.index === index);
@@ -1828,6 +2362,12 @@ console.log("# StructSet");
   theStructSet.type = binaryen.f64;
   theStructSet.finalize();
   assert(theStructSet.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theStructSet);
+  assert(info.type === theStructSet.type);
+  assert(info.index === theStructSet.index);
+  assert(info.ref === theStructSet.ref);
+  assert(info.value === theStructSet.value);
 
   console.log(theStructSet.toText());
   assert(
@@ -1857,10 +2397,15 @@ console.log("# ArrayNew");
   const theArrayNew = binaryen.ArrayNew(module.array.new(type, size, init));
   assert(theArrayNew instanceof binaryen.ArrayNew);
   assert(theArrayNew instanceof binaryen.Expression);
-  assertInfoEqual(theArrayNew, binaryen.getExpressionInfo(theArrayNew));
   assert(theArrayNew.size === size);
   assert(theArrayNew.init === init);
   assert(theArrayNew.type === type);
+
+  var info = binaryen.getExpressionInfo(theArrayNew);
+  assert(info.id === theArrayNew.id);
+  assert(info.type === theArrayNew.type);
+  assert(info.size === theArrayNew.size);
+  assert(info.init === theArrayNew.init);
 
   theArrayNew.size = size = module.i32.const(4);
   assert(theArrayNew.size === size);
@@ -1869,6 +2414,11 @@ console.log("# ArrayNew");
   theArrayNew.type = type = array1Type;
   theArrayNew.finalize();
   assert(theArrayNew.type === type);
+
+  info = binaryen.getExpressionInfo(theArrayNew);
+  assert(info.type === theArrayNew.type);
+  assert(info.size === theArrayNew.size);
+  assert(info.init === theArrayNew.init);
 
   console.log(theArrayNew.toText());
   assert(
@@ -1900,10 +2450,14 @@ console.log("# ArrayNewFixed");
   const theArrayNewFixed = binaryen.ArrayNewFixed(module.array.new_fixed(type, values));
   assert(theArrayNewFixed instanceof binaryen.ArrayNewFixed);
   assert(theArrayNewFixed instanceof binaryen.Expression);
-  assertInfoEqual(theArrayNewFixed, binaryen.getExpressionInfo(theArrayNewFixed));
   assertDeepEqual(theArrayNewFixed.values, values);
   assertDeepEqual(theArrayNewFixed.getValues(), values);
   assert(theArrayNewFixed.type === type);
+
+  var info = binaryen.getExpressionInfo(theArrayNewFixed);
+  assert(info.id === theArrayNewFixed.id);
+  assert(info.type === theArrayNewFixed.type);
+  assertDeepEqual(info.values, theArrayNewFixed.values);
 
   theArrayNewFixed.values = values = [
     module.i32.const(3), // set
@@ -1922,6 +2476,10 @@ console.log("# ArrayNewFixed");
   theArrayNewFixed.type = type = array1Type;
   theArrayNewFixed.finalize();
   assert(theArrayNewFixed.type === type);
+
+  info = binaryen.getExpressionInfo(theArrayNewFixed);
+  assert(info.type === theArrayNewFixed.type);
+  assertDeepEqual(info.values, theArrayNewFixed.values);
 
   console.log(theArrayNewFixed.toText());
   assert(
@@ -1952,11 +2510,17 @@ console.log("# ArrayNewData");
   const theArrayNewData = binaryen.ArrayNewData(module.array.new_data(type, segment, offset, size));
   assert(theArrayNewData instanceof binaryen.ArrayNewData);
   assert(theArrayNewData instanceof binaryen.Expression);
-  assertInfoEqual(theArrayNewData, binaryen.getExpressionInfo(theArrayNewData));
   assert(theArrayNewData.segment === segment);
   assert(theArrayNewData.offset === offset);
   assert(theArrayNewData.size === size);
   assert(theArrayNewData.type === type);
+
+  var info = binaryen.getExpressionInfo(theArrayNewData);
+  assert(info.id === theArrayNewData.id);
+  assert(info.type === theArrayNewData.type);
+  assert(info.segment === theArrayNewData.segment);
+  assert(info.offset === theArrayNewData.offset);
+  assert(info.size === theArrayNewData.size);
 
   theArrayNewData.segment = segment = "3";
   assert(theArrayNewData.segment === segment);
@@ -1967,6 +2531,12 @@ console.log("# ArrayNewData");
   theArrayNewData.type = type = array1Type;
   theArrayNewData.finalize();
   assert(theArrayNewData.type === type);
+
+  info = binaryen.getExpressionInfo(theArrayNewData);
+  assert(info.type === theArrayNewData.type);
+  assert(info.segment === theArrayNewData.segment);
+  assert(info.offset === theArrayNewData.offset);
+  assert(info.size === theArrayNewData.size);
 
   console.log(theArrayNewData.toText());
   assert(
@@ -1997,11 +2567,17 @@ console.log("# ArrayNewElem");
   const theArrayNewElem = binaryen.ArrayNewElem(module.array.new_elem(type, segment, offset, size));
   assert(theArrayNewElem instanceof binaryen.ArrayNewElem);
   assert(theArrayNewElem instanceof binaryen.Expression);
-  assertInfoEqual(theArrayNewElem, binaryen.getExpressionInfo(theArrayNewElem));
   assert(theArrayNewElem.segment === segment);
   assert(theArrayNewElem.offset === offset);
   assert(theArrayNewElem.size === size);
   assert(theArrayNewElem.type === type);
+
+  var info = binaryen.getExpressionInfo(theArrayNewElem);
+  assert(info.id === theArrayNewElem.id);
+  assert(info.type === theArrayNewElem.type);
+  assert(info.segment === theArrayNewElem.segment);
+  assert(info.offset === theArrayNewElem.offset);
+  assert(info.size === theArrayNewElem.size);
 
   theArrayNewElem.segment = segment = "3";
   assert(theArrayNewElem.segment === segment);
@@ -2012,6 +2588,13 @@ console.log("# ArrayNewElem");
   theArrayNewElem.type = type = array1Type;
   theArrayNewElem.finalize();
   assert(theArrayNewElem.type === type);
+
+  info = binaryen.getExpressionInfo(theArrayNewElem);
+  assert(info.id === theArrayNewElem.id);
+  assert(info.type === theArrayNewElem.type);
+  assert(info.segment === theArrayNewElem.segment);
+  assert(info.offset === theArrayNewElem.offset);
+  assert(info.size === theArrayNewElem.size);
 
   console.log(theArrayNewElem.toText());
   assert(
@@ -2042,11 +2625,17 @@ console.log("# ArrayGet");
   const theArrayGet = binaryen.ArrayGet(module.array.get(ref, index, type, signed));
   assert(theArrayGet instanceof binaryen.ArrayGet);
   assert(theArrayGet instanceof binaryen.Expression);
-  assertInfoEqual(theArrayGet, binaryen.getExpressionInfo(theArrayGet));
   assert(theArrayGet.ref === ref);
   assert(theArrayGet.index === index);
   assert(theArrayGet.signed === signed);
   assert(theArrayGet.type === type);
+
+  var info = binaryen.getExpressionInfo(theArrayGet);
+  assert(info.id === theArrayGet.id);
+  assert(info.type === theArrayGet.type);
+  assert(info.ref === theArrayGet.ref);
+  assert(info.index === theArrayGet.index);
+  assert(info.isSigned === theArrayGet.signed);
 
   theArrayGet.ref = ref = module.local.get(1, array1Type);
   assert(theArrayGet.ref === ref);
@@ -2057,6 +2646,12 @@ console.log("# ArrayGet");
   theArrayGet.type = type = binaryen.i64;
   theArrayGet.finalize();
   assert(theArrayGet.type === type);
+
+  info = binaryen.getExpressionInfo(theArrayGet);
+  assert(info.type === theArrayGet.type);
+  assert(info.ref === theArrayGet.ref);
+  assert(info.index === theArrayGet.index);
+  assert(info.isSigned === theArrayGet.signed);
 
   console.log(theArrayGet.toText());
   assert(
@@ -2086,11 +2681,17 @@ console.log("# ArraySet");
   const theArraySet = binaryen.ArraySet(module.array.set(ref, index, value));
   assert(theArraySet instanceof binaryen.ArraySet);
   assert(theArraySet instanceof binaryen.Expression);
-  assertInfoEqual(theArraySet, binaryen.getExpressionInfo(theArraySet));
   assert(theArraySet.ref === ref);
   assert(theArraySet.index === index);
   assert(theArraySet.value === value);
   assert(theArraySet.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theArraySet);
+  assert(info.id === theArraySet.id);
+  assert(info.type === theArraySet.type);
+  assert(info.ref === theArraySet.ref);
+  assert(info.index === theArraySet.index);
+  assert(info.value === theArraySet.value);
 
   theArraySet.ref = ref = module.local.get(2, array1Type);
   assert(theArraySet.ref === ref);
@@ -2101,6 +2702,12 @@ console.log("# ArraySet");
   theArraySet.type = binaryen.i64;
   theArraySet.finalize();
   assert(theArraySet.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theArraySet);
+  assert(info.type === theArraySet.type);
+  assert(info.ref === theArraySet.ref);
+  assert(info.index === theArraySet.index);
+  assert(info.value === theArraySet.value);
 
   console.log(theArraySet.toText());
   assert(
@@ -2128,15 +2735,23 @@ console.log("# ArrayLen");
   const theArrayLen = binaryen.ArrayLen(module.array.len(ref));
   assert(theArrayLen instanceof binaryen.ArrayLen);
   assert(theArrayLen instanceof binaryen.Expression);
-  assertInfoEqual(theArrayLen, binaryen.getExpressionInfo(theArrayLen));
   assert(theArrayLen.ref === ref);
   assert(theArrayLen.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theArrayLen);
+  assert(info.id === theArrayLen.id);
+  assert(info.type === theArrayLen.type);
+  assert(info.ref === theArrayLen.ref);
 
   theArrayLen.ref = ref = module.local.get(1, array1Type);
   assert(theArrayLen.ref === ref);
   theArrayLen.type = binaryen.i64;
   theArrayLen.finalize();
   assert(theArrayLen.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theArrayLen);
+  assert(info.type === theArrayLen.type);
+  assert(info.ref === theArrayLen.ref);
 
   console.log(theArrayLen.toText());
   assert(
@@ -2167,12 +2782,19 @@ console.log("# ArrayFill");
   const theArrayFill = binaryen.ArrayFill(module.array.fill(ref, index, value, size));
   assert(theArrayFill instanceof binaryen.ArrayFill);
   assert(theArrayFill instanceof binaryen.Expression);
-  assertInfoEqual(theArrayFill, binaryen.getExpressionInfo(theArrayFill));
   assert(theArrayFill.ref === ref);
   assert(theArrayFill.index === index);
   assert(theArrayFill.value === value);
   assert(theArrayFill.size === size);
   assert(theArrayFill.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theArrayFill);
+  assert(info.id === theArrayFill.id);
+  assert(info.type === theArrayFill.type);
+  assert(info.ref === theArrayFill.ref);
+  assert(info.index === theArrayFill.index);
+  assert(info.value === theArrayFill.value);
+  assert(info.size === theArrayFill.size);
 
   theArrayFill.ref = ref = module.local.get(2, array1Type);
   assert(theArrayFill.ref === ref);
@@ -2185,6 +2807,13 @@ console.log("# ArrayFill");
   theArrayFill.type = binaryen.i64;
   theArrayFill.finalize();
   assert(theArrayFill.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theArrayFill);
+  assert(info.type === theArrayFill.type);
+  assert(info.ref === theArrayFill.ref);
+  assert(info.index === theArrayFill.index);
+  assert(info.value === theArrayFill.value);
+  assert(info.size === theArrayFill.size);
 
   console.log(theArrayFill.toText());
   assert(
@@ -2216,13 +2845,21 @@ console.log("# ArrayCopy");
   const theArrayCopy = binaryen.ArrayCopy(module.array.copy(destRef, destIndex, srcRef, srcIndex, length));
   assert(theArrayCopy instanceof binaryen.ArrayCopy);
   assert(theArrayCopy instanceof binaryen.Expression);
-  assertInfoEqual(theArrayCopy, binaryen.getExpressionInfo(theArrayCopy));
   assert(theArrayCopy.destRef === destRef);
   assert(theArrayCopy.destIndex === destIndex);
   assert(theArrayCopy.srcRef === srcRef);
   assert(theArrayCopy.srcIndex === srcIndex);
   assert(theArrayCopy.length === length);
   assert(theArrayCopy.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theArrayCopy);
+  assert(info.id === theArrayCopy.id);
+  assert(info.type === theArrayCopy.type);
+  assert(info.destRef === theArrayCopy.destRef);
+  assert(info.destIndex === theArrayCopy.destIndex);
+  assert(info.srcRef === theArrayCopy.srcRef);
+  assert(info.srcIndex === theArrayCopy.srcIndex);
+  assert(info.length === theArrayCopy.length);
 
   theArrayCopy.destRef = destRef = module.local.get(2, array1Type);
   assert(theArrayCopy.destRef === destRef);
@@ -2237,6 +2874,14 @@ console.log("# ArrayCopy");
   theArrayCopy.type = binaryen.i64;
   theArrayCopy.finalize();
   assert(theArrayCopy.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theArrayCopy);
+  assert(info.type === theArrayCopy.type);
+  assert(info.destRef === theArrayCopy.destRef);
+  assert(info.destIndex === theArrayCopy.destIndex);
+  assert(info.srcRef === theArrayCopy.srcRef);
+  assert(info.srcIndex === theArrayCopy.srcIndex);
+  assert(info.length === theArrayCopy.length);
 
   console.log(theArrayCopy.toText());
   assert(
@@ -2268,13 +2913,21 @@ console.log("# ArrayInitData");
   const theArrayInitData = binaryen.ArrayInitData(module.array.init_data(segment, ref, index, offset, size));
   assert(theArrayInitData instanceof binaryen.ArrayInitData);
   assert(theArrayInitData instanceof binaryen.Expression);
-  assertInfoEqual(theArrayInitData, binaryen.getExpressionInfo(theArrayInitData));
   assert(theArrayInitData.segment === segment);
   assert(theArrayInitData.ref === ref);
   assert(theArrayInitData.index === index);
   assert(theArrayInitData.offset === offset);
   assert(theArrayInitData.size === size);
   assert(theArrayInitData.type === binaryen.none);
+  
+  var info = binaryen.getExpressionInfo(theArrayInitData);
+  assert(info.id === theArrayInitData.id);
+  assert(info.type === theArrayInitData.type);
+  assert(info.segment === theArrayInitData.segment);
+  assert(info.ref === theArrayInitData.ref);
+  assert(info.index === theArrayInitData.index);
+  assert(info.offset === theArrayInitData.offset);
+  assert(info.size === theArrayInitData.size);
 
   theArrayInitData.segment = segment = "1";
   assert(theArrayInitData.segment === segment);
@@ -2289,6 +2942,14 @@ console.log("# ArrayInitData");
   theArrayInitData.type = binaryen.i64;
   theArrayInitData.finalize();
   assert(theArrayInitData.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theArrayInitData);
+  assert(info.type === theArrayInitData.type);
+  assert(info.segment === theArrayInitData.segment);
+  assert(info.ref === theArrayInitData.ref);
+  assert(info.index === theArrayInitData.index);
+  assert(info.offset === theArrayInitData.offset);
+  assert(info.size === theArrayInitData.size);
 
   console.log(theArrayInitData.toText());
   assert(
@@ -2320,13 +2981,21 @@ console.log("# ArrayInitElem");
   const theArrayInitElem = binaryen.ArrayInitElem(module.array.init_elem(segment, ref, index, offset, size));
   assert(theArrayInitElem instanceof binaryen.ArrayInitElem);
   assert(theArrayInitElem instanceof binaryen.Expression);
-  assertInfoEqual(theArrayInitElem, binaryen.getExpressionInfo(theArrayInitElem));
   assert(theArrayInitElem.segment === segment);
   assert(theArrayInitElem.ref === ref);
   assert(theArrayInitElem.index === index);
   assert(theArrayInitElem.offset === offset);
   assert(theArrayInitElem.size === size);
   assert(theArrayInitElem.type === binaryen.none);
+
+  var info = binaryen.getExpressionInfo(theArrayInitElem);
+  assert(info.id === theArrayInitElem.id);
+  assert(info.type === theArrayInitElem.type);
+  assert(info.segment === theArrayInitElem.segment);
+  assert(info.ref === theArrayInitElem.ref);
+  assert(info.index === theArrayInitElem.index);
+  assert(info.offset === theArrayInitElem.offset);
+  assert(info.size === theArrayInitElem.size);
 
   theArrayInitElem.segment = segment = "1";
   assert(theArrayInitElem.segment === segment);
@@ -2341,6 +3010,14 @@ console.log("# ArrayInitElem");
   theArrayInitElem.type = binaryen.i64;
   theArrayInitElem.finalize();
   assert(theArrayInitElem.type === binaryen.none);
+
+  info = binaryen.getExpressionInfo(theArrayInitElem);
+  assert(info.type === theArrayInitElem.type);
+  assert(info.segment === theArrayInitElem.segment);
+  assert(info.ref === theArrayInitElem.ref);
+  assert(info.index === theArrayInitElem.index);
+  assert(info.offset === theArrayInitElem.offset);
+  assert(info.size === theArrayInitElem.size);
 
   console.log(theArrayInitElem.toText());
   assert(
@@ -2367,7 +3044,6 @@ console.log("# Try");
   const theTry = binaryen.Try(module.try('', body, ["tag1"], catchBodies, ''));
   assert(theTry instanceof binaryen.Try);
   assert(theTry instanceof binaryen.Expression);
-  assertInfoEqual(theTry, binaryen.getExpressionInfo(theTry));
   assert(theTry.body === body);
   assertDeepEqual(theTry.catchBodies, catchBodies);
   assert(theTry.type === binaryen.i32);
@@ -2375,6 +3051,17 @@ console.log("# Try");
   assert(theTry.getNumCatchBodies() == 2);
   assert(theTry.hasCatchAll() == 1);
   console.log(theTry.toText());
+
+  var info = binaryen.getExpressionInfo(theTry);
+  assert(info.id === theTry.id);
+  assert(info.type === theTry.type);
+  assert(info.name === theTry.name);
+  assert(info.body === theTry.body);
+  assertDeepEqual(info.catchTags, theTry.catchTags);
+  assertDeepEqual(info.catchBodies, theTry.catchBodies);
+  assert(info.hasCatchAll === theTry.hasCatchAll());
+  assert(info.delegateTarget === theTry.delegateTarget);
+  assert(info.isDelegate === theTry.delegate);
 
   theTry.body = body = module.i32.const(4);
   assert(theTry.body === body);
@@ -2418,6 +3105,17 @@ console.log("# Try");
   theTry.finalize();
   assert(theTry.type === binaryen.i32);
 
+  info = binaryen.getExpressionInfo(theTry);
+  assert(info.id === theTry.id);
+  assert(info.type === theTry.type);
+  assert(info.name === theTry.name);
+  assert(info.body === theTry.body);
+  assertDeepEqual(info.catchTags, theTry.catchTags);
+  assertDeepEqual(info.catchBodies, theTry.catchBodies);
+  assert(info.hasCatchAll === theTry.hasCatchAll());
+  assert(info.delegateTarget === theTry.delegateTarget);
+  assert(info.isDelegate === theTry.delegate);
+
   console.log(theTry.toText());
 
   const tryDelegate = binaryen.Try(module.try('', body, [], [], "try_blah"));
@@ -2425,6 +3123,11 @@ console.log("# Try");
   assert(tryDelegate.getDelegateTarget() == "try_blah");
   tryDelegate.setDelegateTarget("try_outer");
   assert(tryDelegate.getDelegateTarget() == "try_outer");
+
+  info = binaryen.getExpressionInfo(tryDelegate);
+  assert(info.delegateTarget === tryDelegate.delegateTarget);
+  assert(info.isDelegate === tryDelegate.delegate);
+
   console.log(tryDelegate.toText());
 
   module.dispose();
@@ -2442,10 +3145,15 @@ console.log("# Throw");
   const theThrow = binaryen.Throw(module.throw(tag, operands));
   assert(theThrow instanceof binaryen.Throw);
   assert(theThrow instanceof binaryen.Expression);
-  assertInfoEqual(theThrow, binaryen.getExpressionInfo(theThrow));
   assert(theThrow.tag === tag);
   assertDeepEqual(theThrow.operands, operands);
   assert(theThrow.type === binaryen.unreachable);
+
+  var info = binaryen.getExpressionInfo(theThrow);
+  assert(info.id === theThrow.id);
+  assert(info.type === theThrow.type);
+  assert(info.tag === theThrow.tag);
+  assertDeepEqual(info.operands, theThrow.operands);
 
   theThrow.tag = "bar";
   assert(theThrow.tag === "bar");
@@ -2468,6 +3176,11 @@ console.log("# Throw");
   theThrow.finalize();
   assert(theThrow.type === binaryen.unreachable);
 
+  info = binaryen.getExpressionInfo(theThrow);
+  assert(info.type === theThrow.type);
+  assert(info.tag === theThrow.tag);
+  assertDeepEqual(info.operands, theThrow.operands);
+
   console.log(theThrow.toText());
   assert(
     theThrow.toText()
@@ -2485,15 +3198,23 @@ console.log("# Rethrow");
   const theRethrow = binaryen.Rethrow(module.rethrow("l0"));
   assert(theRethrow instanceof binaryen.Rethrow);
   assert(theRethrow instanceof binaryen.Expression);
-  assertInfoEqual(theRethrow, binaryen.getExpressionInfo(theRethrow));
   assert(theRethrow.target === "l0");
   assert(theRethrow.type === binaryen.unreachable);
+
+  var info = binaryen.getExpressionInfo(theRethrow);
+  assert(info.id === theRethrow.id);
+  assert(info.type === theRethrow.type);
+  assert(info.target === theRethrow.target);
 
   theRethrow.target = "l1";
   assert(theRethrow.target === "l1");
   theRethrow.type = binaryen.f64;
   theRethrow.finalize();
   assert(theRethrow.type === binaryen.unreachable);
+
+  info = binaryen.getExpressionInfo(theRethrow);
+  assert(info.type === theRethrow.type);
+  assert(info.target === theRethrow.target);
 
   console.log(theRethrow.toText());
   assert(
@@ -2517,9 +3238,13 @@ console.log("# TupleMake");
   const theTupleMake = binaryen.TupleMake(module.tuple.make(operands));
   assert(theTupleMake instanceof binaryen.TupleMake);
   assert(theTupleMake instanceof binaryen.Expression);
-  assertInfoEqual(theTupleMake, binaryen.getExpressionInfo(theTupleMake));
   assertDeepEqual(theTupleMake.operands, operands);
   assert(theTupleMake.type === type);
+
+  var info = binaryen.getExpressionInfo(theTupleMake);
+  assert(info.id === theTupleMake.id);
+  assert(info.type === theTupleMake.type);
+  assertDeepEqual(info.operands, theTupleMake.operands);
 
   theTupleMake.operands = operands = [
     module.i32.const(3), // set
@@ -2539,6 +3264,10 @@ console.log("# TupleMake");
   theTupleMake.type = binaryen.f64;
   theTupleMake.finalize();
   assert(theTupleMake.type === type);
+
+  info = binaryen.getExpressionInfo(theTupleMake);
+  assert(info.type === theTupleMake.type);
+  assertDeepEqual(info.operands, theTupleMake.operands);
 
   console.log(theTupleMake.toText());
   assert(
@@ -2562,10 +3291,15 @@ console.log("# TupleExtract");
   const theTupleExtract = binaryen.TupleExtract(module.tuple.extract(tuple, index));
   assert(theTupleExtract instanceof binaryen.TupleExtract);
   assert(theTupleExtract instanceof binaryen.Expression);
-  assertInfoEqual(theTupleExtract, binaryen.getExpressionInfo(theTupleExtract));
   assert(theTupleExtract.tuple === tuple);
   assert(theTupleExtract.index === index);
   assert(theTupleExtract.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theTupleExtract);
+  assert(info.id === theTupleExtract.id);
+  assert(info.type === theTupleExtract.type);
+  assert(info.tuple === theTupleExtract.tuple);
+  assert(info.index === theTupleExtract.index);
 
   theTupleExtract.tuple = tuple = module.tuple.make([
     module.f64.const(3),
@@ -2577,6 +3311,11 @@ console.log("# TupleExtract");
   theTupleExtract.type = binaryen.i32;
   theTupleExtract.finalize();
   assert(theTupleExtract.type === binaryen.f64);
+
+  info = binaryen.getExpressionInfo(theTupleExtract);
+  assert(info.type === theTupleExtract.type);
+  assert(info.tuple === theTupleExtract.tuple);
+  assert(info.index === theTupleExtract.index);
 
   console.log(theTupleExtract.toText());
   assert(
@@ -2596,12 +3335,19 @@ console.log("# RefI31");
   const theRefI31 = binaryen.RefI31(module.ref.i31(value));
   assert(theRefI31 instanceof binaryen.RefI31);
   assert(theRefI31 instanceof binaryen.Expression);
-  assertInfoEqual(theRefI31, binaryen.getExpressionInfo(theRefI31));
   assert(theRefI31.value === value);
   // assert(theRefI31.type === binaryen.?); // TODO: (ref i31)
 
+  var info = binaryen.getExpressionInfo(theRefI31);
+  assert(info.id === theRefI31.id);
+  assert(info.type === theRefI31.type);
+  assert(info.value === theRefI31.value);
+
   theRefI31.value = value = module.local.get(2, binaryen.i32);
   assert(theRefI31.value === value);
+
+  info = binaryen.getExpressionInfo(theRefI31);
+  assert(info.value === theRefI31.value);
 
   console.log(theRefI31.toText());
   assert(
@@ -2621,10 +3367,15 @@ console.log("# I31Get");
   const theI31Get = binaryen.I31Get(module.i31.get_s(i31));
   assert(theI31Get instanceof binaryen.I31Get);
   assert(theI31Get instanceof binaryen.Expression);
-  assertInfoEqual(theI31Get, binaryen.getExpressionInfo(theI31Get));
   assert(theI31Get.i31 === i31);
   assert(theI31Get.signed === true);
   assert(theI31Get.type === binaryen.i32);
+
+  var info = binaryen.getExpressionInfo(theI31Get);
+  assert(info.id === theI31Get.id);
+  assert(info.type === theI31Get.type);
+  assert(info.i31 === theI31Get.i31);
+  assert(info.isSigned === theI31Get.signed);
 
   theI31Get.i31 = i31 = module.local.get(2, binaryen.i31ref);
   assert(theI31Get.i31 === i31);
@@ -2633,6 +3384,11 @@ console.log("# I31Get");
   theI31Get.type = binaryen.f64;
   theI31Get.finalize();
   assert(theI31Get.type === binaryen.i32);
+
+  info = binaryen.getExpressionInfo(theI31Get);
+  assert(info.type === theI31Get.type);
+  assert(info.i31 === theI31Get.i31);
+  assert(info.isSigned === theI31Get.signed);
 
   console.log(theI31Get.toText());
   assert(
