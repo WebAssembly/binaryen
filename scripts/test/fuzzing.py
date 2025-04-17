@@ -122,6 +122,7 @@ unfuzzable = [
     'coalesce-locals-exact.wast',
     'remove-unused-brs-exact.wast',
     'signature-refining-exact.wast',
+    'gufa-cast-all-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
 ]
