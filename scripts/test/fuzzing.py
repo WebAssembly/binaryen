@@ -115,7 +115,7 @@ unfuzzable = [
     'exact-references.wast',
     'exact-references-lowering.wast',
     'exact-casts.wast',
-    'exact-csats-trivial.wast',
+    'exact-casts-trivial.wast',
     'optimize-instructions-exact.wast',
     'local-subtyping-exact.wast',
     'remove-unused-types-exact.wast',
