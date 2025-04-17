@@ -1283,15 +1283,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           const size_t size = curr->list.size();
           auto* secondLast = curr->list[size - 2];
           auto* last = curr->list[size - 1];
-
-          if (auto* drop = secondLast->dynCast<Drop>()) {
-            if (auto* brk = drop->value->dynCast<Break>()) {
-              if (!EffectAnalyzer(passOptions, *getModule(), brk->value)
-                     .hasSideEffects()) {
-                if (ExpressionAnalyzer::equal(brk->value, last)) {
-                  // All conditions met, perform the update
-                  drop->value = brk->condition;
-                }
+          if (auto* drop = secondLast->dynCast<Drop>(); drop && drop->value) {
+            if (auto* brk = drop->value->dynCast<Break>(); brk && brk->value) {
+              bool hasNoSideEffects =
+                !EffectAnalyzer(passOptions, *getModule(), brk->value)
+                   .hasSideEffects();
+              bool isEqual = ExpressionAnalyzer::equal(brk->value, last);
+              if (hasNoSideEffects && isEqual) {
+                // All conditions met, perform the update
+                drop->value = brk->condition;
               }
             }
           }
