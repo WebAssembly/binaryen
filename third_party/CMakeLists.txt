@@ -1,4 +1,5 @@
 if(BUILD_FUZZTEST)
+  set(BUILD_GMOCK ON)
   add_subdirectory(fuzztest)
 elseif(BUILD_TESTS)
   # fuzztest includes gtest, but if we're not building fuzztest, build gtest ourselves.
