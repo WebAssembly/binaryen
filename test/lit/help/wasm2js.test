@@ -470,6 +470,10 @@
 ;; CHECK-NEXT:                                                 but raise a fatal error if there
 ;; CHECK-NEXT:                                                 are invalid strings
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lowering-magic-imports-keep-feature  same as string-lowering, but
+;; CHECK-NEXT:                                                 keeps the strings feature
+;; CHECK-NEXT:                                                 enabled after
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-debug                                 strip debug info (including the
