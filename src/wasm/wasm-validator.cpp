@@ -2905,9 +2905,9 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     "ref.test target type and ref type must have a common supertype");
 
   // If custom descriptors is not enabled, only trivial and null-checking exact
-  // casts are allowed, i.e. those where the operand is also exact has the same
-  // heap type, but may differ in nullability. The result of these trivial exact
-  // casts does not change when the types are made inexact during binary
+  // casts are allowed, i.e. those where the operand is also exact and has the
+  // same heap type, but may differ in nullability. The result of these trivial
+  // exact casts does not change when the types are made inexact during binary
   // writing.
   if (!getModule()->features.hasCustomDescriptors()) {
     shouldBeTrue(curr->castType.isInexact() || curr->castType.with(Nullable) ==
