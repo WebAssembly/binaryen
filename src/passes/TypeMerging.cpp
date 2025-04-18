@@ -667,6 +667,9 @@ bool shapeEq(Type a, Type b) {
   if (a.getNullability() != b.getNullability()) {
     return false;
   }
+  if (a.getExactness() != b.getExactness()) {
+    return false;
+  }
   return true;
 }
 
@@ -688,6 +691,7 @@ size_t shapeHash(Type a) {
   }
   rehash(digest, 4);
   rehash(digest, (int)a.getNullability());
+  rehash(digest, (int)a.getExactness());
   return digest;
 }
 
