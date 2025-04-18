@@ -124,6 +124,8 @@ unfuzzable = [
     'signature-refining-exact.wast',
     'gufa-cast-all-exact.wast',
     'type-merging-exact.wast',
+    'type-refining-exact.wast',
+    'type-refining-gufa-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
 ]
