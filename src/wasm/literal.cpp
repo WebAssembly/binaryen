@@ -2604,7 +2604,7 @@ Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
   return dot<4, 2, &Literal::getLanesSI16x8>(*this, other);
 }
 
-Literal Literal::dotSI16x8toI32x4Add(const Literal& left,
+Literal Literal::dotSI8x16toI16x8Add(const Literal& left,
                                      const Literal& right) const {
   auto temp = dotSI8x16toI16x8(left);
 
@@ -2617,7 +2617,7 @@ Literal Literal::dotSI16x8toI32x4Add(const Literal& left,
   //
   // i/4 is 0, 0.5, 1, 1.5...
   for (size_t i = 0; i < 4; i++) {
-    dest[i] = tempLames[i * 2, i * 2 + 1];
+    dest[i] = tempLanes[i * 2].add(tempLanes[i * 2 + 1]);
   }
 
   return Literal(dest).addI32x4(right);
