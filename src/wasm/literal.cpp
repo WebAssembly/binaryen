@@ -2610,12 +2610,8 @@ Literal Literal::dotSI8x16toI16x8Add(const Literal& left,
 
   auto tempLanes = temp.getLanesSI16x8();
   LaneArray<4> dest;
-  // TODO: spec says indexes should be half, and fractional?
-  //
-  //   for i in range(0, 8, 2):
-  //     dst[i/4] = tmp[i] + tmp[i+1]
-  //
-  // i/4 is 0, 0.5, 1, 1.5...
+  // TODO: the index on dest may be wrong, see
+  //       https://github.com/WebAssembly/relaxed-simd/issues/162
   for (size_t i = 0; i < 4; i++) {
     dest[i] = tempLanes[i * 2].add(tempLanes[i * 2 + 1]);
   }
