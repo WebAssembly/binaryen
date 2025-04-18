@@ -906,11 +906,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // further optimizations after this, and those optimizations might even
         // benefit from this improvement.
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
-        if (!getModule()->features.hasCustomDescriptors() && glb.isExact() &&
-            !curr->castType.isExact()) {
+        if (!curr->castType.isExact()) {
           // When custom descriptors is not enabled, nontrivial exact casts are
           // not allowed.
-          glb = glb.with(Inexact);
+          glb = glb.withInexactIfNoCustomDescs(getModule()->features);
         }
         if (curr->op == BrOnCastFail) {
           // BrOnCastFail sends the input type, with adjusted nullability. The

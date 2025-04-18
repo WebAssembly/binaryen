@@ -418,14 +418,19 @@ public:
   }
 
   // Return a new reference type with some part updated to the specified value.
-  Type with(HeapType heapType) {
+  Type with(HeapType heapType) const {
     return Type(heapType, getNullability(), getExactness());
   }
-  Type with(Nullability nullability) {
+  Type with(Nullability nullability) const {
     return Type(getHeapType(), nullability, getExactness());
   }
-  Type with(Exactness exactness) {
+  Type with(Exactness exactness) const {
     return Type(getHeapType(), getNullability(), exactness);
+  }
+
+  // Make the type inexact if custom descriptors is not enabled.
+  Type withInexactIfNoCustomDescs(FeatureSet feats) const {
+    return !isExact() || feats.hasCustomDescriptors() ? *this : with(Inexact);
   }
 
 private:
