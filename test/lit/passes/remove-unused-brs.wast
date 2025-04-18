@@ -5,7 +5,7 @@
 
 (module
   ;; Regression test in which we need to calculate a proper LUB.
-  ;; CHECK:      (func $selectify-fresh-lub (type $3) (param $x i32) (result anyref)
+  ;; CHECK:      (func $selectify-fresh-lub (type $4) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (select (result i31ref)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.i31
@@ -226,7 +226,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-i32 (type $4) (result i32)
+  ;; CHECK:      (func $get-i32 (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 400)
   ;; CHECK-NEXT: )
   (func $get-i32 (result i32)
@@ -340,9 +340,32 @@
     )
   )
 
+  ;; CHECK:      (func $restructure-br_if-value-redundant (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $get-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant (result i32)
+    (block $x (result i32)
+      (call $nothing)
+      (drop
+        (br_if $x
+          (i32.const 1)
+          (call $get-i32)
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+
   ;; CHECK:      (func $restructure-select-no-multivalue (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $block (type $2) (result i32 i32)
+  ;; CHECK-NEXT:   (block $block (type $3) (result i32 i32)
   ;; CHECK-NEXT:    (tuple.drop 2
   ;; CHECK-NEXT:     (br_if $block
   ;; CHECK-NEXT:      (tuple.make 2
