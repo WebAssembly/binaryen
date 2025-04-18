@@ -1311,9 +1311,8 @@ public:
           return NONCONSTANT_FLOW;
         }
         return a.dotSI8x16toI16x8Add(b, c);
-      default:
-        WASM_UNREACHABLE("");
     }
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
