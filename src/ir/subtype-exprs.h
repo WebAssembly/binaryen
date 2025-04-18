@@ -415,10 +415,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitContNew(ContNew* curr) { WASM_UNREACHABLE("not implemented"); }
   void visitContBind(ContBind* curr) { WASM_UNREACHABLE("not implemented"); }
   void visitSuspend(Suspend* curr) { WASM_UNREACHABLE("not implemented"); }
-  void visitResume(Resume* curr) {
-    // TODO: Can we do better here?
-    self()->noteNonFlowSubtype(curr->cont, Type(HeapType::cont, Nullable));
-  }
+  void visitResume(Resume* curr) { WASM_UNREACHABLE("not implemented"); }
   void visitResumeThrow(ResumeThrow* curr) {
     WASM_UNREACHABLE("not implemented");
   }
