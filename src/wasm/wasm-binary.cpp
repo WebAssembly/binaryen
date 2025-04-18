@@ -4979,6 +4979,9 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       }
     } else if (name == BinaryConsts::CustomSections::BulkMemoryOptFeature) {
       feature = FeatureSet::BulkMemoryOpt;
+    } else if (name ==
+               BinaryConsts::CustomSections::CallIndirectOverlongFeature) {
+      feature = FeatureSet::CallIndirectOverlong;
     } else if (name == BinaryConsts::CustomSections::ExceptionHandlingFeature) {
       feature = FeatureSet::ExceptionHandling;
     } else if (name == BinaryConsts::CustomSections::MutableGlobalsFeature) {
@@ -5013,6 +5016,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::SharedEverything;
     } else if (name == BinaryConsts::CustomSections::FP16Feature) {
       feature = FeatureSet::FP16;
+    } else if (name == BinaryConsts::CustomSections::CustomDescriptorsFeature) {
+      feature = FeatureSet::CustomDescriptors;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
