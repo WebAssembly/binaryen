@@ -2,6 +2,7 @@ if(BUILD_FUZZTEST)
   include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/third_party/fuzztest)
 else()
   include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/third_party/googletest/googletest/include)
+  include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/third_party/googletest/googlemock/include)
 endif()
 
 set(unittest_SOURCES

@@ -16,6 +16,7 @@
 
 #include "source-map.h"
 #include "print-test.h"
+#include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -53,6 +54,16 @@ protected:
     EXPECT_EQ(loc->columnNumber, col);
     EXPECT_EQ(loc->symbolNameIndex, sym);
   }
+
+  void ExpectParseError(std::string& mapString, const char* expectedError) {
+    SCOPED_TRACE(mapString);
+    EXPECT_THROW(parseMap(mapString), MapParseException);
+    try {
+      parseMap(mapString);
+    } catch (MapParseException ex) {
+      EXPECT_THAT(ex.errorText, ::testing::HasSubstr(expectedError));
+    }
+  }
 };
 
 // Check that debug location parsers can handle single-segment mappings.
@@ -73,16 +84,49 @@ TEST_F(SourceMapTest, SourceMappingSingleSegment) {
   EXPECT_FALSE(loc.has_value());
 }
 
-TEST_F(SourceMapTest, BadSourceMap) {
-  // This source map is missing the version field.
+TEST_F(SourceMapTest, BadSourceMaps) {
+  // Test that a malformed JSON string throws rather than asserting.
   std::string sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["foo.c"],
+      "mappings": ""
+    malformed
+    }
+  )";
+  ExpectParseError(sourceMap, "malformed value in JSON object");
+
+  // Valid JSON, but missing the version field.
+  sourceMap = R"(
     {
       "sources": [],
       "names": [],
       "mappings": "A"
     }
   )";
-  EXPECT_THROW(parseMap(sourceMap), MapParseException);
+  ExpectParseError(sourceMap, "Source map version missing");
+
+  // Valid JSON, but a bad "sources" field.
+  sourceMap = R"(
+    {
+      "version": 3,
+      "sources": 123,
+      "mappings": ""
+    }
+  )";
+  ExpectParseError(sourceMap, "Source map sources missing or not an array");
+
+  sourceMap = R"(
+    {
+      "version": 3,
+      "sources": ["foo.c"],
+      "mappings": "C;A"
+    }
+  )";
+  parseMap(sourceMap);
+  // Mapping strings are parsed incrementally, so errors don't show up until a
+  // sufficiently far-advanced location is requested to reach the problem.
+  EXPECT_THROW(reader->readDebugLocationAt(1), MapParseException);
 }
 
 TEST_F(SourceMapTest, SourcesAndNames) {
