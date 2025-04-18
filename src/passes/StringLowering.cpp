@@ -56,6 +56,12 @@ struct StringGathering : public Pass {
   using StringPtrs = std::vector<Expression**>;
   StringPtrs stringPtrs;
 
+  // Set to true if we found any uses of strings in the module. We note this as
+  // we scan the module for strings, and take into account not just strings
+  // constants but the string type in general - any use of the strings feature.
+  // Subclasses of this class use that information to avoid wasted work.
+  std::atomic<bool> stringsUsed = false;
+
   // Main entry point.
   void run(Module* module) override {
     processModule(module);
@@ -66,10 +72,18 @@ struct StringGathering : public Pass {
   // Scan the entire wasm to find the relevant strings to populate our global
   // data structures.
   void processModule(Module* module) {
-    struct StringWalker : public PostWalker<StringWalker> {
+    struct StringWalker : public PostWalker<StringWalker, UnifiedExpressionVisitor<StringWalker>> {
       StringPtrs& stringPtrs;
 
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
+
+      bool stringsUsed = false;
+
+      void visitExpression(Expression* curr) {
+        if (curr->type.isString()) {
+          stringsUsed = true;
+        }
+      }
 
       void visitStringConst(StringConst* curr) {
         stringPtrs.push_back(getCurrentPointer());
@@ -79,14 +93,22 @@ struct StringGathering : public Pass {
     ModuleUtils::ParallelFunctionAnalysis<StringPtrs> analysis(
       *module, [&](Function* func, StringPtrs& stringPtrs) {
         if (!func->imported()) {
-          StringWalker(stringPtrs).walk(func->body);
+          StringWalker walker(stringPtrs);
+          walker.walk(func->body);
+          if (walker.stringsUsed) {
+            stringsUsed = true;
+          }
         }
       });
 
     // Also walk the global module code (for simplicity, also add it to the
     // function map, using a "function" key of nullptr).
     auto& globalStrings = analysis.map[nullptr];
-    StringWalker(globalStrings).walkModuleCode(module);
+    StringWalker walker(globalStrings);
+    walker.walkModuleCode(module);
+    if (walker.stringsUsed) {
+      stringsUsed = true;
+    }
 
     // Combine all the strings.
     std::unordered_set<Name> stringSet;
@@ -221,6 +243,11 @@ struct StringLowering : public StringGathering {
 
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
+
+    // If we saw no strings during StringGathering, there is no work.    
+    if (!stringsUsed) {
+      return;
+    }
 
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
