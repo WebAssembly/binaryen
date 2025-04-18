@@ -429,7 +429,7 @@ TEST_F(TypeTest, CanonicalizeUses) {
 }
 
 TEST_F(TypeTest, CanonicalizeExactRefs) {
-  TypeBuilder builder(4);
+  TypeBuilder builder(10);
 
   // Types that vary in exactness or nullability of references are different.
   Type a = builder.getTempRefType(builder[0], Nullable, Inexact);
@@ -442,9 +442,37 @@ TEST_F(TypeTest, CanonicalizeExactRefs) {
   builder[2] = Struct({Field(c, Mutable)});
   builder[3] = Struct({Field(d, Mutable)});
 
+  auto translate = [&](HeapType t) -> HeapType {
+    for (int i = 0; i < 4; ++i) {
+      if (t == builder[i]) {
+        return builder[4 + i];
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
+  };
+
+  builder[4].copy(builder[0], translate);
+  builder[5].copy(builder[1], translate);
+  builder[6].copy(builder[2], translate);
+  builder[7].copy(builder[3], translate);
+
+  // Test with references to previous types as well.
+  Type ref0 = builder.getTempRefType(builder[0], Nullable, Exact);
+  Type ref4 = builder.getTempRefType(builder[4], Nullable, Exact);
+
+  builder[8] = Struct({Field(ref0, Mutable)});
+  builder[9] = Struct({Field(ref4, Mutable)});
+
   auto result = builder.build();
   ASSERT_TRUE(result);
   auto built = *result;
+
+  EXPECT_EQ(built[0], built[4]);
+  EXPECT_EQ(built[1], built[5]);
+  EXPECT_EQ(built[2], built[6]);
+  EXPECT_EQ(built[3], built[7]);
+
+  EXPECT_EQ(built[8], built[9]);
 
   EXPECT_NE(built[0], built[1]);
   EXPECT_NE(built[0], built[2]);

@@ -2518,7 +2518,7 @@ void updateReferencedHeapTypes(
       if (type->isRef()) {
         auto ht = type->getHeapType();
         if (auto it = canonicalized.find(ht); it != canonicalized.end()) {
-          *type = Type(it->second, type->getNullability());
+          *type = type->with(it->second);
         }
       } else if (type->isTuple()) {
         TypeGraphWalkerBase<ChildUpdater>::scanType(type);
