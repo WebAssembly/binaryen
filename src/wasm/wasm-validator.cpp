@@ -2904,13 +2904,14 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     curr,
     "ref.test target type and ref type must have a common supertype");
 
-  // If custom descriptors is not enabled, only trivial exact casts are allowed,
-  // i.e. those where the operand has the same exact type. The result of these
-  // trivial exact casts does not change when the types are made inexact during
-  // binary writing.
+  // If custom descriptors is not enabled, only trivial and null-checking exact
+  // casts are allowed, i.e. those where the operand is also exact has the same
+  // heap type, but may differ in nullability. The result of these trivial exact
+  // casts does not change when the types are made inexact during binary
+  // writing.
   if (!getModule()->features.hasCustomDescriptors()) {
-    shouldBeTrue(curr->castType.isInexact() ||
-                   curr->castType == curr->ref->type,
+    shouldBeTrue(curr->castType.isInexact() || curr->castType.with(Nullable) ==
+                                                 curr->ref->type.with(Nullable),
                  curr,
                  "ref.test of exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
@@ -2956,7 +2957,8 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
 
   // See comment about exactness on visitRefTest.
   if (!getModule()->features.hasCustomDescriptors()) {
-    shouldBeTrue(curr->type.isInexact() || curr->type == curr->ref->type,
+    shouldBeTrue(curr->type.isInexact() ||
+                   curr->type.with(Nullable) == curr->ref->type.with(Nullable),
                  curr,
                  "ref.cast to exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
@@ -2993,7 +2995,8 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
     // See comment about exactness on visitRefTest.
     if (!getModule()->features.hasCustomDescriptors()) {
       shouldBeTrue(curr->castType.isInexact() ||
-                     curr->castType == curr->ref->type,
+                     curr->castType.with(Nullable) ==
+                       curr->ref->type.with(Nullable),
                    curr,
                    "br_on_cast* to exact type requires custom descriptors "
                    "[--enable-custom-descriptors]");

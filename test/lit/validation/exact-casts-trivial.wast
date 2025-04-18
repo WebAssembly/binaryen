@@ -9,37 +9,97 @@
   ;; CHECK:      (type $foo (struct))
   (type $foo (struct))
 
-  ;; CHECK:      (func $ref.cast (type $1) (param $0 (ref null (exact $foo)))
+  ;; CHECK:      (func $ref.cast (type $1) (param $0 (ref (exact $foo))) (param $1 (ref null (exact $foo)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref null (exact $foo))
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $foo))
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $foo))
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref null (exact $foo))
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $foo))
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.cast (param (ref null (exact $foo)))
+  (func $ref.cast (param (ref (exact $foo)) (ref null (exact $foo)))
     (drop
       (ref.cast anyref
         (local.get 0)
       )
     )
+    (drop
+      (ref.cast (ref any)
+        (local.get 0)
+      )
+    )
+    (drop
+      (ref.cast anyref
+        (local.get 1)
+      )
+    )
+    (drop
+      (ref.cast (ref any)
+        (local.get 1)
+      )
+    )
   )
 
-  ;; CHECK:      (func $ref.test (type $2) (param $0 (ref (exact $foo)))
+  ;; CHECK:      (func $ref.test (type $1) (param $0 (ref (exact $foo))) (param $1 (ref null (exact $foo)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref (exact $foo))
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref (exact $foo))
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref null (exact $foo))
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref (exact $foo))
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.test (param (ref (exact $foo)))
+  (func $ref.test (param (ref (exact $foo)) (ref null (exact $foo)))
     (drop
       (ref.test anyref
         (local.get 0)
       )
     )
+    (drop
+      (ref.test (ref any)
+        (local.get 0)
+      )
+    )
+    (drop
+      (ref.test anyref
+        (local.get 1)
+      )
+    )
+    (drop
+      (ref.test (ref any)
+        (local.get 1)
+      )
+    )
   )
 
-  ;; CHECK:      (func $br_on_cast (type $1) (param $0 (ref null (exact $foo)))
+  ;; CHECK:      (func $br_on_cast (type $2) (param $0 (ref null (exact $foo))) (param $1 (ref null (exact $foo)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result anyref)
   ;; CHECK-NEXT:    (br_on_cast $block (ref null (exact $foo)) (ref null (exact $foo))
@@ -47,8 +107,29 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block1 (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast $block1 (ref null (exact $foo)) (ref (exact $foo))
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block2 (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast $block2 (ref null (exact $foo)) (ref null (exact $foo))
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block3 (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast $block3 (ref null (exact $foo)) (ref (exact $foo))
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast (param (ref null (exact $foo)))
+  (func $br_on_cast (param (ref null (exact $foo)) (ref null (exact $foo)))
     (drop
       (block (result anyref)
         (br_on_cast 0 anyref anyref
@@ -56,9 +137,30 @@
         )
       )
     )
+    (drop
+      (block (result anyref)
+        (br_on_cast 0 anyref (ref any)
+          (local.get 0)
+        )
+      )
+    )
+    (drop
+      (block (result anyref)
+        (br_on_cast 0 anyref anyref
+          (local.get 1)
+        )
+      )
+    )
+    (drop
+      (block (result anyref)
+        (br_on_cast 0 anyref (ref any)
+          (local.get 1)
+        )
+      )
+    )
   )
 
-  ;; CHECK:      (func $br_on_cast_fail (type $2) (param $0 (ref (exact $foo)))
+  ;; CHECK:      (func $br_on_cast_fail (type $1) (param $0 (ref (exact $foo))) (param $1 (ref null (exact $foo)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result anyref)
   ;; CHECK-NEXT:    (br_on_cast_fail $block (ref (exact $foo)) (ref (exact $foo))
@@ -66,12 +168,54 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block1 (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_fail $block1 (ref (exact $foo)) (ref (exact $foo))
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block2 (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_fail $block2 (ref null (exact $foo)) (ref null (exact $foo))
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block3 (result anyref)
+  ;; CHECK-NEXT:    (br_on_cast_fail $block3 (ref null (exact $foo)) (ref (exact $foo))
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_cast_fail (param (ref (exact $foo)))
+  (func $br_on_cast_fail (param (ref (exact $foo)) (ref null (exact $foo)))
     (drop
       (block (result anyref)
         (br_on_cast_fail 0 anyref anyref
           (local.get 0)
+        )
+      )
+    )
+    (drop
+      (block (result anyref)
+        (br_on_cast_fail 0 anyref (ref any)
+          (local.get 0)
+        )
+      )
+    )
+    (drop
+      (block (result anyref)
+        (br_on_cast_fail 0 anyref anyref
+          (local.get 1)
+        )
+      )
+    )
+    (drop
+      (block (result anyref)
+        (br_on_cast_fail 0 anyref (ref any)
+          (local.get 1)
         )
       )
     )
