@@ -26,7 +26,8 @@
   ;; CHECK-NEXT: )
   (func $string.concat (export "string.concat") (result (ref extern))
     ;; We concatenate "foo" and "bar" here, and can optimize this at compile
-    ;; time to "foobar".
+    ;; time to "foobar". A new imported global will appear for that, and we
+    ;; will only do a get of that global here.
     (call $concat
       (global.get $foo)
       (global.get $bar)
