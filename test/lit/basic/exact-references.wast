@@ -9,16 +9,9 @@
 ;; RUN: cat %t.bin.wast | filecheck %s --check-prefix=CHECK-BIN
 ;; RUN: cat %t.bin.nodebug.wast | filecheck %s --check-prefix=CHECK-BIN-NODEBUG
 
-;; Also check that if we emit a binary without custom descriptors enabled, the
-;; types are generalized to be inexact.
-
-;; RUN: wasm-opt %s -all --disable-custom-descriptors -g -o %t.noexact.wasm
-;; RUN: wasm-opt %t.noexact.wasm -all -S -o - | filecheck %s --check-prefix=NO-EXACT
-
 (module
   ;; CHECK-TEXT:      (type $foo (struct (field (ref null (exact $foo))) (field (ref (exact $foo)))))
   ;; CHECK-BIN:      (type $foo (struct (field (ref null (exact $foo))) (field (ref (exact $foo)))))
-  ;; NO-EXACT:      (type $foo (struct (field (ref null $foo)) (field (ref $foo))))
   (type $foo (struct (field (ref null (exact $foo)) (ref (exact $foo)))))
 
   (rec
@@ -26,18 +19,15 @@
     ;; CHECK-TEXT-NEXT:  (type $super (sub (struct)))
     ;; CHECK-BIN:      (rec
     ;; CHECK-BIN-NEXT:  (type $super (sub (struct)))
-    ;; NO-EXACT:      (rec
-    ;; NO-EXACT-NEXT:  (type $super (sub (struct)))
     (type $super (sub (struct)))
     ;; CHECK-TEXT:       (type $sub1 (sub $super (struct)))
     ;; CHECK-BIN:       (type $sub1 (sub $super (struct)))
-    ;; NO-EXACT:       (type $sub1 (sub $super (struct)))
     (type $sub1 (sub $super (struct)))
     ;; CHECK-TEXT:       (type $sub2 (sub $super (struct)))
     ;; CHECK-BIN:       (type $sub2 (sub $super (struct)))
-    ;; NO-EXACT:       (type $sub2 (sub $super (struct)))
     (type $sub2 (sub $super (struct)))
   )
+
 
   ;; CHECK-TEXT:      (type $4 (func (param (ref null (exact $foo))) (result (ref (exact $foo)))))
 
@@ -61,22 +51,10 @@
   ;; CHECK-BIN:      (type $8 (func (param (ref null (exact $foo))) (result (ref null (exact $foo)))))
 
   ;; CHECK-BIN:      (import "" "g1" (global $g1 (ref null (exact $foo))))
-  ;; NO-EXACT:      (type $4 (func (param (ref null $foo)) (result (ref $foo))))
-
-  ;; NO-EXACT:      (type $5 (func (param (ref null $foo))))
-
-  ;; NO-EXACT:      (type $6 (func (param (ref null $super)) (result (ref null $super))))
-
-  ;; NO-EXACT:      (type $7 (func (param (ref null $sub1))))
-
-  ;; NO-EXACT:      (type $8 (func (param (ref null $foo)) (result (ref null $foo))))
-
-  ;; NO-EXACT:      (import "" "g1" (global $g1 (ref null $foo)))
   (import "" "g1" (global $g1 (ref null (exact $foo))))
 
   ;; CHECK-TEXT:      (import "" "g2" (global $g2 (ref (exact $foo))))
   ;; CHECK-BIN:      (import "" "g2" (global $g2 (ref (exact $foo))))
-  ;; NO-EXACT:      (import "" "g2" (global $g2 (ref $foo)))
   (import "" "g2" (global $g2 (ref (exact $foo))))
 
   ;; CHECK-TEXT:      (func $ref-test (type $5) (param $0 (ref null (exact $foo)))
@@ -103,18 +81,6 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $ref-test (type $5) (param $0 (ref null $foo))
-  ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.test (ref $foo)
-  ;; NO-EXACT-NEXT:    (local.get $0)
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.test (ref null $foo)
-  ;; NO-EXACT-NEXT:    (local.get $0)
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $ref-test (param (ref null (exact $foo)))
     (drop
       (ref.test (ref (exact $foo))
@@ -162,23 +128,6 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $ref-cast (type $7) (param $0 (ref null $sub1))
-  ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.cast (ref $sub1)
-  ;; NO-EXACT-NEXT:    (local.get $0)
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.cast (ref null $sub1)
-  ;; NO-EXACT-NEXT:    (local.get $0)
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT:  (drop
-  ;; NO-EXACT-NEXT:   (ref.cast (ref none)
-  ;; NO-EXACT-NEXT:    (local.get $0)
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $ref-cast (param (ref null (exact $sub1)))
     (drop
       (ref.cast (ref (exact $sub1))
@@ -227,21 +176,6 @@
   ;; CHECK-BIN-NEXT:   (local.get $0)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $br-on-cast (type $6) (param $0 (ref null $super)) (result (ref null $super))
-  ;; NO-EXACT-NEXT:  (block $block (result (ref null $super))
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_cast $block (ref null $super) (ref null $sub1)
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_cast $block (ref null $super) (ref $sub1)
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (local.get $0)
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $br-on-cast (param (ref null $super)) (result (ref null $super))
     (drop
       (br_on_cast 0 anyref (ref null (exact $sub1))
@@ -286,21 +220,6 @@
   ;; CHECK-BIN-NEXT:   (local.get $0)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $br-on-cast-fail (type $6) (param $0 (ref null $super)) (result (ref null $super))
-  ;; NO-EXACT-NEXT:  (block $block (result (ref null $super))
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_cast_fail $block (ref null $super) (ref null $sub1)
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_cast_fail $block (ref null $super) (ref $sub1)
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (local.get $0)
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $br-on-cast-fail (param (ref null $super)) (result (ref null $super))
     (drop
       (br_on_cast_fail 0 anyref (ref null (exact $sub1))
@@ -325,11 +244,6 @@
   ;; CHECK-BIN-NEXT:   (local.get $0)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $valid-ref-as-non-null (type $4) (param $0 (ref null $foo)) (result (ref $foo))
-  ;; NO-EXACT-NEXT:  (ref.as_non_null
-  ;; NO-EXACT-NEXT:   (local.get $0)
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $valid-ref-as-non-null (param (ref null (exact $foo))) (result (ref (exact $foo)))
     (ref.as_non_null
       (local.get 0)
@@ -356,15 +270,6 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $valid-br-on-null (type $5) (param $0 (ref null $foo))
-  ;; NO-EXACT-NEXT:  (block $block
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_null $block
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $valid-br-on-null (param (ref null (exact $foo)))
     (drop
       (block (result (ref (exact $foo)))
@@ -391,14 +296,6 @@
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $valid-br-on-non-null (type $4) (param $0 (ref null $foo)) (result (ref $foo))
-  ;; NO-EXACT-NEXT:  (block $block (result (ref $foo))
-  ;; NO-EXACT-NEXT:   (br_on_non_null $block
-  ;; NO-EXACT-NEXT:    (local.get $0)
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (unreachable)
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $valid-br-on-non-null (param (ref null (exact $foo))) (result (ref (exact $foo)))
     (br_on_non_null 0
       (local.get 0)
@@ -428,16 +325,6 @@
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $valid-br-on-cast (type $8) (param $0 (ref null $foo)) (result (ref null $foo))
-  ;; NO-EXACT-NEXT:  (block $block (result (ref null $foo))
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_cast $block (ref null $foo) (ref null $foo)
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (unreachable)
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $valid-br-on-cast (param (ref null (exact $foo))) (result (ref null (exact $foo)))
     (drop
       (block (result (ref (exact $foo)))
@@ -471,16 +358,6 @@
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; NO-EXACT:      (func $valid-br-on-cast-fail (type $4) (param $0 (ref null $foo)) (result (ref $foo))
-  ;; NO-EXACT-NEXT:  (block $block (result (ref $foo))
-  ;; NO-EXACT-NEXT:   (drop
-  ;; NO-EXACT-NEXT:    (br_on_cast_fail $block (ref null $foo) (ref null $foo)
-  ;; NO-EXACT-NEXT:     (local.get $0)
-  ;; NO-EXACT-NEXT:    )
-  ;; NO-EXACT-NEXT:   )
-  ;; NO-EXACT-NEXT:   (unreachable)
-  ;; NO-EXACT-NEXT:  )
-  ;; NO-EXACT-NEXT: )
   (func $valid-br-on-cast-fail (param (ref null (exact $foo))) (result (ref (exact $foo)))
     (drop
       (block (result (ref null (exact $foo)))

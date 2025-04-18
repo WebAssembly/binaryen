@@ -346,9 +346,8 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
-      // TODO: Handle exactness.
-      return typeBuilder.getTempRefType(typeBuilder[it->second],
-                                        type.getNullability());
+      return typeBuilder.getTempRefType(
+        typeBuilder[it->second], type.getNullability(), type.getExactness());
     }
     // This type is not one that is eligible for optimizing. That is fine; just
     // use it unmodified.

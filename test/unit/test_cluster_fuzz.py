@@ -186,7 +186,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
             # The flags file must contain --wasm-staging
             with open(flags_file) as f:
-                self.assertEqual(f.read(), '--wasm-staging --wasm-allow-mixed-eh-for-testing')
+                self.assertEqual(f.read(), '--wasm-staging')
 
             # Extract the wasm file(s) from the JS. Make sure to not notice
             # stale files.
