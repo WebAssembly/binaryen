@@ -140,6 +140,9 @@ SourceMapReader::readDebugLocationAt(size_t currLocation) {
 
       next = peek();
       if (next == ';') {
+        // Generated JS files can have multiple lines, and mappings for each line are
+        // separated by ';'. Wasm files do not have lines, so there should be only one
+        // generated "line".
         throw MapParseException("Unexpected mapping for 2nd generated line");
       }
       if (next == ',' || next == '\"') {
