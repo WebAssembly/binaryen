@@ -2,8 +2,11 @@
 
 ;; Check that exact casts are only added when custom descriptors are enabled.
 
-;; RUN: wasm-opt %s -all                              --gufa-cast-all -S -o -  | filecheck %s
-;; RUN: wasm-opt %s -all --disable-custom-descriptors --gufa-cast-all -S -o -  | filecheck %s --check-prefix=NO_CD
+;; RUN: foreach %s %t wasm-opt -all                              --gufa-cast-all -S -o - \
+;; RUN:     | filecheck %s
+
+;; RUN: foreach %s %t wasm-opt -all --disable-custom-descriptors --gufa-cast-all -S -o - \
+;; RUN:     | filecheck %s --check-prefix=NO_CD
 
 (module
   ;; CHECK:      (type $foo (struct))
@@ -51,4 +54,58 @@
       (call $callee)
     )
   )
+)
+
+(module
+ ;; CHECK:      (type $foo (struct))
+ ;; NO_CD:      (type $foo (struct))
+ (type $foo (struct))
+
+ ;; CHECK:      (import "" "a" (global $exact-a (ref (exact $foo))))
+ ;; NO_CD:      (import "" "a" (global $exact-a (ref (exact $foo))))
+ (import "" "a" (global $exact-a (ref (exact $foo))))
+ ;; CHECK:      (import "" "b" (global $exact-b (ref (exact $foo))))
+ ;; NO_CD:      (import "" "b" (global $exact-b (ref (exact $foo))))
+ (import "" "b" (global $exact-b (ref (exact $foo))))
+
+ ;; CHECK:      (global $g (mut (ref $foo)) (global.get $exact-a))
+ ;; NO_CD:      (global $g (mut (ref $foo)) (global.get $exact-a))
+ (global $g (mut (ref $foo)) (global.get $exact-a))
+
+ ;; CHECK:      (func $set (type $1)
+ ;; CHECK-NEXT:  (global.set $g
+ ;; CHECK-NEXT:   (global.get $exact-b)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $set (type $1)
+ ;; NO_CD-NEXT:  (global.set $g
+ ;; NO_CD-NEXT:   (global.get $exact-b)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ (func $set
+  ;; $g can now hold two different exact $foo references.
+  (global.set $g
+   (global.get $exact-b)
+  )
+ )
+
+ ;; CHECK:      (func $get (type $2) (result (ref $foo))
+ ;; CHECK-NEXT:  (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:   (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:    (global.get $g)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $get (type $2) (result (ref $foo))
+ ;; NO_CD-NEXT:  (ref.cast (ref $foo)
+ ;; NO_CD-NEXT:   (global.get $g)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ (func $get (result (ref $foo))
+  ;; We can only refine this cast target to be exact if custom descriptors are
+  ;; allowed.
+  (ref.cast (ref $foo)
+   (global.get $g)
+  )
+ )
 )
