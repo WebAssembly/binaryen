@@ -36,5 +36,5 @@
 
 getExpressionInfo(throw) = {"id":54,"type":1,"tag":"e"}
 getExpressionInfo(rethrow) = {"id":55,"type":1,"target":"l0"}
-getExpressionInfo(try_catch) = {"id":52,"type":1,"name":"l0","hasCatchAll":0,"delegateTarget":"","isDelegate":0}
-getExpressionInfo(try_delegate) = {"id":52,"type":0,"name":"try_outer","hasCatchAll":1,"delegateTarget":"","isDelegate":0}
+getExpressionInfo(try_catch) = {"id":52,"type":1,"name":"l0","hasCatchAll":false,"delegateTarget":null,"isDelegate":false}
+getExpressionInfo(try_delegate) = {"id":52,"type":0,"name":"try_outer","hasCatchAll":true,"delegateTarget":null,"isDelegate":false}
