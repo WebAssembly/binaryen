@@ -2608,11 +2608,19 @@ Literal Literal::dotSI16x8toI32x4Add(const Literal& left,
                                      const Literal& right) const {
   auto temp = dotSI8x16toI16x8(left);
 
-  // TODO: The spec also has this mysterious code:
+  auto tempLanes = temp.getLanesSI16x8();
+  LaneArray<4> dest;
+  // TODO: spec says indexes should be half, and fractional?
+  //
   //   for i in range(0, 8, 2):
   //     dst[i/4] = tmp[i] + tmp[i+1]
-  // This cannot be right, as i/4 is fractional...
-  return temp.addI32x4(right);
+  //
+  // i/4 is 0, 0.5, 1, 1.5...
+  for (size_t i = 0; i < 4; i++) {
+    dest[i] = tempLames[i * 2, i * 2 + 1];
+  }
+
+  return Literal(dest).addI32x4(right);
 }
 
 Literal Literal::bitselectV128(const Literal& left,
