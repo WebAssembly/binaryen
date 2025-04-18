@@ -28,7 +28,7 @@ void MapParseException::dump(std::ostream& o) const {
   Colors::red(o);
   o << "map parse exception: ";
   Colors::green(o);
-  o << text;
+  o << errorText;
   Colors::magenta(o);
   o << "]";
   Colors::normal(o);
@@ -39,7 +39,11 @@ void SourceMapReader::parse(Module& wasm) {
     return;
   }
   json::Value json;
-  json.parse(buffer.data(), json::Value::ASCII);
+  try {
+    json.parse(buffer.data(), json::Value::ASCII);
+  } catch (json::JsonParseException jx) {
+    throw MapParseException(jx);
+  }
   if (!json.isObject()) {
     throw MapParseException("Source map is not valid JSON");
   }
@@ -135,6 +139,9 @@ SourceMapReader::readDebugLocationAt(size_t currLocation) {
       col += readBase64VLQ();
 
       next = peek();
+      if (next == ';') {
+        throw MapParseException("Unexpected mapping for 2nd generated line");
+      }
       if (next == ',' || next == '\"') {
         hasSymbol = false;
         break;

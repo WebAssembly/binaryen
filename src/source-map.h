@@ -19,14 +19,15 @@
 
 #include <optional>
 
+#include "support/json.h"
 #include "wasm.h"
 
 namespace wasm {
 
 struct MapParseException {
-  std::string text;
-
-  MapParseException(std::string text) : text(text) {}
+  std::string errorText;
+  MapParseException(std::string errorText) : errorText(errorText) {};
+  MapParseException(json::JsonParseException ex) : errorText(ex.errorText) {};
   void dump(std::ostream& o) const;
 };
 
