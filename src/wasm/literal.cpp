@@ -2604,6 +2604,17 @@ Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
   return dot<4, 2, &Literal::getLanesSI16x8>(*this, other);
 }
 
+Literal Literal::dotSI16x8toI32x4Add(const Literal& left,
+                                     const Literal& right) const {
+  auto temp = dotSI8x16toI16x8(left);
+
+  // TODO: The spec also has this mysterious code:
+  //   for i in range(0, 8, 2):
+  //     dst[i/4] = tmp[i] + tmp[i+1]
+  // This cannot be right, as i/4 is fractional...
+  return temp.addI32x4(right);
+}
+
 Literal Literal::bitselectV128(const Literal& left,
                                const Literal& right) const {
   return andV128(left).orV128(notV128().andV128(right));

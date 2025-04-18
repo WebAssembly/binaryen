@@ -19,8 +19,6 @@ import os
 unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
-    # not all relaxed SIMD instructions are implemented in the interpreter
-    'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings
     'strings.wast',
     'simplify-locals-strings.wast',
