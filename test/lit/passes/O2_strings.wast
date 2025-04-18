@@ -11,12 +11,27 @@
 (module
   (type $array16 (array (mut i16)))
 
+  ;; CHECK:      (type $0 (func (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (type $1 (func (result (ref extern))))
+
+  ;; CHECK:      (import "\'" "foo" (global $foo (ref extern)))
   (import "\'" "foo" (global $foo (ref extern)))
 
+  ;; CHECK:      (import "\'" "bar" (global $bar (ref extern)))
   (import "\'" "bar" (global $bar (ref extern)))
 
+  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $0) (param externref externref) (result (ref extern))))
   (import "wasm:js-string" "concat" (func $concat (param externref externref) (result (ref extern))))
 
+  ;; CHECK:      (export "string.concat" (func $string.concat))
+
+  ;; CHECK:      (func $string.concat (type $1) (result (ref extern))
+  ;; CHECK-NEXT:  (string.concat
+  ;; CHECK-NEXT:   (string.const "foo")
+  ;; CHECK-NEXT:   (string.const "bar")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.concat (export "string.concat") (result (ref extern))
     ;; We concatenate "foo" and "bar" here, and can optimize this at compile
     ;; time to "foobar".

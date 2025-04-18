@@ -731,7 +731,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   // Start by lifting strings into the optimizable IR form, which can help
   // everything else.
   if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
-    addIfNoDwarfIssues("string-lifting");
+    addIfNoDWARFIssues("string-lifting");
   }
   // Removing duplicate functions is fast and saves work later.
   addIfNoDWARFIssues("duplicate-function-elimination");
@@ -819,7 +819,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   // and also we want -O3 -O3 to work properly: if the first -O3 disabled the
   // feature then the second would not lift strings at the start.
   if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
-    addIfNoDwarfIssues("string-lowering-magic-imports-keep-feature");
+    addIfNoDWARFIssues("string-lowering-magic-imports-keep-feature");
   }
 }
 
