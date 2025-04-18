@@ -204,8 +204,12 @@ struct StringLowering : public StringGathering {
   // imports.
   bool assertUTF8;
 
-  StringLowering(bool useMagicImports = false, bool assertUTF8 = false)
-    : useMagicImports(useMagicImports), assertUTF8(assertUTF8) {
+  // Normally we disable the strings feature after the lowering (like other
+  // lowering passes), but an optionally keep it.
+  bool keepFeature;
+
+  StringLowering(bool useMagicImports = false, bool assertUTF8 = false, bool keepFeature = false)
+    : useMagicImports(useMagicImports), assertUTF8(assertUTF8), keepFeature(keepFeature) {
     // If we are asserting valid UTF-8, we must be using magic imports.
     assert(!assertUTF8 || useMagicImports);
   }
@@ -233,8 +237,10 @@ struct StringLowering : public StringGathering {
     // ReFinalize to apply all the above changes.
     ReFinalize().run(getPassRunner(), module);
 
-    // Disable the feature here after we lowered everything away.
-    module->features.disable(FeatureSet::Strings);
+    if (!keepFeature) {
+      // Disable the feature here after we lowered everything away.
+      module->features.disable(FeatureSet::Strings);
+    }
   }
 
   void makeImports(Module* module) {
@@ -553,10 +559,14 @@ struct StringLowering : public StringGathering {
 };
 
 Pass* createStringGatheringPass() { return new StringGathering(); }
+
 Pass* createStringLoweringPass() { return new StringLowering(); }
 Pass* createStringLoweringMagicImportPass() { return new StringLowering(true); }
 Pass* createStringLoweringMagicImportAssertPass() {
   return new StringLowering(true, true);
+}
+Pass* createStringLoweringMagicImportKeepFeaturePass() {
+  return new StringLowering(true, false, true);
 }
 
 } // namespace wasm

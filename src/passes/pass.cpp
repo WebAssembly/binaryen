@@ -537,6 +537,10 @@ void PassRegistry::registerPasses() {
                "if there are invalid strings",
                createStringLoweringMagicImportAssertPass);
   registerPass(
+    "string-lowering-magic-imports-keep-feature",
+    "same as string-lowering, but keeps the strings feature enabled after",
+    createStringLoweringMagicImportKeepFeaturePass);
+  registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
@@ -724,6 +728,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
+  // Start by lifting strings into the optimizable IR form, which can help
+  // everything else.
+  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
+    addIfNoDwarfIssues("string-lifting");
+  }
   // Removing duplicate functions is fast and saves work later.
   addIfNoDWARFIssues("duplicate-function-elimination");
   // Do a global cleanup before anything heavy, as it is fairly fast and can
@@ -803,8 +812,15 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");
   }
-  // may allow more inlining/dae/etc., need --converge for that
+  // May allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
+  // Lower away strings at the very end. We do keep the strings feature enabled,
+  // as (1) it would be odd for the optimization pipeline to disable a feature,
+  // and also we want -O3 -O3 to work properly: if the first -O3 disabled the
+  // feature then the second would not lift strings at the start.
+  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
+    addIfNoDwarfIssues("string-lowering-magic-imports-keep-feature");
+  }
 }
 
 static void dumpWasm(Name name, Module* wasm, const PassOptions& options) {
