@@ -72,7 +72,9 @@ struct StringGathering : public Pass {
   // Scan the entire wasm to find the relevant strings to populate our global
   // data structures.
   void processModule(Module* module) {
-    struct StringWalker : public PostWalker<StringWalker, UnifiedExpressionVisitor<StringWalker>> {
+    struct StringWalker
+      : public PostWalker<StringWalker,
+                          UnifiedExpressionVisitor<StringWalker>> {
       StringPtrs& stringPtrs;
 
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
@@ -230,8 +232,11 @@ struct StringLowering : public StringGathering {
   // lowering passes), but an optionally keep it.
   bool keepFeature;
 
-  StringLowering(bool useMagicImports = false, bool assertUTF8 = false, bool keepFeature = false)
-    : useMagicImports(useMagicImports), assertUTF8(assertUTF8), keepFeature(keepFeature) {
+  StringLowering(bool useMagicImports = false,
+                 bool assertUTF8 = false,
+                 bool keepFeature = false)
+    : useMagicImports(useMagicImports), assertUTF8(assertUTF8),
+      keepFeature(keepFeature) {
     // If we are asserting valid UTF-8, we must be using magic imports.
     assert(!assertUTF8 || useMagicImports);
   }
@@ -244,7 +249,7 @@ struct StringLowering : public StringGathering {
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
 
-    // If we saw no strings during StringGathering, there is no work.    
+    // If we saw no strings during StringGathering, there is no work.
     if (!stringsUsed) {
       return;
     }
