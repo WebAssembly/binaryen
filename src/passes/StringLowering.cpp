@@ -89,6 +89,7 @@ struct StringGathering : public Pass {
 
       void visitStringConst(StringConst* curr) {
         stringPtrs.push_back(getCurrentPointer());
+        stringsUsed = true;
       }
     };
 
