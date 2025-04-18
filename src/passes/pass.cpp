@@ -803,24 +803,22 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
-  addIfNoDWARFIssues("remove-unused-module-elements");
-  if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
-    // Gather strings to globals right before reorder-globals, which will then
-    // sort them properly.
-    addIfNoDWARFIssues("string-gathering");
+  // Lower away strings at the very end. We do keep the strings feature enabled,
+  // as (1) it would be odd for the optimization pipeline to disable a feature,
+  // and also we want -O3 -O3 to work properly: if the first -O3 disabled the
+  // feature then the second would not lift strings at the start.
+  //
+  // We do this before remove-unused-module-elements so we don't add unused
+  // imports, and also before reorder-globals, which will sort the new globals.
+  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("string-lowering-magic-imports-keep-feature");
   }
+  addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");
   }
   // May allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
-  // Lower away strings at the very end. We do keep the strings feature enabled,
-  // as (1) it would be odd for the optimization pipeline to disable a feature,
-  // and also we want -O3 -O3 to work properly: if the first -O3 disabled the
-  // feature then the second would not lift strings at the start.
-  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
-    addIfNoDWARFIssues("string-lowering-magic-imports-keep-feature");
-  }
 }
 
 static void dumpWasm(Name name, Module* wasm, const PassOptions& options) {
