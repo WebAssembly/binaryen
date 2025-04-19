@@ -107,13 +107,15 @@ public:
                                                            Nullable),
                                           Address initial = 0,
                                           Address max = Table::kMaxSize,
-                                          Type addressType = Type::i32) {
+                                          Type addressType = Type::i32,
+                                          Expression* init = nullptr) {
     auto table = std::make_unique<Table>();
     table->name = name;
     table->type = type;
     table->addressType = addressType;
     table->initial = initial;
     table->max = max;
+    table->init = init;
     return table;
   }
 

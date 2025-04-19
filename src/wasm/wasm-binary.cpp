@@ -773,12 +773,20 @@ void WasmBinaryWriter::writeTableDeclarations() {
   auto num = importInfo->getNumDefinedTables();
   o << U32LEB(num);
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
+    if (table->hasInit()) {
+      o << uint8_t(0x40);
+      o << uint8_t(0x00);
+    }
     writeType(table->type);
     writeResizableLimits(table->initial,
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
                          table->is64());
+    if (table->hasInit()) {
+      writeExpression(table->init);
+      o << uint8_t(BinaryConsts::End);
+    }
   });
   finishSection(start);
 }
@@ -5000,9 +5008,19 @@ void WasmBinaryReader::readTableDeclarations() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] = getOrMakeName(
-      tableNames, numImports + i, makeName("", i), usedTableNames);
-    auto elemType = getType();
+    auto [name, isExplicit] =
+      getOrMakeName(tableNames, numImports + i, makeName("", i), usedTableNames);
+    auto type_code = getS32LEB();
+    bool has_init = false;
+    if (type_code == BinaryConsts::EncodedType::Empty) {
+      auto nextInt = getInt8();
+      if (nextInt != 0x00) {
+        throwError("Malformed table");
+      }
+      has_init = true;
+      type_code = getS32LEB();
+    }
+    auto elemType = getType(type_code);
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
     }
@@ -5016,6 +5034,10 @@ void WasmBinaryReader::readTableDeclarations() {
                        Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
+    }
+    if (has_init) {
+      auto* init = readExpression();
+      table->init = init;
     }
     wasm.addTable(std::move(table));
   }
