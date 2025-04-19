@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-latest,windows-11-arm]
     defaults:
       run:
         shell: bash
@@ -31,7 +31,7 @@ jobs:
 
     - name: install ninja (win)
       run: choco install ninja
-      if: matrix.os == 'windows-latest'
+      if: startsWith(matrix.os, 'windows')
 
     - name: mkdir
       run: mkdir -p out
@@ -45,7 +45,7 @@ jobs:
     - name: cmake (win)
       # -G "Visual Studio 15 2017"
       run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out/install
-      if: matrix.os == 'windows-latest'
+      if: startsWith(matrix.os, 'windows')
 
     - name: build
       run: cmake --build out -v --config Release --target install
@@ -56,7 +56,7 @@ jobs:
 
     - name: strip
       run: find out*/install/ -type f -perm -u=x -exec strip -x {} +
-      if: matrix.os != 'windows-latest'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
 
     - name: archive
       id: archive
