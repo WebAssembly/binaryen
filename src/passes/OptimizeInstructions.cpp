@@ -837,7 +837,7 @@ struct OptimizeInstructions
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
         }
-        if (auto* ret = optimizeAndBooleanWithEvenConstant(curr)) {
+        if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
           return replaceCurrent(ret);
         }
       }
@@ -3552,26 +3552,36 @@ private:
     return nullptr;
   }
 
-  // Bitwise AND of a boolean result (0 or 1) with any value
-  // whose LSB is guaranteed to be 0 always yields 0.
-  Expression* optimizeAndBooleanWithEvenConstant(Binary* curr) {
-    assert(curr->op == AndInt32);
-
+  // Bitwise AND of a value with bits in [0, n) and a constant with no bits in
+  // [0, n) always yields 0. Replace with zero.
+  Expression* optimizeAndNoOverlappingBits(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
-    auto leftMaxBits = Bits::getMaxBits(curr->left, this);
+
     auto type = curr->left->type;
-    if (curr->op == Abstract::getBinary(type, And)) {
-      if (leftMaxBits == 1) {
-        // boolean & (No overlap with boolean's LSB)  ==> 0
-        if (auto* c = curr->right->dynCast<Const>()) {
-          if ((1 & c->value.getInteger()) == 0) {
-            replaceCurrent(getDroppedChildrenAndAppend(
-              curr, LiteralUtils::makeZero(c->value.type, *getModule())));
-          }
-        }
+    assert(curr->op == getBinary(type, And));
+
+    auto* left = curr->left;
+    auto* right = curr->right;
+    auto leftMaxBits = Bits::getMaxBits(left, this);
+
+    if (leftMaxBits == 0) {
+      // Left is always zero, result is zero.
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, LiteralUtils::makeZero(type, *getModule())));
+      return nullptr;
+    }
+
+    uint64_t mask = (1ULL << leftMaxBits) - 1;
+
+    if (auto* c = right->dynCast<Const>()) {
+      uint64_t constantValue = c->value.getInteger();
+      if ((constantValue & mask) == 0) {
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, LiteralUtils::makeZero(type, *getModule())));
       }
     }
+
     return nullptr;
   }
 
