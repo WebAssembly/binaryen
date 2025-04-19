@@ -837,6 +837,9 @@ struct OptimizeInstructions
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
         }
+        if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
+          return replaceCurrent(ret);
+        }
       }
       // for or, we can potentially combine
       if (curr->op == OrInt32) {
@@ -3546,6 +3549,39 @@ private:
         return bx;
       }
     }
+    return nullptr;
+  }
+
+  // Bitwise AND of a value with bits in [0, n) and a constant with no bits in
+  // [0, n) always yields 0. Replace with zero.
+  Expression* optimizeAndNoOverlappingBits(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+
+    auto type = curr->left->type;
+    assert(curr->op == getBinary(type, And));
+
+    auto* left = curr->left;
+    auto* right = curr->right;
+    auto leftMaxBits = Bits::getMaxBits(left, this);
+
+    if (leftMaxBits == 0) {
+      // Left is always zero, result is zero.
+      replaceCurrent(getDroppedChildrenAndAppend(
+        curr, LiteralUtils::makeZero(type, *getModule())));
+      return nullptr;
+    }
+
+    uint64_t mask = (1ULL << leftMaxBits) - 1;
+
+    if (auto* c = right->dynCast<Const>()) {
+      uint64_t constantValue = c->value.getInteger();
+      if ((constantValue & mask) == 0) {
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, LiteralUtils::makeZero(type, *getModule())));
+      }
+    }
+
     return nullptr;
   }
 

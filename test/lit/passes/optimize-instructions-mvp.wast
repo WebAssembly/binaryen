@@ -1442,10 +1442,7 @@
   )
   ;; CHECK:      (func $canonicalize-consts-vars (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
@@ -2866,10 +2863,7 @@
     )
   )
   ;; CHECK:      (func $sext-24-and-127-128 (result i32)
-  ;; CHECK-NEXT:  (i32.and
-  ;; CHECK-NEXT:   (i32.const 127)
-  ;; CHECK-NEXT:   (i32.const 128)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $sext-24-and-127-128 (result i32)
     (i32.shr_s
@@ -7018,12 +7012,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
