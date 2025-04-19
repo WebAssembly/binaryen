@@ -374,6 +374,11 @@ struct GUFAOptimizer
         }
 
         auto oracleType = parent.getContents(curr).getType();
+        // Exact casts are only allowed when custom descriptors is enabled.
+        if (oracleType.isExact() &&
+            !getModule()->features.hasCustomDescriptors()) {
+          oracleType = oracleType.with(Inexact);
+        }
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));

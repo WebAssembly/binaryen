@@ -174,6 +174,7 @@ private:
   Name exnrefTableName;
 
   std::unordered_map<Type, Name> logImportNames;
+  Name hashMemoryName;
   Name throwImportName;
   Name tableGetImportName;
   Name tableSetImportName;
