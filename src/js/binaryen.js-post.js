@@ -3084,7 +3084,7 @@ Module['getExpressionInfo'] = function(expr) {
       }
       break;
     default: {
-      const staticMembers = Expression['wrappers'][id];
+      const staticMembers = expressionWrappers[id];
       Object.keys(staticMembers).forEach(memberName => {
         const member = staticMembers[memberName];
         if (typeof member === "function") {
@@ -3105,7 +3105,7 @@ Module['getExpressionInfo'] = function(expr) {
 // Creates an expression wrapper from an expression pointer
 Module['wrapExpression'] = function(expr) {
   const id = Module['_BinaryenExpressionGetId'](expr);
-  return Expression['wrappers'][id](expr);
+  return expressionWrappers[id](expr);
 };
 
 // Gets the side effects of the specified expression
@@ -3433,6 +3433,9 @@ Module['setAllowInliningFunctionsWithLoops'] = function(value) {
 
 // Expression wrappers
 
+// Expression ID-to-wrapper map
+let expressionWrappers = {};
+
 // Private symbol used to store the underlying C-API pointer of a wrapped object.
 const thisPtr = Symbol();
 
@@ -3460,7 +3463,7 @@ function makeExpressionWrapper(expressionId, ownStaticMembers) {
   // derive own instance members
   deriveWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
   // register the expression wrapper
-  Expression['wrappers'][expressionId] = SpecificExpression;
+  expressionWrappers[expressionId] = SpecificExpression;
   return SpecificExpression;
 }
 
@@ -3511,7 +3514,6 @@ function Expression(expr) {
   if (!expr) throw Error("expression reference must not be null");
   this[thisPtr] = expr;
 }
-Expression['wrappers'] = {};
 Expression['getId'] = function(expr) {
   return Module['_BinaryenExpressionGetId'](expr);
 };
