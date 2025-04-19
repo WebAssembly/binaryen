@@ -83,7 +83,7 @@ jobs:
     - name: archive-arm64
       id: archive-arm64
       run: |
-        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//' | sed 's/-11-arm//')
         VERSION=$GITHUB_REF_NAME
         PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
