@@ -573,9 +573,10 @@ struct OptimizeInstructions
         if (curr->op == Abstract::getBinary(curr->left->type, Abstract::LtU) &&
             (c = getFallthrough(curr->right)->dynCast<Const>()) &&
             c->value.isZero()) {
-          c->value = Literal::makeZero(Type::i32);
-          c->type = Type::i32;
-          return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
+          // We could reuse c here, if we checked it had no more uses
+          auto zero =
+            Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
+          return replaceCurrent(getDroppedChildrenAndAppend(curr, zero));
         }
       }
     }
