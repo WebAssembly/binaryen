@@ -2821,4 +2821,4 @@ sizeof Literal: 24
 )
 
 getExpressionInfo(memory.grow)={"id":21,"type":2,"delta":1}
-getExpressionInfo(switch)={"id":5,"type":1,"names":["label"],"defaultName":"label","condition":0,"value":0}
+getExpressionInfo(switch)={"id":5,"type":1,"numNames":1,"names":["label"],"defaultName":"label","condition":0,"value":0}
