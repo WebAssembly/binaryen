@@ -89,7 +89,7 @@ jobs:
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
         echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
-      if: matrix.os == 'macos-latest'
+      if: ${{ matrix.os == 'macos-latest' || matrix.os == 'windows-11-arm' }} 
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1
