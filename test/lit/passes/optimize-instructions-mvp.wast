@@ -11558,12 +11558,12 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:     (block (result i64)
   ;; CHECK-NEXT:      (i64.store
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:       (i64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i64.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
