@@ -2863,10 +2863,7 @@
     )
   )
   ;; CHECK:      (func $sext-24-and-127-128 (result i32)
-  ;; CHECK-NEXT:  (i32.and
-  ;; CHECK-NEXT:   (i32.const 127)
-  ;; CHECK-NEXT:   (i32.const 128)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $sext-24-and-127-128 (result i32)
     (i32.shr_s
