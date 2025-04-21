@@ -7,7 +7,6 @@ endif()
 
 set(unittest_SOURCES
   arena.cpp
-  source-map.cpp
   cfg.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
@@ -29,6 +28,8 @@ set(unittest_SOURCES
 
 if(BUILD_FUZZTEST)
   set(unittest_SOURCES ${unittest_SOURCES} type-domains.cpp)
+else()
+  set(unittest_SOURCES ${unittest_SOURCES} source-map.cpp)
 endif()
 
 # suffix_tree.cpp includes LLVM header using std::iterator (deprecated in C++17)
