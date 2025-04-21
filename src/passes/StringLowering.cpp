@@ -259,7 +259,7 @@ struct StringLowering : public StringGathering {
     // ReFinalize to apply all the above changes.
     ReFinalize().run(runner, module);
 
-    if (!keepFeature) {
+    if (!paired) {
       // Disable the feature here after we lowered everything away.
       module->features.disable(FeatureSet::Strings);
     }
