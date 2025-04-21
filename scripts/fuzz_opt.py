@@ -667,13 +667,20 @@ def run_bynterp(wasm, args):
         del os.environ['BINARYEN_MAX_INTERPRETER_DEPTH']
 
 
-# Enable even more staged things than V8_OPTS. V8_OPTS are the flags we want to
-# use when testing, and enable all features we test against, while --future may
-# also enable non-feature things like new JITs and such (which are never needed
-# for our normal tests, but do make sense to fuzz for V8's sake). We do this
-# randomly for more variety.
+# Enable even more things than V8_OPTS. V8_OPTS are the flags we want to use
+# when testing, on our fixed test suite, but when fuzzing we may want more.
 def get_v8_extra_flags():
-    return ['--future'] if random.random() < 0.5 else []
+    # It is important to use the --fuzzing flag because it does things like
+    # enable mixed old and new EH (which is an issue since
+    # https://github.com/WebAssembly/exception-handling/issues/344 )
+    flags = ['--fuzzing']
+
+    # Sometimes add --future, which may enable new JITs and such, which is good
+    # to fuzz for V8's sake.
+    if random.random() < 0.5:
+        flags += ['--future']
+
+    return flags
 
 
 V8_LIFTOFF_ARGS = ['--liftoff']
@@ -1650,7 +1657,11 @@ class ClusterFuzz(TestCaseHandler):
         # flags here!
         with open(flags_file, 'r') as f:
             flags = f.read()
-        cmd.append(flags)
+        cmd += flags.split(' ')
+        # Get V8's extra fuzzing flags, the same as the ClusterFuzz runner does
+        # (as can be seen from the testcases having --fuzzing and a lot of other
+        # flags as well).
+        cmd += get_v8_extra_flags()
         # Run the fuzz file, which contains a modified fuzz_shell.js - we do
         # *not* run fuzz_shell.js normally.
         cmd.append(os.path.abspath(fuzz_file))

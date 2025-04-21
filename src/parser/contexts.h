@@ -182,8 +182,18 @@ struct NullTypeParserCtx {
 };
 
 template<typename Ctx> struct TypeParserCtx {
+  // Exactness is syntactically part of the heap type, but it is not part of the
+  // HeapType in our IR, so we have to store it separately.
+  struct HeapTypeT {
+    HeapType type;
+    Exactness exactness = Inexact;
+    // Implicitly convert to and from HeapType.
+    HeapTypeT(HeapType::BasicHeapType type) : type(type) {}
+    HeapTypeT(HeapType type) : type(type) {}
+    operator HeapType() { return type; }
+  };
+
   using IndexT = Index;
-  using HeapTypeT = HeapType;
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
   using ResultsT = std::vector<Type>;
@@ -253,7 +263,10 @@ template<typename Ctx> struct TypeParserCtx {
     return HeapTypes::nocont.getBasic(share);
   }
 
-  HeapTypeT makeExact(HeapTypeT type) { return type.with(Exact); }
+  HeapTypeT makeExact(HeapTypeT type) {
+    type.exactness = Exact;
+    return type;
+  }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
@@ -262,7 +275,7 @@ template<typename Ctx> struct TypeParserCtx {
   TypeT makeV128() { return Type::v128; }
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return Type(ht, nullability);
+    return Type(ht.type, nullability, ht.exactness);
   }
 
   std::vector<Type> makeTupleElemList() { return {}; }
@@ -1122,7 +1135,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
       names(builder.size()) {}
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return builder.getTempRefType(ht, nullability);
+    return builder.getTempRefType(ht.type, nullability, ht.exactness);
   }
 
   TypeT makeTupleType(const std::vector<Type> types) {
@@ -1179,19 +1192,18 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   Lexer in;
 
   // Types parsed so far.
-  std::vector<HeapTypeDef>& types;
+  std::vector<HeapType>& types;
 
   // Map typeuse positions without an explicit type to the correct type.
-  std::unordered_map<Index, HeapTypeDef>& implicitTypes;
+  std::unordered_map<Index, HeapType>& implicitTypes;
 
   // Map signatures to the first defined heap type they match.
-  std::unordered_map<Signature, HeapTypeDef> sigTypes;
+  std::unordered_map<Signature, HeapType> sigTypes;
 
-  ParseImplicitTypeDefsCtx(
-    Lexer& in,
-    std::vector<HeapTypeDef>& types,
-    std::unordered_map<Index, HeapTypeDef>& implicitTypes,
-    const IndexMap& typeIndices)
+  ParseImplicitTypeDefsCtx(Lexer& in,
+                           std::vector<HeapType>& types,
+                           std::unordered_map<Index, HeapType>& implicitTypes,
+                           const IndexMap& typeIndices)
     : TypeParserCtx<ParseImplicitTypeDefsCtx>(typeIndices), in(in),
       types(types), implicitTypes(implicitTypes) {
     for (auto type : types) {
@@ -1260,8 +1272,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   Module& wasm;
 
-  const std::vector<HeapTypeDef>& types;
-  const std::unordered_map<Index, HeapTypeDef>& implicitTypes;
+  const std::vector<HeapType>& types;
+  const std::unordered_map<Index, HeapType>& implicitTypes;
   const std::unordered_map<Index, Index>& implicitElemIndices;
 
   // The index of the current type.
@@ -1270,8 +1282,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   ParseModuleTypesCtx(
     Lexer& in,
     Module& wasm,
-    const std::vector<HeapTypeDef>& types,
-    const std::unordered_map<Index, HeapTypeDef>& implicitTypes,
+    const std::vector<HeapType>& types,
+    const std::unordered_map<Index, HeapType>& implicitTypes,
     const std::unordered_map<Index, Index>& implicitElemIndices,
     const IndexMap& typeIndices)
     : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), in(in), wasm(wasm),
@@ -1309,7 +1321,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     return TypeUse{it->second, ids};
   }
 
-  Result<HeapTypeDef> getBlockTypeFromTypeUse(Index pos, TypeUse use) {
+  Result<HeapType> getBlockTypeFromTypeUse(Index pos, TypeUse use) {
     return use.type;
   }
 
@@ -1449,9 +1461,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Module& wasm;
   Builder builder;
 
-  const std::vector<HeapTypeDef>& types;
-  const std::unordered_map<Index, HeapTypeDef>& implicitTypes;
-  const std::unordered_map<HeapTypeDef, std::unordered_map<Name, Index>>&
+  const std::vector<HeapType>& types;
+  const std::unordered_map<Index, HeapType>& implicitTypes;
+  const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
     typeNames;
   const std::unordered_map<Index, Index>& implicitElemIndices;
 
@@ -1476,9 +1488,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   ParseDefsCtx(
     Lexer& in,
     Module& wasm,
-    const std::vector<HeapTypeDef>& types,
-    const std::unordered_map<Index, HeapTypeDef>& implicitTypes,
-    const std::unordered_map<HeapTypeDef, std::unordered_map<Name, Index>>&
+    const std::vector<HeapType>& types,
+    const std::unordered_map<Index, HeapType>& implicitTypes,
+    const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
       typeNames,
     const std::unordered_map<Index, Index>& implicitElemIndices,
     const IndexMap& typeIndices)
@@ -1502,7 +1514,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return HeapType(Signature(Type::none, results[0]));
   }
 
-  Result<HeapTypeDef> getBlockTypeFromTypeUse(Index pos, HeapType type) {
+  Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
     assert(type.isSignature());
     // TODO: Error if block parameters are named
     return type;

@@ -40,10 +40,20 @@ function initializeConstants() {
     ['i31ref', 'I31ref'],
     ['structref', 'Structref'],
     ['stringref', 'Stringref'],
+    ['nullref', 'Nullref'],
+    ['nullexternref', 'NullExternref'],
+    ['nullfuncref', 'NullFuncref'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
     Module[entry[0]] = Module['_BinaryenType' + entry[1]]();
+  });
+
+  [ ['notPacked', 'NotPacked'],
+    ['i8', 'Int8'],
+    ['i16', 'Int16']
+  ].forEach(entry => {
+    Module[entry[0]] = Module['_BinaryenPackedType' + entry[1]]();
   });
 
   // Expression ids
@@ -113,10 +123,15 @@ function initializeConstants() {
     'StructSet',
     'ArrayNew',
     'ArrayNewFixed',
+    'ArrayNewData',
+    'ArrayNewElem',
     'ArrayGet',
     'ArraySet',
     'ArrayLen',
+    'ArrayFill',
     'ArrayCopy',
+    'ArrayInitData',
+    'ArrayInitElem',
     'RefAs',
     'StringNew',
     'StringConst',
@@ -705,54 +720,54 @@ function wrapModule(module, self = {}) {
 
   self['global'] = {
     'get'(name, type) {
-      return Module['_BinaryenGlobalGet'](module, strToStack(name), type);
+      return preserveStack(() => Module['_BinaryenGlobalGet'](module, strToStack(name), type));
     },
     'set'(name, value) {
-      return Module['_BinaryenGlobalSet'](module, strToStack(name), value);
+      return preserveStack(() => Module['_BinaryenGlobalSet'](module, strToStack(name), value));
     }
   }
 
   self['table'] = {
     'get'(name, index, type) {
-      return Module['_BinaryenTableGet'](module, strToStack(name), index, type);
+      return preserveStack(() => Module['_BinaryenTableGet'](module, strToStack(name), index, type));
     },
     'set'(name, index, value) {
-      return Module['_BinaryenTableSet'](module, strToStack(name), index, value);
+      return preserveStack(() => Module['_BinaryenTableSet'](module, strToStack(name), index, value));
     },
     'size'(name) {
-      return Module['_BinaryenTableSize'](module, strToStack(name));
+      return preserveStack(() => Module['_BinaryenTableSize'](module, strToStack(name)));
     },
     'grow'(name, value, delta) {
-      return Module['_BinaryenTableGrow'](module, strToStack(name), value, delta);
+      return preserveStack(() => Module['_BinaryenTableGrow'](module, strToStack(name), value, delta));
     }
   }
 
   self['memory'] = {
     // memory64 defaults to undefined/false.
     'size'(name, memory64) {
-      return Module['_BinaryenMemorySize'](module, strToStack(name), memory64);
+      return preserveStack(() => Module['_BinaryenMemorySize'](module, strToStack(name), memory64));
     },
     'grow'(value, name, memory64) {
-      return Module['_BinaryenMemoryGrow'](module, value, strToStack(name), memory64);
+      return preserveStack(() => Module['_BinaryenMemoryGrow'](module, value, strToStack(name), memory64));
     },
     'init'(segment, dest, offset, size, name) {
       return preserveStack(() => Module['_BinaryenMemoryInit'](module, strToStack(segment), dest, offset, size, strToStack(name)));
     },
     'copy'(dest, source, size, destMemory, sourceMemory) {
-      return Module['_BinaryenMemoryCopy'](module, dest, source, size, strToStack(destMemory), strToStack(sourceMemory));
+      return preserveStack(() => Module['_BinaryenMemoryCopy'](module, dest, source, size, strToStack(destMemory), strToStack(sourceMemory)));
     },
     'fill'(dest, value, size, name) {
-      return Module['_BinaryenMemoryFill'](module, dest, value, size, strToStack(name));
+      return preserveStack(() => Module['_BinaryenMemoryFill'](module, dest, value, size, strToStack(name)));
     },
     'atomic': {
       'notify'(ptr, notifyCount, name) {
-        return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicNotify'](module, ptr, notifyCount, strToStack(name)));
       },
       'wait32'(ptr, expected, timeout, name) {
-        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32'], strToStack(name)));
       },
       'wait64'(ptr, expected, timeout, name) {
-        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64'], strToStack(name)));
       }
     }
   }
@@ -765,28 +780,28 @@ function wrapModule(module, self = {}) {
 
   self['i32'] = {
     'load'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr, strToStack(name)));
     },
     'load8_s'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i32'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i32'], ptr, strToStack(name)));
     },
     'load8_u'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i32'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i32'], ptr, strToStack(name)));
     },
     'load16_s'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i32'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i32'], ptr, strToStack(name)));
     },
     'load16_u'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i32'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i32'], ptr, strToStack(name)));
     },
     'store'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i32'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i32'], strToStack(name)));
     },
     'store8'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i32'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i32'], strToStack(name)));
     },
     'store16'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32'], strToStack(name)));
     },
     'const'(x) {
       return preserveStack(() => {
@@ -928,90 +943,111 @@ function wrapModule(module, self = {}) {
     },
     'atomic': {
       'load'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr, strToStack(name)));
       },
       'load8_u'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i32'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i32'], ptr, strToStack(name)));
       },
       'load16_u'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i32'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i32'], ptr, strToStack(name)));
       },
       'store'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i32'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i32'], strToStack(name)));
       },
       'store8'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i32'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i32'], strToStack(name)));
       },
       'store16'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i32'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i32'], strToStack(name)));
       },
       'rmw': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i32'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i32'], strToStack(name)));
         },
       },
       'rmw8_u': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i32'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i32'], strToStack(name)));
         },
       },
       'rmw16_u': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i32'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i32'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'], strToStack(name)));
         },
       },
     },
@@ -1022,37 +1058,37 @@ function wrapModule(module, self = {}) {
 
   self['i64'] = {
     'load'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 8, true, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'load8_s'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 1, true, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'load8_u'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 1, false, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'load16_s'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 2, true, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'load16_u'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 2, false, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'load32_s'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'load32_u'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 4, false, offset, align, Module['i64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 4, false, offset, align, Module['i64'], ptr, strToStack(name)));
     },
     'store'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['i64'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['i64'], strToStack(name)));
     },
     'store8'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i64'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 1, offset, align, ptr, value, Module['i64'], strToStack(name)));
     },
     'store16'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i64'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i64'], strToStack(name)));
     },
     'store32'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64'], strToStack(name)));
     },
     'const'(x, y) {
       return preserveStack(() => {
@@ -1200,119 +1236,147 @@ function wrapModule(module, self = {}) {
     },
     'atomic': {
       'load'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr, strToStack(name)));
       },
       'load8_u'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i64'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i64'], ptr, strToStack(name)));
       },
       'load16_u'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i64'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i64'], ptr, strToStack(name)));
       },
       'load32_u'(offset, ptr, name) {
-        return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i64'], ptr, strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i64'], ptr, strToStack(name)));
       },
       'store'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 8, offset, ptr, value, Module['i64'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 8, offset, ptr, value, Module['i64'], strToStack(name)));
       },
       'store8'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i64'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i64'], strToStack(name)));
       },
       'store16'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i64'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i64'], strToStack(name)));
       },
       'store32'(offset, ptr, value, name) {
-        return Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i64'], strToStack(name));
+        return preserveStack(() => Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i64'], strToStack(name)));
       },
       'rmw': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 8, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 8, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 8, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 8, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 8, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 8, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 8, offset, ptr, expected, replacement, Module['i64'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 8, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
         },
       },
       'rmw8_u': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i64'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
         },
       },
       'rmw16_u': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i64'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
         },
       },
       'rmw32_u': {
         'add'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'sub'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'and'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'or'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xor'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'xchg'(offset, ptr, value, name) {
-          return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i64'], strToStack(name));
+          return preserveStack(() =>
+            Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i64'], strToStack(name)));
         },
         'cmpxchg'(offset, ptr, expected, replacement, name) {
-          return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'], strToStack(name))
+          return preserveStack(() =>
+            Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'], strToStack(name)));
         },
       },
     },
@@ -1323,10 +1387,10 @@ function wrapModule(module, self = {}) {
 
   self['f32'] = {
     'load'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f32'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f32'], ptr, strToStack(name)));
     },
     'store'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32'], strToStack(name)));
     },
     'const'(x) {
       return preserveStack(() => {
@@ -1431,10 +1495,10 @@ function wrapModule(module, self = {}) {
 
   self['f64'] = {
     'load'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['f64'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 8, true, offset, align, Module['f64'], ptr, strToStack(name)));
     },
     'store'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64'], strToStack(name)));
     },
     'const'(x) {
       return preserveStack(() => {
@@ -1539,70 +1603,78 @@ function wrapModule(module, self = {}) {
 
   self['v128'] = {
     'load'(offset, align, ptr, name) {
-      return Module['_BinaryenLoad'](module, 16, false, offset, align, Module['v128'], ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenLoad'](module, 16, false, offset, align, Module['v128'], ptr, strToStack(name)));
     },
     'load8_splat'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load8SplatVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load8SplatVec128'], offset, align, ptr, strToStack(name)));
     },
     'load16_splat'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load16SplatVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load16SplatVec128'], offset, align, ptr, strToStack(name)));
     },
     'load32_splat'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load32SplatVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load32SplatVec128'], offset, align, ptr, strToStack(name)));
     },
     'load64_splat'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load64SplatVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load64SplatVec128'], offset, align, ptr, strToStack(name)));
     },
     'load8x8_s'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load8x8SVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load8x8SVec128'], offset, align, ptr, strToStack(name)));
     },
     'load8x8_u'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load8x8UVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load8x8UVec128'], offset, align, ptr, strToStack(name)));
     },
     'load16x4_s'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load16x4SVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load16x4SVec128'], offset, align, ptr, strToStack(name)));
     },
     'load16x4_u'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load16x4UVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load16x4UVec128'], offset, align, ptr, strToStack(name)));
     },
     'load32x2_s'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load32x2SVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load32x2SVec128'], offset, align, ptr, strToStack(name)));
     },
     'load32x2_u'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load32x2UVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load32x2UVec128'], offset, align, ptr, strToStack(name)));
     },
     'load32_zero'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load32ZeroVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load32ZeroVec128'], offset, align, ptr, strToStack(name)));
     },
     'load64_zero'(offset, align, ptr, name) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load64ZeroVec128'], offset, align, ptr, strToStack(name));
+      return preserveStack(() => Module['_BinaryenSIMDLoad'](module, Module['Load64ZeroVec128'], offset, align, ptr, strToStack(name)));
     },
     'load8_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load8LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load8LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'load16_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load16LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load16LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'load32_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load32LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load32LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'load64_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load64LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load64LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'store8_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store8LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store8LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'store16_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store16LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store16LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'store32_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store32LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store32LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'store64_lane'(offset, align, index, ptr, vec, name) {
-      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store64LaneVec128'], offset, align, index, ptr, vec, strToStack(name));
+      return preserveStack(() =>
+        Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store64LaneVec128'], offset, align, index, ptr, vec, strToStack(name)));
     },
     'store'(offset, align, ptr, value, name) {
-      return Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128'], strToStack(name));
+      return preserveStack(() => Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128'], strToStack(name)));
     },
     'const'(i8s) {
       return preserveStack(() => {
@@ -2333,6 +2405,12 @@ function wrapModule(module, self = {}) {
     },
     'eq'(left, right) {
       return Module['_BinaryenRefEq'](module, left, right);
+    },
+    'test'(value, castType) {
+      return Module['_BinaryenRefTest'](module, value, castType);
+    },
+    'cast'(value, castType) {
+      return Module['_BinaryenRefCast'](module, value, castType);
     }
   };
 
@@ -2366,7 +2444,7 @@ function wrapModule(module, self = {}) {
     return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(tag), i32sToStack(operands), operands.length));
   };
   self['rethrow'] = function(target) {
-    return Module['_BinaryenRethrow'](module, strToStack(target));
+    return preserveStack(() => Module['_BinaryenRethrow'](module, strToStack(target)));
   };
 
   self['tuple'] = {
@@ -2387,13 +2465,90 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  // TODO: any.convert_extern
-  // TODO: extern.convert_any
-  // TODO: ref.test
-  // TODO: ref.cast
-  // TODO: br_on_*
-  // TODO: struct.*
-  // TODO: array.*
+  self['any'] = {
+    'convert_extern'() {
+      return Module['_BinaryenRefAsAnyConvertExtern']();
+    }
+  };
+
+  self['extern'] = {
+    'convert_any'() {
+      return Module['_BinaryenRefAsExternConvertAny']();
+    }
+  };
+
+  self['br_on_null'] = function(name, value) {
+    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnNull'], strToStack(name), value, Module['unreachable']));
+  };
+
+  self['br_on_non_null'] = function(name, value) {
+    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnNonNull'], strToStack(name), value, Module['unreachable']));
+  };
+
+  self['br_on_cast'] = function(name, value, castType) {
+    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnCast'], strToStack(name), value, castType));
+  };
+
+  self['br_on_cast_fail'] = function(name, value, castType) {
+    return preserveStack(() => Module['_BinaryenBrOn'](module, Module['BrOnCastFail'], strToStack(name), value, castType));
+  };
+
+  self['struct'] = {
+    'new'(operands, type) {
+      return preserveStack(() => Module['_BinaryenStructNew'](module, i32sToStack(operands), operands.length, type));
+    },
+    'new_default'(type) {
+      // Passing in null for |operands| (and 0 for |numOperands|) implies this is
+      // struct.new_default.
+      return Module['_BinaryenStructNew'](module, 0, 0, type);
+    },
+    'get'(index, ref, type, isSigned) {
+      return Module['_BinaryenStructGet'](module, index, ref, type, isSigned);
+    },
+    'set'(index, ref, value) {
+      return Module['_BinaryenStructSet'](module, index, ref, value);
+    }
+  };
+
+  self['array'] = {
+    'new'(type, size, init) {
+      return Module['_BinaryenArrayNew'](module, type, size, init);
+    },
+    'new_default'(type, size) {
+      return Module['_BinaryenArrayNew'](module, type, size, 0);
+    },
+    'new_fixed'(type, values) {
+      return preserveStack(() => Module['_BinaryenArrayNewFixed'](module, type, i32sToStack(values), values.length));
+    },
+    'new_data'(type, name, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayNewData'](module, type, strToStack(name), offset, size));
+    },
+    'new_elem'(type, name, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayNewElem'](module, type, strToStack(name), offset, size));
+    },
+    'get'(ref, index, type, isSigned) {
+      return Module['_BinaryenArrayGet'](module, ref, index, type, isSigned);
+    },
+    'set'(ref, index, value) {
+      return Module['_BinaryenArraySet'](module, ref, index, value);
+    },
+    'len'(ref) {
+      return Module['_BinaryenArrayLen'](module, ref);
+    },
+    'fill'(ref, index, value, size) {
+      return Module['_BinaryenArrayFill'](module, ref, index, value, size);
+    },
+    'copy'(destRef, destIndex, srcRef, srcIndex, length) {
+      return Module['_BinaryenArrayCopy'](module, destRef, destIndex, srcRef, srcIndex, length);
+    },
+    'init_data'(name, ref, index, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayInitData'](module, strToStack(name), ref, index, offset, size));
+    },
+    'init_elem'(name, ref, index, offset, size) {
+      return preserveStack(() => Module['_BinaryenArrayInitElem'](module, strToStack(name), ref, index, offset, size));
+    }
+  };
+  
   // TODO: string.*
 
   // 'Module' operations
@@ -2556,40 +2711,44 @@ function wrapModule(module, self = {}) {
     return Boolean(Module['_BinaryenHasMemory'](module));
   };
   self['getMemoryInfo'] = function(name) {
-    var memoryInfo = {
-      'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module, strToStack(name))),
-      'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module, strToStack(name))),
-      'initial': Module['_BinaryenMemoryGetInitial'](module, strToStack(name)),
-      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module, strToStack(name))),
-      'is64': Boolean(Module['_BinaryenMemoryIs64'](module, strToStack(name))),
-    };
-    if (Module['_BinaryenMemoryHasMax'](module, strToStack(name))) {
-      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module, strToStack(name));
-    }
-    return memoryInfo;
+    return preserveStack(() => {
+      var memoryInfo = {
+        'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module, strToStack(name))),
+        'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module, strToStack(name))),
+        'initial': Module['_BinaryenMemoryGetInitial'](module, strToStack(name)),
+        'shared': Boolean(Module['_BinaryenMemoryIsShared'](module, strToStack(name))),
+        'is64': Boolean(Module['_BinaryenMemoryIs64'](module, strToStack(name))),
+      };
+      if (Module['_BinaryenMemoryHasMax'](module, strToStack(name))) {
+        memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module, strToStack(name));
+      }
+      return memoryInfo;
+    });
   };
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
   self['getMemorySegmentInfo'] = function(name) {
-    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
-    let offset = null;
-    if (!passive) {
-      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
-    }
-    return {
-      'offset': offset,
-      'data': (function(){
-        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
-        const ptr = _malloc(size);
-        Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
-        const res = new Uint8Array(size);
-        res.set(HEAP8.subarray(ptr, ptr + size));
-        _free(ptr);
-        return res.buffer;
-      })(),
-      'passive': passive
-    };
+    return preserveStack(() => {
+      const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
+      let offset = null;
+      if (!passive) {
+        offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
+      }
+      return {
+        'offset': offset,
+        'data': (function(){
+          const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
+          const ptr = _malloc(size);
+          Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
+          const res = new Uint8Array(size);
+          res.set(HEAP8.subarray(ptr, ptr + size));
+          _free(ptr);
+          return res.buffer;
+        })(),
+        'passive': passive
+      };
+    });
   };
   self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
@@ -2602,6 +2761,16 @@ function wrapModule(module, self = {}) {
   };
   self['setFeatures'] = function(features) {
     Module['_BinaryenModuleSetFeatures'](module, features);
+  };
+  self['setTypeName'] = function(heapType, name) {
+    return preserveStack(() =>
+      Module['_BinaryenModuleSetTypeName'](module, heapType, strToStack(name))
+    );
+  };
+  self['setFieldName'] = function(heapType, index, name) {
+    return preserveStack(() =>
+      Module['_BinaryenModuleSetFieldName'](module, heapType, index, strToStack(name))
+    );
   };
   self['addCustomSection'] = function(name, contents) {
     return preserveStack(() =>
@@ -2724,6 +2893,92 @@ function wrapModule(module, self = {}) {
 }
 Module['wrapModule'] = wrapModule;
 
+// 'TypeBuilder' interface
+/** @constructor */
+Module['TypeBuilder'] = function(size) {
+  const builder = Module['_TypeBuilderCreate'](size);
+  this['ptr'] = builder;
+
+  this['grow'] = function(count) {
+    Module['_TypeBuilderGrow'](builder, count);
+  };
+  this['getSize'] = function() {
+    return Module['_TypeBuilderGetSize'](builder);
+  };
+  this['setSignatureType'] = function(index, paramTypes, resultTypes) {
+    Module['_TypeBuilderSetSignatureType'](builder, index, paramTypes, resultTypes);
+  };
+  this['setStructType'] = function(index, fields = []) {
+    // fields are assumed to be { type: type ref, packedType: type ref, mutable: bool }
+    preserveStack(() => {
+      const numFields = fields.length;
+      const types = new Array(numFields);
+      const packedTypes = new Array(numFields);
+      const mutables = new Array(numFields);
+      for (let i = 0; i < numFields; i++) {
+        const { ['type']: type, ['packedType']: packedType, ['mutable']: mutable } = fields[i];
+        types[i] = type;
+        packedTypes[i] = packedType;
+        mutables[i] = mutable;
+      }
+      Module['_TypeBuilderSetStructType'](builder,
+        index,
+        i32sToStack(types), i32sToStack(packedTypes),
+        i8sToStack(mutables),
+        numFields
+      );
+    });
+  };
+  this['setArrayType'] = function(index, elementType, elementPackedType, elementMutable) {
+    Module['_TypeBuilderSetArrayType'](builder,
+      index, elementType, elementPackedType, elementMutable
+    );
+  };
+  this['getTempHeapType'] = function(index) {
+    return Module['_TypeBuilderGetTempHeapType'](builder, index);
+  };
+  this['getTempTupleType'] = function(types) {
+    return preserveStack(() => {
+      return Module['_TypeBuilderGetTempTupleType'](builder, i32sToStack(types), types.length);
+    });
+  };
+  this['getTempRefType'] = function(heapType, nullable) {
+    return Module['_TypeBuilderGetTempRefType'](builder, heapType, nullable);
+  };
+  this['setSubType'] = function(index, superType) {
+    Module['_TypeBuilderSetSubType'](builder, index, superType);
+  };
+  this['setOpen'] = function(index) {
+    Module['_TypeBuilderSetOpen'](builder, index);
+  };
+  this['createRecGroup'] = function(index, length) {
+    Module['_TypeBuilderCreateRecGroup'](builder, index, length);
+  };
+  this['buildAndDispose'] = function() {
+    return preserveStack(() => {
+      const numTypes = this['getSize']();
+      const array = stackAlloc(numTypes << 2);
+      if (!Module['_TypeBuilderBuildAndDispose'](builder, array, 0, 0))
+        throw new TypeError('TypeBuilder.buildAndDispose failed');
+      const types = new Array(numTypes);
+      for (let i = 0; i < numTypes; i++) {
+        types[i] = HEAPU32[(array >>> 2) + i];
+      }
+      return types;
+    });
+  };
+}
+
+// Gets the type from a heap type generated by TypeBuilder
+Module['getTypeFromHeapType'] = function(heapType, nullable) {
+  return Module['_BinaryenTypeFromHeapType'](heapType, nullable);
+};
+
+// Gets the heap type of a type
+Module['getHeapType'] = function(type) {
+  return Module['_BinaryenTypeGetHeapType'](type);
+};
+
 // 'Relooper' interface
 /** @constructor */
 Module['Relooper'] = function(module) {
@@ -2803,7 +3058,7 @@ Module['getExpressionType'] = function(expr) {
 Module['getExpressionInfo'] = function(expr) {
   const id = Module['_BinaryenExpressionGetId'](expr);
   const type = Module['_BinaryenExpressionGetType'](expr);
-  switch (id) {
+  switch (id) { // TODO: GC instructions
     case Module['BlockId']:
       return {
         'id': id,
@@ -4690,6 +4945,406 @@ Module['RefEq'] = makeExpressionWrapper({
   },
   'setRight'(expr, rightExpr) {
     return Module['_BinaryenRefEqSetRight'](expr, rightExpr);
+  }
+});
+
+Module['RefTest'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenRefTestGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenRefTestSetRef'](expr, ref);
+  },
+  'getCastType'(expr) {
+    return Module['_BinaryenRefTestGetCastType'](expr);
+  },
+  'setCastType'(expr, castType) {
+    Module['_BinaryenRefTestSetCastType'](expr, castType);
+  }
+});
+
+Module['RefCast'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenRefCastGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenRefCastSetRef'](expr, ref);
+  }
+});
+
+// TODO: any.convert_extern
+// TODO: extern.convert_any
+
+Module['BrOn'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenBrOnGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenBrOnSetOp'](expr, op);
+  },
+  'getName'(expr) {
+    return UTF8ToString(Module['_BinaryenBrOnGetName'](expr));
+  },
+  'setName'(expr, name) {
+    preserveStack(() => Module['_BinaryenBrOnSetName'](expr, strToStack(name)));
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenBrOnGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenBrOnSetRef'](expr, ref);
+  },
+  'getCastType'(expr) {
+    return Module['_BinaryenBrOnGetCastType'](expr);
+  },
+  'setCastType'(expr, castType) {
+    Module['_BinaryenBrOnSetCastType'](expr, castType);
+  }
+});
+
+Module['StructNew'] = makeExpressionWrapper({
+  'getNumOperands'(expr) {
+    return Module['_BinaryenStructNewGetNumOperands'](expr);
+  },
+  'getOperands'(expr) {
+    return getAllNested(expr, Module['_BinaryenStructNewGetNumOperands'], Module['_BinaryenStructNewGetOperandAt']);
+  },
+  'setOperands'(expr, operands) {
+    setAllNested(
+      expr,
+      operands,
+      Module['_BinaryenStructNewGetNumOperands'],
+      Module['_BinaryenStructNewSetOperandAt'],
+      Module['_BinaryenStructNewAppendOperand'],
+      Module['_BinaryenStructNewRemoveOperandAt']
+    );
+  },
+  'getOperandAt'(expr, index) {
+    return Module['_BinaryenStructNewGetOperandAt'](expr, index);
+  },
+  'setOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenStructNewSetOperandAt'](expr, index, operandExpr);
+  },
+  'appendOperand'(expr, operandExpr) {
+    return Module['_BinaryenStructNewAppendOperand'](expr, operandExpr);
+  },
+  'insertOperandAt'(expr, index, operandExpr) {
+    Module['_BinaryenStructNewInsertOperandAt'](expr, index, operandExpr);
+  },
+  'removeOperandAt'(expr, index) {
+    return Module['_BinaryenStructNewRemoveOperandAt'](expr, index);
+  }
+});
+
+Module['StructGet'] = makeExpressionWrapper({
+  'getIndex'(expr) {
+    return Module['_BinaryenStructGetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenStructGetSetIndex'](expr, index);
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenStructGetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenStructGetSetRef'](expr, ref);
+  },
+  'isSigned'(expr) {
+    return Boolean(Module['_BinaryenStructGetIsSigned'](expr));
+  },
+  'setSigned'(expr, signed) {
+    Module['_BinaryenStructGetSetSigned'](expr, signed);
+  }
+});
+
+Module['StructSet'] = makeExpressionWrapper({
+  'getIndex'(expr) {
+    return Module['_BinaryenStructSetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenStructSetSetIndex'](expr, index);
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenStructSetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenStructSetSetRef'](expr, ref);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenStructSetGetValue'](expr);
+  },
+  'setValue'(expr, value) {
+    Module['_BinaryenStructSetSetValue'](expr, value);
+  }
+});
+
+Module['ArrayNew'] = makeExpressionWrapper({
+  'getInit'(expr) {
+    return Module['_BinaryenArrayNewGetInit'](expr);
+  },
+  'setInit'(expr, init) {
+    Module['_BinaryenArrayNewSetInit'](expr, init);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayNewGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayNewSetSize'](expr, size);
+  }
+});
+
+Module['ArrayNewFixed'] = makeExpressionWrapper({
+  'getNumValues'(expr) {
+    return Module['_BinaryenArrayNewFixedGetNumValues'](expr);
+  },
+  'getValues'(expr) {
+    return getAllNested(expr,
+                        Module['_BinaryenArrayNewFixedGetNumValues'],
+                        Module['_BinaryenArrayNewFixedGetValueAt']);
+  },
+  'setValues'(expr, values) {
+    setAllNested(
+      expr,
+      values,
+      Module['_BinaryenArrayNewFixedGetNumValues'],
+      Module['_BinaryenArrayNewFixedSetValueAt'],
+      Module['_BinaryenArrayNewFixedAppendValue'],
+      Module['_BinaryenArrayNewFixedRemoveValueAt']
+    );
+  },
+  'getValueAt'(expr, index) {
+    return Module['_BinaryenArrayNewFixedGetValueAt'](expr, index);
+  },
+  'setValueAt'(expr, index, valueExpr) {
+    Module['_BinaryenArrayNewFixedSetValueAt'](expr, index, valueExpr);
+  },
+  'appendValue'(expr, valueExpr) {
+    return Module['_BinaryenArrayNewFixedAppendValue'](expr, valueExpr);
+  },
+  'insertValueAt'(expr, index, valueExpr) {
+    Module['_BinaryenArrayNewFixedInsertValueAt'](expr, index, valueExpr);
+  },
+  'removeValueAt'(expr, index) {
+    return Module['_BinaryenArrayNewFixedRemoveValueAt'](expr, index);
+  }
+});
+
+Module['ArrayNewData'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayNewDataGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayNewDataSetSegment'](expr, strToStack(segment)));
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayNewDataGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayNewDataSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayNewDataGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayNewDataSetSize'](expr, size);
+  }
+});
+
+Module['ArrayNewElem'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayNewElemGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayNewElemSetSegment'](expr, strToStack(segment)));
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayNewElemGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayNewElemSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayNewElemGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayNewElemSetSize'](expr, size);
+  }
+});
+
+Module['ArrayGet'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArrayGetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayGetSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayGetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayGetSetIndex'](expr, index);
+  },
+  'isSigned'(expr) {
+    return Boolean(Module['_BinaryenArrayGetIsSigned'](expr));
+  },
+  'setSigned'(expr, signed) {
+    Module['_BinaryenArrayGetSetSigned'](expr, signed);
+  }
+});
+
+Module['ArraySet'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArraySetGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArraySetSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArraySetGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArraySetSetIndex'](expr, index);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenArraySetGetValue'](expr);
+  },
+  'setValue'(expr, value) {
+    Module['_BinaryenArraySetSetValue'](expr, value);
+  }
+});
+
+Module['ArrayLen'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArrayLenGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayLenSetRef'](expr, ref);
+  }
+});
+
+Module['ArrayFill'] = makeExpressionWrapper({
+  'getRef'(expr) {
+    return Module['_BinaryenArrayFillGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayFillSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayFillGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayFillSetIndex'](expr, index);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenArrayFillGetValue'](expr);
+  },
+  'setValue'(expr, value) {
+    Module['_BinaryenArrayFillSetValue'](expr, value);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayFillGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayFillSetSize'](expr, size);
+  }
+});
+
+Module['ArrayCopy'] = makeExpressionWrapper({
+  'getDestRef'(expr) {
+    return Module['_BinaryenArrayCopyGetDestRef'](expr);
+  },
+  'setDestRef'(expr, ref) {
+    Module['_BinaryenArrayCopySetDestRef'](expr, ref);
+  },
+  'getDestIndex'(expr) {
+    return Module['_BinaryenArrayCopyGetDestIndex'](expr);
+  },
+  'setDestIndex'(expr, index) {
+    Module['_BinaryenArrayCopySetDestIndex'](expr, index);
+  },
+  'getSrcRef'(expr) {
+    return Module['_BinaryenArrayCopyGetSrcRef'](expr);
+  },
+  'setSrcRef'(expr, ref) {
+    Module['_BinaryenArrayCopySetSrcRef'](expr, ref);
+  },
+  'getSrcIndex'(expr) {
+    return Module['_BinaryenArrayCopyGetSrcIndex'](expr);
+  },
+  'setSrcIndex'(expr, index) {
+    Module['_BinaryenArrayCopySetSrcIndex'](expr, index);
+  },
+  'getLength'(expr) {
+    return Module['_BinaryenArrayCopyGetLength'](expr);
+  },
+  'setLength'(expr, length) {
+    Module['_BinaryenArrayCopySetLength'](expr, length);
+  }
+});
+
+Module['ArrayInitData'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayInitDataGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayInitDataSetSegment'](expr, strToStack(segment)));
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenArrayInitDataGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayInitDataSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayInitDataGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayInitDataSetIndex'](expr, index);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayInitDataGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayInitDataSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayInitDataGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayInitDataSetSize'](expr, size);
+  }
+});
+
+Module['ArrayInitElem'] = makeExpressionWrapper({
+  'getSegment'(expr) {
+    return UTF8ToString(Module['_BinaryenArrayInitElemGetSegment'](expr));
+  },
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenArrayInitElemSetSegment'](expr, strToStack(segment)));
+  },
+  'getRef'(expr) {
+    return Module['_BinaryenArrayInitElemGetRef'](expr);
+  },
+  'setRef'(expr, ref) {
+    Module['_BinaryenArrayInitElemSetRef'](expr, ref);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenArrayInitElemGetIndex'](expr);
+  },
+  'setIndex'(expr, index) {
+    Module['_BinaryenArrayInitElemSetIndex'](expr, index);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenArrayInitElemGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenArrayInitElemSetOffset'](expr, offset);
+  },
+  'getSize'(expr) {
+    return Module['_BinaryenArrayInitElemGetSize'](expr);
+  },
+  'setSize'(expr, size) {
+    Module['_BinaryenArrayInitElemSetSize'](expr, size);
   }
 });
 

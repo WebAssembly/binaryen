@@ -111,10 +111,18 @@ unfuzzable = [
     'dce-stack-switching.wast',
     'precompute-stack-switching.wast',
     'vacuum-stack-switching.wast',
+    # TODO: fuzzer support for exact references
+    'exact-references.wast',
+    'exact-references-lowering.wast',
+    'exact-casts.wast',
+    'optimize-instructions-exact.wast',
+    'local-subtyping-exact.wast',
+    'remove-unused-types-exact.wast',
+    'coalesce-locals-exact.wast',
+    'remove-unused-brs-exact.wast',
+    'signature-refining-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
-    # TODO: fuzzer support for exact heap types
-    'exact.wast',
 ]
 
 
