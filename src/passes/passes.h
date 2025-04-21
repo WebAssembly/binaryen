@@ -165,7 +165,7 @@ Pass* createStringLiftingPass();
 Pass* createStringLoweringPass();
 Pass* createStringLoweringMagicImportPass();
 Pass* createStringLoweringMagicImportAssertPass();
-Pass* createStringLoweringMagicImportKeepFeaturePass();
+Pass* createStringLoweringPairedPass();
 Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripProducersPass();

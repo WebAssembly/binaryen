@@ -196,7 +196,7 @@ struct StringLifting : public Pass {
 
     // We found strings to lift. Mark this on the PassRunner, so that the
     // corresponding lowering will occur, if we want one.
-    getPassRunner().noteLiftedStrings();
+    getPassRunner()->setLiftedStrings(true);
 
     struct StringApplier : public WalkerPass<PostWalker<StringApplier>> {
       bool isFunctionParallel() override { return true; }

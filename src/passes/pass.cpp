@@ -537,9 +537,10 @@ void PassRegistry::registerPasses() {
                "if there are invalid strings",
                createStringLoweringMagicImportAssertPass);
   registerPass(
-    "string-lowering-magic-imports-keep-feature",
-    "same as string-lowering, but keeps the strings feature enabled after",
-    createStringLoweringMagicImportKeepFeaturePass);
+    "string-lowering-paired",
+    "same as string-lowering, but paired with a lifting operation (only lowers "
+    "if we lifted, and does not reset the strings feature)",
+    createStringLoweringPairedPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
@@ -803,18 +804,14 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
-  // Lower away strings at the very end, if we lifted. Only lowering if we
-  // lifted avoids running the pass
-  // We do keep the strings feature enabled,
+  // Lower away strings at the very end. We do keep the strings feature enabled,
   // as (1) it would be odd for the optimization pipeline to disable a feature,
   // and also we want -O3 -O3 to work properly: if the first -O3 disabled the
   // feature then the second would not lift strings at the start.
   //
   // We do this before remove-unused-module-elements so we don't add unused
   // imports, and also before reorder-globals, which will sort the new globals.
-  if (liftedStrings) {
-    addIfNoDWARFIssues("string-lowering-magic-imports-keep-feature");
-  }
+  addIfNoDWARFIssues("string-lowering-paired");
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");

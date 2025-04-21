@@ -405,7 +405,8 @@ private:
   bool liftedStrings = false;
 
 public:
-  void noteLiftedStrings() { liftedStrings = true; }
+  void setLiftedStrings(bool lifted) { liftedStrings = lifted; }
+  bool getLiftedStrings() { return liftedStrings; }
 };
 
 //
