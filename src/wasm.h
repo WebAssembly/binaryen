@@ -2137,7 +2137,7 @@ struct BinaryLocations {
   std::unordered_map<Function*, FunctionLocations> functions;
 };
 
-// Forward declaration for FuncEffectsMap.
+// Forward declaration for function effects.
 class EffectAnalyzer;
 
 class Function : public Importable {

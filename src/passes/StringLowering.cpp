@@ -56,12 +56,6 @@ struct StringGathering : public Pass {
   using StringPtrs = std::vector<Expression**>;
   StringPtrs stringPtrs;
 
-  // Set to true if we found any uses of strings in the module. We note this as
-  // we scan the module for strings, and take into account not just strings
-  // constants but the string type in general - any use of the strings feature.
-  // Subclasses of this class use that information to avoid wasted work.
-  std::atomic<bool> stringsUsed = false;
-
   // Main entry point.
   void run(Module* module) override {
     processModule(module);
@@ -73,23 +67,13 @@ struct StringGathering : public Pass {
   // data structures.
   void processModule(Module* module) {
     struct StringWalker
-      : public PostWalker<StringWalker,
-                          UnifiedExpressionVisitor<StringWalker>> {
+      : public PostWalker<StringWalker, PostWalker<StringWalker>> {
       StringPtrs& stringPtrs;
 
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
 
-      bool stringsUsed = false;
-
-      void visitExpression(Expression* curr) {
-        if (curr->type.isString()) {
-          stringsUsed = true;
-        }
-      }
-
       void visitStringConst(StringConst* curr) {
         stringPtrs.push_back(getCurrentPointer());
-        stringsUsed = true;
       }
     };
 
@@ -98,9 +82,6 @@ struct StringGathering : public Pass {
         if (!func->imported()) {
           StringWalker walker(stringPtrs);
           walker.walk(func->body);
-          if (walker.stringsUsed) {
-            stringsUsed = true;
-          }
         }
       });
 
@@ -109,9 +90,6 @@ struct StringGathering : public Pass {
     auto& globalStrings = analysis.map[nullptr];
     StringWalker walker(globalStrings);
     walker.walkModuleCode(module);
-    if (walker.stringsUsed) {
-      stringsUsed = true;
-    }
 
     // Combine all the strings.
     std::unordered_set<Name> stringSet;
@@ -249,11 +227,6 @@ struct StringLowering : public StringGathering {
 
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
-
-    // If we saw no strings during StringGathering, there is no work.
-    if (!stringsUsed) {
-      return;
-    }
 
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);

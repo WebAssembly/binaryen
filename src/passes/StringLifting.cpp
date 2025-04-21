@@ -82,6 +82,7 @@ struct StringLifting : public Pass {
     for (auto& section : module->customSections) {
       if (section.name == "string.consts") {
         // We found the string consts section. Parse it.
+        found = true;
         auto copy = section.data;
         json::Value array;
         array.parse(copy.data(), json::Value::WTF16);
@@ -192,6 +193,10 @@ struct StringLifting : public Pass {
       // Nothing to do.
       return;
     }
+
+    // We found strings to lift. Mark this on the PassRunner, so that the
+    // corresponding lowering will occur, if we want one.
+    getPassRunner().noteLiftedStrings();
 
     struct StringApplier : public WalkerPass<PostWalker<StringApplier>> {
       bool isFunctionParallel() override { return true; }
