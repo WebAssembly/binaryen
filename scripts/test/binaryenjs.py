@@ -29,19 +29,15 @@ def do_test_binaryen_js_with(which):
 
     print('\n[ checking binaryen.js testcases (' + which + ')... ]\n')
 
-    for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen.js'))):
-        if not s.endswith('.js'):
-            continue
-        print(s)
-        f = open('a.mjs', 'w')
+    for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
+        basename = os.path.basename(s)
+        outname = os.path.splitext(basename)[0] + '.mjs'
+        f = open(outname, 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
-        f.write('''
-            console.warn = console.error = console.log;
-        ''')
+        f.write('console.warn = console.error = console.log;')
         binaryen_js = open(which).read()
         f.write(binaryen_js)
-        test_path = os.path.join(shared.options.binaryen_test, 'binaryen.js', s)
-        test_src = open(test_path).read()
+        test_src = open(s).read()
         f.write(support.js_test_wrap().replace('%TEST%', test_src))
         f.close()
 
@@ -57,12 +53,12 @@ def do_test_binaryen_js_with(which):
 
         # run in all possible shells
         if shared.MOZJS:
-            test([shared.MOZJS, '-m', 'a.mjs'])
+            test([shared.MOZJS, '-m', outname])
         if shared.NODEJS:
             if node_has_wasm or 'WebAssembly.' not in test_src:
-                test([shared.NODEJS, 'a.mjs'])
+                test([shared.NODEJS, outname])
             else:
-                print('Skipping ' + test_path + ' because WebAssembly might not be supported')
+                print('Skipping ' + basename + ' because WebAssembly might not be supported')
 
 
 def update_binaryen_js_tests():
@@ -78,12 +74,10 @@ def update_binaryen_js_tests():
     node_has_wasm = shared.NODEJS and support.node_has_webassembly(shared.NODEJS)
     for s in shared.get_tests(shared.get_test_dir('binaryen.js'), ['.js']):
         basename = os.path.basename(s)
-        print(basename)
-        f = open('a.mjs', 'w')
+        outname = os.path.splitext(basename)[0] + '.mjs'
+        f = open(outname, 'w')
         # avoid stdout/stderr ordering issues in some js shells - use just stdout
-        f.write('''
-            console.warn = console.error = console.log;
-        ''')
+        f.write('console.warn = console.error = console.log;')
         f.write(open(shared.BINARYEN_JS).read())
         test_src = open(s).read()
         f.write(support.js_test_wrap().replace('%TEST%', test_src))
@@ -100,9 +94,9 @@ def update_binaryen_js_tests():
 
         # run in available shell
         if shared.MOZJS:
-            update([shared.MOZJS, '-m', 'a.mjs'])
+            update([shared.MOZJS, '-m', outname])
         elif node_has_wasm or 'WebAssembly.' not in test_src:
-            update([shared.NODEJS, 'a.mjs'])
+            update([shared.NODEJS, outname])
         else:
             print('Skipping ' + basename + ' because WebAssembly might not be supported')
 
