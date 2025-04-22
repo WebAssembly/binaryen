@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - `-O2` and above will now automatically lift and lower strings, if the string
+   feature is enabled. That is, enable strings if you want the optimizer to lift
+   strings, optimize them (e.g. precompute a concat of two constants, and lower
+   them back down to js string imports).
  - Add a `--string-lifting` pass that raises imported string operations and
    constants into stringref in Binaryen IR (which can then be fully optimized,
    and typically lowered back down with `--string-lowering`).
