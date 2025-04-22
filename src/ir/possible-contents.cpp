@@ -2135,6 +2135,9 @@ private:
   // For a non-full cone, we also reduce the depth as much as possible, so it is
   // equal to the maximum depth of an existing subtype.
   Index getNormalizedConeDepth(Type type, Index depth) {
+    if (type.isExact()) {
+      return 0;
+    }
     return std::min(depth, maxDepths[type.getHeapType()]);
   }
 
