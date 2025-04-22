@@ -61,7 +61,13 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    info.note(expr->type);
+    auto noted = expr->type;
+    // Do not introduce new exact fields that might requires invalid
+    // casts. Keep any existing exact fields, though.
+    if (type.getStruct().fields[index].type.isInexact()) {
+      noted = noted.withInexactIfNoCustomDescs(getModule()->features);
+    }
+    info.note(noted);
   }
 
   void
@@ -185,6 +191,11 @@ struct TypeRefining : public Pass {
         auto& infos = finalInfos[type];
         for (Index i = 0; i < fields.size(); i++) {
           auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
+          // Do not introduce new exact fields that might requires invalid
+          // casts. Keep any existing exact fields, though.
+          if (!fields[i].type.isExact()) {
+            gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
+          }
           infos[i] = LUBFinder(gufaType);
         }
       }

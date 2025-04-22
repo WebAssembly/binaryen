@@ -19,8 +19,6 @@ import os
 unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
-    # not all relaxed SIMD instructions are implemented in the interpreter
-    'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings, including limitations
     #       like the fuzzer not handling (ref extern) imports (there is no way
     #       to create a replacement value)
@@ -127,6 +125,9 @@ unfuzzable = [
     'remove-unused-brs-exact.wast',
     'signature-refining-exact.wast',
     'gufa-cast-all-exact.wast',
+    'type-merging-exact.wast',
+    'type-refining-exact.wast',
+    'type-refining-gufa-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
 ]
