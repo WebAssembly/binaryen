@@ -138,3 +138,74 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $super (sub (struct)))
+ ;; NO_CD:      (type $super (sub (struct)))
+ (type $super (sub (struct)))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:      (import "" "a" (global $exact-a (ref (exact $super))))
+ ;; NO_CD:      (import "" "a" (global $exact-a (ref (exact $super))))
+ (import "" "a" (global $exact-a (ref (exact $super))))
+ ;; CHECK:      (import "" "b" (global $exact-b (ref (exact $super))))
+ ;; NO_CD:      (import "" "b" (global $exact-b (ref (exact $super))))
+ (import "" "b" (global $exact-b (ref (exact $super))))
+ ;; CHECK:      (import "" "x" (global $x i32))
+ ;; NO_CD:      (import "" "x" (global $x i32))
+ (import "" "x" (global $x i32))
+
+ ;; CHECK:      (func $get-exact (type $1) (result (ref $super))
+ ;; CHECK-NEXT:  (select (result (ref (exact $super)))
+ ;; CHECK-NEXT:   (global.get $exact-a)
+ ;; CHECK-NEXT:   (global.get $exact-b)
+ ;; CHECK-NEXT:   (global.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $get-exact (type $1) (result (ref $super))
+ ;; NO_CD-NEXT:  (select (result (ref (exact $super)))
+ ;; NO_CD-NEXT:   (global.get $exact-a)
+ ;; NO_CD-NEXT:   (global.get $exact-b)
+ ;; NO_CD-NEXT:   (global.get $x)
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ (func $get-exact (result (ref $super))
+  (select (result (ref (exact $super)))
+   (global.get $exact-a)
+   (global.get $exact-b)
+   (global.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $cast-sub (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.cast (ref (exact $super))
+ ;; CHECK-NEXT:      (call $get-exact)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $cast-sub (type $2)
+ ;; NO_CD-NEXT:  (drop
+ ;; NO_CD-NEXT:   (block
+ ;; NO_CD-NEXT:    (drop
+ ;; NO_CD-NEXT:     (call $get-exact)
+ ;; NO_CD-NEXT:    )
+ ;; NO_CD-NEXT:    (unreachable)
+ ;; NO_CD-NEXT:   )
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT: )
+ (func $cast-sub
+  (drop
+   ;; We should be able to infer that this cast will not succeed and insert an
+   ;; unreachable after it.
+   (ref.cast (ref $sub)
+    (call $get-exact)
+   )
+  )
+ )
+)
