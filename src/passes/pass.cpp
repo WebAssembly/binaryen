@@ -525,9 +525,9 @@ void PassRegistry::registerPasses() {
   registerPass("string-lifting",
                "lift string imports to wasm strings",
                createStringLiftingPass);
-  registerPass("string-lifting-paired",
-               "same as string-lifting, but paired with a later lowering",
-               createStringLiftingPairedPass);
+  registerTestPass("string-lifting-paired",
+                   "same as string-lifting, but paired with a later lowering",
+                   createStringLiftingPairedPass);
   registerPass("string-lowering",
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
@@ -539,7 +539,7 @@ void PassRegistry::registerPasses() {
                "same as string-lowering-magic-imports, but raise a fatal error "
                "if there are invalid strings",
                createStringLoweringMagicImportAssertPass);
-  registerPass(
+  registerTestPass(
     "string-lowering-paired",
     "same as string-lowering, but paired with an earlier lifting (only lowers "
     "if we lifted, and does not reset the strings feature)",
