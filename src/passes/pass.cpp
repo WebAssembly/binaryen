@@ -525,6 +525,9 @@ void PassRegistry::registerPasses() {
   registerPass("string-lifting",
                "lift string imports to wasm strings",
                createStringLiftingPass);
+  registerPass("string-lifting-paired",
+               "same as string-lifting, but paired with a later lowering",
+               createStringLiftingPairedPass);
   registerPass("string-lowering",
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
@@ -538,7 +541,7 @@ void PassRegistry::registerPasses() {
                createStringLoweringMagicImportAssertPass);
   registerPass(
     "string-lowering-paired",
-    "same as string-lowering, but paired with a lifting operation (only lowers "
+    "same as string-lowering, but paired with an earlier lifting (only lowers "
     "if we lifted, and does not reset the strings feature)",
     createStringLoweringPairedPass);
   registerPass(
@@ -732,7 +735,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   // Start by lifting strings into the optimizable IR form, which can help
   // everything else.
   if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
-    addIfNoDWARFIssues("string-lifting");
+    addIfNoDWARFIssues("string-lifting-paired");
   }
   // Removing duplicate functions is fast and saves work later.
   addIfNoDWARFIssues("duplicate-function-elimination");

@@ -162,6 +162,7 @@ Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStackCheckPass();
 Pass* createStringGatheringPass();
 Pass* createStringLiftingPass();
+Pass* createStringLiftingPairedPass();
 Pass* createStringLoweringPass();
 Pass* createStringLoweringMagicImportPass();
 Pass* createStringLoweringMagicImportAssertPass();
