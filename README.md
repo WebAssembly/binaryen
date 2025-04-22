@@ -175,11 +175,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      output has the right type in the wasm spec. That may cause a few bytes of
      extra size in rare cases (we avoid this overhead in the common case where
      the `br_if` value is unused).
- * Strings: Binaryen has support for something close the stringref proposal,
+ * Strings: Binaryen has support for something close to the stringref proposal,
    mainly for internal optimization purposes. When the strings feature is
    enabled, we "lift" JS string imports into string instructions, which are then
    optimized, and after optimizations we lower back into JS string imports. (If
-   you do not want the lowering, use `--skip-pass=string-loewring XXXXXXXXXXXXXXXXXXXXXXXXXXXXx`
+   you do not want the lowering, use `--skip-pass=string-lowering-paired`.)
    * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
      `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
      used in all places (and it is lowered to `ref.as_non_null` where possible
