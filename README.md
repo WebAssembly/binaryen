@@ -179,7 +179,7 @@ There are a few differences between Binaryen IR and the WebAssembly language:
    mainly for internal optimization purposes. When the strings feature is
    enabled, we "lift" JS string imports into string instructions, which are then
    optimized, and after optimizations we lower back into JS string imports. (If
-   you do not want the lowering, use `--skip-pass=string-lowering-paired`.)
+   you do not want the lowering, use `--no-string-lowering`.)
    * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
      `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
      used in all places (and it is lowered to `ref.as_non_null` where possible

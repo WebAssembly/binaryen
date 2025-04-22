@@ -627,6 +627,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --skip-pass,-sp                               Skip a pass (do not run it)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-string-lowering                          Disables the automatic lowering
+;; CHECK-NEXT:                                                 of stringref to imported strings
+;; CHECK-NEXT:                                                 (that normally happens at the
+;; CHECK-NEXT:                                                 end of the optimization
+;; CHECK-NEXT:                                                 pipeline, if -O2+ is specified)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------

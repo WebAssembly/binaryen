@@ -2,10 +2,10 @@
 ;; NOTE: This test was ported using port_passes_tests_to_lit.py and could be cleaned up.
 
 ;; Run normal -O2, which should lift, optimize, and lower strings. Also see that
-;; -O2 plus an instruction to skip the lowering works properly.
+;; -O2 plus the flag to skip the lowering works properly.
 
 ;; RUN: foreach %s %t wasm-opt -O2 -all -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt -O2 --skip-pass=string-lowering-paired -all -S -o - | filecheck %s --check-prefix=NO_LOWER
+;; RUN: foreach %s %t wasm-opt -O2 --no-string-lowering -all -S -o - | filecheck %s --check-prefix=NO_LOWER
 
 (module
   (type $array16 (array (mut i16)))
