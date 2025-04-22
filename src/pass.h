@@ -397,11 +397,11 @@ private:
   bool shouldPreserveDWARF();
 
   // Whether we lifted strings during our work. If we did, the caller may want
-  // to lower later. Noting the lifting work avoids always running the
+  // to lower later. Noting the lifting work helps us avoid always running the
   // lowering pass at the end, which would add work. With this mechanism, if we
   // lift strings at the beginning of -O2 or such then we will lower them at the
   // end, and if we failed to see any strings to lift then we have no work to do
-  // (and no -O2 optimization passes in the middle can add strings to lower).
+  // (note: no -O2 optimization passes in the middle can add strings to lower).
   bool liftedStrings = false;
 
 public:

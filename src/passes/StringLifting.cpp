@@ -202,7 +202,7 @@ struct StringLifting : public Pass {
 
     if (paired) {
       // We found strings to lift. Mark this on the PassRunner, so that the
-      // corresponding lowering will occur, if we want one.
+      // corresponding lowering will occur.
       getPassRunner()->setLiftedStrings(true);
     }
 
