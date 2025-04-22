@@ -215,8 +215,7 @@ struct StringLowering : public StringGathering {
   StringLowering(bool useMagicImports = false,
                  bool assertUTF8 = false,
                  bool paired = false)
-    : useMagicImports(useMagicImports), assertUTF8(assertUTF8),
-      paired(paired) {
+    : useMagicImports(useMagicImports), assertUTF8(assertUTF8), paired(paired) {
     // If we are asserting valid UTF-8, we must be using magic imports.
     assert(!assertUTF8 || useMagicImports);
   }
