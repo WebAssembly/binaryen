@@ -1287,7 +1287,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             if (auto* br = drop->value->dynCast<Break>(); br && br->value) {
               bool hasNoSideEffects =
                 !EffectAnalyzer(passOptions, *getModule(), br->value)
-                   .hasSideEffects();
+                   .hasUnremovableSideEffects();
               bool isEqual = ExpressionAnalyzer::equal(br->value, last);
               if (hasNoSideEffects && isEqual) {
                 // All conditions met, perform the update
