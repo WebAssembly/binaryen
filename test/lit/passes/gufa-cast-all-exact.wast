@@ -109,3 +109,32 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $foo (struct (field i32)))
+ ;; NO_CD:      (type $foo (struct (field i32)))
+ (type $foo (struct (field i32)))
+
+ ;; CHECK:      (import "" "" (global $exact (ref (exact $foo))))
+ ;; NO_CD:      (import "" "" (global $exact (ref (exact $foo))))
+ (import "" "" (global $exact (ref (exact $foo))))
+
+ ;; CHECK:      (func $get (type $1) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $get (type $1) (result i32)
+ ;; NO_CD-NEXT:  (unreachable)
+ ;; NO_CD-NEXT: )
+ (func $get (result i32)
+  ;; Regression test for a bug where exactness was not preserved when combining
+  ;; nullness into cone types, resulting in a later assertion failure on the
+  ;; StructGet.
+  (struct.get $foo 0
+   (select (result (ref null (exact $foo)))
+    (global.get $exact)
+    (ref.null none)
+    (i32.const 0)
+   )
+  )
+ )
+)

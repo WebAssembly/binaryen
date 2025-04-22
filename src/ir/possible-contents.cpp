@@ -102,7 +102,7 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
     // just add in nullability. For example, a literal of type T and a null
     // becomes an exact type of T that allows nulls, and so forth.
     auto mixInNull = [](ConeType cone) {
-      cone.type = Type(cone.type.getHeapType(), Nullable);
+      cone.type = cone.type.with(Nullable);
       return cone;
     };
     if (!a.isNull()) {
