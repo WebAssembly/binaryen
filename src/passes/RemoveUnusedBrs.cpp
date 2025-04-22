@@ -1261,16 +1261,17 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
           // A potential optimization opportunity:
           // Optimize block tails where a dropped `br_if`'s value is redundant
+          // when the br_if targets the block itself.
           // consider for example:
           // (block $block (result i32)
           // ..
           //   (drop
-          //     (br_if $block
+          //     (br_if $block ;; <- MUST target parent $block
           //       (value)
           //       (condition)
           //     )
           //   )
-          //   (value)
+          //   (value) ;; <- MUST be same as br_if's value
           // )
           // =>
           // (block $block (result i32)
@@ -1285,11 +1286,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* last = curr->list[size - 1];
           if (auto* drop = secondLast->dynCast<Drop>()) {
             if (auto* br = drop->value->dynCast<Break>(); br && br->value) {
-              if (!EffectAnalyzer(passOptions, *getModule(), br->value)
-                     .hasUnremovableSideEffects()) {
-                if (ExpressionAnalyzer::equal(br->value, last)) {
-                  // All conditions met, perform the update
-                  drop->value = br->condition;
+              if (br->name == curr->name) {
+                if (!EffectAnalyzer(passOptions, *getModule(), br->value)
+                       .hasUnremovableSideEffects()) {
+                  if (ExpressionAnalyzer::equal(br->value, last)) {
+                    // All conditions met, perform the update
+                    drop->value = br->condition;
+                  }
                 }
               }
             }
