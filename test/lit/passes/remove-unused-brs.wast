@@ -340,8 +340,8 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-redundant (type $2) (result i32)
-  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK:      (func $restructure-br_if-target-parent-block (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $parent (result i32)
   ;; CHECK-NEXT:   (call $nothing)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (call $get-i32)
@@ -349,16 +349,46 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-value-redundant (result i32)
-    (block $x (result i32)
+  (func $restructure-br_if-target-parent-block (result i32)
+    (block $parent (result i32)
       (call $nothing)
       (drop
-        (br_if $x
+        (br_if $parent
           (i32.const 1)
           (call $get-i32)
         )
       )
       (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-target-outer-block (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $outer (result i32)
+  ;; CHECK-NEXT:   (block $inner (result i32)
+  ;; CHECK-NEXT:    (call $nothing)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $outer
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (call $get-i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-target-outer-block (result i32)
+    ;;Perform optimize only when br_if target its parent block
+    (block $outer (result i32)
+      (block $inner (result i32)
+        (call $nothing)
+        (drop
+          (br_if $outer
+            (i32.const 1)
+            (call $get-i32)
+          )
+        )
+        (i32.const 1)
+      )
     )
   )
 
