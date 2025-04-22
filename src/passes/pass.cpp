@@ -807,13 +807,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
-  // Lower away strings at the very end. We do keep the strings feature enabled,
-  // as (1) it would be odd for the optimization pipeline to disable a feature,
-  // and also we want -O3 -O3 to work properly: if the first -O3 disabled the
-  // feature then the second would not lift strings at the start.
-  //
-  // We do this before remove-unused-module-elements so we don't add unused
-  // imports, and also before reorder-globals, which will sort the new globals.
+  // Lower away strings at the very end. We do this before
+  // remove-unused-module-elements so we don't add unused imports, and also
+  // before reorder-globals, which will sort the new globals.
   addIfNoDWARFIssues("string-lowering-paired");
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {

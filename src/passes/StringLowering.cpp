@@ -66,8 +66,7 @@ struct StringGathering : public Pass {
   // Scan the entire wasm to find the relevant strings to populate our global
   // data structures.
   void processModule(Module* module) {
-    struct StringWalker
-      : public PostWalker<StringWalker, PostWalker<StringWalker>> {
+    struct StringWalker : public PostWalker<StringWalker> {
       StringPtrs& stringPtrs;
 
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
@@ -80,16 +79,14 @@ struct StringGathering : public Pass {
     ModuleUtils::ParallelFunctionAnalysis<StringPtrs> analysis(
       *module, [&](Function* func, StringPtrs& stringPtrs) {
         if (!func->imported()) {
-          StringWalker walker(stringPtrs);
-          walker.walk(func->body);
+          StringWalker(stringPtrs).walk(func->body);
         }
       });
 
     // Also walk the global module code (for simplicity, also add it to the
     // function map, using a "function" key of nullptr).
     auto& globalStrings = analysis.map[nullptr];
-    StringWalker walker(globalStrings);
-    walker.walkModuleCode(module);
+    StringWalker(globalStrings).walkModuleCode(module);
 
     // Combine all the strings.
     std::unordered_set<Name> stringSet;
@@ -210,8 +207,8 @@ struct StringLowering : public StringGathering {
   // Whether we are "paired" to a lifting pass. The lifting pass happens early
   // in the optimization pipeline in this mode, and we happen late, and we only
   // want to lower if something was lifted. This mode also does not disable the
-  // strings feature, as we don't want the pair of passes to alter the feature
-  // set (we run it during the optimization pipeline, which should not do such
+  // strings feature, as we don't want the pair of passes to alter the features
+  // (we run it during the optimization pipeline, which should not do such
   // things).
   bool paired;
 
