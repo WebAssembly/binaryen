@@ -458,9 +458,6 @@
 ;; CHECK-NEXT:   --string-lifting                              lift string imports to wasm
 ;; CHECK-NEXT:                                                 strings
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --string-lifting-paired                       same as string-lifting, but
-;; CHECK-NEXT:                                                 paired with a later lowering
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-lowering                             lowers wasm strings and
 ;; CHECK-NEXT:                                                 operations to imports
 ;; CHECK-NEXT:
@@ -472,12 +469,6 @@
 ;; CHECK-NEXT:                                                 string-lowering-magic-imports,
 ;; CHECK-NEXT:                                                 but raise a fatal error if there
 ;; CHECK-NEXT:                                                 are invalid strings
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --string-lowering-paired                      same as string-lowering, but
-;; CHECK-NEXT:                                                 paired with an earlier lifting
-;; CHECK-NEXT:                                                 (only lowers if we lifted, and
-;; CHECK-NEXT:                                                 does not reset the strings
-;; CHECK-NEXT:                                                 feature)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
