@@ -810,7 +810,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   // Lower away strings at the very end. We do this before
   // remove-unused-module-elements so we don't add unused imports, and also
   // before reorder-globals, which will sort the new globals.
-  addIfNoDWARFIssues("string-lowering-paired");
+  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("string-lowering-paired");
+  }
   addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");
