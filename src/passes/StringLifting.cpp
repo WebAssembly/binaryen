@@ -79,41 +79,48 @@ struct StringLifting : public Pass {
     }
 
     // Imported strings may also be found in the string section.
-    for (auto& section : module->customSections) {
-      if (section.name == "string.consts") {
-        // We found the string consts section. Parse it.
-        auto copy = section.data;
-        json::Value array;
-        array.parse(copy.data(), json::Value::WTF16);
-        if (!array.isArray()) {
-          Fatal()
-            << "StringLifting: string.const section should be a JSON array";
-        }
-
-        // We have the array of constants from the section. Find globals that
-        // refer to it.
-        for (auto& global : module->globals) {
-          if (!global->imported() || global->module != "string.const") {
-            continue;
-          }
-          // The index in the array is the basename.
-          Index index = std::stoi(std::string(global->base.str));
-          if (index >= array.size()) {
-            Fatal() << "StringLifting: bad index in string.const section";
-          }
-          auto item = array[index];
-          if (!item->isString()) {
-            Fatal()
-              << "StringLifting: string.const section entry is not a string";
-          }
-          if (importedStrings.count(global->name)) {
-            Fatal()
-              << "StringLifting: string.const section tramples other const";
-          }
-          importedStrings[global->name] = item->getIString();
-        }
-        break;
+    auto iter = std::find_if(module->customSections.begin(),
+                             module->customSections.end(),
+                             [&](CustomSection& section) {
+      return section.name == "string.consts";
+    });
+    if (iter != module->customSections.end()) {
+      // We found the string consts section. Parse it.
+      auto& section = *iter;
+      auto copy = section.data;
+      json::Value array;
+      array.parse(copy.data(), json::Value::WTF16);
+      if (!array.isArray()) {
+        Fatal()
+          << "StringLifting: string.const section should be a JSON array";
       }
+
+      // We have the array of constants from the section. Find globals that
+      // refer to it.
+      for (auto& global : module->globals) {
+        if (!global->imported() || global->module != "string.const") {
+          continue;
+        }
+        // The index in the array is the basename.
+        Index index = std::stoi(std::string(global->base.str));
+        if (index >= array.size()) {
+          Fatal() << "StringLifting: bad index in string.const section";
+        }
+        auto item = array[index];
+        if (!item->isString()) {
+          Fatal()
+            << "StringLifting: string.const section entry is not a string";
+        }
+        if (importedStrings.count(global->name)) {
+          Fatal()
+            << "StringLifting: string.const section tramples other const";
+        }
+        importedStrings[global->name] = item->getIString();
+      }
+
+      // Remove the custom section: After lifting it has no purpose (and could
+      // cause problems with repeated lifting/lowering).
+      module->customSections.erase(iter);
     }
 
     auto array16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
