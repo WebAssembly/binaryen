@@ -105,8 +105,8 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 
   auto castHeapType = castType.getHeapType();
 
-  // Check whether a value of type `a` is known to be compatible with type `b`
-  // assuming it is non-null.
+  // Check whether a value of type `a` is known to also have type `b`, assuming
+  // it is non-null.
   auto isHeapSubtype = [](Type a, Type b) {
     // TODO: Use information from a subtypes analysis, if available.
     if (!a.getHeapType().isBasic() && !a.getHeapType().isOpen()) {
