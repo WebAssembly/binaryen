@@ -204,8 +204,18 @@ struct StringLowering : public StringGathering {
   // imports.
   bool assertUTF8;
 
-  StringLowering(bool useMagicImports = false, bool assertUTF8 = false)
-    : useMagicImports(useMagicImports), assertUTF8(assertUTF8) {
+  // Whether we are "paired" to a lifting pass. The lifting pass happens early
+  // in the optimization pipeline in this mode, and we happen late, and we only
+  // want to lower if something was lifted. This mode also does not disable the
+  // strings feature, as we don't want the pair of passes to alter the features
+  // (we run it during the optimization pipeline, which should not do such
+  // things).
+  bool paired;
+
+  StringLowering(bool useMagicImports = false,
+                 bool assertUTF8 = false,
+                 bool paired = false)
+    : useMagicImports(useMagicImports), assertUTF8(assertUTF8), paired(paired) {
     // If we are asserting valid UTF-8, we must be using magic imports.
     assert(!assertUTF8 || useMagicImports);
   }
@@ -213,6 +223,18 @@ struct StringLowering : public StringGathering {
   void run(Module* module) override {
     if (!module->features.has(FeatureSet::Strings)) {
       return;
+    }
+
+    auto* runner = getPassRunner();
+
+    if (paired) {
+      // We only want to lower if we previously lifted.
+      if (!runner->getLiftedStrings()) {
+        return;
+      }
+
+      // Reset the flag for later optimization cycles.
+      runner->setLiftedStrings(false);
     }
 
     // First, run the gathering operation so all string.consts are in one place.
@@ -231,10 +253,12 @@ struct StringLowering : public StringGathering {
     replaceNulls(module);
 
     // ReFinalize to apply all the above changes.
-    ReFinalize().run(getPassRunner(), module);
+    ReFinalize().run(runner, module);
 
-    // Disable the feature here after we lowered everything away.
-    module->features.disable(FeatureSet::Strings);
+    if (!paired) {
+      // Disable the feature here after we lowered everything away.
+      module->features.disable(FeatureSet::Strings);
+    }
   }
 
   void makeImports(Module* module) {
@@ -553,10 +577,15 @@ struct StringLowering : public StringGathering {
 };
 
 Pass* createStringGatheringPass() { return new StringGathering(); }
+
 Pass* createStringLoweringPass() { return new StringLowering(); }
 Pass* createStringLoweringMagicImportPass() { return new StringLowering(true); }
 Pass* createStringLoweringMagicImportAssertPass() {
   return new StringLowering(true, true);
+}
+Pass* createStringLoweringPairedPass() {
+  // Use magic imports; no asserts; paired.
+  return new StringLowering(true, false, true);
 }
 
 } // namespace wasm

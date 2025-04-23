@@ -314,6 +314,20 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::N,
            [this](Options*, const std::string& pass) {
              passOptions.passesToSkip.insert(pass);
+           })
+      .add("--no-string-lowering",
+           "",
+           "Disables the automatic lowering of stringref to imported strings "
+           "(that normally happens at the end of the optimization pipeline, if "
+           "-O2+ is specified)",
+           OptimizationOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options*, const std::string&) {
+             // string-lowering-paired is internal (it only makes sense as part
+             // of a pair of passes in the optimization pipeline), and so it
+             // does not show up in --help. To make it convenient for users to
+             // disable the lowering, we provide this flag.
+             passOptions.passesToSkip.insert("string-lowering-paired");
            });
 
     // add passes in registry

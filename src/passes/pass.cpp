@@ -525,6 +525,9 @@ void PassRegistry::registerPasses() {
   registerPass("string-lifting",
                "lift string imports to wasm strings",
                createStringLiftingPass);
+  registerTestPass("string-lifting-paired",
+                   "same as string-lifting, but paired with a later lowering",
+                   createStringLiftingPairedPass);
   registerPass("string-lowering",
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
@@ -536,6 +539,11 @@ void PassRegistry::registerPasses() {
                "same as string-lowering-magic-imports, but raise a fatal error "
                "if there are invalid strings",
                createStringLoweringMagicImportAssertPass);
+  registerTestPass(
+    "string-lowering-paired",
+    "same as string-lowering, but paired with an earlier lifting (only lowers "
+    "if we lifted, and does not reset the strings feature)",
+    createStringLoweringPairedPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
@@ -724,6 +732,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
+  // Start by lifting strings into the optimizable IR form, which can help
+  // everything else.
+  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("string-lifting-paired");
+  }
   // Removing duplicate functions is fast and saves work later.
   addIfNoDWARFIssues("duplicate-function-elimination");
   // Do a global cleanup before anything heavy, as it is fairly fast and can
@@ -794,16 +807,17 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
-  addIfNoDWARFIssues("remove-unused-module-elements");
-  if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
-    // Gather strings to globals right before reorder-globals, which will then
-    // sort them properly.
-    addIfNoDWARFIssues("string-gathering");
+  // Lower away strings at the very end. We do this before
+  // remove-unused-module-elements so we don't add unused imports, and also
+  // before reorder-globals, which will sort the new globals.
+  if (wasm->features.hasStrings() && options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("string-lowering-paired");
   }
+  addIfNoDWARFIssues("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");
   }
-  // may allow more inlining/dae/etc., need --converge for that
+  // May allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
 }
 

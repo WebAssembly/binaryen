@@ -35,6 +35,12 @@
 namespace wasm {
 
 struct StringLifting : public Pass {
+  // Whether this is paired with a later lowering operation. If so, we mark
+  // whether we lifted anything.
+  bool paired;
+
+  StringLifting(bool paired = false) : paired(paired) {}
+
   // Maps the global name of an imported string to the actual string.
   std::unordered_map<Name, Name> importedStrings;
 
@@ -82,6 +88,7 @@ struct StringLifting : public Pass {
     for (auto& section : module->customSections) {
       if (section.name == "string.consts") {
         // We found the string consts section. Parse it.
+        found = true;
         auto copy = section.data;
         json::Value array;
         array.parse(copy.data(), json::Value::WTF16);
@@ -193,6 +200,12 @@ struct StringLifting : public Pass {
       return;
     }
 
+    if (paired) {
+      // We found strings to lift. Mark this on the PassRunner, so that the
+      // corresponding lowering will occur.
+      getPassRunner()->setLiftedStrings(true);
+    }
+
     struct StringApplier : public WalkerPass<PostWalker<StringApplier>> {
       bool isFunctionParallel() override { return true; }
 
@@ -292,5 +305,6 @@ struct StringLifting : public Pass {
 };
 
 Pass* createStringLiftingPass() { return new StringLifting(); }
+Pass* createStringLiftingPairedPass() { return new StringLifting(true); }
 
 } // namespace wasm
