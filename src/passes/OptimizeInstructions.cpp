@@ -2333,6 +2333,15 @@ struct OptimizeInstructions
                                                 builder.makeRefNull(nullType)));
             return;
           }
+
+          // At this point we know the cast will succeed as long as nullability
+          // works out, but we still need the cast to recover the exactness that
+          // is not present in the value's static type, so there's nothing we
+          // can do.
+          if (needsExactCast) {
+            return;
+          }
+
           // We need to use a tee to return the value since we can't materialize
           // it directly.
           auto scratch = builder.addVar(getFunction(), ref->type);
