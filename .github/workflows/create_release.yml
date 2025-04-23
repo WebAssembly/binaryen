@@ -61,7 +61,7 @@ jobs:
 
     - name: strip
       run: find out*/install/ -type f -perm -u=x -exec strip -x {} +
-      if: !startsWith(matrix.os, 'windows')
+      if: ${{ !startsWith(matrix.os, 'windows') }}
 
     - name: archive
       id: archive
