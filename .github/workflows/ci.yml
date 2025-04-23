@@ -372,7 +372,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest,windows-11-arm]
+        os: [windows-latest, windows-11-arm]
     steps:
     - uses: actions/setup-python@v5
       with:

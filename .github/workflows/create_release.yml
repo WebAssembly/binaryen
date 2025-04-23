@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest,windows-11-arm]
+        os: [macos-latest, windows-latest, windows-11-arm]
     defaults:
       run:
         shell: bash
@@ -61,7 +61,7 @@ jobs:
 
     - name: strip
       run: find out*/install/ -type f -perm -u=x -exec strip -x {} +
-      if: ${{ !startsWith(matrix.os, 'windows') }}
+      if: !startsWith(matrix.os, 'windows')
 
     - name: archive
       id: archive
