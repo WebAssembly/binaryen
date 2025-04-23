@@ -108,6 +108,8 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   // Check whether a value of type `a` is known to also have type `b`, assuming
   // it is non-null.
   auto isHeapSubtype = [](Type a, Type b) {
+    // If the heap type of `a` has no subtypes, then we know its value must be
+    // exactly `a`.
     // TODO: Use information from a subtypes analysis, if available.
     if (!a.getHeapType().isBasic() && !a.getHeapType().isOpen()) {
       a = a.with(Exact);

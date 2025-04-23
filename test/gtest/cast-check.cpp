@@ -45,12 +45,6 @@ protected:
   }
 };
 
-// - to bottom
-// - from bottom
-//
-// For each relationship, vary the nullness and exactness of the source and
-// target independently.
-
 TEST_F(CastCheckTest, CastToSelfNonFinal) {
 #define EXPECT_CAST(                                                           \
   srcNullability, srcExactness, castNullability, castExactness, result)        \
