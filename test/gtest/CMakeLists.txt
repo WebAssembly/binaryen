@@ -6,7 +6,7 @@ endif()
 
 set(unittest_SOURCES
   arena.cpp
-  source-map.cpp
+  cast-check.cpp
   cfg.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
@@ -18,6 +18,7 @@ set(unittest_SOURCES
   possible-contents.cpp
   printing.cpp
   scc.cpp
+  source-map.cpp
   stringify.cpp
   suffix_tree.cpp
   topological-sort.cpp
