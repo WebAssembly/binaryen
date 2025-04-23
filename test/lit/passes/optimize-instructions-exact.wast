@@ -3,42 +3,42 @@
 ;; RUN: wasm-opt %s -all --disable-custom-descriptors --optimize-instructions -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $super (sub (struct)))
- (type $super (sub (struct)))
+ ;; CHECK:      (type $foo (sub (struct)))
+ (type $foo (sub (struct)))
 
- ;; CHECK:      (func $ref-cast-exact-fallthrough (type $1) (param $0 (ref (exact $super))) (result (ref $super))
- ;; CHECK-NEXT:  (local $1 (ref $super))
- ;; CHECK-NEXT:  (local $2 (ref (exact $super)))
+ ;; CHECK:      (func $ref-cast-exact-fallthrough (type $1) (param $exact (ref (exact $foo))) (result (ref $foo))
+ ;; CHECK-NEXT:  (local $inexact (ref $foo))
+ ;; CHECK-NEXT:  (local $2 (ref (exact $foo)))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $1
+ ;; CHECK-NEXT:   (local.tee $inexact
  ;; CHECK-NEXT:    (local.tee $2
- ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (local.get $exact)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $2)
  ;; CHECK-NEXT: )
- (func $ref-cast-exact-fallthrough (param (ref (exact $super))) (result (ref $super))
-  (local (ref $super))
+ (func $ref-cast-exact-fallthrough (param $exact (ref (exact $foo))) (result (ref $foo))
+  (local $inexact (ref $foo))
   ;; We should find that the local.get is the most precise fallthrough value and
   ;; hoist it to eliminate the cast.
-  (ref.cast (ref $super)
-   (local.tee 1
-    (local.get 0)
+  (ref.cast (ref $foo)
+   (local.tee $inexact
+    (local.get $exact)
    )
   )
  )
 
- ;; CHECK:      (func $prefer-exactness (type $2) (param $0 (ref null (exact $super))) (result (ref $super))
- ;; CHECK-NEXT:  (local $nn (ref $super))
- ;; CHECK-NEXT:  (local $null (ref null $super))
- ;; CHECK-NEXT:  (local $3 (ref null (exact $super)))
+ ;; CHECK:      (func $prefer-exactness (type $2) (param $exact-null (ref null (exact $foo))) (result (ref $foo))
+ ;; CHECK-NEXT:  (local $inexact-nn (ref $foo))
+ ;; CHECK-NEXT:  (local $inexact-null (ref null $foo))
+ ;; CHECK-NEXT:  (local $3 (ref null (exact $foo)))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $nn
+ ;; CHECK-NEXT:   (local.tee $inexact-nn
  ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.tee $null
+ ;; CHECK-NEXT:     (local.tee $inexact-null
  ;; CHECK-NEXT:      (local.tee $3
- ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:       (local.get $exact-null)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -48,16 +48,16 @@
  ;; CHECK-NEXT:   (local.get $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $prefer-exactness (param (ref null (exact $super))) (result (ref $super))
-  (local $nn (ref $super))
-  (local $null (ref null $super))
+ (func $prefer-exactness (param $exact-null (ref null (exact $foo))) (result (ref $foo))
+  (local $inexact-nn (ref $foo))
+  (local $inexact-null (ref null $foo))
   ;; We should prefer to hoist the exact expression and introduce another null
   ;; check rather than hoisting the non-null, inexact expression.
-  (ref.cast (ref $super)
-   (local.tee $nn
+  (ref.cast (ref $foo)
+   (local.tee $inexact-nn
     (ref.as_non_null
-     (local.tee $null
-      (local.get 0)
+     (local.tee $inexact-null
+      (local.get $exact-null)
      )
     )
    )
