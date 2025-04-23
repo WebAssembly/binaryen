@@ -274,7 +274,7 @@ struct Value {
       // begin looking at the first character after.
       char* close = curr + 1;
       // Skip escaped ", which appears as \". We need to be careful though, as
-      // \" might also be \\" which would be an escaped " and an *un*escaped ".
+      // \" might also be \\" which would be an escaped \ and an *un*escaped ".
       while (*close && *close != '"') {
         if (*close == '\\') {
           // Skip the \ and the character after it, which it escapes.
