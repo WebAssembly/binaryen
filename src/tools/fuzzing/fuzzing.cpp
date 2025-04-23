@@ -2148,7 +2148,6 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
-                &Self::makeRefTest,
                 &Self::makeI31Get);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
                   FeatureSet::Strings,
@@ -2156,6 +2155,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringEq,
                 &Self::makeStringMeasure,
                 &Self::makeStringGet);
+    if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefTest);
+    }
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2177,8 +2180,10 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeCompoundRef);
     }
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                &Self::makeRefCast);
+    if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefCast);
+    }
   }
   if (wasm.features.hasGC()) {
     if (typeStructFields.find(type) != typeStructFields.end()) {
@@ -4907,7 +4912,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
     case BrOnNonNull: {
       // The sent type is the non-nullable version of the reference, so any ref
       // of that type is ok, nullable or not.
-      refType = Type(targetType.getHeapType(), getNullability());
+      refType = targetType.with(getNullability());
       break;
     }
     case BrOnCast: {
@@ -4915,14 +4920,17 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       // nullability, so the combination of the two must be a subtype of
       // targetType.
       castType = getSubType(targetType);
-      if (!wasm.features.hasCustomDescriptors()) {
-        // Exact cast targets disallowed without custom descriptors.
-        castType = castType.with(Inexact);
+      if (castType.isExact() && !wasm.features.hasCustomDescriptors()) {
+        // This exact cast is only valid if its input has the same type (or the
+        // only possible strict subtype, bottom).
+        refType = castType;
+      } else {
+        // The ref's type must be castable to castType, or we'd not validate.
+        // But it can also be a subtype, which will trivially also succeed (so
+        // do that more rarely). Pick subtypes rarely, as they make the cast
+        // trivial.
+        refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
       }
-      // The ref's type must be castable to castType, or we'd not validate. But
-      // it can also be a subtype, which will trivially also succeed (so do that
-      // more rarely). Pick subtypes rarely, as they make the cast trivial.
-      refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
       if (targetType.isNonNullable()) {
         // And it must have the right nullability for the target, as mentioned
         // above: if the target type is non-nullable then either the ref or the
@@ -4945,10 +4953,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       refType = getSubType(targetType);
       // See above on BrOnCast, but flipped.
       castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
-      if (!wasm.features.hasCustomDescriptors()) {
-        // Exact cast targets disallowed without custom descriptors.
-        castType = castType.with(Inexact);
-      }
+      castType = castType.withInexactIfNoCustomDescs(wasm.features);
       // There is no nullability to adjust: if targetType is non-nullable then
       // both refType and castType are as well, as subtypes of it. But we can
       // also allow castType to be nullable (it is not sent to the target).

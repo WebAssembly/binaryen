@@ -900,13 +900,14 @@ std::vector<HeapType> Inhabitator::build() {
     }
     auto heapType = type.getHeapType();
     auto nullability = type.getNullability();
+    auto exactness = type.getExactness();
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
       heapType = builder[it->second];
     }
     if (nullables.count(pos)) {
       nullability = Nullable;
     }
-    type = builder.getTempRefType(heapType, nullability);
+    type = builder.getTempRefType(heapType, nullability, exactness);
   };
 
   for (size_t i = 0; i < types.size(); ++i) {
