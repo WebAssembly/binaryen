@@ -9,7 +9,11 @@ function assertDeepEqual(x, y) {
 
 console.log("# Expression");
 (function testWrapper() {
-  var theExpression = binaryen.Block(42); // works without new
+  const module = new binaryen.Module();
+
+  const ptr = module.block(null, []);
+
+  var theExpression = binaryen.Expression(ptr); // works without new
   assert(theExpression instanceof binaryen.Block);
   assert(theExpression instanceof binaryen.Expression);
   assert(theExpression.constructor === binaryen.Block);
@@ -17,7 +21,9 @@ console.log("# Expression");
   assert(typeof binaryen.Block.getName === "function"); // own
   assert(typeof theExpression.getId === "function"); // proto
   assert(typeof theExpression.getName === "function"); // own
-  assert((theExpression | 0) === 42); // via valueOf
+  assert((theExpression | 0) === ptr); // via valueOf
+
+  module.dispose();
 })();
 
 console.log("# Block");
