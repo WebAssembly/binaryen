@@ -14,10 +14,10 @@
 )
 
 ;; Lower into the section. We should see the section.
-;; RUN: wasm-opt %s -all --string-lowering                  -S -o - | filecheck %s
-;; CHECK: custom section
+;; RUN: wasm-opt %s -all --string-lowering                  -S -o - | filecheck %s --check-prefix=LOWER
+;; LOWER: custom section
 
 ;; Also lift. Now no section should appear.
-;; RUN: wasm-opt %s -all --string-lowering --string-lifting -S -o - | filecheck %s
-;; CHECK-NOT: custom section
+;; RUN: wasm-opt %s -all --string-lowering --string-lifting -S -o - | filecheck %s --check-prefix=AND_LIFT
+;; AND_LIFT-NOT: custom section
 
