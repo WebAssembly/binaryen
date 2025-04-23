@@ -3102,12 +3102,6 @@ Module['getExpressionInfo'] = function(expr) {
   return info;
 };
 
-// Creates an expression wrapper from an expression pointer
-Module['wrapExpression'] = function(expr) {
-  const id = Module['_BinaryenExpressionGetId'](expr);
-  return expressionWrappers[id](expr);
-};
-
 // Gets the side effects of the specified expression
 Module['getSideEffects'] = function(expr, module) {
   assert(module); // guard against incorrect old API usage: a module must be
@@ -3511,6 +3505,12 @@ function deriveWrapperInstanceMembers(prototype, staticMembers) {
 // Base class of all expression wrappers
 /** @constructor */
 function Expression(expr) {
+  // Returns the specific wrapper if called without `new`
+  if (!(this instanceof Expression)) {
+    if (!expr) return null;
+    const id = Module['_BinaryenExpressionGetId'](expr);
+    return expressionWrappers[id](expr);
+  }
   if (!expr) throw Error("expression reference must not be null");
   this[thisPtr] = expr;
 }
