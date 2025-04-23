@@ -128,9 +128,7 @@ class PossibleContents {
 
   // Internal convenience for creating a cone type of unbounded depth, i.e., the
   // full cone of all subtypes for that type.
-  static ConeType FullConeType(Type type) {
-    return type.isExact() ? ExactType(type) : ConeType{type, FullDepth};
-  }
+  static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
 
   template<typename T> PossibleContents(T value) : value(value) {}
 
@@ -267,9 +265,7 @@ public:
 
   // Returns whether the relevant cone for this, as computed by getCone(), is of
   // full size, that is, includes all subtypes.
-  bool hasFullCone() const {
-    return getCone().depth == (getType().isExact() ? 0 : FullDepth);
-  }
+  bool hasFullCone() const { return getCone().depth == FullDepth; }
 
   // Returns whether this is a cone type and also is of full size. This differs
   // from hasFullCone() in that the former can return true for a global, for
