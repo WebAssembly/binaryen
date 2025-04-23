@@ -79,11 +79,10 @@ struct StringLifting : public Pass {
     }
 
     // Imported strings may also be found in the string section.
-    auto iter = std::find_if(module->customSections.begin(),
-                             module->customSections.end(),
-                             [&](CustomSection& section) {
-      return section.name == "string.consts";
-    });
+    auto iter = std::find_if(
+      module->customSections.begin(),
+      module->customSections.end(),
+      [&](CustomSection& section) { return section.name == "string.consts"; });
     if (iter != module->customSections.end()) {
       // We found the string consts section. Parse it.
       auto& section = *iter;
@@ -91,8 +90,7 @@ struct StringLifting : public Pass {
       json::Value array;
       array.parse(copy.data(), json::Value::WTF16);
       if (!array.isArray()) {
-        Fatal()
-          << "StringLifting: string.const section should be a JSON array";
+        Fatal() << "StringLifting: string.const section should be a JSON array";
       }
 
       // We have the array of constants from the section. Find globals that
@@ -112,8 +110,7 @@ struct StringLifting : public Pass {
             << "StringLifting: string.const section entry is not a string";
         }
         if (importedStrings.count(global->name)) {
-          Fatal()
-            << "StringLifting: string.const section tramples other const";
+          Fatal() << "StringLifting: string.const section tramples other const";
         }
         importedStrings[global->name] = item->getIString();
       }
