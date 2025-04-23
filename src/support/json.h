@@ -272,12 +272,17 @@ struct Value {
       // String
       // Start |close| at the opening ", and in the loop below we will always
       // begin looking at the first character after.
-      char* close = curr;
-      // Skip escaped "
-      do {
-        close = strchr(close + 1, '"');
-      } while (*(close - 1) == '\\');
-      assert(close);
+      char* close = curr + 1;
+      // Skip escaped ", which appears as \". We need to be careful though, as
+      // \" might also be \\" which would be an escaped " and an *un*escaped ".
+      while (*close && *close != '"') {
+        if (*close == '\\') {
+          // Skip the \ and the character after it, which it escapes.
+          close++;
+          assert(*close);
+        }
+        close++;
+      }
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
       if (stringEncoding == ASCII) {
