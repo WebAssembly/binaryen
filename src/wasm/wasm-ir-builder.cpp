@@ -1132,7 +1132,7 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try* tryy;
+  } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
     if (tryy->catchBodies.size() < index) {
