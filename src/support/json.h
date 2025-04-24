@@ -291,11 +291,11 @@ struct Value {
         if (*close == '\\') {
           // Skip the \ and the character after it, which it escapes.
           close++;
-          THROW_IF(!*close, "malformed JSON string quoting");
+          THROW_IF(!*close, "unexpected end of JSON string (quoting)");
         }
         close++;
       }
-      THROW_IF(!close, "malformed JSON string");
+      THROW_IF(!close, "unexpected end of JSON string");
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
       if (stringEncoding == ASCII) {
