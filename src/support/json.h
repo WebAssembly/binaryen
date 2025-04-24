@@ -270,7 +270,7 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      // Start |close| at the opening ", and in the loop below we will always
+      // Start |close| after the opening ", and in the loop below we will always
       // begin looking at the first character after.
       char* close = curr + 1;
       // Skip escaped ", which appears as \". We need to be careful though, as
