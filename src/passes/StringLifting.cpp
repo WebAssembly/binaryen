@@ -79,13 +79,13 @@ struct StringLifting : public Pass {
     }
 
     // Imported strings may also be found in the string section.
-    auto iter = std::find_if(
+    auto stringSectionIter = std::find_if(
       module->customSections.begin(),
       module->customSections.end(),
       [&](CustomSection& section) { return section.name == "string.consts"; });
-    if (iter != module->customSections.end()) {
+    if (stringSectionIter != module->customSections.end()) {
       // We found the string consts section. Parse it.
-      auto& section = *iter;
+      auto& section = *stringSectionIter;
       auto copy = section.data;
       json::Value array;
       array.parse(copy.data(), json::Value::WTF16);
@@ -117,7 +117,7 @@ struct StringLifting : public Pass {
 
       // Remove the custom section: After lifting it has no purpose (and could
       // cause problems with repeated lifting/lowering).
-      module->customSections.erase(iter);
+      module->customSections.erase(stringSectionIter);
     }
 
     auto array16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
