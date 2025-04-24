@@ -3,18 +3,21 @@
 
 ;; Exhaustively test optimization of all interesting casts.
 
-;; RUN: wasm-opt %s -all --optimize-instructions -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all                              --optimize-instructions -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --disable-custom-descriptors --optimize-instructions -S -o - | filecheck %s --check-prefix=NO_CD
 
 (module
   ;; CHECK:      (type $super (sub (struct)))
+  ;; NO_CD:      (type $super (sub (struct)))
   (type $super (sub (struct)))
-  ;; CHECK:      (type $sub-final (sub final $super (struct)))
-
   ;; CHECK:      (type $sub (sub $super (struct)))
+  ;; NO_CD:      (type $sub (sub $super (struct)))
   (type $sub (sub $super (struct)))
+  ;; CHECK:      (type $sub-final (sub final $super (struct)))
+  ;; NO_CD:      (type $sub-final (sub final $super (struct)))
   (type $sub-final (sub final $super (struct)))
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-exact-to-null-exact (type $3) (param $0 (ref null (exact $super))) (result (ref null (exact $super)))
+  ;; CHECK:      (func $cast-to-self-nonfinal-null-exact-to-null-inexact (type $3) (param $0 (ref null (exact $super))) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
@@ -26,27 +29,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-null-exact-to-null-exact (param (ref null (exact $super))) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-exact-to-null-inexact (type $4) (param $0 (ref null (exact $super))) (result (ref null $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $super)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-null-exact-to-null-inexact (type $3) (param $0 (ref null (exact $super))) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null (exact $super)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-null-exact-to-null-inexact (param (ref null (exact $super))) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -56,7 +50,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-exact-to-non-null-exact (type $5) (param $0 (ref null (exact $super))) (result (ref (exact $super)))
+  ;; CHECK:      (func $cast-to-self-nonfinal-null-exact-to-non-null-inexact (type $4) (param $0 (ref null (exact $super))) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
@@ -70,29 +64,20 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-null-exact-to-non-null-exact (param (ref null (exact $super))) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-exact-to-non-null-inexact (type $6) (param $0 (ref null (exact $super))) (result (ref $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $super)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (local.get $2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-null-exact-to-non-null-inexact (type $4) (param $0 (ref null (exact $super))) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null (exact $super)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.as_non_null
+  ;; NO_CD-NEXT:   (local.get $2)
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-null-exact-to-non-null-inexact (param (ref null (exact $super))) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -102,24 +87,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-inexact-to-null-exact (type $7) (param $0 (ref null $super)) (result (ref null (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref null (exact $super))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-null-inexact-to-null-exact (param (ref null $super)) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-inexact-to-null-inexact (type $8) (param $0 (ref null $super)) (result (ref null $super))
+  ;; CHECK:      (func $cast-to-self-nonfinal-null-inexact-to-null-inexact (type $5) (param $0 (ref null $super)) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null $super))
   ;; CHECK-NEXT:  (drop
@@ -131,6 +99,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-null-inexact-to-null-inexact (type $5) (param $0 (ref null $super)) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null $super))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-null-inexact-to-null-inexact (param (ref null $super)) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -140,24 +120,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-inexact-to-non-null-exact (type $9) (param $0 (ref null $super)) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $super))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-null-inexact-to-non-null-exact (param (ref null $super)) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-null-inexact-to-non-null-inexact (type $10) (param $0 (ref null $super)) (result (ref $super))
+  ;; CHECK:      (func $cast-to-self-nonfinal-null-inexact-to-non-null-inexact (type $6) (param $0 (ref null $super)) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null $super))
   ;; CHECK-NEXT:  (drop
@@ -171,6 +134,20 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-null-inexact-to-non-null-inexact (type $6) (param $0 (ref null $super)) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null $super))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.as_non_null
+  ;; NO_CD-NEXT:   (local.get $2)
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-null-inexact-to-non-null-inexact (param (ref null $super)) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -180,7 +157,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-exact-to-null-exact (type $11) (param $0 (ref (exact $super))) (result (ref null (exact $super)))
+  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-exact-to-null-inexact (type $7) (param $0 (ref (exact $super))) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $super)))
   ;; CHECK-NEXT:  (drop
@@ -192,27 +169,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-non-null-exact-to-null-exact (param (ref (exact $super))) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-exact-to-null-inexact (type $12) (param $0 (ref (exact $super))) (result (ref null $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref (exact $super)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-non-null-exact-to-null-inexact (type $7) (param $0 (ref (exact $super))) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref (exact $super)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-non-null-exact-to-null-inexact (param (ref (exact $super))) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -222,7 +190,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-exact-to-non-null-exact (type $13) (param $0 (ref (exact $super))) (result (ref (exact $super)))
+  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-exact-to-non-null-inexact (type $8) (param $0 (ref (exact $super))) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $super)))
   ;; CHECK-NEXT:  (drop
@@ -234,27 +202,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-non-null-exact-to-non-null-exact (param (ref (exact $super))) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-exact-to-non-null-inexact (type $14) (param $0 (ref (exact $super))) (result (ref $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref (exact $super)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-non-null-exact-to-non-null-inexact (type $8) (param $0 (ref (exact $super))) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref (exact $super)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-non-null-exact-to-non-null-inexact (param (ref (exact $super))) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -264,24 +223,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-inexact-to-null-exact (type $15) (param $0 (ref $super)) (result (ref null (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $super))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-non-null-inexact-to-null-exact (param (ref $super)) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-inexact-to-null-inexact (type $16) (param $0 (ref $super)) (result (ref null $super))
+  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-inexact-to-null-inexact (type $9) (param $0 (ref $super)) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref $super))
   ;; CHECK-NEXT:  (drop
@@ -293,6 +235,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-non-null-inexact-to-null-inexact (type $9) (param $0 (ref $super)) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref $super))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-non-null-inexact-to-null-inexact (param (ref $super)) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -302,24 +256,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-inexact-to-non-null-exact (type $17) (param $0 (ref $super)) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $super))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-nonfinal-non-null-inexact-to-non-null-exact (param (ref $super)) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-inexact-to-non-null-inexact (type $18) (param $0 (ref $super)) (result (ref $super))
+  ;; CHECK:      (func $cast-to-self-nonfinal-non-null-inexact-to-non-null-inexact (type $10) (param $0 (ref $super)) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref $super))
   ;; CHECK-NEXT:  (drop
@@ -331,6 +268,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-nonfinal-non-null-inexact-to-non-null-inexact (type $10) (param $0 (ref $super)) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref $super))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-nonfinal-non-null-inexact-to-non-null-inexact (param (ref $super)) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -340,7 +289,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-null-exact-to-null-exact (type $19) (param $0 (ref null (exact $sub-final))) (result (ref null (exact $sub-final)))
+  ;; CHECK:      (func $cast-to-self-final-null-exact-to-null-inexact (type $11) (param $0 (ref null (exact $sub-final))) (result (ref null $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $sub-final)))
   ;; CHECK-NEXT:  (drop
@@ -352,27 +301,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  (func $cast-to-self-final-null-exact-to-null-exact (param (ref null (exact $sub-final))) (result (ref null (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-null-exact-to-null-inexact (type $20) (param $0 (ref null (exact $sub-final))) (result (ref null $sub-final))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $sub-final)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-null-exact-to-null-inexact (type $11) (param $0 (ref null (exact $sub-final))) (result (ref null $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null (exact $sub-final)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-null-exact-to-null-inexact (param (ref null (exact $sub-final))) (result (ref null $sub-final))
     (local anyref)
     (ref.cast (ref null $sub-final)
@@ -382,7 +322,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-null-exact-to-non-null-exact (type $21) (param $0 (ref null (exact $sub-final))) (result (ref (exact $sub-final)))
+  ;; CHECK:      (func $cast-to-self-final-null-exact-to-non-null-inexact (type $12) (param $0 (ref null (exact $sub-final))) (result (ref $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $sub-final)))
   ;; CHECK-NEXT:  (drop
@@ -396,29 +336,20 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-to-self-final-null-exact-to-non-null-exact (param (ref null (exact $sub-final))) (result (ref (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-null-exact-to-non-null-inexact (type $22) (param $0 (ref null (exact $sub-final))) (result (ref $sub-final))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref null (exact $sub-final)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.as_non_null
-  ;; CHECK-NEXT:   (local.get $2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-null-exact-to-non-null-inexact (type $12) (param $0 (ref null (exact $sub-final))) (result (ref $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null (exact $sub-final)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.as_non_null
+  ;; NO_CD-NEXT:   (local.get $2)
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-null-exact-to-non-null-inexact (param (ref null (exact $sub-final))) (result (ref $sub-final))
     (local anyref)
     (ref.cast (ref $sub-final)
@@ -428,24 +359,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-null-inexact-to-null-exact (type $23) (param $0 (ref null $sub-final)) (result (ref null (exact $sub-final)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref null (exact $sub-final))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-final-null-inexact-to-null-exact (param (ref null $sub-final)) (result (ref null (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-null-inexact-to-null-inexact (type $24) (param $0 (ref null $sub-final)) (result (ref null $sub-final))
+  ;; CHECK:      (func $cast-to-self-final-null-inexact-to-null-inexact (type $13) (param $0 (ref null $sub-final)) (result (ref null $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null $sub-final))
   ;; CHECK-NEXT:  (drop
@@ -457,6 +371,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-null-inexact-to-null-inexact (type $13) (param $0 (ref null $sub-final)) (result (ref null $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null $sub-final))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-null-inexact-to-null-inexact (param (ref null $sub-final)) (result (ref null $sub-final))
     (local anyref)
     (ref.cast (ref null $sub-final)
@@ -466,24 +392,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-null-inexact-to-non-null-exact (type $25) (param $0 (ref null $sub-final)) (result (ref (exact $sub-final)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $sub-final))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-final-null-inexact-to-non-null-exact (param (ref null $sub-final)) (result (ref (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-null-inexact-to-non-null-inexact (type $26) (param $0 (ref null $sub-final)) (result (ref $sub-final))
+  ;; CHECK:      (func $cast-to-self-final-null-inexact-to-non-null-inexact (type $14) (param $0 (ref null $sub-final)) (result (ref $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null $sub-final))
   ;; CHECK-NEXT:  (drop
@@ -497,6 +406,20 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-null-inexact-to-non-null-inexact (type $14) (param $0 (ref null $sub-final)) (result (ref $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null $sub-final))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.as_non_null
+  ;; NO_CD-NEXT:   (local.get $2)
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-null-inexact-to-non-null-inexact (param (ref null $sub-final)) (result (ref $sub-final))
     (local anyref)
     (ref.cast (ref $sub-final)
@@ -506,7 +429,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-non-null-exact-to-null-exact (type $27) (param $0 (ref (exact $sub-final))) (result (ref null (exact $sub-final)))
+  ;; CHECK:      (func $cast-to-self-final-non-null-exact-to-null-inexact (type $15) (param $0 (ref (exact $sub-final))) (result (ref null $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $sub-final)))
   ;; CHECK-NEXT:  (drop
@@ -518,27 +441,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  (func $cast-to-self-final-non-null-exact-to-null-exact (param (ref (exact $sub-final))) (result (ref null (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-non-null-exact-to-null-inexact (type $28) (param $0 (ref (exact $sub-final))) (result (ref null $sub-final))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref (exact $sub-final)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-non-null-exact-to-null-inexact (type $15) (param $0 (ref (exact $sub-final))) (result (ref null $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref (exact $sub-final)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-non-null-exact-to-null-inexact (param (ref (exact $sub-final))) (result (ref null $sub-final))
     (local anyref)
     (ref.cast (ref null $sub-final)
@@ -548,7 +462,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-non-null-exact-to-non-null-exact (type $29) (param $0 (ref (exact $sub-final))) (result (ref (exact $sub-final)))
+  ;; CHECK:      (func $cast-to-self-final-non-null-exact-to-non-null-inexact (type $16) (param $0 (ref (exact $sub-final))) (result (ref $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $sub-final)))
   ;; CHECK-NEXT:  (drop
@@ -560,27 +474,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
-  (func $cast-to-self-final-non-null-exact-to-non-null-exact (param (ref (exact $sub-final))) (result (ref (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-non-null-exact-to-non-null-inexact (type $30) (param $0 (ref (exact $sub-final))) (result (ref $sub-final))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 (ref (exact $sub-final)))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-non-null-exact-to-non-null-inexact (type $16) (param $0 (ref (exact $sub-final))) (result (ref $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref (exact $sub-final)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-non-null-exact-to-non-null-inexact (param (ref (exact $sub-final))) (result (ref $sub-final))
     (local anyref)
     (ref.cast (ref $sub-final)
@@ -590,24 +495,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-non-null-inexact-to-null-exact (type $31) (param $0 (ref $sub-final)) (result (ref null (exact $sub-final)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $sub-final))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-final-non-null-inexact-to-null-exact (param (ref $sub-final)) (result (ref null (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-non-null-inexact-to-null-inexact (type $32) (param $0 (ref $sub-final)) (result (ref null $sub-final))
+  ;; CHECK:      (func $cast-to-self-final-non-null-inexact-to-null-inexact (type $17) (param $0 (ref $sub-final)) (result (ref null $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref $sub-final))
   ;; CHECK-NEXT:  (drop
@@ -619,6 +507,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-non-null-inexact-to-null-inexact (type $17) (param $0 (ref $sub-final)) (result (ref null $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref $sub-final))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-non-null-inexact-to-null-inexact (param (ref $sub-final)) (result (ref null $sub-final))
     (local anyref)
     (ref.cast (ref null $sub-final)
@@ -628,24 +528,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-self-final-non-null-inexact-to-non-null-exact (type $33) (param $0 (ref $sub-final)) (result (ref (exact $sub-final)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $sub-final))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-self-final-non-null-inexact-to-non-null-exact (param (ref $sub-final)) (result (ref (exact $sub-final)))
-    (local anyref)
-    (ref.cast (ref (exact $sub-final))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-self-final-non-null-inexact-to-non-null-inexact (type $34) (param $0 (ref $sub-final)) (result (ref $sub-final))
+  ;; CHECK:      (func $cast-to-self-final-non-null-inexact-to-non-null-inexact (type $18) (param $0 (ref $sub-final)) (result (ref $sub-final))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref $sub-final))
   ;; CHECK-NEXT:  (drop
@@ -657,6 +540,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-self-final-non-null-inexact-to-non-null-inexact (type $18) (param $0 (ref $sub-final)) (result (ref $sub-final))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref $sub-final))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-self-final-non-null-inexact-to-non-null-inexact (param (ref $sub-final)) (result (ref $sub-final))
     (local anyref)
     (ref.cast (ref $sub-final)
@@ -666,24 +561,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-null-exact-to-null-exact (type $35) (param $0 (ref null (exact $sub))) (result (ref null (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast nullref
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-null-exact-to-null-exact (param (ref null (exact $sub))) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-null-exact-to-null-inexact (type $36) (param $0 (ref null (exact $sub))) (result (ref null $super))
+  ;; CHECK:      (func $cast-to-super-null-exact-to-null-inexact (type $19) (param $0 (ref null (exact $sub))) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $sub)))
   ;; CHECK-NEXT:  (drop
@@ -695,6 +573,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-null-exact-to-null-inexact (type $19) (param $0 (ref null (exact $sub))) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null (exact $sub)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-null-exact-to-null-inexact (param (ref null (exact $sub))) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -704,25 +594,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-null-exact-to-non-null-exact (type $37) (param $0 (ref null (exact $sub))) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-null-exact-to-non-null-exact (param (ref null (exact $sub))) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-null-exact-to-non-null-inexact (type $38) (param $0 (ref null (exact $sub))) (result (ref $super))
+  ;; CHECK:      (func $cast-to-super-null-exact-to-non-null-inexact (type $20) (param $0 (ref null (exact $sub))) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $sub)))
   ;; CHECK-NEXT:  (drop
@@ -736,6 +608,20 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-null-exact-to-non-null-inexact (type $20) (param $0 (ref null (exact $sub))) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null (exact $sub)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.as_non_null
+  ;; NO_CD-NEXT:   (local.get $2)
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-null-exact-to-non-null-inexact (param (ref null (exact $sub))) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -745,24 +631,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-null-inexact-to-null-exact (type $39) (param $0 (ref null $sub)) (result (ref null (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast nullref
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-null-inexact-to-null-exact (param (ref null $sub)) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-null-inexact-to-null-inexact (type $40) (param $0 (ref null $sub)) (result (ref null $super))
+  ;; CHECK:      (func $cast-to-super-null-inexact-to-null-inexact (type $21) (param $0 (ref null $sub)) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null $sub))
   ;; CHECK-NEXT:  (drop
@@ -774,6 +643,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-null-inexact-to-null-inexact (type $21) (param $0 (ref null $sub)) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null $sub))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-null-inexact-to-null-inexact (param (ref null $sub)) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -783,25 +664,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-null-inexact-to-non-null-exact (type $41) (param $0 (ref null $sub)) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-null-inexact-to-non-null-exact (param (ref null $sub)) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-null-inexact-to-non-null-inexact (type $42) (param $0 (ref null $sub)) (result (ref $super))
+  ;; CHECK:      (func $cast-to-super-null-inexact-to-non-null-inexact (type $22) (param $0 (ref null $sub)) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null $sub))
   ;; CHECK-NEXT:  (drop
@@ -815,6 +678,20 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-null-inexact-to-non-null-inexact (type $22) (param $0 (ref null $sub)) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref null $sub))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.as_non_null
+  ;; NO_CD-NEXT:   (local.get $2)
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-null-inexact-to-non-null-inexact (param (ref null $sub)) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -824,25 +701,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-non-null-exact-to-null-exact (type $43) (param $0 (ref (exact $sub))) (result (ref null (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-non-null-exact-to-null-exact (param (ref (exact $sub))) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-non-null-exact-to-null-inexact (type $44) (param $0 (ref (exact $sub))) (result (ref null $super))
+  ;; CHECK:      (func $cast-to-super-non-null-exact-to-null-inexact (type $23) (param $0 (ref (exact $sub))) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $sub)))
   ;; CHECK-NEXT:  (drop
@@ -854,6 +713,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-non-null-exact-to-null-inexact (type $23) (param $0 (ref (exact $sub))) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref (exact $sub)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-non-null-exact-to-null-inexact (param (ref (exact $sub))) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -863,25 +734,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-non-null-exact-to-non-null-exact (type $45) (param $0 (ref (exact $sub))) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-non-null-exact-to-non-null-exact (param (ref (exact $sub))) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-non-null-exact-to-non-null-inexact (type $46) (param $0 (ref (exact $sub))) (result (ref $super))
+  ;; CHECK:      (func $cast-to-super-non-null-exact-to-non-null-inexact (type $24) (param $0 (ref (exact $sub))) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref (exact $sub)))
   ;; CHECK-NEXT:  (drop
@@ -893,6 +746,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-non-null-exact-to-non-null-inexact (type $24) (param $0 (ref (exact $sub))) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref (exact $sub)))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-non-null-exact-to-non-null-inexact (param (ref (exact $sub))) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -902,25 +767,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-non-null-inexact-to-null-exact (type $47) (param $0 (ref $sub)) (result (ref null (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-non-null-inexact-to-null-exact (param (ref $sub)) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-non-null-inexact-to-null-inexact (type $48) (param $0 (ref $sub)) (result (ref null $super))
+  ;; CHECK:      (func $cast-to-super-non-null-inexact-to-null-inexact (type $25) (param $0 (ref $sub)) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref $sub))
   ;; CHECK-NEXT:  (drop
@@ -932,6 +779,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-non-null-inexact-to-null-inexact (type $25) (param $0 (ref $sub)) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref $sub))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-non-null-inexact-to-null-inexact (param (ref $sub)) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -941,25 +800,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-super-non-null-inexact-to-non-null-exact (type $49) (param $0 (ref $sub)) (result (ref (exact $super)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $cast-to-super-non-null-inexact-to-non-null-exact (param (ref $sub)) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-super-non-null-inexact-to-non-null-inexact (type $50) (param $0 (ref $sub)) (result (ref $super))
+  ;; CHECK:      (func $cast-to-super-non-null-inexact-to-non-null-inexact (type $26) (param $0 (ref $sub)) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref $sub))
   ;; CHECK-NEXT:  (drop
@@ -971,6 +812,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-super-non-null-inexact-to-non-null-inexact (type $26) (param $0 (ref $sub)) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (local $2 (ref $sub))
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.tee $2
+  ;; NO_CD-NEXT:     (local.get $0)
+  ;; NO_CD-NEXT:    )
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (local.get $2)
+  ;; NO_CD-NEXT: )
   (func $cast-to-super-non-null-inexact-to-non-null-inexact (param (ref $sub)) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -980,7 +833,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-null-exact-to-null-exact (type $51) (param $0 (ref null (exact $super))) (result (ref null (exact $sub)))
+  ;; CHECK:      (func $cast-to-sub-null-exact-to-null-inexact (type $27) (param $0 (ref null (exact $super))) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast nullref
   ;; CHECK-NEXT:   (local.tee $1
@@ -988,23 +841,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-to-sub-null-exact-to-null-exact (param (ref null (exact $super))) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-null-exact-to-null-inexact (type $52) (param $0 (ref null (exact $super))) (result (ref null $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast nullref
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-null-exact-to-null-inexact (type $27) (param $0 (ref null (exact $super))) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast nullref
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-null-exact-to-null-inexact (param (ref null (exact $super))) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1014,7 +858,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-null-exact-to-non-null-exact (type $53) (param $0 (ref null (exact $super))) (result (ref (exact $sub)))
+  ;; CHECK:      (func $cast-to-sub-null-exact-to-non-null-inexact (type $28) (param $0 (ref null (exact $super))) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1023,24 +867,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sub-null-exact-to-non-null-exact (param (ref null (exact $super))) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-null-exact-to-non-null-inexact (type $54) (param $0 (ref null (exact $super))) (result (ref $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-null-exact-to-non-null-inexact (type $28) (param $0 (ref null (exact $super))) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-null-exact-to-non-null-inexact (param (ref null (exact $super))) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1050,24 +885,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-null-inexact-to-null-exact (type $55) (param $0 (ref null $super)) (result (ref null (exact $sub)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref null (exact $sub))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-sub-null-inexact-to-null-exact (param (ref null $super)) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-null-inexact-to-null-inexact (type $56) (param $0 (ref null $super)) (result (ref null $sub))
+  ;; CHECK:      (func $cast-to-sub-null-inexact-to-null-inexact (type $29) (param $0 (ref null $super)) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast (ref null $sub)
   ;; CHECK-NEXT:   (local.tee $1
@@ -1075,6 +893,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-null-inexact-to-null-inexact (type $29) (param $0 (ref null $super)) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast (ref null $sub)
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-null-inexact-to-null-inexact (param (ref null $super)) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1084,24 +910,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-null-inexact-to-non-null-exact (type $57) (param $0 (ref null $super)) (result (ref (exact $sub)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $sub))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-sub-null-inexact-to-non-null-exact (param (ref null $super)) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-null-inexact-to-non-null-inexact (type $58) (param $0 (ref null $super)) (result (ref $sub))
+  ;; CHECK:      (func $cast-to-sub-null-inexact-to-non-null-inexact (type $30) (param $0 (ref null $super)) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast (ref $sub)
   ;; CHECK-NEXT:   (local.tee $1
@@ -1109,6 +918,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-null-inexact-to-non-null-inexact (type $30) (param $0 (ref null $super)) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast (ref $sub)
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-null-inexact-to-non-null-inexact (param (ref null $super)) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1118,7 +935,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-non-null-exact-to-null-exact (type $59) (param $0 (ref (exact $super))) (result (ref null (exact $sub)))
+  ;; CHECK:      (func $cast-to-sub-non-null-exact-to-null-inexact (type $31) (param $0 (ref (exact $super))) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1127,24 +944,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sub-non-null-exact-to-null-exact (param (ref (exact $super))) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-non-null-exact-to-null-inexact (type $60) (param $0 (ref (exact $super))) (result (ref null $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-non-null-exact-to-null-inexact (type $31) (param $0 (ref (exact $super))) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-non-null-exact-to-null-inexact (param (ref (exact $super))) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1154,7 +962,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-non-null-exact-to-non-null-exact (type $61) (param $0 (ref (exact $super))) (result (ref (exact $sub)))
+  ;; CHECK:      (func $cast-to-sub-non-null-exact-to-non-null-inexact (type $32) (param $0 (ref (exact $super))) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1163,24 +971,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sub-non-null-exact-to-non-null-exact (param (ref (exact $super))) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-non-null-exact-to-non-null-inexact (type $62) (param $0 (ref (exact $super))) (result (ref $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-non-null-exact-to-non-null-inexact (type $32) (param $0 (ref (exact $super))) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-non-null-exact-to-non-null-inexact (param (ref (exact $super))) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1190,24 +989,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-non-null-inexact-to-null-exact (type $63) (param $0 (ref $super)) (result (ref null (exact $sub)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $sub))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-sub-non-null-inexact-to-null-exact (param (ref $super)) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-non-null-inexact-to-null-inexact (type $64) (param $0 (ref $super)) (result (ref null $sub))
+  ;; CHECK:      (func $cast-to-sub-non-null-inexact-to-null-inexact (type $33) (param $0 (ref $super)) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast (ref $sub)
   ;; CHECK-NEXT:   (local.tee $1
@@ -1215,6 +997,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-non-null-inexact-to-null-inexact (type $33) (param $0 (ref $super)) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast (ref $sub)
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-non-null-inexact-to-null-inexact (param (ref $super)) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1224,24 +1014,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sub-non-null-inexact-to-non-null-exact (type $65) (param $0 (ref $super)) (result (ref (exact $sub)))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast (ref (exact $sub))
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $cast-to-sub-non-null-inexact-to-non-null-exact (param (ref $super)) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sub-non-null-inexact-to-non-null-inexact (type $66) (param $0 (ref $super)) (result (ref $sub))
+  ;; CHECK:      (func $cast-to-sub-non-null-inexact-to-non-null-inexact (type $34) (param $0 (ref $super)) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast (ref $sub)
   ;; CHECK-NEXT:   (local.tee $1
@@ -1249,6 +1022,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sub-non-null-inexact-to-non-null-inexact (type $34) (param $0 (ref $super)) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast (ref $sub)
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sub-non-null-inexact-to-non-null-inexact (param (ref $super)) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1258,7 +1039,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-null-exact-to-null-exact (type $67) (param $0 (ref null (exact $sub-final))) (result (ref null (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-null-exact-to-null-inexact (type $35) (param $0 (ref null (exact $sub-final))) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast nullref
   ;; CHECK-NEXT:   (local.tee $1
@@ -1266,23 +1047,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-null-exact-to-null-exact (param (ref null (exact $sub-final))) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-null-exact-to-null-inexact (type $68) (param $0 (ref null (exact $sub-final))) (result (ref null $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast nullref
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-null-exact-to-null-inexact (type $35) (param $0 (ref null (exact $sub-final))) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast nullref
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-null-exact-to-null-inexact (param (ref null (exact $sub-final))) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1292,7 +1064,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-null-exact-to-non-null-exact (type $69) (param $0 (ref null (exact $sub-final))) (result (ref (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-null-exact-to-non-null-inexact (type $36) (param $0 (ref null (exact $sub-final))) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1301,24 +1073,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-null-exact-to-non-null-exact (param (ref null (exact $sub-final))) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-null-exact-to-non-null-inexact (type $70) (param $0 (ref null (exact $sub-final))) (result (ref $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-null-exact-to-non-null-inexact (type $36) (param $0 (ref null (exact $sub-final))) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-null-exact-to-non-null-inexact (param (ref null (exact $sub-final))) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1328,7 +1091,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-null-inexact-to-null-exact (type $71) (param $0 (ref null $sub-final)) (result (ref null (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-null-inexact-to-null-inexact (type $37) (param $0 (ref null $sub-final)) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast nullref
   ;; CHECK-NEXT:   (local.tee $1
@@ -1336,23 +1099,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-null-inexact-to-null-exact (param (ref null $sub-final)) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-null-inexact-to-null-inexact (type $72) (param $0 (ref null $sub-final)) (result (ref null $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (ref.cast nullref
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-null-inexact-to-null-inexact (type $37) (param $0 (ref null $sub-final)) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast nullref
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-null-inexact-to-null-inexact (param (ref null $sub-final)) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1362,7 +1116,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-null-inexact-to-non-null-exact (type $73) (param $0 (ref null $sub-final)) (result (ref (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-null-inexact-to-non-null-inexact (type $38) (param $0 (ref null $sub-final)) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1371,24 +1125,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-null-inexact-to-non-null-exact (param (ref null $sub-final)) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-null-inexact-to-non-null-inexact (type $74) (param $0 (ref null $sub-final)) (result (ref $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-null-inexact-to-non-null-inexact (type $38) (param $0 (ref null $sub-final)) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-null-inexact-to-non-null-inexact (param (ref null $sub-final)) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1398,7 +1143,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-non-null-exact-to-null-exact (type $75) (param $0 (ref (exact $sub-final))) (result (ref null (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-non-null-exact-to-null-inexact (type $39) (param $0 (ref (exact $sub-final))) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1407,24 +1152,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-non-null-exact-to-null-exact (param (ref (exact $sub-final))) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-non-null-exact-to-null-inexact (type $76) (param $0 (ref (exact $sub-final))) (result (ref null $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-non-null-exact-to-null-inexact (type $39) (param $0 (ref (exact $sub-final))) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-non-null-exact-to-null-inexact (param (ref (exact $sub-final))) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1434,7 +1170,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-non-null-exact-to-non-null-exact (type $77) (param $0 (ref (exact $sub-final))) (result (ref (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-non-null-exact-to-non-null-inexact (type $40) (param $0 (ref (exact $sub-final))) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1443,24 +1179,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-non-null-exact-to-non-null-exact (param (ref (exact $sub-final))) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-non-null-exact-to-non-null-inexact (type $78) (param $0 (ref (exact $sub-final))) (result (ref $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-non-null-exact-to-non-null-inexact (type $40) (param $0 (ref (exact $sub-final))) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-non-null-exact-to-non-null-inexact (param (ref (exact $sub-final))) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1470,7 +1197,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-non-null-inexact-to-null-exact (type $79) (param $0 (ref $sub-final)) (result (ref null (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-non-null-inexact-to-null-inexact (type $41) (param $0 (ref $sub-final)) (result (ref null $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1479,24 +1206,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-non-null-inexact-to-null-exact (param (ref $sub-final)) (result (ref null (exact $sub)))
-    (local anyref)
-    (ref.cast (ref null (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-non-null-inexact-to-null-inexact (type $80) (param $0 (ref $sub-final)) (result (ref null $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-non-null-inexact-to-null-inexact (type $41) (param $0 (ref $sub-final)) (result (ref null $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-non-null-inexact-to-null-inexact (param (ref $sub-final)) (result (ref null $sub))
     (local anyref)
     (ref.cast (ref null $sub)
@@ -1506,7 +1224,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-sibling-non-null-inexact-to-non-null-exact (type $81) (param $0 (ref $sub-final)) (result (ref (exact $sub)))
+  ;; CHECK:      (func $cast-to-sibling-non-null-inexact-to-non-null-inexact (type $42) (param $0 (ref $sub-final)) (result (ref $sub))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1515,24 +1233,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-to-sibling-non-null-inexact-to-non-null-exact (param (ref $sub-final)) (result (ref (exact $sub)))
-    (local anyref)
-    (ref.cast (ref (exact $sub))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-to-sibling-non-null-inexact-to-non-null-inexact (type $82) (param $0 (ref $sub-final)) (result (ref $sub))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-sibling-non-null-inexact-to-non-null-inexact (type $42) (param $0 (ref $sub-final)) (result (ref $sub))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-sibling-non-null-inexact-to-non-null-inexact (param (ref $sub-final)) (result (ref $sub))
     (local anyref)
     (ref.cast (ref $sub)
@@ -1542,7 +1251,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-null-exact-to-null-inexact (type $83) (param $0 (ref null (exact $super))) (result nullref)
+  ;; CHECK:      (func $cast-to-bottom-null-exact-to-null-inexact (type $43) (param $0 (ref null (exact $super))) (result nullref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast nullref
   ;; CHECK-NEXT:   (local.tee $1
@@ -1550,6 +1259,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-null-exact-to-null-inexact (type $43) (param $0 (ref null (exact $super))) (result nullref)
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast nullref
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-null-exact-to-null-inexact (param (ref null (exact $super))) (result (ref null none))
     (local anyref)
     (ref.cast (ref null none)
@@ -1559,7 +1276,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-null-exact-to-non-null-inexact (type $84) (param $0 (ref null (exact $super))) (result (ref none))
+  ;; CHECK:      (func $cast-to-bottom-null-exact-to-non-null-inexact (type $44) (param $0 (ref null (exact $super))) (result (ref none))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1568,6 +1285,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-null-exact-to-non-null-inexact (type $44) (param $0 (ref null (exact $super))) (result (ref none))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-null-exact-to-non-null-inexact (param (ref null (exact $super))) (result (ref none))
     (local anyref)
     (ref.cast (ref none)
@@ -1577,7 +1303,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-null-inexact-to-null-inexact (type $85) (param $0 (ref null $super)) (result nullref)
+  ;; CHECK:      (func $cast-to-bottom-null-inexact-to-null-inexact (type $45) (param $0 (ref null $super)) (result nullref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (ref.cast nullref
   ;; CHECK-NEXT:   (local.tee $1
@@ -1585,6 +1311,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-null-inexact-to-null-inexact (type $45) (param $0 (ref null $super)) (result nullref)
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (ref.cast nullref
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-null-inexact-to-null-inexact (param (ref null $super)) (result (ref null none))
     (local anyref)
     (ref.cast (ref null none)
@@ -1594,7 +1328,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-null-inexact-to-non-null-inexact (type $86) (param $0 (ref null $super)) (result (ref none))
+  ;; CHECK:      (func $cast-to-bottom-null-inexact-to-non-null-inexact (type $46) (param $0 (ref null $super)) (result (ref none))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1603,6 +1337,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-null-inexact-to-non-null-inexact (type $46) (param $0 (ref null $super)) (result (ref none))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-null-inexact-to-non-null-inexact (param (ref null $super)) (result (ref none))
     (local anyref)
     (ref.cast (ref none)
@@ -1612,7 +1355,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-non-null-exact-to-null-inexact (type $87) (param $0 (ref (exact $super))) (result nullref)
+  ;; CHECK:      (func $cast-to-bottom-non-null-exact-to-null-inexact (type $47) (param $0 (ref (exact $super))) (result nullref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1621,6 +1364,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-non-null-exact-to-null-inexact (type $47) (param $0 (ref (exact $super))) (result nullref)
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-non-null-exact-to-null-inexact (param (ref (exact $super))) (result (ref null none))
     (local anyref)
     (ref.cast (ref null none)
@@ -1630,7 +1382,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-non-null-exact-to-non-null-inexact (type $88) (param $0 (ref (exact $super))) (result (ref none))
+  ;; CHECK:      (func $cast-to-bottom-non-null-exact-to-non-null-inexact (type $48) (param $0 (ref (exact $super))) (result (ref none))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1639,6 +1391,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-non-null-exact-to-non-null-inexact (type $48) (param $0 (ref (exact $super))) (result (ref none))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-non-null-exact-to-non-null-inexact (param (ref (exact $super))) (result (ref none))
     (local anyref)
     (ref.cast (ref none)
@@ -1648,7 +1409,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-non-null-inexact-to-null-inexact (type $89) (param $0 (ref $super)) (result nullref)
+  ;; CHECK:      (func $cast-to-bottom-non-null-inexact-to-null-inexact (type $49) (param $0 (ref $super)) (result nullref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1657,6 +1418,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-non-null-inexact-to-null-inexact (type $49) (param $0 (ref $super)) (result nullref)
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-non-null-inexact-to-null-inexact (param (ref $super)) (result (ref null none))
     (local anyref)
     (ref.cast (ref null none)
@@ -1666,7 +1436,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-to-bottom-non-null-inexact-to-non-null-inexact (type $90) (param $0 (ref $super)) (result (ref none))
+  ;; CHECK:      (func $cast-to-bottom-non-null-inexact-to-non-null-inexact (type $50) (param $0 (ref $super)) (result (ref none))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1675,6 +1445,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-to-bottom-non-null-inexact-to-non-null-inexact (type $50) (param $0 (ref $super)) (result (ref none))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-to-bottom-non-null-inexact-to-non-null-inexact (param (ref $super)) (result (ref none))
     (local anyref)
     (ref.cast (ref none)
@@ -1684,7 +1463,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-from-bottom-null-inexact-to-null-exact (type $91) (param $0 nullref) (result (ref null (exact $super)))
+  ;; CHECK:      (func $cast-from-bottom-null-inexact-to-null-inexact (type $51) (param $0 nullref) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1693,24 +1472,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
-  (func $cast-from-bottom-null-inexact-to-null-exact (param (ref null none)) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-from-bottom-null-inexact-to-null-inexact (type $92) (param $0 nullref) (result (ref null $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (ref.null none)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-from-bottom-null-inexact-to-null-inexact (type $51) (param $0 nullref) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (ref.null none)
+  ;; NO_CD-NEXT: )
   (func $cast-from-bottom-null-inexact-to-null-inexact (param (ref null none)) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -1720,7 +1490,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-from-bottom-null-inexact-to-non-null-exact (type $93) (param $0 nullref) (result (ref (exact $super)))
+  ;; CHECK:      (func $cast-from-bottom-null-inexact-to-non-null-inexact (type $52) (param $0 nullref) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1729,24 +1499,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-from-bottom-null-inexact-to-non-null-exact (param (ref null none)) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-from-bottom-null-inexact-to-non-null-inexact (type $94) (param $0 nullref) (result (ref $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-from-bottom-null-inexact-to-non-null-inexact (type $52) (param $0 nullref) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-from-bottom-null-inexact-to-non-null-inexact (param (ref null none)) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
@@ -1756,7 +1517,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-from-bottom-non-null-inexact-to-null-exact (type $95) (param $0 (ref none)) (result (ref null (exact $super)))
+  ;; CHECK:      (func $cast-from-bottom-non-null-inexact-to-null-inexact (type $53) (param $0 (ref none)) (result (ref null $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1765,24 +1526,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-from-bottom-non-null-inexact-to-null-exact (param (ref none)) (result (ref null (exact $super)))
-    (local anyref)
-    (ref.cast (ref null (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-from-bottom-non-null-inexact-to-null-inexact (type $96) (param $0 (ref none)) (result (ref null $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-from-bottom-non-null-inexact-to-null-inexact (type $53) (param $0 (ref none)) (result (ref null $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-from-bottom-non-null-inexact-to-null-inexact (param (ref none)) (result (ref null $super))
     (local anyref)
     (ref.cast (ref null $super)
@@ -1792,7 +1544,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-from-bottom-non-null-inexact-to-non-null-exact (type $97) (param $0 (ref none)) (result (ref (exact $super)))
+  ;; CHECK:      (func $cast-from-bottom-non-null-inexact-to-non-null-inexact (type $54) (param $0 (ref none)) (result (ref $super))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1801,24 +1553,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $cast-from-bottom-non-null-inexact-to-non-null-exact (param (ref none)) (result (ref (exact $super)))
-    (local anyref)
-    (ref.cast (ref (exact $super))
-      (local.tee 1
-        (local.get 0)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $cast-from-bottom-non-null-inexact-to-non-null-inexact (type $98) (param $0 (ref none)) (result (ref $super))
-  ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
+  ;; NO_CD:      (func $cast-from-bottom-non-null-inexact-to-non-null-inexact (type $54) (param $0 (ref none)) (result (ref $super))
+  ;; NO_CD-NEXT:  (local $1 anyref)
+  ;; NO_CD-NEXT:  (drop
+  ;; NO_CD-NEXT:   (local.tee $1
+  ;; NO_CD-NEXT:    (local.get $0)
+  ;; NO_CD-NEXT:   )
+  ;; NO_CD-NEXT:  )
+  ;; NO_CD-NEXT:  (unreachable)
+  ;; NO_CD-NEXT: )
   (func $cast-from-bottom-non-null-inexact-to-non-null-inexact (param (ref none)) (result (ref $super))
     (local anyref)
     (ref.cast (ref $super)
