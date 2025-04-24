@@ -6967,7 +6967,7 @@
     )
    )
   )
-  ;; CHECK:      (func $de-morgan-2 (param $x i32) (param $y i32)
+  ;; CHECK:      (func $de-morgan-2 (param $x i32) (param $y i32) (param $z i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.or
@@ -7013,7 +7013,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
@@ -7021,7 +7028,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $de-morgan-2 (param $x i32) (param $y i32)
+  (func $de-morgan-2 (param $x i32) (param $y i32) (param $z i64)
     (drop
       (i32.and (i32.eqz (local.get $x)) (i32.eqz (local.get $y)))
     )
@@ -7038,7 +7045,7 @@
       (i32.and (local.get $x) (i32.eqz (local.get $y)))
     )
     (drop
-      (i32.and (i32.eqz (local.get $x)) (i32.wrap_i64 (i64.const 2)))
+      (i32.and (i32.eqz (local.get $x)) (i32.wrap_i64 (local.get $z)))
     )
     (drop
       (i32.and (i32.wrap_i64 (i64.const 1)) (i32.eqz (local.get $y)))
