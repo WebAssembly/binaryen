@@ -948,9 +948,17 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (wasTry) {
     tryy->body = *expr;
   } else {
+    // Indexes are managed manually to support Outlining.
+    // Its prepopulated try catchBodies and catchTags vectors
+    // cannot be appended to, as in the case of the empty try
+    // used during parsing.
     if (tryy->catchBodies.size() < index) {
       tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
     }
+    // The first time visitCatch is called: the body of the
+    // try is set and catchBodies is not appended to, but the tag
+    // for the following catch is appended. So, catchTags uses
+    // index as-is, but catchBodies uses index-1.
     tryy->catchBodies[index - 1] = *expr;
   }
   if (tryy->catchTags.size() == index) {
@@ -993,6 +1001,10 @@ Result<> IRBuilder::visitCatchAll() {
   if (wasTry) {
     tryy->body = *expr;
   } else {
+    // Indexes are managed manually to support Outlining.
+    // Its prepopulated try catchBodies vector cannot be
+    // appended to, as in the case of the empty try used
+    // during parsing.
     if (tryy->catchBodies.size() < index) {
       tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
     }
@@ -1135,6 +1147,10 @@ Result<> IRBuilder::visitEnd() {
   } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
+    // Indexes are managed manually to support Outlining.
+    // Its prepopulated try catchBodies vector cannot be
+    // appended to, as in the case of the empty try used
+    // during parsing.
     if (tryy->catchBodies.size() < index) {
       tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
     }
