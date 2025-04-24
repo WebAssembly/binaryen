@@ -282,14 +282,20 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      // Start |close| at the opening ", and in the loop below we will always
+      // Start |close| after the opening ", and in the loop below we will always
       // begin looking at the first character after.
-      char* close = curr;
-      // Skip escaped "
-      do {
-        close = strchr(close + 1, '"');
-      } while (*(close - 1) == '\\');
-      THROW_IF(!close, "malformed JSON string");
+      char* close = curr + 1;
+      // Skip escaped ", which appears as \". We need to be careful though, as
+      // \" might also be \\" which would be an escaped \ and an *un*escaped ".
+      while (*close && *close != '"') {
+        if (*close == '\\') {
+          // Skip the \ and the character after it, which it escapes.
+          close++;
+          THROW_IF(!*close, "unexpected end of JSON string (quoting)");
+        }
+        close++;
+      }
+      THROW_IF(!close, "unexpected end of JSON string");
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
       if (stringEncoding == ASCII) {
