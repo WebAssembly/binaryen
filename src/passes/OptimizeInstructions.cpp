@@ -832,11 +832,13 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    if (curr->op == AndInt32 || curr->op == OrInt32) {
+    if (curr->op == AndInt32 || curr->op == AndInt64 || curr->op == OrInt32) {
       if (curr->op == AndInt32) {
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
         }
+      }
+      if (curr->op == AndInt32 || curr->op == AndInt64) {
         if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
           return replaceCurrent(ret);
         }
@@ -3555,34 +3557,43 @@ private:
   // Bitwise AND of a value with bits in [0, n) and a constant with no bits in
   // [0, n) always yields 0. Replace with zero.
   Expression* optimizeAndNoOverlappingBits(Binary* curr) {
+    assert(curr->op == AndInt32 || curr->op == AndInt64);
+
     using namespace Abstract;
     using namespace Match;
-
-    auto type = curr->left->type;
-    assert(curr->op == getBinary(type, And));
 
     auto* left = curr->left;
     auto* right = curr->right;
 
     // Check right as constant and left's max bits
     auto leftMaxBits = Bits::getMaxBits(left, this);
-    uint64_t maskLeft = (1ULL << leftMaxBits) - 1;
+    uint64_t maskLeft;
+    if (leftMaxBits == 64) {
+      maskLeft = 0xffffffffffffffffULL; // All bits set for 64-bit case
+    } else {
+      maskLeft = (1ULL << leftMaxBits) - 1;
+    }
     if (auto* c = right->dynCast<Const>()) {
       uint64_t constantValue = c->value.getInteger();
       if ((constantValue & maskLeft) == 0) {
         return getDroppedChildrenAndAppend(
-          curr, LiteralUtils::makeZero(type, *getModule()));
+          curr, LiteralUtils::makeZero(curr->left->type, *getModule()));
       }
     }
 
     // Check left as constant and right's max bits
     auto rightMaxBits = Bits::getMaxBits(right, this);
-    uint64_t maskRight = (1ULL << rightMaxBits) - 1;
+    uint64_t maskRight;
+    if (rightMaxBits == 64) {
+      maskRight = 0xffffffffffffffffULL; // All bits set for 64-bit case
+    } else {
+      maskRight = (1ULL << rightMaxBits) - 1;
+    }
     if (auto* c = left->dynCast<Const>()) {
       uint64_t constantValue = c->value.getInteger();
       if ((constantValue & maskRight) == 0) {
         return getDroppedChildrenAndAppend(
-          curr, LiteralUtils::makeZero(type, *getModule()));
+          curr, LiteralUtils::makeZero(curr->right->type, *getModule()));
       }
     }
 
