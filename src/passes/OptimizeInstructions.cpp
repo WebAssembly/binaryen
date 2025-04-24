@@ -3569,8 +3569,8 @@ private:
     if (auto* c = right->dynCast<Const>()) {
       uint64_t constantValue = c->value.getInteger();
       if ((constantValue & mask) == 0) {
-        replaceCurrent(getDroppedChildrenAndAppend(
-          curr, LiteralUtils::makeZero(type, *getModule())));
+        getDroppedChildrenAndAppend(curr,
+                                    LiteralUtils::makeZero(type, *getModule()));
       }
     }
 
