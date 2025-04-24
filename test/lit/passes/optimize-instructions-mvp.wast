@@ -17770,4 +17770,124 @@
       (i32.const 1)
     )
   )
+  ;; CHECK:      (func $no-overlapping-bits-corner-case (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const -2147483647)
+  ;; CHECK-NEXT:    (i32.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.const 2147483649)
+  ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-overlapping-bits-corner-case (param $x i32) (param $y i64)
+    ;; optimizeAndNoOverlappingBits will simplify AND operations where
+    ;; Bitwise AND of a value with bits in [0, n) and a constant with no bits in
+    ;; [0, n) always yields 0. Replace with zero.
+    ;; Note: after swapping the operands, it also satisfies the commutative law.
+
+    ;; Unknown, not optimized
+    (drop
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i64.and
+        (local.get $y)
+        (i64.const 1)
+      )
+    )
+    (drop
+      (i32.and
+        (i32.const 1)
+        (local.get $x)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 1)
+        (local.get $y)
+      )
+    )
+    ;; No any bit overlapping, optimized
+    (drop
+      (i32.and
+        (i32.const 0x80000000)
+        (i32.const 0x7fffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 2)
+        (i64.const 1)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x80000000)
+        (i64.const 0x7fffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x8000000000000000)
+        (i64.const 0x7fffffffffffffff)
+      )
+    )
+    ;; Just one bit overlapping, not optimized
+    (drop
+      (i32.and
+        (i32.const 0x80000001)
+        (i32.const 0x7fffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x80000001)
+        (i64.const 0x7fffffff)
+      )
+    )
+  )
 )
