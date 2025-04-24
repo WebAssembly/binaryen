@@ -126,6 +126,9 @@ unfuzzable = [
     'type-refining-gufa-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
+    # TODO: fix split_wast() on tricky escaping situations like a string ending
+    #       in \\" (the " is not escaped - there is an escaped \ before it)
+    'string-lifting-section.wast',
 ]
 
 
