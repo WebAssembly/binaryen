@@ -3563,14 +3563,26 @@ private:
 
     auto* left = curr->left;
     auto* right = curr->right;
-    auto leftMaxBits = Bits::getMaxBits(left, this);
 
-    uint64_t mask = (1ULL << leftMaxBits) - 1;
+    // Check right as constant and left's max bits
+    auto leftMaxBits = Bits::getMaxBits(left, this);
+    uint64_t maskLeft = (1ULL << leftMaxBits) - 1;
     if (auto* c = right->dynCast<Const>()) {
       uint64_t constantValue = c->value.getInteger();
-      if ((constantValue & mask) == 0) {
-        getDroppedChildrenAndAppend(curr,
-                                    LiteralUtils::makeZero(type, *getModule()));
+      if ((constantValue & maskLeft) == 0) {
+        return getDroppedChildrenAndAppend(
+          curr, LiteralUtils::makeZero(type, *getModule()));
+      }
+    }
+
+    // Check left as constant and right's max bits
+    auto rightMaxBits = Bits::getMaxBits(right, this);
+    uint64_t maskRight = (1ULL << rightMaxBits) - 1;
+    if (auto* c = left->dynCast<Const>()) {
+      uint64_t constantValue = c->value.getInteger();
+      if ((constantValue & maskRight) == 0) {
+        return getDroppedChildrenAndAppend(
+          curr, LiteralUtils::makeZero(type, *getModule()));
       }
     }
 
