@@ -25,7 +25,7 @@
 ;; CHECK-NEXT: wasm-merge options:
 ;; CHECK-NEXT: -------------------
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:   --output,-o                          Output file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source maps from the specified
 ;; CHECK-NEXT:                                        files
@@ -150,6 +150,12 @@
 ;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-descriptors          Enable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-descriptors         Disable custom descriptors (RTTs) and
+;; CHECK-NEXT:                                        exact references
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

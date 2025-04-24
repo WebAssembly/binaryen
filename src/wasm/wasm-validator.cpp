@@ -42,16 +42,28 @@ template<typename T,
            Expression,
            typename std::remove_pointer<T>::type>::value>::type* = nullptr>
 inline std::ostream&
-printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
+printModuleComponent(T curr, std::ostringstream& stream, Module& wasm) {
   stream << curr << std::endl;
   return stream;
 }
 
 // Extra overload for Expressions, to print their contents.
-inline std::ostream&
-printModuleComponent(Expression* curr, std::ostream& stream, Module& wasm) {
+inline std::ostream& printModuleComponent(Expression* curr,
+                                          std::ostringstream& stream,
+                                          Module& wasm) {
   if (curr) {
-    stream << ModuleExpression(wasm, curr) << '\n';
+    // Print the full expression if we can, but avoid doing so if the output is
+    // already very large. This avoids quadratic output in some cases (e.g. if
+    // we have many nested expressions in each other, all of which fail to
+    // validate).
+    const std::ostringstream::pos_type MAX_OUTPUT = 16 * 1024;
+    if (stream.tellp() < MAX_OUTPUT) {
+      stream << ModuleExpression(wasm, curr) << '\n';
+    } else {
+      // Print something, at least.
+      stream << "[not printing " << getExpressionName(curr)
+             << " because output is already very large]\n";
+    }
   }
   return stream;
 }
@@ -98,7 +110,7 @@ struct ValidationInfo {
     return printModuleComponent(curr, ret, wasm);
   }
 
-  std::ostream& printFailureHeader(Function* func) {
+  std::ostringstream& printFailureHeader(Function* func) {
     auto& stream = getStream(func);
     if (quiet) {
       return stream;
@@ -2343,24 +2355,26 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types [--enable-reference-types]");
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "ref.func should have a non-nullable reference type")) {
+    return;
+  }
+  if (!shouldBeTrue(curr->type.isSignature(),
+                    curr,
+                    "ref.func must have a function reference type")) {
+    return;
+  }
   if (!info.validateGlobally) {
     return;
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
-  shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  shouldBeTrue(curr->type.isFunction(),
+  if (!shouldBeTrue(!!func, curr, "function argument of ref.func must exist")) {
+    return;
+  }
+  shouldBeTrue(func->type == curr->type.getHeapType(),
                curr,
-               "ref.func must have a function reference type");
-  shouldBeTrue(
-    !curr->type.isNullable(), curr, "ref.func must have non-nullable type");
-  // TODO: verify it also has a typed function references type, and the right
-  // one,
-  //   curr->type.getHeapType().getSignature()
-  // That is blocked on having the ability to create signature types in the C
-  // API (for now those users create the type with funcref). This also needs to
-  // be fixed in LegalizeJSInterface and FuncCastEmulation and other places that
-  // update function types.
-  // TODO: check for non-nullability
+               "function reference type must match referenced function type");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2831,16 +2845,33 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
 void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.i31 requires gc [--enable-gc]");
-  if (curr->type.isRef() && curr->type.getHeapType().isShared()) {
+  shouldBeSubType(curr->value->type,
+                  Type::i32,
+                  curr->value,
+                  "ref.i31's argument should be i32");
+
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "ref.i31 should have a non-nullable reference type")) {
+    return;
+  }
+  auto heapType = curr->type.getHeapType();
+  if (!shouldBeTrue(heapType.isBasic() &&
+                      heapType.getBasic(Unshared) == HeapType::i31,
+                    curr,
+                    "ref.i31 should have an i31 reference type")) {
+    return;
+  }
+  if (heapType.isShared()) {
     shouldBeTrue(
       getModule()->features.hasSharedEverything(),
       curr,
       "ref.i31_shared requires shared-everything [--enable-shared-everything]");
   }
-  shouldBeSubType(curr->value->type,
-                  Type::i32,
-                  curr->value,
-                  "ref.i31's argument should be i32");
 }
 
 void FunctionValidator::visitI31Get(I31Get* curr) {
@@ -2872,6 +2903,19 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     curr->ref->type.getHeapType().getBottom(),
     curr,
     "ref.test target type and ref type must have a common supertype");
+
+  // If custom descriptors is not enabled, only trivial and null-checking exact
+  // casts are allowed, i.e. those where the operand is also exact and has the
+  // same heap type, but may differ in nullability. The result of these trivial
+  // exact casts does not change when the types are made inexact during binary
+  // writing.
+  if (!getModule()->features.hasCustomDescriptors()) {
+    shouldBeTrue(curr->castType.isInexact() || curr->castType.with(Nullable) ==
+                                                 curr->ref->type.with(Nullable),
+                 curr,
+                 "ref.test of exact type requires custom descriptors "
+                 "[--enable-custom-descriptors]");
+  }
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
@@ -2910,6 +2954,15 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
                curr,
                "ref.cast null of non-nullable references are not allowed");
+
+  // See comment about exactness on visitRefTest.
+  if (!getModule()->features.hasCustomDescriptors()) {
+    shouldBeTrue(curr->type.isInexact() ||
+                   curr->type.with(Nullable) == curr->ref->type.with(Nullable),
+                 curr,
+                 "ref.cast to exact type requires custom descriptors "
+                 "[--enable-custom-descriptors]");
+  }
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
@@ -2939,6 +2992,15 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type,
       curr,
       "br_on_cast* target type must be a subtype of its input type");
+    // See comment about exactness on visitRefTest.
+    if (!getModule()->features.hasCustomDescriptors()) {
+      shouldBeTrue(curr->castType.isInexact() ||
+                     curr->castType.with(Nullable) ==
+                       curr->ref->type.with(Nullable),
+                   curr,
+                   "br_on_cast* to exact type requires custom descriptors "
+                   "[--enable-custom-descriptors]");
+    }
   } else {
     shouldBeEqual(curr->castType,
                   Type(Type::none),
@@ -2953,6 +3015,11 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                curr,
                "struct.new requires gc [--enable-gc]");
   if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "struct.new should have a non-nullable reference type")) {
     return;
   }
   auto heapType = curr->type.getHeapType();
@@ -3186,6 +3253,11 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "array.new size must be an i32");
   if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "array.new should have a non-nullable reference type")) {
     return;
   }
   auto heapType = curr->type.getHeapType();
@@ -3618,12 +3690,20 @@ void FunctionValidator::visitContNew(ContNew* curr) {
                curr,
                "cont.new requires stack-switching [--enable-stack-switching]");
 
-  shouldBeTrue(
-    (curr->type.isContinuation() &&
-     curr->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->type == Type::unreachable,
-    curr,
-    "cont.new must be annotated with a continuation type");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "cont.new should have a non-nullable reference type")) {
+    return;
+  }
+
+  shouldBeTrue(curr->type.isContinuation() &&
+                 curr->type.getHeapType().getContinuation().type.isSignature(),
+               curr,
+               "cont.new must be annotated with a continuation type");
 }
 
 void FunctionValidator::visitContBind(ContBind* curr) {
@@ -3645,6 +3725,16 @@ void FunctionValidator::visitContBind(ContBind* curr) {
       curr->type == Type::unreachable,
     curr,
     "the second type annotation on cont.bind must be a continuation type");
+
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+
+  if (!shouldBeTrue(curr->type.isNonNullable(),
+                    curr,
+                    "cont.bind should have a non-nullable reference type")) {
+    return;
+  }
 }
 
 void FunctionValidator::visitSuspend(Suspend* curr) {
@@ -3929,7 +4019,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& curr : module.exports) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
-        Function* f = module.getFunction(curr->value);
+        Function* f = module.getFunction(*curr->getInternalName());
         for (const auto& param : f->getParams()) {
           info.shouldBeUnequal(
             param,
@@ -3945,7 +4035,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
         }
       }
     } else if (curr->kind == ExternalKind::Global) {
-      if (Global* g = module.getGlobalOrNull(curr->value)) {
+      if (Global* g = module.getGlobalOrNull(*curr->getInternalName())) {
         if (!module.features.hasMutableGlobals()) {
           info.shouldBeFalse(g->mutable_,
                              g->name,
@@ -3959,24 +4049,28 @@ static void validateExports(Module& module, ValidationInfo& info) {
   }
   std::unordered_set<Name> exportNames;
   for (auto& exp : module.exports) {
-    Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getFunctionOrNull(name),
                         name,
                         "module function exports must be found");
     } else if (exp->kind == ExternalKind::Global) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getGlobalOrNull(name),
                         name,
                         "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getTableOrNull(name),
                         name,
                         "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(module.getMemoryOrNull(name),
                         name,
                         "module memory exports must be found");
     } else if (exp->kind == ExternalKind::Tag) {
+      Name name = *exp->getInternalName();
       info.shouldBeTrue(
         module.getTagOrNull(name), name, "module tag exports must be found");
     } else {

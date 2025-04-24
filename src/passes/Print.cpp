@@ -82,20 +82,20 @@ std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 // Print a name from the type section, if available. Otherwise print the type
 // normally.
 void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
-  if (type.isRef() && wasm) {
-    auto heapType = type.getHeapType();
-    auto iter = wasm->typeNames.find(heapType);
-    if (iter != wasm->typeNames.end()) {
-      o << iter->second.name;
-      if (type.isNullable()) {
-        o << " null";
+  struct Printer : TypeNameGeneratorBase<Printer> {
+    Module* wasm;
+    DefaultTypeNameGenerator fallback;
+    Printer(Module* wasm) : wasm(wasm) {}
+    TypeNames getNames(HeapType type) {
+      if (wasm) {
+        if (auto it = wasm->typeNames.find(type); it != wasm->typeNames.end()) {
+          return it->second;
+        }
       }
-      return;
+      return fallback.getNames(type);
     }
-  }
-
-  // No luck with a name, just print the test as best we can.
-  o << type;
+  } print{wasm};
+  o << print(type);
 }
 
 } // anonymous namespace
@@ -232,7 +232,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   std::ostream& printType(Type type) { return o << typePrinter(type); }
 
-  std::ostream& printHeapType(HeapType type) {
+  std::ostream& printHeapTypeName(HeapType type) {
     if (type.isBasic()) {
       return o << type;
     }
@@ -257,7 +257,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (sig.results.isTuple()) {
       if (auto it = signatureTypes.find(sig); it != signatureTypes.end()) {
         o << "(type ";
-        printHeapType(it->second);
+        printHeapTypeName(it->second);
         o << ") ";
       }
     }
@@ -471,8 +471,8 @@ struct PrintExpressionContents
 
   std::ostream& printType(Type type) { return parent.printType(type); }
 
-  std::ostream& printHeapType(HeapType type) {
-    return parent.printHeapType(type);
+  std::ostream& printHeapTypeName(HeapType type) {
+    return parent.printHeapTypeName(type);
   }
 
   std::ostream& printResultType(Type type) {
@@ -563,7 +563,7 @@ struct PrintExpressionContents
     o << '(';
     printMinor(o, "type ");
 
-    printHeapType(curr->heapType);
+    printHeapTypeName(curr->heapType);
 
     o << ')';
   }
@@ -2144,7 +2144,7 @@ struct PrintExpressionContents
   }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
@@ -2253,7 +2253,7 @@ struct PrintExpressionContents
 
   void visitCallRef(CallRef* curr) {
     printMedium(o, curr->isReturn ? "return_call_ref " : "call_ref ");
-    printHeapType(curr->target->type.getHeapType());
+    printHeapTypeName(curr->target->type.getHeapType());
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
@@ -2310,7 +2310,7 @@ struct PrintExpressionContents
       printMedium(o, "_default");
     }
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void printFieldName(HeapType type, Index index) {
     auto names = parent.typePrinter.getNames(type).fieldNames;
@@ -2350,7 +2350,7 @@ struct PrintExpressionContents
       printMedium(o, ".get ");
     }
     printMemoryOrder(curr->order);
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2362,7 +2362,7 @@ struct PrintExpressionContents
     }
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2375,7 +2375,7 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2386,7 +2386,7 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2396,26 +2396,26 @@ struct PrintExpressionContents
       printMedium(o, "_default");
     }
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitArrayNewData(ArrayNewData* curr) {
     printMedium(o, "array.new_data");
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayNewElem(ArrayNewElem* curr) {
     printMedium(o, "array.new_elem");
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     printMedium(o, "array.new_fixed");
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
     o << ' ';
     o << curr->values.size();
   }
@@ -2430,32 +2430,32 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "array.get ");
     }
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
     printMedium(o, "array.set ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
     printMedium(o, "array.copy ");
-    printHeapType(curr->destRef->type.getHeapType());
+    printHeapTypeName(curr->destRef->type.getHeapType());
     o << ' ';
-    printHeapType(curr->srcRef->type.getHeapType());
+    printHeapTypeName(curr->srcRef->type.getHeapType());
   }
   void visitArrayFill(ArrayFill* curr) {
     printMedium(o, "array.fill ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayInitData(ArrayInitData* curr) {
     printMedium(o, "array.init_data ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
     printMedium(o, "array.init_elem ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
@@ -2547,14 +2547,14 @@ struct PrintExpressionContents
   void visitContNew(ContNew* curr) {
     assert(curr->type.isContinuation());
     printMedium(o, "cont.new ");
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitContBind(ContBind* curr) {
     assert(curr->cont->type.isContinuation() && curr->type.isContinuation());
     printMedium(o, "cont.bind ");
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitSuspend(Suspend* curr) {
     printMedium(o, "suspend ");
@@ -2582,7 +2582,7 @@ struct PrintExpressionContents
     printMedium(o, "resume");
 
     o << ' ';
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
 
     handleResumeTable(o, curr);
   }
@@ -2591,7 +2591,7 @@ struct PrintExpressionContents
     printMedium(o, "resume_throw");
 
     o << ' ';
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
 
@@ -2602,7 +2602,7 @@ struct PrintExpressionContents
     printMedium(o, "switch");
 
     o << ' ';
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
   }
@@ -3022,7 +3022,7 @@ void PrintSExpression::handleSignature(Function* curr,
   if ((currModule && currModule->features.hasGC()) ||
       requiresExplicitFuncType(curr->type)) {
     o << " (type ";
-    printHeapType(curr->type) << ')';
+    printHeapTypeName(curr->type) << ')';
   }
   bool inParam = false;
   Index i = 0;
@@ -3087,7 +3087,8 @@ void PrintSExpression::visitExport(Export* curr) {
       WASM_UNREACHABLE("invalid ExternalKind");
   }
   o << ' ';
-  curr->value.print(o) << "))";
+  // TODO: specific case for type exports
+  curr->getInternalName()->print(o) << "))";
 }
 
 void PrintSExpression::emitImportHeader(Importable* curr) {
@@ -3246,7 +3247,7 @@ void PrintSExpression::visitDefinedTag(Tag* curr) {
 
 void PrintSExpression::printTagType(HeapType type) {
   o << "(type ";
-  printHeapType(type);
+  printHeapTypeName(type);
   o << ')';
   if (auto params = type.getSignature().params; params != Type::none) {
     o << maybeSpace << "(param";

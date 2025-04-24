@@ -85,6 +85,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzPasses = false;
   bool fuzzMemory = true;
   bool fuzzOOB = true;
+  bool fuzzPreserveImportsAndExports = false;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
   std::string inputSourceMapFilename;
@@ -98,7 +99,7 @@ int main(int argc, const char* argv[]) {
   options
     .add("--output",
          "-o",
-         "Output file (stdout if not specified)",
+         "Output file",
          WasmOptOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
@@ -178,6 +179,14 @@ int main(int argc, const char* argv[]) {
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
+    .add("--fuzz-preserve-imports-exports",
+         "",
+         "don't add imports and exports in -ttf mode",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           fuzzPreserveImportsAndExports = true;
+         })
     .add("--emit-spec-wrapper",
          "-esw",
          "Emit a wasm spec interpreter wrapper file that can run the wasm with "
@@ -310,6 +319,7 @@ int main(int argc, const char* argv[]) {
     }
     reader.setAllowMemory(fuzzMemory);
     reader.setAllowOOB(fuzzOOB);
+    reader.setPreserveImportsAndExports(fuzzPreserveImportsAndExports);
     reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.passOptions)) {

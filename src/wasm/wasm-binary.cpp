@@ -279,13 +279,21 @@ void WasmBinaryWriter::writeTypes() {
       }
       if (super) {
         o << U32LEB(1);
-        writeHeapType(*super);
+        writeHeapType(*super, Inexact);
       } else {
         o << U32LEB(0);
       }
     }
     if (type.isShared()) {
-      o << uint8_t(BinaryConsts::EncodedType::SharedDef);
+      o << uint8_t(BinaryConsts::EncodedType::Shared);
+    }
+    if (auto desc = type.getDescribedType()) {
+      o << uint8_t(BinaryConsts::EncodedType::Describes);
+      writeHeapType(*desc, Inexact);
+    }
+    if (auto desc = type.getDescriptorType()) {
+      o << uint8_t(BinaryConsts::EncodedType::Descriptor);
+      writeHeapType(*desc, Inexact);
     }
     switch (type.getKind()) {
       case HeapTypeKind::Func: {
@@ -314,7 +322,7 @@ void WasmBinaryWriter::writeTypes() {
         break;
       case HeapTypeKind::Cont:
         o << uint8_t(BinaryConsts::EncodedType::Cont);
-        writeHeapType(type.getContinuation().type);
+        writeHeapType(type.getContinuation().type, Inexact);
         break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
@@ -603,19 +611,19 @@ void WasmBinaryWriter::writeExports() {
     o << U32LEB(int32_t(curr->kind));
     switch (curr->kind) {
       case ExternalKind::Function:
-        o << U32LEB(getFunctionIndex(curr->value));
+        o << U32LEB(getFunctionIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Table:
-        o << U32LEB(getTableIndex(curr->value));
+        o << U32LEB(getTableIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Memory:
-        o << U32LEB(getMemoryIndex(curr->value));
+        o << U32LEB(getMemoryIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Global:
-        o << U32LEB(getGlobalIndex(curr->value));
+        o << U32LEB(getGlobalIndex(*curr->getInternalName()));
         break;
       case ExternalKind::Tag:
-        o << U32LEB(getTagIndex(curr->value));
+        o << U32LEB(getTagIndex(*curr->getInternalName()));
         break;
       default:
         WASM_UNREACHABLE("unexpected extern kind");
@@ -1218,25 +1226,40 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     }
   }
 
-  *sourceMap << "\"sources\":[";
-  for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
-    if (i > 0) {
-      *sourceMap << ",";
+  auto writeOptionalString = [&](const char* name, const std::string& str) {
+    if (!str.empty()) {
+      *sourceMap << "\"" << name << "\":\"" << str << "\",";
     }
-    // TODO respect JSON string encoding, e.g. quotes and control chars.
-    *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
-  }
-  *sourceMap << "],\"names\":[";
+  };
 
-  for (size_t i = 0; i < wasm->debugInfoSymbolNames.size(); i++) {
-    if (i > 0) {
-      *sourceMap << ",";
+  writeOptionalString("file", wasm->debugInfoFile);
+  writeOptionalString("sourceRoot", wasm->debugInfoSourceRoot);
+
+  auto writeStringVector = [&](const char* name,
+                               const std::vector<std::string>& vec) {
+    *sourceMap << "\"" << name << "\":[";
+    for (size_t i = 0; i < vec.size(); i++) {
+      if (i > 0) {
+        *sourceMap << ",";
+      }
+      *sourceMap << "\"" << vec[i] << "\"";
     }
-    // TODO respect JSON string encoding, e.g. quotes and control chars.
-    *sourceMap << "\"" << wasm->debugInfoSymbolNames[i] << "\"";
+    *sourceMap << "],";
+  };
+
+  writeStringVector("sources", wasm->debugInfoFileNames);
+
+  if (!wasm->debugInfoSourcesContent.empty()) {
+    writeStringVector("sourcesContent", wasm->debugInfoSourcesContent);
   }
 
-  *sourceMap << "],\"mappings\":\"";
+  // TODO: This field is optional; maybe we should omit if it's empty.
+  // TODO: Binaryen actually does not correctly preserve symbol names when it
+  // rewrites the mappings. We should maybe just drop them, or else handle
+  // them correctly.
+  writeStringVector("names", wasm->debugInfoSymbolNames);
+
+  *sourceMap << "\"mappings\":\"";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
@@ -1358,6 +1381,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::BulkMemoryOptFeature;
       case FeatureSet::CallIndirectOverlong:
         return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
+      case FeatureSet::CustomDescriptors:
+        return BinaryConsts::CustomSections::CustomDescriptorsFeature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -1620,7 +1645,7 @@ void WasmBinaryWriter::writeType(Type type) {
     } else {
       o << S32LEB(BinaryConsts::EncodedType::nonnullable);
     }
-    writeHeapType(type.getHeapType());
+    writeHeapType(type.getHeapType(), type.getExactness());
     return;
   }
   int ret = 0;
@@ -1651,14 +1676,20 @@ void WasmBinaryWriter::writeType(Type type) {
   o << S32LEB(ret);
 }
 
-void WasmBinaryWriter::writeHeapType(HeapType type) {
+void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
   // ref.null always has a bottom heap type in Binaryen IR, but those types are
   // only actually valid with GC. Otherwise, emit the corresponding valid top
   // types instead.
+  if (!wasm->features.hasCustomDescriptors()) {
+    exactness = Inexact;
+  }
   if (!wasm->features.hasGC()) {
     type = type.getTop();
   }
-
+  assert(!type.isBasic() || exactness == Inexact);
+  if (exactness == Exact) {
+    o << uint8_t(BinaryConsts::EncodedType::Exact);
+  }
   if (!type.isBasic()) {
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
@@ -1666,7 +1697,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
 
   int ret = 0;
   if (type.isShared()) {
-    o << S32LEB(BinaryConsts::EncodedType::Shared);
+    o << uint8_t(BinaryConsts::EncodedType::Shared);
   }
   switch (type.getBasic(Unshared)) {
     case HeapType::ext:
@@ -1762,7 +1793,7 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input,
-                                   const std::vector<char>& sourceMap)
+                                   std::vector<char>& sourceMap)
   : wasm(wasm), allocator(wasm.allocator), input(input), builder(wasm),
     sourceMapReader(sourceMap) {
   wasm.features = features;
@@ -1812,7 +1843,7 @@ void WasmBinaryReader::read() {
   }
 
   readHeader();
-  sourceMapReader.readHeader(wasm);
+  sourceMapReader.parse(wasm);
 
   // Read sections until the end
   while (more()) {
@@ -2158,11 +2189,12 @@ Type WasmBinaryReader::getType(int code) {
   if (getBasicType(code, type)) {
     return type;
   }
+  auto [heapType, exactness] = getHeapType();
   switch (code) {
     case BinaryConsts::EncodedType::nullable:
-      return Type(getHeapType(), Nullable);
+      return Type(heapType, Nullable, exactness);
     case BinaryConsts::EncodedType::nonnullable:
-      return Type(getHeapType(), NonNullable);
+      return Type(heapType, NonNullable, exactness);
     default:
       throwError("invalid wasm type: " + std::to_string(code));
   }
@@ -2171,27 +2203,33 @@ Type WasmBinaryReader::getType(int code) {
 
 Type WasmBinaryReader::getType() { return getType(getS32LEB()); }
 
-HeapType WasmBinaryReader::getHeapType() {
+std::pair<HeapType, Exactness> WasmBinaryReader::getHeapType() {
   auto type = getS64LEB(); // TODO: Actually s33
+  auto exactness = Inexact;
+  if (type == BinaryConsts::EncodedType::ExactLEB) {
+    exactness = Exact;
+    type = getS64LEB(); // TODO: Actually s33
+  }
   // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
     if (size_t(type) >= types.size()) {
-      throwError("invalid signature index: " + std::to_string(type));
+      throwError("invalid type index: " + std::to_string(type));
     }
-    return types[type];
+    return {types[type], exactness};
+  }
+  if (exactness == Exact) {
+    throwError("invalid type index: " + std::to_string(type));
   }
   auto share = Unshared;
-  if (type == BinaryConsts::EncodedType::Shared) {
+  if (type == BinaryConsts::EncodedType::SharedLEB) {
     share = Shared;
     type = getS64LEB(); // TODO: Actually s33
   }
   HeapType ht;
   if (getBasicHeapType(type, ht)) {
-    return ht.getBasic(share);
-  } else {
-    throwError("invalid wasm heap type: " + std::to_string(type));
+    return {ht.getBasic(share), Inexact};
   }
-  WASM_UNREACHABLE("unexpected type");
+  throwError("invalid wasm heap type: " + std::to_string(type));
 }
 
 HeapType WasmBinaryReader::getIndexedHeapType() {
@@ -2313,21 +2351,32 @@ void WasmBinaryReader::readMemories() {
 void WasmBinaryReader::readTypes() {
   TypeBuilder builder(getU32LEB());
 
-  auto readHeapType = [&]() -> HeapType {
+  auto readHeapType = [&]() -> std::pair<HeapType, Exactness> {
     int64_t htCode = getS64LEB(); // TODO: Actually s33
+    auto exactness = Inexact;
+    if (htCode == BinaryConsts::EncodedType::ExactLEB) {
+      exactness = Exact;
+      htCode = getS64LEB(); // TODO: Actually s33
+    }
+    if (htCode >= 0) {
+      if (size_t(htCode) >= builder.size()) {
+        throwError("invalid type index: " + std::to_string(htCode));
+      }
+      return {builder.getTempHeapType(size_t(htCode)), exactness};
+    }
+    if (exactness == Exact) {
+      throwError("invalid type index: " + std::to_string(htCode));
+    }
     auto share = Unshared;
-    if (htCode == BinaryConsts::EncodedType::Shared) {
+    if (htCode == BinaryConsts::EncodedType::SharedLEB) {
       share = Shared;
       htCode = getS64LEB(); // TODO: Actually s33
     }
     HeapType ht;
     if (getBasicHeapType(htCode, ht)) {
-      return ht.getBasic(share);
+      return {ht.getBasic(share), Inexact};
     }
-    if (size_t(htCode) >= builder.size()) {
-      throwError("invalid type index: " + std::to_string(htCode));
-    }
-    return builder.getTempHeapType(size_t(htCode));
+    throwError("invalid wasm heap type: " + std::to_string(htCode));
   };
   auto makeType = [&](int32_t typeCode) {
     Type type;
@@ -2342,12 +2391,12 @@ void WasmBinaryReader::readTypes() {
                              ? Nullable
                              : NonNullable;
 
-        HeapType ht = readHeapType();
+        auto [ht, exactness] = readHeapType();
         if (ht.isBasic()) {
-          return Type(ht, nullability);
+          return Type(ht, nullability, exactness);
         }
 
-        return builder.getTempRefType(ht, nullability);
+        return builder.getTempRefType(ht, nullability, exactness);
       }
       default:
         throwError("unexpected type index: " + std::to_string(typeCode));
@@ -2372,7 +2421,10 @@ void WasmBinaryReader::readTypes() {
   };
 
   auto readContinuationDef = [&]() {
-    HeapType ht = readHeapType();
+    auto [ht, exactness] = readHeapType();
+    if (exactness != Inexact) {
+      throw ParseException("invalid exact type in cont definition");
+    }
     if (!ht.isSignature()) {
       throw ParseException("cont types must be built from function types");
     }
@@ -2431,7 +2483,6 @@ void WasmBinaryReader::readTypes() {
       builder.createRecGroup(i, groupSize);
       form = getInt8();
     }
-    std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
         form == BinaryConsts::EncodedType::SubFinal) {
       if (form == BinaryConsts::EncodedType::Sub) {
@@ -2443,12 +2494,32 @@ void WasmBinaryReader::readTypes() {
           throwError("Invalid type definition with " + std::to_string(supers) +
                      " supertypes");
         }
-        superIndex = getU32LEB();
+        auto superIdx = getU32LEB();
+        if (superIdx >= builder.size()) {
+          throwError("invalid supertype index: " + std::to_string(superIdx));
+        }
+        builder[i].subTypeOf(builder[superIdx]);
       }
       form = getInt8();
     }
-    if (form == BinaryConsts::SharedDef) {
+    if (form == BinaryConsts::EncodedType::Shared) {
       builder[i].setShared();
+      form = getInt8();
+    }
+    if (form == BinaryConsts::EncodedType::Describes) {
+      auto descIdx = getU32LEB();
+      if (descIdx >= builder.size()) {
+        throwError("invalid described type index: " + std::to_string(descIdx));
+      }
+      builder[i].describes(builder[descIdx]);
+      form = getInt8();
+    }
+    if (form == BinaryConsts::EncodedType::Descriptor) {
+      auto descIdx = getU32LEB();
+      if (descIdx >= builder.size()) {
+        throwError("invalid descriptor type index: " + std::to_string(descIdx));
+      }
+      builder[i].descriptor(builder[descIdx]);
       form = getInt8();
     }
     if (form == BinaryConsts::EncodedType::Func) {
@@ -2461,13 +2532,6 @@ void WasmBinaryReader::readTypes() {
       builder[i] = Array(readFieldDef());
     } else {
       throwError("Bad type form " + std::to_string(form));
-    }
-    if (superIndex) {
-      if (*superIndex > builder.size()) {
-        throwError("Out of bounds supertype index " +
-                   std::to_string(*superIndex));
-      }
-      builder[i].subTypeOf(builder[*superIndex]);
     }
   }
 
@@ -2975,8 +3039,12 @@ Result<> WasmBinaryReader::readInst() {
       return builder.visitCatchAll();
     case BinaryConsts::Delegate:
       return builder.visitDelegate(getU32LEB());
-    case BinaryConsts::RefNull:
-      return builder.makeRefNull(getHeapType());
+    case BinaryConsts::RefNull: {
+      auto [heapType, exactness] = getHeapType();
+      // Exactness is allowed but doesn't matter, since we always use the bottom
+      // heap type.
+      return builder.makeRefNull(heapType);
+    }
     case BinaryConsts::RefIsNull:
       return builder.makeRefIsNull();
     case BinaryConsts::RefFunc:
@@ -3501,7 +3569,7 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStructCmpxchg(type, field, order);
         }
       }
-      return Err{"unknown atomic operation"};
+      return Err{"unknown atomic operation " + std::to_string(op)};
     }
     case BinaryConsts::MiscPrefix: {
       auto op = getU32LEB();
@@ -3561,7 +3629,7 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStore(2, offset, align, Type::f32, mem);
         }
       }
-      return Err{"unknown misc operation"};
+      return Err{"unknown misc operation: " + std::to_string(op)};
     }
     case BinaryConsts::SIMDPrefix: {
       auto op = getU32LEB();
@@ -4198,7 +4266,7 @@ Result<> WasmBinaryReader::readInst() {
             Store64LaneVec128, offset, align, getLaneIndex(2), mem);
         }
       }
-      return Err{"unknown SIMD operation"};
+      return Err{"unknown SIMD operation " + std::to_string(op)};
     }
     case BinaryConsts::GCPrefix: {
       auto op = getU32LEB();
@@ -4211,20 +4279,36 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeI31Get(true);
         case BinaryConsts::I31GetU:
           return builder.makeI31Get(false);
-        case BinaryConsts::RefTest:
-          return builder.makeRefTest(Type(getHeapType(), NonNullable));
-        case BinaryConsts::RefTestNull:
-          return builder.makeRefTest(Type(getHeapType(), Nullable));
-        case BinaryConsts::RefCast:
-          return builder.makeRefCast(Type(getHeapType(), NonNullable));
-        case BinaryConsts::RefCastNull:
-          return builder.makeRefCast(Type(getHeapType(), Nullable));
+        case BinaryConsts::RefTest: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefTest(Type(heapType, NonNullable, exactness));
+        }
+        case BinaryConsts::RefTestNull: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefTest(Type(heapType, Nullable, exactness));
+        }
+        case BinaryConsts::RefCast: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefCast(Type(heapType, NonNullable, exactness));
+        }
+        case BinaryConsts::RefCastNull: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefCast(Type(heapType, Nullable, exactness));
+        }
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail: {
           auto flags = getInt8();
+          auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
+                           ? Nullable
+                           : NonNullable;
+          auto dstNull = (flags & BinaryConsts::BrOnCastFlag::OutputNullable)
+                           ? Nullable
+                           : NonNullable;
           auto label = getU32LEB();
-          auto in = Type(getHeapType(), (flags & 1) ? Nullable : NonNullable);
-          auto cast = Type(getHeapType(), (flags & 2) ? Nullable : NonNullable);
+          auto [srcType, srcExact] = getHeapType();
+          auto [dstType, dstExact] = getHeapType();
+          auto in = Type(srcType, srcNull, srcExact);
+          auto cast = Type(dstType, dstNull, dstExact);
           auto kind = op == BinaryConsts::BrOnCast ? BrOnCast : BrOnCastFail;
           return builder.makeBrOn(label, kind, in, cast);
         }
@@ -4327,44 +4411,43 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::ExternConvertAny:
           return builder.makeRefAs(ExternConvertAny);
       }
-      return Err{"unknown GC operation"};
+      return Err{"unknown GC operation " + std::to_string(op)};
     }
   }
-  return Err{"unknown operation"};
+  return Err{"unknown operation " + std::to_string(code)};
 }
 
 void WasmBinaryReader::readExports() {
   size_t num = getU32LEB();
   std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
-    auto curr = std::make_unique<Export>();
-    curr->name = getInlineString();
-    if (!names.emplace(curr->name).second) {
+    Name name = getInlineString();
+    if (!names.emplace(name).second) {
       throwError("duplicate export name");
     }
-    curr->kind = (ExternalKind)getU32LEB();
-    auto* ex = wasm.addExport(std::move(curr));
+    ExternalKind kind = (ExternalKind)getU32LEB();
+    std::variant<Name, HeapType> value;
     auto index = getU32LEB();
-    switch (ex->kind) {
+    switch (kind) {
       case ExternalKind::Function:
-        ex->value = getFunctionName(index);
-        continue;
-      case ExternalKind::Table:
-        ex->value = getTableName(index);
-        continue;
-      case ExternalKind::Memory:
-        ex->value = getMemoryName(index);
-        continue;
-      case ExternalKind::Global:
-        ex->value = getGlobalName(index);
-        continue;
-      case ExternalKind::Tag:
-        ex->value = getTagName(index);
-        continue;
-      case ExternalKind::Invalid:
+        value = getFunctionName(index);
         break;
+      case ExternalKind::Table:
+        value = getTableName(index);
+        break;
+      case ExternalKind::Memory:
+        value = getMemoryName(index);
+        break;
+      case ExternalKind::Global:
+        value = getGlobalName(index);
+        break;
+      case ExternalKind::Tag:
+        value = getTagName(index);
+        break;
+      case ExternalKind::Invalid:
+        throwError("invalid export kind");
     }
-    throwError("invalid export kind");
+    wasm.addExport(new Export(name, kind, value));
   }
 }
 
@@ -4896,6 +4979,9 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       }
     } else if (name == BinaryConsts::CustomSections::BulkMemoryOptFeature) {
       feature = FeatureSet::BulkMemoryOpt;
+    } else if (name ==
+               BinaryConsts::CustomSections::CallIndirectOverlongFeature) {
+      feature = FeatureSet::CallIndirectOverlong;
     } else if (name == BinaryConsts::CustomSections::ExceptionHandlingFeature) {
       feature = FeatureSet::ExceptionHandling;
     } else if (name == BinaryConsts::CustomSections::MutableGlobalsFeature) {
@@ -4930,6 +5016,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::SharedEverything;
     } else if (name == BinaryConsts::CustomSections::FP16Feature) {
       feature = FeatureSet::FP16;
+    } else if (name == BinaryConsts::CustomSections::CustomDescriptorsFeature) {
+      feature = FeatureSet::CustomDescriptors;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

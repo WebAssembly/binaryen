@@ -167,6 +167,8 @@ struct NullTypeParserCtx {
   Result<Index> getTypeIndex(Name) { return 1; }
   Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
 
+  HeapTypeT makeExact(HeapTypeT) { return Ok{}; }
+
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
 
@@ -180,8 +182,18 @@ struct NullTypeParserCtx {
 };
 
 template<typename Ctx> struct TypeParserCtx {
+  // Exactness is syntactically part of the heap type, but it is not part of the
+  // HeapType in our IR, so we have to store it separately.
+  struct HeapTypeT {
+    HeapType type;
+    Exactness exactness = Inexact;
+    // Implicitly convert to and from HeapType.
+    HeapTypeT(HeapType::BasicHeapType type) : type(type) {}
+    HeapTypeT(HeapType type) : type(type) {}
+    operator HeapType() { return type; }
+  };
+
   using IndexT = Index;
-  using HeapTypeT = HeapType;
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
   using ResultsT = std::vector<Type>;
@@ -251,6 +263,11 @@ template<typename Ctx> struct TypeParserCtx {
     return HeapTypes::nocont.getBasic(share);
   }
 
+  HeapTypeT makeExact(HeapTypeT type) {
+    type.exactness = Exact;
+    return type;
+  }
+
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
   TypeT makeF32() { return Type::f32; }
@@ -258,7 +275,7 @@ template<typename Ctx> struct TypeParserCtx {
   TypeT makeV128() { return Type::v128; }
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return Type(ht, nullability);
+    return Type(ht.type, nullability, ht.exactness);
   }
 
   std::vector<Type> makeTupleElemList() { return {}; }
@@ -977,7 +994,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addArrayType(ArrayT) {}
   void setOpen() {}
   void setShared() {}
-  Result<> addSubtype(HeapTypeT) { return Ok{}; }
+  void setDescribes(HeapTypeT) {}
+  void setDescriptor(HeapTypeT) {}
+  void setSupertype(HeapTypeT) {}
   void finishTypeDef(Name name, Index pos) {
     // TODO: type annotations
     typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
@@ -1116,7 +1135,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
       names(builder.size()) {}
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return builder.getTempRefType(ht, nullability);
+    return builder.getTempRefType(ht.type, nullability, ht.exactness);
   }
 
   TypeT makeTupleType(const std::vector<Type> types) {
@@ -1149,10 +1168,11 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setShared() { builder[index].setShared(); }
 
-  Result<> addSubtype(HeapTypeT super) {
-    builder[index].subTypeOf(super);
-    return Ok{};
-  }
+  void setDescribes(HeapTypeT desc) { builder[index].describes(desc); }
+
+  void setDescriptor(HeapTypeT desc) { builder[index].descriptor(desc); }
+
+  void setSupertype(HeapTypeT super) { builder[index].subTypeOf(super); }
 
   void finishTypeDef(Name name, Index pos) { names[index++].name = name; }
 
@@ -1224,7 +1244,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     }
 
     auto sig = Signature(Type(paramTypes), Type(resultTypes));
-    auto [it, inserted] = sigTypes.insert({sig, HeapType::func});
+    auto [it, inserted] = sigTypes.insert({sig, HeapType(HeapType::func)});
     if (inserted) {
       auto type = HeapType(sig);
       it->second = type;

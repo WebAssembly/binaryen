@@ -9,8 +9,7 @@
 ;; CHECK-NEXT: wasm-opt options:
 ;; CHECK-NEXT: -----------------
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                                   Output file (stdout if not
-;; CHECK-NEXT:                                                 specified)
+;; CHECK-NEXT:   --output,-o                                   Output file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                                Emit text instead of binary for
 ;; CHECK-NEXT:                                                 the output file
@@ -52,6 +51,9 @@
 ;; CHECK-NEXT:   --no-fuzz-oob                                 don't emit out-of-bounds
 ;; CHECK-NEXT:                                                 loads/stores/indirect calls when
 ;; CHECK-NEXT:                                                 fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-preserve-imports-exports               don't add imports and exports in
+;; CHECK-NEXT:                                                 -ttf mode
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
 ;; CHECK-NEXT:                                                 wrapper file that can run the
@@ -501,6 +503,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-gathering                            gathers wasm strings to globals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lifting                              lift string imports to wasm
+;; CHECK-NEXT:                                                 strings
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-lowering                             lowers wasm strings and
 ;; CHECK-NEXT:                                                 operations to imports
 ;; CHECK-NEXT:
@@ -560,6 +565,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
 ;; CHECK-NEXT:                                                 type fields where possible
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-refining-gufa                          apply more specific subtypes to
+;; CHECK-NEXT:                                                 type fields where possible
+;; CHECK-NEXT:                                                 (using GUFA)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
 ;; CHECK-NEXT:                                                 other optimizations
@@ -783,6 +792,12 @@
 ;; CHECK-NEXT:   --enable-fp16                                 Enable float 16 operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-fp16                                Disable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-custom-descriptors                   Enable custom descriptors (RTTs)
+;; CHECK-NEXT:                                                 and exact references
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-custom-descriptors                  Disable custom descriptors
+;; CHECK-NEXT:                                                 (RTTs) and exact references
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

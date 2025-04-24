@@ -17,7 +17,7 @@
  ;; CHECK:      (elem declare func $2 $3)
 
  ;; CHECK:      (func $0 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -41,7 +41,7 @@
   (nop)
  )
  ;; CHECK:      (func $1 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -126,7 +126,7 @@
  ;; CHECK:      (elem declare func $2 $3)
 
  ;; CHECK:      (func $0 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -150,7 +150,7 @@
   (nop)
  )
  ;; CHECK:      (func $1 (type $type$0)
- ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
+ ;; CHECK-NEXT:  (return_call $byn$mgfn-shared$0
  ;; CHECK-NEXT:   (ref.func $3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

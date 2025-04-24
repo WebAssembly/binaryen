@@ -181,30 +181,25 @@ struct GenerateGlobalEffects : public Pass {
       }
     }
 
-    // Generate the final data structure, starting from a blank slate where
-    // nothing is known.
-    auto& funcEffectsMap = getPassOptions().funcEffectsMap;
-    funcEffectsMap.reset();
-
+    // Generate the final data, starting from a blank slate where nothing is
+    // known.
     for (auto& [func, info] : analysis.map) {
+      func->effects.reset();
       if (!info.effects) {
-        // Add no entry to funcEffectsMap, since nothing is known.
         continue;
       }
 
-      // Only allocate a new funcEffectsMap here when we actually have data for
-      // it (which might make later effect computation slightly faster, to
-      // quickly skip the funcEffectsMap code path).
-      if (!funcEffectsMap) {
-        funcEffectsMap = std::make_shared<FuncEffectsMap>();
-      }
-      funcEffectsMap->emplace(func->name, *info.effects);
+      func->effects = std::make_shared<EffectAnalyzer>(*info.effects);
     }
   }
 };
 
 struct DiscardGlobalEffects : public Pass {
-  void run(Module* module) override { getPassOptions().funcEffectsMap.reset(); }
+  void run(Module* module) override {
+    for (auto& func : module->functions) {
+      func->effects.reset();
+    }
+  }
 };
 
 Pass* createGenerateGlobalEffectsPass() { return new GenerateGlobalEffects(); }

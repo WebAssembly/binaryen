@@ -31,6 +31,11 @@ enum WebLimitations : uint32_t {
   MaxFunctionParams = 1000
 };
 
+// Web limits allow up to 1000 function parameters, but other implementations,
+// such as those on the JVM, only allow up to 255. Do not allow optimizations to
+// introduce functions with more than this many parameters.
+static constexpr int MaxSyntheticFunctionParams = 255;
+
 } // namespace wasm
 
 #endif // wasm_wasm_limits_h

@@ -226,6 +226,10 @@ function test_core() {
       temp13 = makeInt32(10), temp14 = makeInt32(11),
       temp15 = makeInt32(110), temp16 = makeInt64(111);
 
+  // Create a function to reference.
+  module.addFunction("foobar", iIfF, binaryen.i32, [], module.i32.const(0));
+  var foobarType = binaryen.Function(module.getFunction("foobar")).getType();
+
   var valueList = [
     // Unary
     module.i32.clz(module.i32.const(-10)),
@@ -597,8 +601,8 @@ function test_core() {
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
     module.ref.is_null(module.ref.null(binaryen.funcref)),
-    module.ref.is_null(module.ref.func("kitchen()sinker", binaryen.funcref)),
-    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker", binaryen.funcref)),
+    module.ref.is_null(module.ref.func("foobar", foobarType)),
+    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("foobar", foobarType)),
 
     // GC
     module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
@@ -756,6 +760,7 @@ function test_core() {
   // Start function. One per module
   var starter = module.addFunction("starter", binaryen.none, binaryen.none, [], module.nop());
   module.setStart(starter);
+  assert(module.getStart() == starter);
 
   var features = binaryen.Features.All;
   module.setFeatures(features);

@@ -153,10 +153,7 @@ struct GUFAOptimizer
     if (Properties::getMemoryOrder(curr) != MemoryOrder::Unordered) {
       // This load might synchronize with some store, and if we replaced the
       // load with a constant or with a load from a global, it would not
-      // synchronize with that store anymore. Since we know what value the store
-      // must write, and we know it is the same as every other store to the same
-      // location, it's possible that optimizing here would be allowable, but
-      // for now be conservative and do not optimize.
+      // synchronize with that store anymore.
       return;
     }
 
@@ -269,6 +266,9 @@ struct GUFAOptimizer
   void visitRefCast(RefCast* curr) {
     auto currType = curr->type;
     auto inferredType = getContents(curr).getType();
+    // Do not refine to an invalid exact cast.
+    inferredType =
+      inferredType.withInexactIfNoCustomDescs(getModule()->features);
     if (inferredType.isRef() && inferredType != currType &&
         Type::isSubType(inferredType, currType)) {
       // We have inferred that this will only contain something of a more
@@ -377,6 +377,9 @@ struct GUFAOptimizer
         }
 
         auto oracleType = parent.getContents(curr).getType();
+        // Exact casts are only allowed when custom descriptors is enabled.
+        oracleType =
+          oracleType.withInexactIfNoCustomDescs(getModule()->features);
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));

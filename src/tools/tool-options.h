@@ -106,6 +106,8 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::StackSwitching, "stack switching")
       .addFeature(FeatureSet::SharedEverything, "shared-everything threads")
       .addFeature(FeatureSet::FP16, "float 16 operations")
+      .addFeature(FeatureSet::CustomDescriptors,
+                  "custom descriptors (RTTs) and exact references")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

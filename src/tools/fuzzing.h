@@ -128,6 +128,9 @@ public:
   void pickPasses(OptimizationOptions& options);
   void setAllowMemory(bool allowMemory_) { allowMemory = allowMemory_; }
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
+  void setPreserveImportsAndExports(bool preserveImportsAndExports_) {
+    preserveImportsAndExports = preserveImportsAndExports_;
+  }
 
   void build();
 
@@ -146,6 +149,13 @@ private:
   // of bounds (which traps in wasm, and is undefined behavior in C).
   bool allowOOB = true;
 
+  // Whether we preserve imports and exports. Normally we add imports (for
+  // logging and other useful functionality for testing), and add exports of
+  // functions as we create them. With this set, we add neither imports nor
+  // exports, which is useful if the tool using us only wants us to mutate an
+  // existing testcase (using initial-content).
+  bool preserveImportsAndExports = false;
+
   // Whether we allow the fuzzer to add unreachable code when generating changes
   // to existing code. This is randomized during startup, but could be an option
   // like the above options eventually if we find that useful.
@@ -161,8 +171,10 @@ private:
   Name HANG_LIMIT_GLOBAL;
 
   Name funcrefTableName;
+  Name exnrefTableName;
 
   std::unordered_map<Type, Name> logImportNames;
+  Name hashMemoryName;
   Name throwImportName;
   Name tableGetImportName;
   Name tableSetImportName;
@@ -200,6 +212,9 @@ private:
 
   Index numAddedFunctions = 0;
 
+  // The name of an empty tag.
+  Name trivialTag;
+
   // RAII helper for managing the state used to create a single function.
   struct FunctionCreationContext {
     TranslateToFuzzReader& parent;
@@ -214,10 +229,7 @@ private:
     // type => list of locals with that type
     std::unordered_map<Type, std::vector<Index>> typeLocals;
 
-    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
-      : parent(parent), func(func) {
-      parent.funcContext = this;
-    }
+    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func);
 
     ~FunctionCreationContext();
 
@@ -329,8 +341,14 @@ private:
   Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
-  // Function creation
+  // Function operations. The main processFunctions() loop will call addFunction
+  // as well as modFunction().
+  void processFunctions();
+  // Add a new function.
   Function* addFunction();
+  // Modify an existing function.
+  void modFunction(Function* func);
+
   void addHangLimitChecks(Function* func);
 
   // Recombination and mutation
@@ -343,6 +361,10 @@ private:
   // instruction for EH is supposed to exist only at the beginning of a 'catch'
   // block, so it shouldn't be moved around or deleted freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
+    // TODO: Remove this once we better support exact references.
+    if (curr->type.isExact()) {
+      return false;
+    }
     return curr->type.isDefaultable() &&
            !EHUtils::containsValidDanglingPop(curr);
   }
@@ -462,6 +484,8 @@ private:
   Expression* makeSIMDShift();
   Expression* makeSIMDLoad();
   Expression* makeBulkMemory(Type type);
+  Expression* makeTableGet(Type type);
+  Expression* makeTableSet(Type type);
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
@@ -502,7 +526,9 @@ private:
   Type getLoggableType();
   bool isLoggableType(Type type);
   Nullability getNullability();
+  Exactness getExactness();
   Nullability getSubType(Nullability nullability);
+  Exactness getSubType(Exactness exactness);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
   Nullability getSuperType(Nullability nullability);

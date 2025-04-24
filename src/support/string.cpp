@@ -432,4 +432,59 @@ bool isUTF8(std::string_view str) {
   return true;
 }
 
+std::ostream& unescapeUTF8JSONtoWTF16(std::ostream& os, const char* str) {
+  size_t i = 0;
+  while (str[i]) {
+    if (str[i] != '\\') {
+      // Normal character.
+      writeWTF16CodePoint(os, str[i]);
+      i++;
+      continue;
+    }
+
+    // Escaped character.
+    char c = str[i + 1];
+    if (c != 'u') {
+      switch (c) {
+        case 'b':
+          c = '\b';
+          break;
+        case 'f':
+          c = '\f';
+          break;
+        case 'n':
+          c = '\n';
+          break;
+        case 'r':
+          c = '\r';
+          break;
+        case 't':
+          c = '\t';
+          break;
+        case 0:
+          Fatal() << "Invalid escaped JSON ends in slash";
+      }
+      writeWTF16CodePoint(os, c);
+      i += 2;
+      continue;
+    }
+
+    // \uXXXX, 4-digit hex number. First, read the hex.
+    unsigned int x;
+    std::stringstream unhex;
+    if (!str[i + 2] || !str[i + 3] || !str[i + 4] || !str[i + 5]) {
+      Fatal() << "Invalid escaped JSON \\uXXXX";
+    }
+    unhex << std::hex << std::string_view(str + i + 2, 4);
+    unhex >> x;
+
+    // Write out the results.
+    writeWTF16CodePoint(os, x);
+
+    i += 6;
+  }
+
+  return os;
+}
+
 } // namespace wasm::String

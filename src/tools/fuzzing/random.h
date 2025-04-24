@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "wasm-features.h"
+#include "wasm-type.h"
 
 namespace wasm {
 
@@ -35,7 +36,7 @@ class Random {
   bool finishedInput = false;
   // After we finish the input, we start going through it again, but xoring
   // so it's not identical.
-  int xorFactor = 0;
+  unsigned int xorFactor = 0;
   // Features used for picking among FeatureOptions.
   FeatureSet features;
 
@@ -53,8 +54,9 @@ public:
   double getDouble();
 
   // Choose an integer value in [0, x). This doesn't use a perfectly uniform
-  // distribution, but it's fast and reasonable.
+  // distribution, but it's fast and reasonable. upTo(0) is defined as 0.
   uint32_t upTo(uint32_t x);
+  // Returns true with probability 1 in x. oneIn(0) is defined as true.
   bool oneIn(uint32_t x) { return upTo(x) == 0; }
 
   // Apply upTo twice, generating a skewed distribution towards
@@ -62,6 +64,16 @@ public:
   uint32_t upToSquared(uint32_t x) { return upTo(upTo(x)); }
 
   bool finished() { return finishedInput; }
+
+  // How many bytes of data remain to be used.
+  size_t remaining() {
+    if (finishedInput) {
+      // We finished it and are cycling through it again (using xorFactor to try
+      // to improve the entropy).
+      return 0;
+    }
+    return bytes.size() - pos;
+  }
 
   // Pick from a vector-like container
   template<typename T> const typename T::value_type& pick(const T& vec) {
@@ -104,6 +116,23 @@ public:
 #endif
 
   template<typename T> struct FeatureOptions {
+    FeatureOptions<T>& add(HeapType::BasicHeapType option) {
+      // Using FeatureOptions with BasicHeapTypes is risky as BasicHeapType
+      // is an enum, which can convert into FeatureSet implicitly (which would
+      // then be ambiguous with add(FeatureSet) below). Use HeapType instead.
+      //
+      // Use a weird static assert on something other than |false| because of
+      // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2593r1.html
+      // (older compilers may error without this workaround).
+      static_assert(sizeof(T) == 0);
+    }
+
+    // An option without a feature is applied in all cases.
+    FeatureOptions<T>& add(T option) {
+      options[FeatureSet::MVP].push_back(option);
+      return *this;
+    }
+
     template<typename... Ts>
     FeatureOptions<T>& add(FeatureSet feature, T option, Ts... rest) {
       options[feature].push_back(option);

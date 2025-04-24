@@ -1121,7 +1121,7 @@ struct Reducer
         }
       }
       void visitExport(Export* curr) {
-        if (names.count(curr->value)) {
+        if (auto* name = curr->getInternalName(); name && names.count(*name)) {
           exportsToRemove.push_back(curr->name);
         }
       }

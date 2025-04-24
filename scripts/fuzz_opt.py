@@ -151,8 +151,14 @@ def randomize_feature_opts():
 
         # The shared-everything feature is new and we want to fuzz it, but it
         # also currently disables fuzzing V8, so disable it most of the time.
+        # Same with custom descriptors and strings - all these cannot be run in
+        # V8 for now. Relaxed SIMD's nondeterminism disables much but not all of
+        # our V8 fuzzing, so avoid it too.
         if random.random() < 0.9:
             FEATURE_OPTS.append('--disable-shared-everything')
+            FEATURE_OPTS.append('--disable-custom-descriptors')
+            FEATURE_OPTS.append('--disable-strings')
+            FEATURE_OPTS.append('--disable-relaxed-simd')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -661,16 +667,23 @@ def run_bynterp(wasm, args):
         del os.environ['BINARYEN_MAX_INTERPRETER_DEPTH']
 
 
-# Enable even more staged things than V8_OPTS. V8_OPTS are the flags we want to
-# use when testing, and enable all features we test against, while --future may
-# also enable non-feature things like new JITs and such (which are never needed
-# for our normal tests, but do make sense to fuzz for V8's sake). We do this
-# randomly for more variety.
+# Enable even more things than V8_OPTS. V8_OPTS are the flags we want to use
+# when testing, on our fixed test suite, but when fuzzing we may want more.
 def get_v8_extra_flags():
-    return ['--future'] if random.random() < 0.5 else []
+    # It is important to use the --fuzzing flag because it does things like
+    # enable mixed old and new EH (which is an issue since
+    # https://github.com/WebAssembly/exception-handling/issues/344 )
+    flags = ['--fuzzing']
+
+    # Sometimes add --future, which may enable new JITs and such, which is good
+    # to fuzz for V8's sake.
+    if random.random() < 0.5:
+        flags += ['--future']
+
+    return flags
 
 
-V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
+V8_LIFTOFF_ARGS = ['--liftoff']
 
 
 # Default to running with liftoff enabled, because we need to pick either
@@ -801,7 +814,7 @@ class CompareVMs(TestCaseHandler):
             def can_compare_to_self(self):
                 return True
 
-            def can_compare_to_others(self):
+            def can_compare_to_other(self, other):
                 return True
 
         class D8:
@@ -813,18 +826,24 @@ class CompareVMs(TestCaseHandler):
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
                 # shared-everything enabled, so do not fuzz shared-everything
-                # for now.
-                return all_disallowed(['shared-everything'])
+                # for now. It also does not yet support custom descriptors, nor
+                # strings.
+                return all_disallowed(['shared-everything', 'custom-descriptors', 'strings'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
                 # can compare to themselves after opts in that case.
                 return not NANS
 
-            def can_compare_to_others(self):
+            def can_compare_to_other(self, other):
+                # Relaxed SIMD allows different behavior between VMs, so only
+                # allow comparisons to other d8 variants if it is enabled.
+                if not all_disallowed(['relaxed-simd']) and not other.name.startswith('d8'):
+                    return False
+
                 # If not legalized, the JS will fail immediately, so no point to
                 # compare to others.
-                return LEGALIZE and not NANS
+                return self.can_compare_to_self() and LEGALIZE
 
         class D8Liftoff(D8):
             name = 'd8_liftoff'
@@ -836,7 +855,10 @@ class CompareVMs(TestCaseHandler):
             name = 'd8_turboshaft'
 
             def run(self, wasm):
-                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=['--no-liftoff', '--turboshaft-wasm', '--turboshaft-wasm-instruction-selection-staged'])
+                flags = ['--no-liftoff']
+                if random.random() < 0.5:
+                    flags += ['--no-wasm-generic-wrapper']
+                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=flags)
 
         class Wasm2C:
             name = 'wasm2c'
@@ -864,7 +886,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
+                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'custom-descriptors'])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -878,7 +900,7 @@ class CompareVMs(TestCaseHandler):
                 # expects, but that's not quite what C has
                 return not NANS
 
-            def can_compare_to_others(self):
+            def can_compare_to_other(self, other):
                 # C won't trap on OOB, and NaNs can differ from wasm VMs
                 return not OOB and not NANS
 
@@ -925,7 +947,7 @@ class CompareVMs(TestCaseHandler):
                 return super(Wasm2C2Wasm, self).can_run(wasm) and self.has_emcc and \
                     os.path.getsize(wasm) <= INPUT_SIZE_MEAN
 
-            def can_compare_to_others(self):
+            def can_compare_to_other(self, other):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
@@ -953,10 +975,12 @@ class CompareVMs(TestCaseHandler):
         ignored_before = ignored_vm_runs
 
         # vm_results will map vms to their results
+        relevant_vms = []
         vm_results = {}
         for vm in self.vms:
             if vm.can_run(wasm):
                 print(f'[CompareVMs] running {vm.name}')
+                relevant_vms.append(vm)
                 vm_results[vm] = fix_output(vm.run(wasm))
 
                 # If the binaryen interpreter hit a host limitation then do not
@@ -977,13 +1001,13 @@ class CompareVMs(TestCaseHandler):
                     return vm_results
 
         # compare between the vms on this specific input
-        first_vm = None
-        for vm in vm_results.keys():
-            if vm.can_compare_to_others():
-                if first_vm is None:
-                    first_vm = vm
-                else:
-                    compare_between_vms(vm_results[first_vm], vm_results[vm], 'CompareVMs between VMs: ' + first_vm.name + ' and ' + vm.name)
+        num_vms = len(relevant_vms)
+        for i in range(0, num_vms):
+            for j in range(i + 1, num_vms):
+                vm1 = relevant_vms[i]
+                vm2 = relevant_vms[j]
+                if vm1.can_compare_to_other(vm2) and vm2.can_compare_to_other(vm1):
+                    compare_between_vms(vm_results[vm1], vm_results[vm2], 'CompareVMs between VMs: ' + vm1.name + ' and ' + vm2.name)
 
         return vm_results
 
@@ -1165,7 +1189,7 @@ class Wasm2JS(TestCaseHandler):
         # implement wasm suspending using JS async/await.
         if JSPI:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory', 'memory64', 'custom-descriptors'])
 
 
 # given a wasm, find all the exports of particular kinds (for example, kinds
@@ -1571,7 +1595,7 @@ class Split(TestCaseHandler):
             return False
 
         # see D8.can_run
-        return all_disallowed(['shared-everything'])
+        return all_disallowed(['shared-everything', 'custom-descriptors', 'strings'])
 
 
 # Check that the text format round-trips without error.
@@ -1603,7 +1627,11 @@ INSTANTIATE_ERROR = 'exception thrown: failed to instantiate module'
 class ClusterFuzz(TestCaseHandler):
     frequency = 0.1
 
-    def handle(self, wasm):
+    # Use handle_pair over handle because we don't use these wasm files anyhow,
+    # we generate our own using run.py. If we used handle, we'd be called twice
+    # for each iteration (once for each of the wasm files we ignore), which is
+    # confusing.
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
         self.ensure()
 
         # run.py() should emit these two files. Delete them to make sure they
@@ -1627,16 +1655,23 @@ class ClusterFuzz(TestCaseHandler):
         assert os.path.exists(fuzz_file)
         assert os.path.exists(flags_file)
 
+        # We'll use the fuzz file a few times below in commands.
+        fuzz_file = os.path.abspath(fuzz_file)
+
         # Run the testcase in V8, similarly to how ClusterFuzz does.
         cmd = [shared.V8]
         # The flags are given in the flags file - we do *not* use our normal
         # flags here!
         with open(flags_file, 'r') as f:
             flags = f.read()
-        cmd.append(flags)
+        cmd += flags.split(' ')
+        # Get V8's extra fuzzing flags, the same as the ClusterFuzz runner does
+        # (as can be seen from the testcases having --fuzzing and a lot of other
+        # flags as well).
+        cmd += get_v8_extra_flags()
         # Run the fuzz file, which contains a modified fuzz_shell.js - we do
         # *not* run fuzz_shell.js normally.
-        cmd.append(os.path.abspath(fuzz_file))
+        cmd.append(fuzz_file)
         # No wasm file needs to be provided: it is hardcoded into the JS. Note
         # that we use run_vm(), which will ignore known issues in our output and
         # in V8. Those issues may cause V8 to e.g. reject a binary we emit that
@@ -1644,13 +1679,19 @@ class ClusterFuzz(TestCaseHandler):
         # a crash).
         output = run_vm(cmd)
 
-        # Verify that we called something. The fuzzer should always emit at
-        # least one exported function (unless we've decided to ignore the entire
+        # Verify that we called something, if the fuzzer emitted a func export
+        # (rarely, none might exist), unless we've decided to ignore the entire
         # run, or if the wasm errored during instantiation, which can happen due
-        # to a testcase with a segment out of bounds, say).
+        # to a testcase with a segment out of bounds, say.
         if output != IGNORE and not output.startswith(INSTANTIATE_ERROR):
-
-            assert FUZZ_EXEC_CALL_PREFIX in output
+            # Do the work to find if there were function exports: extract the
+            # wasm from the JS, and process it.
+            run([sys.executable,
+                 in_binaryen('scripts', 'clusterfuzz', 'extract_wasms.py'),
+                 fuzz_file,
+                 'extracted'])
+            if get_exports('extracted.0.wasm', ['func']):
+                assert FUZZ_EXEC_CALL_PREFIX in output
 
     def ensure(self):
         # The first time we actually run, set things up: make a bundle like the
@@ -1672,6 +1713,13 @@ class ClusterFuzz(TestCaseHandler):
         tar = tarfile.open(bundle, "r:gz")
         tar.extractall(path=self.clusterfuzz_dir)
         tar.close()
+
+    def can_run_on_wasm(self, wasm):
+        # Do not run ClusterFuzz in the first seconds of fuzzing: the first time
+        # it runs is very slow (to build the bundle), which is annoying when you
+        # are just starting the fuzzer and looking for any obvious problems.
+        seconds = 30
+        return time.time() - start_time > seconds
 
 
 # Tests linking two wasm files at runtime, and that optimizations do not break
@@ -1718,7 +1766,10 @@ class Two(TestCaseHandler):
         # Make sure that fuzz_shell.js actually executed all exports from both
         # wasm files.
         exports = get_exports(wasm, ['func']) + get_exports(second_wasm, ['func'])
-        assert output.count(FUZZ_EXEC_CALL_PREFIX) == len(exports)
+        calls_in_output = output.count(FUZZ_EXEC_CALL_PREFIX)
+        if calls_in_output == 0:
+            print(f'warning: no calls in output. output:\n{output}')
+        assert calls_in_output == len(exports)
 
         output = fix_output(output)
 
@@ -1743,7 +1794,57 @@ class Two(TestCaseHandler):
         # mode. We also cannot run shared-everything code in d8 yet. We also
         # cannot compare if there are NaNs (as optimizations can lead to
         # different outputs).
-        return not CLOSED_WORLD and all_disallowed(['shared-everything']) and not NANS
+        if CLOSED_WORLD:
+            return False
+        if NANS:
+            return False
+        return all_disallowed(['shared-everything', 'custom-descriptors', 'strings'])
+
+
+# Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
+class PreserveImportsExports(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        # We will later verify that no imports or exports changed, by comparing
+        # to the unprocessed original text.
+        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
+
+        # We leave if the module has (ref exn) in struct fields (because we have
+        # no way to generate an exn in a non-function context, and if we picked
+        # that struct for a global, we'd end up needing a (ref exn) in the
+        # global scope, which is impossible). The fuzzer is designed to be
+        # careful not to emit that in testcases, but after the optimizer runs,
+        # we may end up with struct fields getting refined to that, so we need
+        # this extra check (which should be hit very rarely).
+        structs = [line for line in original.split('\n') if '(struct ' in line]
+        if '(ref exn)' in '\n'.join(structs):
+            note_ignored_vm_run('has non-nullable exn in struct')
+            return
+
+        # Generate some random input data.
+        data = abspath('preserve_input.dat')
+        make_random_input(random_size(), data)
+
+        # Process the existing wasm file.
+        processed = run([in_bin('wasm-opt'), data] + FEATURE_OPTS + [
+            '-ttf',
+            '--fuzz-preserve-imports-exports',
+            '--initial-fuzz=' + wasm,
+            '--print',
+        ])
+
+        def get_relevant_lines(wat):
+            # Imports and exports are relevant.
+            lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
+
+            # Ignore type names, which may vary (e.g. one file may have $5 and
+            # another may call the same type $17).
+            lines = [re.sub(r'[(]type [$][0-9a-zA-Z_$]+[)]', '', line) for line in lines]
+
+            return '\n'.join(lines)
+
+        compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
 # The global list of all test case handlers
@@ -1760,6 +1861,7 @@ testcase_handlers = [
     RoundtripText(),
     ClusterFuzz(),
     Two(),
+    PreserveImportsExports(),
 ]
 
 
@@ -1940,6 +2042,7 @@ opt_choices = [
     ("--tuple-optimization",),
     ("--type-finalizing",),
     ("--type-refining",),
+    ("--type-refining-gufa",),
     ("--type-merging",),
     ("--type-ssa",),
     ("--type-unfinalizing",),
@@ -1949,6 +2052,7 @@ opt_choices = [
 
 # TODO: Fix these passes so that they still work without --closed-world!
 requires_closed_world = {("--type-refining",),
+                         ("--type-refining-gufa",),
                          ("--signature-pruning",),
                          ("--signature-refining",),
                          ("--gto",),
@@ -2055,6 +2159,8 @@ if not shared.V8:
     print('The v8 shell, d8, must be in the path')
     sys.exit(1)
 
+start_time = time.time()
+
 if __name__ == '__main__':
     # if we are given a seed, run exactly that one testcase. otherwise,
     # run new ones until we fail
@@ -2080,7 +2186,6 @@ if __name__ == '__main__':
     total_wasm_size = 0
     total_input_size = 0
     total_input_size_squares = 0
-    start_time = time.time()
     while True:
         counter += 1
         if given_seed is not None:

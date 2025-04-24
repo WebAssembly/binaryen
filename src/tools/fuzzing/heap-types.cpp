@@ -424,6 +424,9 @@ struct HeapTypeGeneratorImpl {
           return HeapTypes::none.getBasic(share);
         }
       }
+      // If we had no candidates then the oneIn() above us should have returned
+      // true, since oneIn(0) => true.
+      assert(!candidates.empty());
       return rand.pick(candidates);
     } else {
       // This is not a constructed type, so it must be a basic type.
@@ -510,7 +513,7 @@ struct HeapTypeGeneratorImpl {
         candidates.push_back(HeapTypes::any.getBasic(share));
         break;
       case HeapType::string:
-        candidates.push_back(HeapTypes::any.getBasic(share));
+        candidates.push_back(HeapTypes::ext.getBasic(share));
         break;
       case HeapType::none:
         return pickSubAny(share);

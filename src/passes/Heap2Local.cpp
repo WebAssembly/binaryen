@@ -857,13 +857,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       builder.makeLocalSet(localIndexes[curr->index], curr->value));
 
     // This struct.set cannot possibly synchronize with other threads via the
-    // read value, since the struct never escapes this function. But if the set
-    // is sequentially consistent, it still participates in the global order of
-    // sequentially consistent operations. Preserve this effect on the global
-    // ordering by inserting a fence.
-    if (curr->order == MemoryOrder::SeqCst) {
-      replacement = builder.blockify(replacement, builder.makeAtomicFence());
-    }
+    // read value, since the struct never escapes this function, so we don't
+    // need a fence.
     replaceCurrent(replacement);
   }
 
@@ -897,11 +892,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // for other opts to handle.
     value = Bits::makePackedFieldGet(value, field, curr->signed_, wasm);
     auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-    // See the note on seqcst struct.set. It is ok to insert the fence before
-    // the value here since we know the value is just a local.get.
-    if (curr->order == MemoryOrder::SeqCst) {
-      replacement = builder.blockify(replacement, builder.makeAtomicFence());
-    }
+    // Just like optimized struct.set, this struct.get cannot synchronize with
+    // anything, so we don't need a fence.
     replaceCurrent(builder.blockify(replacement, value));
   }
 
@@ -964,11 +956,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
     block->list.push_back(builder.makeLocalSet(local, newVal));
 
-    // See the notes on seqcst struct.get and struct.set.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
-
     // Unstash the old value.
     block->list.push_back(builder.makeLocalGet(oldScratch, type));
     block->type = type;
@@ -1020,11 +1007,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
                      builder.makeLocalSet(
                        local, builder.makeLocalGet(replacementScratch, type))));
 
-    // See the notes on seqcst struct.get and struct.set.
-    if (curr->order == MemoryOrder::SeqCst) {
-      block->list.push_back(builder.makeAtomicFence());
-    }
-
     // Unstash the old value.
     block->list.push_back(builder.makeLocalGet(oldScratch, type));
     block->type = type;
@@ -1047,8 +1029,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
   // The type of the struct we are changing to (nullable and non-nullable
   // variations).
-  Type nullStruct;
-  Type nonNullStruct;
+  HeapType structType;
 
   Array2Struct(Expression* allocation,
                EscapeAnalyzer& analyzer,
@@ -1066,7 +1047,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     for (Index i = 0; i < numFields; i++) {
       fields.push_back(element);
     }
-    HeapType structType = Struct(fields);
+    structType = Struct(fields);
 
     // Generate a StructNew to replace the ArrayNew*.
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
@@ -1115,10 +1096,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // the array type (which can be the case of an array of arrays). But that is
     // fine to do as the array.get is rewritten to a struct.get which is then
     // lowered away to locals anyhow.
-    auto nullArray = Type(arrayType, Nullable);
-    auto nonNullArray = Type(arrayType, NonNullable);
-    nullStruct = Type(structType, Nullable);
-    nonNullStruct = Type(structType, NonNullable);
     for (auto& [reached, _] : analyzer.reachedInteractions) {
       if (reached->is<RefCast>()) {
         // Casts must be handled later: We need to see the old type, and to
@@ -1126,19 +1103,18 @@ struct Array2Struct : PostWalker<Array2Struct> {
         continue;
       }
 
-      // We must check subtyping here because the allocation may be upcast as it
-      // flows around. If we do see such upcasting then we are refining here and
-      // must refinalize.
-      if (Type::isSubType(nullArray, reached->type)) {
-        if (nullArray != reached->type) {
+      if (!reached->type.isRef()) {
+        continue;
+      }
+
+      // The allocation type may be generalized as it flows around. If we do see
+      // such generalizing, then we are refining here and must refinalize.
+      auto reachedHeapType = reached->type.getHeapType();
+      if (HeapType::isSubType(arrayType, reachedHeapType)) {
+        if (arrayType != reachedHeapType) {
           refinalize = true;
         }
-        reached->type = nullStruct;
-      } else if (Type::isSubType(nonNullArray, reached->type)) {
-        if (nonNullArray != reached->type) {
-          refinalize = true;
-        }
-        reached->type = nonNullStruct;
+        reached->type = Type(structType, reached->type.getNullability());
       }
     }
 
@@ -1266,7 +1242,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
       // type here unconditionally, since we know the allocation flows through
       // here, and anyhow we will be removing the reference during Struct2Local,
       // later.)
-      curr->type = nonNullStruct;
+      curr->type = Type(structType, NonNullable);
     }
 
     // Regardless of how we altered the type here, refinalize.

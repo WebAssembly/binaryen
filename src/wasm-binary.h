@@ -304,6 +304,11 @@ enum SegmentFlag {
   UsesExpressions = 1 << 2
 };
 
+enum BrOnCastFlag {
+  InputNullable = 1 << 0,
+  OutputNullable = 1 << 1,
+};
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
@@ -341,9 +346,13 @@ enum EncodedType {
   Array = 0x5e,
   Sub = 0x50,
   SubFinal = 0x4f,
-  SharedDef = 0x65,
-  Shared = -0x1b, // Also 0x65 as an SLEB128
+  Shared = 0x65,
+  SharedLEB = -0x1b, // Also 0x65 as an SLEB128
+  Exact = 0x62,
+  ExactLEB = -0x1e, // Also 0x62 as an SLEB128
   Rec = 0x4e,
+  Descriptor = 0x4d,
+  Describes = 0x4c,
   // block_type
   Empty = -0x40, // 0x40
 };
@@ -398,6 +407,7 @@ extern const char* SharedEverythingFeature;
 extern const char* FP16Feature;
 extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
+extern const char* CustomDescriptorsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1365,7 +1375,7 @@ public:
 
   // Writes an arbitrary heap type, which may be indexed or one of the
   // basic types like funcref.
-  void writeHeapType(HeapType type);
+  void writeHeapType(HeapType type, Exactness exact);
   // Writes an indexed heap type. Note that this is encoded differently than a
   // general heap type because it does not allow negative values for basic heap
   // types.
@@ -1459,7 +1469,7 @@ public:
   WasmBinaryReader(Module& wasm,
                    FeatureSet features,
                    const std::vector<char>& input,
-                   const std::vector<char>& sourceMap = defaultEmptySourceMap);
+                   std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
@@ -1496,7 +1506,7 @@ public:
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int code);
-  HeapType getHeapType();
+  std::pair<HeapType, Exactness> getHeapType();
   HeapType getIndexedHeapType();
 
   Type getConcreteType();

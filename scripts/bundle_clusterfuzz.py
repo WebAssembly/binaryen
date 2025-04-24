@@ -70,6 +70,7 @@ After uploading to ClusterFuzz, you can wait a while for it to run, and then:
      up). Note that these may take longer to show up than 1 and 2.
 '''
 
+import glob
 import os
 import subprocess
 import sys
@@ -106,6 +107,8 @@ features = [
     '-all',
     '--disable-shared-everything',
     '--disable-fp16',
+    '--disable-custom-descriptors',
+    '--disable-strings',
 ]
 
 with tarfile.open(output_file, "w:gz") as tar:
@@ -133,11 +136,15 @@ with tarfile.open(output_file, "w:gz") as tar:
             tar.add(libbinaryen, arcname=f'lib/libbinaryen{suffix}')
 
             # The emsdk build also includes some more necessary files.
-            for name in [f'libc++{suffix}', f'libc++{suffix}.2', f'libc++{suffix}.2.0']:
-                path = os.path.join(binaryen_lib, name)
-                if os.path.exists(path):
-                    print(f'  ......... : {path}')
-                    tar.add(path, arcname=f'lib/{name}')
+            for lib in ['libc++', 'libmimalloc']:
+                # Include the main name plus any NAME.2.0 and such.
+                # TODO: Using ldd/otool would be better, to find the actual
+                #       dependencies of libbinaryen. Using glob like this will
+                #       pick up stale contents in the directory.
+                full_lib = os.path.join(binaryen_lib, lib) + suffix
+                for path in glob.glob(f'{full_lib}*'):
+                    print(f'  ............. : {path}')
+                    tar.add(path, arcname=f'lib/{os.path.basename(path)}')
 
     # Add tests we will use as initial content under initial/. We put all the
     # tests from the test suite there.

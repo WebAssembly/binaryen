@@ -1006,3 +1006,161 @@
     (loop (nop))
   )
 )
+
+;; Test that no attempt is made to outline overlapping repeat substrings
+;; In the below module, the Outlining optimization identifies two substrings
+;; that each repeat twice. During filtering, one of the repeat substrings is
+;; found to have an overlapping interval with itself. Because an interval is
+;; dropped, only one of the substrings repeats enough times (minimum twice)
+;; to warrant outlining.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    i32.const 0 ;; Begin substring 1
+    drop
+    i32.const 1
+    drop
+    i32.const 2
+    drop
+    i32.const 3
+    drop        ;; End substring 1
+    i32.const 0 ;; Begin substring 1 repeat
+    drop
+    i32.const 1
+    drop
+    i32.const 2
+    drop
+    i32.const 3
+    drop        ;; End substring 1 repeat && Begin substring 2
+    i32.const 1
+    drop
+    i32.const 2
+    drop        ;; End substring 2 && Begin substring 2 repeat
+    i32.const 1
+    drop
+    i32.const 2
+    drop        ;; End substring 2 repeat
+  )
+)
+
+;; Tests unreachable type handling
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result f32)))
+
+  ;; CHECK:      (type $2 (func (result i32)))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $1) (result f32)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $a (result f32)
+    i32.const 0
+    drop
+    unreachable
+  )
+  ;; CHECK:      (func $b (type $2) (result i32)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $b (result i32)
+    i32.const 0
+    drop
+    unreachable
+  )
+)
+
+;; Tests that restricted expressions (local.set) are filtered from outlining
+;; even when nested within control flow.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    (local $x i32)
+    (block
+      (if
+        (i32.const 0)
+        (then
+          (local.set $x
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b
+    (local $x i32)
+    (block
+      (if
+        (i32.const 0)
+        (then
+          (local.set $x
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+)

@@ -123,14 +123,18 @@ struct MetaDCEGraph {
       nodes[dceName] = DCENode(dceName);
     });
     for (auto& exp : wasm.exports) {
-      if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
-        auto dceName = getName("export", exp->name.toString());
-        exportToDCENode[exp->name] = dceName;
-        nodes[dceName] = DCENode(dceName);
+      // skip type exports
+      // TODO: shall we keep track of type dependencies?
+      if (auto* name = exp->getInternalName()) {
+        if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
+          auto dceName = getName("export", exp->name.toString());
+          exportToDCENode[exp->name] = dceName;
+          nodes[dceName] = DCENode(dceName);
+        }
+        // we can also link the export to the thing being exported
+        auto& node = nodes[exportToDCENode[exp->name]];
+        node.reaches.push_back(getDCEName(ModuleItemKind(exp->kind), *name));
       }
-      // we can also link the export to the thing being exported
-      auto& node = nodes[exportToDCENode[exp->name]];
-      node.reaches.push_back(getDCEName(ModuleItemKind(exp->kind), exp->value));
     }
     // Add initializer dependencies
     // if we provide a parent DCE name, that is who can reach what we see
@@ -419,7 +423,7 @@ int main(int argc, const char* argv[]) {
   options
     .add("--output",
          "-o",
-         "Output file (stdout if not specified)",
+         "Output file",
          WasmMetaDCEOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
@@ -514,7 +518,7 @@ int main(int argc, const char* argv[]) {
   auto graphInput(read_file<std::string>(graphFile, Flags::Text));
   auto* copy = strdup(graphInput.c_str());
   json::Value outside;
-  outside.parse(copy);
+  outside.parse(copy, json::Value::ASCII);
 
   // parse the JSON into our graph, doing all the JSON parsing here, leaving
   // the abstract computation for the class itself

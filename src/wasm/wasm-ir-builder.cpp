@@ -1769,6 +1769,7 @@ Result<> IRBuilder::makeRefEq() {
 
 Result<> IRBuilder::makeTableGet(Name table) {
   TableGet curr;
+  curr.table = table;
   CHECK_ERR(visitTableGet(&curr));
   auto type = wasm.getTable(table)->type;
   push(builder.makeTableGet(table, curr.index, type));
@@ -1806,6 +1807,8 @@ Result<> IRBuilder::makeTableFill(Name table) {
 
 Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
   TableCopy curr;
+  curr.destTable = destTable;
+  curr.sourceTable = srcTable;
   CHECK_ERR(visitTableCopy(&curr));
   push(builder.makeTableCopy(
     curr.dest, curr.source, curr.size, destTable, srcTable));
@@ -1971,6 +1974,9 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
     case BrOnCast:
     case BrOnCastFail:
       // Modeled as sending one value.
+      if (extraArity == 0) {
+        return Err{"br_on target does not expect a value"};
+      }
       extraArity -= 1;
       break;
   }

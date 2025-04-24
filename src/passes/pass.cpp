@@ -214,6 +214,10 @@ void PassRegistry::registerPasses() {
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
+  registerPass("type-refining-gufa",
+               "apply more specific subtypes to type fields where possible "
+               "(using GUFA)",
+               createTypeRefiningGUFAPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass("heap-store-optimization",
@@ -518,6 +522,9 @@ void PassRegistry::registerPasses() {
   registerPass("string-gathering",
                "gathers wasm strings to globals",
                createStringGatheringPass);
+  registerPass("string-lifting",
+               "lift string imports to wasm strings",
+               createStringLiftingPass);
   registerPass("string-lowering",
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
@@ -1044,9 +1051,9 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
 
-  if (options.funcEffectsMap && pass->addsEffects()) {
+  if (pass->addsEffects()) {
     // Effects were added, so discard any computed effects for this function.
-    options.funcEffectsMap->erase(func->name);
+    func->effects.reset();
   }
 }
 

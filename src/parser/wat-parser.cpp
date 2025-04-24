@@ -121,6 +121,13 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
 
 } // anonymous namespace
 
+Result<> parseModule(Module& wasm,
+                     std::string_view in,
+                     std::optional<std::string> filename) {
+  Lexer lexer(in, filename);
+  return doParseModule(wasm, lexer, false);
+}
+
 Result<> parseModule(Module& wasm, std::string_view in) {
   Lexer lexer(in);
   return doParseModule(wasm, lexer, false);

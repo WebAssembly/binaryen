@@ -23,7 +23,10 @@
 //
 // StringLowering does the same, and also replaces those new globals with
 // imported globals of type externref, for use with the string imports proposal.
-// String operations will likewise need to be lowered. TODO
+//
+// A pass argument allows customizing the module name for string constants:
+//
+//   --pass-arg=string-constants-module@MODULE_NAME
 //
 // Specs:
 // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md
@@ -38,6 +41,7 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "passes/string-utils.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -234,6 +238,8 @@ struct StringLowering : public StringGathering {
   }
 
   void makeImports(Module* module) {
+    Name stringConstsModule =
+      getArgumentOrDefault("string-constants-module", WasmStringConstsModule);
     Index jsonImportIndex = 0;
     std::stringstream json;
     bool first = true;
@@ -243,7 +249,7 @@ struct StringLowering : public StringGathering {
           std::stringstream utf8;
           if (useMagicImports &&
               String::convertUTF16ToUTF8(utf8, c->string.str)) {
-            global->module = "'";
+            global->module = stringConstsModule;
             global->base = Name(utf8.str());
           } else {
             if (assertUTF8) {
@@ -358,9 +364,6 @@ struct StringLowering : public StringGathering {
   Name lengthImport;
   Name charCodeAtImport;
   Name substringImport;
-
-  // The name of the module to import string functions from.
-  Name WasmStringsModule = "wasm:js-string";
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).

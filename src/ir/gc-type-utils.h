@@ -104,7 +104,21 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   }
 
   auto castHeapType = castType.getHeapType();
-  auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
+
+  // Check whether a value of type `a` is known to also have type `b`, assuming
+  // it is non-null.
+  auto isHeapSubtype = [](Type a, Type b) {
+    // If the heap type of `a` has no subtypes, then we know its value must be
+    // exactly `a`.
+    // TODO: Use information from a subtypes analysis, if available.
+    if (!a.getHeapType().isBasic() && !a.getHeapType().isOpen()) {
+      a = a.with(Exact);
+    }
+    // Ignore nullability.
+    return Type::isSubType(a.with(NonNullable), b.with(NonNullable));
+  };
+
+  auto refIsHeapSubType = isHeapSubtype(refType, castType);
 
   if (refIsHeapSubType) {
     // The heap type is a subtype. All we need is for nullability to work out as
@@ -121,7 +135,7 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return SuccessOnlyIfNonNull;
   }
 
-  auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
+  auto castIsHeapSubType = isHeapSubtype(castType, refType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
   if (!heapTypesCompatible || castHeapType.isBottom()) {

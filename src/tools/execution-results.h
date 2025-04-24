@@ -59,7 +59,7 @@ public:
     : loggings(loggings), wasm(wasm) {
     for (auto& exp : wasm.exports) {
       if (exp->kind == ExternalKind::Table && exp->name == "table") {
-        exportedTable = exp->value;
+        exportedTable = *exp->getInternalName();
         break;
       }
     }
@@ -132,6 +132,10 @@ public:
         return {};
       } else if (import->base == "call-export") {
         callExportAsJS(arguments[0].geti32());
+        // The second argument determines if we should catch and rethrow
+        // exceptions. There is no observable difference in those two modes in
+        // the binaryen interpreter, so we don't need to do anything.
+
         // Return nothing. If we wanted to return a value we'd need to have
         // multiple such functions, one for each signature.
         return {};
@@ -143,9 +147,8 @@ public:
           return {Literal(int32_t(1))};
         }
       } else if (import->base == "call-ref") {
+        // Similar to call-export*, but with a ref.
         callRefAsJS(arguments[0]);
-        // Return nothing. If we wanted to return a value we'd need to have
-        // multiple such functions, one for each signature.
         return {};
       } else if (import->base == "call-ref-catch") {
         try {
@@ -181,11 +184,13 @@ public:
   }
 
   void throwJSException() {
-    // JS exceptions contain an externref, which wasm can't read (so the actual
-    // value here does not matter, but it does need to match what the 'throw'
-    // import does in fuzz_shell.js, as the fuzzer will do comparisons).
-    Literal externref = Literal::makeI31(0, Unshared).externalize();
-    Literals arguments = {externref};
+    // JS exceptions contain an externref. Use the same type of value as a JS
+    // exception would have, which is a reference to an object, and which will
+    // print out "object" in the logging from JS. A trivial struct is enough for
+    // us to log the same thing here.
+    auto empty = HeapType(Struct{});
+    auto inner = Literal(std::make_shared<GCData>(empty, Literals{}), empty);
+    Literals arguments = {inner.externalize()};
     auto payload = std::make_shared<ExnData>(jsTag, arguments);
     throwException(WasmException{Literal(payload)});
   }
@@ -200,7 +205,7 @@ public:
       // No callable export.
       throwJSException();
     }
-    return callFunctionAsJS(exp->value);
+    return callFunctionAsJS(*exp->getInternalName());
   }
 
   Literals callRefAsJS(Literal ref) {
@@ -266,6 +271,10 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      // This is not an optimization: we want to execute anything, even relaxed
+      // SIMD instructions.
+      instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
+      instance.instantiate();
       interface.setModuleRunner(&instance);
       // execute all exported methods (that are therefore preserved through
       // opts)
@@ -274,7 +283,7 @@ struct ExecutionResults {
           continue;
         }
         std::cout << "[fuzz-exec] calling " << exp->name << "\n";
-        auto* func = wasm.getFunction(exp->value);
+        auto* func = wasm.getFunction(*exp->getInternalName());
         FunctionResult ret = run(func, wasm, instance);
         results[exp->name] = ret;
         if (auto* values = std::get_if<Literals>(&ret)) {
@@ -298,9 +307,17 @@ struct ExecutionResults {
   }
 
   void printValue(Literal value) {
-    // Unwrap an externalized value to get the actual value.
-    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable))) {
+    // Unwrap an externalized GC value to get the actual value, but not strings,
+    // which are normally a subtype of ext.
+    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable)) &&
+        !value.type.isString()) {
       value = value.internalize();
+    }
+
+    // An anyref literal is a string.
+    if (value.type.isRef() &&
+        value.type.getHeapType().isMaybeShared(HeapType::any)) {
+      value = value.externalize();
     }
 
     // Don't print most reference values, as e.g. funcref(N) contains an index,
@@ -417,6 +434,8 @@ struct ExecutionResults {
     LoggingExternalInterface interface(loggings, wasm);
     try {
       ModuleRunner instance(wasm, &interface);
+      instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
+      instance.instantiate();
       interface.setModuleRunner(&instance);
       return run(func, wasm, instance);
     } catch (const TrapException&) {

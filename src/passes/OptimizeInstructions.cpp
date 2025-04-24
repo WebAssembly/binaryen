@@ -295,6 +295,14 @@ struct OptimizeInstructions
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
 
+  Expression* getFallthrough(Expression* curr) {
+    return Properties::getFallthrough(curr, getPassOptions(), *getModule());
+  }
+
+  Type getFallthroughType(Expression* curr) {
+    return Properties::getFallthroughType(curr, getPassOptions(), *getModule());
+  }
+
   decltype(auto) pure(Expression** binder) {
     using namespace Match::Internal;
     return Matcher<PureMatcherKind<OptimizeInstructions>>(binder, this);
@@ -302,6 +310,20 @@ struct OptimizeInstructions
 
   bool canReorder(Expression* a, Expression* b) {
     return EffectAnalyzer::canReorder(getPassOptions(), *getModule(), a, b);
+  }
+
+  // If an expression can only have zero bits, return a constant 0 (or null if
+  // we cannot optimize).
+  Expression* replaceZeroBitsWithZero(Expression* curr) {
+    // We should never be called with a constant.
+    assert(!curr->is<Const>());
+
+    if (!curr->type.isInteger() || Bits::getMaxBits(curr, this) != 0) {
+      return nullptr;
+    }
+
+    auto zero = Builder(*getModule()).makeConst(Literal::makeZero(curr->type));
+    return getDroppedChildrenAndAppend(curr, zero);
   }
 
   void visitBinary(Binary* curr) {
@@ -539,22 +561,20 @@ struct OptimizeInstructions
       }
       {
         // unsigned(x) >= 0   =>   i32(1)
-        // TODO: Use getDroppedChildrenAndAppend() here, so we can optimize even
-        //       if pure.
         Const* c;
         Expression* x;
-        if (matches(curr, binary(GeU, pure(&x), ival(&c))) &&
+        if (matches(curr, binary(GeU, any(&x), ival(&c))) &&
             c->value.isZero()) {
           c->value = Literal::makeOne(Type::i32);
           c->type = Type::i32;
-          return replaceCurrent(c);
+          return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
         }
         // unsigned(x) < 0   =>   i32(0)
-        if (matches(curr, binary(LtU, pure(&x), ival(&c))) &&
+        if (matches(curr, binary(LtU, any(&x), ival(&c))) &&
             c->value.isZero()) {
           c->value = Literal::makeZero(Type::i32);
           c->type = Type::i32;
-          return replaceCurrent(c);
+          return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
         }
       }
     }
@@ -562,9 +582,7 @@ struct OptimizeInstructions
       Index extraLeftShifts;
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
       if (extraLeftShifts == 0) {
-        if (auto* load =
-              Properties::getFallthrough(ext, getPassOptions(), *getModule())
-                ->dynCast<Load>()) {
+        if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
           // pattern match a load of 8 bits and a sign extend using a shl of
           // 24 then shr_s of 24 as well, etc.
           if (LoadUtils::canBeSigned(load) &&
@@ -838,6 +856,10 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    // see if we can infer this is a zero
+    if (auto* ret = replaceZeroBitsWithZero(curr)) {
+      return replaceCurrent(ret);
+    }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
     if (!effects(curr->left).hasSideEffects()) {
@@ -1101,6 +1123,10 @@ struct OptimizeInstructions
     if (auto* ret = simplifyRoundingsAndConversions(curr)) {
       return replaceCurrent(ret);
     }
+
+    if (auto* ret = replaceZeroBitsWithZero(curr)) {
+      return replaceCurrent(ret);
+    }
   }
 
   void visitSelect(Select* curr) {
@@ -1328,9 +1354,7 @@ struct OptimizeInstructions
     // the fallthrough value there. It takes more work to optimize this case,
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
-    if (auto* ref = Properties::getFallthrough(
-                      curr->target, getPassOptions(), *getModule())
-                      ->dynCast<RefFunc>()) {
+    if (auto* ref = getFallthrough(curr->target)->dynCast<RefFunc>()) {
       // Check if the fallthrough make sense. We may have cast it to a different
       // type, which would be a problem - we'd be replacing a call_ref to one
       // type with a direct call to a function of another type. That would trap
@@ -1728,8 +1752,7 @@ struct OptimizeInstructions
       }
     }
 
-    auto fallthrough =
-      Properties::getFallthrough(ref, getPassOptions(), *getModule());
+    auto fallthrough = getFallthrough(ref);
 
     if (fallthrough->type.isNull()) {
       replaceCurrent(
@@ -1801,7 +1824,6 @@ struct OptimizeInstructions
       return;
     }
 
-    auto& passOptions = getPassOptions();
     const auto& fields = curr->type.getHeapType().getStruct().fields;
     assert(fields.size() == curr->operands.size());
 
@@ -1813,8 +1835,7 @@ struct OptimizeInstructions
       }
 
       // The field must be written the default value.
-      auto* value = Properties::getFallthrough(
-        curr->operands[i], passOptions, *getModule());
+      auto* value = getFallthrough(curr->operands[i]);
       if (!Properties::isSingleConstantExpression(value) ||
           Properties::getLiteral(value) != Literal::makeZero(type)) {
         return;
@@ -1893,8 +1914,7 @@ struct OptimizeInstructions
     // this location in the total order of seqcst ops would have to be
     // considered to be reading from this RMW and therefore would synchronize
     // with it.
-    auto* value =
-      Properties::getFallthrough(curr->value, getPassOptions(), *getModule());
+    auto* value = getFallthrough(curr->value);
     if (Properties::isSingleConstantExpression(value)) {
       auto val = Properties::getLiteral(value);
       bool canOptimize = false;
@@ -2088,10 +2108,8 @@ struct OptimizeInstructions
     }
 
     // The value must be the default/zero.
-    auto& passOptions = getPassOptions();
     auto zero = Literal::makeZero(type);
-    auto* value =
-      Properties::getFallthrough(curr->init, passOptions, *getModule());
+    auto* value = getFallthrough(curr->init);
     if (!Properties::isSingleConstantExpression(value) ||
         Properties::getLiteral(value) != zero) {
       return;
@@ -2116,8 +2134,6 @@ struct OptimizeInstructions
       return;
     }
 
-    auto& passOptions = getPassOptions();
-
     // If all the values are equal then we can optimize, either to
     // array.new_default (if they are all equal to the default) or array.new (if
     // they are all equal to some other value). First, see if they are all
@@ -2135,8 +2151,7 @@ struct OptimizeInstructions
     // See if they are equal to a constant, and if that constant is the default.
     auto type = curr->type.getHeapType().getArray().element.type;
     if (type.isDefaultable()) {
-      auto* value =
-        Properties::getFallthrough(curr->values[0], passOptions, *getModule());
+      auto* value = getFallthrough(curr->values[0]);
 
       if (Properties::isSingleConstantExpression(value) &&
           Properties::getLiteral(value) == Literal::makeZero(type)) {
@@ -2234,8 +2249,7 @@ struct OptimizeInstructions
     // of the value we are casting. local.tee, br_if, and blocks can all "lose"
     // type information, so looking at all the fallthrough values can give us a
     // more precise type than is stored in the IR.
-    Type refType =
-      Properties::getFallthroughType(curr->ref, getPassOptions(), *getModule());
+    Type refType = getFallthroughType(curr->ref);
 
     // As a first step, we can tighten up the cast type to be the greatest lower
     // bound of the original cast type and the type we know the cast value to
@@ -2277,10 +2291,14 @@ struct OptimizeInstructions
           // emit a null check.
           bool needsNullCheck = ref->type.getNullability() == Nullable &&
                                 curr->type.getNullability() == NonNullable;
+          // Same with exactness.
+          bool needsExactCast = ref->type.getExactness() == Inexact &&
+                                curr->type.getExactness() == Exact;
           // If the best value to propagate is the argument to the cast, we can
           // simply remove the cast (or downgrade it to a null check if
-          // necessary).
-          if (ref == curr->ref) {
+          // necessary). This does not work if we need a cast to prove
+          // exactness.
+          if (ref == curr->ref && !needsExactCast) {
             if (needsNullCheck) {
               replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
             } else {
@@ -2289,9 +2307,9 @@ struct OptimizeInstructions
             return;
           }
           // Otherwise we can't just remove the cast and replace it with `ref`
-          // because the intermediate expressions might have had side effects.
-          // We can replace the cast with a drop followed by a direct return of
-          // the value, though.
+          // because the intermediate expressions might have had side effects or
+          // we need to check exactness. We can replace the cast with a drop
+          // followed by a direct return of the value, though.
           if (ref->type.isNull()) {
             // We can materialize the resulting null value directly.
             //
@@ -2299,7 +2317,7 @@ struct OptimizeInstructions
             // would be, aside from the interesting corner case of
             // uninhabitable types:
             //
-            //  (ref.cast func
+            //  (ref.cast (ref func)
             //    (block (result (ref nofunc))
             //      (unreachable)
             //    )
@@ -2315,6 +2333,15 @@ struct OptimizeInstructions
                                                 builder.makeRefNull(nullType)));
             return;
           }
+
+          // At this point we know the cast will succeed as long as nullability
+          // works out, but we still need the cast to recover the exactness that
+          // is not present in the value's static type, so there's nothing we
+          // can do.
+          if (needsExactCast) {
+            return;
+          }
+
           // We need to use a tee to return the value since we can't materialize
           // it directly.
           auto scratch = builder.addVar(getFunction(), ref->type);
@@ -2346,18 +2373,20 @@ struct OptimizeInstructions
       }
         [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
-        auto nullType = Type(curr->type.getHeapType().getBottom(), Nullable);
         // The cast either returns null or traps. In trapsNeverHappen mode
         // we know the result, since by assumption it will not trap.
         if (getPassOptions().trapsNeverHappen) {
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
-            curr->type));
+          replaceCurrent(
+            builder.makeBlock({builder.makeDrop(curr->ref),
+                               builder.makeRefNull(curr->type.getHeapType())},
+                              curr->type));
           return;
         }
         // Otherwise, we should have already refined the cast type to cast
-        // directly to null.
-        assert(curr->type == nullType);
+        // directly to null. We do not further refine the cast type to exact
+        // null because the extra precision is not useful and doing so would
+        // increase the size of the instruction encoding.
+        assert(curr->type.isNull());
         break;
       }
       case GCTypeUtils::Unreachable:
@@ -2405,8 +2434,7 @@ struct OptimizeInstructions
 
     // Parallel to the code in visitRefCast: we look not just at the final type
     // we are given, but at fallthrough values as well.
-    Type refType =
-      Properties::getFallthroughType(curr->ref, getPassOptions(), *getModule());
+    Type refType = getFallthroughType(curr->ref);
 
     // Improve the cast type as much as we can without changing the results.
     auto glb = Type::getGreatestLowerBound(curr->castType, refType);
@@ -2590,10 +2618,9 @@ private:
     // NoTeeBrIf as we do not want to look through the tee). We cannot do this
     // on the second, however, as there could be effects in the middle.
     // TODO: Use effects here perhaps.
-    auto& passOptions = getPassOptions();
     left =
       Properties::getFallthrough(left,
-                                 passOptions,
+                                 getPassOptions(),
                                  *getModule(),
                                  Properties::FallthroughBehavior::NoTeeBrIf);
     if (areMatchingTeeAndGet(left, right)) {
@@ -2602,9 +2629,9 @@ private:
 
     // Ignore extraneous things and compare them syntactically. We can also
     // look at the full fallthrough for both sides now.
-    left = Properties::getFallthrough(left, passOptions, *getModule());
+    left = getFallthrough(left);
     auto* originalRight = right;
-    right = Properties::getFallthrough(right, passOptions, *getModule());
+    right = getFallthrough(right);
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
@@ -3960,9 +3987,9 @@ private:
       return result;
     }
     // bool(x) | 1  ==>  1
-    if (matches(curr, binary(Or, pure(&left), ival(1))) &&
+    if (matches(curr, binary(Or, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
-      return right;
+      return getDroppedChildrenAndAppend(curr, right);
     }
 
     // Operations on all 1s
@@ -3971,8 +3998,8 @@ private:
       return left;
     }
     // x | -1   ==>   -1
-    if (matches(curr, binary(Or, pure(&left), ival(-1)))) {
-      return right;
+    if (matches(curr, binary(Or, any(&left), ival(-1)))) {
+      return getDroppedChildrenAndAppend(curr, right);
     }
     // (signed)x % -1   ==>   0
     if (matches(curr, binary(RemS, pure(&left), ival(-1)))) {
@@ -4003,16 +4030,16 @@ private:
       return right;
     }
     // (unsigned)x <= -1  ==>   i32(1)
-    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(LeU, any(&left), ival(-1)))) {
       right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
-      return right;
+      return getDroppedChildrenAndAppend(curr, right);
     }
     // (unsigned)x > -1   ==>   i32(0)
-    if (matches(curr, binary(GtU, pure(&left), ival(-1)))) {
+    if (matches(curr, binary(GtU, any(&left), ival(-1)))) {
       right->value = Literal::makeZero(Type::i32);
       right->type = Type::i32;
-      return right;
+      return getDroppedChildrenAndAppend(curr, right);
     }
     // (unsigned)x >= 0   ==>   i32(1)
     if (matches(curr, binary(GeU, pure(&left), ival(0)))) {

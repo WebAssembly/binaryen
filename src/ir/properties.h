@@ -400,6 +400,7 @@ inline Expression** getMostRefinedFallthrough(Expression** currp,
     return currp;
   }
   auto bestType = curr->type.getHeapType();
+  auto bestExactness = curr->type.getExactness();
   auto bestNullability = curr->type.getNullability();
   auto** bestp = currp;
   while (1) {
@@ -412,20 +413,23 @@ inline Expression** getMostRefinedFallthrough(Expression** currp,
     }
     assert(next->type.isRef());
     auto nextType = next->type.getHeapType();
+    auto nextExactness = next->type.getExactness();
     auto nextNullability = next->type.getNullability();
-    if (nextType == bestType) {
+    if (nextType == bestType && nextExactness == bestExactness) {
       // Heap types match: refine nullability if possible.
       if (bestNullability == Nullable && nextNullability == NonNullable) {
         bestp = nextp;
         bestNullability = NonNullable;
       }
-    } else {
-      // Refine heap type if possible, resetting nullability.
-      if (HeapType::isSubType(nextType, bestType)) {
-        bestp = nextp;
-        bestNullability = nextNullability;
-        bestType = nextType;
-      }
+    } else if ((nextType != bestType &&
+                HeapType::isSubType(nextType, bestType)) ||
+               (nextType == bestType && nextExactness == Exact &&
+                bestExactness == Inexact)) {
+      // Refine heap, resetting nullability.
+      bestp = nextp;
+      bestType = nextType;
+      bestExactness = nextExactness;
+      bestNullability = nextNullability;
     }
     currp = nextp;
   }

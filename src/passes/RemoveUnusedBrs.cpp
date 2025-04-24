@@ -859,8 +859,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (Type::isSubType(expr->type, type)) {
             return expr;
           }
-          if (HeapType::isSubType(expr->type.getHeapType(),
-                                  type.getHeapType())) {
+          if (type.isNonNullable() && expr->type.isNullable() &&
+              Type::isSubType(expr->type.with(NonNullable), type)) {
             return builder.makeRefAs(RefAsNonNull, expr);
           }
           return builder.makeRefCast(expr, type);
@@ -906,6 +906,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // further optimizations after this, and those optimizations might even
         // benefit from this improvement.
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+        if (!curr->castType.isExact()) {
+          // When custom descriptors is not enabled, nontrivial exact casts are
+          // not allowed.
+          glb = glb.withInexactIfNoCustomDescs(getModule()->features);
+        }
+        if (curr->op == BrOnCastFail) {
+          // BrOnCastFail sends the input type, with adjusted nullability. The
+          // input heap type makes sense for the branch target, and we will not
+          // change it anyhow, but we need to be careful with nullability: if
+          // the cast type was nullable, then we were sending a non-nullable
+          // value to the branch, and if we refined the cast type to non-
+          // nullable, we would no longer be doing that. In other words, we must
+          // not refine the nullability, as that would *un*refine the send type.
+          if (curr->castType.isNullable() && glb.isNonNullable()) {
+            glb = glb.with(Nullable);
+          }
+        }
         if (glb != Type::unreachable && glb != curr->castType) {
           curr->castType = glb;
           auto oldType = curr->type;

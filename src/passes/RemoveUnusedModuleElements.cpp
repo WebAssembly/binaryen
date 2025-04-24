@@ -544,7 +544,14 @@ struct Analyzer {
     finder.walk(curr);
 
     for (auto element : finder.elements) {
-      referenced.insert(element);
+      // Avoid repeated work. Note that globals with multiple references to
+      // previous globals can lead to exponential work, so this is important.
+      // (If C refers twice to B, and B refers twice to A, then when we process
+      // C we would, naively, scan B twice and A four times.)
+      auto [_, inserted] = referenced.insert(element);
+      if (!inserted) {
+        continue;
+      }
 
       auto& [kind, value] = element;
       if (kind == ModuleElementKind::Global) {
@@ -621,15 +628,16 @@ struct RemoveUnusedModuleElements : public Pass {
     // Exports are roots.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        roots.emplace_back(ModuleElementKind::Function, curr->value);
+        roots.emplace_back(ModuleElementKind::Function,
+                           *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Global) {
-        roots.emplace_back(ModuleElementKind::Global, curr->value);
+        roots.emplace_back(ModuleElementKind::Global, *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Tag) {
-        roots.emplace_back(ModuleElementKind::Tag, curr->value);
+        roots.emplace_back(ModuleElementKind::Tag, *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Table) {
-        roots.emplace_back(ModuleElementKind::Table, curr->value);
+        roots.emplace_back(ModuleElementKind::Table, *curr->getInternalName());
       } else if (curr->kind == ExternalKind::Memory) {
-        roots.emplace_back(ModuleElementKind::Memory, curr->value);
+        roots.emplace_back(ModuleElementKind::Memory, *curr->getInternalName());
       }
     }
 
@@ -693,7 +701,7 @@ struct RemoveUnusedModuleElements : public Pass {
     // For now, all functions that can be called indirectly are marked as roots.
     // TODO: Compute this based on which ElementSegments are actually used,
     //       and which functions have a call_indirect of the proper type.
-    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name name) {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
 
@@ -785,7 +793,8 @@ struct RemoveUnusedModuleElements : public Pass {
         continue;
       }
 
-      auto* func = module->getFunction(exp->value);
+      auto* name = exp->getInternalName();
+      auto* func = module->getFunction(*name);
       if (!func->body) {
         continue;
       }
@@ -812,7 +821,7 @@ struct RemoveUnusedModuleElements : public Pass {
         }
       }
       if (ok) {
-        exp->value = calledFunc->name;
+        *name = calledFunc->name;
       }
     }
   }

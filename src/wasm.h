@@ -1364,7 +1364,7 @@ public:
   Name func;
 
   void finalize();
-  void finalize(Type type_);
+  void finalize(HeapType heapType);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
@@ -2137,6 +2137,9 @@ struct BinaryLocations {
   std::unordered_map<Function*, FunctionLocations> functions;
 };
 
+// Forward declaration for FuncEffectsMap.
+class EffectAnalyzer;
+
 class Function : public Importable {
 public:
   HeapType type = HeapType(Signature()); // parameters and return value
@@ -2170,6 +2173,11 @@ public:
                ? columnNumber < other.columnNumber
                : symbolNameIndex < other.symbolNameIndex;
     }
+    void dump() {
+      std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) << " @ "
+                << fileIndex << ":" << lineNumber << ":" << columnNumber
+                << "\n";
+    }
   };
   // One can explicitly set the debug location of an expression to
   // nullopt to stop the propagation of debug locations.
@@ -2182,6 +2190,13 @@ public:
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
+
+  // The effects for this function, if they have been computed. We use a shared
+  // ptr here to avoid compilation errors with the forward-declared
+  // EffectAnalyzer.
+  //
+  // See addsEffects() in pass.h for more details.
+  std::shared_ptr<EffectAnalyzer> effects;
 
   // Inlining metadata: whether to disallow full and/or partial inlining (for
   // details on what those mean, see Inlining.cpp).
@@ -2245,11 +2260,21 @@ enum class ModuleItemKind {
 
 class Export {
 public:
-  // exported name - note that this is the key, as the internal name is
-  // non-unique (can have multiple exports for an internal, also over kinds)
+  // exported name - note that this is the key, as the internal name,
+  // or the exported type, is non-unique (can have multiple exports for an
+  // internal, also over kinds)
   Name name;
-  Name value; // internal name
   ExternalKind kind;
+
+private:
+  std::variant<Name, HeapType> value; // internal name or exported type
+
+public:
+  Export(Name name, ExternalKind kind, std::variant<Name, HeapType> value)
+    : name(name), kind(kind), value(value) {
+    assert(std::get_if<Name>(&value));
+  }
+  Name* getInternalName() { return std::get_if<Name>(&value); }
 };
 
 class ElementSegment : public Named {
@@ -2381,9 +2406,15 @@ public:
   // Optional user section IR representation.
   std::unique_ptr<DylinkSection> dylinkSection;
 
-  // Source maps debug info.
+  // Source maps debug info. All of these fields are read directly in from the
+  // source map and are encoded as in the original JSON (UTF-8 encoded with
+  // with escaped quotes and slashes). The string values are uninterpreted in
+  // Binaryen, and they are written directly back out without re-encoding.
   std::vector<std::string> debugInfoFileNames;
   std::vector<std::string> debugInfoSymbolNames;
+  std::string debugInfoSourceRoot;
+  std::string debugInfoFile;
+  std::vector<std::string> debugInfoSourcesContent;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.

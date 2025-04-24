@@ -210,12 +210,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       if (it != linkedInstances.end()) {
         auto* inst = it->second.get();
         auto* globalExport = inst->wasm.getExportOrNull(global->base);
-        if (!globalExport) {
+        if (!globalExport || globalExport->kind != ExternalKind::Global) {
           throw FailToEvalException(std::string("importGlobals: ") +
                                     global->module.toString() + "." +
                                     global->base.toString());
         }
-        globals[global->name] = inst->globals[globalExport->value];
+        globals[global->name] = inst->globals[*globalExport->getInternalName()];
       } else {
         throw FailToEvalException(std::string("importGlobals: ") +
                                   global->module.toString() + "." +
@@ -1113,6 +1113,18 @@ start_eval:
           }
         }
         break;
+      } catch (NonconstantException& fail) {
+        if (!quiet) {
+          std::cout << "  ...stopping due to non-constant func\n";
+        }
+        break;
+      }
+
+      if (flow.breakTo == NONCONSTANT_FLOW) {
+        if (!quiet) {
+          std::cout << "  ...stopping due to non-constant flow\n";
+        }
+        break;
       }
 
       if (flow.breakTo == RETURN_CALL_FLOW) {
@@ -1182,7 +1194,7 @@ start_eval:
          (localExprs.size() && func->getParams() != Type::none))) {
       auto originalFuncType = wasm.getFunction(funcName)->type;
       auto copyName = Names::getValidFunctionName(wasm, funcName);
-      wasm.getExport(exportName)->value = copyName;
+      *wasm.getExport(exportName)->getInternalName() = copyName;
 
       if (func->imported()) {
         // We must have return-called this imported function. Generate a new
@@ -1287,6 +1299,7 @@ void evalCtors(Module& wasm,
   try {
     // create an instance for evalling
     EvallingModuleRunner instance(wasm, &interface, linkedInstances);
+    instance.instantiate();
     interface.instanceInitialized = true;
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
@@ -1295,10 +1308,10 @@ void evalCtors(Module& wasm,
         std::cout << "trying to eval " << ctor << '\n';
       }
       Export* ex = wasm.getExportOrNull(ctor);
-      if (!ex) {
+      if (!ex || ex->kind != ExternalKind::Function) {
         Fatal() << "export not found: " << ctor;
       }
-      auto funcName = ex->value;
+      auto funcName = *ex->getInternalName();
       auto outcome = evalCtor(instance, interface, funcName, ctor);
       if (!outcome) {
         if (!quiet) {
@@ -1319,7 +1332,9 @@ void evalCtors(Module& wasm,
       } else {
         // We are keeping around the export, which should now refer to an
         // empty function since calling the export should do nothing.
-        auto* func = wasm.getFunction(exp->value);
+        auto* func = wasm.getFunction((exp->kind == ExternalKind::Function)
+                                        ? *exp->getInternalName()
+                                        : Name());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
         auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
         if (func->getResults() == Type::none) {
@@ -1327,7 +1342,7 @@ void evalCtors(Module& wasm,
         } else {
           copyFunc->body = interface.getSerialization(*outcome);
         }
-        wasm.getExport(exp->name)->value = copyName;
+        *wasm.getExport(exp->name)->getInternalName() = copyName;
       }
     }
   } catch (FailToEvalException& fail) {
@@ -1372,7 +1387,7 @@ int main(int argc, const char* argv[]) {
   options
     .add("--output",
          "-o",
-         "Output file (stdout if not specified)",
+         "Output file",
          WasmCtorEvalOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {

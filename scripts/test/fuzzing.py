@@ -19,8 +19,6 @@ import os
 unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
-    # not all relaxed SIMD instructions are implemented in the interpreter
-    'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings
     'strings.wast',
     'simplify-locals-strings.wast',
@@ -93,6 +91,10 @@ unfuzzable = [
     'names.wast',
     # huge amount of locals that make it extremely slow
     'too_much_for_liveness.wasm',
+    # has (ref extern) imports, which the fuzzer cannot create values for when
+    # it removes unknown imports
+    'string-lifting.wast',
+    'string-lifting-custom-module.wast',
     # TODO: fuzzer support for stack switching
     'stack_switching.wast',
     'stack_switching_contnew.wast',
@@ -100,7 +102,31 @@ unfuzzable = [
     'stack_switching_suspend.wast',
     'stack_switching_resume.wast',
     'stack_switching_resume_throw.wast',
-    'stack_switching_switch.wast'
+    'stack_switching_switch.wast',
+    'stack_switching_switch_2.wast',
+    'O3_stack-switching.wast',
+    'coalesce-locals-stack-switching.wast',
+    'dce-stack-switching.wast',
+    'precompute-stack-switching.wast',
+    'vacuum-stack-switching.wast',
+    # TODO: fuzzer support for exact references
+    'exact-references.wast',
+    'exact-references-lowering.wast',
+    'exact-casts.wast',
+    'exact-casts-trivial.wast',
+    'optimize-instructions-exact.wast',
+    'optimize-instructions-all-casts-exact.wast',
+    'local-subtyping-exact.wast',
+    'remove-unused-types-exact.wast',
+    'coalesce-locals-exact.wast',
+    'remove-unused-brs-exact.wast',
+    'signature-refining-exact.wast',
+    'gufa-cast-all-exact.wast',
+    'type-merging-exact.wast',
+    'type-refining-exact.wast',
+    'type-refining-gufa-exact.wast',
+    # TODO: fuzzer support for custom descriptors
+    'custom-descriptors.wast',
 ]
 
 

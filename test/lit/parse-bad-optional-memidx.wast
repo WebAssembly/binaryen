@@ -3,7 +3,7 @@
 
 ;; RUN: not wasm-opt -all %s 2>&1 | filecheck %s
 
-;; CHECK: Fatal: 12:22: error: expected end of instruction
+;; CHECK: Fatal: {{.*}}:12:22: error: expected end of instruction
 
 (module
  (memory 1 1)

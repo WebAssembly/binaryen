@@ -150,8 +150,12 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
         typeBuilder[i] = newArray;
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        auto newCont = HeapType(typeBuilder[i]).getContinuation();
+        modifyContinuation(type, newCont);
+        typeBuilder[i] = newCont;
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -205,7 +209,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
 
     Type getNew(Type type) {
       if (type.isRef()) {
-        return Type(getNew(type.getHeapType()), type.getNullability());
+        return type.with(getNew(type.getHeapType()));
       }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
@@ -342,8 +346,8 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
-      return typeBuilder.getTempRefType(typeBuilder[it->second],
-                                        type.getNullability());
+      return typeBuilder.getTempRefType(
+        typeBuilder[it->second], type.getNullability(), type.getExactness());
     }
     // This type is not one that is eligible for optimizing. That is fine; just
     // use it unmodified.
@@ -465,7 +469,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 Type getValidLocalType(Type type, FeatureSet features) {
   assert(type.isConcrete());
   if (type.isNonNullable()) {
-    return Type(type.getHeapType(), Nullable);
+    return type.with(Nullable);
   }
   if (type.isTuple()) {
     std::vector<Type> elems(type.size());

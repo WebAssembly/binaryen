@@ -53,7 +53,7 @@ Literal::Literal(Type type) : type(type) {
   }
 
   if (type.isNull()) {
-    assert(type.isNullable());
+    assert(type.isNullable() && !type.isExact());
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
@@ -73,11 +73,15 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
+  // TODO: Use exact types for gcData.
   // The type must be a proper type for GC data: either a struct, array, or
-  // string; or an externalized version of the same; or a null.
+  // string; or an externalized version of the same; or a null; or an
+  // internalized string (which appears as an anyref).
   assert((isData() && gcData) ||
          (type.isMaybeShared(HeapType::ext) && gcData) ||
-         (type.isBottom() && !gcData));
+         (type.isBottom() && !gcData) ||
+         (type.isMaybeShared(HeapType::any) && gcData &&
+          gcData->type.isMaybeShared(HeapType::string)));
 }
 
 Literal::Literal(std::shared_ptr<ExnData> exnData)
@@ -151,6 +155,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case HeapType::nocont:
       WASM_UNREACHABLE("null literals should already have been handled");
     case HeapType::any:
+      // This must be an anyref literal, which is an internalized string.
+      assert(other.gcData &&
+             other.gcData->type.isMaybeShared(HeapType::string));
+      new (&gcData) std::shared_ptr<GCData>(other.gcData);
+      return;
     case HeapType::eq:
     case HeapType::func:
     case HeapType::cont:
@@ -167,7 +176,8 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext)) {
+  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext) ||
+      type.getHeapType().isMaybeShared(HeapType::any)) {
     gcData.~shared_ptr();
   } else if (isExn()) {
     exnData.~shared_ptr();
@@ -650,13 +660,14 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::exn:
           o << "exnref";
           break;
-        case HeapType::any:
         case HeapType::eq:
         case HeapType::func:
         case HeapType::cont:
         case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
+        case HeapType::any:
+          // Anyref literals contain strings.
         case HeapType::string: {
           auto data = literal.getGCData();
           if (!data) {
@@ -2593,6 +2604,21 @@ Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
   return dot<4, 2, &Literal::getLanesSI16x8>(*this, other);
 }
 
+Literal Literal::dotSI8x16toI16x8Add(const Literal& left,
+                                     const Literal& right) const {
+  auto temp = dotSI8x16toI16x8(left);
+
+  auto tempLanes = temp.getLanesSI16x8();
+  LaneArray<4> dest;
+  // TODO: the index on dest may be wrong, see
+  //       https://github.com/WebAssembly/relaxed-simd/issues/162
+  for (size_t i = 0; i < 4; i++) {
+    dest[i] = tempLanes[i * 2].add(tempLanes[i * 2 + 1]);
+  }
+
+  return Literal(dest).addI32x4(right);
+}
+
 Literal Literal::bitselectV128(const Literal& left,
                                const Literal& right) const {
   return andV128(left).orV128(notV128().andV128(right));
@@ -2866,6 +2892,11 @@ Literal Literal::externalize() const {
     return Literal(std::make_shared<GCData>(heapType, Literals{*this}),
                    extType);
   }
+  if (heapType.isMaybeShared(HeapType::any)) {
+    // Anyref literals turn into strings (if we add any other anyref literals,
+    // we will need to be more careful here).
+    return Literal(gcData, HeapTypes::string.getBasic(share));
+  }
   return Literal(gcData, extType);
 }
 
@@ -2880,6 +2911,10 @@ Literal Literal::internalize() const {
   if (gcData->type.isMaybeShared(HeapType::i31)) {
     assert(gcData->values[0].type.getHeapType().isMaybeShared(HeapType::i31));
     return gcData->values[0];
+  }
+  if (gcData->type.isMaybeShared(HeapType::string)) {
+    // Strings turn into anyref literals.
+    return Literal(gcData, HeapTypes::any.getBasic(share));
   }
   return Literal(gcData, gcData->type);
 }

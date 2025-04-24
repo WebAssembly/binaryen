@@ -297,6 +297,41 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       });
   }
 
+  void visitRefFunc(RefFunc* curr) {
+    auto sig = curr->type.getHeapType().getSignature();
+
+    bool hasI64Param = false;
+    for (auto t : sig.params) {
+      if (t == Type::i64) {
+        hasI64Param = true;
+        break;
+      }
+    }
+    auto params = sig.params;
+    if (hasI64Param) {
+      std::vector<Type> newParams;
+      for (auto t : sig.params) {
+        if (t == Type::i64) {
+          newParams.push_back(Type::i32);
+          newParams.push_back(Type::i32);
+        } else {
+          newParams.push_back(t);
+        }
+      }
+      params = Type(newParams);
+    };
+    auto results = sig.results;
+    // Update the results the same way we do when visiting functions. We use a
+    // global rather than multivalue to lower i64 results.
+    if (results == Type::i64) {
+      results = Type::i32;
+    }
+
+    if (params != sig.params || results != sig.results) {
+      curr->type = curr->type.with(HeapType(Signature(params, results)));
+    }
+  }
+
   void visitLocalGet(LocalGet* curr) {
     const auto mappedIndex = indexMap[curr->index];
     // Need to remap the local into the new naming scheme, regardless of
