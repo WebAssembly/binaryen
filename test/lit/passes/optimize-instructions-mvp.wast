@@ -1371,10 +1371,7 @@
   ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.const 100)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $and-neg1
@@ -1393,10 +1390,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.const 100)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1445,6 +1439,9 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 3)
@@ -1479,6 +1476,7 @@
   ;; CHECK-NEXT: )
   (func $canonicalize-consts-vars (param $x i32) (param $y i32)
     (drop (i32.and (i32.const 1) (i32.const 2)))
+    (drop (i32.and (i32.const 2) (i32.const 1)))
     (drop (i32.and (local.get $x) (i32.const 3)))
     (drop (i32.and (i32.const 4) (local.get $x)))
     (drop (i32.and (local.get $x) (local.get $y)))
