@@ -18,12 +18,11 @@
 
 namespace wasm::WATParser {
 
-Result<>
-parseModuleTypes(ParseDeclsCtx& decls,
-                 Lexer& input,
-                 IndexMap& typeIndices,
-                 std::vector<HeapTypeDef>& types,
-                 std::unordered_map<Index, HeapTypeDef>& implicitTypes) {
+Result<> parseModuleTypes(ParseDeclsCtx& decls,
+                          Lexer& input,
+                          IndexMap& typeIndices,
+                          std::vector<HeapType>& types,
+                          std::unordered_map<Index, HeapType>& implicitTypes) {
   ParseModuleTypesCtx ctx(input,
                           decls.wasm,
                           types,

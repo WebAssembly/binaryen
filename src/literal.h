@@ -607,6 +607,7 @@ public:
   Literal dotSI8x16toI16x8(const Literal& other) const;
   Literal dotUI8x16toI16x8(const Literal& other) const;
   Literal dotSI16x8toI32x4(const Literal& other) const;
+  Literal dotSI8x16toI16x8Add(const Literal& left, const Literal& right) const;
   Literal extMulLowSI32x4(const Literal& other) const;
   Literal extMulHighSI32x4(const Literal& other) const;
   Literal extMulLowUI32x4(const Literal& other) const;

@@ -925,6 +925,7 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
   // wasm spec defines when GC is enabled (=== non-nullable types are allowed).
   // If GC is not enabled then we emit a nullable type in the binary format in
   // WasmBinaryWriter::writeType.
+  // TODO: Make this exact.
   Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
@@ -979,6 +980,7 @@ void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     assert(type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31));
   }
 }
@@ -1014,10 +1016,12 @@ void CallRef::finalize() {
     // unreachable instead (and similar in other GC accessors), although this
     // would currently cause the parser to admit more invalid modules.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     } else if (type.isTuple()) {
       Tuple elems;
       for (auto t : type) {
+        // TODO: Make this exact.
         elems.push_back(
           t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
       }
@@ -1153,6 +1157,7 @@ void StructGet::finalize() {
   } else if (ref->type.isNull()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     }
   } else {
@@ -1228,6 +1233,7 @@ void ArrayGet::finalize() {
   } else if (ref->type.isNull()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     }
   } else {
@@ -1309,11 +1315,13 @@ void RefAs::finalize() {
       break;
     case AnyConvertExtern:
       type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
-                  value->type.getNullability());
+                  value->type.getNullability(),
+                  Inexact);
       break;
     case ExternConvertAny:
       type = Type(HeapTypes::ext.getBasic(valHeapType.getShared()),
-                  value->type.getNullability());
+                  value->type.getNullability(),
+                  Inexact);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
@@ -1326,11 +1334,15 @@ void StringNew::finalize() {
       (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
 
-void StringConst::finalize() { type = Type(HeapType::string, NonNullable); }
+void StringConst::finalize() {
+  // TODO: Make this exact.
+  type = Type(HeapType::string, NonNullable);
+}
 
 void StringMeasure::finalize() {
   if (ref->type == Type::unreachable) {
@@ -1353,6 +1365,7 @@ void StringConcat::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
@@ -1378,6 +1391,7 @@ void StringSliceWTF::finalize() {
       end->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }

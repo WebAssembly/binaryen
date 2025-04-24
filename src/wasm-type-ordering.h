@@ -29,12 +29,12 @@ namespace wasm::HeapTypeOrdering {
 // type in the sequence comes only after its immediate supertype in the
 // collection is visited.
 template<typename T>
-std::vector<HeapTypeDef> supertypesFirst(
+std::vector<HeapType> supertypesFirst(
   const T& types,
-  std::function<std::optional<HeapTypeDef>(HeapTypeDef)> getSuper =
-    [](HeapTypeDef type) { return type.getDeclaredSuperType(); }) {
+  std::function<std::optional<HeapType>(HeapType)> getSuper =
+    [](HeapType type) { return type.getDeclaredSuperType(); }) {
 
-  InsertOrderedMap<HeapTypeDef, std::vector<HeapTypeDef>> subtypes;
+  InsertOrderedMap<HeapType, std::vector<HeapType>> subtypes;
   for (auto type : types) {
     subtypes.insert({type, {}});
   }

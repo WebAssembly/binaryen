@@ -2074,7 +2074,8 @@ void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
   o << int8_t(BinaryConsts::RefNull);
-  parent.writeHeapType(curr->type.getHeapType());
+  assert(curr->type.isInexact());
+  parent.writeHeapType(curr->type.getHeapType(), Inexact);
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -2265,7 +2266,8 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
   } else {
     o << U32LEB(BinaryConsts::RefTest);
   }
-  parent.writeHeapType(curr->castType.getHeapType());
+  parent.writeHeapType(curr->castType.getHeapType(),
+                       curr->castType.getExactness());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
@@ -2275,7 +2277,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   } else {
     o << U32LEB(BinaryConsts::RefCast);
   }
-  parent.writeHeapType(curr->type.getHeapType());
+  parent.writeHeapType(curr->type.getHeapType(), curr->type.getExactness());
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -2302,8 +2304,10 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
                       (curr->castType.isNullable() ? 2 : 0);
       o << flags;
       o << U32LEB(getBreakIndex(curr->name));
-      parent.writeHeapType(curr->ref->type.getHeapType());
-      parent.writeHeapType(curr->castType.getHeapType());
+      parent.writeHeapType(curr->ref->type.getHeapType(),
+                           curr->ref->type.getExactness());
+      parent.writeHeapType(curr->castType.getHeapType(),
+                           curr->castType.getExactness());
       return;
     }
   }
