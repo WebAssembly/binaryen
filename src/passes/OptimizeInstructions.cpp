@@ -3565,15 +3565,7 @@ private:
     auto* right = curr->right;
     auto leftMaxBits = Bits::getMaxBits(left, this);
 
-    if (leftMaxBits == 0) {
-      // Left is always zero, result is zero.
-      replaceCurrent(getDroppedChildrenAndAppend(
-        curr, LiteralUtils::makeZero(type, *getModule())));
-      return nullptr;
-    }
-
     uint64_t mask = (1ULL << leftMaxBits) - 1;
-
     if (auto* c = right->dynCast<Const>()) {
       uint64_t constantValue = c->value.getInteger();
       if ((constantValue & mask) == 0) {
