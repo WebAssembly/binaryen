@@ -832,13 +832,11 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
-    if (curr->op == AndInt32 || curr->op == AndInt64 || curr->op == OrInt32) {
+    if (curr->op == AndInt32 || curr->op == OrInt32) {
       if (curr->op == AndInt32) {
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
         }
-      }
-      if (curr->op == AndInt32 || curr->op == AndInt64) {
         if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
           return replaceCurrent(ret);
         }
@@ -855,6 +853,12 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    if (curr->op == AndInt64) {
+      if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
+        return replaceCurrent(ret);
+      }
+    }
+
     // relation/comparisons allow for math optimizations
     if (curr->isRelational()) {
       if (auto* ret = optimizeRelational(curr)) {
