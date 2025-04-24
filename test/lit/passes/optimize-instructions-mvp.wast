@@ -2860,15 +2860,18 @@
       (i32.const 24)
     )
   )
-  ;; CHECK:      (func $sext-24-and-127-128 (result i32)
-  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK:      (func $sext-24-and-127-unknown (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 127)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $sext-24-and-127-128 (result i32)
+  (func $sext-24-and-127-unknown (param $x i32) (result i32)
     (i32.shr_s
       (i32.shl
         (i32.and ;; takes the min, here it is ok
           (i32.const 127)
-          (i32.const 128)
+          (local.get $x)
         )
         (i32.const 24)
       )
