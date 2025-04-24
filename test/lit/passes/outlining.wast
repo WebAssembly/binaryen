@@ -1164,3 +1164,83 @@
     )
   )
 )
+
+;; Tests that the contents of Catch are outlined
+(module
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (type $0 (func))
+  (type $0 (func))
+  (type $1 (func (result i32)))
+  ;; CHECK:      (tag $eimport$1 (type $0))
+  (tag $eimport$1 (type $0))
+  ;; CHECK:      (func $outline$ (type $1) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const -12)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const -2147483647)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 externref)
+  ;; CHECK-NEXT:  (try (result i32)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (i32.const -20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $eimport$1
+  ;; CHECK-NEXT:    (call $outline$)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (i32.const -15)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a (result i32)
+    (local $0 externref)
+    (try (result i32)
+      (do
+        (i32.const -20)
+      )
+      (catch $eimport$1
+        (drop
+          (i32.const -12)
+        )
+        (i32.const -2147483647)
+      )
+      (catch_all
+        (i32.const -15)
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 externref)
+  ;; CHECK-NEXT:  (try (result i32)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (i32.const -20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $eimport$1
+  ;; CHECK-NEXT:    (call $outline$)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (i32.const -15)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b (result i32)
+    (local $0 externref)
+    (try (result i32)
+      (do
+        (i32.const -20)
+      )
+      (catch $eimport$1
+        (drop
+          (i32.const -12)
+        )
+        (i32.const -2147483647)
+      )
+      (catch_all
+        (i32.const -15)
+      )
+    )
+  )
+)
