@@ -2,7 +2,7 @@
 
 ;; Lower first to generate the string.consts custom section, then lift it back.
 
-;; RUN: foreach %s %t wasm-opt -all --string-lowering --string-lifting -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --string-lowering --string-lifting -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $0 (array (mut i16)))
@@ -36,6 +36,8 @@
   ;; CHECK:      (import "string.const" "4" (global $"string.const_\"unpaired high surrogate \\ed\\a0\\80 \"" (ref extern)))
 
   ;; CHECK:      (import "string.const" "5" (global $"string.const_\"unpaired low surrogate \\ed\\bd\\88 \"" (ref extern)))
+
+  ;; CHECK:      (import "string.const" "6" (global $"string.const_\"z\\\\\"" (ref extern)))
 
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -94,6 +96,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.const "unpaired low surrogate \ed\bd\88 ")
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "z\\")
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tricky-consts
     ;; These tricky strings should remain exactly the same after lowering and
@@ -109,6 +114,10 @@
     )
     (drop
       (string.const "unpaired low surrogate \ED\BD\88 ")
+    )
+    ;; A string with \", but the " is not escaped, as the \ is part of \\.
+    (drop
+      (string.const "z\\")
     )
   )
 )

@@ -45,6 +45,18 @@ namespace json {
 
 using IString = wasm::IString;
 
+struct JsonParseException {
+  std::string errorText;
+
+  JsonParseException(std::string errorText) : errorText(errorText) {}
+  void dump(std::ostream& o) const { o << "JSON parse error: " << errorText; }
+};
+
+#define THROW_IF(expr, message)                                                \
+  if (expr) {                                                                  \
+    throw JsonParseException(message);                                         \
+  }
+
 // Main value type
 struct Value {
   struct Ref : public std::shared_ptr<Value> {
@@ -270,14 +282,20 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      // Start |close| at the opening ", and in the loop below we will always
+      // Start |close| after the opening ", and in the loop below we will always
       // begin looking at the first character after.
-      char* close = curr;
-      // Skip escaped "
-      do {
-        close = strchr(close + 1, '"');
-      } while (*(close - 1) == '\\');
-      assert(close);
+      char* close = curr + 1;
+      // Skip escaped ", which appears as \". We need to be careful though, as
+      // \" might also be \\" which would be an escaped \ and an *un*escaped ".
+      while (*close && *close != '"') {
+        if (*close == '\\') {
+          // Skip the \ and the character after it, which it escapes.
+          close++;
+          THROW_IF(!*close, "unexpected end of JSON string (quoting)");
+        }
+        close++;
+      }
+      THROW_IF(!close, "unexpected end of JSON string");
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
       if (stringEncoding == ASCII) {
@@ -301,24 +319,24 @@ struct Value {
         if (*curr == ']') {
           break;
         }
-        assert(*curr == ',');
+        THROW_IF(*curr != ',', "malformed JSON array");
         curr++;
         skip();
       }
       curr++;
     } else if (*curr == 'n') {
       // Null
-      assert(strncmp(curr, "null", 4) == 0);
+      THROW_IF(strncmp(curr, "null", 4) != 0, "unexpected JSON literal");
       setNull();
       curr += 4;
     } else if (*curr == 't') {
       // Bool true
-      assert(strncmp(curr, "true", 4) == 0);
+      THROW_IF(strncmp(curr, "true", 4) != 0, "unexpected JSON literal");
       setBool(true);
       curr += 4;
     } else if (*curr == 'f') {
       // Bool false
-      assert(strncmp(curr, "false", 5) == 0);
+      THROW_IF(strncmp(curr, "false", 5) != 0, "unexpected JSON literal");
       setBool(false);
       curr += 5;
     } else if (*curr == '{') {
@@ -327,15 +345,15 @@ struct Value {
       skip();
       setObject();
       while (*curr != '}') {
-        assert(*curr == '"');
+        THROW_IF(*curr != '"', "malformed key in JSON object");
         curr++;
         char* close = strchr(curr, '"');
-        assert(close);
+        THROW_IF(!close, "malformed key in JSON object");
         *close = 0; // end this string, and reuse it straight from the input
         IString key(curr);
         curr = close + 1;
         skip();
-        assert(*curr == ':');
+        THROW_IF(*curr != ':', "missing ':', in JSON object");
         curr++;
         skip();
         Ref value = Ref(new Value());
@@ -345,7 +363,7 @@ struct Value {
         if (*curr == '}') {
           break;
         }
-        assert(*curr == ',');
+        THROW_IF(*curr != ',', "malformed value in JSON object");
         curr++;
         skip();
       }
