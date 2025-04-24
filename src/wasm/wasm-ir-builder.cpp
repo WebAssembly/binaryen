@@ -817,7 +817,7 @@ Result<> IRBuilder::visitLoopStart(Loop* loop, Type inputType) {
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label, Type inputType) {
   applyDebugLoc(tryy);
-  return pushScope(ScopeCtx::makeTry(tryy, label, inputType));
+  return pushScope(ScopeCtx::makeTry(tryy, label, inputType, 0));
 }
 
 Result<>
@@ -942,20 +942,19 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (!tryy) {
     return Err{"unexpected catch"};
   }
+  auto index = scope.getIndex();
   auto expr = finishScope();
-  size_t index = 0;
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    index = scope.getIndex();
-    if (index > tryy->catchBodies.size()) {
-      tryy->catchBodies.resize(index + 1);
+    if (tryy->catchBodies.size() < index) {
+      tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
     }
-    tryy->catchBodies[index] = *expr;
+    tryy->catchBodies[index - 1] = *expr;
   }
-  if (index > tryy->catchTags.size()) {
-    tryy->catchTags.resize(index + 1);
+  if (tryy->catchTags.size() == index) {
+    tryy->catchTags.resize(tryy->catchTags.size() + 1);
   }
   tryy->catchTags[index] = tag;
 
@@ -964,7 +963,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy, index)));
+  CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy, ++index)));
   // Push a pop for the exception payload if necessary.
   auto params = wasm.getTag(tag)->params();
   if (params != Type::none) {
@@ -988,16 +987,16 @@ Result<> IRBuilder::visitCatchAll() {
   if (!tryy) {
     return Err{"unexpected catch"};
   }
+  auto index = scope.getIndex();
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    size_t lastTagIdx = tryy->catchTags.size();
-    if (lastTagIdx > tryy->catchBodies.size()) {
-      tryy->catchBodies.resize(lastTagIdx + 1);
+    if (tryy->catchBodies.size() < index) {
+      tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
     }
-    tryy->catchBodies[lastTagIdx] = *expr;
+    tryy->catchBodies[index - 1] = *expr;
   }
 
   if (binaryPos && func) {
@@ -1005,7 +1004,7 @@ Result<> IRBuilder::visitCatchAll() {
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
   }
 
-  return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy));
+  return pushScope(ScopeCtx::makeCatchAll(std::move(scope), tryy, ++index));
 }
 
 Result<> IRBuilder::visitDelegate(Index label) {
@@ -1133,20 +1132,14 @@ Result<> IRBuilder::visitEnd() {
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try* tryy; (tryy = scope.getCatch())) {
+  } else if (Try * tryy;
+             (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     auto index = scope.getIndex();
-    if (index > tryy->catchBodies.size()) {
-      tryy->catchBodies.resize(index + 1);
+    if (tryy->catchBodies.size() < index) {
+      tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
     }
-    tryy->catchBodies[index] = *expr;
-    tryy->finalize(tryy->type);
-    push(maybeWrapForLabel(tryy));
-  } else if (Try* tryy; (tryy = scope.getCatchAll())) {
-    auto index = tryy->catchTags.size();
-    if (index > tryy->catchBodies.size()) {
-      tryy->catchBodies.resize(index + 1);
-    }
-    tryy->catchBodies[index] = *expr;
+    tryy->catchBodies[index - 1] = *expr;
+    tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (auto* trytable = scope.getTryTable()) {

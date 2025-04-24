@@ -22,8 +22,8 @@ Result<>
 parseImplicitTypeDefs(ParseDeclsCtx& decls,
                       Lexer& input,
                       IndexMap& typeIndices,
-                      std::vector<HeapTypeDef>& types,
-                      std::unordered_map<Index, HeapTypeDef>& implicitTypes) {
+                      std::vector<HeapType>& types,
+                      std::unordered_map<Index, HeapType>& implicitTypes) {
   ParseImplicitTypeDefsCtx ctx(input, types, implicitTypes, typeIndices);
   for (Index pos : decls.implicitTypeDefs) {
     WithPosition with(ctx, pos);

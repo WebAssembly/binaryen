@@ -26,10 +26,6 @@
 
 namespace wasm {
 
-namespace {
-
-} // anonymous namespace
-
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
@@ -395,9 +391,12 @@ void TranslateToFuzzReader::setupMemory() {
 
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
-    size_t memCovered = 0;
+    size_t numSegments = upTo(8);
     // need at least one segment for memory.inits
-    size_t numSegments = upTo(8) + 1;
+    if (wasm.dataSegments.empty() && !numSegments) {
+      numSegments = 1;
+    }
+    size_t memCovered = 0;
     for (size_t i = 0; i < numSegments; i++) {
       auto segment = builder.makeDataSegment();
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
@@ -417,19 +416,21 @@ void TranslateToFuzzReader::setupMemory() {
       wasm.addDataSegment(std::move(segment));
     }
   } else {
-    // init some data
-    auto segment = builder.makeDataSegment();
-    segment->memory = memory->name;
-    segment->offset =
-      builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
-    segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
-                     false);
-    auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
-    for (size_t i = 0; i < num; i++) {
-      auto value = upTo(512);
-      segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
+    // init some data, especially if none exists before
+    if (!oneIn(wasm.dataSegments.empty() ? 10 : 2)) {
+      auto segment = builder.makeDataSegment();
+      segment->memory = memory->name;
+      segment->offset =
+        builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
+      segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
+                       false);
+      auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
+      for (size_t i = 0; i < num; i++) {
+        auto value = upTo(512);
+        segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
+      }
+      wasm.addDataSegment(std::move(segment));
     }
-    wasm.addDataSegment(std::move(segment));
   }
 }
 
@@ -484,11 +485,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
     // Basic types must be handled directly, since subTypes doesn't look at
     // those.
     auto share = type.getShared();
-    HeapType struct_ = HeapTypes::struct_.getBasic(share);
-    HeapType array = HeapTypes::array.getBasic(share);
-    HeapType eq = HeapTypes::eq.getBasic(share);
-    HeapType any = HeapTypes::any.getBasic(share);
-    HeapType func = HeapTypes::func.getBasic(share);
+    auto struct_ = HeapTypes::struct_.getBasic(share);
+    auto array = HeapTypes::array.getBasic(share);
+    auto eq = HeapTypes::eq.getBasic(share);
+    auto any = HeapTypes::any.getBasic(share);
+    auto func = HeapTypes::func.getBasic(share);
     switch (type.getKind()) {
       case HeapTypeKind::Func:
         interestingHeapSubTypes[func].push_back(type);
@@ -588,17 +589,27 @@ void TranslateToFuzzReader::setupTables() {
   // When EH is enabled, set up an exnref table.
   if (wasm.features.hasExceptionHandling()) {
     Type exnref = Type(HeapType::exn, Nullable);
-    Address initial = upTo(10);
-    Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
-    auto tablePtr =
-      builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
-                        exnref,
-                        initial,
-                        max,
-                        Type::i32); // TODO: wasm64
-    tablePtr->hasExplicitName = true;
-    table = wasm.addTable(std::move(tablePtr));
-    exnrefTableName = table->name;
+    auto iter =
+      std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+        return table->type == exnref;
+      });
+    if (iter != wasm.tables.end()) {
+      // Use the existing one.
+      exnrefTableName = iter->get()->name;
+    } else {
+      // Create a new exnref table.
+      Address initial = upTo(10);
+      Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
+      auto tablePtr =
+        builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
+                          exnref,
+                          initial,
+                          max,
+                          Type::i32); // TODO: wasm64
+      tablePtr->hasExplicitName = true;
+      table = wasm.addTable(std::move(tablePtr));
+      exnrefTableName = table->name;
+    }
   }
 }
 
@@ -1073,6 +1084,11 @@ void TranslateToFuzzReader::addImportSleepSupport() {
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
+  // Don't always add this.
+  if (oneIn(2)) {
+    return;
+  }
+
   // Add memory hasher helper (for the hash, see hash.h). The function looks
   // like:
   // function hashMemory() {
@@ -1107,13 +1123,13 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
-  auto name = Names::getValidFunctionName(wasm, "hashMemory");
+  hashMemoryName = Names::getValidFunctionName(wasm, "hashMemory");
   auto* hasher = wasm.addFunction(builder.makeFunction(
-    name, Signature(Type::none, Type::i32), {Type::i32}, body));
+    hashMemoryName, Signature(Type::none, Type::i32), {Type::i32}, body));
 
-  if (!preserveImportsAndExports) {
+  if (!preserveImportsAndExports && !wasm.getExportOrNull("hashMemory")) {
     wasm.addExport(
-      builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+      builder.makeExport("hashMemory", hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
     if (!wasm.getExportOrNull("memory")) {
       wasm.addExport(builder.makeExport(
@@ -1321,7 +1337,7 @@ Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
-  auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
+  auto* hash = builder.makeCall(hashMemoryName, {}, Type::i32);
   return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
@@ -1566,20 +1582,22 @@ void TranslateToFuzzReader::recombine(Function* func) {
       }
 
       std::vector<Type> ret;
-      auto heapType = type.getHeapType();
-      auto nullability = type.getNullability();
+      ret.push_back(type);
 
-      if (nullability == NonNullable) {
-        ret = getRelevantTypes(Type(heapType, Nullable));
+      if (type.isNonNullable()) {
+        auto nullable = getRelevantTypes(type.with(Nullable));
+        ret.insert(ret.end(), nullable.begin(), nullable.end());
+      }
+      if (type.isExact()) {
+        auto inexact = getRelevantTypes(type.with(Inexact));
+        ret.insert(ret.end(), inexact.begin(), inexact.end());
+        // Do not consider exact references to supertypes.
+        return ret;
       }
 
-      while (1) {
-        ret.push_back(Type(heapType, nullability));
-        auto super = heapType.getSuperType();
-        if (!super) {
-          break;
-        }
-        heapType = *super;
+      for (auto heapType = type.getHeapType().getSuperType(); heapType;
+           heapType = heapType->getSuperType()) {
+        ret.push_back(type.with(*heapType));
       }
 
       return ret;
@@ -2017,7 +2035,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
     }
     invocations.push_back(invoke);
     // log out memory in some cases
-    if (oneIn(2)) {
+    if (hashMemoryName && oneIn(2)) {
       invocations.push_back(makeMemoryHashLogging());
     }
   }
@@ -2175,7 +2193,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
 Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
-    if (choice < LOGGING_PERCENT / 2) {
+    if (!hashMemoryName || choice < LOGGING_PERCENT / 2) {
       return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
@@ -3426,13 +3444,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      auto subtypeOpts = FeatureOptions<HeapType>().add(
-        FeatureSet::ReferenceTypes | FeatureSet::GC,
-        HeapType::i31,
-        HeapType::struct_,
-        HeapType::array);
-      auto subtype = pick(subtypeOpts).getBasic(share);
-      return makeConst(Type(subtype, nullability));
+      assert(wasm.features.hasGC());
+      auto subtype = pick(HeapTypes::i31, HeapTypes::struct_, HeapTypes::array);
+      return makeConst(Type(subtype.getBasic(share), nullability));
     }
     case HeapType::eq: {
       if (!wasm.features.hasGC()) {
@@ -4972,9 +4986,17 @@ static auto makeArrayBoundsCheck(Expression* ref,
                                  Function* func,
                                  Builder& builder,
                                  Expression* length = nullptr) {
-  auto tempRef = builder.addVar(func, ref->type);
+  // The reference might be a RefNull, in which case its type is exact. But we
+  // want to avoid creating exact-typed locals until we support them more widely
+  // in the fuzzer, so adjust the type. TODO: remove this once exact references
+  // are better supported.
+  Type refType = ref->type;
+  if (refType.isExact()) {
+    refType = refType.with(Inexact);
+  }
+  auto tempRef = builder.addVar(func, refType);
   auto tempIndex = builder.addVar(func, index->type);
-  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, refType);
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
 
@@ -5001,7 +5023,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
-              builder.makeLocalGet(tempRef, ref->type),
+              builder.makeLocalGet(tempRef, refType),
               builder.makeLocalGet(tempIndex, index->type),
               getLength};
   return result;
@@ -5390,11 +5412,35 @@ Nullability TranslateToFuzzReader::getNullability() {
   return Nullable;
 }
 
+Exactness TranslateToFuzzReader::getExactness() {
+  // Without GC, the only heap types are func and extern, neither of which is
+  // exactly inhabitable. To avoid introducing uninhabitable types, only
+  // generate exact references when GC is enabled. We don't need custom
+  // descriptors to be enabled even though that is the feature that introduces
+  // exact references because the binary writer can always generalize the exact
+  // reference types away.
+  //
+  // if (wasm.features.hasGC() && oneIn(8)) {
+  //   return Exact;
+  // }
+  //
+  // However, we cannot yet handle creating exact references in general, so for
+  // now we always generate inexact references when given the choice. TODO.
+  return Inexact;
+}
+
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   if (nullability == NonNullable) {
     return NonNullable;
   }
   return getNullability();
+}
+
+Exactness TranslateToFuzzReader::getSubType(Exactness exactness) {
+  if (exactness == Exact) {
+    return Exact;
+  }
+  return getExactness();
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
@@ -5406,16 +5452,18 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
+        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
-                      .add(FeatureSet::ReferenceTypes, HeapType::func)
-                      .add(FeatureSet::GC, HeapType::nofunc))
+                      .add(HeapTypes::func)
+                      .add(FeatureSet::GC, HeapTypes::nofunc))
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
+        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
-                         .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                         .add(FeatureSet::GC, HeapType::noext);
+                         .add(HeapTypes::ext)
+                         .add(FeatureSet::GC, HeapTypes::noext);
         if (share == Unshared) {
           // Shared strings not yet supported.
           options.add(FeatureSet::Strings, HeapType::string);
@@ -5425,14 +5473,13 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        auto options = FeatureOptions<HeapType>().add(FeatureSet::GC,
-                                                      HeapType::any,
-                                                      HeapType::eq,
-                                                      HeapType::i31,
-                                                      HeapType::struct_,
-                                                      HeapType::array,
-                                                      HeapType::none);
-        return pick(options).getBasic(share);
+        return pick(HeapTypes::any,
+                    HeapTypes::eq,
+                    HeapTypes::i31,
+                    HeapTypes::struct_,
+                    HeapTypes::array,
+                    HeapTypes::none)
+          .getBasic(share);
       }
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
@@ -5489,9 +5536,18 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
       return type;
     }
-    heapType = getSubType(heapType);
+    if (type.isExact()) {
+      // The only other possible heap type is bottom, but we don't want to
+      // generate too many bottom types.
+      if (!heapType.isBottom() && oneIn(20)) {
+        heapType = heapType.getBottom();
+      }
+    } else {
+      heapType = getSubType(heapType);
+    }
     auto nullability = getSubType(type.getNullability());
-    auto subType = Type(heapType, nullability);
+    auto exactness = getSubType(type.getExactness());
+    auto subType = Type(heapType, nullability, exactness);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.

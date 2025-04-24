@@ -2903,6 +2903,19 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
     curr->ref->type.getHeapType().getBottom(),
     curr,
     "ref.test target type and ref type must have a common supertype");
+
+  // If custom descriptors is not enabled, only trivial and null-checking exact
+  // casts are allowed, i.e. those where the operand is also exact and has the
+  // same heap type, but may differ in nullability. The result of these trivial
+  // exact casts does not change when the types are made inexact during binary
+  // writing.
+  if (!getModule()->features.hasCustomDescriptors()) {
+    shouldBeTrue(curr->castType.isInexact() || curr->castType.with(Nullable) ==
+                                                 curr->ref->type.with(Nullable),
+                 curr,
+                 "ref.test of exact type requires custom descriptors "
+                 "[--enable-custom-descriptors]");
+  }
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
@@ -2941,6 +2954,15 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
                curr,
                "ref.cast null of non-nullable references are not allowed");
+
+  // See comment about exactness on visitRefTest.
+  if (!getModule()->features.hasCustomDescriptors()) {
+    shouldBeTrue(curr->type.isInexact() ||
+                   curr->type.with(Nullable) == curr->ref->type.with(Nullable),
+                 curr,
+                 "ref.cast to exact type requires custom descriptors "
+                 "[--enable-custom-descriptors]");
+  }
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
@@ -2970,6 +2992,15 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type,
       curr,
       "br_on_cast* target type must be a subtype of its input type");
+    // See comment about exactness on visitRefTest.
+    if (!getModule()->features.hasCustomDescriptors()) {
+      shouldBeTrue(curr->castType.isInexact() ||
+                     curr->castType.with(Nullable) ==
+                       curr->ref->type.with(Nullable),
+                   curr,
+                   "br_on_cast* to exact type requires custom descriptors "
+                   "[--enable-custom-descriptors]");
+    }
   } else {
     shouldBeEqual(curr->castType,
                   Type(Type::none),

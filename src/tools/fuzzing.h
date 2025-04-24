@@ -174,6 +174,7 @@ private:
   Name exnrefTableName;
 
   std::unordered_map<Type, Name> logImportNames;
+  Name hashMemoryName;
   Name throwImportName;
   Name tableGetImportName;
   Name tableSetImportName;
@@ -191,12 +192,11 @@ private:
   std::vector<Type> loggableTypes;
 
   // The heap types we can pick from to generate instructions.
-  std::vector<HeapTypeDef> interestingHeapTypes;
+  std::vector<HeapType> interestingHeapTypes;
 
   // A mapping of a heap type to the subset of interestingHeapTypes that are
   // subtypes of it.
-  std::unordered_map<HeapTypeDef, std::vector<HeapTypeDef>>
-    interestingHeapSubTypes;
+  std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
 
   // Type => list of struct fields that have that type.
   std::unordered_map<Type, std::vector<StructField>> typeStructFields;
@@ -361,6 +361,10 @@ private:
   // instruction for EH is supposed to exist only at the beginning of a 'catch'
   // block, so it shouldn't be moved around or deleted freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
+    // TODO: Remove this once we better support exact references.
+    if (curr->type.isExact()) {
+      return false;
+    }
     return curr->type.isDefaultable() &&
            !EHUtils::containsValidDanglingPop(curr);
   }
@@ -522,7 +526,9 @@ private:
   Type getLoggableType();
   bool isLoggableType(Type type);
   Nullability getNullability();
+  Exactness getExactness();
   Nullability getSubType(Nullability nullability);
+  Exactness getSubType(Exactness exactness);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
   Nullability getSuperType(Nullability nullability);

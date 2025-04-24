@@ -859,8 +859,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (Type::isSubType(expr->type, type)) {
             return expr;
           }
-          if (HeapType::isSubType(expr->type.getHeapType(),
-                                  type.getHeapType())) {
+          if (type.isNonNullable() && expr->type.isNullable() &&
+              Type::isSubType(expr->type.with(NonNullable), type)) {
             return builder.makeRefAs(RefAsNonNull, expr);
           }
           return builder.makeRefCast(expr, type);
@@ -906,6 +906,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // further optimizations after this, and those optimizations might even
         // benefit from this improvement.
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+        if (!curr->castType.isExact()) {
+          // When custom descriptors is not enabled, nontrivial exact casts are
+          // not allowed.
+          glb = glb.withInexactIfNoCustomDescs(getModule()->features);
+        }
         if (curr->op == BrOnCastFail) {
           // BrOnCastFail sends the input type, with adjusted nullability. The
           // input heap type makes sense for the branch target, and we will not

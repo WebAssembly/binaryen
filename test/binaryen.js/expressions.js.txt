@@ -239,6 +239,113 @@
  (local.get $3)
 )
 
+# RefTest
+(ref.test externref
+ (local.get $2)
+)
+
+# RefCast
+(ref.cast externref
+ (local.get $2)
+)
+
+# BrOn
+(br_on_cast $br2 anyref i31ref
+ (local.get $1)
+)
+
+# StructNew
+(struct.new $struct.0
+ (i32.const 7)
+ (i32.const 6)
+)
+
+# StructGet
+(struct.get $struct.0 1
+ (local.get $1)
+)
+
+# StructSet
+(struct.set $struct.0 1
+ (local.get $2)
+ (local.get $3)
+)
+
+# ArrayNew
+(array.new $array.0
+ (i32.const 3)
+ (i32.const 4)
+)
+
+# ArrayNewFixed
+(array.new_fixed $array.0 2
+ (i32.const 7)
+ (i32.const 6)
+)
+
+# ArrayNewData
+(array.new_data $array.0 $3
+ (i32.const 4)
+ (i32.const 5)
+)
+
+# ArrayNewElem
+(array.new_elem $array.0 $3
+ (i32.const 4)
+ (i32.const 5)
+)
+
+# ArrayGet
+(array.get $array.0
+ (local.get $1)
+ (i32.const 1)
+)
+
+# ArraySet
+(array.set $array.0
+ (local.get $2)
+ (i32.const 1)
+ (local.get $3)
+)
+
+# ArrayLen
+(array.len
+ (local.get $1)
+)
+
+# ArrayFill
+(array.fill $array.0
+ (local.get $2)
+ (i32.const 2)
+ (local.get $3)
+ (i32.const 3)
+)
+
+# ArrayCopy
+(array.copy $array.0 $array.0
+ (local.get $2)
+ (i32.const 2)
+ (local.get $3)
+ (i32.const 3)
+ (i32.const 2)
+)
+
+# ArrayInitData
+(array.init_data $array.0 $1
+ (local.get $1)
+ (i32.const 3)
+ (i32.const 4)
+ (i32.const 5)
+)
+
+# ArrayInitElem
+(array.init_elem $array.0 $1
+ (local.get $1)
+ (i32.const 3)
+ (i32.const 4)
+ (i32.const 5)
+)
+
 # Try
 (try (result i32)
  (do

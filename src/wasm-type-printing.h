@@ -34,18 +34,16 @@ namespace wasm {
 template<typename Subclass> struct TypeNameGeneratorBase {
   TypeNameGeneratorBase() { assertValidUsage(); }
 
-  TypeNames getNames(HeapTypeDef type) {
+  TypeNames getNames(HeapType type) {
     WASM_UNREACHABLE("Derived class must implement getNames");
   }
-  HeapType::Printed operator()(HeapTypeDef type) {
-    return type.print([&](HeapTypeDef ht) {
-      return static_cast<Subclass*>(this)->getNames(ht);
-    });
+  HeapType::Printed operator()(HeapType type) {
+    return type.print(
+      [&](HeapType ht) { return static_cast<Subclass*>(this)->getNames(ht); });
   }
   Type::Printed operator()(Type type) {
-    return type.print([&](HeapTypeDef ht) {
-      return static_cast<Subclass*>(this)->getNames(ht);
-    });
+    return type.print(
+      [&](HeapType ht) { return static_cast<Subclass*>(this)->getNames(ht); });
   }
 
 private:
@@ -54,8 +52,8 @@ private:
     // Check that the subclass provides `getNames` with the correct type.
     using Self = TypeNameGeneratorBase<Subclass>;
     static_assert(
-      static_cast<TypeNames (Self::*)(HeapTypeDef)>(&Self::getNames) !=
-        static_cast<TypeNames (Self::*)(HeapTypeDef)>(&Subclass::getNames),
+      static_cast<TypeNames (Self::*)(HeapType)>(&Self::getNames) !=
+        static_cast<TypeNames (Self::*)(HeapType)>(&Subclass::getNames),
       "Derived class must implement getNames");
 #endif
   }
@@ -73,7 +71,7 @@ struct DefaultTypeNameGenerator
   // Cached names for types that have already been seen.
   std::unordered_map<HeapType, TypeNames> nameCache;
 
-  TypeNames getNames(HeapTypeDef type);
+  TypeNames getNames(HeapType type);
 };
 
 // Generates names based on the indices of types in some collection, falling
@@ -84,7 +82,7 @@ struct IndexedTypeNameGenerator
   : TypeNameGeneratorBase<IndexedTypeNameGenerator<FallbackGenerator>> {
   DefaultTypeNameGenerator defaultGenerator;
   FallbackGenerator& fallback;
-  std::unordered_map<HeapTypeDef, TypeNames> names;
+  std::unordered_map<HeapType, TypeNames> names;
 
   template<typename T>
   IndexedTypeNameGenerator(T& types,
@@ -99,7 +97,7 @@ struct IndexedTypeNameGenerator
   IndexedTypeNameGenerator(T& types, const std::string& prefix = "")
     : IndexedTypeNameGenerator(types, defaultGenerator, prefix) {}
 
-  TypeNames getNames(HeapTypeDef type) {
+  TypeNames getNames(HeapType type) {
     if (auto it = names.find(type); it != names.end()) {
       return it->second;
     } else {
@@ -130,7 +128,7 @@ struct ModuleTypeNameGenerator
     std::enable_if_t<std::is_same_v<T, DefaultTypeNameGenerator>>* = nullptr)
     : ModuleTypeNameGenerator(wasm, defaultGenerator) {}
 
-  TypeNames getNames(HeapTypeDef type) {
+  TypeNames getNames(HeapType type) {
     if (auto it = wasm.typeNames.find(type); it != wasm.typeNames.end()) {
       return it->second;
     }
