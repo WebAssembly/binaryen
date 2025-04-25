@@ -3970,6 +3970,33 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 // Main validator class
 
+static void validateTypes(Module& module, ValidationInfo& info) {
+  // Check that public types do not contain any exact references if custom
+  // descriptors is not enabled. If they did, we would erase the exactness
+  // during binary writing and change the public type identities.
+  if (module.features.hasCustomDescriptors()) {
+    return;
+  }
+  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
+    for (auto child : type.getTypeChildren()) {
+      if (child.isExact()) {
+        std::string typeName;
+        if (auto it = module.typeNames.find(type);
+            it != module.typeNames.end()) {
+          typeName = '$' + it->second.name.toString();
+        } else {
+          typeName = type.toString();
+        }
+        info.fail("Exact reference in public type not allowed without custom "
+                  "descriptors [--enable-custom-descriptors]",
+                  typeName,
+                  nullptr);
+        break;
+      }
+    }
+  }
+}
+
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
     if (curr->getResults().isTuple()) {
@@ -4439,6 +4466,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
 
   // Validate globally.
   if (info.validateGlobally) {
+    validateTypes(module, info);
     validateImports(module, info);
     validateExports(module, info);
     validateGlobals(module, info);
