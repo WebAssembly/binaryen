@@ -378,7 +378,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $restructure-br_if-target-outer-block (result i32)
-    ;;Perform optimize only when br_if target its parent block
+    ;; As above, but the br_if targets another block, so we do not optimize.
     (block $outer (result i32)
       (block $inner (result i32)
         (call $nothing)
