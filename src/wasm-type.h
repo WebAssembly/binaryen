@@ -419,7 +419,9 @@ public:
 
   // Return a new reference type with some part updated to the specified value.
   Type with(HeapType heapType) const {
-    return Type(heapType, getNullability(), getExactness());
+    return Type(heapType,
+                getNullability(),
+                heapType.isBasic() ? Inexact : getExactness());
   }
   Type with(Nullability nullability) const {
     return Type(getHeapType(), nullability, getExactness());
