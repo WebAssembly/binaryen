@@ -1259,7 +1259,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // Pattern-patch ifs, recreating them when it makes sense.
           restructureIf(curr);
 
-          // A potential optimization opportunity:
           // Optimize block tails where a dropped `br_if`'s value is redundant
           // when the br_if targets the block itself.
           // consider for example:
