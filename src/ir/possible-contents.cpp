@@ -182,46 +182,25 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto heapType = type.getHeapType();
   auto otherHeapType = otherType.getHeapType();
 
-  // If both inputs are nullable then the intersection is nullable as well.
-  auto nullability =
-    type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
+  // Intersect the types.
+  auto newType = Type::getGreatestLowerBound(type, otherType);
 
   auto setNoneOrNull = [&]() {
-    if (nullability == Nullable) {
+    if (newType.isNullable()) {
       value = Literal::makeNull(heapType);
     } else {
       value = None();
     }
   };
 
-  // If the heap types are not compatible then they are in separate hierarchies
-  // and there is no intersection, aside from possibly a null of the bottom
-  // type.
-  auto isSubType = HeapType::isSubType(heapType, otherHeapType);
-  auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
-  if (!isSubType && !otherIsSubType) {
-    if (heapType.getBottom() == otherHeapType.getBottom()) {
-      setNoneOrNull();
-    } else {
-      value = None();
-    }
+  if (newType == Type::unreachable || newType.isNull()) {
+    setNoneOrNull();
     return;
   }
 
   // The heap types are compatible, so intersect the cones.
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
-
-  // To compute the new cone, find the new heap type for it, and to compute its
-  // depth, consider the adjustments to the existing depths that stem from the
-  // choice of new heap type.
-  HeapType newHeapType;
-
-  if (depthFromRoot < otherDepthFromRoot) {
-    newHeapType = otherHeapType;
-  } else {
-    newHeapType = heapType;
-  }
 
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
@@ -230,8 +209,6 @@ void PossibleContents::intersect(const PossibleContents& other) {
   if (isGlobal()) {
     globalName = getGlobal();
   }
-
-  auto newType = Type(newHeapType, nullability);
 
   // By assumption |other| has full depth. Consider the other cone in |this|.
   if (hasFullCone()) {
@@ -252,7 +229,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
     // E.g. if |this| is a cone of depth 10, and |otherHeapType| is an immediate
     // subtype of |this|, then the new cone must be of depth 9.
     auto newDepth = getCone().depth;
-    if (newHeapType == otherHeapType) {
+    if (newType.getHeapType() == otherHeapType) {
       assert(depthFromRoot <= otherDepthFromRoot);
       auto reduction = otherDepthFromRoot - depthFromRoot;
       if (reduction > newDepth) {
