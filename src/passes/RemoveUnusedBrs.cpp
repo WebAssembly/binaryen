@@ -1281,7 +1281,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           //   )
           //   (value)
           // )
-          const size_t size = curr->list.size();
+          size_t size = curr->list.size();
           auto* secondLast = curr->list[size - 2];
           auto* last = curr->list[size - 1];
           if (auto* drop = secondLast->dynCast<Drop>()) {
