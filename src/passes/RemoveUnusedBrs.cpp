@@ -1260,8 +1260,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           restructureIf(curr);
 
           // Optimize block tails where a dropped `br_if`'s value is redundant
-          // when the br_if targets the block itself.
-          // consider for example:
+          // when the br_if targets the block itself:
+          //
           // (block $block (result i32)
           // ..
           //   (drop
