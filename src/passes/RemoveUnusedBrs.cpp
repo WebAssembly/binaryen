@@ -1289,7 +1289,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 if (!EffectAnalyzer(passOptions, *getModule(), br->value)
                        .hasUnremovableSideEffects()) {
                   if (ExpressionAnalyzer::equal(br->value, last)) {
-                    // All conditions met, perform the update
+                    // All conditions met, perform the update.
                     drop->value = br->condition;
                   }
                 }
