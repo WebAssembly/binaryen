@@ -350,6 +350,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $restructure-br_if-target-parent-block (result i32)
+    ;; The br_if's value is equal to the value right after it, so we can remove it.
     (block $parent (result i32)
       (call $nothing)
       (drop
