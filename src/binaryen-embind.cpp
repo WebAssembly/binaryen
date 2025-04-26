@@ -4,25 +4,7 @@
 using namespace emscripten;
 
 namespace binaryen {
-
-namespace {
-ExpressionFactory::ExpressionFactory(wasm::Module* module) : module(module) {}
-
-uintptr_t LocalExpressionFactory::get(Index index, Type type) {
-  return reinterpret_cast<uintptr_t>(
-    BinaryenLocalGet(reinterpret_cast<BinaryenModuleRef>(module), index, type));
-}
-
-uintptr_t I32ExpressionFactory::add(uintptr_t left, uintptr_t right) {
-  return reinterpret_cast<uintptr_t>(
-    BinaryenBinary(reinterpret_cast<BinaryenModuleRef>(module),
-                   BinaryenAddInt32(),
-                   reinterpret_cast<BinaryenExpressionRef>(left),
-                   reinterpret_cast<BinaryenExpressionRef>(right)));
-}
-} // namespace
-
-Module::Module() : Module(BinaryenModuleCreate()) {}
+Module::Module() : Module(new wasm::Module()) {}
 
 Module::Module(wasm::Module* module) : module(module) {}
 
@@ -30,41 +12,38 @@ const uintptr_t& Module::ptr() const {
   return reinterpret_cast<const uintptr_t&>(module);
 }
 
-uintptr_t Module::block(const std::string& name,
-                        ExpressionList children,
-                        uintptr_t type) {
-  std::vector<uintptr_t> childrenVec =
-    convertJSArrayToNumberVector<uintptr_t>(children);
-  return reinterpret_cast<uintptr_t>(BinaryenBlock(
-    module,
-    name.c_str(),
-    reinterpret_cast<BinaryenExpressionRef*>(childrenVec.begin().base()),
-    childrenVec.size(),
-    type));
+wasm::Expression* Module::block(const std::string& name,
+                                ExpressionList children,
+                                uintptr_t type) {
+  auto childrenVec = vecFromJSArray<wasm::Expression*>(
+    children, allow_raw_pointer<wasm::Expression>());
+  return BinaryenBlock(
+    module, name.c_str(), childrenVec.begin().base(), childrenVec.size(), type);
 }
-uintptr_t
-Module::if_(uintptr_t condition, uintptr_t ifTrue, uintptr_t ifFalse) {
-  return reinterpret_cast<uintptr_t>(
-    BinaryenIf(module,
-               reinterpret_cast<BinaryenExpressionRef>(condition),
-               reinterpret_cast<BinaryenExpressionRef>(ifTrue),
-               reinterpret_cast<BinaryenExpressionRef>(ifFalse)));
+wasm::Expression* Module::if_(wasm::Expression* condition,
+                              wasm::Expression* ifTrue,
+                              wasm::Expression* ifFalse) {
+  return BinaryenIf(module, condition, ifTrue, ifFalse);
 }
-uintptr_t Module::loop(const std::string& label, uintptr_t body) {
-  return reinterpret_cast<uintptr_t>(BinaryenLoop(
-    module, label.c_str(), reinterpret_cast<BinaryenExpressionRef>(body)));
+wasm::Expression* Module::loop(const std::string& label,
+                               wasm::Expression* body) {
+  return BinaryenLoop(module, label.c_str(), body);
 }
-uintptr_t
-Module::br(const std::string& label, uintptr_t condition, uintptr_t value) {
-  return reinterpret_cast<uintptr_t>(
-    BinaryenBreak(module,
-                  label.c_str(),
-                  reinterpret_cast<BinaryenExpressionRef>(condition),
-                  reinterpret_cast<BinaryenExpressionRef>(value)));
+wasm::Expression* Module::br(const std::string& label,
+                             wasm::Expression* condition,
+                             wasm::Expression* value) {
+  return BinaryenBreak(module, label.c_str(), condition, value);
 }
-uintptr_t Module::return_(uintptr_t value) {
-  return reinterpret_cast<uintptr_t>(
-    BinaryenReturn(module, reinterpret_cast<BinaryenExpressionRef>(value)));
+wasm::Expression* Module::Local::get(Index index, Type type) {
+  return BinaryenLocalGet(module, index, type);
+}
+
+wasm::Expression* Module::I32::add(wasm::Expression* left,
+                                   wasm::Expression* right) {
+  return BinaryenBinary(module, BinaryenAddInt32(), left, right);
+}
+wasm::Expression* Module::return_(wasm::Expression* value) {
+  return BinaryenReturn(module, value);
 }
 
 uintptr_t Module::addFunction(const std::string& name,
@@ -162,27 +141,40 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
                       wasm::Expression::Id::CLASS_TO_VISIT##Id);
 #include "wasm-delegations.def"
 
-  class_<binaryen::LocalExpressionFactory>("LocalExpressionFactory")
-    .function("get", &binaryen::LocalExpressionFactory::get);
+  class_<binaryen::Module::Local>("Module_Local")
+    .function("get",
+              &binaryen::Module::Local::get,
+              allow_raw_pointer<wasm::Expression>());
 
-  class_<binaryen::I32ExpressionFactory>("I32ExpressionFactory")
-    .function("add", &binaryen::I32ExpressionFactory::add);
+  class_<binaryen::Module::I32>("Module_I32")
+    .function("add",
+              &binaryen::Module::I32::add,
+              allow_raw_pointer<wasm::Expression>());
 
   class_<binaryen::Module>("Module")
     .constructor()
     .property("ptr", &binaryen::Module::ptr)
 
-    /*.function("block", &binaryen::Module::block)
-    .function("if", &binaryen::Module::if_)
-    .function("loop", &binaryen::Module::loop)
-    .function("br", &binaryen::Module::br)
-    .function("break", &binaryen::Module::br)
-    .function("br_if", &binaryen::Module::br)
-    .property("local", &binaryen::Module::local)
-    .property("i32", &binaryen::Module::i32)
-    .function("return", &binaryen::Module::return_)
+    .function(
+      "block", &binaryen::Module::block, allow_raw_pointer<wasm::Expression>())
+    .function(
+      "if", &binaryen::Module::if_, allow_raw_pointer<wasm::Expression>())
+    .function(
+      "loop", &binaryen::Module::loop, allow_raw_pointer<wasm::Expression>())
+    .function(
+      "br", &binaryen::Module::br, allow_raw_pointer<wasm::Expression>())
+    .function(
+      "break", &binaryen::Module::br, allow_raw_pointer<wasm::Expression>())
+    .function(
+      "br_if", &binaryen::Module::br, allow_raw_pointer<wasm::Expression>())
+    .property(
+      "local", &binaryen::Module::local, return_value_policy::reference())
+    .property("i32", &binaryen::Module::i32, return_value_policy::reference())
+    .function("return",
+              &binaryen::Module::return_,
+              allow_raw_pointer<wasm::Expression>())
 
-    .function("addFunction", &binaryen::Module::addFunction)
+    /*.function("addFunction", &binaryen::Module::addFunction)
     .function("addFunctionExport", &binaryen::Module::addFunctionExport)*/
 
     .function("emitText", &binaryen::Module::emitText);
@@ -197,9 +189,12 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .property("type", &wasm::Expression::type)*/
     ;
 
+  register_type<binaryen::ExpressionList>("Expression[]");
+
 #define DELEGATE_FIELD_MAIN_START
 
-#define DELEGATE_FIELD_CASE_START(id) class_<wasm::id>(#id)
+#define DELEGATE_FIELD_CASE_START(id)                                          \
+  class_<wasm::id, base<wasm::Expression>>(#id)
 
 #define DELEGATE_FIELD_CASE_END(id) ;
 

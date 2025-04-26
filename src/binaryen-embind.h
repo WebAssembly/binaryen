@@ -11,29 +11,9 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(ExpressionList);
 
 EMSCRIPTEN_DECLARE_VAL_TYPE(TypeList);
 
-namespace {
-class ExpressionFactory {
-protected:
+struct ExpressionFactory {
   wasm::Module* module;
-
-public:
-  ExpressionFactory(wasm::Module* module);
 };
-
-class LocalExpressionFactory : public ExpressionFactory {
-public:
-  using ExpressionFactory::ExpressionFactory;
-
-  uintptr_t get(Index index, Type type);
-};
-
-class I32ExpressionFactory : public ExpressionFactory {
-public:
-  using ExpressionFactory::ExpressionFactory;
-
-  uintptr_t add(uintptr_t left, uintptr_t right);
-};
-} // namespace
 
 class Module {
 private:
@@ -46,14 +26,22 @@ public:
 
   const uintptr_t& ptr() const;
 
-  uintptr_t
+  wasm::Expression*
   block(const std::string& name, ExpressionList children, uintptr_t type);
-  uintptr_t if_(uintptr_t condition, uintptr_t ifTrue, uintptr_t ifFalse);
-  uintptr_t loop(const std::string& label, uintptr_t body);
-  uintptr_t br(const std::string& label, uintptr_t condition, uintptr_t value);
-  const LocalExpressionFactory local = LocalExpressionFactory(this->module);
-  const I32ExpressionFactory i32 = I32ExpressionFactory(this->module);
-  uintptr_t return_(uintptr_t value);
+  wasm::Expression* if_(wasm::Expression* condition,
+                        wasm::Expression* ifTrue,
+                        wasm::Expression* ifFalse);
+  wasm::Expression* loop(const std::string& label, wasm::Expression* body);
+  wasm::Expression* br(const std::string& label,
+                       wasm::Expression* condition,
+                       wasm::Expression* value);
+  const struct Local : ExpressionFactory {
+    wasm::Expression* get(Index index, Type type);
+  } local{module};
+  const struct I32 : ExpressionFactory {
+    wasm::Expression* add(wasm::Expression* left, wasm::Expression* right);
+  } i32{module};
+  wasm::Expression* return_(wasm::Expression* value);
 
   uintptr_t addFunction(const std::string& name,
                         Type params,
