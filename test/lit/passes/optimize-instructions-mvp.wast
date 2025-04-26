@@ -11550,6 +11550,44 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (i32.store
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i64.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i64)
+  ;; CHECK-NEXT:      (i64.store
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (i64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -11884,6 +11922,32 @@
       )
       (i64.const 0)
     ))
+    (drop (i32.ge_u
+        (i32.load
+          (i32.const 0)
+        )
+        (block (result i32)
+          (i32.store
+            (i32.const 0)
+            (i32.const 0)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+    (drop (i64.ge_u
+        (i64.load
+          (i32.const 0)
+        )
+        (block (result i64)
+          (i64.store
+            (i32.const 0)
+            (i64.const 0)
+          )
+          (i64.const 0)
+        )
+      )
+    )
 
     ;; (unsigned)x < 0  =>  i32(0)
     (drop (i32.lt_u
