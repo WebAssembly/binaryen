@@ -1,5 +1,6 @@
 #include "binaryen-embind.h"
-#include "binaryen-c.h"
+#include "parser/wat-parser.h"
+#include "wasm-builder.h"
 
 using namespace emscripten;
 
@@ -14,39 +15,50 @@ const uintptr_t& Module::ptr() const {
 
 wasm::Expression* Module::block(const std::string& name,
                                 ExpressionList children,
-                                uintptr_t type) {
-  auto childrenVec = vecFromJSArray<wasm::Expression*>(
-    children, allow_raw_pointer<wasm::Expression>());
-  return BinaryenBlock(
-    module, name.c_str(), childrenVec.begin().base(), childrenVec.size(), type);
+                                std::optional<wasm::Type> type) {
+  return wasm::Builder(*module).makeBlock(
+    name,
+    vecFromJSArray<wasm::Expression*>(children,
+                                      allow_raw_pointer<wasm::Expression>()),
+    type);
 }
 wasm::Expression* Module::if_(wasm::Expression* condition,
                               wasm::Expression* ifTrue,
                               wasm::Expression* ifFalse) {
-  return BinaryenIf(module, condition, ifTrue, ifFalse);
+  return wasm::Builder(*module).makeIf(condition, ifTrue, ifFalse);
 }
 wasm::Expression* Module::loop(const std::string& label,
                                wasm::Expression* body) {
-  return BinaryenLoop(module, label.c_str(), body);
+  return wasm::Builder(*module).makeLoop(label, body);
 }
 wasm::Expression* Module::br(const std::string& label,
                              wasm::Expression* condition,
                              wasm::Expression* value) {
-  return BinaryenBreak(module, label.c_str(), condition, value);
+  return wasm::Builder(*module).makeBreak(label, condition, value);
 }
-wasm::Expression* Module::Local::get(Index index, Type type) {
-  return BinaryenLocalGet(module, index, type);
+wasm::Expression* Module::switch_(NameList names,
+                                  const std::string& defaultName,
+                                  wasm::Expression* condition,
+                                  wasm::Expression* value) {
+  auto strVec = vecFromJSArray<std::string>(names);
+  std::vector<wasm::Name> namesVec(strVec.begin(), strVec.end());
+  return wasm::Builder(*module).makeSwitch(
+    namesVec, defaultName, condition, value);
+}
+wasm::Expression* Module::Local::get(Index index, wasm::Type type) {
+  return wasm::Builder(*module).makeLocalGet(index, type);
 }
 
 wasm::Expression* Module::I32::add(wasm::Expression* left,
                                    wasm::Expression* right) {
-  return BinaryenBinary(module, BinaryenAddInt32(), left, right);
+  return wasm::Builder(*module).makeBinary(
+    wasm::BinaryOp::AddInt32, left, right);
 }
 wasm::Expression* Module::return_(wasm::Expression* value) {
-  return BinaryenReturn(module, value);
+  return wasm::Builder(*module).makeReturn(value);
 }
 
-uintptr_t Module::addFunction(const std::string& name,
+/*uintptr_t Module::addFunction(const std::string& name,
                               BinaryenType params,
                               BinaryenType results,
                               TypeList varTypes,
@@ -66,24 +78,29 @@ uintptr_t Module::addFunctionExport(const std::string& internalName,
                                     const std::string& externalName) {
   return reinterpret_cast<uintptr_t>(BinaryenAddFunctionExport(
     module, internalName.c_str(), externalName.c_str()));
-}
+}*/
 
 std::string Module::emitText() {
-  char* text = BinaryenModuleAllocateAndWriteText(module);
-  std::string str = text;
-  delete text;
-  return str;
+  std::ostringstream os;
+  bool colors = Colors::isEnabled();
+  Colors::setEnabled(false); // do not use colors for writing
+  os << *module;
+  Colors::setEnabled(colors); // restore colors state
+  return os.str();
 }
 
 Module* parseText(const std::string& text) {
-  return new Module(BinaryenModuleParse(text.c_str()));
+  auto* wasm = new wasm::Module;
+  auto parsed = wasm::WATParser::parseModule(*wasm, text);
+  if (auto* err = parsed.getErr()) {
+    wasm::Fatal() << err->msg << "\n";
+  }
+  return new Module(wasm);
 }
 
-BinaryenType createType(TypeList types) {
-  std::vector<uintptr_t> typeIdsVec =
-    convertJSArrayToNumberVector<uintptr_t>(types);
-  std::vector<wasm::Type> typesVec(typeIdsVec.begin(), typeIdsVec.end());
-  return wasm::Type(typesVec).getID();
+wasm::Type createType(TypeList types) {
+  auto typesVec = vecFromJSArray<wasm::Type>(types);
+  return wasm::Type(typesVec);
 }
 } // namespace binaryen
 
@@ -96,34 +113,30 @@ static std::string capitalize(std::string str) {
 } // namespace
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
-  constant<uintptr_t>("none", wasm::Type::none);
-  constant<uintptr_t>("i32", wasm::Type::i32);
-  constant<uintptr_t>("i64", wasm::Type::i64);
-  constant<uintptr_t>("f32", wasm::Type::f32);
-  constant<uintptr_t>("f64", wasm::Type::f64);
-  constant<uintptr_t>("v128", wasm::Type::v128);
-  constant<uintptr_t>("funcref",
-                      wasm::Type(wasm::HeapType::func, wasm::Nullable).getID());
-  constant<uintptr_t>("externref",
-                      wasm::Type(wasm::HeapType::ext, wasm::Nullable).getID());
-  constant<uintptr_t>("anyref",
-                      wasm::Type(wasm::HeapType::any, wasm::Nullable).getID());
-  constant<uintptr_t>("eqref",
-                      wasm::Type(wasm::HeapType::eq, wasm::Nullable).getID());
-  constant<uintptr_t>("i31ref",
-                      wasm::Type(wasm::HeapType::i31, wasm::Nullable).getID());
-  constant<uintptr_t>(
-    "structref", wasm::Type(wasm::HeapType::struct_, wasm::Nullable).getID());
-  constant<uintptr_t>(
-    "stringref", wasm::Type(wasm::HeapType::string, wasm::Nullable).getID());
-  constant<uintptr_t>("nullref",
-                      wasm::Type(wasm::HeapType::none, wasm::Nullable).getID());
-  constant<uintptr_t>(
-    "nullexternref", wasm::Type(wasm::HeapType::noext, wasm::Nullable).getID());
-  constant<uintptr_t>(
-    "nullfuncref", wasm::Type(wasm::HeapType::nofunc, wasm::Nullable).getID());
-  constant<uintptr_t>("unreachable", wasm::Type::unreachable);
-  constant<uintptr_t>("auto", uintptr_t(-1));
+  class_<wasm::Type>("Type");
+
+  register_optional<wasm::Type>();
+
+  constant("none", wasm::Type(wasm::Type::none));
+  constant("i32", wasm::Type(wasm::Type::i32));
+  constant("i64", wasm::Type(wasm::Type::i64));
+  constant("f32", wasm::Type(wasm::Type::f32));
+  constant("f64", wasm::Type(wasm::Type::f64));
+  constant("v128", wasm::Type(wasm::Type::v128));
+  constant("funcref", wasm::Type(wasm::HeapType::func, wasm::Nullable));
+  constant("externref", wasm::Type(wasm::HeapType::ext, wasm::Nullable));
+  constant("anyref", wasm::Type(wasm::HeapType::any, wasm::Nullable));
+  constant("eqref", wasm::Type(wasm::HeapType::eq, wasm::Nullable));
+  constant("i31ref", wasm::Type(wasm::HeapType::i31, wasm::Nullable));
+  constant("structref", wasm::Type(wasm::HeapType::struct_, wasm::Nullable));
+  constant("stringref", wasm::Type(wasm::HeapType::string, wasm::Nullable));
+  constant("nullref", wasm::Type(wasm::HeapType::none, wasm::Nullable));
+  constant("nullexternref", wasm::Type(wasm::HeapType::noext, wasm::Nullable));
+  constant("nullfuncref", wasm::Type(wasm::HeapType::nofunc, wasm::Nullable));
+  constant("unreachable", wasm::Type(wasm::Type::unreachable));
+  constant("auto", val::undefined());
+
+  register_type<binaryen::TypeList>("Type[]");
 
   constant<uintptr_t>("notPacked", wasm::Field::PackedType::not_packed);
   constant<uintptr_t>("i8", wasm::Field::PackedType::i8);
@@ -135,10 +148,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   expressionIds.value(#CLASS_TO_VISIT, wasm::Expression::Id::CLASS_TO_VISIT##Id)
 #include "wasm-delegations.def"
 
-  constant<uintptr_t>("InvalidId", wasm::Expression::Id::InvalidId);
+  constant("InvalidId", wasm::Expression::Id::InvalidId);
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  constant<uintptr_t>(#CLASS_TO_VISIT "Id",                                    \
-                      wasm::Expression::Id::CLASS_TO_VISIT##Id);
+  constant(#CLASS_TO_VISIT "Id", wasm::Expression::Id::CLASS_TO_VISIT##Id);
 #include "wasm-delegations.def"
 
   class_<binaryen::Module::Local>("Module_Local")
@@ -182,14 +194,15 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   function(
     "parseText", binaryen::parseText, allow_raw_pointer<binaryen::Module>());
 
-  // function("createType", binaryen::createType);
+  function("createType", binaryen::createType);
 
   class_<wasm::Expression>("Expression")
-    /*.property("id", &wasm::Expression::_id)
-    .property("type", &wasm::Expression::type)*/
-    ;
+    .property("id", &wasm::Expression::_id)
+    .property("type", &wasm::Expression::type);
 
   register_type<binaryen::ExpressionList>("Expression[]");
+
+  register_type<binaryen::NameList>("string[]");
 
 #define DELEGATE_FIELD_MAIN_START
 
