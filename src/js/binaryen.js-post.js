@@ -3058,449 +3058,48 @@ Module['getExpressionType'] = function(expr) {
 Module['getExpressionInfo'] = function(expr) {
   const id = Module['_BinaryenExpressionGetId'](expr);
   const type = Module['_BinaryenExpressionGetType'](expr);
-  switch (id) { // TODO: GC instructions
-    case Module['BlockId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenBlockGetName'](expr)),
-        'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt'])
-      };
-    case Module['IfId']:
-      return {
-        'id': id,
-        'type': type,
-        'condition': Module['_BinaryenIfGetCondition'](expr),
-        'ifTrue': Module['_BinaryenIfGetIfTrue'](expr),
-        'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)
-      };
-    case Module['LoopId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenLoopGetName'](expr)),
-        'body': Module['_BinaryenLoopGetBody'](expr)
-      };
-    case Module['BreakId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenBreakGetName'](expr)),
-        'condition': Module['_BinaryenBreakGetCondition'](expr),
-        'value': Module['_BinaryenBreakGetValue'](expr)
-      };
-    case Module['SwitchId']:
-      return {
-        'id': id,
-        'type': type,
-         // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
-        'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(p => UTF8ToString(p)),
-        'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expr)),
-        'condition': Module['_BinaryenSwitchGetCondition'](expr),
-        'value': Module['_BinaryenSwitchGetValue'](expr)
-      };
-    case Module['CallId']:
-      return {
-        'id': id,
-        'type': type,
-        'isReturn': Boolean(Module['_BinaryenCallIsReturn'](expr)),
-        'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expr)),
-        'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperandAt'])
-      };
-    case Module['CallIndirectId']:
-      return {
-        'id': id,
-        'type': type,
-        'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
-        'target': Module['_BinaryenCallIndirectGetTarget'](expr),
-        'table': Module['_BinaryenCallIndirectGetTable'](expr),
-        'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
-      };
-    case Module['LocalGetId']:
-      return {
-        'id': id,
-        'type': type,
-        'index': Module['_BinaryenLocalGetGetIndex'](expr)
-      };
-    case Module['LocalSetId']:
-      return {
-        'id': id,
-        'type': type,
-        'isTee': Boolean(Module['_BinaryenLocalSetIsTee'](expr)),
-        'index': Module['_BinaryenLocalSetGetIndex'](expr),
-        'value': Module['_BinaryenLocalSetGetValue'](expr)
-      };
-    case Module['GlobalGetId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr))
-      };
-    case Module['GlobalSetId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr)),
-        'value': Module['_BinaryenGlobalSetGetValue'](expr)
-      };
-    case Module['TableGetId']:
-      return {
-        'id': id,
-        'type': type,
-        'table': UTF8ToString(Module['_BinaryenTableGetGetTable'](expr)),
-        'index': Module['_BinaryenTableGetGetIndex'](expr)
-      };
-    case Module['TableSetId']:
-      return {
-        'id': id,
-        'type': type,
-        'table': UTF8ToString(Module['_BinaryenTableSetGetTable'](expr)),
-        'index': Module['_BinaryenTableSetGetIndex'](expr),
-        'value': Module['_BinaryenTableSetGetValue'](expr)
-      };
-    case Module['TableSizeId']:
-      return {
-        'id': id,
-        'type': type,
-        'table': UTF8ToString(Module['_BinaryenTableSizeGetTable'](expr)),
-      };
-    case Module['TableGrowId']:
-      return {
-        'id': id,
-        'type': type,
-        'table': UTF8ToString(Module['_BinaryenTableGrowGetTable'](expr)),
-        'value': Module['_BinaryenTableGrowGetValue'](expr),
-        'delta': Module['_BinaryenTableGrowGetDelta'](expr),
-      };
-    case Module['LoadId']:
-      return {
-        'id': id,
-        'type': type,
-        'isAtomic': Boolean(Module['_BinaryenLoadIsAtomic'](expr)),
-        'isSigned': Boolean(Module['_BinaryenLoadIsSigned'](expr)),
-        'offset': Module['_BinaryenLoadGetOffset'](expr),
-        'bytes': Module['_BinaryenLoadGetBytes'](expr),
-        'align': Module['_BinaryenLoadGetAlign'](expr),
-        'ptr': Module['_BinaryenLoadGetPtr'](expr)
-      };
-    case Module['StoreId']:
-      return {
-        'id': id,
-        'type': type,
-        'isAtomic': Boolean(Module['_BinaryenStoreIsAtomic'](expr)),
-        'offset': Module['_BinaryenStoreGetOffset'](expr),
-        'bytes': Module['_BinaryenStoreGetBytes'](expr),
-        'align': Module['_BinaryenStoreGetAlign'](expr),
-        'ptr': Module['_BinaryenStoreGetPtr'](expr),
-        'value': Module['_BinaryenStoreGetValue'](expr)
-      };
-    case Module['ConstId']: {
-      let value;
+  const info = { id, type };
+  switch (id) {
+    case Module['ConstId']:
       switch (type) {
-        case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
-        case Module['i64']: value = {
+        case Module['i32']: info.value = Module['_BinaryenConstGetValueI32'](expr); break;
+        case Module['i64']: info.value = {
           'low':  Module['_BinaryenConstGetValueI64Low'](expr),
           'high': Module['_BinaryenConstGetValueI64High'](expr)
         }; break;
-        case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
-        case Module['f64']: value = Module['_BinaryenConstGetValueF64'](expr); break;
+        case Module['f32']: info.value = Module['_BinaryenConstGetValueF32'](expr); break;
+        case Module['f64']: info.value = Module['_BinaryenConstGetValueF64'](expr); break;
         case Module['v128']: {
           preserveStack(() => {
             const tempBuffer = stackAlloc(16);
             Module['_BinaryenConstGetValueV128'](expr, tempBuffer);
-            value = new Array(16);
+            info.value = new Array(16);
             for (let i = 0; i < 16; i++) {
-              value[i] = HEAPU8[tempBuffer + i];
+              info.value[i] = HEAPU8[tempBuffer + i];
             }
           });
           break;
         }
         default: throw Error('unexpected type: ' + type);
       }
-      return {
-        'id': id,
-        'type': type,
-        'value': value
-      };
-    }
-    case Module['UnaryId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenUnaryGetOp'](expr),
-        'value': Module['_BinaryenUnaryGetValue'](expr)
-      };
-    case Module['BinaryId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenBinaryGetOp'](expr),
-        'left': Module['_BinaryenBinaryGetLeft'](expr),
-        'right':  Module['_BinaryenBinaryGetRight'](expr)
-      };
-    case Module['SelectId']:
-      return {
-        'id': id,
-        'type': type,
-        'ifTrue': Module['_BinaryenSelectGetIfTrue'](expr),
-        'ifFalse': Module['_BinaryenSelectGetIfFalse'](expr),
-        'condition': Module['_BinaryenSelectGetCondition'](expr)
-      };
-    case Module['DropId']:
-      return {
-        'id': id,
-        'type': type,
-        'value': Module['_BinaryenDropGetValue'](expr)
-      };
-    case Module['ReturnId']:
-      return {
-        'id': id,
-        'type': type,
-        'value': Module['_BinaryenReturnGetValue'](expr)
-      };
-    case Module['NopId']:
-    case Module['UnreachableId']:
-    case Module['PopId']:
-      return {
-        'id': id,
-        'type': type
-      };
-    case Module['MemorySizeId']:
-      return {
-        'id': id,
-        'type': type
-      };
-    case Module['MemoryGrowId']:
-      return {
-        'id': id,
-        'type': type,
-        'delta': Module['_BinaryenMemoryGrowGetDelta'](expr)
-      }
-    case Module['AtomicRMWId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenAtomicRMWGetOp'](expr),
-        'bytes': Module['_BinaryenAtomicRMWGetBytes'](expr),
-        'offset': Module['_BinaryenAtomicRMWGetOffset'](expr),
-        'ptr': Module['_BinaryenAtomicRMWGetPtr'](expr),
-        'value': Module['_BinaryenAtomicRMWGetValue'](expr)
-      };
-    case Module['AtomicCmpxchgId']:
-      return {
-        'id': id,
-        'type': type,
-        'bytes': Module['_BinaryenAtomicCmpxchgGetBytes'](expr),
-        'offset': Module['_BinaryenAtomicCmpxchgGetOffset'](expr),
-        'ptr': Module['_BinaryenAtomicCmpxchgGetPtr'](expr),
-        'expected': Module['_BinaryenAtomicCmpxchgGetExpected'](expr),
-        'replacement': Module['_BinaryenAtomicCmpxchgGetReplacement'](expr)
-      };
-    case Module['AtomicWaitId']:
-      return {
-        'id': id,
-        'type': type,
-        'ptr': Module['_BinaryenAtomicWaitGetPtr'](expr),
-        'expected': Module['_BinaryenAtomicWaitGetExpected'](expr),
-        'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expr),
-        'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expr)
-      };
-    case Module['AtomicNotifyId']:
-      return {
-        'id': id,
-        'type': type,
-        'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expr),
-        'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expr)
-      };
-    case Module['AtomicFenceId']:
-      return {
-        'id': id,
-        'type': type,
-        'order': Module['_BinaryenAtomicFenceGetOrder'](expr)
-      };
-    case Module['SIMDExtractId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenSIMDExtractGetOp'](expr),
-        'vec': Module['_BinaryenSIMDExtractGetVec'](expr),
-        'index': Module['_BinaryenSIMDExtractGetIndex'](expr)
-      };
-    case Module['SIMDReplaceId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenSIMDReplaceGetOp'](expr),
-        'vec': Module['_BinaryenSIMDReplaceGetVec'](expr),
-        'index': Module['_BinaryenSIMDReplaceGetIndex'](expr),
-        'value': Module['_BinaryenSIMDReplaceGetValue'](expr)
-      };
-    case Module['SIMDShuffleId']:
-      return preserveStack(() => {
-        const tempBuffer = stackAlloc(16);
-        Module['_BinaryenSIMDShuffleGetMask'](expr, tempBuffer);
-        const mask = new Array(16);
-        for (let i = 0; i < 16; i++) {
-          mask[i] = HEAPU8[tempBuffer + i];
+      break;
+    default: {
+      const staticMembers = expressionWrappers[id];
+      Object.keys(staticMembers).forEach(memberName => {
+        const member = staticMembers[memberName];
+        if (typeof member === "function") {
+          let match;
+          if (member.length === 1 && (match = memberName.match(/(^get|^(?=is|has))/))) {
+            const index = match[1].length;
+            const propertyName = memberName.charAt(index).toLowerCase() + memberName.substring(index + 1);
+            info[propertyName] = member(expr);
+          }
         }
-        return {
-          'id': id,
-          'type': type,
-          'left': Module['_BinaryenSIMDShuffleGetLeft'](expr),
-          'right': Module['_BinaryenSIMDShuffleGetRight'](expr),
-          'mask': mask
-        };
       });
-    case Module['SIMDTernaryId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenSIMDTernaryGetOp'](expr),
-        'a': Module['_BinaryenSIMDTernaryGetA'](expr),
-        'b': Module['_BinaryenSIMDTernaryGetB'](expr),
-        'c': Module['_BinaryenSIMDTernaryGetC'](expr)
-      };
-    case Module['SIMDShiftId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenSIMDShiftGetOp'](expr),
-        'vec': Module['_BinaryenSIMDShiftGetVec'](expr),
-        'shift': Module['_BinaryenSIMDShiftGetShift'](expr)
-      };
-    case Module['SIMDLoadId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenSIMDLoadGetOp'](expr),
-        'offset': Module['_BinaryenSIMDLoadGetOffset'](expr),
-        'align': Module['_BinaryenSIMDLoadGetAlign'](expr),
-        'ptr': Module['_BinaryenSIMDLoadGetPtr'](expr)
-      };
-    case Module['SIMDLoadStoreLaneId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr),
-        'offset': Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr),
-        'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr),
-        'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr),
-        'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr),
-        'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr)
-      };
-    case Module['MemoryInitId']:
-      return {
-        'id': id,
-        'segment': UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expr)),
-        'dest': Module['_BinaryenMemoryInitGetDest'](expr),
-        'offset': Module['_BinaryenMemoryInitGetOffset'](expr),
-        'size': Module['_BinaryenMemoryInitGetSize'](expr)
-      };
-    case Module['DataDropId']:
-      return {
-        'id': id,
-        'segment': UTF8ToString(Module['_BinaryenDataDropGetSegment'](expr)),
-      };
-    case Module['MemoryCopyId']:
-      return {
-        'id': id,
-        'dest': Module['_BinaryenMemoryCopyGetDest'](expr),
-        'source': Module['_BinaryenMemoryCopyGetSource'](expr),
-        'size': Module['_BinaryenMemoryCopyGetSize'](expr)
-      };
-    case Module['MemoryFillId']:
-      return {
-        'id': id,
-        'dest': Module['_BinaryenMemoryFillGetDest'](expr),
-        'value': Module['_BinaryenMemoryFillGetValue'](expr),
-        'size': Module['_BinaryenMemoryFillGetSize'](expr)
-      };
-    case Module['RefNullId']:
-      return {
-        'id': id,
-        'type': type
-      };
-    case Module['RefIsNullId']:
-      return {
-        'id': id,
-        'type': type,
-        'value': Module['_BinaryenRefIsNullGetValue'](expr)
-      };
-    case Module['RefAsId']:
-      return {
-        'id': id,
-        'type': type,
-        'op': Module['_BinaryenRefAsGetOp'](expr),
-        'value': Module['_BinaryenRefAsGetValue'](expr)
-      };
-    case Module['RefFuncId']:
-      return {
-        'id': id,
-        'type': type,
-        'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr)),
-      };
-    case Module['RefEqId']:
-      return {
-        'id': id,
-        'type': type,
-        'left': Module['_BinaryenRefEqGetLeft'](expr),
-        'right': Module['_BinaryenRefEqGetRight'](expr)
-      };
-    case Module['TryId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenTryGetName'](expr)),
-        'body': Module['_BinaryenTryGetBody'](expr),
-        'catchTags': getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
-        'catchBodies': getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
-        'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expr),
-        'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expr)),
-        'isDelegate': Module['_BinaryenTryIsDelegate'](expr)
-      };
-    case Module['ThrowId']:
-      return {
-        'id': id,
-        'type': type,
-        'tag': UTF8ToString(Module['_BinaryenThrowGetTag'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
-      };
-    case Module['RethrowId']:
-      return {
-        'id': id,
-        'type': type,
-        'target': UTF8ToString(Module['_BinaryenRethrowGetTarget'](expr))
-      };
-    case Module['TupleMakeId']:
-      return {
-        'id': id,
-        'type': type,
-        'operands': getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperandAt'])
-      };
-    case Module['TupleExtractId']:
-      return {
-        'id': id,
-        'type': type,
-        'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
-        'index': Module['_BinaryenTupleExtractGetIndex'](expr)
-      };
-    case Module['RefI31Id']:
-      return {
-        'id': id,
-        'type': type,
-        'value': Module['_BinaryenRefI31GetValue'](expr)
-      };
-    case Module['I31GetId']:
-      return {
-        'id': id,
-        'type': type,
-        'i31': Module['_BinaryenI31GetGetI31'](expr),
-        'isSigned': Boolean(Module['_BinaryenI31GetIsSigned'](expr))
-      };
-
-    default:
-      throw Error('unexpected id: ' + id);
+      break;
+    }
   }
+  return info;
 };
 
 // Gets the side effects of the specified expression
@@ -3828,12 +3427,15 @@ Module['setAllowInliningFunctionsWithLoops'] = function(value) {
 
 // Expression wrappers
 
+// Expression ID-to-wrapper map
+let expressionWrappers = {};
+
 // Private symbol used to store the underlying C-API pointer of a wrapped object.
 const thisPtr = Symbol();
 
 // Makes a specific expression wrapper class with the specified static members
 // while automatically deriving instance methods and accessors.
-function makeExpressionWrapper(ownStaticMembers) {
+function makeExpressionWrapper(expressionId, ownStaticMembers) {
   /**
    * @constructor
    * @extends Expression
@@ -3854,6 +3456,8 @@ function makeExpressionWrapper(ownStaticMembers) {
   (SpecificExpression.prototype = Object.create(Expression.prototype)).constructor = SpecificExpression;
   // derive own instance members
   deriveWrapperInstanceMembers(SpecificExpression.prototype, ownStaticMembers);
+  // register the expression wrapper
+  expressionWrappers[expressionId] = SpecificExpression;
   return SpecificExpression;
 }
 
@@ -3901,6 +3505,12 @@ function deriveWrapperInstanceMembers(prototype, staticMembers) {
 // Base class of all expression wrappers
 /** @constructor */
 function Expression(expr) {
+  // Returns the specific wrapper if called without `new`
+  if (!(this instanceof Expression)) {
+    if (!expr) return null;
+    const id = Module['_BinaryenExpressionGetId'](expr);
+    return expressionWrappers[id](expr);
+  }
   if (!expr) throw Error("expression reference must not be null");
   this[thisPtr] = expr;
 }
@@ -3926,7 +3536,7 @@ Expression.prototype['valueOf'] = function() {
 
 Module['Expression'] = Expression;
 
-Module['Block'] = makeExpressionWrapper({
+Module['Block'] = makeExpressionWrapper(Module['_BinaryenBlockId'](), {
   'getName'(expr) {
     const name = Module['_BinaryenBlockGetName'](expr);
     return name ? UTF8ToString(name) : null;
@@ -3960,7 +3570,7 @@ Module['Block'] = makeExpressionWrapper({
   }
 });
 
-Module['If'] = makeExpressionWrapper({
+Module['If'] = makeExpressionWrapper(Module['_BinaryenIfId'](), {
   'getCondition'(expr) {
     return Module['_BinaryenIfGetCondition'](expr);
   },
@@ -3981,7 +3591,7 @@ Module['If'] = makeExpressionWrapper({
   }
 });
 
-Module['Loop'] = makeExpressionWrapper({
+Module['Loop'] = makeExpressionWrapper(Module['_BinaryenLoopId'](), {
   'getName'(expr) {
     const name = Module['_BinaryenLoopGetName'](expr);
     return name ? UTF8ToString(name) : null;
@@ -3997,7 +3607,7 @@ Module['Loop'] = makeExpressionWrapper({
   }
 });
 
-Module['Break'] = makeExpressionWrapper({
+Module['Break'] = makeExpressionWrapper(Module['_BinaryenBreakId'](), {
   'getName'(expr) {
     const name = Module['_BinaryenBreakGetName'](expr);
     return name ? UTF8ToString(name) : null;
@@ -4019,7 +3629,7 @@ Module['Break'] = makeExpressionWrapper({
   }
 });
 
-Module['Switch'] = makeExpressionWrapper({
+Module['Switch'] = makeExpressionWrapper(Module['_BinaryenSwitchId'](), {
   'getNumNames'(expr) {
     return Module['_BinaryenSwitchGetNumNames'](expr);
   },
@@ -4067,7 +3677,7 @@ Module['Switch'] = makeExpressionWrapper({
   },
 });
 
-Module['Call'] = makeExpressionWrapper({
+Module['Call'] = makeExpressionWrapper(Module['_BinaryenCallId'](), {
   'getTarget'(expr) {
     return UTF8ToString(Module['_BinaryenCallGetTarget'](expr));
   },
@@ -4106,7 +3716,7 @@ Module['Call'] = makeExpressionWrapper({
   }
 });
 
-Module['CallIndirect'] = makeExpressionWrapper({
+Module['CallIndirect'] = makeExpressionWrapper(Module['_BinaryenCallIndirectId'](), {
   'getTarget'(expr) {
     return Module['_BinaryenCallIndirectGetTarget'](expr);
   },
@@ -4163,7 +3773,7 @@ Module['CallIndirect'] = makeExpressionWrapper({
   }
 });
 
-Module['LocalGet'] = makeExpressionWrapper({
+Module['LocalGet'] = makeExpressionWrapper(Module['_BinaryenLocalGetId'](), {
   'getIndex'(expr) {
     return Module['_BinaryenLocalGetGetIndex'](expr);
   },
@@ -4172,7 +3782,7 @@ Module['LocalGet'] = makeExpressionWrapper({
   }
 });
 
-Module['LocalSet'] = makeExpressionWrapper({
+Module['LocalSet'] = makeExpressionWrapper(Module['_BinaryenLocalSetId'](), {
   'getIndex'(expr) {
     return Module['_BinaryenLocalSetGetIndex'](expr);
   },
@@ -4190,7 +3800,7 @@ Module['LocalSet'] = makeExpressionWrapper({
   }
 });
 
-Module['GlobalGet'] = makeExpressionWrapper({
+Module['GlobalGet'] = makeExpressionWrapper(Module['_BinaryenGlobalGetId'](), {
   'getName'(expr) {
     return UTF8ToString(Module['_BinaryenGlobalGetGetName'](expr));
   },
@@ -4199,7 +3809,7 @@ Module['GlobalGet'] = makeExpressionWrapper({
   }
 });
 
-Module['GlobalSet'] = makeExpressionWrapper({
+Module['GlobalSet'] = makeExpressionWrapper(Module['_BinaryenGlobalSetId'](), {
   'getName'(expr) {
     return UTF8ToString(Module['_BinaryenGlobalSetGetName'](expr));
   },
@@ -4214,7 +3824,7 @@ Module['GlobalSet'] = makeExpressionWrapper({
   }
 });
 
-Module['TableGet'] = makeExpressionWrapper({
+Module['TableGet'] = makeExpressionWrapper(Module['_BinaryenTableGetId'](), {
   'getTable'(expr) {
     return UTF8ToString(Module['_BinaryenTableGetGetTable'](expr));
   },
@@ -4229,7 +3839,7 @@ Module['TableGet'] = makeExpressionWrapper({
   }
 });
 
-Module['TableSet'] = makeExpressionWrapper({
+Module['TableSet'] = makeExpressionWrapper(Module['_BinaryenTableSetId'](), {
   'getTable'(expr) {
     return UTF8ToString(Module['_BinaryenTableSetGetTable'](expr));
   },
@@ -4250,7 +3860,7 @@ Module['TableSet'] = makeExpressionWrapper({
   }
 });
 
-Module['TableSize'] = makeExpressionWrapper({
+Module['TableSize'] = makeExpressionWrapper(Module['_BinaryenTableSizeId'](), {
   'getTable'(expr) {
     return UTF8ToString(Module['_BinaryenTableSizeGetTable'](expr));
   },
@@ -4259,7 +3869,7 @@ Module['TableSize'] = makeExpressionWrapper({
   },
 });
 
-Module['TableGrow'] = makeExpressionWrapper({
+Module['TableGrow'] = makeExpressionWrapper(Module['_BinaryenTableGrowId'](), {
   'getTable'(expr) {
     return UTF8ToString(Module['_BinaryenTableGrowGetTable'](expr));
   },
@@ -4280,9 +3890,9 @@ Module['TableGrow'] = makeExpressionWrapper({
   }
 });
 
-Module['MemorySize'] = makeExpressionWrapper({});
+Module['MemorySize'] = makeExpressionWrapper(Module['_BinaryenMemorySizeId'](), {});
 
-Module['MemoryGrow'] = makeExpressionWrapper({
+Module['MemoryGrow'] = makeExpressionWrapper(Module['_BinaryenMemoryGrowId'](), {
   'getDelta'(expr) {
     return Module['_BinaryenMemoryGrowGetDelta'](expr);
   },
@@ -4291,7 +3901,7 @@ Module['MemoryGrow'] = makeExpressionWrapper({
   }
 });
 
-Module['Load'] = makeExpressionWrapper({
+Module['Load'] = makeExpressionWrapper(Module['_BinaryenLoadId'](), {
   'isAtomic'(expr) {
     return Boolean(Module['_BinaryenLoadIsAtomic'](expr));
   },
@@ -4330,7 +3940,7 @@ Module['Load'] = makeExpressionWrapper({
   }
 });
 
-Module['Store'] = makeExpressionWrapper({
+Module['Store'] = makeExpressionWrapper(Module['_BinaryenStoreId'](), {
   'isAtomic'(expr) {
     return Boolean(Module['_BinaryenStoreIsAtomic'](expr));
   },
@@ -4375,7 +3985,7 @@ Module['Store'] = makeExpressionWrapper({
   }
 });
 
-Module['Const'] = makeExpressionWrapper({
+Module['Const'] = makeExpressionWrapper(Module['_BinaryenConstId'](), {
   'getValueI32'(expr) {
     return Module['_BinaryenConstGetValueI32'](expr);
   },
@@ -4429,7 +4039,7 @@ Module['Const'] = makeExpressionWrapper({
   }
 });
 
-Module['Unary'] = makeExpressionWrapper({
+Module['Unary'] = makeExpressionWrapper(Module['_BinaryenUnaryId'](), {
   'getOp'(expr) {
     return Module['_BinaryenUnaryGetOp'](expr);
   },
@@ -4444,7 +4054,7 @@ Module['Unary'] = makeExpressionWrapper({
   }
 });
 
-Module['Binary'] = makeExpressionWrapper({
+Module['Binary'] = makeExpressionWrapper(Module['_BinaryenBinaryId'](), {
   'getOp'(expr) {
     return Module['_BinaryenBinaryGetOp'](expr);
   },
@@ -4465,7 +4075,7 @@ Module['Binary'] = makeExpressionWrapper({
   }
 });
 
-Module['Select'] = makeExpressionWrapper({
+Module['Select'] = makeExpressionWrapper(Module['_BinaryenSelectId'](), {
   'getIfTrue'(expr) {
     return Module['_BinaryenSelectGetIfTrue'](expr);
   },
@@ -4486,7 +4096,7 @@ Module['Select'] = makeExpressionWrapper({
   }
 });
 
-Module['Drop'] = makeExpressionWrapper({
+Module['Drop'] = makeExpressionWrapper(Module['_BinaryenDropId'](), {
   'getValue'(expr) {
     return Module['_BinaryenDropGetValue'](expr);
   },
@@ -4495,7 +4105,7 @@ Module['Drop'] = makeExpressionWrapper({
   }
 });
 
-Module['Return'] = makeExpressionWrapper({
+Module['Return'] = makeExpressionWrapper(Module['_BinaryenReturnId'](), {
   'getValue'(expr) {
     return Module['_BinaryenReturnGetValue'](expr);
   },
@@ -4504,7 +4114,7 @@ Module['Return'] = makeExpressionWrapper({
   }
 });
 
-Module['AtomicRMW'] = makeExpressionWrapper({
+Module['AtomicRMW'] = makeExpressionWrapper(Module['_BinaryenAtomicRMWId'](), {
   'getOp'(expr) {
     return Module['_BinaryenAtomicRMWGetOp'](expr);
   },
@@ -4537,7 +4147,7 @@ Module['AtomicRMW'] = makeExpressionWrapper({
   }
 });
 
-Module['AtomicCmpxchg'] = makeExpressionWrapper({
+Module['AtomicCmpxchg'] = makeExpressionWrapper(Module['_BinaryenAtomicCmpxchgId'](), {
   'getBytes'(expr) {
     return Module['_BinaryenAtomicCmpxchgGetBytes'](expr);
   },
@@ -4570,7 +4180,7 @@ Module['AtomicCmpxchg'] = makeExpressionWrapper({
   }
 });
 
-Module['AtomicWait'] = makeExpressionWrapper({
+Module['AtomicWait'] = makeExpressionWrapper(Module['_BinaryenAtomicWaitId'](), {
   'getPtr'(expr) {
     return Module['_BinaryenAtomicWaitGetPtr'](expr);
   },
@@ -4597,7 +4207,7 @@ Module['AtomicWait'] = makeExpressionWrapper({
   }
 });
 
-Module['AtomicNotify'] = makeExpressionWrapper({
+Module['AtomicNotify'] = makeExpressionWrapper(Module['_BinaryenAtomicNotifyId'](), {
   'getPtr'(expr) {
     return Module['_BinaryenAtomicNotifyGetPtr'](expr);
   },
@@ -4612,7 +4222,7 @@ Module['AtomicNotify'] = makeExpressionWrapper({
   }
 });
 
-Module['AtomicFence'] = makeExpressionWrapper({
+Module['AtomicFence'] = makeExpressionWrapper(Module['_BinaryenAtomicFenceId'](), {
   'getOrder'(expr) {
     return Module['_BinaryenAtomicFenceGetOrder'](expr);
   },
@@ -4621,7 +4231,7 @@ Module['AtomicFence'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDExtract'] = makeExpressionWrapper({
+Module['SIMDExtract'] = makeExpressionWrapper(Module['_BinaryenSIMDExtractId'](), {
   'getOp'(expr) {
     return Module['_BinaryenSIMDExtractGetOp'](expr);
   },
@@ -4642,7 +4252,7 @@ Module['SIMDExtract'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDReplace'] = makeExpressionWrapper({
+Module['SIMDReplace'] = makeExpressionWrapper(Module['_BinaryenSIMDReplaceId'](), {
   'getOp'(expr) {
     return Module['_BinaryenSIMDReplaceGetOp'](expr);
   },
@@ -4669,7 +4279,7 @@ Module['SIMDReplace'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDShuffle'] = makeExpressionWrapper({
+Module['SIMDShuffle'] = makeExpressionWrapper(Module['_BinaryenSIMDShuffleId'](), {
   'getLeft'(expr) {
     return Module['_BinaryenSIMDShuffleGetLeft'](expr);
   },
@@ -4705,7 +4315,7 @@ Module['SIMDShuffle'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDTernary'] = makeExpressionWrapper({
+Module['SIMDTernary'] = makeExpressionWrapper(Module['_BinaryenSIMDTernaryId'](), {
   'getOp'(expr) {
     return Module['_BinaryenSIMDTernaryGetOp'](expr);
   },
@@ -4732,7 +4342,7 @@ Module['SIMDTernary'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDShift'] = makeExpressionWrapper({
+Module['SIMDShift'] = makeExpressionWrapper(Module['_BinaryenSIMDShiftId'](), {
   'getOp'(expr) {
     return Module['_BinaryenSIMDShiftGetOp'](expr);
   },
@@ -4753,7 +4363,7 @@ Module['SIMDShift'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDLoad'] = makeExpressionWrapper({
+Module['SIMDLoad'] = makeExpressionWrapper(Module['_BinaryenSIMDLoadId'](), {
   'getOp'(expr) {
     return Module['_BinaryenSIMDLoadGetOp'](expr);
   },
@@ -4780,7 +4390,7 @@ Module['SIMDLoad'] = makeExpressionWrapper({
   }
 });
 
-Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
+Module['SIMDLoadStoreLane'] = makeExpressionWrapper(Module['_BinaryenSIMDLoadStoreLaneId'](), {
   'getOp'(expr) {
     return Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr);
   },
@@ -4822,7 +4432,7 @@ Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
   }
 });
 
-Module['MemoryInit'] = makeExpressionWrapper({
+Module['MemoryInit'] = makeExpressionWrapper(Module['_BinaryenMemoryInitId'](), {
   'getSegment'(expr) {
     return UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expr));
   },
@@ -4849,7 +4459,7 @@ Module['MemoryInit'] = makeExpressionWrapper({
   }
 });
 
-Module['DataDrop'] = makeExpressionWrapper({
+Module['DataDrop'] = makeExpressionWrapper(Module['_BinaryenDataDropId'](), {
   'getSegment'(expr) {
     return UTF8ToString(Module['_BinaryenDataDropGetSegment'](expr));
   },
@@ -4858,7 +4468,7 @@ Module['DataDrop'] = makeExpressionWrapper({
   }
 });
 
-Module['MemoryCopy'] = makeExpressionWrapper({
+Module['MemoryCopy'] = makeExpressionWrapper(Module['_BinaryenMemoryCopyId'](), {
   'getDest'(expr) {
     return Module['_BinaryenMemoryCopyGetDest'](expr);
   },
@@ -4879,7 +4489,7 @@ Module['MemoryCopy'] = makeExpressionWrapper({
   }
 });
 
-Module['MemoryFill'] = makeExpressionWrapper({
+Module['MemoryFill'] = makeExpressionWrapper(Module['_BinaryenMemoryFillId'](), {
   'getDest'(expr) {
     return Module['_BinaryenMemoryFillGetDest'](expr);
   },
@@ -4900,7 +4510,7 @@ Module['MemoryFill'] = makeExpressionWrapper({
   }
 });
 
-Module['RefIsNull'] = makeExpressionWrapper({
+Module['RefIsNull'] = makeExpressionWrapper(Module['_BinaryenRefIsNullId'](), {
   'getValue'(expr) {
     return Module['_BinaryenRefIsNullGetValue'](expr);
   },
@@ -4909,7 +4519,7 @@ Module['RefIsNull'] = makeExpressionWrapper({
   }
 });
 
-Module['RefAs'] = makeExpressionWrapper({
+Module['RefAs'] = makeExpressionWrapper(Module['_BinaryenRefAsId'](), {
   'getOp'(expr) {
     return Module['_BinaryenRefAsGetOp'](expr);
   },
@@ -4924,7 +4534,7 @@ Module['RefAs'] = makeExpressionWrapper({
   }
 });
 
-Module['RefFunc'] = makeExpressionWrapper({
+Module['RefFunc'] = makeExpressionWrapper(Module['_BinaryenRefFuncId'](), {
   'getFunc'(expr) {
     return UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expr));
   },
@@ -4933,7 +4543,7 @@ Module['RefFunc'] = makeExpressionWrapper({
   }
 });
 
-Module['RefEq'] = makeExpressionWrapper({
+Module['RefEq'] = makeExpressionWrapper(Module['_BinaryenRefEqId'](), {
   'getLeft'(expr) {
     return Module['_BinaryenRefEqGetLeft'](expr);
   },
@@ -4948,7 +4558,7 @@ Module['RefEq'] = makeExpressionWrapper({
   }
 });
 
-Module['RefTest'] = makeExpressionWrapper({
+Module['RefTest'] = makeExpressionWrapper(Module['_BinaryenRefTestId'](), {
   'getRef'(expr) {
     return Module['_BinaryenRefTestGetRef'](expr);
   },
@@ -4963,7 +4573,7 @@ Module['RefTest'] = makeExpressionWrapper({
   }
 });
 
-Module['RefCast'] = makeExpressionWrapper({
+Module['RefCast'] = makeExpressionWrapper(Module['_BinaryenRefCastId'](), {
   'getRef'(expr) {
     return Module['_BinaryenRefCastGetRef'](expr);
   },
@@ -4975,7 +4585,7 @@ Module['RefCast'] = makeExpressionWrapper({
 // TODO: any.convert_extern
 // TODO: extern.convert_any
 
-Module['BrOn'] = makeExpressionWrapper({
+Module['BrOn'] = makeExpressionWrapper(Module['_BinaryenBrOnId'](), {
   'getOp'(expr) {
     return Module['_BinaryenBrOnGetOp'](expr);
   },
@@ -5002,7 +4612,7 @@ Module['BrOn'] = makeExpressionWrapper({
   }
 });
 
-Module['StructNew'] = makeExpressionWrapper({
+Module['StructNew'] = makeExpressionWrapper(Module['_BinaryenStructNewId'](), {
   'getNumOperands'(expr) {
     return Module['_BinaryenStructNewGetNumOperands'](expr);
   },
@@ -5036,7 +4646,7 @@ Module['StructNew'] = makeExpressionWrapper({
   }
 });
 
-Module['StructGet'] = makeExpressionWrapper({
+Module['StructGet'] = makeExpressionWrapper(Module['_BinaryenStructGetId'](), {
   'getIndex'(expr) {
     return Module['_BinaryenStructGetGetIndex'](expr);
   },
@@ -5057,7 +4667,7 @@ Module['StructGet'] = makeExpressionWrapper({
   }
 });
 
-Module['StructSet'] = makeExpressionWrapper({
+Module['StructSet'] = makeExpressionWrapper(Module['_BinaryenStructSetId'](), {
   'getIndex'(expr) {
     return Module['_BinaryenStructSetGetIndex'](expr);
   },
@@ -5078,7 +4688,7 @@ Module['StructSet'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayNew'] = makeExpressionWrapper({
+Module['ArrayNew'] = makeExpressionWrapper(Module['_BinaryenArrayNewId'](), {
   'getInit'(expr) {
     return Module['_BinaryenArrayNewGetInit'](expr);
   },
@@ -5093,7 +4703,7 @@ Module['ArrayNew'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayNewFixed'] = makeExpressionWrapper({
+Module['ArrayNewFixed'] = makeExpressionWrapper(Module['_BinaryenArrayNewFixedId'](), {
   'getNumValues'(expr) {
     return Module['_BinaryenArrayNewFixedGetNumValues'](expr);
   },
@@ -5129,7 +4739,7 @@ Module['ArrayNewFixed'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayNewData'] = makeExpressionWrapper({
+Module['ArrayNewData'] = makeExpressionWrapper(Module['_BinaryenArrayNewDataId'](), {
   'getSegment'(expr) {
     return UTF8ToString(Module['_BinaryenArrayNewDataGetSegment'](expr));
   },
@@ -5150,7 +4760,7 @@ Module['ArrayNewData'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayNewElem'] = makeExpressionWrapper({
+Module['ArrayNewElem'] = makeExpressionWrapper(Module['_BinaryenArrayNewElemId'](), {
   'getSegment'(expr) {
     return UTF8ToString(Module['_BinaryenArrayNewElemGetSegment'](expr));
   },
@@ -5171,7 +4781,7 @@ Module['ArrayNewElem'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayGet'] = makeExpressionWrapper({
+Module['ArrayGet'] = makeExpressionWrapper(Module['_BinaryenArrayGetId'](), {
   'getRef'(expr) {
     return Module['_BinaryenArrayGetGetRef'](expr);
   },
@@ -5192,7 +4802,7 @@ Module['ArrayGet'] = makeExpressionWrapper({
   }
 });
 
-Module['ArraySet'] = makeExpressionWrapper({
+Module['ArraySet'] = makeExpressionWrapper(Module['_BinaryenArraySetId'](), {
   'getRef'(expr) {
     return Module['_BinaryenArraySetGetRef'](expr);
   },
@@ -5213,7 +4823,7 @@ Module['ArraySet'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayLen'] = makeExpressionWrapper({
+Module['ArrayLen'] = makeExpressionWrapper(Module['_BinaryenArrayLenId'](), {
   'getRef'(expr) {
     return Module['_BinaryenArrayLenGetRef'](expr);
   },
@@ -5222,7 +4832,7 @@ Module['ArrayLen'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayFill'] = makeExpressionWrapper({
+Module['ArrayFill'] = makeExpressionWrapper(Module['_BinaryenArrayFillId'](), {
   'getRef'(expr) {
     return Module['_BinaryenArrayFillGetRef'](expr);
   },
@@ -5249,7 +4859,7 @@ Module['ArrayFill'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayCopy'] = makeExpressionWrapper({
+Module['ArrayCopy'] = makeExpressionWrapper(Module['_BinaryenArrayCopyId'](), {
   'getDestRef'(expr) {
     return Module['_BinaryenArrayCopyGetDestRef'](expr);
   },
@@ -5282,7 +4892,7 @@ Module['ArrayCopy'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayInitData'] = makeExpressionWrapper({
+Module['ArrayInitData'] = makeExpressionWrapper(Module['_BinaryenArrayInitDataId'](), {
   'getSegment'(expr) {
     return UTF8ToString(Module['_BinaryenArrayInitDataGetSegment'](expr));
   },
@@ -5315,7 +4925,7 @@ Module['ArrayInitData'] = makeExpressionWrapper({
   }
 });
 
-Module['ArrayInitElem'] = makeExpressionWrapper({
+Module['ArrayInitElem'] = makeExpressionWrapper(Module['_BinaryenArrayInitElemId'](), {
   'getSegment'(expr) {
     return UTF8ToString(Module['_BinaryenArrayInitElemGetSegment'](expr));
   },
@@ -5348,7 +4958,7 @@ Module['ArrayInitElem'] = makeExpressionWrapper({
   }
 });
 
-Module['Try'] = makeExpressionWrapper({
+Module['Try'] = makeExpressionWrapper(Module['_BinaryenTryId'](), {
   'getName'(expr) {
     const name = Module['_BinaryenTryGetName'](expr);
     return name ? UTF8ToString(name) : null;
@@ -5427,7 +5037,7 @@ Module['Try'] = makeExpressionWrapper({
   }
 });
 
-Module['Throw'] = makeExpressionWrapper({
+Module['Throw'] = makeExpressionWrapper(Module['_BinaryenThrowId'](), {
   'getTag'(expr) {
     return UTF8ToString(Module['_BinaryenThrowGetTag'](expr));
   },
@@ -5460,7 +5070,7 @@ Module['Throw'] = makeExpressionWrapper({
   },
 });
 
-Module['Rethrow'] = makeExpressionWrapper({
+Module['Rethrow'] = makeExpressionWrapper(Module['_BinaryenRethrowId'](), {
   'getTarget'(expr) {
     const target = Module['_BinaryenRethrowGetTarget'](expr);
     return target ? UTF8ToString(target) : null;
@@ -5470,7 +5080,7 @@ Module['Rethrow'] = makeExpressionWrapper({
   }
 });
 
-Module['TupleMake'] = makeExpressionWrapper({
+Module['TupleMake'] = makeExpressionWrapper(Module['_BinaryenTupleMakeId'](), {
   'getNumOperands'(expr) {
     return Module['_BinaryenTupleMakeGetNumOperands'](expr);
   },
@@ -5497,7 +5107,7 @@ Module['TupleMake'] = makeExpressionWrapper({
   }
 });
 
-Module['TupleExtract'] = makeExpressionWrapper({
+Module['TupleExtract'] = makeExpressionWrapper(Module['_BinaryenTupleExtractId'](), {
   'getTuple'(expr) {
     return Module['_BinaryenTupleExtractGetTuple'](expr);
   },
@@ -5512,7 +5122,7 @@ Module['TupleExtract'] = makeExpressionWrapper({
   }
 });
 
-Module['RefI31'] = makeExpressionWrapper({
+Module['RefI31'] = makeExpressionWrapper(Module['_BinaryenRefI31Id'](), {
   'getValue'(expr) {
     return Module['_BinaryenRefI31GetValue'](expr);
   },
@@ -5521,7 +5131,7 @@ Module['RefI31'] = makeExpressionWrapper({
   }
 });
 
-Module['I31Get'] = makeExpressionWrapper({
+Module['I31Get'] = makeExpressionWrapper(Module['_BinaryenI31GetId'](), {
   'getI31'(expr) {
     return Module['_BinaryenI31GetGetI31'](expr);
   },

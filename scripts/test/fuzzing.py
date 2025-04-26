@@ -19,8 +19,6 @@ import os
 unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
-    # not all relaxed SIMD instructions are implemented in the interpreter
-    'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings
     'strings.wast',
     'simplify-locals-strings.wast',
@@ -113,13 +111,26 @@ unfuzzable = [
     'vacuum-stack-switching.wast',
     # TODO: fuzzer support for exact references
     'exact-references.wast',
+    'exact-references-lowering.wast',
+    'exact-casts.wast',
+    'exact-casts-trivial.wast',
     'optimize-instructions-exact.wast',
+    'optimize-instructions-all-casts.wast',
+    'optimize-instructions-all-casts-exact.wast',
     'local-subtyping-exact.wast',
     'remove-unused-types-exact.wast',
     'coalesce-locals-exact.wast',
     'remove-unused-brs-exact.wast',
+    'signature-refining-exact.wast',
+    'gufa-cast-all-exact.wast',
+    'type-merging-exact.wast',
+    'type-refining-exact.wast',
+    'type-refining-gufa-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
+    # TODO: fix split_wast() on tricky escaping situations like a string ending
+    #       in \\" (the " is not escaped - there is an escaped \ before it)
+    'string-lifting-section.wast',
 ]
 
 

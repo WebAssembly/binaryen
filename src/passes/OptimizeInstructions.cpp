@@ -570,11 +570,13 @@ struct OptimizeInstructions
           return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
         }
         // unsigned(x) < 0   =>   i32(0)
-        if (matches(curr, binary(LtU, any(&x), ival(&c))) &&
+        if (curr->op == Abstract::getBinary(curr->left->type, Abstract::LtU) &&
+            (c = getFallthrough(curr->right)->dynCast<Const>()) &&
             c->value.isZero()) {
-          c->value = Literal::makeZero(Type::i32);
-          c->type = Type::i32;
-          return replaceCurrent(getDroppedChildrenAndAppend(curr, c));
+          // We could reuse c here, if we checked it had no more uses
+          auto zero =
+            Builder(*getModule()).makeConst(Literal::makeZero(Type::i32));
+          return replaceCurrent(getDroppedChildrenAndAppend(curr, zero));
         }
       }
     }
@@ -2333,6 +2335,15 @@ struct OptimizeInstructions
                                                 builder.makeRefNull(nullType)));
             return;
           }
+
+          // At this point we know the cast will succeed as long as nullability
+          // works out, but we still need the cast to recover the exactness that
+          // is not present in the value's static type, so there's nothing we
+          // can do.
+          if (needsExactCast) {
+            return;
+          }
+
           // We need to use a tee to return the value since we can't materialize
           // it directly.
           auto scratch = builder.addVar(getFunction(), ref->type);

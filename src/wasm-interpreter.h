@@ -1306,10 +1306,13 @@ public:
           return NONCONSTANT_FLOW;
         }
         return a.relaxedNmaddF64x2(b, c);
-      default:
-        // TODO: implement signselect and dot_add
-        WASM_UNREACHABLE("not implemented");
+      case DotI8x16I7x16AddSToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        return a.dotSI8x16toI16x8Add(b, c);
     }
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
@@ -1639,14 +1642,7 @@ public:
     }
     Literal val = ref.getSingleValue();
     Type castType = curr->getCastType();
-    if (val.isNull()) {
-      if (castType.isNullable()) {
-        return typename Cast::Success{val};
-      } else {
-        return typename Cast::Failure{val};
-      }
-    }
-    if (HeapType::isSubType(val.type.getHeapType(), castType.getHeapType())) {
+    if (Type::isSubType(val.type, castType)) {
       return typename Cast::Success{val};
     } else {
       return typename Cast::Failure{val};
