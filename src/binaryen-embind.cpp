@@ -108,6 +108,14 @@ BinaryenType createType(TypeList types) {
 }
 } // namespace binaryen
 
+namespace {
+static std::string capitalize(std::string str) {
+  assert(!str.empty());
+  str[0] = std::toupper(str[0]);
+  return str;
+}
+} // namespace
+
 EMSCRIPTEN_BINDINGS(Binaryen) {
   constant<uintptr_t>("none", wasm::Type::none);
   constant<uintptr_t>("i32", wasm::Type::i32);
@@ -164,7 +172,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .constructor()
     .property("ptr", &binaryen::Module::ptr)
 
-    .function("block", &binaryen::Module::block)
+    /*.function("block", &binaryen::Module::block)
     .function("if", &binaryen::Module::if_)
     .function("loop", &binaryen::Module::loop)
     .function("br", &binaryen::Module::br)
@@ -175,45 +183,73 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("return", &binaryen::Module::return_)
 
     .function("addFunction", &binaryen::Module::addFunction)
-    .function("addFunctionExport", &binaryen::Module::addFunctionExport)
+    .function("addFunctionExport", &binaryen::Module::addFunctionExport)*/
 
     .function("emitText", &binaryen::Module::emitText);
 
   function(
     "parseText", binaryen::parseText, allow_raw_pointer<binaryen::Module>());
 
-  function("createType", binaryen::createType);
+  // function("createType", binaryen::createType);
+
+  class_<wasm::Expression>("Expression")
+    /*.property("id", &wasm::Expression::_id)
+    .property("type", &wasm::Expression::type)*/
+    ;
 
 #define DELEGATE_FIELD_MAIN_START
 
-#define DELEGATE_FIELD_CASE_START(id) class_<binaryen::id>(#id)
+#define DELEGATE_FIELD_CASE_START(id) class_<wasm::id>(#id)
 
 #define DELEGATE_FIELD_CASE_END(id) ;
 
 #define DELEGATE_FIELD_MAIN_END
 
-#define DELEGATE_FIELD_CHILD(id, field) .property(#field, &binaryen::id::field)
-
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
-
-#define DELEGATE_FIELD_TYPE(id, field)
-#define DELEGATE_FIELD_HEAPTYPE(id, field)
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  .function(("get" + capitalize(#field)).c_str(),                              \
+            +[](const wasm::id& expr) { return expr.field; },                  \
+            allow_raw_pointer<wasm::Expression>(),                             \
+            nonnull<ret_val>())                                                \
+    .function(                                                                 \
+      ("set" + capitalize(#field)).c_str(),                                    \
+      +[](wasm::id& expr, wasm::Expression* value) { expr.field = value; },    \
+      allow_raw_pointer<wasm::Expression>() /* nonnull<arg>() */)              \
+    .property(                                                                 \
+      #field,                                                                  \
+      &wasm::id::field,                                                        \
+      allow_raw_pointer<                                                       \
+        wasm::Expression>() /* nonnull<val>() */) // Embind doesn't support
+                                                  // non-null properties yet
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
+  .function(("get" + capitalize(#field)).c_str(),                              \
+            +[](const wasm::id& expr) { return expr.field; },                  \
+            allow_raw_pointer<wasm::Expression>())                             \
+    .function(                                                                 \
+      ("set" + capitalize(#field)).c_str(),                                    \
+      +[](wasm::id& expr, wasm::Expression* value) { expr.field = value; },    \
+      allow_raw_pointer<wasm::Expression>())                                   \
+    .property(#field, &wasm::id::field, allow_raw_pointer<wasm::Expression>())
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  //.property(#field, &wasm::id::field,
+  // allow_raw_pointer<wasm::Expression>())
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_LITERAL(id, field)
-#define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_ADDRESS(id, field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)                                         \
+  .property(                                                                   \
+    #field,                                                                    \
+    +[](const wasm::id& expr) { return expr.field.toString(); },               \
+    +[](wasm::id& expr, std::string value) { expr.field = value; })
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
 
 #include "wasm-delegations-fields.def"
-
-  register_type<binaryen::ExpressionList>("number[]");
-
-  register_type<binaryen::TypeList>("number[]");
 }
