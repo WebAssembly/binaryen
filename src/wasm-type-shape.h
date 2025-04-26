@@ -20,6 +20,7 @@
 #include <functional>
 #include <vector>
 
+#include "wasm-features.h"
 #include "wasm-type.h"
 
 namespace wasm {
@@ -35,7 +36,13 @@ namespace wasm {
 struct RecGroupShape {
   const std::vector<HeapType>& types;
 
-  RecGroupShape(const std::vector<HeapType>& types) : types(types) {}
+  // Depending on the feature set, some types may be generalized when they are
+  // written out. Take the features into account to ensure our comparisons
+  // account for the rec groups that will ultimately be written.
+  const FeatureSet features;
+
+  RecGroupShape(const std::vector<HeapType>& types, const FeatureSet features)
+    : types(types), features(features) {}
 
   bool operator==(const RecGroupShape& other) const;
   bool operator!=(const RecGroupShape& other) const {
@@ -51,8 +58,9 @@ struct ComparableRecGroupShape : RecGroupShape {
   std::function<bool(HeapType, HeapType)> less;
 
   ComparableRecGroupShape(const std::vector<HeapType>& types,
+                          FeatureSet features,
                           std::function<bool(HeapType, HeapType)> less)
-    : RecGroupShape(types), less(less) {}
+    : RecGroupShape(types, features), less(less) {}
 
   bool operator<(const RecGroupShape& other) const;
   bool operator>(const RecGroupShape& other) const;

@@ -208,14 +208,14 @@ struct GroupClassInfo {
   static std::vector<std::vector<Index>> initSubtypeGraph(RecGroupInfo& info);
   GroupClassInfo(RecGroupInfo& info);
 
-  void advance() {
+  void advance(FeatureSet features) {
     ++orders;
     if (orders == orders.end()) {
-      advanceBrand();
+      advanceBrand(features);
     }
   }
 
-  void advanceBrand() {
+  void advanceBrand(FeatureSet features) {
     if (brand) {
       ++*brand;
     } else {
@@ -231,8 +231,8 @@ struct GroupClassInfo {
       }
     }
     // Make sure the brand is not the same as the real type.
-    if (singletonType &&
-        RecGroupShape({**brand}) == RecGroupShape({*singletonType})) {
+    if (singletonType && RecGroupShape({**brand}, features) ==
+                           RecGroupShape({*singletonType}, features)) {
       ++*brand;
     }
     // Start back at the initial permutation with the new brand.
@@ -370,9 +370,13 @@ struct MinimizeRecGroups : Pass {
   // whose shapes we need to check for uniqueness to avoid deep recursions.
   std::vector<Index> shapesToUpdate;
 
+  // The comparison of rec group shapes depends on the features.
+  FeatureSet features;
+
   void run(Module* module) override {
+    features = module->features;
     // There are no recursion groups to minimize if GC is not enabled.
-    if (!module->features.hasGC()) {
+    if (!features.hasGC()) {
       return;
     }
 
@@ -402,7 +406,7 @@ struct MinimizeRecGroups : Pass {
     for (auto group : publicGroups) {
       publicGroupTypes.emplace_back(group.begin(), group.end());
       [[maybe_unused]] auto [_, inserted] = groupShapeIndices.insert(
-        {RecGroupShape(publicGroupTypes.back()), PublicGroupIndex});
+        {RecGroupShape(publicGroupTypes.back(), features), PublicGroupIndex});
       assert(inserted);
     }
 
@@ -452,8 +456,8 @@ struct MinimizeRecGroups : Pass {
   }
 
   void updateShape(Index group) {
-    auto [it, inserted] =
-      groupShapeIndices.insert({RecGroupShape(groups[group].group), group});
+    auto [it, inserted] = groupShapeIndices.insert(
+      {RecGroupShape(groups[group].group, features), group});
     if (inserted) {
       // This shape was unique. We're done.
       return;
@@ -509,7 +513,7 @@ struct MinimizeRecGroups : Pass {
         // We have everything we need to generate the next permutation of this
         // group.
         auto& classInfo = *groups[groupRep].classInfo;
-        classInfo.advance();
+        classInfo.advance(features);
         classInfo.permute(groupInfo);
         shapesToUpdate.push_back(group);
         return;
@@ -538,7 +542,7 @@ struct MinimizeRecGroups : Pass {
 
       // Move to the next permutation after advancing the type brand to skip
       // further repeated shapes.
-      classInfo.advanceBrand();
+      classInfo.advanceBrand(features);
       classInfo.permute(groupInfo);
 
       shapesToUpdate.push_back(group);
@@ -556,7 +560,7 @@ struct MinimizeRecGroups : Pass {
     // conflict.
     if (groups[groupRep].classInfo && groups[otherRep].classInfo) {
       auto& classInfo = *groups[groupRep].classInfo;
-      classInfo.advance();
+      classInfo.advance(features);
       classInfo.permute(groupInfo);
       shapesToUpdate.push_back(group);
       return;
@@ -578,7 +582,7 @@ struct MinimizeRecGroups : Pass {
       // same shape. Advance `group` to the next permutation.
       otherInfo.classInfo = std::nullopt;
       otherInfo.permutation = groupInfo.permutation;
-      classInfo.advance();
+      classInfo.advance(features);
       classInfo.permute(groupInfo);
 
       shapesToUpdate.push_back(group);
@@ -600,7 +604,7 @@ struct MinimizeRecGroups : Pass {
       // permutation.
       groupInfo.classInfo = std::nullopt;
       groupInfo.permutation = otherInfo.permutation;
-      classInfo.advance();
+      classInfo.advance(features);
       classInfo.permute(groupInfo);
 
       shapesToUpdate.push_back(group);
@@ -754,9 +758,10 @@ struct MinimizeRecGroups : Pass {
     // shapes to lists of automorphically equivalent root types.
     std::map<ComparableRecGroupShape, std::vector<HeapType>> typeClasses;
     for (const auto& order : dfsOrders) {
-      ComparableRecGroupShape shape(order, [this](HeapType a, HeapType b) {
-        return this->typeIndices.at(a) < this->typeIndices.at(b);
-      });
+      ComparableRecGroupShape shape(
+        order, features, [this](HeapType a, HeapType b) {
+          return this->typeIndices.at(a) < this->typeIndices.at(b);
+        });
       typeClasses[shape].push_back(order[0]);
     }
 

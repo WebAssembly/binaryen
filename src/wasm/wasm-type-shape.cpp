@@ -25,6 +25,7 @@ namespace {
 enum Comparison { EQ, LT, GT };
 
 template<typename CompareTypes> struct RecGroupComparator {
+  FeatureSet features;
   std::unordered_map<HeapType, Index> indicesA;
   std::unordered_map<HeapType, Index> indicesB;
   CompareTypes compareTypes;
@@ -32,6 +33,8 @@ template<typename CompareTypes> struct RecGroupComparator {
   RecGroupComparator(CompareTypes compareTypes) : compareTypes(compareTypes) {}
 
   Comparison compare(const RecGroupShape& a, const RecGroupShape& b) {
+    assert(a.features == b.features);
+    features = a.features;
     if (a.types.size() != b.types.size()) {
       return a.types.size() < b.types.size() ? LT : GT;
     }
@@ -147,6 +150,11 @@ template<typename CompareTypes> struct RecGroupComparator {
       return compare(a.getTuple(), b.getTuple());
     }
     assert(a.isRef() && b.isRef());
+    // Only consider exactness if custom descriptors are enabled. Otherwise, it
+    // will be erased when the types are written, so we ignore it here, too.
+    if (features.hasCustomDescriptors() && a.isExact() != b.isExact()) {
+      return a.isExact() < b.isExact() ? LT : GT;
+    }
     if (a.isNullable() != b.isNullable()) {
       return a.isNullable() < b.isNullable() ? LT : GT;
     }
@@ -201,9 +209,11 @@ template<typename CompareTypes>
 RecGroupComparator(CompareTypes) -> RecGroupComparator<CompareTypes>;
 
 struct RecGroupHasher {
+  FeatureSet features;
   std::unordered_map<HeapType, Index> typeIndices;
 
   size_t hash(const RecGroupShape& shape) {
+    features = shape.features;
     for (auto type : shape.types) {
       typeIndices.insert({type, typeIndices.size()});
     }
@@ -285,6 +295,9 @@ struct RecGroupHasher {
       return digest;
     }
     assert(type.isRef());
+    if (features.hasCustomDescriptors()) {
+      wasm::rehash(digest, type.isExact());
+    }
     wasm::rehash(digest, type.isNullable());
     hash_combine(digest, hash(type.getHeapType()));
     return digest;
