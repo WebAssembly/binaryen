@@ -4,6 +4,7 @@
 #include "wasm-builder.h"
 #include "wasm-stack.h"
 #include "wasm2js.h"
+#include <emscripten.h>
 #include <mutex>
 
 using namespace emscripten;
@@ -160,8 +161,8 @@ Binary Module::emitBinary() {
   std::ostringstream os;
   // TODO: Source map
   writer.write();
-  return static_cast<Binary>(
-    val(typed_memory_view(buffer.size(), buffer.data())));
+  return val::global("Uint8Array")
+    .call<Binary>("from", val(typed_memory_view(buffer.size(), buffer.data())));
 }
 std::string Module::emitText() {
   std::ostringstream os;
