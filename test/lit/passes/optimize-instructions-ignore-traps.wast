@@ -704,15 +704,7 @@
  ;; CHECK-NEXT:           (f32.const 71)
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i64.eqz
- ;; CHECK-NEXT:          (select
- ;; CHECK-NEXT:           (i64.const 58)
- ;; CHECK-NEXT:           (i64.const -982757)
- ;; CHECK-NEXT:           (i64.eqz
- ;; CHECK-NEXT:            (i64.const 0)
- ;; CHECK-NEXT:           )
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (i32.const 0)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
