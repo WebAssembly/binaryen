@@ -387,7 +387,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
     .function("validate", &binaryen::Module::validate)
     .function("optimize", &binaryen::Module::optimize)
-    .function("optimizeFunction", &binaryen::Module::optimizeFunction)
+    .function("optimizeFunction",
+              &binaryen::Module::optimizeFunction,
+              allow_raw_pointer<wasm::Expression>())
 
     .function(
       "dispose",
