@@ -532,7 +532,7 @@ if(EMSCRIPTEN)
 
   # binaryen.js WebAssembly variant
   add_executable(binaryen_wasm src/binaryen-embind.cpp)
-  target_link_libraries(binaryen_wasm PRIVATE "-Wl,--whole-archive" binaryen)
+  target_link_libraries(binaryen_wasm PRIVATE binaryen)
   target_link_libraries(binaryen_wasm PRIVATE "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm PRIVATE "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm PRIVATE "-sNODERAWFS=0")
@@ -561,7 +561,7 @@ if(EMSCRIPTEN)
 
   # binaryen.js JavaScript variant
   add_executable(binaryen_js src/binaryen-embind.cpp)
-  target_link_libraries(binaryen_js PRIVATE "-Wl,--whole-archive" binaryen)
+  target_link_libraries(binaryen_js PRIVATE binaryen)
   target_link_libraries(binaryen_js PRIVATE "-sWASM=0")
   target_link_libraries(binaryen_js PRIVATE "-sWASM_ASYNC_COMPILATION=0")
 

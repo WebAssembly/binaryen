@@ -1,6 +1,7 @@
 #include "binaryen-embind.h"
 #include "parser/wat-parser.h"
 #include "wasm-builder.h"
+#include <mutex>
 
 using namespace emscripten;
 
@@ -116,27 +117,35 @@ wasm::Expression* Module::return_(wasm::Expression* value) {
   return wasm::Builder(*module).makeReturn(value);
 }
 
-/*uintptr_t Module::addFunction(const std::string& name,
-                              BinaryenType params,
-                              BinaryenType results,
-                              TypeList varTypes,
-                              uintptr_t body) {
-  std::vector<uintptr_t> varTypesVec =
-    convertJSArrayToNumberVector<uintptr_t>(varTypes);
-  return reinterpret_cast<uintptr_t>(
-    BinaryenAddFunction(module,
-                        name.c_str(),
-                        params,
-                        results,
-                        varTypesVec.begin().base(),
-                        varTypesVec.size(),
-                        reinterpret_cast<BinaryenExpressionRef>(body)));
+static std::mutex ModuleAddFunctionMutex;
+
+wasm::Function* Module::addFunction(const std::string& name,
+                                    wasm::Type params,
+                                    wasm::Type results,
+                                    TypeList varTypes,
+                                    wasm::Expression* body) {
+  auto* ret = new wasm::Function;
+  ret->setExplicitName(name);
+  ret->type = wasm::Signature(params, results);
+  ret->vars = vecFromJSArray<wasm::Type>(varTypes);
+  ret->body = body;
+
+  // Lock. This can be called from multiple threads at once, and is a
+  // point where they all access and modify the module.
+  {
+    std::lock_guard<std::mutex> lock(ModuleAddFunctionMutex);
+    module->addFunction(ret);
+  }
+
+  return ret;
 }
-uintptr_t Module::addFunctionExport(const std::string& internalName,
-                                    const std::string& externalName) {
-  return reinterpret_cast<uintptr_t>(BinaryenAddFunctionExport(
-    module, internalName.c_str(), externalName.c_str()));
-}*/
+wasm::Export* Module::addFunctionExport(const std::string& internalName,
+                                        const std::string& externalName) {
+  auto* ret =
+    new wasm::Export(externalName, wasm::ExternalKind::Function, internalName);
+  module->addExport(ret);
+  return ret;
+}
 
 std::string Module::emitText() {
   std::ostringstream os;
@@ -210,6 +219,10 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   constant(#CLASS_TO_VISIT "Id", wasm::Expression::Id::CLASS_TO_VISIT##Id);
 #include "wasm-delegations.def"
+
+  class_<wasm::Function>("Function");
+
+  class_<wasm::Export>("Export");
 
   class_<binaryen::Module::Local>("Module_Local")
     .function("get",
@@ -299,13 +312,21 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
               allow_raw_pointer<wasm::Expression>(),
               nonnull<ret_val>())
 
-    /*.function("addFunction", &binaryen::Module::addFunction)
-    .function("addFunctionExport", &binaryen::Module::addFunctionExport)*/
+    .function("addFunction",
+              &binaryen::Module::addFunction,
+              allow_raw_pointer<wasm::Function>(),
+              nonnull<ret_val>())
+    .function("addFunctionExport",
+              &binaryen::Module::addFunctionExport,
+              allow_raw_pointer<wasm::Export>(),
+              nonnull<ret_val>())
 
     .function("emitText", &binaryen::Module::emitText);
 
-  function(
-    "parseText", binaryen::parseText, allow_raw_pointer<binaryen::Module>());
+  function("parseText",
+           binaryen::parseText,
+           allow_raw_pointer<binaryen::Module>(),
+           nonnull<ret_val>());
 
   function("createType", binaryen::createType);
 

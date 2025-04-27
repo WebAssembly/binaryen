@@ -69,13 +69,13 @@ public:
   } i32{module};
   wasm::Expression* return_(wasm::Expression* value);
 
-  uintptr_t addFunction(const std::string& name,
-                        wasm::Type params,
-                        wasm::Type results,
-                        TypeList varTypes,
-                        wasm::Expression body);
-  uintptr_t addFunctionExport(const std::string& internalName,
-                              const std::string& externalName);
+  wasm::Function* addFunction(const std::string& name,
+                              wasm::Type params,
+                              wasm::Type results,
+                              TypeList varTypes,
+                              wasm::Expression* body);
+  wasm::Export* addFunctionExport(const std::string& internalName,
+                                  const std::string& externalName);
 
   std::string emitText();
 };
