@@ -5,6 +5,8 @@ namespace binaryen {
 
 typedef uint32_t Index;
 
+EMSCRIPTEN_DECLARE_VAL_TYPE(Binary);
+
 EMSCRIPTEN_DECLARE_VAL_TYPE(ExpressionList);
 
 EMSCRIPTEN_DECLARE_VAL_TYPE(NameList);
@@ -77,7 +79,16 @@ public:
   wasm::Export* addFunctionExport(const std::string& internalName,
                                   const std::string& externalName);
 
+  Binary emitBinary();
   std::string emitText();
+  std::string emitStackIR();
+  std::string emitAsmjs();
+
+  bool validate();
+  void optimize();
+  void optimizeFunction(wasm::Function* func);
+
+  void dispose();
 };
 
 Module* parseText(const std::string& text);

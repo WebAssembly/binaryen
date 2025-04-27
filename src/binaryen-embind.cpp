@@ -1,11 +1,17 @@
 #include "binaryen-embind.h"
 #include "parser/wat-parser.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-stack.h"
+#include "wasm2js.h"
 #include <mutex>
 
 using namespace emscripten;
 
 namespace binaryen {
+static wasm::PassOptions passOptions =
+  wasm::PassOptions::getWithDefaultOptimizationOptions();
+
 Module::Module() : Module(new wasm::Module()) {}
 
 Module::Module(wasm::Module* module) : module(module) {}
@@ -147,6 +153,16 @@ wasm::Export* Module::addFunctionExport(const std::string& internalName,
   return ret;
 }
 
+Binary Module::emitBinary() {
+  wasm::BufferWithRandomAccess buffer;
+  wasm::WasmBinaryWriter writer(module, buffer, passOptions);
+  writer.setNamesSection(passOptions.debugInfo);
+  std::ostringstream os;
+  // TODO: Source map
+  writer.write();
+  return static_cast<Binary>(
+    val(typed_memory_view(buffer.size(), buffer.data())));
+}
 std::string Module::emitText() {
   std::ostringstream os;
   bool colors = Colors::isEnabled();
@@ -155,6 +171,47 @@ std::string Module::emitText() {
   Colors::setEnabled(colors); // restore colors state
   return os.str();
 }
+std::string Module::emitStackIR() {
+  std::ostringstream os;
+  bool colors = Colors::isEnabled();
+  Colors::setEnabled(false); // do not use colors for writing
+  wasm::printStackIR(os, module, passOptions);
+  Colors::setEnabled(colors); // restore colors state
+  auto str = os.str();
+  const size_t len = str.length() + 1;
+  char* output = (char*)malloc(len);
+  std::copy_n(str.c_str(), len, output);
+  return output;
+}
+std::string Module::emitAsmjs() {
+  wasm::Wasm2JSBuilder::Flags flags;
+  wasm::Wasm2JSBuilder wasm2js(flags, passOptions);
+  auto asmjs = wasm2js.processWasm(module);
+  wasm::JSPrinter jser(true, true, asmjs);
+  wasm::Output out("", wasm::Flags::Text); // stdout
+  wasm::Wasm2JSGlue glue(*module, out, flags, "asmFunc");
+  glue.emitPre();
+  jser.printAst();
+  std::string text(jser.buffer);
+  glue.emitPost();
+  return text;
+}
+
+bool Module::validate() { return wasm::WasmValidator().validate(*module); }
+void Module::optimize() {
+  wasm::PassRunner passRunner(module);
+  passRunner.options = passOptions;
+  passRunner.addDefaultOptimizationPasses();
+  passRunner.run();
+}
+void Module::optimizeFunction(wasm::Function* func) {
+  wasm::PassRunner passRunner(module);
+  passRunner.options = passOptions;
+  passRunner.addDefaultFunctionOptimizationPasses();
+  passRunner.runOnFunction(func);
+}
+
+void Module::dispose() { delete this; }
 
 Module* parseText(const std::string& text) {
   auto* wasm = new wasm::Module;
@@ -180,6 +237,8 @@ static std::string capitalize(std::string str) {
 } // namespace
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
+  register_type<binaryen::Binary>("Uint8Array");
+
   class_<wasm::Type>("Type");
 
   register_optional<wasm::Type>();
@@ -321,7 +380,20 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
               allow_raw_pointer<wasm::Export>(),
               nonnull<ret_val>())
 
-    .function("emitText", &binaryen::Module::emitText);
+    .function("emitBinary", &binaryen::Module::emitBinary)
+    .function("emitText", &binaryen::Module::emitText)
+    .function("emitStackIR", &binaryen::Module::emitStackIR)
+    .function("emitAsmjs", &binaryen::Module::emitAsmjs)
+
+    .function("validate", &binaryen::Module::validate)
+    .function("optimize", &binaryen::Module::optimize)
+    .function("optimizeFunction", &binaryen::Module::optimizeFunction)
+
+    .function(
+      "dispose",
+      &binaryen::Module::dispose) // for compatibility, should be removed later
+                                  // in favor of Module.delete()
+    ;
 
   function("parseText",
            binaryen::parseText,
