@@ -40,9 +40,30 @@ public:
                             const std::string& defaultName,
                             wasm::Expression* condition,
                             wasm::Expression* value);
+  wasm::Expression*
+  call(const std::string&, ExpressionList operands, wasm::Type type);
+  wasm::Expression* call_indirect(const std::string& table,
+                                  wasm::Expression* target,
+                                  ExpressionList operands,
+                                  wasm::Type params,
+                                  wasm::Type results);
+  wasm::Expression*
+  return_call(const std::string&, ExpressionList operands, wasm::Type type);
+  wasm::Expression* return_call_indirect(const std::string& table,
+                                         wasm::Expression* target,
+                                         ExpressionList operands,
+                                         wasm::Type params,
+                                         wasm::Type results);
   const struct Local : ExpressionFactory {
     wasm::Expression* get(Index index, wasm::Type type);
+    wasm::Expression* set(Index index, wasm::Expression* value);
+    wasm::Expression*
+    tee(Index index, wasm::Expression* value, wasm::Type type);
   } local{module};
+  const struct Global : ExpressionFactory {
+    wasm::Expression* get(const std::string& name, wasm::Type type);
+    wasm::Expression* set(const std::string& name, wasm::Expression* value);
+  } global{module};
   const struct I32 : ExpressionFactory {
     wasm::Expression* add(wasm::Expression* left, wasm::Expression* right);
   } i32{module};

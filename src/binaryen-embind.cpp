@@ -45,10 +45,68 @@ wasm::Expression* Module::switch_(NameList names,
   return wasm::Builder(*module).makeSwitch(
     namesVec, defaultName, condition, value);
 }
+wasm::Expression* Module::call(const std::string& name,
+                               ExpressionList operands,
+                               wasm::Type type) {
+  return wasm::Builder(*module).makeCall(
+    name,
+    vecFromJSArray<wasm::Expression*>(operands,
+                                      allow_raw_pointer<wasm::Expression>()),
+    type);
+}
+wasm::Expression* Module::call_indirect(const std::string& table,
+                                        wasm::Expression* target,
+                                        ExpressionList operands,
+                                        wasm::Type params,
+                                        wasm::Type results) {
+  return wasm::Builder(*module).makeCallIndirect(
+    table,
+    target,
+    vecFromJSArray<wasm::Expression*>(operands,
+                                      allow_raw_pointer<wasm::Expression>()),
+    wasm::Signature(params, results));
+}
+wasm::Expression* Module::return_call(const std::string& name,
+                                      ExpressionList operands,
+                                      wasm::Type type) {
+  return wasm::Builder(*module).makeCall(
+    name,
+    vecFromJSArray<wasm::Expression*>(operands,
+                                      allow_raw_pointer<wasm::Expression>()),
+    type,
+    true);
+}
+wasm::Expression* Module::return_call_indirect(const std::string& table,
+                                               wasm::Expression* target,
+                                               ExpressionList operands,
+                                               wasm::Type params,
+                                               wasm::Type results) {
+  return wasm::Builder(*module).makeCallIndirect(
+    table,
+    target,
+    vecFromJSArray<wasm::Expression*>(operands,
+                                      allow_raw_pointer<wasm::Expression>()),
+    wasm::Signature(params, results),
+    true);
+}
 wasm::Expression* Module::Local::get(Index index, wasm::Type type) {
   return wasm::Builder(*module).makeLocalGet(index, type);
 }
-
+wasm::Expression* Module::Local::set(Index index, wasm::Expression* value) {
+  return wasm::Builder(*module).makeLocalSet(index, value);
+}
+wasm::Expression*
+Module::Local::tee(Index index, wasm::Expression* value, wasm::Type type) {
+  return wasm::Builder(*module).makeLocalTee(index, value, type);
+}
+wasm::Expression* Module::Global::get(const std::string& name,
+                                      wasm::Type type) {
+  return wasm::Builder(*module).makeGlobalGet(name, type);
+}
+wasm::Expression* Module::Global::set(const std::string& name,
+                                      wasm::Expression* value) {
+  return wasm::Builder(*module).makeGlobalSet(name, value);
+}
 wasm::Expression* Module::I32::add(wasm::Expression* left,
                                    wasm::Expression* right) {
   return wasm::Builder(*module).makeBinary(
@@ -134,7 +192,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   constant("nullexternref", wasm::Type(wasm::HeapType::noext, wasm::Nullable));
   constant("nullfuncref", wasm::Type(wasm::HeapType::nofunc, wasm::Nullable));
   constant("unreachable", wasm::Type(wasm::Type::unreachable));
-  constant("auto", val::undefined());
+  constant("auto", val::null());
 
   register_type<binaryen::TypeList>("Type[]");
 
@@ -156,35 +214,90 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   class_<binaryen::Module::Local>("Module_Local")
     .function("get",
               &binaryen::Module::Local::get,
-              allow_raw_pointer<wasm::Expression>());
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("set",
+              &binaryen::Module::Local::set,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("get",
+              &binaryen::Module::Local::tee,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>());
+
+  class_<binaryen::Module::Global>("Module_Global")
+    .function("get",
+              &binaryen::Module::Global::get,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("set",
+              &binaryen::Module::Global::set,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>());
 
   class_<binaryen::Module::I32>("Module_I32")
     .function("add",
               &binaryen::Module::I32::add,
-              allow_raw_pointer<wasm::Expression>());
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>());
 
   class_<binaryen::Module>("Module")
     .constructor()
     .property("ptr", &binaryen::Module::ptr)
 
-    .function(
-      "block", &binaryen::Module::block, allow_raw_pointer<wasm::Expression>())
-    .function(
-      "if", &binaryen::Module::if_, allow_raw_pointer<wasm::Expression>())
-    .function(
-      "loop", &binaryen::Module::loop, allow_raw_pointer<wasm::Expression>())
-    .function(
-      "br", &binaryen::Module::br, allow_raw_pointer<wasm::Expression>())
-    .function(
-      "break", &binaryen::Module::br, allow_raw_pointer<wasm::Expression>())
-    .function(
-      "br_if", &binaryen::Module::br, allow_raw_pointer<wasm::Expression>())
+    .function("block",
+              &binaryen::Module::block,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("if",
+              &binaryen::Module::if_,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("loop",
+              &binaryen::Module::loop,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("br",
+              &binaryen::Module::br,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("break",
+              &binaryen::Module::br,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("br_if",
+              &binaryen::Module::br,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("switch",
+              &binaryen::Module::switch_,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("call",
+              &binaryen::Module::call,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("call_indirect",
+              &binaryen::Module::call_indirect,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("return_call",
+              &binaryen::Module::return_call,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
+    .function("return_call_indirect",
+              &binaryen::Module::return_call_indirect,
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
     .property(
       "local", &binaryen::Module::local, return_value_policy::reference())
+    .property(
+      "global", &binaryen::Module::global, return_value_policy::reference())
     .property("i32", &binaryen::Module::i32, return_value_policy::reference())
     .function("return",
               &binaryen::Module::return_,
-              allow_raw_pointer<wasm::Expression>())
+              allow_raw_pointer<wasm::Expression>(),
+              nonnull<ret_val>())
 
     /*.function("addFunction", &binaryen::Module::addFunction)
     .function("addFunctionExport", &binaryen::Module::addFunctionExport)*/
