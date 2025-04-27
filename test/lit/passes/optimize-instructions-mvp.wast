@@ -113,6 +113,68 @@
       )
     )
   )
+  ;; CHECK:      (func $if-eqz-one-arm-effect-condition-1 (param $i1 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $i1
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-eqz-one-arm-effect-condition-1 (param $i1 i32)
+    (if
+      (i32.eqz
+        (local.tee $i1
+          (i32.const 0)
+        )
+      )
+      (then
+        (drop
+          (i32.const 10)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $if-eqz-one-arm-effect-condition-2 (param $i1 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $i1
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-eqz-one-arm-effect-condition-2 (param $i1 i32)
+    (if
+      (i32.eqz
+        (local.tee $i1
+          (i32.const 1)
+        )
+      )
+      (then
+        (drop
+          (i32.const 10)
+        )
+      )
+    )
+  )
   ;; CHECK:      (func $if-eqz-two-arms (param $i1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result i32)
@@ -130,6 +192,84 @@
     (if
       (i32.eqz
         (local.get $i1)
+      )
+      (then
+        (drop
+          (i32.const 11)
+        )
+      )
+      (else
+        (drop
+          (i32.const 12)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $if-eqz-two-arms-effect-condition-1 (param $i1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.tee $i1
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-eqz-two-arms-effect-condition-1 (param $i1 i32)
+    (if
+      (i32.eqz
+        (local.tee $i1
+          (i32.const 0)
+        )
+      )
+      (then
+        (drop
+          (i32.const 11)
+        )
+      )
+      (else
+        (drop
+          (i32.const 12)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $if-eqz-two-arms-effect-condition-2 (param $i1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.tee $i1
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-eqz-two-arms-effect-condition-2 (param $i1 i32)
+    (if
+      (i32.eqz
+        (local.tee $i1
+          (i32.const 1)
+        )
       )
       (then
         (drop
@@ -162,6 +302,84 @@
     (if
       (i64.eqz
         (local.get $i2)
+      )
+      (then
+        (drop
+          (i32.const 11)
+        )
+      )
+      (else
+        (drop
+          (i32.const 12)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $if-eqz-two-arms-i64-effect-condition-1 (param $i2 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.tee $i2
+  ;; CHECK-NEXT:       (i64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-eqz-two-arms-i64-effect-condition-1 (param $i2 i64)
+    (if
+      (i64.eqz
+        (local.tee $i2
+          (i64.const 0)
+        )
+      )
+      (then
+        (drop
+          (i32.const 11)
+        )
+      )
+      (else
+        (drop
+          (i32.const 12)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $if-eqz-two-arms-i64-effect-condition-2 (param $i2 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.tee $i2
+  ;; CHECK-NEXT:       (i64.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 11)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 12)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-eqz-two-arms-i64-effect-condition-2 (param $i2 i64)
+    (if
+      (i64.eqz
+        (local.tee $i2
+          (i64.const 1)
+        )
       )
       (then
         (drop
@@ -9681,22 +9899,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:    (i64.eqz
-  ;; CHECK-NEXT:     (i64.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (i64.const 2)
-  ;; CHECK-NEXT:    (i64.eqz
-  ;; CHECK-NEXT:     (i64.const 2)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $select-on-const (param $x i32) (param $y i64)
