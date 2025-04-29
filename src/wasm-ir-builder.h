@@ -399,16 +399,16 @@ private:
       return ScopeCtx(LoopScope{loop}, inputType);
     }
     static ScopeCtx
-    makeTry(Try* tryy, Name originalLabel, Type inputType, Index index) {
-      return ScopeCtx(TryScope{tryy, originalLabel, index}, inputType);
+    makeTry(Try* tryy, Name originalLabel, Type inputType) {
+      return ScopeCtx(TryScope{tryy, originalLabel, 0}, inputType);
     }
-    static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy, Index index) {
-      scope.scope = CatchScope{tryy, scope.getOriginalLabel(), index};
+    static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchScope{tryy, scope.getOriginalLabel(), scope.getIndex()+1};
       scope.resetForDelimiter(/*keepInput=*/false);
       return scope;
     }
-    static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy, Index index) {
-      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel(), index};
+    static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy) {
+      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel(), scope.getIndex()+1};
       scope.resetForDelimiter(/*keepInput=*/false);
       return scope;
     }

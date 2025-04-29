@@ -1250,9 +1250,61 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmReduceOption = "wasm-reduce options";
 
-  ToolOptions options("wasm-reduce",
-                      "Reduce a wasm file to a smaller one that has the same "
-                      "behavior on a given command");
+  ToolOptions options(
+    "wasm-reduce",
+    R"(Reduce a wasm file to a smaller one with the same behavior on a given command.
+
+Typical usage:
+
+  wasm-reduce orig.wasm '--command=bash a.sh' --test t.wasm --working w.wasm
+
+The original file orig.wasm is where we begin. We then repeatedly test a small
+reduction of it by writing that modification to the 'test file' (specified by
+'--test'), and we run the command, in this example 'bash a.sh'. That command
+should use the test file (and not the original file or any other one). Whenever
+the reduction works, we write that new smaller file to the 'working file'
+(specified by '--working'). The reduction 'works' if it correctly preserves the
+behavior of the command on the original input, specifically, that it has the
+same stdout and the result return code. Each time reduction works we continue to
+reduce from that point (and each time it fails, we go back and try something
+else).
+
+As mentioned above, the command should run on the test file. That is, the first
+thing that wasm-reduce does on the example above is, effectively,
+
+  cp orig.wasm t.wasm
+  bash a.sh
+
+In other words, it copies the original to the test file, and runs the command.
+Whatever the command does, we will preserve as we copy progressively smaller
+files to t.wasm. As we make progress, the smallest file will be written to
+the working file, w.wasm, and when reduction is done you will find the final
+result there.
+
+Comparison to creduce:
+
+1. creduce requires the command to return 0. wasm-reduce is often used to reduce
+   crashes, which have non-zero return codes, so it is natural to allow any
+   return code. As mentioned above, we preserve the return code as we reduce.
+2. creduce ignores stdout. wasm-reduce preserves stdout as it reduces, as part
+   of the principle of preserving the original behavior of the command (if your
+   stdout varies in uninteresting ways, your command can be a script that runs
+   the real command and captures stdout to /dev/null, or filters it).
+3. creduce tramples the original input file as it reduces. wasm-reduce never
+   modifies the input (to avoid mistakes that cause data loss). Instead,
+   when reductions work we write to the 'working file' as mentioned above, and
+   the final reduction will be there.
+4. creduce runs the command in a temp directory. That is safer in general, but
+   it is not how the original command ran, and in particular forces additional
+   work if you have multiple files (which, for wasm-reduce, is common, e.g. if
+   the testcase is a combination of JavaScript and wasm). wasm-reduce runs the
+   command in the current directory (of course, your command can be a script
+   that changes directory to anywhere else).
+
+More documentation can be found at
+
+  https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing
+                      )");
   options
     .add("--command",
          "-cmd",
