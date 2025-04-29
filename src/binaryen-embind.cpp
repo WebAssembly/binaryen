@@ -230,11 +230,14 @@ wasm::Type createType(TypeList types) {
 } // namespace binaryen
 
 namespace {
-static std::string capitalize(std::string str) {
+static std::string capitalize(std::string str, int i = 0) {
   assert(!str.empty());
-  str[0] = std::toupper(str[0]);
+  str[i] = std::toupper(str[i]);
   return str;
 }
+
+#define GETTER(field) capitalize("get" field, 3).c_str()
+#define SETTER(field) capitalize("set" field, 3).c_str()
 } // namespace
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
@@ -423,12 +426,13 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_MAIN_END
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-  .function(("get" + capitalize(#field)).c_str(),                              \
-            +[](const wasm::id& expr) { return expr.field; },                  \
-            allow_raw_pointer<wasm::Expression>(),                             \
-            nonnull<ret_val>())                                                \
+  .function(                                                                   \
+    GETTER(#field),                                                            \
+    +[](const wasm::id& expr) { return expr.field; },                          \
+    allow_raw_pointer<wasm::Expression>(),                                     \
+    nonnull<ret_val>())                                                        \
     .function(                                                                 \
-      ("set" + capitalize(#field)).c_str(),                                    \
+      SETTER(#field),                                                          \
       +[](wasm::id& expr, wasm::Expression* value) { expr.field = value; },    \
       allow_raw_pointer<wasm::Expression>() /* nonnull<arg>() */)              \
     .property(                                                                 \
@@ -438,11 +442,12 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
         wasm::Expression>() /* nonnull<val>() */) // Embind doesn't support
                                                   // non-null properties yet
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  .function(("get" + capitalize(#field)).c_str(),                              \
-            +[](const wasm::id& expr) { return expr.field; },                  \
-            allow_raw_pointer<wasm::Expression>())                             \
+  .function(                                                                   \
+    GETTER(#field),                                                            \
+    +[](const wasm::id& expr) { return expr.field; },                          \
+    allow_raw_pointer<wasm::Expression>())                                     \
     .function(                                                                 \
-      ("set" + capitalize(#field)).c_str(),                                    \
+      SETTER(#field),                                                          \
       +[](wasm::id& expr, wasm::Expression* value) { expr.field = value; },    \
       allow_raw_pointer<wasm::Expression>())                                   \
     .property(#field, &wasm::id::field, allow_raw_pointer<wasm::Expression>())
