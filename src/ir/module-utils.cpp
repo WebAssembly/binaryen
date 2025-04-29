@@ -621,8 +621,9 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
 }
 
 std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
-  // We will need to traverse the types used by public types and mark them
-  // public as well.
+  // Look at the types of imports as exports to get an initial set of public
+  // types, then traverse the types used by public types and collect the
+  // transitively reachable public types as well.
   std::vector<HeapType> workList;
   std::unordered_set<RecGroup> publicGroups;
 
