@@ -931,6 +931,21 @@ Result<> IRBuilder::visitElse() {
   return pushScope(ScopeCtx::makeElse(std::move(scope)));
 }
 
+void setCatchBody(Try* tryy, Expression* expr, Index index) {
+  // Indexes are managed manually to support Outlining.
+  // Its prepopulated try catchBodies and catchTags vectors
+  // cannot be appended to, as in the case of the empty try
+  // used during parsing.
+  if (tryy->catchBodies.size() < index) {
+    tryy->catchBodies.resize(tryy->catchBodies.size() + 1);
+  }
+  // The first time visitCatch is called: the body of the
+  // try is set and catchBodies is not appended to, but the tag
+  // for the following catch is appended. So, catchTags uses
+  // index as-is, but catchBodies uses index-1.
+  tryy->catchBodies[index - 1] = expr;
+}
+
 Result<> IRBuilder::visitCatch(Name tag) {
   auto scope = getScope();
   bool wasTry = true;
@@ -942,14 +957,18 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (!tryy) {
     return Err{"unexpected catch"};
   }
+  auto index = scope.getIndex();
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    tryy->catchBodies.push_back(*expr);
+    setCatchBody(tryy, *expr, index);
   }
-  tryy->catchTags.push_back(tag);
+  if (tryy->catchTags.size() == index) {
+    tryy->catchTags.resize(tryy->catchTags.size() + 1);
+  }
+  tryy->catchTags[index] = tag;
 
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
@@ -980,12 +999,13 @@ Result<> IRBuilder::visitCatchAll() {
   if (!tryy) {
     return Err{"unexpected catch"};
   }
+  auto index = scope.getIndex();
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    tryy->catchBodies.push_back(*expr);
+    setCatchBody(tryy, *expr, index);
   }
 
   if (binaryPos && func) {
@@ -1123,7 +1143,8 @@ Result<> IRBuilder::visitEnd() {
     push(maybeWrapForLabel(tryy));
   } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
-    tryy->catchBodies.push_back(*expr);
+    auto index = scope.getIndex();
+    setCatchBody(tryy, *expr, index);
     tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
