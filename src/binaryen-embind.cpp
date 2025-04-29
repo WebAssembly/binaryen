@@ -21,52 +21,53 @@ const uintptr_t& Module::ptr() const {
   return reinterpret_cast<const uintptr_t&>(module);
 }
 
-wasm::Expression* Module::block(const std::string& name,
-                                ExpressionList children,
-                                std::optional<wasm::Type> type) {
+wasm::Block* Module::block(OptionalString name,
+                           ExpressionList children,
+                           std::optional<wasm::Type> type) {
   return wasm::Builder(*module).makeBlock(
-    name,
+    name.isNull() || name.isUndefined() ? nullptr : name.as<std::string>(),
     vecFromJSArray<wasm::Expression*>(children,
                                       allow_raw_pointer<wasm::Expression>()),
     type);
 }
-wasm::Expression* Module::if_(wasm::Expression* condition,
-                              wasm::Expression* ifTrue,
-                              wasm::Expression* ifFalse) {
+wasm::If* Module::if_(wasm::Expression* condition,
+                      wasm::Expression* ifTrue,
+                      wasm::Expression* ifFalse) {
   return wasm::Builder(*module).makeIf(condition, ifTrue, ifFalse);
 }
-wasm::Expression* Module::loop(const std::string& label,
-                               wasm::Expression* body) {
-  return wasm::Builder(*module).makeLoop(label, body);
+wasm::Loop* Module::loop(OptionalString label, wasm::Expression* body) {
+  return wasm::Builder(*module).makeLoop(
+    label.isNull() || label.isUndefined() ? nullptr : label.as<std::string>(),
+    body);
 }
-wasm::Expression* Module::br(const std::string& label,
-                             wasm::Expression* condition,
-                             wasm::Expression* value) {
+wasm::Break* Module::br(const std::string& label,
+                        wasm::Expression* condition,
+                        wasm::Expression* value) {
   return wasm::Builder(*module).makeBreak(label, condition, value);
 }
-wasm::Expression* Module::switch_(NameList names,
-                                  const std::string& defaultName,
-                                  wasm::Expression* condition,
-                                  wasm::Expression* value) {
+wasm::Switch* Module::switch_(NameList names,
+                              const std::string& defaultName,
+                              wasm::Expression* condition,
+                              wasm::Expression* value) {
   auto strVec = vecFromJSArray<std::string>(names);
   std::vector<wasm::Name> namesVec(strVec.begin(), strVec.end());
   return wasm::Builder(*module).makeSwitch(
     namesVec, defaultName, condition, value);
 }
-wasm::Expression* Module::call(const std::string& name,
-                               ExpressionList operands,
-                               wasm::Type type) {
+wasm::Call* Module::call(const std::string& name,
+                         ExpressionList operands,
+                         wasm::Type type) {
   return wasm::Builder(*module).makeCall(
     name,
     vecFromJSArray<wasm::Expression*>(operands,
                                       allow_raw_pointer<wasm::Expression>()),
     type);
 }
-wasm::Expression* Module::call_indirect(const std::string& table,
-                                        wasm::Expression* target,
-                                        ExpressionList operands,
-                                        wasm::Type params,
-                                        wasm::Type results) {
+wasm::CallIndirect* Module::call_indirect(const std::string& table,
+                                          wasm::Expression* target,
+                                          ExpressionList operands,
+                                          wasm::Type params,
+                                          wasm::Type results) {
   return wasm::Builder(*module).makeCallIndirect(
     table,
     target,
@@ -74,9 +75,9 @@ wasm::Expression* Module::call_indirect(const std::string& table,
                                       allow_raw_pointer<wasm::Expression>()),
     wasm::Signature(params, results));
 }
-wasm::Expression* Module::return_call(const std::string& name,
-                                      ExpressionList operands,
-                                      wasm::Type type) {
+wasm::Call* Module::return_call(const std::string& name,
+                                ExpressionList operands,
+                                wasm::Type type) {
   return wasm::Builder(*module).makeCall(
     name,
     vecFromJSArray<wasm::Expression*>(operands,
@@ -84,11 +85,11 @@ wasm::Expression* Module::return_call(const std::string& name,
     type,
     true);
 }
-wasm::Expression* Module::return_call_indirect(const std::string& table,
-                                               wasm::Expression* target,
-                                               ExpressionList operands,
-                                               wasm::Type params,
-                                               wasm::Type results) {
+wasm::CallIndirect* Module::return_call_indirect(const std::string& table,
+                                                 wasm::Expression* target,
+                                                 ExpressionList operands,
+                                                 wasm::Type params,
+                                                 wasm::Type results) {
   return wasm::Builder(*module).makeCallIndirect(
     table,
     target,
@@ -97,30 +98,29 @@ wasm::Expression* Module::return_call_indirect(const std::string& table,
     wasm::Signature(params, results),
     true);
 }
-wasm::Expression* Module::Local::get(Index index, wasm::Type type) {
+wasm::LocalGet* Module::Local::get(Index index, wasm::Type type) {
   return wasm::Builder(*module).makeLocalGet(index, type);
 }
-wasm::Expression* Module::Local::set(Index index, wasm::Expression* value) {
+wasm::LocalSet* Module::Local::set(Index index, wasm::Expression* value) {
   return wasm::Builder(*module).makeLocalSet(index, value);
 }
-wasm::Expression*
+wasm::LocalSet*
 Module::Local::tee(Index index, wasm::Expression* value, wasm::Type type) {
   return wasm::Builder(*module).makeLocalTee(index, value, type);
 }
-wasm::Expression* Module::Global::get(const std::string& name,
-                                      wasm::Type type) {
+wasm::GlobalGet* Module::Global::get(const std::string& name, wasm::Type type) {
   return wasm::Builder(*module).makeGlobalGet(name, type);
 }
-wasm::Expression* Module::Global::set(const std::string& name,
-                                      wasm::Expression* value) {
+wasm::GlobalSet* Module::Global::set(const std::string& name,
+                                     wasm::Expression* value) {
   return wasm::Builder(*module).makeGlobalSet(name, value);
 }
-wasm::Expression* Module::I32::add(wasm::Expression* left,
-                                   wasm::Expression* right) {
+wasm::Binary* Module::I32::add(wasm::Expression* left,
+                               wasm::Expression* right) {
   return wasm::Builder(*module).makeBinary(
     wasm::BinaryOp::AddInt32, left, right);
 }
-wasm::Expression* Module::return_(wasm::Expression* value) {
+wasm::Return* Module::return_(wasm::Expression* value) {
   return wasm::Builder(*module).makeReturn(value);
 }
 
@@ -242,6 +242,8 @@ static std::string capitalize(std::string str, int i = 0) {
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
   register_type<binaryen::Binary>("Uint8Array");
+
+  register_type<binaryen::OptionalString>("string | null | undefined");
 
   class_<wasm::Type>("Type");
 
@@ -408,7 +410,13 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   function("createType", binaryen::createType);
 
-  class_<wasm::Expression>("Expression")
+  function(
+    "Expression",
+    +[](wasm::Expression* expr) { return expr; },
+    allow_raw_pointer<wasm::Expression>(),
+    nonnull<ret_val>());
+
+  class_<wasm::Expression>("ExpressionWrapper")
     .property("id", &wasm::Expression::_id)
     .property("type", &wasm::Expression::type);
 
@@ -419,7 +427,12 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_MAIN_START
 
 #define DELEGATE_FIELD_CASE_START(id)                                          \
-  class_<wasm::id, base<wasm::Expression>>(#id)
+  function(                                                                    \
+    #id,                                                                       \
+    +[](wasm::id* expr) { return expr; },                                      \
+    allow_raw_pointer<wasm::id>(),                                             \
+    nonnull<ret_val>());                                                       \
+  class_<wasm::id, base<wasm::Expression>>(#id "Wrapper")
 
 #define DELEGATE_FIELD_CASE_END(id) ;
 
@@ -496,11 +509,11 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     +[](const wasm::id& expr) { return expr.field.toString(); })               \
     .function(                                                                 \
       SETTER(#field),                                                          \
-      +[](wasm::id& expr, std::string value) { expr.field = value; })          \
+      +[](wasm::id& expr, const std::string& value) { expr.field = value; })   \
     .property(                                                                 \
       #field,                                                                  \
       +[](const wasm::id& expr) { return expr.field.toString(); },             \
-      +[](wasm::id& expr, std::string value) { expr.field = value; })
+      +[](wasm::id& expr, const std::string& value) { expr.field = value; })
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)

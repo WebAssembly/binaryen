@@ -7,6 +7,9 @@ typedef uint32_t Index;
 
 EMSCRIPTEN_DECLARE_VAL_TYPE(Binary);
 
+// https://github.com/emscripten-core/emscripten/issues/24211
+EMSCRIPTEN_DECLARE_VAL_TYPE(OptionalString);
+
 EMSCRIPTEN_DECLARE_VAL_TYPE(ExpressionList);
 
 EMSCRIPTEN_DECLARE_VAL_TYPE(NameList);
@@ -28,48 +31,47 @@ public:
 
   const uintptr_t& ptr() const;
 
-  wasm::Expression* block(const std::string& name,
-                          ExpressionList children,
-                          std::optional<wasm::Type> type);
-  wasm::Expression* if_(wasm::Expression* condition,
-                        wasm::Expression* ifTrue,
-                        wasm::Expression* ifFalse);
-  wasm::Expression* loop(const std::string& label, wasm::Expression* body);
-  wasm::Expression* br(const std::string& label,
-                       wasm::Expression* condition,
-                       wasm::Expression* value);
-  wasm::Expression* switch_(NameList names,
-                            const std::string& defaultName,
-                            wasm::Expression* condition,
-                            wasm::Expression* value);
-  wasm::Expression*
+  wasm::Block* block(OptionalString name,
+                     ExpressionList children,
+                     std::optional<wasm::Type> type);
+  wasm::If* if_(wasm::Expression* condition,
+                wasm::Expression* ifTrue,
+                wasm::Expression* ifFalse);
+  wasm::Loop* loop(OptionalString label, wasm::Expression* body);
+  wasm::Break* br(const std::string& label,
+                  wasm::Expression* condition,
+                  wasm::Expression* value);
+  wasm::Switch* switch_(NameList names,
+                        const std::string& defaultName,
+                        wasm::Expression* condition,
+                        wasm::Expression* value);
+  wasm::Call*
   call(const std::string&, ExpressionList operands, wasm::Type type);
-  wasm::Expression* call_indirect(const std::string& table,
-                                  wasm::Expression* target,
-                                  ExpressionList operands,
-                                  wasm::Type params,
-                                  wasm::Type results);
-  wasm::Expression*
+  wasm::CallIndirect* call_indirect(const std::string& table,
+                                    wasm::Expression* target,
+                                    ExpressionList operands,
+                                    wasm::Type params,
+                                    wasm::Type results);
+  wasm::Call*
   return_call(const std::string&, ExpressionList operands, wasm::Type type);
-  wasm::Expression* return_call_indirect(const std::string& table,
-                                         wasm::Expression* target,
-                                         ExpressionList operands,
-                                         wasm::Type params,
-                                         wasm::Type results);
+  wasm::CallIndirect* return_call_indirect(const std::string& table,
+                                           wasm::Expression* target,
+                                           ExpressionList operands,
+                                           wasm::Type params,
+                                           wasm::Type results);
   const struct Local : ExpressionFactory {
-    wasm::Expression* get(Index index, wasm::Type type);
-    wasm::Expression* set(Index index, wasm::Expression* value);
-    wasm::Expression*
-    tee(Index index, wasm::Expression* value, wasm::Type type);
+    wasm::LocalGet* get(Index index, wasm::Type type);
+    wasm::LocalSet* set(Index index, wasm::Expression* value);
+    wasm::LocalSet* tee(Index index, wasm::Expression* value, wasm::Type type);
   } local{module};
   const struct Global : ExpressionFactory {
-    wasm::Expression* get(const std::string& name, wasm::Type type);
-    wasm::Expression* set(const std::string& name, wasm::Expression* value);
+    wasm::GlobalGet* get(const std::string& name, wasm::Type type);
+    wasm::GlobalSet* set(const std::string& name, wasm::Expression* value);
   } global{module};
   const struct I32 : ExpressionFactory {
-    wasm::Expression* add(wasm::Expression* left, wasm::Expression* right);
+    wasm::Binary* add(wasm::Expression* left, wasm::Expression* right);
   } i32{module};
-  wasm::Expression* return_(wasm::Expression* value);
+  wasm::Return* return_(wasm::Expression* value);
 
   wasm::Function* addFunction(const std::string& name,
                               wasm::Type params,
