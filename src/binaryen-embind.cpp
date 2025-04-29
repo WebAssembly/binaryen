@@ -452,17 +452,55 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
       allow_raw_pointer<wasm::Expression>())                                   \
     .property(#field, &wasm::id::field, allow_raw_pointer<wasm::Expression>())
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-  //.property(#field, &wasm::id::field,
-  // allow_raw_pointer<wasm::Expression>())
-#define DELEGATE_FIELD_INT(id, field)
+  .function(                                                                   \
+    GETTER(#field),                                                            \
+    +[](const wasm::id& expr) {                                                \
+      return binaryen::ExpressionList(                                         \
+        val::array(std::vector(expr.field.begin(), expr.field.end())));        \
+    },                                                                         \
+    allow_raw_pointer<wasm::Expression>())                                     \
+    .function(                                                                 \
+      SETTER(#field),                                                          \
+      +[](wasm::id& expr, binaryen::ExpressionList value) {                    \
+        expr.field.set(vecFromJSArray<wasm::Expression*>(                      \
+          value, allow_raw_pointer<wasm::Expression>()));                      \
+      },                                                                       \
+      allow_raw_pointer<wasm::Expression>())                                   \
+    .property(                                                                 \
+      #field,                                                                  \
+      +[](const wasm::id& expr) {                                              \
+        return binaryen::ExpressionList(                                       \
+          val::array(std::vector(expr.field.begin(), expr.field.end())));      \
+      },                                                                       \
+      +[](wasm::id& expr, binaryen::ExpressionList value) {                    \
+        expr.field.set(vecFromJSArray<wasm::Expression*>(                      \
+          value, allow_raw_pointer<wasm::Expression>()));                      \
+      },                                                                       \
+      allow_raw_pointer<wasm::Expression>())
+#define DELEGATE_FIELD_INT(id, field)                                          \
+  .function(                                                                   \
+    GETTER(#field), +[](const wasm::id& expr) { return expr.field; })          \
+    .function(                                                                 \
+      SETTER(#field),                                                          \
+      +[](wasm::id& expr, uint32_t value) { expr.field = value; })             \
+    .property(#field, &wasm::id::field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)
+#define DELEGATE_FIELD_BOOL(id, field)
+#define DELEGATE_FIELD_BOOL_VECTOR(id, field)
+#define DELEGATE_FIELD_ENUM(id, field, type)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)                                         \
-  .property(                                                                   \
-    #field,                                                                    \
-    +[](const wasm::id& expr) { return expr.field.toString(); },               \
-    +[](wasm::id& expr, std::string value) { expr.field = value; })
+  .function(                                                                   \
+    GETTER(#field),                                                            \
+    +[](const wasm::id& expr) { return expr.field.toString(); })               \
+    .function(                                                                 \
+      SETTER(#field),                                                          \
+      +[](wasm::id& expr, std::string value) { expr.field = value; })          \
+    .property(                                                                 \
+      #field,                                                                  \
+      +[](const wasm::id& expr) { return expr.field.toString(); },             \
+      +[](wasm::id& expr, std::string value) { expr.field = value; })
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
