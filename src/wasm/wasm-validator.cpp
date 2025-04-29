@@ -3977,6 +3977,7 @@ static void validateTypes(Module& module, ValidationInfo& info) {
   if (module.features.hasCustomDescriptors()) {
     return;
   }
+
   for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
     for (auto child : type.getTypeChildren()) {
       if (child.isExact()) {
