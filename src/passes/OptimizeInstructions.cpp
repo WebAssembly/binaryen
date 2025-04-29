@@ -3569,7 +3569,7 @@ private:
     auto* left = curr->left;
     auto* right = curr->right;
 
-    // Check right as constant and left's max bits
+    // Check right is constant and left's max bits
     auto leftMaxBits = Bits::getMaxBits(left, this);
     uint64_t maskLeft;
     if (leftMaxBits == 64) {
