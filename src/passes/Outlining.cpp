@@ -140,7 +140,7 @@ struct ReconstructStringifyWalker
     } else if (auto curr = reason.getTryStart()) {
       // We preserve the name of the tryy because IRBuilder expects
       // visitTryStart() to be called on an empty Try, during the normal case of
-      // parsing.
+      // parsing. TODO: Fix this.
       auto name = curr->tryy->name;
       ASSERT_OK(existingBuilder.visitTryStart(curr->tryy, Name()));
       ODBG(desc = "Try Start at ");
