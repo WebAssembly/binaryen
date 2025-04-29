@@ -306,14 +306,17 @@ private:
     struct TryScope {
       Try* tryy;
       Name originalLabel;
+      Index index;
     };
     struct CatchScope {
       Try* tryy;
       Name originalLabel;
+      Index index;
     };
     struct CatchAllScope {
       Try* tryy;
       Name originalLabel;
+      Index index;
     };
     struct TryTableScope {
       TryTable* trytable;
@@ -396,15 +399,17 @@ private:
       return ScopeCtx(LoopScope{loop}, inputType);
     }
     static ScopeCtx makeTry(Try* tryy, Name originalLabel, Type inputType) {
-      return ScopeCtx(TryScope{tryy, originalLabel}, inputType);
+      return ScopeCtx(TryScope{tryy, originalLabel, 0}, inputType);
     }
     static ScopeCtx makeCatch(ScopeCtx&& scope, Try* tryy) {
-      scope.scope = CatchScope{tryy, scope.getOriginalLabel()};
+      scope.scope =
+        CatchScope{tryy, scope.getOriginalLabel(), scope.getIndex() + 1};
       scope.resetForDelimiter(/*keepInput=*/false);
       return scope;
     }
     static ScopeCtx makeCatchAll(ScopeCtx&& scope, Try* tryy) {
-      scope.scope = CatchAllScope{tryy, scope.getOriginalLabel()};
+      scope.scope =
+        CatchAllScope{tryy, scope.getOriginalLabel(), scope.getIndex() + 1};
       scope.resetForDelimiter(/*keepInput=*/false);
       return scope;
     }
@@ -527,6 +532,18 @@ private:
       }
       if (auto* trytable = getTryTable()) {
         return trytable->type;
+      }
+      WASM_UNREACHABLE("unexpected scope kind");
+    }
+    Index getIndex() {
+      if (auto* tryScope = std::get_if<TryScope>(&scope)) {
+        return tryScope->index;
+      }
+      if (auto* catchScope = std::get_if<CatchScope>(&scope)) {
+        return catchScope->index;
+      }
+      if (auto* catchAllScope = std::get_if<CatchAllScope>(&scope)) {
+        return catchAllScope->index;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }

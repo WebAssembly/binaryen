@@ -98,19 +98,16 @@ adding unique symbol for End
 adding unique symbol for If Start
 in visitExpression for i32.const 30
 adding unique symbol for End
-adding unique symbol for Try Body Start
+adding unique symbol for Try Start
 in visitExpression for nop
-adding unique symbol for End
-adding unique symbol for Try Catch Start
+adding unique symbol for Catch Start
+in visitExpression for block
+adding unique symbol for Catch Start
 in visitExpression for block
 adding unique symbol for End
-adding unique symbol for Try Catch Start
-in visitExpression for block
-adding unique symbol for End
-adding unique symbol for Try Body Start
+adding unique symbol for Try Start
 in visitExpression for nop
-adding unique symbol for End
-adding unique symbol for Try Catch Start
+adding unique symbol for Catch Start
 in visitExpression for block
 adding unique symbol for End
 adding unique symbol for Block Start
