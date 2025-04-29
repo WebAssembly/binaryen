@@ -1244,3 +1244,63 @@
     )
   )
 )
+
+;; Tests TryTable instructions are correctly filtered from being outlined.
+;; The (drop (i32.const 0)) instructions were added to form an outlineable
+;; sequence with the block that contains the try_table.
+(module
+  ;; CHECK:      (type $1 (func (result (ref exn))))
+
+  ;; CHECK:      (type $0 (func))
+  (type $0 (func))
+  ;; CHECK:      (tag $tag$0 (type $0))
+  (tag $tag$0 (type $0))
+  ;; CHECK:      (func $a (type $1) (result (ref exn))
+  ;; CHECK-NEXT:  (loop $label1
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (try_table (catch_all $label1)
+  ;; CHECK-NEXT:     (throw $tag$0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a (result (ref exn))
+    (loop $label1 (result (ref exn))
+      (drop
+        (i32.const 0)
+      )
+      (block (result (ref exn))
+        (try_table (catch_all $label1)
+          (throw $tag$0)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $1) (result (ref exn))
+  ;; CHECK-NEXT:  (loop $label1
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (try_table (catch_all $label1)
+  ;; CHECK-NEXT:     (throw $tag$0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b (result (ref exn))
+    (loop $label1 (result (ref exn))
+      (drop
+        (i32.const 0)
+      )
+      (block (result (ref exn))
+        (try_table (catch_all $label1)
+          (throw $tag$0)
+        )
+      )
+    )
+  )
+)
