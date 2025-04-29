@@ -1642,14 +1642,7 @@ public:
     }
     Literal val = ref.getSingleValue();
     Type castType = curr->getCastType();
-    if (val.isNull()) {
-      if (castType.isNullable()) {
-        return typename Cast::Success{val};
-      } else {
-        return typename Cast::Failure{val};
-      }
-    }
-    if (HeapType::isSubType(val.type.getHeapType(), castType.getHeapType())) {
+    if (Type::isSubType(val.type, castType)) {
       return typename Cast::Success{val};
     } else {
       return typename Cast::Failure{val};

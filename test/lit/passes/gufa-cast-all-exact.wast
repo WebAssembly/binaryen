@@ -138,3 +138,39 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $foo (sub (struct (field i32))))
+ ;; NO_CD:      (type $foo (sub (struct (field i32))))
+ (type $foo (sub (struct (field i32))))
+
+ ;; CHECK:      (import "" "" (global $null-exact (ref null (exact $foo))))
+ ;; NO_CD:      (import "" "" (global $null-exact (ref null (exact $foo))))
+ (import "" "" (global $null-exact (ref null (exact $foo))))
+
+ ;; CHECK:      (func $as-non-null (type $1) (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (global.get $null-exact)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NO_CD:      (func $as-non-null (type $1) (result i32)
+ ;; NO_CD-NEXT:  (drop
+ ;; NO_CD-NEXT:   (ref.as_non_null
+ ;; NO_CD-NEXT:    (global.get $null-exact)
+ ;; NO_CD-NEXT:   )
+ ;; NO_CD-NEXT:  )
+ ;; NO_CD-NEXT:  (unreachable)
+ ;; NO_CD-NEXT: )
+ (func $as-non-null (result i32)
+  (struct.get $foo 0
+   ;; Regression test for an assertion failure when the intersection here
+   ;; dropped exactness as well as nullness.
+   (ref.as_non_null
+    (global.get $null-exact)
+   )
+  )
+ )
+)

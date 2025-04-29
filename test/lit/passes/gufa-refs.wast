@@ -6069,8 +6069,13 @@
   ;; CHECK:      (func $test-set-bottom (type $2)
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.cast nullref
-  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.cast nullref
+  ;; CHECK-NEXT:       (global.get $global)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
