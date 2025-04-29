@@ -590,10 +590,44 @@ namespace {
 
 void classifyTypeVisibility(Module& wasm,
                             InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
+  for (auto type : getPublicHeapTypes(wasm)) {
+    if (auto it = types.find(type); it != types.end()) {
+      it->second.visibility = Visibility::Public;
+    }
+  }
+  for (auto& [type, info] : types) {
+    if (info.visibility != Visibility::Public) {
+      info.visibility = Visibility::Private;
+    }
+  }
+}
+
+void setIndices(IndexedHeapTypes& indexedTypes) {
+  for (Index i = 0; i < indexedTypes.types.size(); i++) {
+    indexedTypes.indices[indexedTypes.types[i]] = i;
+  }
+}
+
+} // anonymous namespace
+
+std::vector<HeapType> collectHeapTypes(Module& wasm) {
+  auto info = collectHeapTypeInfo(wasm);
+  std::vector<HeapType> types;
+  types.reserve(info.size());
+  for (auto& [type, _] : info) {
+    types.push_back(type);
+  }
+  return types;
+}
+
+std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
   // We will need to traverse the types used by public types and mark them
   // public as well.
   std::vector<HeapType> workList;
   std::unordered_set<RecGroup> publicGroups;
+
+  // The collected types.
+  std::vector<HeapType> publicTypes;
 
   auto notePublic = [&](HeapType type) {
     if (type.isBasic()) {
@@ -604,12 +638,8 @@ void classifyTypeVisibility(Module& wasm,
       // The groups in this type have already been marked public.
       return;
     }
-    for (auto member : type.getRecGroup()) {
-      if (auto it = types.find(member); it != types.end()) {
-        it->second.visibility = Visibility::Public;
-      }
-      workList.push_back(member);
-    }
+    publicTypes.insert(publicTypes.end(), group.begin(), group.end());
+    workList.insert(workList.end(), group.begin(), group.end());
   };
 
   ModuleUtils::iterImportedTags(wasm, [&](Tag* tag) { notePublic(tag->type); });
@@ -675,46 +705,10 @@ void classifyTypeVisibility(Module& wasm,
     }
   }
 
-  for (auto& [_, info] : types) {
-    if (info.visibility != Visibility::Public) {
-      info.visibility = Visibility::Private;
-    }
-  }
-
   // TODO: In an open world, we need to consider subtypes of public types public
   // as well, or potentially even consider all types to be public unless
   // otherwise annotated.
-}
-
-void setIndices(IndexedHeapTypes& indexedTypes) {
-  for (Index i = 0; i < indexedTypes.types.size(); i++) {
-    indexedTypes.indices[indexedTypes.types[i]] = i;
-  }
-}
-
-} // anonymous namespace
-
-std::vector<HeapType> collectHeapTypes(Module& wasm) {
-  auto info = collectHeapTypeInfo(wasm);
-  std::vector<HeapType> types;
-  types.reserve(info.size());
-  for (auto& [type, _] : info) {
-    types.push_back(type);
-  }
-  return types;
-}
-
-std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
-  auto info = collectHeapTypeInfo(
-    wasm, TypeInclusion::BinaryTypes, VisibilityHandling::FindVisibility);
-  std::vector<HeapType> types;
-  types.reserve(info.size());
-  for (auto& [type, typeInfo] : info) {
-    if (typeInfo.visibility == Visibility::Public) {
-      types.push_back(type);
-    }
-  }
-  return types;
+  return publicTypes;
 }
 
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
