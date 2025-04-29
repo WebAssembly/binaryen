@@ -418,6 +418,8 @@ public:
   }
 
   // Return a new reference type with some part updated to the specified value.
+  // Always clear exactness when replacing the referenced type with a basic heap
+  // type to avoid creating an invalid type.
   Type with(HeapType heapType) const {
     return Type(heapType,
                 getNullability(),
