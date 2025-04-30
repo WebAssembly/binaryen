@@ -13,7 +13,7 @@ console.log("# Expression");
 
   const ptr = module.block(null, []);
 
-  var theExpression = binaryen.Expression(ptr); // works without new
+  var theExpression = new binaryen.Block(ptr); // works without new
   assert(theExpression instanceof binaryen.Block);
   assert(theExpression instanceof binaryen.Expression);
   assert(theExpression.constructor === binaryen.Block);

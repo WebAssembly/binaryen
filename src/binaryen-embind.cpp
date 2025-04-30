@@ -26,8 +26,7 @@ wasm::Block* Module::block(OptionalString name,
                            std::optional<wasm::Type> type) {
   return wasm::Builder(*module).makeBlock(
     name.isNull() || name.isUndefined() ? nullptr : name.as<std::string>(),
-    vecFromJSArray<wasm::Expression*>(children,
-                                      allow_raw_pointer<wasm::Expression>()),
+    vecFromJSArray<wasm::Expression*>(children, allow_raw_pointers()),
     type);
 }
 wasm::If* Module::if_(wasm::Expression* condition,
@@ -59,8 +58,7 @@ wasm::Call* Module::call(const std::string& name,
                          wasm::Type type) {
   return wasm::Builder(*module).makeCall(
     name,
-    vecFromJSArray<wasm::Expression*>(operands,
-                                      allow_raw_pointer<wasm::Expression>()),
+    vecFromJSArray<wasm::Expression*>(operands, allow_raw_pointers()),
     type);
 }
 wasm::CallIndirect* Module::call_indirect(const std::string& table,
@@ -71,8 +69,7 @@ wasm::CallIndirect* Module::call_indirect(const std::string& table,
   return wasm::Builder(*module).makeCallIndirect(
     table,
     target,
-    vecFromJSArray<wasm::Expression*>(operands,
-                                      allow_raw_pointer<wasm::Expression>()),
+    vecFromJSArray<wasm::Expression*>(operands, allow_raw_pointers()),
     wasm::Signature(params, results));
 }
 wasm::Call* Module::return_call(const std::string& name,
@@ -80,8 +77,7 @@ wasm::Call* Module::return_call(const std::string& name,
                                 wasm::Type type) {
   return wasm::Builder(*module).makeCall(
     name,
-    vecFromJSArray<wasm::Expression*>(operands,
-                                      allow_raw_pointer<wasm::Expression>()),
+    vecFromJSArray<wasm::Expression*>(operands, allow_raw_pointers()),
     type,
     true);
 }
@@ -93,8 +89,7 @@ wasm::CallIndirect* Module::return_call_indirect(const std::string& table,
   return wasm::Builder(*module).makeCallIndirect(
     table,
     target,
-    vecFromJSArray<wasm::Expression*>(operands,
-                                      allow_raw_pointer<wasm::Expression>()),
+    vecFromJSArray<wasm::Expression*>(operands, allow_raw_pointers()),
     wasm::Signature(params, results),
     true);
 }
@@ -238,6 +233,32 @@ static std::string capitalize(std::string str, int i = 0) {
 
 #define GETTER(field) capitalize("get" field, 3).c_str()
 #define SETTER(field) capitalize("set" field, 3).c_str()
+
+#define FIELD(field, name, id, type, ...)                                      \
+  .class_function(                                                             \
+    GETTER(#name),                                                             \
+    +[](const wasm::id& expr) { return expr.field; },                          \
+    ##__VA_ARGS__)                                                             \
+    .class_function(                                                           \
+      SETTER(#name),                                                           \
+      +[](wasm::id& expr, type value) { expr.field = value; },                 \
+      ##__VA_ARGS__)                                                           \
+    .function(                                                                 \
+      GETTER(#name),                                                           \
+      +[](const wasm::id& expr) { return expr.field; },                        \
+      ##__VA_ARGS__)                                                           \
+    .function(                                                                 \
+      SETTER(#name),                                                           \
+      +[](wasm::id& expr, type value) { expr.field = value; },                 \
+      ##__VA_ARGS__)                                                           \
+    .property(#name, &wasm::id::field, ##__VA_ARGS__)
+
+#define FIELD_DYN(field, name, getter, setter, ...)                            \
+  .class_function(GETTER(#name), +getter, ##__VA_ARGS__)                       \
+    .class_function(SETTER(#name), +setter, ##__VA_ARGS__)                     \
+    .function(GETTER(#name), +getter, ##__VA_ARGS__)                           \
+    .function(SETTER(#name), +setter, ##__VA_ARGS__)                           \
+    .property(#name, +getter, +setter, ##__VA_ARGS__)
 } // namespace
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
@@ -292,31 +313,31 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   class_<binaryen::Module::Local>("Module_Local")
     .function("get",
               &binaryen::Module::Local::get,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .function("set",
               &binaryen::Module::Local::set,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .function("get",
               &binaryen::Module::Local::tee,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>());
 
   class_<binaryen::Module::Global>("Module_Global")
     .function("get",
               &binaryen::Module::Global::get,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .function("set",
               &binaryen::Module::Global::set,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>());
 
   class_<binaryen::Module::I32>("Module_I32")
     .function("add",
               &binaryen::Module::I32::add,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>());
 
   class_<binaryen::Module>("Module")
@@ -325,47 +346,35 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
     .function("block",
               &binaryen::Module::block,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
-    .function("if",
-              &binaryen::Module::if_,
-              allow_raw_pointer<wasm::Expression>(),
-              nonnull<ret_val>())
-    .function("loop",
-              &binaryen::Module::loop,
-              allow_raw_pointer<wasm::Expression>(),
-              nonnull<ret_val>())
-    .function("br",
-              &binaryen::Module::br,
-              allow_raw_pointer<wasm::Expression>(),
-              nonnull<ret_val>())
-    .function("break",
-              &binaryen::Module::br,
-              allow_raw_pointer<wasm::Expression>(),
-              nonnull<ret_val>())
-    .function("br_if",
-              &binaryen::Module::br,
-              allow_raw_pointer<wasm::Expression>(),
-              nonnull<ret_val>())
+    .function(
+      "if", &binaryen::Module::if_, allow_raw_pointers(), nonnull<ret_val>())
+    .function(
+      "loop", &binaryen::Module::loop, allow_raw_pointers(), nonnull<ret_val>())
+    .function(
+      "br", &binaryen::Module::br, allow_raw_pointers(), nonnull<ret_val>())
+    .function(
+      "break", &binaryen::Module::br, allow_raw_pointers(), nonnull<ret_val>())
+    .function(
+      "br_if", &binaryen::Module::br, allow_raw_pointers(), nonnull<ret_val>())
     .function("switch",
               &binaryen::Module::switch_,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
-    .function("call",
-              &binaryen::Module::call,
-              allow_raw_pointer<wasm::Expression>(),
-              nonnull<ret_val>())
+    .function(
+      "call", &binaryen::Module::call, allow_raw_pointers(), nonnull<ret_val>())
     .function("call_indirect",
               &binaryen::Module::call_indirect,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .function("return_call",
               &binaryen::Module::return_call,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .function("return_call_indirect",
               &binaryen::Module::return_call_indirect,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .property(
       "local", &binaryen::Module::local, return_value_policy::reference())
@@ -374,16 +383,16 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .property("i32", &binaryen::Module::i32, return_value_policy::reference())
     .function("return",
               &binaryen::Module::return_,
-              allow_raw_pointer<wasm::Expression>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
 
     .function("addFunction",
               &binaryen::Module::addFunction,
-              allow_raw_pointer<wasm::Function>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
     .function("addFunctionExport",
               &binaryen::Module::addFunctionExport,
-              allow_raw_pointer<wasm::Export>(),
+              allow_raw_pointers(),
               nonnull<ret_val>())
 
     .function("emitBinary", &binaryen::Module::emitBinary)
@@ -395,7 +404,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("optimize", &binaryen::Module::optimize)
     .function("optimizeFunction",
               &binaryen::Module::optimizeFunction,
-              allow_raw_pointer<wasm::Expression>())
+              allow_raw_pointers())
 
     .function(
       "dispose",
@@ -403,22 +412,14 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
                                   // in favor of Module.delete()
     ;
 
-  function("parseText",
-           binaryen::parseText,
-           allow_raw_pointer<binaryen::Module>(),
-           nonnull<ret_val>());
+  function(
+    "parseText", binaryen::parseText, allow_raw_pointers(), nonnull<ret_val>());
 
   function("createType", binaryen::createType);
 
-  function(
-    "Expression",
-    +[](wasm::Expression* expr) { return expr; },
-    allow_raw_pointer<wasm::Expression>(),
-    nonnull<ret_val>());
-
-  class_<wasm::Expression>("ExpressionWrapper")
-    .property("id", &wasm::Expression::_id)
-    .property("type", &wasm::Expression::type);
+  class_<wasm::Expression>("Expression")
+    FIELD(_id, id, Expression, wasm::Expression::Id)
+      FIELD(type, type, Expression, wasm::Type);
 
   register_type<binaryen::ExpressionList>("Expression[]");
 
@@ -427,76 +428,34 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_MAIN_START
 
 #define DELEGATE_FIELD_CASE_START(id)                                          \
-  function(                                                                    \
-    #id,                                                                       \
-    +[](wasm::id* expr) { return expr; },                                      \
-    allow_raw_pointer<wasm::id>(),                                             \
-    nonnull<ret_val>());                                                       \
-  class_<wasm::id, base<wasm::Expression>>(#id "Wrapper")
+  class_<wasm::id, base<wasm::Expression>>(#id)
 
 #define DELEGATE_FIELD_CASE_END(id) ;
 
 #define DELEGATE_FIELD_MAIN_END
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-  .function(                                                                   \
-    GETTER(#field),                                                            \
-    +[](const wasm::id& expr) { return expr.field; },                          \
-    allow_raw_pointer<wasm::Expression>(),                                     \
-    nonnull<ret_val>())                                                        \
-    .function(                                                                 \
-      SETTER(#field),                                                          \
-      +[](wasm::id& expr, wasm::Expression* value) { expr.field = value; },    \
-      allow_raw_pointer<wasm::Expression>() /* nonnull<arg>() */)              \
-    .property(                                                                 \
-      #field,                                                                  \
-      &wasm::id::field,                                                        \
-      allow_raw_pointer<                                                       \
-        wasm::Expression>() /* nonnull<val>() */) // Embind doesn't support
-                                                  // non-null properties yet
+  FIELD(field,                                                                 \
+        field,                                                                 \
+        id,                                                                    \
+        wasm::Expression*,                                                     \
+        allow_raw_pointers(),                                                  \
+        nonnull<ret_val>())
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  .function(                                                                   \
-    GETTER(#field),                                                            \
-    +[](const wasm::id& expr) { return expr.field; },                          \
-    allow_raw_pointer<wasm::Expression>())                                     \
-    .function(                                                                 \
-      SETTER(#field),                                                          \
-      +[](wasm::id& expr, wasm::Expression* value) { expr.field = value; },    \
-      allow_raw_pointer<wasm::Expression>())                                   \
-    .property(#field, &wasm::id::field, allow_raw_pointer<wasm::Expression>())
+  FIELD(field, field, id, wasm::Expression*, allow_raw_pointers())
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-  .function(                                                                   \
-    GETTER(#field),                                                            \
-    +[](const wasm::id& expr) {                                                \
+  FIELD_DYN(                                                                   \
+    field,                                                                     \
+    field,                                                                     \
+    [](const wasm::id& expr) {                                                 \
       return binaryen::ExpressionList(                                         \
         val::array(std::vector(expr.field.begin(), expr.field.end())));        \
     },                                                                         \
-    allow_raw_pointer<wasm::Expression>())                                     \
-    .function(                                                                 \
-      SETTER(#field),                                                          \
-      +[](wasm::id& expr, binaryen::ExpressionList value) {                    \
-        expr.field.set(vecFromJSArray<wasm::Expression*>(                      \
-          value, allow_raw_pointer<wasm::Expression>()));                      \
-      },                                                                       \
-      allow_raw_pointer<wasm::Expression>())                                   \
-    .property(                                                                 \
-      #field,                                                                  \
-      +[](const wasm::id& expr) {                                              \
-        return binaryen::ExpressionList(                                       \
-          val::array(std::vector(expr.field.begin(), expr.field.end())));      \
-      },                                                                       \
-      +[](wasm::id& expr, binaryen::ExpressionList value) {                    \
-        expr.field.set(vecFromJSArray<wasm::Expression*>(                      \
-          value, allow_raw_pointer<wasm::Expression>()));                      \
-      },                                                                       \
-      allow_raw_pointer<wasm::Expression>())
-#define DELEGATE_FIELD_INT(id, field)                                          \
-  .function(                                                                   \
-    GETTER(#field), +[](const wasm::id& expr) { return expr.field; })          \
-    .function(                                                                 \
-      SETTER(#field),                                                          \
-      +[](wasm::id& expr, uint32_t value) { expr.field = value; })             \
-    .property(#field, &wasm::id::field)
+    [](wasm::id& expr, binaryen::ExpressionList value) {                       \
+      expr.field.set(                                                          \
+        vecFromJSArray<wasm::Expression*>(value, allow_raw_pointers()));       \
+    })
+#define DELEGATE_FIELD_INT(id, field) FIELD(field, field, id, uint32_t)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)
 #define DELEGATE_FIELD_BOOL(id, field)
@@ -504,16 +463,11 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_ENUM(id, field, type)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)                                         \
-  .function(                                                                   \
-    GETTER(#field),                                                            \
-    +[](const wasm::id& expr) { return expr.field.toString(); })               \
-    .function(                                                                 \
-      SETTER(#field),                                                          \
-      +[](wasm::id& expr, const std::string& value) { expr.field = value; })   \
-    .property(                                                                 \
-      #field,                                                                  \
-      +[](const wasm::id& expr) { return expr.field.toString(); },             \
-      +[](wasm::id& expr, const std::string& value) { expr.field = value; })
+  FIELD_DYN(                                                                   \
+    field,                                                                     \
+    field,                                                                     \
+    [](const wasm::id& expr) { return expr.field.toString(); },                \
+    [](wasm::id& expr, const std::string& value) { expr.field = value; })
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
