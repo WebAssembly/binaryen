@@ -688,6 +688,7 @@
 
  ;; CHECK:      (func $conditionalize-if-type-change (type $3) (result f64)
  ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (loop $label$1 (result f32)
  ;; CHECK-NEXT:    (block $label$2 (result f32)
@@ -704,7 +705,15 @@
  ;; CHECK-NEXT:           (f32.const 71)
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:         (i64.eqz
+ ;; CHECK-NEXT:          (select
+ ;; CHECK-NEXT:           (i64.const 58)
+ ;; CHECK-NEXT:           (i64.const -982757)
+ ;; CHECK-NEXT:           (i64.eqz
+ ;; CHECK-NEXT:            (local.get $1)
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -717,6 +726,7 @@
  ;; CHECK-NEXT: )
  (func $conditionalize-if-type-change (result f64)
   (local $0 i32)
+  (local $1 i64)
   (drop
    (loop $label$1 (result f32)
     (block $label$2 (result f32)
@@ -738,7 +748,7 @@
            (i64.const 58)
            (i64.const -982757)
            (i64.eqz
-            (i64.const 0)
+            (local.get $1)
            )
           )
          )
