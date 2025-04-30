@@ -398,7 +398,7 @@
   ;; CHECK-NEXT:     (call $get-i32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (call $get-i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $restructure-br_if-value-redundant-in-block-tail-3 (param $x i32) (result i32)
