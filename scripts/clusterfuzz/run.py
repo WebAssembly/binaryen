@@ -33,7 +33,12 @@ import sys
 
 # The V8 flags we put in the "fuzzer flags" files, which tell ClusterFuzz how to
 # run V8. By default we apply all staging flags.
-FUZZER_FLAGS_FILE_CONTENTS = '--wasm-staging'
+FUZZER_FLAGS = '--wasm-staging'
+
+# Optional V8 flags to add to FUZZER_FLAGS, some of the time.
+OPTIONAL_FUZZER_FLAGS = [
+    '--experimental-wasm-revectorize',
+]
 
 # Maximum size of the random data that we feed into wasm-opt -ttf. This is
 # smaller than fuzz_opt.py's INPUT_SIZE_MAX because that script is tuned for
@@ -292,7 +297,12 @@ def main(argv):
         flags_file_path = os.path.join(output_dir,
                                        get_file_name(FLAGS_FILENAME_PREFIX, i))
         with open(flags_file_path, 'w') as file:
-            file.write(FUZZER_FLAGS_FILE_CONTENTS)
+            flags = FUZZER_FLAGS
+            # Some of the time add an additional flag for V8
+            if OPTIONAL_FUZZER_FLAGS and system_random.random() < 0.5:
+                flags += ' ' + system_random.choice(OPTIONAL_FUZZER_FLAGS)
+
+            file.write(flags)
 
         print(f'Created testcase: {testcase_file_path}')
 
