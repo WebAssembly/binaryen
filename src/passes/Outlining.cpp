@@ -151,6 +151,9 @@ struct ReconstructStringifyWalker
     } else if (reason.getCatchAllStart()) {
       ASSERT_OK(existingBuilder.visitCatchAll());
       ODBG(desc = "Catch All Start at");
+    } else if (auto curr = reason.getTryTableStart()) {
+      ODBG(desc = "Try Table Start at ");
+      ASSERT_OK(existingBuilder.visitTryTableStart(curr->tryt));
     } else if (reason.getEnd()) {
       ODBG(desc = "End at ");
       ASSERT_OK(existingBuilder.visitEnd());
@@ -346,9 +349,9 @@ struct Outlining : public Pass {
     substrings = StringifyProcessor::dedupe(substrings);
     // Remove substrings with overlapping indices.
     substrings = StringifyProcessor::filterOverlaps(substrings);
-    // Remove substrings with branch and return instructions until an analysis
-    // is performed to see if the intended destination of the branch is included
-    // in the substring to be outlined.
+    // Remove substrings with branch, return, and try_table instructions until
+    // an analysis is performed to see if the intended destination of the branch
+    // is included in the substring to be outlined.
     substrings =
       StringifyProcessor::filterBranches(substrings, stringify.exprs);
     // Remove substrings with local.set instructions until Outlining is extended
