@@ -340,7 +340,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-redudant-in-block-tail-1 (type $2) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-1 (type $2) (result i32)
   ;; CHECK-NEXT:  (block $parent (result i32)
   ;; CHECK-NEXT:   (call $nothing)
   ;; CHECK-NEXT:   (drop
@@ -349,7 +349,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-value-redudant-in-block-tail-1 (result i32)
+  (func $restructure-br_if-value-redundant-in-block-tail-1 (result i32)
     ;; The br_if's value is equal to the value right after it, so we can remove it.
     (block $parent (result i32)
       (call $nothing)
@@ -363,7 +363,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-redudant-in-block-tail-2 (type $2) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-2 (type $2) (result i32)
   ;; CHECK-NEXT:  (block $parent (result i32)
   ;; CHECK-NEXT:   (call $nothing)
   ;; CHECK-NEXT:   (drop
@@ -375,7 +375,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-value-redudant-in-block-tail-2 (result i32)
+  (func $restructure-br_if-value-redundant-in-block-tail-2 (result i32)
     ;; As above, but now the value is different, so we do not optimize
     (block $parent (result i32)
       (call $nothing)
@@ -389,7 +389,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-redudant-in-block-tail-3 (type $0) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-3 (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $parent (result i32)
   ;; CHECK-NEXT:   (call $nothing)
   ;; CHECK-NEXT:   (drop
@@ -401,7 +401,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-value-redudant-in-block-tail-3 (param $x i32) (result i32)
+  (func $restructure-br_if-value-redundant-in-block-tail-3 (param $x i32) (result i32)
     ;; As above, but now the value has effects, so we do not optimize
     (block $parent (result i32)
       (call $nothing)
@@ -415,7 +415,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-redudant-in-block-tail-4 (type $2) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-4 (type $2) (result i32)
   ;; CHECK-NEXT:  (block $outer (result i32)
   ;; CHECK-NEXT:   (block $inner (result i32)
   ;; CHECK-NEXT:    (call $nothing)
@@ -429,7 +429,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-value-redudant-in-block-tail-4 (result i32)
+  (func $restructure-br_if-value-redundant-in-block-tail-4 (result i32)
     ;; As above, but the br_if targets another block, so we do not optimize.
     (block $outer (result i32)
       (block $inner (result i32)
