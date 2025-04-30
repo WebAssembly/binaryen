@@ -231,34 +231,32 @@ static std::string capitalize(std::string str, int i = 0) {
   return str;
 }
 
-#define GETTER(field) capitalize("get" field, 3).c_str()
-#define SETTER(field) capitalize("set" field, 3).c_str()
+#define GETTER(field) capitalize("get" field, 3)
+#define SETTER(field) capitalize("set" field, 3)
 
-#define FIELD(field, name, id, type, ...)                                      \
-  .class_function(                                                             \
-    GETTER(#name),                                                             \
-    +[](const wasm::id& expr) { return expr.field; },                          \
-    ##__VA_ARGS__)                                                             \
-    .class_function(                                                           \
-      SETTER(#name),                                                           \
-      +[](wasm::id& expr, type value) { expr.field = value; },                 \
-      ##__VA_ARGS__)                                                           \
-    .function(                                                                 \
-      GETTER(#name),                                                           \
-      +[](const wasm::id& expr) { return expr.field; },                        \
-      ##__VA_ARGS__)                                                           \
-    .function(                                                                 \
-      SETTER(#name),                                                           \
-      +[](wasm::id& expr, type value) { expr.field = value; },                 \
-      ##__VA_ARGS__)                                                           \
-    .property(#name, &wasm::id::field, ##__VA_ARGS__)
+#define FIELD(target, field, name, id, type, ...)                              \
+  {                                                                            \
+    auto getterName = GETTER(#name);                                           \
+    auto setterName = SETTER(#name);                                           \
+    auto getter = [](const wasm::id& expr) { return expr.field; };             \
+    auto setter = [](wasm::id& expr, type value) { expr.field = value; };      \
+    target.class_function(getterName.c_str(), +getter, ##__VA_ARGS__)          \
+      .class_function(setterName.c_str(), +setter, ##__VA_ARGS__)              \
+      .function(getterName.c_str(), +getter, ##__VA_ARGS__)                    \
+      .function(setterName.c_str(), +setter, ##__VA_ARGS__)                    \
+      .property(#name, &wasm::id::field, ##__VA_ARGS__);                       \
+  }
 
-#define FIELD_DYN(field, name, getter, setter, ...)                            \
-  .class_function(GETTER(#name), +getter, ##__VA_ARGS__)                       \
-    .class_function(SETTER(#name), +setter, ##__VA_ARGS__)                     \
-    .function(GETTER(#name), +getter, ##__VA_ARGS__)                           \
-    .function(SETTER(#name), +setter, ##__VA_ARGS__)                           \
-    .property(#name, +getter, +setter, ##__VA_ARGS__)
+#define FIELD_DYN(target, field, name, getter, setter, ...)                    \
+  {                                                                            \
+    auto getterName = GETTER(#name);                                           \
+    auto setterName = SETTER(#name);                                           \
+    target.class_function(getterName.c_str(), +getter, ##__VA_ARGS__)          \
+      .class_function(setterName.c_str(), +setter, ##__VA_ARGS__)              \
+      .function(getterName.c_str(), +getter, ##__VA_ARGS__)                    \
+      .function(setterName.c_str(), +setter, ##__VA_ARGS__)                    \
+      .property(#name, +getter, +setter, ##__VA_ARGS__);                       \
+  }
 } // namespace
 
 EMSCRIPTEN_BINDINGS(Binaryen) {
@@ -417,9 +415,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   function("createType", binaryen::createType);
 
-  class_<wasm::Expression>("Expression")
-    FIELD(_id, id, Expression, wasm::Expression::Id)
-      FIELD(type, type, Expression, wasm::Type);
+  auto ExpressionWrapper = class_<wasm::Expression>("Expression");
+  FIELD(ExpressionWrapper, _id, id, Expression, wasm::Expression::Id);
+  FIELD(ExpressionWrapper, type, type, Expression, wasm::Type);
 
   register_type<binaryen::ExpressionList>("Expression[]");
 
@@ -428,23 +426,25 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_MAIN_START
 
 #define DELEGATE_FIELD_CASE_START(id)                                          \
-  class_<wasm::id, base<wasm::Expression>>(#id)
+  auto id##Wrapper = class_<wasm::id, base<wasm::Expression>>(#id);
 
-#define DELEGATE_FIELD_CASE_END(id) ;
+#define DELEGATE_FIELD_CASE_END(id) id##Wrapper;
 
 #define DELEGATE_FIELD_MAIN_END
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-  FIELD(field,                                                                 \
+  FIELD(id##Wrapper,                                                           \
+        field,                                                                 \
         field,                                                                 \
         id,                                                                    \
         wasm::Expression*,                                                     \
         allow_raw_pointers(),                                                  \
-        nonnull<ret_val>())
+        nonnull<ret_val>());
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  FIELD(field, field, id, wasm::Expression*, allow_raw_pointers())
+  FIELD(id##Wrapper, field, field, id, wasm::Expression*, allow_raw_pointers());
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   FIELD_DYN(                                                                   \
+    id##Wrapper,                                                               \
     field,                                                                     \
     field,                                                                     \
     [](const wasm::id& expr) {                                                 \
@@ -454,8 +454,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     [](wasm::id& expr, binaryen::ExpressionList value) {                       \
       expr.field.set(                                                          \
         vecFromJSArray<wasm::Expression*>(value, allow_raw_pointers()));       \
-    })
-#define DELEGATE_FIELD_INT(id, field) FIELD(field, field, id, uint32_t)
+    });
+#define DELEGATE_FIELD_INT(id, field)                                          \
+  FIELD(id##Wrapper, field, field, id, uint32_t);
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)
 #define DELEGATE_FIELD_BOOL(id, field)
@@ -464,10 +465,11 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)                                         \
   FIELD_DYN(                                                                   \
+    id##Wrapper,                                                               \
     field,                                                                     \
     field,                                                                     \
     [](const wasm::id& expr) { return expr.field.toString(); },                \
-    [](wasm::id& expr, const std::string& value) { expr.field = value; })
+    [](wasm::id& expr, const std::string& value) { expr.field = value; });
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
