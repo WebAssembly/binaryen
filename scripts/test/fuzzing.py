@@ -127,6 +127,7 @@ unfuzzable = [
     'type-merging-exact.wast',
     'type-refining-exact.wast',
     'type-refining-gufa-exact.wast',
+    'public-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
