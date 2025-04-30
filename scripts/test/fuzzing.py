@@ -127,8 +127,8 @@ unfuzzable = [
     'type-merging-exact.wast',
     'type-refining-exact.wast',
     'type-refining-gufa-exact.wast',
-    'mimimize-rec-groups-exact.wast',
-    'mimimize-rec-groups-ignore-exact.wast',
+    'minimize-rec-groups-exact.wast',
+    'minimize-rec-groups-ignore-exact.wast',
     'public-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
