@@ -411,7 +411,7 @@
           (call $get-i32)
         )
       )
-      (i32.const 1)
+      (call $get-i32)
     )
   )
 
