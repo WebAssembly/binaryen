@@ -47,8 +47,7 @@ public:
                         const std::string& defaultName,
                         wasm::Expression* condition,
                         wasm::Expression* value);
-  wasm::Call*
-  call(const std::string&, ExpressionList operands, TypeID type);
+  wasm::Call* call(const std::string&, ExpressionList operands, TypeID type);
   wasm::CallIndirect* call_indirect(const std::string& table,
                                     wasm::Expression* target,
                                     ExpressionList operands,
@@ -64,16 +63,15 @@ public:
   const struct Local : ExpressionFactory {
     wasm::LocalGet* get(Index index, TypeID type);
     wasm::LocalSet* set(Index index, wasm::Expression* value);
-    wasm::LocalSet*
-    tee(Index index, wasm::Expression* value, TypeID type);
-  } local{module};
+    wasm::LocalSet* tee(Index index, wasm::Expression* value, TypeID type);
+  }* local = new Local{module};
   const struct Global : ExpressionFactory {
     wasm::GlobalGet* get(const std::string& name, TypeID type);
     wasm::GlobalSet* set(const std::string& name, wasm::Expression* value);
-  } global{module};
+  }* global = new Global{module};
   const struct I32 : ExpressionFactory {
     wasm::Binary* add(wasm::Expression* left, wasm::Expression* right);
-  } i32{module};
+  }* i32 = new I32{module};
   wasm::Return* return_(wasm::Expression* value);
 
   wasm::Function* addFunction(const std::string& name,
@@ -99,4 +97,6 @@ public:
 Module* parseText(const std::string& text);
 
 TypeID createType(TypeList types);
+
+emscripten::val getExpressionInfo(wasm::Expression* expr);
 }; // namespace binaryen

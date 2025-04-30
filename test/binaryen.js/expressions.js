@@ -33,7 +33,6 @@ console.log("# Block");
   assert(theBlock instanceof binaryen.Block);
   assert(theBlock instanceof binaryen.Expression);
   assert(theBlock.id === binaryen.BlockId);
-  console.log(theBlock.type, binaryen.none);
   assert(theBlock.name === null);
   assert(theBlock.type === binaryen.none);
   

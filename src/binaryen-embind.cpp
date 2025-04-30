@@ -221,9 +221,45 @@ TypeID createType(TypeList types) {
   auto typesVec = vecFromJSArray<wasm::Type>(types);
   return wasm::Type(typesVec).getID();
 }
-
-val getExpressionInfo(wasm::Expression* expr) { return val(expr); }
 } // namespace binaryen
+
+val binaryen::getExpressionInfo(wasm::Expression* expr) {
+  using namespace wasm;
+
+  val info = val::object();
+  info.set("id", val(expr->_id));
+  info.set("type", (binaryen::TypeID)expr->type.getID());
+
+#define DELEGATE_ID expr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = expr->cast<wasm::id>();
+
+#define DELEGATE_FIELD_CHILD(id, field) info.set(#field, cast->field);
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field) info.set(#field, cast->field);
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_INT(id, field) info.set(#field, cast->field);
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_INT_VECTOR(id, field)
+#define DELEGATE_FIELD_BOOL(id, field) info.set(#field, cast->field);
+#define DELEGATE_FIELD_BOOL_VECTOR(id, field)
+#define DELEGATE_FIELD_ENUM(id, field, type)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field) info.set(#field, cast->field.toString());
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
+  info.set(#field,                                                             \
+           cast->field.size() ? val(cast->field.toString()) : val::null());
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_TYPE_VECTOR(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+
+  return info;
+}
 
 namespace {
 static std::string uncapitalize(std::string str, int i) {
@@ -353,30 +389,36 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("get",
               &binaryen::Module::Local::get,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function("set",
               &binaryen::Module::Local::set,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function("get",
               &binaryen::Module::Local::tee,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>());
 
   class_<binaryen::Module::Global>("Module_Global")
     .function("get",
               &binaryen::Module::Global::get,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function("set",
               &binaryen::Module::Global::set,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>());
 
   class_<binaryen::Module::I32>("Module_I32")
     .function("add",
               &binaryen::Module::I32::add,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>());
 
   class_<binaryen::Module>("Module")
@@ -386,34 +428,54 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("block",
               &binaryen::Module::block,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
-    .function(
-      "if", &binaryen::Module::if_, allow_raw_pointers(), nonnull<ret_val>())
-    .function(
-      "loop", &binaryen::Module::loop, allow_raw_pointers(), nonnull<ret_val>())
-    .function(
-      "br", &binaryen::Module::br, allow_raw_pointers(), nonnull<ret_val>())
-    .function(
-      "break", &binaryen::Module::br, allow_raw_pointers(), nonnull<ret_val>())
-    .function(
-      "br_if", &binaryen::Module::br, allow_raw_pointers(), nonnull<ret_val>())
+    .function("if",
+              &binaryen::Module::if_,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("loop",
+              &binaryen::Module::loop,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("br",
+              &binaryen::Module::br,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("break",
+              &binaryen::Module::br,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("br_if",
+              &binaryen::Module::br,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
     .function("switch",
               &binaryen::Module::switch_,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function(
       "call", &binaryen::Module::call, allow_raw_pointers(), nonnull<ret_val>())
     .function("call_indirect",
               &binaryen::Module::call_indirect,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function("return_call",
               &binaryen::Module::return_call,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function("return_call_indirect",
               &binaryen::Module::return_call_indirect,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .property(
       "local", &binaryen::Module::local, return_value_policy::reference())
@@ -456,6 +518,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   function("createType", binaryen::createType);
 
+  function(
+    "getExpressionInfo", binaryen::getExpressionInfo, allow_raw_pointers());
+
   auto ExpressionWrapper = class_<wasm::Expression>("Expression");
   {
     auto getter = [](const wasm::Expression& expr) { return expr._id; };
@@ -484,7 +549,8 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_MAIN_START
 
 #define DELEGATE_FIELD_CASE_START(id)                                          \
-  auto id##Wrapper = class_<wasm::id, base<wasm::Expression>>(#id);            \
+  [[maybe_unused]] auto id##Wrapper =                                          \
+    class_<wasm::id, base<wasm::Expression>>(#id);                             \
   {                                                                            \
     auto getter = [](const wasm::Expression& expr) { return expr._id; };       \
     id##Wrapper.class_function("getId", +getter);                              \
@@ -500,7 +566,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
       .class_function("setType", +setter);                                     \
   };
 
-#define DELEGATE_FIELD_CASE_END(id) id##Wrapper;
+#define DELEGATE_FIELD_CASE_END(id)
 
 #define DELEGATE_FIELD_MAIN_END
 
