@@ -298,10 +298,9 @@ def main(argv):
                                        get_file_name(FLAGS_FILENAME_PREFIX, i))
         with open(flags_file_path, 'w') as file:
             flags = FUZZER_FLAGS
-            # Some of the time add an additional flag for V8
+            # Some of the time add an additional flag for V8.
             if OPTIONAL_FUZZER_FLAGS and system_random.random() < 0.5:
                 flags += ' ' + system_random.choice(OPTIONAL_FUZZER_FLAGS)
-
             file.write(flags)
 
         print(f'Created testcase: {testcase_file_path}')
