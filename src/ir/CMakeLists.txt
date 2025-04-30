@@ -16,6 +16,7 @@ set(ir_SOURCES
   properties.cpp
   LocalGraph.cpp
   LocalStructuralDominance.cpp
+  public-type-validator.cpp
   ReFinalize.cpp
   return-utils.cpp
   stack-utils.cpp

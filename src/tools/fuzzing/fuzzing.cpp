@@ -30,7 +30,8 @@ TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
-    random(std::move(input), wasm.features) {
+    random(std::move(input), wasm.features),
+    publicTypeValidator(wasm.features) {
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
@@ -1495,11 +1496,13 @@ Function* TranslateToFuzzReader::addFunction() {
   // outside.
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
-      return t.isDefaultable();
+      return t.isDefaultable() && isValidPublicType(t);
     });
-  if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
-      !wasm.getExportOrNull(func->name) && !preserveImportsAndExports) {
-    wasm.addExport(new Export(func->name, ExternalKind::Function, func->name));
+  if (!preserveImportsAndExports && validExportParams &&
+      isValidPublicType(resultType) && (numAddedFunctions == 0 || oneIn(2)) &&
+      !wasm.getExportOrNull(func->name)) {
+    wasm.addExport(
+      Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
   // add some to an elem segment
   while (oneIn(3) && !random.finished()) {

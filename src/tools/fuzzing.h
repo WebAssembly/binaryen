@@ -28,6 +28,7 @@
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
 #include <ir/names.h>
+#include <ir/public-type-validator.h>
 #include <ir/utils.h>
 #include <support/file.h>
 #include <tools/optimization-options.h>
@@ -340,6 +341,13 @@ private:
   Expression* makeImportCallCode(Type type);
   Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
+
+  // We must be careful not to add exports that have invalid public types, such
+  // as those that reach exact types when custom descriptors is disabled.
+  PublicTypeValidator publicTypeValidator;
+  bool isValidPublicType(Type type) {
+    return publicTypeValidator.isValidPublicType(type);
+  }
 
   // Function operations. The main processFunctions() loop will call addFunction
   // as well as modFunction().
