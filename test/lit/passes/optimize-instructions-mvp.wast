@@ -17814,12 +17814,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.and
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i64.const 1)
@@ -17835,6 +17829,12 @@
   ;; CHECK-NEXT:   (i64.and
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -17903,12 +17903,6 @@
       )
     )
     (drop
-      (i32.and
-        (local.get $x)
-        (i32.const 1)
-      )
-    )
-    (drop
       (i64.and
         (local.get $y)
         (i64.const 1)
@@ -17928,6 +17922,12 @@
       )
     )
     ;; One bit overlapped, so we can not optimized.
+    (drop
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
     (drop
       (i32.and
         (i32.const 0x7fffffff)
