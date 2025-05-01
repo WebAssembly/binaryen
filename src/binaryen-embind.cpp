@@ -261,8 +261,15 @@ wasm::Binary* Module::I32::add(wasm::Expression* left,
   return wasm::Builder(*module).makeBinary(
     wasm::BinaryOp::AddInt32, left, right);
 }
+wasm::Drop* Module::drop(wasm::Expression* value) {
+  return wasm::Builder(*module).makeDrop(value);
+}
 wasm::Return* Module::return_(wasm::Expression* value) {
   return wasm::Builder(*module).makeReturn(value);
+}
+wasm::Nop* Module::nop() { return wasm::Builder(*module).makeNop(); }
+wasm::Unreachable* Module::unreachable() {
+  return wasm::Builder(*module).makeUnreachable();
 }
 
 static std::mutex ModuleAddFunctionMutex;
@@ -736,7 +743,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   class_<wasm::Export>("Export");
 
-  class_<binaryen::Module::Local>("Module_Local")
+  class_<binaryen::Module::Local>("Module_Local") // TODO: factory class
     .function("get",
               &binaryen::Module::Local::get,
               allow_raw_pointers(),
@@ -969,8 +976,23 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
               &binaryen::Module::i32,
               allow_raw_pointers(),
               return_value_policy::reference())
+    .function("drop",
+              &binaryen::Module::drop,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
     .function("return",
               &binaryen::Module::return_,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("nop",
+              &binaryen::Module::nop,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("unreachable",
+              &binaryen::Module::unreachable,
               allow_raw_pointers(),
               return_value_policy::reference(),
               nonnull<ret_val>())

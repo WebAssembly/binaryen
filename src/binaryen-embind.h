@@ -157,7 +157,10 @@ public:
     wasm::Const* const_(uint32_t x) const;
     wasm::Binary* add(wasm::Expression* left, wasm::Expression* right) const;
   }* i32 = new I32{module};
+  wasm::Drop* drop(wasm::Expression* value);
   wasm::Return* return_(wasm::Expression* value);
+  wasm::Nop* nop();
+  wasm::Unreachable* unreachable();
 
   wasm::Function* addFunction(const std::string& name,
                               TypeID params,
