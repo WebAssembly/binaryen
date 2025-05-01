@@ -445,6 +445,30 @@
     )
   )
 
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-5 (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $parent (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br $parent
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant-in-block-tail-5 (result i32)
+    ;; As above, but the br lacks a condition. We do not bother to optimize
+    ;; the dead code after it, but also should not error here.
+    (block $parent (result i32)
+      (call $nothing)
+      (drop
+        (br $parent
+          (i32.const 1)
+        )
+      )
+      (i32.const 1)
+    )
+  )
 
   ;; CHECK:      (func $restructure-select-no-multivalue (type $1)
   ;; CHECK-NEXT:  (tuple.drop 2
