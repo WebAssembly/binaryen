@@ -2343,7 +2343,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      const std::vector<Annotation>& annotations,
                      Index label,
                      bool isConditional) {
-    return withLoc(pos, irBuilder.makeBreak(label, isConditional));
+    std::optional<bool> likely;
+    for (auto& annotation : annotations) {
+      if (annotation.kind == Annotation::BranchHint) {
+        if (annotation.contents == "0") {
+          likely = false;
+        } else if (annotation.contents == "1") {
+          likely = true;
+        } else {
+          std::cerr << "warning: invalid BranchHint " << annotation.contents << '\n';
+        }
+      }
+    }
+    return withLoc(pos, irBuilder.makeBreak(label, isConditional, likely));
   }
 
   Result<> makeSwitch(Index pos,
