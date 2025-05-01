@@ -189,4 +189,5 @@ TypeID createType(TypeList types);
 emscripten::val getExpressionInfo(wasm::Expression* expr);
 
 std::string toText(wasm::Expression* expr);
+void finalize(wasm::Expression* expr);
 }; // namespace binaryen

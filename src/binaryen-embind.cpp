@@ -401,12 +401,22 @@ val getExpressionInfo(wasm::Expression* expr) {
 #define DELEGATE_FIELD_ENUM(id, field, type)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field) info.set(#field, cast->field.toString());
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)                                  \
+  {                                                                            \
+    std::vector<std::string> vec;                                              \
+    vec.reserve(cast->field.size());                                           \
+    std::transform(cast->field.begin(),                                        \
+                   cast->field.end(),                                          \
+                   std::back_inserter(vec),                                    \
+                   [](wasm::Name name) { return name.toString(); });           \
+    info.set(#field, val::array(vec));                                         \
+  }
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
   info.set(#field,                                                             \
            cast->field.size() ? val(cast->field.toString()) : val::null());
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
@@ -420,6 +430,20 @@ val getExpressionInfo(wasm::Expression* expr) {
       info.set("children",
                val::array(std::vector<wasm::Expression*>(cast->list.begin(),
                                                          cast->list.end())));
+      break;
+    }
+    case Expression::Id::SwitchId: {
+      auto* cast = expr->cast<wasm::Switch>();
+
+      info.set("defaultName", cast->default_.toString());
+
+      std::vector<std::string> vec;
+      vec.reserve(cast->targets.size());
+      std::transform(cast->targets.begin(),
+                     cast->targets.end(),
+                     std::back_inserter(vec),
+                     [](wasm::Name name) { return name.toString(); });
+      info.set("names", val::array(vec));
       break;
     }
     default:
@@ -437,6 +461,8 @@ std::string toText(wasm::Expression* expr) {
   Colors::setEnabled(colors); // restore colors state
   return os.str();
 }
+
+void finalize(wasm::Expression* expr) { wasm::ReFinalizeNode().visit(expr); }
 } // namespace binaryen
 
 namespace {
@@ -621,7 +647,7 @@ static std::string unpluralize(std::string str) {
       auto setter = [](wasm::id& expr, listType value) {                       \
         std::vector<elemType> valVec =                                         \
           vecFromJSArray<elemType>(value, ##__VA_ARGS__);                      \
-        expr.field.reserve(valVec.size());                                     \
+        expr.field.resize(valVec.size());                                      \
         std::transform(                                                        \
           valVec.begin(), valVec.end(), expr.field.begin(), jsToCpp);          \
       };                                                                       \
@@ -642,7 +668,7 @@ static std::string unpluralize(std::string str) {
       std::string funcName = capitalize("get" + elemName + "At", 3);           \
       auto func = [](const wasm::id& expr, uint32_t index) {                   \
         assert(index < expr.field.size());                                     \
-        return expr.field[index];                                              \
+        return cppToJs(expr.field[index]);                                     \
       };                                                                       \
       target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
         .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
@@ -677,7 +703,7 @@ static std::string unpluralize(std::string str) {
     {                                                                          \
       std::string funcName = capitalize("remove" + elemName + "At", 6);        \
       auto func = [](wasm::id& expr, uint32_t index) {                         \
-        return expr.field.removeAt(index);                                     \
+        return cppToJs(expr.field.removeAt(index));                            \
       };                                                                       \
       target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
         .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
@@ -1035,9 +1061,8 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   auto ExpressionWrapper =
     class_<wasm::Expression>("Expression")
-      .class_function(
-        "finalize", +[](wasm::Expression& expr) { expr.finalize(); })
-      .function("finalize", &wasm::Expression::finalize)
+      .class_function("finalize", &binaryen::finalize, allow_raw_pointers())
+      .function("finalize", &binaryen::finalize, allow_raw_pointers())
       .class_function("toText", &binaryen::toText, allow_raw_pointers())
       .function("toText", &binaryen::toText, allow_raw_pointers());
   FIELD_PROP_CONST(
@@ -1135,7 +1160,16 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     const std::string&,                                                        \
     [](const std::string& value) { return value; },                            \
     [](wasm::Name value) { return value.toString(); });
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)                                  \
+  FIELD_VEC(                                                                   \
+    id##Wrapper,                                                               \
+    id,                                                                        \
+    field,                                                                     \
+    #field,                                                                    \
+    binaryen::NameList,                                                        \
+    std::string,                                                               \
+    [](const std::string& value) { return value; },                            \
+    [](wasm::Name value) { return value.toString(); });
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
   FIELD(                                                                       \
     id##Wrapper,                                                               \
@@ -1172,4 +1206,21 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     [](wasm::Expression* value) { return value; },
     allow_raw_pointers(),
     return_value_policy::reference());
+  FIELD(
+    SwitchWrapper,
+    Switch,
+    default_,
+    "defaultName",
+    const std::string&,
+    [](const std::string& value) { return value; },
+    [](wasm::Name value) { return value.toString(); });
+  FIELD_VEC(
+    SwitchWrapper,
+    Switch,
+    targets,
+    "names",
+    binaryen::NameList,
+    std::string,
+    [](const std::string& value) { return value; },
+    [](wasm::Name value) { return value.toString(); });
 }

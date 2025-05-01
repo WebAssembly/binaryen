@@ -182,7 +182,6 @@ console.log("# Loop");
   theLoop.body = body = module.drop(body);
   assertEq(theLoop.body, body);
   theLoop.finalize();
-  console.log(theLoop.type === binaryen.i32);
   assertEq(theLoop.type, binaryen.none);
 
   info = binaryen.getExpressionInfo(theLoop);
