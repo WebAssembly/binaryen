@@ -17851,12 +17851,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-overlapping-bits-corner-case (param $x i32) (param $y i64)
-    ;; optimizeAndNoOverlappingBits will simplify AND operations where
-    ;; Bitwise AND of a value with bits in [0, n) and a constant with no bits in
-    ;; [0, n) always yields 0. Replace with zero.
-    ;; Note: after swapping the operands, it also satisfies the commutative law.
+    ;; optimizeAndNoOverlappingBits simplifies AND operations where
+    ;;  - the left value covers bits in [0, n)
+    ;;  - the right operand is a constant with no bits in [0, n)
+    ;; Result is simplified to zero.
 
-    ;; No any bit overlapping, optimized
+    ;; No any bit overlapped, optimized.
     (drop
       (i64.and
         (i64.const 1)
@@ -17927,7 +17927,7 @@
         (local.get $y)
       )
     )
-    ;; One bit overlapped, not optimized
+    ;; One bit overlapped, so we can not optimized.
     (drop
       (i32.and
         (i32.const 0x7fffffff)
