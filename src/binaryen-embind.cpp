@@ -24,7 +24,7 @@ const uintptr_t& Module::ptr() const {
 
 wasm::Block* Module::block(OptionalString name,
                            ExpressionList children,
-                           std::optional<TypeID> type) {
+                           std::optional<TypeID> type) const {
   return wasm::Builder(*module).makeBlock(
     name.isNull() ? nullptr : name.as<std::string>(),
     vecFromJSArray<wasm::Expression*>(children, allow_raw_pointers()),
@@ -32,30 +32,31 @@ wasm::Block* Module::block(OptionalString name,
 }
 wasm::If* Module::if_(wasm::Expression* condition,
                       wasm::Expression* ifTrue,
-                      wasm::Expression* ifFalse) {
+                      wasm::Expression* ifFalse) const {
   return wasm::Builder(*module).makeIf(condition, ifTrue, ifFalse);
 }
-wasm::Loop* Module::loop(OptionalString label, wasm::Expression* body) {
+wasm::Loop* Module::loop(OptionalString label, wasm::Expression* body) const {
   return wasm::Builder(*module).makeLoop(
     label.isNull() || label.isUndefined() ? nullptr : label.as<std::string>(),
     body);
 }
 wasm::Break* Module::br(const std::string& label,
                         wasm::Expression* condition,
-                        wasm::Expression* value) {
+                        wasm::Expression* value) const {
   return wasm::Builder(*module).makeBreak(label, condition, value);
 }
 wasm::Switch* Module::switch_(NameList names,
                               const std::string& defaultName,
                               wasm::Expression* condition,
-                              wasm::Expression* value) {
+                              wasm::Expression* value) const {
   auto strVec = vecFromJSArray<std::string>(names);
   std::vector<wasm::Name> namesVec(strVec.begin(), strVec.end());
   return wasm::Builder(*module).makeSwitch(
     namesVec, defaultName, condition, value);
 }
-wasm::Call*
-Module::call(const std::string& name, ExpressionList operands, TypeID type) {
+wasm::Call* Module::call(const std::string& name,
+                         ExpressionList operands,
+                         TypeID type) const {
   return wasm::Builder(*module).makeCall(
     name,
     vecFromJSArray<wasm::Expression*>(operands, allow_raw_pointers()),
@@ -65,7 +66,7 @@ wasm::CallIndirect* Module::call_indirect(const std::string& table,
                                           wasm::Expression* target,
                                           ExpressionList operands,
                                           TypeID params,
-                                          TypeID results) {
+                                          TypeID results) const {
   return wasm::Builder(*module).makeCallIndirect(
     table,
     target,
@@ -74,7 +75,7 @@ wasm::CallIndirect* Module::call_indirect(const std::string& table,
 }
 wasm::Call* Module::return_call(const std::string& name,
                                 ExpressionList operands,
-                                TypeID type) {
+                                TypeID type) const {
   return wasm::Builder(*module).makeCall(
     name,
     vecFromJSArray<wasm::Expression*>(operands, allow_raw_pointers()),
@@ -85,7 +86,7 @@ wasm::CallIndirect* Module::return_call_indirect(const std::string& table,
                                                  wasm::Expression* target,
                                                  ExpressionList operands,
                                                  TypeID params,
-                                                 TypeID results) {
+                                                 TypeID results) const {
   return wasm::Builder(*module).makeCallIndirect(
     table,
     target,
@@ -93,42 +94,44 @@ wasm::CallIndirect* Module::return_call_indirect(const std::string& table,
     wasm::Signature(wasm::Type(params), wasm::Type(results)),
     true);
 }
-wasm::LocalGet* Module::Local::get(Index index, TypeID type) {
+wasm::LocalGet* Module::Local::get(Index index, TypeID type) const {
   return wasm::Builder(*module).makeLocalGet(index, wasm::Type(type));
 }
-wasm::LocalSet* Module::Local::set(Index index, wasm::Expression* value) {
+wasm::LocalSet* Module::Local::set(Index index, wasm::Expression* value) const {
   return wasm::Builder(*module).makeLocalSet(index, value);
 }
 wasm::LocalSet*
-Module::Local::tee(Index index, wasm::Expression* value, TypeID type) {
+Module::Local::tee(Index index, wasm::Expression* value, TypeID type) const {
   return wasm::Builder(*module).makeLocalTee(index, value, wasm::Type(type));
 }
-wasm::GlobalGet* Module::Global::get(const std::string& name, TypeID type) {
+wasm::GlobalGet* Module::Global::get(const std::string& name,
+                                     TypeID type) const {
   return wasm::Builder(*module).makeGlobalGet(name, wasm::Type(type));
 }
 wasm::GlobalSet* Module::Global::set(const std::string& name,
-                                     wasm::Expression* value) {
+                                     wasm::Expression* value) const {
   return wasm::Builder(*module).makeGlobalSet(name, value);
 }
 wasm::TableGet* Module::Table::get(const std::string& name,
                                    wasm::Expression* index,
-                                   TypeID type) {
+                                   TypeID type) const {
   return wasm::Builder(*module).makeTableGet(name, index, wasm::Type(type));
 }
 wasm::TableSet* Module::Table::set(const std::string& name,
                                    wasm::Expression* index,
-                                   wasm::Expression* value) {
+                                   wasm::Expression* value) const {
   return wasm::Builder(*module).makeTableSet(name, index, value);
 }
-wasm::TableSize* Module::Table::size(const std::string& name) {
+wasm::TableSize* Module::Table::size(const std::string& name) const {
   return wasm::Builder(*module).makeTableSize(name);
 }
 wasm::TableGrow* Module::Table::grow(const std::string& name,
                                      wasm::Expression* value,
-                                     wasm::Expression* delta) {
+                                     wasm::Expression* delta) const {
   return wasm::Builder(*module).makeTableGrow(name, value, delta);
 }
-wasm::MemorySize* Module::Memory::size(const std::string& name, bool memory64) {
+wasm::MemorySize* Module::Memory::size(const std::string& name,
+                                       bool memory64) const {
   return wasm::Builder(*module).makeMemorySize(
     name,
     memory64 ? wasm::Builder::MemoryInfo::Memory64
@@ -136,7 +139,7 @@ wasm::MemorySize* Module::Memory::size(const std::string& name, bool memory64) {
 }
 wasm::MemoryGrow* Module::Memory::grow(wasm::Expression* value,
                                        const std::string& name,
-                                       bool memory64) {
+                                       bool memory64) const {
   return wasm::Builder(*module).makeMemoryGrow(
     value,
     name,
@@ -147,7 +150,7 @@ wasm::MemoryInit* Module::Memory::init(const std::string& segment,
                                        wasm::Expression* dest,
                                        wasm::Expression* offset,
                                        wasm::Expression* size,
-                                       const std::string& name) {
+                                       const std::string& name) const {
   return wasm::Builder(*module).makeMemoryInit(
     segment, dest, offset, size, name);
 }
@@ -155,71 +158,73 @@ wasm::MemoryCopy* Module::Memory::copy(wasm::Expression* dest,
                                        wasm::Expression* source,
                                        wasm::Expression* size,
                                        const std::string& destMemory,
-                                       const std::string& sourceMemory) {
+                                       const std::string& sourceMemory) const {
   return wasm::Builder(*module).makeMemoryCopy(
     dest, source, size, destMemory, sourceMemory);
 }
 wasm::MemoryFill* Module::Memory::fill(wasm::Expression* dest,
                                        wasm::Expression* value,
                                        wasm::Expression* size,
-                                       const std::string& name) {
+                                       const std::string& name) const {
   return wasm::Builder(*module).makeMemoryFill(dest, value, size, name);
 }
 wasm::AtomicNotify*
 Module::Memory::Atomic::notify(wasm::Expression* ptr,
                                wasm::Expression* notifyCount,
-                               const std::string& name) {
+                               const std::string& name) const {
   return wasm::Builder(*module).makeAtomicNotify(ptr, notifyCount, 0, name);
 }
-wasm::AtomicWait* Module::Memory::Atomic::wait32(wasm::Expression* ptr,
-                                                 wasm::Expression* expected,
-                                                 wasm::Expression* timeout,
-                                                 const std::string& name) {
+wasm::AtomicWait*
+Module::Memory::Atomic::wait32(wasm::Expression* ptr,
+                               wasm::Expression* expected,
+                               wasm::Expression* timeout,
+                               const std::string& name) const {
   return wasm::Builder(*module).makeAtomicWait(
     ptr, expected, timeout, wasm::Type(wasm::Type::i32), 0, name);
 }
-wasm::AtomicWait* Module::Memory::Atomic::wait64(wasm::Expression* ptr,
-                                                 wasm::Expression* expected,
-                                                 wasm::Expression* timeout,
-                                                 const std::string& name) {
+wasm::AtomicWait*
+Module::Memory::Atomic::wait64(wasm::Expression* ptr,
+                               wasm::Expression* expected,
+                               wasm::Expression* timeout,
+                               const std::string& name) const {
   return wasm::Builder(*module).makeAtomicWait(
     ptr, expected, timeout, wasm::Type(wasm::Type::i64), 0, name);
 }
-wasm::DataDrop* Module::Data::drop(const std::string& segment) {
+wasm::DataDrop* Module::Data::drop(const std::string& segment) const {
   return wasm::Builder(*module).makeDataDrop(segment);
 }
 wasm::Load* Module::I32::load(uint32_t offset,
                               uint32_t align,
                               wasm::Expression* ptr,
-                              const std::string& name) {
+                              const std::string& name) const {
   return wasm::Builder(*module).makeLoad(
     4, true, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
 }
 wasm::Load* Module::I32::load8_s(uint32_t offset,
                                  uint32_t align,
                                  wasm::Expression* ptr,
-                                 const std::string& name) {
+                                 const std::string& name) const {
   return wasm::Builder(*module).makeLoad(
     1, true, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
 }
 wasm::Load* Module::I32::load8_u(uint32_t offset,
                                  uint32_t align,
                                  wasm::Expression* ptr,
-                                 const std::string& name) {
+                                 const std::string& name) const {
   return wasm::Builder(*module).makeLoad(
     1, false, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
 }
 wasm::Load* Module::I32::load16_s(uint32_t offset,
                                   uint32_t align,
                                   wasm::Expression* ptr,
-                                  const std::string& name) {
+                                  const std::string& name) const {
   return wasm::Builder(*module).makeLoad(
     2, true, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
 }
 wasm::Load* Module::I32::load16_u(uint32_t offset,
                                   uint32_t align,
                                   wasm::Expression* ptr,
-                                  const std::string& name) {
+                                  const std::string& name) const {
   return wasm::Builder(*module).makeLoad(
     2, false, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
 }
@@ -227,7 +232,7 @@ wasm::Store* Module::I32::store(uint32_t offset,
                                 uint32_t align,
                                 wasm::Expression* ptr,
                                 wasm::Expression* value,
-                                const std::string& name) {
+                                const std::string& name) const {
   return wasm::Builder(*module).makeStore(
     4, offset, align, ptr, value, wasm::Type(wasm::Type::i32), name);
 }
@@ -235,7 +240,7 @@ wasm::Store* Module::I32::store8(uint32_t offset,
                                  uint32_t align,
                                  wasm::Expression* ptr,
                                  wasm::Expression* value,
-                                 const std::string& name) {
+                                 const std::string& name) const {
   return wasm::Builder(*module).makeStore(
     1, offset, align, ptr, value, wasm::Type(wasm::Type::i32), name);
 }
@@ -243,15 +248,15 @@ wasm::Store* Module::I32::store16(uint32_t offset,
                                   uint32_t align,
                                   wasm::Expression* ptr,
                                   wasm::Expression* value,
-                                  const std::string& name) {
+                                  const std::string& name) const {
   return wasm::Builder(*module).makeStore(
     2, offset, align, ptr, value, wasm::Type(wasm::Type::i32), name);
 }
-wasm::Const* Module::I32::const_(uint32_t x) {
-  return wasm::Builder(*module).makeConst(wasm::Literal(x));
+wasm::Const* Module::I32::const_(uint32_t x) const {
+  return wasm::Builder(*module).makeConst(x);
 }
 wasm::Binary* Module::I32::add(wasm::Expression* left,
-                               wasm::Expression* right) {
+                               wasm::Expression* right) const {
   return wasm::Builder(*module).makeBinary(
     wasm::BinaryOp::AddInt32, left, right);
 }
