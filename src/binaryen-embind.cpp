@@ -372,7 +372,8 @@ Module* parseText(const std::string& text) {
 }
 
 TypeID createType(TypeList types) {
-  auto typesVec = vecFromJSArray<wasm::Type>(types);
+  auto typeIdsVec = vecFromJSArray<TypeID>(types);
+  std::vector<wasm::Type> typesVec(typeIdsVec.begin(), typeIdsVec.end());
   return wasm::Type(typesVec).getID();
 }
 
