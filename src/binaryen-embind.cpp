@@ -128,8 +128,7 @@ wasm::TableGrow* Module::Table::grow(const std::string& name,
                                      wasm::Expression* delta) {
   return wasm::Builder(*module).makeTableGrow(name, value, delta);
 }
-wasm::MemorySize* Module::Memory::size(const std::string& name,
-                                       bool memory64 = false) {
+wasm::MemorySize* Module::Memory::size(const std::string& name, bool memory64) {
   return wasm::Builder(*module).makeMemorySize(
     name,
     memory64 ? wasm::Builder::MemoryInfo::Memory64
@@ -137,8 +136,8 @@ wasm::MemorySize* Module::Memory::size(const std::string& name,
 }
 wasm::MemoryGrow* Module::Memory::grow(wasm::Expression* value,
                                        const std::string& name,
-                                       bool memory64 = false) {
-  wasm::Builder(*module).makeMemoryGrow(
+                                       bool memory64) {
+  return wasm::Builder(*module).makeMemoryGrow(
     value,
     name,
     memory64 ? wasm::Builder::MemoryInfo::Memory64
@@ -188,6 +187,68 @@ wasm::AtomicWait* Module::Memory::Atomic::wait64(wasm::Expression* ptr,
 }
 wasm::DataDrop* Module::Data::drop(const std::string& segment) {
   return wasm::Builder(*module).makeDataDrop(segment);
+}
+wasm::Load* Module::I32::load(uint32_t offset,
+                              uint32_t align,
+                              wasm::Expression* ptr,
+                              const std::string& name) {
+  return wasm::Builder(*module).makeLoad(
+    4, true, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Load* Module::I32::load8_s(uint32_t offset,
+                                 uint32_t align,
+                                 wasm::Expression* ptr,
+                                 const std::string& name) {
+  return wasm::Builder(*module).makeLoad(
+    1, true, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Load* Module::I32::load8_u(uint32_t offset,
+                                 uint32_t align,
+                                 wasm::Expression* ptr,
+                                 const std::string& name) {
+  return wasm::Builder(*module).makeLoad(
+    1, false, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Load* Module::I32::load16_s(uint32_t offset,
+                                  uint32_t align,
+                                  wasm::Expression* ptr,
+                                  const std::string& name) {
+  return wasm::Builder(*module).makeLoad(
+    2, true, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Load* Module::I32::load16_u(uint32_t offset,
+                                  uint32_t align,
+                                  wasm::Expression* ptr,
+                                  const std::string& name) {
+  return wasm::Builder(*module).makeLoad(
+    2, false, offset, align, ptr, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Store* Module::I32::store(uint32_t offset,
+                                uint32_t align,
+                                wasm::Expression* ptr,
+                                wasm::Expression* value,
+                                const std::string& name) {
+  return wasm::Builder(*module).makeStore(
+    4, offset, align, ptr, value, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Store* Module::I32::store8(uint32_t offset,
+                                 uint32_t align,
+                                 wasm::Expression* ptr,
+                                 wasm::Expression* value,
+                                 const std::string& name) {
+  return wasm::Builder(*module).makeStore(
+    1, offset, align, ptr, value, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Store* Module::I32::store16(uint32_t offset,
+                                  uint32_t align,
+                                  wasm::Expression* ptr,
+                                  wasm::Expression* value,
+                                  const std::string& name) {
+  return wasm::Builder(*module).makeStore(
+    2, offset, align, ptr, value, wasm::Type(wasm::Type::i32), name);
+}
+wasm::Const* Module::I32::const_(uint32_t x) {
+  return wasm::Builder(*module).makeConst(wasm::Literal(x));
 }
 wasm::Binary* Module::I32::add(wasm::Expression* left,
                                wasm::Expression* right) {
@@ -642,7 +703,124 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
               return_value_policy::reference(),
               nonnull<ret_val>());
 
+  class_<binaryen::Module::Table>("Module_Table")
+    .function("get",
+              &binaryen::Module::Table::get,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("set",
+              &binaryen::Module::Table::set,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("size",
+              &binaryen::Module::Table::size,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("grow",
+              &binaryen::Module::Table::grow,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>());
+
+  class_<binaryen::Module::Memory>("Module_Memory")
+    .function("size",
+              &binaryen::Module::Memory::size,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("grow",
+              &binaryen::Module::Memory::grow,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("init",
+              &binaryen::Module::Memory::init,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("copy",
+              &binaryen::Module::Memory::copy,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("fill",
+              &binaryen::Module::Memory::fill,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .property("atomic",
+              &binaryen::Module::Memory::atomic,
+              allow_raw_pointers(),
+              return_value_policy::reference());
+
+  class_<binaryen::Module::Memory::Atomic>("Module_Memory_Atomic")
+    .function("notify",
+              &binaryen::Module::Memory::Atomic::notify,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("wait32",
+              &binaryen::Module::Memory::Atomic::wait32,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("wait64",
+              &binaryen::Module::Memory::Atomic::wait64,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>());
+
+  class_<binaryen::Module::Data>("Module_Data")
+    .function("drop",
+              &binaryen::Module::Data::drop,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>());
+
   class_<binaryen::Module::I32>("Module_I32")
+    .function("load",
+              &binaryen::Module::I32::load,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("load8_s",
+              &binaryen::Module::I32::load8_s,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("load8_u",
+              &binaryen::Module::I32::load8_u,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("load16_s",
+              &binaryen::Module::I32::load16_s,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("load16_u",
+              &binaryen::Module::I32::load16_u,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("store",
+              &binaryen::Module::I32::store,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("store8",
+              &binaryen::Module::I32::store16,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
+    .function("const",
+              &binaryen::Module::I32::const_,
+              allow_raw_pointers(),
+              return_value_policy::reference(),
+              nonnull<ret_val>())
     .function("add",
               &binaryen::Module::I32::add,
               allow_raw_pointers(),
@@ -705,23 +883,45 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
               allow_raw_pointers(),
               return_value_policy::reference(),
               nonnull<ret_val>())
-    .property(
-      "local", &binaryen::Module::local, return_value_policy::reference())
-    .property(
-      "global", &binaryen::Module::global, return_value_policy::reference())
-    .property("i32", &binaryen::Module::i32, return_value_policy::reference())
+    .property("local",
+              &binaryen::Module::local,
+              allow_raw_pointers(),
+              return_value_policy::reference())
+    .property("global",
+              &binaryen::Module::global,
+              allow_raw_pointers(),
+              return_value_policy::reference())
+    .property("table",
+              &binaryen::Module::table,
+              allow_raw_pointers(),
+              return_value_policy::reference())
+    .property("memory",
+              &binaryen::Module::memory,
+              allow_raw_pointers(),
+              return_value_policy::reference())
+    .property("data",
+              &binaryen::Module::data,
+              allow_raw_pointers(),
+              return_value_policy::reference())
+    .property("i32",
+              &binaryen::Module::i32,
+              allow_raw_pointers(),
+              return_value_policy::reference())
     .function("return",
               &binaryen::Module::return_,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
 
     .function("addFunction",
               &binaryen::Module::addFunction,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
     .function("addFunctionExport",
               &binaryen::Module::addFunctionExport,
               allow_raw_pointers(),
+              return_value_policy::reference(),
               nonnull<ret_val>())
 
     .function("emitBinary", &binaryen::Module::emitBinary)

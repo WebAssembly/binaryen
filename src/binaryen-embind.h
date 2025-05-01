@@ -117,6 +117,42 @@ public:
     wasm::DataDrop* drop(const std::string& segment);
   }* data = new Data{module};
   const struct I32 : ExpressionFactory {
+    wasm::Load* load(uint32_t offset,
+                     uint32_t align,
+                     wasm::Expression* ptr,
+                     const std::string& name);
+    wasm::Load* load8_s(uint32_t offset,
+                        uint32_t align,
+                        wasm::Expression* ptr,
+                        const std::string& name);
+    wasm::Load* load8_u(uint32_t offset,
+                        uint32_t align,
+                        wasm::Expression* ptr,
+                        const std::string& name);
+    wasm::Load* load16_s(uint32_t offset,
+                         uint32_t align,
+                         wasm::Expression* ptr,
+                         const std::string& name);
+    wasm::Load* load16_u(uint32_t offset,
+                         uint32_t align,
+                         wasm::Expression* ptr,
+                         const std::string& name);
+    wasm::Store* store(uint32_t offset,
+                       uint32_t align,
+                       wasm::Expression* ptr,
+                       wasm::Expression* value,
+                       const std::string& name);
+    wasm::Store* store8(uint32_t offset,
+                        uint32_t align,
+                        wasm::Expression* ptr,
+                        wasm::Expression* value,
+                        const std::string& name);
+    wasm::Store* store16(uint32_t offset,
+                         uint32_t align,
+                         wasm::Expression* ptr,
+                         wasm::Expression* value,
+                         const std::string& name);
+    wasm::Const* const_(uint32_t x);
     wasm::Binary* add(wasm::Expression* left, wasm::Expression* right);
   }* i32 = new I32{module};
   wasm::Return* return_(wasm::Expression* value);
