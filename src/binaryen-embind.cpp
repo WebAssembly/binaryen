@@ -110,6 +110,72 @@ wasm::GlobalSet* Module::Global::set(const std::string& name,
                                      wasm::Expression* value) {
   return wasm::Builder(*module).makeGlobalSet(name, value);
 }
+wasm::TableGet* Module::Table::get(const std::string& name,
+                                   wasm::Expression* index,
+                                   TypeID type) {
+  return wasm::Builder(*module).makeTableGet(name, index, wasm::Type(type));
+}
+wasm::TableSet* Module::Table::set(const std::string& name,
+                                   wasm::Expression* index,
+                                   wasm::Expression* value) {
+  return wasm::Builder(*module).makeTableSet(name, index, value);
+}
+wasm::TableSize* Module::Table::size(const std::string& name) {
+  return wasm::Builder(*module).makeTableSize(name);
+}
+wasm::TableGrow* Module::Table::grow(const std::string& name,
+                                     wasm::Expression* value,
+                                     wasm::Expression* delta) {
+  return wasm::Builder(*module).makeTableGrow(name, value, delta);
+}
+wasm::MemorySize* size(const std::string& name, bool memory64 = false);
+wasm::MemoryGrow*
+grow(wasm::Expression* value, const std::string& name, bool memory64 = false);
+wasm::MemoryInit* Module::Memory::init(const std::string& segment,
+                                       wasm::Expression* dest,
+                                       wasm::Expression* offset,
+                                       wasm::Expression* size,
+                                       const std::string& name) {
+  return wasm::Builder(*module).makeMemoryInit(
+    segment, dest, offset, size, name);
+}
+wasm::MemoryCopy* Module::Memory::copy(wasm::Expression* dest,
+                                       wasm::Expression* source,
+                                       wasm::Expression* size,
+                                       const std::string& destMemory,
+                                       const std::string& sourceMemory) {
+  return wasm::Builder(*module).makeMemoryCopy(
+    dest, source, size, destMemory, sourceMemory);
+}
+wasm::MemoryFill* Module::Memory::fill(wasm::Expression* dest,
+                                       wasm::Expression* value,
+                                       wasm::Expression* size,
+                                       const std::string& name) {
+  return wasm::Builder(*module).makeMemoryFill(dest, value, size, name);
+}
+wasm::AtomicNotify*
+Module::Memory::Atomic::notify(wasm::Expression* ptr,
+                               wasm::Expression* notifyCount,
+                               const std::string& name) {
+  return wasm::Builder(*module).makeAtomicNotify(ptr, notifyCount, 0, name);
+}
+wasm::AtomicWait* Module::Memory::Atomic::wait32(wasm::Expression* ptr,
+                                                 wasm::Expression* expected,
+                                                 wasm::Expression* timeout,
+                                                 const std::string& name) {
+  return wasm::Builder(*module).makeAtomicWait(
+    ptr, expected, timeout, wasm::Type(wasm::Type::i32), 0, name);
+}
+wasm::AtomicWait* Module::Memory::Atomic::wait64(wasm::Expression* ptr,
+                                                 wasm::Expression* expected,
+                                                 wasm::Expression* timeout,
+                                                 const std::string& name) {
+  return wasm::Builder(*module).makeAtomicWait(
+    ptr, expected, timeout, wasm::Type(wasm::Type::i64), 0, name);
+}
+wasm::DataDrop* Module::Data::drop(const std::string& segment) {
+  return wasm::Builder(*module).makeDataDrop(segment);
+}
 wasm::Binary* Module::I32::add(wasm::Expression* left,
                                wasm::Expression* right) {
   return wasm::Builder(*module).makeBinary(

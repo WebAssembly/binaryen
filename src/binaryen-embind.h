@@ -69,6 +69,53 @@ public:
     wasm::GlobalGet* get(const std::string& name, TypeID type);
     wasm::GlobalSet* set(const std::string& name, wasm::Expression* value);
   }* global = new Global{module};
+  const struct Table : ExpressionFactory {
+    wasm::TableGet*
+    get(const std::string& name, wasm::Expression* index, TypeID type);
+    wasm::TableSet* set(const std::string& name,
+                        wasm::Expression* index,
+                        wasm::Expression* value);
+    wasm::TableSize* size(const std::string& name);
+    wasm::TableGrow* grow(const std::string& name,
+                          wasm::Expression* value,
+                          wasm::Expression* delta);
+  }* table = new Table{module};
+  const struct Memory : ExpressionFactory {
+    wasm::MemorySize* size(const std::string& name, bool memory64 = false);
+    wasm::MemoryGrow* grow(wasm::Expression* value,
+                           const std::string& name,
+                           bool memory64 = false);
+    wasm::MemoryInit* init(const std::string& segment,
+                           wasm::Expression* dest,
+                           wasm::Expression* offset,
+                           wasm::Expression* size,
+                           const std::string& name);
+    wasm::MemoryCopy* copy(wasm::Expression* dest,
+                           wasm::Expression* source,
+                           wasm::Expression* size,
+                           const std::string& destMemory,
+                           const std::string& sourceMemory);
+    wasm::MemoryFill* fill(wasm::Expression* dest,
+                           wasm::Expression* value,
+                           wasm::Expression* size,
+                           const std::string& name);
+    const struct Atomic : ExpressionFactory {
+      wasm::AtomicNotify* notify(wasm::Expression* ptr,
+                                 wasm::Expression* notifyCount,
+                                 const std::string& name);
+      wasm::AtomicWait* wait32(wasm::Expression* ptr,
+                               wasm::Expression* expected,
+                               wasm::Expression* timeout,
+                               const std::string& name);
+      wasm::AtomicWait* wait64(wasm::Expression* ptr,
+                               wasm::Expression* expected,
+                               wasm::Expression* timeout,
+                               const std::string& name);
+    }* atomic = new Atomic{module};
+  }* memory = new Memory{module};
+  const struct Data : ExpressionFactory {
+    wasm::DataDrop* drop(const std::string& segment);
+  }* data = new Data{module};
   const struct I32 : ExpressionFactory {
     wasm::Binary* add(wasm::Expression* left, wasm::Expression* right);
   }* i32 = new I32{module};
