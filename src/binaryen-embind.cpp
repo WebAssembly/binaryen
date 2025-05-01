@@ -454,6 +454,11 @@ val getExpressionInfo(wasm::Expression* expr) {
       info.set("results", binaryen::TypeID(signature.results.getID()));
       break;
     }
+    case Expression::Id::LocalSetId: {
+      auto* cast = expr->cast<wasm::LocalSet>();
+      info.set("isTee", cast->isTee());
+      break;
+    }
     default:
       break;
   }
@@ -1281,9 +1286,19 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
         expr.heapType = wasm::Signature(expr.heapType.getSignature().params,
                                         wasm::Type(value));
       };
-      ACCESSOR(CallIndirectWrapper, getterName.c_str(), +getter);
-      ACCESSOR(CallIndirectWrapper, setterName.c_str(), +setter);
+      ACCESSOR(CallIndirectWrapper, getterName.c_str(), getter);
+      ACCESSOR(CallIndirectWrapper, setterName.c_str(), setter);
       CallIndirectWrapper.property(propName.c_str(), +getter, +setter);
+    }
+  }
+
+  { // LocalSet
+    {
+      std::string propName = "tee";
+      std::string getterName = BOOL_GETTER_NAME(propName);
+      auto getter = [](const wasm::LocalSet& expr) { return expr.isTee(); };
+      ACCESSOR(LocalSetWrapper, getterName.c_str(), getter);
+      LocalSetWrapper.property(propName.c_str(), +getter);
     }
   }
 }
