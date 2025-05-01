@@ -8,6 +8,7 @@
 #include <mutex>
 
 using namespace emscripten;
+using namespace std::string_literals;
 
 namespace binaryen {
 static wasm::PassOptions passOptions =
@@ -275,55 +276,152 @@ static std::string capitalize(std::string str, int i) {
 static std::string normalize(std::string str) {
   if (str.back() == '_')
     str.pop_back();
+  return str;
+}
+
+static std::string unboolenize(std::string str) {
   if (str.substr(0, 2) == "is")
     str = uncapitalize(str, 2).substr(2);
   return str;
 }
 
-#define GETTER(field) capitalize("get" field, 3)
-#define SETTER(field) capitalize("set" field, 3)
+/*static std::string unpluralize(std::string str) {
+  if (str.back() == 's') {
+    str.pop_back();
+    if (str == "children")
+      str = str.substr(0, 5);
+    else if (str.substr(str.size() - 2, 2) == "ie")
+      str = str.substr(0, str.size() - 2) + "y";
+  }
+  return str;
+}*/
 
-#define FIELD_GS(target, field, name, getterName, setterName, id, type, ...)   \
-  auto getter = [](const wasm::id& expr) { return expr.field; };               \
-  auto setter = [](wasm::id& expr, type value) { expr.field = value; };        \
-  target.class_function(getterName.c_str(), +getter, ##__VA_ARGS__)            \
-    .class_function(setterName.c_str(), +setter, ##__VA_ARGS__)                \
-    .function(getterName.c_str(), +getter, ##__VA_ARGS__)                      \
-    .function(setterName.c_str(), +setter, ##__VA_ARGS__)                      \
-    .property(name, &wasm::id::field, ##__VA_ARGS__);
+#define GETTER_NAME(field) capitalize("get"s + field, 3)
+#define BOOL_GETTER_NAME(field) capitalize("is"s + field, 2)
+#define SETTER_NAME(field) capitalize("set"s + field, 3)
 
-#define FIELD_BOOL(target, field, name, id, ...)                               \
+#define ACCESSOR(target, name, accessor, ...)                                  \
+  target.class_function(name, +accessor, ##__VA_ARGS__)                        \
+    .function(name, +accessor, ##__VA_ARGS__);
+
+#define FIELD_G(target, id, field, name, getterName, type, cppToJs, ...)       \
   {                                                                            \
-    std::string propName = normalize(#name);                                   \
-    std::string getterName = capitalize("is" + propName, 2);                   \
-    std::string setterName = capitalize("set" + propName, 3);                  \
+    auto getter = [](const wasm::id& expr) { return cppToJs(expr.field); };    \
+    ACCESSOR(target, getterName, getter, ##__VA_ARGS__);                       \
+    target.property(name, +getter, ##__VA_ARGS__);                             \
+  }
+
+#define FIELD_CONST(target, id, field, name, type, cppToJs, ...)               \
+  {                                                                            \
+    std::string propName = normalize(name);                                    \
+    std::string getterName = GETTER_NAME(propName);                            \
+    FIELD_G(target,                                                            \
+            id,                                                                \
+            field,                                                             \
+            propName.c_str(),                                                  \
+            getterName.c_str(),                                                \
+            type,                                                              \
+            jsToCpp,                                                           \
+            ##__VA_ARGS__);                                                    \
+  }
+
+#define FIELD_GS(target,                                                       \
+                 id,                                                           \
+                 field,                                                        \
+                 name,                                                         \
+                 getterName,                                                   \
+                 setterName,                                                   \
+                 type,                                                         \
+                 jsToCpp,                                                      \
+                 cppToJs,                                                      \
+                 ...)                                                          \
+  {                                                                            \
+    auto getter = [](const wasm::id& expr) {                                   \
+      return (type)(cppToJs(expr.field));                                      \
+    };                                                                         \
+    auto setter = [](wasm::id& expr, type value) {                             \
+      expr.field = jsToCpp(value);                                             \
+    };                                                                         \
+    ACCESSOR(target, getterName, getter, ##__VA_ARGS__);                       \
+    ACCESSOR(target, setterName, setter, ##__VA_ARGS__);                       \
+    target.property(name, +getter, +setter, ##__VA_ARGS__);                    \
+  }
+
+#define FIELD(target, id, field, name, type, jsToCpp, cppToJs, ...)            \
+  {                                                                            \
+    std::string propName = normalize(name);                                    \
+    std::string getterName = GETTER_NAME(propName);                            \
+    std::string setterName = SETTER_NAME(propName);                            \
     FIELD_GS(target,                                                           \
+             id,                                                               \
              field,                                                            \
              propName.c_str(),                                                 \
-             getterName,                                                       \
-             setterName,                                                       \
-             id,                                                               \
-             bool,                                                             \
-             ##__VA_ARGS__)                                                    \
+             getterName.c_str(),                                               \
+             setterName.c_str(),                                               \
+             type,                                                             \
+             jsToCpp,                                                          \
+             cppToJs,                                                          \
+             ##__VA_ARGS__);                                                   \
   }
 
-#define FIELD(target, field, name, id, type, ...)                              \
+#define FIELD_PROP_G(target, id, field, name, getterName, type, ...)           \
   {                                                                            \
-    std::string getterName = GETTER(#name);                                    \
-    std::string setterName = SETTER(#name);                                    \
-    FIELD_GS(                                                                  \
-      target, field, #name, getterName, setterName, id, type, ##__VA_ARGS__)   \
+    auto getter = [](const wasm::id& expr) { return expr.field; };             \
+    ACCESSOR(target, getterName, getter, ##__VA_ARGS__);                       \
+    target.property(name, &wasm::id::field, ##__VA_ARGS__);                    \
   }
 
-#define FIELD_DYN(target, field, name, getter, setter, ...)                    \
+#define FIELD_PROP_CONST(target, id, field, name, type, ...)                   \
   {                                                                            \
-    std::string getterName = GETTER(#name);                                    \
-    std::string setterName = SETTER(#name);                                    \
-    target.class_function(getterName.c_str(), +getter, ##__VA_ARGS__)          \
-      .class_function(setterName.c_str(), +setter, ##__VA_ARGS__)              \
-      .function(getterName.c_str(), +getter, ##__VA_ARGS__)                    \
-      .function(setterName.c_str(), +setter, ##__VA_ARGS__)                    \
-      .property(#name, +getter, +setter, ##__VA_ARGS__);                       \
+    std::string propName = normalize(name);                                    \
+    std::string getterName = GETTER_NAME(propName);                            \
+    FIELD_PROP_G(target,                                                       \
+                 id,                                                           \
+                 field,                                                        \
+                 propName.c_str(),                                             \
+                 getterName.c_str(),                                           \
+                 type,                                                         \
+                 ##__VA_ARGS__);                                               \
+  }
+
+#define FIELD_PROP_GS(                                                         \
+  target, id, field, name, getterName, setterName, type, ...)                  \
+  {                                                                            \
+    auto getter = [](const wasm::id& expr) { return (type)(expr.field); };     \
+    auto setter = [](wasm::id& expr, type value) { expr.field = value; };      \
+    ACCESSOR(target, getterName, getter, ##__VA_ARGS__);                       \
+    ACCESSOR(target, setterName, setter, ##__VA_ARGS__);                       \
+    target.property(name, &wasm::id::field, ##__VA_ARGS__);                    \
+  }
+
+#define FIELD_PROP(target, id, field, name, type, ...)                         \
+  {                                                                            \
+    std::string propName = normalize(name);                                    \
+    std::string getterName = GETTER_NAME(propName);                            \
+    std::string setterName = SETTER_NAME(propName);                            \
+    FIELD_PROP_GS(target,                                                      \
+                  id,                                                          \
+                  field,                                                       \
+                  propName.c_str(),                                            \
+                  getterName.c_str(),                                          \
+                  setterName.c_str(),                                          \
+                  type,                                                        \
+                  ##__VA_ARGS__);                                              \
+  }
+
+#define FIELD_PROP_BOOL(target, id, field, name, ...)                          \
+  {                                                                            \
+    std::string propName = unboolenize(normalize(name));                       \
+    std::string getterName = BOOL_GETTER_NAME(propName);                       \
+    std::string setterName = SETTER_NAME(propName);                            \
+    FIELD_PROP_GS(target,                                                      \
+                  id,                                                          \
+                  field,                                                       \
+                  propName.c_str(),                                            \
+                  getterName.c_str(),                                          \
+                  setterName.c_str(),                                          \
+                  bool,                                                        \
+                  ##__VA_ARGS__);                                              \
   }
 } // namespace
 
@@ -522,25 +620,16 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     "getExpressionInfo", binaryen::getExpressionInfo, allow_raw_pointers());
 
   auto ExpressionWrapper = class_<wasm::Expression>("Expression");
-  {
-    auto getter = [](const wasm::Expression& expr) { return expr._id; };
-    ExpressionWrapper.class_function("getId", +getter)
-      .function("getId", +getter)
-      .property("id", &wasm::Expression::_id);
-  };
-  {
-    auto getter = [](const wasm::Expression& expr) {
-      return binaryen::TypeID(expr.type.getID());
-    };
-    auto setter = [](wasm::Expression& expr, binaryen::TypeID value) {
-      expr.type = wasm::Type(value);
-    };
-    ExpressionWrapper.class_function("getType", +getter)
-      .class_function("setType", +setter)
-      .function("getType", +getter)
-      .function("setType", +setter)
-      .property("type", +getter, +setter);
-  };
+  FIELD_PROP_CONST(
+    ExpressionWrapper, Expression, _id, "id", wasm::Expression::Id);
+  FIELD(
+    ExpressionWrapper,
+    Expression,
+    type,
+    "type",
+    binaryen::TypeID,
+    [](binaryen::TypeID value) { return wasm::Type(value); },
+    [](wasm::Type value) { return value.getID(); });
 
   register_type<binaryen::ExpressionList>("Expression[]");
 
@@ -571,56 +660,55 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_MAIN_END
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-  FIELD(id##Wrapper,                                                           \
-        field,                                                                 \
-        field,                                                                 \
-        id,                                                                    \
-        wasm::Expression*,                                                     \
-        allow_raw_pointers(),                                                  \
-        nonnull<ret_val>());
+  FIELD_PROP(id##Wrapper,                                                      \
+             id,                                                               \
+             field,                                                            \
+             #field,                                                           \
+             wasm::Expression*,                                                \
+             allow_raw_pointers(),                                             \
+             return_value_policy::reference(),                                 \
+             nonnull<ret_val>());
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  FIELD(id##Wrapper, field, field, id, wasm::Expression*, allow_raw_pointers());
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-  FIELD_DYN(                                                                   \
-    id##Wrapper,                                                               \
-    field,                                                                     \
-    field,                                                                     \
-    [](const wasm::id& expr) {                                                 \
-      return binaryen::ExpressionList(                                         \
-        val::array(std::vector(expr.field.begin(), expr.field.end())));        \
-    },                                                                         \
-    [](wasm::id& expr, binaryen::ExpressionList value) {                       \
-      expr.field.set(                                                          \
-        vecFromJSArray<wasm::Expression*>(value, allow_raw_pointers()));       \
-    });
+  FIELD_PROP(id##Wrapper,                                                      \
+             id,                                                               \
+             field,                                                            \
+             #field,                                                           \
+             wasm::Expression*,                                                \
+             allow_raw_pointers(),                                             \
+             return_value_policy::reference());
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
 #define DELEGATE_FIELD_INT(id, field)                                          \
-  FIELD(id##Wrapper, field, field, id, uint32_t);
+  FIELD_PROP(id##Wrapper, id, field, #field, uint32_t);
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)
 #define DELEGATE_FIELD_BOOL(id, field)                                         \
-  FIELD_BOOL(id##Wrapper, field, field, id);
+  FIELD_PROP_BOOL(id##Wrapper, id, field, #field);
 #define DELEGATE_FIELD_BOOL_VECTOR(id, field)
 #define DELEGATE_FIELD_ENUM(id, field, type)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)                                         \
-  FIELD_DYN(                                                                   \
+  FIELD(                                                                       \
     id##Wrapper,                                                               \
+    id,                                                                        \
     field,                                                                     \
-    field,                                                                     \
-    [](const wasm::id& expr) { return expr.field.toString(); },                \
-    [](wasm::id& expr, const std::string& value) { expr.field = value; });
+    #field,                                                                    \
+    const std::string&,                                                        \
+    [](const std::string& value) { return value; },                            \
+    [](wasm::Name value) { return value.toString(); });
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
-  FIELD_DYN(                                                                   \
+  FIELD(                                                                       \
     id##Wrapper,                                                               \
+    id,                                                                        \
     field,                                                                     \
-    field,                                                                     \
-    [](const wasm::id& expr) {                                                 \
-      return binaryen::OptionalString(                                         \
-        expr.field.size() ? val(expr.field.toString()) : val::null());         \
+    #field,                                                                    \
+    binaryen::OptionalString,                                                  \
+    [](binaryen::OptionalString value) {                                       \
+      return value.isNull() ? nullptr : value.as<std::string>();               \
     },                                                                         \
-    [](wasm::id& expr, binaryen::OptionalString value) {                       \
-      expr.field = value.isNull() ? nullptr : value.as<std::string>();         \
+    [](wasm::Name value) {                                                     \
+      return binaryen::OptionalString(value.size() ? val(value.toString())     \
+                                                   : val::null());             \
     });
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field) DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
