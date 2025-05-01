@@ -237,7 +237,10 @@ val binaryen::getExpressionInfo(wasm::Expression* expr) {
 
 #define DELEGATE_FIELD_CHILD(id, field) info.set(#field, cast->field);
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field) info.set(#field, cast->field);
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  info.set(#field,                                                             \
+           val::array(std::vector<wasm::Expression*>(cast->field.begin(),      \
+                                                     cast->field.end())));
 #define DELEGATE_FIELD_INT(id, field) info.set(#field, cast->field);
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)
@@ -258,6 +261,18 @@ val binaryen::getExpressionInfo(wasm::Expression* expr) {
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #include "wasm-delegations-fields.def"
+
+  switch (expr->_id) {
+    case Expression::Id::BlockId: {
+      auto* cast = expr->cast<wasm::Block>();
+      info.set("children",
+               val::array(std::vector<wasm::Expression*>(cast->list.begin(),
+                                                         cast->list.end())));
+      break;
+    }
+    default:
+      break;
+  }
 
   return info;
 }
