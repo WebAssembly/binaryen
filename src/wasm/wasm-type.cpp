@@ -361,7 +361,7 @@ private:
 };
 
 struct HeapTypeChildCollector : HeapTypeChildWalker<HeapTypeChildCollector> {
-  std::vector<HeapType> children;
+  HeapTypeChildren children;
   void noteChild(HeapType type) { children.push_back(type); }
 };
 
@@ -753,7 +753,7 @@ bool Type::isSubType(Type left, Type right) {
   return SubTyper().isSubType(left, right);
 }
 
-std::vector<HeapType> Type::getHeapTypeChildren() {
+HeapTypeChildren Type::getHeapTypeChildren() {
   HeapTypeChildCollector collector;
   collector.walkRoot(this);
   return collector.children;
@@ -1175,13 +1175,13 @@ std::vector<Type> HeapType::getTypeChildren() const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-std::vector<HeapType> HeapType::getHeapTypeChildren() const {
+HeapTypeChildren HeapType::getHeapTypeChildren() const {
   HeapTypeChildCollector collector;
   collector.walkRoot(const_cast<HeapType*>(this));
   return collector.children;
 }
 
-std::vector<HeapType> HeapType::getReferencedHeapTypes() const {
+HeapTypeChildren HeapType::getReferencedHeapTypes() const {
   auto types = getHeapTypeChildren();
   if (auto super = getDeclaredSuperType()) {
     types.push_back(*super);
