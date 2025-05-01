@@ -128,9 +128,22 @@ wasm::TableGrow* Module::Table::grow(const std::string& name,
                                      wasm::Expression* delta) {
   return wasm::Builder(*module).makeTableGrow(name, value, delta);
 }
-wasm::MemorySize* size(const std::string& name, bool memory64 = false);
-wasm::MemoryGrow*
-grow(wasm::Expression* value, const std::string& name, bool memory64 = false);
+wasm::MemorySize* Module::Memory::size(const std::string& name,
+                                       bool memory64 = false) {
+  return wasm::Builder(*module).makeMemorySize(
+    name,
+    memory64 ? wasm::Builder::MemoryInfo::Memory64
+             : wasm::Builder::MemoryInfo::Memory32);
+}
+wasm::MemoryGrow* Module::Memory::grow(wasm::Expression* value,
+                                       const std::string& name,
+                                       bool memory64 = false) {
+  wasm::Builder(*module).makeMemoryGrow(
+    value,
+    name,
+    memory64 ? wasm::Builder::MemoryInfo::Memory64
+             : wasm::Builder::MemoryInfo::Memory32);
+}
 wasm::MemoryInit* Module::Memory::init(const std::string& segment,
                                        wasm::Expression* dest,
                                        wasm::Expression* offset,

@@ -112,7 +112,7 @@ public:
                                wasm::Expression* timeout,
                                const std::string& name);
     }* atomic = new Atomic{module};
-  }* memory = new Memory{module};
+  }* memory = new Memory{{module}};
   const struct Data : ExpressionFactory {
     wasm::DataDrop* drop(const std::string& segment);
   }* data = new Data{module};
