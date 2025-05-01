@@ -285,7 +285,7 @@ static std::string unboolenize(std::string str) {
   return str;
 }
 
-/*static std::string unpluralize(std::string str) {
+static std::string unpluralize(std::string str) {
   if (str.back() == 's') {
     str.pop_back();
     if (str == "children")
@@ -294,7 +294,7 @@ static std::string unboolenize(std::string str) {
       str = str.substr(0, str.size() - 2) + "y";
   }
   return str;
-}*/
+}
 
 #define GETTER_NAME(field) capitalize("get"s + field, 3)
 #define BOOL_GETTER_NAME(field) capitalize("is"s + field, 2)
@@ -422,6 +422,42 @@ static std::string unboolenize(std::string str) {
                   setterName.c_str(),                                          \
                   bool,                                                        \
                   ##__VA_ARGS__);                                              \
+  }
+
+#define FIELD_VEC(                                                             \
+  target, id, field, name, listType, elemType, jsToCpp, cppToJs, ...)          \
+  {                                                                            \
+    std::string listName = normalize(name);                                    \
+    std::string elemName = unpluralize(listName);                              \
+    {                                                                          \
+      std::string getterName = GETTER_NAME(listName);                          \
+      std::string setterName = SETTER_NAME(listName);                          \
+      auto getter = [](const wasm::id& expr) {                                 \
+        std::vector<elemType> valVec;                                          \
+        std::transform(                                                        \
+          expr.field.begin(), expr.field.end(), valVec.begin(), cppToJs);      \
+        return listType(val::array(valVec));                                   \
+      };                                                                       \
+      auto setter = [](wasm::id& expr, listType value) {                       \
+        std::vector<elemType> valVec =                                         \
+          vecFromJSArray<elemType>(value, ##__VA_ARGS__);                      \
+        expr.field.reserve(valVec.size());                                     \
+        std::transform(                                                        \
+          valVec.begin(), valVec.end(), expr.field.begin(), jsToCpp);          \
+      };                                                                       \
+      ACCESSOR(target, getterName.c_str(), getter, ##__VA_ARGS__);             \
+      ACCESSOR(target, setterName.c_str(), setter, ##__VA_ARGS__);             \
+      target.property(listName.c_str(), +getter, +setter, ##__VA_ARGS__);      \
+    }                                                                          \
+    {                                                                          \
+      std::string propName = capitalize("num" + listName, 3);                  \
+      std::string getterName = GETTER_NAME(propName);                          \
+      auto getter = [](const wasm::id& expr) {                                 \
+        return uint32_t(expr.field.size());                                    \
+      };                                                                       \
+      ACCESSOR(target, getterName.c_str(), getter, ##__VA_ARGS__);             \
+      target.property(propName.c_str(), +getter, ##__VA_ARGS__);               \
+    }                                                                          \
   }
 } // namespace
 
@@ -676,7 +712,18 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
              wasm::Expression*,                                                \
              allow_raw_pointers(),                                             \
              return_value_policy::reference());
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  FIELD_VEC(                                                                   \
+    id##Wrapper,                                                               \
+    id,                                                                        \
+    field,                                                                     \
+    #field,                                                                    \
+    binaryen::ExpressionList,                                                  \
+    wasm::Expression*,                                                         \
+    [](wasm::Expression* value) { return value; },                             \
+    [](wasm::Expression* value) { return value; },                             \
+    allow_raw_pointers(),                                                      \
+    return_value_policy::reference());
 #define DELEGATE_FIELD_INT(id, field)                                          \
   FIELD_PROP(id##Wrapper, id, field, #field, uint32_t);
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
@@ -719,4 +766,17 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #include "wasm-delegations-fields.def"
+
+  // Extensions
+  FIELD_VEC(
+    BlockWrapper,
+    Block,
+    list,
+    "children",
+    binaryen::ExpressionList,
+    wasm::Expression*,
+    [](wasm::Expression* value) { return value; },
+    [](wasm::Expression* value) { return value; },
+    allow_raw_pointers(),
+    return_value_policy::reference());
 }
