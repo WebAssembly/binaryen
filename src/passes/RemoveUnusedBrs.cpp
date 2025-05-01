@@ -1284,17 +1284,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* secondLast = curr->list[size - 2];
           auto* last = curr->list[size - 1];
           if (auto* drop = secondLast->dynCast<Drop>()) {
-            if (auto* br = drop->value->dynCast<Break>(); br && br->value) {
+            if (auto* br = drop->value->dynCast<Break>();
+                br && br->value && br->condition) {
               if (br->name == curr->name) {
                 if (!EffectAnalyzer(passOptions, *getModule(), br->value)
                        .hasUnremovableSideEffects()) {
                   if (ExpressionAnalyzer::equal(br->value, last)) {
                     // All conditions met, perform the update.
-                    if (br->condition) {
-                      drop->value = br->condition;
-                    } else {
-                      curr->list.removeAt(size - 2);
-                    }
+                    drop->value = br->condition;
                   }
                 }
               }
