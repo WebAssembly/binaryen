@@ -3,8 +3,6 @@
 
 namespace binaryen {
 
-typedef uint32_t Index;
-
 EMSCRIPTEN_DECLARE_VAL_TYPE(Binary);
 
 // https://github.com/emscripten-core/emscripten/issues/24211
@@ -47,7 +45,8 @@ public:
                         const std::string& defaultName,
                         wasm::Expression* condition,
                         wasm::Expression* value) const;
-  wasm::Call* call(const std::string&, ExpressionList operands, TypeID type) const;
+  wasm::Call*
+  call(const std::string&, ExpressionList operands, TypeID type) const;
   wasm::CallIndirect* call_indirect(const std::string& table,
                                     wasm::Expression* target,
                                     ExpressionList operands,
@@ -61,13 +60,15 @@ public:
                                            TypeID params,
                                            TypeID results) const;
   const struct Local : ExpressionFactory {
-    wasm::LocalGet* get(Index index, TypeID type) const;
-    wasm::LocalSet* set(Index index, wasm::Expression* value) const;
-    wasm::LocalSet* tee(Index index, wasm::Expression* value, TypeID type) const;
+    wasm::LocalGet* get(uint32_t index, TypeID type) const;
+    wasm::LocalSet* set(uint32_t index, wasm::Expression* value) const;
+    wasm::LocalSet*
+    tee(uint32_t index, wasm::Expression* value, TypeID type) const;
   }* local = new Local{module};
   const struct Global : ExpressionFactory {
     wasm::GlobalGet* get(const std::string& name, TypeID type) const;
-    wasm::GlobalSet* set(const std::string& name, wasm::Expression* value) const;
+    wasm::GlobalSet* set(const std::string& name,
+                         wasm::Expression* value) const;
   }* global = new Global{module};
   const struct Table : ExpressionFactory {
     wasm::TableGet*
@@ -81,7 +82,8 @@ public:
                           wasm::Expression* delta) const;
   }* table = new Table{module};
   const struct Memory : ExpressionFactory {
-    wasm::MemorySize* size(const std::string& name, bool memory64 = false) const;
+    wasm::MemorySize* size(const std::string& name,
+                           bool memory64 = false) const;
     wasm::MemoryGrow* grow(wasm::Expression* value,
                            const std::string& name,
                            bool memory64 = false) const;
@@ -182,4 +184,6 @@ Module* parseText(const std::string& text);
 TypeID createType(TypeList types);
 
 emscripten::val getExpressionInfo(wasm::Expression* expr);
+
+std::string toText(wasm::Expression* expr);
 }; // namespace binaryen

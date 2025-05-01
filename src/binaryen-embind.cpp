@@ -94,14 +94,15 @@ wasm::CallIndirect* Module::return_call_indirect(const std::string& table,
     wasm::Signature(wasm::Type(params), wasm::Type(results)),
     true);
 }
-wasm::LocalGet* Module::Local::get(Index index, TypeID type) const {
+wasm::LocalGet* Module::Local::get(uint32_t index, TypeID type) const {
   return wasm::Builder(*module).makeLocalGet(index, wasm::Type(type));
 }
-wasm::LocalSet* Module::Local::set(Index index, wasm::Expression* value) const {
+wasm::LocalSet* Module::Local::set(uint32_t index,
+                                   wasm::Expression* value) const {
   return wasm::Builder(*module).makeLocalSet(index, value);
 }
 wasm::LocalSet*
-Module::Local::tee(Index index, wasm::Expression* value, TypeID type) const {
+Module::Local::tee(uint32_t index, wasm::Expression* value, TypeID type) const {
   return wasm::Builder(*module).makeLocalTee(index, value, wasm::Type(type));
 }
 wasm::GlobalGet* Module::Global::get(const std::string& name,
@@ -367,9 +368,8 @@ TypeID createType(TypeList types) {
   auto typesVec = vecFromJSArray<wasm::Type>(types);
   return wasm::Type(typesVec).getID();
 }
-} // namespace binaryen
 
-val binaryen::getExpressionInfo(wasm::Expression* expr) {
+val getExpressionInfo(wasm::Expression* expr) {
   using namespace wasm;
 
   val info = val::object();
@@ -422,6 +422,16 @@ val binaryen::getExpressionInfo(wasm::Expression* expr) {
   return info;
 }
 
+std::string toText(wasm::Expression* expr) {
+  std::ostringstream os;
+  bool colors = Colors::isEnabled();
+  Colors::setEnabled(false); // do not use colors for writing
+  os << *expr << '\n';
+  Colors::setEnabled(colors); // restore colors state
+  return os.str();
+}
+} // namespace binaryen
+
 namespace {
 static std::string uncapitalize(std::string str, int i) {
   str[i] = std::tolower(str[i]);
@@ -446,11 +456,11 @@ static std::string unboolenize(std::string str) {
 }
 
 static std::string unpluralize(std::string str) {
-  if (str.back() == 's') {
+  if (str == "children")
+    str = str.substr(0, 5);
+  else if (str.back() == 's') {
     str.pop_back();
-    if (str == "children")
-      str = str.substr(0, 5);
-    else if (str.substr(str.size() - 2, 2) == "ie")
+    if (str.substr(str.size() - 2, 2) == "ie")
       str = str.substr(0, str.size() - 2) + "y";
   }
   return str;
@@ -594,8 +604,11 @@ static std::string unpluralize(std::string str) {
       std::string setterName = SETTER_NAME(listName);                          \
       auto getter = [](const wasm::id& expr) {                                 \
         std::vector<elemType> valVec;                                          \
-        std::transform(                                                        \
-          expr.field.begin(), expr.field.end(), valVec.begin(), cppToJs);      \
+        valVec.reserve(expr.field.size());                                     \
+        std::transform(expr.field.begin(),                                     \
+                       expr.field.end(),                                       \
+                       std::back_inserter(valVec),                             \
+                       cppToJs);                                               \
         return listType(val::array(valVec));                                   \
       };                                                                       \
       auto setter = [](wasm::id& expr, listType value) {                       \
@@ -617,6 +630,50 @@ static std::string unpluralize(std::string str) {
       };                                                                       \
       ACCESSOR(target, getterName.c_str(), getter, ##__VA_ARGS__);             \
       target.property(propName.c_str(), +getter, ##__VA_ARGS__);               \
+    }                                                                          \
+    {                                                                          \
+      std::string funcName = capitalize("get" + elemName + "At", 3);           \
+      auto func = [](const wasm::id& expr, uint32_t index) {                   \
+        assert(index < expr.field.size());                                     \
+        return expr.field[index];                                              \
+      };                                                                       \
+      target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
+        .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
+    }                                                                          \
+    {                                                                          \
+      std::string funcName = capitalize("set" + elemName + "At", 3);           \
+      auto func = [](wasm::id& expr, uint32_t index, elemType elem) {          \
+        assert(index < expr.field.size());                                     \
+        expr.field[index] = elem;                                              \
+      };                                                                       \
+      target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
+        .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
+    }                                                                          \
+    {                                                                          \
+      std::string funcName = capitalize("append" + elemName, 6);               \
+      auto func = [](wasm::id& expr, elemType elem) {                          \
+        auto index = expr.field.size();                                        \
+        expr.field.push_back(elem);                                            \
+        return index;                                                          \
+      };                                                                       \
+      target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
+        .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
+    }                                                                          \
+    {                                                                          \
+      std::string funcName = capitalize("insert" + elemName + "At", 6);        \
+      auto func = [](wasm::id& expr, uint32_t index, elemType elem) {          \
+        expr.field.insertAt(index, elem);                                      \
+      };                                                                       \
+      target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
+        .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
+    }                                                                          \
+    {                                                                          \
+      std::string funcName = capitalize("remove" + elemName + "At", 6);        \
+      auto func = [](wasm::id& expr, uint32_t index) {                         \
+        return expr.field.removeAt(index);                                     \
+      };                                                                       \
+      target.class_function(funcName.c_str(), +func, ##__VA_ARGS__)            \
+        .function(funcName.c_str(), +func, ##__VA_ARGS__);                     \
     }                                                                          \
   }
 } // namespace
@@ -954,7 +1011,13 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   function(
     "getExpressionInfo", binaryen::getExpressionInfo, allow_raw_pointers());
 
-  auto ExpressionWrapper = class_<wasm::Expression>("Expression");
+  auto ExpressionWrapper =
+    class_<wasm::Expression>("Expression")
+      .class_function(
+        "finalize", +[](wasm::Expression& expr) { expr.finalize(); })
+      .function("finalize", &wasm::Expression::finalize)
+      .class_function("toText", &binaryen::toText, allow_raw_pointers())
+      .function("toText", &binaryen::toText, allow_raw_pointers());
   FIELD_PROP_CONST(
     ExpressionWrapper, Expression, _id, "id", wasm::Expression::Id);
   FIELD(
@@ -965,6 +1028,10 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     binaryen::TypeID,
     [](binaryen::TypeID value) { return wasm::Type(value); },
     [](wasm::Type value) { return value.getID(); });
+  ExpressionWrapper.function(
+    "valueOf", +[](const wasm::Expression& expr) {
+      return reinterpret_cast<uint32_t>(&expr);
+    });
 
   register_type<binaryen::ExpressionList>("Expression[]");
 
@@ -974,7 +1041,12 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
 #define DELEGATE_FIELD_CASE_START(id)                                          \
   [[maybe_unused]] auto id##Wrapper =                                          \
-    class_<wasm::id, base<wasm::Expression>>(#id);                             \
+    class_<wasm::id, base<wasm::Expression>>(#id).constructor(                 \
+      +[](wasm::Expression* expr) {                                            \
+        assert(expr->is<wasm::id>());                                          \
+        return static_cast<wasm::id*>(expr);                                   \
+      },                                                                       \
+      allow_raw_pointers());                                                   \
   {                                                                            \
     auto getter = [](const wasm::Expression& expr) { return expr._id; };       \
     id##Wrapper.class_function("getId", +getter);                              \
