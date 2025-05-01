@@ -744,7 +744,9 @@ struct MinimizeRecGroups : Pass {
         if (seen.insert(curr).second) {
           dfsOrders[i].push_back(curr);
           auto children = curr.getReferencedHeapTypes();
-          workList.insert(workList.end(), children.rbegin(), children.rend());
+          for (auto child : children) {
+            workList.push_back(child);
+          }
         }
       }
       assert(dfsOrders[i].size() == types.size());
