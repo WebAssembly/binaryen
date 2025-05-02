@@ -2703,10 +2703,10 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
     auto iter2 = currFunction->codeAnnotations.find(curr);
     if (iter2 != currFunction->codeAnnotations.end()) {
       auto& annotation = iter2->second;
-      if (annotation.likely) {
+      if (annotation.branchLikely) {
         // TODO share constant name
         o << "(@" << Annotations::BranchHint << " \""
-          << (*annotation ? "\\1" : "\\0") << ")";
+          << (*annotation.branchLikely ? "\\1" : "\\0") << ")";
       }
     }
   }
