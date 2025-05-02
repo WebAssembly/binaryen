@@ -3571,7 +3571,7 @@ private:
     uint64_t maskLeft;
     if (leftMaxBits == left->type.getByteSize() * 8) {
       // If we know nothing useful about the bits on the left,
-      // we can not optimize.
+      // we cannot optimize.
       return nullptr;
     } else {
       maskLeft = (1ULL << leftMaxBits) - 1;
