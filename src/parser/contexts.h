@@ -2341,7 +2341,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   // TODO move
-  std::optional<bool> getBranchHint(const std::vector<Annotation>& annotations) {
+  std::optional<bool>
+  getBranchHint(const std::vector<Annotation>& annotations) {
     // Find and apply (the last) branch hint.
     const Annotation* hint = nullptr;
     for (auto& a : annotations) {
