@@ -1545,7 +1545,7 @@ void WasmBinaryWriter::writeCodeAnnotations() {
 
   std::vector<FuncHints> funcHintsVec;
 
-  for (auto& func : wasm.functions) {
+  for (auto& func : wasm->functions) {
     // Collect the Branch Hints for this function.
     FuncHints funcHints;
 
@@ -1556,7 +1556,7 @@ void WasmBinaryWriter::writeCodeAnnotations() {
     }
 
     // If we found something, note it all.
-    if (!funcHints.exprHints) {
+    if (!funcHints.exprHints.empty()) {
       funcHints.func = func->name;
       funcHintsVec.emplace_back(std::move(funcHints));
     }
