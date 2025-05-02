@@ -3563,9 +3563,6 @@ private:
   Expression* optimizeAndNoOverlappingBits(Binary* curr) {
     assert(curr->op == AndInt32 || curr->op == AndInt64);
 
-    using namespace Abstract;
-    using namespace Match;
-
     auto* left = curr->left;
     auto* right = curr->right;
 
