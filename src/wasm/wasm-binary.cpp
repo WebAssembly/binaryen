@@ -1906,6 +1906,7 @@ void WasmBinaryReader::read() {
 
   // Skip ahead and read the name section so we know what names to use when we
   // construct module elements.
+  // TODO: Combine this pre-scan with the one in preScan().
   if (debugInfo) {
     findAndReadNames();
   }
@@ -2020,6 +2021,8 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     readDylink(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
+  } else if (sectionName.equals(Annotations::BranchHint)) {
+    readBranchHints(payloadLen);
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5164,6 +5167,33 @@ void WasmBinaryReader::readDylink0(size_t payloadLen) {
     if (pos != subsectionPos + subsectionSize) {
       throwError("bad dylink.0 subsection position change");
     }
+  }
+}
+
+void WasmBinaryReader::readBranchHints(size_t payloadLen) {
+  auto sectionPos = pos;
+
+  auto numFuncs = getU32LEB();
+  for (Index func = 0; func < numFuncs; func++) {
+    auto funcIndex = getU32LEB();
+    auto numHints = getU32LEB();
+    for (Index hint = 0; hint < numHints; hint++) {
+      auto offset = getU32LEB();
+
+      auto size = getU32LEB();
+      if (size != 1) {
+        throwError("bad BranchHint size");
+      }
+
+      auto likely = getU32LEB();
+      if (likely != 0 && likely != 1) {
+        throwError("bad BranchHint value");
+      }
+    }
+  }
+
+  if (pos != sectionPos + payloadLen) {
+    throwError("bad BranchHint section size");
   }
 }
 
