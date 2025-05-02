@@ -1871,7 +1871,7 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
   wasm.features = features;
 }
 
-bool WasmBinaryReader::hasDWARFSections() {
+void WasmBinaryReader::preScan() {
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
@@ -1885,28 +1885,24 @@ bool WasmBinaryReader::hasDWARFSections() {
     auto oldPos = pos;
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
-      if (Debug::isDWARFSection(sectionName)) {
-        has = true;
+      // DWARF sections contain code offsets, as do code annotations; either of
+      // those force us to need code locations.
+      // TODO: For Branch Hinting, we could note which functions require
+      //       code locations, as an optimization.
+      if (Debug::isDWARFSection(sectionName) ||
+          sectionName == Annotations::BranchHint) {
+        needCodeLocations = true;
         break;
       }
     }
     pos = oldPos + payloadLen;
   }
+  // Reset.
   pos = 0;
-  return has;
 }
 
 void WasmBinaryReader::read() {
-  if (DWARF) {
-    // In order to update dwarf, we must store info about each IR node's
-    // binary position. This has noticeable memory overhead, so we don't do it
-    // by default: the user must request it by setting "DWARF", and even if so
-    // we scan ahead to see that there actually *are* DWARF sections, so that
-    // we don't do unnecessary work.
-    if (!hasDWARFSections()) {
-      DWARF = false;
-    }
-  }
+  preScan();
 
   // Skip ahead and read the name section so we know what names to use when we
   // construct module elements.
@@ -1951,7 +1947,7 @@ void WasmBinaryReader::read() {
         readFunctionSignatures();
         break;
       case BinaryConsts::Section::Code:
-        if (DWARF) {
+        if (needCodeLocations) {
           codeSectionLocation = pos;
         }
         readFunctions();
@@ -2943,7 +2939,7 @@ void WasmBinaryReader::readFunctions() {
   if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError("invalid function section size, must equal types");
   }
-  if (DWARF) {
+  if (needCodeLocations) {
     builder.setBinaryLocation(&pos, codeSectionLocation);
   }
   for (size_t i = 0; i < numFuncBodies; i++) {
@@ -2957,7 +2953,7 @@ void WasmBinaryReader::readFunctions() {
     auto& func = wasm.functions[numFuncImports + i];
     currFunction = func.get();
 
-    if (DWARF) {
+    if (needCodeLocations) {
       func->funcLocation = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos - codeSectionLocation),
         BinaryLocation(pos - codeSectionLocation),

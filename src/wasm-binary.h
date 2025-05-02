@@ -1451,7 +1451,6 @@ class WasmBinaryReader {
   // Settings.
 
   bool debugInfo = true;
-  bool DWARF = false;
   bool skipFunctionBodies = false;
 
   // Internal state.
@@ -1474,7 +1473,7 @@ public:
                    std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
-  void setDWARF(bool value) { DWARF = value; }
+  void setDWARF(bool value) {} // TODO: rmoof
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;
   }
@@ -1629,7 +1628,14 @@ public:
   }
 
 private:
-  bool hasDWARFSections();
+  // In certain modes we need to note the locations of expressions, to match
+  // them against sections like DWARF or custom annotations. As this incurs
+  // overhead, we only note locations when we actually need to.
+  bool needCodeLocations = false;
+
+  // Scans ahead in the binary to check certain conditions like
+  // needCodeLocations.
+  preScan();
 };
 
 } // namespace wasm
