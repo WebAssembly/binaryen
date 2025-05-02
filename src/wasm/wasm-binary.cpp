@@ -28,6 +28,7 @@
 #include "support/debug.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
+#include "wasm-annotations.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
 #include "wasm-limits.h"
@@ -1568,13 +1569,13 @@ void WasmBinaryWriter::writeCodeAnnotations() {
 
   // Emit the section, as we found data.
   auto start = startSection(BinaryConsts::Custom);
-  writeInlineString(Annotations::BranchHint.c_str()); // c_str?
+  writeInlineString(Annotations::BranchHint);
 
   o << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
     o << U32LEB(getFunctionIndex(funcHints.func));
 
-    o << U32LEB(funcHintsVec.hints.size());
+    o << U32LEB(funcHints.exprHints.size());
     for (auto& exprHint : funcHintsVec.exprHints) {
       // We must only emit hints that are present.
       assert(exprHint->branchLikely);
