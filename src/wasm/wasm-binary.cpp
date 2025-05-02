@@ -1535,7 +1535,7 @@ void WasmBinaryWriter::writeCodeAnnotations() {
   // hints.
   struct ExprHint {
     Expression* expr;
-    CodeAnnotation* hint;
+    Function::CodeAnnotation* hint;
   };
 
   struct FuncHints {
