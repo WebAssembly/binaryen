@@ -63,7 +63,7 @@ const char* CustomDescriptorsFeature = "custom-descriptors";
 
 } // namespace BinaryConsts::CustomSections
 
-namespace Annotations {
+namespace wasm::Annotations {
 
 const Name BranchHint = "metadata.code.branch_hint";
 
