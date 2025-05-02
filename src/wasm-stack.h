@@ -99,11 +99,11 @@ public:
 
   void visit(Expression* curr) {
     if (func && !sourceMap) {
-      parent.writeDebugLocation(curr, func);
+      parent.writeMetadata(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
     if (func && !sourceMap) {
-      parent.writeDebugLocationEnd(curr, func);
+      parent.writeMetadataEnd(curr, func);
     }
   }
 
@@ -479,9 +479,7 @@ public:
   }
   void emitUnreachable() { writer.emitUnreachable(); }
   void emitDebugLocation(Expression* curr) {
-    if (sourceMap) {
-      parent.writeDebugLocation(curr, func);
-    }
+    parent.writeMetadata(curr, func);
   }
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
