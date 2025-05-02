@@ -1531,17 +1531,69 @@ void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
 }
 
 void WasmBinaryWriter::writeCodeAnnotations() {
-  // See if we have any annotations at all.
-  bool have = false;
+  // Assemble the info for Branch Hinting: for each function, a vector of the
+  // hints.
+  struct ExprHint {
+    Expression* expr;
+    CodeAnnotation* hint;
+  };
+
+  struct FuncHints {
+    Name func;
+    std::vector<ExprHint> exprHints;
+  };
+
+  std::vector<FuncHints> funcHintsVec;
+
   for (auto& func : wasm.functions) {
-    if (!func->codeAnnotations.empty()) {
-      have = true;
-      break;
+    // Collect the Branch Hints for this function.
+    FuncHints funcHints;
+
+    for (auto& [expr, annotation] : func->codeAnnotations) {
+      if (annotation.branchLikely) {
+        funcHints.exprHints.push_back(ExprHint{expr, &annotation});
+      }
+    }
+
+    // If we found something, note it all.
+    if (!funcHints.exprHints) {
+      funcHints.func = func->name;
+      funcHintsVec.emplace_back(std::move(funcHints));
     }
   }
-  if (!have) {
+
+  if (funcHintsVec.empty()) {
     return;
   }
+
+  // Emit the section, as we found data.
+  auto start = startSection(BinaryConsts::Custom);
+  writeInlineString(Annotations::BranchHint.c_str()); // c_str?
+
+  o << U32LEB(funcHintsVec.size());
+  for (auto& funcHints : funcHintsVec) {
+    o << U32LEB(getFunctionIndex(funcHints.func));
+
+    o << U32LEB(funcHintsVec.hints.size());
+    for (auto& exprHint : funcHintsVec.exprHints) {
+      // We must only emit hints that are present.
+      assert(exprHint->branchLikely);
+
+      // Emit the offset as relative to the start of the function locals TODO
+      auto iter = binaryLocations.expressions.find(exprHint.expr);
+      assert(iter != binaryLocations.expressions.end());
+      auto offset = iter->second.start;
+      o << U32LEB(offset);
+
+      // Hint size, always 1 for now.
+      o << U32LEB(1);
+
+      // Hint contents: likely or not.
+      o << U32LEB(*exprHint->branchLikely);
+    }
+  }
+
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
