@@ -2191,6 +2191,16 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  // Code annotations. As with debug info, we do not store these on Expressions
+  // themselves, as we assume most instances are unannotated, and do not want to
+  // add constant memory overhead.
+  struct CodeAnnotation {
+    // Branch hinting proposal: Whether the branch is likely, or unlikely.
+    std::optional<bool> branchLikely;
+  };
+
+  std::unordered_map<Expression*, CodeAnnotation> codeAnnotations;
+
   // The effects for this function, if they have been computed. We use a shared
   // ptr here to avoid compilation errors with the forward-declared
   // EffectAnalyzer.

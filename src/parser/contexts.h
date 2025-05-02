@@ -23,6 +23,7 @@
 #include "support/name.h"
 #include "support/result.h"
 #include "support/string.h"
+#include "wasm-annotations.h"
 #include "wasm-builder.h"
 #include "wasm-ir-builder.h"
 #include "wasm.h"
@@ -2339,11 +2340,47 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
+  // Return the branch hint for a branching instruction, if there is one.
+  std::optional<bool>
+  getBranchHint(const std::vector<Annotation>& annotations) {
+    // Find and apply (the last) branch hint.
+    const Annotation* hint = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::BranchHint) {
+        hint = &a;
+      }
+    }
+    if (!hint) {
+      return std::nullopt;
+    }
+
+    Lexer lexer(hint->contents);
+    if (lexer.empty()) {
+      std::cerr << "warning: empty BranchHint\n";
+      return std::nullopt;
+    }
+
+    auto str = lexer.takeString();
+    if (!str || str->size() != 1) {
+      std::cerr << "warning: invalid BranchHint string\n";
+      return std::nullopt;
+    }
+
+    auto value = (*str)[0];
+    if (value != 0 && value != 1) {
+      std::cerr << "warning: invalid BranchHint value\n";
+      return std::nullopt;
+    }
+
+    return bool(value);
+  }
+
   Result<> makeBreak(Index pos,
                      const std::vector<Annotation>& annotations,
                      Index label,
                      bool isConditional) {
-    return withLoc(pos, irBuilder.makeBreak(label, isConditional));
+    auto likely = getBranchHint(annotations);
+    return withLoc(pos, irBuilder.makeBreak(label, isConditional, likely));
   }
 
   Result<> makeSwitch(Index pos,

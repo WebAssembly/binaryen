@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "wasm-annotations.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 
@@ -62,6 +63,12 @@ const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
 
 } // namespace BinaryConsts::CustomSections
+
+namespace Annotations {
+
+const Name BranchHint = "metadata.code.branch_hint";
+
+} // namespace Annotations
 
 Name STACK_POINTER("__stack_pointer");
 Name MODULE("module");
