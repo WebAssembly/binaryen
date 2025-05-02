@@ -3,8 +3,22 @@
 ;; RUN: wasm-opt -all %s -S -o - | filecheck %s
 
 (module
-  (func $test (param $x i32)
-    (@src src.cpp:30:1)
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (func $branch-hints-br_if (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $branch-hints-br_if (param $x i32)
+    ;; A branch annotated as unlikely, and one as likely.
     (block $out
       (@metadata.code.branch_hint "\00")
       (br_if $out
