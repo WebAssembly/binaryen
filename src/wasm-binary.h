@@ -1355,6 +1355,8 @@ public:
   void writeDebugLocationEnd(Expression* curr, Function* func);
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
+  void writeCodeAnnotations();
+
   // helpers
   void writeInlineString(std::string_view name);
   void writeEscapedName(std::string_view name);
