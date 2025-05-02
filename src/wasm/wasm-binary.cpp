@@ -5178,9 +5178,29 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
     auto funcIndex = getU32LEB();
     auto& func = wasm.functions[funcIndex];
 
+    // The encoded offsets we read below are relative to the start of the
+    // function's locals (the declarations).
+    auto funcLocalsOffset = func->funcLocation.declarations;
+
+    // We have a map of expressions to their locations. Invert that to get the
+    // map we will use below, from offsets to expressions.
+    std::unordered_map<BinaryLocation, Expression*> locationsMap;
+
+    for (auto& [expr, span] : func->expressionLocations) {
+      locationsMap[span.begin] = expr;
+    }
+
     auto numHints = getU32LEB();
     for (Index hint = 0; hint < numHints; hint++) {
-      auto offset = getU32LEB();
+      // To get the absolute offset, add the function's offset.
+      auto relativeOffset = getU32LEB();
+      auto absoluteOffset = funcLocalsOffset + relativeOffset;
+
+      auto iter = locationsMap.find(absoluteOffset);
+      if (iter == locationsMap.end()) {
+        throwError("bad BranchHint offset");
+      }
+      auto* expr = iter->second;
 
       auto size = getU32LEB();
       if (size != 1) {
@@ -5191,6 +5211,9 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
       if (likely != 0 && likely != 1) {
         throwError("bad BranchHint value");
       }
+
+      // Apply the valid hint.
+      func->codeAnnotations[expr].branchLikely = likely;
     }
   }
 
