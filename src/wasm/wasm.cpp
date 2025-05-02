@@ -63,6 +63,12 @@ const char* CustomDescriptorsFeature = "custom-descriptors";
 
 } // namespace BinaryConsts::CustomSections
 
+namespace Annotations {
+
+const Name BranchHint = "metadata.code.branch_hint";
+
+}
+
 Name STACK_POINTER("__stack_pointer");
 Name MODULE("module");
 Name START("start");

@@ -2704,7 +2704,8 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
       auto& annotation = iter2->second;
       if (annotation.likely) {
         // TODO share constant name
-        o << "(@metadata.code.branch_hint \"" << (*annotation ? "\\1" : "\\0") << ")";
+        o << "(@" << Annotations::BranchHint << " \""
+          << (*annotation ? "\\1" : "\\0") << ")";
       }
     }
   }

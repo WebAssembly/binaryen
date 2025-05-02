@@ -49,9 +49,6 @@ struct TextPos {
 struct Annotation {
   Name kind;
   std::string_view contents;
-
-  // Recognized annotations.
-  static const Name BranchHint = "metadata.code.branch_hint";
 };
 
 extern Name srcAnnotationKind;

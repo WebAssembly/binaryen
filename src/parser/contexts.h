@@ -2345,7 +2345,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      bool isConditional) {
     std::optional<bool> likely;
     for (auto& annotation : annotations) {
-      if (annotation.kind == Annotation::BranchHint) {
+      if (annotation.kind == Annotations::BranchHint) {
         if (annotation.contents == "0") {
           likely = false;
         } else if (annotation.contents == "1") {
