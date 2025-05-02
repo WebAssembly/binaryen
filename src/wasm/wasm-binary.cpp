@@ -1569,14 +1569,14 @@ void WasmBinaryWriter::writeCodeAnnotations() {
 
   // Emit the section, as we found data.
   auto start = startSection(BinaryConsts::Custom);
-  writeInlineString(Annotations::BranchHint);
+  writeInlineString(Annotations::BranchHint.str);
 
   o << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
     o << U32LEB(getFunctionIndex(funcHints.func));
 
     o << U32LEB(funcHints.exprHints.size());
-    for (auto& exprHint : funcHintsVec.exprHints) {
+    for (auto& exprHint : funcHints.exprHints) {
       // We must only emit hints that are present.
       assert(exprHint->branchLikely);
 
