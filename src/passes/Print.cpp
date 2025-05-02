@@ -268,15 +268,17 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void
   printDebugLocation(const std::optional<Function::DebugLocation>& location);
-  void printDebugLocation(Expression* curr);
 
   // Prints debug info for a delimiter in an expression.
   void printDebugDelimiterLocation(Expression* curr, Index i);
 
+  // Prints debug info and code annotations.
+  void printMetadata(Expression* curr);
+
   void printExpressionContents(Expression* curr);
 
   void visit(Expression* curr) {
-    printDebugLocation(curr);
+    printMetadata(curr);
     UnifiedExpressionVisitor<PrintSExpression>::visit(curr);
   }
 
@@ -2678,7 +2680,7 @@ void PrintSExpression::printDebugLocation(
   doIndent(o, indent);
 }
 
-void PrintSExpression::printDebugLocation(Expression* curr) {
+void PrintSExpression::printMetadata(Expression* curr) {
   if (currFunction) {
     // show an annotation, if there is one
     auto& debugLocations = currFunction->debugLocations;
@@ -2795,7 +2797,7 @@ void PrintSExpression::visitBlock(Block* curr) {
   while (1) {
     if (stack.size() > 0) {
       doIndent(o, indent);
-      printDebugLocation(curr);
+      printMetadata(curr);
     }
     stack.push_back(curr);
     o << '(';
