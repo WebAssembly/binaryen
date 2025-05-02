@@ -1409,10 +1409,10 @@ Result<> IRBuilder::makeBreak(Index label,
   auto* br = builder.makeBreak(curr.name, curr.value, curr.condition);
   push(br);
 
-  if (likely && func) {
-    Function::CodeAnnotation annotation;
-    annotation.branchLikely = likely;
-    func->codeAnnotations[br] = annotation;
+  if (likely) {
+    // Branches are only possible inside functions.
+    assert(func);
+    func->codeAnnotations[br].branchLikely = likely;
   }
 
   return Ok{};

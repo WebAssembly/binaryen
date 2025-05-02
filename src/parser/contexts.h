@@ -2340,8 +2340,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
-  // TODO move
-  std::optional<bool> getBranchHint(const std::vector<Annotation>& annotations) {
+  // Return the branch hint for a branching instruction, if there is one.
+  std::optional<bool>
+  getBranchHint(const std::vector<Annotation>& annotations) {
     // Find and apply (the last) branch hint.
     const Annotation* hint = nullptr;
     for (auto& a : annotations) {
@@ -2355,17 +2356,23 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
     Lexer lexer(hint->contents);
     if (lexer.empty()) {
-      std::cerr << "warning: invalid BranchHint\n";
+      std::cerr << "warning: empty BranchHint\n";
       return std::nullopt;
     }
 
     auto str = lexer.takeString();
     if (!str || str->size() != 1) {
-      std::cerr << "warning: invalid BranchHint\n";
+      std::cerr << "warning: invalid BranchHint string\n";
       return std::nullopt;
     }
 
-    return bool((*str)[0]);
+    auto value = (*str)[0];
+    if (value != 0 && value != 1) {
+      std::cerr << "warning: invalid BranchHint value\n";
+      return std::nullopt;
+    }
+
+    return bool(value);
   }
 
   Result<> makeBreak(Index pos,
