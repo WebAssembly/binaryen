@@ -2340,7 +2340,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
-  // TODO move
+  // Return the branch hint for a branching instruction, if there is one.
   std::optional<bool>
   getBranchHint(const std::vector<Annotation>& annotations) {
     // Find and apply (the last) branch hint.

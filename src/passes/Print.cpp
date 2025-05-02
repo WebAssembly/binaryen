@@ -2706,7 +2706,6 @@ void PrintSExpression::printMetadata(Expression* curr) {
     if (iter2 != currFunction->codeAnnotations.end()) {
       auto& annotation = iter2->second;
       if (annotation.branchLikely) {
-        // TODO share constant name
         Colors::grey(o);
         o << "(@" << Annotations::BranchHint << " \"\\0"
           << (*annotation.branchLikely ? "1" : "0") << "\")\n";
