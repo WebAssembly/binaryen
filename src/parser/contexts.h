@@ -2340,22 +2340,39 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
+  // TODO move
+  std::optional<bool> getBranchHint(const std::vector<Annotation>& annotations) {
+    // Find and apply (the last) branch hint.
+    const Annotation* hint = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::BranchHint) {
+        hint = &a;
+      }
+    }
+    if (!hint) {
+      return std::nullopt;
+    }
+
+    Lexer lexer(hint->contents);
+    if (lexer.empty()) {
+      std::cerr << "warning: invalid BranchHint\n";
+      return std::nullopt;
+    }
+
+    auto str = lexer.takeString();
+    if (!str || str->size() != 1) {
+      std::cerr << "warning: invalid BranchHint\n";
+      return std::nullopt;
+    }
+
+    return bool((*str)[0]);
+  }
+
   Result<> makeBreak(Index pos,
                      const std::vector<Annotation>& annotations,
                      Index label,
                      bool isConditional) {
-    std::optional<bool> likely;
-    for (auto& annotation : annotations) {
-      if (annotation.kind == Annotations::BranchHint) {
-        if (annotation.contents == "0") {
-          likely = false;
-        } else if (annotation.contents == "1") {
-          likely = true;
-        } else {
-          std::cerr << "warning: invalid BranchHint " << annotation.contents << '\n';
-        }
-      }
-    }
+    auto likely = getBranchHint(annotations);
     return withLoc(pos, irBuilder.makeBreak(label, isConditional, likely));
   }
 

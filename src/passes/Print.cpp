@@ -2718,7 +2718,7 @@ void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
     if (iter != currFunction->delimiterLocations.end()) {
       auto& locations = iter->second;
       Colors::grey(o);
-      o << ";; code offset: 0x" << std::hex << locations[i] << std::dec << '\n';
+      o << ";; code offset: 0x0" << std::hex << locations[i] << std::dec << "\"\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }
