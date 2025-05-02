@@ -1578,7 +1578,7 @@ void WasmBinaryWriter::writeCodeAnnotations() {
     o << U32LEB(funcHints.exprHints.size());
     for (auto& exprHint : funcHints.exprHints) {
       // We must only emit hints that are present.
-      assert(exprHint->branchLikely);
+      assert(exprHint.branchLikely);
 
       // Emit the offset as relative to the start of the function locals TODO
       auto iter = binaryLocations.expressions.find(exprHint.expr);
@@ -1590,7 +1590,7 @@ void WasmBinaryWriter::writeCodeAnnotations() {
       o << U32LEB(1);
 
       // Hint contents: likely or not.
-      o << U32LEB(*exprHint->branchLikely);
+      o << U32LEB(int(*exprHint.branchLikely));
     }
   }
 
