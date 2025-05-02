@@ -448,10 +448,8 @@
   ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-5 (type $2) (result i32)
   ;; CHECK-NEXT:  (block $parent (result i32)
   ;; CHECK-NEXT:   (call $nothing)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br $parent
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (br $parent
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
