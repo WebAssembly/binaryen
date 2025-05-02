@@ -27,6 +27,7 @@
 #include <pass.h>
 #include <pretty_printing.h>
 #include <support/string.h>
+#include <wasm-annotations.h>
 #include <wasm-stack.h>
 #include <wasm-type-printing.h>
 #include <wasm.h>

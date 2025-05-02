@@ -21,10 +21,7 @@
 #ifndef wasm_annotations_h
 #define wasm_annotations_h
 
-#include "parsing.h"
-#include "pass.h"
-#include "support/file.h"
-#include "wasm.h"
+#include "support/name.h"
 
 namespace wasm::Annotations {
 

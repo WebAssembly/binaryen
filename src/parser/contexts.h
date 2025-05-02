@@ -23,6 +23,7 @@
 #include "support/name.h"
 #include "support/result.h"
 #include "support/string.h"
+#include "wasm-annotations.h"
 #include "wasm-builder.h"
 #include "wasm-ir-builder.h"
 #include "wasm.h"
