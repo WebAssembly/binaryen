@@ -461,10 +461,8 @@
     ;; the dead code after it, but also should not error here.
     (block $parent (result i32)
       (call $nothing)
-      (drop
-        (br $parent
-          (i32.const 1)
-        )
+      (br $parent
+        (i32.const 1)
       )
       (i32.const 1)
     )
