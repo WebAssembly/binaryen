@@ -2682,18 +2682,18 @@ void PrintSExpression::printDebugLocation(
 
 void PrintSExpression::printMetadata(Expression* curr) {
   if (currFunction) {
-    // show an annotation, if there is one
-    auto& debugLocations = currFunction->debugLocations;
-    auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end()) {
+    // Show a debug location, if there is one.
+    if (auto iter = currFunction->debugLocations.find(curr);
+        iter != currFunction->debugLocations.end()) {
       printDebugLocation(iter->second);
     } else {
       printDebugLocation(std::nullopt);
     }
-    // show a binary position, if there is one
+
+    // Show a binary position, if there is one.
     if (debugInfo) {
-      auto iter = currFunction->expressionLocations.find(curr);
-      if (iter != currFunction->expressionLocations.end()) {
+      if (auto iter = currFunction->expressionLocations.find(curr);
+          iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
         o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
           << '\n';
@@ -2702,9 +2702,10 @@ void PrintSExpression::printMetadata(Expression* curr) {
       }
     }
 
-    auto iter2 = currFunction->codeAnnotations.find(curr);
-    if (iter2 != currFunction->codeAnnotations.end()) {
-      auto& annotation = iter2->second;
+    // Show a code annotation, if there is one.
+    if (auto iter = currFunction->codeAnnotations.find(curr);
+        iter != currFunction->codeAnnotations.end()) {
+      auto& annotation = iter->second;
       if (annotation.branchLikely) {
         Colors::grey(o);
         o << "(@" << Annotations::BranchHint << " \"\\0"
