@@ -5,6 +5,16 @@
 (module
   ;; CHECK:      (type $0 (func (param i32)))
 
+  (func $no-annotations (param $x i32)
+    ;; A function with no annotations. This tests that we use function indexes
+    ;; properly in the section.
+    (block $out
+      (br_if $out
+        (local.get $x)
+      )
+    )
+  )
+
   ;; CHECK:      (func $branch-hints-br_if (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
@@ -35,6 +45,16 @@
       ;; The last one wins.
       (@metadata.code.branch_hint "\01")
       (@metadata.code.branch_hint "\00")
+      (br_if $out
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $branch_hints-br_if-2 (param $x i32)
+    ;; A second function with hints.
+    (block $out
+      (@metadata.code.branch_hint "\01")
       (br_if $out
         (local.get $x)
       )

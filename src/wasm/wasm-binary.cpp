@@ -5174,8 +5174,10 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
   auto sectionPos = pos;
 
   auto numFuncs = getU32LEB();
-  for (Index func = 0; func < numFuncs; func++) {
+  for (Index i = 0; i < numFuncs; i++) {
     auto funcIndex = getU32LEB();
+    auto& func = wasm.functions[funcIndex];
+
     auto numHints = getU32LEB();
     for (Index hint = 0; hint < numHints; hint++) {
       auto offset = getU32LEB();
