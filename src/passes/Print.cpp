@@ -2698,6 +2698,15 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
         doIndent(o, indent);
       }
     }
+
+    auto iter2 = currFunction->codeAnnotations.find(curr);
+    if (iter2 != currFunction->codeAnnotations.end()) {
+      auto& annotation = iter2->second;
+      if (annotation.likely) {
+        // TODO share constant name
+        o << "(@metadata.code.branch_hint \"" << (*annotation ? "\\1" : "\\0") << ")";
+      }
+    }
   }
 }
 
