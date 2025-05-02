@@ -1506,8 +1506,8 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   // binary locations tracked, then track it in the output as well. We also
   // track locations of instructions that have code annotations, as their binary
   // location goes in the custom section.
-  if (func &&
-      (!func->expressionLocations.empty() || func->codeAnnotations.count(curr))) {
+  if (func && (!func->expressionLocations.empty() ||
+               func->codeAnnotations.count(curr))) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
@@ -1541,8 +1541,6 @@ void WasmBinaryWriter::writeCodeAnnotations() {
   if (!have) {
     return;
   }
-
-  
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
