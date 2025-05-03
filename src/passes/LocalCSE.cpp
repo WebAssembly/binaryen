@@ -366,7 +366,7 @@ struct Scanner
   bool isPossible(Expression* curr) {
     // call.without.effects is always possible for CSE.
     if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
-      return;
+      return true;
     }
 
     // We will fully compute effects later, but consider shallow effects at this
