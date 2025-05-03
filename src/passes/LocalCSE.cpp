@@ -118,6 +118,7 @@
 
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/intrinsics.h>
 #include <ir/iteration.h>
 #include <ir/linear-execution.h>
 #include <ir/properties.h>
@@ -363,6 +364,11 @@ struct Scanner
   // total size big enough - while isPossible checks conditions that prevent
   // using an expression at all.
   bool isPossible(Expression* curr) {
+    // call.without.effects is always possible for CSE.
+    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+      return;
+    }
+
     // We will fully compute effects later, but consider shallow effects at this
     // early time to ignore things that cannot be optimized later, because we
     // use a greedy algorithm. Specifically, imagine we see this:
