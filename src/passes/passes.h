@@ -22,6 +22,15 @@ namespace wasm {
 class Pass;
 
 // Normal passes:
+Pass* createMinifiedPrinterPass();
+Pass* createFullPrinterPass();
+Pass* createPrinterPass();
+Pass* createPrintCallGraphPass();
+Pass* createPrintFeaturesPass();
+Pass* createPrintFunctionMapPass();
+Pass* createTypeGeneralizingPass();
+
+#ifndef SKIP_OPTIMIZATIONS
 Pass* createAbstractTypeRefiningPass();
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
@@ -51,7 +60,6 @@ Pass* createExtractFunctionPass();
 Pass* createExtractFunctionIndexPass();
 Pass* createFlattenPass();
 Pass* createFuncCastEmulationPass();
-Pass* createFullPrinterPass();
 Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
@@ -88,7 +96,6 @@ Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
 Pass* createMergeSimilarFunctionsPass();
 Pass* createMergeLocalsPass();
-Pass* createMinifiedPrinterPass();
 Pass* createMinifyImportsPass();
 Pass* createMinifyImportsAndExportsPass();
 Pass* createMinifyImportsAndExportsAndModulesPass();
@@ -125,10 +132,6 @@ Pass* createPoppifyPass();
 Pass* createPostEmscriptenPass();
 Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
-Pass* createPrinterPass();
-Pass* createPrintCallGraphPass();
-Pass* createPrintFeaturesPass();
-Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();
@@ -181,7 +184,6 @@ Pass* createTranslateToExnrefPass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createTupleOptimizationPass();
-Pass* createTypeGeneralizingPass();
 Pass* createTypeRefiningPass();
 Pass* createTypeRefiningGUFAPass();
 Pass* createTypeFinalizingPass();
@@ -191,6 +193,7 @@ Pass* createTypeUnFinalizingPass();
 Pass* createUnsubtypingPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
+#endif
 
 // Test passes:
 Pass* createCatchPopFixupPass();

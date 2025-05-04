@@ -90,6 +90,37 @@ bool PassRegistry::isPassHidden(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
+  registerPass("print", "print in s-expression format", createPrinterPass);
+  registerPass("print-minified",
+               "print in minified s-expression format",
+               createMinifiedPrinterPass);
+  registerPass("print-features",
+               "print options for enabled features",
+               createPrintFeaturesPass);
+  registerPass(
+    "print-full", "print in full s-expression format", createFullPrinterPass);
+  registerPass(
+    "print-call-graph", "print call graph", createPrintCallGraphPass);
+
+  // Register PrintFunctionMap using its normal name.
+  registerPass("print-function-map",
+               "print a map of function indexes to names",
+               createPrintFunctionMapPass);
+  // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
+  // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
+  // (wasm-as cannot run arbitrary passes).
+  // TODO: switch emscripten to this name, then remove the old one
+  registerPass(
+    "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
+
+  // Register passes used for internal testing. These don't show up in --help.
+  registerTestPass("catch-pop-fixup",
+                   "fixup nested pops within catches",
+                   createCatchPopFixupPass);
+  registerTestPass("experimental-type-generalizing",
+                   "generalize types (not yet sound)",
+                   createTypeGeneralizingPass);
+#ifndef SKIP_OPTIMIZATIONS
   registerPass("alignment-lowering",
                "lower unaligned loads and stores to smaller aligned ones",
                createAlignmentLoweringPass);
@@ -383,32 +414,9 @@ void PassRegistry::registerPasses() {
                "computes compile-time evaluatable expressions and propagates "
                "them through locals",
                createPrecomputePropagatePass);
-  registerPass("print", "print in s-expression format", createPrinterPass);
-  registerPass("print-minified",
-               "print in minified s-expression format",
-               createMinifiedPrinterPass);
-  registerPass("print-features",
-               "print options for enabled features",
-               createPrintFeaturesPass);
-  registerPass(
-    "print-full", "print in full s-expression format", createFullPrinterPass);
-  registerPass(
-    "print-call-graph", "print call graph", createPrintCallGraphPass);
-
-  // Register PrintFunctionMap using its normal name.
-  registerPass("print-function-map",
-               "print a map of function indexes to names",
-               createPrintFunctionMapPass);
-  // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
-  // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
-  // (wasm-as cannot run arbitrary passes).
-  // TODO: switch emscripten to this name, then remove the old one
-  registerPass(
-    "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
-
-  registerPass("propagate-globals-globally",
-               "propagate global values to other globals (useful for tests)",
-               createPropagateGlobalsGloballyPass);
+               registerPass("propagate-globals-globally",
+                "propagate global values to other globals (useful for tests)",
+                createPropagateGlobalsGloballyPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
@@ -588,14 +596,7 @@ void PassRegistry::registerPasses() {
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
   // registerPass(
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
-
-  // Register passes used for internal testing. These don't show up in --help.
-  registerTestPass("catch-pop-fixup",
-                   "fixup nested pops within catches",
-                   createCatchPopFixupPass);
-  registerTestPass("experimental-type-generalizing",
-                   "generalize types (not yet sound)",
-                   createTypeGeneralizingPass);
+#endif
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
