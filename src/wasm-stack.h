@@ -97,12 +97,15 @@ public:
                    bool DWARF)
     : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
 
+  // TODO: trackExpressions bool? for speeed
+  // and do we need sourceMap?
+
   void visit(Expression* curr) {
-    if (func && !sourceMap) {
+    if (func) {
       parent.trackExpressionStart(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
-    if (func && !sourceMap) {
+    if (func) {
       parent.trackExpressionEnd(curr, func);
     }
   }
