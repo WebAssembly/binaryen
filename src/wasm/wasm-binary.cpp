@@ -1584,12 +1584,16 @@ void WasmBinaryWriter::writeCodeAnnotations() {
       auto exprIter = binaryLocations.expressions.find(exprHint.expr);
       assert(exprIter != binaryLocations.expressions.end());
       auto exprOffset = exprIter->second.start;
+std::cout << "exprOff " << exprOffset << '\n';
 
       auto funcIter = binaryLocations.functions.find(func);
       assert(funcIter != binaryLocations.functions.end());
       auto funcOffset = funcIter->second.declarations;
+std::cout << "funcOff " << funcOffset << '\n';
 
-      o << U32LEB(exprOffset - funcOffset);
+      // exprOffset is relative to the function body (after the declarations),
+      // so we add.
+      o << U32LEB(exprOffset + funcOffset);
 
       // Hint size, always 1 for now.
       o << U32LEB(1);
