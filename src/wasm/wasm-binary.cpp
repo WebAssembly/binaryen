@@ -1875,7 +1875,6 @@ void WasmBinaryReader::preScan() {
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
-  bool has = false;
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
@@ -2021,7 +2020,7 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     readDylink(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
-  } else if (sectionName.equals(Annotations::BranchHint)) {
+  } else if (sectionName.equals(Annotations::BranchHint.str)) {
     readBranchHints(payloadLen);
   } else {
     // an unfamiliar custom section

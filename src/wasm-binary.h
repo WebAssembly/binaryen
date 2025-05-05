@@ -1636,7 +1636,7 @@ private:
 
   // Scans ahead in the binary to check certain conditions like
   // needCodeLocations.
-  preScan();
+  void preScan();
 };
 
 } // namespace wasm
