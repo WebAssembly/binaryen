@@ -181,7 +181,6 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // we are at the right absolute address.
     // We are relative to the section start.
     auto totalAdjustment = adjustmentForLEBShrinking + body;
-    std::cout << "Aadjust -= " << totalAdjustment << "\n";
     for (auto& [_, locations] : binaryLocations.expressions) {
       locations.start -= totalAdjustment;
       locations.end -= totalAdjustment;
@@ -460,8 +459,6 @@ void WasmBinaryWriter::writeFunctions() {
         // We added the binary locations, adjust them: they must be relative
         // to the code section.
         auto& span = binaryLocations.expressions[curr];
-        std::cout << "Badjust -= " << adjustmentForLEBShrinking << " for "
-                  << *curr << "\n";
         span.start -= adjustmentForLEBShrinking;
         span.end -= adjustmentForLEBShrinking;
         auto iter = binaryLocations.delimiters.find(curr);
