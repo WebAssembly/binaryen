@@ -5186,7 +5186,7 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
     std::unordered_map<BinaryLocation, Expression*> locationsMap;
 
     for (auto& [expr, span] : func->expressionLocations) {
-      locationsMap[span.begin] = expr;
+      locationsMap[span.start] = expr;
     }
 
     auto numHints = getU32LEB();
