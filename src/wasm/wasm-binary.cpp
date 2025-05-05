@@ -1573,15 +1573,23 @@ void WasmBinaryWriter::writeCodeAnnotations() {
 
   o << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
+    auto* func = wasm->getFunction(funcHints.func);
+
     o << U32LEB(getFunctionIndex(funcHints.func));
 
     o << U32LEB(funcHints.exprHints.size());
     for (auto& exprHint : funcHints.exprHints) {
-      // Emit the offset as relative to the start of the function locals TODO
-      auto iter = binaryLocations.expressions.find(exprHint.expr);
-      assert(iter != binaryLocations.expressions.end());
-      auto offset = iter->second.start;
-      o << U32LEB(offset);
+      // Emit the offset as relative to the start of the function locals (i.e.
+      // the function declarations).
+      auto exprIter = binaryLocations.expressions.find(exprHint.expr);
+      assert(exprIter != binaryLocations.expressions.end());
+      auto exprOffset = exprIter->second.start;
+
+      auto funcIter = binaryLocations.functions.find(func);
+      assert(funcIter != binaryLocations.functions.end());
+      auto funcOffset = funcIter->second.declarations;
+
+      o << U32LEB(exprOffset - funcOffset);
 
       // Hint size, always 1 for now.
       o << U32LEB(1);
