@@ -1493,19 +1493,19 @@ void WasmBinaryWriter::writeNoDebugLocation() {
   }
 }
 
-void WasmBinaryWriter::writeMetadata(Expression* curr, Function* func) {
-  if (sourceMap) {
-    auto& debugLocations = func->debugLocations;
-    auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end() && iter->second) {
-      // There is debug information here, write it out.
-      writeDebugLocation(*(iter->second));
-    } else {
-      // This expression has no debug location.
-      writeNoDebugLocation();
-    }
+void WasmBinaryWriter::writeSourceMapLocation(Expression* curr, Function* func) {
+  auto& debugLocations = func->debugLocations;
+  auto iter = debugLocations.find(curr);
+  if (iter != debugLocations.end() && iter->second) {
+    // There is debug information here, write it out.
+    writeDebugLocation(*(iter->second));
+  } else {
+    // This expression has no debug location.
+    writeNoDebugLocation();
   }
+}
 
+void WasmBinaryWriter::writeMetadata(Expression* curr, Function* func) {
   // If this is an instruction in a function, and if the original wasm had
   // binary locations tracked, then track it in the output as well. We also
   // track locations of instructions that have code annotations, as their binary

@@ -479,7 +479,9 @@ public:
   }
   void emitUnreachable() { writer.emitUnreachable(); }
   void emitDebugLocation(Expression* curr) {
-    parent.writeMetadata(curr, func);
+    if (sourceMap) {
+      parent.writeSourceMapLocation(curr, func);
+    }
   }
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }

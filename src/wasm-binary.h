@@ -1351,6 +1351,7 @@ public:
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeNoDebugLocation();
+  void writeSourceMapLocation(Expression* curr, Function* func);
   void writeMetadata(Expression* curr, Function* func);
   void writeMetadataEnd(Expression* curr, Function* func);
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
