@@ -14,6 +14,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; BINARY:      (type $0 (func (param i32)))
+
+  ;; BINARY:      (func $no-annotations (type $0) (param $x i32)
+  ;; BINARY-NEXT:  (block $block
+  ;; BINARY-NEXT:   (br_if $block
+  ;; BINARY-NEXT:    (local.get $x)
+  ;; BINARY-NEXT:   )
+  ;; BINARY-NEXT:  )
+  ;; BINARY-NEXT: )
   (func $no-annotations (param $x i32)
     ;; A function with no annotations. This tests that we use function indexes
     ;; properly in the section.
@@ -40,6 +49,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; BINARY:      (func $branch-hints-br_if (type $0) (param $x i32)
+  ;; BINARY-NEXT:  (block $block
+  ;; BINARY-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; BINARY-NEXT:   (br_if $block
+  ;; BINARY-NEXT:    (local.get $x)
+  ;; BINARY-NEXT:   )
+  ;; BINARY-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; BINARY-NEXT:   (br_if $block
+  ;; BINARY-NEXT:    (local.get $x)
+  ;; BINARY-NEXT:   )
+  ;; BINARY-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; BINARY-NEXT:   (br_if $block
+  ;; BINARY-NEXT:    (local.get $x)
+  ;; BINARY-NEXT:   )
+  ;; BINARY-NEXT:  )
+  ;; BINARY-NEXT: )
   (func $branch-hints-br_if (param $x i32)
     (block $out
       ;; A branch annotated as unlikely, and one as likely.
@@ -68,6 +93,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; BINARY:      (func $branch_hints-br_if-2 (type $0) (param $x i32)
+  ;; BINARY-NEXT:  (block $block
+  ;; BINARY-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; BINARY-NEXT:   (br_if $block
+  ;; BINARY-NEXT:    (local.get $x)
+  ;; BINARY-NEXT:   )
+  ;; BINARY-NEXT:  )
+  ;; BINARY-NEXT: )
   (func $branch_hints-br_if-2 (param $x i32)
     ;; A second function with hints. This one also has local definitions, which
     ;; should not confuse us (branch hint offsets are relative to the start of
