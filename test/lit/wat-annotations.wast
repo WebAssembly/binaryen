@@ -69,8 +69,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $branch_hints-br_if-2 (param $x i32)
-    ;; A second function with hints.
-    ;; TODO: test a big function so the function's size LEB >1 is tested
+    ;; A second function with hints. This one also has local definitions, which
+    ;; should not confuse us (branch hint offsets are relative to the start of
+    ;; the local definitions, not the end).
     (block $out
       (@metadata.code.branch_hint "\01")
       (br_if $out
