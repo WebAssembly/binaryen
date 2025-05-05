@@ -1514,7 +1514,6 @@ void WasmBinaryWriter::writeMetadata(Expression* curr, Function* func) {
                func->codeAnnotations.count(curr))) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
-std::cout << "track " << o.size() << " for " << *curr << "\n"; // XXX this happens twice. too many writeMetadata or such
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
   }
 }
@@ -1585,23 +1584,14 @@ void WasmBinaryWriter::writeCodeAnnotations() {
       // Emit the offset as relative to the start of the function locals (i.e.
       // the function declarations).
       auto exprIter = binaryLocations.expressions.find(exprHint.expr);
-std::cout << "fynd " << *exprHint.expr << '\n';      
       assert(exprIter != binaryLocations.expressions.end());
       auto exprOffset = exprIter->second.start;
-std::cout << "exprOff " << exprOffset << '\n';
 
       auto funcIter = binaryLocations.functions.find(func);
       assert(funcIter != binaryLocations.functions.end());
-      auto funcStart = funcIter->second.start;
       auto funcDeclarations = funcIter->second.declarations;
-std::cout << "funcOff1 " << funcStart << '\n';
-std::cout << "funcOff2 " << funcDeclarations << '\n';
 
-      // exprOffset is relative to the function body (after the declarations),
-      // so we just need to add the offset from the function start to the
-      // declarations. XXX
       o << U32LEB(exprOffset - funcDeclarations);
-std::cout << "written: " << (exprOffset - funcDeclarations) << '\n';
 
       // Hint size, always 1 for now.
       o << U32LEB(1);
