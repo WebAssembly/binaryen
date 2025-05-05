@@ -99,11 +99,11 @@ public:
 
   void visit(Expression* curr) {
     if (func && !sourceMap) {
-      parent.writeMetadata(curr, func);
+      parent.trackExpressionStart(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
     if (func && !sourceMap) {
-      parent.writeMetadataEnd(curr, func);
+      parent.trackExpressionEnd(curr, func);
     }
   }
 

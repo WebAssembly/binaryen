@@ -2737,7 +2737,7 @@ void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   breakStack.pop_back();
   o << int8_t(BinaryConsts::End);
   if (func) {
-    parent.writeMetadataEnd(curr, func);
+    parent.trackExpressionEnd(curr, func);
   }
 }
 
@@ -3212,9 +3212,9 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfBegin:
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
-        parent.writeMetadata(inst->origin, func);
+        parent.trackExpressionStart(inst->origin, func);
         writer.visit(inst->origin);
-        parent.writeMetadataEnd(inst->origin, func);
+        parent.trackExpressionEnd(inst->origin, func);
         break;
       }
       case StackInst::TryEnd:

@@ -1505,7 +1505,7 @@ void WasmBinaryWriter::writeSourceMapLocation(Expression* curr, Function* func) 
   }
 }
 
-void WasmBinaryWriter::writeMetadata(Expression* curr, Function* func) {
+void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
   // If this is an instruction in a function, and if the original wasm had
   // binary locations tracked, then track it in the output as well. We also
   // track locations of instructions that have code annotations, as their binary
@@ -1518,7 +1518,7 @@ void WasmBinaryWriter::writeMetadata(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeMetadataEnd(Expression* curr, Function* func) {
+void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
     span.end = o.size();
