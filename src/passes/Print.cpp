@@ -27,6 +27,7 @@
 #include <pass.h>
 #include <pretty_printing.h>
 #include <support/string.h>
+#include <wasm-annotations.h>
 #include <wasm-stack.h>
 #include <wasm-type-printing.h>
 #include <wasm.h>
@@ -267,15 +268,17 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void
   printDebugLocation(const std::optional<Function::DebugLocation>& location);
-  void printDebugLocation(Expression* curr);
 
   // Prints debug info for a delimiter in an expression.
   void printDebugDelimiterLocation(Expression* curr, Index i);
 
+  // Prints debug info and code annotations.
+  void printMetadata(Expression* curr);
+
   void printExpressionContents(Expression* curr);
 
   void visit(Expression* curr) {
-    printDebugLocation(curr);
+    printMetadata(curr);
     UnifiedExpressionVisitor<PrintSExpression>::visit(curr);
   }
 
@@ -2677,23 +2680,36 @@ void PrintSExpression::printDebugLocation(
   doIndent(o, indent);
 }
 
-void PrintSExpression::printDebugLocation(Expression* curr) {
+void PrintSExpression::printMetadata(Expression* curr) {
   if (currFunction) {
-    // show an annotation, if there is one
-    auto& debugLocations = currFunction->debugLocations;
-    auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end()) {
+    // Show a debug location, if there is one.
+    if (auto iter = currFunction->debugLocations.find(curr);
+        iter != currFunction->debugLocations.end()) {
       printDebugLocation(iter->second);
     } else {
       printDebugLocation(std::nullopt);
     }
-    // show a binary position, if there is one
+
+    // Show a binary position, if there is one.
     if (debugInfo) {
-      auto iter = currFunction->expressionLocations.find(curr);
-      if (iter != currFunction->expressionLocations.end()) {
+      if (auto iter = currFunction->expressionLocations.find(curr);
+          iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
         o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
           << '\n';
+        restoreNormalColor(o);
+        doIndent(o, indent);
+      }
+    }
+
+    // Show a code annotation, if there is one.
+    if (auto iter = currFunction->codeAnnotations.find(curr);
+        iter != currFunction->codeAnnotations.end()) {
+      auto& annotation = iter->second;
+      if (annotation.branchLikely) {
+        Colors::grey(o);
+        o << "(@" << Annotations::BranchHint << " \"\\0"
+          << (*annotation.branchLikely ? "1" : "0") << "\")\n";
         restoreNormalColor(o);
         doIndent(o, indent);
       }
@@ -2781,7 +2797,7 @@ void PrintSExpression::visitBlock(Block* curr) {
   while (1) {
     if (stack.size() > 0) {
       doIndent(o, indent);
-      printDebugLocation(curr);
+      printMetadata(curr);
     }
     stack.push_back(curr);
     o << '(';

@@ -72,8 +72,7 @@ public:
     this->codeSectionOffset = codeSectionOffset;
   }
 
-  // Set the function used to add scratch locals when constructing an isolated
-  // sequence of IR.
+  // The current function, used to create scratch locals, add annotations, etc.
   void setFunction(Function* func) { this->func = func; }
 
   // Handle the boundaries of control flow structures. Users may choose to use
@@ -119,7 +118,9 @@ public:
   Result<> makeBlock(Name label, Signature sig);
   Result<> makeIf(Name label, Signature sig);
   Result<> makeLoop(Name label, Signature sig);
-  Result<> makeBreak(Index label, bool isConditional);
+  Result<> makeBreak(Index label,
+                     bool isConditional,
+                     std::optional<bool> likely = std::nullopt);
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   Result<> makeCall(Name func, bool isReturn);

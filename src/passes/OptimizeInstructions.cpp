@@ -2891,6 +2891,12 @@ private:
             }
           }
         }
+        if (unary->op == EqZInt32 || unary->op == EqZInt64) {
+          if (auto* c = getFallthrough(unary->value)->dynCast<Const>()) {
+            return getDroppedChildrenAndAppend(
+              unary, Literal::makeFromInt32(c->value.isZero(), Type::i32));
+          }
+        }
       }
     } else if (auto* binary = boolean->dynCast<Binary>()) {
       if (binary->op == SubInt32) {

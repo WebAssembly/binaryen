@@ -1393,7 +1393,9 @@ Result<> IRBuilder::makeLoop(Name label, Signature sig) {
   return visitLoopStart(loop, sig.params);
 }
 
-Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
+Result<> IRBuilder::makeBreak(Index label,
+                              bool isConditional,
+                              std::optional<bool> likely) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   auto labelType = getLabelType(label);
@@ -1404,7 +1406,15 @@ Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
   // Use a dummy condition value if we need to pop a condition.
   curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(ChildPopper{*this}.visitBreak(&curr, *labelType));
-  push(builder.makeBreak(curr.name, curr.value, curr.condition));
+  auto* br = builder.makeBreak(curr.name, curr.value, curr.condition);
+  push(br);
+
+  if (likely) {
+    // Branches are only possible inside functions.
+    assert(func);
+    func->codeAnnotations[br].branchLikely = likely;
+  }
+
   return Ok{};
 }
 

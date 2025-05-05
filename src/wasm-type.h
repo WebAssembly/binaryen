@@ -28,6 +28,7 @@
 #include "support/index.h"
 #include "support/name.h"
 #include "support/parent_index_iterator.h"
+#include "support/small_vector.h"
 #include "wasm-features.h"
 
 // TODO: At various code locations we were assuming that single types are basic
@@ -78,6 +79,10 @@ using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
 using TypeID = uint64_t;
+
+// The number of HeapType children is typically small (1 for an array, and for
+// a struct, in practice <=4 is common).
+using HeapTypeChildren = SmallVector<HeapType, 4>;
 
 enum Shareability { Shared, Unshared };
 
@@ -242,11 +247,12 @@ public:
   std::vector<Type> getTypeChildren() const;
 
   // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren() const;
+  HeapTypeChildren getHeapTypeChildren() const;
 
-  // Similar to `getHeapTypeChildren`, but also includes the supertype if it
-  // exists.
-  std::vector<HeapType> getReferencedHeapTypes() const;
+  // Similar to `getHeapTypeChildren`, but also includes references types that
+  // are not children (i.e. that are not in fields of a struct, etc.; such
+  // referenced types include the super, and descriptor/described types).
+  HeapTypeChildren getReferencedHeapTypes() const;
 
   // Return the LUB of two HeapTypes, which may or may not exist.
   static std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
@@ -489,7 +495,7 @@ public:
   static bool isSubType(Type left, Type right);
 
   // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren();
+  HeapTypeChildren getHeapTypeChildren();
 
   // Computes the least upper bound from the type lattice.
   // If one of the type is unreachable, the other type becomes the result. If
