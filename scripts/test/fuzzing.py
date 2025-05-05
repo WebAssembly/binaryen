@@ -127,6 +127,7 @@ unfuzzable = [
     'type-merging-exact.wast',
     'type-refining-exact.wast',
     'type-refining-gufa-exact.wast',
+    'type-ssa-exact.wast',
     'minimize-rec-groups-exact.wast',
     'minimize-rec-groups-ignore-exact.wast',
     'public-exact.wast',
