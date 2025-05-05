@@ -70,6 +70,7 @@
   ;; CHECK-NEXT: )
   (func $branch_hints-br_if-2 (param $x i32)
     ;; A second function with hints.
+    ;; TODO: test a big function so the function's size LEB >1 is tested
     (block $out
       (@metadata.code.branch_hint "\01")
       (br_if $out
