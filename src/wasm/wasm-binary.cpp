@@ -1491,6 +1491,8 @@ void WasmBinaryWriter::writeNoDebugLocation() {
 
 void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
                                               Function* func) {
+  assert(sourceMap);
+
   auto& debugLocations = func->debugLocations;
   auto iter = debugLocations.find(curr);
   if (iter != debugLocations.end() && iter->second) {
@@ -1503,6 +1505,8 @@ void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
 }
 
 void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
+  assert(needCodeLocations);
+
   // If this is an instruction in a function, and if the original wasm had
   // binary locations tracked, then track it in the output as well. We also
   // track locations of instructions that have code annotations, as their binary
@@ -1515,6 +1519,8 @@ void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
 }
 
 void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
+  assert(needCodeLocations);
+
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
     span.end = o.size();
@@ -1524,6 +1530,8 @@ void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
 void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
                                                Function* func,
                                                size_t id) {
+  assert(needCodeLocations);
+
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
