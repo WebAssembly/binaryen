@@ -1838,7 +1838,7 @@ void WasmBinaryReader::preScan() {
   if (DWARF && !foundDWARF) {
     // The user asked for DWARF, but no DWARF sections exist in practice, so
     // disable the support.
-    DWARF = false;    
+    DWARF = false;
   }
 
   // Reset.
