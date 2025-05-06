@@ -86,6 +86,7 @@
   )
 
   ;; CHECK:      (func $branch_hints-br_if-2 (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $unused f64)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:   (br_if $out
@@ -94,6 +95,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; BINARY:      (func $branch_hints-br_if-2 (type $0) (param $x i32)
+  ;; BINARY-NEXT:  (local $unused f64)
   ;; BINARY-NEXT:  (block $block
   ;; BINARY-NEXT:   (@metadata.code.branch_hint "\01")
   ;; BINARY-NEXT:   (br_if $block
@@ -102,6 +104,7 @@
   ;; BINARY-NEXT:  )
   ;; BINARY-NEXT: )
   (func $branch_hints-br_if-2 (param $x i32)
+    (local $unused f64)
     ;; A second function with hints. This one also has local definitions, which
     ;; should not confuse us (branch hint offsets are relative to the start of
     ;; the local definitions, not the end).
