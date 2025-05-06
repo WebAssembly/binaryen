@@ -1521,7 +1521,7 @@ void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
+void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
                                                Function* func,
                                                size_t id) {
   if (func && !func->expressionLocations.empty()) {
