@@ -3212,12 +3212,10 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfBegin:
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
-        parent.trackExpressionStart(inst->origin, func);
         if (sourceMap) {
           parent.writeSourceMapLocation(inst->origin, func);
         }
         writer.visit(inst->origin);
-        parent.trackExpressionEnd(inst->origin, func);
         break;
       }
       case StackInst::TryEnd:
