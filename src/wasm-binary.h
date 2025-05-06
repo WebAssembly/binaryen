@@ -1454,6 +1454,7 @@ class WasmBinaryReader {
   // Settings.
 
   bool debugInfo = true;
+  bool DWARF = false;
   bool skipFunctionBodies = false;
 
   // Internal state.
@@ -1476,7 +1477,7 @@ public:
                    std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
-  void setDWARF(bool value) {} // TODO: rmoof
+  void setDWARF(bool value) { DWARF = value; }
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;
   }

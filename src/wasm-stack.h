@@ -96,9 +96,6 @@ public:
                    bool DWARF)
     : parent(parent), o(o), func(func), DWARF(DWARF) {}
 
-  // TODO: trackExpressions bool? for speeed
-  // and do we need sourceMap?
-
   void visit(Expression* curr) {
     if (func) {
       parent.trackExpressionStart(curr, func);
