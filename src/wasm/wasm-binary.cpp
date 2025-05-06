@@ -1804,9 +1804,18 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
 }
 
 void WasmBinaryReader::preScan() {
+  // TODO: Once we support code annotations here, we will need to always scan,
+  //       but for now, DWARF is the only reason.
+  if (!DWARF) {
+    return;
+  }
+
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
+
+  bool foundDWARF = false;
+
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
@@ -1819,11 +1828,19 @@ void WasmBinaryReader::preScan() {
       // DWARF sections contain code offsets.
       if (DWARF && Debug::isDWARFSection(sectionName)) {
         needCodeLocations = true;
+        foundDWARF = true;
         break;
       }
     }
     pos = oldPos + payloadLen;
   }
+
+  if (DWARF && !foundDWARF) {
+    // The user asked for DWARF, but no DWARF sections exist in practice, so
+    // disable the support.
+    DWARF = false;    
+  }
+
   // Reset.
   pos = 0;
 }
