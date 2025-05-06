@@ -1818,7 +1818,7 @@ void WasmBinaryReader::preScan() {
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
       // DWARF sections contain code offsets.
-      if (Debug::isDWARFSection(sectionName)) {
+      if (DWARF && Debug::isDWARFSection(sectionName)) {
         needCodeLocations = true;
         break;
       }
