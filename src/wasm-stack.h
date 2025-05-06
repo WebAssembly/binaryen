@@ -93,7 +93,6 @@ public:
   BinaryInstWriter(WasmBinaryWriter& parent,
                    BufferWithRandomAccess& o,
                    Function* func,
-                   bool sourceMap,
                    bool DWARF)
     : parent(parent), o(o), func(func), DWARF(DWARF) {}
 
@@ -451,7 +450,7 @@ public:
                            bool sourceMap = false,
                            bool DWARF = false)
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
+      writer(parent, o, func, DWARF), sourceMap(sourceMap) {}
 
   void emit(Expression* curr) { writer.visit(curr); }
   void emitHeader() {
@@ -520,7 +519,7 @@ public:
                         StackIR& stackIR,
                         bool sourceMap = false,
                         bool DWARF = false)
-    : parent(parent), writer(parent, o, func, sourceMap, DWARF), func(func),
+    : parent(parent), writer(parent, o, func, DWARF), func(func),
       stackIR(stackIR), sourceMap(sourceMap) {}
 
   void write();
