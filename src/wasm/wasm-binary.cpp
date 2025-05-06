@@ -1493,6 +1493,8 @@ void WasmBinaryWriter::writeNoDebugLocation() {
 
 void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
                                               Function* func) {
+  assert(sourceMap);
+
   auto& debugLocations = func->debugLocations;
   auto iter = debugLocations.find(curr);
   if (iter != debugLocations.end() && iter->second) {
@@ -1524,9 +1526,9 @@ void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
-                                               Function* func,
-                                               size_t id) {
+void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
+                                                Function* func,
+                                                size_t id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
@@ -1884,6 +1886,9 @@ void WasmBinaryReader::preScan() {
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
+
+  bool foundDWARF = false;
+
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
@@ -1893,18 +1898,32 @@ void WasmBinaryReader::preScan() {
     auto oldPos = pos;
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
-      // DWARF sections contain code offsets, as do code annotations; either of
-      // those force us to need code locations.
+
+      // Code annotations require code locations.
       // TODO: For Branch Hinting, we could note which functions require
       //       code locations, as an optimization.
-      if (Debug::isDWARFSection(sectionName) ||
-          sectionName == Annotations::BranchHint) {
+      if (sectionName == Annotations::BranchHint) {
         needCodeLocations = true;
+        // Do not break, so we keep looking for DWARF.
+        continue;
+      }
+
+      // DWARF sections contain code offsets.
+      if (DWARF && Debug::isDWARFSection(sectionName)) {
+        needCodeLocations = true;
+        foundDWARF = true;
         break;
       }
     }
     pos = oldPos + payloadLen;
   }
+
+  if (DWARF && !foundDWARF) {
+    // The user asked for DWARF, but no DWARF sections exist in practice, so
+    // disable the support.
+    DWARF = false;
+  }
+
   // Reset.
   pos = 0;
 }
