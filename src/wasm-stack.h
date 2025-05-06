@@ -95,10 +95,7 @@ public:
                    Function* func,
                    bool sourceMap,
                    bool DWARF)
-    : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
-
-  // TODO: trackExpressions bool? for speeed
-  // and do we need sourceMap?
+    : parent(parent), o(o), func(func), DWARF(DWARF) {}
 
   void visit(Expression* curr) {
     if (func) {
@@ -139,7 +136,6 @@ private:
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
   Function* func = nullptr;
-  bool sourceMap;
   bool DWARF;
 
   std::vector<Name> breakStack;

@@ -50,7 +50,7 @@ void BinaryInstWriter::visitIf(If* curr) {
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
-  if (func && !sourceMap) {
+  if (func) {
     parent.trackExpressionDelimiter(curr, func, BinaryLocations::Else);
   }
   o << int8_t(BinaryConsts::Else);
@@ -2156,7 +2156,7 @@ void BinaryInstWriter::visitTryTable(TryTable* curr) {
 }
 
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
-  if (func && !sourceMap) {
+  if (func) {
     parent.trackExpressionDelimiter(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch_Legacy)
@@ -2164,7 +2164,7 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
-  if (func && !sourceMap) {
+  if (func) {
     parent.trackExpressionDelimiter(curr, func, curr->catchBodies.size());
   }
   o << int8_t(BinaryConsts::CatchAll_Legacy);
