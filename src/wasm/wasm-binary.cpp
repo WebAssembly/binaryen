@@ -1520,6 +1520,8 @@ void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
 }
 
 void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
+  // TODO: If we need to track the end of annotated code locations, we need to
+  //       enable that here.
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
     span.end = o.size();
@@ -1529,6 +1531,8 @@ void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
 void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
                                                 Function* func,
                                                 size_t id) {
+  // TODO: If we need to track the delimiters of annotated code locations, we
+  //       need to enable that here.
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
