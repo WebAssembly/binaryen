@@ -1620,7 +1620,6 @@ public:
   void readFeatures(size_t payloadLen);
   void readDylink(size_t payloadLen);
   void readDylink0(size_t payloadLen);
-  void readBranchHints(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
