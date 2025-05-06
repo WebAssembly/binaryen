@@ -1351,9 +1351,12 @@ public:
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeNoDebugLocation();
-  void writeDebugLocation(Expression* curr, Function* func);
-  void writeDebugLocationEnd(Expression* curr, Function* func);
-  void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
+  void writeSourceMapLocation(Expression* curr, Function* func);
+
+  // Track where expressions go in the binary format.
+  void trackExpressionStart(Expression* curr, Function* func);
+  void trackExpressionEnd(Expression* curr, Function* func);
+  void trackExpressionDelimiter(Expression* curr, Function* func, size_t id);
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1614,9 +1617,9 @@ public:
 
   static Name escape(Name name);
   void findAndReadNames();
-  void readFeatures(size_t);
-  void readDylink(size_t);
-  void readDylink0(size_t);
+  void readFeatures(size_t payloadLen);
+  void readDylink(size_t payloadLen);
+  void readDylink0(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
@@ -1627,7 +1630,14 @@ public:
   }
 
 private:
-  bool hasDWARFSections();
+  // In certain modes we need to note the locations of expressions, to match
+  // them against sections like DWARF or custom annotations. As this incurs
+  // overhead, we only note locations when we actually need to.
+  bool needCodeLocations = false;
+
+  // Scans ahead in the binary to check certain conditions like
+  // needCodeLocations.
+  void preScan();
 };
 
 } // namespace wasm

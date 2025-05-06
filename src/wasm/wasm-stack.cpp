@@ -50,8 +50,8 @@ void BinaryInstWriter::visitIf(If* curr) {
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, BinaryLocations::Else);
   }
   o << int8_t(BinaryConsts::Else);
 }
@@ -2156,16 +2156,16 @@ void BinaryInstWriter::visitTryTable(TryTable* curr) {
 }
 
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, i);
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch_Legacy)
     << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, curr->catchBodies.size());
   }
   o << int8_t(BinaryConsts::CatchAll_Legacy);
 }
@@ -2736,8 +2736,8 @@ void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   o << int8_t(BinaryConsts::End);
-  if (func && !sourceMap) {
-    parent.writeDebugLocationEnd(curr, func);
+  if (func) {
+    parent.trackExpressionEnd(curr, func);
   }
 }
 
@@ -3213,12 +3213,9 @@ void StackIRToBinaryWriter::write() {
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
         if (sourceMap) {
-          parent.writeDebugLocation(inst->origin, func);
+          parent.writeSourceMapLocation(inst->origin, func);
         }
         writer.visit(inst->origin);
-        if (sourceMap) {
-          parent.writeDebugLocationEnd(inst->origin, func);
-        }
         break;
       }
       case StackInst::TryEnd:

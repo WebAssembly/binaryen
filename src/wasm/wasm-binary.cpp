@@ -1489,20 +1489,26 @@ void WasmBinaryWriter::writeNoDebugLocation() {
   }
 }
 
-void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
-  if (sourceMap) {
-    auto& debugLocations = func->debugLocations;
-    auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end() && iter->second) {
-      // There is debug information here, write it out.
-      writeDebugLocation(*(iter->second));
-    } else {
-      // This expression has no debug location.
-      writeNoDebugLocation();
-    }
+void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
+                                              Function* func) {
+  assert(sourceMap);
+
+  auto& debugLocations = func->debugLocations;
+  auto iter = debugLocations.find(curr);
+  if (iter != debugLocations.end() && iter->second) {
+    // There is debug information here, write it out.
+    writeDebugLocation(*(iter->second));
+  } else {
+    // This expression has no debug location.
+    writeNoDebugLocation();
   }
+}
+
+void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
   // If this is an instruction in a function, and if the original wasm had
-  // binary locations tracked, then track it in the output as well.
+  // binary locations tracked, then track it in the output as well. We also
+  // track locations of instructions that have code annotations, as their binary
+  // location goes in the custom section.
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
@@ -1510,16 +1516,16 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
+void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
     span.end = o.size();
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
-                                               Function* func,
-                                               size_t id) {
+void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
+                                                Function* func,
+                                                size_t id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
@@ -1799,11 +1805,19 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
   wasm.features = features;
 }
 
-bool WasmBinaryReader::hasDWARFSections() {
+void WasmBinaryReader::preScan() {
+  // TODO: Once we support code annotations here, we will need to always scan,
+  //       but for now, DWARF is the only reason.
+  if (!DWARF) {
+    return;
+  }
+
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
-  bool has = false;
+
+  bool foundDWARF = false;
+
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
@@ -1813,31 +1827,32 @@ bool WasmBinaryReader::hasDWARFSections() {
     auto oldPos = pos;
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
-      if (Debug::isDWARFSection(sectionName)) {
-        has = true;
+      // DWARF sections contain code offsets.
+      if (DWARF && Debug::isDWARFSection(sectionName)) {
+        needCodeLocations = true;
+        foundDWARF = true;
         break;
       }
     }
     pos = oldPos + payloadLen;
   }
+
+  if (DWARF && !foundDWARF) {
+    // The user asked for DWARF, but no DWARF sections exist in practice, so
+    // disable the support.
+    DWARF = false;
+  }
+
+  // Reset.
   pos = 0;
-  return has;
 }
 
 void WasmBinaryReader::read() {
-  if (DWARF) {
-    // In order to update dwarf, we must store info about each IR node's
-    // binary position. This has noticeable memory overhead, so we don't do it
-    // by default: the user must request it by setting "DWARF", and even if so
-    // we scan ahead to see that there actually *are* DWARF sections, so that
-    // we don't do unnecessary work.
-    if (!hasDWARFSections()) {
-      DWARF = false;
-    }
-  }
+  preScan();
 
   // Skip ahead and read the name section so we know what names to use when we
   // construct module elements.
+  // TODO: Combine this pre-scan with the one in preScan().
   if (debugInfo) {
     findAndReadNames();
   }
@@ -1879,7 +1894,7 @@ void WasmBinaryReader::read() {
         readFunctionSignatures();
         break;
       case BinaryConsts::Section::Code:
-        if (DWARF) {
+        if (needCodeLocations) {
           codeSectionLocation = pos;
         }
         readFunctions();
@@ -2871,7 +2886,7 @@ void WasmBinaryReader::readFunctions() {
   if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError("invalid function section size, must equal types");
   }
-  if (DWARF) {
+  if (needCodeLocations) {
     builder.setBinaryLocation(&pos, codeSectionLocation);
   }
   for (size_t i = 0; i < numFuncBodies; i++) {
@@ -2885,7 +2900,7 @@ void WasmBinaryReader::readFunctions() {
     auto& func = wasm.functions[numFuncImports + i];
     currFunction = func.get();
 
-    if (DWARF) {
+    if (needCodeLocations) {
       func->funcLocation = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos - codeSectionLocation),
         BinaryLocation(pos - codeSectionLocation),
