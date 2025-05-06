@@ -1524,8 +1524,8 @@ void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
 }
 
 void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
-                                               Function* func,
-                                               size_t id) {
+                                                Function* func,
+                                                size_t id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
