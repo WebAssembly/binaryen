@@ -97,13 +97,16 @@ public:
                    bool DWARF)
     : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
 
+  // TODO: trackExpressions bool? for speeed
+  // and do we need sourceMap?
+
   void visit(Expression* curr) {
-    if (func && !sourceMap) {
-      parent.writeDebugLocation(curr, func);
+    if (func) {
+      parent.trackExpressionStart(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
-    if (func && !sourceMap) {
-      parent.writeDebugLocationEnd(curr, func);
+    if (func) {
+      parent.trackExpressionEnd(curr, func);
     }
   }
 
@@ -480,7 +483,7 @@ public:
   void emitUnreachable() { writer.emitUnreachable(); }
   void emitDebugLocation(Expression* curr) {
     if (sourceMap) {
-      parent.writeDebugLocation(curr, func);
+      parent.writeSourceMapLocation(curr, func);
     }
   }
 
