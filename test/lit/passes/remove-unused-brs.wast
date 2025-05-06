@@ -5,7 +5,7 @@
 
 (module
   ;; Regression test in which we need to calculate a proper LUB.
-  ;; CHECK:      (func $selectify-fresh-lub (type $3) (param $x i32) (result anyref)
+  ;; CHECK:      (func $selectify-fresh-lub (type $4) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (select (result i31ref)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.i31
@@ -30,7 +30,7 @@
     )
   )
 
-  ;; CHECK:      (func $selectify-simple (type $1) (param $0 i32) (result i32)
+  ;; CHECK:      (func $selectify-simple (type $0) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.lt_u
@@ -73,7 +73,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (then
@@ -104,12 +104,12 @@
     )
   )
 
-  ;; CHECK:      (func $nothing (type $0)
+  ;; CHECK:      (func $nothing (type $1)
   ;; CHECK-NEXT: )
   (func $nothing)
 
 
-  ;; CHECK:      (func $restructure-br_if-condition-reorderable (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-condition-reorderable (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
@@ -146,7 +146,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-effectful (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-effectful (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $nothing)
@@ -188,7 +188,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-1 (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-1 (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
@@ -226,14 +226,14 @@
     )
   )
 
-  ;; CHECK:      (func $get-i32 (type $4) (result i32)
+  ;; CHECK:      (func $get-i32 (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 400)
   ;; CHECK-NEXT: )
   (func $get-i32 (result i32)
     (i32.const 400)
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-2 (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-2 (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
@@ -272,7 +272,7 @@
       (call $get-i32)
     )
   )
-  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-3 (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-3 (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
@@ -305,7 +305,7 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-4 (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-4 (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $x
@@ -340,9 +340,135 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-select-no-multivalue (type $0)
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-1 (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $parent (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $get-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant-in-block-tail-1 (result i32)
+    ;; The br_if's value is equal to the value right after it, so we can remove it.
+    (block $parent (result i32)
+      (call $nothing)
+      (drop
+        (br_if $parent
+          (i32.const 1)
+          (call $get-i32)
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-2 (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $parent (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $parent
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (call $get-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant-in-block-tail-2 (result i32)
+    ;; As above, but now the value is different, so we do not optimize
+    (block $parent (result i32)
+      (call $nothing)
+      (drop
+        (br_if $parent
+          (i32.const 2)
+          (call $get-i32)
+        )
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-3 (type $0) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $parent (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $parent
+  ;; CHECK-NEXT:     (call $get-i32)
+  ;; CHECK-NEXT:     (call $get-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $get-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant-in-block-tail-3 (param $x i32) (result i32)
+    ;; As above, but now the value has effects, so we do not optimize
+    (block $parent (result i32)
+      (call $nothing)
+      (drop
+        (br_if $parent
+          (call $get-i32)
+          (call $get-i32)
+        )
+      )
+      (call $get-i32)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-4 (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $outer (result i32)
+  ;; CHECK-NEXT:   (block $inner (result i32)
+  ;; CHECK-NEXT:    (call $nothing)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $outer
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (call $get-i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant-in-block-tail-4 (result i32)
+    ;; As above, but the br_if targets another block, so we do not optimize.
+    (block $outer (result i32)
+      (block $inner (result i32)
+        (call $nothing)
+        (drop
+          (br_if $outer
+            (i32.const 1)
+            (call $get-i32)
+          )
+        )
+        (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-5 (type $2) (result i32)
+  ;; CHECK-NEXT:  (block $parent (result i32)
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (br $parent
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-redundant-in-block-tail-5 (result i32)
+    ;; As above, but the br lacks a condition. We do not bother to optimize
+    ;; the dead code after it, but also should not error here.
+    (block $parent (result i32)
+      (call $nothing)
+      (br $parent
+        (i32.const 1)
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-select-no-multivalue (type $1)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $block (type $2) (result i32 i32)
+  ;; CHECK-NEXT:   (block $block (type $3) (result i32 i32)
   ;; CHECK-NEXT:    (tuple.drop 2
   ;; CHECK-NEXT:     (br_if $block
   ;; CHECK-NEXT:      (tuple.make 2
@@ -387,7 +513,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-of-if (type $0)
+  ;; CHECK:      (func $if-of-if (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
@@ -421,7 +547,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-of-if-but-side-effects (type $0)
+  ;; CHECK:      (func $if-of-if-but-side-effects (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $x
@@ -460,7 +586,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-of-if-but-too-costly (type $0)
+  ;; CHECK:      (func $if-of-if-but-too-costly (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $x
@@ -515,7 +641,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-of-if-but-inner-else (type $0)
+  ;; CHECK:      (func $if-of-if-but-inner-else (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $x
@@ -555,7 +681,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-of-if-but-outer-else (type $0)
+  ;; CHECK:      (func $if-of-if-but-outer-else (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.tee $x
@@ -595,7 +721,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable-if (type $0)
+  ;; CHECK:      (func $unreachable-if (type $1)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (unreachable)
@@ -625,7 +751,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-with-unreachable-if (type $0)
+  ;; CHECK:      (func $loop-with-unreachable-if (type $1)
   ;; CHECK-NEXT:  (loop $label
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (unreachable)
