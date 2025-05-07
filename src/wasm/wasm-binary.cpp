@@ -1525,8 +1525,7 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
 }
 
 void WasmBinaryWriter::writeInlineString(std::string_view name) {
-  o << U32LEB(name.size());
-  writeData(name.data(), name.size());
+  o.writeInlineString(name);
 }
 
 static bool isHexDigit(char ch) {
