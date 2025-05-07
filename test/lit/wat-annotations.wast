@@ -135,6 +135,11 @@
   ;; BINARY-NEXT: )
   (func $mixing (param $x i32)
     ;; Mix branch hints with source locations. Both hints should remain.
+    ;; TODO: Fix this in the binary format. Atm we test with --roundtrip here,
+    ;;       which does not use source maps, so it is expected for the source
+    ;;       annotation to vanish. But using source maps does not fix it, see
+    ;;       the TODO in the code.
+
     ;;@ mixing.src:1337:42
     (block $out
       (@metadata.code.branch_hint "\01")
