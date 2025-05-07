@@ -77,7 +77,6 @@
         (local.get $x)
       )
       ;; The last one wins.
-      (@metadata.code.branch_hint "\01")
       (@metadata.code.branch_hint "\00")
       (br_if $out
         (local.get $x)

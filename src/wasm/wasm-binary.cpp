@@ -1545,6 +1545,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   // hints.
   struct ExprHint {
     Expression* expr;
+    // The offset we will write in the custom section.
+    BinaryLocation offset;
     Function::CodeAnnotation* hint;
   };
 
@@ -1559,15 +1561,45 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
     // Collect the Branch Hints for this function.
     FuncHints funcHints;
 
+    // We compute the location of the function declaration area (where the
+    // locals are declared) the first time we need it.
+    BinaryLocation funcDeclarations = 0;
+
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (annotation.branchLikely) {
-        funcHints.exprHints.push_back(ExprHint{expr, &annotation});
+        // Compute the offset: it should be relative to the start of the
+        // function locals (i.e. the function declarations).
+        auto exprIter = binaryLocations.expressions.find(expr);
+        if (exprIter == binaryLocations.expressions.end()) {
+          // No expression exists for this annotation - perhaps optimizations
+          // removed it.
+          continue;
+        }
+        auto exprOffset = exprIter->second.start;
+
+        if (!funcDeclarations) {
+          auto funcIter = binaryLocations.functions.find(func.get());
+          assert(funcIter != binaryLocations.functions.end());
+          funcDeclarations = funcIter->second.declarations;
+        }
+
+        auto offset = exprOffset - funcDeclarations;
+
+        funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
       }
     }
 
-    // If we found something, note it all.
     if (!funcHints.exprHints.empty()) {
+      // We found something. Finalize the data.
       funcHints.func = func->name;
+
+      // Hints must be sorted by increasing binary offset.
+      std::sort(funcHints.exprHints.begin(),
+                funcHints.exprHints.end(),
+                [](const ExprHint& a, const ExprHint& b) {
+                  return a.offset < b.offset;
+                });
+
       funcHintsVec.emplace_back(std::move(funcHints));
     }
   }
@@ -1585,23 +1617,11 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
   buffer << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
-    auto* func = wasm->getFunction(funcHints.func);
-
     buffer << U32LEB(getFunctionIndex(funcHints.func));
 
     buffer << U32LEB(funcHints.exprHints.size());
     for (auto& exprHint : funcHints.exprHints) {
-      // Emit the offset as relative to the start of the function locals (i.e.
-      // the function declarations).
-      auto exprIter = binaryLocations.expressions.find(exprHint.expr);
-      assert(exprIter != binaryLocations.expressions.end());
-      auto exprOffset = exprIter->second.start;
-
-      auto funcIter = binaryLocations.functions.find(func);
-      assert(funcIter != binaryLocations.functions.end());
-      auto funcDeclarations = funcIter->second.declarations;
-
-      buffer << U32LEB(exprOffset - funcDeclarations);
+      buffer << U32LEB(exprHint.offset);
 
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
