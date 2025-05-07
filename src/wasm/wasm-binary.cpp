@@ -109,10 +109,7 @@ void WasmBinaryWriter::writeHeader() {
 }
 
 int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
-  int32_t ret = o.size();
-  o << int32_t(0);
-  o << int8_t(0);
-  return ret;
+  return o.writeU32LEBPlaceholder();
 }
 
 void WasmBinaryWriter::writeResizableLimits(
@@ -144,26 +141,12 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  // section size does not include the reserved bytes of the size field itself
-  int32_t size = o.size() - start - MaxLEB32Bytes;
-  auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  // We can move things back if the actual LEB for the size doesn't use the
-  // maximum 5 bytes. In that case we need to adjust offsets after we move
-  // things backwards.
-  auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
-  if (adjustmentForLEBShrinking) {
-    // we can save some room, nice
-    assert(sizeFieldSize < MaxLEB32Bytes);
-    std::move(&o[start] + MaxLEB32Bytes,
-              &o[start] + MaxLEB32Bytes + size,
-              &o[start] + sizeFieldSize);
-    o.resize(o.size() - adjustmentForLEBShrinking);
-    if (sourceMap) {
-      for (auto i = sourceMapLocationsSizeAtSectionStart;
-           i < sourceMapLocations.size();
-           ++i) {
-        sourceMapLocations[i].first -= adjustmentForLEBShrinking;
-      }
+  auto adjustmentForLEBShrinking = o.emitRetroactiveLEB(start);
+  if (adjustmentForLEBShrinking && sourceMap) {
+    for (auto i = sourceMapLocationsSizeAtSectionStart;
+         i < sourceMapLocations.size();
+         ++i) {
+      sourceMapLocations[i].first -= adjustmentForLEBShrinking;
     }
   }
 
@@ -489,6 +472,22 @@ void WasmBinaryWriter::writeFunctions() {
     }
   });
   finishSection(sectionStart);
+
+  // Code annotations must come before the code section (see comment on
+  // writeCodeAnnotations).
+  if (auto annotations = writeCodeAnnotations()) {
+    // We need to move the code section and put the annotations before it.
+    auto& annotationsBuffer = *annotations;
+    auto oldSize = o.size();
+    o.resize(oldSize + annotationsBuffer.size());
+
+    // |sectionStart| is the start of the contents of the section. Subtract 1 to
+    // include the section code as well, so we move all of it.
+    std::move_backwards(&o[sectionStart - 1], &o[oldSize], o.end());
+    std::copy(annotationsBuffer.begin(),
+              annotationsBuffer.end(),
+              &o[sectionStart - 1]);
+  }
 }
 
 void WasmBinaryWriter::writeStrings() {
@@ -1538,7 +1537,7 @@ void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
   }
 }
 
-void WasmBinaryWriter::writeCodeAnnotations() {
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   // Assemble the info for Branch Hinting: for each function, a vector of the
   // hints.
   struct ExprHint {
@@ -1571,20 +1570,23 @@ void WasmBinaryWriter::writeCodeAnnotations() {
   }
 
   if (funcHintsVec.empty()) {
-    return;
+    return {};
   }
 
-  // Emit the section, as we found data.
-  auto start = startSection(BinaryConsts::Custom);
+  BufferWithRandomAccess buffer;
+
+  // We found data: emit the section.
+  buffer << uint8_t(BinaryConsts::Custom);
+  auto lebPos = buffer.writeU32LEBPlaceholder();
   writeInlineString(Annotations::BranchHint.str);
 
-  o << U32LEB(funcHintsVec.size());
+  buffer << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
     auto* func = wasm->getFunction(funcHints.func);
 
-    o << U32LEB(getFunctionIndex(funcHints.func));
+    buffer << U32LEB(getFunctionIndex(funcHints.func));
 
-    o << U32LEB(funcHints.exprHints.size());
+    buffer << U32LEB(funcHints.exprHints.size());
     for (auto& exprHint : funcHints.exprHints) {
       // Emit the offset as relative to the start of the function locals (i.e.
       // the function declarations).
@@ -1596,20 +1598,25 @@ void WasmBinaryWriter::writeCodeAnnotations() {
       assert(funcIter != binaryLocations.functions.end());
       auto funcDeclarations = funcIter->second.declarations;
 
-      o << U32LEB(exprOffset - funcDeclarations);
+      buffer << U32LEB(exprOffset - funcDeclarations);
 
       // Hint size, always 1 for now.
-      o << U32LEB(1);
+      buffer << U32LEB(1);
 
       // We must only emit hints that are present.
       assert(exprHint.hint->branchLikely);
 
       // Hint contents: likely or not.
-      o << U32LEB(int(*exprHint.hint->branchLikely));
+      buffer << U32LEB(int(*exprHint.hint->branchLikely));
     }
   }
 
-  finishSection(start);
+  // Write the final size. We can ignore the return value, which is the number
+  // of bytes we shrank (if the LEB was smaller than the maximum size), as no
+  // value in this section cares.
+  (void)buffer.emitRetroactiveLEB(start);
+
+  return buffer;
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
