@@ -157,6 +157,10 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // The section type byte is right before the LEB for the size; we want
     // offsets that are relative to the body, which is after that section type
     // byte and the the size LEB.
+    //
+    // We can compute the size of the size field LEB by considering the original
+    // size of the maximal LEB, and the adjustment due to shrinking.
+    auto sizeFieldSize = MaxLEB32Bytes - adjustmentForLEBShrinking;
     auto body = start + sizeFieldSize;
     // Offsets are relative to the body of the code section: after the
     // section type byte and the size.
@@ -483,7 +487,7 @@ void WasmBinaryWriter::writeFunctions() {
 
     // |sectionStart| is the start of the contents of the section. Subtract 1 to
     // include the section code as well, so we move all of it.
-    std::move_backwards(&o[sectionStart - 1], &o[oldSize], o.end());
+    std::move_backward(&o[sectionStart - 1], &o[oldSize], o.end());
     std::copy(annotationsBuffer.begin(),
               annotationsBuffer.end(),
               &o[sectionStart - 1]);
@@ -1614,7 +1618,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   // Write the final size. We can ignore the return value, which is the number
   // of bytes we shrank (if the LEB was smaller than the maximum size), as no
   // value in this section cares.
-  (void)buffer.emitRetroactiveLEB(start);
+  (void)buffer.emitRetroactiveLEB(lebPos);
 
   return buffer;
 }

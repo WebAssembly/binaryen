@@ -263,9 +263,9 @@ public:
   // offset we wrote it at. The LEB can then be patched with the proper value
   // later, when the size is known.
   BinaryLocation writeU32LEBPlaceholder() {
-    BinaryLocation ret = o.size();
-    o << int32_t(0);
-    o << int8_t(0);
+    BinaryLocation ret = size();
+    *this << int32_t(0);
+    *this << int8_t(0);
     return ret;
   }
 
@@ -276,9 +276,9 @@ public:
   // (Thus, if we return >0, we moved code backwards, and the caller may need to
   // adjust things.)
   BinaryLocation emitRetroactiveLEB(BinaryLocation start) {
-    // Do not include the LEB itself in the size.
-    auto actualSize = size() - start - MaxLEB32Bytes;
-    auto sizeFieldSize = writeAt(start, U32LEB(actualSize));
+    // Do not include the LEB itself in the section size.
+    auto sectionSize = size() - start - MaxLEB32Bytes;
+    auto sizeFieldSize = writeAt(start, U32LEB(sectionSize));
 
     // We can move things back if the actual LEB for the size doesn't use the
     // maximum 5 bytes. In that case we need to adjust offsets after we move
@@ -287,9 +287,9 @@ public:
     if (adjustmentForLEBShrinking) {
       // We can save some room.
       assert(sizeFieldSize < MaxLEB32Bytes);
-      std::move(&o[start] + MaxLEB32Bytes,
-                &o[start] + MaxLEB32Bytes + size,
-                &o[start] + sizeFieldSize);
+      std::move(&(*this)[start] + MaxLEB32Bytes,
+                &(*this)[start] + MaxLEB32Bytes + sectionSize,
+                &(*this)[start] + sizeFieldSize);
       resize(size() - adjustmentForLEBShrinking);
     }
 
