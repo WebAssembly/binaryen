@@ -139,7 +139,7 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  auto adjustmentForLEBShrinking = o.emitRetroactiveLEB(start);
+  auto adjustmentForLEBShrinking = o.emitRetroactiveSectionSizeLEB(start);
   if (adjustmentForLEBShrinking && sourceMap) {
     for (auto i = sourceMapLocationsSizeAtSectionStart;
          i < sourceMapLocations.size();
