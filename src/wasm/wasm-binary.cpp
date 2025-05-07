@@ -1944,7 +1944,6 @@ void WasmBinaryReader::preScan() {
       if (sectionName == Annotations::BranchHint) {
         needCodeLocations = true;
         // Do not break, so we keep looking for DWARF.
-        continue;
       }
 
       // DWARF sections contain code offsets.
