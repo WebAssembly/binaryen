@@ -275,7 +275,7 @@ public:
   // backwards if we used fewer bytes, and return the number of bytes we moved.
   // (Thus, if we return >0, we moved code backwards, and the caller may need to
   // adjust things.)
-  BinaryLocation emitRetroactiveLEB(BinaryLocation start) {
+  BinaryLocation emitRetroactiveSectionSizeLEB(BinaryLocation start) {
     // Do not include the LEB itself in the section size.
     auto sectionSize = size() - start - MaxLEB32Bytes;
     auto sizeFieldSize = writeAt(start, U32LEB(sectionSize));

@@ -140,7 +140,7 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  auto adjustmentForLEBShrinking = o.emitRetroactiveLEB(start);
+  auto adjustmentForLEBShrinking = o.emitRetroactiveSectionSizeLEB(start);
   if (adjustmentForLEBShrinking && sourceMap) {
     for (auto i = sourceMapLocationsSizeAtSectionStart;
          i < sourceMapLocations.size();
@@ -1643,7 +1643,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   // Write the final size. We can ignore the return value, which is the number
   // of bytes we shrank (if the LEB was smaller than the maximum size), as no
   // value in this section cares.
-  (void)buffer.emitRetroactiveLEB(lebPos);
+  (void)buffer.emitRetroactiveSectionSizeLEB(lebPos);
 
   return buffer;
 }
