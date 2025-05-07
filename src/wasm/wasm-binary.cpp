@@ -1566,8 +1566,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (annotation.branchLikely) {
-        // Compute the offset: it should be relative to the start of the
-        // function locals (i.e. the function declarations).
         auto exprIter = binaryLocations.expressions.find(expr);
         if (exprIter == binaryLocations.expressions.end()) {
           // No expression exists for this annotation - perhaps optimizations
@@ -1582,6 +1580,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
           funcDeclarations = funcIter->second.declarations;
         }
 
+        // Compute the offset: it should be relative to the start of the
+        // function locals (i.e. the function declarations).
         auto offset = exprOffset - funcDeclarations;
 
         funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
@@ -1943,12 +1943,8 @@ void WasmBinaryReader::preScan() {
       //       code locations, as an optimization.
       if (sectionName == Annotations::BranchHint) {
         needCodeLocations = true;
-        if (DWARF) {
-          // Do not break, so we keep looking for DWARF.
-          continue;
-        } else {
-          break;
-        }
+        // Do not break, so we keep looking for DWARF.
+        continue;
       }
 
       // DWARF sections contain code offsets.
@@ -1957,6 +1953,10 @@ void WasmBinaryReader::preScan() {
         foundDWARF = true;
         break;
       }
+
+      // TODO: We could stop early if we see the Code section and DWARF is
+      //       disabled, as BranchHint must appear first, but this seems to
+      //       make practically no difference in practice.
     }
     pos = oldPos + payloadLen;
   }
