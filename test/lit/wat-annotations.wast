@@ -116,6 +116,23 @@
     )
   )
 
+  ;; CHECK:      (func $mixing (type $0) (param $x i32)
+  ;; CHECK-NEXT:  ;;@ mixing.src:1337:42
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; BINARY:      (func $mixing (type $0) (param $x i32)
+  ;; BINARY-NEXT:  (block $block
+  ;; BINARY-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; BINARY-NEXT:   (br_if $block
+  ;; BINARY-NEXT:    (local.get $x)
+  ;; BINARY-NEXT:   )
+  ;; BINARY-NEXT:  )
+  ;; BINARY-NEXT: )
   (func $mixing (param $x i32)
     ;; Mix branch hints with source locations. Both hints should remain.
     ;;@ mixing.src:1337:42

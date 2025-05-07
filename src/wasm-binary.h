@@ -295,6 +295,15 @@ public:
 
     return adjustmentForLEBShrinking;
   }
+
+  void writeInlineString(std::string_view name) {
+    auto size = name.size();
+    auto data = name.data();
+    *this << U32LEB(size);
+    for (size_t i = 0; i < size; i++) {
+      *this << int8_t(data[i]);
+    }
+  }
 };
 
 namespace BinaryConsts {

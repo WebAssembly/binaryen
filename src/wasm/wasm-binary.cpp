@@ -100,7 +100,6 @@ void WasmBinaryWriter::write() {
 
   writeLateCustomSections();
   writeFeaturesSection();
-  writeCodeAnnotations();
 }
 
 void WasmBinaryWriter::writeHeader() {
@@ -1582,7 +1581,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   // We found data: emit the section.
   buffer << uint8_t(BinaryConsts::Custom);
   auto lebPos = buffer.writeU32LEBPlaceholder();
-  writeInlineString(Annotations::BranchHint.str);
+  buffer.writeInlineString(Annotations::BranchHint.str);
 
   buffer << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
@@ -1630,8 +1629,7 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
 }
 
 void WasmBinaryWriter::writeInlineString(std::string_view name) {
-  o << U32LEB(name.size());
-  writeData(name.data(), name.size());
+  o.writeInlineString(name);
 }
 
 static bool isHexDigit(char ch) {
