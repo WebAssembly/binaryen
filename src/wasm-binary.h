@@ -1622,6 +1622,14 @@ public:
   void readFeatures(size_t payloadLen);
   void readDylink(size_t payloadLen);
   void readDylink0(size_t payloadLen);
+
+  // We read branch hints *after* the code section, even though they appear
+  // earlier. That is simpler for us as we note expression locations as we scan
+  // code, and then just need to match them up. To do this, we note the branch
+  // hint position and size in the first pass, and handle it later.
+  size_t branchHintsPos = 0;
+  size_t branchHintsLen = 0;
+
   void readBranchHints(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);

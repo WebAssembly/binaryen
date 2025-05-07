@@ -2036,6 +2036,12 @@ void WasmBinaryReader::read() {
     }
   }
 
+  // Go back and parse things we deferred.
+  if (branchHintsPos) {
+    pos = branchHintsPos;
+    readBranchHints(branchHintsLen);
+  }
+
   validateBinary();
 }
 
@@ -2057,7 +2063,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
   } else if (sectionName.equals(Annotations::BranchHint.str)) {
-    readBranchHints(payloadLen);
+    // Only note the position and length, we read this later.
+    branchHintsPos = pos;
+    branchHintsLen = payloadLen;
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
