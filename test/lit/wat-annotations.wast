@@ -115,4 +115,15 @@
       )
     )
   )
+
+  (func $mixing (param $x i32)
+    ;; Mix branch hints with source locations. Both hints should remain.
+    ;;@ mixing.src:1337:42
+    (block $out
+      (@metadata.code.branch_hint "\01")
+      (br_if $out
+        (local.get $x)
+      )
+    )
+  )
 )
