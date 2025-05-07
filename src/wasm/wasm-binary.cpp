@@ -487,9 +487,8 @@ void WasmBinaryWriter::writeFunctions() {
     // |sectionStart| is the start of the contents of the section. Subtract 1 to
     // include the section code as well, so we move all of it.
     std::move_backward(&o[sectionStart - 1], &o[oldSize], o.end());
-    std::copy(annotationsBuffer.begin(),
-              annotationsBuffer.end(),
-              &o[sectionStart - 1]);
+    std::copy(
+      annotationsBuffer.begin(), annotationsBuffer.end(), &o[sectionStart - 1]);
   }
 }
 
