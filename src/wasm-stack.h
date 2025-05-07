@@ -93,17 +93,16 @@ public:
   BinaryInstWriter(WasmBinaryWriter& parent,
                    BufferWithRandomAccess& o,
                    Function* func,
-                   bool sourceMap,
                    bool DWARF)
-    : parent(parent), o(o), func(func), sourceMap(sourceMap), DWARF(DWARF) {}
+    : parent(parent), o(o), func(func), DWARF(DWARF) {}
 
   void visit(Expression* curr) {
-    if (func && !sourceMap) {
-      parent.writeDebugLocation(curr, func);
+    if (func) {
+      parent.trackExpressionStart(curr, func);
     }
     OverriddenVisitor<BinaryInstWriter>::visit(curr);
-    if (func && !sourceMap) {
-      parent.writeDebugLocationEnd(curr, func);
+    if (func) {
+      parent.trackExpressionEnd(curr, func);
     }
   }
 
@@ -136,7 +135,6 @@ private:
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
   Function* func = nullptr;
-  bool sourceMap;
   bool DWARF;
 
   std::vector<Name> breakStack;
@@ -452,7 +450,7 @@ public:
                            bool sourceMap = false,
                            bool DWARF = false)
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
+      writer(parent, o, func, DWARF), sourceMap(sourceMap) {}
 
   void emit(Expression* curr) { writer.visit(curr); }
   void emitHeader() {
@@ -480,7 +478,7 @@ public:
   void emitUnreachable() { writer.emitUnreachable(); }
   void emitDebugLocation(Expression* curr) {
     if (sourceMap) {
-      parent.writeDebugLocation(curr, func);
+      parent.writeSourceMapLocation(curr, func);
     }
   }
 
@@ -521,7 +519,7 @@ public:
                         StackIR& stackIR,
                         bool sourceMap = false,
                         bool DWARF = false)
-    : parent(parent), writer(parent, o, func, sourceMap, DWARF), func(func),
+    : parent(parent), writer(parent, o, func, DWARF), func(func),
       stackIR(stackIR), sourceMap(sourceMap) {}
 
   void write();

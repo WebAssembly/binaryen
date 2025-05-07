@@ -107,10 +107,7 @@ void WasmBinaryWriter::writeHeader() {
 }
 
 int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
-  int32_t ret = o.size();
-  o << int32_t(0);
-  o << int8_t(0);
-  return ret;
+  return o.writeU32LEBPlaceholder();
 }
 
 void WasmBinaryWriter::writeResizableLimits(
@@ -142,26 +139,12 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  // section size does not include the reserved bytes of the size field itself
-  int32_t size = o.size() - start - MaxLEB32Bytes;
-  auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  // We can move things back if the actual LEB for the size doesn't use the
-  // maximum 5 bytes. In that case we need to adjust offsets after we move
-  // things backwards.
-  auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
-  if (adjustmentForLEBShrinking) {
-    // we can save some room, nice
-    assert(sizeFieldSize < MaxLEB32Bytes);
-    std::move(&o[start] + MaxLEB32Bytes,
-              &o[start] + MaxLEB32Bytes + size,
-              &o[start] + sizeFieldSize);
-    o.resize(o.size() - adjustmentForLEBShrinking);
-    if (sourceMap) {
-      for (auto i = sourceMapLocationsSizeAtSectionStart;
-           i < sourceMapLocations.size();
-           ++i) {
-        sourceMapLocations[i].first -= adjustmentForLEBShrinking;
-      }
+  auto adjustmentForLEBShrinking = o.emitRetroactiveSectionSizeLEB(start);
+  if (adjustmentForLEBShrinking && sourceMap) {
+    for (auto i = sourceMapLocationsSizeAtSectionStart;
+         i < sourceMapLocations.size();
+         ++i) {
+      sourceMapLocations[i].first -= adjustmentForLEBShrinking;
     }
   }
 
@@ -172,6 +155,10 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // The section type byte is right before the LEB for the size; we want
     // offsets that are relative to the body, which is after that section type
     // byte and the the size LEB.
+    //
+    // We can compute the size of the size field LEB by considering the original
+    // size of the maximal LEB, and the adjustment due to shrinking.
+    auto sizeFieldSize = MaxLEB32Bytes - adjustmentForLEBShrinking;
     auto body = start + sizeFieldSize;
     // Offsets are relative to the body of the code section: after the
     // section type byte and the size.
@@ -1489,20 +1476,26 @@ void WasmBinaryWriter::writeNoDebugLocation() {
   }
 }
 
-void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
-  if (sourceMap) {
-    auto& debugLocations = func->debugLocations;
-    auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end() && iter->second) {
-      // There is debug information here, write it out.
-      writeDebugLocation(*(iter->second));
-    } else {
-      // This expression has no debug location.
-      writeNoDebugLocation();
-    }
+void WasmBinaryWriter::writeSourceMapLocation(Expression* curr,
+                                              Function* func) {
+  assert(sourceMap);
+
+  auto& debugLocations = func->debugLocations;
+  auto iter = debugLocations.find(curr);
+  if (iter != debugLocations.end() && iter->second) {
+    // There is debug information here, write it out.
+    writeDebugLocation(*(iter->second));
+  } else {
+    // This expression has no debug location.
+    writeNoDebugLocation();
   }
+}
+
+void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
   // If this is an instruction in a function, and if the original wasm had
-  // binary locations tracked, then track it in the output as well.
+  // binary locations tracked, then track it in the output as well. We also
+  // track locations of instructions that have code annotations, as their binary
+  // location goes in the custom section.
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
@@ -1510,16 +1503,16 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
+void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
     span.end = o.size();
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
-                                               Function* func,
-                                               size_t id) {
+void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
+                                                Function* func,
+                                                size_t id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
@@ -1532,8 +1525,7 @@ void WasmBinaryWriter::writeData(const char* data, size_t size) {
 }
 
 void WasmBinaryWriter::writeInlineString(std::string_view name) {
-  o << U32LEB(name.size());
-  writeData(name.data(), name.size());
+  o.writeInlineString(name);
 }
 
 static bool isHexDigit(char ch) {
@@ -1799,11 +1791,19 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
   wasm.features = features;
 }
 
-bool WasmBinaryReader::hasDWARFSections() {
+void WasmBinaryReader::preScan() {
+  // TODO: Once we support code annotations here, we will need to always scan,
+  //       but for now, DWARF is the only reason.
+  if (!DWARF) {
+    return;
+  }
+
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
-  bool has = false;
+
+  bool foundDWARF = false;
+
   while (more()) {
     uint8_t sectionCode = getInt8();
     uint32_t payloadLen = getU32LEB();
@@ -1813,31 +1813,32 @@ bool WasmBinaryReader::hasDWARFSections() {
     auto oldPos = pos;
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
-      if (Debug::isDWARFSection(sectionName)) {
-        has = true;
+      // DWARF sections contain code offsets.
+      if (DWARF && Debug::isDWARFSection(sectionName)) {
+        needCodeLocations = true;
+        foundDWARF = true;
         break;
       }
     }
     pos = oldPos + payloadLen;
   }
+
+  if (DWARF && !foundDWARF) {
+    // The user asked for DWARF, but no DWARF sections exist in practice, so
+    // disable the support.
+    DWARF = false;
+  }
+
+  // Reset.
   pos = 0;
-  return has;
 }
 
 void WasmBinaryReader::read() {
-  if (DWARF) {
-    // In order to update dwarf, we must store info about each IR node's
-    // binary position. This has noticeable memory overhead, so we don't do it
-    // by default: the user must request it by setting "DWARF", and even if so
-    // we scan ahead to see that there actually *are* DWARF sections, so that
-    // we don't do unnecessary work.
-    if (!hasDWARFSections()) {
-      DWARF = false;
-    }
-  }
+  preScan();
 
   // Skip ahead and read the name section so we know what names to use when we
   // construct module elements.
+  // TODO: Combine this pre-scan with the one in preScan().
   if (debugInfo) {
     findAndReadNames();
   }
@@ -1879,7 +1880,7 @@ void WasmBinaryReader::read() {
         readFunctionSignatures();
         break;
       case BinaryConsts::Section::Code:
-        if (DWARF) {
+        if (needCodeLocations) {
           codeSectionLocation = pos;
         }
         readFunctions();
@@ -2871,7 +2872,7 @@ void WasmBinaryReader::readFunctions() {
   if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError("invalid function section size, must equal types");
   }
-  if (DWARF) {
+  if (needCodeLocations) {
     builder.setBinaryLocation(&pos, codeSectionLocation);
   }
   for (size_t i = 0; i < numFuncBodies; i++) {
@@ -2885,7 +2886,7 @@ void WasmBinaryReader::readFunctions() {
     auto& func = wasm.functions[numFuncImports + i];
     currFunction = func.get();
 
-    if (DWARF) {
+    if (needCodeLocations) {
       func->funcLocation = BinaryLocations::FunctionLocations{
         BinaryLocation(sizePos - codeSectionLocation),
         BinaryLocation(pos - codeSectionLocation),

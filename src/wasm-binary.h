@@ -258,6 +258,52 @@ public:
     std::copy(begin(), end(), ret.begin());
     return ret;
   }
+
+  // Writes bytes in the maximum amount for a U32 LEB placeholder. Return the
+  // offset we wrote it at. The LEB can then be patched with the proper value
+  // later, when the size is known.
+  BinaryLocation writeU32LEBPlaceholder() {
+    BinaryLocation ret = size();
+    *this << int32_t(0);
+    *this << int8_t(0);
+    return ret;
+  }
+
+  // Given the location of a maximum-size LEB placeholder, as returned from
+  // writeU32LEBPlaceholder, use the current buffer size to figure out the size
+  // that should be written there, and emit an optimal-size LEB. Move contents
+  // backwards if we used fewer bytes, and return the number of bytes we moved.
+  // (Thus, if we return >0, we moved code backwards, and the caller may need to
+  // adjust things.)
+  BinaryLocation emitRetroactiveSectionSizeLEB(BinaryLocation start) {
+    // Do not include the LEB itself in the section size.
+    auto sectionSize = size() - start - MaxLEB32Bytes;
+    auto sizeFieldSize = writeAt(start, U32LEB(sectionSize));
+
+    // We can move things back if the actual LEB for the size doesn't use the
+    // maximum 5 bytes. In that case we need to adjust offsets after we move
+    // things backwards.
+    auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+    if (adjustmentForLEBShrinking) {
+      // We can save some room.
+      assert(sizeFieldSize < MaxLEB32Bytes);
+      std::move(&(*this)[start] + MaxLEB32Bytes,
+                &(*this)[start] + MaxLEB32Bytes + sectionSize,
+                &(*this)[start] + sizeFieldSize);
+      resize(size() - adjustmentForLEBShrinking);
+    }
+
+    return adjustmentForLEBShrinking;
+  }
+
+  void writeInlineString(std::string_view name) {
+    auto size = name.size();
+    auto data = name.data();
+    *this << U32LEB(size);
+    for (size_t i = 0; i < size; i++) {
+      *this << int8_t(data[i]);
+    }
+  }
 };
 
 namespace BinaryConsts {
@@ -1351,9 +1397,12 @@ public:
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeNoDebugLocation();
-  void writeDebugLocation(Expression* curr, Function* func);
-  void writeDebugLocationEnd(Expression* curr, Function* func);
-  void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
+  void writeSourceMapLocation(Expression* curr, Function* func);
+
+  // Track where expressions go in the binary format.
+  void trackExpressionStart(Expression* curr, Function* func);
+  void trackExpressionEnd(Expression* curr, Function* func);
+  void trackExpressionDelimiter(Expression* curr, Function* func, size_t id);
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1614,9 +1663,9 @@ public:
 
   static Name escape(Name name);
   void findAndReadNames();
-  void readFeatures(size_t);
-  void readDylink(size_t);
-  void readDylink0(size_t);
+  void readFeatures(size_t payloadLen);
+  void readDylink(size_t payloadLen);
+  void readDylink0(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
@@ -1627,7 +1676,14 @@ public:
   }
 
 private:
-  bool hasDWARFSections();
+  // In certain modes we need to note the locations of expressions, to match
+  // them against sections like DWARF or custom annotations. As this incurs
+  // overhead, we only note locations when we actually need to.
+  bool needCodeLocations = false;
+
+  // Scans ahead in the binary to check certain conditions like
+  // needCodeLocations.
+  void preScan();
 };
 
 } // namespace wasm
