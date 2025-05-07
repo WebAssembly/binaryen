@@ -107,10 +107,7 @@ void WasmBinaryWriter::writeHeader() {
 }
 
 int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
-  int32_t ret = o.size();
-  o << int32_t(0);
-  o << int8_t(0);
-  return ret;
+  return o.writeU32LEBPlaceholder();
 }
 
 void WasmBinaryWriter::writeResizableLimits(
@@ -142,26 +139,12 @@ template<typename T> int32_t WasmBinaryWriter::startSection(T code) {
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  // section size does not include the reserved bytes of the size field itself
-  int32_t size = o.size() - start - MaxLEB32Bytes;
-  auto sizeFieldSize = o.writeAt(start, U32LEB(size));
-  // We can move things back if the actual LEB for the size doesn't use the
-  // maximum 5 bytes. In that case we need to adjust offsets after we move
-  // things backwards.
-  auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
-  if (adjustmentForLEBShrinking) {
-    // we can save some room, nice
-    assert(sizeFieldSize < MaxLEB32Bytes);
-    std::move(&o[start] + MaxLEB32Bytes,
-              &o[start] + MaxLEB32Bytes + size,
-              &o[start] + sizeFieldSize);
-    o.resize(o.size() - adjustmentForLEBShrinking);
-    if (sourceMap) {
-      for (auto i = sourceMapLocationsSizeAtSectionStart;
-           i < sourceMapLocations.size();
-           ++i) {
-        sourceMapLocations[i].first -= adjustmentForLEBShrinking;
-      }
+  auto adjustmentForLEBShrinking = o.emitRetroactiveLEB(start);
+  if (adjustmentForLEBShrinking && sourceMap) {
+    for (auto i = sourceMapLocationsSizeAtSectionStart;
+         i < sourceMapLocations.size();
+         ++i) {
+      sourceMapLocations[i].first -= adjustmentForLEBShrinking;
     }
   }
 
@@ -172,6 +155,10 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // The section type byte is right before the LEB for the size; we want
     // offsets that are relative to the body, which is after that section type
     // byte and the the size LEB.
+    //
+    // We can compute the size of the size field LEB by considering the original
+    // size of the maximal LEB, and the adjustment due to shrinking.
+    auto sizeFieldSize = MaxLEB32Bytes - adjustmentForLEBShrinking;
     auto body = start + sizeFieldSize;
     // Offsets are relative to the body of the code section: after the
     // section type byte and the size.

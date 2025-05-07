@@ -258,6 +258,43 @@ public:
     std::copy(begin(), end(), ret.begin());
     return ret;
   }
+
+  // Writes bytes in the maximum amount for a U32 LEB placeholder. Return the
+  // offset we wrote it at. The LEB can then be patched with the proper value
+  // later, when the size is known.
+  BinaryLocation writeU32LEBPlaceholder() {
+    BinaryLocation ret = size();
+    *this << int32_t(0);
+    *this << int8_t(0);
+    return ret;
+  }
+
+  // Given the location of a maximum-size LEB placeholder, as returned from
+  // writeU32LEBPlaceholder, use the current buffer size to figure out the size
+  // that should be written there, and emit an optimal-size LEB. Move contents
+  // backwards if we used fewer bytes, and return the number of bytes we moved.
+  // (Thus, if we return >0, we moved code backwards, and the caller may need to
+  // adjust things.)
+  BinaryLocation emitRetroactiveLEB(BinaryLocation start) {
+    // Do not include the LEB itself in the section size.
+    auto sectionSize = size() - start - MaxLEB32Bytes;
+    auto sizeFieldSize = writeAt(start, U32LEB(sectionSize));
+
+    // We can move things back if the actual LEB for the size doesn't use the
+    // maximum 5 bytes. In that case we need to adjust offsets after we move
+    // things backwards.
+    auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+    if (adjustmentForLEBShrinking) {
+      // We can save some room.
+      assert(sizeFieldSize < MaxLEB32Bytes);
+      std::move(&(*this)[start] + MaxLEB32Bytes,
+                &(*this)[start] + MaxLEB32Bytes + sectionSize,
+                &(*this)[start] + sizeFieldSize);
+      resize(size() - adjustmentForLEBShrinking);
+    }
+
+    return adjustmentForLEBShrinking;
+  }
 };
 
 namespace BinaryConsts {
