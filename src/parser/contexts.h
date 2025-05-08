@@ -1916,7 +1916,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     }
     auto likely = getBranchHint(annotations);
     return withLoc(
-      pos, irBuilder.makeIf(label ? *label : Name{}, type.getSignature(), likely));
+      pos,
+      irBuilder.makeIf(label ? *label : Name{}, type.getSignature(), likely));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }

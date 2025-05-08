@@ -201,9 +201,11 @@ public:
   Result<> makeCallRef(HeapType type, bool isReturn);
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type);
-  Result<>
-  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none,
-                     std::optional<bool> likely = std::nullopt);
+  Result<> makeBrOn(Index label,
+                    BrOnOp op,
+                    Type in = Type::none,
+                    Type out = Type::none,
+                    std::optional<bool> likely = std::nullopt);
   Result<> makeStructNew(HeapType type);
   Result<> makeStructNewDefault(HeapType type);
   Result<>
@@ -389,8 +391,10 @@ private:
     static ScopeCtx makeBlock(Block* block, Type inputType) {
       return ScopeCtx(BlockScope{block}, inputType);
     }
-    static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType,
-                     std::optional<bool> likely = std::nullopt) {
+    static ScopeCtx makeIf(If* iff,
+                           Name originalLabel,
+                           Type inputType,
+                           std::optional<bool> likely = std::nullopt) {
       return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
     static ScopeCtx makeElse(ScopeCtx&& scope) {

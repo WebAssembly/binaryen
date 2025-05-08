@@ -1380,8 +1380,8 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   return visitBlockStart(block, sig.params);
 }
 
-Result<> IRBuilder::makeIf(Name label, Signature sig,
-                     std::optional<bool> likely) {
+Result<>
+IRBuilder::makeIf(Name label, Signature sig, std::optional<bool> likely) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
   addBranchHint(iff, likely);
@@ -1976,8 +1976,8 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out,
-                     std::optional<bool> likely) {
+Result<> IRBuilder::makeBrOn(
+  Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
   BrOn curr;
   curr.op = op;
   curr.castType = out;
