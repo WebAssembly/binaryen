@@ -698,7 +698,7 @@ private:
   Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
-  // Add a branch hint, if |likely| is given. Returns the expression itself.
+  // Add a branch hint, if |likely| is present.
   void addBranchHint(Expression* expr, std::optional<bool> likely);
 
   void dump();
