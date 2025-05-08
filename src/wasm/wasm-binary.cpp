@@ -1948,7 +1948,8 @@ void WasmBinaryReader::preScan() {
         // DWARF sections contain code offsets.
         needCodeLocations = true;
         foundDWARF = true;
-      } else if (sectionName == BinaryConsts::CustomSections::Name) {
+      } else if (debugInfo &&
+                 sectionName == BinaryConsts::CustomSections::Name) {
         readNames(oldPos, payloadLen);
       }
       // TODO: We could stop early in some cases, if we've seen enough (e.g.
