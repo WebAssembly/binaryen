@@ -152,7 +152,7 @@ using News = std::vector<Expression*>;
 using ExactTypes = std::unordered_set<HeapType>;
 
 struct Analyzer
-  : public ControlFlowWalker<Analyzer, UnifiedExpressionVisitor<Analyzer>> {
+  : public PostWalker<Analyzer, UnifiedExpressionVisitor<Analyzer>> {
   // Find allocations we can potentially optimize.
   News news;
 
