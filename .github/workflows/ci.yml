@@ -368,11 +368,8 @@ jobs:
 
   # Windows + gcc needs work before the tests will run, so just test the compile
   build-mingw:
-    name: mingw-${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, windows-11-arm]
+    name: mingw
+    runs-on: windows-latest
     steps:
     - uses: actions/setup-python@v5
       with:
