@@ -149,7 +149,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
 using News = std::vector<Expression*>;
 
 // A set of types for which the exactness of allocations may be observed.
-using ExactTypes = std::unordered_set<HeapType>;
+using TypeSet = std::unordered_set<HeapType>;
 
 struct Analyzer
   : public PostWalker<Analyzer, UnifiedExpressionVisitor<Analyzer>> {
@@ -160,7 +160,7 @@ struct Analyzer
   // will not be able to optimize allocations of these types without an analysis
   // proving that an allocation does not flow into any location where its
   // exactness is observed.
-  ExactTypes exactTypes;
+  TypeSet disallowedTypes;
 
   // Find allocations we can potentially optimize.
   void visitStructNew(StructNew* curr) {
@@ -188,7 +188,7 @@ struct Analyzer
   // be optimized.
   template<typename Cast> void visitCast(Cast* cast) {
     if (auto type = cast->getCastType(); type.isExact()) {
-      exactTypes.insert(type.getHeapType());
+      disallowedTypes.insert(type.getHeapType());
     }
   }
   void visitRefTest(RefTest* curr) { visitCast(curr); }
@@ -206,7 +206,9 @@ struct Analyzer
     // branches inhibit optimization since they can safely be refinalized to use
     // new types as long as no other instruction expected the original exact
     // type. Also allow optimizing if the instruction that would inhibit
-    // optimizing will not be written in the final output.
+    // optimizing will not be written in the final output. Skipping further
+    // analysis for these instructions also ensures that the ChildTyper below
+    // sees the type information it expects in the instructions it analyzes.
     if (Properties::isControlFlowStructure(curr) ||
         Properties::isBranch(curr) ||
         Properties::hasUnwritableTypeImmediate(curr)) {
@@ -234,7 +236,7 @@ struct Analyzer
       void noteSubtype(Expression**, Type type) {
         for (Type t : type) {
           if (t.isExact()) {
-            parent.exactTypes.insert(t.getHeapType());
+            parent.disallowedTypes.insert(t.getHeapType());
           }
         }
       }
@@ -256,7 +258,7 @@ struct Analyzer
     // heap types.
     for (auto type : func->getSig().results) {
       if (type.isExact()) {
-        exactTypes.insert(type.getHeapType());
+        disallowedTypes.insert(type.getHeapType());
       }
     }
   }
@@ -267,7 +269,7 @@ struct Analyzer
     // the allocations used in the initialization, but this is simpler.
     for (auto type : global->type) {
       if (type.isExact()) {
-        exactTypes.insert(type.getHeapType());
+        disallowedTypes.insert(type.getHeapType());
       }
     }
   }
@@ -275,7 +277,7 @@ struct Analyzer
   void visitElementSegment(ElementSegment* segment) {
     assert(!segment->type.isTuple());
     if (segment->type.isExact()) {
-      exactTypes.insert(segment->type.getHeapType());
+      disallowedTypes.insert(segment->type.getHeapType());
     }
   }
 };
@@ -295,10 +297,11 @@ struct TypeSSA : public Pass {
 
     struct Info {
       News news;
-      ExactTypes exactTypes;
+      TypeSet disallowedTypes;
     };
 
-    // First, find all the struct/array.news.
+    // First, analyze the function to find struct/array.news and disallowed
+    // types.
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
@@ -308,7 +311,7 @@ struct TypeSSA : public Pass {
         Analyzer analyzer;
         analyzer.walkFunctionInModule(func, module);
         info.news = std::move(analyzer.news);
-        info.exactTypes = std::move(analyzer.exactTypes);
+        info.disallowedTypes = std::move(analyzer.disallowedTypes);
       });
 
     // Also find news in the module scope.
@@ -325,9 +328,9 @@ struct TypeSSA : public Pass {
     // Find all the types that are unoptimizable because the exactness of their
     // allocations may be observed.
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      processExactTypes(analysis.map[func].exactTypes);
+      processDisallowedTypes(analysis.map[func].disallowedTypes);
     });
-    processExactTypes(moduleAnalyzer.exactTypes);
+    processDisallowedTypes(moduleAnalyzer.disallowedTypes);
 
     // Process all the news to find the ones we want to modify, adding them to
     // newsToModify. Note that we must do so in a deterministic order.
@@ -345,10 +348,10 @@ struct TypeSSA : public Pass {
     ReFinalize().runOnModuleCode(getPassRunner(), module);
   }
 
-  ExactTypes disallowedTypes;
+  TypeSet disallowedTypes;
 
-  void processExactTypes(const ExactTypes& exactTypes) {
-    disallowedTypes.insert(exactTypes.begin(), exactTypes.end());
+  void processDisallowedTypes(const TypeSet& types) {
+    disallowedTypes.insert(types.begin(), types.end());
   }
 
   News newsToModify;
