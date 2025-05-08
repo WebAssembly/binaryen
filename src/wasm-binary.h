@@ -1668,7 +1668,7 @@ public:
   void readTags();
 
   static Name escape(Name name);
-  void findAndReadNames();
+  void readNames(size_t sectionPos, size_t payloadLen);
   void readFeatures(size_t payloadLen);
   void readDylink(size_t payloadLen);
   void readDylink0(size_t payloadLen);
