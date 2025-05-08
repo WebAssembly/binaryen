@@ -28,6 +28,7 @@
 #include "support/debug.h"
 #include "support/stdckdint.h"
 #include "support/string.h"
+#include "wasm-annotations.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
 #include "wasm-limits.h"
@@ -474,6 +475,21 @@ void WasmBinaryWriter::writeFunctions() {
     }
   });
   finishSection(sectionStart);
+
+  // Code annotations must come before the code section (see comment on
+  // writeCodeAnnotations).
+  if (auto annotations = writeCodeAnnotations()) {
+    // We need to move the code section and put the annotations before it.
+    auto& annotationsBuffer = *annotations;
+    auto oldSize = o.size();
+    o.resize(oldSize + annotationsBuffer.size());
+
+    // |sectionStart| is the start of the contents of the section. Subtract 1 to
+    // include the section code as well, so we move all of it.
+    std::move_backward(&o[sectionStart - 1], &o[oldSize], o.end());
+    std::copy(
+      annotationsBuffer.begin(), annotationsBuffer.end(), &o[sectionStart - 1]);
+  }
 }
 
 void WasmBinaryWriter::writeStrings() {
@@ -1496,7 +1512,8 @@ void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
   // binary locations tracked, then track it in the output as well. We also
   // track locations of instructions that have code annotations, as their binary
   // location goes in the custom section.
-  if (func && !func->expressionLocations.empty()) {
+  if (func && (!func->expressionLocations.empty() ||
+               func->codeAnnotations.count(curr))) {
     binaryLocations.expressions[curr] =
       BinaryLocations::Span{BinaryLocation(o.size()), 0};
     binaryLocationTrackedExpressionsForFunc.push_back(curr);
@@ -1504,6 +1521,8 @@ void WasmBinaryWriter::trackExpressionStart(Expression* curr, Function* func) {
 }
 
 void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
+  // TODO: If we need to track the end of annotated code locations, we need to
+  //       enable that here.
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
     span.end = o.size();
@@ -1513,9 +1532,121 @@ void WasmBinaryWriter::trackExpressionEnd(Expression* curr, Function* func) {
 void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
                                                 Function* func,
                                                 size_t id) {
+  // TODO: If we need to track the delimiters of annotated code locations, we
+  //       need to enable that here.
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
+}
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
+  // Assemble the info for Branch Hinting: for each function, a vector of the
+  // hints.
+  struct ExprHint {
+    Expression* expr;
+    // The offset we will write in the custom section.
+    BinaryLocation offset;
+    Function::CodeAnnotation* hint;
+  };
+
+  struct FuncHints {
+    Name func;
+    std::vector<ExprHint> exprHints;
+  };
+
+  std::vector<FuncHints> funcHintsVec;
+
+  for (auto& func : wasm->functions) {
+    // Collect the Branch Hints for this function.
+    FuncHints funcHints;
+
+    // We compute the location of the function declaration area (where the
+    // locals are declared) the first time we need it.
+    BinaryLocation funcDeclarationsOffset = 0;
+
+    for (auto& [expr, annotation] : func->codeAnnotations) {
+      if (annotation.branchLikely) {
+        auto exprIter = binaryLocations.expressions.find(expr);
+        if (exprIter == binaryLocations.expressions.end()) {
+          // No expression exists for this annotation - perhaps optimizations
+          // removed it.
+          continue;
+        }
+        auto exprOffset = exprIter->second.start;
+
+        if (!funcDeclarationsOffset) {
+          auto funcIter = binaryLocations.functions.find(func.get());
+          assert(funcIter != binaryLocations.functions.end());
+          funcDeclarationsOffset = funcIter->second.declarations;
+        }
+
+        // Compute the offset: it should be relative to the start of the
+        // function locals (i.e. the function declarations).
+        auto offset = exprOffset - funcDeclarationsOffset;
+
+        funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
+      }
+    }
+
+    if (funcHints.exprHints.empty()) {
+      continue;
+    }
+
+    // We found something. Finalize the data.
+    funcHints.func = func->name;
+
+    // Hints must be sorted by increasing binary offset.
+    std::sort(
+      funcHints.exprHints.begin(),
+      funcHints.exprHints.end(),
+      [](const ExprHint& a, const ExprHint& b) { return a.offset < b.offset; });
+
+    funcHintsVec.emplace_back(std::move(funcHints));
+  }
+
+  if (funcHintsVec.empty()) {
+    return {};
+  }
+
+  if (sourceMap) {
+    // TODO: This mode may not matter (when debugging, code annotations are an
+    //       optimization that can be skipped), but atm source maps cause
+    //       annotations to break.
+    Fatal() << "Annotations are not supported with source maps";
+  }
+
+  BufferWithRandomAccess buffer;
+
+  // We found data: emit the section.
+  buffer << uint8_t(BinaryConsts::Custom);
+  auto lebPos = buffer.writeU32LEBPlaceholder();
+  buffer.writeInlineString(Annotations::BranchHint.str);
+
+  buffer << U32LEB(funcHintsVec.size());
+  for (auto& funcHints : funcHintsVec) {
+    buffer << U32LEB(getFunctionIndex(funcHints.func));
+
+    buffer << U32LEB(funcHints.exprHints.size());
+    for (auto& exprHint : funcHints.exprHints) {
+      buffer << U32LEB(exprHint.offset);
+
+      // Hint size, always 1 for now.
+      buffer << U32LEB(1);
+
+      // We must only emit hints that are present.
+      assert(exprHint.hint->branchLikely);
+
+      // Hint contents: likely or not.
+      buffer << U32LEB(int(*exprHint.hint->branchLikely));
+    }
+  }
+
+  // Write the final size. We can ignore the return value, which is the number
+  // of bytes we shrank (if the LEB was smaller than the maximum size), as no
+  // value in this section cares.
+  buffer.emitRetroactiveSectionSizeLEB(lebPos);
+
+  return buffer;
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
@@ -1792,12 +1923,6 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
 }
 
 void WasmBinaryReader::preScan() {
-  // TODO: Once we support code annotations here, we will need to always scan,
-  //       but for now, DWARF is the only reason.
-  if (!DWARF) {
-    return;
-  }
-
   assert(pos == 0);
   getInt32(); // magic
   getInt32(); // version
@@ -1813,12 +1938,22 @@ void WasmBinaryReader::preScan() {
     auto oldPos = pos;
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
-      // DWARF sections contain code offsets.
-      if (DWARF && Debug::isDWARFSection(sectionName)) {
+
+      if (sectionName == Annotations::BranchHint) {
+        // Code annotations require code locations.
+        // TODO: For Branch Hinting, we could note which functions require
+        //       code locations, as an optimization.
+        needCodeLocations = true;
+      } else if (DWARF && Debug::isDWARFSection(sectionName)) {
+        // DWARF sections contain code offsets.
         needCodeLocations = true;
         foundDWARF = true;
-        break;
+      } else if (debugInfo &&
+                 sectionName == BinaryConsts::CustomSections::Name) {
+        readNames(oldPos, payloadLen);
       }
+      // TODO: We could stop early in some cases, if we've seen enough (e.g.
+      //       seeing Code implies no BranchHint will appear, due to ordering).
     }
     pos = oldPos + payloadLen;
   }
@@ -1835,14 +1970,6 @@ void WasmBinaryReader::preScan() {
 
 void WasmBinaryReader::read() {
   preScan();
-
-  // Skip ahead and read the name section so we know what names to use when we
-  // construct module elements.
-  // TODO: Combine this pre-scan with the one in preScan().
-  if (debugInfo) {
-    findAndReadNames();
-  }
-
   readHeader();
   sourceMapReader.parse(wasm);
 
@@ -1933,6 +2060,12 @@ void WasmBinaryReader::read() {
     }
   }
 
+  // Go back and parse things we deferred.
+  if (branchHintsPos) {
+    pos = branchHintsPos;
+    readBranchHints(branchHintsLen);
+  }
+
   validateBinary();
 }
 
@@ -1953,6 +2086,10 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     readDylink(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
+  } else if (sectionName == Annotations::BranchHint) {
+    // Only note the position and length, we read this later.
+    branchHintsPos = pos;
+    branchHintsLen = payloadLen;
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -4794,32 +4931,7 @@ private:
 
 } // anonymous namespace
 
-void WasmBinaryReader::findAndReadNames() {
-  // Find the names section. Skip the magic and version.
-  assert(pos == 0);
-  getInt32();
-  getInt32();
-  Index payloadLen, sectionPos;
-  bool found = false;
-  while (more()) {
-    uint8_t sectionCode = getInt8();
-    payloadLen = getU32LEB();
-    sectionPos = pos;
-    if (sectionCode == BinaryConsts::Section::Custom) {
-      auto sectionName = getInlineString();
-      if (sectionName.equals(BinaryConsts::CustomSections::Name)) {
-        found = true;
-        break;
-      }
-    }
-    pos = sectionPos + payloadLen;
-  }
-  if (!found) {
-    // No names section to read.
-    pos = 0;
-    return;
-  }
-
+void WasmBinaryReader::readNames(size_t sectionPos, size_t payloadLen) {
   // Read the names.
   uint32_t lastType = 0;
   while (pos < sectionPos + payloadLen) {
@@ -4944,9 +5056,6 @@ void WasmBinaryReader::findAndReadNames() {
   if (pos != sectionPos + payloadLen) {
     throwError("bad names section position change");
   }
-
-  // Reset the position; we were just reading ahead.
-  pos = 0;
 }
 
 void WasmBinaryReader::readFeatures(size_t payloadLen) {
@@ -5097,6 +5206,62 @@ void WasmBinaryReader::readDylink0(size_t payloadLen) {
     if (pos != subsectionPos + subsectionSize) {
       throwError("bad dylink.0 subsection position change");
     }
+  }
+}
+
+void WasmBinaryReader::readBranchHints(size_t payloadLen) {
+  auto sectionPos = pos;
+
+  auto numFuncs = getU32LEB();
+  for (Index i = 0; i < numFuncs; i++) {
+    auto funcIndex = getU32LEB();
+    if (funcIndex >= wasm.functions.size()) {
+      throwError("bad BranchHint function");
+    }
+
+    auto& func = wasm.functions[funcIndex];
+
+    // The encoded offsets we read below are relative to the start of the
+    // function's locals (the declarations).
+    auto funcLocalsOffset = func->funcLocation.declarations;
+
+    // We have a map of expressions to their locations. Invert that to get the
+    // map we will use below, from offsets to expressions.
+    std::unordered_map<BinaryLocation, Expression*> locationsMap;
+
+    for (auto& [expr, span] : func->expressionLocations) {
+      locationsMap[span.start] = expr;
+    }
+
+    auto numHints = getU32LEB();
+    for (Index hint = 0; hint < numHints; hint++) {
+      // To get the absolute offset, add the function's offset.
+      auto relativeOffset = getU32LEB();
+      auto absoluteOffset = funcLocalsOffset + relativeOffset;
+
+      auto iter = locationsMap.find(absoluteOffset);
+      if (iter == locationsMap.end()) {
+        throwError("bad BranchHint offset");
+      }
+      auto* expr = iter->second;
+
+      auto size = getU32LEB();
+      if (size != 1) {
+        throwError("bad BranchHint size");
+      }
+
+      auto likely = getU32LEB();
+      if (likely != 0 && likely != 1) {
+        throwError("bad BranchHint value");
+      }
+
+      // Apply the valid hint.
+      func->codeAnnotations[expr].branchLikely = likely;
+    }
+  }
+
+  if (pos != sectionPos + payloadLen) {
+    throwError("bad BranchHint section size");
   }
 }
 
