@@ -116,7 +116,9 @@ public:
   // signatures ensure that there are no missing fields.
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
-  Result<> makeIf(Name label, Signature sig);
+  Result<> makeIf(Name label,
+                  Signature sig,
+                  std::optional<bool> likely = std::nullopt);
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
@@ -393,8 +395,7 @@ private:
     }
     static ScopeCtx makeIf(If* iff,
                            Name originalLabel,
-                           Type inputType,
-                           std::optional<bool> likely = std::nullopt) {
+                           Type inputType) {
       return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
     static ScopeCtx makeElse(ScopeCtx&& scope) {
@@ -701,7 +702,7 @@ private:
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
   // Add a branch hint, if |likely| is given. Returns the expression itself.
-  Expression* addBranchHint(Expression* expr, std::optional<bool> likely);
+  void addBranchHint(Expression* expr, std::optional<bool> likely);
 
   void dump();
 };
