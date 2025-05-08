@@ -366,11 +366,14 @@
   ;; CHECK-NEXT: )
   (func $ref-test (param $used (ref (exact $used-in-ref-test)))
     (drop
+      ;; This cast will observe the exactness of the $used-in-ref-test.
       (ref.test (ref (exact $used-in-ref-test))
         (local.get $used)
       )
     )
     (drop
+      ;; So this cannot be optimized since we don't do a flow analysis and don't
+      ;; know that this particular allocation is never observed to be exact.
       (struct.new $used-in-ref-test
         (ref.null none)
       )
@@ -631,6 +634,7 @@
   (func $branch (param $used (ref (exact $used-in-branch)))
     (drop
       (block $l (result (ref (exact $used-in-branch)))
+        ;; Branches don't inhibit optimizations, either.
         (br $l
           (local.get $used)
         )
@@ -692,6 +696,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $return (param $used (ref (exact $used-in-return))) (result (ref (exact $used-in-return)))
+    ;; This return will inhibit optimization because it requires its operand to be exact.
     (return
       (local.get $used)
     )
@@ -1332,7 +1337,6 @@
   ;; CHECK-NEXT: )
   (func $struct-set-ok (param $used (ref (exact $used-in-struct-set-ok))) (param $ref (ref $struct-set-inexact))
     (struct.set $struct-set-inexact 0
-      ;; We _can_ optimize this struct.new, but that's also incidental.
       (local.get $ref)
       (local.get $used)
     )

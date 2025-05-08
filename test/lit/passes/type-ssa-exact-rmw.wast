@@ -58,12 +58,15 @@
   ;; CHECK-NEXT: )
   (func $struct-rmw (param $used (ref (exact $used-in-struct-rmw))) (param $ref (ref $struct-rmw-exact))
     (drop
+      ;; This requires and observes an exact $used-in-struct-rmw
       (struct.atomic.rmw.xchg $struct-rmw-exact 0
         (local.get $ref)
         (local.get $used)
       )
     )
     (drop
+      ;; So this cannot be optimized since we don't do a flow analysis and don't
+      ;; know that this particular allocation is never observed to be exact.
       (struct.new $used-in-struct-rmw
         (ref.null none)
       )
@@ -85,12 +88,14 @@
   ;; CHECK-NEXT: )
   (func $struct-rmw-ok (param $used (ref (exact $used-in-struct-rmw-ok))) (param $ref (ref $struct-rmw-inexact))
     (drop
+      ;; But this time the operand is not required to be exact.
       (struct.atomic.rmw.xchg $struct-rmw-inexact 0
         (local.get $ref)
         (local.get $used)
       )
     )
     (drop
+      ;; So this can be optimized.
       (struct.new $used-in-struct-rmw-ok
         (ref.null none)
       )
