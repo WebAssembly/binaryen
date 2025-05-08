@@ -1939,24 +1939,21 @@ void WasmBinaryReader::preScan() {
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
 
-      // Code annotations require code locations.
-      // TODO: For Branch Hinting, we could note which functions require
-      //       code locations, as an optimization.
       if (sectionName == Annotations::BranchHint) {
+        // Code annotations require code locations.
+        // TODO: For Branch Hinting, we could note which functions require
+        //       code locations, as an optimization.
         needCodeLocations = true;
-        // Do not break, so we keep looking for DWARF.
-      }
-
-      // DWARF sections contain code offsets.
-      if (DWARF && Debug::isDWARFSection(sectionName)) {
+      } else if (DWARF && Debug::isDWARFSection(sectionName)) {
+        // DWARF sections contain code offsets.
         needCodeLocations = true;
         foundDWARF = true;
-        break;
+      } else if (debugInfo &&
+                 sectionName == BinaryConsts::CustomSections::Name) {
+        readNames(oldPos, payloadLen);
       }
-
-      // TODO: We could stop early if we see the Code section and DWARF is
-      //       disabled, as BranchHint must appear first, but this seems to
-      //       make practically no difference in practice.
+      // TODO: We could stop early in some cases, if we've seen enough (e.g.
+      //       seeing Code implies no BranchHint will appear, due to ordering).
     }
     pos = oldPos + payloadLen;
   }
@@ -1973,14 +1970,6 @@ void WasmBinaryReader::preScan() {
 
 void WasmBinaryReader::read() {
   preScan();
-
-  // Skip ahead and read the name section so we know what names to use when we
-  // construct module elements.
-  // TODO: Combine this pre-scan with the one in preScan().
-  if (debugInfo) {
-    findAndReadNames();
-  }
-
   readHeader();
   sourceMapReader.parse(wasm);
 
@@ -4942,32 +4931,7 @@ private:
 
 } // anonymous namespace
 
-void WasmBinaryReader::findAndReadNames() {
-  // Find the names section. Skip the magic and version.
-  assert(pos == 0);
-  getInt32();
-  getInt32();
-  Index payloadLen, sectionPos;
-  bool found = false;
-  while (more()) {
-    uint8_t sectionCode = getInt8();
-    payloadLen = getU32LEB();
-    sectionPos = pos;
-    if (sectionCode == BinaryConsts::Section::Custom) {
-      auto sectionName = getInlineString();
-      if (sectionName.equals(BinaryConsts::CustomSections::Name)) {
-        found = true;
-        break;
-      }
-    }
-    pos = sectionPos + payloadLen;
-  }
-  if (!found) {
-    // No names section to read.
-    pos = 0;
-    return;
-  }
-
+void WasmBinaryReader::readNames(size_t sectionPos, size_t payloadLen) {
   // Read the names.
   uint32_t lastType = 0;
   while (pos < sectionPos + payloadLen) {
@@ -5092,9 +5056,6 @@ void WasmBinaryReader::findAndReadNames() {
   if (pos != sectionPos + payloadLen) {
     throwError("bad names section position change");
   }
-
-  // Reset the position; we were just reading ahead.
-  pos = 0;
 }
 
 void WasmBinaryReader::readFeatures(size_t payloadLen) {
