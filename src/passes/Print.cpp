@@ -313,13 +313,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTry(Try* curr);
   void visitTryTable(TryTable* curr);
 
+  void printUnreachableReplacement(Expression* curr);
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
-  bool maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
-  void visitCallRef(CallRef* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->target->type)) {
-      visitExpression(curr);
-    }
-  }
   void visitRefCast(RefCast* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
@@ -327,26 +322,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void visitStructNew(StructNew* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructGet(StructGet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructSet(StructSet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructRMW(StructRMW* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
       visitExpression(curr);
     }
   }
@@ -370,63 +345,28 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
-  void visitArraySet(ArraySet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayGet(ArrayGet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayCopy(ArrayCopy* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->srcRef->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->destRef->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayFill(ArrayFill* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayInitData(ArrayInitData* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayInitElem(ArrayInitElem* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
   void visitContNew(ContNew* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitContBind(ContBind* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResume(Resume* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResumeThrow(ResumeThrow* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitStackSwitch(StackSwitch* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
@@ -2776,6 +2716,11 @@ void PrintSExpression::maybePrintImplicitBlock(Expression* curr) {
 }
 
 void PrintSExpression::visitExpression(Expression* curr) {
+  if (Properties::hasUnwritableTypeImmediate(curr)) {
+    printUnreachableReplacement(curr);
+    return;
+  }
+
   o << '(';
   printExpressionContents(curr);
   auto it = ChildIterator(curr);
@@ -2987,16 +2932,7 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
   controlFlowDepth--;
 }
 
-bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
-                                                        Type type) {
-  // When we cannot print an instruction because the child from which it's
-  // supposed to get a type immediate is unreachable, then we print a
-  // semantically-equivalent block that drops each of the children and ends in
-  // an unreachable.
-  if (type != Type::unreachable) {
-    return false;
-  }
-
+void PrintSExpression::printUnreachableReplacement(Expression* curr) {
   // Emit a block with drops of the children.
   o << "(block";
   if (!minify) {
@@ -3012,15 +2948,19 @@ bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
   Unreachable unreachable;
   printFullLine(&unreachable);
   decIndent();
-  return true;
 }
 
-bool PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
-                                                              Type type) {
-  if (type.isNull()) {
-    type = Type::unreachable;
+bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
+                                                        Type type) {
+  // When we cannot print an instruction because the child from which it's
+  // supposed to get a type immediate is unreachable, then we print a
+  // semantically-equivalent block that drops each of the children and ends in
+  // an unreachable.
+  if (type == Type::unreachable) {
+    printUnreachableReplacement(curr);
+    return true;
   }
-  return maybePrintUnreachableReplacement(curr, type);
+  return false;
 }
 
 static bool requiresExplicitFuncType(HeapType type) {
