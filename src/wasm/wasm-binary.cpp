@@ -1562,7 +1562,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 
     // We compute the location of the function declaration area (where the
     // locals are declared) the first time we need it.
-    BinaryLocation funcDeclarations = 0;
+    BinaryLocation funcDeclarationsOffset = 0;
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
       if (annotation.branchLikely) {
@@ -1574,33 +1574,35 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
         }
         auto exprOffset = exprIter->second.start;
 
-        if (!funcDeclarations) {
+        if (!funcDeclarationsOffset) {
           auto funcIter = binaryLocations.functions.find(func.get());
           assert(funcIter != binaryLocations.functions.end());
-          funcDeclarations = funcIter->second.declarations;
+          funcDeclarationsOffset = funcIter->second.declarations;
         }
 
         // Compute the offset: it should be relative to the start of the
         // function locals (i.e. the function declarations).
-        auto offset = exprOffset - funcDeclarations;
+        auto offset = exprOffset - funcDeclarationsOffset;
 
         funcHints.exprHints.push_back(ExprHint{expr, offset, &annotation});
       }
     }
 
-    if (!funcHints.exprHints.empty()) {
-      // We found something. Finalize the data.
-      funcHints.func = func->name;
-
-      // Hints must be sorted by increasing binary offset.
-      std::sort(funcHints.exprHints.begin(),
-                funcHints.exprHints.end(),
-                [](const ExprHint& a, const ExprHint& b) {
-                  return a.offset < b.offset;
-                });
-
-      funcHintsVec.emplace_back(std::move(funcHints));
+    if (funcHints.exprHints.empty()) {
+      continue;
     }
+
+    // We found something. Finalize the data.
+    funcHints.func = func->name;
+
+    // Hints must be sorted by increasing binary offset.
+    std::sort(funcHints.exprHints.begin(),
+              funcHints.exprHints.end(),
+              [](const ExprHint& a, const ExprHint& b) {
+                return a.offset < b.offset;
+              });
+
+    funcHintsVec.emplace_back(std::move(funcHints));
   }
 
   if (funcHintsVec.empty()) {
@@ -1643,7 +1645,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   // Write the final size. We can ignore the return value, which is the number
   // of bytes we shrank (if the LEB was smaller than the maximum size), as no
   // value in this section cares.
-  (void)buffer.emitRetroactiveSectionSizeLEB(lebPos);
+  buffer.emitRetroactiveSectionSizeLEB(lebPos);
 
   return buffer;
 }
@@ -2096,7 +2098,7 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     readDylink(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
     readDylink0(payloadLen);
-  } else if (sectionName.equals(Annotations::BranchHint.str)) {
+  } else if (sectionName == Annotations::BranchHint) {
     // Only note the position and length, we read this later.
     branchHintsPos = pos;
     branchHintsLen = payloadLen;
@@ -5253,6 +5255,10 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
   auto numFuncs = getU32LEB();
   for (Index i = 0; i < numFuncs; i++) {
     auto funcIndex = getU32LEB();
+    if (funcIndex >= wasm.functions.size()) {
+      throwError("bad BranchHint function");
+    }
+
     auto& func = wasm.functions[funcIndex];
 
     // The encoded offsets we read below are relative to the start of the
