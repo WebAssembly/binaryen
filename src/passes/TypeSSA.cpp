@@ -232,8 +232,10 @@ struct Analyzer
           parent(parent) {}
 
       void noteSubtype(Expression**, Type type) {
-        if (type.isExact()) {
-          parent.exactTypes.insert(type.getHeapType());
+        for (Type t : type) {
+          if (t.isExact()) {
+            parent.exactTypes.insert(t.getHeapType());
+          }
         }
       }
 
@@ -271,6 +273,7 @@ struct Analyzer
   }
 
   void visitElementSegment(ElementSegment* segment) {
+    assert(!segment->type.isTuple());
     if (segment->type.isExact()) {
       exactTypes.insert(segment->type.getHeapType());
     }

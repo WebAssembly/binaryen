@@ -66,6 +66,10 @@
     (type $used-in-local-set (sub (struct (field anyref))))
     ;; CHECK:       (type $used-in-local-set-ok (sub (struct (field anyref))))
     (type $used-in-local-set-ok (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-local-set-tuple (sub (struct (field anyref))))
+    (type $used-in-local-set-tuple (sub (struct (field anyref))))
+    ;; CHECK:       (type $used-in-local-set-tuple-ok (sub (struct (field anyref))))
+    (type $used-in-local-set-tuple-ok (sub (struct (field anyref))))
     ;; CHECK:       (type $used-in-global-set (sub (struct (field anyref))))
     (type $used-in-global-set (sub (struct (field anyref))))
     ;; CHECK:       (type $used-in-global-set-ok (sub (struct (field anyref))))
@@ -155,103 +159,107 @@
   ;; CHECK:      (type $array-copy-exact (sub (array (mut (ref (exact $used-in-array-copy-ok))))))
   (type $array-copy-exact (sub (array (field (mut (ref (exact $used-in-array-copy-ok)))))))
 
-  ;; CHECK:      (type $65 (func (param (ref (exact $used-in-throw)))))
+  ;; CHECK:      (type $67 (func (param (ref (exact $used-in-throw)))))
 
-  ;; CHECK:      (type $66 (func (param (ref $used-in-throw-ok))))
+  ;; CHECK:      (type $68 (func (param (ref $used-in-throw-ok))))
 
-  ;; CHECK:      (type $67 (func (param (ref (exact $used-in-ref-test)))))
+  ;; CHECK:      (type $69 (func (param (ref (exact $used-in-ref-test)))))
 
-  ;; CHECK:      (type $68 (func (param (ref (exact $used-in-ref-cast)))))
+  ;; CHECK:      (type $70 (func (param (ref (exact $used-in-ref-cast)))))
 
-  ;; CHECK:      (type $69 (func (param (ref (exact $used-in-br-on-cast)))))
+  ;; CHECK:      (type $71 (func (param (ref (exact $used-in-br-on-cast)))))
 
-  ;; CHECK:      (type $70 (func (param (ref (exact $used-in-br-on-cast-fail)))))
+  ;; CHECK:      (type $72 (func (param (ref (exact $used-in-br-on-cast-fail)))))
 
-  ;; CHECK:      (type $71 (func (param (ref (exact $used-in-block)))))
+  ;; CHECK:      (type $73 (func (param (ref (exact $used-in-block)))))
 
-  ;; CHECK:      (type $72 (func (param (ref (exact $used-in-loop)))))
+  ;; CHECK:      (type $74 (func (param (ref (exact $used-in-loop)))))
 
-  ;; CHECK:      (type $73 (func (param (ref (exact $used-in-if)))))
+  ;; CHECK:      (type $75 (func (param (ref (exact $used-in-if)))))
 
-  ;; CHECK:      (type $74 (func (param (ref (exact $used-in-try)))))
+  ;; CHECK:      (type $76 (func (param (ref (exact $used-in-try)))))
 
-  ;; CHECK:      (type $75 (func (param (ref (exact $used-in-try-table)))))
+  ;; CHECK:      (type $77 (func (param (ref (exact $used-in-try-table)))))
 
-  ;; CHECK:      (type $76 (func (param (ref (exact $used-in-branch)))))
+  ;; CHECK:      (type $78 (func (param (ref (exact $used-in-branch)))))
 
-  ;; CHECK:      (type $77 (func (param (ref (exact $used-in-br-table)))))
+  ;; CHECK:      (type $79 (func (param (ref (exact $used-in-br-table)))))
 
-  ;; CHECK:      (type $78 (func (param (ref (exact $used-in-return))) (result (ref (exact $used-in-return)))))
+  ;; CHECK:      (type $80 (func (param (ref (exact $used-in-return))) (result (ref (exact $used-in-return)))))
 
-  ;; CHECK:      (type $79 (func (param (ref (exact $used-in-return-ok))) (result (ref $used-in-return-ok))))
+  ;; CHECK:      (type $81 (func (param (ref (exact $used-in-return-ok))) (result (ref $used-in-return-ok))))
 
-  ;; CHECK:      (type $80 (func (param (ref (exact $used-in-call)))))
+  ;; CHECK:      (type $82 (func (param (ref (exact $used-in-call)))))
 
-  ;; CHECK:      (type $81 (func (param (ref $used-in-call-ok))))
+  ;; CHECK:      (type $83 (func (param (ref $used-in-call-ok))))
 
-  ;; CHECK:      (type $82 (func (param (ref (exact $used-in-call-ok)))))
+  ;; CHECK:      (type $84 (func (param (ref (exact $used-in-call-ok)))))
 
-  ;; CHECK:      (type $83 (func (param (ref (exact $used-in-call-indirect)))))
+  ;; CHECK:      (type $85 (func (param (ref (exact $used-in-call-indirect)))))
 
-  ;; CHECK:      (type $84 (func (param (ref (exact $used-in-call-indirect-ok)))))
+  ;; CHECK:      (type $86 (func (param (ref (exact $used-in-call-indirect-ok)))))
 
-  ;; CHECK:      (type $85 (func (param (ref $used-in-call-indirect-ok))))
+  ;; CHECK:      (type $87 (func (param (ref $used-in-call-indirect-ok))))
 
-  ;; CHECK:      (type $86 (func (param (ref (exact $used-in-call-ref)) (ref $call-ref-exact))))
+  ;; CHECK:      (type $88 (func (param (ref (exact $used-in-call-ref)) (ref $call-ref-exact))))
 
-  ;; CHECK:      (type $87 (func (param (ref (exact $used-in-call-ref-ok)) (ref $call-ref-inexact))))
+  ;; CHECK:      (type $89 (func (param (ref (exact $used-in-call-ref-ok)) (ref $call-ref-inexact))))
 
-  ;; CHECK:      (type $88 (func (param (ref (exact $used-in-ret-call)))))
+  ;; CHECK:      (type $90 (func (param (ref (exact $used-in-ret-call)))))
 
-  ;; CHECK:      (type $89 (func (param (ref $used-in-ret-call-ok))))
+  ;; CHECK:      (type $91 (func (param (ref $used-in-ret-call-ok))))
 
-  ;; CHECK:      (type $90 (func (param (ref (exact $used-in-ret-call-ok)))))
+  ;; CHECK:      (type $92 (func (param (ref (exact $used-in-ret-call-ok)))))
 
-  ;; CHECK:      (type $91 (func (param (ref (exact $used-in-ret-call-unreachable)) i32)))
+  ;; CHECK:      (type $93 (func (param (ref (exact $used-in-ret-call-unreachable)) i32)))
 
-  ;; CHECK:      (type $92 (func (param (ref (exact $used-in-throw-ok)))))
+  ;; CHECK:      (type $94 (func (param (ref (exact $used-in-throw-ok)))))
 
-  ;; CHECK:      (type $93 (func (param (ref (exact $used-in-local-set)))))
+  ;; CHECK:      (type $95 (func (param (ref (exact $used-in-local-set)))))
 
-  ;; CHECK:      (type $94 (func (param (ref (exact $used-in-local-set-ok)))))
+  ;; CHECK:      (type $96 (func (param (ref (exact $used-in-local-set-ok)))))
 
-  ;; CHECK:      (type $95 (func (param (ref (exact $used-in-global-set)))))
+  ;; CHECK:      (type $97 (func (param (ref (exact $used-in-local-set-tuple)))))
 
-  ;; CHECK:      (type $96 (func (param (ref (exact $used-in-global-set-ok)))))
+  ;; CHECK:      (type $98 (func (param (ref (exact $used-in-local-set-tuple-ok)))))
 
-  ;; CHECK:      (type $97 (func (param (ref (exact $used-in-table-set)))))
+  ;; CHECK:      (type $99 (func (param (ref (exact $used-in-global-set)))))
 
-  ;; CHECK:      (type $98 (func (param (ref (exact $used-in-table-set-ok)))))
+  ;; CHECK:      (type $100 (func (param (ref (exact $used-in-global-set-ok)))))
 
-  ;; CHECK:      (type $99 (func (param (ref (exact $used-in-struct-new)))))
+  ;; CHECK:      (type $101 (func (param (ref (exact $used-in-table-set)))))
 
-  ;; CHECK:      (type $100 (func (param (ref (exact $used-in-struct-new-ok)))))
+  ;; CHECK:      (type $102 (func (param (ref (exact $used-in-table-set-ok)))))
 
-  ;; CHECK:      (type $101 (func (param (ref (exact $used-in-struct-set)) (ref $struct-set-exact))))
+  ;; CHECK:      (type $103 (func (param (ref (exact $used-in-struct-new)))))
 
-  ;; CHECK:      (type $102 (func (param (ref (exact $used-in-struct-set-ok)) (ref $struct-set-inexact))))
+  ;; CHECK:      (type $104 (func (param (ref (exact $used-in-struct-new-ok)))))
 
-  ;; CHECK:      (type $103 (func (param (ref null (exact $used-in-array-new)))))
+  ;; CHECK:      (type $105 (func (param (ref (exact $used-in-struct-set)) (ref $struct-set-exact))))
 
-  ;; CHECK:      (type $104 (func (param (ref null (exact $used-in-array-new-ok)))))
+  ;; CHECK:      (type $106 (func (param (ref (exact $used-in-struct-set-ok)) (ref $struct-set-inexact))))
 
-  ;; CHECK:      (type $105 (func (param (ref null (exact $used-in-array-new-fixed)))))
+  ;; CHECK:      (type $107 (func (param (ref null (exact $used-in-array-new)))))
 
-  ;; CHECK:      (type $106 (func (param (ref null (exact $used-in-array-new-fixed-ok)))))
+  ;; CHECK:      (type $108 (func (param (ref null (exact $used-in-array-new-ok)))))
 
-  ;; CHECK:      (type $107 (func (param (ref (exact $used-in-array-set)) (ref $array-set-exact))))
+  ;; CHECK:      (type $109 (func (param (ref null (exact $used-in-array-new-fixed)))))
 
-  ;; CHECK:      (type $108 (func (param (ref (exact $used-in-array-set-ok)) (ref $array-set-inexact))))
+  ;; CHECK:      (type $110 (func (param (ref null (exact $used-in-array-new-fixed-ok)))))
 
-  ;; CHECK:      (type $109 (func (param (ref (exact $used-in-array-fill)) (ref $array-fill-exact))))
+  ;; CHECK:      (type $111 (func (param (ref (exact $used-in-array-set)) (ref $array-set-exact))))
 
-  ;; CHECK:      (type $110 (func (param (ref (exact $used-in-array-fill-ok)) (ref $array-fill-inexact))))
+  ;; CHECK:      (type $112 (func (param (ref (exact $used-in-array-set-ok)) (ref $array-set-inexact))))
 
-  ;; CHECK:      (type $111 (func (param (ref (exact $used-in-array-copy-ok)) (ref $array-copy-exact))))
+  ;; CHECK:      (type $113 (func (param (ref (exact $used-in-array-fill)) (ref $array-fill-exact))))
 
-  ;; CHECK:      (type $112 (func (param (ref (exact $used-in-func))) (result (ref (exact $used-in-func)))))
+  ;; CHECK:      (type $114 (func (param (ref (exact $used-in-array-fill-ok)) (ref $array-fill-inexact))))
 
-  ;; CHECK:      (type $113 (func))
+  ;; CHECK:      (type $115 (func (param (ref (exact $used-in-array-copy-ok)) (ref $array-copy-exact))))
+
+  ;; CHECK:      (type $116 (func (param (ref (exact $used-in-func))) (result (ref (exact $used-in-func)))))
+
+  ;; CHECK:      (type $117 (func))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $used-in-block_1 (sub $used-in-block (struct (field anyref))))
@@ -288,35 +296,37 @@
 
   ;; CHECK:       (type $used-in-local-set-ok_17 (sub $used-in-local-set-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-global-set-ok_18 (sub $used-in-global-set-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-local-set-tuple-ok_18 (sub $used-in-local-set-tuple-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-table-set-ok_19 (sub $used-in-table-set-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-global-set-ok_19 (sub $used-in-global-set-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-struct-new-ok_20 (sub $used-in-struct-new-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-table-set-ok_20 (sub $used-in-table-set-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-struct-set-ok_21 (sub $used-in-struct-set-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-struct-new-ok_21 (sub $used-in-struct-new-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $array-new-exact_22 (sub $array-new-exact (array (ref null (exact $used-in-array-new)))))
+  ;; CHECK:       (type $used-in-struct-set-ok_22 (sub $used-in-struct-set-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $array-new-inexact_23 (sub $array-new-inexact (array (ref null $used-in-array-new-ok))))
+  ;; CHECK:       (type $array-new-exact_23 (sub $array-new-exact (array (ref null (exact $used-in-array-new)))))
 
   ;; CHECK:       (type $array-new-inexact_24 (sub $array-new-inexact (array (ref null $used-in-array-new-ok))))
 
-  ;; CHECK:       (type $used-in-array-new-ok_25 (sub $used-in-array-new-ok (struct (field anyref))))
+  ;; CHECK:       (type $array-new-inexact_25 (sub $array-new-inexact (array (ref null $used-in-array-new-ok))))
 
-  ;; CHECK:       (type $array-new-fixed-exact_26 (sub $array-new-fixed-exact (array (ref null (exact $used-in-array-new-fixed)))))
+  ;; CHECK:       (type $used-in-array-new-ok_26 (sub $used-in-array-new-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $array-new-fixed-inexact_27 (sub $array-new-fixed-inexact (array (ref null $used-in-array-new-fixed-ok))))
+  ;; CHECK:       (type $array-new-fixed-exact_27 (sub $array-new-fixed-exact (array (ref null (exact $used-in-array-new-fixed)))))
 
   ;; CHECK:       (type $array-new-fixed-inexact_28 (sub $array-new-fixed-inexact (array (ref null $used-in-array-new-fixed-ok))))
 
-  ;; CHECK:       (type $used-in-array-new-fixed-ok_29 (sub $used-in-array-new-fixed-ok (struct (field anyref))))
+  ;; CHECK:       (type $array-new-fixed-inexact_29 (sub $array-new-fixed-inexact (array (ref null $used-in-array-new-fixed-ok))))
 
-  ;; CHECK:       (type $used-in-array-set-ok_30 (sub $used-in-array-set-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-array-new-fixed-ok_30 (sub $used-in-array-new-fixed-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-array-fill-ok_31 (sub $used-in-array-fill-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-array-set-ok_31 (sub $used-in-array-set-ok (struct (field anyref))))
 
-  ;; CHECK:       (type $used-in-array-copy-ok_32 (sub $used-in-array-copy-ok (struct (field anyref))))
+  ;; CHECK:       (type $used-in-array-fill-ok_32 (sub $used-in-array-fill-ok (struct (field anyref))))
+
+  ;; CHECK:       (type $used-in-array-copy-ok_33 (sub $used-in-array-copy-ok (struct (field anyref))))
 
   ;; CHECK:      (global $global-exact (mut (ref null (exact $used-in-global-set))) (ref.null none))
   (global $global-exact (mut (ref null (exact $used-in-global-set))) (ref.null none))
@@ -337,12 +347,12 @@
   ;; CHECK:      (elem $segment-exact-unused (ref null (exact $used-in-segment)) (item (ref.null none)))
   (elem $segment-exact-unused (ref null (exact $used-in-segment)) (item (ref.null none)))
 
-  ;; CHECK:      (tag $throw-exact (type $65) (param (ref (exact $used-in-throw))))
+  ;; CHECK:      (tag $throw-exact (type $67) (param (ref (exact $used-in-throw))))
   (tag $throw-exact (param (ref (exact $used-in-throw))))
-  ;; CHECK:      (tag $throw-inexact (type $66) (param (ref $used-in-throw-ok)))
+  ;; CHECK:      (tag $throw-inexact (type $68) (param (ref $used-in-throw-ok)))
   (tag $throw-inexact (param (ref $used-in-throw-ok)))
 
-  ;; CHECK:      (func $ref-test (type $67) (param $used (ref (exact $used-in-ref-test)))
+  ;; CHECK:      (func $ref-test (type $69) (param $used (ref (exact $used-in-ref-test)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref (exact $used-in-ref-test))
   ;; CHECK-NEXT:    (local.get $used)
@@ -367,7 +377,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast (type $68) (param $used (ref (exact $used-in-ref-cast)))
+  ;; CHECK:      (func $ref-cast (type $70) (param $used (ref (exact $used-in-ref-cast)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref (exact $used-in-ref-cast))
   ;; CHECK-NEXT:    (local.get $used)
@@ -392,7 +402,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_cast (type $69) (param $used (ref (exact $used-in-br-on-cast)))
+  ;; CHECK:      (func $br_on_cast (type $71) (param $used (ref (exact $used-in-br-on-cast)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-br-on-cast)))
   ;; CHECK-NEXT:    (br_on_cast $l (ref (exact $used-in-br-on-cast)) (ref (exact $used-in-br-on-cast))
@@ -425,7 +435,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_cast_fail (type $70) (param $used (ref (exact $used-in-br-on-cast-fail)))
+  ;; CHECK:      (func $br_on_cast_fail (type $72) (param $used (ref (exact $used-in-br-on-cast-fail)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-br-on-cast-fail)))
   ;; CHECK-NEXT:    (drop
@@ -458,7 +468,7 @@
     )
   )
 
-  ;; CHECK:      (func $block (type $71) (param $used (ref (exact $used-in-block)))
+  ;; CHECK:      (func $block (type $73) (param $used (ref (exact $used-in-block)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-block)))
   ;; CHECK-NEXT:    (local.get $used)
@@ -486,7 +496,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop (type $72) (param $used (ref (exact $used-in-loop)))
+  ;; CHECK:      (func $loop (type $74) (param $used (ref (exact $used-in-loop)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (loop (result (ref (exact $used-in-loop)))
   ;; CHECK-NEXT:    (local.get $used)
@@ -512,7 +522,7 @@
     )
   )
 
-  ;; CHECK:      (func $if (type $73) (param $used (ref (exact $used-in-if)))
+  ;; CHECK:      (func $if (type $75) (param $used (ref (exact $used-in-if)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref (exact $used-in-if)))
   ;; CHECK-NEXT:    (i32.const 0)
@@ -549,7 +559,7 @@
     )
   )
 
-  ;; CHECK:      (func $try (type $74) (param $used (ref (exact $used-in-try)))
+  ;; CHECK:      (func $try (type $76) (param $used (ref (exact $used-in-try)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (try (result (ref (exact $used-in-try)))
   ;; CHECK-NEXT:    (do
@@ -578,7 +588,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-table (type $75) (param $used (ref (exact $used-in-try-table)))
+  ;; CHECK:      (func $try-table (type $77) (param $used (ref (exact $used-in-try-table)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (try_table (result (ref (exact $used-in-try-table)))
   ;; CHECK-NEXT:    (local.get $used)
@@ -603,7 +613,7 @@
     )
   )
 
-  ;; CHECK:      (func $branch (type $76) (param $used (ref (exact $used-in-branch)))
+  ;; CHECK:      (func $branch (type $78) (param $used (ref (exact $used-in-branch)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-branch)))
   ;; CHECK-NEXT:    (br $l
@@ -635,7 +645,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-table (type $77) (param $used (ref (exact $used-in-br-table)))
+  ;; CHECK:      (func $br-table (type $79) (param $used (ref (exact $used-in-br-table)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $l (result (ref (exact $used-in-br-table)))
   ;; CHECK-NEXT:    (br_table $l
@@ -670,7 +680,7 @@
   )
 
 
-  ;; CHECK:      (func $return (type $78) (param $used (ref (exact $used-in-return))) (result (ref (exact $used-in-return)))
+  ;; CHECK:      (func $return (type $80) (param $used (ref (exact $used-in-return))) (result (ref (exact $used-in-return)))
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -692,7 +702,7 @@
     )
   )
 
-  ;; CHECK:      (func $return-ok (type $79) (param $used (ref (exact $used-in-return-ok))) (result (ref $used-in-return-ok))
+  ;; CHECK:      (func $return-ok (type $81) (param $used (ref (exact $used-in-return-ok))) (result (ref $used-in-return-ok))
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -715,7 +725,7 @@
     )
   )
 
-  ;; CHECK:      (func $call (type $80) (param $used (ref (exact $used-in-call)))
+  ;; CHECK:      (func $call (type $82) (param $used (ref (exact $used-in-call)))
   ;; CHECK-NEXT:  (call $call
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -736,7 +746,7 @@
     )
   )
 
-  ;; CHECK:      (func $inexact-callee (type $81) (param $0 (ref $used-in-call-ok))
+  ;; CHECK:      (func $inexact-callee (type $83) (param $0 (ref $used-in-call-ok))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $inexact-callee (param (ref $used-in-call-ok))
@@ -744,7 +754,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $call-ok (type $82) (param $used (ref (exact $used-in-call-ok)))
+  ;; CHECK:      (func $call-ok (type $84) (param $used (ref (exact $used-in-call-ok)))
   ;; CHECK-NEXT:  (call $inexact-callee
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -766,8 +776,8 @@
     )
   )
 
-  ;; CHECK:      (func $call-indirect (type $83) (param $used (ref (exact $used-in-call-indirect)))
-  ;; CHECK-NEXT:  (call_indirect $indirect-call-table (type $83)
+  ;; CHECK:      (func $call-indirect (type $85) (param $used (ref (exact $used-in-call-indirect)))
+  ;; CHECK-NEXT:  (call_indirect $indirect-call-table (type $85)
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -789,8 +799,8 @@
     )
   )
 
-  ;; CHECK:      (func $call-indirect-ok (type $84) (param $used (ref (exact $used-in-call-indirect-ok)))
-  ;; CHECK-NEXT:  (call_indirect $indirect-call-table (type $85)
+  ;; CHECK:      (func $call-indirect-ok (type $86) (param $used (ref (exact $used-in-call-indirect-ok)))
+  ;; CHECK-NEXT:  (call_indirect $indirect-call-table (type $87)
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -813,7 +823,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-ref (type $86) (param $used (ref (exact $used-in-call-ref))) (param $ref (ref $call-ref-exact))
+  ;; CHECK:      (func $call-ref (type $88) (param $used (ref (exact $used-in-call-ref))) (param $ref (ref $call-ref-exact))
   ;; CHECK-NEXT:  (call_ref $call-ref-exact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $ref)
@@ -836,7 +846,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-ref-ok (type $87) (param $used (ref (exact $used-in-call-ref-ok))) (param $ref (ref $call-ref-inexact))
+  ;; CHECK:      (func $call-ref-ok (type $89) (param $used (ref (exact $used-in-call-ref-ok))) (param $ref (ref $call-ref-inexact))
   ;; CHECK-NEXT:  (call_ref $call-ref-inexact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:   (local.get $ref)
@@ -920,7 +930,7 @@
     )
   )
 
-  ;; CHECK:      (func $ret-call (type $88) (param $used (ref (exact $used-in-ret-call)))
+  ;; CHECK:      (func $ret-call (type $90) (param $used (ref (exact $used-in-ret-call)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $used-in-ret-call
   ;; CHECK-NEXT:    (ref.null none)
@@ -941,7 +951,7 @@
     )
   )
 
-  ;; CHECK:      (func $inexact-ret-callee (type $89) (param $0 (ref $used-in-ret-call-ok))
+  ;; CHECK:      (func $inexact-ret-callee (type $91) (param $0 (ref $used-in-ret-call-ok))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $inexact-ret-callee (param (ref $used-in-ret-call-ok))
@@ -949,7 +959,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $ret-call-ok (type $90) (param $used (ref (exact $used-in-ret-call-ok)))
+  ;; CHECK:      (func $ret-call-ok (type $92) (param $used (ref (exact $used-in-ret-call-ok)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $used-in-ret-call-ok_14
   ;; CHECK-NEXT:    (ref.null none)
@@ -972,7 +982,7 @@
   )
 
 
-  ;; CHECK:      (func $ret-call-unreachable (type $91) (param $used (ref (exact $used-in-ret-call-unreachable))) (param $1 i32)
+  ;; CHECK:      (func $ret-call-unreachable (type $93) (param $used (ref (exact $used-in-ret-call-unreachable))) (param $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $used-in-ret-call-unreachable_15
   ;; CHECK-NEXT:    (ref.null none)
@@ -997,7 +1007,7 @@
     )
   )
 
-  ;; CHECK:      (func $throw (type $65) (param $used (ref (exact $used-in-throw)))
+  ;; CHECK:      (func $throw (type $67) (param $used (ref (exact $used-in-throw)))
   ;; CHECK-NEXT:  (throw $throw-exact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -1018,7 +1028,7 @@
     )
   )
 
-  ;; CHECK:      (func $throw-ok (type $92) (param $used (ref (exact $used-in-throw-ok)))
+  ;; CHECK:      (func $throw-ok (type $94) (param $used (ref (exact $used-in-throw-ok)))
   ;; CHECK-NEXT:  (throw $throw-inexact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -1039,7 +1049,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-set (type $93) (param $used (ref (exact $used-in-local-set)))
+  ;; CHECK:      (func $local-set (type $95) (param $used (ref (exact $used-in-local-set)))
   ;; CHECK-NEXT:  (local $exact (ref (exact $used-in-local-set)))
   ;; CHECK-NEXT:  (local.set $exact
   ;; CHECK-NEXT:   (local.get $used)
@@ -1062,7 +1072,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-set-ok (type $94) (param $used (ref (exact $used-in-local-set-ok)))
+  ;; CHECK:      (func $local-set-ok (type $96) (param $used (ref (exact $used-in-local-set-ok)))
   ;; CHECK-NEXT:  (local $inexact (ref $used-in-local-set-ok))
   ;; CHECK-NEXT:  (local.set $inexact
   ;; CHECK-NEXT:   (local.get $used)
@@ -1085,7 +1095,65 @@
     )
   )
 
-  ;; CHECK:      (func $global-set (type $95) (param $used (ref (exact $used-in-global-set)))
+  ;; CHECK:      (func $local-set-tuple (type $97) (param $used (ref (exact $used-in-local-set-tuple)))
+  ;; CHECK-NEXT:  (local $tuple-exact (tuple i32 (ref (exact $used-in-local-set-tuple))))
+  ;; CHECK-NEXT:  (local.set $tuple-exact
+  ;; CHECK-NEXT:   (tuple.make 2
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-local-set-tuple
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-set-tuple (param $used (ref (exact $used-in-local-set-tuple)))
+    (local $tuple-exact (tuple i32 (ref (exact $used-in-local-set-tuple))))
+    (local.set $tuple-exact
+      (tuple.make 2
+        (i32.const 0)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-local-set-tuple
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $local-set-tuple-ok (type $98) (param $used (ref (exact $used-in-local-set-tuple-ok)))
+  ;; CHECK-NEXT:  (local $tuple-inexact (tuple i32 (ref $used-in-local-set-tuple-ok)))
+  ;; CHECK-NEXT:  (local.set $tuple-inexact
+  ;; CHECK-NEXT:   (tuple.make 2
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $used)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $used-in-local-set-tuple-ok_18
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-set-tuple-ok (param $used (ref (exact $used-in-local-set-tuple-ok)))
+    (local $tuple-inexact (tuple i32 (ref $used-in-local-set-tuple-ok)))
+    (local.set $tuple-inexact
+      (tuple.make 2
+        (i32.const 0)
+        (local.get $used)
+      )
+    )
+    (drop
+      (struct.new $used-in-local-set-tuple-ok
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $global-set (type $99) (param $used (ref (exact $used-in-global-set)))
   ;; CHECK-NEXT:  (global.set $global-exact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
@@ -1106,12 +1174,12 @@
     )
   )
 
-  ;; CHECK:      (func $global-set-ok (type $96) (param $used (ref (exact $used-in-global-set-ok)))
+  ;; CHECK:      (func $global-set-ok (type $100) (param $used (ref (exact $used-in-global-set-ok)))
   ;; CHECK-NEXT:  (global.set $global-inexact
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-global-set-ok_18
+  ;; CHECK-NEXT:   (struct.new $used-in-global-set-ok_19
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1127,7 +1195,7 @@
     )
   )
 
-  ;; CHECK:      (func $table-set (type $97) (param $used (ref (exact $used-in-table-set)))
+  ;; CHECK:      (func $table-set (type $101) (param $used (ref (exact $used-in-table-set)))
   ;; CHECK-NEXT:  (table.set $table-exact
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $used)
@@ -1150,13 +1218,13 @@
     )
   )
 
-  ;; CHECK:      (func $table-set-ok (type $98) (param $used (ref (exact $used-in-table-set-ok)))
+  ;; CHECK:      (func $table-set-ok (type $102) (param $used (ref (exact $used-in-table-set-ok)))
   ;; CHECK-NEXT:  (table.set $table-inexact
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-table-set-ok_19
+  ;; CHECK-NEXT:   (struct.new $used-in-table-set-ok_20
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1173,7 +1241,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-new (type $99) (param $used (ref (exact $used-in-struct-new)))
+  ;; CHECK:      (func $struct-new (type $103) (param $used (ref (exact $used-in-struct-new)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct-new-exact
   ;; CHECK-NEXT:    (local.get $used)
@@ -1201,7 +1269,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-new-ok (type $100) (param $used (ref (exact $used-in-struct-new-ok)))
+  ;; CHECK:      (func $struct-new-ok (type $104) (param $used (ref (exact $used-in-struct-new-ok)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct-new-inexact
   ;; CHECK-NEXT:    (local.get $used)
@@ -1209,7 +1277,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-struct-new-ok_20
+  ;; CHECK-NEXT:   (struct.new $used-in-struct-new-ok_21
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1228,7 +1296,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct-set (type $101) (param $used (ref (exact $used-in-struct-set))) (param $ref (ref $struct-set-exact))
+  ;; CHECK:      (func $struct-set (type $105) (param $used (ref (exact $used-in-struct-set))) (param $ref (ref $struct-set-exact))
   ;; CHECK-NEXT:  (struct.set $struct-set-exact 0
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (local.get $used)
@@ -1251,13 +1319,13 @@
     )
   )
 
-  ;; CHECK:      (func $struct-set-ok (type $102) (param $used (ref (exact $used-in-struct-set-ok))) (param $ref (ref $struct-set-inexact))
+  ;; CHECK:      (func $struct-set-ok (type $106) (param $used (ref (exact $used-in-struct-set-ok))) (param $ref (ref $struct-set-inexact))
   ;; CHECK-NEXT:  (struct.set $struct-set-inexact 0
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-struct-set-ok_21
+  ;; CHECK-NEXT:   (struct.new $used-in-struct-set-ok_22
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1275,7 +1343,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-new (type $103) (param $used (ref null (exact $used-in-array-new)))
+  ;; CHECK:      (func $array-new (type $107) (param $used (ref null (exact $used-in-array-new)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new $array-new-exact
   ;; CHECK-NEXT:    (local.get $used)
@@ -1283,7 +1351,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new $array-new-exact_22
+  ;; CHECK-NEXT:   (array.new $array-new-exact_23
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -1315,21 +1383,21 @@
     )
   )
 
-  ;; CHECK:      (func $array-new-ok (type $104) (param $used (ref null (exact $used-in-array-new-ok)))
+  ;; CHECK:      (func $array-new-ok (type $108) (param $used (ref null (exact $used-in-array-new-ok)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new $array-new-inexact_23
+  ;; CHECK-NEXT:   (array.new $array-new-inexact_24
   ;; CHECK-NEXT:    (local.get $used)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new $array-new-inexact_24
+  ;; CHECK-NEXT:   (array.new $array-new-inexact_25
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-array-new-ok_25
+  ;; CHECK-NEXT:   (struct.new $used-in-array-new-ok_26
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1355,14 +1423,14 @@
     )
   )
 
-  ;; CHECK:      (func $array-new-fixed (type $105) (param $used (ref null (exact $used-in-array-new-fixed)))
+  ;; CHECK:      (func $array-new-fixed (type $109) (param $used (ref null (exact $used-in-array-new-fixed)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new_fixed $array-new-fixed-exact 1
   ;; CHECK-NEXT:    (local.get $used)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new $array-new-fixed-exact_26
+  ;; CHECK-NEXT:   (array.new $array-new-fixed-exact_27
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -1393,20 +1461,20 @@
     )
   )
 
-  ;; CHECK:      (func $array-new-fixed-ok (type $106) (param $used (ref null (exact $used-in-array-new-fixed-ok)))
+  ;; CHECK:      (func $array-new-fixed-ok (type $110) (param $used (ref null (exact $used-in-array-new-fixed-ok)))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array-new-fixed-inexact_27 1
+  ;; CHECK-NEXT:   (array.new_fixed $array-new-fixed-inexact_28 1
   ;; CHECK-NEXT:    (local.get $used)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new $array-new-fixed-inexact_28
+  ;; CHECK-NEXT:   (array.new $array-new-fixed-inexact_29
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-array-new-fixed-ok_29
+  ;; CHECK-NEXT:   (struct.new $used-in-array-new-fixed-ok_30
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1431,7 +1499,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-set (type $107) (param $used (ref (exact $used-in-array-set))) (param $ref (ref $array-set-exact))
+  ;; CHECK:      (func $array-set (type $111) (param $used (ref (exact $used-in-array-set))) (param $ref (ref $array-set-exact))
   ;; CHECK-NEXT:  (array.set $array-set-exact
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1456,14 +1524,14 @@
     )
   )
 
-  ;; CHECK:      (func $array-set-ok (type $108) (param $used (ref (exact $used-in-array-set-ok))) (param $ref (ref $array-set-inexact))
+  ;; CHECK:      (func $array-set-ok (type $112) (param $used (ref (exact $used-in-array-set-ok))) (param $ref (ref $array-set-inexact))
   ;; CHECK-NEXT:  (array.set $array-set-inexact
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (local.get $used)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-array-set-ok_30
+  ;; CHECK-NEXT:   (struct.new $used-in-array-set-ok_31
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1481,7 +1549,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-fill (type $109) (param $used (ref (exact $used-in-array-fill))) (param $ref (ref $array-fill-exact))
+  ;; CHECK:      (func $array-fill (type $113) (param $used (ref (exact $used-in-array-fill))) (param $ref (ref $array-fill-exact))
   ;; CHECK-NEXT:  (array.fill $array-fill-exact
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1508,7 +1576,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-fill-ok (type $110) (param $used (ref (exact $used-in-array-fill-ok))) (param $ref (ref $array-fill-inexact))
+  ;; CHECK:      (func $array-fill-ok (type $114) (param $used (ref (exact $used-in-array-fill-ok))) (param $ref (ref $array-fill-inexact))
   ;; CHECK-NEXT:  (array.fill $array-fill-inexact
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1516,7 +1584,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-array-fill-ok_31
+  ;; CHECK-NEXT:   (struct.new $used-in-array-fill-ok_32
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1535,7 +1603,7 @@
     )
   )
 
-  ;; CHECK:      (func $array-copy-ok (type $111) (param $used (ref (exact $used-in-array-copy-ok))) (param $ref (ref $array-copy-exact))
+  ;; CHECK:      (func $array-copy-ok (type $115) (param $used (ref (exact $used-in-array-copy-ok))) (param $ref (ref $array-copy-exact))
   ;; CHECK-NEXT:  (array.copy $array-copy-exact $array-copy-exact
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1544,7 +1612,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $used-in-array-copy-ok_32
+  ;; CHECK-NEXT:   (struct.new $used-in-array-copy-ok_33
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1568,7 +1636,7 @@
     )
   )
 
-  ;; CHECK:      (func $func (type $112) (param $used (ref (exact $used-in-func))) (result (ref (exact $used-in-func)))
+  ;; CHECK:      (func $func (type $116) (param $used (ref (exact $used-in-func))) (result (ref (exact $used-in-func)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $used-in-func
   ;; CHECK-NEXT:    (ref.null none)
@@ -1586,7 +1654,7 @@
     (local.get $used)
   )
 
-  ;; CHECK:      (func $global (type $113)
+  ;; CHECK:      (func $global (type $117)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $used-in-global
   ;; CHECK-NEXT:    (ref.null none)
@@ -1603,7 +1671,7 @@
     )
   )
 
-  ;; CHECK:      (func $segment (type $113)
+  ;; CHECK:      (func $segment (type $117)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $used-in-segment
   ;; CHECK-NEXT:    (ref.null none)
