@@ -1596,11 +1596,10 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
     funcHints.func = func->name;
 
     // Hints must be sorted by increasing binary offset.
-    std::sort(funcHints.exprHints.begin(),
-              funcHints.exprHints.end(),
-              [](const ExprHint& a, const ExprHint& b) {
-                return a.offset < b.offset;
-              });
+    std::sort(
+      funcHints.exprHints.begin(),
+      funcHints.exprHints.end(),
+      [](const ExprHint& a, const ExprHint& b) { return a.offset < b.offset; });
 
     funcHintsVec.emplace_back(std::move(funcHints));
   }
