@@ -116,9 +116,8 @@ public:
   // signatures ensure that there are no missing fields.
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
-  Result<> makeIf(Name label,
-                  Signature sig,
-                  std::optional<bool> likely = std::nullopt);
+  Result<>
+  makeIf(Name label, Signature sig, std::optional<bool> likely = std::nullopt);
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
@@ -393,9 +392,7 @@ private:
     static ScopeCtx makeBlock(Block* block, Type inputType) {
       return ScopeCtx(BlockScope{block}, inputType);
     }
-    static ScopeCtx makeIf(If* iff,
-                           Name originalLabel,
-                           Type inputType) {
+    static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType) {
       return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
     static ScopeCtx makeElse(ScopeCtx&& scope) {
