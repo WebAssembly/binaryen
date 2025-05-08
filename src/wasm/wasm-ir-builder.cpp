@@ -1380,9 +1380,11 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   return visitBlockStart(block, sig.params);
 }
 
-Result<> IRBuilder::makeIf(Name label, Signature sig) {
+Result<> IRBuilder::makeIf(Name label, Signature sig,
+                     std::optional<bool> likely) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
+  addBranchHint(iff, likely);
   return visitIfStart(iff, label, sig.params);
 }
 
@@ -1407,13 +1409,8 @@ Result<> IRBuilder::makeBreak(Index label,
   curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(ChildPopper{*this}.visitBreak(&curr, *labelType));
   auto* br = builder.makeBreak(curr.name, curr.value, curr.condition);
+  addBranchHint(br, likely);
   push(br);
-
-  if (likely) {
-    // Branches are only possible inside functions.
-    assert(func);
-    func->codeAnnotations[br].branchLikely = likely;
-  }
 
   return Ok{};
 }
@@ -1979,7 +1976,8 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
+Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out,
+                     std::optional<bool> likely) {
   BrOn curr;
   curr.op = op;
   curr.castType = out;
@@ -2036,7 +2034,9 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
     auto name = getLabelName(label);
     CHECK_ERR(name);
 
-    push(builder.makeBrOn(op, *name, curr.ref, out));
+    auto* br = builder.makeBrOn(op, *name, curr.ref, out);
+    addBranchHint(br, likely);
+    push(br);
     return Ok{};
   }
 
@@ -2058,7 +2058,9 @@ Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
 
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
-  push(builder.makeBrOn(op, extraLabel, curr.ref, out));
+  auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out);
+  addBranchHint(br, likely);
+  push(br);
 
   // If the branch wasn't taken, we need to leave the extra values on the
   // stack. For all instructions except br_on_non_null the extra values need
@@ -2529,6 +2531,14 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
 
   push(builder.makeStackSwitch(tag, std::move(curr.operands), curr.cont));
   return Ok{};
+}
+
+void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
+  if (likely) {
+    // Branches are only possible inside functions.
+    assert(func);
+    func->codeAnnotations[expr].branchLikely = likely;
+  }
 }
 
 } // namespace wasm

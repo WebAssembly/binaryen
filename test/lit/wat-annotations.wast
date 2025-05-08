@@ -148,4 +148,25 @@
       )
     )
   )
+
+  (func $if (param $x i32)
+    (@metadata.code.branch_hint "\00")
+    (if
+      (local.get $x)
+      (@metadata.code.branch_hint "\01")
+      (if
+        (local.get $x)
+        (nop)
+      )
+    )
+  )
+
+  (func $branch-hints-br_on (param $x anyref)
+    (block $out
+      (@metadata.code.branch_hint "\00")
+      (br_on_null $out
+        (local.get $x)
+      )
+    )
+  )
 )

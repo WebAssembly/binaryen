@@ -202,7 +202,8 @@ public:
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type);
   Result<>
-  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
+  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none,
+                     std::optional<bool> likely = std::nullopt);
   Result<> makeStructNew(HeapType type);
   Result<> makeStructNewDefault(HeapType type);
   Result<>
@@ -388,7 +389,8 @@ private:
     static ScopeCtx makeBlock(Block* block, Type inputType) {
       return ScopeCtx(BlockScope{block}, inputType);
     }
-    static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType) {
+    static ScopeCtx makeIf(If* iff, Name originalLabel, Type inputType,
+                     std::optional<bool> likely = std::nullopt) {
       return ScopeCtx(IfScope{iff, originalLabel}, inputType);
     }
     static ScopeCtx makeElse(ScopeCtx&& scope) {
@@ -693,6 +695,9 @@ private:
                                                              size_t extraArity);
   Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
+
+  // Add a branch hint, if |likely| is given. Returns the expression itself.
+  Expression* addBranchHint(Expression* expr, std::optional<bool> likely);
 
   void dump();
 };
