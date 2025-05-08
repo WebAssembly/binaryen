@@ -258,6 +258,23 @@ struct Analyzer
       }
     }
   }
+
+  void visitGlobal(Global* global) {
+    // This could be more precise by checking that the init expression is not
+    // null before inhibiting optimization, or by just inhibiting optmization of
+    // the allocations used in the initialization, but this is simpler.
+    for (auto type : global->type) {
+      if (type.isExact()) {
+        exactTypes.insert(type.getHeapType());
+      }
+    }
+  }
+
+  void visitElementSegment(ElementSegment* segment) {
+    if (segment->type.isExact()) {
+      exactTypes.insert(segment->type.getHeapType());
+    }
+  }
 };
 
 struct TypeSSA : public Pass {
@@ -294,6 +311,13 @@ struct TypeSSA : public Pass {
     // Also find news in the module scope.
     Analyzer moduleAnalyzer;
     moduleAnalyzer.walkModuleCode(module);
+    for (auto& global : module->globals) {
+      moduleAnalyzer.visitGlobal(global.get());
+    }
+    for (auto& segment : module->elementSegments) {
+      moduleAnalyzer.visitElementSegment(segment.get());
+    }
+    // TODO: Visit tables with initializers once we support those.
 
     // Find all the types that are unoptimizable because the exactness of their
     // allocations may be observed.
