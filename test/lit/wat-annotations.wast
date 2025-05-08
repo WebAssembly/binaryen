@@ -7,6 +7,8 @@
 
   ;; CHECK:      (type $0 (func (param i32)))
 
+  ;; CHECK:      (type $1 (func (param anyref)))
+
   ;; CHECK:      (func $no-annotations (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (br_if $out
@@ -15,6 +17,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; RTRIP:      (type $0 (func (param i32)))
+
+  ;; RTRIP:      (type $1 (func (param anyref)))
 
   ;; RTRIP:      (func $no-annotations (type $0) (param $x i32)
   ;; RTRIP-NEXT:  (block $block
@@ -149,23 +153,79 @@
     )
   )
 
+  ;; CHECK:      (func $if (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $if (type $0) (param $x i32)
+  ;; RTRIP-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; RTRIP-NEXT:  (if
+  ;; RTRIP-NEXT:   (local.get $x)
+  ;; RTRIP-NEXT:   (then
+  ;; RTRIP-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; RTRIP-NEXT:    (if
+  ;; RTRIP-NEXT:     (local.get $x)
+  ;; RTRIP-NEXT:     (then
+  ;; RTRIP-NEXT:      (nop)
+  ;; RTRIP-NEXT:     )
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
   (func $if (param $x i32)
     (@metadata.code.branch_hint "\00")
     (if
       (local.get $x)
-      (@metadata.code.branch_hint "\01")
-      (if
-        (local.get $x)
-        (nop)
+      (then
+        (@metadata.code.branch_hint "\01")
+        (if
+          (local.get $x)
+          (then
+            (nop)
+          )
+        )
       )
     )
   )
 
+  ;; CHECK:      (func $branch-hints-br_on (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (br_on_null $out
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $branch-hints-br_on (type $1) (param $x anyref)
+  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:   (drop
+  ;; RTRIP-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; RTRIP-NEXT:    (br_on_null $block
+  ;; RTRIP-NEXT:     (local.get $x)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
   (func $branch-hints-br_on (param $x anyref)
     (block $out
-      (@metadata.code.branch_hint "\00")
-      (br_on_null $out
-        (local.get $x)
+      (drop
+        (@metadata.code.branch_hint "\00")
+        (br_on_null $out
+          (local.get $x)
+        )
       )
     )
   )
