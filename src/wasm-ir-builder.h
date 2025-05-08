@@ -116,7 +116,8 @@ public:
   // signatures ensure that there are no missing fields.
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
-  Result<> makeIf(Name label, Signature sig);
+  Result<>
+  makeIf(Name label, Signature sig, std::optional<bool> likely = std::nullopt);
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
@@ -201,8 +202,11 @@ public:
   Result<> makeCallRef(HeapType type, bool isReturn);
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type);
-  Result<>
-  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
+  Result<> makeBrOn(Index label,
+                    BrOnOp op,
+                    Type in = Type::none,
+                    Type out = Type::none,
+                    std::optional<bool> likely = std::nullopt);
   Result<> makeStructNew(HeapType type);
   Result<> makeStructNewDefault(HeapType type);
   Result<>
@@ -693,6 +697,9 @@ private:
                                                              size_t extraArity);
   Expression* fixExtraOutput(ScopeCtx& scope, Name label, Expression* expr);
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
+
+  // Add a branch hint, if |likely| is present.
+  void addBranchHint(Expression* expr, std::optional<bool> likely);
 
   void dump();
 };

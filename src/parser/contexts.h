@@ -1914,8 +1914,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     if (!type.isSignature()) {
       return in.err(pos, "expected function type");
     }
+    auto likely = getBranchHint(annotations);
     return withLoc(
-      pos, irBuilder.makeIf(label ? *label : Name{}, type.getSignature()));
+      pos,
+      irBuilder.makeIf(label ? *label : Name{}, type.getSignature(), likely));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
@@ -2546,7 +2548,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     BrOnOp op,
                     Type in = Type::none,
                     Type out = Type::none) {
-    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out));
+    auto likely = getBranchHint(annotations);
+    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out, likely));
   }
 
   Result<> makeStructNew(Index pos,
