@@ -153,7 +153,7 @@
     )
   )
 
-  ;; CHECK:      (func $if (type $0) (param $x i32)
+  ;; CHECK:      (func $branch-hints-if (type $0) (param $x i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -168,7 +168,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $if (type $0) (param $x i32)
+  ;; RTRIP:      (func $branch-hints-if (type $0) (param $x i32)
   ;; RTRIP-NEXT:  (@metadata.code.branch_hint "\00")
   ;; RTRIP-NEXT:  (if
   ;; RTRIP-NEXT:   (local.get $x)
@@ -183,7 +183,7 @@
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  (func $if (param $x i32)
+  (func $branch-hints-if (param $x i32)
     (@metadata.code.branch_hint "\00")
     (if
       (local.get $x)
