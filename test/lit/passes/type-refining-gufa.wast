@@ -33,7 +33,7 @@
     ;; O3O3-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct (field (mut anyref)))))
     ;; NRML:       (type $B (sub (struct (field (mut anyref)))))
-    ;; GUFA:       (type $B (sub (struct (field (mut (ref null $A))))))
+    ;; GUFA:       (type $B (sub (struct (field (mut (ref null (exact $A)))))))
     ;; O3O3:       (type $B (sub (struct (field anyref))))
     (type $B (sub (struct (field (mut anyref)))))
   )
@@ -83,7 +83,7 @@
   ;; GUFA:      (export "work" (func $work))
 
   ;; GUFA:      (func $get_from_global (type $2) (param $x i32) (result anyref)
-  ;; GUFA-NEXT:  (if (result (ref null $A))
+  ;; GUFA-NEXT:  (if (result (ref null (exact $A)))
   ;; GUFA-NEXT:   (local.get $x)
   ;; GUFA-NEXT:   (then
   ;; GUFA-NEXT:    (struct.get $A 0
@@ -188,14 +188,14 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT:  (local.set $b
   ;; GUFA-NEXT:   (struct.new $B
-  ;; GUFA-NEXT:    (ref.cast (ref null $A)
+  ;; GUFA-NEXT:    (ref.cast (ref null (exact $A))
   ;; GUFA-NEXT:     (local.get $a)
   ;; GUFA-NEXT:    )
   ;; GUFA-NEXT:   )
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT:  (local.set $b
   ;; GUFA-NEXT:   (struct.new $B
-  ;; GUFA-NEXT:    (ref.cast (ref null $A)
+  ;; GUFA-NEXT:    (ref.cast (ref null (exact $A))
   ;; GUFA-NEXT:     (call $get_from_global
   ;; GUFA-NEXT:      (local.get $x)
   ;; GUFA-NEXT:     )
@@ -217,7 +217,7 @@
   ;; GUFA-NEXT:  )
   ;; GUFA-NEXT: )
   ;; O3O3:      (func $work (type $3) (param $0 i32)
-  ;; O3O3-NEXT:  (local $1 (ref $B))
+  ;; O3O3-NEXT:  (local $1 (ref (exact $B)))
   ;; O3O3-NEXT:  (local.set $1
   ;; O3O3-NEXT:   (struct.new $B
   ;; O3O3-NEXT:    (if (result anyref)

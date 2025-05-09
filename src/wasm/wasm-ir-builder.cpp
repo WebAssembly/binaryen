@@ -2105,7 +2105,7 @@ Result<> IRBuilder::makeBrOn(
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
   StructNew curr(wasm.allocator);
-  curr.type = Type(type, NonNullable);
+  curr.type = Type(type, NonNullable, Exact);
   // Differentiate from struct.new_default with a non-empty expression list.
   curr.operands.resize(type.getStruct().fields.size());
   CHECK_ERR(visitStructNew(&curr));
@@ -2166,7 +2166,7 @@ IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
 
 Result<> IRBuilder::makeArrayNew(HeapType type) {
   ArrayNew curr;
-  curr.type = Type(type, NonNullable);
+  curr.type = Type(type, NonNullable, Exact);
   // Differentiate from array.new_default with dummy initializer.
   curr.init = (Expression*)0x01;
   CHECK_ERR(visitArrayNew(&curr));

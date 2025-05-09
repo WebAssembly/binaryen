@@ -71,9 +71,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block (ref $struct) (ref $substruct)
- ;; CHECK-NEXT:     (struct.new_default $struct)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (struct.new_default $struct)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
@@ -111,7 +109,7 @@
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (ref.cast (ref $struct)
+ ;; CHECK-NEXT:     (ref.cast (ref (exact $struct))
  ;; CHECK-NEXT:      (local.tee $any
  ;; CHECK-NEXT:       (struct.new_default $struct)
  ;; CHECK-NEXT:      )
@@ -131,10 +129,8 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block anyref (ref $substruct)
- ;; CHECK-NEXT:     (local.tee $any
- ;; CHECK-NEXT:      (struct.new_default $struct)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    (local.tee $any
+ ;; CHECK-NEXT:     (struct.new_default $struct)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -328,7 +324,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $struct) (ref $substruct)
+ ;; CHECK-NEXT:    (br $block
  ;; CHECK-NEXT:     (struct.new_default $struct)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -368,7 +364,7 @@
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.cast (ref $struct)
+ ;; CHECK-NEXT:    (ref.cast (ref (exact $struct))
  ;; CHECK-NEXT:     (local.tee $any
  ;; CHECK-NEXT:      (struct.new_default $struct)
  ;; CHECK-NEXT:     )
@@ -382,7 +378,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block anyref (ref $substruct)
+ ;; CHECK-NEXT:    (br $block
  ;; CHECK-NEXT:     (local.tee $any
  ;; CHECK-NEXT:      (struct.new_default $struct)
  ;; CHECK-NEXT:     )
@@ -847,7 +843,7 @@
 
  ;; CHECK:      (func $allocations-are-costly (type $8) (param $x i32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result (ref null $struct))
+ ;; CHECK-NEXT:   (if (result (ref null (exact $struct)))
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (struct.new_default $struct)

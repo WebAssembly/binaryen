@@ -1045,7 +1045,7 @@
 
   ;; CHECK:      (func $called (type $2) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $B))
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2085,7 +2085,7 @@
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $bot)
+ ;; CHECK-NEXT:   (ref.cast (ref (exact $bot))
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

@@ -421,7 +421,8 @@ class ClusterFuzz(utils.BinaryenTestCase):
             for i in range(1, N + 1):
                 fuzz_file = os.path.join(temp_dir.name, f'fuzz-binaryen-{i}.js')
 
-                cmd = [shared.V8, '--wasm-staging', fuzz_file]
+                # Add --fuzzing to allow legacy and standard EH to coexist
+                cmd = [shared.V8, '--wasm-staging', '--fuzzing', fuzz_file]
                 proc = subprocess.run(cmd, stdout=subprocess.PIPE)
 
                 # An execution is valid if we exited without error, and if we

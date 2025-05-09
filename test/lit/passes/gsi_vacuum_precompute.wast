@@ -58,14 +58,18 @@
   )
  ))
 
- ;; CHECK:      (elem declare func $func1 $func2)
-
  ;; CHECK:      (export "test-A" (func $test-A))
 
  ;; CHECK:      (export "test-B" (func $test-B))
 
  ;; CHECK:      (func $test-A (type $3) (param $ref (ref any)) (result funcref)
- ;; CHECK-NEXT:  (ref.func $func1)
+ ;; CHECK-NEXT:  (struct.get $vtable 0
+ ;; CHECK-NEXT:   (struct.get $itable1 0
+ ;; CHECK-NEXT:    (ref.cast (ref $itable1)
+ ;; CHECK-NEXT:     (local.get $ref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test-A (export "test-A") (param $ref (ref any)) (result funcref)
   (struct.get $vtable 0    ;; this is a reference to $func1
@@ -78,7 +82,13 @@
  )
 
  ;; CHECK:      (func $test-B (type $3) (param $ref (ref any)) (result funcref)
- ;; CHECK-NEXT:  (ref.func $func2)
+ ;; CHECK-NEXT:  (struct.get $vtable 0
+ ;; CHECK-NEXT:   (struct.get $itable2 0
+ ;; CHECK-NEXT:    (ref.cast (ref $itable2)
+ ;; CHECK-NEXT:     (local.get $ref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test-B (export "test-B") (param $ref (ref any)) (result funcref)
   (struct.get $vtable 0    ;; this is a reference to $func2

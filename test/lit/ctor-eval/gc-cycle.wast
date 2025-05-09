@@ -9,7 +9,7 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_3 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_3 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
@@ -84,7 +84,7 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_3 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_3 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
@@ -151,12 +151,12 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_7 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_8 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_8 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_7)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
@@ -250,12 +250,12 @@
 
  ;; CHECK:      (type $3 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_7 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_8 (ref $B) (struct.new $B
+ ;; CHECK:      (global $ctor-eval$global_8 (ref (exact $B)) (struct.new $B
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_7)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
@@ -348,12 +348,12 @@
 
  ;; CHECK:      (type $3 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_7 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_8 (ref $B) (struct.new $B
+ ;; CHECK:      (global $ctor-eval$global_8 (ref (exact $B)) (struct.new $B
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_7)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
@@ -446,12 +446,12 @@
 
  ;; CHECK:      (type $3 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_7 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_8 (ref $B) (struct.new $B
+ ;; CHECK:      (global $ctor-eval$global_8 (ref (exact $B)) (struct.new $B
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_7)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
@@ -536,12 +536,12 @@
 
  ;; CHECK:      (type $3 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_7 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_8 (ref $B) (struct.new $B
+ ;; CHECK:      (global $ctor-eval$global_8 (ref (exact $B)) (struct.new $B
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_7)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
@@ -614,17 +614,17 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_12 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_12 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_14 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_14 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_13 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_13 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT:  (i32.const 99999)
  ;; CHECK-NEXT: ))
@@ -725,12 +725,12 @@
 
  ;; CHECK:      (type $4 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_12 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_12 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_14 (ref $B) (array.new_fixed $B 10
+ ;; CHECK:      (global $ctor-eval$global_14 (ref (exact $B)) (array.new_fixed $B 10
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
@@ -780,7 +780,7 @@
   )
  )
 
- ;; CHECK:      (global $ctor-eval$global_13 (ref $C) (array.new_fixed $C 2
+ ;; CHECK:      (global $ctor-eval$global_13 (ref (exact $C)) (array.new_fixed $C 2
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT: ))
@@ -833,12 +833,12 @@
 
  ;; CHECK:      (type $4 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_12 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_12 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_14 (ref $B) (array.new_fixed $B 10
+ ;; CHECK:      (global $ctor-eval$global_14 (ref (exact $B)) (array.new_fixed $B 10
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
@@ -892,7 +892,7 @@
   )
  )
 
- ;; CHECK:      (global $ctor-eval$global_13 (ref $C) (array.new_fixed $C 2
+ ;; CHECK:      (global $ctor-eval$global_13 (ref (exact $C)) (array.new_fixed $C 2
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
  ;; CHECK-NEXT: ))
@@ -944,19 +944,19 @@
 
  ;; CHECK:      (type $3 (func (result anyref)))
 
- ;; CHECK:      (global $ctor-eval$global_17 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_17 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_14 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_14 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_18 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_18 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
@@ -994,15 +994,15 @@
   )
  )
 
- ;; CHECK:      (global $ctor-eval$global_16 (ref $B) (array.new_fixed $B 3
+ ;; CHECK:      (global $ctor-eval$global_16 (ref (exact $B)) (array.new_fixed $B 3
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_17)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_18)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_15 (ref $B) (array.new_fixed $B 0))
+ ;; CHECK:      (global $ctor-eval$global_15 (ref (exact $B)) (array.new_fixed $B 0))
 
- ;; CHECK:      (global $ctor-eval$global_19 (ref $B) (array.new_fixed $B 0))
+ ;; CHECK:      (global $ctor-eval$global_19 (ref (exact $B)) (array.new_fixed $B 0))
 
  ;; CHECK:      (export "test" (func $test_3))
 
@@ -1056,17 +1056,17 @@
 
  ;; CHECK:      (type $3 (func (result anyref)))
 
- ;; CHECK:      (global $ctor-eval$global_17 (ref $B) (array.new_fixed $B 0))
+ ;; CHECK:      (global $ctor-eval$global_17 (ref (exact $B)) (array.new_fixed $B 0))
 
- ;; CHECK:      (global $ctor-eval$global_14 (ref $B) (array.new_fixed $B 3
+ ;; CHECK:      (global $ctor-eval$global_14 (ref (exact $B)) (array.new_fixed $B 3
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_18 (ref $B) (array.new_fixed $B 0))
+ ;; CHECK:      (global $ctor-eval$global_18 (ref (exact $B)) (array.new_fixed $B 0))
 
- ;; CHECK:      (global $ctor-eval$global_16 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_16 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_17)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_18)
@@ -1105,13 +1105,13 @@
   )
  )
 
- ;; CHECK:      (global $ctor-eval$global_15 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_15 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_19 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_19 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (ref.null none)
@@ -1167,7 +1167,7 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_4 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_4 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 42)
  ;; CHECK-NEXT: ))
@@ -1271,7 +1271,7 @@
   )
  )
 )
-;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new $A
+;; CHECK:      (global $ctor-eval$global (ref (exact $A)) (struct.new $A
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
 

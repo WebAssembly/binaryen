@@ -829,7 +829,7 @@ void RefFunc::finalize() {
 }
 
 void RefFunc::finalize(HeapType heapType) {
-  type = Type(heapType, NonNullable);
+  type = Type(heapType, NonNullable, Exact);
 }
 
 void RefEq::finalize() {

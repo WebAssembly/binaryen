@@ -908,21 +908,21 @@ public:
                            std::initializer_list<Expression*> args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
   StructNew* makeStructNew(HeapType type, ExpressionList&& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands = std::move(args);
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
   template<typename T> StructNew* makeStructNew(HeapType type, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -985,7 +985,7 @@ public:
     auto* ret = wasm.allocator.alloc<ArrayNew>();
     ret->size = size;
     ret->init = init;
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -997,7 +997,7 @@ public:
     ret->segment = seg;
     ret->offset = offset;
     ret->size = size;
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1009,7 +1009,7 @@ public:
     ret->segment = seg;
     ret->offset = offset;
     ret->size = size;
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1017,7 +1017,7 @@ public:
   ArrayNewFixed* makeArrayNewFixed(HeapType type, const T& values) {
     auto* ret = wasm.allocator.alloc<ArrayNewFixed>();
     ret->values.set(values);
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1185,7 +1185,7 @@ public:
   }
   ContNew* makeContNew(HeapType type, Expression* func) {
     auto* ret = wasm.allocator.alloc<ContNew>();
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->func = func;
     ret->finalize();
     return ret;
@@ -1194,7 +1194,7 @@ public:
                          ExpressionList&& operands,
                          Expression* cont) {
     auto* ret = wasm.allocator.alloc<ContBind>();
-    ret->type = Type(targetType, NonNullable);
+    ret->type = Type(targetType, NonNullable, Exact);
     ret->operands = std::move(operands);
     ret->cont = cont;
     ret->finalize();

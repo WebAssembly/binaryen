@@ -455,15 +455,13 @@
   ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $A_1 (sub $A (struct)))
+  ;; CHECK:      (type $1 (func (result (ref $A))))
 
-  ;; CHECK:      (type $2 (func (result (ref $A))))
-
-  ;; CHECK:      (func $0 (type $2) (result (ref $A))
-  ;; CHECK-NEXT:  (block $label (result (ref $A_1))
+  ;; CHECK:      (func $0 (type $1) (result (ref $A))
+  ;; CHECK-NEXT:  (block $label (result (ref (exact $A)))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $label (ref $A_1) (ref $A_1)
-  ;; CHECK-NEXT:     (struct.new_default $A_1)
+  ;; CHECK-NEXT:    (br_on_cast $label (ref (exact $A)) (ref (exact $A))
+  ;; CHECK-NEXT:     (struct.new_default $A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)

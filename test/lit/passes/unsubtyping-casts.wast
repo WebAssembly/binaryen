@@ -34,20 +34,19 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct)))
+ ;; CHECK:       (type $bot (sub $top (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $3 (func))
+ ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (func $cast (type $3)
+ ;; CHECK:      (func $cast (type $2)
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $mid)
+ ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (struct.new_default $top)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -72,20 +71,19 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct)))
+ ;; CHECK:       (type $bot (sub $top (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $3 (func))
+ ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (func $cast (type $3)
+ ;; CHECK:      (func $cast (type $2)
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.test (ref $mid)
+ ;; CHECK-NEXT:   (ref.test (ref none)
  ;; CHECK-NEXT:    (struct.new_default $top)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -109,22 +107,21 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct)))
+ ;; CHECK:       (type $bot (sub $top (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $3 (func))
+ ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (func $cast (type $3)
+ ;; CHECK:      (func $cast (type $2)
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $mid))
+ ;; CHECK-NEXT:   (block $l (result (ref none))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_cast $l (ref $top) (ref $mid)
+ ;; CHECK-NEXT:     (br_on_cast $l (ref (exact $top)) (ref none)
  ;; CHECK-NEXT:      (struct.new_default $top)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -156,22 +153,21 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct)))
+ ;; CHECK:       (type $bot (sub $top (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $3 (func))
+ ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (func $cast (type $3)
+ ;; CHECK:      (func $cast (type $2)
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $top))
+ ;; CHECK-NEXT:   (block $l (result (ref (exact $top)))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_cast_fail $l (ref $top) (ref $mid)
+ ;; CHECK-NEXT:     (br_on_cast_fail $l (ref (exact $top)) (ref none)
  ;; CHECK-NEXT:      (struct.new_default $top)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -481,45 +477,42 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $topC (sub (struct)))
   (type $topC (sub (struct)))
-  ;; CHECK:       (type $midC (sub $topC (struct)))
   (type $midC (sub $topC (struct)))
-  ;; CHECK:       (type $botC (sub $midC (struct)))
+  ;; CHECK:       (type $botC (sub $topC (struct)))
   (type $botC (sub $midC (struct)))
 
   ;; CHECK:       (type $topB (sub (struct (field (ref null $topC)))))
   (type $topB (sub (struct (ref null $topC))))
-  ;; CHECK:       (type $midB (sub $topB (struct (field (ref null $botC)))))
   (type $midB (sub $topB (struct (ref null $botC))))
-  ;; CHECK:       (type $botB (sub $midB (struct (field (ref null $botC)))))
+  ;; CHECK:       (type $botB (sub $topB (struct (field (ref null $botC)))))
   (type $botB (sub $midB (struct (ref null $botC))))
 
   ;; CHECK:       (type $topA (sub (struct (field (ref null $topB)))))
   (type $topA (sub (struct (ref null $topB))))
-  ;; CHECK:       (type $midA (sub $topA (struct (field (ref null $botB)))))
   (type $midA (sub $topA (struct (ref null $botB))))
-  ;; CHECK:       (type $botA (sub $midA (struct (field (ref null $botB)))))
+  ;; CHECK:       (type $botA (sub $topA (struct (field (ref null $botB)))))
   (type $botA (sub $midA (struct (ref null $botB))))
  )
 
- ;; CHECK:       (type $9 (func))
+ ;; CHECK:       (type $6 (func))
 
- ;; CHECK:      (func $cast (type $9)
+ ;; CHECK:      (func $cast (type $6)
  ;; CHECK-NEXT:  (local $l (ref null $topA))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $botA)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $midA)
+ ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (struct.new_default $topA)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $midB)
+ ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (struct.new_default $topB)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $midC)
+ ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (struct.new_default $topC)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

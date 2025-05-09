@@ -1997,7 +1997,8 @@ console.log("# RefFunc");
   assert(theRefFunc instanceof binaryen.RefFunc);
   assert(theRefFunc instanceof binaryen.Expression);
   assert(theRefFunc.func === func);
-  assert(theRefFunc.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   var info = binaryen.getExpressionInfo(theRefFunc);
   assert(info.id === theRefFunc.id);
@@ -2007,7 +2008,8 @@ console.log("# RefFunc");
   theRefFunc.func = func = "b";
   assert(theRefFunc.func === func);
   theRefFunc.finalize();
-  assert(theRefFunc.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   info = binaryen.getExpressionInfo(theRefFunc);
   assert(info.type === theRefFunc.type);
@@ -2223,7 +2225,8 @@ console.log("# StructNew");
   assert(theStructNew instanceof binaryen.Expression);
   assertDeepEqual(theStructNew.operands, operands);
   assertDeepEqual(theStructNew.getOperands(), operands);
-  assert(theStructNew.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   var info = binaryen.getExpressionInfo(theStructNew);
   assert(info.id === theStructNew.id);
@@ -2405,7 +2408,8 @@ console.log("# ArrayNew");
   assert(theArrayNew instanceof binaryen.Expression);
   assert(theArrayNew.size === size);
   assert(theArrayNew.init === init);
-  assert(theArrayNew.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   var info = binaryen.getExpressionInfo(theArrayNew);
   assert(info.id === theArrayNew.id);
@@ -2458,7 +2462,8 @@ console.log("# ArrayNewFixed");
   assert(theArrayNewFixed instanceof binaryen.Expression);
   assertDeepEqual(theArrayNewFixed.values, values);
   assertDeepEqual(theArrayNewFixed.getValues(), values);
-  assert(theArrayNewFixed.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   var info = binaryen.getExpressionInfo(theArrayNewFixed);
   assert(info.id === theArrayNewFixed.id);
@@ -2519,7 +2524,8 @@ console.log("# ArrayNewData");
   assert(theArrayNewData.segment === segment);
   assert(theArrayNewData.offset === offset);
   assert(theArrayNewData.size === size);
-  assert(theArrayNewData.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   var info = binaryen.getExpressionInfo(theArrayNewData);
   assert(info.id === theArrayNewData.id);
@@ -2576,7 +2582,8 @@ console.log("# ArrayNewElem");
   assert(theArrayNewElem.segment === segment);
   assert(theArrayNewElem.offset === offset);
   assert(theArrayNewElem.size === size);
-  assert(theArrayNewElem.type === type);
+  // TODO: assert that the type is a non-nullable, exact reference to the
+  // function type once we can express that in the JS API.
 
   var info = binaryen.getExpressionInfo(theArrayNewElem);
   assert(info.id === theArrayNewElem.id);

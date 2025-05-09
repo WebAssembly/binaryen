@@ -68,8 +68,8 @@
 
 ;; Test ref.func and ref.null optimization of constant parameter values.
 (module
- ;; CHECK:      (func $foo (type $1) (param $0 (ref $0))
- ;; CHECK-NEXT:  (local $1 (ref $0))
+ ;; CHECK:      (func $foo (type $1) (param $0 (ref (exact $0)))
+ ;; CHECK-NEXT:  (local $1 (ref (exact $0)))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $a)
  ;; CHECK-NEXT:  )

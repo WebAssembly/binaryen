@@ -105,9 +105,9 @@ protected:
     PossibleContents::exactType(Type(HeapType::i31, NonNullable));
 
   PossibleContents exactFuncSignatureType = PossibleContents::exactType(
-    Type(Signature(Type::none, Type::none), Nullable));
+    Type(Signature(Type::none, Type::none), Nullable, Exact));
   PossibleContents exactNonNullFuncSignatureType = PossibleContents::exactType(
-    Type(Signature(Type::none, Type::none), NonNullable));
+    Type(Signature(Type::none, Type::none), NonNullable, Exact));
 
   PossibleContents many = PossibleContents::many();
 

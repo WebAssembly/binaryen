@@ -60,7 +60,6 @@
  (type $void_func (func))
  (type $struct (sub (struct (field (mut i32)))))
  (type $3 (func (param i32)))
- (type $extendedstruct (sub $struct (struct (field (mut i32)) (field f64))))
  (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (type $3) (param i32)))
  (export "structs" (func $structs))
@@ -99,7 +98,7 @@
   )
  )
  (func $arrays (type $void_func)
-  (local $0 (ref $bytes))
+  (local $0 (ref (exact $bytes)))
   (local.set $0
    (array.new $bytes
     (i32.const 42)
@@ -145,25 +144,15 @@
   )
  )
  (func $br_on_failed_cast-1 (type $void_func)
-  (local $0 (ref $struct))
+  (local $0 (ref (exact $struct)))
   (local.set $0
    (struct.new_default $struct)
   )
-  (drop
-   (block $any (result (ref null $struct))
-    (call $log
-     (i32.const 1)
-    )
-    (drop
-     (br_on_cast_fail $any (ref $struct) (ref $extendedstruct)
-      (local.get $0)
-     )
-    )
-    (call $log
-     (i32.const 999)
-    )
-    (ref.null none)
+  (block $any
+   (call $log
+    (i32.const 1)
    )
+   (br $any)
   )
  )
  (func $br_on_failed_cast-2 (type $void_func)
@@ -210,8 +199,8 @@
   )
  )
  (func $array-copy (type $void_func)
-  (local $0 (ref $bytes))
-  (local $1 (ref $bytes))
+  (local $0 (ref (exact $bytes)))
+  (local $1 (ref (exact $bytes)))
   (array.set $bytes
    (local.tee $1
     (array.new_default $bytes

@@ -444,7 +444,7 @@
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 (ref any))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (call $helper0
   ;; CHECK-NEXT:      (i32.const 0)
@@ -484,7 +484,7 @@
   ;; CHECK-NEXT:  (local $0 f64)
   ;; CHECK-NEXT:  (local $1 (ref any))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (call $helper1
   ;; CHECK-NEXT:      (i32.const 0)
@@ -520,7 +520,7 @@
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 (ref any))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (global.get $mut-i32)
   ;; CHECK-NEXT:    )
@@ -585,7 +585,7 @@
   ;; CHECK:      (func $new-side-effect-in-kept (type $3) (param $any (ref any))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (call $helper0
   ;; CHECK-NEXT:      (i32.const 0)
@@ -1651,7 +1651,7 @@
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct))
+  ;; CHECK-NEXT:     (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )

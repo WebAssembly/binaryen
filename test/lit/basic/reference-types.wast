@@ -997,7 +997,7 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block6 (result funcref)
-  ;; CHECK-BIN-NEXT:    (ref.cast (ref $3)
+  ;; CHECK-BIN-NEXT:    (ref.cast (ref (exact $3))
   ;; CHECK-BIN-NEXT:     (br_if $block6
   ;; CHECK-BIN-NEXT:      (ref.func $foo)
   ;; CHECK-BIN-NEXT:      (i32.const 1)
@@ -2334,7 +2334,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block6 (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast (ref $3)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast (ref (exact $3))
 ;; CHECK-BIN-NODEBUG-NEXT:     (br_if $block6
 ;; CHECK-BIN-NODEBUG-NEXT:      (ref.func $3)
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)

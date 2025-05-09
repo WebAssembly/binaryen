@@ -1523,7 +1523,7 @@
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-long_7 (type $5) (param $0 i32) (result (ref $A))
-;; ZERO___-NEXT:  (local $1 (ref $A))
+;; ZERO___-NEXT:  (local $1 (ref (exact $A)))
 ;; ZERO___-NEXT:  (local.set $1
 ;; ZERO___-NEXT:   (struct.new $A
 ;; ZERO___-NEXT:    (local.get $0)
@@ -1548,7 +1548,7 @@
 ;; ZERO___-NEXT: )
 
 ;; ZERO___:      (func $target-long_9 (type $7) (result (ref $A))
-;; ZERO___-NEXT:  (local $0 (ref $A))
+;; ZERO___-NEXT:  (local $0 (ref (exact $A)))
 ;; ZERO___-NEXT:  (local.set $0
 ;; ZERO___-NEXT:   (struct.new $A
 ;; ZERO___-NEXT:    (i32.const 42)

@@ -62,9 +62,9 @@ function asmFunc(imports) {
  }
  
  function named_type_temps() {
-  var $0 = null, wasm2js__ref_null_$func_0_$0_1 = null, wasm2js__ref_null_$func_0_$1_1 = null, wasm2js_i32$0 = 0;
+  var $0 = null, wasm2js__ref_null__exact_$func_0__$0_1 = null, wasm2js__ref_null__exact_$func_0__$1_1 = null, wasm2js_i32$0 = 0;
   $0 = named_type_temps;
-  return wasm2js__ref_null_$func_0_$0 = null, wasm2js__ref_null_$func_0_$1 = $0 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js__ref_null_$func_0_$0 : wasm2js__ref_null_$func_0_$1;
+  return wasm2js__ref_null__exact_$func_0__$0 = null, wasm2js__ref_null__exact_$func_0__$1 = $0 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js__ref_null__exact_$func_0__$0 : wasm2js__ref_null__exact_$func_0__$1;
  }
  
  return {

@@ -2052,7 +2052,7 @@
   )
   ;; CHECK:      (func $set (type $0)
   ;; CHECK-NEXT:  (struct.set $C 0
-  ;; CHECK-NEXT:   (ref.cast (ref $C)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $C))
   ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 20)

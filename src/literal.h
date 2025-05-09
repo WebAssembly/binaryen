@@ -88,7 +88,7 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func, HeapType type)
-    : func(func), type(type, NonNullable) {
+    : func(func), type(type, NonNullable, Exact) {
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);

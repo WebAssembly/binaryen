@@ -306,7 +306,7 @@
  (func $do-return-call (result funcref)
   (return_call $return-ref-func)
  )
- ;; CHECK:      (func $return-ref-func (type $9) (result (ref $6))
+ ;; CHECK:      (func $return-ref-func (type $9) (result (ref (exact $6)))
  ;; CHECK-NEXT:  (ref.func $do-return-call)
  ;; CHECK-NEXT: )
  (func $return-ref-func (result funcref)
