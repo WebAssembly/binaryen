@@ -47,6 +47,7 @@
 // This pass works well with TypeMerging. See notes there for more.
 //
 
+#include "ir/child-typer.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -147,14 +148,138 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
 // A vector of struct.new or one of the variations on array.new.
 using News = std::vector<Expression*>;
 
-struct NewFinder : public PostWalker<NewFinder> {
+// A set of types for which the exactness of allocations may be observed.
+using TypeSet = std::unordered_set<HeapType>;
+
+struct Analyzer
+  : public PostWalker<Analyzer, UnifiedExpressionVisitor<Analyzer>> {
+  // Find allocations we can potentially optimize.
   News news;
 
-  void visitStructNew(StructNew* curr) { news.push_back(curr); }
-  void visitArrayNew(ArrayNew* curr) { news.push_back(curr); }
-  void visitArrayNewData(ArrayNewData* curr) { news.push_back(curr); }
-  void visitArrayNewElem(ArrayNewElem* curr) { news.push_back(curr); }
-  void visitArrayNewFixed(ArrayNewFixed* curr) { news.push_back(curr); }
+  // Also find heap types for which the exactness of allocations is observed. We
+  // will not be able to optimize allocations of these types without an analysis
+  // proving that an allocation does not flow into any location where its
+  // exactness is observed.
+  TypeSet disallowedTypes;
+
+  // Find allocations we can potentially optimize.
+  void visitStructNew(StructNew* curr) {
+    news.push_back(curr);
+    visitExpression(curr);
+  }
+  void visitArrayNew(ArrayNew* curr) {
+    news.push_back(curr);
+    visitExpression(curr);
+  }
+  void visitArrayNewData(ArrayNewData* curr) {
+    news.push_back(curr);
+    visitExpression(curr);
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    news.push_back(curr);
+    visitExpression(curr);
+  }
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    news.push_back(curr);
+    visitExpression(curr);
+  }
+
+  // Find casts to exact types. Allocations of these types will not be able to
+  // be optimized.
+  template<typename Cast> void visitCast(Cast* cast) {
+    if (auto type = cast->getCastType(); type.isExact()) {
+      disallowedTypes.insert(type.getHeapType());
+    }
+  }
+  void visitRefTest(RefTest* curr) { visitCast(curr); }
+  void visitRefCast(RefCast* curr) { visitCast(curr); }
+  void visitBrOn(BrOn* curr) {
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
+      visitCast(curr);
+    }
+  }
+
+  void visitExpression(Expression* curr) {
+    // Look at the constraints on this expression's operands to see if it
+    // requires an exact operand. If it does, we cannot optimize allocations of
+    // that type. As an optimization, do not let control flow structures or
+    // branches inhibit optimization since they can safely be refinalized to use
+    // new types as long as no other instruction expected the original exact
+    // type. Also allow optimizing if the instruction that would inhibit
+    // optimizing will not be written in the final output. Skipping further
+    // analysis for these instructions also ensures that the ChildTyper below
+    // sees the type information it expects in the instructions it analyzes.
+    if (Properties::isControlFlowStructure(curr) ||
+        Properties::isBranch(curr) ||
+        Properties::hasUnwritableTypeImmediate(curr)) {
+      return;
+    }
+
+    // Also do not let unreachable instructions inhibit optimization, as long as
+    // they are unreachable because of an unreachable child. (Some other
+    // unreachable instructions, such as a return_call, can still require an
+    // exact operand and may inhibit optimization.)
+    if (curr->type == Type::unreachable) {
+      for (auto* child : ChildIterator(curr)) {
+        if (child->type == Type::unreachable) {
+          return;
+        }
+      }
+    }
+
+    struct ExactChildTyper : ChildTyper<ExactChildTyper> {
+      Analyzer& parent;
+      ExactChildTyper(Analyzer& parent)
+        : ChildTyper(*parent.getModule(), parent.getFunction()),
+          parent(parent) {}
+
+      void noteSubtype(Expression**, Type type) {
+        for (Type t : type) {
+          if (t.isExact()) {
+            parent.disallowedTypes.insert(t.getHeapType());
+          }
+        }
+      }
+
+      // Other constraints do not matter to us.
+      void noteAnyType(Expression**) {}
+      void noteAnyReferenceType(Expression**) {}
+      void noteAnyTupleType(Expression**, size_t) {}
+      void noteAnyI8ArrayReferenceType(Expression**) {}
+      void noteAnyI16ArrayReferenceType(Expression**) {}
+
+      Type getLabelType(Name label) { WASM_UNREACHABLE("unexpected branch"); }
+    } typer(*this);
+    typer.visit(curr);
+  }
+
+  void visitFunction(Function* func) {
+    // Returned exact references must remain exact references to the original
+    // heap types.
+    for (auto type : func->getSig().results) {
+      if (type.isExact()) {
+        disallowedTypes.insert(type.getHeapType());
+      }
+    }
+  }
+
+  void visitGlobal(Global* global) {
+    // This could be more precise by checking that the init expression is not
+    // null before inhibiting optimization, or by just inhibiting optmization of
+    // the allocations used in the initialization, but this is simpler.
+    for (auto type : global->type) {
+      if (type.isExact()) {
+        disallowedTypes.insert(type.getHeapType());
+      }
+    }
+  }
+
+  void visitElementSegment(ElementSegment* segment) {
+    assert(!segment->type.isTuple());
+    if (segment->type.isExact()) {
+      disallowedTypes.insert(segment->type.getHeapType());
+    }
+  }
 };
 
 struct TypeSSA : public Pass {
@@ -170,28 +295,48 @@ struct TypeSSA : public Pass {
       return;
     }
 
-    // First, find all the struct/array.news.
+    struct Info {
+      News news;
+      TypeSet disallowedTypes;
+    };
 
-    ModuleUtils::ParallelFunctionAnalysis<News> analysis(
-      *module, [&](Function* func, News& news) {
+    // First, analyze the function to find struct/array.news and disallowed
+    // types.
+    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+      *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           return;
         }
 
-        NewFinder finder;
-        finder.walk(func->body);
-        news = std::move(finder.news);
+        Analyzer analyzer;
+        analyzer.walkFunctionInModule(func, module);
+        info.news = std::move(analyzer.news);
+        info.disallowedTypes = std::move(analyzer.disallowedTypes);
       });
 
     // Also find news in the module scope.
-    NewFinder moduleFinder;
-    moduleFinder.walkModuleCode(module);
+    Analyzer moduleAnalyzer;
+    moduleAnalyzer.walkModuleCode(module);
+    for (auto& global : module->globals) {
+      moduleAnalyzer.visitGlobal(global.get());
+    }
+    for (auto& segment : module->elementSegments) {
+      moduleAnalyzer.visitElementSegment(segment.get());
+    }
+    // TODO: Visit tables with initializers once we support those.
+
+    // Find all the types that are unoptimizable because the exactness of their
+    // allocations may be observed.
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+      processDisallowedTypes(analysis.map[func].disallowedTypes);
+    });
+    processDisallowedTypes(moduleAnalyzer.disallowedTypes);
 
     // Process all the news to find the ones we want to modify, adding them to
     // newsToModify. Note that we must do so in a deterministic order.
     ModuleUtils::iterDefinedFunctions(
-      *module, [&](Function* func) { processNews(analysis.map[func]); });
-    processNews(moduleFinder.news);
+      *module, [&](Function* func) { processNews(analysis.map[func].news); });
+    processNews(moduleAnalyzer.news);
 
     // Modify the ones we found are relevant. We must modify them all at once as
     // in the isorecursive type system we want to create a single new rec group
@@ -203,6 +348,12 @@ struct TypeSSA : public Pass {
     ReFinalize().runOnModuleCode(getPassRunner(), module);
   }
 
+  TypeSet disallowedTypes;
+
+  void processDisallowedTypes(const TypeSet& types) {
+    disallowedTypes.insert(types.begin(), types.end());
+  }
+
   News newsToModify;
 
   // As we generate new names, use a consistent index.
@@ -210,7 +361,11 @@ struct TypeSSA : public Pass {
 
   void processNews(const News& news) {
     for (auto* curr : news) {
-      if (isInteresting(curr)) {
+      bool disallowed = false;
+      if (curr->type.isRef()) {
+        disallowed = disallowedTypes.count(curr->type.getHeapType());
+      }
+      if (!disallowed && isInteresting(curr)) {
         newsToModify.push_back(curr);
       }
     }

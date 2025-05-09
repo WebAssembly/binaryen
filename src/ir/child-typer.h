@@ -33,9 +33,9 @@ namespace wasm {
 //   noteAnyType(Expression** childp) - The child may have any non-tuple type.
 //   Used for the children of polymorphic instructions like `drop` and `select`.
 //
-//   noteAnyReference(Expression** childp) - The child may have any reference
-//   type. Used for the children of polymorphic reference instructions like
-//   `ref.is_null`.
+//   noteAnyReferenceType(Expression** childp) - The child may have any
+//   reference type. Used for the children of polymorphic reference instructions
+//   like `ref.is_null`.
 //
 //   noteAnyTupleType(Expression** childp, size_t arity) - The child may have
 //   any tuple type with the given arity. Used for the children of polymorphic
