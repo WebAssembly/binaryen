@@ -246,7 +246,7 @@ struct GUFAOptimizer
       // We have some knowledge of the type here. Use that to optimize: RefTest
       // returns 1 if the input is of a subtype of the intended type, that is,
       // we are looking for a type in that cone of types.
-      auto intendedContents = PossibleContents::fullConeType(curr->castType);
+      auto intendedContents = PossibleContents::coneType(curr->castType);
 
       auto optimize = [&](int32_t result) {
         auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
