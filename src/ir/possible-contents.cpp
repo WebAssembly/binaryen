@@ -144,7 +144,9 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
 
 void PossibleContents::intersect(const PossibleContents& other) {
   // This does not yet handle all possible content.
-  assert(other.isFullConeType() || other.isLiteral() || other.isNone());
+  assert((other.isConeType() &&
+          (other.getType().isExact() || other.hasFullCone())) ||
+         other.isLiteral() || other.isNone());
 
   if (*this == other) {
     // Nothing changes.
@@ -201,6 +203,7 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // The heap types are compatible, so intersect the cones.
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
+  auto newDepthFromRoot = newType.getHeapType().getDepth();
 
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
@@ -210,38 +213,21 @@ void PossibleContents::intersect(const PossibleContents& other) {
     globalName = getGlobal();
   }
 
-  // By assumption |other| has full depth. Consider the other cone in |this|.
-  if (hasFullCone()) {
+  if (hasFullCone() && other.hasFullCone()) {
     // Both are full cones, so the result is as well.
-    value = FullConeType(newType);
+    value = DefaultConeType(newType);
   } else {
-    // The result is a partial cone. If the cone starts in |otherHeapType| then
-    // we need to adjust the depth down, since it will be smaller than the
-    // original cone:
-    /*
-    //                             ..
-    //                            /
-    //              otherHeapType
-    //            /               \
-    //   heapType                  ..
-    //            \
-    */
-    // E.g. if |this| is a cone of depth 10, and |otherHeapType| is an immediate
-    // subtype of |this|, then the new cone must be of depth 9.
-    auto newDepth = getCone().depth;
-    if (newType.getHeapType() == otherHeapType) {
-      assert(depthFromRoot <= otherDepthFromRoot);
-      auto reduction = otherDepthFromRoot - depthFromRoot;
-      if (reduction > newDepth) {
-        // The cone on heapType does not even reach the cone on otherHeapType,
-        // so the result is not a cone.
-        setNoneOrNull();
-        return;
-      }
-      newDepth -= reduction;
+    // The result is a partial cone. Check whether the cones overlap, and if
+    // they do, find the new depth.
+    if (newDepthFromRoot - depthFromRoot > getCone().depth ||
+        newDepthFromRoot - otherDepthFromRoot > other.getCone().depth) {
+      setNoneOrNull();
+      return;
     }
-
-    value = ConeType{newType, newDepth};
+    Index newDepth = getCone().depth - (newDepthFromRoot - depthFromRoot);
+    Index otherNewDepth =
+      other.getCone().depth - (newDepthFromRoot - otherDepthFromRoot);
+    value = ConeType{newType, std::min(newDepth, otherNewDepth)};
   }
 
   if (globalName) {
@@ -371,7 +357,18 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
     return false;
   }
 
-  WASM_UNREACHABLE("unhandled case of isSubContents");
+  if (b.isGlobal()) {
+    // We've already ruled out anything but another global or cone type for a.
+    return false;
+  }
+
+  assert(b.isConeType() && (a.isConeType() || a.isGlobal()));
+  if (!Type::isSubType(a.getType(), b.getType())) {
+    return false;
+  }
+  // Check that a's cone type is enclosed in b's cone type.
+  return a.getType().getHeapType().getDepth() + a.getCone().depth <=
+         b.getType().getHeapType().getDepth() + b.getCone().depth;
 }
 
 namespace {
@@ -1463,7 +1460,7 @@ public:
 
   // Get the type we inferred was possible at a location.
   PossibleContents getContents(Expression* curr) {
-    auto naiveContents = PossibleContents::fullConeType(curr->type);
+    auto naiveContents = PossibleContents::coneType(curr->type);
 
     // If we inferred nothing, use the naive type.
     auto iter = inferences.find(curr);
@@ -1871,8 +1868,8 @@ void TNHOracle::optimizeCallCasts(Expression* call,
         // There are two constraints on this location: any value there must
         // be of the declared type (curr->type) and also the cast type, so
         // we know only their intersection can appear here.
-        auto declared = PossibleContents::fullConeType(curr->type);
-        auto intersection = PossibleContents::fullConeType(castType);
+        auto declared = PossibleContents::coneType(curr->type);
+        auto intersection = PossibleContents::coneType(castType);
         intersection.intersect(declared);
         if (intersection.isConeType()) {
           auto intersectionType = intersection.getType();
@@ -1956,7 +1953,7 @@ struct Flower {
   PossibleContents getTNHContents(Expression* curr) {
     if (!tnhOracle) {
       // No oracle; just use the type in the IR.
-      return PossibleContents::fullConeType(curr->type);
+      return PossibleContents::coneType(curr->type);
     }
     return tnhOracle->getContents(curr);
   }
@@ -2858,7 +2855,7 @@ void Flower::readFromData(Type declaredType,
 #ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
-  auto maximalContents = PossibleContents::fullConeType(declaredType);
+  auto maximalContents = PossibleContents::coneType(declaredType);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 
@@ -2953,7 +2950,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
-  auto maximalContents = PossibleContents::fullConeType(ref->type);
+  auto maximalContents = PossibleContents::coneType(ref->type);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 
