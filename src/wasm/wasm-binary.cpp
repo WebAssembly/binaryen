@@ -482,13 +482,22 @@ void WasmBinaryWriter::writeFunctions() {
     // We need to move the code section and put the annotations before it.
     auto& annotationsBuffer = *annotations;
     auto oldSize = o.size();
-    o.resize(oldSize + annotationsBuffer.size());
+    auto annotationsSectionSize = annotationsBuffer.size();
+    o.resize(oldSize + annotationsSectionSize);
 
     // |sectionStart| is the start of the contents of the section. Subtract 1 to
     // include the section code as well, so we move all of it.
     std::move_backward(&o[sectionStart - 1], &o[oldSize], o.end());
     std::copy(
       annotationsBuffer.begin(), annotationsBuffer.end(), &o[sectionStart - 1]);
+
+    // Source map offsets are absolute (from the start of the binary, so we must
+    // adjust them after moving the code section.
+    if (sourceMap) {
+      for (auto& location : sourceMapLocations) {
+        location.first += annotationsSectionSize;
+      }
+    }
   }
 }
 
