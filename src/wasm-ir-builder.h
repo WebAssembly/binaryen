@@ -702,7 +702,7 @@ private:
   void addBranchHint(Expression* expr, std::optional<bool> likely);
 
   // Add an inlining hint, if |inline_| is present.
-  void addInlineHint(Expression* expr, std::optional<std::uint8_t> inline);
+  void addInlineHint(Expression* expr, std::optional<std::uint8_t> inline_);
 
   void dump();
 };

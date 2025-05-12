@@ -2543,4 +2543,12 @@ void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
   }
 }
 
+void IRBuilder::addInlineHint(Expression* expr, std::optional<bool> inline_) {
+  if (inline_) {
+    // Branches are only possible inside functions.
+    assert(func);
+    func->codeAnnotations[expr].inline_ = inline_;
+  }
+}
+
 } // namespace wasm
