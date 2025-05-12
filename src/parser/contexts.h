@@ -1257,9 +1257,47 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   }
 };
 
+struct AnnotationParserCtx {
+  // Return the inline hint for a call instruction, if there is one.
+  std::optional<std::uint8_t>
+  getInlineHint(const std::vector<Annotation>& annotations) {
+    // Find and apply (the last) inline hint.
+    const Annotation* hint = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::InlineHint) {
+        hint = &a;
+      }
+    }
+    if (!hint) {
+      return std::nullopt;
+    }
+
+    Lexer lexer(hint->contents);
+    if (lexer.empty()) {
+      std::cerr << "warning: empty InlineHint\n";
+      return std::nullopt;
+    }
+
+    auto str = lexer.takeString();
+    if (!str || str->size() != 1) {
+      std::cerr << "warning: invalid InlineHint string\n";
+      return std::nullopt;
+    }
+
+    uint8_t value = (*str)[0];
+    if (value > 127) {
+      std::cerr << "warning: invalid InlineHint value\n";
+      return std::nullopt;
+    }
+
+    return value;
+  }
+};
+
 // Phase 4: Parse and set the types of module elements.
 struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
-                             NullInstrParserCtx {
+                             NullInstrParserCtx,
+                             AnnotationParserCtx {
   // In this phase we have constructed all the types, so we can materialize and
   // validate them when they are used.
 
@@ -1347,7 +1385,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ImportNames*,
                    TypeUse type,
                    std::optional<LocalsT> locals,
-                   std::vector<Annotation>&&,
+                   std::vector<Annotation>&& annotations,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
@@ -1366,6 +1404,11 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
       for (auto& l : *locals) {
         Builder::addVar(f.get(), l.name, l.type);
       }
+    }
+    // Add function-level annotations (which are stored using the nullptr key,
+    // as they are tied to no instruction in particular).
+    if (auto inline_ = getInlineHint(annotations)) {
+      f->codeAnnotations[nullptr].inline_ = inline_;
     }
     return Ok{};
   }
@@ -1427,7 +1470,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 };
 
 // Phase 5: Parse module element definitions, including instructions.
-struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
+struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   using GlobalTypeT = Ok;
   using TableTypeT = Ok;
   using TypeUseT = HeapType;
@@ -2323,41 +2366,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<>
   makePop(Index pos, const std::vector<Annotation>& annotations, Type type) {
     return withLoc(pos, irBuilder.makePop(type));
-  }
-
-  // Return the inline hint for a call instruction, if there is one.
-  std::optional<std::uint8_t>
-  getInlineHint(const std::vector<Annotation>& annotations) {
-    // Find and apply (the last) inline hint.
-    const Annotation* hint = nullptr;
-    for (auto& a : annotations) {
-      if (a.kind == Annotations::InlineHint) {
-        hint = &a;
-      }
-    }
-    if (!hint) {
-      return std::nullopt;
-    }
-
-    Lexer lexer(hint->contents);
-    if (lexer.empty()) {
-      std::cerr << "warning: empty InlineHint\n";
-      return std::nullopt;
-    }
-
-    auto str = lexer.takeString();
-    if (!str || str->size() != 1) {
-      std::cerr << "warning: invalid InlineHint string\n";
-      return std::nullopt;
-    }
-
-    uint8_t value = (*str)[0];
-    if (value > 127) {
-      std::cerr << "warning: invalid InlineHint value\n";
-      return std::nullopt;
-    }
-
-    return value;
   }
 
   Result<> makeCall(Index pos,
