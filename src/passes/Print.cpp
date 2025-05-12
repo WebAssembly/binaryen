@@ -2678,7 +2678,7 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
     if (annotation.inline_) {
       Colors::grey(o);
       o << "(@" << Annotations::InlineHint << " \"\\" << std::hex
-        << *annotation.inline_ << std::dec << "\")\n";
+        << int(*annotation.inline_) << std::dec << "\")\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }

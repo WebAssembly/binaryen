@@ -5,6 +5,19 @@
 ;; TODORUN: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (@metadata.code.inline "\0")
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (@metadata.code.inline "\1")
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (@metadata.code.inline "\7e")
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (@metadata.code.inline "\7f")
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT: )
   (func $func
     (@metadata.code.inline "\00")
     (call $func)
@@ -13,6 +26,8 @@
     (@metadata.code.inline "\7e")
     (call $func)
     (@metadata.code.inline "\7f")
+    (call $func)
+    ;; Unannotated
     (call $func)
   )
 )
