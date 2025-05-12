@@ -491,7 +491,7 @@ void WasmBinaryWriter::writeFunctions() {
     std::copy(
       annotationsBuffer.begin(), annotationsBuffer.end(), &o[sectionStart - 1]);
 
-    // Source map offsets are absolute (from the start of the binary, so we must
+    // Source map offsets are absolute (from the start of the binary) so we must
     // adjust them after moving the code section.
     if (sourceMap) {
       for (auto& location : sourceMapLocations) {
