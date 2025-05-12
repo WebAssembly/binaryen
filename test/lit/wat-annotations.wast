@@ -338,7 +338,8 @@
   ;; SRCMP-NEXT: )
   (func $source-locations (param $x anyref)
     ;; This function contains both branch hints and source locations. Both
-    ;; should work.
+    ;; should work, at least in normal and source maps mode (roundtrip does not
+    ;; keep source locations0.
     (block $out
       ;;@ src.file:1337:42
       (drop
