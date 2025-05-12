@@ -339,7 +339,7 @@
   (func $source-locations (param $x anyref)
     ;; This function contains both branch hints and source locations. Both
     ;; should work, at least in normal and source maps mode (roundtrip does not
-    ;; keep source locations0.
+    ;; keep source locations.
     (block $out
       ;;@ src.file:1337:42
       (drop
