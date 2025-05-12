@@ -3140,6 +3140,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   if (currFunction->prologLocation) {
     printDebugLocation(*currFunction->prologLocation);
   }
+  printCodeAnnotations(nullptr);
   handleSignature(curr, true);
   incIndent();
   for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
