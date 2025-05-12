@@ -26,7 +26,7 @@
 namespace wasm::Annotations {
 
 extern const Name BranchHint;
-extern const Name Inline;
+extern const Name InlineHint;
 
 } // namespace wasm::Annotations
 

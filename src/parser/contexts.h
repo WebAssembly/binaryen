@@ -2351,8 +2351,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return std::nullopt;
     }
 
-    auto value = (*str)[0];
-    if (value < 0 || value > 127) {
+    uint8_t value = (*str)[0];
+    if (value > 127) {
       std::cerr << "warning: invalid InlineHint value\n";
       return std::nullopt;
     }

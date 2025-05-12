@@ -1449,7 +1449,7 @@ Result<> IRBuilder::makeCall(Name func, bool isReturn, std::optional<std::uint8_
   CHECK_ERR(visitCall(&curr));
   auto* call = builder.makeCall(curr.target, curr.operands, sig.results, isReturn);
   push(call);
-  addBranchHint(call, inline_);
+  addInlineHint(call, inline_);
   return Ok{};
 }
 
