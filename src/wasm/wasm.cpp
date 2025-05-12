@@ -67,6 +67,7 @@ const char* CustomDescriptorsFeature = "custom-descriptors";
 namespace Annotations {
 
 const Name BranchHint = "metadata.code.branch_hint";
+const Name Inline = "metadata.code.inline";
 
 } // namespace Annotations
 

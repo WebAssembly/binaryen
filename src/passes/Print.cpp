@@ -275,6 +275,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Prints debug info and code annotations.
   void printMetadata(Expression* curr);
 
+  // Print code annotations for an expression. If the expression is nullptr,
+  // prints for the current function.
+  void printCodeAnnotations(Expression* curr);
+
   void printExpressionContents(Expression* curr);
 
   void visit(Expression* curr) {
@@ -2642,18 +2646,8 @@ void PrintSExpression::printMetadata(Expression* curr) {
       }
     }
 
-    // Show a code annotation, if there is one.
-    if (auto iter = currFunction->codeAnnotations.find(curr);
-        iter != currFunction->codeAnnotations.end()) {
-      auto& annotation = iter->second;
-      if (annotation.branchLikely) {
-        Colors::grey(o);
-        o << "(@" << Annotations::BranchHint << " \"\\0"
-          << (*annotation.branchLikely ? "1" : "0") << "\")\n";
-        restoreNormalColor(o);
-        doIndent(o, indent);
-      }
-    }
+    // Show code annotations.
+    printCodeAnnotations(curr);
   }
 }
 
@@ -2664,6 +2658,27 @@ void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
       auto& locations = iter->second;
       Colors::grey(o);
       o << ";; code offset: 0x" << std::hex << locations[i] << std::dec << '\n';
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
+  }
+}
+
+void PrintSExpression::printCodeAnnotations(Expression* curr) {
+  if (auto iter = currFunction->codeAnnotations.find(curr);
+      iter != currFunction->codeAnnotations.end()) {
+    auto& annotation = iter->second;
+    if (annotation.branchLikely) {
+      Colors::grey(o);
+      o << "(@" << Annotations::BranchHint << " \"\\0"
+        << (*annotation.branchLikely ? "1" : "0") << "\")\n";
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
+    if (annotation.logCallFrequency) {
+      Colors::grey(o);
+      o << "(@" << Annotations::Inline << " \"\\" << std::hex
+        << *annotation.logCallFrequency << std::dec << "\")\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }
