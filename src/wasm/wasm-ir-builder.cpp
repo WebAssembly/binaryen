@@ -2543,7 +2543,7 @@ void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
   }
 }
 
-void IRBuilder::addInlineHint(Expression* expr, std::optional<bool> inline_) {
+void IRBuilder::addInlineHint(Expression* expr, std::optional<uint8_t> inline_) {
   if (inline_) {
     // Branches are only possible inside functions.
     assert(func);
