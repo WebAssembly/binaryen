@@ -1608,13 +1608,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
     return {};
   }
 
-  if (sourceMap) {
-    // TODO: This mode may not matter (when debugging, code annotations are an
-    //       optimization that can be skipped), but atm source maps cause
-    //       annotations to break.
-    Fatal() << "Annotations are not supported with source maps";
-  }
-
   BufferWithRandomAccess buffer;
 
   // We found data: emit the section.
