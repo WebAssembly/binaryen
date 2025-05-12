@@ -41,6 +41,7 @@
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:  )
+  ;; SRCMP-NEXT:  ;;@ src.file:1337:42
   ;; SRCMP-NEXT: )
   (func $no-annotations (param $x i32)
     ;; A function with no annotations. This tests that we use function indexes
@@ -90,12 +91,10 @@
   ;; SRCMP-NEXT:   (br_if $block
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
-  ;; SRCMP-NEXT:   ;;@
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
   ;; SRCMP-NEXT:   (br_if $block
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
-  ;; SRCMP-NEXT:   ;;@
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\00")
   ;; SRCMP-NEXT:   (br_if $block
   ;; SRCMP-NEXT:    (local.get $x)
@@ -305,48 +304,40 @@
     )
   )
 
-  ;; CHECK:      (func $source-locations (type $1) (param $x anyref)
+  ;; CHECK:      (func $source-locations (type $0) (param $x i32)
+  ;; CHECK-NEXT:  ;;@ src.file:1337:42
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   ;;@ src.file:1337:42
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
-  ;; CHECK-NEXT:    (br_on_null $out
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; RTRIP:      (func $source-locations (type $1) (param $x anyref)
+  ;; RTRIP:      (func $source-locations (type $0) (param $x i32)
   ;; RTRIP-NEXT:  (block $block
-  ;; RTRIP-NEXT:   (drop
-  ;; RTRIP-NEXT:    (@metadata.code.branch_hint "\01")
-  ;; RTRIP-NEXT:    (br_on_null $block
-  ;; RTRIP-NEXT:     (local.get $x)
-  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; RTRIP-NEXT:   (br_if $block
+  ;; RTRIP-NEXT:    (local.get $x)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; SRCMP:      (func $source-locations (type $1) (param $x anyref)
+  ;; SRCMP:      (func $source-locations (type $0) (param $x i32)
   ;; SRCMP-NEXT:  (block $block
-  ;; SRCMP-NEXT:   (drop
-  ;; SRCMP-NEXT:    (@metadata.code.branch_hint "\01")
-  ;; SRCMP-NEXT:    (br_on_null $block
-  ;; SRCMP-NEXT:     (local.get $x)
-  ;; SRCMP-NEXT:    )
+  ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; SRCMP-NEXT:   (br_if $block
+  ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
   ;; SRCMP-NEXT:  )
   ;; SRCMP-NEXT: )
-  (func $source-locations (param $x anyref)
+  (func $source-locations (param $x i32)
     ;; This function contains both branch hints and source locations. Both
     ;; should work, at least in normal and source maps mode (roundtrip does not
     ;; keep source locations.
+    ;;@ src.file:1337:42
     (block $out
-      ;;@ src.file:1337:42
-      (drop
-        (@metadata.code.branch_hint "\01")
-        (br_on_null $out
-          (local.get $x)
-        )
+      (@metadata.code.branch_hint "\01")
+      (br_if $out
+        (local.get $x)
       )
     )
   )
