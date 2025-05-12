@@ -2325,11 +2325,47 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makePop(type));
   }
 
+  // Return the inline hint for a call instruction, if there is one.
+  std::optional<std::uint8_t>
+  getInlineHint(const std::vector<Annotation>& annotations) {
+    // Find and apply (the last) inline hint.
+    const Annotation* hint = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::InlineHint) {
+        hint = &a;
+      }
+    }
+    if (!hint) {
+      return std::nullopt;
+    }
+
+    Lexer lexer(hint->contents);
+    if (lexer.empty()) {
+      std::cerr << "warning: empty InlineHint\n";
+      return std::nullopt;
+    }
+
+    auto str = lexer.takeString();
+    if (!str || str->size() != 1) {
+      std::cerr << "warning: invalid InlineHint string\n";
+      return std::nullopt;
+    }
+
+    auto value = (*str)[0];
+    if (value < 0 || value > 127) {
+      std::cerr << "warning: invalid InlineHint value\n";
+      return std::nullopt;
+    }
+
+    return value;
+  }
+
   Result<> makeCall(Index pos,
                     const std::vector<Annotation>& annotations,
                     Name func,
                     bool isReturn) {
-    return withLoc(pos, irBuilder.makeCall(func, isReturn));
+    auto inline_ = getInlineHint(annotations);
+    return withLoc(pos, irBuilder.makeCall(func, isReturn, inline_));
   }
 
   Result<> makeCallIndirect(Index pos,

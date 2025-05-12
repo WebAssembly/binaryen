@@ -2675,10 +2675,10 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
       restoreNormalColor(o);
       doIndent(o, indent);
     }
-    if (annotation.logCallFrequency) {
+    if (annotation.inline_) {
       Colors::grey(o);
       o << "(@" << Annotations::Inline << " \"\\" << std::hex
-        << *annotation.logCallFrequency << std::dec << "\")\n";
+        << *annotation.inline_ << std::dec << "\")\n";
       restoreNormalColor(o);
       doIndent(o, indent);
     }

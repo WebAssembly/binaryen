@@ -1441,13 +1441,15 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
   return Ok{};
 }
 
-Result<> IRBuilder::makeCall(Name func, bool isReturn) {
+Result<> IRBuilder::makeCall(Name func, bool isReturn, std::optional<std::uint8_t> inline_) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
   curr.operands.resize(sig.params.size());
   CHECK_ERR(visitCall(&curr));
-  push(builder.makeCall(curr.target, curr.operands, sig.results, isReturn));
+  auto* call = builder.makeCall(curr.target, curr.operands, sig.results, isReturn);
+  push(call);
+  addBranchHint(call, inline_);
   return Ok{};
 }
 

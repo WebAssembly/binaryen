@@ -2201,7 +2201,7 @@ public:
     // Compilation Hints proposal.
     using NeverInline = 0;
     using AlwaysInline = 127;
-    std::optional<uint8_t> logCallFrequency;
+    std::optional<uint8_t> inline_;
   };
 
   // Function-level annotations are implemented with a key of nullptr, matching
