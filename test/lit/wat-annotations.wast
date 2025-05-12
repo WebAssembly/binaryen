@@ -90,10 +90,12 @@
   ;; SRCMP-NEXT:   (br_if $block
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
+  ;; SRCMP-NEXT:   ;;@
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
   ;; SRCMP-NEXT:   (br_if $block
   ;; SRCMP-NEXT:    (local.get $x)
   ;; SRCMP-NEXT:   )
+  ;; SRCMP-NEXT:   ;;@
   ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\00")
   ;; SRCMP-NEXT:   (br_if $block
   ;; SRCMP-NEXT:    (local.get $x)
@@ -296,6 +298,51 @@
     (block $out
       (drop
         (@metadata.code.branch_hint "\00")
+        (br_on_null $out
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $source-locations (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   ;;@ src.file:1337:42
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (br_on_null $out
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $source-locations (type $1) (param $x anyref)
+  ;; RTRIP-NEXT:  (block $block
+  ;; RTRIP-NEXT:   (drop
+  ;; RTRIP-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; RTRIP-NEXT:    (br_on_null $block
+  ;; RTRIP-NEXT:     (local.get $x)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  ;; SRCMP:      (func $source-locations (type $1) (param $x anyref)
+  ;; SRCMP-NEXT:  (block $block
+  ;; SRCMP-NEXT:   (drop
+  ;; SRCMP-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; SRCMP-NEXT:    (br_on_null $block
+  ;; SRCMP-NEXT:     (local.get $x)
+  ;; SRCMP-NEXT:    )
+  ;; SRCMP-NEXT:   )
+  ;; SRCMP-NEXT:  )
+  ;; SRCMP-NEXT: )
+  (func $source-locations (param $x anyref)
+    ;; This function contains both branch hints and source locations. Both
+    ;; should work.
+    (block $out
+      ;;@ src.file:1337:42
+      (drop
+        (@metadata.code.branch_hint "\01")
         (br_on_null $out
           (local.get $x)
         )
