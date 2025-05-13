@@ -1308,10 +1308,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               //     (write that value)
               //   )
               //   (read a value)         ;; now the written value is used
-              auto valueEffects = EffectAnalyzer(passOptions, *getModule(), br->value);
+              auto valueEffects =
+                EffectAnalyzer(passOptions, *getModule(), br->value);
               if (!valueEffects.hasUnremovableSideEffects()) {
-                auto conditionEffects = EffectAnalyzer(passOptions, *getModule(), br->condition);
-                if  (!conditionEffects.invalidates(valueEffects)) {
+                auto conditionEffects =
+                  EffectAnalyzer(passOptions, *getModule(), br->condition);
+                if (!conditionEffects.invalidates(valueEffects)) {
                   // All conditions met, perform the update.
                   drop->value = br->condition;
                 }
