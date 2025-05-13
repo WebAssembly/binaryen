@@ -38,9 +38,11 @@
   )
 
   ;; CHECK:      (func $other-calls (type $func)
+  ;; CHECK-NEXT:  (@metadata.code.inline "\12")
   ;; CHECK-NEXT:  (call_indirect $table (type $func)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.inline "\34")
   ;; CHECK-NEXT:  (call_ref $func
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
