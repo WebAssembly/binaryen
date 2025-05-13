@@ -71,6 +71,11 @@ using CastTypes = SmallUnorderedSet<HeapType, 5>;
 struct CastFinder : public PostWalker<CastFinder> {
   CastTypes castTypes;
 
+  // For each cast target, record whether there is an exact cast. Exact casts
+  // will additionally prevent subtypes from being merged into the cast target.
+  // TODO: Use a SmallMap to combine this with `castTypes`.
+  CastTypes exactCastTypes;
+
   // If traps never happen, then ref.cast and call_indirect can never
   // differentiate between types since they always succeed. Take advantage of
   // that by not having those instructions inhibit merges in TNH mode.
@@ -83,6 +88,9 @@ struct CastFinder : public PostWalker<CastFinder> {
   template<typename T> void visitCast(T* curr) {
     if (auto type = curr->getCastType(); type != Type::unreachable) {
       castTypes.insert(type.getHeapType());
+      if (type.isExact()) {
+        exactCastTypes.insert(type.getHeapType());
+      }
     }
   }
 
@@ -126,8 +134,9 @@ struct TypeMerging : public Pass {
   // All private original types.
   std::unordered_set<HeapType> privateTypes;
 
-  // Types that are distinguished by cast instructions.
+  // Types that are distinguished by casts and exact casts.
   CastTypes castTypes;
+  CastTypes exactCastTypes;
 
   // The list of remaining types that have not been merged into other types.
   // Candidates for further merging.
@@ -169,7 +178,8 @@ struct TypeMerging : public Pass {
   std::vector<std::vector<HeapType>>
   splitSupertypePartition(const std::vector<HeapType>&);
 
-  CastTypes findCastTypes();
+  // Return the cast types and the exact cast types.
+  std::pair<CastTypes, CastTypes> findCastTypes();
   std::vector<HeapType> getPublicChildren(HeapType type);
   DFA::State<HeapType> makeDFAState(HeapType type);
   void applyMerges();
@@ -220,7 +230,9 @@ void TypeMerging::run(Module* module_) {
   mergeable = ModuleUtils::getPrivateHeapTypes(*module);
   privateTypes =
     std::unordered_set<HeapType>(mergeable.begin(), mergeable.end());
-  castTypes = findCastTypes();
+  auto casts = findCastTypes();
+  castTypes = std::move(casts.first);
+  exactCastTypes = std::move(casts.second);
 
   // Merging supertypes or siblings can unlock more sibling merging
   // opportunities, but merging siblings can never unlock more supertype merging
@@ -329,17 +341,18 @@ bool TypeMerging::merge(MergeKind kind) {
     switch (kind) {
       case Supertypes: {
         auto super = type.getDeclaredSuperType();
-        if (super && shapeEq(type, *super)) {
-          // The current type and its supertype have the same top-level
-          // structure and are not distinguished, so add the current type to its
-          // supertype's partition.
-          auto it = ensurePartition(*super);
-          it->push_back(makeDFAState(type));
-          typePartitions[type] = it;
-        } else {
-          // Otherwise, create a new partition for this type.
+        bool superHasExactCast = super && exactCastTypes.count(*super);
+        if (!super || !shapeEq(type, *super) || superHasExactCast) {
+          // Create a new partition for this type and bail.
           ensurePartition(type);
+          break;
         }
+        // The current type and its supertype have the same top-level
+        // structure and are not distinguished, so add the current type to its
+        // supertype's partition.
+        auto it = ensurePartition(*super);
+        it->push_back(makeDFAState(type));
+        typePartitions[type] = it;
         break;
       }
       case Siblings: {
@@ -476,17 +489,19 @@ TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   return partitions;
 }
 
-CastTypes TypeMerging::findCastTypes() {
-  ModuleUtils::ParallelFunctionAnalysis<CastTypes> analysis(
-    *module, [&](Function* func, CastTypes& castTypes) {
-      if (func->imported()) {
-        return;
-      }
+std::pair<CastTypes, CastTypes> TypeMerging::findCastTypes() {
+  ModuleUtils::ParallelFunctionAnalysis<std::pair<CastTypes, CastTypes>>
+    analysis(*module,
+             [&](Function* func, std::pair<CastTypes, CastTypes>& castTypes) {
+               if (func->imported()) {
+                 return;
+               }
 
-      CastFinder finder(getPassOptions());
-      finder.walk(func->body);
-      castTypes = std::move(finder.castTypes);
-    });
+               CastFinder finder(getPassOptions());
+               finder.walk(func->body);
+               castTypes = {std::move(finder.castTypes),
+                            std::move(finder.exactCastTypes)};
+             });
 
   // Also find cast types in the module scope (not possible in the current
   // spec, but do it to be future-proof).
@@ -495,12 +510,17 @@ CastTypes TypeMerging::findCastTypes() {
 
   // Accumulate all the castTypes.
   auto& allCastTypes = moduleFinder.castTypes;
-  for (auto& [k, castTypes] : analysis.map) {
+  auto& allExactCastTypes = moduleFinder.exactCastTypes;
+  for (auto& [k, types] : analysis.map) {
+    auto& [castTypes, exactCastTypes] = types;
     for (auto type : castTypes) {
       allCastTypes.insert(type);
     }
+    for (auto type : exactCastTypes) {
+      allExactCastTypes.insert(type);
+    }
   }
-  return allCastTypes;
+  return {std::move(allCastTypes), std::move(allExactCastTypes)};
 }
 
 std::vector<HeapType> TypeMerging::getPublicChildren(HeapType type) {
