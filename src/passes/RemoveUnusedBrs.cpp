@@ -1298,7 +1298,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               //
               //   (drop
               //     (br_if $block
-              //       (read a value)     ;; this original value is returned
+              //       (read a value)     ;; this original value is returned,
               //       (write that value) ;; if we branch
               //     )
               //   )
