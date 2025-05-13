@@ -126,8 +126,9 @@ class PossibleContents {
 
   static constexpr Index FullDepth = -1;
 
-  // Internal convenience for creating a cone type of unbounded depth, i.e., the
-  // full cone of all subtypes for that type.
+  // Internal convenience for creating a cone type carrying no information
+  // besides the type. For exact references, the depth is 0 and for all other
+  // types the depth is unbounded and includes all possible subtypes.
   static ConeType DefaultConeType(Type type) {
     return type.isExact() ? ExactType(type) : ConeType{type, FullDepth};
   }
@@ -150,8 +151,9 @@ public:
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
   }
-  // Helper for a cone with unbounded depth, i.e., the full cone of all subtypes
-  // for that type.
+  // Helper for a cone with default depth for the given type. For exact
+  // references this is depth 0 and for all other this tyis is unbounded depth
+  // and includes all possible subtypes.
   static PossibleContents coneType(Type type) {
     return PossibleContents{DefaultConeType(type)};
   }

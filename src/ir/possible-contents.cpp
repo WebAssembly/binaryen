@@ -358,7 +358,8 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   }
 
   if (b.isGlobal()) {
-    // We've already ruled out anything but another global or cone type for a.
+    // We've already ruled out anything but another global or non-full cone type
+    // for a.
     return false;
   }
 
