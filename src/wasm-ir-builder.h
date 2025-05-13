@@ -124,7 +124,9 @@ public:
                      std::optional<bool> likely = std::nullopt);
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
-  Result<> makeCall(Name func, bool isReturn, std::optional<std::uint8_t> inline_ = std::nullopt);
+  Result<> makeCall(Name func,
+                    bool isReturn,
+                    std::optional<std::uint8_t> inline_ = std::nullopt);
   Result<> makeCallIndirect(Name table, HeapType type, bool isReturn);
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
