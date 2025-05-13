@@ -31,13 +31,6 @@
     (call $func)
   )
 
-  (@metadata.code.inline "\12")
-  ;; CHECK:      (func $annotated (type $0)
-  ;; CHECK-NEXT:  (@metadata.code.inline "\34")
-  ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT: )
-  (func $annotated
-    (@metadata.code.inline "\34")
-    (call $func)
-  )
+  ;; TODO: test function annotations, after
+  ;; https://github.com/WebAssembly/tool-conventions/issues/251
 )

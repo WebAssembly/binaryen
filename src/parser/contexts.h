@@ -1385,7 +1385,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ImportNames*,
                    TypeUse type,
                    std::optional<LocalsT> locals,
-                   std::vector<Annotation>&& annotations,
+                   std::vector<Annotation>&&,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
@@ -1406,8 +1406,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
       }
     }
     // TODO: Add function-level annotations (stored using the nullptr key, as
-    // as they are tied to no instruction in particular), but this should wait
-    // on figuring out
+    // they are tied to no instruction in particular), but this should wait on
+    // figuring out
     // https://github.com/WebAssembly/tool-conventions/issues/251
     // if (auto inline_ = getInlineHint(annotations)) {
     //   f->codeAnnotations[nullptr].inline_ = inline_;
