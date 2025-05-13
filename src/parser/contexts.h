@@ -1405,11 +1405,13 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
         Builder::addVar(f.get(), l.name, l.type);
       }
     }
-    // Add function-level annotations (which are stored using the nullptr key,
-    // as they are tied to no instruction in particular).
-    if (auto inline_ = getInlineHint(annotations)) {
-      f->codeAnnotations[nullptr].inline_ = inline_;
-    }
+    // TODO: Add function-level annotations (stored using the nullptr key, as
+    // as they are tied to no instruction in particular), but this should wait
+    // on figuring out
+    // https://github.com/WebAssembly/tool-conventions/issues/251
+    // if (auto inline_ = getInlineHint(annotations)) {
+    //   f->codeAnnotations[nullptr].inline_ = inline_;
+    // }
     return Ok{};
   }
 
