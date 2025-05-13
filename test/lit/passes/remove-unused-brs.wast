@@ -470,8 +470,11 @@
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (block $block (result i32)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.tee $temp
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    (br_if $block
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:     (local.tee $temp
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $temp)
