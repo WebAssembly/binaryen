@@ -2386,7 +2386,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     auto inline_ = getInlineHint(annotations);
-    return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn, inline_));
+    return withLoc(pos,
+                   irBuilder.makeCallIndirect(*t, type, isReturn, inline_));
   }
 
   // Return the branch hint for a branching instruction, if there is one.

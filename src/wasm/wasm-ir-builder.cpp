@@ -1456,13 +1456,16 @@ Result<> IRBuilder::makeCall(Name func,
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn, std::optional<std::uint8_t> inline_) {
+Result<> IRBuilder::makeCallIndirect(Name table,
+                                     HeapType type,
+                                     bool isReturn,
+                                     std::optional<std::uint8_t> inline_) {
   CallIndirect curr(wasm.allocator);
   curr.heapType = type;
   curr.operands.resize(type.getSignature().params.size());
   CHECK_ERR(visitCallIndirect(&curr));
-  auto* call = builder.makeCallIndirect(
-    table, curr.target, curr.operands, type, isReturn);
+  auto* call =
+    builder.makeCallIndirect(table, curr.target, curr.operands, type, isReturn);
   push(call);
   addInlineHint(call, inline_);
   return Ok{};
@@ -1954,7 +1957,9 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallRef(HeapType type, bool isReturn, std::optional<std::uint8_t> inline_) {
+Result<> IRBuilder::makeCallRef(HeapType type,
+                                bool isReturn,
+                                std::optional<std::uint8_t> inline_) {
   CallRef curr(wasm.allocator);
   if (!type.isSignature()) {
     return Err{"expected function type"};
@@ -1963,7 +1968,8 @@ Result<> IRBuilder::makeCallRef(HeapType type, bool isReturn, std::optional<std:
   curr.operands.resize(type.getSignature().params.size());
   CHECK_ERR(ChildPopper{*this}.visitCallRef(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.target));
-  auto* call = builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn);
+  auto* call =
+    builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn);
   push(call);
   addInlineHint(call, inline_);
   return Ok{};
