@@ -19,6 +19,7 @@
 //
 
 #include <algorithm>
+#include <fstream>
 
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
@@ -2677,8 +2678,12 @@ void PrintSExpression::printCodeAnnotations(Expression* curr) {
     }
     if (annotation.inline_) {
       Colors::grey(o);
+      std::ofstream saved;
+      saved.copyfmt(std::cout);
       o << "(@" << Annotations::InlineHint << " \"\\" << std::hex
-        << int(*annotation.inline_) << std::dec << "\")\n";
+        << std::setfill('0') << std::setw(2) << int(*annotation.inline_)
+        << "\")\n";
+      std::cout.copyfmt(saved);
       restoreNormalColor(o);
       doIndent(o, indent);
     }

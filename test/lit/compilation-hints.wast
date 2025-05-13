@@ -2,15 +2,15 @@
 
 ;; RUN: wasm-opt -all             %s -S -o - | filecheck %s
 
-;; TODORUN: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
+;; TODO: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (func $func (type $0)
-  ;; CHECK-NEXT:  (@metadata.code.inline "\0")
+  ;; CHECK-NEXT:  (@metadata.code.inline "\00")
   ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT:  (@metadata.code.inline "\1")
+  ;; CHECK-NEXT:  (@metadata.code.inline "\01")
   ;; CHECK-NEXT:  (call $func)
   ;; CHECK-NEXT:  (@metadata.code.inline "\7e")
   ;; CHECK-NEXT:  (call $func)
