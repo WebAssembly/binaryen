@@ -1290,11 +1290,28 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* last = curr->list[size - 1];
           if (auto* drop = secondLast->dynCast<Drop>()) {
             if (auto* br = drop->value->dynCast<Break>();
-                br && br->value && br->condition) {
-              if (br->name == curr->name) {
-                if (!EffectAnalyzer(passOptions, *getModule(), br->value)
-                       .hasUnremovableSideEffects()) {
-                  if (ExpressionAnalyzer::equal(br->value, last)) {
+                br && br->value && br->condition && br->name == curr->name &&
+                ExpressionAnalyzer::equal(br->value, last)) {
+                // The value must have no effects, as we are removing one copy
+                // of it. Also, the condition must not interfere with that
+                // value, or it might change, e.g.
+                //
+                //   (drop
+                //     (br_if $block
+                //       (read a value)     ;; this original value is returned
+                //       (write that value) ;; if we branch
+                //     )
+                //   )
+                //   (read a value)
+                // =>
+                //   (drop
+                //     (write that value)
+                //   )
+                //   (read a value)         ;; now the written value is used
+                auto valueEffects = EffectAnalyzer(passOptions, *getModule(), br->value);
+                if (!valueEffects.hasUnremovableSideEffects()) {
+                  auto conditionEffects = EffectAnalyzer(passOptions, *getModule(), br->condition);
+                  if  (!conditionEffects.invalidates(valueEffects)) {
                     // All conditions met, perform the update.
                     drop->value = br->condition;
                   }
