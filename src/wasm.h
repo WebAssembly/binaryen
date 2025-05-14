@@ -2191,14 +2191,21 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
-  // Code annotations. As with debug info, we do not store these on Expressions
-  // themselves, as we assume most instances are unannotated, and do not want to
+  // Code annotations for VMs. As with debug info, we do not store these on
+  // Expressions as we assume most instances are unannotated, and do not want to
   // add constant memory overhead.
   struct CodeAnnotation {
-    // Branch hinting proposal: Whether the branch is likely, or unlikely.
+    // Branch Hinting proposal: Whether the branch is likely, or unlikely.
     std::optional<bool> branchLikely;
+
+    // Compilation Hints proposal.
+    static const uint8_t NeverInline = 0;
+    static const uint8_t AlwaysInline = 127;
+    std::optional<uint8_t> inline_;
   };
 
+  // Function-level annotations are implemented with a key of nullptr, matching
+  // the 0 byte offset in the spec.
   std::unordered_map<Expression*, CodeAnnotation> codeAnnotations;
 
   // The effects for this function, if they have been computed. We use a shared
@@ -2208,8 +2215,8 @@ public:
   // See addsEffects() in pass.h for more details.
   std::shared_ptr<EffectAnalyzer> effects;
 
-  // Inlining metadata: whether to disallow full and/or partial inlining (for
-  // details on what those mean, see Inlining.cpp).
+  // Inlining metadata: whether to disallow full and/or partial inlining. This
+  // is a toolchain-level hint. For more details, see Inlining.cpp.
   bool noFullInline = false;
   bool noPartialInline = false;
 
