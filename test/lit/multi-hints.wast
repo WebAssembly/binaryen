@@ -5,30 +5,31 @@
 ;; TODO: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
+  ;; CHECK:      (type $0 (func (param i32)))
+
   ;; CHECK:      (type $func (func))
   (type $func (func))
 
   ;; CHECK:      (table $table 10 20 funcref)
   (table $table 10 20 funcref)
 
-  ;; CHECK:      (elem declare func $func)
-
-  ;; CHECK:      (func $func (type $func)
+  ;; CHECK:      (func $inline (type $func)
   ;; CHECK-NEXT:  (@metadata.code.inline "\00")
-  ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT:  (@metadata.code.inline "\01")
-  ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT:  (@metadata.code.inline "\7e")
-  ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT:  (@metadata.code.inline "\7f")
-  ;; CHECK-NEXT:  (call $func)
-  ;; CHECK-NEXT:  (call $func)
+  ;; CHECK-NEXT:  (call $inline)
   ;; CHECK-NEXT: )
   (func $inline
     (@metadata.code.inline "\00")
     (call $inline)
   )
 
+  ;; CHECK:      (func $branch (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $branch (param $x i32)
     (block $out
       (@metadata.code.branch_hint "\01")
@@ -38,6 +39,16 @@
     )
   )
 
+  ;; CHECK:      (func $both (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.inline "\02")
+  ;; CHECK-NEXT:   (call $inline)
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $both (param $x i32)
     (block $out
       (@metadata.code.inline "\02")
