@@ -2120,6 +2120,10 @@ void WasmBinaryReader::read() {
     pos = branchHintsPos;
     readBranchHints(branchHintsLen);
   }
+  if (inlineHintsPos) {
+    pos = inlineHintsPos;
+    readInlineHints(inlineHintsLen);
+  }
 
   validateBinary();
 }
@@ -2145,6 +2149,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     // Only note the position and length, we read this later.
     branchHintsPos = pos;
     branchHintsLen = payloadLen;
+  } else if (sectionName == Annotations::InlineHint) {
+    inlineHintsPos = pos;
+    inlineHintsLen = payloadLen;
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
