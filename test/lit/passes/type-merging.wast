@@ -830,38 +830,40 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $x (sub (struct (field anyref))))
     (type $x (sub (struct anyref)))
+    ;; CHECK:       (type $y (sub $x (struct (field anyref))))
     (type $y (sub $x (struct anyref)))
 
     ;; If we did vertical and horizontal merges at the same time, these three
     ;; types would be put into the same initial partition and $b1 would be merged
     ;; into $a. This would be incorrect because then $b1 would no longer be a
     ;; subtype of $b.
-    ;; CHECK:       (type $a (struct (field (ref null $x))))
+    ;; CHECK:       (type $a (struct (field (ref null $y))))
     (type $a (struct (ref null $y)))
     ;; CHECK:       (type $b (sub (struct (field (ref null $x)))))
     (type $b (sub (struct (ref null $x))))
+    ;; CHECK:       (type $b1 (sub $b (struct (field (ref null $y)))))
     (type $b1 (sub $b (struct (ref null $y))))
   )
 
-  ;; CHECK:       (type $3 (func (result (ref $b))))
+  ;; CHECK:       (type $5 (func (param (ref $x)) (result (ref $b))))
 
-  ;; CHECK:      (func $test (type $3) (result (ref $b))
-  ;; CHECK-NEXT:  (local $0 (ref null $a))
+  ;; CHECK:      (func $test (type $5) (param $x (ref $x)) (result (ref $b))
+  ;; CHECK-NEXT:  (local $1 (ref null $a))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test (ref none)
-  ;; CHECK-NEXT:    (struct.new_default $x)
+  ;; CHECK-NEXT:   (ref.test (ref $y)
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.new_default $b)
+  ;; CHECK-NEXT:  (struct.new_default $b1)
   ;; CHECK-NEXT: )
-  (func $test (result (ref $b))
+  (func $test (param $x (ref $x)) (result (ref $b))
     ;; Use $a to prevent it from being dropped completely.
     (local (ref null $a))
 
     ;; Cast to prevent $x and $y from being merged.
     (drop
       (ref.test (ref $y)
-        (struct.new_default $x)
+        (local.get $x)
       )
     )
 
