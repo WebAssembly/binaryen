@@ -1699,6 +1699,13 @@ private:
   // Scans ahead in the binary to check certain conditions like
   // needCodeLocations.
   void preScan();
+
+  // Internal helper for reading a code annotation section for a hint that is
+  // expression offset based. Receives the section name, payload length of the
+  // section and a function to read a single hint (receiving the annotation to
+  // update).
+  template<typename ReadFunc>
+  void readExpressionHints(Name sectionName, size_t payloadLen, ReadFunc read);
 };
 
 } // namespace wasm
