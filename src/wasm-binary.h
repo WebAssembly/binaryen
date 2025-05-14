@@ -1494,6 +1494,14 @@ private:
   std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
+
+  // Internal helper for emitting a code annotation section for a hint that is
+  // expression offset based. Receives the name of the section and two
+  // functions, one to check if the annotation we care about exists (receiving
+  // the annotation), and another to emit it (receiving the annotation and the
+  // buffer to write in).
+  template<typename HasFunc, typename EmitFunc>
+  std::optional<BufferWithRandomAccess> writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit);
 };
 
 extern std::vector<char> defaultEmptySourceMap;
