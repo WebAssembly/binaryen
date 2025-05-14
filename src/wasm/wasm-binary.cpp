@@ -5321,7 +5321,7 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
   readExpressionHints(
     Annotations::BranchHint,
     payloadLen,
-    [&](const Function::CodeAnnotation& annotation) {
+    [&](Function::CodeAnnotation& annotation) {
       auto size = getU32LEB();
       if (size != 1) {
         throwError("bad BranchHint size");
