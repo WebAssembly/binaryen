@@ -5347,7 +5347,7 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
                           throwError("bad InlineHint size");
                         }
 
-                        uint8_t inline_ = getU8();
+                        uint8_t inline_ = getInt8();
                         if (inline_ > 127) {
                           throwError("bad InlineHint value");
                         }
