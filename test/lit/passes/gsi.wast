@@ -2157,7 +2157,7 @@
   )
 )
 
-;; The basic case, but now the globals have type eqref. This should stlil work.
+;; The basic case, but now the globals have type eqref. This should still work.
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
