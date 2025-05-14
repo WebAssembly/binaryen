@@ -1665,8 +1665,6 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Nam
 
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
   return writeExpressionHints(
-    *wasm,
-    binaryLocations,
     Annotations::BranchHint,
     [](const Function::CodeAnnotation& annotation) {
       return annotation.branchLikely;
