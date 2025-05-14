@@ -3054,9 +3054,7 @@
   ;; CHECK-NEXT: )
   (func $ref.test-fallthrough
     (local $A (ref $A))
-    ;; The test will fail, but this pass does not have exact type info, so it
-    ;; thinks it can succeed and nothing happens here (GUFA can optimize this,
-    ;; however).
+    ;; The test will fail, and because we have exact type info, we can optimize.
     (drop
       (ref.test (ref $B)
         (local.tee $A
