@@ -5243,14 +5243,17 @@ void WasmBinaryReader::readDylink0(size_t payloadLen) {
   }
 }
 
-void WasmBinaryReader::readBranchHints(size_t payloadLen) {
+template<typename ReadFunc>
+void WasmBinaryReader::readExpressionHints(Name sectionName,
+                                           size_t payloadLen,
+                                           ReadFunc read) {
   auto sectionPos = pos;
 
   auto numFuncs = getU32LEB();
   for (Index i = 0; i < numFuncs; i++) {
     auto funcIndex = getU32LEB();
     if (funcIndex >= wasm.functions.size()) {
-      throwError("bad BranchHint function");
+      throwError("bad function in " + sectionName.toString());
     }
 
     auto& func = wasm.functions[funcIndex];
@@ -5275,28 +5278,36 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
 
       auto iter = locationsMap.find(absoluteOffset);
       if (iter == locationsMap.end()) {
-        throwError("bad BranchHint offset");
+        throwError("bad offset in " + sectionName.toString());
       }
       auto* expr = iter->second;
 
-      auto size = getU32LEB();
-      if (size != 1) {
-        throwError("bad BranchHint size");
-      }
-
-      auto likely = getU32LEB();
-      if (likely != 0 && likely != 1) {
-        throwError("bad BranchHint value");
-      }
-
-      // Apply the valid hint.
-      func->codeAnnotations[expr].branchLikely = likely;
+      read(func->codeAnnotations[expr]);
     }
   }
 
   if (pos != sectionPos + payloadLen) {
     throwError("bad BranchHint section size");
   }
+}
+
+void WasmBinaryReader::readBranchHints(size_t payloadLen) {
+  readExpressionHints(Annotations::BranchHint,
+                      payloadLen,
+                      [&](Function::CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 1) {
+                          throwError("bad BranchHint size");
+                        }
+
+                        auto likely = getU32LEB();
+                        if (likely != 0 && likely != 1) {
+                          throwError("bad BranchHint value");
+                        }
+
+                        // Apply the valid hint.
+                        annotation.branchLikely = likely;
+                      });
 }
 
 Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
