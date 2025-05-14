@@ -1564,16 +1564,17 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   };
 
   append(writeBranchHints());
-  append(writeInlineHints());
   return ret;
 }
+
+namespace {
 
 // Writes a code annotation section for a hint that is expression offset based.
 // Receives the name of the section and two functions, one to check of the
 // annotation we care about exists (receiving the annotation), and another to
 // emit it (receiving the annotation and the buffer to write in).
 template<typename HasFunc, typename EmitFunc>
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit) {
+std::optional<BufferWithRandomAccess> writeExpressionHints(Module& wasm, BinaryLocations& binaryLocations, Name sectionName, HasFunc has, EmitFunc emit) {
   // Assemble the info: for each function, a vector of the hints.
   struct ExprHint {
     Expression* expr;
@@ -1589,7 +1590,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Nam
 
   std::vector<FuncHints> funcHintsVec;
 
-  for (auto& func : wasm->functions) {
+  for (auto& func : wasm.functions) {
     // Collect the hints for this function.
     FuncHints funcHints;
 
@@ -1668,12 +1669,16 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Nam
   return buffer;
 }
 
+} // anonymous namespace
+
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
-  return writeHints(
+  return writeExpressionHints(
+    *wasm,
+    binaryLocations,
     Annotations::BranchHint,
     [](const Function::CodeAnnotation& annotation) {
       return annotation.branchLikely;
-    }.
+    },
     [](const Function::CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
