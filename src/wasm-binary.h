@@ -1410,6 +1410,8 @@ public:
   // must then insert before the code (as the spec requires that).
   std::optional<BufferWithRandomAccess> writeCodeAnnotations();
 
+  std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
+
   // helpers
   void writeInlineString(std::string_view name);
   void writeEscapedName(std::string_view name);
@@ -1492,6 +1494,15 @@ private:
   std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
+
+  // Internal helper for emitting a code annotation section for a hint that is
+  // expression offset based. Receives the name of the section and two
+  // functions, one to check if the annotation we care about exists (receiving
+  // the annotation), and another to emit it (receiving the annotation and the
+  // buffer to write in).
+  template<typename HasFunc, typename EmitFunc>
+  std::optional<BufferWithRandomAccess>
+  writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit);
 };
 
 extern std::vector<char> defaultEmptySourceMap;
@@ -1679,7 +1690,6 @@ public:
   // hint position and size in the first pass, and handle it later.
   size_t branchHintsPos = 0;
   size_t branchHintsLen = 0;
-
   void readBranchHints(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);

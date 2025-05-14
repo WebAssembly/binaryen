@@ -1883,3 +1883,88 @@
     )
   )
 )
+
+;; The basic case, but now the globals have type eqref. This should still work.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $1 (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 eqref (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 eqref (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 eqref (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 eqref (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    ;; We can infer that this get can reference either $global1 or $global2,
+    ;; and nothing else (aside from a null), and can emit a select between
+    ;; those values.
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
+;; Same, but now the globals have type anyref, so they are not comparable and we
+;; cannot optimize.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $1 (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1 anyref (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $global1 anyref (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $global2 anyref (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global2 anyref (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
