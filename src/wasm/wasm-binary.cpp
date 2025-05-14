@@ -1651,7 +1651,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Nam
     for (auto& exprHint : funcHints.exprHints) {
       buffer << U32LEB(exprHint.offset);
 
-      emit(*exprHint.hint);
+      emit(*exprHint.hint, buffer);
     }
   }
 
