@@ -4,13 +4,12 @@
 (module
  ;; The signature should be refined to a single self-referential type.
 
- (type $refined (func (param (ref $refined)) (result (ref $refined))))
-
- ;; CHECK:      (type $0 (func (param (ref (exact $0))) (result (ref (exact $0)))))
+ ;; CHECK:      (type $refined (func (param (ref (exact $refined))) (result (ref (exact $refined)))))
+ (type $refined (func (param (ref (exact $refined))) (result (ref (exact $refined)))))
 
  ;; CHECK:      (elem declare func $foo)
 
- ;; CHECK:      (func $foo (type $0) (param $0 (ref (exact $0))) (result (ref (exact $0)))
+ ;; CHECK:      (func $foo (type $refined) (param $0 (ref (exact $refined))) (result (ref (exact $refined)))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $foo
  ;; CHECK-NEXT:    (ref.func $foo)
