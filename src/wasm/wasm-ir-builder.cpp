@@ -1441,23 +1441,33 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
   return Ok{};
 }
 
-Result<> IRBuilder::makeCall(Name func, bool isReturn) {
+Result<> IRBuilder::makeCall(Name func,
+                             bool isReturn,
+                             std::optional<std::uint8_t> inline_) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
   curr.operands.resize(sig.params.size());
   CHECK_ERR(visitCall(&curr));
-  push(builder.makeCall(curr.target, curr.operands, sig.results, isReturn));
+  auto* call =
+    builder.makeCall(curr.target, curr.operands, sig.results, isReturn);
+  push(call);
+  addInlineHint(call, inline_);
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
+Result<> IRBuilder::makeCallIndirect(Name table,
+                                     HeapType type,
+                                     bool isReturn,
+                                     std::optional<std::uint8_t> inline_) {
   CallIndirect curr(wasm.allocator);
   curr.heapType = type;
   curr.operands.resize(type.getSignature().params.size());
   CHECK_ERR(visitCallIndirect(&curr));
-  push(builder.makeCallIndirect(
-    table, curr.target, curr.operands, type, isReturn));
+  auto* call =
+    builder.makeCallIndirect(table, curr.target, curr.operands, type, isReturn);
+  push(call);
+  addInlineHint(call, inline_);
   return Ok{};
 }
 
@@ -1947,7 +1957,9 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeCallRef(HeapType type, bool isReturn) {
+Result<> IRBuilder::makeCallRef(HeapType type,
+                                bool isReturn,
+                                std::optional<std::uint8_t> inline_) {
   CallRef curr(wasm.allocator);
   if (!type.isSignature()) {
     return Err{"expected function type"};
@@ -1956,7 +1968,10 @@ Result<> IRBuilder::makeCallRef(HeapType type, bool isReturn) {
   curr.operands.resize(type.getSignature().params.size());
   CHECK_ERR(ChildPopper{*this}.visitCallRef(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.target));
-  push(builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn));
+  auto* call =
+    builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn);
+  push(call);
+  addInlineHint(call, inline_);
   return Ok{};
 }
 
@@ -2538,6 +2553,15 @@ void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
     // Branches are only possible inside functions.
     assert(func);
     func->codeAnnotations[expr].branchLikely = likely;
+  }
+}
+
+void IRBuilder::addInlineHint(Expression* expr,
+                              std::optional<uint8_t> inline_) {
+  if (inline_) {
+    // Branches are only possible inside functions.
+    assert(func);
+    func->codeAnnotations[expr].inline_ = inline_;
   }
 }
 

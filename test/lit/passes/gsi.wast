@@ -2157,7 +2157,7 @@
   )
 )
 
-;; The basic case, but now the globals have type eqref. This should stlil work.
+;; The basic case, but now the globals have type eqref. This should still work.
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
@@ -2234,9 +2234,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $struct (ref null $struct))
-    ;; We can infer that this get can reference either $global1 or $global2,
-    ;; and nothing else (aside from a null), and can emit a select between
-    ;; those values.
     (drop
       (struct.get $struct 0
         (local.get $struct)
