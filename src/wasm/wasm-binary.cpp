@@ -1564,6 +1564,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   };
 
   append(writeBranchHints());
+  append(writeInlineHints());
   return ret;
 }
 
@@ -1680,6 +1681,25 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
 
       // Hint contents: likely or not.
       buffer << U32LEB(int(*annotation.branchLikely));
+    });
+}
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeInlineHints() {
+  return writeExpressionHints(
+    Annotations::InlineHint,
+    [](const Function::CodeAnnotation& annotation) {
+      return annotation.inline_;
+    },
+    [](const Function::CodeAnnotation& annotation,
+       BufferWithRandomAccess& buffer) {
+      // Hint size, always 1 for now.
+      buffer << U32LEB(1);
+
+      // We must only emit hints that are present.
+      assert(annotation.inline_);
+
+      // Hint contents: likely or not.
+      buffer << U32LEB(*annotation.inline_);
     });
 }
 
@@ -1973,10 +1993,11 @@ void WasmBinaryReader::preScan() {
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
 
-      if (sectionName == Annotations::BranchHint) {
+      if (sectionName == Annotations::BranchHint ||
+          sectionName == Annotations::InlineHint) {
         // Code annotations require code locations.
-        // TODO: For Branch Hinting, we could note which functions require
-        //       code locations, as an optimization.
+        // TODO: We could note which functions require code locations, as an
+        //       optimization.
         needCodeLocations = true;
       } else if (DWARF && Debug::isDWARFSection(sectionName)) {
         // DWARF sections contain code offsets.
