@@ -1549,6 +1549,25 @@ void WasmBinaryWriter::trackExpressionDelimiter(Expression* curr,
 }
 
 std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
+  std::optional<BufferWithRandomAccess> ret;
+
+  auto append = [&](std::optional<BufferWithRandomAccess>&& temp) {
+    if (temp) {
+      if (!ret) {
+        // This is the first section.
+        ret = std::move(temp);
+      } else {
+        // This is a later section, append.
+        ret->insert(ret->end(), temp->begin(), temp->end());
+      }
+    }
+  };
+
+  append(writeBranchHints());
+  return ret;
+}
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
   // Assemble the info for Branch Hinting: for each function, a vector of the
   // hints.
   struct ExprHint {
