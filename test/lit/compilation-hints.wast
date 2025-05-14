@@ -5,9 +5,15 @@
 ;; TODO: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $func (func))
+  (type $func (func))
 
-  ;; CHECK:      (func $func (type $0)
+  ;; CHECK:      (table $table 10 20 funcref)
+  (table $table 10 20 funcref)
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $func)
   ;; CHECK-NEXT:  (@metadata.code.inline "\00")
   ;; CHECK-NEXT:  (call $func)
   ;; CHECK-NEXT:  (@metadata.code.inline "\01")
@@ -29,6 +35,27 @@
     (call $func)
     ;; Unannotated
     (call $func)
+  )
+
+  ;; CHECK:      (func $other-calls (type $func)
+  ;; CHECK-NEXT:  (@metadata.code.inline "\12")
+  ;; CHECK-NEXT:  (call_indirect $table (type $func)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.inline "\34")
+  ;; CHECK-NEXT:  (call_ref $func
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $other-calls
+    (@metadata.code.inline "\12")
+    (call_indirect (type $func)
+      (i32.const 0)
+    )
+    (@metadata.code.inline "\34")
+    (call_ref $func
+      (ref.func $func)
+    )
   )
 
   ;; TODO: test function annotations, after

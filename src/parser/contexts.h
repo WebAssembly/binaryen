@@ -2385,7 +2385,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                             bool isReturn) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
-    return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
+    auto inline_ = getInlineHint(annotations);
+    return withLoc(pos,
+                   irBuilder.makeCallIndirect(*t, type, isReturn, inline_));
   }
 
   // Return the branch hint for a branching instruction, if there is one.
@@ -2561,7 +2563,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                        const std::vector<Annotation>& annotations,
                        HeapType type,
                        bool isReturn) {
-    return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
+    auto inline_ = getInlineHint(annotations);
+    return withLoc(pos, irBuilder.makeCallRef(type, isReturn, inline_));
   }
 
   Result<> makeRefI31(Index pos,

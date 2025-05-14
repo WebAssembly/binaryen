@@ -127,7 +127,10 @@ public:
   Result<> makeCall(Name func,
                     bool isReturn,
                     std::optional<std::uint8_t> inline_ = std::nullopt);
-  Result<> makeCallIndirect(Name table, HeapType type, bool isReturn);
+  Result<> makeCallIndirect(Name table,
+                            HeapType type,
+                            bool isReturn,
+                            std::optional<std::uint8_t> inline_ = std::nullopt);
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
   Result<> makeLocalTee(Index local);
@@ -201,7 +204,9 @@ public:
   Result<> makeTupleDrop(uint32_t arity);
   Result<> makeRefI31(Shareability share);
   Result<> makeI31Get(bool signed_);
-  Result<> makeCallRef(HeapType type, bool isReturn);
+  Result<> makeCallRef(HeapType type,
+                       bool isReturn,
+                       std::optional<std::uint8_t> inline_ = std::nullopt);
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type);
   Result<> makeBrOn(Index label,
