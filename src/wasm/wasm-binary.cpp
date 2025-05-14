@@ -1698,7 +1698,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
       // We must only emit hints that are present.
       assert(annotation.inline_);
 
-      // Hint contents: likely or not.
+      // Hint contents: inline frequency count
       buffer << U32LEB(*annotation.inline_);
     });
 }
@@ -5333,7 +5333,6 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
                           throwError("bad BranchHint value");
                         }
 
-                        // Apply the valid hint.
                         annotation.branchLikely = likely;
                       });
 }
@@ -5352,7 +5351,6 @@ void WasmBinaryReader::readInlineHints(size_t payloadLen) {
                           throwError("bad InlineHint value");
                         }
 
-                        // Apply the valid hint.
                         annotation.inline_ = inline_;
                       });
 }
