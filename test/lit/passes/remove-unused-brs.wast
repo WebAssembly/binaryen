@@ -466,6 +466,37 @@
     )
   )
 
+  ;; CHECK:      (func $restructure-br_if-condition-invalidates-6 (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (block $block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $block
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:     (local.tee $temp
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-condition-invalidates-6 (result i32)
+    (local $temp i32)
+    ;; The br value is syntactically identical to the value at the end of the
+    ;; block, however, the local.tee changes that value so we cannot optimize.
+    (block $block (result i32)
+      (drop
+        (br_if $block
+          (local.get $temp)
+          (local.tee $temp
+            (i32.const 1)
+          )
+        )
+      )
+      (local.get $temp)
+    )
+  )
+
   ;; CHECK:      (func $restructure-select-no-multivalue (type $1)
   ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $block (type $3) (result i32 i32)
