@@ -1564,12 +1564,17 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   };
 
   append(writeBranchHints());
+  append(writeInlineHints());
   return ret;
 }
 
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
-  // Assemble the info for Branch Hinting: for each function, a vector of the
-  // hints.
+// Writes a code annotation section for a hint that is expression offset based.
+// Receives the name of the section and two functions, one to check of the
+// annotation we care about exists (receiving the annotation), and another to
+// emit it (receiving the annotation and the buffer to write in).
+template<typename HasFunc, typename EmitFunc>
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit) {
+  // Assemble the info: for each function, a vector of the hints.
   struct ExprHint {
     Expression* expr;
     // The offset we will write in the custom section.
@@ -1585,7 +1590,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
   std::vector<FuncHints> funcHintsVec;
 
   for (auto& func : wasm->functions) {
-    // Collect the Branch Hints for this function.
+    // Collect the hints for this function.
     FuncHints funcHints;
 
     // We compute the location of the function declaration area (where the
@@ -1593,7 +1598,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
     BinaryLocation funcDeclarationsOffset = 0;
 
     for (auto& [expr, annotation] : func->codeAnnotations) {
-      if (annotation.branchLikely) {
+      if (has(annotation)) {
         auto exprIter = binaryLocations.expressions.find(expr);
         if (exprIter == binaryLocations.expressions.end()) {
           // No expression exists for this annotation - perhaps optimizations
@@ -1641,7 +1646,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
   // We found data: emit the section.
   buffer << uint8_t(BinaryConsts::Custom);
   auto lebPos = buffer.writeU32LEBPlaceholder();
-  buffer.writeInlineString(Annotations::BranchHint.str);
+  buffer.writeInlineString(sectionName.str);
 
   buffer << U32LEB(funcHintsVec.size());
   for (auto& funcHints : funcHintsVec) {
@@ -1651,14 +1656,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
     for (auto& exprHint : funcHints.exprHints) {
       buffer << U32LEB(exprHint.offset);
 
-      // Hint size, always 1 for now.
-      buffer << U32LEB(1);
-
-      // We must only emit hints that are present.
-      assert(exprHint.hint->branchLikely);
-
-      // Hint contents: likely or not.
-      buffer << U32LEB(int(*exprHint.hint->branchLikely));
+      emit(*exprHint.hint);
     }
   }
 
@@ -1668,6 +1666,25 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
   buffer.emitRetroactiveSectionSizeLEB(lebPos);
 
   return buffer;
+}
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
+  return writeHints(
+    Annotations::BranchHint,
+    [](const Function::CodeAnnotation& annotation) {
+      return annotation.branchLikely;
+    }.
+    [](const Function::CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
+      // Hint size, always 1 for now.
+      buffer << U32LEB(1);
+
+      // We must only emit hints that are present.
+      assert(annotation.branchLikely);
+
+      // Hint contents: likely or not.
+      buffer << U32LEB(int(*annotation.branchLikely));
+    }
+  );
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {

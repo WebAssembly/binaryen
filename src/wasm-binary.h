@@ -1411,7 +1411,6 @@ public:
   std::optional<BufferWithRandomAccess> writeCodeAnnotations();
 
   std::optional<BufferWithRandomAccess> writeBranchHints();
-  std::optional<BufferWithRandomAccess> writeCompilationHints();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1683,11 +1682,6 @@ public:
   size_t branchHintsPos = 0;
   size_t branchHintsLen = 0;
   void readBranchHints(size_t payloadLen);
-
-  // Compilation hints, like branch hints, are read after the code.
-  size_t compilationHintsPos = 0;
-  size_t compilationHintsLen = 0;
-  void readCompilationHints(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
