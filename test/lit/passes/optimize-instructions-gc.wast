@@ -22,14 +22,19 @@
   ;; CHECK:      (type $B (sub $A (struct (field i32) (field i32) (field f32))))
   (type $B (sub $A (struct (field i32) (field i32) (field f32))))
 
+  ;; CHECK:      (type $void (sub (func)))
+
   ;; CHECK:      (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
   (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
 
   (type $empty (struct))
 
-  ;; CHECK:      (type $void (sub (func)))
-
   ;; CHECK:      (type $C (sub $A (struct (field i32) (field i32) (field f64))))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $void1 (sub $void (func)))
+
+  ;; CHECK:       (type $void2 (sub $void (func)))
 
   ;; CHECK:      (type $struct.ref (struct (field funcref)))
   (type $struct.ref (struct (field funcref)))
@@ -38,17 +43,20 @@
 
   (type $void (sub (func)))
 
-  (type $void2 (sub $void (func)))
+  (rec
+    (type $void1 (sub $void (func)))
+    (type $void2 (sub $void (func)))
+  )
 
   ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
   (type $struct_i64 (func (param (ref null struct)) (result i64)))
 
-  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $8) (result i32)))
+  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $9) (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
-  ;; CHECK:      (func $if-arms-subtype-fold (type $27) (result anyref)
+  ;; CHECK:      (func $if-arms-subtype-fold (type $29) (result anyref)
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: )
   (func $if-arms-subtype-fold (result anyref)
@@ -63,7 +71,7 @@
     )
   )
   ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
-  ;; CHECK:      (func $if-arms-subtype-nofold (type $28) (param $i31ref i31ref) (result anyref)
+  ;; CHECK:      (func $if-arms-subtype-nofold (type $30) (param $i31ref i31ref) (result anyref)
   ;; CHECK-NEXT:  (if (result anyref)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
@@ -87,7 +95,7 @@
   )
 
   ;; Stored values automatically truncate unneeded bytes.
-  ;; CHECK:      (func $store-trunc (type $10) (param $x (ref null $struct))
+  ;; CHECK:      (func $store-trunc (type $11) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (struct.set $struct $i8
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 35)
@@ -306,7 +314,7 @@
     )
   )
 
-  ;; CHECK:      (func $redundant-non-null-casts (type $29) (param $x (ref null $struct)) (param $y (ref null $array)) (param $f (ref null $void))
+  ;; CHECK:      (func $redundant-non-null-casts (type $31) (param $x (ref null $struct)) (param $y (ref null $array)) (param $f (ref null $void))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -393,14 +401,14 @@
     )
   )
 
-  ;; CHECK:      (func $get-eqref (type $30) (result eqref)
+  ;; CHECK:      (func $get-eqref (type $32) (result eqref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get-eqref (result eqref)
     (unreachable)
   )
 
-  ;; CHECK:      (func $ref-eq (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (local $lx eqref)
   ;; CHECK-NEXT:  (local $ly eqref)
   ;; CHECK-NEXT:  (drop
@@ -656,7 +664,7 @@
     )
   )
 
-  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $31) (param $x (ref any)) (param $y anyref)
+  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $33) (param $x (ref any)) (param $y anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $x
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -677,7 +685,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ternary-identical-arms (type $32) (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
+  ;; CHECK:      (func $ternary-identical-arms (type $34) (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (if (result (ref null $struct))
@@ -732,7 +740,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ternary-identical-arms-no-side-effect (type $33) (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
+  ;; CHECK:      (func $ternary-identical-arms-no-side-effect (type $35) (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get_u $struct $i8
   ;; CHECK-NEXT:    (select (result (ref $struct))
@@ -917,7 +925,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-possible (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq-possible (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.cast (ref null $struct)
@@ -944,7 +952,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-impossible (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq-impossible (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1036,7 +1044,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-possible-b (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq-possible-b (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.cast (ref $A)
@@ -1084,7 +1092,7 @@
     )
   )
 
-  ;; CHECK:      (func $hoist-LUB-danger (type $34) (param $x i32) (param $b (ref $B)) (param $c (ref $C)) (result i32)
+  ;; CHECK:      (func $hoist-LUB-danger (type $36) (param $x i32) (param $b (ref $B)) (param $c (ref $C)) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (then
@@ -1123,7 +1131,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-non-null (type $35) (param $struct (ref $struct))
+  ;; CHECK:      (func $incompatible-cast-of-non-null (type $37) (param $struct (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref none))
   ;; CHECK-NEXT:    (drop
@@ -1141,7 +1149,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-null (type $10) (param $x (ref null $struct))
+  ;; CHECK:      (func $incompatible-cast-of-null (type $11) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -1176,7 +1184,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-unknown (type $10) (param $struct (ref null $struct))
+  ;; CHECK:      (func $incompatible-cast-of-unknown (type $11) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (local.get $struct)
@@ -1191,7 +1199,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test (type $10) (param $struct (ref null $struct))
+  ;; CHECK:      (func $incompatible-test (type $11) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1410,7 +1418,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test-heap-types-nonnullable (type $7) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-test-heap-types-nonnullable (type $8) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
@@ -1452,7 +1460,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test-heap-types-nullable (type $7) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-test-heap-types-nullable (type $8) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
@@ -1493,7 +1501,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test-heap-types-unreachable (type $7) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-test-heap-types-unreachable (type $8) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
@@ -1535,7 +1543,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.test-unreachable (type $36) (param $A (ref null $A))
+  ;; CHECK:      (func $ref.test-unreachable (type $38) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref $A)
   ;; CHECK-NEXT:    (unreachable)
@@ -2179,7 +2187,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-test-static-impossible (type $37) (param $nullable (ref null $array)) (param $non-nullable (ref $array))
+  ;; CHECK:      (func $ref-test-static-impossible (type $39) (param $nullable (ref null $array)) (param $non-nullable (ref $array))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -2211,7 +2219,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-boolean (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-boolean (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (local.get $x)
@@ -2259,14 +2267,14 @@
     )
   )
 
-  ;; CHECK:      (func $impossible (type $38) (result (ref none))
+  ;; CHECK:      (func $impossible (type $40) (result (ref none))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $impossible (result (ref none))
     (unreachable)
   )
 
-  ;; CHECK:      (func $bottom-type-accessors (type $39) (param $bot (ref none)) (param $null nullref)
+  ;; CHECK:      (func $bottom-type-accessors (type $41) (param $bot (ref none)) (param $null nullref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -2599,7 +2607,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-separate-fallthrough (type $40) (param $eqref eqref) (result structref)
+  ;; CHECK:      (func $incompatible-cast-separate-fallthrough (type $42) (param $eqref eqref) (result structref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $eqref
   ;; CHECK-NEXT:    (block (result (ref i31))
@@ -2633,7 +2641,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-heap-types-nonnullable (type $7) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-cast-heap-types-nonnullable (type $8) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result (ref any))
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -2669,7 +2677,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-heap-types-nullable (type $7) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-cast-heap-types-nullable (type $8) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (block (result nullref)
@@ -2701,7 +2709,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-heap-types-unreachable (type $7) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-cast-heap-types-unreachable (type $8) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -2736,7 +2744,7 @@
     )
   )
 
-  ;; CHECK:      (func $as_of_unreachable (type $41) (result (ref $A))
+  ;; CHECK:      (func $as_of_unreachable (type $43) (result (ref $A))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $as_of_unreachable (result (ref $A))
@@ -2750,7 +2758,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-internalized-extern (type $42) (param $externref externref)
+  ;; CHECK:      (func $cast-internalized-extern (type $44) (param $externref externref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (any.convert_extern
@@ -2837,25 +2845,36 @@
     )
   )
 
+  ;; CHECK:      (func $func.arm.1 (type $void1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func.arm.1 (type $void1)
+    (nop)
+  )
+
+  ;; CHECK:      (func $func.arm.2 (type $void2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func.arm.2 (type $void2)
+    (nop)
+  )
+
   ;; CHECK:      (func $refinalize.select.arm (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref nofunc))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.func $refinalize.select.arm)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (block (result (ref (exact $void1)))
+  ;; CHECK-NEXT:    (ref.func $func.arm.1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $refinalize.select.arm (type $void)
     ;; Pick one of the two select sides using the condition. This changes the
     ;; type (the arms are more refined than the declared type), so we must
-    ;; refinalize or we'll error.
+    ;; refinalize.
     (drop
-      (ref.cast (ref null $void2)
+      (block (result (ref null $void))
         (select (result (ref null $void))
-          (ref.func $refinalize.select.arm)
-          (ref.func $refinalize.select.arm)
+          (ref.func $func.arm.1)
+          (ref.func $func.arm.2)
           (i32.const 1)
         )
       )
@@ -2864,51 +2883,49 @@
 
   ;; CHECK:      (func $refinalize.select.arm.flip (type $5)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref nofunc))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.func $refinalize.select.arm)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   (block (result (ref (exact $void2)))
+  ;; CHECK-NEXT:    (ref.func $func.arm.2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $refinalize.select.arm.flip
     ;; Flipped of the above.
     (drop
-      (ref.cast (ref null $void2)
+      (block (result (ref null $void))
         (select (result (ref null $void))
-          (ref.func $refinalize.select.arm)
-          (ref.func $refinalize.select.arm)
+          (ref.func $func.arm.1)
+          (ref.func $func.arm.2)
           (i32.const 0)
         )
       )
     )
   )
 
-  ;; CHECK:      (func $refinalize.select.arm.unknown (type $25) (param $x i32)
+  ;; CHECK:      (func $refinalize.select.arm.unknown (type $27) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref nofunc))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.func $refinalize.select.arm)
+  ;; CHECK-NEXT:   (block (result (ref null $void))
+  ;; CHECK-NEXT:    (select (result (ref $void))
+  ;; CHECK-NEXT:     (ref.func $func.arm.1)
+  ;; CHECK-NEXT:     (ref.func $func.arm.2)
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $refinalize.select.arm.unknown (param $x i32)
     ;; As above but use an unknown value at compile time for the condition.
     (drop
-      (ref.cast (ref null $void2)
+      (block (result (ref null $void))
         (select (result (ref null $void))
-          (ref.func $refinalize.select.arm)
-          (ref.func $refinalize.select.arm)
+          (ref.func $func.arm.1)
+          (ref.func $func.arm.2)
           (local.get $x)
         )
       )
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-ref (type $43) (result (ref func))
+  ;; CHECK:      (func $non-null-bottom-ref (type $45) (result (ref func))
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
@@ -2936,7 +2953,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-cast (type $44) (result (ref nofunc))
+  ;; CHECK:      (func $non-null-bottom-cast (type $46) (result (ref nofunc))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $non-null-bottom-cast)
   ;; CHECK-NEXT:  )
@@ -2949,7 +2966,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-ref-test (type $8) (result i32)
+  ;; CHECK:      (func $non-null-bottom-ref-test (type $9) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
@@ -2972,7 +2989,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $8) (result i32)
+  ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $9) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (loop (result (ref nofunc))
@@ -2992,7 +3009,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-test (type $8) (result i32)
+  ;; CHECK:      (func $non-null-bottom-test (type $9) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $non-null-bottom-cast)
   ;; CHECK-NEXT:  )
@@ -3037,7 +3054,9 @@
   ;; CHECK-NEXT: )
   (func $ref.test-fallthrough
     (local $A (ref $A))
-    ;; The test will fail, and because we have exact type info, we can optimize.
+    ;; The test will fail, but this pass does not have exact type info, so it
+    ;; thinks it can succeed and nothing happens here (GUFA can optimize this,
+    ;; however).
     (drop
       (ref.test (ref $B)
         (local.tee $A
@@ -3062,7 +3081,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.test-then-optimizeAddedConstants (type $8) (result i32)
+  ;; CHECK:      (func $ref.test-then-optimizeAddedConstants (type $9) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -3563,7 +3582,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed_fallthrough_local (type $25) (param $x i32)
+  ;; CHECK:      (func $array.new_fixed_fallthrough_local (type $27) (param $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
