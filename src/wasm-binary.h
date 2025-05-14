@@ -1410,8 +1410,8 @@ public:
   // must then insert before the code (as the spec requires that).
   std::optional<BufferWithRandomAccess> writeCodeAnnotations();
 
-  std::optional<BufferWithRandomAccess> writeBranchHints();
-  std::optional<BufferWithRandomAccess> writeInlineHints();
+  std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
+  std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);

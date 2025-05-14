@@ -1563,8 +1563,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
     }
   };
 
-  append(writeBranchHints());
-  append(writeInlineHints());
+  append(getBranchHintsBuffer());
+  append(getInlineHintsBuffer());
   return ret;
 }
 
@@ -1665,7 +1665,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
   return buffer;
 }
 
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
   return writeExpressionHints(
     Annotations::BranchHint,
     [](const Function::CodeAnnotation& annotation) {
@@ -1684,7 +1684,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
     });
 }
 
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeInlineHints() {
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
   return writeExpressionHints(
     Annotations::InlineHint,
     [](const Function::CodeAnnotation& annotation) {
