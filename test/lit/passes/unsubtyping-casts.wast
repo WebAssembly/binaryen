@@ -34,24 +34,25 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $top (struct)))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $3 (func (param (ref $top))))
 
- ;; CHECK:      (func $cast (type $2)
+ ;; CHECK:      (func $cast (type $3) (param $top (ref $top))
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref none)
- ;; CHECK-NEXT:    (struct.new_default $top)
+ ;; CHECK-NEXT:   (ref.cast (ref $mid)
+ ;; CHECK-NEXT:    (local.get $top)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast
+ (func $cast (param $top (ref $top))
   (local $l (ref null $top))
   (local.set $l
    ;; Require $bot <: $top.
@@ -61,7 +62,7 @@
    ;; Now the cast requires $mid <: $top so that a $bot value appearing in the
    ;; $top location would still pass the cast to $mid.
    (ref.cast (ref $mid)
-    (struct.new $top)
+    (local.get $top)
    )
   )
  )
@@ -71,24 +72,25 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $top (struct)))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $3 (func (param (ref $top))))
 
- ;; CHECK:      (func $cast (type $2)
+ ;; CHECK:      (func $cast (type $3) (param $top (ref $top))
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.test (ref none)
- ;; CHECK-NEXT:    (struct.new_default $top)
+ ;; CHECK-NEXT:   (ref.test (ref $mid)
+ ;; CHECK-NEXT:    (local.get $top)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast
+ (func $cast (param $top (ref $top))
   (local $l (ref null $top))
   (local.set $l
    ;; Require $bot <: $top.
@@ -97,7 +99,7 @@
   (drop
    ;; Same as above, but with a ref.test.
    (ref.test (ref $mid)
-    (struct.new $top)
+    (local.get $top)
    )
   )
  )
@@ -107,29 +109,30 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $top (struct)))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $3 (func (param (ref $top))))
 
- ;; CHECK:      (func $cast (type $2)
+ ;; CHECK:      (func $cast (type $3) (param $top (ref $top))
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref none))
+ ;; CHECK-NEXT:   (block $l (result (ref $mid))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_cast $l (ref (exact $top)) (ref none)
- ;; CHECK-NEXT:      (struct.new_default $top)
+ ;; CHECK-NEXT:     (br_on_cast $l (ref $top) (ref $mid)
+ ;; CHECK-NEXT:      (local.get $top)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast
+ (func $cast (param $top (ref $top))
   (local $l (ref null $top))
   (local.set $l
    ;; Require $bot <: $top.
@@ -140,7 +143,7 @@
     ;; Same as above, but with a br_on_cast.
     (drop
      (br_on_cast $l anyref (ref $mid)
-      (struct.new $top)
+      (local.get $top)
      )
     )
     (unreachable)
@@ -153,29 +156,30 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $top (struct)))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $3 (func (param (ref $top))))
 
- ;; CHECK:      (func $cast (type $2)
+ ;; CHECK:      (func $cast (type $3) (param $top (ref $top))
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref (exact $top)))
+ ;; CHECK-NEXT:   (block $l (result (ref $top))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_cast_fail $l (ref (exact $top)) (ref none)
- ;; CHECK-NEXT:      (struct.new_default $top)
+ ;; CHECK-NEXT:     (br_on_cast_fail $l (ref $top) (ref $mid)
+ ;; CHECK-NEXT:      (local.get $top)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast
+ (func $cast (param $top (ref $top))
   (local $l (ref null $top))
   (local.set $l
    ;; Require $bot <: $top.
@@ -186,7 +190,7 @@
     ;; Same as above, but with a br_on_cast_fail.
     (drop
      (br_on_cast_fail $l anyref (ref $mid)
-      (struct.new $top)
+      (local.get $top)
      )
     )
     (unreachable)
@@ -204,25 +208,34 @@
  ;; CHECK:       (type $bot (sub $mid (func)))
  (type $bot (sub $mid (func)))
 
+ ;; CHECK:       (type $3 (func (param (ref $top))))
+
  ;; CHECK:      (table $t 1 1 (ref null $top))
  (table $t 1 1 (ref null $top))
 
- ;; CHECK:      (elem declare func $cast)
+ ;; CHECK:      (elem declare func $bot)
 
- ;; CHECK:      (func $cast (type $bot)
+ ;; CHECK:      (func $bot (type $bot)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $bot (type $bot)
+   (nop)
+ )
+
+ ;; CHECK:      (func $cast (type $3) (param $top (ref $top))
  ;; CHECK-NEXT:  (local $l (ref null $top))
  ;; CHECK-NEXT:  (local.set $l
- ;; CHECK-NEXT:   (ref.func $cast)
+ ;; CHECK-NEXT:   (ref.func $bot)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call_indirect $t (type $mid)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast (type $bot)
+ (func $cast (param $top (ref $top))
   (local $l (ref null $top))
   (local.set $l
    ;; Require $bot <: $top.
-   (ref.func $cast)
+   (ref.func $bot)
   )
   ;; Same as above, but with a call_indirect
   (call_indirect $t (type $mid)
@@ -477,47 +490,50 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $topC (sub (struct)))
   (type $topC (sub (struct)))
+  ;; CHECK:       (type $midC (sub $topC (struct)))
   (type $midC (sub $topC (struct)))
-  ;; CHECK:       (type $botC (sub $topC (struct)))
+  ;; CHECK:       (type $botC (sub $midC (struct)))
   (type $botC (sub $midC (struct)))
 
   ;; CHECK:       (type $topB (sub (struct (field (ref null $topC)))))
   (type $topB (sub (struct (ref null $topC))))
+  ;; CHECK:       (type $midB (sub $topB (struct (field (ref null $botC)))))
   (type $midB (sub $topB (struct (ref null $botC))))
-  ;; CHECK:       (type $botB (sub $topB (struct (field (ref null $botC)))))
+  ;; CHECK:       (type $botB (sub $midB (struct (field (ref null $botC)))))
   (type $botB (sub $midB (struct (ref null $botC))))
 
   ;; CHECK:       (type $topA (sub (struct (field (ref null $topB)))))
   (type $topA (sub (struct (ref null $topB))))
+  ;; CHECK:       (type $midA (sub $topA (struct (field (ref null $botB)))))
   (type $midA (sub $topA (struct (ref null $botB))))
-  ;; CHECK:       (type $botA (sub $topA (struct (field (ref null $botB)))))
+  ;; CHECK:       (type $botA (sub $midA (struct (field (ref null $botB)))))
   (type $botA (sub $midA (struct (ref null $botB))))
  )
 
- ;; CHECK:       (type $6 (func))
+ ;; CHECK:       (type $9 (func (param (ref $topA) (ref $topB) (ref $topC))))
 
- ;; CHECK:      (func $cast (type $6)
+ ;; CHECK:      (func $cast (type $9) (param $topA (ref $topA)) (param $topB (ref $topB)) (param $topC (ref $topC))
  ;; CHECK-NEXT:  (local $l (ref null $topA))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $botA)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref none)
- ;; CHECK-NEXT:    (struct.new_default $topA)
+ ;; CHECK-NEXT:   (ref.cast (ref $midA)
+ ;; CHECK-NEXT:    (local.get $topA)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref none)
- ;; CHECK-NEXT:    (struct.new_default $topB)
+ ;; CHECK-NEXT:   (ref.cast (ref $midB)
+ ;; CHECK-NEXT:    (local.get $topB)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref none)
- ;; CHECK-NEXT:    (struct.new_default $topC)
+ ;; CHECK-NEXT:   (ref.cast (ref $midC)
+ ;; CHECK-NEXT:    (local.get $topC)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast
+ (func $cast (param $topA (ref $topA)) (param $topB (ref $topB)) (param $topC (ref $topC))
   (local $l (ref null $topA))
   (local.set $l
    ;; Require $botA <: $topA.
@@ -528,21 +544,21 @@
    ;; the $topA location would still pass the cast to $midA. This will
    ;; transitively require $botB <: $topB.
    (ref.cast (ref $midA)
-    (struct.new_default $topA)
+    (local.get $topA)
    )
   )
   (drop
    ;; Same as before, but now for the B types. This requires $botC <: $topC, but
    ;; only after the previous cast has already been analyzed.
    (ref.cast (ref $midB)
-    (struct.new_default $topB)
+    (local.get $topB)
    )
   )
   (drop
    ;; Same as before, but now for the C types. Now no types will able to be
    ;; optimized.
    (ref.cast (ref $midC)
-    (struct.new $topC)
+    (local.get $topC)
    )
   )
  )
