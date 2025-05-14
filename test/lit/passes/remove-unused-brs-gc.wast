@@ -19,7 +19,7 @@
  ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
  (global $struct (ref $struct) (struct.new $struct))
 
- ;; CHECK:      (func $br_on-if (type $9) (param $0 (ref struct))
+ ;; CHECK:      (func $br_on-if (type $10) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref struct))
@@ -54,7 +54,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $5) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $4) (param $0 (ref $struct)) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -71,12 +71,14 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:    (br_on_cast $block (ref $struct) (ref $substruct)
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast (result (ref $struct))
+ (func $br_on_cast (param (ref $struct)) (result (ref $struct))
   (local $struct (ref null $struct))
   (block $block (result (ref $struct))
    (drop
@@ -96,14 +98,14 @@
    (drop
     ;; This cast cannot be optimized at all.
     (br_on_cast $block anyref (ref $substruct)
-     (struct.new $struct)
+     (local.get 0)
     )
    )
    (unreachable)
   )
  )
 
- ;; CHECK:      (func $br_on_cast-fallthrough (type $5) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $4) (param $0 (ref $struct)) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
@@ -129,14 +131,16 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.tee $any
- ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    (br_on_cast $block anyref (ref $substruct)
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast-fallthrough (result (ref $struct))
+ (func $br_on_cast-fallthrough (param (ref $struct)) (result (ref $struct))
   ;; Same as above, but now the type information comes from fallthrough values.
   (local $struct (ref null $struct))
   (local $any anyref)
@@ -157,14 +161,14 @@
     ;; This cannot be optimized, but at least it still doesn't need an
     ;; additional cast.
     (br_on_cast $block anyref (ref $substruct)
-     (local.tee $any (struct.new $struct))
+     (local.tee $any (local.get 0))
     )
    )
    (unreachable)
   )
  )
 
- ;; CHECK:      (func $nested_br_on_cast (type $10) (result i31ref)
+ ;; CHECK:      (func $nested_br_on_cast (type $11) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -192,7 +196,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $6) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $5) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -246,7 +250,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $6) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $5) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -312,7 +316,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail (type $6) (param $0 (ref $struct)) (result anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct))
  ;; CHECK-NEXT:   (drop
@@ -324,14 +328,14 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $struct) (ref $substruct)
+ ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_fail (result anyref)
+ (func $br_on_cast_fail (param (ref $struct)) (result anyref)
   (local $struct (ref null $struct))
   (block $block (result anyref)
    (drop
@@ -352,14 +356,14 @@
    (drop
     ;; This cast cannot be optimized at all.
     (br_on_cast_fail $block anyref (ref $substruct)
-     (struct.new $struct)
+     (local.get 0)
     )
    )
    (unreachable)
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $6) (param $0 (ref $struct)) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -378,16 +382,16 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:    (br_on_cast_fail $block anyref (ref $substruct)
  ;; CHECK-NEXT:     (local.tee $any
- ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_fail-fallthrough (result anyref)
+ (func $br_on_cast_fail-fallthrough (param (ref $struct)) (result anyref)
   ;; Same as above, but now the type information comes from fallthrough values.
   (local $any anyref)
   (local $struct (ref null $struct))
@@ -408,14 +412,14 @@
    (drop
     ;; This cast cannot be optimized at all.
     (br_on_cast_fail $block anyref (ref $substruct)
-     (local.tee $any (struct.new $struct))
+     (local.tee $any (local.get 0))
     )
    )
    (unreachable)
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated (type $7) (result anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct2))
  ;; CHECK-NEXT:   (drop
@@ -477,7 +481,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $7) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -553,7 +557,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough-non-null (type $11) (result (ref any))
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough-non-null (type $12) (result (ref any))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref any))
@@ -601,7 +605,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-unreachable (type $7) (param $i31ref i31ref) (result anyref)
+ ;; CHECK:      (func $br_on_cast-unreachable (type $8) (param $i31ref i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -657,7 +661,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-unreachable (type $7) (param $0 i31ref) (result anyref)
+ ;; CHECK:      (func $fallthrough-unreachable (type $8) (param $0 i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
@@ -696,7 +700,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $8) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $9) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
@@ -841,7 +845,7 @@
   )
  )
 
- ;; CHECK:      (func $allocations-are-costly (type $8) (param $x i32)
+ ;; CHECK:      (func $allocations-are-costly (type $9) (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result (ref null (exact $struct)))
  ;; CHECK-NEXT:    (local.get $x)
@@ -889,7 +893,7 @@
   )
  )
 
- ;; CHECK:      (func $threading (type $12) (param $x anyref)
+ ;; CHECK:      (func $threading (type $13) (param $x anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (block $inner
  ;; CHECK-NEXT:    (drop
@@ -913,7 +917,7 @@
   )
  )
 
- ;; CHECK:      (func $test (type $13) (param $x (ref any))
+ ;; CHECK:      (func $test (type $14) (param $x (ref any))
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref $struct-nn))
@@ -965,7 +969,7 @@
   )
  )
 
- ;; CHECK:      (func $select-refinalize (type $14) (param $param (ref $struct)) (result (ref struct))
+ ;; CHECK:      (func $select-refinalize (type $15) (param $param (ref $struct)) (result (ref struct))
  ;; CHECK-NEXT:  (select (result (ref $struct))
  ;; CHECK-NEXT:   (select (result (ref $struct))
  ;; CHECK-NEXT:    (global.get $struct)
