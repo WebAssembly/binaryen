@@ -5272,7 +5272,9 @@ void WasmBinaryReader::readDylink0(size_t payloadLen) {
 }
 
 template<typename ReadFunc>
-void WasmBinaryReader::readExpressionHints(Name sectionName, size_t payloadLen, ReadFunc read) {
+void WasmBinaryReader::readExpressionHints(Name sectionName,
+                                           size_t payloadLen,
+                                           ReadFunc read) {
   auto sectionPos = pos;
 
   auto numFuncs = getU32LEB();
@@ -5318,23 +5320,22 @@ void WasmBinaryReader::readExpressionHints(Name sectionName, size_t payloadLen, 
 }
 
 void WasmBinaryReader::readBranchHints(size_t payloadLen) {
-  readExpressionHints(
-    Annotations::BranchHint,
-    payloadLen,
-    [&](Function::CodeAnnotation& annotation) {
-      auto size = getU32LEB();
-      if (size != 1) {
-        throwError("bad BranchHint size");
-      }
+  readExpressionHints(Annotations::BranchHint,
+                      payloadLen,
+                      [&](Function::CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 1) {
+                          throwError("bad BranchHint size");
+                        }
 
-      auto likely = getU32LEB();
-      if (likely != 0 && likely != 1) {
-        throwError("bad BranchHint value");
-      }
+                        auto likely = getU32LEB();
+                        if (likely != 0 && likely != 1) {
+                          throwError("bad BranchHint value");
+                        }
 
-      // Apply the valid hint.
-      annotation.branchLikely = likely;
-    });
+                        // Apply the valid hint.
+                        annotation.branchLikely = likely;
+                      });
 }
 
 Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
