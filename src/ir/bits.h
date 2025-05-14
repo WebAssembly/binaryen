@@ -459,7 +459,7 @@ Index getMaxBits(Expression* curr,
   } else if (auto* block = curr->dynCast<Block>()) {
     // TODO: getFallthrough(block, ..., ...) is needed,
     //   because the localset also need it
-    if (!block->name.is() && block->list.size() > 0) {
+    if (!block->name.is() && block->list.size() > 0 && block->type.isConcrete()) {
       return getMaxBits(block->list.back(), localInfoProvider);
     }
   }
