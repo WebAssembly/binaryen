@@ -5338,6 +5338,25 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
                       });
 }
 
+void WasmBinaryReader::readInlineHints(size_t payloadLen) {
+  readExpressionHints(Annotations::InlineHint,
+                      payloadLen,
+                      [&](Function::CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 1) {
+                          throwError("bad InlineHint size");
+                        }
+
+                        uint8_t inline_ = getU8();
+                        if (inline_ > 127) {
+                          throwError("bad InlineHint value");
+                        }
+
+                        // Apply the valid hint.
+                        annotation.inline_ = inline_;
+                      });
+}
+
 Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
   auto rawAlignment = getU32LEB();
   bool hasMemIdx = false;
