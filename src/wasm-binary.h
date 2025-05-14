@@ -1501,7 +1501,8 @@ private:
   // the annotation), and another to emit it (receiving the annotation and the
   // buffer to write in).
   template<typename HasFunc, typename EmitFunc>
-  std::optional<BufferWithRandomAccess> writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit);
+  std::optional<BufferWithRandomAccess>
+  writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit);
 };
 
 extern std::vector<char> defaultEmptySourceMap;

@@ -1568,7 +1568,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
 }
 
 template<typename HasFunc, typename EmitFunc>
-std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit) {
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeExpressionHints(
+  Name sectionName, HasFunc has, EmitFunc emit) {
   // Assemble the info: for each function, a vector of the hints.
   struct ExprHint {
     Expression* expr;
@@ -1669,7 +1670,8 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
     [](const Function::CodeAnnotation& annotation) {
       return annotation.branchLikely;
     },
-    [](const Function::CodeAnnotation& annotation, BufferWithRandomAccess& buffer) {
+    [](const Function::CodeAnnotation& annotation,
+       BufferWithRandomAccess& buffer) {
       // Hint size, always 1 for now.
       buffer << U32LEB(1);
 
@@ -1678,8 +1680,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeBranchHints() {
 
       // Hint contents: likely or not.
       buffer << U32LEB(int(*annotation.branchLikely));
-    }
-  );
+    });
 }
 
 void WasmBinaryWriter::writeData(const char* data, size_t size) {
