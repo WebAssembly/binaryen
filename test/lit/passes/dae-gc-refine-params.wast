@@ -410,11 +410,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $"get_null_{i32}" (result (ref null $"{i32}"))
-  ;; Helper function that returns a null value of $"{i32}." We use this instead of
-  ;; a direct ref.null because those can be rewritten by LUBFinder.
-  (select
+  ;; Helper function that returns a null value of $"{i32}." We use this instead
+  ;; of a direct ref.null because those can be rewritten by LUBFinder. Use two
+  ;; selects to create a return type that cannot be improved to be non-null, a
+  ;; subtype, or exact.
+  (select (result (ref null $"{i32}"))
    (ref.null none)
-   (select
+   (select (result (ref $"{i32}"))
      (struct.new_default $"{i32}")
      (struct.new_default $"{i32_i64}")
      (i32.const 0)
