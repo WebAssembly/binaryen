@@ -1564,6 +1564,7 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::writeCodeAnnotations() {
   };
 
   append(getBranchHintsBuffer());
+  append(getInlineHintsBuffer());
   return ret;
 }
 
@@ -1680,6 +1681,28 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getBranchHintsBuffer() {
 
       // Hint contents: likely or not.
       buffer << U32LEB(int(*annotation.branchLikely));
+    });
+}
+
+std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
+  return writeExpressionHints(
+    Annotations::InlineHint,
+    [](const Function::CodeAnnotation& annotation) {
+      return annotation.inline_;
+    },
+    [](const Function::CodeAnnotation& annotation,
+       BufferWithRandomAccess& buffer) {
+      // Hint size, always 1 for now.
+      buffer << U32LEB(1);
+
+      // We must only emit hints that are present.
+      assert(annotation.inline_);
+
+      // Hint must fit in one byte.
+      assert(*annotation.inline_ <= 127);
+
+      // Hint contents: inline frequency count
+      buffer << U32LEB(*annotation.inline_);
     });
 }
 
@@ -1973,10 +1996,11 @@ void WasmBinaryReader::preScan() {
     if (sectionCode == BinaryConsts::Section::Custom) {
       auto sectionName = getInlineString();
 
-      if (sectionName == Annotations::BranchHint) {
+      if (sectionName == Annotations::BranchHint ||
+          sectionName == Annotations::InlineHint) {
         // Code annotations require code locations.
-        // TODO: For Branch Hinting, we could note which functions require
-        //       code locations, as an optimization.
+        // TODO: We could note which functions require code locations, as an
+        //       optimization.
         needCodeLocations = true;
       } else if (DWARF && Debug::isDWARFSection(sectionName)) {
         // DWARF sections contain code offsets.
@@ -2099,6 +2123,10 @@ void WasmBinaryReader::read() {
     pos = branchHintsPos;
     readBranchHints(branchHintsLen);
   }
+  if (inlineHintsPos) {
+    pos = inlineHintsPos;
+    readInlineHints(inlineHintsLen);
+  }
 
   validateBinary();
 }
@@ -2124,6 +2152,9 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     // Only note the position and length, we read this later.
     branchHintsPos = pos;
     branchHintsLen = payloadLen;
+  } else if (sectionName == Annotations::InlineHint) {
+    inlineHintsPos = pos;
+    inlineHintsLen = payloadLen;
   } else {
     // an unfamiliar custom section
     if (sectionName.equals(BinaryConsts::CustomSections::Linking)) {
@@ -5305,8 +5336,25 @@ void WasmBinaryReader::readBranchHints(size_t payloadLen) {
                           throwError("bad BranchHint value");
                         }
 
-                        // Apply the valid hint.
                         annotation.branchLikely = likely;
+                      });
+}
+
+void WasmBinaryReader::readInlineHints(size_t payloadLen) {
+  readExpressionHints(Annotations::InlineHint,
+                      payloadLen,
+                      [&](Function::CodeAnnotation& annotation) {
+                        auto size = getU32LEB();
+                        if (size != 1) {
+                          throwError("bad InlineHint size");
+                        }
+
+                        uint8_t inline_ = getInt8();
+                        if (inline_ > 127) {
+                          throwError("bad InlineHint value");
+                        }
+
+                        annotation.inline_ = inline_;
                       });
 }
 
