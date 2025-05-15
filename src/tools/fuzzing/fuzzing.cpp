@@ -2148,6 +2148,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
+                &Self::makeRefTest,
                 &Self::makeI31Get);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
                   FeatureSet::Strings,
@@ -2155,10 +2156,6 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeStringEq,
                 &Self::makeStringMeasure,
                 &Self::makeStringGet);
-    if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
-      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeRefTest);
-    }
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2180,6 +2177,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeCompoundRef);
     }
+    // Exact casts are only allowed with custom descriptors enabled.
     if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeRefCast);
