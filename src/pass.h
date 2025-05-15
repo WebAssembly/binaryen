@@ -340,12 +340,14 @@ struct PassRunner {
 
   // Adds the default optimization passes that work on
   // individual functions.
-  void addDefaultFunctionOptimizationPasses(Ordering ordering = UnknownOrdering);
+  void
+  addDefaultFunctionOptimizationPasses(Ordering ordering = UnknownOrdering);
 
   // Adds the default optimization passes that work on
   // entire modules as a whole, and make sense to
   // run before function passes.
-  void addDefaultGlobalOptimizationPrePasses(Ordering ordering = UnknownOrdering);
+  void
+  addDefaultGlobalOptimizationPrePasses(Ordering ordering = UnknownOrdering);
 
   // Adds the default optimization passes that work on
   // entire modules as a whole, and make sense to
@@ -353,7 +355,8 @@ struct PassRunner {
   // This is run at the very end of the optimization
   // process - you can assume no other opts will be run
   // afterwards.
-  void addDefaultGlobalOptimizationPostPasses(Ordering ordering = UnknownOrdering);
+  void
+  addDefaultGlobalOptimizationPostPasses(Ordering ordering = UnknownOrdering);
 
   // Run the passes on the module
   void run();
