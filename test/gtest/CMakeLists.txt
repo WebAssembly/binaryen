@@ -18,6 +18,7 @@ set(unittest_SOURCES
   local-graph.cpp
   possible-contents.cpp
   printing.cpp
+  public-type-validator.cpp
   scc.cpp
   stringify.cpp
   suffix_tree.cpp
