@@ -2,13 +2,15 @@
 
 ;; RUN: wasm-opt -all             %s -S -o - | filecheck %s
 
-;; TODO: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
+;; RUN: wasm-opt -all --roundtrip %s -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
   ;; CHECK:      (type $func (func))
+  ;; RTRIP:      (type $func (func))
   (type $func (func))
 
   ;; CHECK:      (table $table 10 20 funcref)
+  ;; RTRIP:      (table $table 10 20 funcref)
   (table $table 10 20 funcref)
 
   ;; CHECK:      (elem declare func $func)
@@ -24,6 +26,19 @@
   ;; CHECK-NEXT:  (call $func)
   ;; CHECK-NEXT:  (call $func)
   ;; CHECK-NEXT: )
+  ;; RTRIP:      (elem declare func $func)
+
+  ;; RTRIP:      (func $func (type $func)
+  ;; RTRIP-NEXT:  (@metadata.code.inline "\00")
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (@metadata.code.inline "\01")
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (@metadata.code.inline "\7e")
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (@metadata.code.inline "\7f")
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT:  (call $func)
+  ;; RTRIP-NEXT: )
   (func $func
     (@metadata.code.inline "\00")
     (call $func)
@@ -47,6 +62,16 @@
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $other-calls (type $func)
+  ;; RTRIP-NEXT:  (@metadata.code.inline "\12")
+  ;; RTRIP-NEXT:  (call_indirect $table (type $func)
+  ;; RTRIP-NEXT:   (i32.const 0)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT:  (@metadata.code.inline "\34")
+  ;; RTRIP-NEXT:  (call_ref $func
+  ;; RTRIP-NEXT:   (ref.func $func)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
   (func $other-calls
     (@metadata.code.inline "\12")
     (call_indirect (type $func)

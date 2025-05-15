@@ -1411,6 +1411,7 @@ public:
   std::optional<BufferWithRandomAccess> writeCodeAnnotations();
 
   std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
+  std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1691,6 +1692,11 @@ public:
   size_t branchHintsPos = 0;
   size_t branchHintsLen = 0;
   void readBranchHints(size_t payloadLen);
+
+  // Like branch hints, we note where the section is to read it later.
+  size_t inlineHintsPos = 0;
+  size_t inlineHintsLen = 0;
+  void readInlineHints(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
