@@ -258,8 +258,7 @@ struct ReconstructStringifyWalker
     // call will replace the instructions moved to the outlined function.
     ODBG(std::cerr << "\nadding call " << outlinedFunc->name << " to "
                    << &existingBuilder << "\n");
-    ASSERT_OK(existingBuilder.makeCall(
-      outlinedFunc->name, false, CodeAnnotation::AlwaysInline));
+    ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
 
     // If the last instruction of the outlined sequence is unreachable, insert
     // an unreachable instruction immediately after the call to the outlined
