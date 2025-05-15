@@ -125,7 +125,7 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      * Names are required to be unique. (Reading .wat files with duplicate names
        is supported; the names are modified when the IR is constructed).
 
-   * As an optimization, a blocks with no names, which can never be a branch
+   * As an optimization, a block with no name, which can never be a branch
      target, will not be emitted when generating wasm. Instead its list of
      children will be directly used in the containing control flow structure.
      Such a block is sometimes called an "implicit block".
