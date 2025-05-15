@@ -176,6 +176,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      extra size in rare cases (we avoid this overhead in the common case where
      the `br_if` value is unused).
  * Strings
+   * When the string builtins feature is enabled (`--enable-string=builtins`),
+     string operations are optimized. First, string imports are lifted into
+     stringref operations, before any default optimization passes. Those
+     stringref operations can then be optimized (e.g., a concat of constants
+     turns into a concatenated constant). When we are about to finish running
+     default optimizations, we lower stringref back into string builtins.
    * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
      `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
      used in all places (and it is lowered to `ref.as_non_null` where possible
