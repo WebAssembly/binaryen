@@ -41,7 +41,7 @@ protected:
     HeapType recursive = builder[1];
     builder[1] = Struct({Field(Type(recursive, Nullable), Mutable)});
 
-    // Invalid struct
+    // Invalid struct (when custom descriptors are disabled)
     HeapType invalid = builder[2];
     builder[2] = Struct({Field(Type(empty, Nullable, Exact), Mutable)});
 

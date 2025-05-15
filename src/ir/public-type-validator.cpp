@@ -20,10 +20,10 @@
 namespace wasm {
 
 bool PublicTypeValidator::isValidPublicTypeImpl(HeapType type) {
-  // If custom descriptors is not enabled and exposing this type would make an
-  // exact reference public, then this type is not valid to make public.
   assert(!features.hasCustomDescriptors());
   assert(!type.isBasic());
+  // If custom descriptors is not enabled and exposing this type would make an
+  // exact reference public, then this type is not valid to make public.
   // Traverse the heap types reachable from this one, looking for exact
   // references. Cache the findings for each group along the way to minimize
   // future work.
@@ -34,7 +34,7 @@ bool PublicTypeValidator::isValidPublicTypeImpl(HeapType type) {
   std::vector<Task> workList{Task{type.getRecGroup(), false}};
   std::unordered_set<RecGroup> visiting;
 
-  auto findInvalid = [&]() {
+  auto markVisitingInvalid = [&]() {
     for (auto group : visiting) {
       auto [_, inserted] = allowedPublicGroupCache.insert({group, false});
       assert(inserted);
@@ -48,7 +48,8 @@ bool PublicTypeValidator::isValidPublicTypeImpl(HeapType type) {
       // We finished searching this group and the groups it reaches without
       // finding a problem.
       visiting.erase(task.group);
-      auto [_, inserted] = allowedPublicGroupCache.insert({task.group, true});
+      [[maybe_unused]] auto [_, inserted] =
+        allowedPublicGroupCache.insert({task.group, true});
       assert(inserted);
       continue;
     }
@@ -59,7 +60,7 @@ bool PublicTypeValidator::isValidPublicTypeImpl(HeapType type) {
         continue;
       } else {
         // This group is invalid!
-        findInvalid();
+        markVisitingInvalid();
         return false;
       }
     }
@@ -74,7 +75,7 @@ bool PublicTypeValidator::isValidPublicTypeImpl(HeapType type) {
       // Look for invalid exact references.
       for (auto t : heapType.getTypeChildren()) {
         if (t.isExact()) {
-          findInvalid();
+          markVisitingInvalid();
           return false;
         }
       }
