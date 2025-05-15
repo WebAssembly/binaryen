@@ -327,10 +327,10 @@ struct PassRunner {
   // By default, we do not know if we are running first in the ordering of
   // optimization passes, or last - we could be anywhere.
   struct Ordering {
-    bool first = false;
-    bool last = false;
+    bool first;
+    bool last;
   };
-  static const Ordering UnknownOrdering;
+  static constexpr Ordering UnknownOrdering = {false, false};
 
   // Adds the default set of optimization passes; this is what -O does.
   //

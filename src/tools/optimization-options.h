@@ -400,13 +400,11 @@ struct OptimizationOptions : public ToolOptions {
 
     // Find the first and last default opt passes, so we can tell them they are
     // first/last.
-    Index firstDefault = -1;
-    Index lastDefault = -1;
+    Index firstDefault = passes.size();
+    Index lastDefault = passes.size();
     for (Index i = 0; i < passes.size(); i++) {
       if (passes[i].name == DEFAULT_OPT_PASSES) {
-        if (firstDefault == -1) {
-          firstDefault = i;
-        }
+        firstDefault = std::min(firstDefault, i);
         lastDefault = i;
       }
     }
