@@ -330,7 +330,7 @@ struct PassRunner {
     bool first = false;
     bool last = false;
   };
-  static const UnknownOrdering;
+  static const Ordering UnknownOrdering;
 
   // Adds the default set of optimization passes; this is what -O does.
   //
