@@ -15,7 +15,7 @@
 
   ;; OPEN_WORLD:      (type $2 (func (result i32)))
 
-  ;; OPEN_WORLD:      (global $glob (ref $struct) (struct.new $struct
+  ;; OPEN_WORLD:      (global $glob (ref (exact $struct)) (struct.new $struct
   ;; OPEN_WORLD-NEXT:  (ref.func $by-ref)
   ;; OPEN_WORLD-NEXT:  (i32.const 100)
   ;; OPEN_WORLD-NEXT: ))

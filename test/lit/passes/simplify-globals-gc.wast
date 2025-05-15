@@ -14,7 +14,7 @@
 
  ;; CHECK:      (func $func (type $A)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast (ref $A)
+ ;; CHECK-NEXT:   (ref.cast (ref (exact $A))
  ;; CHECK-NEXT:    (ref.func $func)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

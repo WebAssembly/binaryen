@@ -2089,7 +2089,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (select (result (ref null $0))
+       (select (result (ref null (exact $0)))
         (ref.null nofunc)
         (ref.func $foobar)
         (i32.const 1)

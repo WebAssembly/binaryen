@@ -13,17 +13,17 @@
 
  ;; CHECK:      (type $2 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_6 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_6 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 10)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_7 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 20)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_8 (ref $A) (struct.new $A
+ ;; CHECK:      (global $ctor-eval$global_8 (ref (exact $A)) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 30)
  ;; CHECK-NEXT: ))

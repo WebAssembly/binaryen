@@ -178,8 +178,7 @@ struct FuncCastEmulation : public Pass {
         }
         auto* thunk = iter->second;
         ref->func = thunk->name;
-        // TODO: Make this exact.
-        ref->type = Type(thunk->type, NonNullable);
+        ref->finalize(thunk->type);
       }
     }
 

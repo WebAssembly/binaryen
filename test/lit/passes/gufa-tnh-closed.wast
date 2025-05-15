@@ -1060,7 +1060,7 @@
 
   ;; CHECK:      (func $called (type $A) (param $ref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref null $Y1)
+  ;; CHECK-NEXT:   (ref.cast (ref null (exact $Y1))
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1081,7 +1081,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast (ref $Y1)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $Y1))
   ;; CHECK-NEXT:    (select (result (ref $X))
   ;; CHECK-NEXT:     (struct.new_default $Y1)
   ;; CHECK-NEXT:     (struct.new_default $Y2)

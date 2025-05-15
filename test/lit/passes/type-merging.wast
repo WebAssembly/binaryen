@@ -845,25 +845,25 @@
     (type $b1 (sub $b (struct (ref null $y))))
   )
 
-  ;; CHECK:       (type $5 (func (result (ref $b))))
+  ;; CHECK:       (type $5 (func (param (ref $x)) (result (ref $b))))
 
-  ;; CHECK:      (func $test (type $5) (result (ref $b))
-  ;; CHECK-NEXT:  (local $0 (ref null $a))
+  ;; CHECK:      (func $test (type $5) (param $x (ref $x)) (result (ref $b))
+  ;; CHECK-NEXT:  (local $1 (ref null $a))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref $y)
-  ;; CHECK-NEXT:    (struct.new_default $x)
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.new_default $b1)
   ;; CHECK-NEXT: )
-  (func $test (result (ref $b))
+  (func $test (param $x (ref $x)) (result (ref $b))
     ;; Use $a to prevent it from being dropped completely.
     (local (ref null $a))
 
     ;; Cast to prevent $x and $y from being merged.
     (drop
       (ref.test (ref $y)
-        (struct.new_default $x)
+        (local.get $x)
       )
     )
 
@@ -1002,7 +1002,7 @@
 
  ;; CHECK:      (func $test (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result (ref $subA))
+ ;; CHECK-NEXT:   (select (result (ref (exact $subA)))
  ;; CHECK-NEXT:    (struct.new_default $subA)
  ;; CHECK-NEXT:    (struct.new_default $subA)
  ;; CHECK-NEXT:    (i32.const 0)

@@ -437,7 +437,7 @@ struct TypeSSA : public Pass {
       auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
       auto newType = newTypes[i];
-      curr->type = Type(newType, NonNullable);
+      curr->type = Type(newType, NonNullable, Exact);
 
       // If the old type has a nice name, make a nice name for the new one.
       if (typeNames.count(oldType)) {

@@ -14,8 +14,8 @@
   ;; CHECK:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   ;; CLOSD:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
-  ;; CHECK:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
-  ;; CLOSD:      (global $func-func-init (mut (ref $foo_t)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref (exact $foo_t))) (ref.func $foo))
+  ;; CLOSD:      (global $func-func-init (mut (ref (exact $foo_t))) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
   ;; CHECK:      (func $foo (type $foo_t)
   ;; CHECK-NEXT: )
@@ -35,8 +35,8 @@
   ;; CHECK:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   ;; CLOSD:      (global $func-null-init (mut nullfuncref) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null $foo_t))
-  ;; CHECK:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
-  ;; CLOSD:      (global $func-func-init (mut (ref null $foo_t)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref null (exact $foo_t))) (ref.func $foo))
+  ;; CLOSD:      (global $func-func-init (mut (ref null (exact $foo_t))) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
 
   ;; CHECK:      (func $foo (type $foo_t)
@@ -67,13 +67,13 @@
 
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $func-null-init (mut (ref null $0)) (ref.null nofunc))
+  ;; CHECK:      (global $func-null-init (mut (ref null (exact $0))) (ref.null nofunc))
   ;; CLOSD:      (type $0 (func))
 
-  ;; CLOSD:      (global $func-null-init (mut (ref null $0)) (ref.null nofunc))
+  ;; CLOSD:      (global $func-null-init (mut (ref null (exact $0))) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref $0)) (ref.func $foo))
-  ;; CLOSD:      (global $func-func-init (mut (ref $0)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref (exact $0))) (ref.func $foo))
+  ;; CLOSD:      (global $func-func-init (mut (ref (exact $0))) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
 
   ;; CHECK:      (elem declare func $foo)
@@ -178,8 +178,8 @@
   ;; CLOSD:      (type $sub (sub $super (func)))
   (type $sub (sub $super (func)))
 
-  ;; CHECK:      (global $a (ref $sub) (ref.func $func))
-  ;; CLOSD:      (global $a (ref $sub) (ref.func $func))
+  ;; CHECK:      (global $a (ref (exact $sub)) (ref.func $func))
+  ;; CLOSD:      (global $a (ref (exact $sub)) (ref.func $func))
   (global $a (ref $super) (ref.func $func))
   ;; CHECK:      (global $b (ref $super) (global.get $a))
   ;; CLOSD:      (global $b (ref $super) (global.get $a))

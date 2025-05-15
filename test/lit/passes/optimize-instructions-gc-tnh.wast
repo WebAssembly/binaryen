@@ -364,10 +364,10 @@
 
   ;; TNH:      (func $select.arm.null.effects (type $void)
   ;; TNH-NEXT:  (local $temp i32)
-  ;; TNH-NEXT:  (local $1 (ref $struct))
-  ;; TNH-NEXT:  (local $2 (ref $struct))
+  ;; TNH-NEXT:  (local $1 (ref (exact $struct)))
+  ;; TNH-NEXT:  (local $2 (ref (exact $struct)))
   ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:   (block (result (ref (exact $struct)))
   ;; TNH-NEXT:    (local.set $1
   ;; TNH-NEXT:     (struct.new $struct
   ;; TNH-NEXT:      (local.tee $temp
@@ -393,7 +393,7 @@
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (block (result (ref $struct))
+  ;; TNH-NEXT:   (block (result (ref (exact $struct)))
   ;; TNH-NEXT:    (drop
   ;; TNH-NEXT:     (block (result nullref)
   ;; TNH-NEXT:      (local.set $temp
@@ -402,7 +402,7 @@
   ;; TNH-NEXT:      (ref.null none)
   ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (block (result (ref $struct))
+  ;; TNH-NEXT:    (block (result (ref (exact $struct)))
   ;; TNH-NEXT:     (local.set $2
   ;; TNH-NEXT:      (struct.new $struct
   ;; TNH-NEXT:       (local.tee $temp
@@ -422,7 +422,7 @@
   ;; NO_TNH:      (func $select.arm.null.effects (type $void)
   ;; NO_TNH-NEXT:  (local $temp i32)
   ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:   (select (result (ref null (exact $struct)))
   ;; NO_TNH-NEXT:    (struct.new $struct
   ;; NO_TNH-NEXT:     (local.tee $temp
   ;; NO_TNH-NEXT:      (i32.const 1)
@@ -439,7 +439,7 @@
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
+  ;; NO_TNH-NEXT:   (select (result (ref null (exact $struct)))
   ;; NO_TNH-NEXT:    (block (result nullref)
   ;; NO_TNH-NEXT:     (local.set $temp
   ;; NO_TNH-NEXT:      (i32.const 2)

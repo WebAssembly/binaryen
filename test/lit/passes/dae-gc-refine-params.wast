@@ -338,7 +338,7 @@
   )
  )
 
- ;; CHECK:      (func $non-nullable-fixup (type $14) (param $0 (ref $"{}"))
+ ;; CHECK:      (func $non-nullable-fixup (type $14) (param $0 (ref (exact $"{}")))
  ;; CHECK-NEXT:  (local $1 structref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (local.get $0)
@@ -386,7 +386,7 @@
   )
  )
 
- ;; CHECK:      (func $update-null (type $15) (param $x (ref null $"{}"))
+ ;; CHECK:      (func $update-null (type $15) (param $x (ref null (exact $"{}")))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -401,22 +401,32 @@
  ;; CHECK:      (func $"get_null_{i32}" (type $5) (result (ref null $"{i32}"))
  ;; CHECK-NEXT:  (select (result (ref null $"{i32}"))
  ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default $"{i32}")
+ ;; CHECK-NEXT:   (select (result (ref $"{i32}"))
+ ;; CHECK-NEXT:    (struct.new_default $"{i32}")
+ ;; CHECK-NEXT:    (struct.new_default $"{i32_i64}")
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $"get_null_{i32}" (result (ref null $"{i32}"))
-  ;; Helper function that returns a null value of $"{i32}." We use this instead of
-  ;; a direct ref.null because those can be rewritten by LUBFinder.
-  (select
+  ;; Helper function that returns a null value of $"{i32}." We use this instead
+  ;; of a direct ref.null because those can be rewritten by LUBFinder. Use two
+  ;; selects to create a return type that cannot be improved to be non-null, a
+  ;; subtype, or exact.
+  (select (result (ref null $"{i32}"))
    (ref.null none)
-   (struct.new_default $"{i32}")
+   (select (result (ref $"{i32}"))
+     (struct.new_default $"{i32}")
+     (struct.new_default $"{i32_i64}")
+     (i32.const 0)
+   )
    (i32.const 0)
   )
  )
 
- ;; CHECK:      (func $"get_null_{i32_i64}" (type $16) (result (ref null $"{i32_i64}"))
- ;; CHECK-NEXT:  (select (result (ref null $"{i32_i64}"))
+ ;; CHECK:      (func $"get_null_{i32_i64}" (type $16) (result (ref null (exact $"{i32_i64}")))
+ ;; CHECK-NEXT:  (select (result (ref null (exact $"{i32_i64}")))
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:   (struct.new_default $"{i32_i64}")
  ;; CHECK-NEXT:   (i32.const 0)
@@ -430,8 +440,8 @@
   )
  )
 
- ;; CHECK:      (func $"get_null_{i32_f32}" (type $17) (result (ref null $"{i32_f32}"))
- ;; CHECK-NEXT:  (select (result (ref null $"{i32_f32}"))
+ ;; CHECK:      (func $"get_null_{i32_f32}" (type $17) (result (ref null (exact $"{i32_f32}")))
+ ;; CHECK-NEXT:  (select (result (ref null (exact $"{i32_f32}")))
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:   (struct.new_default $"{i32_f32}")
  ;; CHECK-NEXT:   (i32.const 0)

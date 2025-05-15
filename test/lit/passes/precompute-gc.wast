@@ -872,9 +872,9 @@
  )
 
  ;; CHECK:      (func $br_on_cast-on-creation (type $16) (result (ref $empty))
- ;; CHECK-NEXT:  (block $label (result (ref $empty))
+ ;; CHECK-NEXT:  (block $label (result (ref (exact $empty)))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $label (ref $empty) (ref $empty)
+ ;; CHECK-NEXT:    (br_on_cast $label (ref (exact $empty)) (ref (exact $empty))
  ;; CHECK-NEXT:     (struct.new_default $empty)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

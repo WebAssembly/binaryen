@@ -2122,7 +2122,7 @@ BinaryenFeatureAll: 4194303
        )
       )
       (drop
-       (select (result (ref null $2))
+       (select (result (ref null (exact $2)))
         (ref.null nofunc)
         (ref.func $"kitchen()sinker")
         (i32.const 1)

@@ -4801,12 +4801,17 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
+  if (!wasm.features.hasCustomDescriptors()) {
+    // Exact cast targets disallowed without custom descriptors.
+    castType = castType.with(Inexact);
+  }
   return builder.makeRefTest(make(refType), castType);
 }
 
 Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   assert(type.isRef());
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+  assert(type.isInexact() || wasm.features.hasCustomDescriptors());
   // As with RefTest, use possibly related types. Unlike there, we are given the
   // output type, which is the cast type, so just generate the ref's type.
   Type refType;
@@ -4907,6 +4912,10 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       // nullability, so the combination of the two must be a subtype of
       // targetType.
       castType = getSubType(targetType);
+      if (!wasm.features.hasCustomDescriptors()) {
+        // Exact cast targets disallowed without custom descriptors.
+        castType = castType.with(Inexact);
+      }
       // The ref's type must be castable to castType, or we'd not validate. But
       // it can also be a subtype, which will trivially also succeed (so do that
       // more rarely). Pick subtypes rarely, as they make the cast trivial.
@@ -4933,6 +4942,10 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       refType = getSubType(targetType);
       // See above on BrOnCast, but flipped.
       castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
+      if (!wasm.features.hasCustomDescriptors()) {
+        // Exact cast targets disallowed without custom descriptors.
+        castType = castType.with(Inexact);
+      }
       // There is no nullability to adjust: if targetType is non-nullable then
       // both refType and castType are as well, as subtypes of it. But we can
       // also allow castType to be nullable (it is not sent to the target).
@@ -5546,7 +5559,8 @@ Type TranslateToFuzzReader::getSubType(Type type) {
       heapType = getSubType(heapType);
     }
     auto nullability = getSubType(type.getNullability());
-    auto exactness = getSubType(type.getExactness());
+    auto exactness =
+      heapType.isBasic() ? Inexact : getSubType(type.getExactness());
     auto subType = Type(heapType, nullability, exactness);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was

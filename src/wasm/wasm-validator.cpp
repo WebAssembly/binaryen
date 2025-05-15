@@ -502,7 +502,7 @@ public:
   void visitStructRMW(StructRMW* curr);
   void visitStructCmpxchg(StructCmpxchg* curr);
   void visitArrayNew(ArrayNew* curr);
-  template<typename ArrayNew> void visitArrayNew(ArrayNew* curr);
+  template<typename ArrayNew> void visitArrayNewSegment(ArrayNew* curr);
   void visitArrayNewData(ArrayNewData* curr);
   void visitArrayNewElem(ArrayNewElem* curr);
   void visitArrayNewFixed(ArrayNewFixed* curr);
@@ -2375,6 +2375,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(func->type == curr->type.getHeapType(),
                curr,
                "function reference type must match referenced function type");
+  shouldBeTrue(
+    curr->type.isExact(), curr, "function reference should be exact");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -3022,6 +3024,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                     "struct.new should have a non-nullable reference type")) {
     return;
   }
+  shouldBeTrue(curr->type.isExact(), curr, "struct.new should be exact");
   auto heapType = curr->type.getHeapType();
   if (!shouldBeTrue(
         heapType.isStruct(), curr, "struct.new heap type must be struct")) {
@@ -3260,6 +3263,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
                     "array.new should have a non-nullable reference type")) {
     return;
   }
+  shouldBeTrue(curr->type.isExact(), curr, "array.new* should be exact");
   auto heapType = curr->type.getHeapType();
   if (!shouldBeTrue(
         heapType.isArray(), curr, "array.new heap type must be array")) {
@@ -3284,7 +3288,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
 }
 
 template<typename ArrayNew>
-void FunctionValidator::visitArrayNew(ArrayNew* curr) {
+void FunctionValidator::visitArrayNewSegment(ArrayNew* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "array.new_{data, elem} requires gc [--enable-gc]");
@@ -3307,6 +3311,8 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
         "array.new_{data, elem} type should be an array reference")) {
     return;
   }
+  shouldBeTrue(
+    curr->type.isExact(), curr, "array.new_{data, elem} should be exact");
   auto heapType = curr->type.getHeapType();
   if (!shouldBeTrue(
         heapType.isArray(),
@@ -3317,7 +3323,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
 }
 
 void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
-  visitArrayNew(curr);
+  visitArrayNewSegment(curr);
 
   shouldBeTrue(
     getModule()->features.hasBulkMemory(),
@@ -3340,7 +3346,7 @@ void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
 }
 
 void FunctionValidator::visitArrayNewElem(ArrayNewElem* curr) {
-  visitArrayNew(curr);
+  visitArrayNewSegment(curr);
 
   if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
                     curr,
@@ -3363,13 +3369,14 @@ void FunctionValidator::visitArrayNewElem(ArrayNewElem* curr) {
 void FunctionValidator::visitArrayNewFixed(ArrayNewFixed* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
-               "array.init requires gc [--enable-gc]");
+               "array.new_fixed requires gc [--enable-gc]");
   if (curr->type == Type::unreachable) {
     return;
   }
+  shouldBeTrue(curr->type.isExact(), curr, "array.new_fixed should be exact");
   auto heapType = curr->type.getHeapType();
   if (!shouldBeTrue(
-        heapType.isArray(), curr, "array.init heap type must be array")) {
+        heapType.isArray(), curr, "array.new_fixed heap type must be array")) {
     return;
   }
   const auto& element = heapType.getArray().element;
@@ -3377,7 +3384,7 @@ void FunctionValidator::visitArrayNewFixed(ArrayNewFixed* curr) {
     shouldBeSubType(value->type,
                     element.type,
                     curr,
-                    "array.init value must have proper type");
+                    "array.new_fixed value must have proper type");
   }
 }
 
@@ -3699,6 +3706,7 @@ void FunctionValidator::visitContNew(ContNew* curr) {
                     "cont.new should have a non-nullable reference type")) {
     return;
   }
+  shouldBeTrue(curr->type.isExact(), curr, "cont.new should be exact");
 
   shouldBeTrue(curr->type.isContinuation() &&
                  curr->type.getHeapType().getContinuation().type.isSignature(),
@@ -3735,6 +3743,7 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                     "cont.bind should have a non-nullable reference type")) {
     return;
   }
+  shouldBeTrue(curr->type.isExact(), curr, "cont.bind should be exact");
 }
 
 void FunctionValidator::visitSuspend(Suspend* curr) {

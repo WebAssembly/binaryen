@@ -2861,7 +2861,7 @@
 
   ;; CHECK:      (func $refinalize.select.arm (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $void1))
+  ;; CHECK-NEXT:   (block (result (ref (exact $void1)))
   ;; CHECK-NEXT:    (ref.func $func.arm.1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2883,7 +2883,7 @@
 
   ;; CHECK:      (func $refinalize.select.arm.flip (type $5)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $void2))
+  ;; CHECK-NEXT:   (block (result (ref (exact $void2)))
   ;; CHECK-NEXT:    (ref.func $func.arm.2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3026,12 +3026,15 @@
   ;; CHECK:      (func $ref.test-fallthrough (type $5)
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test (ref $B)
-  ;; CHECK-NEXT:    (local.tee $A
-  ;; CHECK-NEXT:     (struct.new $A
-  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $A
+  ;; CHECK-NEXT:      (struct.new $A
+  ;; CHECK-NEXT:       (i32.const 10)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3051,9 +3054,7 @@
   ;; CHECK-NEXT: )
   (func $ref.test-fallthrough
     (local $A (ref $A))
-    ;; The test will fail, but this pass does not have exact type info, so it
-    ;; thinks it can succeed and nothing happens here (GUFA can optimize this,
-    ;; however).
+    ;; The test will fail, and because we have exact type info, we can optimize.
     (drop
       (ref.test (ref $B)
         (local.tee $A
@@ -3203,7 +3204,7 @@
 
   ;; CHECK:      (func $struct.new (type $5)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $struct.new)
@@ -3288,7 +3289,7 @@
 
   ;; CHECK:      (func $array.new (type $5)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new)
@@ -3359,7 +3360,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed)
@@ -3386,7 +3387,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed)
@@ -3469,7 +3470,7 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed_fallthrough)
@@ -3483,7 +3484,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed_fallthrough)
@@ -3497,7 +3498,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed)
@@ -3585,7 +3586,7 @@
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed_fallthrough)
@@ -3599,7 +3600,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $array.new_fixed_fallthrough)
@@ -3613,7 +3614,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block (result (ref (exact $array)))
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (local.set $x
