@@ -4,19 +4,52 @@
 ;; Run normal -O2, which should lift, optimize, and lower strings, if the
 ;; string builtins feature is enabled. We optimize in the last two here.
 
-;; RUN: foreach %s %t wasm-opt -O2                          -S -o - | filecheck %s --check-prefix=MVP
-;; RUN: foreach %s %t wasm-opt -O2 -all                     -S -o - | filecheck %s --check-prefix=ALL
-;; RUN: foreach %s %t wasm-opt -O2 --enable-string-builtins -S -o - | filecheck %s --check-prefix=ESB
+;; RUN: foreach %s %t wasm-opt -O2 --enable-reference-types -S -o - | filecheck %s --check-prefix=MVP
+;; RUN: foreach %s %t wasm-opt -O2 -all -S -o - | filecheck %s --check-prefix=ALL
+;; RUN: foreach %s %t wasm-opt -O2 --enable-reference-types --enable-string-builtins -S -o - | filecheck %s --check-prefix=ESB
 
 (module
   (type $array16 (array (mut i16)))
 
+  ;; MVP:      (type $0 (func (param externref externref) (result (ref extern))))
+
+  ;; MVP:      (type $1 (func (result (ref extern))))
+
+  ;; MVP:      (import "\'" "foo" (global $foo (ref extern)))
   (import "\'" "foo" (global $foo (ref extern)))
 
+  ;; MVP:      (import "\'" "bar" (global $bar (ref extern)))
   (import "\'" "bar" (global $bar (ref extern)))
 
+  ;; MVP:      (import "wasm:js-string" "concat" (func $concat (param externref externref) (result (ref extern))))
   (import "wasm:js-string" "concat" (func $concat (param externref externref) (result (ref extern))))
 
+  ;; MVP:      (export "string.concat" (func $string.concat))
+
+  ;; MVP:      (func $string.concat (result (ref extern))
+  ;; MVP-NEXT:  (call $concat
+  ;; MVP-NEXT:   (global.get $foo)
+  ;; MVP-NEXT:   (global.get $bar)
+  ;; MVP-NEXT:  )
+  ;; MVP-NEXT: )
+  ;; ALL:      (type $0 (func (result (ref extern))))
+
+  ;; ALL:      (import "string.const" "0" (global $"string.const_\"foobar\"" (ref extern)))
+
+  ;; ALL:      (export "string.concat" (func $string.concat))
+
+  ;; ALL:      (func $string.concat (type $0) (result (ref extern))
+  ;; ALL-NEXT:  (global.get $"string.const_\"foobar\"")
+  ;; ALL-NEXT: )
+  ;; ESB:      (type $0 (func (result (ref extern))))
+
+  ;; ESB:      (import "string.const" "0" (global $"string.const_\"foobar\"" (ref extern)))
+
+  ;; ESB:      (export "string.concat" (func $string.concat))
+
+  ;; ESB:      (func $string.concat (result (ref extern))
+  ;; ESB-NEXT:  (global.get $"string.const_\"foobar\"")
+  ;; ESB-NEXT: )
   (func $string.concat (export "string.concat") (result (ref extern))
     ;; When we optimize, we concatenate "foo" and "bar" here to "foobar". A new
     ;; imported global will appear for that, and we will get it here.
