@@ -1380,8 +1380,9 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
   return visitBlockStart(block, sig.params);
 }
 
-Result<>
-IRBuilder::makeIf(Name label, Signature sig, CodeAnnotation::BranchLikely likely) {
+Result<> IRBuilder::makeIf(Name label,
+                           Signature sig,
+                           CodeAnnotation::BranchLikely likely) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
   addBranchHint(iff, likely);
@@ -1441,9 +1442,8 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
   return Ok{};
 }
 
-Result<> IRBuilder::makeCall(Name func,
-                             bool isReturn,
-                             CodeAnnotation::Inline inline_) {
+Result<>
+IRBuilder::makeCall(Name func, bool isReturn, CodeAnnotation::Inline inline_) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1991,8 +1991,11 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(
-  Index label, BrOnOp op, Type in, Type out, CodeAnnotation::BranchLikely likely) {
+Result<> IRBuilder::makeBrOn(Index label,
+                             BrOnOp op,
+                             Type in,
+                             Type out,
+                             CodeAnnotation::BranchLikely likely) {
   BrOn curr;
   curr.op = op;
   curr.castType = out;
@@ -2548,7 +2551,8 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   return Ok{};
 }
 
-void IRBuilder::addBranchHint(Expression* expr, CodeAnnotation::BranchLikely likely) {
+void IRBuilder::addBranchHint(Expression* expr,
+                              CodeAnnotation::BranchLikely likely) {
   if (likely) {
     // Branches are only possible inside functions.
     assert(func);

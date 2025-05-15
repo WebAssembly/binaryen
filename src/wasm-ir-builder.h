@@ -116,8 +116,9 @@ public:
   // signatures ensure that there are no missing fields.
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
-  Result<>
-  makeIf(Name label, Signature sig, CodeAnnotation::BranchLikely likely = std::nullopt);
+  Result<> makeIf(Name label,
+                  Signature sig,
+                  CodeAnnotation::BranchLikely likely = std::nullopt);
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
