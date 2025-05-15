@@ -1698,6 +1698,9 @@ std::optional<BufferWithRandomAccess> WasmBinaryWriter::getInlineHintsBuffer() {
       // We must only emit hints that are present.
       assert(annotation.inline_);
 
+      // Hint must fit in one byte.
+      assert(*annotation.inline_ <= 127);
+
       // Hint contents: inline frequency count
       buffer << U32LEB(*annotation.inline_);
     });
