@@ -72,12 +72,10 @@ There are a few differences between Binaryen IR and the WebAssembly language:
    * Binaryen IR [is a tree][binaryen_ir], i.e., it has hierarchical structure,
      for convenience of optimization. This differs from the WebAssembly binary
      format which is a stack machine.
-   * Consequently Binaryen's text format allows only s-expressions.
-     WebAssembly's official text format is primarily a linear instruction list
-     (with s-expression extensions). Binaryen can't read the linear style, but
-     it can read a wasm text file if it contains only s-expressions.
+
    * Binaryen uses Stack IR to optimize "stacky" code (that can't be
      represented in structured form).
+
    * When stacky code must be represented in Binaryen IR, such as with
      multivalue instructions and blocks, it is represented with tuple types that
      do not exist in the WebAssembly language. In addition to multivalue
@@ -85,9 +83,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      but not in WebAssembly. Experiments show that better support for
      multivalue could enable useful but small code size savings of 1-3%, so it
      has not been worth changing the core IR structure to support it better.
+
    * Block input values (currently only supported in `catch` blocks in the
      exception handling feature) are represented as `pop` subexpressions.
+
  * Types and unreachable code
+
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
      block/if/loop to take it, allowing [local transforms that don't need to
@@ -95,100 +96,112 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      text output is not necessarily valid wasm text. (To get valid wasm text,
      you can do `--generate-stack-ir --print-stack-ir`, which prints Stack IR,
      this is guaranteed to be valid for wasm parsers.)
-   * Binaryen ignores unreachable code when reading WebAssembly binaries. That
-     means that if you read a wasm file with unreachable code, that code will be
-     discarded as if it were optimized out (often this is what you want anyhow,
-     and optimized programs have no unreachable code anyway, but if you write an
-     unoptimized file and then read it, it may look different). The reason for
-     this behavior is that unreachable code in WebAssembly has corner cases that
-     are tricky to handle in Binaryen IR (it can be very unstructured, and
-     Binaryen IR is more structured than WebAssembly as noted earlier). Note
-     that Binaryen does support unreachable code in .wat text files, since as we
-     saw Binaryen only supports s-expressions there, which are structured.
+
    * Binaryen supports a `stringref` type. This is similar to the currently-
-     frozen [stringref proposal], with the difference that the string type is a
+     inactive [stringref proposal], with the difference that the string type is a
      subtype of `externref` rather than `anyref`. Doing so allows toolchains to
      emit code in a form that uses [js string builtins] which Binaryen can then
      "lift" into stringref in its internal IR, optimize (for example, a
      concatenation of "a" and "b" can be optimized at compile time to "ab"), and
      then "lower" that into js string builtins once more.
+
  * Blocks
-   * Binaryen IR has only one node that contains a variable-length list of
-     operands: the block. WebAssembly on the other hand allows lists in loops,
-     if arms, and the top level of a function. Binaryen's IR has a single
-     operand for all non-block nodes; this operand may of course be a block.
-     The motivation for this property is that many passes need special code
-     for iterating on lists, so having a single IR node with a list simplifies
-     them.
-   * As in wasm, blocks and loops may have names. Branch targets in the IR are
-     resolved by name (as opposed to nesting depth). This has 2 consequences:
+
+   * Binaryen IR has only one control flow structure that contains a
+     variable-length list of children: the block. WebAssembly on the other hand
+     allows all control flow structures, such as loops, if arms, and function
+     bodies, to have multiple children. In Binaryen IR, these other control flow
+     structures have a single child. This child may of course be a block. The
+     motivation for this property is that many passes need special code for
+     iterating on lists of instructions, so having a single IR node with a list
+     simplifies them.
+
+   * As in the Wasm text format, blocks and loops may have names. Branch targets
+     in the IR are resolved by name (as opposed to nesting depth). This has 2
+     consequences:
+
      * Blocks without names may not be branch targets.
+
      * Names are required to be unique. (Reading .wat files with duplicate names
        is supported; the names are modified when the IR is constructed).
-   * As an optimization, a block that is the child of a loop (or if arm, or
-     function toplevel) and which has no branches targeting it will not be
-     emitted when generating wasm. Instead its list of operands will be directly
-     used in the containing node. Such a block is sometimes called an "implicit
-     block".
+
+   * As an optimization, a block with no name, which can never be a branch
+     target, will not be emitted when generating wasm. Instead its list of
+     children will be directly used in the containing control flow structure.
+     Such a block is sometimes called an "implicit block".
+
  * Reference Types
+
    * The wasm text and binary formats require that a function whose address is
      taken by `ref.func` must be either in the table, or declared via an
      `(elem declare func $..)`. Binaryen will emit that data when necessary, but
      it does not represent it in IR. That is, IR can be worked on without needing
      to think about declaring function references.
-   * Binaryen IR allows non-nullable locals in the form that the wasm spec does,
-     (which was historically nicknamed "1a"), in which a `local.get` must be
-     structurally dominated by a `local.set` in order to validate (that ensures
-     we do not read the default value of null). Despite being aligned with the
-     wasm spec, there are some minor details that you may notice:
+
+   * Binaryen IR allows non-nullable locals in the form that the Wasm spec does,
+     in which a `local.get` must be structurally dominated by a `local.set` in
+     order to validate (that ensures we do not read the default value of null).
+     Despite being aligned with the Wasm spec, there are some minor details that
+     you may notice:
+
      * A nameless `Block` in Binaryen IR does not interfere with validation.
        Nameless blocks are never emitted into the binary format (we just emit
-       their contents), so we ignore them for purposes of non-nullable locals. As
-       a result, if you read wasm text emitted by Binaryen then you may see what
-       seems to be code that should not validate per the spec (and may not
-       validate in wasm text parsers), but that difference will not exist in the
-       binary format (binaries emitted by Binaryen will always work everywhere,
-       aside for bugs of course).
+       their contents), so we ignore them for purposes of validating
+       non-nullable locals. As a result, if you read wasm text emitted by
+       Binaryen then you may see what seems to be code that should not validate
+       per the spec (and may not validate in Wasm text parsers), but that
+       difference will not exist in the binary format (binaries emitted by
+       Binaryen will always work everywhere, aside from bugs of course).
+
      * The Binaryen pass runner will automatically fix up validation after each
        pass (finding things that do not validate and fixing them up, usually by
        demoting a local to be nullable). As a result you do not need to worry
        much about this when writing Binaryen passes. For more details see the
        `requiresNonNullableLocalFixups()` hook in `pass.h` and the
        `LocalStructuralDominance` class.
+
    * Binaryen IR uses the most refined types possible for references,
      specifically:
-     * The IR type of a `ref.func` is always a specific function type, and not
-       plain `funcref`. It is also non-nullable.
+
+     * The IR type of a `ref.func` is always an exact, non-nullable reference to
+       a defined function type, and not plain `funcref`, even if no features
+       beyond basic reference types are enabled.
+
+     * The IR type of allocation instructions such as `struct.new` or
+       `array.new` is always an exact reference, even if Custom Descriptors are
+       not enabled.
+
      * Non-nullable types are also used for the type that `try_table` sends
        on branches (if we branch, a null is never sent), that is, it sends
        (ref exn) and not (ref null exn).
-     In both cases if GC is not enabled then we emit the less-refined type in the
-     binary. When reading a binary, the more refined types will be applied as we
-     build the IR.
+
+     * As a result, non-nullable and exact references are generally allowed in
+       the IR even when GC or Custom Descriptors is not enabled. When reading a
+       binary, the more refined types will be applied as we build the IR.
+
+     In all cases the binary writer will generalize the type as necessary for
+     the enabled feature set. For example, if only Reference Types is enabled,
+     all function reference types will be emitted as `funcref`.
+
    * `br_if` output types are more refined in Binaryen IR: they have the type of
-     the value, when a value flows in. In the wasm spec the type is that of the
-     branch target, which may be less refined. Using the more refined type here
-     ensures that we optimize in the best way possible, using all the type
-     information, but it does mean that some roundtripping operations may look a
-     little different. In particular, when we emit a `br_if` whose type is more
-     refined in Binaryen IR then we emit a cast right after it, so that the
-     output has the right type in the wasm spec. That may cause a few bytes of
-     extra size in rare cases (we avoid this overhead in the common case where
-     the `br_if` value is unused).
+     the sent value operand, when it exists. In the Wasm spec the type is that
+     of the branch target, which may be less refined. Using the more refined
+     type here ensures that we optimize in the best way possible, using all the
+     type information, but it does mean that some roundtripping operations may
+     look a little different. In particular, when we emit a `br_if` whose type
+     is more refined in Binaryen IR, then we emit a cast right after it to
+     recover the more refined type. That may cause a few bytes of extra size in
+     rare cases (we avoid this overhead in the common case where the `br_if`
+     value is unused).
+
  * Strings
-   * When the string builtins feature is enabled (`--enable-string=builtins`),
+
+   * When the string builtins feature is enabled (`--enable-string-builtins`),
      string operations are optimized. First, string imports are lifted into
      stringref operations, before any default optimization passes. Those
      stringref operations can then be optimized (e.g., a concat of constants
      turns into a concatenated constant). When we are about to finish running
      default optimizations, we lower stringref back into string builtins.
-   * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
-     `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
-     used in all places (and it is lowered to `ref.as_non_null` where possible
-     in the optimizer). The stringref spec does not seem to allow this though,
-     and to fix that the binary writer will replace `ref.cast` that casts a
-     string view to a non-nullable type to `ref.as_non_null`. A `ref.cast` of a
-     string view that is a no-op is skipped entirely.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.

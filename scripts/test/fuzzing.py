@@ -114,33 +114,13 @@ unfuzzable = [
     'dce-stack-switching.wast',
     'precompute-stack-switching.wast',
     'vacuum-stack-switching.wast',
-    # TODO: fuzzer support for exact references
-    'exact-references.wast',
-    'exact-references-lowering.wast',
-    'exact-casts.wast',
-    'exact-casts-trivial.wast',
-    'abstract-type-refining-exact.wast',
-    'optimize-instructions-exact.wast',
-    'optimize-instructions-all-casts.wast',
-    'optimize-instructions-all-casts-exact.wast',
-    'local-subtyping-exact.wast',
-    'remove-unused-types-exact.wast',
-    'coalesce-locals-exact.wast',
-    'remove-unused-brs-exact.wast',
-    'signature-refining-exact.wast',
-    'gufa-cast-all-exact.wast',
-    'type-merging-exact.wast',
-    'type-refining-exact.wast',
-    'type-refining-gufa-exact.wast',
-    'type-ssa-exact.wast',
-    'minimize-rec-groups-exact.wast',
-    'minimize-rec-groups-ignore-exact.wast',
-    'public-exact.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
+    # TODO: fuzzer support for uninhabitable imported globals
+    'exact-references.wast',
 ]
 
 
