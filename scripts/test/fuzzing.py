@@ -25,8 +25,7 @@ unfuzzable = [
     'strings.wast',
     'simplify-locals-strings.wast',
     'string-lowering-instructions.wast',
-    'O2_strings.wast',
-    'O2_O3_strings.wast',
+    'string-builtins.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
