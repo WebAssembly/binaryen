@@ -1381,7 +1381,7 @@ Result<> IRBuilder::makeBlock(Name label, Signature sig) {
 }
 
 Result<>
-IRBuilder::makeIf(Name label, Signature sig, std::optional<bool> likely) {
+IRBuilder::makeIf(Name label, Signature sig, CodeAnnotation::BranchLikely likely) {
   auto* iff = wasm.allocator.alloc<If>();
   iff->type = sig.results;
   addBranchHint(iff, likely);
@@ -1397,7 +1397,7 @@ Result<> IRBuilder::makeLoop(Name label, Signature sig) {
 
 Result<> IRBuilder::makeBreak(Index label,
                               bool isConditional,
-                              std::optional<bool> likely) {
+                              CodeAnnotation::BranchLikely likely) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   auto labelType = getLabelType(label);
@@ -1443,7 +1443,7 @@ Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
 
 Result<> IRBuilder::makeCall(Name func,
                              bool isReturn,
-                             std::optional<std::uint8_t> inline_) {
+                             CodeAnnotation::Inline inline_) {
   auto sig = wasm.getFunction(func)->getSig();
   Call curr(wasm.allocator);
   curr.target = func;
@@ -1459,7 +1459,7 @@ Result<> IRBuilder::makeCall(Name func,
 Result<> IRBuilder::makeCallIndirect(Name table,
                                      HeapType type,
                                      bool isReturn,
-                                     std::optional<std::uint8_t> inline_) {
+                                     CodeAnnotation::Inline inline_) {
   CallIndirect curr(wasm.allocator);
   curr.heapType = type;
   curr.operands.resize(type.getSignature().params.size());
@@ -1959,7 +1959,7 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
 
 Result<> IRBuilder::makeCallRef(HeapType type,
                                 bool isReturn,
-                                std::optional<std::uint8_t> inline_) {
+                                CodeAnnotation::Inline inline_) {
   CallRef curr(wasm.allocator);
   if (!type.isSignature()) {
     return Err{"expected function type"};
@@ -1992,7 +1992,7 @@ Result<> IRBuilder::makeRefCast(Type type) {
 }
 
 Result<> IRBuilder::makeBrOn(
-  Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
+  Index label, BrOnOp op, Type in, Type out, CodeAnnotation::BranchLikely likely) {
   BrOn curr;
   curr.op = op;
   curr.castType = out;
@@ -2548,7 +2548,7 @@ Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   return Ok{};
 }
 
-void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
+void IRBuilder::addBranchHint(Expression* expr, CodeAnnotation::BranchLikely likely) {
   if (likely) {
     // Branches are only possible inside functions.
     assert(func);
@@ -2557,7 +2557,7 @@ void IRBuilder::addBranchHint(Expression* expr, std::optional<bool> likely) {
 }
 
 void IRBuilder::addInlineHint(Expression* expr,
-                              std::optional<uint8_t> inline_) {
+                              CodeAnnotation::Inline inline_) {
   if (inline_) {
     // Branches are only possible inside functions.
     assert(func);

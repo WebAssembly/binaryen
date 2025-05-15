@@ -117,20 +117,20 @@ public:
   Result<> makeNop();
   Result<> makeBlock(Name label, Signature sig);
   Result<>
-  makeIf(Name label, Signature sig, std::optional<bool> likely = std::nullopt);
+  makeIf(Name label, Signature sig, CodeAnnotation::BranchLikely likely = std::nullopt);
   Result<> makeLoop(Name label, Signature sig);
   Result<> makeBreak(Index label,
                      bool isConditional,
-                     std::optional<bool> likely = std::nullopt);
+                     CodeAnnotation::BranchLikely likely = std::nullopt);
   Result<> makeSwitch(const std::vector<Index>& labels, Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   Result<> makeCall(Name func,
                     bool isReturn,
-                    std::optional<std::uint8_t> inline_ = std::nullopt);
+                    CodeAnnotation::Inline inline_ = std::nullopt);
   Result<> makeCallIndirect(Name table,
                             HeapType type,
                             bool isReturn,
-                            std::optional<std::uint8_t> inline_ = std::nullopt);
+                            CodeAnnotation::Inline inline_ = std::nullopt);
   Result<> makeLocalGet(Index local);
   Result<> makeLocalSet(Index local);
   Result<> makeLocalTee(Index local);
@@ -206,14 +206,14 @@ public:
   Result<> makeI31Get(bool signed_);
   Result<> makeCallRef(HeapType type,
                        bool isReturn,
-                       std::optional<std::uint8_t> inline_ = std::nullopt);
+                       CodeAnnotation::Inline inline_ = std::nullopt);
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type);
   Result<> makeBrOn(Index label,
                     BrOnOp op,
                     Type in = Type::none,
                     Type out = Type::none,
-                    std::optional<bool> likely = std::nullopt);
+                    CodeAnnotation::BranchLikely likely = std::nullopt);
   Result<> makeStructNew(HeapType type);
   Result<> makeStructNewDefault(HeapType type);
   Result<>
@@ -706,10 +706,10 @@ private:
   void fixLoopWithInput(Loop* loop, Type inputType, Index scratch);
 
   // Add a branch hint, if |likely| is present.
-  void addBranchHint(Expression* expr, std::optional<bool> likely);
+  void addBranchHint(Expression* expr, CodeAnnotation::BranchLikely likely);
 
   // Add an inlining hint, if |inline_| is present.
-  void addInlineHint(Expression* expr, std::optional<std::uint8_t> inline_);
+  void addInlineHint(Expression* expr, CodeAnnotation::Inline inline_);
 
   void dump();
 };

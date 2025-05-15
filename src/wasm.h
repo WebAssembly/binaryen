@@ -2137,6 +2137,21 @@ struct BinaryLocations {
   std::unordered_map<Function*, FunctionLocations> functions;
 };
 
+// Code annotations for VMs. As with debug info, we do not store these on
+// Expressions as we assume most instances are unannotated, and do not want to
+// add constant memory overhead.
+struct CodeAnnotation {
+  // Branch Hinting proposal: Whether the branch is likely, or unlikely.
+  using BranchLikely = std::optional<bool>;
+  BranchLikely branchLikely;
+
+  // Compilation Hints proposal.
+  static const uint8_t NeverInline = 0;
+  static const uint8_t AlwaysInline = 127;
+  using Inline = std::optional<uint8_t>;
+  Inline inline_;
+};
+
 // Forward declaration for FuncEffectsMap.
 class EffectAnalyzer;
 
@@ -2190,19 +2205,6 @@ public:
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
-
-  // Code annotations for VMs. As with debug info, we do not store these on
-  // Expressions as we assume most instances are unannotated, and do not want to
-  // add constant memory overhead.
-  struct CodeAnnotation {
-    // Branch Hinting proposal: Whether the branch is likely, or unlikely.
-    std::optional<bool> branchLikely;
-
-    // Compilation Hints proposal.
-    static const uint8_t NeverInline = 0;
-    static const uint8_t AlwaysInline = 127;
-    std::optional<uint8_t> inline_;
-  };
 
   // Function-level annotations are implemented with a key of nullptr, matching
   // the 0 byte offset in the spec.
