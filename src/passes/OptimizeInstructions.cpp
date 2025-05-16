@@ -2423,7 +2423,7 @@ struct OptimizeInstructions
     //
     if (auto* as = curr->ref->dynCast<RefAs>(); as && as->op == RefAsNonNull) {
       curr->ref = as->value;
-      curr->type = Type(curr->type.getHeapType(), NonNullable);
+      curr->type = curr->type.with(NonNullable);
     }
   }
 
