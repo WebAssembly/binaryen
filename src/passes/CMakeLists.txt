@@ -21,6 +21,7 @@ set(passes_SOURCES
   AlignmentLowering.cpp
   Asyncify.cpp
   AvoidReinterprets.cpp
+  BranchHintAnalysis.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
