@@ -69,8 +69,8 @@ class PassesTest(utils.BinaryenTestCase):
         self.assertEqual(passes.count('string-lifting'), 1)
         self.assertEqual(passes.count('string-lowering'), 1)
 
-        # Other passes appear twice or more.
-        self.assertGreater(passes.count('precompute'), 1)
+        # Other passes appear twice, when -O2 is repeated
+        self.assertEqual(passes.count('directize'), 2)
 
         # Without the feature, we do not lift or lower.
         passes = self.get_passes_run(['-O2', '-O2', '-all', '--disable-string-builtins'])
