@@ -24,7 +24,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "pass.h"
-#include "unique_deferring_queue.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -109,10 +109,10 @@ struct BranchHintAnalysis
         // call may suggests a low chance if it is cold, but the
         // unreachable suggests a very low chance, which we trust.
         if (auto chance = getChance(*currp)) {
-          block->chance = std::min(block->chance, *chance);
+          block->contents.chance = std::min(block->contents.chance, *chance);
         }
       }
-      std::cout << " => " << int(block->chance) << "\n";
+      std::cout << " => " << int(block->contents.chance) << "\n";
     }
 
     // We consider the chance of a block to be no higher than the things it
@@ -121,15 +121,15 @@ struct BranchHintAnalysis
     // of all blocks.
     UniqueDeferredQueue<BasicBlock*> work;
     for (auto& block : basicBlocks) {
-      work.push(&block);
+      work.push(block.get());
     }
     while (!work.empty()) {
       auto* block = work.pop();
       // Apply this block to its predecessors, potentially raising their
       // chances.
       for (auto* in : block->in) {
-        if (block->chance > in->chance) {
-          in->chance = block->chance;
+        if (block->contents.chance > in->contents.chance) {
+          in->contents.chance = block->contents.chance;
           work.push(in);
         }
       }
@@ -138,7 +138,7 @@ struct BranchHintAnalysis
     for (Index i = 0; i < basicBlocks.size(); ++i) {
       std::cout << "2block\n";
       auto& block = basicBlocks[i];
-      std::cout << " => " << int(block->chance) << "\n";
+      std::cout << " => " << int(block->contents.chance) << "\n";
     }
   }
 };
