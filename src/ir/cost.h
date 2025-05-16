@@ -668,6 +668,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitRefCast(RefCast* curr) {
     return CastCost + nullCheckCost(curr->ref) + visit(curr->ref);
   }
+  CostType visitRefGetDesc(RefGetDesc* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
   CostType visitBrOn(BrOn* curr) {
     // BrOn of a null can be fairly fast, but anything else is a cast check.
     CostType base =

@@ -595,6 +595,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     push(Type::none);
   }
 
+  void visitRefGetDesc(RefGetDesc* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitBrOn(BrOn* curr) {
     // Like br_if, these instructions do different things to the stack depending
     // on whether the branch is taken or not. For branches that drop the tested

@@ -2211,7 +2211,10 @@ struct PrintExpressionContents
     printMedium(o, "ref.cast ");
     printType(curr->type);
   }
-
+  void visitRefGetDesc(RefGetDesc* curr) {
+    printMedium(o, "ref.get_desc ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+  }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:

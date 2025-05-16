@@ -849,7 +849,11 @@ private:
     }
     void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
-      // Traps if the ref is not null and the cast fails.
+      // Traps if the cast fails.
+      parent.implicitTrap = true;
+    }
+    void visitRefGetDesc(RefGetDesc* curr) {
+      // Traps if the ref is null.
       parent.implicitTrap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }

@@ -1071,6 +1071,16 @@ void RefCast::finalize() {
   type = Type::getGreatestLowerBound(type, ref->type);
 }
 
+void RefGetDesc::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+
+  auto desc = *ref->type.getHeapType().getDescriptorType();
+  type = Type(desc, NonNullable, ref->type.getExactness());
+}
+
 void BrOn::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;

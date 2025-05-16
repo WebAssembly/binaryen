@@ -4764,6 +4764,12 @@ switch (buf[0]) {
               return Ok{};
             }
             goto parse_error;
+          case 'g':
+            if (op == "ref.get_desc"sv) {
+              CHECK_ERR(makeRefGetDesc(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
           case 'i': {
             switch (buf[5]) {
               case '3': {

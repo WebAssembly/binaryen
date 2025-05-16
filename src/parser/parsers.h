@@ -233,6 +233,8 @@ Result<> makeRefTest(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRefCast(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeRefGetDesc(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<>
 makeBrOnNull(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
 template<typename Ctx>
@@ -2216,6 +2218,15 @@ makeRefCast(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto type = reftype(ctx);
   CHECK_ERR(type);
   return ctx.makeRefCast(pos, annotations, *type);
+}
+
+template<typename Ctx>
+Result<> makeRefGetDesc(Ctx& ctx,
+                        Index pos,
+                        const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefGetDesc(pos, annotations, *type);
 }
 
 template<typename Ctx>

@@ -2304,6 +2304,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitRefGetDesc(RefGetDesc* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitBrOn(BrOn* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

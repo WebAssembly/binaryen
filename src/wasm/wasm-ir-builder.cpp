@@ -672,6 +672,13 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitRefGetDesc(RefGetDesc* curr,
+                           std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitRefGetDesc(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitBreak(Break* curr,
                       std::optional<Type> labelType = std::nullopt) {
     std::vector<Child> children;
@@ -1988,6 +1995,17 @@ Result<> IRBuilder::makeRefCast(Type type) {
   curr.type = type;
   CHECK_ERR(visitRefCast(&curr));
   push(builder.makeRefCast(curr.ref, type));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeRefGetDesc(HeapType type) {
+  RefGetDesc curr;
+  if (!type.getDescriptorType()) {
+    return Err{"expected type with descriptor"};
+  }
+  CHECK_ERR(ChildPopper{*this}.visitRefGetDesc(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeRefGetDesc(curr.ref));
   return Ok{};
 }
 
