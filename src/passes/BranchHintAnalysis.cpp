@@ -64,9 +64,11 @@ struct BranchHintAnalysis
   // branch we don't need to hint about) and not switch (which Branch Hints do
   // not support).
   bool isBranching(Expression* curr) {
+std::cout << "chak isBranching " << *curr << '\n';
     if (auto* br = curr->dynCast<Break>()) {
       return !!br->condition;
     }
+std::cout << "chak isBranching2 " << *curr << " : " << (curr->is<If>() || curr->is<BrOn>()) << '\n';
     return curr->is<If>() || curr->is<BrOn>();
   }
 
@@ -89,9 +91,13 @@ struct BranchHintAnalysis
   }
 
   void visitExpression(Expression* curr) {
+std::cout << "visit " << *curr << " : " << currBasicBlock << '\n';
     // Add all (reachable, so |currBasicBlock| exists) things that either branch
     // or suggest chances of branching.
-    if (currBasicBlock && (isBranching(curr) || getChance(curr))) {
+    auto cond = currBasicBlock && (isBranching(curr) || getChance(curr));
+    std::cout << "cond: " << cond << '\n';
+    if (cond) {
+std::cout << "  add!\n";
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
@@ -165,6 +171,7 @@ struct BranchHintAnalysis
       // We have a useful hint!
       curr->codeAnnotations[last].branchLikely = (firstChance < secondChance);
       // XXX order?
+      // XXX messy to assume the order... and if doesn't even visit in the right time... instead, add explicit hooks, called from doFinishIf in cfg-trav etc.
     }
   }
 };

@@ -47,6 +47,53 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $if-unreachable (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-unreachable (param $x i32)
+    ;; The unreachable branch should be marked unlikely.
+    (if
+      (local.get $x)
+      (then
+        (unreachable)
+      )
+      (else
+        (nop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-unreachable-flip (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-unreachable-flip (param $x i32)
+    ;; As above, but flipped, so the hint is flipped too.
+    (if
+      (local.get $x)
+      (then
+        (nop)
+      )
+      (else
+        (unreachable)
+      )
+    )
+  )
 )
 
-;; TODO: calls etc.

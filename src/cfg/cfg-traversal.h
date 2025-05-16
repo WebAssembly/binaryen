@@ -196,6 +196,14 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
                self->startBasicBlock()); // before if -> ifFalse
   }
 
+  // Optional hook that is called on each branch between two paths. This
+  // receives the branching instruction and the two blocks it can reach. For
+  // example, for an if, the blocks it can reach correspond to the ifTrue and
+  // ifFalse targets.
+  void noteBranch(Expression* curr, BasicBlock* ifTrue, BasicBlock* ifFalse) {
+    // Do nothing by default.
+  }
+
   static void doEndIf(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
@@ -488,7 +496,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
         self->pushTask(SubType::doStartIfTrue, currp);
         self->pushTask(SubType::scan, &curr->cast<If>()->condition);
-        return; // don't do anything else
+        break;
       }
       case Expression::Id::LoopId: {
         self->pushTask(SubType::doEndLoop, currp);
@@ -522,7 +530,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doStartCatches, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
         self->pushTask(SubType::doStartTry, currp);
-        return; // don't do anything else
+        break;
       }
       case Expression::Id::TryTableId: {
         self->pushTask(SubType::doEndTryTable, currp);
