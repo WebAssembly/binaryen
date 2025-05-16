@@ -53,7 +53,7 @@ struct BranchHintAnalysis
   // instructions but without br (without condition, which is an unconditional
   // branch we don't need to hint about) and not switch (which Branch Hints do
   // not support).
-  bool branches(Expression* curr) {
+  bool isBranching(Expression* curr) {
     if (auto* br = curr->dynCast<Break>()) {
       return !!br->condition;
     }
@@ -84,7 +84,7 @@ struct BranchHintAnalysis
   void visitExpression(Expression* curr) {
     // Add all (reachable, so |currBasicBlock| exists) things that either branch
     // or suggest probabilities of branching.
-    if (currBasicBlock && (branches(curr) || getProbability(curr))) {
+    if (currBasicBlock && (isBranching(curr) || getProbability(curr))) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
