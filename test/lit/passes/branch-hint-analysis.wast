@@ -4,8 +4,22 @@
 ;;
 
 (module
+  ;; CHECK:      (tag $e (type $0))
   (tag $e)
 
+  ;; CHECK:      (func $brs (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (throw $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $brs (param $x i32)
     (block $block
       (br_if $block
