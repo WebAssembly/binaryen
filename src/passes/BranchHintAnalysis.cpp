@@ -91,6 +91,12 @@ struct BranchHintAnalysis
 
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
+    for (auto& block : basicBlocks) {
+      std::cout << "block\n";
+      for (auto** currp : block->contents.actions) {
+        std::cout << "  " << **currp << "\n";
+      }
+    }
   }
 };
 
