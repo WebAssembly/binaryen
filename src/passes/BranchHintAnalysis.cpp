@@ -135,10 +135,36 @@ struct BranchHintAnalysis
       }
     }
 
+    // Debug
     for (Index i = 0; i < basicBlocks.size(); ++i) {
       std::cout << "2block\n";
       auto& block = basicBlocks[i];
       std::cout << " => " << int(block->contents.chance) << "\n";
+    }
+
+    // Apply the final chances: when a branch between two options has a higher
+    // higher chance to go one way then the other, mark it as likely or unlikely
+    // accordingly. TODO: should we not mark when the difference is small?
+    for (auto& block : basicBlocks) {
+      if (block->contents.actions.empty() || block->out.size() != 2) {
+        continue;
+      }
+
+      auto* last = block->contents.actions.back();
+      if (!isBranching(last)) {
+        continue;
+      }
+
+      // Compare the probabilities of the two targets.
+      auto firstChance = block->out[0]->contents.chance;
+      auto secondChance = block->out[1]->contents.chance;
+      if (firstChance == secondChance) {
+        continue;
+      }
+
+      // We have a useful hint!
+      curr->codeAnnotations[last].branchLikely = (firstChance < secondChance);
+      // XXX order?
     }
   }
 };
