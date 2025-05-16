@@ -3569,8 +3569,7 @@ private:
     // Check left's max bits and right is constant.
     auto leftMaxBits = Bits::getMaxBits(left, this);
     uint64_t maskLeft;
-    if (!left->type.isConcrete() ||
-        leftMaxBits == left->type.getByteSize() * 8) {
+    if (!left->type.isNumber() || leftMaxBits == left->type.getByteSize() * 8) {
       // If we know nothing useful about the bits on the left,
       // we cannot optimize.
       return nullptr;
