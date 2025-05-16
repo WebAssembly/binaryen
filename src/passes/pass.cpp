@@ -807,7 +807,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses(Ordering ordering) {
   // before reorder-globals, which will sort the new globals.
   if (wasm->features.hasStringBuiltins() && options.optimizeLevel >= 2 &&
       ordering.last) {
-    addIfNoDWARFIssues("string-lowering");
+    addIfNoDWARFIssues("string-lowering-magic-imports");
   }
 
   addIfNoDWARFIssues("remove-unused-module-elements");

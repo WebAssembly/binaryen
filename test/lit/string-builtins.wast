@@ -33,7 +33,7 @@
   ;; MVP-NEXT: )
   ;; ALL:      (type $0 (func (result (ref extern))))
 
-  ;; ALL:      (import "string.const" "0" (global $"string.const_\"foobar\"" (ref extern)))
+  ;; ALL:      (import "\'" "foobar" (global $"string.const_\"foobar\"" (ref extern)))
 
   ;; ALL:      (export "string.concat" (func $string.concat))
 
@@ -42,7 +42,7 @@
   ;; ALL-NEXT: )
   ;; ESB:      (type $0 (func (result (ref extern))))
 
-  ;; ESB:      (import "string.const" "0" (global $"string.const_\"foobar\"" (ref extern)))
+  ;; ESB:      (import "\'" "foobar" (global $"string.const_\"foobar\"" (ref extern)))
 
   ;; ESB:      (export "string.concat" (func $string.concat))
 
