@@ -2213,6 +2213,9 @@ Result<> IRBuilder::makeArrayNewElem(HeapType type, Name elem) {
 
 Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
   ArrayNewFixed curr(wasm.allocator);
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.new_fixed"};
+  }
   curr.type = Type(type, NonNullable);
   curr.values.resize(arity);
   CHECK_ERR(visitArrayNewFixed(&curr));
