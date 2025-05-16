@@ -150,7 +150,7 @@ struct BranchHintAnalysis
         continue;
       }
 
-      auto* last = block->contents.actions.back();
+      auto* last = *block->contents.actions.back();
       if (!isBranching(last)) {
         continue;
       }

@@ -4,34 +4,48 @@
 ;;
 
 (module
-  ;; CHECK:      (tag $e (type $0))
+  ;; CHECK:      (tag $e (type $1))
   (tag $e)
 
-  ;; CHECK:      (func $brs (type $1) (param $x i32)
+  ;; CHECK:      (func $br-unreachable (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:   (br_if $block
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (br_if $block
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw $e)
+  ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $brs (param $x i32)
+  (func $br-unreachable (param $x i32)
+    ;; The br_if is unlikely, as it reaches an unreachable.
     (block $block
       (br_if $block
         (local.get $x)
       )
-      (nop)
+      (return)
+    )
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $br-unreachable-flip (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-unreachable-flip (param $x i32)
+    ;; As above, but flipped: the hint should be reversed, since the unreachable
+    ;; is if we do not branch.
+    (block $block
       (br_if $block
         (local.get $x)
       )
-      (throw $e)
+      (unreachable)
     )
-    (unreachable)
   )
 )
 
