@@ -727,8 +727,11 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses(Ordering ordering) {
   // If we are optimizing string builtins then we lift at the very start of the
   // optimization pipeline, not just at the beginning here, but only when we are
   // ordered before other bundles of passes.
-  if (wasm->features.hasStringBuiltins() && options.optimizeLevel >= 2 &&
-      ordering.first) {
+  //
+  // We check for GC for symmetry with the lowering pass, see comment in
+  // addDefaultGlobalOptimizationPostPasses() below.
+  if (wasm->features.hasStringBuiltins() && wasm->features.hasGC() &&
+      options.optimizeLevel >= 2 && ordering.first) {
     addIfNoDWARFIssues("string-lifting");
   }
   // Removing duplicate functions is fast and saves work later.
@@ -805,8 +808,13 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses(Ordering ordering) {
   // Lower away strings at the very very end. We do this before
   // remove-unused-module-elements so we don't add unused imports, and also
   // before reorder-globals, which will sort the new globals.
-  if (wasm->features.hasStringBuiltins() && options.optimizeLevel >= 2 &&
-      ordering.last) {
+  //
+  // Note we also test for GC here, as the pass adds imports that use GC arrays
+  // (and externref). Those imports may be unused, but they exist until
+  // remove-unused-module-elements cleans them up, which would cause an error in
+  // between.
+  if (wasm->features.hasStringBuiltins() && wasm->features.hasGC() &&
+      options.optimizeLevel >= 2 && ordering.last) {
     addIfNoDWARFIssues("string-lowering-magic-imports");
   }
 
