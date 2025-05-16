@@ -24,6 +24,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "pass.h"
+#include "unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -31,10 +32,19 @@ namespace wasm {
 
 namespace {
 
-// In each basic block we will store instructions that either branch, or that
-// provide hints as to branching.
+// An abstract chance (probability, but in less letters) of code being
+// reached, in the range 0 - 100.
+using Chance = uint8_t;
+static constexpr Chance MaxChance = 100;
+
 struct Info {
+  // In each basic block we will store instructions that either branch, or that
+  // provide hints as to branching.
   std::vector<Expression**> actions;
+
+  // The chance of the block being reached. We assume any can be reached, unless
+  // we see a good hint otherwise.
+  Chance chance = MaxChance;  
 };
 
 struct BranchHintAnalysis
@@ -59,11 +69,6 @@ struct BranchHintAnalysis
     }
     return curr->is<If>() || curr->is<BrOn>();
   }
-
-  // An abstract chance (probability, but in less letters) of code being
-  // reached, in the range 0 - 100.
-  using Chance = uint8_t;
-  static constexpr Chance MaxChance = 100;
 
   // Returns the chance that an instruction is reached, if something about
   // it suggests it is likely or not.
@@ -94,27 +99,47 @@ struct BranchHintAnalysis
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
     // First, compute the chance of each basic block from its contents.
-    std::vector<Chance> blockChances(basicBlocks.size(), MaxChance);
     for (Index i = 0; i < basicBlocks.size(); ++i) {
       std::cout << "block\n";
       auto& block = basicBlocks[i];
-      auto& chance = blockChances[i];
       for (auto** currp : block->contents.actions) {
         std::cout << "  " << **currp << "\n";
         // The chance of a basic block is the lowest thing we can find: if
         // we see nop, call, unreachable, then the nop tells us nothing, the
         // call may suggests a low chance if it is cold, but the
         // unreachable suggests a very low chance, which we trust.
-        if (auto currChance = getChance(*currp)) {
-          chance = std::min(chance, *currChance);
+        if (auto chance = getChance(*currp)) {
+          block->chance = std::min(block->chance, *chance);
         }
       }
-      std::cout << " => " << int(chance) << "\n";
+      std::cout << " => " << int(block->chance) << "\n";
     }
 
     // We consider the chance of a block to be no higher than the things it
     // targets, that is, chance(block) := max(chance(target) for target). Flow
-    // chances to sources of blocks to achieve that.
+    // chances to sources of blocks to achieve that, starting from the indexes
+    // of all blocks.
+    UniqueDeferredQueue<BasicBlock*> work;
+    for (auto& block : basicBlocks) {
+      work.push(&block);
+    }
+    while (!work.empty()) {
+      auto* block = work.pop();
+      // Apply this block to its predecessors, potentially raising their
+      // chances.
+      for (auto* in : block->in) {
+        if (block->chance > in->chance) {
+          in->chance = block->chance;
+          work.push(in);
+        }
+      }
+    }
+
+    for (Index i = 0; i < basicBlocks.size(); ++i) {
+      std::cout << "2block\n";
+      auto& block = basicBlocks[i];
+      std::cout << " => " << int(block->chance) << "\n";
+    }
   }
 };
 
