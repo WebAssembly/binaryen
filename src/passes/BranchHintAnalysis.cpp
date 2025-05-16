@@ -109,8 +109,12 @@ struct BranchHintAnalysis
           chance = std::min(chance, *currChance);
         }
       }
-      std::cout << " => " << chance << "\n";
+      std::cout << " => " << int(chance) << "\n";
     }
+
+    // We consider the chance of a block to be no higher than the things it
+    // targets, that is, chance(block) := max(chance(target) for target). Flow
+    // chances to sources of blocks to achieve that.
   }
 };
 
