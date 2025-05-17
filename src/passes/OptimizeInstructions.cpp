@@ -2587,6 +2587,19 @@ struct OptimizeInstructions
 
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
+    if (localInfo.size() <= get->index) {
+      // we don't know anything about this local
+      switch (get->type.getBasic()) {
+        case Type::i32:
+          return 32;
+        case Type::i64:
+          return 64;
+        case Type::unreachable:
+          return 64; // not interesting, but don't crash
+        default:
+          WASM_UNREACHABLE("invalid type");
+      }
+    }
     return localInfo[get->index].maxBits;
   }
 
