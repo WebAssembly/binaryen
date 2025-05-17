@@ -2471,6 +2471,7 @@ IRBuilder::makeResume(HeapType ct,
     return Err{"the sizes of tags and labels must be equal"};
   }
   if (!ct.isContinuation()) {
+    std::cout << ct.toString() << "\n";
     return Err{"expected continuation type"};
   }
 
