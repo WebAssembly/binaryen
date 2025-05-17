@@ -839,6 +839,9 @@ struct OptimizeInstructions
         if (auto* ret = combineAnd(curr)) {
           return replaceCurrent(ret);
         }
+        if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
+          return replaceCurrent(ret);
+        }
       }
       // for or, we can potentially combine
       if (curr->op == OrInt32) {
@@ -852,6 +855,12 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
     }
+    if (curr->op == AndInt64) {
+      if (auto* ret = optimizeAndNoOverlappingBits(curr)) {
+        return replaceCurrent(ret);
+      }
+    }
+
     // relation/comparisons allow for math optimizations
     if (curr->isRelational()) {
       if (auto* ret = optimizeRelational(curr)) {
@@ -3563,6 +3572,35 @@ private:
         return bx;
       }
     }
+    return nullptr;
+  }
+
+  // Bitwise AND of a value with bits in [0, n) and a constant with no bits in
+  // [0, n) always yields 0. Replace with zero.
+  Expression* optimizeAndNoOverlappingBits(Binary* curr) {
+    assert(curr->op == AndInt32 || curr->op == AndInt64);
+
+    auto* left = curr->left;
+    auto* right = curr->right;
+
+    // Check left's max bits and right is constant.
+    auto leftMaxBits = Bits::getMaxBits(left, this);
+    uint64_t maskLeft;
+    if (!left->type.isNumber() || leftMaxBits == left->type.getByteSize() * 8) {
+      // If we know nothing useful about the bits on the left,
+      // we cannot optimize.
+      return nullptr;
+    } else {
+      maskLeft = (1ULL << leftMaxBits) - 1;
+    }
+    if (auto* c = right->dynCast<Const>()) {
+      uint64_t constantValue = c->value.getInteger();
+      if ((constantValue & maskLeft) == 0) {
+        return getDroppedChildrenAndAppend(
+          curr, LiteralUtils::makeZero(left->type, *getModule()));
+      }
+    }
+
     return nullptr;
   }
 
