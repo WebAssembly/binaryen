@@ -19,9 +19,9 @@
  (type $cont (cont $function_1))
  ;; CHECK:      (type $fiber (struct (field $handlers (ref $handlers)) (field $cont (ref $cont))))
  (type $fiber (struct (field $handlers (ref $handlers)) (field $cont (ref $cont))))
- ;; CHECK:      (tag $exception (type $8) (param (ref eq)))
+ ;; CHECK:      (tag $exception (type $9) (param (ref eq)))
  (tag $exception (param (ref eq)))
- ;; CHECK:      (tag $effect (type $9) (param (ref eq)) (result (ref eq) (ref eq)))
+ ;; CHECK:      (tag $effect (type $8) (param (ref eq)) (result (ref eq) (ref eq)))
  (tag $effect (param (ref eq)) (result (ref eq) (ref eq)))
 
  ;; CHECK:      (func $resume (type $10) (param $0 (ref $fiber)) (param $1 (ref $closure)) (param $2 (ref eq)) (result (ref eq))
