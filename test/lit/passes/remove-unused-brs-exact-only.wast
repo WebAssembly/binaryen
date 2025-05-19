@@ -2,7 +2,7 @@
 
 ;; RUN: wasm-opt %s -all  --remove-unused-brs -S -o - | filecheck %s
 
-;; Like "remove-unused-brs-exact.wast, but with exact types in the input so we
+;; Like "remove-unused-brs-exact.wast", but with exact types in the input so we
 ;; cannot have a NO_CD mode.
 
 (module
