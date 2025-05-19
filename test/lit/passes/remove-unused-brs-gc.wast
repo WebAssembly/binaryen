@@ -119,15 +119,10 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result nullref)
- ;; CHECK-NEXT:     (br_on_non_null $block
- ;; CHECK-NEXT:      (ref.cast (ref null $struct)
- ;; CHECK-NEXT:       (local.tee $any
- ;; CHECK-NEXT:        (local.get $struct)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:    (br_on_cast $block anyref (ref $struct)
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (local.get $struct)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
