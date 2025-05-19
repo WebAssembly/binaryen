@@ -425,3 +425,54 @@
   (func $func (type $func)
   )
 )
+
+;; Regression test for an assertion failure on packed data reads from null
+;; references.
+(module
+ (type $i8 (struct (field i8)))
+
+ ;; NRML:      (type $0 (func (param (ref none)) (result i32)))
+
+ ;; NRML:      (table $0 1 funcref)
+ ;; GUFA:      (type $0 (func (param (ref none)) (result i32)))
+
+ ;; GUFA:      (table $0 1 funcref)
+ ;; O3O3:      (type $0 (func (param (ref none)) (result i32)))
+
+ ;; O3O3:      (table $0 1 funcref)
+ (table $0 1 funcref)
+ ;; NRML:      (elem $0 (i32.const 0) $test)
+ ;; GUFA:      (elem $0 (i32.const 0) $test)
+ ;; O3O3:      (elem $0 (i32.const 0) $test)
+ (elem $0 (i32.const 0) $test)
+
+ ;; NRML:      (export "table" (table $0))
+ ;; GUFA:      (export "table" (table $0))
+ ;; O3O3:      (export "table" (table $0))
+ (export "table" (table $0))
+
+ ;; NRML:      (func $test (type $0) (param $i8 (ref none)) (result i32)
+ ;; NRML-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
+ ;; NRML-NEXT:   (drop
+ ;; NRML-NEXT:    (local.get $i8)
+ ;; NRML-NEXT:   )
+ ;; NRML-NEXT:   (unreachable)
+ ;; NRML-NEXT:  )
+ ;; NRML-NEXT: )
+ ;; GUFA:      (func $test (type $0) (param $i8 (ref none)) (result i32)
+ ;; GUFA-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
+ ;; GUFA-NEXT:   (drop
+ ;; GUFA-NEXT:    (local.get $i8)
+ ;; GUFA-NEXT:   )
+ ;; GUFA-NEXT:   (unreachable)
+ ;; GUFA-NEXT:  )
+ ;; GUFA-NEXT: )
+ ;; O3O3:      (func $test (type $0) (param $0 (ref none)) (result i32)
+ ;; O3O3-NEXT:  (unreachable)
+ ;; O3O3-NEXT: )
+ (func $test (param $i8 (ref none)) (result i32)
+  (struct.get_s $i8 0
+   (local.get $i8)
+  )
+ )
+)
