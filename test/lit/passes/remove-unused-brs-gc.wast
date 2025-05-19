@@ -147,7 +147,8 @@
     )
    )
    (drop
-    ;; Needs a null check and cast for validity.
+    ;; Needs a null check and cast for validity. That makes it not worthwhile,
+    ;; so we do not optimize.
     (br_on_cast $block anyref (ref $struct)
      (local.tee $any (local.get $struct))
     )
