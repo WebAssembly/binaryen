@@ -327,8 +327,8 @@ struct StringLowering : public StringGathering {
         results.push_back(fix(result));
       }
 
-      // In addition to doing the update, mark it in the map of updated for
-      // TypeMapper, so it updates RefFuncs of it etc.
+      // In addition to doing the update, mark it in the map of updates for
+      // TypeMapper, so RefFuncs with this type get updated.
       auto old = func->type;
       func->type = Signature(params, results);
       updates[old] = func->type;
