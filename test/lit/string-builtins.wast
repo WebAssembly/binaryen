@@ -2,17 +2,17 @@
 
 ;; Run normal -O2, which should lift, optimize, and lower strings, if the
 ;; string builtins feature is enabled (GC is required, as well, as the lowering
-;; emits functions using arrays). We optimize in the last two here.
+;; emits functions using arrays). We optimize identically in the last two here.
 
 ;; RUN: foreach %s %t wasm-opt -O2 -S -o - --enable-reference-types \
 ;; RUN:    | filecheck %s --check-prefix=MVP
 
 ;; RUN: foreach %s %t wasm-opt -O2 -S -o - -all \
-;; RUN:    | filecheck %s --check-prefix=ALL
+;; RUN:    | filecheck %s --check-prefix=OPT
 
 ;; RUN: foreach %s %t wasm-opt -O2 -S -o - --enable-reference-types \
 ;; RUN:    --enable-string-builtins --enable-gc \
-;; RUN:    | filecheck %s --check-prefix=ESB
+;; RUN:    | filecheck %s --check-prefix=OPT
 
 (module
   (type $array16 (array (mut i16)))
@@ -38,24 +38,15 @@
   ;; MVP-NEXT:   (global.get $bar)
   ;; MVP-NEXT:  )
   ;; MVP-NEXT: )
-  ;; ALL:      (type $0 (func (result (ref extern))))
+  ;; OPT:      (type $0 (func (result (ref extern))))
 
-  ;; ALL:      (import "\'" "foobar" (global $"string.const_\"foobar\"" (ref extern)))
+  ;; OPT:      (import "\'" "foobar" (global $"string.const_\"foobar\"" (ref extern)))
 
-  ;; ALL:      (export "string.concat" (func $string.concat))
+  ;; OPT:      (export "string.concat" (func $string.concat))
 
-  ;; ALL:      (func $string.concat (type $0) (result (ref extern))
-  ;; ALL-NEXT:  (global.get $"string.const_\"foobar\"")
-  ;; ALL-NEXT: )
-  ;; ESB:      (type $0 (func (result (ref extern))))
-
-  ;; ESB:      (import "\'" "foobar" (global $"string.const_\"foobar\"" (ref extern)))
-
-  ;; ESB:      (export "string.concat" (func $string.concat))
-
-  ;; ESB:      (func $string.concat (type $0) (result (ref extern))
-  ;; ESB-NEXT:  (global.get $"string.const_\"foobar\"")
-  ;; ESB-NEXT: )
+  ;; OPT:      (func $string.concat (type $0) (result (ref extern))
+  ;; OPT-NEXT:  (global.get $"string.const_\"foobar\"")
+  ;; OPT-NEXT: )
   (func $string.concat (export "string.concat") (result (ref extern))
     ;; When we optimize, we concatenate "foo" and "bar" here to "foobar". A new
     ;; imported global will appear for that, and we will get it here.
