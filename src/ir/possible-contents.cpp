@@ -2825,6 +2825,12 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
     return;
   }
 
+  // If there is no struct or array to read, no value will ever be returned.
+  if (ref->type.isNull()) {
+    contents = PossibleContents::none();
+    return;
+  }
+
   // We are reading data here, so the reference must be a valid struct or
   // array, otherwise we would never have gotten here.
   assert(ref->type.isRef());
