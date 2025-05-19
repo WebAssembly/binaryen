@@ -457,8 +457,8 @@ jobs:
         python check.py --binaryen-bin=out/bin gtest
 
   # Ensures we can build in no-asserts mode (just building)
-  build-debug:
-    name: debug
+  build-noasserts:
+    name: noasserts
     runs-on: ubuntu-latest
     steps:
     - uses: actions/setup-python@v5
