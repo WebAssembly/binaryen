@@ -1077,8 +1077,9 @@ void RefGetDesc::finalize() {
     return;
   }
 
-  auto desc = *ref->type.getHeapType().getDescriptorType();
-  type = Type(desc, NonNullable, ref->type.getExactness());
+  auto desc = ref->type.getHeapType().getDescriptorType();
+  assert(desc);
+  type = Type(*desc, NonNullable, ref->type.getExactness());
 }
 
 void BrOn::finalize() {
