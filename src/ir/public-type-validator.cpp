@@ -36,7 +36,8 @@ bool PublicTypeValidator::isValidPublicTypeImpl(HeapType type) {
 
   auto markVisitingInvalid = [&]() {
     for (auto group : visiting) {
-      auto [_, inserted] = allowedPublicGroupCache.insert({group, false});
+      [[maybe_unused]] auto [_, inserted] =
+        allowedPublicGroupCache.insert({group, false});
       assert(inserted);
     }
   };
