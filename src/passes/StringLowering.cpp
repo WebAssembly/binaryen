@@ -288,6 +288,8 @@ struct StringLowering : public StringGathering {
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   void updateTypes(Module* module) {
+    TypeMapper::TypeUpdates updates;
+
     // TypeMapper will not handle public types, but we do want to modify them as
     // well: we are modifying the public ABI here. We can't simply tell
     // TypeMapper to consider them private, as then they'd end up in the new big
@@ -324,10 +326,13 @@ struct StringLowering : public StringGathering {
       for (auto result : func->type.getSignature().results) {
         results.push_back(fix(result));
       }
-      func->type = Signature(params, results);
-    }
 
-    TypeMapper::TypeUpdates updates;
+      // In addition to doing the update, mark it in the map of updated for
+      // TypeMapper, so it updates RefFuncs of it etc.
+      auto old = func->type;
+      func->type = Signature(params, results);
+      updates[old] = func->type;
+    }
 
     // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
