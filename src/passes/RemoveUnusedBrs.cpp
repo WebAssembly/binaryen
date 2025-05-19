@@ -1008,8 +1008,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             //       (...)
             //     (ref.null bot<X>)
             //   )
-            curr->ref = maybeCast(
-              curr->ref, Type(curr->getSentType().getHeapType(), Nullable));
+            auto* casted = maybeCast(
+              curr->ref, curr->getSentType().with(Nullable));
+            if (casted->is<RefCast>()) {
+              // Given the RefCast we are forced to use, we are replacing a
+              // BrOn* with a BrOnNonNull + a RefCast, which is never better
+              // than any BrOn* by itself (even BrOnCast).
+              return;
+            }
+            curr->ref = casted;
             curr->op = BrOnNonNull;
             curr->castType = Type::none;
             curr->type = Type::none;
