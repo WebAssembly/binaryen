@@ -974,7 +974,7 @@ struct Reducer
     return maxSkip > 2;
   }
 
-  void visitModule(Module* curr) {
+  void visitModule([[maybe_unused]] Module* curr) {
     // The initial module given to us is our global object. As we continue to
     // process things here, we may replace the module, so we should never again
     // refer to curr.
