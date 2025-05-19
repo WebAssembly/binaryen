@@ -201,7 +201,9 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      stringref operations, before any default optimization passes. Those
      stringref operations can then be optimized (e.g., a concat of constants
      turns into a concatenated constant). When we are about to finish running
-     default optimizations, we lower stringref back into string builtins.
+     default optimizations, we lower stringref back into string builtins. (Note:
+     reference types and GC must also be enabled, as imported string operations
+     depend on GC arrays.)
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
