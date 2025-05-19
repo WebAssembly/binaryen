@@ -71,3 +71,64 @@
     (local (ref $private))
   )
 )
+
+;; A function returning a string is taken by reference. We should update the
+;; ref.funcs for it, both in the table and in the code, and not error.
+(module
+  ;; CHECK:      (type $0 (array (mut i16)))
+
+  ;; CHECK:      (type $1 (func (param externref externref) (result i32)))
+
+  ;; CHECK:      (type $2 (func (result (ref extern))))
+
+  ;; CHECK:      (type $3 (func (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (type $4 (func (param i32) (result (ref extern))))
+
+  ;; CHECK:      (type $5 (func (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (type $6 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; CHECK:      (type $7 (func (param externref) (result i32)))
+
+  ;; CHECK:      (type $8 (func (param externref i32) (result i32)))
+
+  ;; CHECK:      (type $9 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $4) (param i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "concat" (func $concat (type $5) (param externref externref) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $0) i32) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "equals" (func $equals (type $1) (param externref externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $7) (param externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (table $table 31 31 funcref)
+  (table $table 31 31 funcref)
+
+  ;; CHECK:      (elem $elem (i32.const 0) $func)
+  (elem $elem (i32.const 0) $func)
+
+  ;; CHECK:      (func $func (type $2) (result (ref extern))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func (result (ref string))
+    (drop
+      (ref.func $func)
+    )
+    (unreachable)
+  )
+)
