@@ -385,6 +385,8 @@
   ;; CHECK-NEXT: )
   (func $switch-param
     (local $cont (ref null $cont))
+    ;; The continuation expects a $super, but we send it a $sub. This requires
+    ;; $sub <: $super.
     (switch $cont $e
       (struct.new $sub)
       (local.get $cont)
