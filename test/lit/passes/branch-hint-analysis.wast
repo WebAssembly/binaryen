@@ -290,5 +290,41 @@
       )
     )
   )
+
+  ;; CHECK:      (func $if-nesting (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-nesting (param $x i32)
+    ;; We know nothing for this if.
+    (if
+      (local.get $x)
+      (then
+        (return)
+      )
+      (else
+        ;; This condition is likely false.
+        (if
+          (local.get $x)
+          (then
+            (unreachable)
+          )
+        )
+      )
+    )
+  )
 )
 
