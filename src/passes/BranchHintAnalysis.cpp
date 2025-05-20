@@ -174,19 +174,36 @@ std::cout << "  last " << *last << "\n";
       }
 
 std::cout << "  chances1\n";
-      // Compare the probabilities of the two targets.
-      auto firstChance = block->out[0]->contents.chance;
-      auto secondChance = block->out[1]->contents.chance;
-      if (firstChance == secondChance) {
-        continue;
+      // Compare the probabilities of the two targets and see if we can infer
+      // likelihood.
+      if (auto likely = getLikelihood(last,
+                                      block->out[0]->contents.chance,
+                                      block->out[1]->contents.chance)) {
+        // We have a useful hint!
+        curr->codeAnnotations[last].branchLikely = likely;
       }
-std::cout << "  chances2\n";
-
-      // We have a useful hint!
-      curr->codeAnnotations[last].branchLikely = (firstChance < secondChance);
-      // XXX order?
-      // XXX messy to assume the order... and if doesn't even visit in the right time... instead, add explicit hooks, called from doFinishIf in cfg-trav etc.
     }
+  }
+
+  // Checks if a branch from a branching instruction to two targets is likely or
+  // not (or unknown).
+  std::optional<bool> getLikelihood(Expression* brancher,
+                                    Chance first,
+                                    Chance second) {
+    if (first == second) {
+      // No data to suggest likelihood either way.
+      return {};
+    }
+
+    // |first, second| are the chances of the basic blocks after the brancher,
+    // in order. For Br*, the block right after them is reached if we do *not*
+    // branch (the condition is false), and the later block if we do, while for
+    // If, it is reversed: the block right after us is reached if the condition
+    // is true.
+    if (brancher->is<If>()) {
+      std::swap(first, second);
+    }
+    return first < second;
   }
 };
 
