@@ -147,5 +147,55 @@
       )
     )
   )
+
+  ;; CHECK:      (func $if-throw (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (throw $e)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-throw (param $x i32)
+    ;; A throw is unlikely.
+    (if
+      (local.get $x)
+      (then
+        (throw $e)
+      )
+      (else
+        (nop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-throw-unreachable (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (throw $e)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-throw-unreachable (param $x i32)
+    ;; A throw is less likely than an unreachable.
+    (if
+      (local.get $x)
+      (then
+        (throw $e)
+      )
+      (else
+        (unreachable)
+      )
+    )
+  )
 )
 
