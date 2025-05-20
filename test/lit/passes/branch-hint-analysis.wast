@@ -266,5 +266,29 @@
       )
     )
   )
+
+  ;; CHECK:      (func $if-unreachable-double (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-unreachable-double (param $x i32)
+    ;; Two unreachables are equally unlikely, so nothing to hint.
+    (if
+      (local.get $x)
+      (then
+        (unreachable)
+      )
+      (else
+        (unreachable)
+      )
+    )
+  )
 )
 
