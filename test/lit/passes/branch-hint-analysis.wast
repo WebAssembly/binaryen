@@ -148,6 +148,46 @@
     )
   )
 
+  ;; CHECK:      (func $if-unreachable-one-arm (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-unreachable-one-arm (param $x i32)
+    ;; The unreachable means the condition is unlikely.
+    (if
+      (local.get $x)
+      (then
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-one-arm-unreachable-later (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $if-one-arm-unreachable-later (param $x i32)
+    ;; The unreachable after means the condition is likely.
+    (if
+      (local.get $x)
+      (then
+        (return)
+      )
+    )
+    (unreachable)
+  )
+
   ;; CHECK:      (func $if-throw (type $0) (param $x i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
