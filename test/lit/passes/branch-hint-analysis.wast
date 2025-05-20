@@ -61,7 +61,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-unreachable (param $x i32)
-    ;; The unreachable branch should be marked unlikely.
+    ;; The unreachable means the condition is unlikely.
     (if
       (local.get $x)
       (then
