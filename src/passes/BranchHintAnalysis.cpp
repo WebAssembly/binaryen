@@ -109,11 +109,11 @@ std::cout << "  add!\n";
   // structures, so they do not appear in basic blocks (an If spans several),
   // but we do need to know where the If begins, specifically, where the
   // condition can branch
-  static void doStartIfTrue(SubType* self, Expression** currp) {
+  static void doStartIfTrue(BranchHintAnalysis* self, Expression** currp) {
     // Right before the Super creates a basic block for the ifTrue, note the
     // basic block the condition is in.
     if (self->currBasicBlock) {
-      currBasicBlock->contents.actions.push_back(currp);
+      self->currBasicBlock->contents.actions.push_back(currp);
     }
     Super::doStartIfTrue(self, currp);
   }
