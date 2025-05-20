@@ -173,6 +173,35 @@
     )
   )
 
+  ;; CHECK:      (func $if-throw_ref (type $3) (param $x i32) (param $y exnref)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-throw_ref (param $x i32) (param $y exnref)
+    ;; A throw is unlikely.
+    (if
+      (local.get $x)
+      (then
+        (throw_ref
+          (local.get $y)
+        )
+      )
+      (else
+        (nop)
+      )
+    )
+  )
+
   ;; CHECK:      (func $if-throw-unreachable (type $0) (param $x i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
