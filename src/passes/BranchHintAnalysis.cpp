@@ -67,11 +67,9 @@ struct BranchHintAnalysis
   // branch we don't need to hint about) and not switch (which Branch Hints do
   // not support).
   bool isBranching(Expression* curr) {
-std::cout << "chak isBranching " << *curr << '\n';
     if (auto* br = curr->dynCast<Break>()) {
       return !!br->condition;
     }
-std::cout << "chak isBranching2 " << *curr << " : " << (curr->is<If>() || curr->is<BrOn>()) << '\n';
     return curr->is<If>() || curr->is<BrOn>();
   }
 
@@ -94,13 +92,9 @@ std::cout << "chak isBranching2 " << *curr << " : " << (curr->is<If>() || curr->
   }
 
   void visitExpression(Expression* curr) {
-std::cout << "visit " << *curr << " : " << currBasicBlock << '\n';
     // Add all (reachable, so |currBasicBlock| exists) things that either branch
     // or suggest chances of branching.
-    auto cond = currBasicBlock && (isBranching(curr) || getChance(curr));
-    std::cout << "cond: " << cond << '\n';
-    if (cond) {
-std::cout << "  add!\n";
+    if (currBasicBlock && (isBranching(curr) || getChance(curr))) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
@@ -122,10 +116,10 @@ std::cout << "  add!\n";
     // Now that the walk is complete and we have a CFG, find things to optimize.
     // First, compute the chance of each basic block from its contents.
     for (Index i = 0; i < basicBlocks.size(); ++i) {
-      std::cout << "block\n";
+std::cout << "block\n";
       auto& block = basicBlocks[i];
       for (auto** currp : block->contents.actions) {
-        std::cout << "  " << **currp << "\n";
+std::cout << "  " << **currp << "\n";
         // The chance of a basic block is the lowest thing we can find: if
         // we see nop, call, unreachable, then the nop tells us nothing, the
         // call may suggests a low chance if it is cold, but the
@@ -134,7 +128,7 @@ std::cout << "  add!\n";
           block->contents.chance = std::min(block->contents.chance, *chance);
         }
       }
-      std::cout << " => " << int(block->contents.chance) << "\n";
+std::cout << " => " << int(block->contents.chance) << "\n";
     }
 
     // We consider the chance of a block to be no higher than the things it
@@ -159,30 +153,34 @@ std::cout << "  add!\n";
 
     // Debug
     for (Index i = 0; i < basicBlocks.size(); ++i) {
-      std::cout << "2block\n";
+std::cout << "2block\n";
       auto& block = basicBlocks[i];
-      std::cout << " => " << int(block->contents.chance) << "\n";
+std::cout << " => " << int(block->contents.chance) << "\n";
     }
 
     // Apply the final chances: when a branch between two options has a higher
     // higher chance to go one way then the other, mark it as likely or unlikely
     // accordingly. TODO: should we not mark when the difference is small?
     for (auto& block : basicBlocks) {
+std::cout << "lastloop block\n";
       if (block->contents.actions.empty() || block->out.size() != 2) {
         continue;
       }
 
       auto* last = *block->contents.actions.back();
+std::cout << "  last " << *last << "\n";
       if (!isBranching(last)) {
         continue;
       }
 
+std::cout << "  chances1\n";
       // Compare the probabilities of the two targets.
       auto firstChance = block->out[0]->contents.chance;
       auto secondChance = block->out[1]->contents.chance;
       if (firstChance == secondChance) {
         continue;
       }
+std::cout << "  chances2\n";
 
       // We have a useful hint!
       curr->codeAnnotations[last].branchLikely = (firstChance < secondChance);
