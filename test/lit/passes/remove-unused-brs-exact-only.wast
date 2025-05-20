@@ -12,16 +12,20 @@
   ;; CHECK:      (func $br_on_cast_to_non_null (type $1) (param $foo (ref null $foo)) (result (ref (exact $foo)))
   ;; CHECK-NEXT:  (block $block (result (ref (exact $foo)))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $block (ref null $foo) (ref (exact $foo))
-  ;; CHECK-NEXT:     (local.get $foo)
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (br_on_non_null $block
+  ;; CHECK-NEXT:      (ref.cast (ref null (exact $foo))
+  ;; CHECK-NEXT:       (local.get $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br_on_cast_to_non_null (param $foo (ref null $foo)) (result (ref (exact $foo)))
-    ;; We can simplify the br_on_cast to a br_on_non_null plus a cast, but that
-    ;; is not worthwhile, so we avoid it.
+    ;; We can simplify the br_on_cast to a br_on_non_null plus a cast.
     (block $block (result (ref (exact $foo)))
      (drop
         (br_on_cast $block (ref null $foo) (ref (exact $foo))

@@ -119,10 +119,15 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block anyref (ref $struct)
- ;; CHECK-NEXT:     (local.tee $any
- ;; CHECK-NEXT:      (local.get $struct)
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (ref.cast (ref null $struct)
+ ;; CHECK-NEXT:       (local.tee $any
+ ;; CHECK-NEXT:        (local.get $struct)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
@@ -147,8 +152,7 @@
     )
    )
    (drop
-    ;; Needs a null check and cast for validity. That makes it not worthwhile,
-    ;; so we do not optimize.
+    ;; Needs a null check and cast for validity.
     (br_on_cast $block anyref (ref $struct)
      (local.tee $any (local.get $struct))
     )

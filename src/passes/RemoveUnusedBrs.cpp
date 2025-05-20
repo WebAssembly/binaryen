@@ -1008,14 +1008,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             //       (...)
             //     (ref.null bot<X>)
             //   )
+            //
+            // A RefCast is added in some cases, but this is still generally
+            // worth doing as the BrOnNonNull and the appended null may end up
+            // optimized with surrounding code.
             auto* casted =
               maybeCast(curr->ref, curr->getSentType().with(Nullable));
-            if (casted->is<RefCast>()) {
-              // Given the RefCast we are forced to use, we are replacing a
-              // BrOn* with a BrOnNonNull + a RefCast, which is never better
-              // than any BrOn* by itself (even BrOnCast).
-              return;
-            }
             curr->ref = casted;
             curr->op = BrOnNonNull;
             curr->castType = Type::none;
