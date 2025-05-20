@@ -35,6 +35,8 @@ namespace {
 // An abstract chance (probability, but in less letters) of code being
 // reached, in the range 0 - 100.
 using Chance = uint8_t;
+static constexpr Chance MinChance = 0;
+static constexpr Chance TinyChance = 1;
 static constexpr Chance MaxChance = 100;
 
 struct Info {
@@ -78,12 +80,12 @@ struct BranchHintAnalysis
   std::optional<Chance> getChance(Expression* curr) {
     // Unreachable is assumed to never happen.
     if (curr->is<Unreachable>()) {
-      return 0;
+      return MinChance;
     }
 
     // Throw is assumed to almost never happen.
     if (curr->is<Throw>() || curr->is<ThrowRef>()) {
-      return 1;
+      return TinyChance;
     }
 
     // Otherwise, we don't know.
