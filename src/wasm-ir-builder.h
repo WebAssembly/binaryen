@@ -209,6 +209,7 @@ public:
                        std::optional<std::uint8_t> inline_ = std::nullopt);
   Result<> makeRefTest(Type type);
   Result<> makeRefCast(Type type);
+  Result<> makeRefGetDesc(HeapType type);
   Result<> makeBrOn(Index label,
                     BrOnOp op,
                     Type in = Type::none,

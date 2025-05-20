@@ -77,6 +77,7 @@ DELEGATE(I31Get);
 DELEGATE(CallRef);
 DELEGATE(RefTest);
 DELEGATE(RefCast);
+DELEGATE(RefGetDesc);
 DELEGATE(BrOn);
 DELEGATE(StructNew);
 DELEGATE(StructGet);

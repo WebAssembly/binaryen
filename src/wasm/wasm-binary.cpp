@@ -4498,6 +4498,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [heapType, exactness] = getHeapType();
           return builder.makeRefCast(Type(heapType, Nullable, exactness));
         }
+        case BinaryConsts::RefGetDesc: {
+          auto type = getIndexedHeapType();
+          return builder.makeRefGetDesc(type);
+        }
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail: {
           auto flags = getInt8();

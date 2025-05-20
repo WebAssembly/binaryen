@@ -703,6 +703,10 @@ struct InfoCollector
 
   void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
+  void visitRefGetDesc(RefGetDesc* curr) {
+    // TODO: Do something more similar to struct.get here
+    addRoot(curr);
+  }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);

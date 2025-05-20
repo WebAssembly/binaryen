@@ -495,6 +495,7 @@ public:
   void visitI31Get(I31Get* curr);
   void visitRefTest(RefTest* curr);
   void visitRefCast(RefCast* curr);
+  void visitRefGetDesc(RefGetDesc* curr);
   void visitBrOn(BrOn* curr);
   void visitStructNew(StructNew* curr);
   void visitStructGet(StructGet* curr);
@@ -2965,6 +2966,13 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "ref.cast to exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+}
+
+void FunctionValidator::visitRefGetDesc(RefGetDesc* curr) {
+  shouldBeTrue(
+    getModule()->features.hasCustomDescriptors(),
+    curr,
+    "ref.get_desc requires custom descriptors [--enable-custom-descriptors]");
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {

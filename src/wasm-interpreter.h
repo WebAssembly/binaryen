@@ -1670,6 +1670,10 @@ public:
     trap("cast error");
     WASM_UNREACHABLE("unreachable");
   }
+  Flow visitRefGetDesc(RefGetDesc* curr) {
+    NOTE_ENTER("RefGetDesc");
+    WASM_UNREACHABLE("unimplemented");
+  }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
     // BrOnCast* uses the casting infrastructure, so handle them first.

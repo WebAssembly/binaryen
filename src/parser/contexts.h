@@ -736,6 +736,10 @@ struct NullInstrParserCtx {
   Result<> makeRefCast(Index, const std::vector<Annotation>&, TypeT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<> makeRefGetDesc(Index, const std::vector<Annotation>&, HeapTypeT) {
+    return Ok{};
+  }
 
   Result<> makeBrOn(Index, const std::vector<Annotation>&, LabelIdxT, BrOnOp) {
     return Ok{};
@@ -2589,6 +2593,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                        const std::vector<Annotation>& annotations,
                        Type type) {
     return withLoc(pos, irBuilder.makeRefCast(type));
+  }
+
+  Result<> makeRefGetDesc(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          HeapType type) {
+    return withLoc(pos, irBuilder.makeRefGetDesc(type));
   }
 
   Result<> makeBrOn(Index pos,
