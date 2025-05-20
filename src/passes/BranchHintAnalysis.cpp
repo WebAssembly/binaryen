@@ -40,7 +40,7 @@ static constexpr Chance MaxChance = 100;
 struct Info {
   // In each basic block we will store instructions that either branch, or that
   // provide hints as to branching.
-  std::vector<Expression**> actions;
+  std::vector<Expression**> actions; // TODO * not **?
 
   // The chance of the block being reached. We assume any can be reached, unless
   // we see a good hint otherwise.
@@ -58,6 +58,9 @@ struct BranchHintAnalysis
   std::unique_ptr<Pass> create() override {
     return std::make_unique<BranchHintAnalysis>();
   }
+
+  using Super = WalkerPass<
+      CFGWalker<BranchHintAnalysis, UnifiedExpressionVisitor<BranchHintAnalysis>, Info>>;
 
   // We only look at things that branch twice, which is all branching
   // instructions but without br (without condition, which is an unconditional
@@ -100,6 +103,19 @@ std::cout << "visit " << *curr << " : " << currBasicBlock << '\n';
 std::cout << "  add!\n";
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
+  }
+
+  // Override cfg-analysis's handling of If start. Ifs are control flow
+  // structures, so they do not appear in basic blocks (an If spans several),
+  // but we do need to know where the If begins, specifically, where the
+  // condition can branch
+  static void doStartIfTrue(SubType* self, Expression** currp) {
+    // Right before the Super creates a basic block for the ifTrue, note the
+    // basic block the condition is in.
+    if (self->currBasicBlock) {
+      currBasicBlock->contents.actions.push_back(currp);
+    }
+    Super::doStartIfTrue(self, currp);
   }
 
   void visitFunction(Function* curr) {
