@@ -4,7 +4,7 @@
 ;;
 
 (module
-  ;; CHECK:      (tag $e (type $1))
+  ;; CHECK:      (tag $e (type $2))
   (tag $e)
 
   ;; CHECK:      (func $br-unreachable (type $0) (param $x i32)
@@ -45,6 +45,56 @@
         (local.get $x)
       )
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $br_on-unreachable (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref any))
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (br_on_non_null $block
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on-unreachable (param $x anyref)
+    ;; The br_on is unlikely, as it reaches an unreachable.
+    (drop
+      (block $block (result (ref any))
+        (br_on_non_null $block
+          (local.get $x)
+        )
+        (return)
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $br_on-unreachable-flip (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref any))
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (br_on_non_null $block
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on-unreachable-flip (param $x anyref)
+    ;; As above, but flipped, so the hint is flipped too.
+    (drop
+      (block $block (result (ref any))
+        (br_on_non_null $block
+          (local.get $x)
+        )
+        (unreachable)
+      )
     )
   )
 
