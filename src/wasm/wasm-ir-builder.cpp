@@ -155,14 +155,14 @@ void IRBuilder::push(Expression* expr) {
     auto end = BinaryLocation(*binaryPos - codeSectionOffset);
     // Some expressions already have their start noted, and we are just seeing
     // their last segment (like an Else).
-    // TODO: does Try etc. need this too?
-    if (expr->is<If>()) {
-      auto iter = func->expressionLocations.find(expr);
-      assert(iter != func->expressionLocations.end());
+    auto iter = func->expressionLocations.find(expr);
+    if (iter != func->expressionLocations.end()) {
+      // Just update the end.
       iter->second.end = end;
       // The true start from before is before the start of the current segment.
       assert(iter->second.start < start);
     } else {
+      // Add a whole entry.
       func->expressionLocations[expr] = BinaryLocations::Span{start, end};
     }
     lastBinaryPos = *binaryPos;

@@ -259,6 +259,54 @@
     )
   )
 
+  ;; CHECK:      (func $branch-hints-if-else (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $branch-hints-if-else (type $0) (param $x i32)
+  ;; RTRIP-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; RTRIP-NEXT:  (if
+  ;; RTRIP-NEXT:   (local.get $x)
+  ;; RTRIP-NEXT:   (then
+  ;; RTRIP-NEXT:    (drop
+  ;; RTRIP-NEXT:     (i32.const 1)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:   (else
+  ;; RTRIP-NEXT:    (drop
+  ;; RTRIP-NEXT:     (i32.const 0)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  ;; SRCMP:      (func $branch-hints-if-else (type $0) (param $x i32)
+  ;; SRCMP-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; SRCMP-NEXT:  (if
+  ;; SRCMP-NEXT:   (local.get $x)
+  ;; SRCMP-NEXT:   (then
+  ;; SRCMP-NEXT:    (drop
+  ;; SRCMP-NEXT:     (i32.const 1)
+  ;; SRCMP-NEXT:    )
+  ;; SRCMP-NEXT:   )
+  ;; SRCMP-NEXT:   (else
+  ;; SRCMP-NEXT:    (drop
+  ;; SRCMP-NEXT:     (i32.const 0)
+  ;; SRCMP-NEXT:    )
+  ;; SRCMP-NEXT:   )
+  ;; SRCMP-NEXT:  )
+  ;; SRCMP-NEXT: )
   (func $branch-hints-if-else (param $x i32)
     (@metadata.code.branch_hint "\01")
     (if
@@ -276,6 +324,48 @@
     )
   )
 
+  ;; CHECK:      (func $branch-hints-if-else-result (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $branch-hints-if-else-result (type $0) (param $x i32)
+  ;; RTRIP-NEXT:  (drop
+  ;; RTRIP-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; RTRIP-NEXT:   (if (result i32)
+  ;; RTRIP-NEXT:    (local.get $x)
+  ;; RTRIP-NEXT:    (then
+  ;; RTRIP-NEXT:     (i32.const 1)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (else
+  ;; RTRIP-NEXT:     (i32.const 0)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  ;; SRCMP:      (func $branch-hints-if-else-result (type $0) (param $x i32)
+  ;; SRCMP-NEXT:  (drop
+  ;; SRCMP-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; SRCMP-NEXT:   (if (result i32)
+  ;; SRCMP-NEXT:    (local.get $x)
+  ;; SRCMP-NEXT:    (then
+  ;; SRCMP-NEXT:     (i32.const 1)
+  ;; SRCMP-NEXT:    )
+  ;; SRCMP-NEXT:    (else
+  ;; SRCMP-NEXT:     (i32.const 0)
+  ;; SRCMP-NEXT:    )
+  ;; SRCMP-NEXT:   )
+  ;; SRCMP-NEXT:  )
+  ;; SRCMP-NEXT: )
   (func $branch-hints-if-else-result (param $x i32)
     (drop
       (@metadata.code.branch_hint "\01")
