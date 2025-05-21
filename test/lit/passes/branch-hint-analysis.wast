@@ -188,6 +188,27 @@
     (unreachable)
   )
 
+  ;; CHECK:      (func $if-one-arm-unreachable-always (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $if-one-arm-unreachable-always (param $x i32)
+    ;; The unreachable after means the if arm is unlikely, like the code after
+    ;; the if, so we do not hint.
+    (if
+      (local.get $x)
+      (then
+        (nop)  ;; used to be a return here
+      )
+    )
+    (unreachable)
+  )
+
   ;; CHECK:      (func $if-throw (type $0) (param $x i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
@@ -328,6 +349,7 @@
   )
 
   ;; CHECK:      (func $if-nesting-2 (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (then
@@ -354,7 +376,8 @@
         (return)
       )
       (else
-        ;; Both arms are equally likely, and all this code is unlikely.
+        ;; Both arms are equally likely, so we do not hint here, but all this
+        ;; code is unlikely.
         (if
           (local.get $x)
           (then
@@ -369,3 +392,4 @@
   )
 )
 
+;; throw after unreachable rtc.

@@ -51,9 +51,9 @@ struct Info {
   void dump(Function* func) {
     std::cout << "    info\n";
     if (!actions.empty()) {
-      std::cout << "      with last " << **actions.back() << '\n';
+      std::cout << "      with last: " << getExpressionName(*actions.back()) << '\n';
     }
-    std::cout << "      with chance " << int(chance) << '\n';
+    std::cout << "      with chance: " << int(chance) << '\n';
   }
 };
 
@@ -147,11 +147,18 @@ struct BranchHintAnalysis
     // of all blocks.
     UniqueDeferredQueue<BasicBlock*> work;
     for (auto& block : basicBlocks) {
-      work.push(block.get());
+      // Blocks with no successors have nothing new to compute in the loop
+      // below.
+      if (!block->out.empty()) {
+        work.push(block.get());
+      }
     }
     while (!work.empty()) {
       auto* block = work.pop();
 std::cout << "work on " << debugIds[block] << '\n';
+
+      // We should not get here if there is no work.
+      assert(!block->out.empty());
 
       // Compute this block from its successors. The naive chance we already
       // computed may decrease if all successors have lower probability.
@@ -161,6 +168,7 @@ std::cout << "work on " << debugIds[block] << '\n';
       }
 
       auto& chance = block->contents.chance;
+std::cout << "  old " << int(chance) << ", maxOut " << int(maxOut) << '\n';
       if (maxOut < chance) {
         chance = maxOut;
         for (auto* in : block->in) {
