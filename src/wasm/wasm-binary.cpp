@@ -947,7 +947,7 @@ void WasmBinaryWriter::writeNames() {
       auto substart =
         startSubsection(BinaryConsts::CustomSections::Subsection::NameLocal);
       o << U32LEB(functionsWithLocalNames.size());
-      Index emitted = 0;
+      [[maybe_unused]] Index emitted = 0;
       for (auto& [index, func] : functionsWithLocalNames) {
         // Pairs of (local index in IR, name).
         std::vector<std::pair<Index, Name>> localsWithNames;
@@ -4497,6 +4497,10 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::RefCastNull: {
           auto [heapType, exactness] = getHeapType();
           return builder.makeRefCast(Type(heapType, Nullable, exactness));
+        }
+        case BinaryConsts::RefGetDesc: {
+          auto type = getIndexedHeapType();
+          return builder.makeRefGetDesc(type);
         }
         case BinaryConsts::BrOnCast:
         case BinaryConsts::BrOnCastFail: {

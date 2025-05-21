@@ -610,6 +610,7 @@ instructions = [
     ("i31.get_u",            "makeI31Get(false)"),
     ("ref.test",             "makeRefTest()"),
     ("ref.cast",             "makeRefCast()"),
+    ("ref.get_desc",         "makeRefGetDesc()"),
     ("br_on_null",           "makeBrOnNull()"),
     ("br_on_non_null",       "makeBrOnNull(true)"),
     ("br_on_cast",           "makeBrOnCast()"),

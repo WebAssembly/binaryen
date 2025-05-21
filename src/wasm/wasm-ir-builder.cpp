@@ -151,9 +151,20 @@ void IRBuilder::push(Expression* expr) {
 
   applyDebugLoc(expr);
   if (binaryPos && func && lastBinaryPos != *binaryPos) {
-    func->expressionLocations[expr] =
-      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
-                            BinaryLocation(*binaryPos - codeSectionOffset)};
+    auto start = BinaryLocation(lastBinaryPos - codeSectionOffset);
+    auto end = BinaryLocation(*binaryPos - codeSectionOffset);
+    // Some expressions already have their start noted, and we are just seeing
+    // their last segment (like an Else).
+    auto iter = func->expressionLocations.find(expr);
+    if (iter != func->expressionLocations.end()) {
+      // Just update the end.
+      iter->second.end = end;
+      // The true start from before is before the start of the current segment.
+      assert(iter->second.start < start);
+    } else {
+      // Add a whole entry.
+      func->expressionLocations[expr] = BinaryLocations::Span{start, end};
+    }
     lastBinaryPos = *binaryPos;
   }
 
@@ -672,6 +683,13 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitRefGetDesc(RefGetDesc* curr,
+                           std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitRefGetDesc(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitBreak(Break* curr,
                       std::optional<Type> labelType = std::nullopt) {
     std::vector<Child> children;
@@ -926,6 +944,10 @@ Result<> IRBuilder::visitElse() {
   if (binaryPos && func) {
     func->delimiterLocations[iff][BinaryLocations::Else] =
       lastBinaryPos - codeSectionOffset;
+
+    // Note the start of the if (which will be lost as the If is closed and the
+    // Else begins, but the if spans them both).
+    func->expressionLocations[iff].start = scope.startPos - codeSectionOffset;
   }
 
   return pushScope(ScopeCtx::makeElse(std::move(scope)));
@@ -1988,6 +2010,17 @@ Result<> IRBuilder::makeRefCast(Type type) {
   curr.type = type;
   CHECK_ERR(visitRefCast(&curr));
   push(builder.makeRefCast(curr.ref, type));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeRefGetDesc(HeapType type) {
+  RefGetDesc curr;
+  if (!type.getDescriptorType()) {
+    return Err{"expected type with descriptor"};
+  }
+  CHECK_ERR(ChildPopper{*this}.visitRefGetDesc(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeRefGetDesc(curr.ref));
   return Ok{};
 }
 

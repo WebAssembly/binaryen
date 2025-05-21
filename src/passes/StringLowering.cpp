@@ -227,9 +227,6 @@ struct StringLowering : public StringGathering {
     // Replace string.* etc. operations with imported ones.
     replaceInstructions(module);
 
-    // Replace ref.null types as needed.
-    replaceNulls(module);
-
     // ReFinalize to apply all the above changes.
     ReFinalize().run(getPassRunner(), module);
 
@@ -291,6 +288,8 @@ struct StringLowering : public StringGathering {
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   void updateTypes(Module* module) {
+    TypeMapper::TypeUpdates updates;
+
     // TypeMapper will not handle public types, but we do want to modify them as
     // well: we are modifying the public ABI here. We can't simply tell
     // TypeMapper to consider them private, as then they'd end up in the new big
@@ -327,10 +326,13 @@ struct StringLowering : public StringGathering {
       for (auto result : func->type.getSignature().results) {
         results.push_back(fix(result));
       }
-      func->type = Signature(params, results);
-    }
 
-    TypeMapper::TypeUpdates updates;
+      // In addition to doing the update, mark it in the map of updates for
+      // TypeMapper, so RefFuncs with this type get updated.
+      auto old = func->type;
+      func->type = Signature(params, results);
+      updates[old] = func->type;
+    }
 
     // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
@@ -494,61 +496,6 @@ struct StringLowering : public StringGathering {
     Replacer replacer(*this);
     replacer.run(getPassRunner(), module);
     replacer.walkModuleCode(module);
-  }
-
-  // A ref.null of none needs to be noext if it is going to a location of type
-  // stringref.
-  void replaceNulls(Module* module) {
-    // Use SubtypingDiscoverer to find when a ref.null of none flows into a
-    // place that has been changed from stringref to externref.
-    struct NullFixer
-      : public WalkerPass<
-          ControlFlowWalker<NullFixer, SubtypingDiscoverer<NullFixer>>> {
-      // Hooks for SubtypingDiscoverer.
-      void noteSubtype(Type, Type) {
-        // Nothing to do for pure types.
-      }
-      void noteSubtype(HeapType, HeapType) {
-        // Nothing to do for pure types.
-      }
-      void noteSubtype(Type, Expression*) {
-        // Nothing to do for a subtype of an expression.
-      }
-      void noteSubtype(Expression* a, Type b) {
-        // This is the case we care about: if |a| is a null that must be a
-        // subtype of ext then we fix that up.
-        if (!b.isRef()) {
-          return;
-        }
-        HeapType top = b.getHeapType().getTop();
-        if (top.isMaybeShared(HeapType::ext)) {
-          if (auto* null = a->dynCast<RefNull>()) {
-            null->finalize(HeapTypes::noext.getBasic(top.getShared()));
-          }
-        }
-      }
-      void noteSubtype(Expression* a, Expression* b) {
-        // Only the type matters of the place we assign to.
-        noteSubtype(a, b->type);
-      }
-      void noteNonFlowSubtype(Expression* a, Type b) {
-        // Flow or non-flow is the same for us.
-        noteSubtype(a, b);
-      }
-      void noteCast(HeapType, HeapType) {
-        // Casts do not concern us.
-      }
-      void noteCast(Expression*, Type) {
-        // Casts do not concern us.
-      }
-      void noteCast(Expression*, Expression*) {
-        // Casts do not concern us.
-      }
-    };
-
-    NullFixer fixer;
-    fixer.run(getPassRunner(), module);
-    fixer.walkModuleCode(module);
   }
 };
 

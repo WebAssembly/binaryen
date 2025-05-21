@@ -718,6 +718,7 @@ public:
     CallRefId,
     RefTestId,
     RefCastId,
+    RefGetDescId,
     BrOnId,
     StructNewId,
     StructGetId,
@@ -1620,6 +1621,16 @@ public:
   void finalize();
 
   Type& getCastType() { return type; }
+};
+
+class RefGetDesc : public SpecificExpression<Expression::RefGetDescId> {
+public:
+  RefGetDesc() = default;
+  RefGetDesc(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {

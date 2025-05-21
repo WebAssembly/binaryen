@@ -703,6 +703,10 @@ struct InfoCollector
 
   void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
+  void visitRefGetDesc(RefGetDesc* curr) {
+    // TODO: Do something more similar to struct.get here
+    addRoot(curr);
+  }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);
@@ -2822,6 +2826,12 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
     WASM_UNREACHABLE("bad packed read");
   }
   if (!signed_) {
+    return;
+  }
+
+  // If there is no struct or array to read, no value will ever be returned.
+  if (ref->type.isNull()) {
+    contents = PossibleContents::none();
     return;
   }
 

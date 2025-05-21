@@ -147,6 +147,7 @@ void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
 void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
 void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
+void ReFinalize::visitRefGetDesc(RefGetDesc* curr) { curr->finalize(); }
 void ReFinalize::visitBrOn(BrOn* curr) {
   curr->finalize();
   if (curr->type == Type::unreachable) {

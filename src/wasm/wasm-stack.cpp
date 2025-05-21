@@ -2280,6 +2280,15 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   parent.writeHeapType(curr->type.getHeapType(), curr->type.getExactness());
 }
 
+void BinaryInstWriter::visitRefGetDesc(RefGetDesc* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefGetDesc);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
   switch (curr->op) {
     case BrOnNull:

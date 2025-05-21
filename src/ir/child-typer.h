@@ -857,6 +857,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->ref, Type(top, Nullable));
   }
 
+  void visitRefGetDesc(RefGetDesc* curr,
+                       std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      ht = curr->ref->type.getHeapType();
+    }
+    note(&curr->ref, Type(*ht, Nullable));
+  }
+
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:

@@ -894,6 +894,12 @@ public:
     ret->finalize();
     return ret;
   }
+  RefGetDesc* makeRefGetDesc(Expression* ref) {
+    auto* ret = wasm.allocator.alloc<RefGetDesc>();
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
   BrOn*
   makeBrOn(BrOnOp op, Name name, Expression* ref, Type castType = Type::none) {
     auto* ret = wasm.allocator.alloc<BrOn>();
