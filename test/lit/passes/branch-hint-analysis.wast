@@ -617,4 +617,102 @@
     ;; Finally, an unreachable.
     (unreachable)
   )
+
+  ;; CHECK:      (func $lots-in-middle-return (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 50)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $lots-in-middle-return (param $x i32)
+    ;; As above, but now a return in the middle of the code below. No hint here,
+    ;; but we can hint on the br_if near that return.
+    (if
+      (local.get $x)
+      (then
+        (return)
+      )
+    )
+    (nop)
+    (drop
+      (i32.const 10)
+    )
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (i32.const 20)
+        )
+      )
+      (else
+        (local.set $x
+          (i32.const 30)
+        )
+      )
+    )
+    (block $block
+      (br_if $block
+        (local.get $x)
+      )
+      (drop
+        (return)
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (if
+          (local.get $x)
+          (then
+            (drop
+              (i32.const 50)
+            )
+          )
+        )
+      )
+    )
+    (unreachable)
+  )
 )
