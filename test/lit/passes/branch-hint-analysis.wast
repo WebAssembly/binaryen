@@ -402,12 +402,18 @@
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br $loop)
   ;; CHECK-NEXT:  )
@@ -423,12 +429,14 @@
           (return)
         )
       )
+      (drop (i32.const 20))
       (if
         (local.get $y)
         (then
           (unreachable)
         )
       )
+      (drop (i32.const 30))
       (br $loop)
     )
   )
