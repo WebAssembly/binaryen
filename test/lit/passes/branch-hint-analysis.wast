@@ -481,7 +481,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls (param $x i32)
-    ;; As above but no unreachable at the end.
+    ;; As above but no unreachable at the end. The call might throw, but it also
+    ;; might exit normally, so we have no hint to give here.
     (if
       (local.get $x)
       (then
@@ -516,5 +517,104 @@
     (call $calls
       (local.get $x)
     )
+  )
+
+  ;; CHECK:      (func $lots-in-middle (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 50)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $lots-in-middle (param $x i32)
+    ;; The unreachable after all the code below means the condition is likely.
+    (if
+      (local.get $x)
+      (then
+        (return)
+      )
+    )
+    ;; ...lots of code, but no exits from function...
+    (nop)
+    (drop
+      (i32.const 10)
+    )
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (i32.const 20)
+        )
+      )
+      (else
+        (local.set $x
+          (i32.const 30)
+        )
+      )
+    )
+    (block $block
+      (br_if $block
+        (local.get $x)
+      )
+      (drop
+        (i32.const 40)
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (if
+          (local.get $x)
+          (then
+            (drop
+              (i32.const 50)
+            )
+          )
+        )
+      )
+    )
+    ;; Finally, an unreachable.
+    (unreachable)
   )
 )
