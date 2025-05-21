@@ -223,6 +223,8 @@ if(BYN_ENABLE_LTO)
   set(CMAKE_JOB_POOL_LINK link_job_pool)
   add_compile_flag("-flto=thin")
 endif()
+#add_link_flag("-Wl,--export-dynamic")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Bsymbolic -Wl,--export-dynamic")
 
 if(MSVC)
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")

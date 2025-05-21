@@ -20,6 +20,7 @@
 #include <functional>
 #include <vector>
 
+#include "compiler-support.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 
@@ -74,7 +75,7 @@ namespace std {
 
 template<> class hash<wasm::RecGroupShape> {
 public:
-  size_t operator()(const wasm::RecGroupShape& shape) const;
+  DLLEXPORT size_t operator()(const wasm::RecGroupShape& shape) const;
 };
 
 } // namespace std

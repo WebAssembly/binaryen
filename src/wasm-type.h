@@ -25,6 +25,7 @@
 #include <variant>
 #include <vector>
 
+#include "compiler-support.h"
 #include "support/index.h"
 #include "support/name.h"
 #include "support/parent_index_iterator.h"
@@ -1005,35 +1006,35 @@ namespace std {
 
 template<> class hash<wasm::Type> {
 public:
-  size_t operator()(const wasm::Type&) const;
+  DLLEXPORT size_t operator()(const wasm::Type&) const;
 };
 template<> class hash<wasm::Signature> {
 public:
-  size_t operator()(const wasm::Signature&) const;
+  DLLEXPORT size_t operator()(const wasm::Signature&) const;
 };
 template<> class hash<wasm::Continuation> {
 public:
-  size_t operator()(const wasm::Continuation&) const;
+  DLLEXPORT size_t operator()(const wasm::Continuation&) const;
 };
 template<> class hash<wasm::Field> {
 public:
-  size_t operator()(const wasm::Field&) const;
+  DLLEXPORT size_t operator()(const wasm::Field&) const;
 };
 template<> class hash<wasm::Struct> {
 public:
-  size_t operator()(const wasm::Struct&) const;
+  DLLEXPORT size_t operator()(const wasm::Struct&) const;
 };
 template<> class hash<wasm::Array> {
 public:
-  size_t operator()(const wasm::Array&) const;
+  DLLEXPORT size_t operator()(const wasm::Array&) const;
 };
 template<> class hash<wasm::HeapType> {
 public:
-  size_t operator()(const wasm::HeapType&) const;
+  DLLEXPORT size_t operator()(const wasm::HeapType&) const;
 };
 template<> class hash<wasm::RecGroup> {
 public:
-  size_t operator()(const wasm::RecGroup&) const;
+  DLLEXPORT size_t operator()(const wasm::RecGroup&) const;
 };
 
 } // namespace std
