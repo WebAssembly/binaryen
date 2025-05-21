@@ -161,21 +161,26 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   // exit blocks to flow to.
   bool hasSyntheticExit = false;
 
-  // Given a basic block, add a link to the exit block, indicating this block
-  // can reach the outside (unwind).
-  void linkToExit(BasicBlock* block) {
-    // TODO simplify exit/hasSynth
-    if (!hasSyntheticExit) {
-      exit = makeBasicBlock();
-      hasSyntheticExit = true;
-    }
-    link(block, exit);
-  }
-
   static void doEndReturn(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->startUnreachableBlock();
-    self->linkToExit(last);
+    if (!self->exit) {
+      // This is our first exit block and may be our only exit block, so just
+      // set it.
+      self->exit = last;
+    } else if (!self->hasSyntheticExit) {
+      // We now have multiple exit blocks, so we need to create a synthetic one.
+      // It will be added to the list of basic blocks at the end of the
+      // function.
+      auto* lastExit = self->exit;
+      self->exit = self->makeBasicBlock();
+      self->link(lastExit, self->exit);
+      self->link(last, self->exit);
+      self->hasSyntheticExit = true;
+    } else {
+      // We already have a synthetic exit block. Just link it up.
+      self->link(last, self->exit);
+    }
   }
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
@@ -349,11 +354,6 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       // the outside) can only happen at the end of basic blocks.
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock());
-
-      if (!self->ignoreBranchesOutsideOfFunc) {
-        // Add a branch to the outside of the func.
-        self->linkToExit(last);
-      }
     }
   }
 
