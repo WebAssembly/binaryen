@@ -440,4 +440,59 @@
       (br $loop)
     )
   )
+
+  ;; CHECK:      (func $calls (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $calls
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $calls (param $x i32)
+    ;; Calls may branch out, but only when throwing, which means the code after
+    ;; the if is unlikely, so the if is likely.
+    (if
+      (local.get $x)
+      (then
+        (return)
+      )
+    )
+    (call $calls
+      (local.get $x)
+    )
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $calls-throw (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (throw $e)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $calls
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $calls-throw (param $x i32)
+    ;; Both sides throw or may throw (at best), so we do not hint. XXX
+    (if
+      (local.get $x)
+      (then
+        (throw $e)
+      )
+    )
+    (call $calls
+      (local.get $x)
+    )
+    (unreachable)
+  )
 )
