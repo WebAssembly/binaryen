@@ -259,6 +259,38 @@
     )
   )
 
+  (func $branch-hints-if-else (param $x i32)
+    (@metadata.code.branch_hint "\01")
+    (if
+      (local.get $x)
+      (then
+        (drop
+          (i32.const 1)
+        )
+      )
+      (else
+        (drop
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
+  (func $branch-hints-if-else-result (param $x i32)
+    (drop
+      (@metadata.code.branch_hint "\01")
+      (if (result i32)
+        (local.get $x)
+        (then
+          (i32.const 1)
+        )
+        (else
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $branch-hints-br_on (type $1) (param $x anyref)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (drop

@@ -151,9 +151,20 @@ void IRBuilder::push(Expression* expr) {
 
   applyDebugLoc(expr);
   if (binaryPos && func && lastBinaryPos != *binaryPos) {
-    func->expressionLocations[expr] =
-      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
-                            BinaryLocation(*binaryPos - codeSectionOffset)};
+    auto start = BinaryLocation(lastBinaryPos - codeSectionOffset);
+    auto end = BinaryLocation(*binaryPos - codeSectionOffset);
+    // Some expressions already have their start noted, and we are just seeing
+    // their last segment (like an Else).
+    // TODO: does Try etc. need this too?
+    if (expr->is<If>()) {
+      auto iter = func->expressionLocations.find(expr);
+      assert(iter != func->expressionLocations.end());
+      iter->second.end = end;
+      // The true start from before is before the start of the current segment.
+      assert(iter->second.start < start);
+    } else {
+      func->expressionLocations[expr] = BinaryLocations::Span{start, end};
+    }
     lastBinaryPos = *binaryPos;
   }
 
@@ -933,6 +944,10 @@ Result<> IRBuilder::visitElse() {
   if (binaryPos && func) {
     func->delimiterLocations[iff][BinaryLocations::Else] =
       lastBinaryPos - codeSectionOffset;
+
+    // Note the start of the if (which will be lost as the If is closed and the
+    // Else begins, but the if spans them both).
+    func->expressionLocations[iff].start = scope.startPos - codeSectionOffset;
   }
 
   return pushScope(ScopeCtx::makeElse(std::move(scope)));
