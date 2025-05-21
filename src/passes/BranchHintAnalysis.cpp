@@ -44,8 +44,8 @@ struct Info {
   // provide hints as to branching.
   std::vector<Expression**> actions; // TODO * not **?
 
-  // The chance of the block being reached. We assume any can be reached, unless
-  // we see a good hint otherwise.
+  // The chance of the block being reached. We assume it is likely to be reached
+  // until we see a signal otherwise.
   Chance chance = MaxChance;  
 
   void dump(Function* func) {
@@ -102,10 +102,20 @@ struct BranchHintAnalysis
   }
 
   void visitExpression(Expression* curr) {
-    // Add all (reachable, so |currBasicBlock| exists) things that either branch
-    // or suggest chances of branching.
-    if (currBasicBlock && (isBranching(curr) || getChance(curr))) {
+    // Ignore unreachable code.
+    if (!currBasicBlock) {
+      return;
+    }
+
+    // Add all things that branch.
+    if (isBranching(curr)) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
+    }
+
+    // Apply all signals: if something tells us the block is unlikely, mark it
+    // so.
+    if (auto chance = getChance(curr)) {
+      currBasicBlock->contents.chance = std::min(currBasicBlock->contents.chance, *chance);
     }
   }
 
@@ -124,20 +134,6 @@ struct BranchHintAnalysis
 
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
-    // First, compute the chance of each basic block from its contents.
-    for (Index i = 0; i < basicBlocks.size(); ++i) {
-      auto& block = basicBlocks[i];
-      for (auto** currp : block->contents.actions) {
-        // The naive chance of a basic block is the lowest thing we can find: if
-        // we see nop, call, unreachable, then the nop tells us nothing, the
-        // call may suggests a low chance if it is cold, but the
-        // unreachable suggests a very low chance, which we trust.
-        if (auto chance = getChance(*currp)) {
-          block->contents.chance = std::min(block->contents.chance, *chance);
-        }
-      }
-    }
-
     //dumpCFG("pre");
 
     // We consider the chance of a block to be no higher than the things it
