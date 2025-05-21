@@ -49,11 +49,11 @@ struct Info {
   Chance chance = MaxChance;  
 
   void dump(Function* func) {
-    std::cout << "    info\n";
+    //std::cerr << "    info\n";
     if (!actions.empty()) {
-      std::cout << "      with last: " << getExpressionName(*actions.back()) << '\n';
+      //std::cerr << "      with last: " << getExpressionName(*actions.back()) << '\n';
     }
-    std::cout << "      with chance: " << int(chance) << '\n';
+    //std::cerr << "      with chance: " << int(chance) << '\n';
   }
 };
 
@@ -138,8 +138,7 @@ struct BranchHintAnalysis
       }
     }
 
-    // Debug
-    dumpCFG("pre");
+    //dumpCFG("pre");
 
     // We consider the chance of a block to be no higher than the things it
     // targets, that is, chance(block) := max(chance(target) for target). Flow
@@ -155,7 +154,7 @@ struct BranchHintAnalysis
     }
     while (!work.empty()) {
       auto* block = work.pop();
-std::cout << "work on " << debugIds[block] << '\n';
+//std::cerr << "work on " << debugIds[block] << '\n';
 
       // We should not get here if there is no work.
       assert(!block->out.empty());
@@ -168,7 +167,7 @@ std::cout << "work on " << debugIds[block] << '\n';
       }
 
       auto& chance = block->contents.chance;
-std::cout << "  old " << int(chance) << ", maxOut " << int(maxOut) << '\n';
+//std::cerr << "  old " << int(chance) << ", maxOut " << int(maxOut) << '\n';
       if (maxOut < chance) {
         chance = maxOut;
         for (auto* in : block->in) {
@@ -177,24 +176,24 @@ std::cout << "  old " << int(chance) << ", maxOut " << int(maxOut) << '\n';
       }
     }
 
-    dumpCFG("analzyed");
+    //dumpCFG("analzyed");
 
     // Apply the final chances: when a branch between two options has a higher
     // higher chance to go one way then the other, mark it as likely or unlikely
     // accordingly. TODO: should we not mark when the difference is small?
     for (auto& block : basicBlocks) {
-std::cout << "lastloop block\n";
+//std::cerr << "lastloop block\n";
       if (block->contents.actions.empty() || block->out.size() != 2) {
         continue;
       }
 
       auto* last = *block->contents.actions.back();
-std::cout << "  last " << *last << "\n";
+//std::cerr << "  last " << *last << "\n";
       if (!isBranching(last)) {
         continue;
       }
 
-std::cout << "  chances1\n";
+//std::cerr << "  chances1\n";
       // Compare the probabilities of the two targets and see if we can infer
       // likelihood.
       if (auto likely = getLikelihood(last,
