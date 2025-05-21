@@ -47,6 +47,14 @@ struct Info {
   // The chance of the block being reached. We assume any can be reached, unless
   // we see a good hint otherwise.
   Chance chance = MaxChance;  
+
+  void dump(Function* func) {
+    std::cout << "    info\n";
+    if (!actions.empty()) {
+      std::cout << "      with last " << **actions.back() << '\n';
+    }
+    std::cout << "      with chance " << int(chance) << '\n';
+  }
 };
 
 struct BranchHintAnalysis
@@ -118,11 +126,9 @@ struct BranchHintAnalysis
     // Now that the walk is complete and we have a CFG, find things to optimize.
     // First, compute the chance of each basic block from its contents.
     for (Index i = 0; i < basicBlocks.size(); ++i) {
-std::cout << "block\n";
       auto& block = basicBlocks[i];
       for (auto** currp : block->contents.actions) {
-std::cout << "  " << **currp << "\n";
-        // The chance of a basic block is the lowest thing we can find: if
+        // The naive chance of a basic block is the lowest thing we can find: if
         // we see nop, call, unreachable, then the nop tells us nothing, the
         // call may suggests a low chance if it is cold, but the
         // unreachable suggests a very low chance, which we trust.
@@ -130,8 +136,10 @@ std::cout << "  " << **currp << "\n";
           block->contents.chance = std::min(block->contents.chance, *chance);
         }
       }
-std::cout << " => " << int(block->contents.chance) << "\n";
     }
+
+    // Debug
+    dumpCFG("pre");
 
     // We consider the chance of a block to be no higher than the things it
     // targets, that is, chance(block) := max(chance(target) for target). Flow
@@ -143,22 +151,25 @@ std::cout << " => " << int(block->contents.chance) << "\n";
     }
     while (!work.empty()) {
       auto* block = work.pop();
-      // Apply this block to its predecessors, potentially raising their
-      // chances.
-      for (auto* in : block->in) {
-        if (block->contents.chance > in->contents.chance) {
-          in->contents.chance = block->contents.chance;
+std::cout << "work on " << debugIds[block] << '\n';
+
+      // Compute this block from its successors. The naive chance we already
+      // computed may decrease if all successors have lower probability.
+      auto maxOut = MinChance;
+      for (auto* out : block->out) {
+        maxOut = std::max(maxOut, out->contents.chance);
+      }
+
+      auto& chance = block->contents.chance;
+      if (maxOut < chance) {
+        chance = maxOut;
+        for (auto* in : block->in) {
           work.push(in);
         }
       }
     }
 
-    // Debug
-    for (Index i = 0; i < basicBlocks.size(); ++i) {
-std::cout << "2block\n";
-      auto& block = basicBlocks[i];
-std::cout << " => " << int(block->contents.chance) << "\n";
-    }
+    dumpCFG("analzyed");
 
     // Apply the final chances: when a branch between two options has a higher
     // higher chance to go one way then the other, mark it as likely or unlikely
