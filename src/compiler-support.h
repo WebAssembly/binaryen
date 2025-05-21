@@ -31,16 +31,17 @@
 #define WASM_BUILTIN_UNREACHABLE __assume(false)
 #endif
 
-// Forces symbols to be exported from libbinaryen.so. Currently we are just
-// using the default flags, which cause most of our symbols to have "default"
-// visibility, which means they can all be used from the tool sources. However
-// a recent libc++ change caused functions declared in namespace std (such as
-// hash template specializations) to have hidden visibility. So this define is
-// used to force them to be exported. In the future if we want to compile
+// Forces symbols to be exported from libbinaryen dynamic library. Currently
+// we are just using the default flags, causing most of our symbols to have
+// "default" visibility, meaning they can all be used from the tool sources.
+// However a recent libc++ change caused functions declared in namespace std
+// (e.g. hash template specializations) to have hidden visibility. So this
+// macro forces them to be exported. In the future if we want to compile
 // libbinaryen with -fvisibility-hidden or use a DLL on Windows, we'll need
 // to explicitly annotate everything we want to export. But that's probably
 // only useful if we want external users to link against libbinaryen.so
-#ifdef __ELF__
+// (currently we don't; it's only used to reduce our install size).
+#if defined(__ELF__) || defined(__MACH__)
 #define DLLEXPORT [[gnu::visibility("default")]]
 #else
 #define DLLEXPORT
