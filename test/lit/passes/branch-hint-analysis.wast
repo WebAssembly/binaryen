@@ -390,6 +390,46 @@
       )
     )
   )
-)
 
-;; throw after unreachable rtc.
+  ;; CHECK:      (func $loop (type $4) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop (param $x i32) (param $y i32)
+    ;; We should not error when computing cycles.
+    (loop $loop
+      (drop (i32.const 10))
+      ;; No hint for the first if, but the second is unlikely.
+      (if
+        (local.get $x)
+        (then
+          (return)
+        )
+      )
+      (if
+        (local.get $y)
+        (then
+          (unreachable)
+        )
+      )
+      (br $loop)
+    )
+  )
+)
