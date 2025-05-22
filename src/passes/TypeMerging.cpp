@@ -253,7 +253,19 @@ void TypeMerging::run(Module* module_) {
   // siblings is the merged type rather than their common supertype after the
   // merge. This can happen in merge(Siblings), but also in merge(Supertypes),
   // since we may end up merging B1 to its super A, and also B2 to the same
-  // super A, ending up with B1 and B2 now equal.
+  // super A, ending up with B1 and B2 now equal - in that case the siblings are
+  // now both equal (to the parent), allowing an exact LUB:
+  //
+  //  (select (result A))
+  //   (B1)
+  //   (B2)
+  //  )
+  // =>
+  //  (select (result (exact A))) ;; result is now exact
+  //   (A) ;; both are
+  //   (A) ;; now A
+  //  )
+  //
   ReFinalize().run(getPassRunner(), module);
 }
 
