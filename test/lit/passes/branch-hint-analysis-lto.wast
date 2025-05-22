@@ -6,16 +6,40 @@
 ;; functions.
 
 (module
+  ;; CHECK:      (tag $e (type $1))
+  (tag $e)
+
+  ;; CHECK:      (func $unreachable (type $1)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $unreachable
     ;; Helper for below.
     (unreachable)
   )
 
+  ;; CHECK:      (func $throw (type $1)
+  ;; CHECK-NEXT:  (throw $e)
+  ;; CHECK-NEXT: )
   (func $throw
     ;; Helper for below.
     (throw $e)
   )
 
+  ;; CHECK:      (func $nop (type $1)
+  ;; CHECK-NEXT: )
+  (func $nop
+    ;; Helper for below.
+  )
+
+  ;; CHECK:      (func $call-unreachable (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $call-unreachable (param $x i32)
     ;; This is unlikely as the call's target is.
     (if
@@ -26,6 +50,15 @@
     )
   )
 
+  ;; CHECK:      (func $call-throw (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $throw)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $call-throw (param $x i32)
     ;; This is unlikely as the call's target is.
     (if
@@ -36,6 +69,36 @@
     )
   )
 
+  ;; CHECK:      (func $call-nop (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-nop (param $x i32)
+    ;; Nothing to infer here.
+    (if
+      (local.get $x)
+      (then
+        (call $nop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $call-both (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $throw)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $call-both (param $x i32)
     ;; Unreachable is less likely than throw.
     (if
@@ -49,6 +112,18 @@
     )
   )
 
+  ;; CHECK:      (func $call-both-flip (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $throw)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $call-both-flip (param $x i32)
     ;; As above, but flipped.
     (if
