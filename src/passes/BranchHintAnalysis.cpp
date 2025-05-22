@@ -229,11 +229,11 @@ struct BranchHintAnalysis : public Pass {
         if (callerBlock->contents.actions.empty()) {
           continue;
         }
-        auto* last = block->contents.actions.back();
+        auto* last = callerBlock->contents.actions.back();
         if (auto* call = last->dynCast<Call>()) {
           auto* target = module->getFunction(call->target);
           auto* targetEntryBlock = analyzer.map[target].entry;
-          entryToCallersMap[targetEntryBlock].push_back(callerBlock);
+          entryToCallersMap[targetEntryBlock].push_back(callerBlock.get());
         }
       }
     }
@@ -250,7 +250,7 @@ struct BranchHintAnalysis : public Pass {
       auto* entry = work.pop();
       auto entryChance = entry->contents.chance;
       // Find callers with higher chance: we can infer they have lower, now.
-      for (auto* caller : entryToCallersMap) {
+      for (auto* caller : entryToCallersMap[entry]) {
         auto& callerChance = caller->contents.chance;
         if (callerChance > entryChance) {
           callerChance = entryChance;
@@ -275,14 +275,14 @@ struct BranchHintAnalysis : public Pass {
 
         auto* last = block->contents.actions.back();
   //std::cerr << "  last " << *last << "\n";
-        if (!isBranching(last)) {
+        if (!analysis.isBranching(last)) {
           continue;
         }
 
   //std::cerr << "  chances1\n";
         // Compare the probabilities of the two targets and see if we can infer
         // likelihood.
-        if (auto likely = getLikelihood(last,
+        if (auto likely = analysis.getLikelihood(last,
                                         block->out[0]->contents.chance,
                                         block->out[1]->contents.chance)) {
           // We have a useful hint!
