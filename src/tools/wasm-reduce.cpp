@@ -1479,7 +1479,7 @@ More documentation can be found at
   }
 
   std::cerr << "|checking that command has expected behavior on canonicalized "
-               "(read-written) binary\n";
+               "(read-written) input\n";
   {
     // read and write it
     auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
@@ -1489,7 +1489,7 @@ More documentation can be found at
     }
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {
-      stopIfNotForced("failed to read and write the binary", readWrite);
+      stopIfNotForced("failed to read and write the input", readWrite);
     } else {
       ProgramResult result(command);
       if (result != expected) {
