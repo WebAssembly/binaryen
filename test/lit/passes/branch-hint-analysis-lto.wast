@@ -189,6 +189,54 @@
     )
   )
 
-;; TODO: flow back from call, to get the hint
+  ;; CHECK:      (func $flow-back (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 20)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $flow-back (param $x i32)
+    ;; We must flow back what we infer about the call, to previous blocks, in
+    ;; order to infer a hint on this if.
+    (if
+      (local.get $x)
+      (then
+        ;; Add some basic blocks and code in the middle.
+        (drop
+          (i32.const 10)
+        )
+        (if
+          (local.get $x)
+          (then
+            (drop
+              (i32.const 20)
+            )
+          )
+        )
+        (drop
+          (i32.const 30)
+        )
+        (call $unreachable)
+      )
+    )
+  )
+
 ;; TODO: flow back throgh chain of calls
 )
