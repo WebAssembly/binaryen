@@ -231,7 +231,7 @@ struct BranchHintAnalysis : public Pass {
     // Whenever a function's entry block has low chance, that means callers are
     // low chance as well. Build a mapping to connect each entry function to the
     // callers, so we can update them later down.
-    std::unordered_map<BasicBlock*, std::vector<BlockContext*>> entryToCallersMap;
+    std::unordered_map<BasicBlock*, std::vector<BlockContext>> entryToCallersMap;
     for (auto& [_, analysis] : analyzer.map) {
       for (auto& callerBlock : analysis.basicBlocks) {
         // Calls only appear at the end of blocks.
@@ -242,7 +242,8 @@ struct BranchHintAnalysis : public Pass {
         if (auto* call = last->dynCast<Call>()) {
           auto* target = module->getFunction(call->target);
           auto* targetEntryBlock = analyzer.map[target].entry;
-          entryToCallersMap[targetEntryBlock].push_back(BlockContext{callerBlock.get(), &analysis});
+          auto context = BlockContext{callerBlock.get(), &analysis};
+          entryToCallersMap[targetEntryBlock].push_back(context);
         }
       }
     }
@@ -259,7 +260,7 @@ struct BranchHintAnalysis : public Pass {
       auto* entry = work.pop();
       auto entryChance = entry->contents.chance;
       // Find callers with higher chance: we can infer they have lower, now.
-      for (auto* callerContext : entryToCallersMap[entry]) {
+      for (auto& callerContext : entryToCallersMap[entry]) {
         auto& callerChance = callerContext.block->contents.chance;
         if (callerChance > entryChance) {
           callerChance = entryChance;
@@ -269,12 +270,12 @@ struct BranchHintAnalysis : public Pass {
           // from the caller blocks, and we could do these flows in parallel.
           auto* callerAnalysis = callerContext.analysis;
           auto* callerEntry = callerAnalysis->entry;
-          auto oldCallerEntryChance = callerEntry->content.chance;
+          auto oldCallerEntryChance = callerEntry->contents.chance;
           callerAnalysis.flow();
 
           // If our entry decreased in chance, we can propagate that to our
           // callers too.
-          if (oldCallerEntryChance > callerEntry->content.chance) {
+          if (oldCallerEntryChance > callerEntry->contents.chance) {
             work.push(callerEntry);
           }
         }
