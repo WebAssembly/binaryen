@@ -6,6 +6,9 @@
 ;; functions.
 
 (module
+  ;; CHECK:      (import "a" "b" (func $import (type $1)))
+  (import "a" "b" (func $import))
+
   ;; CHECK:      (tag $e (type $1))
   (tag $e)
 
@@ -295,6 +298,24 @@
       (local.get $x)
       (then
         (call $chain-2)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $call-import (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-import (param $x i32)
+    ;; We know nothing about imports.
+    (if
+      (local.get $x)
+      (then
+        (call $import)
       )
     )
   )

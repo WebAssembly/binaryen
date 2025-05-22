@@ -252,7 +252,7 @@ struct BranchHintAnalysis : public Pass {
     // chance and put them in a work queue.
     UniqueDeferredQueue<BasicBlock*> work;
     for (auto& [entry, _] : entryToCallersMap) {
-      if (entry->contents.chance < MaxChance) {
+      if (entry && entry->contents.chance < MaxChance) {
         work.push(entry);
       }
     }
