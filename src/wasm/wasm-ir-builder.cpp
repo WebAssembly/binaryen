@@ -151,9 +151,18 @@ void IRBuilder::push(Expression* expr) {
 
   applyDebugLoc(expr);
   if (binaryPos && func && lastBinaryPos != *binaryPos) {
-    func->expressionLocations[expr] =
+    auto span =
       BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
                             BinaryLocation(*binaryPos - codeSectionOffset)};
+    // Some expressions already have their start noted, and we are just seeing
+    // their last segment (like an Else).
+    auto [iter, inserted] = func->expressionLocations.insert({expr, span});
+    if (!inserted) {
+      // Just update the end.
+      iter->second.end = span.end;
+      // The true start from before is before the start of the current segment.
+      assert(iter->second.start < span.start);
+    }
     lastBinaryPos = *binaryPos;
   }
 
@@ -933,6 +942,10 @@ Result<> IRBuilder::visitElse() {
   if (binaryPos && func) {
     func->delimiterLocations[iff][BinaryLocations::Else] =
       lastBinaryPos - codeSectionOffset;
+
+    // Note the start of the if (which will be lost as the If is closed and the
+    // Else begins, but the if spans them both).
+    func->expressionLocations[iff].start = scope.startPos - codeSectionOffset;
   }
 
   return pushScope(ScopeCtx::makeElse(std::move(scope)));
@@ -980,6 +993,8 @@ Result<> IRBuilder::visitCatch(Name tag) {
   if (binaryPos && func) {
     auto& delimiterLocs = func->delimiterLocations[tryy];
     delimiterLocs[delimiterLocs.size()] = lastBinaryPos - codeSectionOffset;
+    // TODO: As in visitElse, we likely need to stash the Try start. Here we
+    //       also need to account for multiple catches.
   }
 
   CHECK_ERR(pushScope(ScopeCtx::makeCatch(std::move(scope), tryy)));
