@@ -137,6 +137,32 @@
     )
   )
 
+  ;; CHECK:      (func $call-both-mix (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:    (call $throw)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-both-mix (param $x i32)
+    ;; As above, but mix calls in one arm. Nothing to infer.
+    (if
+      (local.get $x)
+      (then
+        (call $unreachable)
+      )
+      (else
+        (call $unreachable)
+        (call $throw)
+      )
+    )
+  )
+
 ;; TODO: flow back from call, to get the hint
 ;; TODO: flow back throgh chain of calls
 )
