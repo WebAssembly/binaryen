@@ -66,6 +66,8 @@ struct BranchHintCFGAnalysis
   using Super =
       CFGWalker<BranchHintCFGAnalysis, UnifiedExpressionVisitor<BranchHintCFGAnalysis>, Info>;
 
+  PassOptions passOptions;
+
   // We only look at things that branch twice, which is all branching
   // instructions but without br (without condition, which is an unconditional
   // branch we don't need to hint about) and not switch (which Branch Hints do
@@ -75,6 +77,10 @@ struct BranchHintCFGAnalysis
       return !!br->condition;
     }
     return curr->is<If>() || curr->is<BrOn>();
+  }
+
+  bool isCall(Expression* curr) {
+    return ShallowEffectAnalyzer(passOptions, *getModule(), curr).calls;
   }
 
   // Returns the chance that an instruction is reached, if something about
@@ -101,8 +107,8 @@ struct BranchHintCFGAnalysis
       return;
     }
 
-    // Add all things that branch.
-    if (isBranching(curr)) {
+    // Add all things that branch or call.
+    if (isBranching(curr) || isCall(curr)) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
 
@@ -229,14 +235,20 @@ struct BranchHintAnalysis : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   void run(Module* module) override {
+    // Analyze each function, computing chances inside it.
     ModuleUtils::CallGraphPropertyAnalysis<StoredBranchHintCFGAnalysis> analyzer(
       *module, [&](Function* func, StoredBranchHintCFGAnalysis& analysis) {
         if (func->imported()) {
           return;
         }
 
+        analysis.passOptions = getPassOptions();
         analysis.walkFunctionInModule(func, module);
       });
+
+    // Link up the CFGs from each function to a single unified CFG, by linking a
+    // call in one function to the entry blocks in the called function.
+    // TODO
   }
 };
 
