@@ -171,7 +171,7 @@ struct TypeMerging : public Pass {
   // in a single step would be unsound because a type might be merged into its
   // parent's sibling without being merged with its parent.
   enum MergeKind { Supertypes, Siblings };
-  bool merge(MergeKind kind);
+  void merge(MergeKind kind);
 
   // Split a partition into potentially multiple partitions for each
   // disconnected group of types it contains.
@@ -242,27 +242,22 @@ void TypeMerging::run(Module* module_) {
   // Merging can unlock more sibling merging opportunities because two identical
   // types cannot be merged until their respective identical parents have been
   // merged in a previous step, making them siblings.
-  //
-  // If we merge siblings, we also need to refinalize because the LUB of merged
-  // siblings is the merged type rather than their common supertype after the
-  // merge.
-  bool refinalize = false;
   merge(Supertypes);
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
-    if (!merge(Siblings)) {
-      break;
-    }
-    refinalize = true;
+    merge(Siblings);
   }
 
   applyMerges();
 
-  if (refinalize) {
-    ReFinalize().run(getPassRunner(), module);
-  }
+  // If we merge siblings, we also need to refinalize because the LUB of merged
+  // siblings is the merged type rather than their common supertype after the
+  // merge. This can happen in merge(Siblings), but also in merge(Supertypes),
+  // since we may end up merging B1 to its super A, and also B2 to the same
+  // super A, ending up with B1 and B2 now equal.
+  ReFinalize().run(getPassRunner(), module);
 }
 
-bool TypeMerging::merge(MergeKind kind) {
+void TypeMerging::merge(MergeKind kind) {
   // Initial partitions are formed by grouping types with their structurally
   // similar supertypes or siblings, according to the `kind`.
   Partitions partitions;
@@ -432,14 +427,12 @@ bool TypeMerging::merge(MergeKind kind) {
   // will accidentally set that subtype to be its own supertype. Also keep track
   // of the remaining types.
   std::vector<HeapType> newMergeable;
-  bool merged = false;
   for (const auto& partition : refinedPartitions) {
     auto target = mergeableSupertypesFirst(partition).front();
     newMergeable.push_back(target);
     for (auto type : partition) {
       if (type != target) {
         merges[type] = target;
-        merged = true;
       }
     }
   }
@@ -459,8 +452,6 @@ bool TypeMerging::merge(MergeKind kind) {
     std::cerr << "\n";
   }
 #endif // TYPE_MERGING_DEBUG
-
-  return merged;
 }
 
 std::vector<std::vector<HeapType>>

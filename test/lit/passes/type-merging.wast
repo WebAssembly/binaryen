@@ -890,7 +890,7 @@
  )
 
  ;; CHECK:      (func $test (type $D) (result (ref any) (ref $B))
- ;; CHECK-NEXT:  (block $l (type $A) (result (ref any) (ref $B))
+ ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

@@ -131,3 +131,44 @@
     )
   )
 )
+
+;; Merge two siblings to their parent. We must refinalize here.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (array i8)))
+    (type $A (sub (array i8)))
+    (type $B1 (sub $A (array i8)))
+    (type $B2 (sub $A (array i8)))
+  )
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (array.new_default $A
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new_default $A
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; B1 and B2 will turn into A, after which the select can be refined to an
+    ;; exact type.
+    (drop
+      (select (result (ref $A))
+        (array.new_default $B1
+          (i32.const 0)
+        )
+        (array.new_default $B2
+          (i32.const 1)
+        )
+        (i32.const 2)
+      )
+    )
+  )
+)
+
