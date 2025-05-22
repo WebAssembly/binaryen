@@ -51,11 +51,11 @@ struct Info {
   Chance chance = MaxChance;  
 
   void dump(Function* func) {
-    //std::cerr << "    info\n";
+    std::cerr << "    info\n";
     if (!actions.empty()) {
-      //std::cerr << "      with last: " << getExpressionName(actions.back()) << '\n';
+      std::cerr << "      with last: " << getExpressionName(actions.back()) << '\n';
     }
-    //std::cerr << "      with chance: " << int(chance) << '\n';
+    std::cerr << "      with chance: " << int(chance) << '\n';
   }
 };
 
@@ -263,14 +263,13 @@ struct BranchHintAnalysis : public Pass {
       for (auto& callerContext : entryToCallersMap[entry]) {
         auto& callerChance = callerContext.block->contents.chance;
         if (callerChance > entryChance) {
-          callerChance = entryChance;
-
           // This adjustment to a basic block's chance may lead to more
           // inferences inside that function: do a flow. TODO we could flow only
           // from the caller blocks, and we could do these flows in parallel.
           auto* callerAnalysis = callerContext.analysis;
           auto* callerEntry = callerAnalysis->entry;
           auto oldCallerEntryChance = callerEntry->contents.chance;
+          callerChance = entryChance;
           callerAnalysis->flow();
 
           // If our entry decreased in chance, we can propagate that to our
@@ -288,19 +287,20 @@ struct BranchHintAnalysis : public Pass {
     // chance to go one way then the other, mark it as likely or unlikely
     // accordingly. TODO: should we not mark when the difference is small?
     for (auto& [func, analysis] : analyzer.map) {
+//std::cerr << "lastloop on " << func->name << '\n';
       for (auto& block : analysis.basicBlocks) {
-  //std::cerr << "lastloop block\n";
+//std::cerr << "  lastloop block " << block.get() << " with chance " << int(block->contents.chance) << "\n";
         if (block->contents.actions.empty() || block->out.size() != 2) {
           continue;
         }
 
         auto* last = block->contents.actions.back();
-  //std::cerr << "  last " << *last << "\n";
+//std::cerr << "  last " << *last << "\n";
         if (!analysis.isBranching(last)) {
           continue;
         }
 
-  //std::cerr << "  chances1\n";
+//std::cerr << "  chances1\n";
         // Compare the probabilities of the two targets and see if we can infer
         // likelihood.
         if (auto likely = analysis.getLikelihood(last,

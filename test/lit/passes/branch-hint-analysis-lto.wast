@@ -281,6 +281,7 @@
   )
 
   ;; CHECK:      (func $call-chain (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (then
@@ -289,7 +290,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-chain (param $x i32)
-    ;; This is unlikely as the callchain ends that way. XXX
+    ;; This is unlikely as the callchain ends that way.
     (if
       (local.get $x)
       (then
