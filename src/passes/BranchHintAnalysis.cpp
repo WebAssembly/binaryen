@@ -231,6 +231,11 @@ struct BranchHintAnalysis : public Pass {
     // Whenever a function's entry block has low chance, that means callers are
     // low chance as well. Build a mapping to connect each entry function to the
     // callers, so we can update them later down.
+    //
+    // How much this cross-function analysis matters varies a lot by codebase,
+    // anywhere from 3%, 7%, 20%, to 50%. (The 50% is on code that uses partial
+    // inlining heavily, leaving many outlined throws, which can then be marked
+    // unlikely.)
     std::unordered_map<BasicBlock*, std::vector<BlockContext>> entryToCallersMap;
     for (auto& [_, analysis] : analyzer.map) {
       for (auto& callerBlock : analysis.basicBlocks) {
