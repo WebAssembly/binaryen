@@ -132,11 +132,11 @@ struct BranchHintCFGAnalysis
   }
 
   void visitFunction(Function* curr) {
-    flow(curr);
+    flow();
   }
 
   // Flow chances in a function, to find the chances of all blocks inside it.
-  void flow(Function* func) {
+  void flow() {
     // We consider the chance of a block to be no higher than the things it
     // targets, that is, chance(block) := max(chance(target) for target). Flow
     // chances to sources of blocks to achieve that, starting from the indexes
@@ -271,7 +271,7 @@ struct BranchHintAnalysis : public Pass {
           auto* callerAnalysis = callerContext.analysis;
           auto* callerEntry = callerAnalysis->entry;
           auto oldCallerEntryChance = callerEntry->contents.chance;
-          callerAnalysis.flow();
+          callerAnalysis->flow();
 
           // If our entry decreased in chance, we can propagate that to our
           // callers too.
