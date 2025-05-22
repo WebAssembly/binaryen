@@ -238,5 +238,63 @@
     )
   )
 
-;; TODO: flow back throgh chain of calls
+  ;; CHECK:      (func $chain-0 (type $1)
+  ;; CHECK-NEXT:  (call $throw)
+  ;; CHECK-NEXT: )
+  (func $chain-0
+    ;; The end of a chain of functions that calls something unlikely. Helper for
+    ;; below.
+    (call $throw)
+  )
+
+  ;; CHECK:      (func $chain-1 (type $1)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $chain-0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $chain-1
+    ;; This callchain segment needs some flow internally. We can also infer this
+    ;; if is likely (since throw is more likely than unreachable).
+    (if
+      (i32.const 10)
+      (then
+        (call $chain-0)
+      )
+      (else
+        (call $unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $chain-2 (type $1)
+  ;; CHECK-NEXT:  (call $chain-1)
+  ;; CHECK-NEXT: )
+  (func $chain-2
+    (call $chain-1)
+  )
+
+  ;; CHECK:      (func $call-chain (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $chain-2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-chain (param $x i32)
+    ;; This is unlikely as the callchain ends that way. XXX
+    (if
+      (local.get $x)
+      (then
+        (call $chain-2)
+      )
+    )
+  )
 )
