@@ -163,6 +163,32 @@
     )
   )
 
+  ;; CHECK:      (func $call-both-mix-flip (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $throw)
+  ;; CHECK-NEXT:    (call $unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-both-mix-flip (param $x i32)
+    ;; As above, but flipped in that arm. Still nothing to infer.
+    (if
+      (local.get $x)
+      (then
+        (call $unreachable)
+      )
+      (else
+        (call $throw)
+        (call $unreachable)
+      )
+    )
+  )
+
 ;; TODO: flow back from call, to get the hint
 ;; TODO: flow back throgh chain of calls
 )
