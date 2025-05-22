@@ -66,8 +66,6 @@ struct BranchHintCFGAnalysis
   using Super =
       CFGWalker<BranchHintCFGAnalysis, UnifiedExpressionVisitor<BranchHintCFGAnalysis>, Info>;
 
-  PassOptions passOptions;
-
   // We only look at things that branch twice, which is all branching
   // instructions but without br (without condition, which is an unconditional
   // branch we don't need to hint about) and not switch (which Branch Hints do
@@ -80,7 +78,8 @@ struct BranchHintCFGAnalysis
   }
 
   bool isCall(Expression* curr) {
-    return ShallowEffectAnalyzer(passOptions, *getModule(), curr).calls;
+    // TODO: we could infer something for indirect calls too.
+    return curr->is<Call>();
   }
 
   // Returns the chance that an instruction is reached, if something about
@@ -133,9 +132,11 @@ struct BranchHintCFGAnalysis
   }
 
   void visitFunction(Function* curr) {
-    // Now that the walk is complete and we have a CFG, find things to optimize.
-    //dumpCFG("pre");
+    flow(curr);
+  }
 
+  // Flow chances in a function, to find the chances of all blocks inside it.
+  void flow(Function* func) {
     // We consider the chance of a block to be no higher than the things it
     // targets, that is, chance(block) := max(chance(target) for target). Flow
     // chances to sources of blocks to achieve that, starting from the indexes
@@ -169,34 +170,6 @@ struct BranchHintCFGAnalysis
         for (auto* in : block->in) {
           work.push(in);
         }
-      }
-    }
-
-    //dumpCFG("analzyed");
-
-    // Apply the final chances: when a branch between two options has a higher
-    // higher chance to go one way then the other, mark it as likely or unlikely
-    // accordingly. TODO: should we not mark when the difference is small?
-    for (auto& block : basicBlocks) {
-//std::cerr << "lastloop block\n";
-      if (block->contents.actions.empty() || block->out.size() != 2) {
-        continue;
-      }
-
-      auto* last = block->contents.actions.back();
-//std::cerr << "  last " << *last << "\n";
-      if (!isBranching(last)) {
-        continue;
-      }
-
-//std::cerr << "  chances1\n";
-      // Compare the probabilities of the two targets and see if we can infer
-      // likelihood.
-      if (auto likely = getLikelihood(last,
-                                      block->out[0]->contents.chance,
-                                      block->out[1]->contents.chance)) {
-        // We have a useful hint!
-        curr->codeAnnotations[last].branchLikely = likely;
       }
     }
   }
@@ -242,12 +215,81 @@ struct BranchHintAnalysis : public Pass {
           return;
         }
 
-        analysis.passOptions = getPassOptions();
         analysis.walkFunctionInModule(func, module);
       });
 
-    // Link up the CFGs from each function to a single unified CFG, by linking a
-    // call in one function to the entry blocks in the called function.
+    // Whenever a function's entry block has low chance, that means callers are
+    // low chance as well. Build a mapping to connect each entry function to the
+    // callers, so we can update them later down.
+    using BasicBlock = StoredBranchHintCFGAnalysis::BasicBlock;
+    std::unordered_map<BasicBlock*, std::vector<BasicBlock*>> entryToCallersMap;
+    for (auto& [_, analysis] : analyzer.map) {
+      for (auto& callerBlock : analysis.basicBlocks) {
+        // Calls only appear at the end of blocks.
+        if (callerBlock->contents.actions.empty()) {
+          continue;
+        }
+        auto* last = block->contents.actions.back();
+        if (auto* call = last->dynCast<Call>()) {
+          auto* target = module->getFunction(call->target);
+          auto* targetEntryBlock = analyzer.map[target].entry;
+          entryToCallersMap[targetEntryBlock].push_back(callerBlock);
+        }
+      }
+    }
+
+    // Flow back from entries to callers. We start from all entries with low
+    // chance and put them in a work queue.
+    UniqueDeferredQueue<BasicBlock*> work;
+    for (auto& [entry, callers] : entryToCallersMap) {
+      if (entry->contents.chance < MaxChance) {
+        work.push(entry);
+      }
+    }
+    while (!work.empty()) {
+      auto* entry = work.pop();
+      auto entryChance = entry->contents.chance;
+      // Find callers with higher chance: we can infer they have lower, now.
+      for (auto* caller : entryToCallersMap) {
+        auto& callerChance = caller->contents.chance;
+        if (callerChance > entryChance) {
+          callerChance = entryChance;
+
+          // This adjustment to a basic block's chance may lead to more
+          // inferences inside that function: do a flow. TODO
+        }
+      }
+    }
+
+    // Finally, apply all we've inferred. TODO: parallelize.
+
+    // Apply the final chances: when a branch between two options has a higher
+    // chance to go one way then the other, mark it as likely or unlikely
+    // accordingly. TODO: should we not mark when the difference is small?
+    for (auto& [func, analysis] : analyzer.map) {
+      for (auto& block : analysis.basicBlocks) {
+  //std::cerr << "lastloop block\n";
+        if (block->contents.actions.empty() || block->out.size() != 2) {
+          continue;
+        }
+
+        auto* last = block->contents.actions.back();
+  //std::cerr << "  last " << *last << "\n";
+        if (!isBranching(last)) {
+          continue;
+        }
+
+  //std::cerr << "  chances1\n";
+        // Compare the probabilities of the two targets and see if we can infer
+        // likelihood.
+        if (auto likely = getLikelihood(last,
+                                        block->out[0]->contents.chance,
+                                        block->out[1]->contents.chance)) {
+          // We have a useful hint!
+          func->codeAnnotations[last].branchLikely = likely;
+        }
+      }
+    }
   }
 };
 
