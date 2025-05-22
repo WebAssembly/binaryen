@@ -44,7 +44,7 @@ static constexpr Chance MaxChance = 100;
 struct Info {
   // In each basic block we will store instructions that either branch, or that
   // provide hints as to branching.
-  std::vector<Expression**> actions; // TODO * not **?
+  std::vector<Expression*> actions;
 
   // The chance of the block being reached. We assume it is likely to be reached
   // until we see a signal otherwise.
@@ -53,7 +53,7 @@ struct Info {
   void dump(Function* func) {
     //std::cerr << "    info\n";
     if (!actions.empty()) {
-      //std::cerr << "      with last: " << getExpressionName(*actions.back()) << '\n';
+      //std::cerr << "      with last: " << getExpressionName(actions.back()) << '\n';
     }
     //std::cerr << "      with chance: " << int(chance) << '\n';
   }
@@ -109,7 +109,7 @@ struct BranchHintCFGAnalysis
 
     // Add all things that branch or call.
     if (isBranching(curr) || isCall(curr)) {
-      currBasicBlock->contents.actions.push_back(getCurrentPointer());
+      currBasicBlock->contents.actions.push_back(curr);
     }
 
     // Apply all signals: if something tells us the block is unlikely, mark it
@@ -127,7 +127,7 @@ struct BranchHintCFGAnalysis
     // Right before the Super creates a basic block for the ifTrue, note the
     // basic block the condition is in.
     if (self->currBasicBlock) {
-      self->currBasicBlock->contents.actions.push_back(currp);
+      self->currBasicBlock->contents.actions.push_back(*currp);
     }
     Super::doStartIfTrue(self, currp);
   }
@@ -183,7 +183,7 @@ struct BranchHintCFGAnalysis
         continue;
       }
 
-      auto* last = *block->contents.actions.back();
+      auto* last = block->contents.actions.back();
 //std::cerr << "  last " << *last << "\n";
       if (!isBranching(last)) {
         continue;
@@ -248,7 +248,6 @@ struct BranchHintAnalysis : public Pass {
 
     // Link up the CFGs from each function to a single unified CFG, by linking a
     // call in one function to the entry blocks in the called function.
-    // TODO
   }
 };
 
