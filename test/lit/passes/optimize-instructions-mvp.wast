@@ -17830,7 +17830,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $add-op-overlapping-bits-corner-case
-    ;; One bit overlapped, so we can not optimized.
+    ;; One bit overlaps, so we cannot optimize.
     (drop
       (i32.and
         (i32.const 0x7fffffff)
