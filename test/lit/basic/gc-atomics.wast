@@ -463,7 +463,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array.get_u (param (ref null $array-packed)) (result i32)
-    (array.atomic.get_u $array-packed
+    (array.atomic.get_u acqrel $array-packed
       (local.get 0)
       (i32.const 42)
     )
