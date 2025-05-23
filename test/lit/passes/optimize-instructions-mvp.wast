@@ -17865,8 +17865,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $add-op-no-overlapping-skipped
-    ;; Both-constant cases which does not meets the condition are handled
-    ;; by Precompute, so they are skipped here.
+    ;; Both-constant cases which do not meet the condition (mask of left has no
+    ;; overlap with right) is left for Precompute.
     (drop
       (i32.and
         (i32.const 2)
