@@ -816,11 +816,11 @@ struct NullInstrParserCtx {
   }
   template<typename HeapTypeT>
   Result<>
-  makeArrayGet(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
+  makeArrayGet(Index, const std::vector<Annotation>&, HeapTypeT, bool, MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT) {
+  Result<> makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT, MemoryOrder) {
     return Ok{};
   }
   Result<> makeArrayLen(Index, const std::vector<Annotation>&) { return Ok{}; }
