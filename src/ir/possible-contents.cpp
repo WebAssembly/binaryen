@@ -1060,7 +1060,7 @@ struct InfoCollector
     // however, which is a downside.
     Builder builder(*getModule());
     auto* get =
-      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type, MemoryOrder::Unordered);
+      builder.makeArrayGet(curr->srcRef, curr->srcIndex, MemoryOrder::Unordered, curr->srcRef->type);
     visitArrayGet(get);
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get, MemoryOrder::Unordered);
     visitArraySet(set);
