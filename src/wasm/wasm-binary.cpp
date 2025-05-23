@@ -3772,6 +3772,19 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStructCmpxchg(type, field, order);
         }
       }
+        case BinaryConsts::ArrayAtomicGet:
+        case BinaryConsts::ArrayAtomicGetS:
+        case BinaryConsts::ArrayAtomicGetU: {
+          auto order = getMemoryOrder();
+          auto type = getIndexedHeapType();
+          bool signed_ = op == BinaryConsts::ArrayAtomicGetS;
+          return builder.makeArrayGet(type, signed_, order);
+        }
+        case BinaryConsts::ArrayAtomicSet: {
+          auto order = getMemoryOrder();
+          auto type = getIndexedHeapType();
+          return builder.makeArraySet(type, order);
+        }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }
     case BinaryConsts::MiscPrefix: {
@@ -4559,11 +4572,11 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::ArrayGet:
         case BinaryConsts::ArrayGetU:
-          return builder.makeArrayGet(getIndexedHeapType(), false);
+          return builder.makeArrayGet(getIndexedHeapType(), false, MemoryOrder::Unordered);
         case BinaryConsts::ArrayGetS:
-          return builder.makeArrayGet(getIndexedHeapType(), true);
+          return builder.makeArrayGet(getIndexedHeapType(), true, MemoryOrder::Unordered);
         case BinaryConsts::ArraySet:
-          return builder.makeArraySet(getIndexedHeapType());
+          return builder.makeArraySet(getIndexedHeapType(), MemoryOrder::Unordered);
         case BinaryConsts::ArrayLen:
           return builder.makeArrayLen();
         case BinaryConsts::ArrayCopy: {
