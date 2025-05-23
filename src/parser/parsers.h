@@ -2416,7 +2416,19 @@ Result<> makeArrayGet(Ctx& ctx,
                       bool signed_) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  return ctx.makeArrayGet(pos, annotations, *type, signed_);
+  return ctx.makeArrayGet(pos, annotations, MemoryOrder::Unordered, *type, signed_);
+}
+
+template<typename Ctx>
+Result<> makeAtomicArrayGet(Ctx& ctx,
+                      Index pos,
+                      const std::vector<Annotation>& annotations,
+                      bool signed_) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayGet(pos, annotations, order, *type, signed_);
 }
 
 template<typename Ctx>
@@ -2424,7 +2436,17 @@ Result<>
 makeArraySet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  return ctx.makeArraySet(pos, annotations, *type);
+  return ctx.makeArraySet(pos, annotations, *type, MemoryOrder::Unordered);
+}
+
+template<typename Ctx>
+Result<>
+makeAtomicArraySet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArraySet(pos, annotations, *type, order);
 }
 
 template<typename Ctx>
