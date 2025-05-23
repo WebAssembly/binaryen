@@ -431,7 +431,7 @@
   )
 
   ;; CHECK:      (func $array.get (type $8) (param $0 (ref null $array)) (result i32)
-  ;; CHECK-NEXT:  (array.get $array
+  ;; CHECK-NEXT:  (array.atomic.get $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -444,7 +444,7 @@
   )
 
   ;; CHECK:      (func $array.get_s (type $7) (param $0 (ref null $array-packed)) (result i32)
-  ;; CHECK-NEXT:  (array.get_s $array-packed
+  ;; CHECK-NEXT:  (array.atomic.get_s $array-packed
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -457,7 +457,7 @@
   )
 
   ;; CHECK:      (func $array.get_u (type $7) (param $0 (ref null $array-packed)) (result i32)
-  ;; CHECK-NEXT:  (array.get_u $array-packed
+  ;; CHECK-NEXT:  (array.atomic.get_u acqrel $array-packed
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -470,7 +470,7 @@
   )
 
   ;; CHECK:      (func $array.set (type $9) (param $0 (ref null $array))
-  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:  (array.atomic.set acqrel $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (i32.const 1337)
