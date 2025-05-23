@@ -470,7 +470,7 @@
   )
 
   ;; CHECK:      (func $array.set (type $9) (param $0 (ref null $array))
-  ;; CHECK-NEXT:  (array$array
+  ;; CHECK-NEXT:  (array.set $array
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (i32.const 1337)
