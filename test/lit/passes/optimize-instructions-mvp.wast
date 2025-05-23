@@ -1770,9 +1770,12 @@
   )
   ;; CHECK:      (func $canonicalize-consts-vars (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.and
-  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1810,6 +1813,7 @@
   ;; CHECK-NEXT: )
   (func $canonicalize-consts-vars (param $x i32) (param $y i32)
     (drop (i32.and (i32.const 1) (i32.const 2)))
+    (drop (i32.and (i32.const 2) (i32.const 1)))
     (drop (i32.and (local.get $x) (i32.const 3)))
     (drop (i32.and (i32.const 4) (local.get $x)))
     (drop (i32.and (local.get $x) (local.get $y)))
@@ -3193,18 +3197,18 @@
       (i32.const 24)
     )
   )
-  ;; CHECK:      (func $sext-24-and-127-128 (result i32)
+  ;; CHECK:      (func $sext-24-and-127-unknown (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.and
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 127)
-  ;; CHECK-NEXT:   (i32.const 128)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $sext-24-and-127-128 (result i32)
+  (func $sext-24-and-127-unknown (param $x i32) (result i32)
     (i32.shr_s
       (i32.shl
         (i32.and ;; takes the min, here it is ok
           (i32.const 127)
-          (i32.const 128)
+          (local.get $x)
         )
         (i32.const 24)
       )
@@ -7300,7 +7304,7 @@
     )
    )
   )
-  ;; CHECK:      (func $de-morgan-2 (param $x i32) (param $y i32)
+  ;; CHECK:      (func $de-morgan-2 (param $x i32) (param $y i32) (param $z i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.or
@@ -7350,7 +7354,9 @@
   ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.wrap_i64
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -7359,7 +7365,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $de-morgan-2 (param $x i32) (param $y i32)
+  (func $de-morgan-2 (param $x i32) (param $y i32) (param $z i64)
     (drop
       (i32.and (i32.eqz (local.get $x)) (i32.eqz (local.get $y)))
     )
@@ -7376,7 +7382,7 @@
       (i32.and (local.get $x) (i32.eqz (local.get $y)))
     )
     (drop
-      (i32.and (i32.eqz (local.get $x)) (i32.wrap_i64 (i64.const 2)))
+      (i32.and (i32.eqz (local.get $x)) (i32.wrap_i64 (local.get $z)))
     )
     (drop
       (i32.and (i32.wrap_i64 (i64.const 1)) (i32.eqz (local.get $y)))
@@ -18216,6 +18222,192 @@
        (i32.const 32)
       )
       (i32.const 1)
+    )
+  )
+  ;; CHECK:      (func $add-op-no-overlapping-bits-corner-case (param $0 i32) (param $1 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-op-no-overlapping-bits-corner-case (param $0 i32) (param $1 i64)
+    ;; optimizeAndNoOverlappingBits simplifies AND operations where
+    ;;  - the left value covers bits in [0, n)
+    ;;  - the right operand is a constant with no bits in [0, n)
+    ;; Result is simplified to zero.
+    ;; No bit overlaps, so we optimize.
+    (drop
+      (i32.and
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 1)
+        (i64.const 2)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x7fffffff)
+        (i64.const 0x80000000)
+      )
+    )
+    ;; We know something (but not constant) about the bits
+    ;; on the left, so we can optimize.
+    (drop
+      (i32.and
+        (i32.and
+          (local.get $0)
+          (i32.const 0xff)
+        )
+        (i32.const 0xff00)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.and
+          (local.get $1)
+          (i64.const 0xff)
+        )
+        (i64.const 0xff00)
+      )
+    )
+  )
+  ;; CHECK:      (func $add-op-overlapping-bits-corner-case
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const 2147483647)
+  ;; CHECK-NEXT:    (i32.const -2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:    (i64.const 2147483649)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-op-overlapping-bits-corner-case
+    ;; One bit overlaps, so we cannot optimize.
+    (drop
+      (i32.and
+        (i32.const 0x7fffffff)
+        (i32.const 0x80000001)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x7fffffff)
+        (i64.const 0x80000001)
+      )
+    )
+  )
+  ;; CHECK:      (func $add-op-no-overlapping-skipped
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.const 2)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.const 2147483648)
+  ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-op-no-overlapping-skipped
+    ;; Both-constant cases which do not meet the condition (mask of left has no
+    ;; overlap with right) is left for Precompute.
+    (drop
+      (i32.and
+        (i32.const 2)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 2)
+        (i64.const 1)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x80000000)
+        (i64.const 0x7fffffff)
+      )
+    )
+  )
+  ;; CHECK:      (func $add-op-unknown-useful (param $0 i32) (param $1 i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:    (i32.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (i64.const -9223372036854775808)
+  ;; CHECK-NEXT:    (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $add-op-unknown-useful (param $0 i32) (param $1 i64)
+    ;; We know nothing useful about the bits on the left, so we cannot optimize.
+    (drop
+      (i32.and
+        (i32.const 0x80000000)
+        (i32.const 0x7fffffff)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.const 0x8000000000000000)
+        (i64.const 0x7fffffffffffffff)
+      )
+    )
+    (drop
+      (i32.and
+        (local.get $0)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i64.and
+        (local.get $1)
+        (i64.const 1)
+      )
     )
   )
 )
