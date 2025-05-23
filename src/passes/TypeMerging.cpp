@@ -245,9 +245,22 @@ void TypeMerging::run(Module* module_) {
   //
   // If we merge siblings, we also need to refinalize because the LUB of merged
   // siblings is the merged type rather than their common supertype after the
-  // merge.
-  bool refinalize = false;
-  merge(Supertypes);
+  // merge. This can happen in merge(Siblings), but also in merge(Supertypes),
+  // since we may end up merging B1 to its super A, and also B2 to the same
+  // super A, ending up with B1 and B2 now equal - in that case the siblings are
+  // now both equal (to the parent), allowing an exact LUB:
+  //
+  //  (select (result A))
+  //   (B1)
+  //   (B2)
+  //  )
+  // =>
+  //  (select (result (exact A))) ;; result is now exact
+  //   (A) ;; both are
+  //   (A) ;; now A
+  //  )
+  //
+  bool refinalize = merge(Supertypes);
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
     if (!merge(Siblings)) {
       break;
