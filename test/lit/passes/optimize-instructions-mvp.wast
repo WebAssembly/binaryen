@@ -17779,7 +17779,7 @@
       (i32.const 1)
     )
   )
-  ;; CHECK:      (func $add-op-no-overlapping-bits-corner-case
+  ;; CHECK:      (func $add-op-no-overlapping-bits-corner-case (param $0 i32) (param $1 i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -17789,8 +17789,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $add-op-no-overlapping-bits-corner-case
+  (func $add-op-no-overlapping-bits-corner-case (param $0 i32) (param $1 i64)
     ;; optimizeAndNoOverlappingBits simplifies AND operations where
     ;;  - the left value covers bits in [0, n)
     ;;  - the right operand is a constant with no bits in [0, n)
@@ -17812,6 +17818,26 @@
       (i64.and
         (i64.const 0x7fffffff)
         (i64.const 0x80000000)
+      )
+    )
+    ;; We know something (but not constant) about the bits
+    ;; on the left, so we can optimize.
+    (drop
+      (i32.and
+        (i32.and
+          (local.get $0)
+          (i32.const 0xff)
+        )
+        (i32.const 0xff00)
+      )
+    )
+    (drop
+      (i64.and
+        (i64.and
+          (local.get $1)
+          (i64.const 0xff)
+        )
+        (i64.const 0xff00)
       )
     )
   )
