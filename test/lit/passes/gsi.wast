@@ -2241,3 +2241,41 @@
     )
   )
 )
+
+;; The field has type nullable $A, but we can infer it contains null (as both
+;; globals do). This leads to refining the types of the parents.
+(module
+  ;; CHECK:      (type $A (struct (field (ref null $A))))
+  (type $A (struct (field (ref null $A))))
+
+  ;; CHECK:      (type $1 (func (param (ref $A)) (result (ref $A))))
+
+  ;; CHECK:      (global $global$1 (ref (exact $A)) (struct.new_default $A))
+  (global $global$1 (ref (exact $A)) (struct.new_default $A))
+
+  ;; CHECK:      (global $global$2 (ref (exact $A)) (struct.new_default $A))
+  (global $global$2 (ref (exact $A)) (struct.new_default $A))
+
+  ;; CHECK:      (func $func (type $1) (param $A (ref $A)) (result (ref $A))
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $A (ref $A)) (result (ref $A))
+    ;; The block's result should refine.
+    (block (result (ref $A))
+      (ref.as_non_null
+        (struct.get $A 0
+          (local.get $A)
+        )
+      )
+    )
+  )
+)
