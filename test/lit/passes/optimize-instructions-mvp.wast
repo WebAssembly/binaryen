@@ -17795,7 +17795,7 @@
     ;;  - the left value covers bits in [0, n)
     ;;  - the right operand is a constant with no bits in [0, n)
     ;; Result is simplified to zero.
-    ;; No any bit overlapped, optimized.
+    ;; No bit overlaps, so we optimize.
     (drop
       (i32.and
         (i32.const 1)
