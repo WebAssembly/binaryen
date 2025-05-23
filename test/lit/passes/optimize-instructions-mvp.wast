@@ -17913,7 +17913,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $add-op-unknown-useful (param $0 i32) (param $1 i64)
-    ;; Know nothing useful about the bits on the left, so we can not optimize.
+    ;; We know nothing useful about the bits on the left, so we cannot optimize.
     (drop
       (i32.and
         (i32.const 0x80000000)
