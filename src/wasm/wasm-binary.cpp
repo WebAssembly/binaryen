@@ -3771,7 +3771,6 @@ Result<> WasmBinaryReader::readInst() {
           auto field = getU32LEB();
           return builder.makeStructCmpxchg(type, field, order);
         }
-      }
         case BinaryConsts::ArrayAtomicGet:
         case BinaryConsts::ArrayAtomicGetS:
         case BinaryConsts::ArrayAtomicGetU: {
@@ -3785,6 +3784,7 @@ Result<> WasmBinaryReader::readInst() {
           auto type = getIndexedHeapType();
           return builder.makeArraySet(type, order);
         }
+      }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }
     case BinaryConsts::MiscPrefix: {
