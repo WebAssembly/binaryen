@@ -1778,6 +1778,7 @@ public:
   Expression* index;
   // Packed fields have a sign.
   bool signed_ = false;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };
@@ -1790,6 +1791,7 @@ public:
   Expression* ref;
   Expression* index;
   Expression* value;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };

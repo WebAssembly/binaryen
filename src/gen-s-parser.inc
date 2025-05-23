@@ -22,6 +22,34 @@ switch (buf[0]) {
         goto parse_error;
       case 'r': {
         switch (buf[6]) {
+          case 'a': {
+            switch (buf[16]) {
+              case '\0':
+                if (op == "array.atomic.get"sv) {
+                  CHECK_ERR(makeArrayAtomicGet(ctx, pos, annotations));
+                  return Ok{};
+                }
+                goto parse_error;
+              case '_': {
+                switch (buf[17]) {
+                  case 's':
+                    if (op == "array.atomic.get_s"sv) {
+                      CHECK_ERR(makeArrayAtomicGet(ctx, pos, annotations, true));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'u':
+                    if (op == "array.atomic.get_u"sv) {
+                      CHECK_ERR(makeArrayAtomicGet(ctx, pos, annotations, false));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              default: goto parse_error;
+            }
+          }
           case 'c':
             if (op == "array.copy"sv) {
               CHECK_ERR(makeArrayCopy(ctx, pos, annotations));

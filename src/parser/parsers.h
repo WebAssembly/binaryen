@@ -274,7 +274,12 @@ template<typename Ctx>
 Result<>
 makeArrayGet(Ctx&, Index, const std::vector<Annotation>&, bool signed_ = false);
 template<typename Ctx>
+Result<>
+makeAtomicArrayGet(Ctx&, Index, const std::vector<Annotation>&, bool signed_ = false);
+template<typename Ctx>
 Result<> makeArraySet(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeAtomicArraySet(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayLen(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
