@@ -2256,7 +2256,8 @@ Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
+Result<>
+IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
   ArrayGet curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));

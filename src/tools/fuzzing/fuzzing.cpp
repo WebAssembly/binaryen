@@ -5058,14 +5058,16 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    return builder.makeArrayGet(ref, index, MemoryOrder::Unordered, type, signed_);
+    return builder.makeArrayGet(
+      ref, index, MemoryOrder::Unordered, type, signed_);
   }
   // To avoid a trap, check the length dynamically using this pattern:
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, MemoryOrder::Unordered, type, signed_);
+  auto* get = builder.makeArrayGet(
+    check.getRef, check.getIndex, MemoryOrder::Unordered, type, signed_);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(check.condition, get, fallback);
 }
@@ -5090,7 +5092,8 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   //   if (index < array.len) array[index] = value;
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* set = builder.makeArraySet(check.getRef, check.getIndex, value, MemoryOrder::Unordered);
+  auto* set = builder.makeArraySet(
+    check.getRef, check.getIndex, value, MemoryOrder::Unordered);
   return builder.makeIf(check.condition, set);
 }
 

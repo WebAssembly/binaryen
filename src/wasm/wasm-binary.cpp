@@ -4572,11 +4572,14 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::ArrayGet:
         case BinaryConsts::ArrayGetU:
-          return builder.makeArrayGet(getIndexedHeapType(), false, MemoryOrder::Unordered);
+          return builder.makeArrayGet(
+            getIndexedHeapType(), false, MemoryOrder::Unordered);
         case BinaryConsts::ArrayGetS:
-          return builder.makeArrayGet(getIndexedHeapType(), true, MemoryOrder::Unordered);
+          return builder.makeArrayGet(
+            getIndexedHeapType(), true, MemoryOrder::Unordered);
         case BinaryConsts::ArraySet:
-          return builder.makeArraySet(getIndexedHeapType(), MemoryOrder::Unordered);
+          return builder.makeArraySet(getIndexedHeapType(),
+                                      MemoryOrder::Unordered);
         case BinaryConsts::ArrayLen:
           return builder.makeArrayLen();
         case BinaryConsts::ArrayCopy: {

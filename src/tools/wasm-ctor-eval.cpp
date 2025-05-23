@@ -960,8 +960,10 @@ public:
       set =
         builder.makeStructSet(index, getGlobal, value, MemoryOrder::Unordered);
     } else {
-      set = builder.makeArraySet(
-        getGlobal, builder.makeConst(int32_t(index)), value, MemoryOrder::Unordered);
+      set = builder.makeArraySet(getGlobal,
+                                 builder.makeConst(int32_t(index)),
+                                 value,
+                                 MemoryOrder::Unordered);
     }
 
     (*startBlock)->list.push_back(set);
