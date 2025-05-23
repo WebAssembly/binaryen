@@ -2693,14 +2693,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   Result<> makeArrayGet(Index pos,
                         const std::vector<Annotation>& annotations,
                         HeapType type,
-                        bool signed_) {
-    return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
+                        bool signed_,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayGet(type, signed_, order));
   }
 
   Result<> makeArraySet(Index pos,
                         const std::vector<Annotation>& annotations,
-                        HeapType type) {
-    return withLoc(pos, irBuilder.makeArraySet(type));
+                        HeapType type,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArraySet(type, order));
   }
 
   Result<> makeArrayLen(Index pos, const std::vector<Annotation>& annotations) {
