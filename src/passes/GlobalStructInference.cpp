@@ -447,6 +447,13 @@ struct GlobalStructInference : public Pass {
             ret = get;
           }
 
+          // If the type is more refined, we must refinalize. For example, we
+          // might have a struct.get that normally returns anyref, and know that
+          // field contains null, so we return nullref.
+          if (ret->type != curr->type) {
+            refinalize = true;
+          }
+
           // This value replaces the struct.get, so it should have the same
           // source location.
           debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
