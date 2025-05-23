@@ -8,6 +8,10 @@
   (type $struct (struct (field (mut i32))))
   ;; CHECK:      (type $packed (struct (field (mut i8))))
   (type $packed (struct (field (mut i8))))
+  ;; CHECK:      (type $array (array (mut i32)))
+  (type $array (array (mut i32)))
+  ;; CHECK:      (type $array-packed (array (mut i8)))
+  (type $array-packed (array (mut i8)))
 
   ;; CHECK:      (func $get (type $1) (param $0 (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get $struct 0
@@ -108,7 +112,7 @@
     )
   )
 
-  ;; CHECK:      (func $set (type $4) (param $0 (ref null $struct))
+  ;; CHECK:      (func $set (type $6) (param $0 (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.set $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -121,7 +125,7 @@
     )
   )
 
-  ;; CHECK:      (func $set-seqcst (type $4) (param $0 (ref null $struct))
+  ;; CHECK:      (func $set-seqcst (type $6) (param $0 (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.set $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -134,7 +138,7 @@
     )
   )
 
-  ;; CHECK:      (func $set-acqrel (type $4) (param $0 (ref null $struct))
+  ;; CHECK:      (func $set-acqrel (type $6) (param $0 (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.set acqrel $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -423,6 +427,60 @@
       (local.get 0)
       (i32.const 1)
       (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $array.get (type $8) (param $0 (ref null $array)) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.get $array
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.get (param (ref null $array)) (result i32)
+    (array.atomic.get $array
+      (local.get 0)
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (func $array.get_s (type $7) (param $0 (ref null $array-packed)) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.get_s $array-packed
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.get_s (param (ref null $array-packed)) (result i32)
+    (array.atomic.get_s seqcst $array-packed
+      (local.get 0)
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (func $array.get_u (type $7) (param $0 (ref null $array-packed)) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.get_u acqrel $array-packed
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.get_u (param (ref null $array-packed)) (result i32)
+    (array.atomic.get_u acqrel $array-packed
+      (local.get 0)
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (func $array.set (type $9) (param $0 (ref null $array))
+  ;; CHECK-NEXT:  (array.atomic.set acqrel $array
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.set (param (ref null $array))
+    (array.atomic.set acqrel $array
+      (local.get 0)
+      (i32.const 42)
+      (i32.const 1337)
     )
   )
 )

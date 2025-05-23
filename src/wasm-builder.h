@@ -1034,6 +1034,7 @@ public:
   }
   ArrayGet* makeArrayGet(Expression* ref,
                          Expression* index,
+                         MemoryOrder order,
                          Type type,
                          bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();
@@ -1041,15 +1042,19 @@ public:
     ret->index = index;
     ret->type = type;
     ret->signed_ = signed_;
+    ret->order = order;
     ret->finalize();
     return ret;
   }
-  ArraySet*
-  makeArraySet(Expression* ref, Expression* index, Expression* value) {
+  ArraySet* makeArraySet(Expression* ref,
+                         Expression* index,
+                         Expression* value,
+                         MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<ArraySet>();
     ret->ref = ref;
     ret->index = index;
     ret->value = value;
+    ret->order = order;
     ret->finalize();
     return ret;
   }

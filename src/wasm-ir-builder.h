@@ -228,8 +228,8 @@ public:
   Result<> makeArrayNewData(HeapType type, Name data);
   Result<> makeArrayNewElem(HeapType type, Name elem);
   Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
-  Result<> makeArrayGet(HeapType type, bool signed_);
-  Result<> makeArraySet(HeapType type);
+  Result<> makeArrayGet(HeapType type, bool signed_, MemoryOrder order);
+  Result<> makeArraySet(HeapType type, MemoryOrder order);
   Result<> makeArrayLen();
   Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   Result<> makeArrayFill(HeapType type);

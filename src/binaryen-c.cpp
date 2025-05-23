@@ -1822,17 +1822,22 @@ BinaryenExpressionRef BinaryenArrayGet(BinaryenModuleRef module,
                                        BinaryenExpressionRef index,
                                        BinaryenType type,
                                        bool signed_) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeArrayGet((Expression*)ref, (Expression*)index, Type(type), signed_));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeArrayGet((Expression*)ref,
+                                                  (Expression*)index,
+                                                  MemoryOrder::Unordered,
+                                                  Type(type),
+                                                  signed_));
 }
 BinaryenExpressionRef BinaryenArraySet(BinaryenModuleRef module,
                                        BinaryenExpressionRef ref,
                                        BinaryenExpressionRef index,
                                        BinaryenExpressionRef value) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeArraySet((Expression*)ref, (Expression*)index, (Expression*)value));
+  return static_cast<Expression*>(Builder(*(Module*)module)
+                                    .makeArraySet((Expression*)ref,
+                                                  (Expression*)index,
+                                                  (Expression*)value,
+                                                  MemoryOrder::Unordered));
 }
 BinaryenExpressionRef BinaryenArrayLen(BinaryenModuleRef module,
                                        BinaryenExpressionRef ref) {
