@@ -1162,7 +1162,7 @@ Type BrOn::getSentType() {
     case BrOnNonNull:
       // If the input is unreachable, the branch is not taken, and there is no
       // valid type we can report as being sent. Report it as unreachable.
-      if (type == Type::unreachable) {
+      if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
       // BrOnNonNull sends the non-nullable type on the branch.
@@ -1178,7 +1178,7 @@ Type BrOn::getSentType() {
     case BrOnCastFail:
     case BrOnCastDescFail:
       // The same as the result type of br_on_cast (if reachable).
-      if (type == Type::unreachable) {
+      if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
       if (castType.isNullable()) {
