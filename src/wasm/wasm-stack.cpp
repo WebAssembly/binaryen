@@ -2290,6 +2290,11 @@ void BinaryInstWriter::visitRefGetDesc(RefGetDesc* curr) {
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
+  bool hasDesc = curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail;
+  if (hasDesc && curr->desc->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   switch (curr->op) {
     case BrOnNull:
       o << int8_t(BinaryConsts::BrOnNull);
@@ -2314,7 +2319,7 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       break;
   }
   assert(curr->ref->type.isRef());
-  assert(Type::isSubType(curr->castType, curr->ref->type));
+  assert(hasDesc || Type::isSubType(curr->castType, curr->ref->type));
   uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
                   (curr->castType.isNullable() ? 2 : 0);
   o << flags;
