@@ -865,16 +865,25 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->ref, Type(*ht, Nullable));
   }
 
-  void visitBrOn(BrOn* curr) {
+  void visitBrOn(BrOn* curr, std::optional<Type> target = std::nullopt) {
     switch (curr->op) {
       case BrOnNull:
       case BrOnNonNull:
         noteAnyReference(&curr->ref);
         return;
       case BrOnCast:
-      case BrOnCastFail: {
-        auto top = curr->castType.getHeapType().getTop();
+      case BrOnCastFail:
+      case BrOnCastDesc:
+      case BrOnCastDescFail: {
+        if (!target) {
+          target = curr->castType;
+        }
+        auto top = target->getHeapType().getTop();
         note(&curr->ref, Type(top, Nullable));
+        if (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail) {
+          auto descriptor = *target->getHeapType().getDescriptorType();
+          note(&curr->desc, Type(descriptor, Nullable));
+        }
         return;
       }
     }

@@ -608,6 +608,8 @@ enum BrOnOp {
   BrOnNonNull,
   BrOnCast,
   BrOnCastFail,
+  BrOnCastDesc,
+  BrOnCastDescFail,
 };
 
 enum StringNewOp {
@@ -1641,6 +1643,11 @@ public:
   BrOnOp op;
   Name name;
   Expression* ref;
+
+  // Only used for br_on_cast_desc{,_fail}
+  Expression* desc;
+
+  // Only used for br_on_cast{,_desc}{,_fail}
   Type castType;
 
   void finalize();

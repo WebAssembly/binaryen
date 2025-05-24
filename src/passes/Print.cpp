@@ -2226,7 +2226,26 @@ struct PrintExpressionContents
         curr->name.print(o);
         return;
       case BrOnCast:
-        printMedium(o, "br_on_cast ");
+      case BrOnCastDesc:
+      case BrOnCastFail:
+      case BrOnCastDescFail:
+        switch (curr->op) {
+          case BrOnCast:
+            printMedium(o, "br_on_cast");
+            break;
+          case BrOnCastFail:
+            printMedium(o, "br_on_cast_fail");
+            break;
+          case BrOnCastDesc:
+            printMedium(o, "br_on_cast_desc");
+            break;
+          case BrOnCastDescFail:
+            printMedium(o, "br_on_cast_desc_fail");
+            break;
+          default:
+            WASM_UNREACHABLE("unexpected op");
+        }
+        o << ' ';
         curr->name.print(o);
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
@@ -2240,8 +2259,9 @@ struct PrintExpressionContents
         o << ' ';
         printType(curr->castType);
         return;
-      case BrOnCastFail:
-        printMedium(o, "br_on_cast_fail ");
+        printMedium(o,
+                    curr->op == BrOnCastFail ? "br_on_cast_fail "
+                                             : "br_on_cast_desc_fail ");
         curr->name.print(o);
         o << ' ';
         if (curr->ref->type == Type::unreachable) {

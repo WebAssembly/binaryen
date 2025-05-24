@@ -151,7 +151,7 @@ void ReFinalize::visitRefGetDesc(RefGetDesc* curr) { curr->finalize(); }
 void ReFinalize::visitBrOn(BrOn* curr) {
   curr->finalize();
   if (curr->type == Type::unreachable) {
-    replaceUntaken(curr->ref, nullptr);
+    replaceUntaken(curr->ref, curr->desc);
   } else {
     updateBreakValueType(curr->name, curr->getSentType());
   }
@@ -218,11 +218,11 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
 }
 
 // Replace an untaken branch/switch with an unreachable value.
-// A condition may also exist and may or may not be unreachable.
-void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
+// Another child may also exist and may or may not be unreachable.
+void ReFinalize::replaceUntaken(Expression* value, Expression* otherChild) {
   assert(value->type == Type::unreachable);
   auto* replacement = value;
-  if (condition) {
+  if (otherChild) {
     Builder builder(*getModule());
     // Even if we have
     //  (block
@@ -233,10 +233,10 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
     // the value is unreachable, and necessary since the type of
     // the condition did not have an impact before (the break/switch
     // type was unreachable), and might not fit in.
-    if (condition->type.isConcrete()) {
-      condition = builder.makeDrop(condition);
+    if (otherChild->type.isConcrete()) {
+      otherChild = builder.makeDrop(otherChild);
     }
-    replacement = builder.makeSequence(value, condition);
+    replacement = builder.makeSequence(value, otherChild);
     assert(replacement->type.isBasic() && "Basic type expected");
   }
   replaceCurrent(replacement);
