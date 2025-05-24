@@ -1077,34 +1077,59 @@ void RefGetDesc::finalize() {
     return;
   }
 
-  auto desc = ref->type.getHeapType().getDescriptorType();
-  assert(desc);
-  type = Type(*desc, NonNullable, ref->type.getExactness());
+  if (ref->type.isNull()) {
+    // The operation will trap. Model it as returning an uninhabitable type.
+    type = ref->type.with(NonNullable);
+  } else {
+    auto desc = ref->type.getHeapType().getDescriptorType();
+    assert(desc);
+    type = Type(*desc, NonNullable, ref->type.getExactness());
+  }
 }
 
 void BrOn::finalize() {
-  if (ref->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (desc && desc->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
   }
   if (op == BrOnCast || op == BrOnCastFail) {
-    // The cast type must be a subtype of the input type. If we've refined the
-    // input type so that this is no longer true, we can fix it by similarly
-    // refining the cast type in a way that will not change the cast behavior.
+    // If we've refined the input type so that it is no longer a subtype of the
+    // cast type, we can improve the cast type in a way that will not change the
+    // cast behavior. This satisfies the constraint we had before Custom
+    // Descriptors that the cast type is a subtype of the input type.
     castType = Type::getGreatestLowerBound(castType, ref->type);
     assert(castType.isRef());
+  } else if (op == BrOnCastDesc || op == BrOnCastDescFail) {
+    if (desc->type.isNull()) {
+      // Cast will never be executed and the instruction will not be emitted.
+      // Model this with an uninhabitable cast type.
+      castType = desc->type.with(NonNullable);
+    } else {
+      // The cast heap type and exactness is determined by the descriptor's
+      // type. Its nullability can be improved if the input value is
+      // non-nullable.
+      auto heapType = desc->type.getHeapType().getDescribedType();
+      assert(heapType);
+      auto exactness = desc->type.getExactness();
+      castType = castType.with(*heapType).with(exactness);
+      if (ref->type.isNonNullable()) {
+        castType = castType.with(NonNullable);
+      }
+    }
   }
   switch (op) {
     case BrOnNull:
       // If we do not branch, we flow out the existing value as non-null.
       type = ref->type.with(NonNullable);
-      break;
+      return;
     case BrOnNonNull:
       // If we do not branch, we flow out nothing (the spec could also have had
       // us flow out the null, but it does not).
       type = Type::none;
-      break;
+      return;
     case BrOnCast:
+    case BrOnCastDesc:
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
         type = ref->type.with(NonNullable);
@@ -1113,8 +1138,9 @@ void BrOn::finalize() {
         // the input is.
         type = ref->type;
       }
-      break;
+      return;
     case BrOnCastFail:
+    case BrOnCastDescFail:
       if (castType.isNullable()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
@@ -1123,10 +1149,9 @@ void BrOn::finalize() {
         // Nulls take the branch, so the result is non-nullable.
         type = castType;
       }
-      break;
-    default:
-      WASM_UNREACHABLE("invalid br_on_*");
+      return;
   }
+  WASM_UNREACHABLE("invalid br_on_*");
 }
 
 Type BrOn::getSentType() {
@@ -1137,12 +1162,13 @@ Type BrOn::getSentType() {
     case BrOnNonNull:
       // If the input is unreachable, the branch is not taken, and there is no
       // valid type we can report as being sent. Report it as unreachable.
-      if (ref->type == Type::unreachable) {
+      if (type == Type::unreachable) {
         return Type::unreachable;
       }
       // BrOnNonNull sends the non-nullable type on the branch.
       return ref->type.with(NonNullable);
     case BrOnCast:
+    case BrOnCastDesc:
       // The same as the result type of br_on_cast_fail.
       if (castType.isNullable()) {
         return castType.with(ref->type.getNullability());
@@ -1150,8 +1176,9 @@ Type BrOn::getSentType() {
         return castType;
       }
     case BrOnCastFail:
+    case BrOnCastDescFail:
       // The same as the result type of br_on_cast (if reachable).
-      if (ref->type == Type::unreachable) {
+      if (type == Type::unreachable) {
         return Type::unreachable;
       }
       if (castType.isNullable()) {
@@ -1159,9 +1186,8 @@ Type BrOn::getSentType() {
       } else {
         return ref->type;
       }
-    default:
-      WASM_UNREACHABLE("invalid br_on_*");
   }
+  WASM_UNREACHABLE("invalid br_on_*");
 }
 
 void StructNew::finalize() {

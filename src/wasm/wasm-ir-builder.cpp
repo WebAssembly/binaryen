@@ -37,15 +37,15 @@ namespace wasm {
 
 namespace {
 
-Result<> validateTypeAnnotation(HeapType type, Expression* child) {
-  if (child->type == Type::unreachable) {
-    return Ok{};
-  }
-  if (!child->type.isRef() ||
-      !HeapType::isSubType(child->type.getHeapType(), type)) {
-    return Err{"invalid reference type on stack"};
+Result<> validateTypeAnnotation(Type type, Expression* child) {
+  if (!Type::isSubType(child->type, type)) {
+    return Err{"invalid type on stack"};
   }
   return Ok{};
+}
+
+Result<> validateTypeAnnotation(HeapType type, Expression* child) {
+  return validateTypeAnnotation(Type(type, Nullable), child);
 }
 
 } // anonymous namespace
@@ -2029,14 +2029,29 @@ Result<> IRBuilder::makeBrOn(
   BrOn curr;
   curr.op = op;
   curr.castType = out;
+  curr.desc = nullptr;
   CHECK_ERR(visitBrOn(&curr));
-  if (out != Type::none) {
-    if (!Type::isSubType(out, in)) {
-      return Err{"output type is not a subtype of the input type"};
+
+  // Validate type immediates before we forget them.
+  switch (op) {
+    case BrOnNull:
+    case BrOnNonNull:
+      break;
+    case BrOnCastDesc:
+    case BrOnCastDescFail: {
+      assert(out.isRef());
+      auto descriptor = out.getHeapType().getDescriptorType();
+      if (!descriptor) {
+        return Err{"cast target must have descriptor"};
+      }
+      CHECK_ERR(validateTypeAnnotation(out.with(*descriptor).with(Nullable),
+                                       curr.desc));
     }
-    if (!Type::isSubType(curr.ref->type, in)) {
-      return Err{"expected input to match input type annotation"};
-    }
+      [[fallthrough]];
+    case BrOnCast:
+    case BrOnCastFail:
+      assert(in.isRef());
+      CHECK_ERR(validateTypeAnnotation(in, curr.ref));
   }
 
   // Extra values need to be sent in a scratch local.
@@ -2050,6 +2065,8 @@ Result<> IRBuilder::makeBrOn(
     case BrOnNonNull:
     case BrOnCast:
     case BrOnCastFail:
+    case BrOnCastDesc:
+    case BrOnCastDescFail:
       // Modeled as sending one value.
       if (extraArity == 0) {
         return Err{"br_on target does not expect a value"};
@@ -2069,6 +2086,8 @@ Result<> IRBuilder::makeBrOn(
       break;
     case BrOnCast:
     case BrOnCastFail:
+    case BrOnCastDesc:
+    case BrOnCastDescFail:
       testType = in;
       break;
   }
@@ -2082,7 +2101,7 @@ Result<> IRBuilder::makeBrOn(
     auto name = getLabelName(label);
     CHECK_ERR(name);
 
-    auto* br = builder.makeBrOn(op, *name, curr.ref, out);
+    auto* br = builder.makeBrOn(op, *name, curr.ref, out, curr.desc);
     addBranchHint(br, likely);
     push(br);
     return Ok{};
@@ -2106,7 +2125,7 @@ Result<> IRBuilder::makeBrOn(
 
   // Perform the branch.
   CHECK_ERR(visitBrOn(&curr));
-  auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out);
+  auto* br = builder.makeBrOn(op, extraLabel, curr.ref, out, curr.desc);
   addBranchHint(br, likely);
   push(br);
 
@@ -2127,6 +2146,7 @@ Result<> IRBuilder::makeBrOn(
     case BrOnNonNull:
       WASM_UNREACHABLE("unexpected op");
     case BrOnCast:
+    case BrOnCastDesc:
       if (out.isNullable()) {
         resultType = Type(in.getHeapType(), NonNullable);
       } else {
@@ -2134,6 +2154,7 @@ Result<> IRBuilder::makeBrOn(
       }
       break;
     case BrOnCastFail:
+    case BrOnCastDescFail:
       if (in.isNonNullable()) {
         resultType = Type(out.getHeapType(), NonNullable);
       } else {

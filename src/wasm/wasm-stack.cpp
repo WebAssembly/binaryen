@@ -2300,27 +2300,30 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       o << U32LEB(getBreakIndex(curr->name));
       return;
     case BrOnCast:
-    case BrOnCastFail: {
-      o << int8_t(BinaryConsts::GCPrefix);
-      if (curr->op == BrOnCast) {
-        o << U32LEB(BinaryConsts::BrOnCast);
-      } else {
-        o << U32LEB(BinaryConsts::BrOnCastFail);
-      }
-      assert(curr->ref->type.isRef());
-      assert(Type::isSubType(curr->castType, curr->ref->type));
-      uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
-                      (curr->castType.isNullable() ? 2 : 0);
-      o << flags;
-      o << U32LEB(getBreakIndex(curr->name));
-      parent.writeHeapType(curr->ref->type.getHeapType(),
-                           curr->ref->type.getExactness());
-      parent.writeHeapType(curr->castType.getHeapType(),
-                           curr->castType.getExactness());
-      return;
-    }
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      break;
+    case BrOnCastFail:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
+      break;
+    case BrOnCastDesc:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastDesc);
+      break;
+    case BrOnCastDescFail:
+      o << int8_t(BinaryConsts::GCPrefix)
+        << U32LEB(BinaryConsts::BrOnCastDescFail);
+      break;
   }
-  WASM_UNREACHABLE("invalid br_on_*");
+  assert(curr->ref->type.isRef());
+  assert(Type::isSubType(curr->castType, curr->ref->type));
+  uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
+                  (curr->castType.isNullable() ? 2 : 0);
+  o << flags;
+  o << U32LEB(getBreakIndex(curr->name));
+  parent.writeHeapType(curr->ref->type.getHeapType(),
+                       curr->ref->type.getExactness());
+  parent.writeHeapType(curr->castType.getHeapType(),
+                       curr->castType.getExactness());
+  return;
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
