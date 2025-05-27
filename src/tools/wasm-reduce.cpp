@@ -196,7 +196,7 @@ struct ProgramResult {
     }
     code = pclose(stream);
     timer.stop();
-    time = timer.getTotal() / 2;
+    time = timer.getTotal();
   }
 #endif // _WIN32
 
