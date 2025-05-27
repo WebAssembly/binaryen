@@ -1059,10 +1059,11 @@ struct InfoCollector
     // part of the main IR, which is potentially confusing during debugging,
     // however, which is a downside.
     Builder builder(*getModule());
-    auto* get =
-      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type);
+    auto* get = builder.makeArrayGet(
+      curr->srcRef, curr->srcIndex, MemoryOrder::Unordered, curr->srcRef->type);
     visitArrayGet(get);
-    auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
+    auto* set = builder.makeArraySet(
+      curr->destRef, curr->destIndex, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
   void visitArrayFill(ArrayFill* curr) {
@@ -1071,7 +1072,8 @@ struct InfoCollector
     }
     // See ArrayCopy, above.
     Builder builder(*getModule());
-    auto* set = builder.makeArraySet(curr->ref, curr->index, curr->value);
+    auto* set = builder.makeArraySet(
+      curr->ref, curr->index, curr->value, MemoryOrder::Unordered);
     visitArraySet(set);
   }
   template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
@@ -1092,7 +1094,8 @@ struct InfoCollector
     Builder builder(*getModule());
     auto* get = builder.makeLocalGet(-1, valueType);
     addRoot(get);
-    auto* set = builder.makeArraySet(curr->ref, curr->index, get);
+    auto* set =
+      builder.makeArraySet(curr->ref, curr->index, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
   void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
