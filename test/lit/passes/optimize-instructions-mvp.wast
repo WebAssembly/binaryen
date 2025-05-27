@@ -18410,4 +18410,41 @@
       )
     )
   )
+
+  ;; CHECK:      (func $local-unreachable-size-matters
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-unreachable-size-matters
+    ;; The local is written 1, then later down we have an unreachable. That
+    ;; should not confuse us as to the max bits in the local. This is a test for
+    ;; a bug where any local with an unreachable set got assigned 64 bits, which
+    ;; is wrong in this case and led to a misoptimization of the |and|. We
+    ;; should not optimize it away to a 0 (we could in theory optimize it to a
+    ;; 1, but this pass does not infer locals that precisely).
+    (local $temp i32)
+    (local.set $temp
+      (i32.const 1)
+    )
+    (drop
+      (i32.and
+        (local.get $temp)
+        (i32.const 1)
+      )
+    )
+    (local.tee $temp
+      (unreachable)
+    )
+  )
 )
