@@ -154,7 +154,6 @@ struct BranchHintCFGAnalysis
     }
     while (!work.empty()) {
       auto* block = work.pop();
-      // std::cerr << "work on " << debugIds[block] << '\n';
 
       // We should not get here if there is no work.
       assert(!block->out.empty());
@@ -167,8 +166,6 @@ struct BranchHintCFGAnalysis
       }
 
       auto& chance = block->contents.chance;
-      // std::cerr << "  old " << int(chance) << ", maxOut " << int(maxOut) <<
-      // '\n';
       if (maxOut < chance) {
         chance = maxOut;
         for (auto* in : block->in) {
@@ -296,21 +293,16 @@ struct BranchHintAnalysis : public Pass {
     // chance to go one way then the other, mark it as likely or unlikely
     // accordingly. TODO: should we not mark when the difference is small?
     for (auto& [func, analysis] : analyzer.map) {
-      // std::cerr << "lastloop on " << func->name << '\n';
       for (auto& block : analysis.basicBlocks) {
-        // std::cerr << "  lastloop block " << block.get() << " with chance " <<
-        // int(block->contents.chance) << "\n";
         if (block->contents.actions.empty() || block->out.size() != 2) {
           continue;
         }
 
         auto* last = block->contents.actions.back();
-        // std::cerr << "  last " << *last << "\n";
         if (!analysis.isBranching(last)) {
           continue;
         }
 
-        // std::cerr << "  chances1\n";
         // Compare the probabilities of the two targets and see if we can infer
         // likelihood.
         if (auto likely =
