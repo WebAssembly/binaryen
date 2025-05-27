@@ -3004,7 +3004,7 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       shouldBeEqual(curr->castType,
                     Type(Type::none),
                     curr,
-                    "non-cast br_on* must not set intendedType field");
+                    "non-cast br_on* must not set castType field");
       break;
     case BrOnCastDesc:
     case BrOnCastDescFail: {
