@@ -1199,6 +1199,10 @@ enum ASTNodes {
   StructAtomicRMWXor = 0x64,
   StructAtomicRMWXchg = 0x65,
   StructAtomicRMWCmpxchg = 0x66,
+  ArrayAtomicGet = 0x67,
+  ArrayAtomicGetS = 0x68,
+  ArrayAtomicGetU = 0x69,
+  ArrayAtomicSet = 0x6a,
 
   // stringref opcodes
 

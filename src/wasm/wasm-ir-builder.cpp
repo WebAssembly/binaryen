@@ -2277,20 +2277,21 @@ Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeArrayGet(HeapType type, bool signed_) {
+Result<>
+IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
   ArrayGet curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayGet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArrayGet(
-    curr.ref, curr.index, type.getArray().element.type, signed_));
+    curr.ref, curr.index, order, type.getArray().element.type, signed_));
   return Ok{};
 }
 
-Result<> IRBuilder::makeArraySet(HeapType type) {
+Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
   ArraySet curr;
   CHECK_ERR(ChildPopper{*this}.visitArraySet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
-  push(builder.makeArraySet(curr.ref, curr.index, curr.value));
+  push(builder.makeArraySet(curr.ref, curr.index, curr.value, order));
   return Ok{};
 }
 

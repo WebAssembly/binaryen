@@ -185,11 +185,6 @@ struct ProgramResult {
   void getFromExecution(std::string command) {
     Timer timer;
     timer.start();
-    // do this using just core stdio.h and stdlib.h, for portability
-    // sadly this requires two invokes
-    code = system(("timeout " + std::to_string(timeout) + "s " + command +
-                   " > /dev/null 2> /dev/null")
-                    .c_str());
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
     FILE* stream = popen(
@@ -199,7 +194,7 @@ struct ProgramResult {
     while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
       output.append(buffer);
     }
-    pclose(stream);
+    code = pclose(stream);
     timer.stop();
     time = timer.getTotal() / 2;
   }

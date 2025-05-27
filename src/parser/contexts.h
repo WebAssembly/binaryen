@@ -815,12 +815,13 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<>
-  makeArrayGet(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
+  Result<> makeArrayGet(
+    Index, const std::vector<Annotation>&, HeapTypeT, bool, MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT) {
+  Result<>
+  makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT, MemoryOrder) {
     return Ok{};
   }
   Result<> makeArrayLen(Index, const std::vector<Annotation>&) { return Ok{}; }
@@ -2693,14 +2694,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   Result<> makeArrayGet(Index pos,
                         const std::vector<Annotation>& annotations,
                         HeapType type,
-                        bool signed_) {
-    return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
+                        bool signed_,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayGet(type, signed_, order));
   }
 
   Result<> makeArraySet(Index pos,
                         const std::vector<Annotation>& annotations,
-                        HeapType type) {
-    return withLoc(pos, irBuilder.makeArraySet(type));
+                        HeapType type,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArraySet(type, order));
   }
 
   Result<> makeArrayLen(Index pos, const std::vector<Annotation>& annotations) {

@@ -129,6 +129,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
       Properties::getFallthrough(curr->value, passOptions, *getModule());
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, Bits::getMaxBits(value, this));
+    info.maxBits = std::min(info.maxBits, getBitsForType(type));
     auto signExtBits = LocalInfo::kUnknown;
     if (Properties::getSignExtValue(value)) {
       signExtBits = Properties::getSignExtBits(value);

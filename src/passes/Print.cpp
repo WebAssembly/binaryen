@@ -2392,19 +2392,29 @@ struct PrintExpressionContents
   }
   void visitArrayGet(ArrayGet* curr) {
     const auto& element = curr->ref->type.getHeapType().getArray().element;
+    printMedium(o, "array");
+    if (curr->order != MemoryOrder::Unordered) {
+      printMedium(o, ".atomic");
+    }
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, "array.get_s ");
+        printMedium(o, ".get_s ");
       } else {
-        printMedium(o, "array.get_u ");
+        printMedium(o, ".get_u ");
       }
     } else {
-      printMedium(o, "array.get ");
+      printMedium(o, ".get ");
     }
+    printMemoryOrder(curr->order);
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
-    printMedium(o, "array.set ");
+    if (curr->order == MemoryOrder::Unordered) {
+      printMedium(o, "array.set ");
+    } else {
+      printMedium(o, "array.atomic.set ");
+    }
+    printMemoryOrder(curr->order);
     printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
