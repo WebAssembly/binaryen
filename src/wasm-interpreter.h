@@ -1398,8 +1398,7 @@ public:
   }
   Flow visitUnreachable(Unreachable* curr) {
     NOTE_ENTER("Unreachable");
-    trap("unreachable");
-    WASM_UNREACHABLE("unreachable");
+    return Flow(NONCONSTANT_FLOW);
   }
 
   Literal truncSFloat(Unary* curr, Literal value) {
