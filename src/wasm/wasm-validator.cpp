@@ -2966,6 +2966,40 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "ref.cast to exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+
+  if (!curr->desc) {
+    return;
+  }
+
+  shouldBeTrue(getModule()->features.hasCustomDescriptors(),
+               curr,
+               "ref.cast_desc requires custom descriptors "
+               "[--enable-custom-descriptors]");
+  if (!shouldBeTrue(curr->desc && curr->desc->type.isRef(),
+                    curr,
+                    "ref.cast_desc descriptor must have ref type")) {
+    return;
+  }
+  auto descriptor = curr->desc->type.getHeapType();
+  if (descriptor.isBottom()) {
+    return;
+  }
+
+  auto described = descriptor.getDescribedType();
+  if (!shouldBeTrue(bool(described),
+                    curr,
+                    "ref.cast_desc descriptor should have a described type")) {
+    return;
+  }
+  shouldBeEqual(*described,
+                curr->type.getHeapType(),
+                curr,
+                "ref.cast_desc cast type should be described by descriptor");
+  shouldBeEqual(
+    curr->type.getExactness(),
+    curr->desc->type.getExactness(),
+    curr,
+    "ref.cast_desc cast exactness should match descriptor exactness");
 }
 
 void FunctionValidator::visitRefGetDesc(RefGetDesc* curr) {

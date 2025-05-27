@@ -1172,6 +1172,8 @@ enum ASTNodes {
   RefTestNull = 0x15,
   RefCast = 0x16,
   RefCastNull = 0x17,
+  RefCastDesc = 0x23,
+  RefCastDescNull = 0x24,
   BrOnCast = 0x18,
   BrOnCastFail = 0x19,
   BrOnCastDesc = 0x25,

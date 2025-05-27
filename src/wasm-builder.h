@@ -888,8 +888,12 @@ public:
     return ret;
   }
   RefCast* makeRefCast(Expression* ref, Type type) {
+    return makeRefCast(ref, nullptr, type);
+  }
+  RefCast* makeRefCast(Expression* ref, Expression* desc, Type type) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
+    ret->desc = desc;
     ret->type = type;
     ret->finalize();
     return ret;

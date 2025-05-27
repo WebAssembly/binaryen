@@ -2005,11 +2005,28 @@ Result<> IRBuilder::makeRefTest(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeRefCast(Type type) {
+Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
+  std::optional<HeapType> descriptor;
+  if (isDesc) {
+    assert(type.isRef());
+    descriptor = type.getHeapType().getDescriptorType();
+    if (!descriptor) {
+      return Err{"cast target must have descriptor"};
+    }
+  }
+
   RefCast curr;
   curr.type = type;
+  // Placeholder value to differentiate ref.cast_desc.
+  curr.desc = isDesc ? &curr : nullptr;
   CHECK_ERR(visitRefCast(&curr));
-  push(builder.makeRefCast(curr.ref, type));
+
+  if (isDesc) {
+    CHECK_ERR(
+      validateTypeAnnotation(type.with(*descriptor).with(Nullable), curr.desc));
+  }
+
+  push(builder.makeRefCast(curr.ref, curr.desc, type));
   return Ok{};
 }
 
@@ -2026,6 +2043,15 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
 
 Result<> IRBuilder::makeBrOn(
   Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
+  std::optional<HeapType> descriptor;
+  if (op == BrOnCastDesc || op == BrOnCastDescFail) {
+    assert(out.isRef());
+    descriptor = out.getHeapType().getDescriptorType();
+    if (!descriptor) {
+      return Err{"cast target must have descriptor"};
+    }
+  }
+
   BrOn curr;
   curr.op = op;
   curr.castType = out;
@@ -2039,11 +2065,6 @@ Result<> IRBuilder::makeBrOn(
       break;
     case BrOnCastDesc:
     case BrOnCastDescFail: {
-      assert(out.isRef());
-      auto descriptor = out.getHeapType().getDescriptorType();
-      if (!descriptor) {
-        return Err{"cast target must have descriptor"};
-      }
       CHECK_ERR(validateTypeAnnotation(out.with(*descriptor).with(Nullable),
                                        curr.desc));
     }
