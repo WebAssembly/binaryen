@@ -2976,20 +2976,20 @@ void FunctionValidator::visitRefGetDesc(RefGetDesc* curr) {
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
-  shouldBeTrue(getModule()->features.hasGC(),
-               curr,
-               "br_on_cast requires gc [--enable-gc]");
+  shouldBeTrue(
+    getModule()->features.hasGC(), curr, "br_on* requires gc [--enable-gc]");
   if (curr->ref->type == Type::unreachable) {
     return;
   }
   if (!shouldBeTrue(
-        curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type")) {
+        curr->ref->type.isRef(), curr, "br_on* ref must have ref type")) {
     return;
   }
-  if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
+  if (curr->op != BrOnNull && curr->op != BrOnNonNull) {
+    // Common validation for all br_on_cast*
     if (!shouldBeTrue(curr->castType.isRef(),
                       curr,
-                      "br_on_cast must have reference cast type")) {
+                      "br_on_cast* must have reference cast type")) {
       return;
     }
     shouldBeEqual(
@@ -2997,25 +2997,71 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type.getHeapType().getBottom(),
       curr,
       "br_on_cast* target type and ref type must have a common supertype");
-    shouldBeSubType(
-      curr->castType,
-      curr->ref->type,
-      curr,
-      "br_on_cast* target type must be a subtype of its input type");
-    // See comment about exactness on visitRefTest.
-    if (!getModule()->features.hasCustomDescriptors()) {
-      shouldBeTrue(curr->castType.isInexact() ||
-                     curr->castType.with(Nullable) ==
-                       curr->ref->type.with(Nullable),
+  }
+  switch (curr->op) {
+    case BrOnNull:
+    case BrOnNonNull:
+      shouldBeEqual(curr->castType,
+                    Type(Type::none),
+                    curr,
+                    "non-cast br_on* must not set castType field");
+      break;
+    case BrOnCastDesc:
+    case BrOnCastDescFail: {
+      shouldBeTrue(getModule()->features.hasCustomDescriptors(),
                    curr,
-                   "br_on_cast* to exact type requires custom descriptors "
+                   "br_on_cast_desc* requires custom descriptors "
                    "[--enable-custom-descriptors]");
+      if (!shouldBeTrue(curr->desc && curr->desc->type.isRef(),
+                        curr,
+                        "br_on_cast_desc* descriptor must have ref type")) {
+        return;
+      }
+      auto descriptor = curr->desc->type.getHeapType();
+      if (!descriptor.isBottom()) {
+        auto described = descriptor.getDescribedType();
+        if (!shouldBeTrue(
+              bool(described),
+              curr,
+              "br_on_cast_desc* descriptor should have a described type")) {
+          return;
+        }
+        shouldBeEqual(
+          *described,
+          curr->castType.getHeapType(),
+          curr,
+          "br_on_cast_desc* cast type should be described by descriptor");
+        shouldBeEqual(
+          curr->castType.getExactness(),
+          curr->desc->type.getExactness(),
+          curr,
+          "br_on_cast_desc* cast exactness should match descriptor exactness");
+        shouldBeTrue(curr->ref->type.isNullable() ||
+                       curr->castType.isNonNullable(),
+                     curr,
+                     "br_on_cast_desc* with non-nullable ref should have "
+                     "non-nullable cast type");
+      }
+      break;
     }
-  } else {
-    shouldBeEqual(curr->castType,
-                  Type(Type::none),
-                  curr,
-                  "non-cast br_on* must not set intendedType field");
+    case BrOnCast:
+    case BrOnCastFail: {
+      shouldBeSubType(
+        curr->castType,
+        curr->ref->type,
+        curr,
+        "br_on_cast* target type must be a subtype of its input type");
+      // See comment about exactness on visitRefTest.
+      if (!getModule()->features.hasCustomDescriptors()) {
+        shouldBeTrue(curr->castType.isInexact() ||
+                       curr->castType.with(Nullable) ==
+                         curr->ref->type.with(Nullable),
+                     curr,
+                     "br_on_cast* to exact type requires custom descriptors "
+                     "[--enable-custom-descriptors]");
+      }
+      break;
+    }
   }
   noteBreak(curr->name, curr->getSentType(), curr);
 }
