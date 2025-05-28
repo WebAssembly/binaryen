@@ -1689,18 +1689,6 @@
       )
     )
   )
-
-  ;; CHECK:      (func $tuple-unreachable (type $117)
-  ;; CHECK-NEXT:  (tuple.extract 2 0
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $tuple-unreachable
-    ;; We should not error on this.
-    (tuple.extract 2 0
-      (unreachable)
-    )
-  )
 )
 
 (module

@@ -206,6 +206,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
+    if (self().skipUnreachable() && curr->type == Type::unreachable) {
+      return;
+    }
     assert(curr->type == Type::i32 || curr->type == Type::i64);
     notePointer(&curr->ptr, curr->memory);
     note(&curr->value, curr->type);
