@@ -1690,3 +1690,40 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $func (func (param (ref (exact $array)) i32)))
+    (type $func (func (param (ref (exact $array)) i32)))
+    ;; CHECK:       (type $array (sub (array v128)))
+    (type $array (sub (array v128)))
+  )
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (func $caller (type $2)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (array.new_default $array
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; This call is unreachable, but we cannot optimize here, as it would break
+    ;; validation: the called function expects an exact ref to $array.
+    (call $called
+      (array.new_default $array
+        (i32.const 0)
+      )
+      (unreachable)
+    )
+  )
+  ;; CHECK:      (func $called (type $func) (param $0 (ref (exact $array))) (param $1 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $called (type $func) (param $0 (ref (exact $array))) (param $1 i32)
+    (nop)
+  )
+)
+
