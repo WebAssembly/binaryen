@@ -215,18 +215,6 @@ struct Analyzer
       return;
     }
 
-    // Also do not let unreachable instructions inhibit optimization, as long as
-    // they are unreachable because of an unreachable child. (Some other
-    // unreachable instructions, such as a return_call, can still require an
-    // exact operand and may inhibit optimization.)
-    if (curr->type == Type::unreachable) {
-      for (auto* child : ChildIterator(curr)) {
-        if (child->type == Type::unreachable) {
-          return;
-        }
-      }
-    }
-
     struct ExactChildTyper : ChildTyper<ExactChildTyper> {
       Analyzer& parent;
       ExactChildTyper(Analyzer& parent)
