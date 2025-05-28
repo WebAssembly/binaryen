@@ -835,6 +835,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       if (self().skipUnreachable() && !curr->tuple->type.isTuple()) {
         return;
       }
+      assert(curr->tuple->type.isTuple());
       arity = curr->tuple->type.size();
     }
     noteAnyTuple(&curr->tuple, *arity);
