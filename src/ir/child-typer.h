@@ -823,7 +823,10 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitTupleExtract(TupleExtract* curr,
                          std::optional<size_t> arity = std::nullopt) {
     if (!arity) {
-      assert(curr->tuple->type.isTuple());
+      if (!curr->tuple->type.isTuple()) {
+        // Ignore unreachable code.
+        return;
+      }
       arity = curr->tuple->type.size();
     }
     noteAnyTuple(&curr->tuple, *arity);
