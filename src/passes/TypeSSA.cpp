@@ -237,6 +237,10 @@ struct Analyzer
       void noteAnyI16ArrayReferenceType(Expression**) {}
 
       Type getLabelType(Name label) { WASM_UNREACHABLE("unexpected branch"); }
+
+      // Skip unreachable code. If we cannot compute a constraint due to
+      // unreachability, we can ignore it.
+      bool skipUnreachable() { return true; }
     } typer(*this);
     typer.visit(curr);
   }
