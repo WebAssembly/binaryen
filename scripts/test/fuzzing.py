@@ -113,6 +113,8 @@ unfuzzable = [
     'vacuum-stack-switching.wast',
     # TODO: fuzzer support for custom descriptors
     'custom-descriptors.wast',
+    'br_on_cast_desc.wast',
+    'ref.get_cast.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',

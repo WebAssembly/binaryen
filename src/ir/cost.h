@@ -673,9 +673,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitBrOn(BrOn* curr) {
     // BrOn of a null can be fairly fast, but anything else is a cast check.
-    CostType base =
-      curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : CastCost;
-    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref);
+    switch (curr->op) {
+      case BrOnNull:
+      case BrOnNonNull:
+        return 2 + nullCheckCost(curr->ref) + visit(curr->ref);
+      case BrOnCast:
+      case BrOnCastFail:
+        return CastCost + visit(curr->ref);
+      case BrOnCastDesc:
+      case BrOnCastDescFail:
+        // These are not as expensive as full casts, since they just do a
+        // identity check on the descriptor.
+        return 2 + visit(curr->ref) + visit(curr->desc);
+    }
+    WASM_UNREACHABLE("unexpected op");
   }
   CostType visitStructNew(StructNew* curr) {
     CostType ret = AllocationCost + curr->operands.size();

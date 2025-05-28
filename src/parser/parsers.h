@@ -238,8 +238,7 @@ template<typename Ctx>
 Result<>
 makeBrOnNull(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
 template<typename Ctx>
-Result<>
-makeBrOnCast(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
+Result<> makeBrOnCast(Ctx&, Index, const std::vector<Annotation>&, BrOnOp op);
 template<typename Ctx>
 Result<>
 makeStructNew(Ctx&, Index, const std::vector<Annotation>&, bool default_);
@@ -2251,15 +2250,14 @@ template<typename Ctx>
 Result<> makeBrOnCast(Ctx& ctx,
                       Index pos,
                       const std::vector<Annotation>& annotations,
-                      bool onFail) {
+                      BrOnOp op) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
   auto in = reftype(ctx);
   CHECK_ERR(in);
   auto out = reftype(ctx);
   CHECK_ERR(out);
-  return ctx.makeBrOn(
-    pos, annotations, *label, onFail ? BrOnCastFail : BrOnCast, *in, *out);
+  return ctx.makeBrOn(pos, annotations, *label, op, *in, *out);
 }
 
 template<typename Ctx>

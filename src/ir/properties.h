@@ -521,7 +521,7 @@ inline bool hasUnwritableTypeImmediate(Expression* curr) {
 #define DELEGATE_ID curr->_id
 
 #define DELEGATE_FIELD_IMMEDIATE_TYPED_CHILD(id, field)                        \
-  {                                                                            \
+  if (curr->cast<id>()->field) {                                               \
     auto type = curr->cast<id>()->field->type;                                 \
     if (type == Type::unreachable || type.isNull()) {                          \
       return true;                                                             \

@@ -209,16 +209,38 @@ switch (buf[0]) {
                 switch (buf[10]) {
                   case '\0':
                     if (op == "br_on_cast"sv) {
-                      CHECK_ERR(makeBrOnCast(ctx, pos, annotations));
+                      CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCast));
                       return Ok{};
                     }
                     goto parse_error;
-                  case '_':
-                    if (op == "br_on_cast_fail"sv) {
-                      CHECK_ERR(makeBrOnCast(ctx, pos, annotations, true));
-                      return Ok{};
+                  case '_': {
+                    switch (buf[11]) {
+                      case 'd': {
+                        switch (buf[15]) {
+                          case '\0':
+                            if (op == "br_on_cast_desc"sv) {
+                              CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDesc));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          case '_':
+                            if (op == "br_on_cast_desc_fail"sv) {
+                              CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastDescFail));
+                              return Ok{};
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
+                      case 'f':
+                        if (op == "br_on_cast_fail"sv) {
+                          CHECK_ERR(makeBrOnCast(ctx, pos, annotations, BrOnCastFail));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   default: goto parse_error;
                 }
               }

@@ -1677,48 +1677,58 @@ public:
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
     // BrOnCast* uses the casting infrastructure, so handle them first.
-    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-      auto cast = doCast(curr);
-      if (auto* breaking = cast.getBreaking()) {
-        return *breaking;
-      } else if (auto* original = cast.getFailure()) {
-        if (curr->op == BrOnCast) {
-          return *original;
+    switch (curr->op) {
+      case BrOnCast:
+      case BrOnCastFail: {
+        auto cast = doCast(curr);
+        if (auto* breaking = cast.getBreaking()) {
+          return *breaking;
+        } else if (auto* original = cast.getFailure()) {
+          if (curr->op == BrOnCast) {
+            return *original;
+          } else {
+            return Flow(curr->name, *original);
+          }
         } else {
-          return Flow(curr->name, *original);
+          auto* result = cast.getSuccess();
+          assert(result);
+          if (curr->op == BrOnCast) {
+            return Flow(curr->name, *result);
+          } else {
+            return *result;
+          }
         }
-      } else {
-        auto* result = cast.getSuccess();
-        assert(result);
-        if (curr->op == BrOnCast) {
-          return Flow(curr->name, *result);
+      }
+      case BrOnCastDesc:
+      case BrOnCastDescFail:
+        WASM_UNREACHABLE("TODO");
+      case BrOnNull:
+      case BrOnNonNull: {
+        // Otherwise we are just checking for null.
+        Flow flow = visit(curr->ref);
+        if (flow.breaking()) {
+          return flow;
+        }
+        const auto& value = flow.getSingleValue();
+        NOTE_EVAL1(value);
+        if (curr->op == BrOnNull) {
+          // BrOnNull does not propagate the value if it takes the branch.
+          if (value.isNull()) {
+            return Flow(curr->name);
+          }
+          // If the branch is not taken, we return the non-null value.
+          return {value};
         } else {
-          return *result;
+          // BrOnNonNull does not return a value if it does not take the branch.
+          if (value.isNull()) {
+            return Flow();
+          }
+          // If the branch is taken, we send the non-null value.
+          return Flow(curr->name, value);
         }
       }
     }
-    // Otherwise we are just checking for null.
-    Flow flow = visit(curr->ref);
-    if (flow.breaking()) {
-      return flow;
-    }
-    const auto& value = flow.getSingleValue();
-    NOTE_EVAL1(value);
-    if (curr->op == BrOnNull) {
-      // BrOnNull does not propagate the value if it takes the branch.
-      if (value.isNull()) {
-        return Flow(curr->name);
-      }
-      // If the branch is not taken, we return the non-null value.
-      return {value};
-    } else {
-      // BrOnNonNull does not return a value if it does not take the branch.
-      if (value.isNull()) {
-        return Flow();
-      }
-      // If the branch is taken, we send the non-null value.
-      return Flow(curr->name, value);
-    }
+    WASM_UNREACHABLE("unexpected op");
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");

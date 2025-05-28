@@ -4516,7 +4516,9 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeRefGetDesc(type);
         }
         case BinaryConsts::BrOnCast:
-        case BinaryConsts::BrOnCastFail: {
+        case BinaryConsts::BrOnCastFail:
+        case BinaryConsts::BrOnCastDesc:
+        case BinaryConsts::BrOnCastDescFail: {
           auto flags = getInt8();
           auto srcNull = (flags & BinaryConsts::BrOnCastFlag::InputNullable)
                            ? Nullable
@@ -4529,7 +4531,10 @@ Result<> WasmBinaryReader::readInst() {
           auto [dstType, dstExact] = getHeapType();
           auto in = Type(srcType, srcNull, srcExact);
           auto cast = Type(dstType, dstNull, dstExact);
-          auto kind = op == BinaryConsts::BrOnCast ? BrOnCast : BrOnCastFail;
+          auto kind = op == BinaryConsts::BrOnCast       ? BrOnCast
+                      : op == BinaryConsts::BrOnCastFail ? BrOnCastFail
+                      : op == BinaryConsts::BrOnCastDesc ? BrOnCastDesc
+                                                         : BrOnCastDescFail;
           return builder.makeBrOn(label, kind, in, cast);
         }
         case BinaryConsts::StructNew:
