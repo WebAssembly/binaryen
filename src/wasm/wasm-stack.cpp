@@ -2580,7 +2580,6 @@ void BinaryInstWriter::visitArrayRMW(ArrayRMW* curr) {
   }
   parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitArrayCmpxchg(ArrayCmpxchg* curr) {
@@ -2592,7 +2591,6 @@ void BinaryInstWriter::visitArrayCmpxchg(ArrayCmpxchg* curr) {
     << U32LEB(BinaryConsts::ArrayAtomicRMWCmpxchg);
   parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
