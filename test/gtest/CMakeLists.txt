@@ -17,6 +17,7 @@ set(unittest_SOURCES
   lattices.cpp
   local-graph.cpp
   possible-contents.cpp
+  principal-type.cpp
   printing.cpp
   public-type-validator.cpp
   scc.cpp

@@ -33,7 +33,7 @@ struct DisjointSets {
     // An upper bound on the height of the tree rooted at this element.
     size_t rank;
   };
-  std::vector<ElemInfo> info;
+  mutable std::vector<ElemInfo> info;
 
   // Add an element and return its index.
   size_t addSet() {
@@ -43,7 +43,7 @@ struct DisjointSets {
   }
 
   // Get the representative element of the set to which `elem` belongs.
-  size_t getRoot(size_t elem) {
+  size_t getRoot(size_t elem) const {
     assert(elem < info.size());
     size_t root = elem;
     // Follow parent pointers up to the root.
