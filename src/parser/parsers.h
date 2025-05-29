@@ -2505,8 +2505,8 @@ Result<> makeArrayInitElem(Ctx& ctx,
 
 template<typename Ctx>
 Result<> makeArrayRMW(Ctx& ctx,
-                       const std::vector<Annotation>& annotations,
-                       AtomicRMWOp op) {
+                      const std::vector<Annotation>& annotations,
+                      AtomicRMWOp op) {
   auto order1 = memorder(ctx);
   CHECK_ERR(order1);
   auto order2 = memorder(ctx);
@@ -2523,7 +2523,7 @@ Result<> makeArrayRMW(Ctx& ctx,
 
 template<typename Ctx>
 Result<> makeArrayCmpxchg(Ctx& ctx,
-                           const std::vector<Annotation>& annotations) {
+                          const std::vector<Annotation>& annotations) {
   auto order1 = memorder(ctx);
   CHECK_ERR(order1);
   auto order2 = memorder(ctx);

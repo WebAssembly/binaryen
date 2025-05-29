@@ -1129,10 +1129,10 @@ public:
     return ret;
   }
   ArrayRMW* makeArrayRMW(AtomicRMWOp op,
-                           Expression* ref,
-                           Expression* index,
-                           Expression* value,
-                           MemoryOrder order) {
+                         Expression* ref,
+                         Expression* index,
+                         Expression* value,
+                         MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<ArrayRMW>();
     ret->op = op;
     ret->ref = ref;
@@ -1143,10 +1143,10 @@ public:
     return ret;
   }
   ArrayCmpxchg* makeArrayCmpxchg(Expression* ref,
-                           Expression* index,
-                                   Expression* expected,
-                                   Expression* replacement,
-                                   MemoryOrder order) {
+                                 Expression* index,
+                                 Expression* expected,
+                                 Expression* replacement,
+                                 MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<ArrayCmpxchg>();
     ret->ref = ref;
     ret->index = index;

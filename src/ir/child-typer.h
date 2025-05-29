@@ -1127,7 +1127,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitArrayRMW(ArrayRMW* curr,
-                    std::optional<HeapType> ht = std::nullopt) {
+                     std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
       if (self().skipUnreachable() && !curr->ref->type.isRef()) {
         return;
@@ -1140,7 +1140,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr,
-                        std::optional<HeapType> ht = std::nullopt) {
+                         std::optional<HeapType> ht = std::nullopt) {
     if (!ht) {
       if (self().skipUnreachable() && !curr->ref->type.isRef()) {
         return;

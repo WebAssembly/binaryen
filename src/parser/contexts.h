@@ -850,15 +850,17 @@ struct NullInstrParserCtx {
   }
   template<typename HeapTypeT>
   Result<> makeArrayRMW(Index,
-                         const std::vector<Annotation>&,
-                         AtomicRMWOp,
-                         HeapTypeT,
-                         MemoryOrder) {
+                        const std::vector<Annotation>&,
+                        AtomicRMWOp,
+                        HeapTypeT,
+                        MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayCmpxchg(
-    Index, const std::vector<Annotation>&, HeapTypeT, MemoryOrder) {
+  Result<> makeArrayCmpxchg(Index,
+                            const std::vector<Annotation>&,
+                            HeapTypeT,
+                            MemoryOrder) {
     return Ok{};
   }
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
@@ -2752,17 +2754,17 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   }
 
   Result<> makeArrayRMW(Index pos,
-                         const std::vector<Annotation>& annotations,
-                         AtomicRMWOp op,
-                         HeapType type,
-                         MemoryOrder order) {
+                        const std::vector<Annotation>& annotations,
+                        AtomicRMWOp op,
+                        HeapType type,
+                        MemoryOrder order) {
     return withLoc(pos, irBuilder.makeArrayRMW(op, type, order));
   }
 
   Result<> makeArrayCmpxchg(Index pos,
-                             const std::vector<Annotation>& annotations,
-                             HeapType type,
-                             MemoryOrder order) {
+                            const std::vector<Annotation>& annotations,
+                            HeapType type,
+                            MemoryOrder order) {
     return withLoc(pos, irBuilder.makeArrayCmpxchg(type, order));
   }
 

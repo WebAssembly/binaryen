@@ -1635,9 +1635,7 @@ void TNHOracle::scan(Function* func,
       notePossibleTrap(curr->ref);
     }
     void visitArrayRMW(ArrayRMW* curr) { notePossibleTrap(curr->ref); }
-    void visitArrayCmpxchg(ArrayCmpxchg* curr) {
-      notePossibleTrap(curr->ref);
-    }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) { notePossibleTrap(curr->ref); }
 
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned

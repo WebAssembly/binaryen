@@ -668,14 +668,14 @@ public:
   }
 
   Result<> visitArrayRMW(ArrayRMW* curr,
-                          std::optional<HeapType> ht = std::nullopt) {
+                         std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitArrayRMW(curr, ht);
     return popConstrainedChildren(children);
   }
 
   Result<> visitArrayCmpxchg(ArrayCmpxchg* curr,
-                              std::optional<HeapType> ht = std::nullopt) {
+                             std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitArrayCmpxchg(curr, ht);
     return popConstrainedChildren(children);
@@ -2383,9 +2383,8 @@ Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeArrayRMW(AtomicRMWOp op,
-                                  HeapType type,
-                                  MemoryOrder order) {
+Result<>
+IRBuilder::makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order) {
   ArrayRMW curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayRMW(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2393,8 +2392,7 @@ Result<> IRBuilder::makeArrayRMW(AtomicRMWOp op,
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeArrayCmpxchg(HeapType type, MemoryOrder order) {
+Result<> IRBuilder::makeArrayCmpxchg(HeapType type, MemoryOrder order) {
   ArrayCmpxchg curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayCmpxchg(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));

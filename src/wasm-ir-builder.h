@@ -235,8 +235,7 @@ public:
   Result<> makeArrayFill(HeapType type);
   Result<> makeArrayInitData(HeapType type, Name data);
   Result<> makeArrayInitElem(HeapType type, Name elem);
-  Result<>
-  makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order);
+  Result<> makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order);
   Result<> makeArrayCmpxchg(HeapType type, MemoryOrder order);
   Result<> makeRefAs(RefAsOp op);
   Result<> makeStringNew(StringNewOp op);
