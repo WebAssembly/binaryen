@@ -654,12 +654,12 @@ instructions = [
     ("array.init_data",      "makeArrayInitData()"),
     ("array.init_elem",      "makeArrayInitElem()"),
     ("array.atomic.rmw.add", "makeArrayRMW(RMWAdd)"),
-    ("array.atomic.rmw.sub", "makemakeArrayRMW(RMWSub)"),
-    ("array.atomic.rmw.and", "makemakeArrayRMW(RMWAnd)"),
-    ("array.atomic.rmw.or",  "makemakeArrayRMW(RMWOr)"),
-    ("array.atomic.rmw.xor", "makemakeArrayRMW(RMWXor)"),
-    ("array.atomic.rmw.xchg", "makemakeArrayRMW(RMWXchg)"),
-    ("array.atomic.rmw.cmpxchg", "makemakeArrayCmpxchg()"),
+    ("array.atomic.rmw.sub", "makeArrayRMW(RMWSub)"),
+    ("array.atomic.rmw.and", "makeArrayRMW(RMWAnd)"),
+    ("array.atomic.rmw.or",  "makeArrayRMW(RMWOr)"),
+    ("array.atomic.rmw.xor", "makeArrayRMW(RMWXor)"),
+    ("array.atomic.rmw.xchg", "makeArrayRMW(RMWXchg)"),
+    ("array.atomic.rmw.cmpxchg", "makeArrayCmpxchg()"),
     ("ref.as_non_null",      "makeRefAs(RefAsNonNull)"),
     ("extern.internalize",   "makeRefAs(AnyConvertExtern)"),  # Deprecated
     ("extern.externalize",   "makeRefAs(ExternConvertAny)"),  # Deprecated
