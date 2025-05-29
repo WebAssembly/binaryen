@@ -1362,6 +1362,34 @@ void ArrayInitElem::finalize() {
   }
 }
 
+void ArrayRMW::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::Unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // We have no array type to read the field off of, but the most precise
+    // possible option is the type of the value we are using to make the
+    // modification.
+    type = value->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArrayCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::Unreachable ||
+      expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // Like ArrayRMW, but the most precise possible field type is the LUB of
+    // the expected and replacement values.
+    type = Type::getLeastUpperBound(expected->type, replacement->type);
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
 void RefAs::finalize() {
   // An unreachable child means we are unreachable. Also set ourselves to
   // unreachable when the child is invalid (say, it is an i32 or some other non-

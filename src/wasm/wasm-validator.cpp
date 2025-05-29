@@ -515,6 +515,8 @@ public:
   template<typename ArrayInit> void visitArrayInit(ArrayInit* curr);
   void visitArrayInitData(ArrayInitData* curr);
   void visitArrayInitElem(ArrayInitElem* curr);
+  void visitArrayRMW(ArrayRMW* curr);
+  void visitArrayCmpxchg(ArrayCmpxchg* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -3690,6 +3692,108 @@ void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
                   field->type,
                   curr,
                   "array.init_elem segment type must match destination type");
+}
+
+void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "array.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "array.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
+    return;
+  }
+  auto field = GCTypeUtils::getField(curr->ref->type);
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "array.atomic.rmw field must be mutable");
+  shouldBeFalse(
+    field.isPacked(), curr, "array.atomic.rmw field must not be packed");
+  bool isAny =
+    field.type.isRef() &&
+    Type::isSubType(
+      field.type,
+      Type(HeapTypes::any.getBasic(field.type.getHeapType().getShared()),
+           Nullable));
+  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 ||
+                      (isAny && curr->op == RMWXchg),
+                    curr,
+                    "array.atomic.rmw field type invalid for operation")) {
+    return;
+  }
+  shouldBeSubType(curr->value->type,
+                  field.type,
+                  curr,
+                  "array.atomic.rmw value must have the proper type");
+}
+
+void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "array.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "array.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
+    return;
+  }
+  auto field = GCTypeUtils::getField(curr->ref->type);
+  shouldBeEqual(
+    field.mutable_, Mutable, curr, "array.atomic.rmw field must be mutable");
+  shouldBeFalse(
+    field.isPacked(), curr, "array.atomic.rmw field must not be packed");
+
+  Type expectedExpectedType;
+  if (field.type == Type::i32) {
+    expectedExpectedType = Type::i32;
+  } else if (field.type == Type::i64) {
+    expectedExpectedType = Type::i64;
+  } else if (field.type.isRef()) {
+    expectedExpectedType = Type(
+      HeapTypes::eq.getBasic(field.type.getHeapType().getShared()), Nullable);
+  } else {
+    shouldBeTrue(
+      false, curr, "array.atomic.rmw field type invalid for operation");
+    return;
+  }
+  shouldBeSubType(
+    curr->expected->type,
+    expectedExpectedType,
+    curr,
+    "array.atomic.rmw.cmpxchg expected value must have the proper type");
+  shouldBeSubType(
+    curr->replacement->type,
+    field.type,
+    curr,
+    "array.atomic.rmw.cmpxchg replacement value must have the proper type");
 }
 
 void FunctionValidator::visitStringNew(StringNew* curr) {
