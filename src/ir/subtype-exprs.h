@@ -399,6 +399,21 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto* seg = self()->getModule()->getElementSegment(curr->segment);
     self()->noteSubtype(seg->type, array.element.type);
   }
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    self()->noteSubtype(curr->value, array.element.type);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    self()->noteSubtype(curr->expected, array.element.type);
+    self()->noteSubtype(curr->replacement, array.element.type);
+  }
   void visitRefAs(RefAs* curr) {
     if (curr->op == RefAsNonNull) {
       self()->noteCast(curr->value, curr);
