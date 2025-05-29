@@ -2512,7 +2512,7 @@ Result<> makeArrayRMW(Ctx& ctx,
   auto order2 = memorder(ctx);
   CHECK_ERR(order2);
   if (*order1 != *order2) {
-    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+    return ctx.in.err("array.atomic.rmw memory orders must be identical");
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
@@ -2529,7 +2529,7 @@ Result<> makeArrayCmpxchg(Ctx& ctx,
   auto order2 = memorder(ctx);
   CHECK_ERR(order2);
   if (*order1 != *order2) {
-    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+    return ctx.in.err("array.atomic.rmw memory orders must be identical");
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
