@@ -292,10 +292,10 @@ Result<> makeArrayInitData(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayInitElem(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
-template<typename Ctx>
 Result<> makeArrayRMW(AtomicRMWOp, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayCmpxchg(const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeRefAs(Ctx&, Index, const std::vector<Annotation>&, RefAsOp op);
 template<typename Ctx>
 Result<>
