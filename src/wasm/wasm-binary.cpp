@@ -3802,8 +3802,7 @@ Result<> WasmBinaryReader::readInst() {
         case BinaryConsts::ArrayAtomicRMWCmpxchg: {
           auto order = getMemoryOrder(true);
           auto type = getIndexedHeapType();
-          auto field = getU32LEB();
-          return builder.makeArrayCmpxchg(type, field, order);
+          return builder.makeArrayCmpxchg(type, order);
         }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
