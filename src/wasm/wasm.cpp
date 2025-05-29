@@ -1363,7 +1363,7 @@ void ArrayInitElem::finalize() {
 }
 
 void ArrayRMW::finalize() {
-  if (ref->type == Type::unreachable || index->type == Type::Unreachable ||
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       value->type == Type::unreachable) {
     type = Type::unreachable;
   } else if (ref->type.isNull()) {
@@ -1377,7 +1377,7 @@ void ArrayRMW::finalize() {
 }
 
 void ArrayCmpxchg::finalize() {
-  if (ref->type == Type::unreachable || index->type == Type::Unreachable ||
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       expected->type == Type::unreachable ||
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
