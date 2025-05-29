@@ -94,7 +94,7 @@
 
   (func $array-rmw-trap-on-null (result i32)
     (array.atomic.rmw.add $array
-      (ref.null (shared none))
+      (ref.null none)
       (i32.const 1)
       (i32.const 2)
     )
@@ -105,7 +105,7 @@
   ;; CHECK-NEXT: )
   (func $array-cmpxchg-trap-on-null (result i32)
     (array.atomic.rmw.cmpxchg $array
-      (ref.null (shared none))
+      (ref.null none)
       (i32.const 1)
       (i32.const 2)
       (i32.const 3)
