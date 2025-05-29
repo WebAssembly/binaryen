@@ -483,4 +483,78 @@
       (i32.const 1337)
     )
   )
+
+  (func $array-rmw-add (param (ref null $array)) (result i32)
+    (array.atomic.rmw.add $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-sub (param (ref null $array)) (result i32)
+    (array.atomic.rmw.sub $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-and (param (ref null $array)) (result i32)
+    (array.atomic.rmw.and $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-or (param (ref null $array)) (result i32)
+    (array.atomic.rmw.or $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-xor (param (ref null $array)) (result i32)
+    (array.atomic.rmw.xor $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-xchg (param (ref null $array)) (result i32)
+    (array.atomic.rmw.xchg $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-xchg-acqrel (param (ref null $array)) (result i32)
+    (array.atomic.rmw.xchg acqrel acqrel $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-cmpxchg (param (ref null $array)) (result i32)
+    (array.atomic.rmw.cmpxchg $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+      (i32.const 3)
+    )
+  )
+
+  (func $array-rmw-cmpxchg-acqrel (param (ref null $array)) (result i32)
+    (array.atomic.rmw.cmpxchg acqrel acqrel $array
+      (local.get 0)
+      (i32.const 1)
+      (i32.const 2)
+      (i32.const 3)
+    )
+  )
 )

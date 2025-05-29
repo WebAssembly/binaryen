@@ -16,6 +16,8 @@
   ;; CHECK:      (type $unshared-struct (struct (field (mut (ref null $unshared-struct)))))
   (type $unshared-struct (struct (field (mut (ref null $unshared-struct)))))
 
+  (type $array (array (mut i32)))
+
   ;; CHECK:      (func $rmw-skip-non-null-cast (type $6) (param $0 (ref null $i32)) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.add $i32 0
   ;; CHECK-NEXT:   (local.get $0)
@@ -48,6 +50,27 @@
     )
   )
 
+  (func $array-rmw-skip-non-null-cast (param (ref null $i32) i32) (result i32)
+    (array.atomic.rmw.add $i32
+      (ref.as_non_null
+        (local.get 0)
+      )
+      (local.get 1)
+      (local.get 2)
+    )
+  )
+
+  (func $array-cmpxchg-skip-non-null-cast (param (ref null $i32) i32 i32) (result i32)
+    (array.atomic.rmw.cmpxchg $i32
+      (ref.as_non_null
+        (local.get 0)
+      )
+      (local.get 1)
+      (local.get 2)
+      (local.get 3)
+    )
+  )
+
   ;; CHECK:      (func $rmw-trap-on-null (type $8) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
@@ -66,6 +89,26 @@
       (ref.null (shared none))
       (i32.const 1)
       (i32.const 2)
+    )
+  )
+
+  (func $array-rmw-trap-on-null (result i32)
+    (array.atomic.rmw.add $i32
+      (ref.null (shared none))
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $cmpxchg-trap-on-null (type $8) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array-cmpxchg-trap-on-null (result i32)
+    (array.atomic.rmw.cmpxchg $i32
+      (ref.null (shared none))
+      (i32.const 1)
+      (i32.const 2)
+      (i32.const 3)
     )
   )
 
