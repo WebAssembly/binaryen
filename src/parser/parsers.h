@@ -292,6 +292,10 @@ Result<> makeArrayInitData(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayInitElem(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+template<typename Ctx>
+Result<> makeArrayRMW(AtomicRMWOp, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeArrayCmpxchg(const std::vector<Annotation>&);
 Result<> makeRefAs(Ctx&, Index, const std::vector<Annotation>&, RefAsOp op);
 template<typename Ctx>
 Result<>
@@ -2497,6 +2501,41 @@ Result<> makeArrayInitElem(Ctx& ctx,
   auto elem = elemidx(ctx);
   CHECK_ERR(elem);
   return ctx.makeArrayInitElem(pos, annotations, *type, *elem);
+}
+
+template<typename Ctx>
+Result<> makeArrayRMW(Ctx& ctx,
+                       const std::vector<Annotation>& annotations,
+                       AtomicRMWOp op) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeArrayRMW(annotations, op, *type, *field, *order1);
+}
+
+template<typename Ctx>
+Result<> makeArrayCmpxchg(Ctx& ctx,
+                           const std::vector<Annotation>& annotations) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto field = fieldidx(ctx, *type);
+  CHECK_ERR(field);
+  return ctx.makeArrayCmpxchg(annotations, *type, *field, *order1);
 }
 
 template<typename Ctx>
