@@ -71,9 +71,7 @@
   ;; CHECK:      (func $array-cmpxchg-skip-non-null-cast (type $10) (param $0 (ref null $array)) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )

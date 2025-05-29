@@ -592,7 +592,7 @@
   ;; CHECK:      (func $array-rmw-cmpxchg (type $4) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
@@ -609,7 +609,7 @@
   ;; CHECK:      (func $array-rmw-cmpxchg-acqrel (type $4) (param $0 (ref null $array)) (result i32)
   ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg acqrel acqrel $array
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
