@@ -3718,7 +3718,7 @@ void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
         type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
     return;
   }
-  const auto& element = heapType.getArray().element;
+  const auto& element = type.getArray().element;
   shouldBeEqual(
     element.mutable_, Mutable, curr, "array.atomic.rmw element must be mutable");
   shouldBeFalse(
@@ -3765,7 +3765,7 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
         type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
     return;
   }
-  const auto& element = heapType.getArray().element;
+  const auto& element = type.getArray().element;
   shouldBeEqual(
     element.mutable_, Mutable, curr, "array.atomic.rmw element must be mutable");
   shouldBeFalse(
