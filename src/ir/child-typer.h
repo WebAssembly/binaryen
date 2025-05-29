@@ -1136,7 +1136,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     auto type = ht->getArray().element.type;
     note(&curr->ref, Type(*ht, Nullable));
-    note(&curr->value, type.type);
+    note(&curr->value, type);
   }
 
   void visitArrayCmpxchg(ArrayCmpxchg* curr,
@@ -1149,8 +1149,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     auto type = ht->getArray().element.type;
     note(&curr->ref, Type(*ht, Nullable));
-    note(&curr->expected, type.type);
-    note(&curr->replacement, type.type);
+    note(&curr->expected, type);
+    note(&curr->replacement, type);
   }
 
   void visitRefAs(RefAs* curr) {
