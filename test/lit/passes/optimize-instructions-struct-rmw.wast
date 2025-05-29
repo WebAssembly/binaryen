@@ -16,9 +16,10 @@
   ;; CHECK:      (type $unshared-struct (struct (field (mut (ref null $unshared-struct)))))
   (type $unshared-struct (struct (field (mut (ref null $unshared-struct)))))
 
+  ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (func $rmw-skip-non-null-cast (type $6) (param $0 (ref null $i32)) (param $1 i32) (result i32)
+  ;; CHECK:      (func $rmw-skip-non-null-cast (type $7) (param $0 (ref null $i32)) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.add $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $1)
@@ -33,7 +34,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-skip-non-null-cast (type $7) (param $0 (ref null $i32)) (param $1 i32) (param $2 i32) (result i32)
+  ;; CHECK:      (func $cmpxchg-skip-non-null-cast (type $8) (param $0 (ref null $i32)) (param $1 i32) (param $2 i32) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $1)
@@ -50,6 +51,13 @@
     )
   )
 
+  ;; CHECK:      (func $array-rmw-skip-non-null-cast (type $9) (param $0 (ref null $array)) (param $1 i32) (param $2 i32) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.rmw.add $array
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $array-rmw-skip-non-null-cast (param (ref null $array) i32 i32) (result i32)
     (array.atomic.rmw.add $array
       (ref.as_non_null
@@ -60,6 +68,16 @@
     )
   )
 
+  ;; CHECK:      (func $array-cmpxchg-skip-non-null-cast (type $10) (param $0 (ref null $array)) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+  ;; CHECK-NEXT:  (array.atomic.rmw.cmpxchg $array
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $array-cmpxchg-skip-non-null-cast (param (ref null $array) i32 i32 i32) (result i32)
     (array.atomic.rmw.cmpxchg $array
       (ref.as_non_null
@@ -71,7 +89,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-trap-on-null (type $8) (result i32)
+  ;; CHECK:      (func $rmw-trap-on-null (type $11) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $rmw-trap-on-null (result i32)
@@ -81,7 +99,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-trap-on-null (type $8) (result i32)
+  ;; CHECK:      (func $cmpxchg-trap-on-null (type $11) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $cmpxchg-trap-on-null (result i32)
@@ -92,6 +110,9 @@
     )
   )
 
+  ;; CHECK:      (func $array-rmw-trap-on-null (type $11) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $array-rmw-trap-on-null (result i32)
     (array.atomic.rmw.add $array
       (ref.null none)
@@ -100,7 +121,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-trap-on-null (type $8) (result i32)
+  ;; CHECK:      (func $array-cmpxchg-trap-on-null (type $11) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $array-cmpxchg-trap-on-null (result i32)
@@ -112,7 +133,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i32-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-add-i32-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i32 0
   ;; CHECK-NEXT:   (block (result (ref null $i32))
   ;; CHECK-NEXT:    (drop
@@ -130,7 +151,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i32-noident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-add-i32-noident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.add acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -144,7 +165,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-sub-i32-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-sub-i32-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i32 0
   ;; CHECK-NEXT:   (block (result (ref null $i32))
   ;; CHECK-NEXT:    (drop
@@ -161,7 +182,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-sub-i32-noident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-sub-i32-noident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.sub acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -174,7 +195,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-and-i32-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-and-i32-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i32 0
   ;; CHECK-NEXT:   (block (result (ref null $i32))
   ;; CHECK-NEXT:    (drop
@@ -191,7 +212,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-and-i32-noident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-and-i32-noident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.and acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -204,7 +225,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-or-i32-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-or-i32-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i32 0
   ;; CHECK-NEXT:   (block (result (ref null $i32))
   ;; CHECK-NEXT:    (drop
@@ -221,7 +242,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-or-i32-noident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-or-i32-noident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.or acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const -1)
@@ -234,7 +255,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xor-i32-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-xor-i32-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i32 0
   ;; CHECK-NEXT:   (block (result (ref null $i32))
   ;; CHECK-NEXT:    (drop
@@ -251,7 +272,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xor-i32-noident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-xor-i32-noident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.xor acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const -1)
@@ -264,7 +285,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-i32-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-xchg-i32-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (struct.get $i32 0
@@ -282,7 +303,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-i32-noident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-xchg-i32-noident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -295,7 +316,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i32-ident (type $6) (param $0 (ref null $i32)) (param $1 i32) (result i32)
+  ;; CHECK:      (func $cmpxchg-i32-ident (type $7) (param $0 (ref null $i32)) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i32 0
   ;; CHECK-NEXT:   (block (result (ref null $i32))
   ;; CHECK-NEXT:    (block
@@ -318,7 +339,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i32-noident (type $6) (param $0 (ref null $i32)) (param $1 i32) (result i32)
+  ;; CHECK:      (func $cmpxchg-i32-noident (type $7) (param $0 (ref null $i32)) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -333,7 +354,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i64-ident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-add-i64-ident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i64 0
   ;; CHECK-NEXT:   (block (result (ref null $i64))
   ;; CHECK-NEXT:    (drop
@@ -351,7 +372,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i64-noident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-add-i64-noident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.add acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const 1)
@@ -365,7 +386,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-sub-i64-ident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-sub-i64-ident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i64 0
   ;; CHECK-NEXT:   (block (result (ref null $i64))
   ;; CHECK-NEXT:    (drop
@@ -382,7 +403,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-sub-i64-noident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-sub-i64-noident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.sub acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const 1)
@@ -395,7 +416,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-and-i64-ident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-and-i64-ident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i64 0
   ;; CHECK-NEXT:   (block (result (ref null $i64))
   ;; CHECK-NEXT:    (drop
@@ -412,7 +433,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-and-i64-noident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-and-i64-noident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.and acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const 0)
@@ -425,7 +446,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-or-i64-ident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-or-i64-ident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i64 0
   ;; CHECK-NEXT:   (block (result (ref null $i64))
   ;; CHECK-NEXT:    (drop
@@ -442,7 +463,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-or-i64-noident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-or-i64-noident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.or acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const -1)
@@ -455,7 +476,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xor-i64-ident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-xor-i64-ident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i64 0
   ;; CHECK-NEXT:   (block (result (ref null $i64))
   ;; CHECK-NEXT:    (drop
@@ -472,7 +493,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xor-i64-noident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-xor-i64-noident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.xor acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const -1)
@@ -485,7 +506,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-i64-ident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-xchg-i64-ident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (struct.get $i64 0
@@ -503,7 +524,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-i64-noident (type $10) (param $0 (ref null $i64)) (result i64)
+  ;; CHECK:      (func $rmw-xchg-i64-noident (type $13) (param $0 (ref null $i64)) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const 0)
@@ -516,7 +537,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i64-ident (type $11) (param $0 (ref null $i64)) (param $1 i64) (result i64)
+  ;; CHECK:      (func $cmpxchg-i64-ident (type $14) (param $0 (ref null $i64)) (param $1 i64) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $i64 0
   ;; CHECK-NEXT:   (block (result (ref null $i64))
   ;; CHECK-NEXT:    (block
@@ -539,7 +560,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i64-noident (type $11) (param $0 (ref null $i64)) (param $1 i64) (result i64)
+  ;; CHECK:      (func $cmpxchg-i64-noident (type $14) (param $0 (ref null $i64)) (param $1 i64) (result i64)
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $i64 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i64.const 0)
@@ -554,7 +575,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-ref-ident (type $12) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $rmw-xchg-ref-ident (type $15) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (struct.get $struct 0
@@ -572,7 +593,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-ref-noident (type $12) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $rmw-xchg-ref-noident (type $15) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.xchg acqrel acqrel $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (local.get $0)
@@ -585,7 +606,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-ref-ident (type $12) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $cmpxchg-ref-ident (type $15) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $struct 0
   ;; CHECK-NEXT:   (block (result (ref null $struct))
   ;; CHECK-NEXT:    (block
@@ -608,7 +629,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-ref-ident-null (type $12) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $cmpxchg-ref-ident-null (type $15) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.get acqrel $struct 0
   ;; CHECK-NEXT:   (block (result (ref null $struct))
   ;; CHECK-NEXT:    (block
@@ -631,7 +652,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-ref-noident (type $12) (param $0 (ref null $struct)) (result (ref null $struct))
+  ;; CHECK:      (func $cmpxchg-ref-noident (type $15) (param $0 (ref null $struct)) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.atomic.rmw.cmpxchg acqrel acqrel $struct 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (ref.null (shared none))
@@ -646,7 +667,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i32-seqcst-ident (type $9) (param $0 (ref null $i32)) (result i32)
+  ;; CHECK:      (func $rmw-add-i32-seqcst-ident (type $12) (param $0 (ref null $i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.rmw.add $i32 0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -660,7 +681,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i32-unshared-ident (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-add-i32-unshared-ident (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get $unshared-i32 0
   ;; CHECK-NEXT:   (block (result (ref null $unshared-i32))
   ;; CHECK-NEXT:    (drop
@@ -679,7 +700,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i32-unshared-ident (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $cmpxchg-i32-unshared-ident (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (struct.atomic.get $unshared-i32 0
   ;; CHECK-NEXT:   (block (result (ref null $unshared-i32))
   ;; CHECK-NEXT:    (block
@@ -703,7 +724,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-add-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -734,7 +755,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-sub-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-sub-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -765,7 +786,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-and-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-and-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -796,7 +817,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-or-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-or-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -827,7 +848,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xor-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-xor-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -858,7 +879,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-xchg-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -886,7 +907,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i32-lower (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $cmpxchg-i32-lower (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -926,7 +947,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $rmw-add-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -957,7 +978,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-sub-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $rmw-sub-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -988,7 +1009,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-and-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $rmw-and-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -1019,7 +1040,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-or-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $rmw-or-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -1050,7 +1071,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xor-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $rmw-xor-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -1081,7 +1102,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $rmw-xchg-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -1109,7 +1130,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i64-lower (type $14) (param $0 (ref null $unshared-i64)) (result i64)
+  ;; CHECK:      (func $cmpxchg-i64-lower (type $17) (param $0 (ref null $unshared-i64)) (result i64)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i64))
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local $3 i64)
@@ -1149,7 +1170,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-xchg-ref-lower (type $15) (param $0 (ref null $unshared-struct)) (result (ref null $unshared-struct))
+  ;; CHECK:      (func $rmw-xchg-ref-lower (type $18) (param $0 (ref null $unshared-struct)) (result (ref null $unshared-struct))
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-struct))
   ;; CHECK-NEXT:  (local $2 (ref null $unshared-struct))
   ;; CHECK-NEXT:  (local $3 (ref null $unshared-struct))
@@ -1177,7 +1198,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-ref-lower (type $15) (param $0 (ref null $unshared-struct)) (result (ref null $unshared-struct))
+  ;; CHECK:      (func $cmpxchg-ref-lower (type $18) (param $0 (ref null $unshared-struct)) (result (ref null $unshared-struct))
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-struct))
   ;; CHECK-NEXT:  (local $2 (ref null $unshared-struct))
   ;; CHECK-NEXT:  (local $3 (ref null $unshared-struct))
@@ -1217,7 +1238,7 @@
     )
   )
 
-  ;; CHECK:      (func $rmw-add-i32-acqrel (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $rmw-add-i32-acqrel (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -1249,7 +1270,7 @@
     )
   )
 
-  ;; CHECK:      (func $cmpxchg-i32-acqrel (type $13) (param $0 (ref null $unshared-i32)) (result i32)
+  ;; CHECK:      (func $cmpxchg-i32-acqrel (type $16) (param $0 (ref null $unshared-i32)) (result i32)
   ;; CHECK-NEXT:  (local $1 (ref null $unshared-i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
