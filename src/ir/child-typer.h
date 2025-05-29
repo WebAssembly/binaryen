@@ -884,7 +884,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       if (!target) {
         target = curr->type;
       }
-      if (self().skipUnreachable() && !target.isRef()) {
+      if (self().skipUnreachable() && !target->isRef()) {
         return;
       }
       auto desc = target->getHeapType().getDescriptorType();
