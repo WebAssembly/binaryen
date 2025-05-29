@@ -2397,7 +2397,7 @@ Result<> IRBuilder::makeArrayCmpxchg(HeapType type, MemoryOrder order) {
   CHECK_ERR(ChildPopper{*this}.visitArrayCmpxchg(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArrayCmpxchg(
-    curr.ref, curr.ref, curr.expected, curr.replacement, order));
+    curr.ref, curr.index, curr.expected, curr.replacement, order));
   return Ok{};
 }
 
