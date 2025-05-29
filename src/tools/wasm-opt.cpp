@@ -96,7 +96,7 @@ int main(int argc, const char* argv[]) {
   const std::string WasmOptOption = "wasm-opt options";
 
   OptimizationOptions options("wasm-opt",
-    R"Read, write, and optimize files.
+    R"(Read, write, and optimize files.
 
 Example usage:
 
