@@ -3719,8 +3719,10 @@ void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
     return;
   }
   const auto& element = type.getArray().element;
-  shouldBeEqual(
-    element.mutable_, Mutable, curr, "array.atomic.rmw element must be mutable");
+  shouldBeEqual(element.mutable_,
+                Mutable,
+                curr,
+                "array.atomic.rmw element must be mutable");
   shouldBeFalse(
     element.isPacked(), curr, "array.atomic.rmw element must not be packed");
   bool isAny =
@@ -3766,8 +3768,10 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
     return;
   }
   const auto& element = type.getArray().element;
-  shouldBeEqual(
-    element.mutable_, Mutable, curr, "array.atomic.rmw element must be mutable");
+  shouldBeEqual(element.mutable_,
+                Mutable,
+                curr,
+                "array.atomic.rmw element must be mutable");
   shouldBeFalse(
     element.isPacked(), curr, "array.atomic.rmw element must not be packed");
 
