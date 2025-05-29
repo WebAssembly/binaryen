@@ -848,6 +848,19 @@ struct NullInstrParserCtx {
                              ElemIdxT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<> makeArrayRMW(Index,
+                         const std::vector<Annotation>&,
+                         AtomicRMWOp,
+                         HeapTypeT,
+                         MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayCmpxchg(
+    Index, const std::vector<Annotation>&, HeapTypeT, MemoryOrder) {
+    return Ok{};
+  }
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
     return Ok{};
   }
@@ -2736,6 +2749,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                              HeapType type,
                              Name elem) {
     return withLoc(pos, irBuilder.makeArrayInitElem(type, elem));
+  }
+
+  Result<> makeArrayRMW(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         AtomicRMWOp op,
+                         HeapType type,
+                         MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayRMW(op, type, order));
+  }
+
+  Result<> makeArrayCmpxchg(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayCmpxchg(type, order));
   }
 
   Result<>
