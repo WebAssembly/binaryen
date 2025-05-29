@@ -50,8 +50,8 @@
     )
   )
 
-  (func $array-rmw-skip-non-null-cast (param (ref null $i32) i32) (result i32)
-    (array.atomic.rmw.add $i32
+  (func $array-rmw-skip-non-null-cast (param (ref null $array) i32 i32) (result i32)
+    (array.atomic.rmw.add $array
       (ref.as_non_null
         (local.get 0)
       )
@@ -60,8 +60,8 @@
     )
   )
 
-  (func $array-cmpxchg-skip-non-null-cast (param (ref null $i32) i32 i32) (result i32)
-    (array.atomic.rmw.cmpxchg $i32
+  (func $array-cmpxchg-skip-non-null-cast (param (ref null $array) i32 i32 i32) (result i32)
+    (array.atomic.rmw.cmpxchg $array
       (ref.as_non_null
         (local.get 0)
       )
@@ -93,7 +93,7 @@
   )
 
   (func $array-rmw-trap-on-null (result i32)
-    (array.atomic.rmw.add $i32
+    (array.atomic.rmw.add $array
       (ref.null (shared none))
       (i32.const 1)
       (i32.const 2)
@@ -104,7 +104,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $array-cmpxchg-trap-on-null (result i32)
-    (array.atomic.rmw.cmpxchg $i32
+    (array.atomic.rmw.cmpxchg $array
       (ref.null (shared none))
       (i32.const 1)
       (i32.const 2)

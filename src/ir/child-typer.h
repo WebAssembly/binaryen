@@ -1136,6 +1136,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     auto type = ht->getArray().element.type;
     note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
     note(&curr->value, type);
   }
 
@@ -1149,6 +1150,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     auto type = ht->getArray().element.type;
     note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
     note(&curr->expected, type);
     note(&curr->replacement, type);
   }
