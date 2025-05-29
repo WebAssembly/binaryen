@@ -3718,25 +3718,25 @@ void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
         type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
     return;
   }
-  auto field = GCTypeUtils::getField(curr->ref->type);
+  const auto& element = heapType.getArray().element;
   shouldBeEqual(
-    field.mutable_, Mutable, curr, "array.atomic.rmw field must be mutable");
+    element.mutable_, Mutable, curr, "array.atomic.rmw element must be mutable");
   shouldBeFalse(
-    field.isPacked(), curr, "array.atomic.rmw field must not be packed");
+    element.isPacked(), curr, "array.atomic.rmw element must not be packed");
   bool isAny =
-    field.type.isRef() &&
+    element.type.isRef() &&
     Type::isSubType(
-      field.type,
-      Type(HeapTypes::any.getBasic(field.type.getHeapType().getShared()),
+      element.type,
+      Type(HeapTypes::any.getBasic(element.type.getHeapType().getShared()),
            Nullable));
-  if (!shouldBeTrue(field.type == Type::i32 || field.type == Type::i64 ||
+  if (!shouldBeTrue(element.type == Type::i32 || element.type == Type::i64 ||
                       (isAny && curr->op == RMWXchg),
                     curr,
-                    "array.atomic.rmw field type invalid for operation")) {
+                    "array.atomic.rmw element type invalid for operation")) {
     return;
   }
   shouldBeSubType(curr->value->type,
-                  field.type,
+                  element.type,
                   curr,
                   "array.atomic.rmw value must have the proper type");
 }
@@ -3765,23 +3765,23 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
         type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
     return;
   }
-  auto field = GCTypeUtils::getField(curr->ref->type);
+  const auto& element = heapType.getArray().element;
   shouldBeEqual(
-    field.mutable_, Mutable, curr, "array.atomic.rmw field must be mutable");
+    element.mutable_, Mutable, curr, "array.atomic.rmw element must be mutable");
   shouldBeFalse(
-    field.isPacked(), curr, "array.atomic.rmw field must not be packed");
+    element.isPacked(), curr, "array.atomic.rmw element must not be packed");
 
   Type expectedExpectedType;
-  if (field.type == Type::i32) {
+  if (element.type == Type::i32) {
     expectedExpectedType = Type::i32;
-  } else if (field.type == Type::i64) {
+  } else if (element.type == Type::i64) {
     expectedExpectedType = Type::i64;
-  } else if (field.type.isRef()) {
+  } else if (element.type.isRef()) {
     expectedExpectedType = Type(
-      HeapTypes::eq.getBasic(field.type.getHeapType().getShared()), Nullable);
+      HeapTypes::eq.getBasic(element.type.getHeapType().getShared()), Nullable);
   } else {
     shouldBeTrue(
-      false, curr, "array.atomic.rmw field type invalid for operation");
+      false, curr, "array.atomic.rmw element type invalid for operation");
     return;
   }
   shouldBeSubType(
@@ -3791,7 +3791,7 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
     "array.atomic.rmw.cmpxchg expected value must have the proper type");
   shouldBeSubType(
     curr->replacement->type,
-    field.type,
+    element.type,
     curr,
     "array.atomic.rmw.cmpxchg replacement value must have the proper type");
 }
