@@ -95,7 +95,23 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmOptOption = "wasm-opt options";
 
-  OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
+  OptimizationOptions options(
+    "wasm-opt",
+    "");
+    R"Read, write, and optimize files.
+
+Example usage:
+
+  wasm-opt input.wasm -O3 -o output.wasm
+
+This reads an input wasm file, optimizes with -O3, and writes out the result.
+
+For more on how to optimize effectively, see
+
+  https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook
+  https://github.com/WebAssembly/binaryen/wiki/GC-Optimization-Guidebook
+                            )");
+
   options
     .add("--output",
          "-o",
