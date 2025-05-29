@@ -852,9 +852,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->ref, Type(top, Nullable));
   }
 
-  void visitRefCast(RefCast* curr) {
+  void visitRefCast(RefCast* curr, std::optional<Type> target = std::nullopt) {
     auto top = curr->type.getHeapType().getTop();
     note(&curr->ref, Type(top, Nullable));
+    if (curr->desc) {
+      if (!target) {
+        target = curr->type;
+      }
+      auto desc = target->getHeapType().getDescriptorType();
+      assert(desc);
+      note(&curr->desc, Type(*desc, Nullable, curr->type.getExactness()));
+    }
   }
 
   void visitRefGetDesc(RefGetDesc* curr,
@@ -881,8 +889,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         auto top = target->getHeapType().getTop();
         note(&curr->ref, Type(top, Nullable));
         if (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail) {
-          auto descriptor = *target->getHeapType().getDescriptorType();
-          note(&curr->desc, Type(descriptor, Nullable));
+          auto desc = target->getHeapType().getDescriptorType();
+          assert(desc);
+          note(&curr->desc, Type(*desc, Nullable));
         }
         return;
       }

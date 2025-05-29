@@ -115,6 +115,7 @@ unfuzzable = [
     'custom-descriptors.wast',
     'br_on_cast_desc.wast',
     'ref.get_cast.wast',
+    'ref.cast_desc.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',

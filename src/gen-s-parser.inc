@@ -4807,12 +4807,23 @@ switch (buf[0]) {
               return Ok{};
             }
             goto parse_error;
-          case 'c':
-            if (op == "ref.cast"sv) {
-              CHECK_ERR(makeRefCast(ctx, pos, annotations));
-              return Ok{};
+          case 'c': {
+            switch (buf[8]) {
+              case '\0':
+                if (op == "ref.cast"sv) {
+                  CHECK_ERR(makeRefCast(ctx, pos, annotations, false));
+                  return Ok{};
+                }
+                goto parse_error;
+              case '_':
+                if (op == "ref.cast_desc"sv) {
+                  CHECK_ERR(makeRefCast(ctx, pos, annotations, true));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'e':
             if (op == "ref.eq"sv) {
               CHECK_ERR(makeRefEq(ctx, pos, annotations));

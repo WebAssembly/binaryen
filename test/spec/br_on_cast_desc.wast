@@ -26,7 +26,7 @@
     )
   )
   (func $br_on_cast_desc-exact (param $any anyref) (param $super.desc (ref null (exact $super.desc))) (result (ref null (exact $super)))
-    ;; The sent type exact because the descriptor is exact.
+    ;; The sent type is exact because the descriptor is exact.
     (br_on_cast_desc 0 anyref (ref null $super)
       (local.get $any)
       (local.get $super.desc)
@@ -77,13 +77,13 @@
 
 (assert_malformed
   ;; Cast type must be a reference.
-  (module quote "(module (func (unreachable) (br_on_cast_desc 0 anyref i32)))")
+  (module quote "(module (func (unreachable) (br_on_cast_desc 0 anyref i32) (unreachable)))")
   "expected reftype"
 )
 
 (assert_malformed
   ;; Cast type must be a reference.
-  (module quote "(module (func (unreachable) (br_on_cast_desc_fail 0 anyref i32)))")
+  (module quote "(module (func (unreachable) (br_on_cast_desc_fail 0 anyref i32) (unreachable)))")
   "expected reftype"
 )
 
@@ -125,7 +125,7 @@
       )
     )
   )
-  "invalid reference type on stack"
+  "invalid type on stack"
 )
 
 (assert_invalid
@@ -142,7 +142,7 @@
       )
     )
   )
-  "invalid reference type on stack"
+  "invalid type on stack"
 )
 
 (assert_invalid
@@ -162,7 +162,7 @@
       )
     )
   )
-  "invalid reference type on stack"
+  "invalid type on stack"
 )
 
 (assert_invalid
@@ -182,7 +182,7 @@
       )
     )
   )
-  "invalid reference type on stack"
+  "invalid type on stack"
 )
 
 (assert_invalid
@@ -192,10 +192,10 @@
       (type $desc (describes $struct (struct)))
     )
     (func (param $any anyref) (param $desc (ref null $desc)) (result (ref null (exact $struct)))
-      ;; The sent type is not exact because the descriptor is not exact.
+      ;; The sent type cannnot be exact because the descriptor is not exact.
       (br_on_cast_desc 0 anyref (ref null $struct)
         (local.get $any)
-        (local.get $descriptor)
+        (local.get $desc)
       )
       (unreachable)
     )

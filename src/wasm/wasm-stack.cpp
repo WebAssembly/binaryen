@@ -81,7 +81,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // are casting, and to emit the proper thing.
       RefCast cast;
       cast.type = to;
-      cast.ref = nullptr;
+      cast.ref = cast.desc = nullptr;
       visitRefCast(&cast);
     };
 
@@ -2271,11 +2271,23 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
+  if (curr->desc && curr->desc->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
-    o << U32LEB(BinaryConsts::RefCastNull);
+    if (curr->desc) {
+      o << U32LEB(BinaryConsts::RefCastDescNull);
+    } else {
+      o << U32LEB(BinaryConsts::RefCastNull);
+    }
   } else {
-    o << U32LEB(BinaryConsts::RefCast);
+    if (curr->desc) {
+      o << U32LEB(BinaryConsts::RefCastDesc);
+    } else {
+      o << U32LEB(BinaryConsts::RefCast);
+    }
   }
   parent.writeHeapType(curr->type.getHeapType(), curr->type.getExactness());
 }

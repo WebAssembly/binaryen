@@ -1620,6 +1620,9 @@ public:
 
   Expression* ref;
 
+  // Used only for ref.cast_desc.
+  Expression* desc;
+
   void finalize();
 
   Type& getCastType() { return type; }

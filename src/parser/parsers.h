@@ -231,7 +231,7 @@ Result<> makeI31Get(Ctx&, Index, const std::vector<Annotation>&, bool signed_);
 template<typename Ctx>
 Result<> makeRefTest(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
-Result<> makeRefCast(Ctx&, Index, const std::vector<Annotation>&);
+Result<> makeRefCast(Ctx&, Index, const std::vector<Annotation>&, bool isDesc);
 template<typename Ctx>
 Result<> makeRefGetDesc(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
@@ -2219,11 +2219,13 @@ makeRefTest(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 }
 
 template<typename Ctx>
-Result<>
-makeRefCast(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+Result<> makeRefCast(Ctx& ctx,
+                     Index pos,
+                     const std::vector<Annotation>& annotations,
+                     bool isDesc) {
   auto type = reftype(ctx);
   CHECK_ERR(type);
-  return ctx.makeRefCast(pos, annotations, *type);
+  return ctx.makeRefCast(pos, annotations, *type, isDesc);
 }
 
 template<typename Ctx>

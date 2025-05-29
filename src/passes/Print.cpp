@@ -2208,7 +2208,11 @@ struct PrintExpressionContents
     printType(curr->castType);
   }
   void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast ");
+    if (curr->desc) {
+      printMedium(o, "ref.cast_desc ");
+    } else {
+      printMedium(o, "ref.cast ");
+    }
     printType(curr->type);
   }
   void visitRefGetDesc(RefGetDesc* curr) {
