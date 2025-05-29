@@ -1052,8 +1052,28 @@ void RefTest::finalize() {
 }
 
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (desc && desc->type == Type::unreachable)) {
     type = Type::unreachable;
+    return;
+  }
+
+  if (desc) {
+    if (desc->type.isNull()) {
+      // Cast will never be executed and the instruction will not be emitted.
+      // Model this with an uninhabitable cast type.
+      type = desc->type.with(NonNullable);
+      return;
+    }
+    // The cast heap type and exactness is determined by the descriptor's type.
+    // Its nullability can be improved if the input valus is non-nullable.
+    auto heapType = desc->type.getHeapType().getDescribedType();
+    assert(heapType);
+    auto exactness = desc->type.getExactness();
+    type = type.with(*heapType).with(exactness);
+    if (ref->type.isNonNullable()) {
+      type = type.with(NonNullable);
+    }
     return;
   }
 

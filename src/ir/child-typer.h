@@ -71,7 +71,8 @@ namespace wasm {
 // StructNew has no struct type defined, so we cannot apply its heap type. By
 // default we do not skip such unreachable code, and error in such such cases if
 // the type is not provided (by passing the heap type as mentioned above, as a
-// parameter to the visit* method).
+// parameter to the visit* method). Optimization passes can often skip
+// unreachable code (leaving it for DCE), while other operations might not.
 template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   Module& wasm;
   Function* func;
@@ -873,12 +874,23 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->ref, Type(top, Nullable));
   }
 
-  void visitRefCast(RefCast* curr) {
+  void visitRefCast(RefCast* curr, std::optional<Type> target = std::nullopt) {
     if (self().skipUnreachable() && !curr->type.isRef()) {
       return;
     }
     auto top = curr->type.getHeapType().getTop();
     note(&curr->ref, Type(top, Nullable));
+    if (curr->desc) {
+      if (!target) {
+        target = curr->type;
+      }
+      if (self().skipUnreachable() && !target.isRef()) {
+        return;
+      }
+      auto desc = target->getHeapType().getDescriptorType();
+      assert(desc);
+      note(&curr->desc, Type(*desc, Nullable, curr->type.getExactness()));
+    }
   }
 
   void visitRefGetDesc(RefGetDesc* curr,
@@ -911,8 +923,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         auto top = target->getHeapType().getTop();
         note(&curr->ref, Type(top, Nullable));
         if (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail) {
-          auto descriptor = *target->getHeapType().getDescriptorType();
-          note(&curr->desc, Type(descriptor, Nullable));
+          auto desc = target->getHeapType().getDescriptorType();
+          assert(desc);
+          note(&curr->desc, Type(*desc, Nullable));
         }
         return;
       }

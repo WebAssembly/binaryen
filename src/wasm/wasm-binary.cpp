@@ -4505,11 +4505,22 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::RefCast: {
           auto [heapType, exactness] = getHeapType();
-          return builder.makeRefCast(Type(heapType, NonNullable, exactness));
+          return builder.makeRefCast(Type(heapType, NonNullable, exactness),
+                                     false);
         }
         case BinaryConsts::RefCastNull: {
           auto [heapType, exactness] = getHeapType();
-          return builder.makeRefCast(Type(heapType, Nullable, exactness));
+          return builder.makeRefCast(Type(heapType, Nullable, exactness),
+                                     false);
+        }
+        case BinaryConsts::RefCastDesc: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefCast(Type(heapType, NonNullable, exactness),
+                                     true);
+        }
+        case BinaryConsts::RefCastDescNull: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefCast(Type(heapType, Nullable, exactness), true);
         }
         case BinaryConsts::RefGetDesc: {
           auto type = getIndexedHeapType();

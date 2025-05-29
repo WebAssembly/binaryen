@@ -733,7 +733,7 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename TypeT>
-  Result<> makeRefCast(Index, const std::vector<Annotation>&, TypeT) {
+  Result<> makeRefCast(Index, const std::vector<Annotation>&, TypeT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -2592,8 +2592,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
 
   Result<> makeRefCast(Index pos,
                        const std::vector<Annotation>& annotations,
-                       Type type) {
-    return withLoc(pos, irBuilder.makeRefCast(type));
+                       Type type,
+                       bool isDesc) {
+    return withLoc(pos, irBuilder.makeRefCast(type, isDesc));
   }
 
   Result<> makeRefGetDesc(Index pos,
