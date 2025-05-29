@@ -97,7 +97,6 @@ int main(int argc, const char* argv[]) {
 
   OptimizationOptions options(
     "wasm-opt",
-    "");
     R"Read, write, and optimize files.
 
 Example usage:
