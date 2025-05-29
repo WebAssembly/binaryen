@@ -3789,8 +3789,7 @@ Result<> WasmBinaryReader::readInst() {
   case BinaryConsts::ArrayAtomicRMW##op: {                                     \
     auto order = getMemoryOrder(true);                                         \
     auto type = getIndexedHeapType();                                          \
-    auto field = getU32LEB();                                                  \
-    return builder.makeArrayRMW(RMW##op, type, field, order);                  \
+    return builder.makeArrayRMW(RMW##op, type, order);                         \
   }
 
           ARRAY_RMW(Add)
