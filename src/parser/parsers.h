@@ -2517,7 +2517,7 @@ Result<> makeArrayRMW(Ctx& ctx,
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  return ctx.makeArrayRMW(annotations, op, *type, *order1);
+  return ctx.makeArrayRMW(pos, annotations, op, *type, *order1);
 }
 
 template<typename Ctx>
@@ -2533,7 +2533,7 @@ Result<> makeArrayCmpxchg(Ctx& ctx,
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  return ctx.makeArrayCmpxchg(annotations, *type, *order1);
+  return ctx.makeArrayCmpxchg(pos, annotations, *type, *order1);
 }
 
 template<typename Ctx>
