@@ -1005,7 +1005,7 @@ private:
         parent.trap = true;
         return;
       }
-      parent.readsMutableArray = true;
+      parent.readsArray = true;
       parent.writesArray = true;
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
@@ -1018,7 +1018,7 @@ private:
         parent.trap = true;
         return;
       }
-      parent.readsMutableArray = true;
+      parent.readsArray = true;
       parent.writesArray = true;
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
