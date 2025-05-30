@@ -2589,20 +2589,10 @@ struct OptimizeInstructions
     // check what we know about the local (we may know nothing, if this local
     // was added after the pass scanned for locals; in that case, full
     // optimization may require another cycle)
-    if (localInfo.size() <= get->index) {
-      // we don't know anything about this local
-      switch (get->type.getBasic()) {
-        case Type::i32:
-          return 32;
-        case Type::i64:
-          return 64;
-        case Type::unreachable:
-          return 64; // not interesting, but don't crash
-        default:
-          WASM_UNREACHABLE("invalid type");
-      }
+    if (get->index < localInfo.size()) {
+      return localInfo[get->index].maxBits;
     }
-    return localInfo[get->index].maxBits;
+    return getBitsForType(get->type);
   }
 
 private:
