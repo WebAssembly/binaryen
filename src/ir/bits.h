@@ -456,6 +456,10 @@ Index getMaxBits(Expression* curr,
     if (LoadUtils::isSignRelevant(load) && !load->signed_) {
       return 8 * load->bytes;
     }
+  } else if (auto* block = curr->dynCast<Block>()) {
+    if (!block->name.is() && !block->list.empty() && block->type.isConcrete()) {
+      return getMaxBits(block->list.back(), localInfoProvider);
+    }
   }
   switch (curr->type.getBasic()) {
     case Type::i32:
