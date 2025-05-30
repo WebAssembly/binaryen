@@ -457,7 +457,7 @@ Index getMaxBits(Expression* curr,
       return 8 * load->bytes;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
-    if (!block->name.is() && block->list.size() > 0 &&
+    if (!block->name.is() && !block->list.empty() &&
         block->type.isConcrete()) {
       return getMaxBits(block->list.back(), localInfoProvider);
     }
