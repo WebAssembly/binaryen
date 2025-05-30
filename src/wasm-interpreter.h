@@ -2086,6 +2086,81 @@ public:
   }
   Flow visitArrayInitData(ArrayInitData* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayRMW(ArrayRMW* curr) {
+    NOTE_ENTER("ArrayRMW");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    auto& field = data->values[indexVal];
+    auto oldVal = field;
+    auto newVal = value.getSingleValue();
+    switch (curr->op) {
+      case RMWAdd:
+        field = field.add(newVal);
+        break;
+      case RMWSub:
+        field = field.sub(newVal);
+        break;
+      case RMWAnd:
+        field = field.and_(newVal);
+        break;
+      case RMWOr:
+        field = field.or_(newVal);
+        break;
+      case RMWXor:
+        field = field.xor_(newVal);
+        break;
+      case RMWXchg:
+        field = newVal;
+        break;
+    }
+    return oldVal;
+  }
+
+  Flow visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    NOTE_ENTER("ArrayCmpxchg");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow expected = self()->visit(curr->expected);
+    if (expected.breaking()) {
+      return expected;
+    }
+    Flow replacement = self()->visit(curr->replacement);
+    if (replacement.breaking()) {
+      return replacement;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    auto& field = data->values[indexVal];
+    auto oldVal = field;
+    if (field == expected.getSingleValue()) {
+      field = replacement.getSingleValue();
+    }
+    return oldVal;
+  }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
     Flow flow = visit(curr->value);

@@ -95,6 +95,8 @@ DELEGATE(ArrayCopy);
 DELEGATE(ArrayFill);
 DELEGATE(ArrayInitData);
 DELEGATE(ArrayInitElem);
+DELEGATE(ArrayRMW);
+DELEGATE(ArrayCmpxchg);
 DELEGATE(RefAs);
 DELEGATE(StringNew);
 DELEGATE(StringConst);

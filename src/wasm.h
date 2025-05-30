@@ -738,6 +738,8 @@ public:
     ArrayFillId,
     ArrayInitDataId,
     ArrayInitElemId,
+    ArrayRMWId,
+    ArrayCmpxchgId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1867,6 +1869,34 @@ public:
   Expression* index;
   Expression* offset;
   Expression* size;
+
+  void finalize();
+};
+
+class ArrayRMW : public SpecificExpression<Expression::ArrayRMWId> {
+public:
+  ArrayRMW() = default;
+  ArrayRMW(MixedArena& allocator) {}
+
+  AtomicRMWOp op;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+  MemoryOrder order;
+
+  void finalize();
+};
+
+class ArrayCmpxchg : public SpecificExpression<Expression::ArrayCmpxchgId> {
+public:
+  ArrayCmpxchg() = default;
+  ArrayCmpxchg(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* index;
+  Expression* expected;
+  Expression* replacement;
+  MemoryOrder order;
 
   void finalize();
 };

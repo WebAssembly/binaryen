@@ -1126,6 +1126,35 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->size, Type::i32);
   }
 
+  void visitArrayRMW(ArrayRMW* curr,
+                     std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      if (self().skipUnreachable() && !curr->ref->type.isRef()) {
+        return;
+      }
+      ht = curr->ref->type.getHeapType();
+    }
+    auto type = ht->getArray().element.type;
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
+    note(&curr->value, type);
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr,
+                         std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      if (self().skipUnreachable() && !curr->ref->type.isRef()) {
+        return;
+      }
+      ht = curr->ref->type.getHeapType();
+    }
+    auto type = ht->getArray().element.type;
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
+    note(&curr->expected, type);
+    note(&curr->replacement, type);
+  }
+
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
       case RefAsNonNull:

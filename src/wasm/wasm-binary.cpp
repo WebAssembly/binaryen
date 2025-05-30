@@ -3784,6 +3784,26 @@ Result<> WasmBinaryReader::readInst() {
           auto type = getIndexedHeapType();
           return builder.makeArraySet(type, order);
         }
+
+#define ARRAY_RMW(op)                                                          \
+  case BinaryConsts::ArrayAtomicRMW##op: {                                     \
+    auto order = getMemoryOrder(true);                                         \
+    auto type = getIndexedHeapType();                                          \
+    return builder.makeArrayRMW(RMW##op, type, order);                         \
+  }
+
+          ARRAY_RMW(Add)
+          ARRAY_RMW(Sub)
+          ARRAY_RMW(And)
+          ARRAY_RMW(Or)
+          ARRAY_RMW(Xor)
+          ARRAY_RMW(Xchg)
+
+        case BinaryConsts::ArrayAtomicRMWCmpxchg: {
+          auto order = getMemoryOrder(true);
+          auto type = getIndexedHeapType();
+          return builder.makeArrayCmpxchg(type, order);
+        }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }

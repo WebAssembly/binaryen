@@ -1000,6 +1000,32 @@ private:
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+    void visitArrayRMW(ArrayRMW* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsArray = true;
+      parent.writesArray = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsArray = true;
+      parent.writesArray = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
     void visitRefAs(RefAs* curr) {
       if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
         // These conversions are infallible.
