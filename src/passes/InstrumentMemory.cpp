@@ -59,6 +59,7 @@
 
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
+#include "support/string.h"
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
@@ -93,14 +94,26 @@ static Name array_set_val_f32("array_set_val_f32");
 static Name array_set_val_f64("array_set_val_f64");
 static Name array_get_index("array_get_index");
 static Name array_set_index("array_set_index");
+static Name memory_grow_pre("memory_grow_pre");
+static Name memory_grow_post("memory_grow_post");
 
 // TODO: Add support for atomicRMW/cmpxchg
 
-struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
-  // Adds calls to new imports.
-  bool addsEffects() override { return true; }
+using InstructionFilter = std::optional<std::unordered_set<std::string>>;
 
+#define CHECK_EXPRESSION(expr)                                                 \
+  do {                                                                         \
+    if (filter && !filter->count(expr)) {                                      \
+      return;                                                                  \
+    }                                                                          \
+  } while (false)
+
+struct AddInstrumentation : public WalkerPass<PostWalker<AddInstrumentation>> {
+  explicit AddInstrumentation(InstructionFilter filter)
+    : filter(std::move(filter)) {}
   void visitLoad(Load* curr) {
+    CHECK_EXPRESSION("load");
+
     id++;
     Builder builder(*getModule());
     auto mem = getModule()->getMemory(curr->memory);
@@ -134,6 +147,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitStore(Store* curr) {
+    CHECK_EXPRESSION("store");
+
     id++;
     Builder builder(*getModule());
     auto mem = getModule()->getMemory(curr->memory);
@@ -167,6 +182,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitStructGet(StructGet* curr) {
+    CHECK_EXPRESSION("struct.get");
+
     Builder builder(*getModule());
     Name target;
     if (curr->type == Type::i32) {
@@ -185,6 +202,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitStructSet(StructSet* curr) {
+    CHECK_EXPRESSION("struct.set");
+
     Builder builder(*getModule());
     Name target;
     if (curr->value->type == Type::i32) {
@@ -205,6 +224,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitArrayGet(ArrayGet* curr) {
+    CHECK_EXPRESSION("array.get");
+
     Builder builder(*getModule());
     curr->index =
       builder.makeCall(array_get_index,
@@ -227,6 +248,8 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
   void visitArraySet(ArraySet* curr) {
+    CHECK_EXPRESSION("array.set");
+
     Builder builder(*getModule());
     curr->index =
       builder.makeCall(array_set_index,
@@ -250,9 +273,27 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
                        curr->value->type);
   }
 
+  void visitMemoryGrow(MemoryGrow* curr) {
+    CHECK_EXPRESSION("memory.grow");
+
+    id++;
+    Builder builder(*getModule());
+    auto addressType = getModule()->getMemory(curr->memory)->addressType;
+    curr->delta =
+      builder.makeCall(memory_grow_pre,
+                       {builder.makeConst(int32_t(id)), curr->delta},
+                       addressType);
+    replaceCurrent(builder.makeCall(
+      memory_grow_post, {builder.makeConst(int32_t(id)), curr}, addressType));
+  }
+
   void visitModule(Module* curr) {
     auto addressType =
       curr->memories.empty() ? Type::i32 : curr->memories[0]->addressType;
+
+    // Grow.
+    addImport(curr, memory_grow_pre, {Type::i32, addressType}, addressType);
+    addImport(curr, memory_grow_post, {Type::i32, addressType}, addressType);
 
     // Load.
     addImport(curr,
@@ -300,13 +341,29 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   }
 
 private:
-  Index id;
+  Index id = 0;
+  InstructionFilter filter;
 
   void addImport(Module* curr, Name name, Type params, Type results) {
     auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
     curr->addFunction(std::move(import));
+  }
+};
+
+struct InstrumentMemory : Pass {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
+  void run(Module* module) override {
+    auto arg = getArgumentOrDefault("instrument-memory", "");
+    InstructionFilter instructions;
+    if (arg.size() > 0) {
+      String::Split s(arg, ",");
+      instructions = std::unordered_set<std::string>{s.begin(), s.end()};
+    }
+    AddInstrumentation(std::move(instructions)).run(getPassRunner(), module);
   }
 };
 
