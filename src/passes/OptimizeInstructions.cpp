@@ -2586,7 +2586,9 @@ struct OptimizeInstructions
   }
 
   Index getMaxBitsForLocal(LocalGet* get) {
-    // check what we know about the local
+    // check what we know about the local (we may know nothing, if this local
+    // was added after the pass scanned for locals; in that case, full
+    // optimization may require another cycle)
     if (localInfo.size() <= get->index) {
       // we don't know anything about this local
       switch (get->type.getBasic()) {
