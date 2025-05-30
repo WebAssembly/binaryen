@@ -8508,6 +8508,7 @@
         (i64.const 0)
       )
     )
+    ;; We can optimize out the |and| even if the 0 is at the end of a block.
     (drop
       (i32.and
         (local.tee $0
