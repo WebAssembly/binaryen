@@ -337,6 +337,7 @@ public:
       // the separate items in the tuple (tuples themselves have no subtyping,
       // so the tuple's depth must be 0, i.e., an exact type).
       assert(cone->depth == 0);
+      WASM_UNUSED(cone);
       return coneType(type[i]);
     } else {
       WASM_UNREACHABLE("not a tuple");
