@@ -337,8 +337,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    self()->noteSubtype(curr->expected, fields[curr->index].type);
-    self()->noteSubtype(curr->replacement, fields[curr->index].type);
+    auto type = fields[curr->index].type;
+    self()->noteSubtype(curr->expected,
+                        type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    self()->noteSubtype(curr->replacement, type);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
@@ -398,6 +400,22 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto array = curr->ref->type.getHeapType().getArray();
     auto* seg = self()->getModule()->getElementSegment(curr->segment);
     self()->noteSubtype(seg->type, array.element.type);
+  }
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    self()->noteSubtype(curr->value, array.element.type);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto type = curr->ref->type.getHeapType().getArray().element.type;
+    self()->noteSubtype(curr->expected,
+                        type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    self()->noteSubtype(curr->replacement, type);
   }
   void visitRefAs(RefAs* curr) {
     if (curr->op == RefAsNonNull) {
