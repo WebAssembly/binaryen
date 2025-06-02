@@ -102,15 +102,15 @@ ArrayGetId: 75
 ArraySetId: 76
 ArrayLenId: 77
 ArrayCopy: 78
-RefAs: 82
-StringNew: 83
-StringConst: 84
-StringMeasure: 85
-StringEncode: 86
-StringConcat: 87
-StringEq: 88
-StringWTF16Get: 89
-StringSliceWTF: 90
+RefAs: 84
+StringNew: 85
+StringConst: 86
+StringMeasure: 87
+StringEncode: 88
+StringConcat: 89
+StringEq: 90
+StringWTF16Get: 91
+StringSliceWTF: 92
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
