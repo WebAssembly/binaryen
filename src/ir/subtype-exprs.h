@@ -337,7 +337,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    self()->noteSubtype(curr->expected, fields[curr->index].type);
+    self()->noteSubtype(curr->expected, Type(HeapType::eq, Nullable));
     self()->noteSubtype(curr->replacement, fields[curr->index].type);
   }
   void visitArrayNew(ArrayNew* curr) {
@@ -411,7 +411,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     auto array = curr->ref->type.getHeapType().getArray();
-    self()->noteSubtype(curr->expected, array.element.type);
+    self()->noteSubtype(curr->expected, Type(HeapType::eq, Nullable));
     self()->noteSubtype(curr->replacement, array.element.type);
   }
   void visitRefAs(RefAs* curr) {
