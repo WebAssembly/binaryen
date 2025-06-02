@@ -103,10 +103,6 @@ public:
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
 #endif
 
-// Silence unused variable warnings. This is mostly used for variables which
-// are only used in asserts.
-#define WASM_UNUSED(x) (void)(x)
-
 } // namespace wasm
 
 #endif // wasm_support_utilities_h
