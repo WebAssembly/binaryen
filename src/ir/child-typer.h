@@ -997,8 +997,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     const auto& fields = ht->getStruct().fields;
     assert(curr->index < fields.size());
     note(&curr->ref, Type(*ht, Nullable));
-    note(&curr->expected, Type(HeapType::eq, Nullable));
-    note(&curr->replacement, fields[curr->index].type);
+    auto type = fields[curr->index].type;
+    note(&curr->expected, type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    note(&curr->replacement, type);
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -1151,7 +1152,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     auto type = ht->getArray().element.type;
     note(&curr->ref, Type(*ht, Nullable));
     note(&curr->index, Type::i32);
-    note(&curr->expected, Type(HeapType::eq, Nullable));
+    note(&curr->expected, type.isRef() ? Type(HeapType::eq, Nullable) : type);
     note(&curr->replacement, type);
   }
 
