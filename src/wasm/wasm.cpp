@@ -1256,9 +1256,7 @@ void StructCmpxchg::finalize() {
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
   } else if (ref->type.isNull()) {
-    // Like StructRMW, but the most precise possible field type is the LUB of
-    // the expected and replacement values.
-    type = Type::getLeastUpperBound(expected->type, replacement->type);
+    type = replacement->type;
   } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
@@ -1382,9 +1380,7 @@ void ArrayCmpxchg::finalize() {
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
   } else if (ref->type.isNull()) {
-    // Like ArrayRMW, but the most precise possible field type is the LUB of
-    // the expected and replacement values.
-    type = Type::getLeastUpperBound(expected->type, replacement->type);
+    type = replacement->type;
   } else {
     type = ref->type.getHeapType().getArray().element.type;
   }
