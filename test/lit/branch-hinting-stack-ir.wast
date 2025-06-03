@@ -28,7 +28,7 @@
  (func $empty-if
   (local $1 i32)
   ;; Several stack IR opts work here, leading to the if arms being empty (nops
-  ;; removed) and the local.set vanishing, leaving
+  ;; removed) and the local.set/get vanishing, leaving
   ;;
   ;;  i32.const 0
   ;;  i32.const 0
