@@ -8745,23 +8745,72 @@
       (i32.const 0)
     )
   )
-  ;; CHECK:      (func $andZero (param $0 i32) (result i32)
+  ;; CHECK:      (func $andZero (param $0 i32) (param $1 i64) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $andZero
-  ;; CHECK-NEXT:      (i32.const 1234)
+  ;; CHECK-NEXT:     (local.tee $0
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $1
+  ;; CHECK-NEXT:      (i64.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $0
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $1
+  ;; CHECK-NEXT:      (i64.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i64)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (i64.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $andZero (param $0 i32) (result i32)
+  (func $andZero (param $0 i32) (param $1 i64) (result i32)
     (drop
       (i32.and
         (local.get $0)
@@ -8769,10 +8818,54 @@
       )
     )
     (drop
+      (i64.and
+        (local.get $1)
+        (i64.const 0)
+      )
+    )
+    ;; side effects. we must keep the tee, but
+    ;; can drop it.
+    (drop
       (i32.and
-        (call $andZero (i32.const 1234)) ;; side effects, we must keep this, but
-                                         ;; can drop it.
+        (local.tee $0
+          (i32.const 1)
+        )
         (i32.const 0)
+      )
+    )
+    (drop
+      (i64.and
+        (local.tee $1
+          (i64.const 1)
+        )
+        (i64.const 0)
+      )
+    )
+    ;; We can optimize out the |and| even if the 0 is at the end of a block.
+    (drop
+      (i32.and
+        (local.tee $0
+          (i32.const 1)
+        )
+        (block (result i32)
+          (local.set $0
+            (i32.const 1)
+          )
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (i64.and
+        (local.tee $1
+          (i64.const 1)
+        )
+        (block (result i64)
+          (local.set $1
+            (i64.const 1)
+          )
+          (i64.const 0)
+        )
       )
     )
     (unreachable)
