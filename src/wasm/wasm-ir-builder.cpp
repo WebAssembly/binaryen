@@ -160,8 +160,9 @@ void IRBuilder::push(Expression* expr) {
     if (!inserted) {
       // Just update the end.
       iter->second.end = span.end;
-      // The true start from before is before the start of the current segment.
-      assert(iter->second.start < span.start);
+      // The true start from before is before the start of the current segment
+      // (or equal, if the previous segment is empty).
+      assert(iter->second.start <= span.start);
     }
     lastBinaryPos = *binaryPos;
   }
