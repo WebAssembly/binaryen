@@ -25,27 +25,6 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; RTRIP:      (type $0 (func))
-
- ;; RTRIP:      (func $empty-if (type $0)
- ;; RTRIP-NEXT:  (local $1 i32)
- ;; RTRIP-NEXT:  (local.set $1
- ;; RTRIP-NEXT:   (i32.const 0)
- ;; RTRIP-NEXT:  )
- ;; RTRIP-NEXT:  (drop
- ;; RTRIP-NEXT:   (i32.const 0)
- ;; RTRIP-NEXT:  )
- ;; RTRIP-NEXT:  (@metadata.code.branch_hint "\00")
- ;; RTRIP-NEXT:  (if
- ;; RTRIP-NEXT:   (local.get $1)
- ;; RTRIP-NEXT:   (then
- ;; RTRIP-NEXT:    (nop)
- ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:   (else
- ;; RTRIP-NEXT:    (nop)
- ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:  )
- ;; RTRIP-NEXT: )
  (func $empty-if
   (local $1 i32)
   ;; Several stack IR opts work here, leading to the if arms being empty (nops
