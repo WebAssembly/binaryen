@@ -8490,7 +8490,7 @@
         (i64.const 0)
       )
     )
-    ;; side effects, we must keep this, but
+    ;; side effects. we must keep the tee, but
     ;; can drop it.
     (drop
       (i32.and
