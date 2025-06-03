@@ -37,8 +37,10 @@
   ;;  else
   ;;  end
   ;;
-  ;; We should not error during computation of the location of the if, and the
-  ;; branch hint should remain.
+  ;; As a result we have a segment before us that was optimized away (with the
+  ;; local.set), and the if body is empty. This should not cause an error when
+  ;; computing the if's binary location for the hint, and the hint should
+  ;; remain.
   (local.set $1
    (i32.const 0)
   )
