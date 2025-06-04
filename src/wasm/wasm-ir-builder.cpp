@@ -79,7 +79,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   if (type == Type::unreachable) {
     // Make sure the top of the stack also has an unreachable expression.
     if (stack.back()->type != Type::unreachable) {
-      push(builder.makeUnreachable());
+      pushSynthetic(builder.makeUnreachable());
     }
     return HoistedVal{Index(index), nullptr};
   }
@@ -88,7 +88,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   CHECK_ERR(scratchIdx);
   expr = builder.makeLocalSet(*scratchIdx, expr);
   auto* get = builder.makeLocalGet(*scratchIdx, type);
-  push(get);
+  pushSynthetic(get);
   return HoistedVal{Index(index), get};
 }
 
@@ -107,7 +107,7 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
     scope.exprStack.resize(hoisted.valIndex);
-    push(block);
+    pushSynthetic(block);
   };
 
   auto type = scope.exprStack.back()->type;
@@ -137,34 +137,36 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
-    push(builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
+    pushSynthetic(builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
   }
   return Ok{};
 }
 
-void IRBuilder::push(Expression* expr) {
+void IRBuilder::push(Expression* expr, Origin origin) {
   auto& scope = getScope();
   if (expr->type == Type::unreachable) {
     scope.unreachable = true;
   }
   scope.exprStack.push_back(expr);
 
-  applyDebugLoc(expr);
-  if (binaryPos && func && lastBinaryPos != *binaryPos) {
-    auto span =
-      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
-                            BinaryLocation(*binaryPos - codeSectionOffset)};
-    // Some expressions already have their start noted, and we are just seeing
-    // their last segment (like an Else).
-    auto [iter, inserted] = func->expressionLocations.insert({expr, span});
-    if (!inserted) {
-      // Just update the end.
-      iter->second.end = span.end;
-      // The true start from before is before the start of the current segment
-      // (or equal, if the previous segment is empty).
-      assert(iter->second.start <= span.start);
+  if (origin == Organic) {
+    applyDebugLoc(expr);
+    if (binaryPos && func && lastBinaryPos != *binaryPos) {
+      auto span =
+        BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
+                              BinaryLocation(*binaryPos - codeSectionOffset)};
+      // Some expressions already have their start noted, and we are just seeing
+      // their last segment (like an Else).
+      auto [iter, inserted] = func->expressionLocations.insert({expr, span});
+      if (!inserted) {
+        // Just update the end.
+        iter->second.end = span.end;
+        // The true start from before is before the start of the current segment
+        // (or equal, if the previous segment is empty).
+        assert(iter->second.start < span.start);
+      }
+      lastBinaryPos = *binaryPos;
     }
-    lastBinaryPos = *binaryPos;
   }
 
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");

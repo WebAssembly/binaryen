@@ -55,9 +55,20 @@ public:
   // initialized to initialize the child fields and refinalize it.
   Result<> visit(Expression*);
 
+  // Whether an expression is organic (comes from the wasm) or synthetic (is
+  // generated automatically, e.g., a local.get for a scratch local). Only
+  // organic expressions have binary locations and debug info.
+  enum Origin {
+    Organic = 0,
+    Synthetic = 1
+  };
+
   // Like visit, but pushes the expression onto the stack as-is without popping
   // any children or refinalization.
-  void push(Expression*);
+  void push(Expression*, Origin origin=Organic);
+  void pushSynthetic(Expression* expr) {
+    push(expr, Synthetic);
+  }
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
