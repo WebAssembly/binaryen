@@ -137,7 +137,8 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
-    pushSynthetic(builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
+    pushSynthetic(
+      builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
   }
   return Ok{};
 }
