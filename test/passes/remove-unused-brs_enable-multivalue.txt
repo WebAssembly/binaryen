@@ -2897,7 +2897,12 @@
     (i32.const 1026)
     (then
      (br_if $label$1
-      (local.tee $0
+      (block (result i32)
+       (drop
+        (local.tee $0
+         (i32.const -7)
+        )
+       )
        (i32.const -7)
       )
      )
