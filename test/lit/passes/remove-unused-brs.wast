@@ -357,6 +357,8 @@
   (func $restructure-br_if-value-effectful-corner-case-5 (param $x i32)
     (block $x
       (br_if $x
+        ;; the fallthrough of the condition is constant,
+        ;; we can infer how the branch happens and apply that
         (local.tee $x
           (i32.const 1)
         )
