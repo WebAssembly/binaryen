@@ -1007,7 +1007,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     // Note that we have a pop to help determine later whether we need to run
     // the fixup for pops within blocks.
     scopeStack[0].notePop();
-    push(builder.makePop(params));
+    pushSynthetic(builder.makePop(params));
   }
 
   return Ok{};
