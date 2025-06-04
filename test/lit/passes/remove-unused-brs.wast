@@ -340,6 +340,31 @@
     )
   )
 
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-5 (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (block $x
+  ;; CHECK-NEXT:   (br_if $x
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-5 (param $x i32)
+    (block $x
+      (br_if $x
+        (local.tee $x
+          (i32.const 1)
+        )
+      )
+    )
+  )
+
+
   ;; CHECK:      (func $restructure-br_if-value-redundant-in-block-tail-1 (type $2) (result i32)
   ;; CHECK-NEXT:  (block $parent (result i32)
   ;; CHECK-NEXT:   (call $nothing)
