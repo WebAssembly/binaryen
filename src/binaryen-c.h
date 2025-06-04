@@ -2643,8 +2643,6 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenStringNewGetEnd(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
                                           BinaryenExpressionRef endExpr);
-BINARYEN_API void BinaryenStringNewSetTry(BinaryenExpressionRef expr,
-                                          bool try_);
 
 // StringConst
 
