@@ -24,6 +24,7 @@
 #include "ir/effects.h"
 #include "ir/gc-type-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "parsing.h"
 #include "pass.h"
@@ -1879,6 +1880,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
           }
           start = end;
+        }
+      }
+
+      void visitBreak(Break* curr) {
+        if (!curr->condition) {
+          return;
+        }
+        // optimize if condition's fallthrough is a constant
+        auto* value = Properties::getFallthrough(
+          curr->condition, passOptions, *getModule());
+        if (auto* c = value->dynCast<Const>()) {
+          curr->condition = getDroppedChildrenAndAppend(
+            curr->condition,
+            *getModule(),
+            passOptions,
+            Builder(*getModule()).makeConst(c->value),
+            DropMode::NoticeParentEffects);
         }
       }
     };
