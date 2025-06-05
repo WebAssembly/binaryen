@@ -24,6 +24,7 @@
 #include "ir/effects.h"
 #include "ir/gc-type-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/localize.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "parsing.h"
@@ -1887,16 +1888,32 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!curr->condition) {
           return;
         }
-        // optimize if condition's fallthrough is a constant
         auto* value = Properties::getFallthrough(
           curr->condition, passOptions, *getModule());
+        // optimize if condition's fallthrough is a constant
         if (auto* c = value->dynCast<Const>()) {
-          curr->condition = getDroppedChildrenAndAppend(
-            curr->condition,
-            *getModule(),
-            passOptions,
-            Builder(*getModule()).makeConst(c->value),
-            DropMode::NoticeParentEffects);
+          curr->dump();
+          if (curr->value) {
+            curr->condition = getDroppedChildrenAndAppend(
+              curr->condition,
+              *getModule(),
+              passOptions,
+              Builder(*getModule()).makeConst(c->value),
+              DropMode::NoticeParentEffects);
+          } else {
+            ChildLocalizer localizer(
+              curr, getFunction(), *getModule(), passOptions);
+            auto* block = localizer.getChildrenReplacement();
+            if (c->value.geti32()) {
+              // the branch is always taken, make it unconditional
+              curr->condition = nullptr;
+              block->list.push_back(curr);
+              replaceCurrent(block);
+            } else {
+              // the branch is never taken, allow control flow to fall through
+              replaceCurrent(block);
+            }
+          }
         }
       }
     };
