@@ -1906,7 +1906,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             if (c->value.geti32()) {
               // the branch is always taken, make it unconditional
               curr->condition = nullptr;
+              curr->type = Type::unreachable;
               block->list.push_back(curr);
+              block->finalize();
               replaceCurrent(block);
             } else {
               // the branch is never taken, allow control flow to fall through
