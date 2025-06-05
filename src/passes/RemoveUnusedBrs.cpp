@@ -1892,7 +1892,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           curr->condition, passOptions, *getModule());
         // optimize if condition's fallthrough is a constant
         if (auto* c = value->dynCast<Const>()) {
-          curr->dump();
           if (curr->value) {
             curr->condition = getDroppedChildrenAndAppend(
               curr->condition,
