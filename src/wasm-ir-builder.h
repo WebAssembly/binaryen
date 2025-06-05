@@ -56,7 +56,7 @@ public:
   Result<> visit(Expression*);
 
   // The origin of an expression.
-  enum Origin {
+  enum class Origin {
     // The expression originates in the binary we are reading. We track binary
     // locations for such instructions where necessary (for code annotations,
     // etc.).
@@ -68,8 +68,8 @@ public:
 
   // Like visit, but pushes the expression onto the stack as-is without popping
   // any children or refinalization.
-  void push(Expression*, Origin origin = Binary);
-  void pushSynthetic(Expression* expr) { push(expr, Synthetic); }
+  void push(Expression*, Origin origin = Origin::Binary);
+  void pushSynthetic(Expression* expr) { push(expr, Origin::Synthetic); }
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.

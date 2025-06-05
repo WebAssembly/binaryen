@@ -150,7 +150,7 @@ void IRBuilder::push(Expression* expr, Origin origin) {
   }
   scope.exprStack.push_back(expr);
 
-  if (origin == Binary) {
+  if (origin == Origin::Binary) {
     applyDebugLoc(expr);
     if (binaryPos && func && lastBinaryPos != *binaryPos) {
       auto span =
