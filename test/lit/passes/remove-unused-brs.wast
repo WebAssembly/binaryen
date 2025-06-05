@@ -340,27 +340,71 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-5 (type $5) (param $x i32)
-  ;; CHECK-NEXT:  (block $x
+  ;; CHECK:      (func $restructure-br_if-constant-branch-1 (type $0) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
   ;; CHECK-NEXT:   (br_if $x
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.const 42)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-constant-branch-1 (param $x i32) (result i32)
+    (block $x (result i32)
+      (br_if $x
+        (unreachable)
+        (local.tee $x
+          (i32.const 42)
+        )
+      )
+      (unreachable)
+    )
+  )
+  ;; CHECK:      (func $restructure-br_if-constant-branch-2 (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block $x
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $x0
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-value-effectful-corner-case-5 (param $x i32)
+  (func $restructure-br_if-constant-branch-2 (param $x i32)
+    ;; there is no value, thus it can be simpler as below
     (block $x
       (br_if $x
-        ;; the fallthrough of the condition is constant,
-        ;; we can infer how the branch happens and apply that
+        ;; the branch is always taken, make it unconditional
         (local.tee $x
           (i32.const 1)
+        )
+      )
+    )
+    (block $x
+      (br_if $x
+        ;; the branch is never taken, allow control flow to fall through
+        (local.tee $x
+          (i32.const 0)
         )
       )
     )
