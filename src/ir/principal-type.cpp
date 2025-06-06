@@ -24,6 +24,8 @@ namespace wasm {
 
 namespace {
 
+#ifndef NDEBUG
+
 bool valid(const VarAbsHeapType& type) {
   if (!type.ht.isBasic()) {
     return false;
@@ -58,6 +60,8 @@ bool valid(const VarType& type) {
   }
   return true;
 }
+
+#endif // NDEBUG
 
 VarType canonicalizeRef(const VarRef& ref) {
   const auto* null = std::get_if<Nullability>(&ref.null);
