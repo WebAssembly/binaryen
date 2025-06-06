@@ -435,7 +435,7 @@ template<typename T> struct AssignmentClasses {
     classes.info.reserve(i + 1);
     values.reserve(i + 1);
     while (values.size() <= i) {
-      size_t set = classes.addSet();
+      [[maybe_unused]] size_t set = classes.addSet();
       assert(set == values.size());
       values.push_back(std::nullopt);
     }
