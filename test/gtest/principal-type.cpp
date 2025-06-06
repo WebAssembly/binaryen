@@ -306,15 +306,11 @@ TEST(PrincipalTypeTest, MatchExactnessVariables) {
   auto built = builder.build();
   HeapType foo = (*built)[0];
   VarType refFoo = Type(foo, NonNullable);
-  VarType refNullFoo = Type(foo, Nullable);
   VarType refExactFoo = Type(foo, NonNullable, Exact);
-  VarType refNullExactFoo = Type(foo, Nullable, Exact);
   VarType refE0Foo = VarRef{NonNullable, VarDefHeapType{{0u}, foo}};
   HeapType bar = (*built)[1];
   VarType refBar = Type(bar, NonNullable);
-  VarType refNullBar = Type(bar, Nullable);
   VarType refExactBar = Type(bar, NonNullable, Exact);
-  VarType refNullExactBar = Type(bar, Nullable, Exact);
   VarType refE0Bar = VarRef{NonNullable, VarDefHeapType{{0u}, bar}};
   VarType refBot = VarRef{NonNullable, BottomHeapType{}};
 
