@@ -5,17 +5,21 @@
 
 (module
   (memory 256 256)
+  ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
+
   ;; CHECK:      (type $1 (func))
   (type $1 (func))
   ;; CHECK:      (type $2 (func (param i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (type $3 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $3 (func (param i32 i64) (result i64)))
 
-  ;; CHECK:      (type $4 (func (param i32 i64) (result i64)))
+  ;; CHECK:      (type $4 (func (param i32 f32) (result f32)))
 
-  ;; CHECK:      (type $5 (func (param i32 f32) (result f32)))
+  ;; CHECK:      (type $5 (func (param i32 f64) (result f64)))
 
-  ;; CHECK:      (type $6 (func (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "memory_grow_pre" (func $memory_grow_pre (param i32 i32) (result i32)))
+
+  ;; CHECK:      (import "env" "memory_grow_post" (func $memory_grow_post (param i32 i32) (result i32)))
 
   ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (param i32 i32 i32 i32) (result i32)))
 
@@ -675,5 +679,22 @@
     (i64.store offset=7 align=2 (i32.const 0) (i64.const 7))
     (f32.store offset=8 align=2 (i32.const 0) (f32.const 8))
     (f64.store offset=9 align=2 (i32.const 0) (f64.const 9))
+  )
+
+  ;; CHECK:      (func $C
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $memory_grow_post
+  ;; CHECK-NEXT:    (i32.const 47)
+  ;; CHECK-NEXT:    (memory.grow
+  ;; CHECK-NEXT:     (call $memory_grow_pre
+  ;; CHECK-NEXT:      (i32.const 47)
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $C (type $1)
+    (drop (memory.grow (i32.const 4)))
   )
 )

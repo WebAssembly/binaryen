@@ -888,8 +888,12 @@ public:
     return ret;
   }
   RefCast* makeRefCast(Expression* ref, Type type) {
+    return makeRefCast(ref, nullptr, type);
+  }
+  RefCast* makeRefCast(Expression* ref, Expression* desc, Type type) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
+    ret->desc = desc;
     ret->type = type;
     ret->finalize();
     return ret;
@@ -1121,6 +1125,34 @@ public:
     ret->index = index;
     ret->offset = offset;
     ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  ArrayRMW* makeArrayRMW(AtomicRMWOp op,
+                         Expression* ref,
+                         Expression* index,
+                         Expression* value,
+                         MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<ArrayRMW>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  ArrayCmpxchg* makeArrayCmpxchg(Expression* ref,
+                                 Expression* index,
+                                 Expression* expected,
+                                 Expression* replacement,
+                                 MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<ArrayCmpxchg>();
+    ret->ref = ref;
+    ret->index = index;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->order = order;
     ret->finalize();
     return ret;
   }

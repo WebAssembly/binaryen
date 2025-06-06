@@ -55,9 +55,21 @@ public:
   // initialized to initialize the child fields and refinalize it.
   Result<> visit(Expression*);
 
+  // The origin of an expression.
+  enum class Origin {
+    // The expression originates in the binary we are reading. We track binary
+    // locations for such instructions where necessary (for code annotations,
+    // etc.).
+    Binary = 0,
+    // The expression was synthetically added by the IRBuilder (e.g. a local.get
+    // of a scratch local).
+    Synthetic = 1
+  };
+
   // Like visit, but pushes the expression onto the stack as-is without popping
   // any children or refinalization.
-  void push(Expression*);
+  void push(Expression*, Origin origin = Origin::Binary);
+  void pushSynthetic(Expression* expr) { push(expr, Origin::Synthetic); }
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
@@ -208,7 +220,7 @@ public:
                        bool isReturn,
                        std::optional<std::uint8_t> inline_ = std::nullopt);
   Result<> makeRefTest(Type type);
-  Result<> makeRefCast(Type type);
+  Result<> makeRefCast(Type type, bool isDesc);
   Result<> makeRefGetDesc(HeapType type);
   Result<> makeBrOn(Index label,
                     BrOnOp op,
@@ -235,6 +247,8 @@ public:
   Result<> makeArrayFill(HeapType type);
   Result<> makeArrayInitData(HeapType type, Name data);
   Result<> makeArrayInitElem(HeapType type, Name elem);
+  Result<> makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order);
+  Result<> makeArrayCmpxchg(HeapType type, MemoryOrder order);
   Result<> makeRefAs(RefAsOp op);
   Result<> makeStringNew(StringNewOp op);
   Result<> makeStringConst(Name string);

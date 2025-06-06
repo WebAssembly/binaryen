@@ -2208,7 +2208,11 @@ struct PrintExpressionContents
     printType(curr->castType);
   }
   void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast ");
+    if (curr->desc) {
+      printMedium(o, "ref.cast_desc ");
+    } else {
+      printMedium(o, "ref.cast ");
+    }
     printType(curr->type);
   }
   void visitRefGetDesc(RefGetDesc* curr) {
@@ -2439,6 +2443,26 @@ struct PrintExpressionContents
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
+  }
+  void visitArrayRMW(ArrayRMW* curr) {
+    prepareColor(o);
+    o << "array.atomic.rmw.";
+    printAtomicRMWOp(curr->op);
+    restoreNormalColor(o);
+    o << ' ';
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(heapType);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    prepareColor(o);
+    o << "array.atomic.rmw.cmpxchg ";
+    restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(heapType);
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {

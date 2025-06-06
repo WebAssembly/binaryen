@@ -1172,6 +1172,8 @@ enum ASTNodes {
   RefTestNull = 0x15,
   RefCast = 0x16,
   RefCastNull = 0x17,
+  RefCastDesc = 0x23,
+  RefCastDescNull = 0x24,
   BrOnCast = 0x18,
   BrOnCastFail = 0x19,
   BrOnCastDesc = 0x25,
@@ -1203,6 +1205,13 @@ enum ASTNodes {
   ArrayAtomicGetS = 0x68,
   ArrayAtomicGetU = 0x69,
   ArrayAtomicSet = 0x6a,
+  ArrayAtomicRMWAdd = 0x6b,
+  ArrayAtomicRMWSub = 0x6c,
+  ArrayAtomicRMWAnd = 0x6d,
+  ArrayAtomicRMWOr = 0x6e,
+  ArrayAtomicRMWXor = 0x6f,
+  ArrayAtomicRMWXchg = 0x70,
+  ArrayAtomicRMWCmpxchg = 0x71,
 
   // stringref opcodes
 

@@ -2240,6 +2240,18 @@ struct OptimizeInstructions
     trapOnNull(curr, curr->destRef) || trapOnNull(curr, curr->srcRef);
   }
 
+  void visitArrayRMW(ArrayRMW* curr) {
+    skipNonNullCast(curr->ref, curr);
+    trapOnNull(curr, curr->ref);
+    // TODO: more opts like StructRMW
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    skipNonNullCast(curr->ref, curr);
+    trapOnNull(curr, curr->ref);
+    // TODO: more opts like StructCmpxchg
+  }
+
   void visitRefCast(RefCast* curr) {
     // Note we must check the ref's type here and not our own, since we only
     // refinalize at the end, which means our type may not have been updated yet
@@ -2596,8 +2608,13 @@ struct OptimizeInstructions
   }
 
   Index getMaxBitsForLocal(LocalGet* get) {
-    // check what we know about the local
-    return localInfo[get->index].maxBits;
+    // check what we know about the local (we may know nothing, if this local
+    // was added after the pass scanned for locals; in that case, full
+    // optimization may require another cycle)
+    if (get->index < localInfo.size()) {
+      return localInfo[get->index].maxBits;
+    }
+    return getBitsForType(get->type);
   }
 
 private:

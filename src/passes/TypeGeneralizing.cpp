@@ -727,6 +727,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
+  void visitArrayRMW(ArrayRMW* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
+
   HeapType
   generalizeArrayType(HeapType type,
                       std::optional<Type> reqFieldType = std::nullopt) {

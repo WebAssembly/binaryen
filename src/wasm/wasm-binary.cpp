@@ -3784,6 +3784,26 @@ Result<> WasmBinaryReader::readInst() {
           auto type = getIndexedHeapType();
           return builder.makeArraySet(type, order);
         }
+
+#define ARRAY_RMW(op)                                                          \
+  case BinaryConsts::ArrayAtomicRMW##op: {                                     \
+    auto order = getMemoryOrder(true);                                         \
+    auto type = getIndexedHeapType();                                          \
+    return builder.makeArrayRMW(RMW##op, type, order);                         \
+  }
+
+          ARRAY_RMW(Add)
+          ARRAY_RMW(Sub)
+          ARRAY_RMW(And)
+          ARRAY_RMW(Or)
+          ARRAY_RMW(Xor)
+          ARRAY_RMW(Xchg)
+
+        case BinaryConsts::ArrayAtomicRMWCmpxchg: {
+          auto order = getMemoryOrder(true);
+          auto type = getIndexedHeapType();
+          return builder.makeArrayCmpxchg(type, order);
+        }
       }
       return Err{"unknown atomic operation " + std::to_string(op)};
     }
@@ -4505,11 +4525,22 @@ Result<> WasmBinaryReader::readInst() {
         }
         case BinaryConsts::RefCast: {
           auto [heapType, exactness] = getHeapType();
-          return builder.makeRefCast(Type(heapType, NonNullable, exactness));
+          return builder.makeRefCast(Type(heapType, NonNullable, exactness),
+                                     false);
         }
         case BinaryConsts::RefCastNull: {
           auto [heapType, exactness] = getHeapType();
-          return builder.makeRefCast(Type(heapType, Nullable, exactness));
+          return builder.makeRefCast(Type(heapType, Nullable, exactness),
+                                     false);
+        }
+        case BinaryConsts::RefCastDesc: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefCast(Type(heapType, NonNullable, exactness),
+                                     true);
+        }
+        case BinaryConsts::RefCastDescNull: {
+          auto [heapType, exactness] = getHeapType();
+          return builder.makeRefCast(Type(heapType, Nullable, exactness), true);
         }
         case BinaryConsts::RefGetDesc: {
           auto type = getIndexedHeapType();

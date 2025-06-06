@@ -609,7 +609,8 @@ instructions = [
     ("i31.get_s",            "makeI31Get(true)"),
     ("i31.get_u",            "makeI31Get(false)"),
     ("ref.test",             "makeRefTest()"),
-    ("ref.cast",             "makeRefCast()"),
+    ("ref.cast",             "makeRefCast(false)"),
+    ("ref.cast_desc",        "makeRefCast(true)"),
     ("ref.get_desc",         "makeRefGetDesc()"),
     ("br_on_null",           "makeBrOnNull()"),
     ("br_on_non_null",       "makeBrOnNull(true)"),
@@ -652,6 +653,13 @@ instructions = [
     ("array.fill",           "makeArrayFill()"),
     ("array.init_data",      "makeArrayInitData()"),
     ("array.init_elem",      "makeArrayInitElem()"),
+    ("array.atomic.rmw.add", "makeArrayRMW(RMWAdd)"),
+    ("array.atomic.rmw.sub", "makeArrayRMW(RMWSub)"),
+    ("array.atomic.rmw.and", "makeArrayRMW(RMWAnd)"),
+    ("array.atomic.rmw.or",  "makeArrayRMW(RMWOr)"),
+    ("array.atomic.rmw.xor", "makeArrayRMW(RMWXor)"),
+    ("array.atomic.rmw.xchg", "makeArrayRMW(RMWXchg)"),
+    ("array.atomic.rmw.cmpxchg", "makeArrayCmpxchg()"),
     ("ref.as_non_null",      "makeRefAs(RefAsNonNull)"),
     ("extern.internalize",   "makeRefAs(AnyConvertExtern)"),  # Deprecated
     ("extern.externalize",   "makeRefAs(ExternConvertAny)"),  # Deprecated

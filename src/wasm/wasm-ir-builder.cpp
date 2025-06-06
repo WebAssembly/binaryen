@@ -79,7 +79,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   if (type == Type::unreachable) {
     // Make sure the top of the stack also has an unreachable expression.
     if (stack.back()->type != Type::unreachable) {
-      push(builder.makeUnreachable());
+      pushSynthetic(builder.makeUnreachable());
     }
     return HoistedVal{Index(index), nullptr};
   }
@@ -88,7 +88,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   CHECK_ERR(scratchIdx);
   expr = builder.makeLocalSet(*scratchIdx, expr);
   auto* get = builder.makeLocalGet(*scratchIdx, type);
-  push(get);
+  pushSynthetic(get);
   return HoistedVal{Index(index), get};
 }
 
@@ -107,7 +107,7 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
     scope.exprStack.resize(hoisted.valIndex);
-    push(block);
+    pushSynthetic(block);
   };
 
   auto type = scope.exprStack.back()->type;
@@ -137,33 +137,37 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
-    push(builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
+    pushSynthetic(
+      builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
   }
   return Ok{};
 }
 
-void IRBuilder::push(Expression* expr) {
+void IRBuilder::push(Expression* expr, Origin origin) {
   auto& scope = getScope();
   if (expr->type == Type::unreachable) {
     scope.unreachable = true;
   }
   scope.exprStack.push_back(expr);
 
-  applyDebugLoc(expr);
-  if (binaryPos && func && lastBinaryPos != *binaryPos) {
-    auto span =
-      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
-                            BinaryLocation(*binaryPos - codeSectionOffset)};
-    // Some expressions already have their start noted, and we are just seeing
-    // their last segment (like an Else).
-    auto [iter, inserted] = func->expressionLocations.insert({expr, span});
-    if (!inserted) {
-      // Just update the end.
-      iter->second.end = span.end;
-      // The true start from before is before the start of the current segment.
-      assert(iter->second.start < span.start);
+  if (origin == Origin::Binary) {
+    applyDebugLoc(expr);
+    if (binaryPos && func && lastBinaryPos != *binaryPos) {
+      auto span =
+        BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
+                              BinaryLocation(*binaryPos - codeSectionOffset)};
+      // Some expressions already have their start noted, and we are just seeing
+      // their last segment (like an Else).
+      auto [iter, inserted] = func->expressionLocations.insert({expr, span});
+      if (!inserted) {
+        // Just update the end.
+        iter->second.end = span.end;
+        // The true start from before is before the start of the current
+        // segment.
+        assert(iter->second.start < span.start);
+      }
+      lastBinaryPos = *binaryPos;
     }
-    lastBinaryPos = *binaryPos;
   }
 
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
@@ -667,6 +671,20 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitArrayRMW(ArrayRMW* curr,
+                         std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayRMW(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitArrayCmpxchg(ArrayCmpxchg* curr,
+                             std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayCmpxchg(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitStringEncode(StringEncode* curr,
                              std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -1004,7 +1022,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     // Note that we have a pop to help determine later whether we need to run
     // the fixup for pops within blocks.
     scopeStack[0].notePop();
-    push(builder.makePop(params));
+    pushSynthetic(builder.makePop(params));
   }
 
   return Ok{};
@@ -2005,11 +2023,28 @@ Result<> IRBuilder::makeRefTest(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeRefCast(Type type) {
+Result<> IRBuilder::makeRefCast(Type type, bool isDesc) {
+  std::optional<HeapType> descriptor;
+  if (isDesc) {
+    assert(type.isRef());
+    descriptor = type.getHeapType().getDescriptorType();
+    if (!descriptor) {
+      return Err{"cast target must have descriptor"};
+    }
+  }
+
   RefCast curr;
   curr.type = type;
+  // Placeholder value to differentiate ref.cast_desc.
+  curr.desc = isDesc ? &curr : nullptr;
   CHECK_ERR(visitRefCast(&curr));
-  push(builder.makeRefCast(curr.ref, type));
+
+  if (isDesc) {
+    CHECK_ERR(
+      validateTypeAnnotation(type.with(*descriptor).with(Nullable), curr.desc));
+  }
+
+  push(builder.makeRefCast(curr.ref, curr.desc, type));
   return Ok{};
 }
 
@@ -2026,6 +2061,15 @@ Result<> IRBuilder::makeRefGetDesc(HeapType type) {
 
 Result<> IRBuilder::makeBrOn(
   Index label, BrOnOp op, Type in, Type out, std::optional<bool> likely) {
+  std::optional<HeapType> descriptor;
+  if (op == BrOnCastDesc || op == BrOnCastDescFail) {
+    assert(out.isRef());
+    descriptor = out.getHeapType().getDescriptorType();
+    if (!descriptor) {
+      return Err{"cast target must have descriptor"};
+    }
+  }
+
   BrOn curr;
   curr.op = op;
   curr.castType = out;
@@ -2039,11 +2083,6 @@ Result<> IRBuilder::makeBrOn(
       break;
     case BrOnCastDesc:
     case BrOnCastDescFail: {
-      assert(out.isRef());
-      auto descriptor = out.getHeapType().getDescriptorType();
-      if (!descriptor) {
-        return Err{"cast target must have descriptor"};
-      }
       CHECK_ERR(validateTypeAnnotation(out.with(*descriptor).with(Nullable),
                                        curr.desc));
     }
@@ -2350,6 +2389,24 @@ Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArrayInitElem(
     elem, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
+
+Result<>
+IRBuilder::makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order) {
+  ArrayRMW curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayRMW(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayRMW(op, curr.ref, curr.index, curr.value, order));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeArrayCmpxchg(HeapType type, MemoryOrder order) {
+  ArrayCmpxchg curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayCmpxchg(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayCmpxchg(
+    curr.ref, curr.index, curr.expected, curr.replacement, order));
   return Ok{};
 }
 

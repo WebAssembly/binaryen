@@ -30,6 +30,10 @@
   ;; CHECK:      (global $h (ref $struct) (struct.new $struct_5
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (memory $0 16 17)
+  (memory $0 16 17)
+
   (global $h (ref $struct) (struct.new $struct
     (i32.const 42)
   ))
@@ -67,6 +71,32 @@
       (struct.new $struct
         (i32.const 100)
       )
+    )
+  )
+
+  ;; CHECK:      (func $tuple-unreachable (type $1)
+  ;; CHECK-NEXT:  (tuple.extract 2 0
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tuple-unreachable
+    ;; We should not error on this.
+    (tuple.extract 2 0
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $atomic-unreachable (type $1)
+  ;; CHECK-NEXT:  (i32.atomic.rmw.sub offset=4
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $atomic-unreachable
+    ;; We should not error on this.
+    (i32.atomic.rmw.sub offset=4
+      (unreachable)
+      (unreachable)
     )
   )
 )

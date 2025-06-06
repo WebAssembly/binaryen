@@ -1052,8 +1052,28 @@ void RefTest::finalize() {
 }
 
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (desc && desc->type == Type::unreachable)) {
     type = Type::unreachable;
+    return;
+  }
+
+  if (desc) {
+    if (desc->type.isNull()) {
+      // Cast will never be executed and the instruction will not be emitted.
+      // Model this with an uninhabitable cast type.
+      type = desc->type.with(NonNullable);
+      return;
+    }
+    // The cast heap type and exactness is determined by the descriptor's type.
+    // Its nullability can be improved if the input valus is non-nullable.
+    auto heapType = desc->type.getHeapType().getDescribedType();
+    assert(heapType);
+    auto exactness = desc->type.getExactness();
+    type = type.with(*heapType).with(exactness);
+    if (ref->type.isNonNullable()) {
+      type = type.with(NonNullable);
+    }
     return;
   }
 
@@ -1236,9 +1256,7 @@ void StructCmpxchg::finalize() {
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
   } else if (ref->type.isNull()) {
-    // Like StructRMW, but the most precise possible field type is the LUB of
-    // the expected and replacement values.
-    type = Type::getLeastUpperBound(expected->type, replacement->type);
+    type = replacement->type;
   } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
@@ -1339,6 +1357,32 @@ void ArrayInitElem::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::none;
+  }
+}
+
+void ArrayRMW::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // We have no array type to read the field off of, but the most precise
+    // possible option is the type of the value we are using to make the
+    // modification.
+    type = value->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArrayCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    type = replacement->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
   }
 }
 

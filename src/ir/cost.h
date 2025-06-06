@@ -752,6 +752,15 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
            visit(curr->size);
   }
+  CostType visitArrayRMW(ArrayRMW* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  CostType visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->expected) +
+           visit(curr->replacement);
+  }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {
     return 8 + visit(curr->ref) + maybeVisit(curr->start) +

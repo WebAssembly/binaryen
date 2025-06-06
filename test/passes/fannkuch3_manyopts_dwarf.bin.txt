@@ -4902,6 +4902,7 @@ file_names[  4]:
            ;; code offset: 0xaf
            (local.get $2)
           )
+          ;; code offset: 0xbd
           (br_if $label1
            (block (result i32)
             (local.set $scratch
@@ -4918,7 +4919,6 @@ file_names[  4]:
              ;; code offset: 0xb9
              (local.get $1)
             )
-            ;; code offset: 0xbd
             (local.get $scratch)
            )
           )
@@ -5428,6 +5428,7 @@ file_names[  4]:
         ;; code offset: 0x234
         (local.get $2)
        )
+       ;; code offset: 0x242
        (br_if $label7
         (block (result i32)
          (local.set $scratch_18
@@ -5444,7 +5445,6 @@ file_names[  4]:
           ;; code offset: 0x23e
           (local.get $1)
          )
-         ;; code offset: 0x242
          (local.get $scratch_18)
         )
        )
@@ -6252,6 +6252,7 @@ file_names[  4]:
           ;; code offset: 0x4a7
           (local.get $2)
          )
+         ;; code offset: 0x4b5
          (br_if $label3
           (block (result i32)
            (local.set $scratch
@@ -6268,7 +6269,6 @@ file_names[  4]:
             ;; code offset: 0x4b1
             (local.get $0)
            )
-           ;; code offset: 0x4b5
            (local.get $scratch)
           )
          )
@@ -6515,6 +6515,7 @@ file_names[  4]:
          ;; code offset: 0x565
          (local.get $2)
         )
+        ;; code offset: 0x573
         (br_if $label7
          (block (result i32)
           (local.set $scratch_10
@@ -6531,7 +6532,6 @@ file_names[  4]:
            ;; code offset: 0x56f
            (local.get $0)
           )
-          ;; code offset: 0x573
           (local.get $scratch_10)
          )
         )

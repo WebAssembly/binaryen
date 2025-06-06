@@ -515,6 +515,8 @@ public:
   template<typename ArrayInit> void visitArrayInit(ArrayInit* curr);
   void visitArrayInitData(ArrayInitData* curr);
   void visitArrayInitElem(ArrayInitElem* curr);
+  void visitArrayRMW(ArrayRMW* curr);
+  void visitArrayCmpxchg(ArrayCmpxchg* curr);
   void visitStringNew(StringNew* curr);
   void visitStringConst(StringConst* curr);
   void visitStringMeasure(StringMeasure* curr);
@@ -2966,6 +2968,40 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
                  "ref.cast to exact type requires custom descriptors "
                  "[--enable-custom-descriptors]");
   }
+
+  if (!curr->desc) {
+    return;
+  }
+
+  shouldBeTrue(getModule()->features.hasCustomDescriptors(),
+               curr,
+               "ref.cast_desc requires custom descriptors "
+               "[--enable-custom-descriptors]");
+  if (!shouldBeTrue(curr->desc && curr->desc->type.isRef(),
+                    curr,
+                    "ref.cast_desc descriptor must have ref type")) {
+    return;
+  }
+  auto descriptor = curr->desc->type.getHeapType();
+  if (descriptor.isBottom()) {
+    return;
+  }
+
+  auto described = descriptor.getDescribedType();
+  if (!shouldBeTrue(bool(described),
+                    curr,
+                    "ref.cast_desc descriptor should have a described type")) {
+    return;
+  }
+  shouldBeEqual(*described,
+                curr->type.getHeapType(),
+                curr,
+                "ref.cast_desc cast type should be described by descriptor");
+  shouldBeEqual(
+    curr->type.getExactness(),
+    curr->desc->type.getExactness(),
+    curr,
+    "ref.cast_desc cast exactness should match descriptor exactness");
 }
 
 void FunctionValidator::visitRefGetDesc(RefGetDesc* curr) {
@@ -3670,6 +3706,112 @@ void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
                   field->type,
                   curr,
                   "array.init_elem segment type must match destination type");
+}
+
+void FunctionValidator::visitArrayRMW(ArrayRMW* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "array.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "array.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
+    return;
+  }
+  const auto& element = type.getArray().element;
+  shouldBeEqual(element.mutable_,
+                Mutable,
+                curr,
+                "array.atomic.rmw element must be mutable");
+  shouldBeFalse(
+    element.isPacked(), curr, "array.atomic.rmw element must not be packed");
+  bool isAny =
+    element.type.isRef() &&
+    Type::isSubType(
+      element.type,
+      Type(HeapTypes::any.getBasic(element.type.getHeapType().getShared()),
+           Nullable));
+  if (!shouldBeTrue(element.type == Type::i32 || element.type == Type::i64 ||
+                      (isAny && curr->op == RMWXchg),
+                    curr,
+                    "array.atomic.rmw element type invalid for operation")) {
+    return;
+  }
+  shouldBeSubType(curr->value->type,
+                  element.type,
+                  curr,
+                  "array.atomic.rmw value must have the proper type");
+}
+
+void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
+  auto expected =
+    FeatureSet::GC | FeatureSet::Atomics | FeatureSet::SharedEverything;
+  if (!shouldBeTrue(expected <= getModule()->features,
+                    curr,
+                    "array.atomic.rmw requires additional features ")) {
+    getStream() << getMissingFeaturesList(*getModule(), expected) << '\n';
+  }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isRef(),
+                    curr->ref,
+                    "array.atomic.rmw ref must be a reference type")) {
+    return;
+  }
+  auto type = curr->ref->type.getHeapType();
+  if (type.isMaybeShared(HeapType::none)) {
+    return;
+  }
+  if (!shouldBeTrue(
+        type.isArray(), curr->ref, "array.atomic.rmw ref must be a array")) {
+    return;
+  }
+  const auto& element = type.getArray().element;
+  shouldBeEqual(element.mutable_,
+                Mutable,
+                curr,
+                "array.atomic.rmw element must be mutable");
+  shouldBeFalse(
+    element.isPacked(), curr, "array.atomic.rmw element must not be packed");
+
+  Type expectedExpectedType;
+  if (element.type == Type::i32) {
+    expectedExpectedType = Type::i32;
+  } else if (element.type == Type::i64) {
+    expectedExpectedType = Type::i64;
+  } else if (element.type.isRef()) {
+    expectedExpectedType = Type(
+      HeapTypes::eq.getBasic(element.type.getHeapType().getShared()), Nullable);
+  } else {
+    shouldBeTrue(
+      false, curr, "array.atomic.rmw element type invalid for operation");
+    return;
+  }
+  shouldBeSubType(
+    curr->expected->type,
+    expectedExpectedType,
+    curr,
+    "array.atomic.rmw.cmpxchg expected value must have the proper type");
+  shouldBeSubType(
+    curr->replacement->type,
+    element.type,
+    curr,
+    "array.atomic.rmw.cmpxchg replacement value must have the proper type");
 }
 
 void FunctionValidator::visitStringNew(StringNew* curr) {

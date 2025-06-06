@@ -52,6 +52,63 @@ switch (buf[0]) {
                   default: goto parse_error;
                 }
               }
+              case 'r': {
+                switch (buf[17]) {
+                  case 'a': {
+                    switch (buf[18]) {
+                      case 'd':
+                        if (op == "array.atomic.rmw.add"sv) {
+                          CHECK_ERR(makeArrayRMW(ctx, pos, annotations, RMWAdd));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'n':
+                        if (op == "array.atomic.rmw.and"sv) {
+                          CHECK_ERR(makeArrayRMW(ctx, pos, annotations, RMWAnd));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case 'c':
+                    if (op == "array.atomic.rmw.cmpxchg"sv) {
+                      CHECK_ERR(makeArrayCmpxchg(ctx, pos, annotations));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'o':
+                    if (op == "array.atomic.rmw.or"sv) {
+                      CHECK_ERR(makeArrayRMW(ctx, pos, annotations, RMWOr));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 's':
+                    if (op == "array.atomic.rmw.sub"sv) {
+                      CHECK_ERR(makeArrayRMW(ctx, pos, annotations, RMWSub));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'x': {
+                    switch (buf[18]) {
+                      case 'c':
+                        if (op == "array.atomic.rmw.xchg"sv) {
+                          CHECK_ERR(makeArrayRMW(ctx, pos, annotations, RMWXchg));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case 'o':
+                        if (op == "array.atomic.rmw.xor"sv) {
+                          CHECK_ERR(makeArrayRMW(ctx, pos, annotations, RMWXor));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  default: goto parse_error;
+                }
+              }
               case 's':
                 if (op == "array.atomic.set"sv) {
                   CHECK_ERR(makeAtomicArraySet(ctx, pos, annotations));
@@ -4807,12 +4864,23 @@ switch (buf[0]) {
               return Ok{};
             }
             goto parse_error;
-          case 'c':
-            if (op == "ref.cast"sv) {
-              CHECK_ERR(makeRefCast(ctx, pos, annotations));
-              return Ok{};
+          case 'c': {
+            switch (buf[8]) {
+              case '\0':
+                if (op == "ref.cast"sv) {
+                  CHECK_ERR(makeRefCast(ctx, pos, annotations, false));
+                  return Ok{};
+                }
+                goto parse_error;
+              case '_':
+                if (op == "ref.cast_desc"sv) {
+                  CHECK_ERR(makeRefCast(ctx, pos, annotations, true));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'e':
             if (op == "ref.eq"sv) {
               CHECK_ERR(makeRefEq(ctx, pos, annotations));
