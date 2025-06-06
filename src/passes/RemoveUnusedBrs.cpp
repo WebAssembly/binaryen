@@ -1909,6 +1909,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               curr->type = Type::unreachable;
               block->list.push_back(curr);
               block->finalize();
+              // the type is changed , so refinalize
+              refinalize = true;
               replaceCurrent(block);
             } else {
               // the branch is never taken, allow control flow to fall through
