@@ -891,13 +891,19 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitStructNew(StructNew* curr) {
-    if (curr->isWithDefault()) {
-      return;
+    if (!curr->isWithDefault()) {
+      const auto& fields = curr->type.getHeapType().getStruct().fields;
+      assert(fields.size() + curr->hasDescriptor() == curr->operands.size());
+      for (size_t i = 0; i < fields.size(); ++i) {
+        note(&curr->operands[i], fields[i].type);
+      }
     }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0; i < fields.size(); ++i) {
-      note(&curr->operands[i], fields[i].type);
+    if (curr->hasDescriptor()) {
+      assert(curr->operands.size() >= 1);
+      auto desc = curr->type.getHeapType().getDescriptorType();
+      assert(desc);
+      note(&curr->operands[curr->operands.size() - 1],
+           Type(*desc, NonNullable, Exact));
     }
   }
 

@@ -1667,7 +1667,13 @@ public:
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
   ExpressionList operands;
 
-  bool isWithDefault() { return operands.empty(); }
+  bool hasDescriptor() {
+    return type.isStruct() && type.getHeapType().getDescriptorType();
+  }
+
+  bool isWithDefault() {
+    return hasDescriptor() ? (operands.size() == 1) : operands.empty();
+  }
 
   void finalize();
 };

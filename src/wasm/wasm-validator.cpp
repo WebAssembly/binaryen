@@ -3086,30 +3086,44 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   }
   const auto& fields = heapType.getStruct().fields;
   if (curr->isWithDefault()) {
-    shouldBeTrue(curr->operands.empty(),
-                 curr,
-                 "struct.new_with_default should have no operands");
     // All the fields must be defaultable.
     for (const auto& field : fields) {
       shouldBeTrue(field.type.isDefaultable(),
                    field,
-                   "struct.new_with_default value type must be defaultable");
+                   "struct.new_default value type must be defaultable");
+    }
+    if (!shouldBeEqual(
+          curr->operands.size(),
+          size_t(curr->hasDescriptor()),
+          curr,
+          "struct.new_default must have the right nubmer of operands")) {
+      return;
     }
   } else {
-    if (shouldBeEqual(curr->operands.size(),
-                      fields.size(),
-                      curr,
-                      "struct.new must have the right number of operands")) {
-      // All the fields must have the proper type.
-      for (Index i = 0; i < fields.size(); i++) {
-        if (!Type::isSubType(curr->operands[i]->type, fields[i].type)) {
-          info.fail("struct.new operand " + std::to_string(i) +
-                      " must have proper type",
-                    curr,
-                    getFunction());
-        }
+    if (!shouldBeEqual(
+          curr->operands.size(),
+          fields.size() + curr->hasDescriptor(),
+          curr,
+          "struct.new_default must have the right nubmer of operands")) {
+      return;
+    }
+    // All the fields must have the proper type.
+    for (Index i = 0; i < fields.size(); i++) {
+      if (!Type::isSubType(curr->operands[i]->type, fields[i].type)) {
+        info.fail("struct.new operand " + std::to_string(i) +
+                    " must have proper type",
+                  curr,
+                  getFunction());
       }
     }
+  }
+  if (curr->hasDescriptor()) {
+    auto descType = curr->type.getHeapType().getDescriptorType();
+    assert(descType);
+    shouldBeSubType(curr->operands[curr->operands.size() - 1]->type,
+                    Type(*descType, Nullable, Exact),
+                    curr,
+                    "struct.new descriptor operand should have proper type");
   }
 }
 
