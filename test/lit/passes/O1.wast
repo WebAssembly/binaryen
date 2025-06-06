@@ -4,6 +4,8 @@
 ;; RUN: foreach %s %t wasm-opt -O1 -S -o - | filecheck %s
 
 (module
+
+ (import "env" "fimport$0" (func $fimport$0 (param i32)))
  ;; CHECK:      (type $0 (func (result i32)))
 
  ;; CHECK:      (memory $0 1 1)
@@ -36,6 +38,38 @@
   (i32.sub
    (i32.const 268435456)
    (i32.const -2147483648)
+  )
+ )
+ (func $two-branches-unreachable
+  ;; remove-unused-brs makes the break unconditional,
+  ;; thus in this case the two branches are unreachable,
+  ;; refinalization is required.
+  (local $0 i32)
+  (block $label
+   (block $block
+    (if
+     (local.get $0)
+     (then
+      (if
+       (local.tee $0
+        (i32.const 1)
+       )
+       (then
+        (br $label)
+       )
+       (else
+        (br $block)
+       )
+      )
+     )
+     (else
+      (unreachable)
+     )
+    )
+   )
+   (call $fimport$0
+    (local.get $0)
+   )
   )
  )
 )
