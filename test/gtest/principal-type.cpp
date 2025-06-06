@@ -481,7 +481,6 @@ TEST(PrincipalTypeTest, UnifyVariables) {
   HeapType bar = (*built)[1];
   VarType refBar = Type(bar, NonNullable);
   VarType refExactBar = Type(bar, NonNullable, Exact);
-  VarType refE0Bar = VarRef{NonNullable, VarDefHeapType{{0u}, bar}};
 
   // Unify multiple variables.
   // []->[t2 t2 t1 t1 t0] + [t2' t1' t1' t0' t0']->[t0' t1' t2']
