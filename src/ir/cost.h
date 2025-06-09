@@ -693,6 +693,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
+    ret += maybeVisit(curr->descriptor);
     return ret;
   }
   CostType visitStructGet(StructGet* curr) {

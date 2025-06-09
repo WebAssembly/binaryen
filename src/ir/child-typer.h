@@ -939,7 +939,6 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     if (!curr->isWithDefault()) {
       const auto& fields = curr->type.getHeapType().getStruct().fields;
-      assert(fields.size() + curr->hasDescriptor() == curr->operands.size());
       for (size_t i = 0; i < fields.size(); ++i) {
         note(&curr->operands[i], fields[i].type);
       }
