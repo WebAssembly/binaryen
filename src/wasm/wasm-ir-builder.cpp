@@ -600,7 +600,7 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<> visitStructNew(Break* curr,
+  Result<> visitStructNew(StructNew* curr,
                           std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitStructNew(curr, ht);
