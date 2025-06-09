@@ -3151,8 +3151,8 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   auto descType = curr->type.getHeapType().getDescriptorType();
   if (!descType) {
     shouldBeFalse(curr->descriptor,
-                 curr,
-                 "struct.new of type without descriptor should lack one");
+                  curr,
+                  "struct.new of type without descriptor should lack one");
   } else {
     shouldBeSubType(curr->descriptor,
                     Type(*descType, Nullable, Exact),

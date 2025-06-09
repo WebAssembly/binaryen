@@ -930,7 +930,9 @@ public:
     ret->finalize();
     return ret;
   }
-  StructNew* makeStructNew(HeapType type, ExpressionList&& args, Expression* descriptor = nullptr) {
+  StructNew* makeStructNew(HeapType type,
+                           ExpressionList&& args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands = std::move(args);
     ret->descriptor = descriptor;
@@ -938,7 +940,10 @@ public:
     ret->finalize();
     return ret;
   }
-  template<typename T> StructNew* makeStructNew(HeapType type, const T& args, Expression* descriptor = nullptr) {
+  template<typename T>
+  StructNew* makeStructNew(HeapType type,
+                           const T& args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
     ret->descriptor = descriptor;

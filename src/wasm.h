@@ -1674,9 +1674,7 @@ public:
 
   Expression* descriptor = nullptr;
 
-  bool isWithDefault() {
-    return operands.empty();
-  }
+  bool isWithDefault() { return operands.empty(); }
 
   void finalize();
 };
