@@ -3154,7 +3154,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                   curr,
                   "struct.new of type without descriptor should lack one");
   } else {
-    shouldBeSubType(curr->descriptor,
+    shouldBeSubType(curr->descriptor->type,
                     Type(*descType, Nullable, Exact),
                     curr,
                     "struct.new descriptor operand should have proper type");
