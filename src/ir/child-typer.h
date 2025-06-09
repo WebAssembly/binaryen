@@ -944,11 +944,11 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         note(&curr->operands[i], fields[i].type);
       }
     }
-    if (curr->hasDescriptor()) {
+    if (curr->descriptor) {
       assert(curr->operands.size() >= 1);
       auto desc = curr->type.getHeapType().getDescriptorType();
       assert(desc);
-      note(&curr->operands[curr->operands.size() - 1],
+      note(&curr->descriptor,
            Type(*desc, NonNullable, Exact));
     }
   }
