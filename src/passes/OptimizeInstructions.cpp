@@ -1759,7 +1759,7 @@ struct OptimizeInstructions
           }
         }
         if (canOptimize) {
-          cast->type = Type(cast->type.getHeapType(), NonNullable);
+          cast->type = cast->type.with(NonNullable);
         }
       }
     }
@@ -2583,7 +2583,7 @@ struct OptimizeInstructions
       // The cast cannot be non-nullable, or we would have handled this right
       // above by just removing the ref.as, since it would not be needed.
       assert(!cast->type.isNonNullable());
-      cast->type = Type(cast->type.getHeapType(), NonNullable);
+      cast->type = cast->type.with(NonNullable);
       replaceCurrent(cast);
     }
   }
