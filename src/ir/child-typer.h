@@ -933,13 +933,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     WASM_UNREACHABLE("unexpected op");
   }
 
-  void visitStructNew(StructNew* curr,
-                      std::optional<HeapType> ht = std::nullopt) {
-    if (!ht) {
-      if (self().skipUnreachable() && !curr->type.isRef()) {
-        return;
-      }
-      ht = curr->type.getHeapType();
+  void visitStructNew(StructNew* curr) {
+    if (self().skipUnreachable() && !curr->type.isRef()) {
+      return;
     }
     if (!curr->isWithDefault()) {
       const auto& fields = curr->type.getHeapType().getStruct().fields;
@@ -947,7 +943,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
         note(&curr->operands[i], fields[i].type);
       }
     }
-    auto desc = ht->getDescriptorType();
+    auto desc = curr->type.getHeapType().getDescriptorType();
     if (desc) {
       note(&curr->descriptor, Type(*desc, NonNullable, Exact));
     }

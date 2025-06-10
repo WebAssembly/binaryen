@@ -600,13 +600,6 @@ public:
     return popConstrainedChildren(children);
   }
 
-  Result<> visitStructNew(StructNew* curr,
-                          std::optional<HeapType> ht = std::nullopt) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitStructNew(curr, ht);
-    return popConstrainedChildren(children);
-  }
-
   Result<> visitStructGet(StructGet* curr,
                           std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -2219,14 +2212,19 @@ Result<> IRBuilder::makeBrOn(
 }
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
+std::cout << "MSN " << type << '\n';
   StructNew curr(wasm.allocator);
+  curr.type = Type(type, NonNullable, Exact);
+  curr.operands.resize(type.getStruct().fields.size());
   CHECK_ERR(ChildPopper{*this}.visitStructNew(&curr));
   push(builder.makeStructNew(type, std::move(curr.operands), curr.descriptor));
   return Ok{};
 }
 
 Result<> IRBuilder::makeStructNewDefault(HeapType type) {
+std::cout << "MSN_DEF " << type << '\n';
   StructNew curr(wasm.allocator);
+  curr.type = Type(type, NonNullable, Exact);
   CHECK_ERR(ChildPopper{*this}.visitStructNew(&curr));
   push(builder.makeStructNew(type, {}, curr.descriptor));
   return Ok{};
