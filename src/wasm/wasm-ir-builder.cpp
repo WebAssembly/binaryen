@@ -2212,7 +2212,6 @@ Result<> IRBuilder::makeBrOn(
 }
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
-std::cout << "MSN " << type << '\n';
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   curr.operands.resize(type.getStruct().fields.size());
@@ -2222,7 +2221,6 @@ std::cout << "MSN " << type << '\n';
 }
 
 Result<> IRBuilder::makeStructNewDefault(HeapType type) {
-std::cout << "MSN_DEF " << type << '\n';
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   CHECK_ERR(ChildPopper{*this}.visitStructNew(&curr));
