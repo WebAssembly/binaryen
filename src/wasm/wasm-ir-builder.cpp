@@ -2214,15 +2214,17 @@ Result<> IRBuilder::makeBrOn(
 Result<> IRBuilder::makeStructNew(HeapType type) {
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
-  // Differentiate from struct.new_default with a non-empty expression list.
   curr.operands.resize(type.getStruct().fields.size());
   CHECK_ERR(visitStructNew(&curr));
-  push(builder.makeStructNew(type, std::move(curr.operands)));
+  push(builder.makeStructNew(type, std::move(curr.operands), curr.descriptor));
   return Ok{};
 }
 
 Result<> IRBuilder::makeStructNewDefault(HeapType type) {
-  push(builder.makeStructNew(type, {}));
+  StructNew curr(wasm.allocator);
+  curr.type = Type(type, NonNullable, Exact);
+  CHECK_ERR(visitStructNew(&curr));
+  push(builder.makeStructNew(type, {}, curr.descriptor));
   return Ok{};
 }
 

@@ -1672,6 +1672,8 @@ public:
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
   ExpressionList operands;
 
+  Expression* descriptor = nullptr;
+
   bool isWithDefault() { return operands.empty(); }
 
   void finalize();
