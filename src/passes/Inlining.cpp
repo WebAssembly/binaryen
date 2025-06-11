@@ -190,23 +190,24 @@ struct InlineMeasurer
     if (isViolationOrderedAssumption) {
       return;
     }
-    LocalGet* const localGet = curr->dynCast<LocalGet>();
-    if (localGet == nullptr ||
-        localGet->index >= getFunction()->getNumParams()) {
-      // TODO: maybe support more complex analysis, like
-      // (i32.store (i32.add (local.get $x0) (local.get $x1)) (local.get $x2))
+    if (invalidOperation(curr)) {
       isViolationOrderedAssumption = true;
       return;
     }
-    if (localGet->index >= expectedGetIndex) {
-      expectedGetIndex = localGet->index + 1;
-      orderedGetCount++;
-    } else {
-      // duplicated local.get, fallback to normal cases
-      // it will introduce temporary locals after inlining
-      orderedGetCount = 0;
-      isViolationOrderedAssumption = true;
+    if (LocalGet* localGet = curr->dynCast<LocalGet>()) {
+      if (localGet->index >= expectedGetIndex) {
+        expectedGetIndex = localGet->index + 1;
+        orderedGetCount++;
+      } else {
+        // duplicated local.get, fallback to normal cases
+        // it will introduce temporary locals after inlining
+        isViolationOrderedAssumption = true;
+      }
     }
+  }
+
+  bool invalidOperation(Expression* curr) {
+    return curr->is<GlobalGet>() || curr->is<LocalSet>() || curr->is<Const>();
   }
 
   // Measure the number of expressions for inlining purposes. This is similar to
@@ -214,6 +215,7 @@ struct InlineMeasurer
   // function body.
   static Index measure(Function* func) {
     InlineMeasurer measurer;
+    measurer.isViolationOrderedAssumption = func->getNumVars() != 0;
     measurer.walkFunction(func);
     // we don't count the local.get when the order is same as the
     // parameters' order.
@@ -224,7 +226,9 @@ struct InlineMeasurer
     //     (local.get $y)
     //   )
     // )
-    return measurer.size - measurer.orderedGetCount;
+    return measurer.size - (measurer.isViolationOrderedAssumption
+                              ? 0
+                              : measurer.orderedGetCount);
   }
 };
 
