@@ -166,9 +166,10 @@
        (i32.const 12)
       )
       (drop
-       (br_if $topmost
-        (i32.const 1)
-        (i32.const 1)
+       (block
+        (br $topmost
+         (i32.const 1)
+        )
        )
       )
      )
@@ -1088,6 +1089,7 @@
          (drop
           (i32.const 1764950569)
          )
+         (unreachable)
         )
         (f32.const 1.1910939690100655e-32)
         (i32.const 1628057906)
