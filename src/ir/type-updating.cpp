@@ -87,34 +87,31 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 
   std::vector<HeapType> sorted;
   if (wasm.typeIndices.empty()) {
-    sorted = TopologicalSort::sortOf(privatePreds.begin(),
-                                     privatePreds.end());
+    sorted = TopologicalSort::sortOf(privatePreds.begin(), privatePreds.end());
   } else {
-    sorted =
-      TopologicalSort::minSortOf(privatePreds.begin(),
-                                 privatePreds.end(),
-                                 [&](Index a, Index b) {
-                                   auto typeA = privatePreds[a].first;
-                                   auto typeB = privatePreds[b].first;
-                                   // Preserve type order.
-                                   auto itA = wasm.typeIndices.find(typeA);
-                                   auto itB = wasm.typeIndices.find(typeB);
-                                   bool hasA = itA != wasm.typeIndices.end();
-                                   bool hasB = itB != wasm.typeIndices.end();
-                                   if (hasA != hasB) {
-                                     // Types with preserved indices must be
-                                     // sorted before (after in this reversed
-                                     // comparison) types without indices to
-                                     // maintain transitivity.
-                                     return !hasA;
-                                   }
-                                   if (hasA && *itA != *itB) {
-                                     return !(itA->second < itB->second);
-                                   }
-                                   // Break ties by the arbitrary order we
-                                   // have collected the types in.
-                                   return a > b;
-                                 });
+    sorted = TopologicalSort::minSortOf(
+      privatePreds.begin(), privatePreds.end(), [&](Index a, Index b) {
+        auto typeA = privatePreds[a].first;
+        auto typeB = privatePreds[b].first;
+        // Preserve type order.
+        auto itA = wasm.typeIndices.find(typeA);
+        auto itB = wasm.typeIndices.find(typeB);
+        bool hasA = itA != wasm.typeIndices.end();
+        bool hasB = itB != wasm.typeIndices.end();
+        if (hasA != hasB) {
+          // Types with preserved indices must be
+          // sorted before (after in this reversed
+          // comparison) types without indices to
+          // maintain transitivity.
+          return !hasA;
+        }
+        if (hasA && *itA != *itB) {
+          return !(itA->second < itB->second);
+        }
+        // Break ties by the arbitrary order we
+        // have collected the types in.
+        return a > b;
+      });
   }
   std::reverse(sorted.begin(), sorted.end());
   Index i = 0;
