@@ -65,22 +65,20 @@
 
  ;; CHECK:      (func $test-prefinalize (type $4) (result f64)
  ;; CHECK-NEXT:  (loop $loop (result f64)
- ;; CHECK-NEXT:   (if (result f64)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (then
- ;; CHECK-NEXT:     (f64.const 0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (else
- ;; CHECK-NEXT:     (block $block (result f64)
- ;; CHECK-NEXT:      (nop)
- ;; CHECK-NEXT:      (br_if $loop
- ;; CHECK-NEXT:       (i32.eqz
- ;; CHECK-NEXT:        (i32.const 0)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:   (block $block (result f64)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (br $block
+ ;; CHECK-NEXT:       (f64.const 0)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br_if $loop
+ ;; CHECK-NEXT:     (i32.eqz
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

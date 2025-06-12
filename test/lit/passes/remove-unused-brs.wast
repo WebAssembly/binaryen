@@ -5,7 +5,7 @@
 
 (module
   ;; Regression test in which we need to calculate a proper LUB.
-  ;; CHECK:      (func $selectify-fresh-lub (type $4) (param $x i32) (result anyref)
+  ;; CHECK:      (func $selectify-fresh-lub (type $5) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (select (result i31ref)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.i31
@@ -340,34 +340,63 @@
     )
   )
 
-  ;; CHECK:      (func $restructure-br_if-constant-branch-1 (type $0) (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (block $x (result i32)
-  ;; CHECK-NEXT:   (br_if $x
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK:      (func $restructure-br_if-constant-branch-1 (type $3) (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $x (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.tee $x
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $x
+  ;; CHECK-NEXT:       (i32.const 10)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $x0 (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $restructure-br_if-constant-branch-1 (param $x i32) (result i32)
-    (block $x (result i32)
-      (br_if $x
-        (unreachable)
-        (local.tee $x
-          (i32.const 42)
+  (func $restructure-br_if-constant-branch-1 (param $x i32)
+    (drop
+      (block $x (result i32)
+        (drop
+          (br_if $x
+            (i32.const 10)
+            (local.tee $x
+              (i32.const 42)
+            )
+          )
         )
+        (i32.const 20)
       )
-      (unreachable)
+    )
+    (drop
+      (block $x (result i32)
+        (drop
+          (br_if $x
+            (i32.const 10)
+            (i32.const 0)
+          )
+        )
+        (i32.const 20)
+      )
     )
   )
-  ;; CHECK:      (func $restructure-br_if-constant-branch-2 (type $5) (param $x i32)
+  ;; CHECK:      (func $restructure-br_if-constant-branch-2 (type $3) (param $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $x
@@ -539,17 +568,21 @@
 
   ;; CHECK:      (func $restructure-br_if-condition-invalidates-6 (type $2) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block $block (result i32)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_if $block
-  ;; CHECK-NEXT:     (local.get $temp)
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.tee $temp
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $temp)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.tee $temp
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $block
+  ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -574,17 +607,22 @@
   )
 
   ;; CHECK:      (func $restructure-select-no-multivalue (type $1)
+  ;; CHECK-NEXT:  (local $0 (tuple i32 i32))
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $block (type $3) (result i32 i32)
-  ;; CHECK-NEXT:    (tuple.drop 2
-  ;; CHECK-NEXT:     (br_if $block
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:       (call $restructure-br_if
-  ;; CHECK-NEXT:        (i32.const 2)
+  ;; CHECK-NEXT:   (block $block (type $4) (result i32 i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:        (call $restructure-br_if
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (br $block
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.make 2
