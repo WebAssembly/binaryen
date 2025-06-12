@@ -112,6 +112,7 @@ unfuzzable = [
     'unsubtyping-stack-switching.wast',
     'vacuum-stack-switching.wast',
     # TODO: fuzzer support for custom descriptors
+    'remove-unused-module-elements-refs-descriptors.wast',
     'custom-descriptors.wast',
     'br_on_cast_desc.wast',
     'ref.get_desc.wast',
