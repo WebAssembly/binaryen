@@ -8,10 +8,14 @@
  (import "env" "fimport$0" (func $fimport$0 (param i32)))
  ;; CHECK:      (type $0 (func (result i32)))
 
+ ;; CHECK:      (type $1 (func))
+
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))
  ;; CHECK:      (export "foo" (func $foo))
+
+ ;; CHECK:      (export "two-branches-unreachable" (func $two-branches-unreachable))
 
  ;; CHECK:      (func $foo (result i32)
  ;; CHECK-NEXT:  (drop
@@ -40,7 +44,18 @@
    (i32.const -2147483648)
   )
  )
- (func $two-branches-unreachable
+ ;; CHECK:      (func $two-branches-unreachable
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $two-branches-unreachable (export "two-branches-unreachable")
   ;; remove-unused-brs makes the break unconditional,
   ;; thus in this case the two branches are unreachable,
   ;; refinalization is required.
