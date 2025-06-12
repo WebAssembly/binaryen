@@ -80,7 +80,10 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
     }
 
     // Check for a (private) described type.
-    if (auto desc = type.getDescribedType(); desc && !isPublic(*desc)) {
+    if (auto desc = type.getDescribedType()) {
+      // It is not possible for a a described type to be public while its
+      // descriptor is private, or vice versa.
+      assert(!isPublic(*desc));
       privatePreds.back().second.push_back(*desc);
     }
   }
