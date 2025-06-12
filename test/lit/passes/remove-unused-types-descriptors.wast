@@ -7,8 +7,12 @@
 ;; can test the sort is valid.
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $described (descriptor $middle (struct)))
     (type $described (descriptor $middle (struct)))
+    ;; CHECK:       (type $middle (describes $described (descriptor $describing (struct))))
     (type $middle (describes $described (descriptor $describing (struct))))
+    ;; CHECK:       (type $describing (describes $middle (struct)))
     (type $describing (describes $middle (struct)))
 
     (type $unused (struct))
@@ -63,8 +67,12 @@
 ;; As above, but with use counts flipped.
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $described (descriptor $middle (struct)))
     (type $described (descriptor $middle (struct)))
+    ;; CHECK:       (type $middle (describes $described (descriptor $describing (struct))))
     (type $middle (describes $described (descriptor $describing (struct))))
+    ;; CHECK:       (type $describing (describes $middle (struct)))
     (type $describing (describes $middle (struct)))
 
     (type $unused (struct))
