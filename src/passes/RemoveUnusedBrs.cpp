@@ -27,7 +27,6 @@
 #include "ir/localize.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
-#include "literal.h"
 #include "parsing.h"
 #include "pass.h"
 #include "support/small_set.h"
