@@ -142,7 +142,7 @@ public:
       return idx;
     }
 
-    auto name = takeName();
+    auto name = takeID();
     if (name) {
       return name;
     }
