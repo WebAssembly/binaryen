@@ -1890,7 +1890,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         auto* value = Properties::getFallthrough(
           curr->condition, passOptions, *getModule());
-        // optimize if condition's fallthrough is a constant
+        // Optimize if condition's fallthrough is a constant.
         if (auto* c = value->dynCast<Const>()) {
           ChildLocalizer localizer(
             curr, getFunction(), *getModule(), passOptions);
@@ -1901,7 +1901,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             curr->type = Type::unreachable;
             block->list.push_back(curr);
             block->finalize();
-            // the type is changed , so refinalize
+            // The type changed, so refinalize.
             refinalize = true;
             replaceCurrent(block);
           } else {
