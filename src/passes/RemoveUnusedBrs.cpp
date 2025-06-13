@@ -1903,15 +1903,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             block->finalize();
             // The type changed, so refinalize.
             refinalize = true;
-            replaceCurrent(block);
           } else {
+            // the branch is never taken, allow control flow to fall through
             if (curr->value) {
               block->list.push_back(curr->value);
               block->finalize();
             }
-            // the branch is never taken, allow control flow to fall through
-            replaceCurrent(block);
           }
+          replaceCurrent(block);
         }
       }
     };
