@@ -184,7 +184,7 @@ def wabt_determine_platform():
 
 
 def wabt_determine_release(platform):
-    platform_regex = re.compile(r"^wabt-.*-ubuntu-.*.tar.gz$")
+    platform_regex = re.compile(r"^wabt-.*-%s.*.tar.gz$" % platform)
     data = fetch_json('https://api.github.com/repos/WebAssembly/wabt/releases/latest')
     for asset in data['assets']:
         if platform_regex.match(asset['name']):
