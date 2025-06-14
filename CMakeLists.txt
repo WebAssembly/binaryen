@@ -87,6 +87,9 @@ option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten buil
 
 option(ENABLE_WERROR "Enable -Werror" ON)
 
+# Turn this on to skip all optimizations but leave ones which just print
+option(SKIP_OPTIMIZATIONS "Skip all optimizations but Print* ones" OFF)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -482,6 +485,10 @@ if(BUILD_MIMALLOC)
   else()
     target_link_libraries(binaryen mimalloc)
   endif()
+endif()
+
+if(SKIP_OPTIMIZATIONS)
+  add_definitions(-DSKIP_OPTIMIZATIONS)
 endif()
 
 add_subdirectory(src/ir)
