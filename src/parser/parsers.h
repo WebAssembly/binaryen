@@ -2130,11 +2130,38 @@ makeTableCopy(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 template<typename Ctx>
 Result<>
 makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
-  auto table = maybeTableidx(ctx);
+  // Note: binary and text formats for `table.init` are different. In the text
+  // format the table index is optional (with 0 as the default), and it comes
+  // after the elem index.
+  std::variant<uint32_t, Name> elemIdx;
+  std::variant<uint32_t, Name> tableIdx = (uint32_t)0;
+
+  std::optional<std::variant<uint32_t, Name>> arg1 = ctx.in.takeU32OrName();
+  if (!arg1) {
+    return ctx.in.err("expected table or elem index or identifier");
+  }
+
+  std::optional<std::variant<uint32_t, Name>> arg2 = ctx.in.takeU32OrName();
+  if (arg2) {
+    elemIdx = *arg2;
+    tableIdx = *arg1;
+  } else {
+    elemIdx = *arg1;
+  }
+
+  Result<typename Ctx::TableIdxT> table =
+    std::holds_alternative<uint32_t>(tableIdx)
+      ? ctx.getTableFromIdx(std::get<uint32_t>(tableIdx))
+      : ctx.getTableFromName(std::get<Name>(tableIdx));
   CHECK_ERR(table);
-  auto elem = elemidx(ctx);
+
+  Result<typename Ctx::ElemIdxT> elem =
+    std::holds_alternative<uint32_t>(elemIdx)
+      ? ctx.getElemFromIdx(std::get<uint32_t>(elemIdx))
+      : ctx.getElemFromName(std::get<Name>(elemIdx));
   CHECK_ERR(elem);
-  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+
+  return ctx.makeTableInit(pos, annotations, &*table, *elem);
 }
 
 template<typename Ctx>
