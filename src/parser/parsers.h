@@ -2130,9 +2130,10 @@ makeTableCopy(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 template<typename Ctx>
 Result<>
 makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
-  // Note: binary and text formats for `table.init` are different. In the text
-  // format the table index is optional (with 0 as the default), and it comes
-  // after the elem index.
+  // Note: binary and text formats for `table.init` are different. In both
+  // formats the table index is optional (with 0 as the default). When both the
+  // table and elem index are specified, the elem index comes first in the
+  // binary format, but second in the text format.
 
   auto reset = ctx.in.getPos();
 
