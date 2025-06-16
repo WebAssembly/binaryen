@@ -8,7 +8,7 @@ namespace wasm {
 
 namespace {
 
-struct Finder : PostWalker<Finder> {
+struct Finder : TryDepthWalker<Finder> {
   std::vector<Call*> tailCalls;
   std::vector<CallIndirect*> tailCallIndirects;
   void visitFunction(Function* curr) { checkTailCall(curr->body); }
@@ -17,6 +17,10 @@ struct Finder : PostWalker<Finder> {
 private:
   void checkTailCall(Expression* expr) {
     if (expr == nullptr) {
+      return;
+    }
+    if (tryDepth > 0) {
+      // We are in a try block, so we cannot optimize tail calls.
       return;
     }
     if (auto* call = expr->dynCast<Call>()) {
