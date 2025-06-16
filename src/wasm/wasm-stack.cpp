@@ -2129,8 +2129,8 @@ void BinaryInstWriter::visitTableInit(TableInit* curr) {
 }
 
 void BinaryInstWriter::visitElemDrop(ElemDrop* curr) {
-    o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::ElemDrop);
-    o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::ElemDrop);
+  o << U32LEB(parent.getElementSegmentIndex(curr->segment));
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
