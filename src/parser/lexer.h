@@ -142,12 +142,7 @@ public:
       return idx;
     }
 
-    auto name = takeID();
-    if (name) {
-      return name;
-    }
-
-    return {};
+    return takeID();
   }
 
   bool takeSExprStart(std::string_view expected) {
