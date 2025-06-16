@@ -240,6 +240,12 @@ public:
     // string.encode_wtf16_array anyhow.)
     return Flow(NONCONSTANT_FLOW);
   }
+
+  Flow visitRefGetDesc(RefGetDesc* curr) {
+    // TODO: Implement this. For now, return nonconstant so that we skip it and
+    //       do not error.
+    return Flow(NONCONSTANT_FLOW);
+  }
 };
 
 struct Precompute
