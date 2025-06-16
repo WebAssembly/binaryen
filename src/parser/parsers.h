@@ -2133,33 +2133,28 @@ makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   // Note: binary and text formats for `table.init` are different. In the text
   // format the table index is optional (with 0 as the default), and it comes
   // after the elem index.
-  std::variant<uint32_t, Name> elemIdx;
-  std::variant<uint32_t, Name> tableIdx = (uint32_t)0;
 
-  std::optional<std::variant<uint32_t, Name>> arg1 = ctx.in.takeU32OrName();
-  if (!arg1) {
-    return ctx.in.err("expected table or elem index or identifier");
+  auto reset = ctx.in.getPos();
+
+  auto retry = [&]() -> Result<> {
+    // We're unable to parse the two argument format. Try one argument format
+    // with just elem index.
+    WithPosition with(ctx, reset);
+    auto elem = elemidx(ctx);
+    CHECK_ERR(elem);
+    MaybeResult<typename Ctx::TableIdxT> table = ctx.getTableFromIdx(0);
+    return ctx.makeTableInit(pos, annotations, &*table, *elem);
+  };
+
+  auto table = maybeTableidx(ctx);
+  if (table.getErr()) {
+    return retry();
   }
 
-  std::optional<std::variant<uint32_t, Name>> arg2 = ctx.in.takeU32OrName();
-  if (arg2) {
-    elemIdx = *arg2;
-    tableIdx = *arg1;
-  } else {
-    elemIdx = *arg1;
+  auto elem = maybeElemidx(ctx);
+  if (elem.getErr()) {
+    return retry();
   }
-
-  Result<typename Ctx::TableIdxT> table =
-    std::holds_alternative<uint32_t>(tableIdx)
-      ? ctx.getTableFromIdx(std::get<uint32_t>(tableIdx))
-      : ctx.getTableFromName(std::get<Name>(tableIdx));
-  CHECK_ERR(table);
-
-  Result<typename Ctx::ElemIdxT> elem =
-    std::holds_alternative<uint32_t>(elemIdx)
-      ? ctx.getElemFromIdx(std::get<uint32_t>(elemIdx))
-      : ctx.getElemFromName(std::get<Name>(elemIdx));
-  CHECK_ERR(elem);
 
   return ctx.makeTableInit(pos, annotations, &*table, *elem);
 }
@@ -2877,12 +2872,21 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
 
 // elemidx ::= x:u32 => x
 //           | v:id => x (if elems[x] = v)
-template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::ElemIdxT> maybeElemidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getElemFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
     return ctx.getElemFromName(*id);
+  }
+  return {};
+}
+
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+  if (auto idx = maybeElemidx(ctx)) {
+    CHECK_ERR(idx);
+    return *idx;
   }
   return ctx.in.err("expected elem index or identifier");
 }
