@@ -1286,9 +1286,10 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     }
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
-    out << char(digit < 20
-                  ? 'g' + digit
-                  : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+    out << char(digit < 20    ? 'g' + digit
+                : digit < 30  ? '0' + digit - 20
+                : digit == 30 ? '+'
+                              : '/');
   }
 }
 
@@ -3855,6 +3856,10 @@ Result<> WasmBinaryReader::readInst() {
           auto elem = getElemName(getU32LEB());
           auto table = getTableName(getU32LEB());
           return builder.makeTableInit(elem, table);
+        }
+        case BinaryConsts::ElemDrop: {
+          auto elem = getElemName(getU32LEB());
+          return builder.makeElemDrop(elem);
         }
         case BinaryConsts::F32_F16LoadMem: {
           auto [mem, align, offset] = getMemarg();
