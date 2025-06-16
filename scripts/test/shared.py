@@ -416,12 +416,12 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
     'align.wast',    # Alignment bit 6 used by multi-memory
     'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
-    'bulk.wast',     # Requires table.init abbreviation with implicit table
+    'bulk.wast',     # Requires support for elem.drop
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
     'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Constant global references allowed by GC
-    'elem.wast',    # Requires table.init abbreviation with implicit table
+    'elem.wast',    # Has an incorrect test: https://github.com/WebAssembly/spec/issues/1921
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
