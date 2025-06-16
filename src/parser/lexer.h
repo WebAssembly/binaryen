@@ -136,15 +136,6 @@ public:
     return Name(*str);
   }
 
-  std::optional<std::variant<uint32_t, Name>> takeU32OrName() {
-    auto idx = takeU32();
-    if (idx) {
-      return idx;
-    }
-
-    return takeID();
-  }
-
   bool takeSExprStart(std::string_view expected) {
     auto original = *this;
     if (takeLParen() && takeKeyword(expected)) {
