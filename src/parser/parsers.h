@@ -2152,11 +2152,8 @@ makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   }
 
   auto elem = maybeElemidx(ctx);
-  if (elem.getErr()) {
+  if (elem.getErr() || !elem) {
     return retry();
-  }
-  if (!elem) {
-      return retry();
   }
 
   return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
