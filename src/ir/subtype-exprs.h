@@ -243,6 +243,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(seg->type,
                         self()->getModule()->getTable(curr->table)->type);
   }
+  void visitElemDrop(ElemDrop* curr) {}
   void visitTry(Try* curr) {
     self()->noteSubtype(curr->body, curr);
     for (auto* body : curr->catchBodies) {

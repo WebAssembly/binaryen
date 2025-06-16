@@ -401,25 +401,36 @@ switch (buf[0]) {
     }
   }
   case 'e': {
-    switch (buf[7]) {
-      case 'c':
-        if (op == "extern.convert_any"sv) {
-          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
+    switch (buf[1]) {
+      case 'l':
+        if (op == "elem.drop"sv) {
+          CHECK_ERR(makeElemDrop(ctx, pos, annotations));
           return Ok{};
         }
         goto parse_error;
-      case 'e':
-        if (op == "extern.externalize"sv) {
-          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
-          return Ok{};
+      case 'x': {
+        switch (buf[7]) {
+          case 'c':
+            if (op == "extern.convert_any"sv) {
+              CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'e':
+            if (op == "extern.externalize"sv) {
+              CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'i':
+            if (op == "extern.internalize"sv) {
+              CHECK_ERR(makeRefAs(ctx, pos, annotations, AnyConvertExtern));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
         }
-        goto parse_error;
-      case 'i':
-        if (op == "extern.internalize"sv) {
-          CHECK_ERR(makeRefAs(ctx, pos, annotations, AnyConvertExtern));
-          return Ok{};
-        }
-        goto parse_error;
+      }
       default: goto parse_error;
     }
   }

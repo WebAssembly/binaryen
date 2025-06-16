@@ -804,6 +804,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->size, Type::i32);
   }
 
+  void visitElemDrop(ElemDrop* curr) {}
+
   void visitTry(Try* curr) {
     note(&curr->body, curr->type);
     for (auto& expr : curr->catchBodies) {

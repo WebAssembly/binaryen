@@ -500,6 +500,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   }
 
   void visitTableInit(TableInit* curr) {}
+  
+  void visitElemDrop(ElemDrop* curr) {}
 
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }

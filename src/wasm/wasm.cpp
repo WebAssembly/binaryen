@@ -891,6 +891,8 @@ void TableInit::finalize() {
   }
 }
 
+void ElemDrop::finalize() {}
+
 void Try::finalize(std::optional<Type> type_) {
   if (type_) {
     type = *type_;

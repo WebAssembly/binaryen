@@ -209,6 +209,8 @@ Result<> makeTableCopy(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeTableInit(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeElemDrop(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeThrow(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRethrow(Ctx&, Index, const std::vector<Annotation>&);
@@ -2158,6 +2160,14 @@ makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   }
 
   return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+}
+
+template<typename Ctx>
+Result<>
+makeElemDrop(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
+  return ctx.makeElemDrop(pos, annotations, *elem);
 }
 
 template<typename Ctx>
