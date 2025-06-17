@@ -782,9 +782,7 @@ private:
       parent.writesTable = true;
       parent.implicitTrap = true;
     }
-    void visitElemDrop(ElemDrop* curr) {
-      parent.writesTable = true;
-    }
+    void visitElemDrop(ElemDrop* curr) { parent.writesTable = true; }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);
