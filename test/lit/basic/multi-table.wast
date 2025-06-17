@@ -76,6 +76,8 @@
   ;; CHECK-TEXT:      (elem $empty func)
   ;; CHECK-BIN:      (elem $empty func)
   (elem $empty func)
+  ;; CHECK-TEXT:      (elem $declarative func)
+  ;; CHECK-BIN:      (elem $declarative func)
   (elem $declarative declare func $h)
 
   ;; This elem will be emitted as usesExpressions because of the type of the
@@ -142,7 +144,9 @@
 
 ;; CHECK-BIN-NODEBUG:      (elem $8 func)
 
-;; CHECK-BIN-NODEBUG:      (elem $9 (table $3) (i32.const 0) (ref null $0) (item (ref.func $0)) (item (ref.func $2)))
+;; CHECK-BIN-NODEBUG:      (elem $9 func)
+
+;; CHECK-BIN-NODEBUG:      (elem $10 (table $3) (i32.const 0) (ref null $0) (item (ref.func $0)) (item (ref.func $2)))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
