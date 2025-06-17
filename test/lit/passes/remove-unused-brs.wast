@@ -422,10 +422,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $restructure-br_if-constant-branch-2 (param $x i32)
-    ;; there is no value, thus it can be simpler as below
+    ;; as before, but now there is no value.
     (block $x
       (br_if $x
-        ;; the branch is always taken, make it unconditional
         (local.tee $x
           (i32.const 1)
         )
@@ -433,7 +432,6 @@
     )
     (block $x
       (br_if $x
-        ;; the branch is never taken, allow control flow to fall through
         (local.tee $x
           (i32.const 0)
         )
