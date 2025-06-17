@@ -290,6 +290,11 @@ struct Unsubtyping
           case HeapTypeKind::Basic:
             WASM_UNREACHABLE("unexpected kind");
         }
+        if (auto desc = type.getDescriptorType()) {
+          if (auto superDesc = super.getDescriptorType()) {
+            noteSubtype(*desc, *superDesc);
+          }
+        }
       }
 
       // Analyze all casts at once.
