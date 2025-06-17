@@ -53,74 +53,80 @@
   (i32.const 0)
  )
  (func $join-br_ifs
+  (local $x i32)
   (block $out
-   (block
-    (br $out)
+   (br_if $out
+    (i32.or
+     (local.get $x)
+     (local.get $x)
+    )
    )
-   (block
-    (br $out)
-   )
-   (block
-    (br $out)
+   (nop)
+   (br_if $out
+    (local.get $x)
    )
   )
   (block $out2
    (block $out3
-    (block
-     (br $out2)
+    (br_if $out2
+     (local.get $x)
     )
-    (block
-     (br $out3)
+    (br_if $out3
+     (local.get $x)
     )
-    (block
-     (br $out2)
+    (br_if $out2
+     (local.get $x)
     )
    )
    (unreachable)
   )
   (block $out4
    (block $out5
-    (block
-     (br $out4)
+    (br_if $out4
+     (local.get $x)
     )
-    (block
-     (br $out5)
+    (br_if $out5
+     (i32.or
+      (local.get $x)
+      (local.get $x)
+     )
     )
-    (block
-     (br $out5)
-    )
+    (nop)
    )
    (unreachable)
   )
   (block $out6
    (block $out7
-    (block
-     (br $out6)
+    (br_if $out6
+     (i32.or
+      (local.get $x)
+      (local.get $x)
+     )
     )
-    (block
-     (br $out6)
-    )
-    (block
-     (br $out7)
+    (nop)
+    (br_if $out7
+     (local.get $x)
     )
    )
    (unreachable)
   )
   (if
    (i32.eqz
-    (call $b14)
+    (i32.or
+     (call $b14)
+     (local.get $x)
+    )
    )
    (then
     (block $out8
      (nop)
-     (block
-     )
+     (nop)
     )
    )
   )
   (block $out80
-   (block
-    (br $out80)
+   (br_if $out80
+    (local.get $x)
    )
    (br_if $out80
     (call $b14)
