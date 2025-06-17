@@ -1902,9 +1902,6 @@ Result<> IRBuilder::makeTableInit(Name elem, Name table) {
 }
 
 Result<> IRBuilder::makeElemDrop(Name segment) {
-  ElemDrop curr;
-  curr.segment = segment;
-  CHECK_ERR(visitElemDrop(&curr));
   push(builder.makeElemDrop(segment));
   return Ok{};
 }

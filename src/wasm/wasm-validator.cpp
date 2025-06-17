@@ -2553,7 +2553,7 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
 void FunctionValidator::visitElemDrop(ElemDrop* curr) {
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
-               "table.init requires bulk-memory [--enable-bulk-memory]");
+               "elem.drop requires bulk-memory [--enable-bulk-memory]");
   auto* segment = getModule()->getElementSegment(curr->segment);
   shouldBeTrue(!!segment, curr, "elem.drop segment must exist");
 }
