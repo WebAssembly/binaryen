@@ -59,7 +59,7 @@
   (func $b6 (type $0) (param $i1 i32)
     (block $topmost
       (br_if $topmost
-        (i32.const 1)
+        (local.get $i1)
       )
     )
   )
@@ -70,7 +70,7 @@
           (i32.const 0)
         )
         (br_if $topmost
-          (i32.const 1)
+          (local.get $i1)
         )
       )
     )
@@ -79,7 +79,7 @@
     (block $topmost
       (block $inner
         (br_if $topmost
-          (i32.const 1)
+          (local.get $i1)
         )
       )
     )
@@ -88,7 +88,7 @@
     (block $topmost
       (block $inner
         (br_if $topmost
-          (i32.const 1)
+          (local.get $i1)
         )
       )
     )
@@ -101,7 +101,7 @@
             (i32.const 0)
           )
           (br_if $topmost
-            (i32.const 1)
+            (local.get $i1)
           )
         )
       )
@@ -115,7 +115,7 @@
             (i32.const 0)
           )
           (br_if $inner
-            (i32.const 1)
+            (local.get $i1)
           )
         )
       )
@@ -155,6 +155,7 @@
     )
   )
   (func $b13 (type $2) (result i32)
+    (local $x i32)
     (block $topmost (result i32)
       (if
         (i32.const 1)
@@ -165,8 +166,8 @@
             )
             (drop
               (br_if $topmost
-                (i32.const 1)
-                (i32.const 1)
+                (local.get $x)
+                (local.get $x)
               )
             )
           )
@@ -226,9 +227,10 @@
     )
   )
   (func $b15 (type $1)
+    (local $x i32)
     (block $topmost
       (if
-        (i32.const 17)
+        (local.get $x)
         (then
           (br $topmost)
         )
