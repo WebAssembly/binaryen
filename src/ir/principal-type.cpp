@@ -63,6 +63,8 @@ bool valid(const VarType& type) {
 
 #endif // NDEBUG
 
+// Convert a VarRef that does not use the extended type syntax into a normal
+// Type.
 VarType canonicalizeRef(const VarRef& ref) {
   const auto* null = std::get_if<Nullability>(&ref.null);
   if (!null) {
@@ -85,6 +87,8 @@ VarType canonicalizeRef(const VarRef& ref) {
   return ref;
 }
 
+// Convert a given reference type into a VarRef. The result will not use the
+// extended type syntax.
 VarRef asVarRef(Type type) {
   assert(type.isRef());
   auto null = type.getNullability();
@@ -94,6 +98,8 @@ VarRef asVarRef(Type type) {
   }
   return VarRef{null, VarDefHeapType{type.getExactness(), ht}};
 }
+
+// join: Update `value` to the least upper bound of `value` and `other`.
 
 bool join(VarNullability& value, const VarNullability& other) {
   assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other) &&
@@ -236,6 +242,8 @@ bool join(VarType& value, const VarType& other) {
   WASM_UNREACHABLE("unexpected variant");
 }
 
+// Find the least upper bound where T is lifted so that nullopt is the bottom
+// value.
 template<typename T>
 bool join(std::optional<T>& value, const std::optional<T>& other) {
   if (value && other) {
@@ -245,6 +253,8 @@ bool join(std::optional<T>& value, const std::optional<T>& other) {
   }
   return true;
 }
+
+// countVars: Count the number of distinct variables for each kind of variable.
 
 struct VarCounts {
   Index nulls = 0;
@@ -310,6 +320,9 @@ void countVars(VarCounts& counts, const PrincipalType& type) {
   countVars(counts, type.rparams);
   countVars(counts, type.results);
 }
+
+// renumber: Replace variables with new variables given in `renumbering` or
+// otherwise indexed sequentially starting at `base`.
 
 // Sorted vector mapping original to renumbered variables.
 using Renumbering = std::vector<std::pair<Index, Index>>;
@@ -540,6 +553,9 @@ struct VarAssignments {
   }
 };
 
+// apply: replace variables with their assigned values according to
+// `assignments`.
+
 void apply(const VarAssignments& assignments, VarNullability& null) {
   if (auto* i = std::get_if<Index>(&null)) {
     null = assignments.nulls.get(*i);
@@ -601,6 +617,12 @@ void apply(const VarAssignments& assignments, PrincipalType& type) {
   }
 }
 
+// matchBottom: join the bottom value into the assignemnt in `assignments` for
+// any variables appearing in the second parameter. Returns `true` if this
+// succeeds. TODO: This currently always succeeded, but if we supported repeated
+// variables in outputs properly, we would need to avoid mixing left assignment
+// and right assignemnt, so this would be able to fail.
+
 bool matchBottom(VarAssignments& assignments, const VarNullability& null) {
   if (auto* i = std::get_if<Index>(&null)) {
     return assignments.nulls.assign(*i, NonNullable);
@@ -646,6 +668,9 @@ bool matchBottom(VarAssignments& assignments, const VarHeapType& type) {
 bool matchBottom(VarAssignments& assignments, const VarRef& ref) {
   return matchBottom(assignments, ref.null) && matchBottom(assignments, ref.ht);
 }
+
+// match: Record the variable assignemnts necessary to make `a` match `b` (i.e.
+// to ensure `a` <: `b`).
 
 bool match(VarAssignments& assignments,
            const VarNullability& a,
@@ -844,6 +869,9 @@ bool match(VarAssignments& assignments, const VarType& a, const VarType& b) {
   }
   WASM_UNREACHABLE("unexpected variants");
 }
+
+// print: print a principal type to `o`. Used for debugging and producing
+// helpful error messages in tests.
 
 void print(std::ostream& o, const VarNullability& null) {
   if (auto* i = std::get_if<Index>(&null)) {

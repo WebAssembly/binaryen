@@ -44,6 +44,7 @@ using VarSharedness = std::variant<BottomShare, Shareability, Index>;
 // An abstract heap type with some given sharedness.
 struct VarAbsHeapType {
   VarSharedness share;
+  // Must be basic and unshared.
   HeapType ht;
 
   bool operator==(const VarAbsHeapType& other) const {
@@ -60,6 +61,7 @@ using VarExactness = std::variant<Exactness, Index>;
 // A defined heap type with a given exactness.
 struct VarDefHeapType {
   VarExactness exact;
+  // Must be defined.
   HeapType ht;
 
   bool operator==(const VarDefHeapType& other) const {
