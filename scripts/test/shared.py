@@ -421,7 +421,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'const.wast',    # Hex float constant not recognized as out of range
     'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Constant global references allowed by GC
-    'elem.wast',    # Requires modeling empty declarative segments
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN

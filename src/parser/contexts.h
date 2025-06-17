@@ -1116,7 +1116,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   Result<> addElem(Name, TableIdxT*, std::optional<ExprT>, ElemListT&&, Index);
 
-  Result<> addDeclareElem(Name, ElemListT&&, Index) { return Ok{}; }
+  Result<> addDeclareElem(Name, ElemListT&&, Index);
 
   Result<> addData(Name name,
                    MemoryIdxT*,
