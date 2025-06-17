@@ -202,6 +202,7 @@ public:
   Result<> makeTableFill(Name table);
   Result<> makeTableCopy(Name destTable, Name srcTable);
   Result<> makeTableInit(Name elem, Name table);
+  Result<> makeElemDrop(Name elem);
   Result<> makeTry(Name label, Signature sig);
   Result<> makeTryTable(Name label,
                         Signature sig,

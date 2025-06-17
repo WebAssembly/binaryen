@@ -768,6 +768,12 @@ public:
     ret->finalize();
     return ret;
   }
+  ElemDrop* makeElemDrop(Name segment) {
+    auto* ret = wasm.allocator.alloc<ElemDrop>();
+    ret->segment = segment;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,

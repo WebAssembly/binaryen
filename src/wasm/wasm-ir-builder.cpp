@@ -1901,6 +1901,11 @@ Result<> IRBuilder::makeTableInit(Name elem, Name table) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeElemDrop(Name segment) {
+  push(builder.makeElemDrop(segment));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeTry(Name label, Signature sig) {
   auto* tryy = wasm.allocator.alloc<Try>();
   tryy->type = sig.results;

@@ -481,6 +481,7 @@ public:
   void visitTableFill(TableFill* curr);
   void visitTableCopy(TableCopy* curr);
   void visitTableInit(TableInit* curr);
+  void visitElemDrop(ElemDrop* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -2547,6 +2548,14 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
                                     "table.init offset must be valid");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "table.init size must be valid");
+}
+
+void FunctionValidator::visitElemDrop(ElemDrop* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "elem.drop requires bulk-memory [--enable-bulk-memory]");
+  auto* segment = getModule()->getElementSegment(curr->segment);
+  shouldBeTrue(!!segment, curr, "elem.drop segment must exist");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {

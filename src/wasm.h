@@ -708,6 +708,7 @@ public:
     TableFillId,
     TableCopyId,
     TableInitId,
+    ElemDropId,
     TryId,
     TryTableId,
     ThrowId,
@@ -1467,6 +1468,16 @@ public:
   Expression* offset;
   Expression* size;
   Name table;
+
+  void finalize();
+};
+
+class ElemDrop : public SpecificExpression<Expression::ElemDropId> {
+public:
+  ElemDrop() = default;
+  ElemDrop(MixedArena& allocator) : ElemDrop() {}
+
+  Name segment;
 
   void finalize();
 };

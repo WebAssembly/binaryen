@@ -65,6 +65,7 @@ DELEGATE(TableGrow);
 DELEGATE(TableFill);
 DELEGATE(TableCopy);
 DELEGATE(TableInit);
+DELEGATE(ElemDrop);
 DELEGATE(Try);
 DELEGATE(TryTable);
 DELEGATE(Throw);

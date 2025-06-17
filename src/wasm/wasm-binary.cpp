@@ -3856,6 +3856,10 @@ Result<> WasmBinaryReader::readInst() {
           auto table = getTableName(getU32LEB());
           return builder.makeTableInit(elem, table);
         }
+        case BinaryConsts::ElemDrop: {
+          auto elem = getElemName(getU32LEB());
+          return builder.makeElemDrop(elem);
+        }
         case BinaryConsts::F32_F16LoadMem: {
           auto [mem, align, offset] = getMemarg();
           return builder.makeLoad(2, false, offset, align, Type::f32, mem);

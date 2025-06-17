@@ -1118,6 +1118,7 @@ enum ASTNodes {
   TableFill = 0x11,
   TableCopy = 0x0e,
   TableInit = 0x0c,
+  ElemDrop = 0x0d,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,

@@ -1557,6 +1557,7 @@ public:
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitElemDrop(ElemDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -2670,6 +2671,10 @@ public:
     NOTE_ENTER("TableInit");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitElemDrop(ElemDrop* curr) {
+    NOTE_ENTER("ElemDrop");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -3645,6 +3650,13 @@ public:
       auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
       info.interface()->tableStore(info.name, destVal + i, value);
     }
+    return {};
+  }
+
+  Flow visitElemDrop(ElemDrop* curr) {
+    Module& wasm = *self()->getModule();
+    ElementSegment* seg = wasm.getElementSegment(curr->segment);
+    seg->data.clear();
     return {};
   }
 
