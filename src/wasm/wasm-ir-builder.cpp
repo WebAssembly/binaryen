@@ -1500,6 +1500,9 @@ Result<> IRBuilder::makeCallIndirect(Name table,
                                      HeapType type,
                                      bool isReturn,
                                      std::optional<std::uint8_t> inline_) {
+  if (!type.isSignature()) {
+    return Err{"expected function type annotation on call_indirect"};
+  }
   CallIndirect curr(wasm.allocator);
   curr.heapType = type;
   curr.operands.resize(type.getSignature().params.size());
@@ -2005,6 +2008,9 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
 Result<> IRBuilder::makeCallRef(HeapType type,
                                 bool isReturn,
                                 std::optional<std::uint8_t> inline_) {
+  if (!type.isSignature()) {
+    return Err{"expected function type annotation on call_ref"};
+  }
   CallRef curr(wasm.allocator);
   if (!type.isSignature()) {
     return Err{"expected function type"};
@@ -2217,6 +2223,9 @@ Result<> IRBuilder::makeBrOn(
 }
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.new"};
+  }
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   curr.operands.resize(type.getStruct().fields.size());
@@ -2248,6 +2257,9 @@ Result<> IRBuilder::makeStructGet(HeapType type,
 
 Result<>
 IRBuilder::makeStructSet(HeapType type, Index field, MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.set"};
+  }
   StructSet curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructSet(&curr, type));
@@ -2260,6 +2272,9 @@ Result<> IRBuilder::makeStructRMW(AtomicRMWOp op,
                                   HeapType type,
                                   Index field,
                                   MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.atomic.rmw"};
+  }
   StructRMW curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructRMW(&curr, type));
@@ -2270,6 +2285,9 @@ Result<> IRBuilder::makeStructRMW(AtomicRMWOp op,
 
 Result<>
 IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.atomic.rmw"};
+  }
   StructCmpxchg curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructCmpxchg(&curr, type));
@@ -2280,6 +2298,9 @@ IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
 }
 
 Result<> IRBuilder::makeArrayNew(HeapType type) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.new"};
+  }
   ArrayNew curr;
   curr.type = Type(type, NonNullable, Exact);
   // Differentiate from array.new_default with dummy initializer.
@@ -2312,10 +2333,10 @@ Result<> IRBuilder::makeArrayNewElem(HeapType type, Name elem) {
 }
 
 Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
-  ArrayNewFixed curr(wasm.allocator);
   if (!type.isArray()) {
     return Err{"expected array type annotation on array.new_fixed"};
   }
+  ArrayNewFixed curr(wasm.allocator);
   curr.type = Type(type, NonNullable);
   curr.values.resize(arity);
   CHECK_ERR(visitArrayNewFixed(&curr));
@@ -2334,6 +2355,9 @@ IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
 }
 
 Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.set"};
+  }
   ArraySet curr;
   CHECK_ERR(ChildPopper{*this}.visitArraySet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2359,6 +2383,9 @@ Result<> IRBuilder::makeArrayCopy(HeapType destType, HeapType srcType) {
 }
 
 Result<> IRBuilder::makeArrayFill(HeapType type) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.fill"};
+  }
   ArrayFill curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayFill(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2396,6 +2423,9 @@ Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
 
 Result<>
 IRBuilder::makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.atomic.rmw"};
+  }
   ArrayRMW curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayRMW(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2404,6 +2434,9 @@ IRBuilder::makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order) {
 }
 
 Result<> IRBuilder::makeArrayCmpxchg(HeapType type, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.atomic.rmw"};
+  }
   ArrayCmpxchg curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayCmpxchg(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2500,7 +2533,7 @@ Result<> IRBuilder::makeContNew(HeapType type) {
 
 Result<> IRBuilder::makeContBind(HeapType sourceType, HeapType targetType) {
   if (!sourceType.isContinuation() || !targetType.isContinuation()) {
-    return Err{"expected continuation types"};
+    return Err{"expected continuation type annotations on cont.bind"};
   }
   ContBind curr(wasm.allocator);
 
@@ -2590,7 +2623,7 @@ IRBuilder::makeResume(HeapType ct,
     return Err{"the sizes of tags and labels must be equal"};
   }
   if (!ct.isContinuation()) {
-    return Err{"expected continuation type"};
+    return Err{"expected continuation type annotation on resume"};
   }
 
   Resume curr(wasm.allocator);
@@ -2623,7 +2656,7 @@ IRBuilder::makeResumeThrow(HeapType ct,
     return Err{"the sizes of tags and labels must be equal"};
   }
   if (!ct.isContinuation()) {
-    return Err{"expected continuation type"};
+    return Err{"expected continuation type annotation on resume_throw"};
   }
 
   ResumeThrow curr(wasm.allocator);
@@ -2649,7 +2682,7 @@ IRBuilder::makeResumeThrow(HeapType ct,
 
 Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   if (!ct.isContinuation()) {
-    return Err{"expected continuation type"};
+    return Err{"expected continuation type annotation on switch"};
   }
   StackSwitch curr(wasm.allocator);
   curr.tag = tag;
