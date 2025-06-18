@@ -591,9 +591,7 @@ bool shapeEq(HeapType a, HeapType b) {
   if (a.isShared() != b.isShared()) {
     return false;
   }
-  if (!!a.getDeclaredSuperType() != !!b.getDeclaredSuperType()) {
-    return false;
-  }
+  // Ignore supertype because we want to be able to merge into parents.
   if (!!a.getDescriptorType() != !!b.getDescriptorType()) {
     return false;
   }
@@ -623,7 +621,7 @@ bool shapeEq(HeapType a, HeapType b) {
 size_t shapeHash(HeapType a) {
   size_t digest = hash(a.isOpen());
   rehash(digest, a.isShared());
-  rehash(digest, !!a.getDeclaredSuperType());
+  // Ignore supertype because we want to be able to merge into parents.
   rehash(digest, !!a.getDescriptorType());
   rehash(digest, !!a.getDescribedType());
   auto kind = a.getKind();
