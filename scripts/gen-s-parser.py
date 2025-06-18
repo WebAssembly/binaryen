@@ -582,6 +582,7 @@ instructions = [
     ("table.fill",           "makeTableFill()"),
     ("table.copy",           "makeTableCopy()"),
     ("table.init",           "makeTableInit()"),
+    ("elem.drop",            "makeElemDrop()"),
     # exception handling instructions
     ("try",                  "makeTry()"),
     ("try_table",            "makeTryTable()"),

@@ -416,12 +416,11 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
     'align.wast',    # Alignment bit 6 used by multi-memory
     'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
-    'bulk.wast',     # Requires table.init abbreviation with implicit table
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
     'conversions.wast',  # Promoted NaN should be canonical
     'data.wast',    # Constant global references allowed by GC
-    'elem.wast',    # Requires table.init abbreviation with implicit table
+    'elem.wast',    # Requires modeling empty declarative segments
     'f32.wast',     # Adding -0 and -nan should give a canonical NaN
     'f64.wast',     # Adding -0 and -nan should give a canonical NaN
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
@@ -450,7 +449,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'type-equivalence.wast',  # Recursive types allowed by GC
     'unreached-invalid.wast',  # Requires more precise unreachable validation
     'array.wast',  # Requires support for table default elements
-    'array_init_elem.wast',  # Requires support for elem.drop
     'br_if.wast',  # Requires more precise branch validation
     'br_on_cast.wast',  # Requires host references to not be externalized i31refs
     'br_on_cast_fail.wast',  # Requires host references to not be externalized i31refs

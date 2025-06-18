@@ -708,6 +708,7 @@ public:
     TableFillId,
     TableCopyId,
     TableInitId,
+    ElemDropId,
     TryId,
     TryTableId,
     ThrowId,
@@ -1471,6 +1472,16 @@ public:
   void finalize();
 };
 
+class ElemDrop : public SpecificExpression<Expression::ElemDropId> {
+public:
+  ElemDrop() = default;
+  ElemDrop(MixedArena& allocator) : ElemDrop() {}
+
+  Name segment;
+
+  void finalize();
+};
+
 // 'try' from the old (Phase 3) EH proposal
 class Try : public SpecificExpression<Expression::TryId> {
 public:
@@ -1671,6 +1682,8 @@ public:
   // struct with no fields ambiguous, but it doesn't make a difference in that
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
   ExpressionList operands;
+
+  Expression* descriptor = nullptr;
 
   bool isWithDefault() { return operands.empty(); }
 

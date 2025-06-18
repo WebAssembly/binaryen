@@ -238,6 +238,8 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     wrapTableAddress64(curr->dest, curr->table);
   }
 
+  void visitElemDrop(ElemDrop* curr) {}
+
   void visitCallIndirect(CallIndirect* curr) {
     wrapTableAddress64(curr->target, curr->table);
   }

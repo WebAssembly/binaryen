@@ -481,6 +481,7 @@ public:
   void visitTableFill(TableFill* curr);
   void visitTableCopy(TableCopy* curr);
   void visitTableInit(TableInit* curr);
+  void visitElemDrop(ElemDrop* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -2549,6 +2550,14 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
     curr->size->type, Type(Type::i32), curr, "table.init size must be valid");
 }
 
+void FunctionValidator::visitElemDrop(ElemDrop* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "elem.drop requires bulk-memory [--enable-bulk-memory]");
+  auto* segment = getModule()->getElementSegment(curr->segment);
+  shouldBeTrue(!!segment, curr, "elem.drop segment must exist");
+}
+
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
     shouldBeTrue(delegateTargetNames.count(name) != 0,
@@ -3146,6 +3155,18 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
         }
       }
     }
+  }
+
+  auto descType = curr->type.getHeapType().getDescriptorType();
+  if (!descType) {
+    shouldBeFalse(curr->descriptor,
+                  curr,
+                  "struct.new of type without descriptor should lack one");
+  } else {
+    shouldBeSubType(curr->descriptor->type,
+                    Type(*descType, Nullable, Exact),
+                    curr,
+                    "struct.new descriptor operand should have proper type");
   }
 }
 

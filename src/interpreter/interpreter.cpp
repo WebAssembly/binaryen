@@ -233,6 +233,7 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitElemDrop(ElemDrop* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }

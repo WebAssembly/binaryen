@@ -804,6 +804,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->size, Type::i32);
   }
 
+  void visitElemDrop(ElemDrop* curr) {}
+
   void visitTry(Try* curr) {
     note(&curr->body, curr->type);
     for (auto& expr : curr->catchBodies) {
@@ -934,16 +936,19 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitStructNew(StructNew* curr) {
-    if (curr->isWithDefault()) {
-      return;
-    }
     if (self().skipUnreachable() && !curr->type.isRef()) {
       return;
     }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0; i < fields.size(); ++i) {
-      note(&curr->operands[i], fields[i].type);
+    if (!curr->isWithDefault()) {
+      const auto& fields = curr->type.getHeapType().getStruct().fields;
+      assert(fields.size() == curr->operands.size());
+      for (size_t i = 0; i < fields.size(); ++i) {
+        note(&curr->operands[i], fields[i].type);
+      }
+    }
+    auto desc = curr->type.getHeapType().getDescriptorType();
+    if (desc) {
+      note(&curr->descriptor, Type(*desc, NonNullable, Exact));
     }
   }
 

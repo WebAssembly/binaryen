@@ -700,6 +700,9 @@ struct NullInstrParserCtx {
   makeTableInit(Index, const std::vector<Annotation>&, TableIdxT*, ElemIdxT) {
     return Ok{};
   }
+  Result<> makeElemDrop(Index, const std::vector<Annotation>&, ElemIdxT) {
+    return Ok{};
+  }
   Result<> makeThrow(Index, const std::vector<Annotation>&, TagIdxT) {
     return Ok{};
   }
@@ -2543,6 +2546,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeTableInit(elem, *t));
+  }
+
+  Result<> makeElemDrop(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Name elem) {
+    return withLoc(pos, irBuilder.makeElemDrop(elem));
   }
 
   Result<>
