@@ -150,17 +150,21 @@
   )
  )
  (func $br-if-unreachable-pair
+  (local $x i32)
   (block $label$14
    (br_if $label$14
     (unreachable)
    )
-   (block
+   (br_if $label$14
+    (local.get $x)
    )
   )
  )
  (func $br-if-unreachable-pair2
+  (local $x i32)
   (block $label$14
-   (block
+   (br_if $label$14
+    (local.get $x)
    )
    (br_if $label$14
     (unreachable)
