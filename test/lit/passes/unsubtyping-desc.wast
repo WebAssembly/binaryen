@@ -56,7 +56,7 @@
   )
 
   ;; Now we directly require B.desc <: A.desc. This does *not* imply B <: A, so
-  ;; we can optimize.
+  ;; we can optimize $B (but not $B.desc).
   ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
   (global $B.desc (ref null $B.desc) (ref.null none))
   ;; CHECK:      (global $A.desc (ref null $A.desc) (global.get $B.desc))
