@@ -99,7 +99,8 @@ VarRef asVarRef(Type type) {
   return VarRef{null, VarDefHeapType{type.getExactness(), ht}};
 }
 
-// join: Update `value` to the least upper bound of `value` and `other`.
+// join: Update `value` to the least upper bound of `value` and `other`. Returns
+// `true` iff the least upper bound exists.
 
 bool join(VarNullability& value, const VarNullability& other) {
   assert(!std::get_if<Index>(&value) && !std::get_if<Index>(&other) &&
