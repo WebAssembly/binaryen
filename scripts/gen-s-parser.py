@@ -582,6 +582,7 @@ instructions = [
     ("table.fill",           "makeTableFill()"),
     ("table.copy",           "makeTableCopy()"),
     ("table.init",           "makeTableInit()"),
+    ("elem.drop",            "makeElemDrop()"),
     # exception handling instructions
     ("try",                  "makeTry()"),
     ("try_table",            "makeTryTable()"),
@@ -653,6 +654,13 @@ instructions = [
     ("array.fill",           "makeArrayFill()"),
     ("array.init_data",      "makeArrayInitData()"),
     ("array.init_elem",      "makeArrayInitElem()"),
+    ("array.atomic.rmw.add", "makeArrayRMW(RMWAdd)"),
+    ("array.atomic.rmw.sub", "makeArrayRMW(RMWSub)"),
+    ("array.atomic.rmw.and", "makeArrayRMW(RMWAnd)"),
+    ("array.atomic.rmw.or",  "makeArrayRMW(RMWOr)"),
+    ("array.atomic.rmw.xor", "makeArrayRMW(RMWXor)"),
+    ("array.atomic.rmw.xchg", "makeArrayRMW(RMWXchg)"),
+    ("array.atomic.rmw.cmpxchg", "makeArrayCmpxchg()"),
     ("ref.as_non_null",      "makeRefAs(RefAsNonNull)"),
     ("extern.internalize",   "makeRefAs(AnyConvertExtern)"),  # Deprecated
     ("extern.externalize",   "makeRefAs(ExternConvertAny)"),  # Deprecated

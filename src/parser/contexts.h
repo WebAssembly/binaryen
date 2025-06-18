@@ -700,6 +700,9 @@ struct NullInstrParserCtx {
   makeTableInit(Index, const std::vector<Annotation>&, TableIdxT*, ElemIdxT) {
     return Ok{};
   }
+  Result<> makeElemDrop(Index, const std::vector<Annotation>&, ElemIdxT) {
+    return Ok{};
+  }
   Result<> makeThrow(Index, const std::vector<Annotation>&, TagIdxT) {
     return Ok{};
   }
@@ -846,6 +849,21 @@ struct NullInstrParserCtx {
                              const std::vector<Annotation>&,
                              HeapTypeT,
                              ElemIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayRMW(Index,
+                        const std::vector<Annotation>&,
+                        AtomicRMWOp,
+                        HeapTypeT,
+                        MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayCmpxchg(Index,
+                            const std::vector<Annotation>&,
+                            HeapTypeT,
+                            MemoryOrder) {
     return Ok{};
   }
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
@@ -2530,6 +2548,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
     return withLoc(pos, irBuilder.makeTableInit(elem, *t));
   }
 
+  Result<> makeElemDrop(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Name elem) {
+    return withLoc(pos, irBuilder.makeElemDrop(elem));
+  }
+
   Result<>
   makeThrow(Index pos, const std::vector<Annotation>& annotations, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
@@ -2736,6 +2760,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                              HeapType type,
                              Name elem) {
     return withLoc(pos, irBuilder.makeArrayInitElem(type, elem));
+  }
+
+  Result<> makeArrayRMW(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        AtomicRMWOp op,
+                        HeapType type,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayRMW(op, type, order));
+  }
+
+  Result<> makeArrayCmpxchg(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            HeapType type,
+                            MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayCmpxchg(type, order));
   }
 
   Result<>

@@ -768,6 +768,12 @@ public:
     ret->finalize();
     return ret;
   }
+  ElemDrop* makeElemDrop(Name segment) {
+    auto* ret = wasm.allocator.alloc<ElemDrop>();
+    ret->segment = segment;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,
@@ -921,23 +927,32 @@ public:
     return ret;
   }
   StructNew* makeStructNew(HeapType type,
-                           std::initializer_list<Expression*> args) {
+                           std::initializer_list<Expression*> args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
+    ret->descriptor = descriptor;
     ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
-  StructNew* makeStructNew(HeapType type, ExpressionList&& args) {
+  StructNew* makeStructNew(HeapType type,
+                           ExpressionList&& args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands = std::move(args);
+    ret->descriptor = descriptor;
     ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
-  template<typename T> StructNew* makeStructNew(HeapType type, const T& args) {
+  template<typename T>
+  StructNew* makeStructNew(HeapType type,
+                           const T& args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
+    ret->descriptor = descriptor;
     ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
@@ -1125,6 +1140,34 @@ public:
     ret->index = index;
     ret->offset = offset;
     ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  ArrayRMW* makeArrayRMW(AtomicRMWOp op,
+                         Expression* ref,
+                         Expression* index,
+                         Expression* value,
+                         MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<ArrayRMW>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  ArrayCmpxchg* makeArrayCmpxchg(Expression* ref,
+                                 Expression* index,
+                                 Expression* expected,
+                                 Expression* replacement,
+                                 MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<ArrayCmpxchg>();
+    ret->ref = ref;
+    ret->index = index;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->order = order;
     ret->finalize();
     return ret;
   }

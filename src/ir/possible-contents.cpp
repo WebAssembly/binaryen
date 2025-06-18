@@ -675,6 +675,7 @@ struct InfoCollector
   void visitTableFill(TableFill* curr) { addRoot(curr); }
   void visitTableCopy(TableCopy* curr) { addRoot(curr); }
   void visitTableInit(TableInit* curr) {}
+  void visitElemDrop(ElemDrop* curr) {}
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -1100,6 +1101,22 @@ struct InfoCollector
   }
   void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
   void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -1618,6 +1635,8 @@ void TNHOracle::scan(Function* func,
     void visitArrayInitElem(ArrayInitElem* curr) {
       notePossibleTrap(curr->ref);
     }
+    void visitArrayRMW(ArrayRMW* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) { notePossibleTrap(curr->ref); }
 
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned

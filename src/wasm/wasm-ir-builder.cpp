@@ -79,7 +79,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   if (type == Type::unreachable) {
     // Make sure the top of the stack also has an unreachable expression.
     if (stack.back()->type != Type::unreachable) {
-      push(builder.makeUnreachable());
+      pushSynthetic(builder.makeUnreachable());
     }
     return HoistedVal{Index(index), nullptr};
   }
@@ -88,7 +88,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   CHECK_ERR(scratchIdx);
   expr = builder.makeLocalSet(*scratchIdx, expr);
   auto* get = builder.makeLocalGet(*scratchIdx, type);
-  push(get);
+  pushSynthetic(get);
   return HoistedVal{Index(index), get};
 }
 
@@ -107,7 +107,7 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
                                    scope.exprStack.end());
     auto* block = builder.makeBlock(exprs, type);
     scope.exprStack.resize(hoisted.valIndex);
-    push(block);
+    pushSynthetic(block);
   };
 
   auto type = scope.exprStack.back()->type;
@@ -137,33 +137,37 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
-    push(builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
+    pushSynthetic(
+      builder.makeTupleExtract(builder.makeLocalGet(scratchIdx, type), i));
   }
   return Ok{};
 }
 
-void IRBuilder::push(Expression* expr) {
+void IRBuilder::push(Expression* expr, Origin origin) {
   auto& scope = getScope();
   if (expr->type == Type::unreachable) {
     scope.unreachable = true;
   }
   scope.exprStack.push_back(expr);
 
-  applyDebugLoc(expr);
-  if (binaryPos && func && lastBinaryPos != *binaryPos) {
-    auto span =
-      BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
-                            BinaryLocation(*binaryPos - codeSectionOffset)};
-    // Some expressions already have their start noted, and we are just seeing
-    // their last segment (like an Else).
-    auto [iter, inserted] = func->expressionLocations.insert({expr, span});
-    if (!inserted) {
-      // Just update the end.
-      iter->second.end = span.end;
-      // The true start from before is before the start of the current segment.
-      assert(iter->second.start < span.start);
+  if (origin == Origin::Binary) {
+    applyDebugLoc(expr);
+    if (binaryPos && func && lastBinaryPos != *binaryPos) {
+      auto span =
+        BinaryLocations::Span{BinaryLocation(lastBinaryPos - codeSectionOffset),
+                              BinaryLocation(*binaryPos - codeSectionOffset)};
+      // Some expressions already have their start noted, and we are just seeing
+      // their last segment (like an Else).
+      auto [iter, inserted] = func->expressionLocations.insert({expr, span});
+      if (!inserted) {
+        // Just update the end.
+        iter->second.end = span.end;
+        // The true start from before is before the start of the current
+        // segment.
+        assert(iter->second.start < span.start);
+      }
+      lastBinaryPos = *binaryPos;
     }
-    lastBinaryPos = *binaryPos;
   }
 
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
@@ -667,6 +671,20 @@ public:
     return popConstrainedChildren(children);
   }
 
+  Result<> visitArrayRMW(ArrayRMW* curr,
+                         std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayRMW(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
+  Result<> visitArrayCmpxchg(ArrayCmpxchg* curr,
+                             std::optional<HeapType> ht = std::nullopt) {
+    std::vector<Child> children;
+    ConstraintCollector{builder, children}.visitArrayCmpxchg(curr, ht);
+    return popConstrainedChildren(children);
+  }
+
   Result<> visitStringEncode(StringEncode* curr,
                              std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
@@ -1004,7 +1022,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     // Note that we have a pop to help determine later whether we need to run
     // the fixup for pops within blocks.
     scopeStack[0].notePop();
-    push(builder.makePop(params));
+    pushSynthetic(builder.makePop(params));
   }
 
   return Ok{};
@@ -1482,6 +1500,9 @@ Result<> IRBuilder::makeCallIndirect(Name table,
                                      HeapType type,
                                      bool isReturn,
                                      std::optional<std::uint8_t> inline_) {
+  if (!type.isSignature()) {
+    return Err{"expected function type annotation on call_indirect"};
+  }
   CallIndirect curr(wasm.allocator);
   curr.heapType = type;
   curr.operands.resize(type.getSignature().params.size());
@@ -1883,6 +1904,11 @@ Result<> IRBuilder::makeTableInit(Name elem, Name table) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeElemDrop(Name segment) {
+  push(builder.makeElemDrop(segment));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeTry(Name label, Signature sig) {
   auto* tryy = wasm.allocator.alloc<Try>();
   tryy->type = sig.results;
@@ -1982,6 +2008,9 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
 Result<> IRBuilder::makeCallRef(HeapType type,
                                 bool isReturn,
                                 std::optional<std::uint8_t> inline_) {
+  if (!type.isSignature()) {
+    return Err{"expected function type annotation on call_ref"};
+  }
   CallRef curr(wasm.allocator);
   if (!type.isSignature()) {
     return Err{"expected function type"};
@@ -2194,17 +2223,22 @@ Result<> IRBuilder::makeBrOn(
 }
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.new"};
+  }
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
-  // Differentiate from struct.new_default with a non-empty expression list.
   curr.operands.resize(type.getStruct().fields.size());
   CHECK_ERR(visitStructNew(&curr));
-  push(builder.makeStructNew(type, std::move(curr.operands)));
+  push(builder.makeStructNew(type, std::move(curr.operands), curr.descriptor));
   return Ok{};
 }
 
 Result<> IRBuilder::makeStructNewDefault(HeapType type) {
-  push(builder.makeStructNew(type, {}));
+  StructNew curr(wasm.allocator);
+  curr.type = Type(type, NonNullable, Exact);
+  CHECK_ERR(visitStructNew(&curr));
+  push(builder.makeStructNew(type, {}, curr.descriptor));
   return Ok{};
 }
 
@@ -2223,6 +2257,9 @@ Result<> IRBuilder::makeStructGet(HeapType type,
 
 Result<>
 IRBuilder::makeStructSet(HeapType type, Index field, MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.set"};
+  }
   StructSet curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructSet(&curr, type));
@@ -2235,6 +2272,9 @@ Result<> IRBuilder::makeStructRMW(AtomicRMWOp op,
                                   HeapType type,
                                   Index field,
                                   MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.atomic.rmw"};
+  }
   StructRMW curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructRMW(&curr, type));
@@ -2245,6 +2285,9 @@ Result<> IRBuilder::makeStructRMW(AtomicRMWOp op,
 
 Result<>
 IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
+  if (!type.isStruct()) {
+    return Err{"expected struct type annotation on struct.atomic.rmw"};
+  }
   StructCmpxchg curr;
   curr.index = field;
   CHECK_ERR(ChildPopper{*this}.visitStructCmpxchg(&curr, type));
@@ -2255,6 +2298,9 @@ IRBuilder::makeStructCmpxchg(HeapType type, Index field, MemoryOrder order) {
 }
 
 Result<> IRBuilder::makeArrayNew(HeapType type) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.new"};
+  }
   ArrayNew curr;
   curr.type = Type(type, NonNullable, Exact);
   // Differentiate from array.new_default with dummy initializer.
@@ -2287,10 +2333,10 @@ Result<> IRBuilder::makeArrayNewElem(HeapType type, Name elem) {
 }
 
 Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
-  ArrayNewFixed curr(wasm.allocator);
   if (!type.isArray()) {
     return Err{"expected array type annotation on array.new_fixed"};
   }
+  ArrayNewFixed curr(wasm.allocator);
   curr.type = Type(type, NonNullable);
   curr.values.resize(arity);
   CHECK_ERR(visitArrayNewFixed(&curr));
@@ -2309,6 +2355,9 @@ IRBuilder::makeArrayGet(HeapType type, bool signed_, MemoryOrder order) {
 }
 
 Result<> IRBuilder::makeArraySet(HeapType type, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.set"};
+  }
   ArraySet curr;
   CHECK_ERR(ChildPopper{*this}.visitArraySet(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2334,6 +2383,9 @@ Result<> IRBuilder::makeArrayCopy(HeapType destType, HeapType srcType) {
 }
 
 Result<> IRBuilder::makeArrayFill(HeapType type) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.fill"};
+  }
   ArrayFill curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayFill(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
@@ -2366,6 +2418,30 @@ Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArrayInitElem(
     elem, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
+
+Result<>
+IRBuilder::makeArrayRMW(AtomicRMWOp op, HeapType type, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.atomic.rmw"};
+  }
+  ArrayRMW curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayRMW(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayRMW(op, curr.ref, curr.index, curr.value, order));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeArrayCmpxchg(HeapType type, MemoryOrder order) {
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.atomic.rmw"};
+  }
+  ArrayCmpxchg curr;
+  CHECK_ERR(ChildPopper{*this}.visitArrayCmpxchg(&curr, type));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayCmpxchg(
+    curr.ref, curr.index, curr.expected, curr.replacement, order));
   return Ok{};
 }
 
@@ -2457,7 +2533,7 @@ Result<> IRBuilder::makeContNew(HeapType type) {
 
 Result<> IRBuilder::makeContBind(HeapType sourceType, HeapType targetType) {
   if (!sourceType.isContinuation() || !targetType.isContinuation()) {
-    return Err{"expected continuation types"};
+    return Err{"expected continuation type annotations on cont.bind"};
   }
   ContBind curr(wasm.allocator);
 
@@ -2547,7 +2623,7 @@ IRBuilder::makeResume(HeapType ct,
     return Err{"the sizes of tags and labels must be equal"};
   }
   if (!ct.isContinuation()) {
-    return Err{"expected continuation type"};
+    return Err{"expected continuation type annotation on resume"};
   }
 
   Resume curr(wasm.allocator);
@@ -2580,7 +2656,7 @@ IRBuilder::makeResumeThrow(HeapType ct,
     return Err{"the sizes of tags and labels must be equal"};
   }
   if (!ct.isContinuation()) {
-    return Err{"expected continuation type"};
+    return Err{"expected continuation type annotation on resume_throw"};
   }
 
   ResumeThrow curr(wasm.allocator);
@@ -2606,7 +2682,7 @@ IRBuilder::makeResumeThrow(HeapType ct,
 
 Result<> IRBuilder::makeStackSwitch(HeapType ct, Name tag) {
   if (!ct.isContinuation()) {
-    return Err{"expected continuation type"};
+    return Err{"expected continuation type annotation on switch"};
   }
   StackSwitch curr(wasm.allocator);
   curr.tag = tag;

@@ -2128,6 +2128,11 @@ void BinaryInstWriter::visitTableInit(TableInit* curr) {
   o << U32LEB(parent.getTableIndex(curr->table));
 }
 
+void BinaryInstWriter::visitElemDrop(ElemDrop* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::ElemDrop);
+  o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
@@ -2550,6 +2555,47 @@ void BinaryInstWriter::visitArrayInitElem(ArrayInitElem* curr) {
   o << U32LEB(BinaryConsts::ArrayInitElem);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+}
+
+void BinaryInstWriter::visitArrayRMW(ArrayRMW* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->op) {
+    case RMWAdd:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWAdd);
+      break;
+    case RMWSub:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWSub);
+      break;
+    case RMWAnd:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWAnd);
+      break;
+    case RMWOr:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWOr);
+      break;
+    case RMWXor:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWXor);
+      break;
+    case RMWXchg:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWXchg);
+      break;
+  }
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayCmpxchg(ArrayCmpxchg* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::ArrayAtomicRMWCmpxchg);
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {

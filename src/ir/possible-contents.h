@@ -332,7 +332,7 @@ public:
       WASM_UNREACHABLE("TODO: use Literals");
     } else if (std::get_if<GlobalInfo>(&value)) {
       WASM_UNREACHABLE("TODO");
-    } else if (auto* cone = std::get_if<ConeType>(&value)) {
+    } else if ([[maybe_unused]] auto* cone = std::get_if<ConeType>(&value)) {
       // Return a full cone of the appropriate type, as we lack depth info for
       // the separate items in the tuple (tuples themselves have no subtyping,
       // so the tuple's depth must be 0, i.e., an exact type).

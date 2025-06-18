@@ -891,6 +891,8 @@ void TableInit::finalize() {
   }
 }
 
+void ElemDrop::finalize() { type = Type::none; }
+
 void Try::finalize(std::optional<Type> type_) {
   if (type_) {
     type = *type_;
@@ -1256,9 +1258,7 @@ void StructCmpxchg::finalize() {
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
   } else if (ref->type.isNull()) {
-    // Like StructRMW, but the most precise possible field type is the LUB of
-    // the expected and replacement values.
-    type = Type::getLeastUpperBound(expected->type, replacement->type);
+    type = replacement->type;
   } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
@@ -1359,6 +1359,32 @@ void ArrayInitElem::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::none;
+  }
+}
+
+void ArrayRMW::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // We have no array type to read the field off of, but the most precise
+    // possible option is the type of the value we are using to make the
+    // modification.
+    type = value->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArrayCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    type = replacement->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
   }
 }
 

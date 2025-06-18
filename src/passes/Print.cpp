@@ -2132,6 +2132,10 @@ struct PrintExpressionContents
     o << ' ';
     curr->segment.print(o);
   }
+  void visitElemDrop(ElemDrop* curr) {
+    printMedium(o, "elem.drop ");
+    curr->segment.print(o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
@@ -2443,6 +2447,26 @@ struct PrintExpressionContents
     printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
+  }
+  void visitArrayRMW(ArrayRMW* curr) {
+    prepareColor(o);
+    o << "array.atomic.rmw.";
+    printAtomicRMWOp(curr->op);
+    restoreNormalColor(o);
+    o << ' ';
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(heapType);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    prepareColor(o);
+    o << "array.atomic.rmw.cmpxchg ";
+    restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(heapType);
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {

@@ -708,6 +708,7 @@ public:
     TableFillId,
     TableCopyId,
     TableInitId,
+    ElemDropId,
     TryId,
     TryTableId,
     ThrowId,
@@ -738,6 +739,8 @@ public:
     ArrayFillId,
     ArrayInitDataId,
     ArrayInitElemId,
+    ArrayRMWId,
+    ArrayCmpxchgId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1469,6 +1472,16 @@ public:
   void finalize();
 };
 
+class ElemDrop : public SpecificExpression<Expression::ElemDropId> {
+public:
+  ElemDrop() = default;
+  ElemDrop(MixedArena& allocator) : ElemDrop() {}
+
+  Name segment;
+
+  void finalize();
+};
+
 // 'try' from the old (Phase 3) EH proposal
 class Try : public SpecificExpression<Expression::TryId> {
 public:
@@ -1670,6 +1683,8 @@ public:
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
   ExpressionList operands;
 
+  Expression* descriptor = nullptr;
+
   bool isWithDefault() { return operands.empty(); }
 
   void finalize();
@@ -1867,6 +1882,34 @@ public:
   Expression* index;
   Expression* offset;
   Expression* size;
+
+  void finalize();
+};
+
+class ArrayRMW : public SpecificExpression<Expression::ArrayRMWId> {
+public:
+  ArrayRMW() = default;
+  ArrayRMW(MixedArena& allocator) {}
+
+  AtomicRMWOp op;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+  MemoryOrder order;
+
+  void finalize();
+};
+
+class ArrayCmpxchg : public SpecificExpression<Expression::ArrayCmpxchgId> {
+public:
+  ArrayCmpxchg() = default;
+  ArrayCmpxchg(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* index;
+  Expression* expected;
+  Expression* replacement;
+  MemoryOrder order;
 
   void finalize();
 };

@@ -127,6 +127,7 @@ void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
 void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
 void ReFinalize::visitTableInit(TableInit* curr) { curr->finalize(); }
+void ReFinalize::visitElemDrop(ElemDrop* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitTryTable(TryTable* curr) {
   curr->finalize();
@@ -172,6 +173,8 @@ void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitArrayFill(ArrayFill* curr) { curr->finalize(); }
 void ReFinalize::visitArrayInitData(ArrayInitData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayInitElem(ArrayInitElem* curr) { curr->finalize(); }
+void ReFinalize::visitArrayRMW(ArrayRMW* curr) { curr->finalize(); }
+void ReFinalize::visitArrayCmpxchg(ArrayCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
 void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }

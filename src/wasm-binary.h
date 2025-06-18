@@ -1118,6 +1118,7 @@ enum ASTNodes {
   TableFill = 0x11,
   TableCopy = 0x0e,
   TableInit = 0x0c,
+  ElemDrop = 0x0d,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1205,6 +1206,13 @@ enum ASTNodes {
   ArrayAtomicGetS = 0x68,
   ArrayAtomicGetU = 0x69,
   ArrayAtomicSet = 0x6a,
+  ArrayAtomicRMWAdd = 0x6b,
+  ArrayAtomicRMWSub = 0x6c,
+  ArrayAtomicRMWAnd = 0x6d,
+  ArrayAtomicRMWOr = 0x6e,
+  ArrayAtomicRMWXor = 0x6f,
+  ArrayAtomicRMWXchg = 0x70,
+  ArrayAtomicRMWCmpxchg = 0x71,
 
   // stringref opcodes
 

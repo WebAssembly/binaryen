@@ -209,6 +209,8 @@ Result<> makeTableCopy(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeTableInit(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeElemDrop(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeThrow(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRethrow(Ctx&, Index, const std::vector<Annotation>&);
@@ -291,6 +293,10 @@ template<typename Ctx>
 Result<> makeArrayInitData(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayInitElem(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeArrayRMW(AtomicRMWOp, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeArrayCmpxchg(Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRefAs(Ctx&, Index, const std::vector<Annotation>&, RefAsOp op);
 template<typename Ctx>
@@ -2126,11 +2132,42 @@ makeTableCopy(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 template<typename Ctx>
 Result<>
 makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  // Note: binary and text formats for `table.init` are different. In both
+  // formats the table index is optional (with 0 as the default). When both the
+  // table and elem index are specified, the elem index comes first in the
+  // binary format, but second in the text format.
+
+  auto reset = ctx.in.getPos();
+
+  auto retry = [&]() -> Result<> {
+    // We're unable to parse the two argument format. Try one argument format
+    // with just elem index.
+    WithPosition with(ctx, reset);
+    auto elem = elemidx(ctx);
+    CHECK_ERR(elem);
+    MaybeResult<typename Ctx::TableIdxT> table = ctx.getTableFromIdx(0);
+    return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+  };
+
   auto table = maybeTableidx(ctx);
-  CHECK_ERR(table);
+  if (table.getErr()) {
+    return retry();
+  }
+
+  auto elem = maybeElemidx(ctx);
+  if (elem.getErr() || !elem) {
+    return retry();
+  }
+
+  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+}
+
+template<typename Ctx>
+Result<>
+makeElemDrop(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto elem = elemidx(ctx);
   CHECK_ERR(elem);
-  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+  return ctx.makeElemDrop(pos, annotations, *elem);
 }
 
 template<typename Ctx>
@@ -2500,6 +2537,39 @@ Result<> makeArrayInitElem(Ctx& ctx,
 }
 
 template<typename Ctx>
+Result<> makeArrayRMW(Ctx& ctx,
+                      Index pos,
+                      const std::vector<Annotation>& annotations,
+                      AtomicRMWOp op) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayRMW(pos, annotations, op, *type, *order1);
+}
+
+template<typename Ctx>
+Result<> makeArrayCmpxchg(Ctx& ctx,
+                          Index pos,
+                          const std::vector<Annotation>& annotations) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayCmpxchg(pos, annotations, *type, *order1);
+}
+
+template<typename Ctx>
 Result<> makeRefAs(Ctx& ctx,
                    Index pos,
                    const std::vector<Annotation>& annotations,
@@ -2813,12 +2883,21 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
 
 // elemidx ::= x:u32 => x
 //           | v:id => x (if elems[x] = v)
-template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::ElemIdxT> maybeElemidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getElemFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
     return ctx.getElemFromName(*id);
+  }
+  return {};
+}
+
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+  if (auto idx = maybeElemidx(ctx)) {
+    CHECK_ERR(idx);
+    return *idx;
   }
   return ctx.in.err("expected elem index or identifier");
 }

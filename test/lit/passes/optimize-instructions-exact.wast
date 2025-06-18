@@ -6,7 +6,7 @@
  ;; CHECK:      (type $foo (sub (struct)))
  (type $foo (sub (struct)))
 
- ;; CHECK:      (func $ref-cast-exact-fallthrough (type $1) (param $exact (ref (exact $foo))) (result (ref $foo))
+ ;; CHECK:      (func $ref-cast-exact-fallthrough (type $2) (param $exact (ref (exact $foo))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $inexact (ref $foo))
  ;; CHECK-NEXT:  (local $2 (ref (exact $foo)))
  ;; CHECK-NEXT:  (drop
@@ -29,7 +29,7 @@
   )
  )
 
- ;; CHECK:      (func $prefer-exactness (type $2) (param $exact-null (ref null (exact $foo))) (result (ref $foo))
+ ;; CHECK:      (func $prefer-exactness (type $3) (param $exact-null (ref null (exact $foo))) (result (ref $foo))
  ;; CHECK-NEXT:  (local $inexact-nn (ref $foo))
  ;; CHECK-NEXT:  (local $inexact-null (ref null $foo))
  ;; CHECK-NEXT:  (local $3 (ref null (exact $foo)))
@@ -64,7 +64,7 @@
   )
  )
 
- ;; CHECK:      (func $combine-non-null (type $3) (param $foo (ref null $foo)) (result (ref (exact $foo)))
+ ;; CHECK:      (func $combine-non-null (type $1) (param $foo (ref null $foo)) (result (ref (exact $foo)))
  ;; CHECK-NEXT:  (ref.cast (ref (exact $foo))
  ;; CHECK-NEXT:   (local.get $foo)
  ;; CHECK-NEXT:  )
@@ -74,6 +74,20 @@
   ;; ref.as_non_null into it.
   (ref.cast (ref null (exact $foo))
    (ref.as_non_null
+    (local.get $foo)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $combine-non-null-reverse (type $1) (param $foo (ref null $foo)) (result (ref (exact $foo)))
+ ;; CHECK-NEXT:  (ref.cast (ref (exact $foo))
+ ;; CHECK-NEXT:   (local.get $foo)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $combine-non-null-reverse (param $foo (ref null $foo)) (result (ref (exact $foo)))
+  ;; As above, but flipped.
+  (ref.as_non_null
+   (ref.cast (ref null (exact $foo))
     (local.get $foo)
    )
   )

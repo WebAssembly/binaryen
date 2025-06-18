@@ -112,10 +112,14 @@ unfuzzable = [
     'unsubtyping-stack-switching.wast',
     'vacuum-stack-switching.wast',
     # TODO: fuzzer support for custom descriptors
+    'remove-unused-module-elements-refs-descriptors.wast',
     'custom-descriptors.wast',
     'br_on_cast_desc.wast',
-    'ref.get_cast.wast',
+    'ref.get_desc.wast',
     'ref.cast_desc.wast',
+    'struct.new-desc.wast',
+    'remove-unused-types-descriptors.wast',
+    'unsubtyping-desc.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',

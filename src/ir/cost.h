@@ -631,6 +631,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitTableInit(TableInit* curr) {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
+  CostType visitElemDrop(ElemDrop* curr) { return 6; }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
@@ -693,6 +694,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
+    ret += maybeVisit(curr->descriptor);
     return ret;
   }
   CostType visitStructGet(StructGet* curr) {
@@ -751,6 +753,15 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitArrayInitElem(ArrayInitElem* curr) {
     return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
            visit(curr->size);
+  }
+  CostType visitArrayRMW(ArrayRMW* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  CostType visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->expected) +
+           visit(curr->replacement);
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {

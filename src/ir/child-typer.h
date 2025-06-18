@@ -804,6 +804,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->size, Type::i32);
   }
 
+  void visitElemDrop(ElemDrop* curr) {}
+
   void visitTry(Try* curr) {
     note(&curr->body, curr->type);
     for (auto& expr : curr->catchBodies) {
@@ -934,16 +936,19 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitStructNew(StructNew* curr) {
-    if (curr->isWithDefault()) {
-      return;
-    }
     if (self().skipUnreachable() && !curr->type.isRef()) {
       return;
     }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0; i < fields.size(); ++i) {
-      note(&curr->operands[i], fields[i].type);
+    if (!curr->isWithDefault()) {
+      const auto& fields = curr->type.getHeapType().getStruct().fields;
+      assert(fields.size() == curr->operands.size());
+      for (size_t i = 0; i < fields.size(); ++i) {
+        note(&curr->operands[i], fields[i].type);
+      }
+    }
+    auto desc = curr->type.getHeapType().getDescriptorType();
+    if (desc) {
+      note(&curr->descriptor, Type(*desc, NonNullable, Exact));
     }
   }
 
@@ -997,8 +1002,9 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     const auto& fields = ht->getStruct().fields;
     assert(curr->index < fields.size());
     note(&curr->ref, Type(*ht, Nullable));
-    note(&curr->expected, fields[curr->index].type);
-    note(&curr->replacement, fields[curr->index].type);
+    auto type = fields[curr->index].type;
+    note(&curr->expected, type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    note(&curr->replacement, type);
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -1124,6 +1130,35 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->index, Type::i32);
     note(&curr->offset, Type::i32);
     note(&curr->size, Type::i32);
+  }
+
+  void visitArrayRMW(ArrayRMW* curr,
+                     std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      if (self().skipUnreachable() && !curr->ref->type.isRef()) {
+        return;
+      }
+      ht = curr->ref->type.getHeapType();
+    }
+    auto type = ht->getArray().element.type;
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
+    note(&curr->value, type);
+  }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr,
+                         std::optional<HeapType> ht = std::nullopt) {
+    if (!ht) {
+      if (self().skipUnreachable() && !curr->ref->type.isRef()) {
+        return;
+      }
+      ht = curr->ref->type.getHeapType();
+    }
+    auto type = ht->getArray().element.type;
+    note(&curr->ref, Type(*ht, Nullable));
+    note(&curr->index, Type::i32);
+    note(&curr->expected, type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    note(&curr->replacement, type);
   }
 
   void visitRefAs(RefAs* curr) {

@@ -128,7 +128,7 @@ struct ReconstructStringifyWalker
       // visitIfStart(), which will expect to be able to pop the condition.
       // This is always okay to do because the correct condition was installed
       // onto the If when the outer scope was visited.
-      existingBuilder.push(curr->iff->condition);
+      existingBuilder.pushSynthetic(curr->iff->condition);
       ODBG(desc = "If Start at ");
       ASSERT_OK(existingBuilder.visitIfStart(curr->iff));
     } else if (reason.getElseStart()) {

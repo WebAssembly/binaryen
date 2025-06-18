@@ -448,6 +448,18 @@ struct EscapeAnalyzer {
         escapes = false;
         fullyConsumes = true;
       }
+      void visitArrayRMW(ArrayRMW* curr) {
+        if (curr->ref == child) {
+          escapes = false;
+          fullyConsumes = true;
+        }
+      }
+      void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+        if (curr->ref == child || curr->expected == child) {
+          escapes = false;
+          fullyConsumes = true;
+        }
+      }
       // TODO other GC operations
     } checker;
 
