@@ -238,15 +238,16 @@ struct FunctionInfoScanner
     info.size = Measurer::measure(curr->body);
 
     if (auto* call = curr->body->dynCast<Call>()) {
-      // If call arguments are function locals read in order (maybe by skipping
-      // some of the arguments), then the code size always shrinks when the call
-      // is inlined.
+      // If call arguments are function locals read in order, then the code size
+      // always shrinks when the call is inlined. Note that we don't allow
+      // skipping function arguments here, as that can create `drop`
+      // instructions at the call sites, increasing code size.
       bool shrinks = true;
       Index lastLocalGetIndex = -1;
       for (auto* operand : call->operands) {
         if (auto* localGet = operand->dynCast<LocalGet>()) {
-          if (localGet->index > lastLocalGetIndex) {
-            lastLocalGetIndex = localGet->index;
+          if (localGet->index > lastLocalGetIndex + 1) {
+            lastLocalGetIndex += 1;
           } else {
             shrinks = false;
             break;
