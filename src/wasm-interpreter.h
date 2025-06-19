@@ -3654,9 +3654,8 @@ public:
   }
 
   Flow visitElemDrop(ElemDrop* curr) {
-    Module& wasm = *self()->getModule();
     ElementSegment* seg = wasm.getElementSegment(curr->segment);
-    seg->data.clear();
+    droppedElementSegments.insert(seg->name);
     return {};
   }
 
