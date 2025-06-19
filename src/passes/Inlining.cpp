@@ -251,6 +251,9 @@ struct FunctionInfoScanner
             shrinks = false;
             break;
           }
+        } else {
+            shrinks = false;
+            break;
         }
       }
 
