@@ -95,7 +95,7 @@ struct FunctionInfo {
   // Something is used globally if there is a reference to it in a table or
   // export etc.
   bool usedGlobally;
-  TrivialInstruction isTrivialInstruction;
+  TrivialInstruction trivialInstruction;
   InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
@@ -107,7 +107,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
-    isTrivialInstruction = TrivialInstruction::NotTrivial;
+    trivialInstruction = TrivialInstruction::NotTrivial;
     inliningMode = InliningMode::Unknown;
   }
 
@@ -119,7 +119,7 @@ struct FunctionInfo {
     hasLoops = other.hasLoops;
     hasTryDelegate = other.hasTryDelegate;
     usedGlobally = other.usedGlobally;
-    isTrivialInstruction = other.isTrivialInstruction;
+    trivialInstruction = other.trivialInstruction;
     inliningMode = other.inliningMode;
     return *this;
   }
@@ -145,7 +145,7 @@ struct FunctionInfo {
     // arguments, and arguments are used in strictly increasing order, and each
     // argument is used at most once, then inlining it shrinks the code size and
     // it's also good for runtime. So we always inline it.
-    if (isTrivialInstruction == TrivialInstruction::Shrinks) {
+    if (trivialInstruction == TrivialInstruction::Shrinks) {
       return true;
     }
     // If it's so big that we have no flexible options that could allow it,
@@ -164,7 +164,7 @@ struct FunctionInfo {
     // than once. In this case we inline if we're not optimizing for code size,
     // as inlining it to more than one call site may increase code size by
     // introducing locals.
-    if (isTrivialInstruction == TrivialInstruction::MayNotShrink) {
+    if (trivialInstruction == TrivialInstruction::MayNotShrink) {
       return true;
     }
     // This doesn't have calls. Inline if loops do not prevent us (normally, a
@@ -251,34 +251,37 @@ struct FunctionInfoScanner
             shrinks = false;
             break;
           }
+        } else {
+          shrinks = false;
+          break;
         }
       }
 
       if (shrinks) {
-        info.isTrivialInstruction = TrivialInstruction::Shrinks;
+        info.trivialInstruction = TrivialInstruction::Shrinks;
         return;
       }
 
       if (info.size == call->operands.size() + 1) {
         // This function body is a call with some trivial (size 1) operands like
         // LocalGet or Const, so it is a trivial call.
-        info.isTrivialInstruction = TrivialInstruction::MayNotShrink;
+        info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
 
     } else if (auto* binary = curr->body->dynCast<Binary>()) {
-      info.isTrivialInstruction = TrivialInstruction::MayNotShrink;
+      info.trivialInstruction = TrivialInstruction::MayNotShrink;
       if (auto* left = binary->left->dynCast<LocalGet>()) {
         if (auto* right = binary->right->dynCast<LocalGet>()) {
           if (right->index > left->index) {
-            info.isTrivialInstruction = TrivialInstruction::Shrinks;
+            info.trivialInstruction = TrivialInstruction::Shrinks;
           }
         }
       }
 
     } else if (auto* unary = curr->body->dynCast<Unary>()) {
-      info.isTrivialInstruction = TrivialInstruction::MayNotShrink;
+      info.trivialInstruction = TrivialInstruction::MayNotShrink;
       if (unary->value->dynCast<LocalGet>()) {
-        info.isTrivialInstruction = TrivialInstruction::Shrinks;
+        info.trivialInstruction = TrivialInstruction::Shrinks;
       }
     }
   }
