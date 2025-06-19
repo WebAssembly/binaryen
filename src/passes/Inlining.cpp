@@ -95,7 +95,7 @@ struct FunctionInfo {
   // Something is used globally if there is a reference to it in a table or
   // export etc.
   bool usedGlobally;
-  TrivialCall isTrivialCall;
+  TrivialCall trivialCall;
   InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
@@ -107,7 +107,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
-    isTrivialCall = TrivialCall::NotTrivial;
+    trivialCall = TrivialCall::NotTrivial;
     inliningMode = InliningMode::Unknown;
   }
 
@@ -119,7 +119,7 @@ struct FunctionInfo {
     hasLoops = other.hasLoops;
     hasTryDelegate = other.hasTryDelegate;
     usedGlobally = other.usedGlobally;
-    isTrivialCall = other.isTrivialCall;
+    trivialCall = other.trivialCall;
     inliningMode = other.inliningMode;
     return *this;
   }
@@ -145,7 +145,7 @@ struct FunctionInfo {
     // arguments, and arguments are used in strictly increasing order, and each
     // argument is used at most once, then inlining it shrinks the code size and
     // it's also good for runtime. So we always inline it.
-    if (isTrivialCall == TrivialCall::Shrinks) {
+    if (trivialCall == TrivialCall::Shrinks) {
       return true;
     }
     // If it's so big that we have no flexible options that could allow it,
@@ -164,7 +164,7 @@ struct FunctionInfo {
     // than once. In this case we inline if we're not optimizing for code size,
     // as inlining it to more than one call site may increase code size by
     // introducing locals.
-    if (isTrivialCall == TrivialCall::MayNotShrink) {
+    if (trivialCall == TrivialCall::MayNotShrink) {
       return true;
     }
     // This doesn't have calls. Inline if loops do not prevent us (normally, a
@@ -252,20 +252,20 @@ struct FunctionInfoScanner
             break;
           }
         } else {
-            shrinks = false;
-            break;
+          shrinks = false;
+          break;
         }
       }
 
       if (shrinks) {
-        info.isTrivialCall = TrivialCall::Shrinks;
+        info.trivialCall = TrivialCall::Shrinks;
         return;
       }
 
       if (info.size == call->operands.size() + 1) {
         // This function body is a call with some trivial (size 1) operands like
         // LocalGet or Const, so it is a trivial call.
-        info.isTrivialCall = TrivialCall::MayNotShrink;
+        info.trivialCall = TrivialCall::MayNotShrink;
       }
     }
   }
