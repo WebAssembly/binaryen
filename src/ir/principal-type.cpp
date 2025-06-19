@@ -266,7 +266,7 @@ struct VarCounts {
 };
 
 void countVar(Index* countp, Index i) {
-  // Variables must be introduced sequentialy starting at 0 so their count is
+  // Variables must be introduced sequentially starting at 0 so their count is
   // one greater than their max value.
   if (i >= *countp) {
     assert(*countp == i);
@@ -618,11 +618,11 @@ void apply(const VarAssignments& assignments, PrincipalType& type) {
   }
 }
 
-// matchBottom: join the bottom value into the assignemnt in `assignments` for
+// matchBottom: join the bottom value into the assignment in `assignments` for
 // any variables appearing in the second parameter. Returns `true` if this
-// succeeds. TODO: This currently always succeeded, but if we supported repeated
+// succeeds. TODO: This currently always succeeds, but if we supported repeated
 // variables in outputs properly, we would need to avoid mixing left assignment
-// and right assignemnt, so this would be able to fail.
+// and right assignment, so this would be able to fail.
 
 bool matchBottom(VarAssignments& assignments, const VarNullability& null) {
   if (auto* i = std::get_if<Index>(&null)) {
@@ -670,7 +670,7 @@ bool matchBottom(VarAssignments& assignments, const VarRef& ref) {
   return matchBottom(assignments, ref.null) && matchBottom(assignments, ref.ht);
 }
 
-// match: Record the variable assignemnts necessary to make `a` match `b` (i.e.
+// match: Record the variable assignments necessary to make `a` match `b` (i.e.
 // to ensure `a` <: `b`).
 
 bool match(VarAssignments& assignments,
