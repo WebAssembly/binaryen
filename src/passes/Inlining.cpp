@@ -67,7 +67,25 @@ enum class InliningMode {
   SplitPatternB
 };
 
-// Useful into on a function, helping us decide if we can inline it
+// Whether a function just calls another function with only `local.get`s as
+// arguments.
+enum class TrivialCall {
+  // Function does not just call another function, with only `local.get`s as
+  // arguments.
+  NotTrivial,
+
+  // Function just calls another function, and all arguments are `local.get`s
+  // with strictly increasing local index. This means code size always shrinks
+  // when this function is inlined.
+  Shrinks,
+
+  // Function just calls another function, but maybe with arguments other than
+  // `local.get`s, or maybe some locals are used more than once. In this case
+  // code size does not always shrink.
+  MayNotShrink,
+};
+
+// Useful info on a function, helping us decide if we can inline it.
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
@@ -77,16 +95,7 @@ struct FunctionInfo {
   // Something is used globally if there is a reference to it in a table or
   // export etc.
   bool usedGlobally;
-  // We consider a function to be a trivial call if the body is just a call with
-  // trivial arguments, like this:
-  //
-  //  (func $forward (param $x) (param $y)
-  //    (call $target (local.get $x) (local.get $y))
-  //  )
-  //
-  // Specifically the body must be a call, and the operands to the call must be
-  // of size 1 (generally, LocalGet or Const).
-  bool isTrivialCall;
+  TrivialCall isTrivialCall;
   InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
@@ -98,7 +107,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
-    isTrivialCall = false;
+    isTrivialCall = TrivialCall::NotTrivial;
     inliningMode = InliningMode::Unknown;
   }
 
@@ -132,6 +141,13 @@ struct FunctionInfo {
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
+    // If the function just calls another function using its locals as
+    // arguments, and arguments are used in strictly increasing order, and each
+    // argument is used at most once, then inlining it shrinks the code size and
+    // it's also good for runtime. So we always inline it.
+    if (isTrivialCall == TrivialCall::Shrinks) {
+      return true;
+    }
     // If it's so big that we have no flexible options that could allow it,
     // do not inline.
     if (size > options.inlining.flexibleInlineMaxSize) {
@@ -143,18 +159,13 @@ struct FunctionInfo {
     if (options.shrinkLevel > 0 || options.optimizeLevel < 3) {
       return false;
     }
-    if (hasCalls) {
-      // This has calls. If it is just a trivial call itself then inline, as we
-      // will save a call that way - basically we skip a trampoline in the
-      // middle - but if it is something more complex, leave it alone, as we may
-      // not help much (and with recursion we may end up with a wasteful
-      // increase in code size).
-      //
-      // Note that inlining trivial calls may increase code size, e.g. if they
-      // use a parameter more than once (forcing us after inlining to save that
-      // value to a local, etc.), but here we are optimizing for speed and not
-      // size, so we risk it.
-      return isTrivialCall;
+    // The function just calls another function, but it's using locals in
+    // different order than the argument order, and/or using some locals more
+    // than once. In this case we inline if we're not optimizing for code size,
+    // as inlining it to more than one call site may increase code size by
+    // introducing locals.
+    if (isTrivialCall == TrivialCall::MayNotShrink) {
+      return true;
     }
     // This doesn't have calls. Inline if loops do not prevent us (normally, a
     // loop suggests a lot of work and so inlining is less useful).
@@ -227,10 +238,31 @@ struct FunctionInfoScanner
     info.size = Measurer::measure(curr->body);
 
     if (auto* call = curr->body->dynCast<Call>()) {
+      // If call arguments are function locals read in order (maybe by skipping
+      // some of the arguments), then the code size always shrinks when the call
+      // is inlined.
+      bool shrinks = true;
+      Index lastLocalGetIndex = -1;
+      for (auto* operand : call->operands) {
+        if (auto* localGet = operand->dynCast<LocalGet>()) {
+          if (localGet->index > lastLocalGetIndex) {
+            lastLocalGetIndex = localGet->index;
+          } else {
+            shrinks = false;
+            break;
+          }
+        }
+      }
+
+      if (shrinks) {
+        info.isTrivialCall = TrivialCall::Shrinks;
+        return;
+      }
+
       if (info.size == call->operands.size() + 1) {
         // This function body is a call with some trivial (size 1) operands like
         // LocalGet or Const, so it is a trivial call.
-        info.isTrivialCall = true;
+        info.isTrivialCall = TrivialCall::MayNotShrink;
       }
     }
   }
