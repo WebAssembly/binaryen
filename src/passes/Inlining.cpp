@@ -167,9 +167,9 @@ struct FunctionInfo {
     if (trivialInstruction == TrivialInstruction::MayNotShrink) {
       return true;
     }
-    // This doesn't have calls. Inline if loops do not prevent us (normally, a
+    // Inline if it doesn't have calls and loops do not prevent us (normally, a
     // loop suggests a lot of work and so inlining is less useful).
-    return !hasLoops || options.inlining.allowFunctionsWithLoops;
+    return !hasCalls && (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
 };
 
