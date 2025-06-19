@@ -450,7 +450,7 @@ template<typename T> struct AssignmentClasses {
       return true;
     }
     // Make sure we have a class for i.
-    classes.info.reserve(i + 1);
+    classes.reserve(i + 1);
     values.reserve(i + 1);
     while (values.size() <= i) {
       [[maybe_unused]] size_t set = classes.addSet();

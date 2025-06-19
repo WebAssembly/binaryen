@@ -80,6 +80,9 @@ struct DisjointSets {
     }
     return root1;
   }
+
+  // Reserve space for `size` disjoint sets.
+  void reserve(size_t size) { info.reserve(size); }
 };
 
 } // namespace wasm
