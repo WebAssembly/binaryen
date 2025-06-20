@@ -2576,7 +2576,9 @@
     (i32.const 1026)
     (then
      (br_if $label$1
-      (local.get $0) ;; but here it is *not* ok
+      (local.tee $0 ;; but here it is *not* ok
+        (local.get $0)
+      )
      )
     )
    )
