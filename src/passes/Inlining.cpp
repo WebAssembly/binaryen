@@ -243,11 +243,11 @@ struct FunctionInfoScanner
       // skipping function arguments here, as that can create `drop`
       // instructions at the call sites, increasing code size.
       bool shrinks = true;
-      Index lastLocalGetIndex = -1;
+      Index nextLocalGetIndex = 0;
       for (auto* operand : call->operands) {
         if (auto* localGet = operand->dynCast<LocalGet>()) {
-          if (localGet->index > lastLocalGetIndex + 1) {
-            lastLocalGetIndex += 1;
+          if (localGet->index == nextLocalGetIndex) {
+            nextLocalGetIndex += 1;
           } else {
             shrinks = false;
             break;
