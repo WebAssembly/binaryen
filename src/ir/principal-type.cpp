@@ -834,10 +834,10 @@ bool match(VarAssignments& assignments, const VarType& a, const VarType& b) {
     return assignments.types.assign(*i, a);
   }
 
-  auto* refB = std::get_if<VarRef>(&b);
-  assert(!refB || b == canonicalizeRef(*refB));
   auto* refA = std::get_if<VarRef>(&a);
   assert(!refA || a == canonicalizeRef(*refA));
+  auto* refB = std::get_if<VarRef>(&b);
+  assert(!refB || b == canonicalizeRef(*refB));
 
   if (refA && refB) {
     return match(assignments, *refA, *refB);
