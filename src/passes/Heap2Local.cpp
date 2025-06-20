@@ -846,8 +846,20 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     if (curr->desc) {
-      if (analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows) {
-        // The cast succeeds if the optimized allocation's descriptor is the
+      // If we are doing a ref.cast_desc of the optimized allocation, but we
+      // know it does not have a descriptor, then we know the cast must fail. We
+      // also know the cast must fail if the optimized allocation flows in as
+      // the descriptor, since it cannot possible have been used in the
+      // allocation of the cast value without having been considered to escape.
+      if (!allocation->descriptor || analyzer.getInteraction(curr->desc) ==
+                                       ParentChildInteraction::Flows) {
+        // The allocation does not have a descriptor, so there is no way for the
+        // cast to succeed.
+        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()));
+      } else {
+        // The cast succeeds iff the optimized allocation's descriptor is the
         // same as the given descriptor and traps otherwise.
         auto type = allocation->descriptor->type;
         replaceCurrent(builder.blockify(
@@ -858,15 +870,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
               builder.makeLocalGet(localIndexes[fields.size()], type)),
             builder.makeRefNull(allocation->type.getHeapType()),
             builder.makeUnreachable())));
-      } else {
-        assert(analyzer.getInteraction(curr->desc) ==
-               ParentChildInteraction::Flows);
-        // We know the descriptor does not flow into the allocation of the
-        // struct being cast because that would count as escaping, so we know
-        // this cast will fail.
-        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->desc),
-                                        builder.makeUnreachable()));
       }
     } else {
       // We know this RefCast receives our allocation, so we can see whether it
