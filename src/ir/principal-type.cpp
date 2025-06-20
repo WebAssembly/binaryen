@@ -855,20 +855,19 @@ bool match(VarAssignments& assignments, const VarType& a, const VarType& b) {
     return matchBottom(assignments, *refB);
   }
 
-  if (typeA && refB) {
+  if (typeA) {
+    assert(refB);
     if (!typeA->isRef()) {
       return false;
     }
     return match(assignments, asVarRef(*typeA), *refB);
   }
 
-  if (refA && typeB) {
-    if (!typeB->isRef()) {
-      return false;
-    }
-    return match(assignments, *refA, asVarRef(*typeB));
+  assert(refA && typeB);
+  if (!typeB->isRef()) {
+    return false;
   }
-  WASM_UNREACHABLE("unexpected variants");
+  return match(assignments, *refA, asVarRef(*typeB));
 }
 
 // print: print a principal type to `o`. Used for debugging and producing
