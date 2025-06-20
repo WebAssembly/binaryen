@@ -849,7 +849,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // If we are doing a ref.cast_desc of the optimized allocation, but we
       // know it does not have a descriptor, then we know the cast must fail. We
       // also know the cast must fail if the optimized allocation flows in as
-      // the descriptor, since it cannot possible have been used in the
+      // the descriptor, since it cannot possibly have been used in the
       // allocation of the cast value without having been considered to escape.
       if (!allocation->descriptor || analyzer.getInteraction(curr->desc) ==
                                        ParentChildInteraction::Flows) {
