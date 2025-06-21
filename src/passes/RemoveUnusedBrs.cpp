@@ -24,6 +24,8 @@
 #include "ir/effects.h"
 #include "ir/gc-type-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/localize.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "parsing.h"
 #include "pass.h"
@@ -1879,6 +1881,36 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
           }
           start = end;
+        }
+      }
+
+      void visitBreak(Break* curr) {
+        if (!curr->condition) {
+          return;
+        }
+        auto* value = Properties::getFallthrough(
+          curr->condition, passOptions, *getModule());
+        // Optimize if condition's fallthrough is a constant.
+        if (auto* c = value->dynCast<Const>()) {
+          ChildLocalizer localizer(
+            curr, getFunction(), *getModule(), passOptions);
+          auto* block = localizer.getChildrenReplacement();
+          if (c->value.geti32()) {
+            // the branch is always taken, make it unconditional
+            curr->condition = nullptr;
+            curr->type = Type::unreachable;
+            block->list.push_back(curr);
+            block->finalize();
+            // The type changed, so refinalize.
+            refinalize = true;
+          } else {
+            // the branch is never taken, allow control flow to fall through
+            if (curr->value) {
+              block->list.push_back(curr->value);
+              block->finalize();
+            }
+          }
+          replaceCurrent(block);
         }
       }
     };
