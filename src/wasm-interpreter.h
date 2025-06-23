@@ -199,9 +199,11 @@ protected:
   // this function in LSan.
   //
   // This consumes the input |data| entirely.
-  Literal makeGCData(Literals&& data, Type type) {
+  Literal makeGCData(Literals&& data,
+                     Type type,
+                     Literal desc = Literal::makeNull(HeapType::none)) {
     auto allocation =
-      std::make_shared<GCData>(type.getHeapType(), std::move(data));
+      std::make_shared<GCData>(type.getHeapType(), std::move(data), desc);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
@@ -1673,7 +1675,15 @@ public:
   }
   Flow visitRefGetDesc(RefGetDesc* curr) {
     NOTE_ENTER("RefGetDesc");
-    WASM_UNREACHABLE("unimplemented");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return data->desc;
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
@@ -1742,6 +1752,12 @@ public:
           return value;
         }
       }
+      if (curr->descriptor) {
+        auto value = self()->visit(curr->descriptor);
+        if (value.breaking()) {
+          return value;
+        }
+      }
       WASM_UNREACHABLE("unreachable but no unreachable child");
     }
     auto heapType = curr->type.getHeapType();
@@ -1759,7 +1775,14 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    return makeGCData(std::move(data), curr->type);
+    if (!curr->descriptor) {
+      return makeGCData(std::move(data), curr->type);
+    }
+    auto desc = self()->visit(curr->descriptor);
+    if (desc.breaking()) {
+      return desc;
+    }
+    return makeGCData(std::move(data), curr->type, desc.getSingleValue());
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
