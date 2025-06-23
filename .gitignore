@@ -28,6 +28,7 @@ CMakeFiles
 /emcc-build
 compile_commands.json
 test/lit/lit.site.cfg.py
+CMakeUserPresets.json
 
 # files related to bulding in-tree on windows
 /.vs/
