@@ -67,16 +67,19 @@ enum class InliningMode {
   SplitPatternB
 };
 
-// Whether a function just calls another function with only `local.get`s as
-// arguments.
+// Whether a function just calls another function in a way that always shrinks
+// when the calling function is inlined.
 enum class TrivialCall {
-  // Function does not just call another function, with only `local.get`s as
-  // arguments.
+  // Function does not just call another function, or it may not shrink when
+  // inlined.
   NotTrivial,
 
-  // Function just calls another function, and all arguments are `local.get`s
-  // with strictly increasing local index. This means code size always shrinks
-  // when this function is inlined.
+  // Function just calls another function, with `local.get`s as arguments, and
+  // with each `local` is used exactly once, and in the order they appear in the
+  // argument list.
+  //
+  // In this case, inlining the function generates smaller code, and it is also
+  // good for runtime.
   Shrinks,
 
   // Function just calls another function, but maybe with arguments other than
@@ -141,10 +144,8 @@ struct FunctionInfo {
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
-    // If the function just calls another function using its locals as
-    // arguments, and arguments are used in strictly increasing order, and each
-    // argument is used at most once, then inlining it shrinks the code size and
-    // it's also good for runtime. So we always inline it.
+    // If the function calls another one in a way that always shrinks when
+    // inlined, inline it in all optimization and shrink modes.
     if (trivialCall == TrivialCall::Shrinks) {
       return true;
     }
@@ -167,8 +168,9 @@ struct FunctionInfo {
     if (trivialCall == TrivialCall::MayNotShrink) {
       return true;
     }
-    // Inline if it doesn't have calls and loops do not prevent us (normally, a
-    // loop suggests a lot of work and so inlining is less useful).
+    // Trivial calls are already handled. Inline if
+    // 1. The function doesn't have calls, and
+    // 2. The function doesn't have loops, or we allow inlining with loops.
     return !hasCalls && (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
 };
