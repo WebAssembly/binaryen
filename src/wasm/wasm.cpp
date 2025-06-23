@@ -1216,6 +1216,9 @@ void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
+  if (descriptor && descriptor->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
 }
 
 void StructGet::finalize() {
