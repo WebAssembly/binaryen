@@ -395,11 +395,21 @@ struct EscapeAnalyzer {
         // Whether the cast succeeds or fails, it does not escape.
         escapes = false;
 
-        // If the cast fails then the allocation is fully consumed and does not
-        // flow any further (instead, we trap).
-        if (!Type::isSubType(allocation->type, curr->type)) {
+        if (curr->ref == child) {
+          // If the cast fails then the allocation is fully consumed and does
+          // not flow any further (instead, we trap).
+          if (!Type::isSubType(allocation->type, curr->type)) {
+            fullyConsumes = true;
+          }
+        } else {
+          assert(curr->desc == child);
           fullyConsumes = true;
         }
+      }
+
+      void visitRefGetDesc(RefGetDesc* curr) {
+        escapes = false;
+        fullyConsumes = true;
       }
 
       // GC operations.
@@ -598,9 +608,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
       builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
 
-    // Allocate locals to store the allocation's fields in.
+    // Allocate locals to store the allocation's fields and descriptor in.
     for (auto field : fields) {
       localIndexes.push_back(builder.addVar(func, field.type));
+    }
+    if (allocation->descriptor) {
+      localIndexes.push_back(
+        builder.addVar(func, allocation->descriptor->type));
     }
 
     // Replace the things we need to using the visit* methods.
@@ -708,61 +722,54 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // First, assign the initial values to the new locals.
     std::vector<Expression*> contents;
 
-    if (!allocation->isWithDefault()) {
-      // We must assign the initial values to temp indexes, then copy them
-      // over all at once. If instead we did set them as we go, then we might
-      // hit a problem like this:
-      //
-      //  (local.set X (new_X))
-      //  (local.set Y (block (result ..)
-      //                 (.. (local.get X) ..) ;; returns new_X, wrongly
-      //                 (new_Y)
-      //               )
-      //
-      // Note how we assign to the local X and use it during the assignment to
-      // the local Y - but we should still see the old value of X, not new_X.
-      // Temp locals X', Y' can ensure that:
-      //
-      //  (local.set X' (new_X))
-      //  (local.set Y' (block (result ..)
-      //                  (.. (local.get X) ..) ;; returns the proper, old X
-      //                  (new_Y)
-      //                )
-      //  ..
-      //  (local.set X (local.get X'))
-      //  (local.set Y (local.get Y'))
-      std::vector<Index> tempIndexes;
+    // We might be in a loop, so the locals representing the struct fields might
+    // already have values. Furthermore, the computation of the new field values
+    // might depend on the old field values. If we naively assign the new values
+    // to the locals as they are computed, the computation of a later field may
+    // use the new value of an earlier field where it should have used the old
+    // value of the earlier field. To avoid this problem, we store all the
+    // nontrivial new values in temp locals, and only once they have fully been
+    // computed do we copy them into the locals representing the fields.
+    std::vector<Index> tempIndexes;
+    Index numTemps =
+      (curr->isWithDefault() ? 0 : fields.size()) + bool(curr->descriptor);
+    tempIndexes.reserve(numTemps);
 
+    // Create the temp variables.
+    if (!curr->isWithDefault()) {
       for (auto field : fields) {
         tempIndexes.push_back(builder.addVar(func, field.type));
       }
+    }
+    if (curr->descriptor) {
+      tempIndexes.push_back(builder.addVar(func, curr->descriptor->type));
+    }
 
-      // Store the initial values into the temp locals.
-      for (Index i = 0; i < tempIndexes.size(); i++) {
+    // Store the initial values into the temp locals.
+    if (!curr->isWithDefault()) {
+      for (Index i = 0; i < fields.size(); i++) {
         contents.push_back(
-          builder.makeLocalSet(tempIndexes[i], allocation->operands[i]));
+          builder.makeLocalSet(tempIndexes[i], curr->operands[i]));
       }
+    }
+    if (curr->descriptor) {
+      contents.push_back(
+        builder.makeLocalSet(tempIndexes[numTemps - 1], curr->descriptor));
+    }
 
-      // Copy them to the normal ones.
-      for (Index i = 0; i < tempIndexes.size(); i++) {
-        auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
-        contents.push_back(builder.makeLocalSet(localIndexes[i], value));
-      }
-
-      // TODO Check if the nondefault case does not increase code size in some
-      //      cases. A heap allocation that implicitly sets the default values
-      //      is smaller than multiple explicit settings of locals to
-      //      defaults.
-    } else {
-      // Set the default values.
-      //
-      // Note that we must assign the defaults because we might be in a loop,
-      // that is, there might be a previous value.
-      for (Index i = 0; i < localIndexes.size(); i++) {
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
-      }
+    // Store the values into the locals representing the fields.
+    for (Index i = 0; i < fields.size(); ++i) {
+      auto* val =
+        curr->isWithDefault()
+          ? builder.makeConstantExpression(Literal::makeZero(fields[i].type))
+          : builder.makeLocalGet(tempIndexes[i], fields[i].type);
+      contents.push_back(builder.makeLocalSet(localIndexes[i], val));
+    }
+    if (curr->descriptor) {
+      auto* val =
+        builder.makeLocalGet(tempIndexes[numTemps - 1], curr->descriptor->type);
+      contents.push_back(
+        builder.makeLocalSet(localIndexes[fields.size()], val));
     }
 
     // Replace the allocation with a null reference. This changes the type
@@ -838,23 +845,67 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    // We know this RefCast receives our allocation, so we can see whether it
-    // succeeds or fails.
-    if (Type::isSubType(allocation->type, curr->type)) {
-      // The cast succeeds, so it is a no-op, and we can skip it, since after we
-      // remove the allocation it will not even be needed for validation.
-      replaceCurrent(curr->ref);
+    if (curr->desc) {
+      // If we are doing a ref.cast_desc of the optimized allocation, but we
+      // know it does not have a descriptor, then we know the cast must fail. We
+      // also know the cast must fail if the optimized allocation flows in as
+      // the descriptor, since it cannot possibly have been used in the
+      // allocation of the cast value without having been considered to escape.
+      if (!allocation->descriptor || analyzer.getInteraction(curr->desc) ==
+                                       ParentChildInteraction::Flows) {
+        // The allocation does not have a descriptor, so there is no way for the
+        // cast to succeed.
+        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->desc),
+                                        builder.makeUnreachable()));
+      } else {
+        // The cast succeeds iff the optimized allocation's descriptor is the
+        // same as the given descriptor and traps otherwise.
+        auto type = allocation->descriptor->type;
+        replaceCurrent(builder.blockify(
+          builder.makeDrop(curr->ref),
+          builder.makeIf(
+            builder.makeRefEq(
+              curr->desc,
+              builder.makeLocalGet(localIndexes[fields.size()], type)),
+            builder.makeRefNull(allocation->type.getHeapType()),
+            builder.makeUnreachable())));
+      }
     } else {
-      // The cast fails, so this must trap.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                          builder.makeUnreachable()));
+      // We know this RefCast receives our allocation, so we can see whether it
+      // succeeds or fails.
+      if (Type::isSubType(allocation->type, curr->type)) {
+        // The cast succeeds, so it is a no-op, and we can skip it, since after
+        // we remove the allocation it will not even be needed for validation.
+        replaceCurrent(curr->ref);
+      } else {
+        // The cast fails, so this must trap.
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeUnreachable()));
+      }
     }
 
-    // Either way, we need to refinalize here (we either added an unreachable,
+    // In any case, we need to refinalize here (we either added an unreachable,
     // or we replaced a cast with the value being cast, which may have a less-
     // refined type - it will not be used after we remove the allocation, but we
     // must still fix that up for validation).
     refinalize = true;
+  }
+
+  void visitRefGetDesc(RefGetDesc* curr) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
+      return;
+    }
+
+    auto type = allocation->descriptor->type;
+    if (type != curr->type) {
+      // We know exactly the allocation that flows into this expression, so we
+      // know the exact type of the descriptor. This type may be more precise
+      // than the static type of this expression.
+      refinalize = true;
+    }
+    auto* value = builder.makeLocalGet(localIndexes[fields.size()], type);
+    replaceCurrent(builder.blockify(builder.makeDrop(curr->ref), value));
   }
 
   void visitStructSet(StructSet* curr) {

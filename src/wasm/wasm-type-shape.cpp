@@ -64,15 +64,17 @@ template<typename CompareTypes> struct RecGroupComparator {
     if (a.isOpen() != b.isOpen()) {
       return a.isOpen() < b.isOpen() ? LT : GT;
     }
-    auto aSuper = a.getDeclaredSuperType();
-    auto bSuper = b.getDeclaredSuperType();
-    if (aSuper.has_value() != bSuper.has_value()) {
-      return aSuper.has_value() < bSuper.has_value() ? LT : GT;
+    if (auto cmp = compare(a.getDeclaredSuperType(), b.getDeclaredSuperType());
+        cmp != EQ) {
+      return cmp;
     }
-    if (aSuper) {
-      if (auto cmp = compare(*aSuper, *bSuper); cmp != EQ) {
-        return cmp;
-      }
+    if (auto cmp = compare(a.getDescriptorType(), b.getDescriptorType());
+        cmp != EQ) {
+      return cmp;
+    }
+    if (auto cmp = compare(a.getDescribedType(), b.getDescribedType());
+        cmp != EQ) {
+      return cmp;
     }
     auto aKind = a.getKind();
     auto bKind = b.getKind();
@@ -202,6 +204,16 @@ template<typename CompareTypes> struct RecGroupComparator {
     // comparator.
     return compareTypes(a, b);
   }
+
+  Comparison compare(std::optional<HeapType> a, std::optional<HeapType> b) {
+    if (a.has_value() != b.has_value()) {
+      return a.has_value() < b.has_value() ? LT : GT;
+    }
+    if (a) {
+      return compare(*a, *b);
+    }
+    return EQ;
+  }
 };
 
 // Deduction guide to satisfy -Wctad-maybe-unsupported.
@@ -227,11 +239,9 @@ struct RecGroupHasher {
   size_t hashDefinition(HeapType type) {
     size_t digest = wasm::hash(type.isShared());
     wasm::rehash(digest, type.isOpen());
-    auto super = type.getDeclaredSuperType();
-    wasm::rehash(digest, super.has_value());
-    if (super) {
-      hash_combine(digest, hash(*super));
-    }
+    hash_combine(digest, hash(type.getDeclaredSuperType()));
+    hash_combine(digest, hash(type.getDescriptorType()));
+    hash_combine(digest, hash(type.getDescribedType()));
     auto kind = type.getKind();
     // Mix in very random numbers to differentiate the kinds.
     switch (kind) {
@@ -324,6 +334,14 @@ struct RecGroupHasher {
       return digest;
     }
     wasm::rehash(digest, type.getID());
+    return digest;
+  }
+
+  size_t hash(std::optional<HeapType> type) {
+    size_t digest = wasm::hash(type.has_value());
+    if (type) {
+      hash_combine(digest, hash(*type));
+    }
     return digest;
   }
 };
