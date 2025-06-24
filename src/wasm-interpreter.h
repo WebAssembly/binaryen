@@ -1651,6 +1651,36 @@ public:
       return typename Cast::Failure{val};
     }
   }
+  template<typename T> Cast doDescCast(T* curr) {
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return typename Cast::Breaking{ref};
+    }
+    Flow desc = self()->visit(curr->desc);
+    if (desc.breaking()) {
+      return typename Cast::Breaking{ref};
+    }
+    auto expected = desc.getSingleValue().getGCData();
+    if (!expected) {
+      trap("null descriptor");
+    }
+    Literal val = ref.getSingleValue();
+    auto data = val.getGCData();
+    if (!data) {
+      // Check whether null is allowed.
+      if (curr->getCastType().isNullable()) {
+        return typename Cast::Success{val};
+      } else {
+        return typename Cast::Failure{val};
+      }
+    }
+    // The cast succeeds if we have the expected descriptor.
+    if (data->desc.getGCData() == expected) {
+      return typename Cast::Success{val};
+    } else {
+      return typename Cast::Failure{val};
+    }
+  }
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
@@ -1663,7 +1693,7 @@ public:
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    auto cast = doCast(curr);
+    auto cast = curr->desc ? doDescCast(curr) : doCast(curr);
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
     } else if (auto* result = cast.getSuccess()) {
@@ -1690,12 +1720,14 @@ public:
     // BrOnCast* uses the casting infrastructure, so handle them first.
     switch (curr->op) {
       case BrOnCast:
-      case BrOnCastFail: {
-        auto cast = doCast(curr);
+      case BrOnCastFail:
+      case BrOnCastDesc:
+      case BrOnCastDescFail: {
+        auto cast = curr->desc ? doDescCast(curr) : doCast(curr);
         if (auto* breaking = cast.getBreaking()) {
           return *breaking;
         } else if (auto* original = cast.getFailure()) {
-          if (curr->op == BrOnCast) {
+          if (curr->op == BrOnCast || curr->op == BrOnCastDesc) {
             return *original;
           } else {
             return Flow(curr->name, *original);
@@ -1703,16 +1735,13 @@ public:
         } else {
           auto* result = cast.getSuccess();
           assert(result);
-          if (curr->op == BrOnCast) {
+          if (curr->op == BrOnCast || curr->op == BrOnCastDesc) {
             return Flow(curr->name, *result);
           } else {
             return *result;
           }
         }
       }
-      case BrOnCastDesc:
-      case BrOnCastDescFail:
-        WASM_UNREACHABLE("TODO");
       case BrOnNull:
       case BrOnNonNull: {
         // Otherwise we are just checking for null.

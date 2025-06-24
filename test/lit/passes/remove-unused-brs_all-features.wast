@@ -64,9 +64,10 @@
  )
 
  ;; CHECK:      (func $test-prefinalize (type $4) (result f64)
+ ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (loop $loop (result f64)
  ;; CHECK-NEXT:   (if (result f64)
- ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (f64.const 0)
  ;; CHECK-NEXT:    )
@@ -85,12 +86,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test-prefinalize (result f64)
+  (local $x i32)
   (loop $loop (result f64)
    (block $block (result f64)
     (drop
      (br_if $block
       (f64.const 0)
-      (i32.const 1)
+      (local.get $x)
      )
     )
     (if
