@@ -948,7 +948,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     }
     auto desc = curr->type.getHeapType().getDescriptorType();
     if (desc) {
-      note(&curr->descriptor, Type(*desc, NonNullable, Exact));
+      note(&curr->desc, Type(*desc, NonNullable, Exact));
     }
   }
 
