@@ -3159,11 +3159,11 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
 
   auto descType = curr->type.getHeapType().getDescriptorType();
   if (!descType) {
-    shouldBeFalse(curr->descriptor,
+    shouldBeFalse(curr->desc,
                   curr,
                   "struct.new of type without descriptor should lack one");
   } else {
-    shouldBeSubType(curr->descriptor->type,
+    shouldBeSubType(curr->desc->type,
                     Type(*descType, Nullable, Exact),
                     curr,
                     "struct.new descriptor operand should have proper type");
