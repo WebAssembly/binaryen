@@ -51,7 +51,7 @@
   ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
   (type $struct_i64 (func (param (ref null struct)) (result i64)))
 
-  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $9) (result i32)))
+  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $8) (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
   ;; These functions test if an `if` with subtyped arms is correctly folded
@@ -1418,7 +1418,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test-heap-types-nonnullable (type $8) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-test-heap-types-nonnullable (type $9) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
@@ -1460,7 +1460,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test-heap-types-nullable (type $8) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-test-heap-types-nullable (type $9) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
@@ -1501,7 +1501,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test-heap-types-unreachable (type $8) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-test-heap-types-unreachable (type $9) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
@@ -2641,7 +2641,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-heap-types-nonnullable (type $8) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-cast-heap-types-nonnullable (type $9) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result (ref any))
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -2677,7 +2677,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-heap-types-nullable (type $8) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-cast-heap-types-nullable (type $9) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (block (result nullref)
@@ -2709,7 +2709,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-heap-types-unreachable (type $8) (param $anyref anyref) (result anyref)
+  ;; CHECK:      (func $incompatible-cast-heap-types-unreachable (type $9) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -2966,7 +2966,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-ref-test (type $9) (result i32)
+  ;; CHECK:      (func $non-null-bottom-ref-test (type $8) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
@@ -2989,7 +2989,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $9) (result i32)
+  ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $8) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (loop (result (ref nofunc))
@@ -3009,7 +3009,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-null-bottom-test (type $9) (result i32)
+  ;; CHECK:      (func $non-null-bottom-test (type $8) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $non-null-bottom-cast)
   ;; CHECK-NEXT:  )
@@ -3079,7 +3079,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.test-then-optimizeAddedConstants (type $9) (result i32)
+  ;; CHECK:      (func $ref.test-then-optimizeAddedConstants (type $8) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -3689,6 +3689,32 @@
           (local.get $x)
         )
       )
+    )
+  )
+
+  ;; Regression test for UB when analyzing bits.
+  ;; CHECK:      (func $unreachable-bits (type $8) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $unreachable-bits (result i32)
+    ;; When this is optimized, the unreachable left hand side is arbitrarily
+    ;; considered to have 64 bits. This should not lead to UB.
+    (i32.and
+      ;; This will be optimized to an unreachable block.
+      (ref.test (ref none)
+        (ref.as_non_null
+          (ref.null none)
+        )
+      )
+     (i32.const 0)
     )
   )
 )
