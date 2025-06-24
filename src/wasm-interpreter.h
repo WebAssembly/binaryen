@@ -1781,8 +1781,8 @@ public:
           return value;
         }
       }
-      if (curr->descriptor) {
-        auto value = self()->visit(curr->descriptor);
+      if (curr->desc) {
+        auto value = self()->visit(curr->desc);
         if (value.breaking()) {
           return value;
         }
@@ -1804,10 +1804,10 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    if (!curr->descriptor) {
+    if (!curr->desc) {
       return makeGCData(std::move(data), curr->type);
     }
-    auto desc = self()->visit(curr->descriptor);
+    auto desc = self()->visit(curr->desc);
     if (desc.breaking()) {
       return desc;
     }

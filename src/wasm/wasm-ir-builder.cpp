@@ -2230,7 +2230,7 @@ Result<> IRBuilder::makeStructNew(HeapType type) {
   curr.type = Type(type, NonNullable, Exact);
   curr.operands.resize(type.getStruct().fields.size());
   CHECK_ERR(visitStructNew(&curr));
-  push(builder.makeStructNew(type, std::move(curr.operands), curr.descriptor));
+  push(builder.makeStructNew(type, std::move(curr.operands), curr.desc));
   return Ok{};
 }
 
@@ -2238,7 +2238,7 @@ Result<> IRBuilder::makeStructNewDefault(HeapType type) {
   StructNew curr(wasm.allocator);
   curr.type = Type(type, NonNullable, Exact);
   CHECK_ERR(visitStructNew(&curr));
-  push(builder.makeStructNew(type, {}, curr.descriptor));
+  push(builder.makeStructNew(type, {}, curr.desc));
   return Ok{};
 }
 

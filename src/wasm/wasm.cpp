@@ -1216,7 +1216,7 @@ void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  if (descriptor && descriptor->type == Type::unreachable) {
+  if (desc && desc->type == Type::unreachable) {
     type = Type::unreachable;
   }
 }
