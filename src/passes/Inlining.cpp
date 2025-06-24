@@ -82,9 +82,13 @@ enum class TrivialCall {
   // good for runtime.
   Shrinks,
 
-  // Function just calls another function, but maybe with arguments other than
-  // `local.get`s, or maybe some locals are used more than once. In this case
-  // code size does not always shrink.
+  // Function just calls another function, but maybe with constant arguments, or
+  // maybe some locals are used more than once. In these cases code size does
+  // not always shrink: at the call sites, omitted locals can create `drop`
+  // instructions, a local used multiple times can create new locals, and
+  // encoding of constants may be larger than just a `local.get` with a small
+  // index. In these cases we still want to inline with `-O3`, but the code size
+  // may increase when inlined.
   MayNotShrink,
 };
 
