@@ -164,11 +164,8 @@ struct FunctionInfo {
     if (options.shrinkLevel > 0 || options.optimizeLevel < 3) {
       return false;
     }
-    // The function just calls another function, but it's using locals in
-    // different order than the argument order, and/or using some locals more
-    // than once. In this case we inline if we're not optimizing for code size,
-    // as inlining it to more than one call site may increase code size by
-    // introducing locals.
+    // The function just calls another function, but the code size may increase
+    // when inlined. We only inline it fully with `-O3`.
     if (trivialCall == TrivialCall::MayNotShrink) {
       return true;
     }
