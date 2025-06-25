@@ -32,9 +32,6 @@ struct HeapTypeGenerator {
   // The intended subtypes of each built type.
   std::vector<std::vector<Index>> subtypeIndices;
 
-  // The intended supertype of each built type, if any.
-  std::vector<std::optional<Index>> supertypeIndices;
-
   // Create a populated `HeapTypeGenerator` with `n` random HeapTypes with
   // interesting subtyping.
   static HeapTypeGenerator create(Random& rand, FeatureSet features, size_t n);
