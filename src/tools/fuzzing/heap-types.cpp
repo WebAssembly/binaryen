@@ -57,9 +57,7 @@ struct HeapTypeGeneratorImpl {
   FuzzParams params;
 
   HeapTypeGeneratorImpl(Random& rand, FeatureSet features, size_t n)
-    : result{TypeBuilder(n),
-             std::vector<std::vector<Index>>(n),
-             std::vector<std::optional<Index>>(n)},
+    : result{TypeBuilder(n), std::vector<std::vector<Index>>(n)},
       builder(result.builder), subtypeIndices(result.subtypeIndices),
       supertypeIndices(n), rand(rand), features(features) {
     // Set up the subtype relationships. Start with some number of root types,
