@@ -487,6 +487,9 @@ BinaryenFeatures BinaryenFeatureBulkMemoryOpt(void) {
 BinaryenFeatures BinaryenFeatureCallIndirectOverlong(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::CallIndirectOverlong);
 }
+BinaryenFeatures BinaryenFeatureCustomPageSizes(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::CustomPageSizes);
+}
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
 }

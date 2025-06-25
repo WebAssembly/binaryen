@@ -111,11 +111,18 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
   return o.writeU32LEBPlaceholder();
 }
 
-void WasmBinaryWriter::writeResizableLimits(
-  Address initial, Address maximum, bool hasMaximum, bool shared, bool is64) {
-  uint32_t flags = (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
-                   (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
-                   (is64 ? (uint32_t)BinaryConsts::Is64 : 0U);
+void WasmBinaryWriter::writeResizableLimits(Address initial,
+                                            Address maximum,
+                                            bool hasMaximum,
+                                            bool shared,
+                                            bool is64,
+                                            bool hasPageSize,
+                                            Address::address32_t pageSizeLog2) {
+  uint32_t flags =
+    (hasMaximum ? (uint32_t)BinaryConsts::HasMaximum : 0U) |
+    (shared ? (uint32_t)BinaryConsts::IsShared : 0U) |
+    (is64 ? (uint32_t)BinaryConsts::Is64 : 0U) |
+    (hasPageSize ? (uint32_t)BinaryConsts::HasCustomPageSize : 0U);
   o << U32LEB(flags);
   if (is64) {
     o << U64LEB(initial);
@@ -127,6 +134,9 @@ void WasmBinaryWriter::writeResizableLimits(
     if (hasMaximum) {
       o << U32LEB(maximum);
     }
+  }
+  if (hasPageSize) {
+    o << U32LEB(pageSizeLog2);
   }
 }
 
@@ -212,7 +222,9 @@ void WasmBinaryWriter::writeMemories() {
                          memory->max,
                          memory->hasMax(),
                          memory->shared,
-                         memory->is64());
+                         memory->is64(),
+                         memory->pageSizeLog2 != Memory::kDefaultPageSizeLog2,
+                         memory->pageSizeLog2);
   });
   finishSection(start);
 }
@@ -354,7 +366,9 @@ void WasmBinaryWriter::writeImports() {
                          memory->max,
                          memory->hasMax(),
                          memory->shared,
-                         memory->is64());
+                         memory->is64(),
+                         memory->pageSizeLog2 != Memory::kDefaultPageSizeLog2,
+                         memory->pageSizeLog2);
   });
   ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     writeImportHeader(table);
@@ -364,7 +378,9 @@ void WasmBinaryWriter::writeImports() {
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
-                         table->is64());
+                         table->is64(),
+                         /*hasPageSize=*/false,
+                         /*PageSize*/ 1);
   });
   finishSection(start);
 }
@@ -773,7 +789,9 @@ void WasmBinaryWriter::writeTableDeclarations() {
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
-                         table->is64());
+                         table->is64(),
+                         /*hasPageSize=*/false,
+                         /*PageSize*/ 1);
   });
   finishSection(start);
 }
@@ -1395,6 +1413,9 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::CallIndirectOverlongFeature;
       case FeatureSet::CustomDescriptors:
         return BinaryConsts::CustomSections::CustomDescriptorsFeature;
+      case FeatureSet::CustomPageSizes:
+        return BinaryConsts::CustomSections::CustomPageSizesFeature;
+
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -2546,6 +2567,7 @@ void WasmBinaryReader::readMemories() {
                        memory->max,
                        memory->shared,
                        memory->addressType,
+                       memory->pageSizeLog2,
                        Memory::kUnlimitedSize);
     wasm.addMemory(std::move(memory));
   }
@@ -2850,11 +2872,13 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
                                           Address& max,
                                           bool& shared,
                                           Type& addressType,
+                                          uint8_t& pageSizeLog2,
                                           Address defaultIfNoMax) {
   auto flags = getU32LEB();
   bool hasMax = (flags & BinaryConsts::HasMaximum) != 0;
   bool isShared = (flags & BinaryConsts::IsShared) != 0;
   bool is64 = (flags & BinaryConsts::Is64) != 0;
+  bool hasCustomPageSize = (flags & BinaryConsts::HasCustomPageSize) != 0;
   initial = is64 ? getU64LEB() : getU32LEB();
   if (isShared && !hasMax) {
     throwError("shared memory must have max size");
@@ -2865,6 +2889,14 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
     max = is64 ? getU64LEB() : getU32LEB();
   } else {
     max = defaultIfNoMax;
+  }
+  if (hasCustomPageSize) {
+    auto readPageSizeLog2 = getU32LEB();
+    if (readPageSizeLog2 != 0 &&
+        readPageSizeLog2 != Memory::kDefaultPageSizeLog2) {
+      throwError("Memory page size is only allowed to be 1 or 64 KiB");
+    }
+    pageSizeLog2 = (uint8_t)readPageSizeLog2;
   }
 }
 
@@ -2914,15 +2946,19 @@ void WasmBinaryReader::readImports() {
         table->module = module;
         table->base = base;
         table->type = getType();
-
         bool is_shared;
+        uint8_t page_size = 0xff;
         getResizableLimits(table->initial,
                            table->max,
                            is_shared,
                            table->addressType,
+                           page_size,
                            Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
+        }
+        if (page_size != 0xff) {
+          throwError("Tables may not have a custom page size");
         }
         wasm.addTable(std::move(table));
         break;
@@ -2941,6 +2977,7 @@ void WasmBinaryReader::readImports() {
                            memory->max,
                            memory->shared,
                            memory->addressType,
+                           memory->pageSizeLog2,
                            Memory::kUnlimitedSize);
         wasm.addMemory(std::move(memory));
         break;
@@ -4876,13 +4913,18 @@ void WasmBinaryReader::readTableDeclarations() {
     auto table = Builder::makeTable(name, elemType);
     table->hasExplicitName = isExplicit;
     bool is_shared;
+    uint8_t pageSize = 0xff;
     getResizableLimits(table->initial,
                        table->max,
                        is_shared,
                        table->addressType,
+                       pageSize,
                        Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
+    }
+    if (pageSize != 0xff) {
+      throwError("Tables may not specify a custom page size");
     }
     wasm.addTable(std::move(table));
   }
@@ -5253,6 +5295,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::FP16;
     } else if (name == BinaryConsts::CustomSections::CustomDescriptorsFeature) {
       feature = FeatureSet::CustomDescriptors;
+    } else if (name == BinaryConsts::CustomSections::CustomPageSizesFeature) {
+      feature = FeatureSet::CustomPageSizes;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
