@@ -66,55 +66,69 @@ struct HeapTypeGeneratorImpl {
     // appropriately use types we haven't constructed yet.
     typeKinds.reserve(builder.size());
     supertypeIndices.reserve(builder.size());
-    Index numRoots = 1 + rand.upTo(builder.size());
-    for (Index i = 0; i < builder.size(); ++i) {
-      typeIndices.insert({builder[i], i});
-      // Everything is a subtype of itself.
-      subtypeIndices[i].push_back(i);
-      if (i < numRoots || rand.oneIn(2)) {
-        // This is a root type with no supertype. Choose a kind for this type.
-        typeKinds.emplace_back(generateHeapTypeKind());
-        builder[i].setShared(
-          !features.hasSharedEverything() || rand.oneIn(2) ? Unshared : Shared);
-      } else {
-        // This is a subtype. Choose one of the previous types to be the
-        // supertype.
-        Index super = rand.upTo(i);
-        builder[i].subTypeOf(builder[super]);
-        builder[i].setShared(HeapType(builder[super]).getShared());
-        supertypeIndices[i] = super;
-        subtypeIndices[super].push_back(i);
-        typeKinds.push_back(typeKinds[super]);
-      }
-    }
-
-    // Types without nontrivial subtypes may be marked final.
-    for (Index i = 0; i < builder.size(); ++i) {
-      builder[i].setOpen(subtypeIndices[i].size() > 1 || rand.oneIn(2));
-    }
-
-    // Initialize the recursion groups.
     recGroupEnds.reserve(builder.size());
-    // Create isorecursive recursion groups. Choose an expected group size
-    // uniformly at random, then create groups with random sizes on a geometric
-    // distribution based on that expected size.
-    size_t expectedSize = 1 + rand.upTo(builder.size());
-    Index groupStart = 0;
-    for (Index i = 0; i < builder.size(); ++i) {
-      if (i == builder.size() - 1 || rand.oneIn(expectedSize)) {
-        // End the old group and create a new group.
-        Index newGroupStart = i + 1;
-        builder.createRecGroup(groupStart, newGroupStart - groupStart);
-        for (Index j = groupStart; j < newGroupStart; ++j) {
-          recGroupEnds.push_back(newGroupStart);
-        }
-        groupStart = newGroupStart;
-      }
+
+    // The number of root types to generate before we start adding subtypes.
+    size_t numRoots = 1 + rand.upTo(builder.size());
+
+    // The mean expected size of the recursion groups.
+    size_t expectedGroupSize = 1 + rand.upTo(builder.size());
+
+    size_t i = 0;
+    while (i < builder.size()) {
+      i += planGroup(i, numRoots, expectedGroupSize);
     }
     assert(recGroupEnds.size() == builder.size());
 
+    populateTypes();
+  }
+
+  size_t planGroup(size_t start, size_t numRoots, size_t expectedGroupSize) {
+    size_t maxSize = builder.size() - start;
+    size_t size = 1;
+    // Generate the group size according to a geometric distribution.
+    for (; size < maxSize; ++size) {
+      if (rand.oneIn(expectedGroupSize)) {
+        break;
+      }
+    }
+    assert(start + size <= builder.size());
+    builder.createRecGroup(start, size);
+
+    size_t end = start + size;
+    for (size_t i = start; i < end; ++i) {
+      recGroupEnds.push_back(end);
+      planType(i, numRoots);
+    }
+    return size;
+  }
+
+  void planType(size_t i, size_t numRoots) {
+    typeIndices.insert({builder[i], i});
+    // Everything is a subtype of itself.
+    subtypeIndices[i].push_back(i);
+    if (i < numRoots || rand.oneIn(2)) {
+      // This is a root type with no supertype. Choose a kind for this type.
+      typeKinds.emplace_back(generateHeapTypeKind());
+      builder[i].setShared(
+        !features.hasSharedEverything() || rand.oneIn(2) ? Unshared : Shared);
+    } else {
+      // This is a subtype. Choose one of the previous types to be the
+      // supertype.
+      Index super = rand.upTo(i);
+      builder[i].subTypeOf(builder[super]);
+      builder[i].setShared(HeapType(builder[super]).getShared());
+      supertypeIndices[i] = super;
+      subtypeIndices[super].push_back(i);
+      typeKinds.push_back(typeKinds[super]);
+    }
+  }
+
+  void populateTypes() {
     // Create the heap types.
     for (; index < builder.size(); ++index) {
+      // Types without nontrivial subtypes may be marked final.
+      builder[index].setOpen(subtypeIndices[index].size() > 1 || rand.oneIn(2));
       auto kind = typeKinds[index];
       auto share = HeapType(builder[index]).getShared();
       if (!supertypeIndices[index]) {
