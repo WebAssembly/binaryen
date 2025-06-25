@@ -55,6 +55,7 @@ struct FeatureSet {
     // it does nothing. Binaryen always accepts LEB call-indirect encodings.
     CallIndirectOverlong = 1 << 20,
     CustomDescriptors = 1 << 21,
+    CustomPageSizes = 1 << 22,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
@@ -108,6 +109,8 @@ struct FeatureSet {
         return "call-indirect-overlong";
       case CustomDescriptors:
         return "custom-descriptors";
+      case CustomPageSizes:
+        return "custom-page-sizes";
       case MVP:
       case Default:
       case All:
@@ -167,6 +170,9 @@ struct FeatureSet {
   }
   bool hasCustomDescriptors() const {
     return (features & CustomDescriptors) != 0;
+  }
+  bool hasCustomPageSizes() const{
+    return (features & CustomPageSizes) != 0;
   }
   bool hasAll() const { return (features & All) != 0; }
 

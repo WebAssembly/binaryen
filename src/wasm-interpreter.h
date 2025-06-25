@@ -3218,7 +3218,7 @@ private:
   }
 
   void initializeMemoryContents() {
-    initializeMemorySizes();
+    initializeMemorySizesAndMemoryPageSizes();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -3258,9 +3258,12 @@ private:
   // in pages, used to keep track of memorySize throughout the below memops
   std::unordered_map<Name, Address> memorySizes;
 
-  void initializeMemorySizes() {
+  std::unordered_map<Name, Address::address32_t> memoryPageSizes;
+
+  void initializeMemorySizesAndMemoryPageSizes() {
     for (auto& memory : wasm.memories) {
       memorySizes[memory->name] = memory->initial;
+      memorySizes[memory->name] = memory->pageSizelog2;
     }
   }
 
@@ -3278,6 +3281,14 @@ private:
       externalInterface->trap("setMemorySize called on non-existing memory");
     }
     memorySizes[memory] = size;
+  }
+
+  Address::address32_t getMemoryPageSize(Name memory) {
+    auto iter = memoryPageSizes.find(memory);
+    if (iter == memoryPageSizes.end()) {
+      externalInterface->trap("getMemoryPageSize called on non-existing memory");
+    }
+    return iter->second;
   }
 
 public:
@@ -3709,10 +3720,11 @@ public:
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, flow.getSingleValue(), memorySize);
+      info.instance->getFinalAddress(curr, flow.getSingleValue(), memorySize, memoryPageSize);
     if (curr->isAtomic) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
+      info.instance->checkAtomicAddress(addr, curr->bytes, memorySize, memoryPageSize);
     }
     auto ret = info.interface()->load(curr, addr, info.name);
     NOTE_EVAL1(addr);
@@ -3731,10 +3743,11 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize, memoryPageSize);
     if (curr->isAtomic) {
-      info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
+      info.instance->checkAtomicAddress(addr, curr->bytes, memorySize, memoryPageSize);
     }
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
@@ -3755,12 +3768,13 @@ public:
     NOTE_EVAL1(ptr);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize, memoryPageSize);
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
     auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySize);
+      addr, curr->bytes, curr->type, info.name, memorySize, memoryPageSize);
     NOTE_EVAL1(loaded);
     auto computed = value.getSingleValue();
     switch (curr->op) {
@@ -3783,7 +3797,7 @@ public:
         break;
     }
     info.instance->doAtomicStore(
-      addr, curr->bytes, computed, info.name, memorySize);
+      addr, curr->bytes, computed, info.name, memorySize, memoryPageSize);
     return loaded;
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
@@ -3803,18 +3817,19 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize, memoryPageSize);
     expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
     NOTE_EVAL1(addr);
     NOTE_EVAL1(expected);
     NOTE_EVAL1(replacement);
     auto loaded = info.instance->doAtomicLoad(
-      addr, curr->bytes, curr->type, info.name, memorySize);
+      addr, curr->bytes, curr->type, info.name, memorySize, memoryPageSize);
     NOTE_EVAL1(loaded);
     if (loaded == expected.getSingleValue()) {
       info.instance->doAtomicStore(
-        addr, curr->bytes, replacement.getSingleValue(), info.name, memorySize);
+        addr, curr->bytes, replacement.getSingleValue(), info.name, memorySize, memoryPageSize);
     }
     return loaded;
   }
@@ -3838,10 +3853,11 @@ public:
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), bytes, memorySize);
+      curr, ptr.getSingleValue(), bytes, memorySize, memoryPageSize);
     auto loaded = info.instance->doAtomicLoad(
-      addr, bytes, curr->expectedType, info.name, memorySize);
+      addr, bytes, curr->expectedType, info.name, memorySize, memoryPageSize);
     NOTE_EVAL1(loaded);
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
@@ -3870,10 +3886,11 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), 4, memorySize);
+      info.instance->getFinalAddress(curr, ptr.getSingleValue(), 4, memorySize, memoryPageSize);
     // Just check TODO actual threads support
-    info.instance->checkAtomicAddress(addr, 4, memorySize);
+    info.instance->checkAtomicAddress(addr, 4, memorySize, memoryPageSize);
     return Literal(int32_t(0)); // none woken up
   }
   Flow visitSIMDLoad(SIMDLoad* curr) {
@@ -3960,12 +3977,13 @@ public:
       WASM_UNREACHABLE("invalid op");
     };
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto addressType = curr->ptr->type;
     auto fillLanes = [&](auto lanes, size_t laneBytes) {
       for (auto& lane : lanes) {
         auto ptr = Literal::makeFromInt64(src, addressType);
         lane = loadLane(
-          info.instance->getFinalAddress(curr, ptr, laneBytes, memorySize));
+          info.instance->getFinalAddress(curr, ptr, laneBytes, memorySize, memoryPageSize));
         src =
           ptr.add(Literal::makeFromInt32(laneBytes, addressType)).getUnsigned();
       }
@@ -4000,8 +4018,9 @@ public:
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     Address src = info.instance->getFinalAddress(
-      curr, flow.getSingleValue(), curr->getMemBytes(), memorySize);
+      curr, flow.getSingleValue(), curr->getMemBytes(), memorySize, memoryPageSize);
     auto zero =
       Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
     if (curr->op == Load32ZeroVec128) {
@@ -4025,8 +4044,9 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     Address addr = info.instance->getFinalAddress(
-      curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySize);
+      curr, ptrFlow.getSingleValue(), curr->getMemBytes(), memorySize, memoryPageSize);
     Literal vec = vecFlow.getSingleValue();
     switch (curr->op) {
       case Load8LaneVec128:
@@ -4099,6 +4119,7 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
     auto addressType = memory->addressType;
     auto fail = Literal::makeFromInt64(-1, memory->addressType);
@@ -4107,7 +4128,7 @@ public:
     uint64_t maxAddr = addressType == Type::i32
                          ? std::numeric_limits<uint32_t>::max()
                          : std::numeric_limits<uint64_t>::max();
-    if (delta > maxAddr / Memory::kPageSize) {
+    if (delta > maxAddr >> memoryPageSize) {
       // Impossible to grow this much.
       return fail;
     }
@@ -4120,8 +4141,8 @@ public:
       return fail;
     }
     if (!info.interface()->growMemory(info.name,
-                                      memorySize * Memory::kPageSize,
-                                      newSize * Memory::kPageSize)) {
+                                      memorySize << memoryPageSize,
+                                      newSize << memoryPageSize)) {
       // We failed to grow the memory in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -4162,13 +4183,14 @@ public:
     }
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
-    if (destVal + sizeVal > memorySize * Memory::kPageSize) {
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
+    if (destVal + sizeVal > memorySize << memoryPageSize) {
       trap("out of bounds memory access in memory.init");
     }
     for (size_t i = 0; i < sizeVal; ++i) {
       Literal addr(destVal + i);
       info.interface()->store8(
-        info.instance->getFinalAddressWithoutOffset(addr, 1, memorySize),
+        info.instance->getFinalAddressWithoutOffset(addr, 1, memorySize, memoryPageSize),
         segment->data[offsetVal + i],
         info.name);
     }
@@ -4204,8 +4226,10 @@ public:
     auto sourceInfo = getMemoryInstanceInfo(curr->sourceMemory);
     auto destMemorySize = destInfo.instance->getMemorySize(destInfo.name);
     auto sourceMemorySize = sourceInfo.instance->getMemorySize(sourceInfo.name);
-    if (sourceVal + sizeVal > sourceMemorySize * Memory::kPageSize ||
-        destVal + sizeVal > destMemorySize * Memory::kPageSize ||
+    auto destMemoryPageSize = destInfo.instance->getMemoryPageSize(destInfo.name);
+    auto sourceMemoryPageSize = destInfo.instance->getMemoryPageSize(sourceInfo.name);
+    if (sourceVal + sizeVal > sourceMemorySize << sourceMemoryPageSize ||
+        destVal + sizeVal > destMemorySize << destMemoryPageSize ||
         // FIXME: better/cheaper way to detect wrapping?
         sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
         destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
@@ -4224,10 +4248,10 @@ public:
     for (int64_t i = start; i != end; i += step) {
       destInfo.interface()->store8(
         destInfo.instance->getFinalAddressWithoutOffset(
-          Literal(destVal + i), 1, destMemorySize),
+          Literal(destVal + i), 1, destMemorySize, destMemoryPageSize),
         sourceInfo.interface()->load8s(
           sourceInfo.instance->getFinalAddressWithoutOffset(
-            Literal(sourceVal + i), 1, sourceMemorySize),
+            Literal(sourceVal + i), 1, sourceMemorySize, sourceMemoryPageSize),
           sourceInfo.name),
         destInfo.name);
     }
@@ -4255,16 +4279,17 @@ public:
 
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
+    auto memoryPageSize = info.instance->getMemoryPageSize(info.name);
     // FIXME: cheaper wrapping detection?
-    if (destVal > memorySize * Memory::kPageSize ||
-        sizeVal > memorySize * Memory::kPageSize ||
-        destVal + sizeVal > memorySize * Memory::kPageSize) {
+    if (destVal > memorySize << memoryPageSize ||
+        sizeVal > memorySize << memoryPageSize ||
+        destVal + sizeVal > memorySize << memoryPageSize) {
       trap("out of bounds memory access in memory.fill");
     }
     uint8_t val(value.getSingleValue().geti32());
     for (size_t i = 0; i < sizeVal; ++i) {
       info.interface()->store8(info.instance->getFinalAddressWithoutOffset(
-                                 Literal(destVal + i), 1, memorySize),
+                                 Literal(destVal + i), 1, memorySize, memoryPageSize),
                                val,
                                info.name);
     }
@@ -4669,36 +4694,44 @@ protected:
 
   template<class LS>
   Address
-  getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySize) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
+  getFinalAddress(LS* curr, Literal ptr, Index bytes, Address memorySize, Address::address32_t memoryPageSize) {
+    Address memorySizeBytes = memorySize << memoryPageSize;
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
     trapIfGt(bytes, memorySizeBytes, "bytes > memory");
-    checkLoadAddress(addr, bytes, memorySize);
+    checkLoadAddress(addr, bytes, memorySize, memoryPageSize);
     return addr;
   }
 
   template<class LS>
-  Address getFinalAddress(LS* curr, Literal ptr, Address memorySize) {
-    return getFinalAddress(curr, ptr, curr->bytes, memorySize);
+  Address getFinalAddress(LS* curr, Literal ptr, Address memorySize, Address::address32_t memoryPageSize) {
+    return getFinalAddress(curr, ptr, curr->bytes, memorySize, memoryPageSize);
   }
 
-  Address
-  getFinalAddressWithoutOffset(Literal ptr, Index bytes, Address memorySize) {
+  Address getFinalAddressWithoutOffset(Literal ptr,
+                                       Index bytes,
+                                       Address memorySize,
+                                       Address::address32_t memoryPageSize) {
     uint64_t addr = ptr.type == Type::i32 ? ptr.geti32() : ptr.geti64();
-    checkLoadAddress(addr, bytes, memorySize);
+    checkLoadAddress(addr, bytes, memorySize, memoryPageSize);
     return addr;
   }
 
-  void checkLoadAddress(Address addr, Index bytes, Address memorySize) {
-    Address memorySizeBytes = memorySize * Memory::kPageSize;
+  void checkLoadAddress(Address addr,
+                        Index bytes,
+                        Address memorySize,
+                        Address::address32_t memoryPageSize) {
+    Address memorySizeBytes = memorySize << memoryPageSize;
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
   }
 
-  void checkAtomicAddress(Address addr, Index bytes, Address memorySize) {
-    checkLoadAddress(addr, bytes, memorySize);
+  void checkAtomicAddress(Address addr,
+                          Index bytes,
+                          Address memorySize,
+                          Address::address32_t memoryPageSize) {
+    checkLoadAddress(addr, bytes, memorySize, memoryPageSize);
     // Unaligned atomics trap.
     if (bytes > 1) {
       if (addr & (bytes - 1)) {
@@ -4708,8 +4741,8 @@ protected:
   }
 
   Literal doAtomicLoad(
-    Address addr, Index bytes, Type type, Name memoryName, Address memorySize) {
-    checkAtomicAddress(addr, bytes, memorySize);
+    Address addr, Index bytes, Type type, Name memoryName, Address memorySize, Address::address32_t memoryPageSize) {
+    checkAtomicAddress(addr, bytes, memorySize, memoryPageSize);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;
@@ -4730,8 +4763,9 @@ protected:
                      Index bytes,
                      Literal toStore,
                      Name memoryName,
-                     Address memorySize) {
-    checkAtomicAddress(addr, bytes, memorySize);
+                     Address memorySize,
+                     Address::address32_t memoryPageSize) {
+    checkAtomicAddress(addr, bytes, memorySize, memoryPageSize);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = Type::i32;

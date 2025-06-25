@@ -112,13 +112,15 @@ public:
 
   static std::unique_ptr<Memory> makeMemory(Name name,
                                             Address initial = 0,
-                                            Address max = Memory::kMaxSize32,
+                                            Address max = Memory::kDefaultMaxSize32,
+                                            Address::address32_t pageSizelog2 = 16,
                                             bool shared = false,
                                             Type addressType = Type::i32) {
     auto memory = std::make_unique<Memory>();
     memory->name = name;
     memory->initial = initial;
     memory->max = max;
+    memory->pageSizelog2 = pageSizelog2;
     memory->shared = shared;
     memory->addressType = addressType;
     return memory;
