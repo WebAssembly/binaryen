@@ -150,6 +150,21 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return tooCostlyToRunUnconditionally(passOptions, max);
 }
 
+// Copy the branch hint from one instruction to another.
+static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
+  auto iter = func->codeAnnotations.find(from);
+  if (iter == func->codeAnnotations.end()) {
+    // No annotations at all.
+    return;
+  }
+  auto& annotation = iter->second;
+  if (!annotation.branchLikely) {
+    // No branch hint annotation.
+    return;
+  }
+  func->codeAnnotations[to].branchLikely = annotation.branchLikely;
+}
+
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
@@ -396,6 +411,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               curr->condition, br->value, getPassOptions(), *getModule())) {
           if (!br->condition) {
             br->condition = curr->condition;
+            copyBranchHintTo(curr, br, getFunction());
           } else {
             // In this case we can replace
             //   if (condition1) br_if (condition2)
