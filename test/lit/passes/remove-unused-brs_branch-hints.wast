@@ -3,6 +3,15 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (func $if-br (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $if-br (param $x i32)
     (block $out
       ;; The if-br will turn into a br_if. The branch hint should then go on the
@@ -12,7 +21,8 @@
         (local.get $x)
         (then
           (br $out)
-       )
+        )
+      )
     )
     (unreachable)
   )
