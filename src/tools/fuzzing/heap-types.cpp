@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cassert>
 #include <variant>
 
 #include "ir/gc-type-utils.h"
@@ -31,6 +32,9 @@ struct HeapTypeGeneratorImpl {
   TypeBuilder& builder;
   std::vector<std::vector<Index>>& subtypeIndices;
   std::vector<std::optional<Index>> supertypeIndices;
+  std::vector<std::optional<Index>>& descriptorIndices;
+  std::vector<std::optional<Index>> describedIndices;
+  std::vector<size_t> descriptorChainLengths;
   Random& rand;
   FeatureSet features;
 
@@ -57,9 +61,13 @@ struct HeapTypeGeneratorImpl {
   FuzzParams params;
 
   HeapTypeGeneratorImpl(Random& rand, FeatureSet features, size_t n)
-    : result{TypeBuilder(n), std::vector<std::vector<Index>>(n)},
+    : result{TypeBuilder(n),
+             std::vector<std::vector<Index>>(n),
+             std::vector<std::optional<Index>>(n)},
       builder(result.builder), subtypeIndices(result.subtypeIndices),
-      supertypeIndices(n), rand(rand), features(features) {
+      supertypeIndices(n), descriptorIndices(result.descriptorIndices),
+      describedIndices(n), descriptorChainLengths(n), rand(rand),
+      features(features) {
     // Set up the subtype relationships. Start with some number of root types,
     // then after that start creating subtypes of existing types. Determine the
     // top-level kind and shareability of each type in advance so that we can
@@ -95,32 +103,169 @@ struct HeapTypeGeneratorImpl {
     assert(start + size <= builder.size());
     builder.createRecGroup(start, size);
 
+    // The indices of types that need descriptors and the total number of
+    // remaining descriptors we have committed to create in this group.
+    std::vector<Index> describees;
+    size_t committed = 0;
+
     size_t end = start + size;
     for (size_t i = start; i < end; ++i) {
       recGroupEnds.push_back(end);
-      planType(i, numRoots);
+      planType(i, numRoots, end - i, describees, committed);
     }
     return size;
   }
 
-  void planType(size_t i, size_t numRoots) {
+  void planType(size_t i,
+                size_t numRoots,
+                size_t remaining,
+                std::vector<Index>& describees,
+                size_t& committed) {
+    assert(remaining >= committed);
     typeIndices.insert({builder[i], i});
     // Everything is a subtype of itself.
     subtypeIndices[i].push_back(i);
-    if (i < numRoots || rand.oneIn(2)) {
+
+    // We may pick a supertype. If we have a described type that itself has a
+    // supertype, then we must choose that supertype's descriptor as our
+    // supertype.
+    std::optional<Index> super;
+
+    // Pick a type to describe, or choose not to describe a type by
+    // picking the one-past-the-end index. If all of the remaining types must be
+    // descriptors, then we must choose a describee.
+    Index describee = rand.upTo(describees.size() + (remaining != committed));
+
+    bool isDescriptor = false;
+    if (describee != describees.size()) {
+      isDescriptor = true;
+      --committed;
+
+      // If the intended described type has a supertype with a descriptor, then
+      // that descriptor must be the supertype of the type we intend to
+      // generate. However, we may not have generated that descriptor yet,
+      // meaning it is unavailable to be the supertype of the current type.
+      // Detect that situation and plan to generate the missing supertype
+      // instead.
+      Index described;
+      while (true) {
+        described = describees[describee];
+        auto describedSuper = supertypeIndices[described];
+        if (!describedSuper) {
+          // The described type has no supertype, so there is no problem.
+          break;
+        }
+        if (descriptorChainLengths[*describedSuper] == 0) {
+          // The supertype of the described type will not have a descriptor,
+          // so there is no problem.
+          break;
+        }
+        if ((super = descriptorIndices[*describedSuper])) {
+          // The descriptor of the described type's supertype, which must become
+          // the current type's supertype, has already been generated. There is
+          // no problem.
+          break;
+        }
+        // The necessary supertype does not yet exist. Find its described type
+        // so we can try to generate the missing supertype instead.
+        for (describee = 0; describee < describees.size(); ++describee) {
+          if (describees[describee] == *describedSuper) {
+            break;
+          }
+        }
+        assert(describee < describees.size());
+        // Go back and check whether the new intended type can be generated.
+        continue;
+      }
+
+      // We have locked in the type we will describe.
+      std::swap(describees[describee], describees.back());
+      describees.pop_back();
+      descriptorIndices[described] = i;
+      describedIndices[i] = described;
+      builder[described].descriptor(builder[i]);
+      builder[i].describes(builder[described]);
+
+      // The length of the descriptor chain from this type is determined by the
+      // planned length of the chain from its described type.
+      descriptorChainLengths[i] = descriptorChainLengths[described] - 1;
+    }
+
+    --remaining;
+    assert(remaining >= committed);
+    size_t remainingUncommitted = remaining - committed;
+
+    if (!super && i >= numRoots && rand.oneIn(2)) {
+      // Try to pick a supertype. The supertype must be a descriptor type if and
+      // only if we are currently generating a descriptor type. Furthermore, we
+      // must have space left in the current chaink if it exists, or else in the
+      // rec group, to mirror the supertype's descriptor chain, if it has one.
+      // Finally, if this is a descriptor, the sharedness of the described type
+      // and supertype must match.
+      size_t maxChain =
+        isDescriptor ? descriptorChainLengths[i] : remainingUncommitted;
+      std::vector<Index> candidates;
+      candidates.reserve(i);
+      for (Index candidate = 0; candidate < i; ++candidate) {
+        bool descMatch = bool(describedIndices[candidate]) == isDescriptor;
+        bool chainMatch = descriptorChainLengths[candidate] <= maxChain;
+        bool shareMatch = !isDescriptor ||
+                          HeapType(builder[candidate]).getShared() ==
+                            HeapType(builder[*describedIndices[i]]).getShared();
+        if (descMatch && chainMatch && shareMatch) {
+          candidates.push_back(candidate);
+        }
+      }
+      if (!candidates.empty()) {
+        super = rand.pick(candidates);
+      }
+    }
+
+    // Set up the builder entry and type kind for this type.
+    if (super) {
+      typeKinds.push_back(typeKinds[*super]);
+      builder[i].subTypeOf(builder[*super]);
+      builder[i].setShared(HeapType(builder[*super]).getShared());
+      supertypeIndices[i] = *super;
+      subtypeIndices[*super].push_back(i);
+    } else if (isDescriptor) {
+      // Descriptor types must be structs and their sharedness must match their
+      // described types.
+      typeKinds.push_back(StructKind{});
+      builder[i].setShared(HeapType(builder[*describedIndices[i]]).getShared());
+    } else {
       // This is a root type with no supertype. Choose a kind for this type.
       typeKinds.emplace_back(generateHeapTypeKind());
       builder[i].setShared(
         !features.hasSharedEverything() || rand.oneIn(2) ? Unshared : Shared);
-    } else {
-      // This is a subtype. Choose one of the previous types to be the
-      // supertype.
-      Index super = rand.upTo(i);
-      builder[i].subTypeOf(builder[super]);
-      builder[i].setShared(HeapType(builder[super]).getShared());
-      supertypeIndices[i] = super;
-      subtypeIndices[super].push_back(i);
-      typeKinds.push_back(typeKinds[super]);
+    }
+
+    // Plan this descriptor chain for this type if it is not already determined
+    // by a described type. Only structs may have descriptor chains.
+    if (!isDescriptor && std::get_if<StructKind>(&typeKinds.back()) &&
+        remainingUncommitted && features.hasCustomDescriptors()) {
+      if (super) {
+        // If we have a supertype, our descriptor chain must be at least as
+        // long as the supertype's descriptor chain.
+        size_t length = descriptorChainLengths[*super];
+        if (rand.oneIn(2)) {
+          length += rand.upToSquared(remainingUncommitted - length);
+        }
+        descriptorChainLengths[i] = length;
+        committed += length;
+      } else {
+        // We can choose to start a brand new chain at this type.
+        if (rand.oneIn(2)) {
+          size_t length = rand.upToSquared(remainingUncommitted);
+          descriptorChainLengths[i] = length;
+          committed += length;
+        }
+      }
+    }
+    // If this type has a descriptor chain, then we need to be able to
+    // choose to generate the next type in the chain in the future.
+    if (descriptorChainLengths[i]) {
+      describees.push_back(i);
     }
   }
 
@@ -557,9 +702,9 @@ struct HeapTypeGeneratorImpl {
       // from JS). There are also no subtypes to consider, so just return.
       return super;
     }
-    auto nullability = super.nullability == NonNullable
-                         ? NonNullable
-                         : rand.oneIn(2) ? Nullable : NonNullable;
+    auto nullability = super.nullability == NonNullable ? NonNullable
+                       : rand.oneIn(2)                  ? Nullable
+                                                        : NonNullable;
     return {pickSubHeapType(super.type), nullability};
   }
 
@@ -736,9 +881,13 @@ void Inhabitator::markNullable(FieldPos field) {
   switch (getVariance(field)) {
     case Covariant:
       // Mark the field null in all supertypes. If the supertype field is
-      // already nullable or does not exist, that's ok and this will have no
-      // effect.
+      // already nullable, that's ok and this will have no effect.
       while (auto super = curr.getDeclaredSuperType()) {
+        if (super->isStruct() && idx >= super->getStruct().fields.size()) {
+          // Do not mark fields that don't exist as nullable; this index may be
+          // used by a descriptor.
+          break;
+        }
         nullables.insert({*super, idx});
         curr = *super;
       }
@@ -764,9 +913,8 @@ void Inhabitator::markNullable(FieldPos field) {
       // this extra `index` variable once we have C++20. It's a workaround for
       // lambdas being unable to capture structured bindings.
       const size_t index = idx;
-      subtypes.iterSubTypes(curr, [&](HeapType type, Index) {
-        nullables.insert({type, index});
-      });
+      subtypes.iterSubTypes(
+        curr, [&](HeapType type, Index) { nullables.insert({type, index}); });
       break;
   }
 }
@@ -818,15 +966,17 @@ void Inhabitator::markExternRefsNullable() {
 //
 // [1]: https://en.wikipedia.org/wiki/Feedback_arc_set
 void Inhabitator::breakNonNullableCycles() {
-  // The types reachable from each heap type.
-  // TODO: Include descriptors.
+  // The types reachable from each heap type. Descriptors are modeled as
+  // additional non-nullable reference types appended to the other children.
   std::unordered_map<HeapType, std::vector<Type>> children;
 
   auto getChildren = [&children](HeapType type) {
     auto [it, inserted] = children.insert({type, {}});
     if (inserted) {
-      // TODO: Add descriptors.
       it->second = type.getTypeChildren();
+      if (auto desc = type.getDescriptorType()) {
+        it->second.push_back(Type(*desc, NonNullable, Exact));
+      }
     }
     return it->second;
   };
@@ -865,7 +1015,14 @@ void Inhabitator::breakNonNullableCycles() {
     visitType(root);
 
     while (path.size()) {
-      auto [curr, index] = path.back();
+      auto& [curr, index] = path.back();
+      // We may have visited this type again after searching through a
+      // descriptor backedge. If we've already finished visiting this type on
+      // that later visit, we don't need to continue this earlier visit.
+      if (visited.count(curr)) {
+        finishType();
+        continue;
+      }
       const auto& children = getChildren(curr);
 
       while (index < children.size()) {
@@ -883,6 +1040,7 @@ void Inhabitator::breakNonNullableCycles() {
         // Skip references that we have already marked nullable to satisfy
         // subtyping constraints.
         if (nullables.count({curr, index})) {
+          // std:: << "skipping fixed\n";
           ++index;
           continue;
         }
@@ -903,11 +1061,15 @@ void Inhabitator::breakNonNullableCycles() {
           continue;
         }
         // If this ref forms a cycle, break the cycle by marking it nullable and
-        // continue.
-        if (auto it = visiting.find(heapType); it != visiting.end()) {
-          markNullable({curr, index});
-          ++index;
-          continue;
+        // continue. We can't do this for descriptors, though. For those we will
+        // continue searching as if for any other non-nullable reference and
+        // eventually find a non-descriptor backedge.
+        if (!curr.getDescriptorType() || index != children.size() - 1) {
+          if (auto it = visiting.find(heapType); it != visiting.end()) {
+            markNullable({curr, index});
+            ++index;
+            continue;
+          }
         }
         break;
       }
@@ -1002,7 +1164,7 @@ std::vector<HeapType> Inhabitator::build() {
     start += size;
   }
 
-  // Establish supertypes and finality.
+  // Establish supertypes, descriptors, and finality.
   for (size_t i = 0; i < types.size(); ++i) {
     if (auto super = types[i].getDeclaredSuperType()) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
@@ -1010,6 +1172,12 @@ std::vector<HeapType> Inhabitator::build() {
       } else {
         builder[i].subTypeOf(*super);
       }
+    }
+    if (auto desc = types[i].getDescriptorType()) {
+      auto it = typeIndices.find(*desc);
+      assert(it != typeIndices.end());
+      builder[i].descriptor(builder[it->second]);
+      builder[it->second].describes(builder[i]);
     }
     builder[i].setOpen(types[i].isOpen());
     builder[i].setShared(types[i].getShared());
@@ -1093,6 +1261,11 @@ bool isUninhabitable(HeapType type,
   auto [it, inserted] = visiting.insert(type);
   if (!inserted) {
     return true;
+  }
+  if (auto desc = type.getDescriptorType()) {
+    if (isUninhabitable(Type(*desc, NonNullable, Exact), visited, visiting)) {
+      return true;
+    }
   }
   switch (type.getKind()) {
     case HeapTypeKind::Struct:
