@@ -811,55 +811,87 @@ void Inhabitator::markExternRefsNullable() {
   }
 }
 
-// Use a depth-first search to find cycles, marking the last found reference in
-// the cycle to be made non-nullable.
+// Break cycles of non-nullable references. Doing this optimally (i.e. by
+// changing the fewest possible references) is NP-complete[1], so use a simple
+// depth-first search rather than anything fancy. When we find a back edge
+// forming a cycle, mark the reference forming the edge as nullable.
+//
+// [1]: https://en.wikipedia.org/wiki/Feedback_arc_set
 void Inhabitator::breakNonNullableCycles() {
+  // The types reachable from each heap type.
+  // TODO: Include descriptors.
+  std::unordered_map<HeapType, std::vector<Type>> children;
+
+  auto getChildren = [&children](HeapType type) {
+    auto [it, inserted] = children.insert({type, {}});
+    if (inserted) {
+      // TODO: Add descriptors.
+      it->second = type.getTypeChildren();
+    }
+    return it->second;
+  };
+
+  // The sequence of visited types and edge indices comprising the current DFS
+  // search path.
+  std::vector<std::pair<HeapType, Index>> path;
+
+  // Track how many times each heap type appears on the current path.
+  std::unordered_map<HeapType, Index> visiting;
+
   // Types we've finished visiting. We don't need to visit them again.
   std::unordered_set<HeapType> visited;
 
-  // The path of types we are currently visiting. If one of them comes back up,
-  // we've found a cycle. Map the types to the other types they reference and
-  // our current index into that list so we can track where we are in each level
-  // of the search.
-  InsertOrderedMap<HeapType, std::pair<std::vector<Type>, Index>> visiting;
+  auto visitType = [&](HeapType type) {
+    path.push_back({type, 0});
+    ++visiting[type];
+  };
+
+  auto finishType = [&]() {
+    auto type = path.back().first;
+    path.pop_back();
+    auto it = visiting.find(type);
+    assert(it != visiting.end());
+    if (--it->second == 0) {
+      visiting.erase(it);
+    }
+    visited.insert(type);
+  };
 
   for (auto root : types) {
     if (visited.count(root)) {
       continue;
     }
     assert(visiting.size() == 0);
-    visiting.insert({root, {root.getTypeChildren(), 0}});
+    visitType(root);
 
-    while (visiting.size()) {
-      auto& [curr, state] = *std::prev(visiting.end());
-      auto& [children, idx] = state;
+    while (path.size()) {
+      auto [curr, index] = path.back();
+      const auto& children = getChildren(curr);
 
-      while (idx < children.size()) {
+      while (index < children.size()) {
         // Skip non-reference children because they cannot refer to other types.
-        if (!children[idx].isRef()) {
-          ++idx;
+        if (!children[index].isRef()) {
+          ++index;
           continue;
         }
         // Skip nullable references because they don't cause uninhabitable
         // cycles.
-        if (children[idx].isNullable()) {
-          ++idx;
+        if (children[index].isNullable()) {
+          ++index;
           continue;
         }
         // Skip references that we have already marked nullable to satisfy
-        // subtyping constraints. TODO: We could take such nullable references
-        // into account when detecting cycles by tracking where in the current
-        // search path we have made references nullable.
-        if (nullables.count({curr, idx})) {
-          ++idx;
+        // subtyping constraints.
+        if (nullables.count({curr, index})) {
+          ++index;
           continue;
         }
         // Skip references to types that we have finished visiting. We have
         // visited the full graph reachable from such references, so we know
         // they cannot cycle back to anything we are currently visiting.
-        auto heapType = children[idx].getHeapType();
+        auto heapType = children[index].getHeapType();
         if (visited.count(heapType)) {
-          ++idx;
+          ++index;
           continue;
         }
         // Skip references to function types. Functions types can always be
@@ -867,14 +899,14 @@ void Inhabitator::breakNonNullableCycles() {
         // params or results. Function references therefore break cycles that
         // would otherwise produce uninhabitability.
         if (heapType.isSignature()) {
-          ++idx;
+          ++index;
           continue;
         }
         // If this ref forms a cycle, break the cycle by marking it nullable and
         // continue.
         if (auto it = visiting.find(heapType); it != visiting.end()) {
-          markNullable({curr, idx});
-          ++idx;
+          markNullable({curr, index});
+          ++index;
           continue;
         }
         break;
@@ -882,16 +914,15 @@ void Inhabitator::breakNonNullableCycles() {
 
       // If we've finished the DFS on the current type, pop it off the search
       // path and continue searching the previous type.
-      if (idx == children.size()) {
-        visited.insert(curr);
-        visiting.erase(std::prev(visiting.end()));
+      if (index == children.size()) {
+        finishType();
         continue;
       }
 
       // Otherwise we have a non-nullable reference we need to search.
-      assert(children[idx].isRef() && children[idx].isNonNullable());
-      auto next = children[idx++].getHeapType();
-      visiting.insert({next, {next.getTypeChildren(), 0}});
+      assert(children[index].isRef() && children[index].isNonNullable());
+      auto next = children[index++].getHeapType();
+      visitType(next);
     }
   }
 }
