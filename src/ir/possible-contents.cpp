@@ -1143,6 +1143,10 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
+  void visitStringTest(StringTest* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
   void visitStringWTF16Get(StringWTF16Get* curr) {
     // TODO: optimize when possible
     addRoot(curr);

@@ -429,6 +429,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStringEncode(StringEncode* curr) {}
   void visitStringConcat(StringConcat* curr) {}
   void visitStringEq(StringEq* curr) {}
+  void visitStringTest(StringTest* curr) {}
   void visitStringWTF16Get(StringWTF16Get* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
 
