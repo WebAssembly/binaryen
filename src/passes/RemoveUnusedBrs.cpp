@@ -411,7 +411,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               curr->condition, br->value, getPassOptions(), *getModule())) {
           if (!br->condition) {
             br->condition = curr->condition;
-            copyBranchHintTo(curr, br, getFunction());
           } else {
             // In this case we can replace
             //   if (condition1) br_if (condition2)
@@ -445,6 +444,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               builder.makeSelect(br->condition, curr->condition, zero);
           }
           br->finalize();
+          copyBranchHintTo(curr, br, getFunction());
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
