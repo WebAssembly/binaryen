@@ -3,6 +3,9 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (import "a" "b" (func $i32 (type $1) (result i32)))
+  (import "a" "b" (func $i32 (result i32)))
+
   ;; CHECK:      (func $if-br (type $0) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (nop)
@@ -28,25 +31,31 @@
     )
   )
 
-  ;; CHECK:      (func $if-br_if (type $1) (param $x i32)
+  ;; CHECK:      (func $if-br_if (type $0) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $if-br_if (param $x i32)
+  (func $if-br_if (param $x i32) (param $y i32)
     (block $out
       (nop)
-      ;; As above, but the br has a condition. We can merge conditions, and
-      ;; still move the hint to the br_if.
+      ;; As above, but the br has a condition. We can merge conditions (using a
+      ;; select), and then move the hint to the br_if.
       (@metadata.code.branch_hint "\01")
       (if
         (local.get $x)
         (then
-          (br $out)
+          (br_if $out
+            (local.get $y)
+          )
         )
       )
     )
