@@ -168,11 +168,16 @@ static void clearBranchHint(Expression* expr, Function* func) {
   func->codeAnnotations[expr].branchLikely = {};
 }
 
-// Copy the branch hint from one instruction to another.
 static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
   auto fromLikely = getBranchHint(from, func);
   if (fromLikely) {
     setBranchHint(to, *fromLikely, func);
+  }
+}
+
+static void flipBranchHint(Expression* expr, Function* func) {
+  if (auto likely = getBranchHint(expr, func)) {
+    setBranchHint(expr, !*likely, func);
   }
 }
 
@@ -726,6 +731,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
             last->name = brIf->name;
             brIf->name = loop->name;
+            abort();
+            flipBranchHint(brIf, getFunction());
             return true;
           } else {
             // there are elements in the middle,
