@@ -752,6 +752,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
                                stealSlice(builder, block, i + 1, list.size()));
+              copyBranchHintTo(brIf, list[i], getFunction());
               block->finalize();
               return true;
             }

@@ -370,4 +370,38 @@
       )
     )
   )
+
+  ;; CHECK:      (func $loop-br_if-if (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (block $block
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop-br_if-if (param $x i32)
+    (loop $loop
+      (block $block
+        ;; This br_if will turn into an if with the same condition. The hint can
+        ;; be copied over.
+        (@metadata.code.branch_hint "\00")
+        (br_if $block
+          (local.get $x)
+        )
+        ;; Extra code so simpler optimizations do not kick in.
+        (drop (i32.const 42))
+        (br $loop)
+      )
+    )
+  )
 )
