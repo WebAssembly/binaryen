@@ -150,19 +150,30 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return tooCostlyToRunUnconditionally(passOptions, max);
 }
 
-// Copy the branch hint from one instruction to another.
-static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
-  auto iter = func->codeAnnotations.find(from);
+// Branch hint utilities.
+static std::optional<bool> getBranchHint(Expression* expr, Function* func) {
+  auto iter = func->codeAnnotations.find(expr);
   if (iter == func->codeAnnotations.end()) {
     // No annotations at all.
-    return;
+    return {};
   }
-  auto& annotation = iter->second;
-  if (!annotation.branchLikely) {
-    // No branch hint annotation.
-    return;
+  return iter->second.branchLikely;
+}
+
+static void setBranchHint(Expression* expr, bool likely, Function* func) {
+  func->codeAnnotations[expr].branchLikely = likely;
+}
+
+static void clearBranchHint(Expression* expr, Function* func) {
+  func->codeAnnotations[expr].branchLikely = {};
+}
+
+// Copy the branch hint from one instruction to another.
+static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
+  auto fromLikely = getBranchHint(from, func);
+  if (fromLikely) {
+    setBranchHint(to, *fromLikely, func);
   }
-  func->codeAnnotations[to].branchLikely = annotation.branchLikely;
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -475,6 +486,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         curr->condition = builder.makeSelect(
           child->condition, curr->condition, builder.makeConst(int32_t(0)));
+        // A branch hint makes sense if both ifs have one, and they agree
+        // (otherwise, we don't know if the combined condition is still likely/
+        // unlikely).
+        auto currHint = getBranchHint(curr, getFunction());
+        auto childHint = getBranchHint(child, getFunction());
+        if (!currHint || currHint != childHint) {
+          clearBranchHint(curr, getFunction());
+        }
         curr->ifTrue = child->ifTrue;
       }
     }

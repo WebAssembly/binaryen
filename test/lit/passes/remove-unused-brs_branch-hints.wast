@@ -5,6 +5,8 @@
 (module
   ;; CHECK:      (import "a" "b" (func $i32 (type $1) (result i32)))
   (import "a" "b" (func $i32 (result i32)))
+  ;; CHECK:      (import "a" "b" (func $none (type $2)))
+  (import "a" "b" (func $none))
 
   ;; CHECK:      (func $if-br (type $0) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
@@ -22,6 +24,29 @@
       ;; The if-br will turn into a br_if. The branch hint should then go on the
       ;; br_if, and remain 01.
       (@metadata.code.branch_hint "\01")
+      (if
+        (local.get $x)
+        (then
+          (br $out)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-br_0 (type $0) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-br_0 (param $x i32) (param $y i32)
+    (block $out
+      (nop)
+      ;; As above, but a hint of 0.
+      (@metadata.code.branch_hint "\00")
       (if
         (local.get $x)
         (then
@@ -55,6 +80,37 @@
         (then
           (br_if $out
             (local.get $y)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-if (type $0) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-if (param $x i32) (param $y i32)
+    ;; Both ifs have a hint, so after we merge the ifs the combined condition
+    ;; remains likely.
+    (@metadata.code.branch_hint "\01")
+    (if
+      (local.get $x)
+      (then
+        (@metadata.code.branch_hint "\01")
+        (if
+          (local.get $y)
+          (then
+            (call $none)
           )
         )
       )
