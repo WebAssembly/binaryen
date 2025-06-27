@@ -106,12 +106,12 @@ struct HeapTypeGeneratorImpl {
     // The indices of types that need descriptors and the total number of
     // remaining descriptors we have committed to create in this group.
     std::vector<Index> describees;
-    size_t committed = 0;
+    size_t numPlannedDescriptors = 0;
 
     size_t end = start + size;
     for (size_t i = start; i < end; ++i) {
       recGroupEnds.push_back(end);
-      planType(i, numRoots, end - i, describees, committed);
+      planType(i, numRoots, end - i, describees, numPlannedDescriptors);
     }
     return size;
   }
@@ -120,8 +120,8 @@ struct HeapTypeGeneratorImpl {
                 size_t numRoots,
                 size_t remaining,
                 std::vector<Index>& describees,
-                size_t& committed) {
-    assert(remaining >= committed);
+                size_t& numPlannedDescriptors) {
+    assert(remaining >= numPlannedDescriptors);
     typeIndices.insert({builder[i], i});
     // Everything is a subtype of itself.
     subtypeIndices[i].push_back(i);
@@ -134,12 +134,13 @@ struct HeapTypeGeneratorImpl {
     // Pick a type to describe, or choose not to describe a type by
     // picking the one-past-the-end index. If all of the remaining types must be
     // descriptors, then we must choose a describee.
-    Index describee = rand.upTo(describees.size() + (remaining != committed));
+    Index describee =
+      rand.upTo(describees.size() + (remaining != numPlannedDescriptors));
 
     bool isDescriptor = false;
     if (describee != describees.size()) {
       isDescriptor = true;
-      --committed;
+      --numPlannedDescriptors;
 
       // If the intended described type has a supertype with a descriptor, then
       // that descriptor must be the supertype of the type we intend to
@@ -192,8 +193,8 @@ struct HeapTypeGeneratorImpl {
     }
 
     --remaining;
-    assert(remaining >= committed);
-    size_t remainingUncommitted = remaining - committed;
+    assert(remaining >= numPlannedDescriptors);
+    size_t remainingUncommitted = remaining - numPlannedDescriptors;
 
     if (!super && i >= numRoots && rand.oneIn(2)) {
       // Try to pick a supertype. The supertype must be a descriptor type if and
@@ -252,13 +253,13 @@ struct HeapTypeGeneratorImpl {
           length += rand.upToSquared(remainingUncommitted - length);
         }
         descriptorChainLengths[i] = length;
-        committed += length;
+        numPlannedDescriptors += length;
       } else {
         // We can choose to start a brand new chain at this type.
         if (rand.oneIn(2)) {
           size_t length = rand.upToSquared(remainingUncommitted);
           descriptorChainLengths[i] = length;
-          committed += length;
+          numPlannedDescriptors += length;
         }
       }
     }
