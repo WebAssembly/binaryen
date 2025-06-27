@@ -6,8 +6,8 @@
 ;; A trivial argument for now is just an instruction with size 1. E.g.
 ;; `local.get`, constants.
 ;;
-;; In this test we check inlining when the trivial call arguments are constant.
-;; In tests inlining-trivial-calls-{1,2,3}.wast we check locals.
+;; In this test we check inlining when the trivial call arguments are
+;; constants. In tests inlining-trivial-calls-{1,2,3}.wast we check locals.
 
 ;; RUN: foreach %s %t wasm-opt -all -O3 -S -o - | filecheck %s --check-prefix=O3
 ;; RUN: foreach %s %t wasm-opt -all -O2 -S -o - | filecheck %s --check-prefix=O2
