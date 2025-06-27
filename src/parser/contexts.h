@@ -890,6 +890,9 @@ struct NullInstrParserCtx {
   Result<> makeStringEq(Index, const std::vector<Annotation>&, StringEqOp) {
     return Ok{};
   }
+  Result<> makeStringTest(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
   Result<> makeStringWTF8Advance(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
@@ -2821,6 +2824,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
                         const std::vector<Annotation>& annotations,
                         StringEqOp op) {
     return withLoc(pos, irBuilder.makeStringEq(op));
+  }
+
+  Result<> makeStringTest(Index pos,
+                          const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeStringTest());
   }
 
   Result<> makeStringWTF16Get(Index pos,
