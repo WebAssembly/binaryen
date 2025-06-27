@@ -198,7 +198,7 @@ struct HeapTypeGeneratorImpl {
     if (!super && i >= numRoots && rand.oneIn(2)) {
       // Try to pick a supertype. The supertype must be a descriptor type if and
       // only if we are currently generating a descriptor type. Furthermore, we
-      // must have space left in the current chaink if it exists, or else in the
+      // must have space left in the current chain if it exists, or else in the
       // rec group, to mirror the supertype's descriptor chain, if it has one.
       // Finally, if this is a descriptor, the sharedness of the described type
       // and supertype must match.
