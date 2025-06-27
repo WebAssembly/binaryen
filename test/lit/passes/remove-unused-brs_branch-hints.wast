@@ -86,7 +86,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-if (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-if-1* (type $0) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
@@ -98,8 +98,28 @@
   ;; CHECK-NEXT:    (call $none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $if-if (param $x i32) (param $y i32)
+  (func $if-if-1* (param $x i32) (param $y i32)
     ;; Both ifs have a hint, so after we merge the ifs the combined condition
     ;; remains likely.
     (@metadata.code.branch_hint "\01")
@@ -107,6 +127,34 @@
       (local.get $x)
       (then
         (@metadata.code.branch_hint "\01")
+        (if
+          (local.get $y)
+          (then
+            (call $none)
+          )
+        )
+      )
+    )
+    ;; The outer if still has a hint of 1, but the inner is 0. We emit no hint.
+    (@metadata.code.branch_hint "\01")
+    (if
+      (local.get $x)
+      (then
+        (@metadata.code.branch_hint "\00")
+        (if
+          (local.get $y)
+          (then
+            (call $none)
+          )
+        )
+      )
+    )
+    ;; The outer if still has a hint of 1, but the inner has none. We emit no
+    ;;  hint.
+    (@metadata.code.branch_hint "\01")
+    (if
+      (local.get $x)
+      (then
         (if
           (local.get $y)
           (then
