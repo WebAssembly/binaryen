@@ -250,7 +250,7 @@ struct FunctionInfoScanner
       for (auto* operand : call->operands) {
         if (auto* localGet = operand->dynCast<LocalGet>()) {
           if (localGet->index == nextLocalGetIndex) {
-            nextLocalGetIndex += 1;
+            nextLocalGetIndex++;
           } else {
             shrinks = false;
             break;
