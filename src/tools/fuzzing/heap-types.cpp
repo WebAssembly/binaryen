@@ -149,6 +149,7 @@ struct HeapTypeGeneratorImpl {
       // instead.
       Index described;
       while (true) {
+        assert(describee < describees.size());
         described = describees[describee];
         auto describedSuper = supertypeIndices[described];
         if (!describedSuper) {
@@ -173,7 +174,6 @@ struct HeapTypeGeneratorImpl {
             break;
           }
         }
-        assert(describee < describees.size());
         // Go back and check whether the new intended type can be generated.
         continue;
       }
