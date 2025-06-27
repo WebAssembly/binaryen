@@ -952,11 +952,11 @@ void print(std::ostream& o, const PrincipalType& type) {
     }
     print(o, *it);
   }
+  o << ']';
   if (type.unreachable) {
-    o << "]~>[";
-  } else {
-    o << "]->[";
+    o << '*';
   }
+  o << "->[";
   for (auto it = type.results.begin(); it != type.results.end(); ++it) {
     if (it != type.results.begin()) {
       o << " ";

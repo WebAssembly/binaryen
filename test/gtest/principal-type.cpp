@@ -61,11 +61,11 @@ TEST(PrincipalTypeTest, ComposeBasic) {
   // Empty types with all combinations of unreachability.
   // []->[] + []->[] = []->[]
   COMPOSE(({}, {}), ({}, {}), ({}, {}));
-  // []->[] + []~>[] = []~>[]
+  // []->[] + []*->[] = []*->[]
   COMPOSE(({}, {}), ({}, {}, true), ({}, {}, true));
-  // []~>[] + []->[] = []~>[]
+  // []*->[] + []->[] = []*->[]
   COMPOSE(({}, {}, true), ({}, {}), ({}, {}, true));
-  // []~>[] + []~>[] = []~>[]
+  // []*->[] + []*->[] = []*->[]
   COMPOSE(({}, {}, true), ({}, {}, true), ({}, {}, true));
 
   // i32 in all positions with all combinations of unreachability.
@@ -78,31 +78,31 @@ TEST(PrincipalTypeTest, ComposeBasic) {
   // []->[] + []->[i32] = []->[i32]
   COMPOSE(({}, {}), ({}, {i32}), ({}, {i32}));
 
-  // [i32]~>[] + []->[] = [i32]~>[]
+  // [i32]*->[] + []->[] = [i32]*->[]
   COMPOSE(({i32}, {}, true), ({}, {}), ({i32}, {}, true));
-  // []~>[i32] + []->[] = []~>[i32]
+  // []*->[i32] + []->[] = []*->[i32]
   COMPOSE(({}, {i32}, true), ({}, {}), ({}, {i32}, true));
-  // []~>[] + [i32]->[] = []~>[]
+  // []*->[] + [i32]->[] = []*->[]
   COMPOSE(({}, {}, true), ({i32}, {}), ({}, {}, true));
-  // []~>[] + []->[i32] = []~>[i32]
+  // []*->[] + []->[i32] = []*->[i32]
   COMPOSE(({}, {}, true), ({}, {i32}), ({}, {i32}, true));
 
-  // [i32]->[] + []~>[] = [i32]~>[]
+  // [i32]->[] + []*->[] = [i32]*->[]
   COMPOSE(({i32}, {}), ({}, {}, true), ({i32}, {}, true));
-  // []->[i32] + []~>[] = []~>[]
+  // []->[i32] + []*->[] = []*->[]
   COMPOSE(({}, {i32}), ({}, {}, true), ({}, {}, true));
-  // []->[] + [i32]~>[] = [i32]~>[]
+  // []->[] + [i32]*->[] = [i32]*->[]
   COMPOSE(({}, {}), ({i32}, {}, true), ({i32}, {}, true));
-  // []->[] + []~>[i32] = []~>[i32]
+  // []->[] + []*->[i32] = []*->[i32]
   COMPOSE(({}, {}), ({}, {i32}, true), ({}, {i32}, true));
 
-  // [i32]~>[] + []~>[] = [i32]~>[]
+  // [i32]*->[] + []*->[] = [i32]*->[]
   COMPOSE(({i32}, {}, true), ({}, {}, true), ({i32}, {}, true));
-  // []~>[i32] + []~>[] = []~>[]
+  // []*->[i32] + []*->[] = []*->[]
   COMPOSE(({}, {i32}, true), ({}, {}, true), ({}, {}, true));
-  // []~>[] + [i32]~>[] = []~>[]
+  // []*->[] + [i32]*->[] = []*->[]
   COMPOSE(({}, {}, true), ({i32}, {}, true), ({}, {}, true));
-  // []~>[] + []~>[i32] = []~>[i32]
+  // []*->[] + []*->[i32] = []*->[i32]
   COMPOSE(({}, {}, true), ({}, {i32}, true), ({}, {i32}, true));
 
   // A second type (f64) in all possible positions.
@@ -181,9 +181,9 @@ TEST(PrincipalTypeTest, MatchTypeVariables) {
   COMPOSE(({t0}, {t0}), ({t0}, {i32}), ({t0}, {i32}));
 
   // Match bottom.
-  // []~>[] + [t0]->[t0] = []~>[]
+  // []*->[] + [t0]->[t0] = []*->[]
   COMPOSE(({}, {}, true), ({t0}, {t0}), ({}, {}, true));
-  // [t0]->[t0] + []*->[] = [t0]~>[]
+  // [t0]->[t0] + []*->[] = [t0]*->[]
   COMPOSE(({t0}, {t0}), ({}, {}, true), ({t0}, {}, true));
 
   // Multiple variables.
@@ -242,9 +242,9 @@ TEST(PrincipalTypeTest, MatchHeapTypeVariables) {
   COMPOSE(({refNullT0}, {refT0}), ({refT0}, {refT0}), ({refNullT0}, {refT0}));
 
   // Match bottom.
-  // []~>[] + [(ref t0)]->[(ref t0)] = []~>[(ref bot))]
+  // []*->[] + [(ref t0)]->[(ref t0)] = []*->[(ref bot))]
   COMPOSE(({}, {}, true), ({refT0}, {refT0}), ({}, {refBot}, true));
-  // [(ref t0)]->[(ref t0)] + []~>[] = [(ref t0)]~>[]
+  // [(ref t0)]->[(ref t0)] + []*->[] = [(ref t0)]*->[]
   COMPOSE(({refT0}, {refT0}), ({}, {}, true), ({refT0}, {}, true));
 }
 
@@ -291,9 +291,9 @@ TEST(PrincipalTypeTest, MatchNullabilityVariables) {
     ({refN0Eq}, {refN0Eq}), ({refN0Eq}, {refN0Eq}), ({refN0Eq}, {refN0Eq}));
 
   // Match bottom.
-  // []~>[] + [(ref n0 any)]->[(ref n0 any)] = []~>[(ref any))]
+  // []*->[] + [(ref n0 any)]->[(ref n0 any)] = []*->[(ref any))]
   COMPOSE(({}, {}, true), ({refN0Any}, {refN0Any}), ({}, {refAny}, true));
-  // [(ref n0 any)]->[(ref n0 any)] + []~>[] = [(ref n0 any)]~>[]
+  // [(ref n0 any)]->[(ref n0 any)] + []*->[] = [(ref n0 any)]*->[]
   COMPOSE(({refN0Any}, {refN0Any}), ({}, {}, true), ({refN0Any}, {}, true));
 }
 
@@ -365,9 +365,9 @@ TEST(PrincipalTypeTest, MatchExactnessVariables) {
   COMPOSE(({}, {refBot}), ({refE0Foo}, {refE0Foo}), ({}, {refExactFoo}));
   // [(ref (e0 foo))]->[(ref (e0 foo))] + [(ref bot)]->[] = X
   NO_COMPOSE(({refE0Foo}, {refE0Foo}), ({refBot}, {}));
-  // []~>[] + [(ref (e0 foo))]->[(ref (e0 foo))] = []~>[(ref (exact foo))]
+  // []*->[] + [(ref (e0 foo))]->[(ref (e0 foo))] = []*->[(ref (exact foo))]
   COMPOSE(({}, {}, true), ({refE0Foo}, {refE0Foo}), ({}, {refExactFoo}, true));
-  // [(ref (e0 foo))]->[(ref (e0 foo))] + []~>[] = [(ref (e0 foo))]~>[]
+  // [(ref (e0 foo))]->[(ref (e0 foo))] + []*->[] = [(ref (e0 foo))]*->[]
   COMPOSE(({refE0Foo}, {refE0Foo}), ({}, {}, true), ({refE0Foo}, {}, true));
 }
 
@@ -444,9 +444,9 @@ TEST(PrincipalTypeTest, MatchSharednessVariables) {
   COMPOSE(({}, {refBot}), ({refS0Any}, {refS0Any}), ({}, {refBotAny}));
   // [(ref (s0 any))]->[(ref (s0 any))] + [(ref bot)]->[] = X
   NO_COMPOSE(({refS0Any}, {refS0Any}), ({refBot}, {}));
-  // []~>[] + [(ref (s0 any))]->[(ref (s0 any))] = []~>[(ref (bot-share any))]
+  // []*->[] + [(ref (s0 any))]->[(ref (s0 any))] = []*->[(ref (bot-share any))]
   COMPOSE(({}, {}, true), ({refS0Any}, {refS0Any}), ({}, {refBotAny}, true));
-  // [(ref (s0 any))]->[(ref (s0 any))] + []~>[] = [(ref (s0 any))]~>[]
+  // [(ref (s0 any))]->[(ref (s0 any))] + []*->[] = [(ref (s0 any))]*->[]
   COMPOSE(({refS0Any}, {refS0Any}), ({}, {}, true), ({refS0Any}, {}, true));
 }
 
