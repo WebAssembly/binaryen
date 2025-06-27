@@ -243,4 +243,75 @@
       )
     )
   )
-)
+
+  ;; CHECK:      (func $if-if-?* (type $0) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-if-?* (param $x i32) (param $y i32)
+    ;; As above, but now the outer if has no hint. We emit no hints here.
+
+    (if
+      (local.get $x)
+      (then
+        (@metadata.code.branch_hint "\01")
+        (if
+          (local.get $y)
+          (then
+            (call $none)
+          )
+        )
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (@metadata.code.branch_hint "\00")
+        (if
+          (local.get $y)
+          (then
+            (call $none)
+          )
+        )
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (if
+          (local.get $y)
+          (then
+            (call $none)
+          )
+        )
+      )
+    )
+  ))
