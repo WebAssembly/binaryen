@@ -753,6 +753,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                builder.makeBreak(brIf->name),
                                stealSlice(builder, block, i + 1, list.size()));
               copyBranchHintTo(brIf, list[i], getFunction());
+              // next: benchnarj without binarye
+              // later: fuzz this: instrument "i am guessing at loc X" and "it was true/it was false", then fuzzz that we don't decreaes times we are right.
+              // maybe: turn hints into asserts? not for fuzzing, but testing. if hint is 1, assert the value is not 0, etc.
               block->finalize();
               return true;
             }
