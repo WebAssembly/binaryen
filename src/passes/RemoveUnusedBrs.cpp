@@ -486,9 +486,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         curr->condition = builder.makeSelect(
           child->condition, curr->condition, builder.makeConst(int32_t(0)));
-        // A branch hint makes sense if both ifs have one, and they agree
-        // (otherwise, we don't know if the combined condition is still likely/
-        // unlikely).
+        // If two conditions A and B are likely, then A && B is also likely
+        // (though, in theory, slightly less likely, but our branch hints are
+        // close to certainty). If one of them lacks a hint, we know nothing. If
+        // both are unlikely, we can say that A && B is also unlikely (in fact
+        // it is less likely).
         auto currHint = getBranchHint(curr, getFunction());
         auto childHint = getBranchHint(child, getFunction());
         if (!currHint || currHint != childHint) {
