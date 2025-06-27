@@ -1040,7 +1040,6 @@ void Inhabitator::breakNonNullableCycles() {
         // Skip references that we have already marked nullable to satisfy
         // subtyping constraints.
         if (nullables.count({curr, index})) {
-          // std:: << "skipping fixed\n";
           ++index;
           continue;
         }
