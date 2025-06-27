@@ -3,9 +3,9 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (import "a" "b" (func $i32 (type $1) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $i32 (type $2) (result i32)))
   (import "a" "b" (func $i32 (result i32)))
-  ;; CHECK:      (import "a" "b" (func $none (type $2)))
+  ;; CHECK:      (import "a" "b" (func $none (type $3)))
   (import "a" "b" (func $none))
 
   ;; CHECK:      (func $if-br (type $0) (param $x i32) (param $y i32)
@@ -314,4 +314,60 @@
         )
       )
     )
-  ))
+  )
+
+  ;; CHECK:      (func $loop-br_if-flip (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:     (br_if $loop
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop-br_if-flip (param $x i32)
+    (block $block
+      (loop $loop
+        ;; This br_if's condition will flip when it is turned from a break out
+        ;; of the loop to a continue inside it. The hint should flip too.
+        (@metadata.code.branch_hint "\00")
+        (br_if $block
+          (local.get $x)
+        )
+        (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $loop-br_if-flip-reverse (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:     (br_if $loop
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop-br_if-flip-reverse (param $x i32)
+    ;; As above, with a hint of 1, that should flip to 0.
+    (block $block
+      (loop $loop
+        (@metadata.code.branch_hint "\01")
+        (br_if $block
+          (local.get $x)
+        )
+        (br $loop)
+      )
+    )
+  )
+)

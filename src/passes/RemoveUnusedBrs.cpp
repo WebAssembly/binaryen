@@ -731,7 +731,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
             last->name = brIf->name;
             brIf->name = loop->name;
-            abort();
             flipBranchHint(brIf, getFunction());
             return true;
           } else {
