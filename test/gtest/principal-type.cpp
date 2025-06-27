@@ -451,6 +451,7 @@ TEST(PrincipalTypeTest, MatchSharednessVariables) {
 }
 
 TEST(PrincipalTypeTest, UnifyVariables) {
+  Type i32 = Type::i32;
   HeapType any = HeapType::any;
   Type anyref = Type(any, Nullable);
   Type refAny = Type(any, NonNullable);
@@ -488,8 +489,11 @@ TEST(PrincipalTypeTest, UnifyVariables) {
   COMPOSE(({}, {t2, t2, t1, t1, t0}),
           ({t2, t1, t1, t0, t0}, {t0, t1, t2}),
           ({}, {t0, t0, t0}));
-  // []->[t1 t1 t0 t0 i32] + [t0' t1' t1' t2 t2] = []->[i32 i32 i32 i32 i32]
-  COMPOSE(({}, {}), ({}, {}), ({}, {}));
+  // []->[t1 t1 t0 t0 i32] + [t2' t1' t1' t0' t0']->[t0' t1' t2']
+  //     = []->[i32 i32 i32]
+  COMPOSE(({}, {t1, t1, t0, t0, i32}),
+          ({t2, t1, t1, t0, t0}, {t0, t1, t2}),
+          ({}, {i32, i32, i32}));
 
   // Join multiple type variables.
   // []->[eqref (ref any)] + [t0 t0]->[t0] = []->[anyref]
