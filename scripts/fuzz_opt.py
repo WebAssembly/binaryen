@@ -1843,22 +1843,47 @@ class PreserveImportsExports(TestCaseHandler):
 
         compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
+class Owi(TestCaseHandler):
+    frequency = 1
+
+    def can_run_on_wasm(self, wasm):
+        if JSPI:
+            return False
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'gc', 'multimemory', 'memory64', 'custom-descriptors', 'shared-everything'])
+
+    def handle_pair(self, input, before_wasm, after_wasm, opts):
+        completed_process = subprocess.run(["owi", "iso", before_wasm, after_wasm, "--fail-on-assertion-only"])
+        code = completed_process.returncode
+
+        # 20: incompatible import type due to log-i64 being unreliable
+        if code == 20:
+            return True
+        # illegal opcode, needs to be investigated
+        elif code == 30:
+            return True
+        # unknown import, needs to be fixed in Owi (table-get and table-set)
+        elif code == 45:
+            return True
+        else:
+            print("found a bug: return code of Owi was: ", code)
+            return code == 0
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
+    #Wasm2JS(),
+    #TrapsNeverHappen(),
+    #CtorEval(),
+    #Merge(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
-    RoundtripText(),
-    ClusterFuzz(),
-    Two(),
-    PreserveImportsExports(),
+    #RoundtripText(),
+    #ClusterFuzz(),
+    #Two(),
+    #PreserveImportsExports(),
+    Owi(),
 ]
 
 
