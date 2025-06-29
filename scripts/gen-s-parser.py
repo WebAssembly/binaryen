@@ -678,6 +678,7 @@ instructions = [
     ("string.concat",        "makeStringConcat()"),
     ("string.eq",            "makeStringEq(StringEqEqual)"),
     ("string.compare",       "makeStringEq(StringEqCompare)"),
+    ("string.test",          "makeStringTest()"),
     ("stringview_wtf16.get_codeunit", "makeStringWTF16Get()"),
     ("stringview_wtf16.slice",        "makeStringSliceWTF()"),
     # Ignored in input

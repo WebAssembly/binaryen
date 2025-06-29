@@ -109,8 +109,8 @@ StringMeasure: 88
 StringEncode: 89
 StringConcat: 90
 StringEq: 91
-StringWTF16Get: 92
-StringSliceWTF: 93
+StringWTF16Get: 93
+StringSliceWTF: 94
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)

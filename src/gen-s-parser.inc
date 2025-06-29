@@ -5139,6 +5139,12 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
+                  case 't':
+                    if (op == "string.test"sv) {
+                      CHECK_ERR(makeStringTest(ctx, pos, annotations));
+                      return Ok{};
+                    }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }

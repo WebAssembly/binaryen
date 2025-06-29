@@ -1226,6 +1226,11 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->right, stringref);
   }
 
+  void visitStringTest(StringTest* curr) {
+    auto stringref = Type(HeapType::ext, Nullable);
+    note(&curr->ref, stringref);
+  }
+
   void visitStringWTF16Get(StringWTF16Get* curr) {
     note(&curr->ref, Type(HeapType::string, Nullable));
     note(&curr->pos, Type::i32);

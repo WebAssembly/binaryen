@@ -2547,6 +2547,7 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.eq*");
     }
   }
+  void visitStringTest(StringTest* curr) { printMedium(o, "string.test"); }
   void visitStringWTF16Get(StringWTF16Get* curr) {
     printMedium(o, "stringview_wtf16.get_codeunit");
   }

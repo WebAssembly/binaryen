@@ -1472,6 +1472,14 @@ void StringEq::finalize() {
   }
 }
 
+void StringTest::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
 void StringWTF16Get::finalize() {
   if (ref->type == Type::unreachable || pos->type == Type::unreachable) {
     type = Type::unreachable;

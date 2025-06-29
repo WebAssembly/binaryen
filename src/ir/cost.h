@@ -788,6 +788,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // "3" is chosen since strings might or might not be interned in the engine.
     return 3 + visit(curr->left) + visit(curr->right);
   }
+  CostType visitStringTest(StringTest* curr) {
+    // "3" copied from `visitStringEq`.
+    return 3 + visit(curr->ref);
+  }
   CostType visitStringWTF16Get(StringWTF16Get* curr) {
     return 1 + visit(curr->ref) + visit(curr->pos);
   }

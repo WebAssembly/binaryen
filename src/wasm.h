@@ -748,6 +748,7 @@ public:
     StringEncodeId,
     StringConcatId,
     StringEqId,
+    StringTestId,
     StringWTF16GetId,
     StringSliceWTFId,
     ContNewId,
@@ -2002,6 +2003,16 @@ public:
 
   Expression* left;
   Expression* right;
+
+  void finalize();
+};
+
+class StringTest : public SpecificExpression<Expression::StringTestId> {
+public:
+  StringTest() = default;
+  StringTest(MixedArena& allocator) {}
+
+  Expression* ref;
 
   void finalize();
 };

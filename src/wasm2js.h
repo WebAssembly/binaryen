@@ -2412,6 +2412,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitStringTest(StringTest* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitStringWTF16Get(StringWTF16Get* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

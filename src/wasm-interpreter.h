@@ -2448,6 +2448,10 @@ public:
     }
     return Literal(result);
   }
+  Flow visitStringTest(StringTest* curr) {
+    trap("TODO");
+    WASM_UNREACHABLE("unimp");
+  }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     NOTE_ENTER("StringWTF16Get");
     Flow ref = visit(curr->ref);

@@ -880,6 +880,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringEq(StringEq* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitStringTest(StringTest* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
 

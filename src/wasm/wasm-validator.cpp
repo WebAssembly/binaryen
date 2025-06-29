@@ -524,6 +524,7 @@ public:
   void visitStringEncode(StringEncode* curr);
   void visitStringConcat(StringConcat* curr);
   void visitStringEq(StringEq* curr);
+  void visitStringTest(StringTest* curr);
   void visitStringWTF16Get(StringWTF16Get* curr);
   void visitStringSliceWTF(StringSliceWTF* curr);
   void visitContNew(ContNew* curr);
@@ -3897,6 +3898,12 @@ void FunctionValidator::visitStringConcat(StringConcat* curr) {
 }
 
 void FunctionValidator::visitStringEq(StringEq* curr) {
+  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
+               curr,
+               "string operations require reference-types [--enable-strings]");
+}
+
+void FunctionValidator::visitStringTest(StringTest* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");

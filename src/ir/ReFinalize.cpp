@@ -182,6 +182,7 @@ void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
 void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
 void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
 void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
+void ReFinalize::visitStringTest(StringTest* curr) { curr->finalize(); }
 void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
 void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }

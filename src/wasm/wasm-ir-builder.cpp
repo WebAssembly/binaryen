@@ -2505,6 +2505,13 @@ Result<> IRBuilder::makeStringEq(StringEqOp op) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeStringTest() {
+  StringTest curr;
+  CHECK_ERR(visitStringTest(&curr));
+  push(builder.makeStringTest(curr.ref));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeStringWTF16Get() {
   StringWTF16Get curr;
   CHECK_ERR(visitStringWTF16Get(&curr));
