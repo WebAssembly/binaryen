@@ -67,7 +67,27 @@ enum class InliningMode {
   SplitPatternB
 };
 
-// Useful into on a function, helping us decide if we can inline it
+// Whether a function is just a single instruction with only `local.get`s and
+// constants as arguments, that always shrinks when inlined.
+enum class TrivialInstruction {
+  // Function is not a single instruction, or it may not shrink when inlined.
+  NotTrivial,
+
+  // Function is just one instruction, with `local.get`s as arguments, and each
+  // `local` is used exactly once, in the order they appear in the argument
+  // list.
+  //
+  // In this case, inlining the function generates smaller code, and it is also
+  // good for runtime.
+  Shrinks,
+
+  // Function is a single instruction, but maybe with arguments other than
+  // `local.get`s, or maybe some locals are used more than once. In this case
+  // code size does not always shrink.
+  MayNotShrink,
+};
+
+// Useful info on a function, helping us decide if we can inline it.
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
@@ -77,16 +97,7 @@ struct FunctionInfo {
   // Something is used globally if there is a reference to it in a table or
   // export etc.
   bool usedGlobally;
-  // We consider a function to be a trivial call if the body is just a call with
-  // trivial arguments, like this:
-  //
-  //  (func $forward (param $x) (param $y)
-  //    (call $target (local.get $x) (local.get $y))
-  //  )
-  //
-  // Specifically the body must be a call, and the operands to the call must be
-  // of size 1 (generally, LocalGet or Const).
-  bool isTrivialCall;
+  TrivialInstruction trivialInstruction;
   InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
@@ -98,7 +109,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
-    isTrivialCall = false;
+    trivialInstruction = TrivialInstruction::NotTrivial;
     inliningMode = InliningMode::Unknown;
   }
 
@@ -110,7 +121,7 @@ struct FunctionInfo {
     hasLoops = other.hasLoops;
     hasTryDelegate = other.hasTryDelegate;
     usedGlobally = other.usedGlobally;
-    isTrivialCall = other.isTrivialCall;
+    trivialInstruction = other.trivialInstruction;
     inliningMode = other.inliningMode;
     return *this;
   }
@@ -132,6 +143,11 @@ struct FunctionInfo {
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
+    // If the function calls another one in a way that always shrinks when
+    // inlined, inline it in all optimization and shrink modes.
+    if (trivialInstruction == TrivialInstruction::Shrinks) {
+      return true;
+    }
     // If it's so big that we have no flexible options that could allow it,
     // do not inline.
     if (size > options.inlining.flexibleInlineMaxSize) {
@@ -143,22 +159,18 @@ struct FunctionInfo {
     if (options.shrinkLevel > 0 || options.optimizeLevel < 3) {
       return false;
     }
-    if (hasCalls) {
-      // This has calls. If it is just a trivial call itself then inline, as we
-      // will save a call that way - basically we skip a trampoline in the
-      // middle - but if it is something more complex, leave it alone, as we may
-      // not help much (and with recursion we may end up with a wasteful
-      // increase in code size).
-      //
-      // Note that inlining trivial calls may increase code size, e.g. if they
-      // use a parameter more than once (forcing us after inlining to save that
-      // value to a local, etc.), but here we are optimizing for speed and not
-      // size, so we risk it.
-      return isTrivialCall;
+    // The function just calls another function, but it's using locals in
+    // different order than the argument order, and/or using some locals more
+    // than once. In this case we inline if we're not optimizing for code size,
+    // as inlining it to more than one call site may increase code size by
+    // introducing locals.
+    if (trivialInstruction == TrivialInstruction::MayNotShrink) {
+      return true;
     }
-    // This doesn't have calls. Inline if loops do not prevent us (normally, a
-    // loop suggests a lot of work and so inlining is less useful).
-    return !hasLoops || options.inlining.allowFunctionsWithLoops;
+    // Trivial calls are already handled. Inline if
+    // 1. The function doesn't have calls, and
+    // 2. The function doesn't have loops, or we allow inlining with loops.
+    return !hasCalls && (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
 };
 
@@ -227,10 +239,51 @@ struct FunctionInfoScanner
     info.size = Measurer::measure(curr->body);
 
     if (auto* call = curr->body->dynCast<Call>()) {
+      // If call arguments are function locals read in order, then the code size
+      // always shrinks when the call is inlined. Note that we don't allow
+      // skipping function arguments here, as that can create `drop`
+      // instructions at the call sites, increasing code size.
+      bool shrinks = true;
+      Index nextLocalGetIndex = 0;
+      for (auto* operand : call->operands) {
+        if (auto* localGet = operand->dynCast<LocalGet>()) {
+          if (localGet->index == nextLocalGetIndex) {
+            nextLocalGetIndex += 1;
+          } else {
+            shrinks = false;
+            break;
+          }
+        } else {
+          shrinks = false;
+          break;
+        }
+      }
+
+      if (shrinks) {
+        info.trivialInstruction = TrivialInstruction::Shrinks;
+        return;
+      }
+
       if (info.size == call->operands.size() + 1) {
         // This function body is a call with some trivial (size 1) operands like
         // LocalGet or Const, so it is a trivial call.
-        info.isTrivialCall = true;
+        info.trivialInstruction = TrivialInstruction::MayNotShrink;
+      }
+
+    } else if (auto* binary = curr->body->dynCast<Binary>()) {
+      info.trivialInstruction = TrivialInstruction::MayNotShrink;
+      if (auto* left = binary->left->dynCast<LocalGet>()) {
+        if (auto* right = binary->right->dynCast<LocalGet>()) {
+          if (right->index > left->index) {
+            info.trivialInstruction = TrivialInstruction::Shrinks;
+          }
+        }
+      }
+
+    } else if (auto* unary = curr->body->dynCast<Unary>()) {
+      info.trivialInstruction = TrivialInstruction::MayNotShrink;
+      if (unary->value->dynCast<LocalGet>()) {
+        info.trivialInstruction = TrivialInstruction::Shrinks;
       }
     }
   }
