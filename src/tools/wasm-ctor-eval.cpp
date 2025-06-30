@@ -850,7 +850,7 @@ public:
     } else {
       // This is the first usage of this data. Generate a struct.new /
       // array.new for it.
-      auto& values = value.getGCData()->values;
+      auto& values = data->values;
       std::vector<Expression*> args;
 
       // The initial values for this allocation may themselves be GC
@@ -876,10 +876,15 @@ public:
         args.push_back(getSerialization(value));
       }
 
+      Expression* desc = nullptr;
+      if (data->desc.getGCData()) {
+        desc = getSerialization(data->desc);
+      }
+
       Expression* init;
       auto heapType = type.getHeapType();
       if (heapType.isStruct()) {
-        init = builder.makeStructNew(heapType, args);
+        init = builder.makeStructNew(heapType, args, desc);
       } else if (heapType.isArray()) {
         // TODO: for repeated identical values, can use ArrayNew
         init = builder.makeArrayNewFixed(heapType, args);

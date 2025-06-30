@@ -858,7 +858,16 @@ private:
       parent.implicitTrap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
-    void visitStructNew(StructNew* curr) {}
+    void visitStructNew(StructNew* curr) {
+      if (curr->desc) {
+        // Traps when the descriptor is null.
+        if (curr->desc->type.isNull()) {
+          parent.trap = true;
+        } else if (curr->desc->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
+      }
+    }
     void visitStructGet(StructGet* curr) {
       if (curr->ref->type == Type::unreachable) {
         return;
