@@ -446,8 +446,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
+    // TODO: Support custom descriptors.
+    auto features = wasm.features;
+    features.setCustomDescriptors(false);
     auto generator = HeapTypeGenerator::create(
-      random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
+      random, features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "

@@ -485,8 +485,8 @@ struct Analyzer {
 
     // Use the descriptor right now, normally. (We only have special
     // optimization for struct.new operands, below.)
-    if (new_->descriptor) {
-      use(new_->descriptor);
+    if (new_->desc) {
+      use(new_->desc);
     }
 
     auto type = new_->type.getHeapType();

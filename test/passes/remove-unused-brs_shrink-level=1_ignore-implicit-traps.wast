@@ -55,41 +55,42 @@
     (i32.const 0)
   )
   (func $join-br_ifs
+    (local $x i32)
     (block $out
-      (br_if $out (i32.const 1))
-      (br_if $out (i32.const 2))
-      (br_if $out (i32.const 3))
+      (br_if $out (local.get $x))
+      (br_if $out (local.get $x))
+      (br_if $out (local.get $x))
     )
     (block $out2
       (block $out3
-        (br_if $out2 (i32.const 1))
-        (br_if $out3 (i32.const 2))
-        (br_if $out2 (i32.const 3))
+        (br_if $out2 (local.get $x))
+        (br_if $out3 (local.get $x))
+        (br_if $out2 (local.get $x))
       )
       (unreachable)
     )
     (block $out4
       (block $out5
-        (br_if $out4 (i32.const 1))
-        (br_if $out5 (i32.const 2))
-        (br_if $out5 (i32.const 3))
+        (br_if $out4 (local.get $x))
+        (br_if $out5 (local.get $x))
+        (br_if $out5 (local.get $x))
       )
       (unreachable)
     )
     (block $out6
       (block $out7
-        (br_if $out6 (i32.const 1))
-        (br_if $out6 (i32.const 2))
-        (br_if $out7 (i32.const 3))
+        (br_if $out6 (local.get $x))
+        (br_if $out6 (local.get $x))
+        (br_if $out7 (local.get $x))
       )
       (unreachable)
     )
     (block $out8
       (br_if $out8 (call $b14)) ;; side effect
-      (br_if $out8 (i32.const 0))
+      (br_if $out8 (local.get $x))
     )
     (block $out8
-      (br_if $out8 (i32.const 1))
+      (br_if $out8 (local.get $x))
       (br_if $out8 (call $b14)) ;; side effect
     )
   )

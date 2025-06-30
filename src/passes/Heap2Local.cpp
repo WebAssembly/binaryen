@@ -612,9 +612,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     for (auto field : fields) {
       localIndexes.push_back(builder.addVar(func, field.type));
     }
-    if (allocation->descriptor) {
-      localIndexes.push_back(
-        builder.addVar(func, allocation->descriptor->type));
+    if (allocation->desc) {
+      localIndexes.push_back(builder.addVar(func, allocation->desc->type));
     }
 
     // Replace the things we need to using the visit* methods.
@@ -732,7 +731,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // computed do we copy them into the locals representing the fields.
     std::vector<Index> tempIndexes;
     Index numTemps =
-      (curr->isWithDefault() ? 0 : fields.size()) + bool(curr->descriptor);
+      (curr->isWithDefault() ? 0 : fields.size()) + bool(curr->desc);
     tempIndexes.reserve(numTemps);
 
     // Create the temp variables.
@@ -741,8 +740,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
         tempIndexes.push_back(builder.addVar(func, field.type));
       }
     }
-    if (curr->descriptor) {
-      tempIndexes.push_back(builder.addVar(func, curr->descriptor->type));
+    if (curr->desc) {
+      tempIndexes.push_back(builder.addVar(func, curr->desc->type));
     }
 
     // Store the initial values into the temp locals.
@@ -752,9 +751,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
           builder.makeLocalSet(tempIndexes[i], curr->operands[i]));
       }
     }
-    if (curr->descriptor) {
+    if (curr->desc) {
       contents.push_back(
-        builder.makeLocalSet(tempIndexes[numTemps - 1], curr->descriptor));
+        builder.makeLocalSet(tempIndexes[numTemps - 1], curr->desc));
     }
 
     // Store the values into the locals representing the fields.
@@ -765,9 +764,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
           : builder.makeLocalGet(tempIndexes[i], fields[i].type);
       contents.push_back(builder.makeLocalSet(localIndexes[i], val));
     }
-    if (curr->descriptor) {
+    if (curr->desc) {
       auto* val =
-        builder.makeLocalGet(tempIndexes[numTemps - 1], curr->descriptor->type);
+        builder.makeLocalGet(tempIndexes[numTemps - 1], curr->desc->type);
       contents.push_back(
         builder.makeLocalSet(localIndexes[fields.size()], val));
     }
@@ -851,8 +850,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // also know the cast must fail if the optimized allocation flows in as
       // the descriptor, since it cannot possibly have been used in the
       // allocation of the cast value without having been considered to escape.
-      if (!allocation->descriptor || analyzer.getInteraction(curr->desc) ==
-                                       ParentChildInteraction::Flows) {
+      if (!allocation->desc || analyzer.getInteraction(curr->desc) ==
+                                 ParentChildInteraction::Flows) {
         // The allocation does not have a descriptor, so there is no way for the
         // cast to succeed.
         replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
@@ -861,7 +860,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       } else {
         // The cast succeeds iff the optimized allocation's descriptor is the
         // same as the given descriptor and traps otherwise.
-        auto type = allocation->descriptor->type;
+        auto type = allocation->desc->type;
         replaceCurrent(builder.blockify(
           builder.makeDrop(curr->ref),
           builder.makeIf(
@@ -897,7 +896,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    auto type = allocation->descriptor->type;
+    auto type = allocation->desc->type;
     if (type != curr->type) {
       // We know exactly the allocation that flows into this expression, so we
       // know the exact type of the descriptor. This type may be more precise

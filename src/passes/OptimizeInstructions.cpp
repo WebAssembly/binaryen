@@ -1830,9 +1830,18 @@ struct OptimizeInstructions
   }
 
   void visitStructNew(StructNew* curr) {
+    if (curr->type == Type::unreachable) {
+      // Leave this for DCE.
+      return;
+    }
+    if (curr->desc) {
+      skipNonNullCast(curr->desc, curr);
+      trapOnNull(curr, curr->desc);
+    }
+
     // If values are provided, but they are all the default, then we can remove
     // them (in reachable code).
-    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+    if (curr->isWithDefault()) {
       return;
     }
 

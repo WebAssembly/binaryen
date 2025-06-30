@@ -931,7 +931,7 @@ public:
                            Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->descriptor = descriptor;
+    ret->desc = descriptor;
     ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
@@ -941,7 +941,7 @@ public:
                            Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands = std::move(args);
-    ret->descriptor = descriptor;
+    ret->desc = descriptor;
     ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
@@ -952,7 +952,7 @@ public:
                            Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->descriptor = descriptor;
+    ret->desc = descriptor;
     ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
