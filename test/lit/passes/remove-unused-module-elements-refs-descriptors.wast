@@ -6,32 +6,146 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $B (sub (descriptor $A (struct))))
-  (type $B (sub (descriptor $A (struct))))
-  ;; CHECK:       (type $A (sub (describes $B (struct))))
-  (type $A (sub (describes $B (struct))))
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
+  (type $struct (descriptor $desc (struct)))
+  ;; CHECK:       (type $desc (describes $struct (struct)))
+  (type $desc (describes $struct (struct)))
  )
 
  ;; CHECK:      (type $2 (func))
 
- ;; CHECK:      (global $global (ref (exact $A)) (struct.new_default $A))
- (global $global (ref (exact $A)) (struct.new $A))
+ ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new_default $desc))
+ (global $desc (ref (exact $desc)) (struct.new $desc))
 
  ;; CHECK:      (export "export" (func $export))
 
  ;; CHECK:      (func $export (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (struct.new_default $B
- ;; CHECK-NEXT:    (global.get $global)
+ ;; CHECK-NEXT:   (struct.new_default $struct
+ ;; CHECK-NEXT:    (global.get $desc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $export (export "export")
   (drop
-   (struct.new $B
-    (global.get $global)
+   (struct.new $struct
+    (global.get $desc)
    )
   )
  )
+)
+
+;; We cannot optimize out globals whose initializers might trap due to a null
+;; descriptor.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
+  (type $struct (descriptor $desc (struct)))
+  ;; CHECK:       (type $desc (describes $struct (struct)))
+  (type $desc (describes $struct (struct)))
+  ;; CHECK:       (type $list (struct (field (ref $struct)) (field (ref null $list))))
+  (type $list (struct (field (ref $struct)) (field (ref null $list))))
+ )
+
+ ;; This may be null, so may cause traps in the globals that use it. Those
+ ;; globals must be kept, so this must be kept as well.
+ ;; CHECK:      (import "" "" (global $nullable-desc-import (ref null (exact $desc))))
+ (import "" "" (global $nullable-desc-import (ref null (exact $desc))))
+ ;; This is the same as the previous, but it is not used at all so it can be
+ ;; removed.
+ (import "" "" (global $nullable-desc-import-unused (ref null (exact $desc))))
+ ;; This cannot cause traps in globals that use it, so it does not need to be
+ ;; kept.
+ (import "" "" (global $nn-desc-import (ref (exact $desc))))
+ ;; This is the same as the previous, but it is used in globals that must be
+ ;; kept, so it too must be kept.
+ ;; CHECK:      (import "" "" (global $nn-desc-import-used (ref (exact $desc))))
+ (import "" "" (global $nn-desc-import-used (ref (exact $desc))))
+
+ ;; CHECK:      (global $null (ref null (exact $desc)) (ref.null none))
+ (global $null (ref null (exact $desc)) (ref.null none))
+ (global $desc (ref null (exact $desc)) struct.new $desc)
+
+ ;; Trapping globals must be kept, but non-trapping globals can be removed.
+ ;; CHECK:      (global $trap (ref $struct) (struct.new_default $struct
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT: ))
+ (global $trap (ref $struct) (struct.new $struct (ref.null none)))
+ (global $no-trap (ref $struct) (struct.new $struct (struct.new $desc)))
+
+ ;; CHECK:      (global $trap-get (ref $struct) (struct.new_default $struct
+ ;; CHECK-NEXT:  (global.get $null)
+ ;; CHECK-NEXT: ))
+ (global $trap-get (ref $struct) (struct.new $struct (global.get $null)))
+ (global $no-trap-get (ref $struct) (struct.new $struct (global.get $desc)))
+
+ ;; CHECK:      (global $trap-import (ref $struct) (struct.new_default $struct
+ ;; CHECK-NEXT:  (global.get $nullable-desc-import)
+ ;; CHECK-NEXT: ))
+ (global $trap-import (ref $struct) (struct.new $struct (global.get $nullable-desc-import)))
+ (global $no-trap-import (ref $struct) (struct.new $struct (global.get $nn-desc-import)))
+
+ ;; CHECK:      (global $indirect-null-1 (ref null (exact $desc)) (global.get $null))
+ (global $indirect-null-1 (ref null (exact $desc)) (global.get $null))
+ ;; CHECK:      (global $indirect-null-2 (ref null (exact $desc)) (global.get $indirect-null-1))
+ (global $indirect-null-2 (ref null (exact $desc)) (global.get $indirect-null-1))
+ ;; CHECK:      (global $indirect-null-3 (ref null (exact $desc)) (global.get $indirect-null-2))
+ (global $indirect-null-3 (ref null (exact $desc)) (global.get $indirect-null-2))
+
+ (global $indirect-desc-1 (ref null (exact $desc)) (global.get $desc))
+ (global $indirect-desc-2 (ref null (exact $desc)) (global.get $indirect-desc-1))
+ (global $indirect-desc-3 (ref null (exact $desc)) (global.get $indirect-desc-2))
+
+ ;; CHECK:      (global $trap-indirect (ref $struct) (struct.new_default $struct
+ ;; CHECK-NEXT:  (global.get $indirect-null-3)
+ ;; CHECK-NEXT: ))
+ (global $trap-indirect (ref $struct) (struct.new $struct (global.get $indirect-null-3)))
+ (global $no-trap-indirect (ref $struct) (struct.new $struct (global.get $indirect-desc-3)))
+
+ ;; CHECK:      (global $trap-nested (ref $list) (struct.new $list
+ ;; CHECK-NEXT:  (struct.new_default $struct
+ ;; CHECK-NEXT:   (struct.new_default $desc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.new $list
+ ;; CHECK-NEXT:   (struct.new_default $struct
+ ;; CHECK-NEXT:    (global.get $nn-desc-import-used)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (struct.new $list
+ ;; CHECK-NEXT:    (struct.new_default $struct
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: ))
+ (global $trap-nested (ref $list)
+  (struct.new $list
+   (struct.new $struct (struct.new $desc))
+   (struct.new $list
+    (struct.new $struct (global.get $nn-desc-import-used))
+    (struct.new $list
+     (struct.new $struct (ref.null none))
+     (ref.null none)
+    )
+   )
+  )
+ )
+
+ (global $no-trap-nested (ref $list)
+  (struct.new $list
+   (struct.new $struct (struct.new $desc))
+   (struct.new $list
+    (struct.new $struct (global.get $desc))
+    (ref.null none)
+   )
+  )
+ )
+
+ ;; CHECK:      (elem $trap anyref (item (struct.new_default $struct
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT: )))
+ (elem $trap anyref (item (struct.new $struct (ref.null none))))
+ (elem $no-trap anyref (item (struct.new $struct (struct.new $desc))))
 )
 

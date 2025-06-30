@@ -36,6 +36,7 @@
 //
 
 #include <memory>
+#include <vector>
 
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
@@ -45,8 +46,11 @@
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/stdckdint.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -712,6 +716,27 @@ struct RemoveUnusedModuleElements : public Pass {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
 
+    // Just as out-of-bound segments may cause observable traps at instantiation
+    // time, so can struct.new instructions with null descriptors cause traps in
+    // global or element segment initializers.
+    if (!getPassOptions().trapsNeverHappen) {
+      for (auto& segment : module->elementSegments) {
+        for (auto* init : segment->data) {
+          if (isMaybeTrappingInit(*module, init)) {
+            roots.emplace_back(ModuleElementKind::ElementSegment,
+                               segment->name);
+            break;
+          }
+        }
+      }
+      for (auto& global : module->globals) {
+        if (auto* init = global->init;
+            init && isMaybeTrappingInit(*module, init)) {
+          roots.emplace_back(ModuleElementKind::Global, global->name);
+        }
+      }
+    }
+
     // Analyze the module.
     auto& options = getPassOptions();
     Analyzer analyzer(module, options, roots);
@@ -747,9 +772,8 @@ struct RemoveUnusedModuleElements : public Pass {
       // See TODO in addReferences - we may be able to do better here.
       return !needed({ModuleElementKind::Global, curr->name});
     });
-    module->removeTags([&](Tag* curr) {
-      return !needed({ModuleElementKind::Tag, curr->name});
-    });
+    module->removeTags(
+      [&](Tag* curr) { return !needed({ModuleElementKind::Tag, curr->name}); });
     module->removeMemories([&](Memory* curr) {
       return !needed(ModuleElement(ModuleElementKind::Memory, curr->name));
     });
@@ -831,6 +855,92 @@ struct RemoveUnusedModuleElements : public Pass {
         *name = calledFunc->name;
       }
     }
+  }
+
+  // For each global we have processed, true if it might be null and false
+  // if it definitely is not null.
+  std::unordered_map<Name, bool> globalMaybeNullCache;
+
+  bool isMaybeTrappingInit(Module& wasm, Expression* root) {
+    // Traverse the expression, looking for literal null or imported nullable
+    // descriptors passed to struct.new. These are the only situations (beyond
+    // exceeded implementation limits, which we don't model) that can lead a
+    // constant expression to trap.
+    struct NullDescFinder : PostWalker<NullDescFinder> {
+      RemoveUnusedModuleElements& parent;
+      Module& wasm;
+      bool mayTrap = false;
+      NullDescFinder(RemoveUnusedModuleElements& parent, Module& wasm)
+        : parent(parent), wasm(wasm) {}
+
+      void visitStructNew(StructNew* curr) {
+        if (!curr->desc) {
+          return;
+        }
+        if (curr->desc->is<StructNew>()) {
+          return;
+        }
+        if (curr->desc->is<RefNull>()) {
+          mayTrap = true;
+          return;
+        }
+        if (auto* get = curr->desc->dynCast<GlobalGet>()) {
+          // Search through a chain of global.gets providing the descriptor
+          // value to find a ref.null or nullable import, or alternatively an
+          // allocation. Cache the results to avoid searching the same globals
+          // again in the future.
+          bool maybeNullGlobal;
+          auto* global = wasm.getGlobal(get->name);
+          std::vector<std::unordered_map<Name, bool>::iterator> cacheEntries;
+          while (true) {
+            auto [it, inserted] =
+              parent.globalMaybeNullCache.insert({global->name, false});
+            if (!inserted) {
+              maybeNullGlobal = it->second;
+              break;
+            }
+            cacheEntries.push_back(it);
+            if (global->type.isNonNullable()) {
+              // Only a null can cause a trap. Further globals must also be
+              // non-nullable.
+              maybeNullGlobal = false;
+              break;
+            }
+            if (global->imported()) {
+              // Nullable imported globals may be null.
+              maybeNullGlobal = true;
+              break;
+            }
+            if (global->init->is<StructNew>()) {
+              maybeNullGlobal = false;
+              break;
+            }
+            if (global->init->is<RefNull>()) {
+              maybeNullGlobal = true;
+              break;
+            }
+            if (auto* next = global->init->dynCast<GlobalGet>()) {
+              global = wasm.getGlobal(next->name);
+              continue;
+            }
+            WASM_UNREACHABLE("unexpected global init");
+          }
+          // Update the cache so we don't need to visit these globals again.
+          for (auto& it : cacheEntries) {
+            it->second = maybeNullGlobal;
+          }
+          if (maybeNullGlobal) {
+            mayTrap = true;
+          }
+          return;
+        }
+        WASM_UNREACHABLE("unexpected descriptor");
+      }
+    };
+
+    NullDescFinder finder(*this, wasm);
+    finder.walk(root);
+    return finder.mayTrap;
   }
 };
 
