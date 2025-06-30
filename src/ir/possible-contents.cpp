@@ -102,7 +102,7 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
     // just add in nullability. For example, a literal of type T and a null
     // becomes an exact type of T that allows nulls, and so forth.
     auto mixInNull = [](ConeType cone) {
-      cone.type = Type(cone.type.getHeapType(), Nullable);
+      cone.type = cone.type.with(Nullable);
       return cone;
     };
     if (!a.isNull()) {
@@ -144,7 +144,9 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
 
 void PossibleContents::intersect(const PossibleContents& other) {
   // This does not yet handle all possible content.
-  assert(other.isFullConeType() || other.isLiteral() || other.isNone());
+  assert((other.isConeType() &&
+          (other.getType().isExact() || other.hasFullCone())) ||
+         other.isLiteral() || other.isNone());
 
   if (*this == other) {
     // Nothing changes.
@@ -182,46 +184,26 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto heapType = type.getHeapType();
   auto otherHeapType = otherType.getHeapType();
 
-  // If both inputs are nullable then the intersection is nullable as well.
-  auto nullability =
-    type.isNullable() && otherType.isNullable() ? Nullable : NonNullable;
+  // Intersect the types.
+  auto newType = Type::getGreatestLowerBound(type, otherType);
 
   auto setNoneOrNull = [&]() {
-    if (nullability == Nullable) {
+    if (newType.isNullable()) {
       value = Literal::makeNull(heapType);
     } else {
       value = None();
     }
   };
 
-  // If the heap types are not compatible then they are in separate hierarchies
-  // and there is no intersection, aside from possibly a null of the bottom
-  // type.
-  auto isSubType = HeapType::isSubType(heapType, otherHeapType);
-  auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
-  if (!isSubType && !otherIsSubType) {
-    if (heapType.getBottom() == otherHeapType.getBottom()) {
-      setNoneOrNull();
-    } else {
-      value = None();
-    }
+  if (newType == Type::unreachable || newType.isNull()) {
+    setNoneOrNull();
     return;
   }
 
   // The heap types are compatible, so intersect the cones.
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
-
-  // To compute the new cone, find the new heap type for it, and to compute its
-  // depth, consider the adjustments to the existing depths that stem from the
-  // choice of new heap type.
-  HeapType newHeapType;
-
-  if (depthFromRoot < otherDepthFromRoot) {
-    newHeapType = otherHeapType;
-  } else {
-    newHeapType = heapType;
-  }
+  auto newDepthFromRoot = newType.getHeapType().getDepth();
 
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
@@ -231,40 +213,21 @@ void PossibleContents::intersect(const PossibleContents& other) {
     globalName = getGlobal();
   }
 
-  auto newType = Type(newHeapType, nullability);
-
-  // By assumption |other| has full depth. Consider the other cone in |this|.
-  if (hasFullCone()) {
+  if (hasFullCone() && other.hasFullCone()) {
     // Both are full cones, so the result is as well.
-    value = FullConeType(newType);
+    value = DefaultConeType(newType);
   } else {
-    // The result is a partial cone. If the cone starts in |otherHeapType| then
-    // we need to adjust the depth down, since it will be smaller than the
-    // original cone:
-    /*
-    //                             ..
-    //                            /
-    //              otherHeapType
-    //            /               \
-    //   heapType                  ..
-    //            \
-    */
-    // E.g. if |this| is a cone of depth 10, and |otherHeapType| is an immediate
-    // subtype of |this|, then the new cone must be of depth 9.
-    auto newDepth = getCone().depth;
-    if (newHeapType == otherHeapType) {
-      assert(depthFromRoot <= otherDepthFromRoot);
-      auto reduction = otherDepthFromRoot - depthFromRoot;
-      if (reduction > newDepth) {
-        // The cone on heapType does not even reach the cone on otherHeapType,
-        // so the result is not a cone.
-        setNoneOrNull();
-        return;
-      }
-      newDepth -= reduction;
+    // The result is a partial cone. Check whether the cones overlap, and if
+    // they do, find the new depth.
+    if (newDepthFromRoot - depthFromRoot > getCone().depth ||
+        newDepthFromRoot - otherDepthFromRoot > other.getCone().depth) {
+      setNoneOrNull();
+      return;
     }
-
-    value = ConeType{newType, newDepth};
+    Index newDepth = getCone().depth - (newDepthFromRoot - depthFromRoot);
+    Index otherNewDepth =
+      other.getCone().depth - (newDepthFromRoot - otherDepthFromRoot);
+    value = ConeType{newType, std::min(newDepth, otherNewDepth)};
   }
 
   if (globalName) {
@@ -394,7 +357,19 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
     return false;
   }
 
-  WASM_UNREACHABLE("unhandled case of isSubContents");
+  if (b.isGlobal()) {
+    // We've already ruled out anything but another global or non-full cone type
+    // for a.
+    return false;
+  }
+
+  assert(b.isConeType() && (a.isConeType() || a.isGlobal()));
+  if (!Type::isSubType(a.getType(), b.getType())) {
+    return false;
+  }
+  // Check that a's cone type is enclosed in b's cone type.
+  return a.getType().getHeapType().getDepth() + a.getCone().depth <=
+         b.getType().getHeapType().getDepth() + b.getCone().depth;
 }
 
 namespace {
@@ -700,6 +675,7 @@ struct InfoCollector
   void visitTableFill(TableFill* curr) { addRoot(curr); }
   void visitTableCopy(TableCopy* curr) { addRoot(curr); }
   void visitTableInit(TableInit* curr) {}
+  void visitElemDrop(ElemDrop* curr) {}
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -728,6 +704,10 @@ struct InfoCollector
 
   void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
+  void visitRefGetDesc(RefGetDesc* curr) {
+    // TODO: Do something more similar to struct.get here
+    addRoot(curr);
+  }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
     handleBreakValue(curr);
@@ -1080,10 +1060,11 @@ struct InfoCollector
     // part of the main IR, which is potentially confusing during debugging,
     // however, which is a downside.
     Builder builder(*getModule());
-    auto* get =
-      builder.makeArrayGet(curr->srcRef, curr->srcIndex, curr->srcRef->type);
+    auto* get = builder.makeArrayGet(
+      curr->srcRef, curr->srcIndex, MemoryOrder::Unordered, curr->srcRef->type);
     visitArrayGet(get);
-    auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
+    auto* set = builder.makeArraySet(
+      curr->destRef, curr->destIndex, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
   void visitArrayFill(ArrayFill* curr) {
@@ -1092,7 +1073,8 @@ struct InfoCollector
     }
     // See ArrayCopy, above.
     Builder builder(*getModule());
-    auto* set = builder.makeArraySet(curr->ref, curr->index, curr->value);
+    auto* set = builder.makeArraySet(
+      curr->ref, curr->index, curr->value, MemoryOrder::Unordered);
     visitArraySet(set);
   }
   template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
@@ -1113,11 +1095,28 @@ struct InfoCollector
     Builder builder(*getModule());
     auto* get = builder.makeLocalGet(-1, valueType);
     addRoot(get);
-    auto* set = builder.makeArraySet(curr->ref, curr->index, get);
+    auto* set =
+      builder.makeArraySet(curr->ref, curr->index, get, MemoryOrder::Unordered);
     visitArraySet(set);
   }
   void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
   void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Model the modification part of the RMW in addition to the read and
+    // the write.
+    addRoot(curr);
+  }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -1486,7 +1485,7 @@ public:
 
   // Get the type we inferred was possible at a location.
   PossibleContents getContents(Expression* curr) {
-    auto naiveContents = PossibleContents::fullConeType(curr->type);
+    auto naiveContents = PossibleContents::coneType(curr->type);
 
     // If we inferred nothing, use the naive type.
     auto iter = inferences.find(curr);
@@ -1636,6 +1635,8 @@ void TNHOracle::scan(Function* func,
     void visitArrayInitElem(ArrayInitElem* curr) {
       notePossibleTrap(curr->ref);
     }
+    void visitArrayRMW(ArrayRMW* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) { notePossibleTrap(curr->ref); }
 
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned
@@ -1894,8 +1895,8 @@ void TNHOracle::optimizeCallCasts(Expression* call,
         // There are two constraints on this location: any value there must
         // be of the declared type (curr->type) and also the cast type, so
         // we know only their intersection can appear here.
-        auto declared = PossibleContents::fullConeType(curr->type);
-        auto intersection = PossibleContents::fullConeType(castType);
+        auto declared = PossibleContents::coneType(curr->type);
+        auto intersection = PossibleContents::coneType(castType);
         intersection.intersect(declared);
         if (intersection.isConeType()) {
           auto intersectionType = intersection.getType();
@@ -1979,7 +1980,7 @@ struct Flower {
   PossibleContents getTNHContents(Expression* curr) {
     if (!tnhOracle) {
       // No oracle; just use the type in the IR.
-      return PossibleContents::fullConeType(curr->type);
+      return PossibleContents::coneType(curr->type);
     }
     return tnhOracle->getContents(curr);
   }
@@ -2850,6 +2851,12 @@ void Flower::filterPackedDataReads(PossibleContents& contents,
     return;
   }
 
+  // If there is no struct or array to read, no value will ever be returned.
+  if (ref->type.isNull()) {
+    contents = PossibleContents::none();
+    return;
+  }
+
   // We are reading data here, so the reference must be a valid struct or
   // array, otherwise we would never have gotten here.
   assert(ref->type.isRef());
@@ -2881,7 +2888,7 @@ void Flower::readFromData(Type declaredType,
 #ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
-  auto maximalContents = PossibleContents::fullConeType(declaredType);
+  auto maximalContents = PossibleContents::coneType(declaredType);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 
@@ -2976,7 +2983,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #ifndef NDEBUG
   // We must not have anything in the reference that is invalid for the wasm
   // type there.
-  auto maximalContents = PossibleContents::fullConeType(ref->type);
+  auto maximalContents = PossibleContents::coneType(ref->type);
   assert(PossibleContents::isSubContents(refContents, maximalContents));
 #endif
 

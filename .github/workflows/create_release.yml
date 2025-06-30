@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-latest, windows-11-arm]
     defaults:
       run:
         shell: bash
@@ -31,7 +31,7 @@ jobs:
 
     - name: install ninja (win)
       run: choco install ninja
-      if: matrix.os == 'windows-latest'
+      if: startsWith(matrix.os, 'windows')
 
     - name: mkdir
       run: mkdir -p out
@@ -47,6 +47,11 @@ jobs:
       run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out/install
       if: matrix.os == 'windows-latest'
 
+    - name: cmake (win arm64)
+      # -G "Visual Studio 15 2017"
+      run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out-arm64/install 
+      if: matrix.os == 'windows-11-arm'
+
     - name: build
       run: cmake --build out -v --config Release --target install
 
@@ -56,7 +61,7 @@ jobs:
 
     - name: strip
       run: find out*/install/ -type f -perm -u=x -exec strip -x {} +
-      if: matrix.os != 'windows-latest'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
 
     - name: archive
       id: archive
@@ -73,11 +78,12 @@ jobs:
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
         echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
+      if: matrix.os != 'windows-11-arm'
 
     - name: archive-arm64
       id: archive-arm64
       run: |
-        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//')
+        OSNAME=$(echo ${{ matrix.os }} | sed 's/-latest//' | sed 's/-11-arm//')
         VERSION=$GITHUB_REF_NAME
         PKGNAME="binaryen-$VERSION-arm64-$OSNAME"
         TARBALL=$PKGNAME.tar.gz
@@ -89,7 +95,7 @@ jobs:
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
         echo "SHASUM=$SHASUM" >> $GITHUB_OUTPUT
-      if: matrix.os == 'macos-latest'
+      if: ${{ matrix.os == 'macos-latest' || matrix.os == 'windows-11-arm' }} 
 
     - name: upload tarball
       uses: softprops/action-gh-release@v1

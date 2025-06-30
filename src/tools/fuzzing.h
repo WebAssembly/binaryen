@@ -28,6 +28,7 @@
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
 #include <ir/names.h>
+#include <ir/public-type-validator.h>
 #include <ir/utils.h>
 #include <support/file.h>
 #include <tools/optimization-options.h>
@@ -174,6 +175,7 @@ private:
   Name exnrefTableName;
 
   std::unordered_map<Type, Name> logImportNames;
+  Name hashMemoryName;
   Name throwImportName;
   Name tableGetImportName;
   Name tableSetImportName;
@@ -340,6 +342,13 @@ private:
   Expression* makeImportSleep(Type type);
   Expression* makeMemoryHashLogging();
 
+  // We must be careful not to add exports that have invalid public types, such
+  // as those that reach exact types when custom descriptors is disabled.
+  PublicTypeValidator publicTypeValidator;
+  bool isValidPublicType(Type type) {
+    return publicTypeValidator.isValidPublicType(type);
+  }
+
   // Function operations. The main processFunctions() loop will call addFunction
   // as well as modFunction().
   void processFunctions();
@@ -360,6 +369,10 @@ private:
   // instruction for EH is supposed to exist only at the beginning of a 'catch'
   // block, so it shouldn't be moved around or deleted freely.
   bool canBeArbitrarilyReplaced(Expression* curr) {
+    // TODO: Remove this once we better support exact references.
+    if (curr->type.isExact()) {
+      return false;
+    }
     return curr->type.isDefaultable() &&
            !EHUtils::containsValidDanglingPop(curr);
   }
@@ -521,7 +534,9 @@ private:
   Type getLoggableType();
   bool isLoggableType(Type type);
   Nullability getNullability();
+  Exactness getExactness();
   Nullability getSubType(Nullability nullability);
+  Exactness getSubType(Exactness exactness);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
   Nullability getSuperType(Nullability nullability);

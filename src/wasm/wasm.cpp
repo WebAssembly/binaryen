@@ -16,6 +16,7 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
+#include "wasm-annotations.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 
@@ -62,6 +63,13 @@ const char* CallIndirectOverlongFeature = "call-indirect-overlong";
 const char* CustomDescriptorsFeature = "custom-descriptors";
 
 } // namespace BinaryConsts::CustomSections
+
+namespace Annotations {
+
+const Name BranchHint = "metadata.code.branch_hint";
+const Name InlineHint = "metadata.code.inline";
+
+} // namespace Annotations
 
 Name STACK_POINTER("__stack_pointer");
 Name MODULE("module");
@@ -821,7 +829,9 @@ void RefFunc::finalize() {
   assert(type.isSignature());
 }
 
-void RefFunc::finalize(Type type_) { type = type_; }
+void RefFunc::finalize(HeapType heapType) {
+  type = Type(heapType, NonNullable, Exact);
+}
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
@@ -881,6 +891,8 @@ void TableInit::finalize() {
   }
 }
 
+void ElemDrop::finalize() { type = Type::none; }
+
 void Try::finalize(std::optional<Type> type_) {
   if (type_) {
     type = *type_;
@@ -923,6 +935,7 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
   // wasm spec defines when GC is enabled (=== non-nullable types are allowed).
   // If GC is not enabled then we emit a nullable type in the binary format in
   // WasmBinaryWriter::writeType.
+  // TODO: Make this exact.
   Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
@@ -977,6 +990,7 @@ void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     assert(type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31));
   }
 }
@@ -1012,10 +1026,12 @@ void CallRef::finalize() {
     // unreachable instead (and similar in other GC accessors), although this
     // would currently cause the parser to admit more invalid modules.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     } else if (type.isTuple()) {
       Tuple elems;
       for (auto t : type) {
+        // TODO: Make this exact.
         elems.push_back(
           t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
       }
@@ -1038,8 +1054,28 @@ void RefTest::finalize() {
 }
 
 void RefCast::finalize() {
-  if (ref->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (desc && desc->type == Type::unreachable)) {
     type = Type::unreachable;
+    return;
+  }
+
+  if (desc) {
+    if (desc->type.isNull()) {
+      // Cast will never be executed and the instruction will not be emitted.
+      // Model this with an uninhabitable cast type.
+      type = desc->type.with(NonNullable);
+      return;
+    }
+    // The cast heap type and exactness is determined by the descriptor's type.
+    // Its nullability can be improved if the input valus is non-nullable.
+    auto heapType = desc->type.getHeapType().getDescribedType();
+    assert(heapType);
+    auto exactness = desc->type.getExactness();
+    type = type.with(*heapType).with(exactness);
+    if (ref->type.isNonNullable()) {
+      type = type.with(NonNullable);
+    }
     return;
   }
 
@@ -1057,29 +1093,65 @@ void RefCast::finalize() {
   type = Type::getGreatestLowerBound(type, ref->type);
 }
 
-void BrOn::finalize() {
+void RefGetDesc::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
     return;
   }
+
+  if (ref->type.isNull()) {
+    // The operation will trap. Model it as returning an uninhabitable type.
+    type = ref->type.with(NonNullable);
+  } else {
+    auto desc = ref->type.getHeapType().getDescriptorType();
+    assert(desc);
+    type = Type(*desc, NonNullable, ref->type.getExactness());
+  }
+}
+
+void BrOn::finalize() {
+  if (ref->type == Type::unreachable ||
+      (desc && desc->type == Type::unreachable)) {
+    type = Type::unreachable;
+    return;
+  }
   if (op == BrOnCast || op == BrOnCastFail) {
-    // The cast type must be a subtype of the input type. If we've refined the
-    // input type so that this is no longer true, we can fix it by similarly
-    // refining the cast type in a way that will not change the cast behavior.
+    // If we've refined the input type so that it is no longer a subtype of the
+    // cast type, we can improve the cast type in a way that will not change the
+    // cast behavior. This satisfies the constraint we had before Custom
+    // Descriptors that the cast type is a subtype of the input type.
     castType = Type::getGreatestLowerBound(castType, ref->type);
     assert(castType.isRef());
+  } else if (op == BrOnCastDesc || op == BrOnCastDescFail) {
+    if (desc->type.isNull()) {
+      // Cast will never be executed and the instruction will not be emitted.
+      // Model this with an uninhabitable cast type.
+      castType = desc->type.with(NonNullable);
+    } else {
+      // The cast heap type and exactness is determined by the descriptor's
+      // type. Its nullability can be improved if the input value is
+      // non-nullable.
+      auto heapType = desc->type.getHeapType().getDescribedType();
+      assert(heapType);
+      auto exactness = desc->type.getExactness();
+      castType = castType.with(*heapType).with(exactness);
+      if (ref->type.isNonNullable()) {
+        castType = castType.with(NonNullable);
+      }
+    }
   }
   switch (op) {
     case BrOnNull:
       // If we do not branch, we flow out the existing value as non-null.
       type = ref->type.with(NonNullable);
-      break;
+      return;
     case BrOnNonNull:
       // If we do not branch, we flow out nothing (the spec could also have had
       // us flow out the null, but it does not).
       type = Type::none;
-      break;
+      return;
     case BrOnCast:
+    case BrOnCastDesc:
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
         type = ref->type.with(NonNullable);
@@ -1088,8 +1160,9 @@ void BrOn::finalize() {
         // the input is.
         type = ref->type;
       }
-      break;
+      return;
     case BrOnCastFail:
+    case BrOnCastDescFail:
       if (castType.isNullable()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
@@ -1098,10 +1171,9 @@ void BrOn::finalize() {
         // Nulls take the branch, so the result is non-nullable.
         type = castType;
       }
-      break;
-    default:
-      WASM_UNREACHABLE("invalid br_on_*");
+      return;
   }
+  WASM_UNREACHABLE("invalid br_on_*");
 }
 
 Type BrOn::getSentType() {
@@ -1118,6 +1190,7 @@ Type BrOn::getSentType() {
       // BrOnNonNull sends the non-nullable type on the branch.
       return ref->type.with(NonNullable);
     case BrOnCast:
+    case BrOnCastDesc:
       // The same as the result type of br_on_cast_fail.
       if (castType.isNullable()) {
         return castType.with(ref->type.getNullability());
@@ -1125,6 +1198,7 @@ Type BrOn::getSentType() {
         return castType;
       }
     case BrOnCastFail:
+    case BrOnCastDescFail:
       // The same as the result type of br_on_cast (if reachable).
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
@@ -1134,14 +1208,16 @@ Type BrOn::getSentType() {
       } else {
         return ref->type;
       }
-    default:
-      WASM_UNREACHABLE("invalid br_on_*");
   }
+  WASM_UNREACHABLE("invalid br_on_*");
 }
 
 void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
+  }
+  if (desc && desc->type == Type::unreachable) {
+    type = Type::unreachable;
   }
 }
 
@@ -1151,6 +1227,7 @@ void StructGet::finalize() {
   } else if (ref->type.isNull()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     }
   } else {
@@ -1184,9 +1261,7 @@ void StructCmpxchg::finalize() {
       replacement->type == Type::unreachable) {
     type = Type::unreachable;
   } else if (ref->type.isNull()) {
-    // Like StructRMW, but the most precise possible field type is the LUB of
-    // the expected and replacement values.
-    type = Type::getLeastUpperBound(expected->type, replacement->type);
+    type = replacement->type;
   } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
@@ -1226,6 +1301,7 @@ void ArrayGet::finalize() {
   } else if (ref->type.isNull()) {
     // See comment on CallRef for explanation.
     if (type.isRef()) {
+      // TODO: Make this exact.
       type = Type(type.getHeapType().getBottom(), NonNullable);
     }
   } else {
@@ -1289,6 +1365,32 @@ void ArrayInitElem::finalize() {
   }
 }
 
+void ArrayRMW::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    // We have no array type to read the field off of, but the most precise
+    // possible option is the type of the value we are using to make the
+    // modification.
+    type = value->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArrayCmpxchg::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      expected->type == Type::unreachable ||
+      replacement->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (ref->type.isNull()) {
+    type = replacement->type;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
 void RefAs::finalize() {
   // An unreachable child means we are unreachable. Also set ourselves to
   // unreachable when the child is invalid (say, it is an i32 or some other non-
@@ -1307,11 +1409,13 @@ void RefAs::finalize() {
       break;
     case AnyConvertExtern:
       type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
-                  value->type.getNullability());
+                  value->type.getNullability(),
+                  Inexact);
       break;
     case ExternConvertAny:
       type = Type(HeapTypes::ext.getBasic(valHeapType.getShared()),
-                  value->type.getNullability());
+                  value->type.getNullability(),
+                  Inexact);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
@@ -1324,11 +1428,15 @@ void StringNew::finalize() {
       (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
 
-void StringConst::finalize() { type = Type(HeapType::string, NonNullable); }
+void StringConst::finalize() {
+  // TODO: Make this exact.
+  type = Type(HeapType::string, NonNullable);
+}
 
 void StringMeasure::finalize() {
   if (ref->type == Type::unreachable) {
@@ -1351,6 +1459,7 @@ void StringConcat::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
@@ -1376,6 +1485,7 @@ void StringSliceWTF::finalize() {
       end->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    // TODO: Make this exact.
     type = Type(HeapType::string, NonNullable);
   }
 }
@@ -1443,8 +1553,12 @@ void StackSwitch::finalize() {
   }
 
   assert(this->cont->type.isContinuation());
-  type =
+  Type params =
     this->cont->type.getHeapType().getContinuation().type.getSignature().params;
+  assert(params.size() > 0);
+  Type cont = params[params.size() - 1];
+  assert(cont.isContinuation());
+  type = cont.getHeapType().getContinuation().type.getSignature().params;
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

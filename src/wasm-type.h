@@ -28,6 +28,7 @@
 #include "support/index.h"
 #include "support/name.h"
 #include "support/parent_index_iterator.h"
+#include "support/small_vector.h"
 #include "wasm-features.h"
 
 // TODO: At various code locations we were assuming that single types are basic
@@ -79,6 +80,10 @@ using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 // HeapType.
 using TypeID = uint64_t;
 
+// The number of HeapType children is typically small (1 for an array, and for
+// a struct, in practice <=4 is common).
+using HeapTypeChildren = SmallVector<HeapType, 4>;
+
 enum Shareability { Shared, Unshared };
 
 enum class HeapTypeKind {
@@ -99,12 +104,11 @@ class HeapType {
   static constexpr int TypeBits = 2;
   static constexpr int UsedBits = TypeBits + 1;
   static constexpr int SharedMask = 1 << TypeBits;
-  static constexpr int ExactMask = SharedMask;
+  friend class Type;
 
 public:
-  // Bits 0-1 are used by the Type representation, so need to be left free. Bit
-  // 2 determines whether a basic heap type is shared (1) or unshared (0). For
-  // non-basic heap types, bit 2 determines whether the type is exact instead.
+  // Bits 0-2 are used by the Type representation, so need to be left free.
+  // Bit 3 determines whether the basic heap type is shared (1) or unshared (0).
   enum BasicHeapType : uint32_t {
     ext = 1 << UsedBits,
     func = 2 << UsedBits,
@@ -129,7 +133,7 @@ public:
   constexpr HeapType(BasicHeapType id) : id(id) {}
 
   // But converting raw TypeID is more dangerous, so make it explicit
-  explicit constexpr HeapType(TypeID id) : id(id) {}
+  explicit HeapType(TypeID id) : id(id) {}
 
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
@@ -170,12 +174,8 @@ public:
   bool isBottom() const;
   bool isOpen() const;
   bool isShared() const { return getShared() == Shared; }
-  bool isExact() const { return getExactness() == Exact; }
 
   Shareability getShared() const;
-  Exactness getExactness() const {
-    return !isBasic() && (id & ExactMask) ? Exact : Inexact;
-  }
 
   // Check if the type is a given basic heap type, while ignoring whether it is
   // shared or not.
@@ -224,29 +224,13 @@ public:
   // Get the index of this non-basic type within its recursion group.
   size_t getRecGroupIndex() const;
 
+  constexpr TypeID getID() const { return id; }
+
   // Get the shared or unshared version of this basic heap type.
   constexpr BasicHeapType getBasic(Shareability share) const {
     assert(isBasic());
     return BasicHeapType(share == Shared ? (id | SharedMask)
                                          : (id & ~SharedMask));
-  }
-
-  constexpr HeapType with(Exactness exactness) const {
-    assert((!isBasic() || exactness == Inexact) &&
-           "abstract types cannot be exact");
-    return isBasic() ? *this
-                     : HeapType(exactness == Exact ? (id | ExactMask)
-                                                   : (id & ~ExactMask));
-  }
-
-  // The ID is the numeric representation of the heap type and can be used in
-  // FFI or hashing applications. The "raw" ID is the numeric representation of
-  // the plain version of the type without exactness or any other attributes we
-  // might add in the future. It's useful in contexts where all heap types using
-  // the same type definition need to be treated identically.
-  constexpr TypeID getID() const { return id; }
-  constexpr TypeID getRawID() const {
-    return isBasic() ? id : with(Inexact).id;
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
@@ -263,11 +247,12 @@ public:
   std::vector<Type> getTypeChildren() const;
 
   // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren() const;
+  HeapTypeChildren getHeapTypeChildren() const;
 
-  // Similar to `getHeapTypeChildren`, but also includes the supertype if it
-  // exists.
-  std::vector<HeapType> getReferencedHeapTypes() const;
+  // Similar to `getHeapTypeChildren`, but also includes references types that
+  // are not children (i.e. that are not in fields of a struct, etc.; such
+  // referenced types include the super, and descriptor/described types).
+  HeapTypeChildren getReferencedHeapTypes() const;
 
   // Return the LUB of two HeapTypes, which may or may not exist.
   static std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
@@ -301,7 +286,7 @@ class Type {
   // bit 0 set. When that bit is masked off, they are pointers to the underlying
   // vectors of types. Otherwise, the type is a reference type, and is
   // represented as a heap type with bit 1 set iff the reference type is
-  // nullable.
+  // nullable and bit 2 set iff the reference type is exact.
   //
   // Since `Type` is really just a single integer, it should be passed by value.
   // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
@@ -310,6 +295,12 @@ class Type {
 
   static constexpr int TupleMask = 1 << 0;
   static constexpr int NullMask = 1 << 1;
+  static constexpr int ExactMask = 1 << 2;
+
+  // Only abstract heap types store sharedness as a bit in the representation
+  // and only non-abstract heap types can be exact, so exactness and sharedness
+  // can use the same bit.
+  static_assert(ExactMask == HeapType::SharedMask);
 
 public:
   enum BasicType : uint32_t {
@@ -340,9 +331,12 @@ public:
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType heapType, Nullability nullable)
-    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0)) {
-    assert(heapType.isBasic() || !(heapType.getID() & (TupleMask | NullMask)));
+  Type(HeapType heapType, Nullability nullable, Exactness exact = Inexact)
+    : Type(heapType.getID() | (nullable == Nullable ? NullMask : 0) |
+           (exact == Exact ? ExactMask : 0)) {
+    assert(!(heapType.getID() &
+             (TupleMask | NullMask | (heapType.isBasic() ? 0 : ExactMask))));
+    assert(!heapType.isBasic() || exact == Inexact);
   }
 
   // Predicates
@@ -391,9 +385,18 @@ public:
   bool isRef() const { return !isBasic() && !(id & TupleMask); }
   bool isNullable() const { return isRef() && (id & NullMask); }
   bool isNonNullable() const { return isRef() && !(id & NullMask); }
+  bool isExact() const {
+    return isRef() && !getHeapType().isBasic() && (id & ExactMask);
+  }
+  bool isInexact() const { return isRef() && !isExact(); }
   HeapType getHeapType() const {
     assert(isRef());
-    return HeapType(id & ~NullMask);
+    HeapType masked(id & ~NullMask);
+    // Avoid masking off the shared bit on basic heap types.
+    if (!masked.isBasic()) {
+      masked = HeapType(masked.id & ~ExactMask);
+    }
+    return masked;
   }
 
   bool isFunction() const { return isRef() && getHeapType().isFunction(); }
@@ -415,11 +418,29 @@ public:
   Nullability getNullability() const {
     return isNullable() ? Nullable : NonNullable;
   }
+  Exactness getExactness() const {
+    assert(isRef());
+    return isExact() ? Exact : Inexact;
+  }
 
   // Return a new reference type with some part updated to the specified value.
-  Type with(HeapType heapType) { return Type(heapType, getNullability()); }
-  Type with(Nullability nullability) {
-    return Type(getHeapType(), nullability);
+  // Always clear exactness when replacing the referenced type with a basic heap
+  // type to avoid creating an invalid type.
+  Type with(HeapType heapType) const {
+    return Type(heapType,
+                getNullability(),
+                heapType.isBasic() ? Inexact : getExactness());
+  }
+  Type with(Nullability nullability) const {
+    return Type(getHeapType(), nullability, getExactness());
+  }
+  Type with(Exactness exactness) const {
+    return Type(getHeapType(), getNullability(), exactness);
+  }
+
+  // Make the type inexact if custom descriptors is not enabled.
+  Type withInexactIfNoCustomDescs(FeatureSet feats) const {
+    return !isExact() || feats.hasCustomDescriptors() ? *this : with(Inexact);
   }
 
 private:
@@ -474,7 +495,7 @@ public:
   static bool isSubType(Type left, Type right);
 
   // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren();
+  HeapTypeChildren getHeapTypeChildren();
 
   // Computes the least upper bound from the type lattice.
   // If one of the type is unreachable, the other type becomes the result. If
@@ -739,7 +760,8 @@ struct TypeBuilder {
         return t;
       }
       assert(t.isRef());
-      return getTempRefType(map(t.getHeapType()), t.getNullability());
+      return getTempRefType(
+        map(t.getHeapType()), t.getNullability(), t.getExactness());
     };
     auto copyType = [&](Type t) -> Type {
       if (t.isTuple()) {
@@ -792,7 +814,9 @@ struct TypeBuilder {
   // TypeBuilder's HeapTypes. For Ref types, the HeapType may be a temporary
   // HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
-  Type getTempRefType(HeapType heapType, Nullability nullable);
+  Type getTempRefType(HeapType heapType,
+                      Nullability nullable,
+                      Exactness exact = Inexact);
 
   // Declare the HeapType being built at index `i` to be an immediate subtype of
   // the given HeapType.

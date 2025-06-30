@@ -1167,7 +1167,7 @@
  )
 
  ;; CHECK:      (func $select-non-nullable (type $1) (param $x i32)
- ;; CHECK-NEXT:  (local $1 (ref $1))
+ ;; CHECK-NEXT:  (local $1 (ref (exact $1)))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
  ;; CHECK-NEXT:  )
@@ -1186,7 +1186,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-non-nullable (type $1) (param $x i32)
- ;; IMMUT-NEXT:  (local $1 (ref $1))
+ ;; IMMUT-NEXT:  (local $1 (ref (exact $1)))
  ;; IMMUT-NEXT:  (local.set $1
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
  ;; IMMUT-NEXT:  )

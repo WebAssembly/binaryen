@@ -18,8 +18,16 @@
 // Apply more specific subtypes to type fields where possible, where all the
 // writes to that field in the entire program allow doing so.
 //
+// TODO: handle arrays and not just structs.
+//
+// The GUFA variant of this uses GUFA to infer types, which performs a (slow)
+// whole-program inference, rather than just scan struct/array operations by
+// themselves.
+//
 
+#include "ir/find_all.h"
 #include "ir/lubs.h"
+#include "ir/possible-contents.h"
 #include "ir/struct-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -53,7 +61,13 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    info.note(expr->type);
+    auto noted = expr->type;
+    // Do not introduce new exact fields that might requires invalid
+    // casts. Keep any existing exact fields, though.
+    if (type.getStruct().fields[index].type.isInexact()) {
+      noted = noted.withInexactIfNoCustomDescs(getModule()->features);
+    }
+    info.note(noted);
   }
 
   void
@@ -104,7 +118,15 @@ struct TypeRefining : public Pass {
   // Only affects GC type declarations and struct.gets.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  bool gufa;
+
+  TypeRefining(bool gufa) : gufa(gufa) {}
+
+  // The final information we inferred about struct usage, that we then use to
+  // optimize.
   StructUtils::StructValuesMap<FieldInfo> finalInfos;
+
+  using Propagator = StructUtils::TypeHierarchyPropagator<FieldInfo>;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -115,6 +137,20 @@ struct TypeRefining : public Pass {
       Fatal() << "TypeRefining requires --closed-world";
     }
 
+    Propagator propagator(*module);
+
+    // Compute our main data structure, finalInfos, either normally or using
+    // GUFA.
+    if (!gufa) {
+      computeFinalInfos(module, propagator);
+    } else {
+      computeFinalInfosGUFA(module, propagator);
+    }
+
+    useFinalInfos(module, propagator);
+  }
+
+  void computeFinalInfos(Module* module, Propagator& propagator) {
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
@@ -132,14 +168,77 @@ struct TypeRefining : public Pass {
     // able to contain that type. Propagate things written using set to subtypes
     // as well, as the reference might be to a supertype if the field is present
     // there.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetGetInfos);
 
     // Combine everything together.
     combinedNewInfos.combineInto(finalInfos);
     combinedSetGetInfos.combineInto(finalInfos);
+  }
 
+  void computeFinalInfosGUFA(Module* module, Propagator& propagator) {
+    // Compute the oracle, then simply apply it.
+    // TODO: Consider doing this in GUFA.cpp, where we already computed the
+    //       oracle. That would require refactoring out the rest of this pass to
+    //       a shared location. Alternatively, perhaps we can reuse the computed
+    //       oracle, but any pass that changes anything would need to invalidate
+    //       it...
+    ContentOracle oracle(*module, getPassOptions());
+    auto allTypes = ModuleUtils::collectHeapTypes(*module);
+    for (auto type : allTypes) {
+      if (type.isStruct()) {
+        auto& fields = type.getStruct().fields;
+        auto& infos = finalInfos[type];
+        for (Index i = 0; i < fields.size(); i++) {
+          auto gufaType = oracle.getContents(DataLocation{type, i}).getType();
+          // Do not introduce new exact fields that might requires invalid
+          // casts. Keep any existing exact fields, though.
+          if (!fields[i].type.isExact()) {
+            gufaType = gufaType.withInexactIfNoCustomDescs(module->features);
+          }
+          infos[i] = LUBFinder(gufaType);
+        }
+      }
+    }
+
+    // Take into account possible problems. This pass only refines struct
+    // fields, and when we refine in a way that exceeds the wasm type system
+    // then we fix that up with a cast (see below). However, we cannot use casts
+    // in all places, specifically in globals, so we must account for that.
+    for (auto& global : module->globals) {
+      if (global->imported()) {
+        continue;
+      }
+
+      // Find StructNews, which are the one thing that can appear in a global
+      // init that is affected by our optimizations.
+      for (auto* structNew : FindAll<StructNew>(global->init).list) {
+        if (structNew->isWithDefault()) {
+          continue;
+        }
+
+        auto type = structNew->type.getHeapType();
+        auto& infos = finalInfos[type];
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          // We are in a situation like this:
+          //
+          //  (struct.new $A
+          //   (global.get or such
+          //
+          // To avoid ending up requiring a cast later, the type of our child
+          // must fit perfectly in the field it is written to.
+          auto childType = structNew->operands[i]->type;
+          infos[i].note(childType);
+        }
+      }
+    }
+
+    // Propagate to supertypes, so no field is less refined than its super.
+    propagator.propagateToSuperTypes(finalInfos);
+  }
+
+  void useFinalInfos(Module* module, Propagator& propagator) {
     // While we do the following work, see if we have anything to optimize, so
     // that we can avoid wasteful work later if not.
     bool canOptimize = false;
@@ -427,6 +526,7 @@ struct TypeRefining : public Pass {
 
 } // anonymous namespace
 
-Pass* createTypeRefiningPass() { return new TypeRefining(); }
+Pass* createTypeRefiningPass() { return new TypeRefining(false); }
+Pass* createTypeRefiningGUFAPass() { return new TypeRefining(true); }
 
 } // namespace wasm

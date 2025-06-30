@@ -25,6 +25,7 @@ namespace {
 enum Comparison { EQ, LT, GT };
 
 template<typename CompareTypes> struct RecGroupComparator {
+  FeatureSet features;
   std::unordered_map<HeapType, Index> indicesA;
   std::unordered_map<HeapType, Index> indicesB;
   CompareTypes compareTypes;
@@ -32,6 +33,8 @@ template<typename CompareTypes> struct RecGroupComparator {
   RecGroupComparator(CompareTypes compareTypes) : compareTypes(compareTypes) {}
 
   Comparison compare(const RecGroupShape& a, const RecGroupShape& b) {
+    assert(a.features == b.features);
+    features = a.features;
     if (a.types.size() != b.types.size()) {
       return a.types.size() < b.types.size() ? LT : GT;
     }
@@ -61,15 +64,17 @@ template<typename CompareTypes> struct RecGroupComparator {
     if (a.isOpen() != b.isOpen()) {
       return a.isOpen() < b.isOpen() ? LT : GT;
     }
-    auto aSuper = a.getDeclaredSuperType();
-    auto bSuper = b.getDeclaredSuperType();
-    if (aSuper.has_value() != bSuper.has_value()) {
-      return aSuper.has_value() < bSuper.has_value() ? LT : GT;
+    if (auto cmp = compare(a.getDeclaredSuperType(), b.getDeclaredSuperType());
+        cmp != EQ) {
+      return cmp;
     }
-    if (aSuper) {
-      if (auto cmp = compare(*aSuper, *bSuper); cmp != EQ) {
-        return cmp;
-      }
+    if (auto cmp = compare(a.getDescriptorType(), b.getDescriptorType());
+        cmp != EQ) {
+      return cmp;
+    }
+    if (auto cmp = compare(a.getDescribedType(), b.getDescribedType());
+        cmp != EQ) {
+      return cmp;
     }
     auto aKind = a.getKind();
     auto bKind = b.getKind();
@@ -147,6 +152,11 @@ template<typename CompareTypes> struct RecGroupComparator {
       return compare(a.getTuple(), b.getTuple());
     }
     assert(a.isRef() && b.isRef());
+    // Only consider exactness if custom descriptors are enabled. Otherwise, it
+    // will be erased when the types are written, so we ignore it here, too.
+    if (features.hasCustomDescriptors() && a.isExact() != b.isExact()) {
+      return a.isExact() < b.isExact() ? LT : GT;
+    }
     if (a.isNullable() != b.isNullable()) {
       return a.isNullable() < b.isNullable() ? LT : GT;
     }
@@ -194,6 +204,16 @@ template<typename CompareTypes> struct RecGroupComparator {
     // comparator.
     return compareTypes(a, b);
   }
+
+  Comparison compare(std::optional<HeapType> a, std::optional<HeapType> b) {
+    if (a.has_value() != b.has_value()) {
+      return a.has_value() < b.has_value() ? LT : GT;
+    }
+    if (a) {
+      return compare(*a, *b);
+    }
+    return EQ;
+  }
 };
 
 // Deduction guide to satisfy -Wctad-maybe-unsupported.
@@ -201,9 +221,11 @@ template<typename CompareTypes>
 RecGroupComparator(CompareTypes) -> RecGroupComparator<CompareTypes>;
 
 struct RecGroupHasher {
+  FeatureSet features;
   std::unordered_map<HeapType, Index> typeIndices;
 
   size_t hash(const RecGroupShape& shape) {
+    features = shape.features;
     for (auto type : shape.types) {
       typeIndices.insert({type, typeIndices.size()});
     }
@@ -217,11 +239,9 @@ struct RecGroupHasher {
   size_t hashDefinition(HeapType type) {
     size_t digest = wasm::hash(type.isShared());
     wasm::rehash(digest, type.isOpen());
-    auto super = type.getDeclaredSuperType();
-    wasm::rehash(digest, super.has_value());
-    if (super) {
-      hash_combine(digest, hash(*super));
-    }
+    hash_combine(digest, hash(type.getDeclaredSuperType()));
+    hash_combine(digest, hash(type.getDescriptorType()));
+    hash_combine(digest, hash(type.getDescribedType()));
     auto kind = type.getKind();
     // Mix in very random numbers to differentiate the kinds.
     switch (kind) {
@@ -285,6 +305,9 @@ struct RecGroupHasher {
       return digest;
     }
     assert(type.isRef());
+    if (features.hasCustomDescriptors()) {
+      wasm::rehash(digest, type.isExact());
+    }
     wasm::rehash(digest, type.isNullable());
     hash_combine(digest, hash(type.getHeapType()));
     return digest;
@@ -311,6 +334,14 @@ struct RecGroupHasher {
       return digest;
     }
     wasm::rehash(digest, type.getID());
+    return digest;
+  }
+
+  size_t hash(std::optional<HeapType> type) {
+    size_t digest = wasm::hash(type.has_value());
+    if (type) {
+      hash_combine(digest, hash(*type));
+    }
     return digest;
   }
 };

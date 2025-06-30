@@ -477,7 +477,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $1))
+  ;; CHECK-NEXT:   (block (result (ref (exact $1)))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $struct)

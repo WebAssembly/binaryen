@@ -246,7 +246,7 @@ struct GUFAOptimizer
       // We have some knowledge of the type here. Use that to optimize: RefTest
       // returns 1 if the input is of a subtype of the intended type, that is,
       // we are looking for a type in that cone of types.
-      auto intendedContents = PossibleContents::fullConeType(curr->castType);
+      auto intendedContents = PossibleContents::coneType(curr->castType);
 
       auto optimize = [&](int32_t result) {
         auto* last = Builder(*getModule()).makeConst(Literal(int32_t(result)));
@@ -266,6 +266,9 @@ struct GUFAOptimizer
   void visitRefCast(RefCast* curr) {
     auto currType = curr->type;
     auto inferredType = getContents(curr).getType();
+    // Do not refine to an invalid exact cast.
+    inferredType =
+      inferredType.withInexactIfNoCustomDescs(getModule()->features);
     if (inferredType.isRef() && inferredType != currType &&
         Type::isSubType(inferredType, currType)) {
       // We have inferred that this will only contain something of a more
@@ -374,6 +377,9 @@ struct GUFAOptimizer
         }
 
         auto oracleType = parent.getContents(curr).getType();
+        // Exact casts are only allowed when custom descriptors is enabled.
+        oracleType =
+          oracleType.withInexactIfNoCustomDescs(getModule()->features);
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));

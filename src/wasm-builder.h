@@ -673,12 +673,6 @@ public:
     ret->finalize(Type(type.getBottom(), Nullable));
     return ret;
   }
-  RefNull* makeRefNull(Type type) {
-    assert(type.isNullable() && type.isNull());
-    auto* ret = wasm.allocator.alloc<RefNull>();
-    ret->finalize(type);
-    return ret;
-  }
   RefIsNull* makeRefIsNull(Expression* value) {
     auto* ret = wasm.allocator.alloc<RefIsNull>();
     ret->value = value;
@@ -688,7 +682,7 @@ public:
   RefFunc* makeRefFunc(Name func, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize(Type(heapType, NonNullable));
+    ret->finalize(heapType);
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -771,6 +765,12 @@ public:
     ret->offset = offset;
     ret->size = size;
     ret->table = table;
+    ret->finalize();
+    return ret;
+  }
+  ElemDrop* makeElemDrop(Name segment) {
+    auto* ret = wasm.allocator.alloc<ElemDrop>();
+    ret->segment = segment;
     ret->finalize();
     return ret;
   }
@@ -894,41 +894,66 @@ public:
     return ret;
   }
   RefCast* makeRefCast(Expression* ref, Type type) {
+    return makeRefCast(ref, nullptr, type);
+  }
+  RefCast* makeRefCast(Expression* ref, Expression* desc, Type type) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
+    ret->desc = desc;
     ret->type = type;
     ret->finalize();
     return ret;
   }
-  BrOn*
-  makeBrOn(BrOnOp op, Name name, Expression* ref, Type castType = Type::none) {
+  RefGetDesc* makeRefGetDesc(Expression* ref) {
+    auto* ret = wasm.allocator.alloc<RefGetDesc>();
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
+  BrOn* makeBrOn(BrOnOp op,
+                 Name name,
+                 Expression* ref,
+                 Type castType = Type::none,
+                 Expression* desc = nullptr) {
+    assert((desc && (op == BrOnCastDesc || op == BrOnCastDescFail)) ||
+           (!desc && op != BrOnCastDesc && op != BrOnCastDescFail));
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
     ret->name = name;
     ret->ref = ref;
+    ret->desc = desc;
     ret->castType = castType;
     ret->finalize();
     return ret;
   }
   StructNew* makeStructNew(HeapType type,
-                           std::initializer_list<Expression*> args) {
+                           std::initializer_list<Expression*> args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->type = Type(type, NonNullable);
+    ret->desc = descriptor;
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
-  StructNew* makeStructNew(HeapType type, ExpressionList&& args) {
+  StructNew* makeStructNew(HeapType type,
+                           ExpressionList&& args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands = std::move(args);
-    ret->type = Type(type, NonNullable);
+    ret->desc = descriptor;
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
-  template<typename T> StructNew* makeStructNew(HeapType type, const T& args) {
+  template<typename T>
+  StructNew* makeStructNew(HeapType type,
+                           const T& args,
+                           Expression* descriptor = nullptr) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
-    ret->type = Type(type, NonNullable);
+    ret->desc = descriptor;
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -991,7 +1016,7 @@ public:
     auto* ret = wasm.allocator.alloc<ArrayNew>();
     ret->size = size;
     ret->init = init;
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1003,7 +1028,7 @@ public:
     ret->segment = seg;
     ret->offset = offset;
     ret->size = size;
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1015,7 +1040,7 @@ public:
     ret->segment = seg;
     ret->offset = offset;
     ret->size = size;
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1023,7 +1048,7 @@ public:
   ArrayNewFixed* makeArrayNewFixed(HeapType type, const T& values) {
     auto* ret = wasm.allocator.alloc<ArrayNewFixed>();
     ret->values.set(values);
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->finalize();
     return ret;
   }
@@ -1034,6 +1059,7 @@ public:
   }
   ArrayGet* makeArrayGet(Expression* ref,
                          Expression* index,
+                         MemoryOrder order,
                          Type type,
                          bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();
@@ -1041,15 +1067,19 @@ public:
     ret->index = index;
     ret->type = type;
     ret->signed_ = signed_;
+    ret->order = order;
     ret->finalize();
     return ret;
   }
-  ArraySet*
-  makeArraySet(Expression* ref, Expression* index, Expression* value) {
+  ArraySet* makeArraySet(Expression* ref,
+                         Expression* index,
+                         Expression* value,
+                         MemoryOrder order) {
     auto* ret = wasm.allocator.alloc<ArraySet>();
     ret->ref = ref;
     ret->index = index;
     ret->value = value;
+    ret->order = order;
     ret->finalize();
     return ret;
   }
@@ -1110,6 +1140,34 @@ public:
     ret->index = index;
     ret->offset = offset;
     ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  ArrayRMW* makeArrayRMW(AtomicRMWOp op,
+                         Expression* ref,
+                         Expression* index,
+                         Expression* value,
+                         MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<ArrayRMW>();
+    ret->op = op;
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
+    ret->order = order;
+    ret->finalize();
+    return ret;
+  }
+  ArrayCmpxchg* makeArrayCmpxchg(Expression* ref,
+                                 Expression* index,
+                                 Expression* expected,
+                                 Expression* replacement,
+                                 MemoryOrder order) {
+    auto* ret = wasm.allocator.alloc<ArrayCmpxchg>();
+    ret->ref = ref;
+    ret->index = index;
+    ret->expected = expected;
+    ret->replacement = replacement;
+    ret->order = order;
     ret->finalize();
     return ret;
   }
@@ -1191,7 +1249,7 @@ public:
   }
   ContNew* makeContNew(HeapType type, Expression* func) {
     auto* ret = wasm.allocator.alloc<ContNew>();
-    ret->type = Type(type, NonNullable);
+    ret->type = Type(type, NonNullable, Exact);
     ret->func = func;
     ret->finalize();
     return ret;
@@ -1200,7 +1258,7 @@ public:
                          ExpressionList&& operands,
                          Expression* cont) {
     auto* ret = wasm.allocator.alloc<ContBind>();
-    ret->type = Type(targetType, NonNullable);
+    ret->type = Type(targetType, NonNullable, Exact);
     ret->operands = std::move(operands);
     ret->cont = cont;
     ret->finalize();
@@ -1270,7 +1328,7 @@ public:
       return makeConst(value);
     }
     if (value.isNull()) {
-      return makeRefNull(type);
+      return makeRefNull(type.getHeapType());
     }
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
@@ -1435,8 +1493,8 @@ public:
       return maybeWrap(makeConstantExpression(Literal::makeZeros(curr->type)));
     }
     if (curr->type.isNullable()) {
-      return maybeWrap(ExpressionManipulator::refNull(
-        curr, Type(curr->type.getHeapType().getBottom(), Nullable)));
+      return maybeWrap(
+        ExpressionManipulator::refNull(curr, curr->type.getHeapType()));
     }
     if (curr->type.isRef() &&
         curr->type.getHeapType().isMaybeShared(HeapType::i31)) {

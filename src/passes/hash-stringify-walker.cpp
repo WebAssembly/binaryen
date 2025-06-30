@@ -204,6 +204,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
     void walk(Expression* curr) {
       hasFilterValue = false;
       Super::walk(curr);
+      flushControlFlowQueue();
     }
 
     void addUniqueSymbol(SeparatorReason reason) {}
@@ -268,7 +269,8 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
   const std::vector<Expression*>& exprs) {
   return StringifyProcessor::filter(
     substrings, exprs, [](const Expression* curr) {
-      return Properties::isBranch(curr) || curr->is<Return>();
+      return Properties::isBranch(curr) || curr->is<Return>() ||
+             curr->is<TryTable>();
     });
 }
 

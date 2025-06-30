@@ -382,6 +382,7 @@ public:
   // used to define the new type in the TypeBuilder.
   virtual void modifyStruct(HeapType oldType, Struct& struct_) {}
   virtual void modifyArray(HeapType oldType, Array& array) {}
+  virtual void modifyContinuation(HeapType oldType, Continuation& sig) {}
   virtual void modifySignature(HeapType oldType, Signature& sig) {}
 
   // This additional hook is called after modify* and other operations, and
@@ -490,16 +491,19 @@ public:
     mapTypes(newMapping);
   }
 
+  HeapType getNewHeapType(HeapType type) {
+    auto iter = mapping.find(type);
+    if (iter != mapping.end()) {
+      return iter->second;
+    }
+    return type;
+  }
+
   Type getNewType(Type type) {
     if (!type.isRef()) {
       return type;
     }
-    auto heapType = type.getHeapType();
-    auto iter = mapping.find(heapType);
-    if (iter != mapping.end()) {
-      return getTempType(Type(iter->second, type.getNullability()));
-    }
-    return getTempType(type);
+    return getTempType(type.with(getNewHeapType(type.getHeapType())));
   }
 
   void modifyStruct(HeapType oldType, Struct& struct_) override {
@@ -512,6 +516,10 @@ public:
   }
   void modifyArray(HeapType oldType, Array& array) override {
     array.element.type = getNewType(oldType.getArray().element.type);
+  }
+  void modifyContinuation(HeapType oldType,
+                          Continuation& continuation) override {
+    continuation.type = getNewHeapType(oldType.getContinuation().type);
   }
   void modifySignature(HeapType oldSignatureType, Signature& sig) override {
     auto getUpdatedTypeList = [&](Type type) {

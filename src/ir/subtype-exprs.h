@@ -243,6 +243,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(seg->type,
                         self()->getModule()->getTable(curr->table)->type);
   }
+  void visitElemDrop(ElemDrop* curr) {}
   void visitTry(Try* curr) {
     self()->noteSubtype(curr->body, curr);
     for (auto* body : curr->catchBodies) {
@@ -299,6 +300,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteCast(curr->ref, curr->castType);
   }
   void visitRefCast(RefCast* curr) { self()->noteCast(curr->ref, curr); }
+  void visitRefGetDesc(RefGetDesc* curr) {}
   void visitBrOn(BrOn* curr) {
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       self()->noteCast(curr->ref, curr->castType);
@@ -336,8 +338,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    self()->noteSubtype(curr->expected, fields[curr->index].type);
-    self()->noteSubtype(curr->replacement, fields[curr->index].type);
+    auto type = fields[curr->index].type;
+    self()->noteSubtype(curr->expected,
+                        type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    self()->noteSubtype(curr->replacement, type);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
@@ -398,6 +402,22 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto* seg = self()->getModule()->getElementSegment(curr->segment);
     self()->noteSubtype(seg->type, array.element.type);
   }
+  void visitArrayRMW(ArrayRMW* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    self()->noteSubtype(curr->value, array.element.type);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto type = curr->ref->type.getHeapType().getArray().element.type;
+    self()->noteSubtype(curr->expected,
+                        type.isRef() ? Type(HeapType::eq, Nullable) : type);
+    self()->noteSubtype(curr->replacement, type);
+  }
   void visitRefAs(RefAs* curr) {
     if (curr->op == RefAsNonNull) {
       self()->noteCast(curr->value, curr);
@@ -412,15 +432,127 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStringWTF16Get(StringWTF16Get* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
 
-  void visitContNew(ContNew* curr) { WASM_UNREACHABLE("not implemented"); }
-  void visitContBind(ContBind* curr) { WASM_UNREACHABLE("not implemented"); }
-  void visitSuspend(Suspend* curr) { WASM_UNREACHABLE("not implemented"); }
-  void visitResume(Resume* curr) { WASM_UNREACHABLE("not implemented"); }
+  void visitContNew(ContNew* curr) {
+    if (!curr->type.isContinuation()) {
+      return;
+    }
+    // The type of the function reference must remain a subtype of the function
+    // type expected by the continuation.
+    self()->noteSubtype(curr->func->type.getHeapType(),
+                        curr->type.getHeapType().getContinuation().type);
+  }
+  void visitContBind(ContBind* curr) {
+    if (!curr->cont->type.isContinuation()) {
+      return;
+    }
+    // Each of the bound arguments must remain subtypes of their expected
+    // parameters.
+    auto params = curr->cont->type.getHeapType()
+                    .getContinuation()
+                    .type.getSignature()
+                    .params;
+    assert(curr->operands.size() <= params.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], params[i]);
+    }
+  }
+  void visitSuspend(Suspend* curr) {
+    // The operands must remain subtypes of the parameters given by the tag.
+    auto params =
+      self()->getModule()->getTag(curr->tag)->type.getSignature().params;
+    assert(curr->operands.size() == params.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], params[i]);
+    }
+  }
+  void processResumeHandlers(Type contType,
+                             const ArenaVector<Name>& handlerTags,
+                             const ArenaVector<Name>& handlerBlocks) {
+    auto contSig = contType.getHeapType().getContinuation().type.getSignature();
+    assert(handlerTags.size() == handlerBlocks.size());
+    auto& wasm = *self()->getModule();
+    // Process each handler in turn.
+    for (Index i = 0; i < handlerTags.size(); ++i) {
+      if (!handlerBlocks[i]) {
+        // Switch handlers do not constrain types in any way.
+        continue;
+      }
+      auto tagSig = wasm.getTag(handlerTags[i])->type.getSignature();
+      // The types sent on suspensions with this tag must remain subtypes of the
+      // types expected at the target block.
+      auto expected = self()->findBreakTarget(handlerBlocks[i])->type;
+      assert(tagSig.params.size() + 1 == expected.size());
+      for (Index j = 0; j < tagSig.params.size(); ++j) {
+        self()->noteSubtype(tagSig.params[i], expected[i]);
+      }
+      auto nextSig = expected[expected.size() - 1]
+                       .getHeapType()
+                       .getContinuation()
+                       .type.getSignature();
+      // The types we send to the next continuation must remain subtypes of the
+      // types the continuation is expecting based on the tag results.
+      self()->noteSubtype(nextSig.params, tagSig.results);
+      // The types returned by the current continuation must remain subtypes of
+      // the types returned by the next continuation.
+      self()->noteSubtype(contSig.results, nextSig.results);
+    }
+  }
+  void visitResume(Resume* curr) {
+    if (!curr->cont->type.isContinuation()) {
+      return;
+    }
+    processResumeHandlers(
+      curr->cont->type, curr->handlerTags, curr->handlerBlocks);
+    // The types we send to the resumed continuation must remain subtypes of the
+    // types expected by the continuation.
+    auto params = curr->cont->type.getHeapType()
+                    .getContinuation()
+                    .type.getSignature()
+                    .params;
+    assert(curr->operands.size() == params.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], params[i]);
+    }
+  }
   void visitResumeThrow(ResumeThrow* curr) {
-    WASM_UNREACHABLE("not implemented");
+    if (!curr->cont->type.isContinuation()) {
+      return;
+    }
+    processResumeHandlers(
+      curr->cont->type, curr->handlerTags, curr->handlerBlocks);
+    // The types we use to create the exception package must remain subtypes of
+    // the types expected by the exception tag.
+    auto params =
+      self()->getModule()->getTag(curr->tag)->type.getSignature().params;
+    assert(curr->operands.size() == params.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], params[i]);
+    }
   }
   void visitStackSwitch(StackSwitch* curr) {
-    WASM_UNREACHABLE("not implemented");
+    if (!curr->cont->type.isContinuation()) {
+      return;
+    }
+    // The types sent when switching must remain subtypes of the types expected
+    // by the target continuation.
+    auto contSig =
+      curr->cont->type.getHeapType().getContinuation().type.getSignature();
+    assert(curr->operands.size() + 1 == contSig.params.size());
+    for (Index i = 0; i < curr->operands.size(); ++i) {
+      self()->noteSubtype(curr->operands[i], contSig.params[i]);
+    }
+    // The type returned by the target continuation must remain a subtype of the
+    // type the current continuation returns as indicated by the tag result.
+    auto currResult =
+      self()->getModule()->getTag(curr->tag)->type.getSignature().results;
+    self()->noteSubtype(contSig.results, currResult);
+    // The type returned by the current continuation must remain a subtype of
+    // the type returned by the return continuation.
+    auto retSig = contSig.params[contSig.params.size() - 1]
+                    .getHeapType()
+                    .getContinuation()
+                    .type.getSignature();
+    self()->noteSubtype(currResult, retSig.results);
   }
 };
 

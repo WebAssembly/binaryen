@@ -51,6 +51,12 @@ struct WasmException {
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
+// An exception thrown when we try to execute non-constant code, that is, code
+// that we cannot properly evaluate at compile time (e.g. if it refers to an
+// import, or we are optimizing and it uses relaxed SIMD).
+// TODO: use a flow with a special name, as this is likely very slow
+struct NonconstantException {};
+
 // Utilities
 
 extern Name WASM, RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
@@ -193,9 +199,11 @@ protected:
   // this function in LSan.
   //
   // This consumes the input |data| entirely.
-  Literal makeGCData(Literals&& data, Type type) {
+  Literal makeGCData(Literals&& data,
+                     Type type,
+                     Literal desc = Literal::makeNull(HeapType::none)) {
     auto allocation =
-      std::make_shared<GCData>(type.getHeapType(), std::move(data));
+      std::make_shared<GCData>(type.getHeapType(), std::move(data), desc);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
@@ -219,12 +227,28 @@ public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
 
+  enum RelaxedBehavior {
+    // Consider relaxed SIMD instructions non-constant. This is suitable for
+    // optimizations, as we bake the results of optimizations into the output,
+    // but relaxed operations must behave according to the host semantics, not
+    // ours, so we do not want to optimize such expressions.
+    NonConstant,
+    // Execute relaxed SIMD instructions.
+    Execute,
+  };
+
+protected:
+  RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
+
+public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
   }
   virtual ~ExpressionRunner() = default;
+
+  void setRelaxedBehavior(RelaxedBehavior value) { relaxedBehavior = value; }
 
   Flow visit(Expression* curr) {
     depth++;
@@ -584,11 +608,21 @@ public:
         return value.extAddPairwiseToSI32x4();
       case ExtAddPairwiseUVecI16x8ToI32x4:
         return value.extAddPairwiseToUI32x4();
-      case TruncSatSVecF32x4ToVecI32x4:
       case RelaxedTruncSVecF32x4ToVecI32x4:
+        // TODO: We could do this only if the actual values are in the relaxed
+        //       range.
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
-      case TruncSatUVecF32x4ToVecI32x4:
       case RelaxedTruncUVecF32x4ToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
@@ -622,11 +656,19 @@ public:
         return value.convertLowSToF64x2();
       case ConvertLowUVecI32x4ToVecF64x2:
         return value.convertLowUToF64x2();
-      case TruncSatZeroSVecF64x2ToVecI32x4:
       case RelaxedTruncZeroSVecF64x2ToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatZeroSVecF64x2ToVecI32x4:
         return value.truncSatZeroSToI32x4();
-      case TruncSatZeroUVecF64x2ToVecI32x4:
       case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case TruncSatZeroUVecF64x2ToVecI32x4:
         return value.truncSatZeroUToI32x4();
       case DemoteZeroVecF64x2ToVecF32x4:
         return value.demoteZeroToF32x4();
@@ -989,8 +1031,12 @@ public:
         return left.maxUI16x8(right);
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
-      case Q15MulrSatSVecI16x8:
       case RelaxedQ15MulrSVecI16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case Q15MulrSatSVecI16x8:
         return left.q15MulrSatSI16x8(right);
       case ExtMulLowSVecI16x8:
         return left.extMulLowSI16x8(right);
@@ -1064,11 +1110,19 @@ public:
         return left.mulF32x4(right);
       case DivVecF32x4:
         return left.divF32x4(right);
-      case MinVecF32x4:
       case RelaxedMinVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MinVecF32x4:
         return left.minF32x4(right);
-      case MaxVecF32x4:
       case RelaxedMaxVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MaxVecF32x4:
         return left.maxF32x4(right);
       case PMinVecF32x4:
         return left.pminF32x4(right);
@@ -1082,11 +1136,19 @@ public:
         return left.mulF64x2(right);
       case DivVecF64x2:
         return left.divF64x2(right);
-      case MinVecF64x2:
       case RelaxedMinVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MinVecF64x2:
         return left.minF64x2(right);
-      case MaxVecF64x2:
       case RelaxedMaxVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case MaxVecF64x2:
         return left.maxF64x2(right);
       case PMinVecF64x2:
         return left.pminF64x2(right);
@@ -1102,8 +1164,12 @@ public:
       case NarrowUVecI32x4ToVecI16x8:
         return left.narrowUToI16x8(right);
 
-      case SwizzleVecI8x16:
       case RelaxedSwizzleVecI8x16:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        [[fallthrough]];
+      case SwizzleVecI8x16:
         return left.swizzleI8x16(right);
 
       case DotI8x16I7x16SToVecI16x8:
@@ -1213,21 +1279,42 @@ public:
         return c.bitselectV128(a, b);
 
       case RelaxedMaddVecF16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedMaddF16x8(b, c);
       case RelaxedNmaddVecF16x8:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedNmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedMaddF32x4(b, c);
       case RelaxedNmaddVecF32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedNmaddF32x4(b, c);
       case RelaxedMaddVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedMaddF64x2(b, c);
       case RelaxedNmaddVecF64x2:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
         return a.relaxedNmaddF64x2(b, c);
-      default:
-        // TODO: implement signselect and dot_add
-        WASM_UNREACHABLE("not implemented");
+      case DotI8x16I7x16AddSToVecI32x4:
+        if (relaxedBehavior == RelaxedBehavior::NonConstant) {
+          return NONCONSTANT_FLOW;
+        }
+        return a.dotSI8x16toI16x8Add(b, c);
     }
+    WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
@@ -1472,6 +1559,7 @@ public:
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitElemDrop(ElemDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -1557,14 +1645,37 @@ public:
     }
     Literal val = ref.getSingleValue();
     Type castType = curr->getCastType();
-    if (val.isNull()) {
-      if (castType.isNullable()) {
+    if (Type::isSubType(val.type, castType)) {
+      return typename Cast::Success{val};
+    } else {
+      return typename Cast::Failure{val};
+    }
+  }
+  template<typename T> Cast doDescCast(T* curr) {
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return typename Cast::Breaking{ref};
+    }
+    Flow desc = self()->visit(curr->desc);
+    if (desc.breaking()) {
+      return typename Cast::Breaking{ref};
+    }
+    auto expected = desc.getSingleValue().getGCData();
+    if (!expected) {
+      trap("null descriptor");
+    }
+    Literal val = ref.getSingleValue();
+    auto data = val.getGCData();
+    if (!data) {
+      // Check whether null is allowed.
+      if (curr->getCastType().isNullable()) {
         return typename Cast::Success{val};
       } else {
         return typename Cast::Failure{val};
       }
     }
-    if (HeapType::isSubType(val.type.getHeapType(), castType.getHeapType())) {
+    // The cast succeeds if we have the expected descriptor.
+    if (data->desc.getGCData() == expected) {
       return typename Cast::Success{val};
     } else {
       return typename Cast::Failure{val};
@@ -1582,7 +1693,7 @@ public:
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    auto cast = doCast(curr);
+    auto cast = curr->desc ? doDescCast(curr) : doCast(curr);
     if (auto* breaking = cast.getBreaking()) {
       return *breaking;
     } else if (auto* result = cast.getSuccess()) {
@@ -1592,51 +1703,72 @@ public:
     trap("cast error");
     WASM_UNREACHABLE("unreachable");
   }
+  Flow visitRefGetDesc(RefGetDesc* curr) {
+    NOTE_ENTER("RefGetDesc");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return data->desc;
+  }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
     // BrOnCast* uses the casting infrastructure, so handle them first.
-    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-      auto cast = doCast(curr);
-      if (auto* breaking = cast.getBreaking()) {
-        return *breaking;
-      } else if (auto* original = cast.getFailure()) {
-        if (curr->op == BrOnCast) {
-          return *original;
+    switch (curr->op) {
+      case BrOnCast:
+      case BrOnCastFail:
+      case BrOnCastDesc:
+      case BrOnCastDescFail: {
+        auto cast = curr->desc ? doDescCast(curr) : doCast(curr);
+        if (auto* breaking = cast.getBreaking()) {
+          return *breaking;
+        } else if (auto* original = cast.getFailure()) {
+          if (curr->op == BrOnCast || curr->op == BrOnCastDesc) {
+            return *original;
+          } else {
+            return Flow(curr->name, *original);
+          }
         } else {
-          return Flow(curr->name, *original);
+          auto* result = cast.getSuccess();
+          assert(result);
+          if (curr->op == BrOnCast || curr->op == BrOnCastDesc) {
+            return Flow(curr->name, *result);
+          } else {
+            return *result;
+          }
         }
-      } else {
-        auto* result = cast.getSuccess();
-        assert(result);
-        if (curr->op == BrOnCast) {
-          return Flow(curr->name, *result);
+      }
+      case BrOnNull:
+      case BrOnNonNull: {
+        // Otherwise we are just checking for null.
+        Flow flow = visit(curr->ref);
+        if (flow.breaking()) {
+          return flow;
+        }
+        const auto& value = flow.getSingleValue();
+        NOTE_EVAL1(value);
+        if (curr->op == BrOnNull) {
+          // BrOnNull does not propagate the value if it takes the branch.
+          if (value.isNull()) {
+            return Flow(curr->name);
+          }
+          // If the branch is not taken, we return the non-null value.
+          return {value};
         } else {
-          return *result;
+          // BrOnNonNull does not return a value if it does not take the branch.
+          if (value.isNull()) {
+            return Flow();
+          }
+          // If the branch is taken, we send the non-null value.
+          return Flow(curr->name, value);
         }
       }
     }
-    // Otherwise we are just checking for null.
-    Flow flow = visit(curr->ref);
-    if (flow.breaking()) {
-      return flow;
-    }
-    const auto& value = flow.getSingleValue();
-    NOTE_EVAL1(value);
-    if (curr->op == BrOnNull) {
-      // BrOnNull does not propagate the value if it takes the branch.
-      if (value.isNull()) {
-        return Flow(curr->name);
-      }
-      // If the branch is not taken, we return the non-null value.
-      return {value};
-    } else {
-      // BrOnNonNull does not return a value if it does not take the branch.
-      if (value.isNull()) {
-        return Flow();
-      }
-      // If the branch is taken, we send the non-null value.
-      return Flow(curr->name, value);
-    }
+    WASM_UNREACHABLE("unexpected op");
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
@@ -1645,6 +1777,12 @@ public:
       // find why we are unreachable, and stop there.
       for (auto* operand : curr->operands) {
         auto value = self()->visit(operand);
+        if (value.breaking()) {
+          return value;
+        }
+      }
+      if (curr->desc) {
+        auto value = self()->visit(curr->desc);
         if (value.breaking()) {
           return value;
         }
@@ -1666,7 +1804,17 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    return makeGCData(std::move(data), curr->type);
+    if (!curr->desc) {
+      return makeGCData(std::move(data), curr->type);
+    }
+    auto desc = self()->visit(curr->desc);
+    if (desc.breaking()) {
+      return desc;
+    }
+    if (desc.getSingleValue().isNull()) {
+      trap("null descriptor");
+    }
+    return makeGCData(std::move(data), curr->type, desc.getSingleValue());
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1994,6 +2142,81 @@ public:
   }
   Flow visitArrayInitData(ArrayInitData* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayRMW(ArrayRMW* curr) {
+    NOTE_ENTER("ArrayRMW");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    auto& field = data->values[indexVal];
+    auto oldVal = field;
+    auto newVal = value.getSingleValue();
+    switch (curr->op) {
+      case RMWAdd:
+        field = field.add(newVal);
+        break;
+      case RMWSub:
+        field = field.sub(newVal);
+        break;
+      case RMWAnd:
+        field = field.and_(newVal);
+        break;
+      case RMWOr:
+        field = field.or_(newVal);
+        break;
+      case RMWXor:
+        field = field.xor_(newVal);
+        break;
+      case RMWXchg:
+        field = newVal;
+        break;
+    }
+    return oldVal;
+  }
+
+  Flow visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    NOTE_ENTER("ArrayCmpxchg");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow expected = self()->visit(curr->expected);
+    if (expected.breaking()) {
+      return expected;
+    }
+    Flow replacement = self()->visit(curr->replacement);
+    if (replacement.breaking()) {
+      return replacement;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    auto& field = data->values[indexVal];
+    auto oldVal = field;
+    if (field == expected.getSingleValue()) {
+      field = replacement.getSingleValue();
+    }
+    return oldVal;
+  }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
     Flow flow = visit(curr->value);
@@ -2381,9 +2604,6 @@ protected:
   std::unordered_map<Name, Literals> globalValues;
 
 public:
-  struct NonconstantException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
   ConstantExpressionRunner(Module* module,
                            Flags flags,
                            Index maxDepth,
@@ -2506,6 +2726,10 @@ public:
     NOTE_ENTER("TableInit");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitElemDrop(ElemDrop* curr) {
+    NOTE_ENTER("ElemDrop");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2617,15 +2841,29 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
-  Flow visitContNew(ContNew* curr) { WASM_UNREACHABLE("unimplemented"); }
-  Flow visitContBind(ContBind* curr) { WASM_UNREACHABLE("unimplemented"); }
-  Flow visitSuspend(Suspend* curr) { WASM_UNREACHABLE("unimplemented"); }
-  Flow visitResume(Resume* curr) { WASM_UNREACHABLE("unimplemented"); }
+  Flow visitContNew(ContNew* curr) {
+    NOTE_ENTER("ContNew");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitContBind(ContBind* curr) {
+    NOTE_ENTER("ContBind");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSuspend(Suspend* curr) {
+    NOTE_ENTER("Suspend");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitResume(Resume* curr) {
+    NOTE_ENTER("Resume");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitResumeThrow(ResumeThrow* curr) {
-    WASM_UNREACHABLE("unimplemented");
+    NOTE_ENTER("ResumeThrow");
+    return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStackSwitch(StackSwitch* curr) {
-    WASM_UNREACHABLE("unimplemented");
+    NOTE_ENTER("StackSwitch");
+    return Flow(NONCONSTANT_FLOW);
   }
 
   void trap(const char* why) override { throw NonconstantException(); }
@@ -2886,7 +3124,12 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
-      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
+      externalInterface(externalInterface), linkedInstances(linkedInstances_) {}
+
+  // Start up this instance. This must be called before doing anything else.
+  // (This is separate from the constructor so that it does not occur
+  // synchronously, which makes some code patterns harder to write.)
+  void instantiate() {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // generate internal (non-imported) globals
@@ -3462,6 +3705,12 @@ public:
       auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
       info.interface()->tableStore(info.name, destVal + i, value);
     }
+    return {};
+  }
+
+  Flow visitElemDrop(ElemDrop* curr) {
+    ElementSegment* seg = wasm.getElementSegment(curr->segment);
+    droppedElementSegments.insert(seg->name);
     return {};
   }
 
@@ -4443,6 +4692,10 @@ public:
       name = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
+    }
+
+    if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
+      throw NonconstantException();
     }
 
     // cannot still be breaking, it means we missed our stop

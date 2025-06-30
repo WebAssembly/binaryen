@@ -89,9 +89,19 @@ struct StringifyWalker
       Loop* loop;
     };
 
-    struct TryBodyStart {};
+    struct TryStart {
+      Try* tryy;
+    };
 
-    struct TryCatchStart {};
+    struct CatchStart {
+      Name tag;
+    };
+
+    struct CatchAllStart {};
+
+    struct TryTableStart {
+      TryTable* tryt;
+    };
 
     struct End {
       Expression* curr;
@@ -101,8 +111,10 @@ struct StringifyWalker
                                    IfStart,
                                    ElseStart,
                                    LoopStart,
-                                   TryBodyStart,
-                                   TryCatchStart,
+                                   TryStart,
+                                   CatchStart,
+                                   CatchAllStart,
+                                   TryTableStart,
                                    End>;
 
     Separator reason;
@@ -124,11 +136,17 @@ struct StringifyWalker
     static SeparatorReason makeLoopStart(Loop* loop) {
       return SeparatorReason(LoopStart{loop});
     }
-    static SeparatorReason makeTryCatchStart() {
-      return SeparatorReason(TryCatchStart{});
+    static SeparatorReason makeTryStart(Try* tryy) {
+      return SeparatorReason(TryStart{tryy});
     }
-    static SeparatorReason makeTryBodyStart() {
-      return SeparatorReason(TryBodyStart{});
+    static SeparatorReason makeCatchStart(Name tag) {
+      return SeparatorReason(CatchStart{tag});
+    }
+    static SeparatorReason makeCatchAllStart() {
+      return SeparatorReason(CatchAllStart{});
+    }
+    static SeparatorReason makeTryTableStart(TryTable* tryt) {
+      return SeparatorReason(TryTableStart{tryt});
     }
     static SeparatorReason makeEnd() { return SeparatorReason(End{}); }
     FuncStart* getFuncStart() { return std::get_if<FuncStart>(&reason); }
@@ -136,11 +154,13 @@ struct StringifyWalker
     IfStart* getIfStart() { return std::get_if<IfStart>(&reason); }
     ElseStart* getElseStart() { return std::get_if<ElseStart>(&reason); }
     LoopStart* getLoopStart() { return std::get_if<LoopStart>(&reason); }
-    TryBodyStart* getTryBodyStart() {
-      return std::get_if<TryBodyStart>(&reason);
+    TryStart* getTryStart() { return std::get_if<TryStart>(&reason); }
+    CatchStart* getCatchStart() { return std::get_if<CatchStart>(&reason); }
+    CatchAllStart* getCatchAllStart() {
+      return std::get_if<CatchAllStart>(&reason);
     }
-    TryCatchStart* getTryCatchStart() {
-      return std::get_if<TryCatchStart>(&reason);
+    TryTableStart* getTryTableStart() {
+      return std::get_if<TryTableStart>(&reason);
     }
     End* getEnd() { return std::get_if<End>(&reason); }
   };
@@ -158,10 +178,14 @@ struct StringifyWalker
       return o << "Else Start";
     } else if (reason.getLoopStart()) {
       return o << "Loop Start";
-    } else if (reason.getTryBodyStart()) {
-      return o << "Try Body Start";
-    } else if (reason.getTryCatchStart()) {
-      return o << "Try Catch Start";
+    } else if (reason.getTryStart()) {
+      return o << "Try Start";
+    } else if (reason.getCatchStart()) {
+      return o << "Catch Start";
+    } else if (reason.getCatchAllStart()) {
+      return o << "Catch All Start";
+    } else if (reason.getTryTableStart()) {
+      return o << "Try Table Start";
     } else if (reason.getEnd()) {
       return o << "End";
     }
@@ -191,7 +215,11 @@ struct StringifyWalker
   static void scan(SubType* self, Expression** currp);
   static void doVisitExpression(SubType* self, Expression** currp);
 
-private:
+  void flushControlFlowQueue() {
+    while (!controlFlowQueue.empty()) {
+      dequeueControlFlow();
+    }
+  }
   void dequeueControlFlow();
 };
 
@@ -248,20 +276,6 @@ private:
   std::set<uint32_t> funcIndices;
   // Maps the start idx of each function to the function name.
   std::map<uint32_t, Name> idxToFuncName;
-};
-
-struct OutliningSequence {
-  unsigned startIdx;
-  unsigned endIdx;
-  Name func;
-  bool endsTypeUnreachable;
-
-  OutliningSequence(unsigned startIdx,
-                    unsigned endIdx,
-                    Name func,
-                    bool endsTypeUnreachable)
-    : startIdx(startIdx), endIdx(endIdx), func(func),
-      endsTypeUnreachable(endsTypeUnreachable) {}
 };
 
 using Substrings = std::vector<SuffixTree::RepeatedSubstring>;

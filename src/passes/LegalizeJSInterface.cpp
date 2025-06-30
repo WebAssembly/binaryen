@@ -148,8 +148,7 @@ struct LegalizeJSInterface : public Pass {
           }
 
           curr->func = iter->second->name;
-          // TODO: Make this exact.
-          curr->type = Type(iter->second->type, NonNullable);
+          curr->finalize(iter->second->type);
         }
       };
 

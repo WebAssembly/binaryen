@@ -782,6 +782,7 @@ private:
       parent.writesTable = true;
       parent.implicitTrap = true;
     }
+    void visitElemDrop(ElemDrop* curr) { parent.writesTable = true; }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);
@@ -849,11 +850,24 @@ private:
     }
     void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
-      // Traps if the ref is not null and the cast fails.
+      // Traps if the cast fails.
+      parent.implicitTrap = true;
+    }
+    void visitRefGetDesc(RefGetDesc* curr) {
+      // Traps if the ref is null.
       parent.implicitTrap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
-    void visitStructNew(StructNew* curr) {}
+    void visitStructNew(StructNew* curr) {
+      if (curr->desc) {
+        // Traps when the descriptor is null.
+        if (curr->desc->type.isNull()) {
+          parent.trap = true;
+        } else if (curr->desc->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
+      }
+    }
     void visitStructGet(StructGet* curr) {
       if (curr->ref->type == Type::unreachable) {
         return;
@@ -996,6 +1010,32 @@ private:
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
+    void visitArrayRMW(ArrayRMW* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsArray = true;
+      parent.writesArray = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
+    void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.readsArray = true;
+      parent.writesArray = true;
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+      assert(curr->order != MemoryOrder::Unordered);
+      parent.isAtomic = true;
+    }
     void visitRefAs(RefAs* curr) {
       if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
         // These conversions are infallible.

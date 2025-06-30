@@ -26,15 +26,12 @@
 
 namespace wasm {
 
-namespace {
-
-} // anonymous namespace
-
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input,
                                              bool closedWorld)
   : wasm(wasm), closedWorld(closedWorld), builder(wasm),
-    random(std::move(input), wasm.features) {
+    random(std::move(input), wasm.features),
+    publicTypeValidator(wasm.features) {
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
@@ -395,9 +392,12 @@ void TranslateToFuzzReader::setupMemory() {
 
   auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
-    size_t memCovered = 0;
+    size_t numSegments = upTo(8);
     // need at least one segment for memory.inits
-    size_t numSegments = upTo(8) + 1;
+    if (wasm.dataSegments.empty() && !numSegments) {
+      numSegments = 1;
+    }
+    size_t memCovered = 0;
     for (size_t i = 0; i < numSegments; i++) {
       auto segment = builder.makeDataSegment();
       segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
@@ -417,19 +417,21 @@ void TranslateToFuzzReader::setupMemory() {
       wasm.addDataSegment(std::move(segment));
     }
   } else {
-    // init some data
-    auto segment = builder.makeDataSegment();
-    segment->memory = memory->name;
-    segment->offset =
-      builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
-    segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
-                     false);
-    auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
-    for (size_t i = 0; i < num; i++) {
-      auto value = upTo(512);
-      segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
+    // init some data, especially if none exists before
+    if (!oneIn(wasm.dataSegments.empty() ? 10 : 2)) {
+      auto segment = builder.makeDataSegment();
+      segment->memory = memory->name;
+      segment->offset =
+        builder.makeConst(Literal::makeFromInt32(0, memory->addressType));
+      segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
+                       false);
+      auto num = upTo(fuzzParams->USABLE_MEMORY * 2);
+      for (size_t i = 0; i < num; i++) {
+        auto value = upTo(512);
+        segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
+      }
+      wasm.addDataSegment(std::move(segment));
     }
-    wasm.addDataSegment(std::move(segment));
   }
 }
 
@@ -444,8 +446,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
+    // TODO: Support custom descriptors.
+    auto features = wasm.features;
+    features.setCustomDescriptors(false);
     auto generator = HeapTypeGenerator::create(
-      random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
+      random, features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
@@ -588,17 +593,27 @@ void TranslateToFuzzReader::setupTables() {
   // When EH is enabled, set up an exnref table.
   if (wasm.features.hasExceptionHandling()) {
     Type exnref = Type(HeapType::exn, Nullable);
-    Address initial = upTo(10);
-    Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
-    auto tablePtr =
-      builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
-                        exnref,
-                        initial,
-                        max,
-                        Type::i32); // TODO: wasm64
-    tablePtr->hasExplicitName = true;
-    table = wasm.addTable(std::move(tablePtr));
-    exnrefTableName = table->name;
+    auto iter =
+      std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+        return table->type == exnref;
+      });
+    if (iter != wasm.tables.end()) {
+      // Use the existing one.
+      exnrefTableName = iter->get()->name;
+    } else {
+      // Create a new exnref table.
+      Address initial = upTo(10);
+      Address max = oneIn(2) ? initial + upTo(4) : Memory::kUnlimitedSize;
+      auto tablePtr =
+        builder.makeTable(Names::getValidTableName(wasm, "exnref_table"),
+                          exnref,
+                          initial,
+                          max,
+                          Type::i32); // TODO: wasm64
+      tablePtr->hasExplicitName = true;
+      table = wasm.addTable(std::move(tablePtr));
+      exnrefTableName = table->name;
+    }
   }
 }
 
@@ -1073,6 +1088,11 @@ void TranslateToFuzzReader::addImportSleepSupport() {
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
+  // Don't always add this.
+  if (oneIn(2)) {
+    return;
+  }
+
   // Add memory hasher helper (for the hash, see hash.h). The function looks
   // like:
   // function hashMemory() {
@@ -1107,13 +1127,13 @@ void TranslateToFuzzReader::addHashMemorySupport() {
   }
   contents.push_back(builder.makeLocalGet(0, Type::i32));
   auto* body = builder.makeBlock(contents);
-  auto name = Names::getValidFunctionName(wasm, "hashMemory");
+  hashMemoryName = Names::getValidFunctionName(wasm, "hashMemory");
   auto* hasher = wasm.addFunction(builder.makeFunction(
-    name, Signature(Type::none, Type::i32), {Type::i32}, body));
+    hashMemoryName, Signature(Type::none, Type::i32), {Type::i32}, body));
 
-  if (!preserveImportsAndExports) {
+  if (!preserveImportsAndExports && !wasm.getExportOrNull("hashMemory")) {
     wasm.addExport(
-      builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+      builder.makeExport("hashMemory", hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
     if (!wasm.getExportOrNull("memory")) {
       wasm.addExport(builder.makeExport(
@@ -1321,7 +1341,7 @@ Expression* TranslateToFuzzReader::makeImportSleep(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
-  auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
+  auto* hash = builder.makeCall(hashMemoryName, {}, Type::i32);
   return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
@@ -1479,11 +1499,13 @@ Function* TranslateToFuzzReader::addFunction() {
   // outside.
   bool validExportParams =
     std::all_of(paramType.begin(), paramType.end(), [&](Type t) {
-      return t.isDefaultable();
+      return t.isDefaultable() && isValidPublicType(t);
     });
-  if (validExportParams && (numAddedFunctions == 0 || oneIn(2)) &&
-      !wasm.getExportOrNull(func->name) && !preserveImportsAndExports) {
-    wasm.addExport(new Export(func->name, ExternalKind::Function, func->name));
+  if (!preserveImportsAndExports && validExportParams &&
+      isValidPublicType(resultType) && (numAddedFunctions == 0 || oneIn(2)) &&
+      !wasm.getExportOrNull(func->name)) {
+    wasm.addExport(
+      Builder::makeExport(func->name, func->name, ExternalKind::Function));
   }
   // add some to an elem segment
   while (oneIn(3) && !random.finished()) {
@@ -1566,20 +1588,22 @@ void TranslateToFuzzReader::recombine(Function* func) {
       }
 
       std::vector<Type> ret;
-      auto heapType = type.getHeapType();
-      auto nullability = type.getNullability();
+      ret.push_back(type);
 
-      if (nullability == NonNullable) {
-        ret = getRelevantTypes(Type(heapType, Nullable));
+      if (type.isNonNullable()) {
+        auto nullable = getRelevantTypes(type.with(Nullable));
+        ret.insert(ret.end(), nullable.begin(), nullable.end());
+      }
+      if (type.isExact()) {
+        auto inexact = getRelevantTypes(type.with(Inexact));
+        ret.insert(ret.end(), inexact.begin(), inexact.end());
+        // Do not consider exact references to supertypes.
+        return ret;
       }
 
-      while (1) {
-        ret.push_back(Type(heapType, nullability));
-        auto super = heapType.getSuperType();
-        if (!super) {
-          break;
-        }
-        heapType = *super;
+      for (auto heapType = type.getHeapType().getSuperType(); heapType;
+           heapType = heapType->getSuperType()) {
+        ret.push_back(type.with(*heapType));
       }
 
       return ret;
@@ -2017,7 +2041,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
     }
     invocations.push_back(invoke);
     // log out memory in some cases
-    if (oneIn(2)) {
+    if (hashMemoryName && oneIn(2)) {
       invocations.push_back(makeMemoryHashLogging());
     }
   }
@@ -2156,8 +2180,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeCompoundRef);
     }
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                &Self::makeRefCast);
+    // Exact casts are only allowed with custom descriptors enabled.
+    if (type.isInexact() || wasm.features.hasCustomDescriptors()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefCast);
+    }
   }
   if (wasm.features.hasGC()) {
     if (typeStructFields.find(type) != typeStructFields.end()) {
@@ -2175,7 +2202,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
 Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
-    if (choice < LOGGING_PERCENT / 2) {
+    if (!hashMemoryName || choice < LOGGING_PERCENT / 2) {
       return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
@@ -3426,13 +3453,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      auto subtypeOpts = FeatureOptions<HeapType>().add(
-        FeatureSet::ReferenceTypes | FeatureSet::GC,
-        HeapType::i31,
-        HeapType::struct_,
-        HeapType::array);
-      auto subtype = pick(subtypeOpts).getBasic(share);
-      return makeConst(Type(subtype, nullability));
+      assert(wasm.features.hasGC());
+      auto subtype = pick(HeapTypes::i31, HeapTypes::struct_, HeapTypes::array);
+      return makeConst(Type(subtype.getBasic(share), nullability));
     }
     case HeapType::eq: {
       if (!wasm.features.hasGC()) {
@@ -3831,12 +3854,17 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         }
         case Type::v128: {
           assert(wasm.features.hasSIMD());
-          // TODO: Add the other SIMD unary ops
-          return buildUnary({pick(AnyTrueVec128,
-                                  AllTrueVecI8x16,
-                                  AllTrueVecI16x8,
-                                  AllTrueVecI32x4),
-                             make(Type::v128)});
+          auto op = pick(FeatureOptions<UnaryOp>().add(FeatureSet::SIMD,
+                                                       AnyTrueVec128,
+                                                       AllTrueVecI8x16,
+                                                       AllTrueVecI16x8,
+                                                       AllTrueVecI32x4,
+                                                       AllTrueVecI64x2,
+                                                       BitmaskVecI8x16,
+                                                       BitmaskVecI16x8,
+                                                       BitmaskVecI32x4,
+                                                       BitmaskVecI64x2));
+          return buildUnary({op, make(Type::v128)});
         }
         case Type::none:
         case Type::unreachable:
@@ -3945,46 +3973,76 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 3:
           return buildUnary({SplatVecF64x2, make(Type::f64)});
         case 4:
-          return buildUnary(
-            {pick(FeatureOptions<UnaryOp>()
-                    .add(FeatureSet::SIMD,
-                         NotVec128,
-                         // TODO: add additional SIMD instructions
-                         NegVecI8x16,
-                         NegVecI16x8,
-                         NegVecI32x4,
-                         NegVecI64x2,
-                         AbsVecF32x4,
-                         NegVecF32x4,
-                         SqrtVecF32x4,
-                         AbsVecF64x2,
-                         NegVecF64x2,
-                         SqrtVecF64x2,
-                         TruncSatSVecF32x4ToVecI32x4,
-                         TruncSatUVecF32x4ToVecI32x4,
-                         ConvertSVecI32x4ToVecF32x4,
-                         ConvertUVecI32x4ToVecF32x4,
-                         ExtendLowSVecI8x16ToVecI16x8,
-                         ExtendHighSVecI8x16ToVecI16x8,
-                         ExtendLowUVecI8x16ToVecI16x8,
-                         ExtendHighUVecI8x16ToVecI16x8,
-                         ExtendLowSVecI16x8ToVecI32x4,
-                         ExtendHighSVecI16x8ToVecI32x4,
-                         ExtendLowUVecI16x8ToVecI32x4,
-                         ExtendHighUVecI16x8ToVecI32x4)
-                    .add(FeatureSet::FP16,
-                         AbsVecF16x8,
-                         NegVecF16x8,
-                         SqrtVecF16x8,
-                         CeilVecF16x8,
-                         FloorVecF16x8,
-                         TruncVecF16x8,
-                         NearestVecF16x8,
-                         TruncSatSVecF16x8ToVecI16x8,
-                         TruncSatUVecF16x8ToVecI16x8,
-                         ConvertSVecI16x8ToVecF16x8,
-                         ConvertUVecI16x8ToVecF16x8)),
-             make(Type::v128)});
+          return buildUnary({pick(FeatureOptions<UnaryOp>()
+                                    .add(FeatureSet::SIMD,
+                                         NotVec128,
+                                         AbsVecI8x16,
+                                         AbsVecI16x8,
+                                         AbsVecI32x4,
+                                         AbsVecI64x2,
+                                         PopcntVecI8x16,
+                                         NegVecI8x16,
+                                         NegVecI16x8,
+                                         NegVecI32x4,
+                                         NegVecI64x2,
+                                         AbsVecF32x4,
+                                         NegVecF32x4,
+                                         SqrtVecF32x4,
+                                         CeilVecF32x4,
+                                         FloorVecF32x4,
+                                         TruncVecF32x4,
+                                         NearestVecF32x4,
+                                         AbsVecF64x2,
+                                         NegVecF64x2,
+                                         SqrtVecF64x2,
+                                         CeilVecF64x2,
+                                         FloorVecF64x2,
+                                         TruncVecF64x2,
+                                         NearestVecF64x2,
+                                         ExtAddPairwiseSVecI8x16ToI16x8,
+                                         ExtAddPairwiseUVecI8x16ToI16x8,
+                                         ExtAddPairwiseSVecI16x8ToI32x4,
+                                         ExtAddPairwiseUVecI16x8ToI32x4,
+                                         TruncSatSVecF32x4ToVecI32x4,
+                                         TruncSatUVecF32x4ToVecI32x4,
+                                         ConvertSVecI32x4ToVecF32x4,
+                                         ConvertUVecI32x4ToVecF32x4,
+                                         ExtendLowSVecI8x16ToVecI16x8,
+                                         ExtendHighSVecI8x16ToVecI16x8,
+                                         ExtendLowUVecI8x16ToVecI16x8,
+                                         ExtendHighUVecI8x16ToVecI16x8,
+                                         ExtendLowSVecI16x8ToVecI32x4,
+                                         ExtendHighSVecI16x8ToVecI32x4,
+                                         ExtendLowUVecI16x8ToVecI32x4,
+                                         ExtendHighUVecI16x8ToVecI32x4,
+                                         ExtendLowSVecI32x4ToVecI64x2,
+                                         ExtendHighSVecI32x4ToVecI64x2,
+                                         ExtendLowUVecI32x4ToVecI64x2,
+                                         ExtendHighUVecI32x4ToVecI64x2,
+                                         ConvertLowSVecI32x4ToVecF64x2,
+                                         ConvertLowUVecI32x4ToVecF64x2,
+                                         TruncSatZeroSVecF64x2ToVecI32x4,
+                                         TruncSatZeroUVecF64x2ToVecI32x4,
+                                         DemoteZeroVecF64x2ToVecF32x4,
+                                         PromoteLowVecF32x4ToVecF64x2)
+                                    .add(FeatureSet::RelaxedSIMD,
+                                         RelaxedTruncSVecF32x4ToVecI32x4,
+                                         RelaxedTruncUVecF32x4ToVecI32x4,
+                                         RelaxedTruncZeroSVecF64x2ToVecI32x4,
+                                         RelaxedTruncZeroUVecF64x2ToVecI32x4)
+                                    .add(FeatureSet::FP16,
+                                         AbsVecF16x8,
+                                         NegVecF16x8,
+                                         SqrtVecF16x8,
+                                         CeilVecF16x8,
+                                         FloorVecF16x8,
+                                         TruncVecF16x8,
+                                         NearestVecF16x8,
+                                         TruncSatSVecF16x8ToVecI16x8,
+                                         TruncSatUVecF16x8ToVecI16x8,
+                                         ConvertSVecI16x8ToVecF16x8,
+                                         ConvertUVecI16x8ToVecF16x8)),
+                             make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
     }
@@ -4146,6 +4204,12 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       LeUVecI32x4,
                                       GeSVecI32x4,
                                       GeUVecI32x4,
+                                      EqVecI64x2,
+                                      NeVecI64x2,
+                                      LtSVecI64x2,
+                                      GtSVecI64x2,
+                                      LeSVecI64x2,
+                                      GeSVecI64x2,
                                       EqVecF32x4,
                                       NeVecF32x4,
                                       LtVecF32x4,
@@ -4158,6 +4222,8 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       GtVecF64x2,
                                       LeVecF64x2,
                                       GeVecF64x2,
+
+                                      // SIMD arithmetic
                                       AndVec128,
                                       OrVec128,
                                       XorVec128,
@@ -4172,9 +4238,7 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MinUVecI8x16,
                                       MaxSVecI8x16,
                                       MaxUVecI8x16,
-                                      // TODO: avgr_u
-                                      // TODO: q15mulr_sat_s
-                                      // TODO: extmul
+                                      AvgrUVecI8x16,
                                       AddVecI16x8,
                                       AddSatSVecI16x8,
                                       AddSatUVecI16x8,
@@ -4186,6 +4250,12 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MinUVecI16x8,
                                       MaxSVecI16x8,
                                       MaxUVecI16x8,
+                                      AvgrUVecI16x8,
+                                      Q15MulrSatSVecI16x8,
+                                      ExtMulLowSVecI16x8,
+                                      ExtMulHighSVecI16x8,
+                                      ExtMulLowUVecI16x8,
+                                      ExtMulHighUVecI16x8,
                                       AddVecI32x4,
                                       SubVecI32x4,
                                       MulVecI32x4,
@@ -4194,24 +4264,41 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MaxSVecI32x4,
                                       MaxUVecI32x4,
                                       DotSVecI16x8ToVecI32x4,
+                                      ExtMulLowSVecI32x4,
+                                      ExtMulHighSVecI32x4,
+                                      ExtMulLowUVecI32x4,
+                                      ExtMulHighUVecI32x4,
                                       AddVecI64x2,
                                       SubVecI64x2,
+                                      MulVecI64x2,
+                                      ExtMulLowSVecI64x2,
+                                      ExtMulHighSVecI64x2,
+                                      ExtMulLowUVecI64x2,
+                                      ExtMulHighUVecI64x2,
                                       AddVecF32x4,
                                       SubVecF32x4,
                                       MulVecF32x4,
                                       DivVecF32x4,
                                       MinVecF32x4,
                                       MaxVecF32x4,
+                                      PMinVecF32x4,
+                                      PMaxVecF32x4,
                                       AddVecF64x2,
                                       SubVecF64x2,
                                       MulVecF64x2,
                                       DivVecF64x2,
                                       MinVecF64x2,
                                       MaxVecF64x2,
+                                      PMinVecF64x2,
+                                      PMaxVecF64x2,
+
+                                      // SIMD Conversion
                                       NarrowSVecI16x8ToVecI8x16,
                                       NarrowUVecI16x8ToVecI8x16,
                                       NarrowSVecI32x4ToVecI16x8,
                                       NarrowUVecI32x4ToVecI16x8,
+
+                                      // SIMD Swizzle
                                       SwizzleVecI8x16)
                                  .add(FeatureSet::FP16,
                                       EqVecF16x8,
@@ -4226,7 +4313,9 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                       MulVecF16x8,
                                       DivVecF16x8,
                                       MinVecF16x8,
-                                      MaxVecF16x8)),
+                                      MaxVecF16x8,
+                                      PMinVecF16x8,
+                                      PMaxVecF16x8)),
                           make(Type::v128),
                           make(Type::v128)});
     }
@@ -4559,7 +4648,6 @@ Expression* TranslateToFuzzReader::makeSIMDShift() {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDLoad() {
-  // TODO: add Load{32,64}Zero if merged to proposal
   SIMDLoadOp op = pick(Load8SplatVec128,
                        Load16SplatVec128,
                        Load32SplatVec128,
@@ -4569,7 +4657,9 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
                        Load16x4SVec128,
                        Load16x4UVec128,
                        Load32x2SVec128,
-                       Load32x2UVec128);
+                       Load32x2UVec128,
+                       Load32ZeroVec128,
+                       Load64ZeroVec128);
   Address offset = logify(get());
   Address align;
   switch (op) {
@@ -4592,8 +4682,11 @@ Expression* TranslateToFuzzReader::makeSIMDLoad() {
       align = pick(1, 2, 4, 8);
       break;
     case Load32ZeroVec128:
+      align = 4;
+      break;
     case Load64ZeroVec128:
-      WASM_UNREACHABLE("Unexpected SIMD loads");
+      align = 8;
+      break;
   }
   Expression* ptr = makePointer();
   return builder.makeSIMDLoad(op, offset, align, ptr, wasm.memories[0]->name);
@@ -4717,12 +4810,17 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
+  if (!wasm.features.hasCustomDescriptors()) {
+    // Exact cast targets disallowed without custom descriptors.
+    castType = castType.with(Inexact);
+  }
   return builder.makeRefTest(make(refType), castType);
 }
 
 Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   assert(type.isRef());
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+  assert(type.isInexact() || wasm.features.hasCustomDescriptors());
   // As with RefTest, use possibly related types. Unlike there, we are given the
   // output type, which is the cast type, so just generate the ref's type.
   Type refType;
@@ -4815,7 +4913,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
     case BrOnNonNull: {
       // The sent type is the non-nullable version of the reference, so any ref
       // of that type is ok, nullable or not.
-      refType = Type(targetType.getHeapType(), getNullability());
+      refType = targetType.with(getNullability());
       break;
     }
     case BrOnCast: {
@@ -4823,10 +4921,17 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       // nullability, so the combination of the two must be a subtype of
       // targetType.
       castType = getSubType(targetType);
-      // The ref's type must be castable to castType, or we'd not validate. But
-      // it can also be a subtype, which will trivially also succeed (so do that
-      // more rarely). Pick subtypes rarely, as they make the cast trivial.
-      refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
+      if (castType.isExact() && !wasm.features.hasCustomDescriptors()) {
+        // This exact cast is only valid if its input has the same type (or the
+        // only possible strict subtype, bottom).
+        refType = castType;
+      } else {
+        // The ref's type must be castable to castType, or we'd not validate.
+        // But it can also be a subtype, which will trivially also succeed (so
+        // do that more rarely). Pick subtypes rarely, as they make the cast
+        // trivial.
+        refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
+      }
       if (targetType.isNonNullable()) {
         // And it must have the right nullability for the target, as mentioned
         // above: if the target type is non-nullable then either the ref or the
@@ -4849,6 +4954,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       refType = getSubType(targetType);
       // See above on BrOnCast, but flipped.
       castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
+      castType = castType.withInexactIfNoCustomDescs(wasm.features);
       // There is no nullability to adjust: if targetType is non-nullable then
       // both refType and castType are as well, as subtypes of it. But we can
       // also allow castType to be nullable (it is not sent to the target).
@@ -4902,9 +5008,17 @@ static auto makeArrayBoundsCheck(Expression* ref,
                                  Function* func,
                                  Builder& builder,
                                  Expression* length = nullptr) {
-  auto tempRef = builder.addVar(func, ref->type);
+  // The reference might be a RefNull, in which case its type is exact. But we
+  // want to avoid creating exact-typed locals until we support them more widely
+  // in the fuzzer, so adjust the type. TODO: remove this once exact references
+  // are better supported.
+  Type refType = ref->type;
+  if (refType.isExact()) {
+    refType = refType.with(Inexact);
+  }
+  auto tempRef = builder.addVar(func, refType);
   auto tempIndex = builder.addVar(func, index->type);
-  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, refType);
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
 
@@ -4931,7 +5045,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
-              builder.makeLocalGet(tempRef, ref->type),
+              builder.makeLocalGet(tempRef, refType),
               builder.makeLocalGet(tempIndex, index->type),
               getLength};
   return result;
@@ -4947,14 +5061,16 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    return builder.makeArrayGet(ref, index, type, signed_);
+    return builder.makeArrayGet(
+      ref, index, MemoryOrder::Unordered, type, signed_);
   }
   // To avoid a trap, check the length dynamically using this pattern:
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, type, signed_);
+  auto* get = builder.makeArrayGet(
+    check.getRef, check.getIndex, MemoryOrder::Unordered, type, signed_);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(check.condition, get, fallback);
 }
@@ -4972,14 +5088,15 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    return builder.makeArraySet(ref, index, value);
+    return builder.makeArraySet(ref, index, value, MemoryOrder::Unordered);
   }
   // To avoid a trap, check the length dynamically using this pattern:
   //
   //   if (index < array.len) array[index] = value;
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* set = builder.makeArraySet(check.getRef, check.getIndex, value);
+  auto* set = builder.makeArraySet(
+    check.getRef, check.getIndex, value, MemoryOrder::Unordered);
   return builder.makeIf(check.condition, set);
 }
 
@@ -5320,11 +5437,35 @@ Nullability TranslateToFuzzReader::getNullability() {
   return Nullable;
 }
 
+Exactness TranslateToFuzzReader::getExactness() {
+  // Without GC, the only heap types are func and extern, neither of which is
+  // exactly inhabitable. To avoid introducing uninhabitable types, only
+  // generate exact references when GC is enabled. We don't need custom
+  // descriptors to be enabled even though that is the feature that introduces
+  // exact references because the binary writer can always generalize the exact
+  // reference types away.
+  //
+  // if (wasm.features.hasGC() && oneIn(8)) {
+  //   return Exact;
+  // }
+  //
+  // However, we cannot yet handle creating exact references in general, so for
+  // now we always generate inexact references when given the choice. TODO.
+  return Inexact;
+}
+
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   if (nullability == NonNullable) {
     return NonNullable;
   }
   return getNullability();
+}
+
+Exactness TranslateToFuzzReader::getSubType(Exactness exactness) {
+  if (exactness == Exact) {
+    return Exact;
+  }
+  return getExactness();
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
@@ -5336,16 +5477,18 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
+        assert(wasm.features.hasReferenceTypes());
         return pick(FeatureOptions<HeapType>()
-                      .add(FeatureSet::ReferenceTypes, HeapType::func)
-                      .add(FeatureSet::GC, HeapType::nofunc))
+                      .add(HeapTypes::func)
+                      .add(FeatureSet::GC, HeapTypes::nofunc))
           .getBasic(share);
       case HeapType::cont:
         return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext: {
+        assert(wasm.features.hasReferenceTypes());
         auto options = FeatureOptions<HeapType>()
-                         .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                         .add(FeatureSet::GC, HeapType::noext);
+                         .add(HeapTypes::ext)
+                         .add(FeatureSet::GC, HeapTypes::noext);
         if (share == Unshared) {
           // Shared strings not yet supported.
           options.add(FeatureSet::Strings, HeapType::string);
@@ -5355,14 +5498,13 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        auto options = FeatureOptions<HeapType>().add(FeatureSet::GC,
-                                                      HeapType::any,
-                                                      HeapType::eq,
-                                                      HeapType::i31,
-                                                      HeapType::struct_,
-                                                      HeapType::array,
-                                                      HeapType::none);
-        return pick(options).getBasic(share);
+        return pick(HeapTypes::any,
+                    HeapTypes::eq,
+                    HeapTypes::i31,
+                    HeapTypes::struct_,
+                    HeapTypes::array,
+                    HeapTypes::none)
+          .getBasic(share);
       }
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
@@ -5419,9 +5561,19 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     if (!funcContext && heapType.isMaybeShared(HeapType::exn)) {
       return type;
     }
-    heapType = getSubType(heapType);
+    if (type.isExact()) {
+      // The only other possible heap type is bottom, but we don't want to
+      // generate too many bottom types.
+      if (!heapType.isBottom() && oneIn(20)) {
+        heapType = heapType.getBottom();
+      }
+    } else {
+      heapType = getSubType(heapType);
+    }
     auto nullability = getSubType(type.getNullability());
-    auto subType = Type(heapType, nullability);
+    auto exactness =
+      heapType.isBasic() ? Inexact : getSubType(type.getExactness());
+    auto subType = Type(heapType, nullability, exactness);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.

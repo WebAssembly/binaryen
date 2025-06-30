@@ -209,6 +209,8 @@ Result<> makeTableCopy(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeTableInit(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeElemDrop(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeThrow(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRethrow(Ctx&, Index, const std::vector<Annotation>&);
@@ -231,13 +233,14 @@ Result<> makeI31Get(Ctx&, Index, const std::vector<Annotation>&, bool signed_);
 template<typename Ctx>
 Result<> makeRefTest(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
-Result<> makeRefCast(Ctx&, Index, const std::vector<Annotation>&);
+Result<> makeRefCast(Ctx&, Index, const std::vector<Annotation>&, bool isDesc);
+template<typename Ctx>
+Result<> makeRefGetDesc(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<>
 makeBrOnNull(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
 template<typename Ctx>
-Result<>
-makeBrOnCast(Ctx&, Index, const std::vector<Annotation>&, bool onFail = false);
+Result<> makeBrOnCast(Ctx&, Index, const std::vector<Annotation>&, BrOnOp op);
 template<typename Ctx>
 Result<>
 makeStructNew(Ctx&, Index, const std::vector<Annotation>&, bool default_);
@@ -272,7 +275,14 @@ template<typename Ctx>
 Result<>
 makeArrayGet(Ctx&, Index, const std::vector<Annotation>&, bool signed_ = false);
 template<typename Ctx>
+Result<> makeAtomicArrayGet(Ctx&,
+                            Index,
+                            const std::vector<Annotation>&,
+                            bool signed_ = false);
+template<typename Ctx>
 Result<> makeArraySet(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeAtomicArraySet(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayLen(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
@@ -283,6 +293,10 @@ template<typename Ctx>
 Result<> makeArrayInitData(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeArrayInitElem(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeArrayRMW(AtomicRMWOp, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeArrayCmpxchg(Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRefAs(Ctx&, Index, const std::vector<Annotation>&, RefAsOp op);
 template<typename Ctx>
@@ -434,12 +448,22 @@ Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
 }
 
 // heaptype ::= x:typeidx                      => types[x]
+//            | '(' 'exact' x:typeidx ')'      => exact types[x]
 //            | t:absheaptype                  => unshared t
 //            | '(' 'shared' t:absheaptype ')' => shared t
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (auto t = maybeTypeidx(ctx)) {
     CHECK_ERR(t);
     return *t;
+  }
+
+  if (ctx.in.takeSExprStart("exact"sv)) {
+    auto t = typeidx(ctx);
+    CHECK_ERR(t);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of exact heap type");
+    }
+    return ctx.makeExact(*t);
   }
 
   auto share = ctx.in.takeSExprStart("shared"sv) ? Shared : Unshared;
@@ -2108,11 +2132,42 @@ makeTableCopy(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 template<typename Ctx>
 Result<>
 makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  // Note: binary and text formats for `table.init` are different. In both
+  // formats the table index is optional (with 0 as the default). When both the
+  // table and elem index are specified, the elem index comes first in the
+  // binary format, but second in the text format.
+
+  auto reset = ctx.in.getPos();
+
+  auto retry = [&]() -> Result<> {
+    // We're unable to parse the two argument format. Try one argument format
+    // with just elem index.
+    WithPosition with(ctx, reset);
+    auto elem = elemidx(ctx);
+    CHECK_ERR(elem);
+    MaybeResult<typename Ctx::TableIdxT> table = ctx.getTableFromIdx(0);
+    return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+  };
+
   auto table = maybeTableidx(ctx);
-  CHECK_ERR(table);
+  if (table.getErr()) {
+    return retry();
+  }
+
+  auto elem = maybeElemidx(ctx);
+  if (elem.getErr() || !elem) {
+    return retry();
+  }
+
+  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+}
+
+template<typename Ctx>
+Result<>
+makeElemDrop(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto elem = elemidx(ctx);
   CHECK_ERR(elem);
-  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+  return ctx.makeElemDrop(pos, annotations, *elem);
 }
 
 template<typename Ctx>
@@ -2201,11 +2256,22 @@ makeRefTest(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 }
 
 template<typename Ctx>
-Result<>
-makeRefCast(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+Result<> makeRefCast(Ctx& ctx,
+                     Index pos,
+                     const std::vector<Annotation>& annotations,
+                     bool isDesc) {
   auto type = reftype(ctx);
   CHECK_ERR(type);
-  return ctx.makeRefCast(pos, annotations, *type);
+  return ctx.makeRefCast(pos, annotations, *type, isDesc);
+}
+
+template<typename Ctx>
+Result<> makeRefGetDesc(Ctx& ctx,
+                        Index pos,
+                        const std::vector<Annotation>& annotations) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefGetDesc(pos, annotations, *type);
 }
 
 template<typename Ctx>
@@ -2223,15 +2289,14 @@ template<typename Ctx>
 Result<> makeBrOnCast(Ctx& ctx,
                       Index pos,
                       const std::vector<Annotation>& annotations,
-                      bool onFail) {
+                      BrOnOp op) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
   auto in = reftype(ctx);
   CHECK_ERR(in);
   auto out = reftype(ctx);
   CHECK_ERR(out);
-  return ctx.makeBrOn(
-    pos, annotations, *label, onFail ? BrOnCastFail : BrOnCast, *in, *out);
+  return ctx.makeBrOn(pos, annotations, *label, op, *in, *out);
 }
 
 template<typename Ctx>
@@ -2390,7 +2455,20 @@ Result<> makeArrayGet(Ctx& ctx,
                       bool signed_) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  return ctx.makeArrayGet(pos, annotations, *type, signed_);
+  return ctx.makeArrayGet(
+    pos, annotations, *type, signed_, MemoryOrder::Unordered);
+}
+
+template<typename Ctx>
+Result<> makeAtomicArrayGet(Ctx& ctx,
+                            Index pos,
+                            const std::vector<Annotation>& annotations,
+                            bool signed_) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayGet(pos, annotations, *type, signed_, *order);
 }
 
 template<typename Ctx>
@@ -2398,7 +2476,18 @@ Result<>
 makeArraySet(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  return ctx.makeArraySet(pos, annotations, *type);
+  return ctx.makeArraySet(pos, annotations, *type, MemoryOrder::Unordered);
+}
+
+template<typename Ctx>
+Result<> makeAtomicArraySet(Ctx& ctx,
+                            Index pos,
+                            const std::vector<Annotation>& annotations) {
+  auto order = memorder(ctx);
+  CHECK_ERR(order);
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArraySet(pos, annotations, *type, *order);
 }
 
 template<typename Ctx>
@@ -2445,6 +2534,39 @@ Result<> makeArrayInitElem(Ctx& ctx,
   auto elem = elemidx(ctx);
   CHECK_ERR(elem);
   return ctx.makeArrayInitElem(pos, annotations, *type, *elem);
+}
+
+template<typename Ctx>
+Result<> makeArrayRMW(Ctx& ctx,
+                      Index pos,
+                      const std::vector<Annotation>& annotations,
+                      AtomicRMWOp op) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayRMW(pos, annotations, op, *type, *order1);
+}
+
+template<typename Ctx>
+Result<> makeArrayCmpxchg(Ctx& ctx,
+                          Index pos,
+                          const std::vector<Annotation>& annotations) {
+  auto order1 = memorder(ctx);
+  CHECK_ERR(order1);
+  auto order2 = memorder(ctx);
+  CHECK_ERR(order2);
+  if (*order1 != *order2) {
+    return ctx.in.err(pos, "array.atomic.rmw memory orders must be identical");
+  }
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayCmpxchg(pos, annotations, *type, *order1);
 }
 
 template<typename Ctx>
@@ -2761,12 +2883,21 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
 
 // elemidx ::= x:u32 => x
 //           | v:id => x (if elems[x] = v)
-template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::ElemIdxT> maybeElemidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getElemFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
     return ctx.getElemFromName(*id);
+  }
+  return {};
+}
+
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+  if (auto idx = maybeElemidx(ctx)) {
+    CHECK_ERR(idx);
+    return *idx;
   }
   return ctx.in.err("expected elem index or identifier");
 }

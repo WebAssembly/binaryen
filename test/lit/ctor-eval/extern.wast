@@ -92,19 +92,19 @@
 
 ;; CHECK:      (type $7 (func (result (ref null (shared any)))))
 
-;; CHECK:      (global $ctor-eval$global (ref $array) (array.new_fixed $array 3
+;; CHECK:      (global $ctor-eval$global (ref (exact $array)) (array.new_fixed $array 3
 ;; CHECK-NEXT:  (i32.const 1)
 ;; CHECK-NEXT:  (i32.const 2)
 ;; CHECK-NEXT:  (i32.const 3)
 ;; CHECK-NEXT: ))
 
-;; CHECK:      (global $ctor-eval$global_1 (ref $shared-array) (array.new_fixed $shared-array 3
+;; CHECK:      (global $ctor-eval$global_1 (ref (exact $shared-array)) (array.new_fixed $shared-array 3
 ;; CHECK-NEXT:  (i32.const 1)
 ;; CHECK-NEXT:  (i32.const 2)
 ;; CHECK-NEXT:  (i32.const 3)
 ;; CHECK-NEXT: ))
 
-;; CHECK:      (global $ctor-eval$global_2 (ref $struct) (struct.new $struct
+;; CHECK:      (global $ctor-eval$global_2 (ref (exact $struct)) (struct.new $struct
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (ref.i31
 ;; CHECK-NEXT:    (i32.const 1)
@@ -112,7 +112,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: ))
 
-;; CHECK:      (global $ctor-eval$global_3 (ref $shared-struct) (struct.new $shared-struct
+;; CHECK:      (global $ctor-eval$global_3 (ref (exact $shared-struct)) (struct.new $shared-struct
 ;; CHECK-NEXT:  (extern.convert_any
 ;; CHECK-NEXT:   (ref.i31_shared
 ;; CHECK-NEXT:    (i32.const 1)

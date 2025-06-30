@@ -105,14 +105,14 @@ protected:
     PossibleContents::exactType(Type(HeapType::i31, NonNullable));
 
   PossibleContents exactFuncSignatureType = PossibleContents::exactType(
-    Type(Signature(Type::none, Type::none), Nullable));
+    Type(Signature(Type::none, Type::none), Nullable, Exact));
   PossibleContents exactNonNullFuncSignatureType = PossibleContents::exactType(
-    Type(Signature(Type::none, Type::none), NonNullable));
+    Type(Signature(Type::none, Type::none), NonNullable, Exact));
 
   PossibleContents many = PossibleContents::many();
 
-  PossibleContents coneAnyref = PossibleContents::fullConeType(anyref);
-  PossibleContents coneFuncref = PossibleContents::fullConeType(funcref);
+  PossibleContents coneAnyref = PossibleContents::coneType(anyref);
+  PossibleContents coneFuncref = PossibleContents::coneType(funcref);
   PossibleContents coneFuncref1 = PossibleContents::coneType(funcref, 1);
 };
 
@@ -663,29 +663,29 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                     PossibleContents::coneType(structref, 5));
 
   // Full cones.
-  assertCombination(PossibleContents::fullConeType(nullA),
+  assertCombination(PossibleContents::coneType(nullA),
                     exactA,
-                    PossibleContents::fullConeType(nullA));
-  assertCombination(PossibleContents::fullConeType(nullA),
+                    PossibleContents::coneType(nullA));
+  assertCombination(PossibleContents::coneType(nullA),
                     PossibleContents::coneType(nullA, 2),
-                    PossibleContents::fullConeType(nullA));
+                    PossibleContents::coneType(nullA));
 
   // All full cones with A remain full cones, except for E.
-  assertCombination(PossibleContents::fullConeType(nullA),
-                    PossibleContents::fullConeType(nullA),
-                    PossibleContents::fullConeType(nullA));
-  assertCombination(PossibleContents::fullConeType(nullA),
-                    PossibleContents::fullConeType(nullB),
-                    PossibleContents::fullConeType(nullA));
-  assertCombination(PossibleContents::fullConeType(nullA),
-                    PossibleContents::fullConeType(nullC),
-                    PossibleContents::fullConeType(nullA));
-  assertCombination(PossibleContents::fullConeType(nullA),
-                    PossibleContents::fullConeType(nullD),
-                    PossibleContents::fullConeType(nullA));
-  assertCombination(PossibleContents::fullConeType(nullA),
-                    PossibleContents::fullConeType(nullE),
-                    PossibleContents::fullConeType(structref));
+  assertCombination(PossibleContents::coneType(nullA),
+                    PossibleContents::coneType(nullA),
+                    PossibleContents::coneType(nullA));
+  assertCombination(PossibleContents::coneType(nullA),
+                    PossibleContents::coneType(nullB),
+                    PossibleContents::coneType(nullA));
+  assertCombination(PossibleContents::coneType(nullA),
+                    PossibleContents::coneType(nullC),
+                    PossibleContents::coneType(nullA));
+  assertCombination(PossibleContents::coneType(nullA),
+                    PossibleContents::coneType(nullD),
+                    PossibleContents::coneType(nullA));
+  assertCombination(PossibleContents::coneType(nullA),
+                    PossibleContents::coneType(nullE),
+                    PossibleContents::coneType(structref));
 
   // Intersections. Test with non-nullable types to avoid the null being a
   // possible intersection.
@@ -710,180 +710,169 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   // Neither is a subtype of the other, but nulls are possible, so a null can be
   // the intersection.
-  assertHaveIntersection(PossibleContents::fullConeType(nullA),
-                         PossibleContents::fullConeType(nullE));
+  assertHaveIntersection(PossibleContents::coneType(nullA),
+                         PossibleContents::coneType(nullE));
 
   // Without null on one side, we cannot intersect.
-  assertLackIntersection(PossibleContents::fullConeType(nnA),
-                         PossibleContents::fullConeType(nullE));
+  assertLackIntersection(PossibleContents::coneType(nnA),
+                         PossibleContents::coneType(nullE));
 
   // Computing intersections is supported with a full cone type.
-  assertIntersection(none, PossibleContents::fullConeType(nnA), none);
-  assertIntersection(many,
-                     PossibleContents::fullConeType(nnA),
-                     PossibleContents::fullConeType(nnA));
-  assertIntersection(many,
-                     PossibleContents::fullConeType(nullA),
-                     PossibleContents::fullConeType(nullA));
+  assertIntersection(none, PossibleContents::coneType(nnA), none);
+  assertIntersection(
+    many, PossibleContents::coneType(nnA), PossibleContents::coneType(nnA));
+  assertIntersection(
+    many, PossibleContents::coneType(nullA), PossibleContents::coneType(nullA));
 
-  assertIntersection(exactA, PossibleContents::fullConeType(nullA), exactA);
-  assertIntersection(nnExactA, PossibleContents::fullConeType(nullA), nnExactA);
-  assertIntersection(exactA, PossibleContents::fullConeType(nnA), nnExactA);
+  assertIntersection(exactA, PossibleContents::coneType(nullA), exactA);
+  assertIntersection(nnExactA, PossibleContents::coneType(nullA), nnExactA);
+  assertIntersection(exactA, PossibleContents::coneType(nnA), nnExactA);
 
-  assertIntersection(exactB, PossibleContents::fullConeType(nullA), exactB);
-  assertIntersection(nnExactB, PossibleContents::fullConeType(nullA), nnExactB);
-  assertIntersection(exactB, PossibleContents::fullConeType(nnA), nnExactB);
+  assertIntersection(exactB, PossibleContents::coneType(nullA), exactB);
+  assertIntersection(nnExactB, PossibleContents::coneType(nullA), nnExactB);
+  assertIntersection(exactB, PossibleContents::coneType(nnA), nnExactB);
 
   auto literalNullA = PossibleContents::literal(Literal::makeNull(A));
 
   assertIntersection(
-    literalNullA, PossibleContents::fullConeType(nullA), literalNullA);
-  assertIntersection(literalNullA, PossibleContents::fullConeType(nnA), none);
+    literalNullA, PossibleContents::coneType(nullA), literalNullA);
+  assertIntersection(literalNullA, PossibleContents::coneType(nnA), none);
 
   assertIntersection(
-    literalNullA, PossibleContents::fullConeType(nullB), literalNullA);
-  assertIntersection(literalNullA, PossibleContents::fullConeType(nnB), none);
+    literalNullA, PossibleContents::coneType(nullB), literalNullA);
+  assertIntersection(literalNullA, PossibleContents::coneType(nnB), none);
 
   assertIntersection(
-    literalNullA, PossibleContents::fullConeType(nullE), literalNullA);
-  assertIntersection(literalNullA, PossibleContents::fullConeType(nnE), none);
+    literalNullA, PossibleContents::coneType(nullE), literalNullA);
+  assertIntersection(literalNullA, PossibleContents::coneType(nnE), none);
 
   assertIntersection(exactA,
-                     PossibleContents::fullConeType(nullB),
+                     PossibleContents::coneType(nullB),
                      PossibleContents::literal(Literal::makeNull(B)));
-  assertIntersection(nnExactA, PossibleContents::fullConeType(nullB), none);
-  assertIntersection(exactA, PossibleContents::fullConeType(nnB), none);
+  assertIntersection(nnExactA, PossibleContents::coneType(nullB), none);
+  assertIntersection(exactA, PossibleContents::coneType(nnB), none);
 
   // A and E have no intersection, so the only possibility is a null, and that
   // null must be the bottom type.
   assertIntersection(
     exactA,
-    PossibleContents::fullConeType(nullE),
+    PossibleContents::coneType(nullE),
     PossibleContents::literal(Literal::makeNull(HeapType::none)));
 
   assertIntersection(PossibleContents::coneType(nnA, 1),
-                     PossibleContents::fullConeType(nnB),
+                     PossibleContents::coneType(nnB),
                      nnExactB);
   assertIntersection(PossibleContents::coneType(nnB, 1),
-                     PossibleContents::fullConeType(nnA),
+                     PossibleContents::coneType(nnA),
                      PossibleContents::coneType(nnB, 1));
   assertIntersection(PossibleContents::coneType(nnD, 2),
-                     PossibleContents::fullConeType(nnA),
+                     PossibleContents::coneType(nnA),
                      PossibleContents::coneType(nnD, 2));
   assertIntersection(PossibleContents::coneType(nnA, 5),
-                     PossibleContents::fullConeType(nnD),
+                     PossibleContents::coneType(nnD),
                      PossibleContents::coneType(nnD, 3));
 
-  assertIntersection(PossibleContents::coneType(nnA, 1),
-                     PossibleContents::fullConeType(nnD),
-                     none);
+  assertIntersection(
+    PossibleContents::coneType(nnA, 1), PossibleContents::coneType(nnD), none);
 
   // Globals stay as globals, but their type might get refined.
   assertIntersection(
-    funcGlobal, PossibleContents::fullConeType(funcref), funcGlobal);
+    funcGlobal, PossibleContents::coneType(funcref), funcGlobal);
 
   // No global filtering.
   auto signature = Type(Signature(Type::none, Type::none), Nullable);
   assertIntersection(
-    nonNullFunc, PossibleContents::fullConeType(signature), nonNullFunc);
+    nonNullFunc, PossibleContents::coneType(signature), nonNullFunc);
 
   // Filter a global to a more specific type.
   assertIntersection(funcGlobal,
-                     PossibleContents::fullConeType(signature),
+                     PossibleContents::coneType(signature),
                      PossibleContents::global("funcGlobal", signature));
 
   // Filter a global's nullability only.
   auto nonNullFuncRef = Type(HeapType::func, NonNullable);
-  assertIntersection(funcGlobal,
-                     PossibleContents::fullConeType(nonNullFuncRef),
-                     nonNullFuncGlobal);
+  assertIntersection(
+    funcGlobal, PossibleContents::coneType(nonNullFuncRef), nonNullFuncGlobal);
 
   // Incompatible global and cone types have no intersection.
-  assertIntersection(funcGlobal, PossibleContents::fullConeType(nullE), none);
+  assertIntersection(funcGlobal, PossibleContents::coneType(nullE), none);
 
   // Incompatible hierarchies have no intersection.
-  assertIntersection(
-    literalNullA, PossibleContents::fullConeType(funcref), none);
+  assertIntersection(literalNullA, PossibleContents::coneType(funcref), none);
 
   // Computing intersections is also supported with a Literal.
   assertIntersection(i32Zero, i32Zero, i32Zero);
   assertIntersection(i32One, i32Zero, none);
   assertIntersection(i32Global1, i32Zero, i32Zero);
   assertIntersection(funcGlobal, i32Zero, none);
-  assertIntersection(
-    PossibleContents::fullConeType(Type::i32), i32Zero, i32Zero);
-  assertIntersection(PossibleContents::fullConeType(Type::f64), i32Zero, none);
+  assertIntersection(PossibleContents::coneType(Type::i32), i32Zero, i32Zero);
+  assertIntersection(PossibleContents::coneType(Type::f64), i32Zero, none);
 
   // Computing intersections is also supported with empty contents.
   assertIntersection(none, none, none);
   assertIntersection(literalNullA, none, none);
   assertIntersection(funcGlobal, none, none);
-  assertIntersection(PossibleContents::fullConeType(signature), none, none);
+  assertIntersection(PossibleContents::coneType(signature), none, none);
 
   // Subcontents. This API only supports the case where one of the inputs is a
   // full cone type.
   // First, compare exact types to such a cone.
+  EXPECT_TRUE(
+    PossibleContents::isSubContents(exactA, PossibleContents::coneType(nullA)));
+  EXPECT_TRUE(
+    PossibleContents::isSubContents(nnExactA, PossibleContents::coneType(nnA)));
   EXPECT_TRUE(PossibleContents::isSubContents(
-    exactA, PossibleContents::fullConeType(nullA)));
+    nnExactA, PossibleContents::coneType(nullA)));
   EXPECT_TRUE(PossibleContents::isSubContents(
-    nnExactA, PossibleContents::fullConeType(nnA)));
-  EXPECT_TRUE(PossibleContents::isSubContents(
-    nnExactA, PossibleContents::fullConeType(nullA)));
-  EXPECT_TRUE(PossibleContents::isSubContents(
-    nnExactD, PossibleContents::fullConeType(nullA)));
+    nnExactD, PossibleContents::coneType(nullA)));
 
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    exactA, PossibleContents::fullConeType(nnA)));
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    exactA, PossibleContents::fullConeType(nullB)));
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(exactA, PossibleContents::coneType(nnA)));
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(exactA, PossibleContents::coneType(nullB)));
 
   // Next, compare cones.
-  EXPECT_TRUE(
-    PossibleContents::isSubContents(PossibleContents::fullConeType(nullA),
-                                    PossibleContents::fullConeType(nullA)));
-  EXPECT_TRUE(
-    PossibleContents::isSubContents(PossibleContents::fullConeType(nnA),
-                                    PossibleContents::fullConeType(nullA)));
   EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nnA), PossibleContents::fullConeType(nnA)));
-  EXPECT_TRUE(
-    PossibleContents::isSubContents(PossibleContents::fullConeType(nullD),
-                                    PossibleContents::fullConeType(nullA)));
+    PossibleContents::coneType(nullA), PossibleContents::coneType(nullA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::coneType(nnA), PossibleContents::coneType(nullA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(PossibleContents::coneType(nnA),
+                                              PossibleContents::coneType(nnA)));
+  EXPECT_TRUE(PossibleContents::isSubContents(
+    PossibleContents::coneType(nullD), PossibleContents::coneType(nullA)));
 
-  EXPECT_FALSE(
-    PossibleContents::isSubContents(PossibleContents::fullConeType(nullA),
-                                    PossibleContents::fullConeType(nnA)));
-  EXPECT_FALSE(
-    PossibleContents::isSubContents(PossibleContents::fullConeType(nullA),
-                                    PossibleContents::fullConeType(nullD)));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::coneType(nullA), PossibleContents::coneType(nnA)));
+  EXPECT_FALSE(PossibleContents::isSubContents(
+    PossibleContents::coneType(nullA), PossibleContents::coneType(nullD)));
 
   // Trivial values.
   EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::none(), PossibleContents::fullConeType(nullA)));
+    PossibleContents::none(), PossibleContents::coneType(nullA)));
   EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::many(), PossibleContents::fullConeType(nullA)));
+    PossibleContents::many(), PossibleContents::coneType(nullA)));
 
   EXPECT_TRUE(PossibleContents::isSubContents(
-    anyNull, PossibleContents::fullConeType(nullA)));
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    anyNull, PossibleContents::fullConeType(nnA)));
+    anyNull, PossibleContents::coneType(nullA)));
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(anyNull, PossibleContents::coneType(nnA)));
 
   // Tests cases with a full cone only on the left. Such a cone is only a sub-
   // contents of Many.
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(PossibleContents::coneType(nullA), exactA));
   EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA), exactA));
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA), nnExactA));
+    PossibleContents::coneType(nullA), nnExactA));
 
   EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA), PossibleContents::none()));
-  EXPECT_TRUE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA), PossibleContents::many()));
+    PossibleContents::coneType(nullA), PossibleContents::none()));
+  EXPECT_TRUE(PossibleContents::isSubContents(PossibleContents::coneType(nullA),
+                                              PossibleContents::many()));
 
   EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nullA), anyNull));
-  EXPECT_FALSE(PossibleContents::isSubContents(
-    PossibleContents::fullConeType(nnA), anyNull));
+    PossibleContents::coneType(nullA), anyNull));
+  EXPECT_FALSE(
+    PossibleContents::isSubContents(PossibleContents::coneType(nnA), anyNull));
 }
 
 TEST_F(PossibleContentsTest, TestOracleManyTypes) {
@@ -957,6 +946,6 @@ TEST_F(PossibleContentsTest, TestTupleItems) {
 
   // We can get the tuple items. The funcref is a full cone, as we did not have
   // depth info for it.
-  EXPECT_EQ(tuple.getTupleItem(0), PossibleContents::fullConeType(Type::i32));
-  EXPECT_EQ(tuple.getTupleItem(1), PossibleContents::fullConeType(funcref));
+  EXPECT_EQ(tuple.getTupleItem(0), PossibleContents::coneType(Type::i32));
+  EXPECT_EQ(tuple.getTupleItem(1), PossibleContents::coneType(funcref));
 }

@@ -501,6 +501,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitTableInit(TableInit* curr) {}
 
+  void visitElemDrop(ElemDrop* curr) {}
+
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
@@ -594,6 +596,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     pop();
     push(Type::none);
   }
+
+  void visitRefGetDesc(RefGetDesc* curr) { WASM_UNREACHABLE("TODO"); }
 
   void visitBrOn(BrOn* curr) {
     // Like br_if, these instructions do different things to the stack depending
@@ -724,6 +728,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       }
     }
   }
+
+  void visitArrayRMW(ArrayRMW* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
 
   HeapType
   generalizeArrayType(HeapType type,

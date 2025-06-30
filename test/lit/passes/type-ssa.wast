@@ -30,6 +30,10 @@
   ;; CHECK:      (global $h (ref $struct) (struct.new $struct_5
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (memory $0 16 17)
+  (memory $0 16 17)
+
   (global $h (ref $struct) (struct.new $struct
     (i32.const 42)
   ))
@@ -67,6 +71,32 @@
       (struct.new $struct
         (i32.const 100)
       )
+    )
+  )
+
+  ;; CHECK:      (func $tuple-unreachable (type $1)
+  ;; CHECK-NEXT:  (tuple.extract 2 0
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tuple-unreachable
+    ;; We should not error on this.
+    (tuple.extract 2 0
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $atomic-unreachable (type $1)
+  ;; CHECK-NEXT:  (i32.atomic.rmw.sub offset=4
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $atomic-unreachable
+    ;; We should not error on this.
+    (i32.atomic.rmw.sub offset=4
+      (unreachable)
+      (unreachable)
     )
   )
 )
@@ -460,23 +490,26 @@
   ;; CHECK:      (type $2 (func (result (ref $A))))
 
   ;; CHECK:      (func $0 (type $2) (result (ref $A))
-  ;; CHECK-NEXT:  (block $label (result (ref $A_1))
+  ;; CHECK-NEXT:  (block $label (result (ref (exact $A_1)))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $label (ref $A_1) (ref $A_1)
-  ;; CHECK-NEXT:     (struct.new_default $A_1)
+  ;; CHECK-NEXT:    (br_on_cast $label (ref (exact $A_1)) (ref (exact $A_1))
+  ;; CHECK-NEXT:     (block (result (ref (exact $A_1)))
+  ;; CHECK-NEXT:      (struct.new_default $A_1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0 (result (ref $A))
-    ;; After creating a subtype of $A as the input to the br_on_cast, the cast
-    ;; must be refinalized so that it validates (otherwise, it would try to cast
-    ;; to a supertype).
+    ;; After creating a subtype of $A as the input to the br_on_cast, the block
+    ;; and cast should be refinalized.
     (block $label (result (ref $A))
       (drop
         (br_on_cast $label (ref $A) (ref $A)
-          (struct.new_default $A)
+          (block (result (ref $A))
+            (struct.new_default $A)
+          )
         )
       )
       (unreachable)

@@ -187,7 +187,9 @@ Index getMaxBits(Expression* curr,
             return 32;
           }
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return 32;
       }
@@ -195,7 +197,9 @@ Index getMaxBits(Expression* curr,
         int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (auto* c = binary->right->dynCast<Const>()) {
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return maxBitsLeft;
       }
@@ -282,7 +286,9 @@ Index getMaxBits(Expression* curr,
             return 64;
           }
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return 64;
       }
@@ -290,7 +296,9 @@ Index getMaxBits(Expression* curr,
         int32_t maxBitsLeft = getMaxBits(binary->left, localInfoProvider);
         if (auto* c = binary->right->dynCast<Const>()) {
           int32_t bitsRight = getMaxBits(c);
-          return std::max(0, maxBitsLeft - bitsRight + 1);
+          // Apply std::min: Result bits cannot exceed dividend bits
+          return std::min(maxBitsLeft,
+                          std::max(0, maxBitsLeft - bitsRight + 1));
         }
         return maxBitsLeft;
       }
@@ -447,6 +455,10 @@ Index getMaxBits(Expression* curr,
     // if unsigned, then we have a limit
     if (LoadUtils::isSignRelevant(load) && !load->signed_) {
       return 8 * load->bytes;
+    }
+  } else if (auto* block = curr->dynCast<Block>()) {
+    if (!block->name.is() && !block->list.empty() && block->type.isConcrete()) {
+      return getMaxBits(block->list.back(), localInfoProvider);
     }
   }
   switch (curr->type.getBasic()) {

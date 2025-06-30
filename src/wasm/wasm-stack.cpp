@@ -50,8 +50,8 @@ void BinaryInstWriter::visitIf(If* curr) {
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, BinaryLocations::Else);
   }
   o << int8_t(BinaryConsts::Else);
 }
@@ -81,7 +81,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // are casting, and to emit the proper thing.
       RefCast cast;
       cast.type = to;
-      cast.ref = nullptr;
+      cast.ref = cast.desc = nullptr;
       visitRefCast(&cast);
     };
 
@@ -2074,7 +2074,8 @@ void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
   o << int8_t(BinaryConsts::RefNull);
-  parent.writeHeapType(curr->type.getHeapType());
+  assert(curr->type.isInexact());
+  parent.writeHeapType(curr->type.getHeapType(), Inexact);
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -2127,6 +2128,11 @@ void BinaryInstWriter::visitTableInit(TableInit* curr) {
   o << U32LEB(parent.getTableIndex(curr->table));
 }
 
+void BinaryInstWriter::visitElemDrop(ElemDrop* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::ElemDrop);
+  o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
@@ -2155,16 +2161,16 @@ void BinaryInstWriter::visitTryTable(TryTable* curr) {
 }
 
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, i);
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch_Legacy)
     << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
-  if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
+  if (func) {
+    parent.trackExpressionDelimiter(curr, func, curr->catchBodies.size());
   }
   o << int8_t(BinaryConsts::CatchAll_Legacy);
 }
@@ -2265,20 +2271,47 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
   } else {
     o << U32LEB(BinaryConsts::RefTest);
   }
-  parent.writeHeapType(curr->castType.getHeapType());
+  parent.writeHeapType(curr->castType.getHeapType(),
+                       curr->castType.getExactness());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
+  if (curr->desc && curr->desc->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
-    o << U32LEB(BinaryConsts::RefCastNull);
+    if (curr->desc) {
+      o << U32LEB(BinaryConsts::RefCastDescNull);
+    } else {
+      o << U32LEB(BinaryConsts::RefCastNull);
+    }
   } else {
-    o << U32LEB(BinaryConsts::RefCast);
+    if (curr->desc) {
+      o << U32LEB(BinaryConsts::RefCastDesc);
+    } else {
+      o << U32LEB(BinaryConsts::RefCast);
+    }
   }
-  parent.writeHeapType(curr->type.getHeapType());
+  parent.writeHeapType(curr->type.getHeapType(), curr->type.getExactness());
+}
+
+void BinaryInstWriter::visitRefGetDesc(RefGetDesc* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefGetDesc);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
+  bool hasDesc = curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail;
+  if (hasDesc && curr->desc->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   switch (curr->op) {
     case BrOnNull:
       o << int8_t(BinaryConsts::BrOnNull);
@@ -2289,25 +2322,30 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       o << U32LEB(getBreakIndex(curr->name));
       return;
     case BrOnCast:
-    case BrOnCastFail: {
-      o << int8_t(BinaryConsts::GCPrefix);
-      if (curr->op == BrOnCast) {
-        o << U32LEB(BinaryConsts::BrOnCast);
-      } else {
-        o << U32LEB(BinaryConsts::BrOnCastFail);
-      }
-      assert(curr->ref->type.isRef());
-      assert(Type::isSubType(curr->castType, curr->ref->type));
-      uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
-                      (curr->castType.isNullable() ? 2 : 0);
-      o << flags;
-      o << U32LEB(getBreakIndex(curr->name));
-      parent.writeHeapType(curr->ref->type.getHeapType());
-      parent.writeHeapType(curr->castType.getHeapType());
-      return;
-    }
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      break;
+    case BrOnCastFail:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
+      break;
+    case BrOnCastDesc:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastDesc);
+      break;
+    case BrOnCastDescFail:
+      o << int8_t(BinaryConsts::GCPrefix)
+        << U32LEB(BinaryConsts::BrOnCastDescFail);
+      break;
   }
-  WASM_UNREACHABLE("invalid br_on_*");
+  assert(curr->ref->type.isRef());
+  assert(hasDesc || Type::isSubType(curr->castType, curr->ref->type));
+  uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
+                  (curr->castType.isNullable() ? 2 : 0);
+  o << flags;
+  o << U32LEB(getBreakIndex(curr->name));
+  parent.writeHeapType(curr->ref->type.getHeapType(),
+                       curr->ref->type.getExactness());
+  parent.writeHeapType(curr->castType.getHeapType(),
+                       curr->castType.getExactness());
+  return;
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
@@ -2442,15 +2480,20 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
   }
   auto heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getArray().element;
+  bool atomic = curr->order != MemoryOrder::Unordered;
   int8_t op;
   if (field.type != Type::i32 || field.packedType == Field::not_packed) {
-    op = BinaryConsts::ArrayGet;
+    op = atomic ? BinaryConsts::ArrayAtomicGet : BinaryConsts::ArrayGet;
   } else if (curr->signed_) {
-    op = BinaryConsts::ArrayGetS;
+    op = atomic ? BinaryConsts::ArrayAtomicGetS : BinaryConsts::ArrayGetS;
   } else {
-    op = BinaryConsts::ArrayGetU;
+    op = atomic ? BinaryConsts::ArrayAtomicGetU : BinaryConsts::ArrayGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  auto prefix = atomic ? BinaryConsts::AtomicPrefix : BinaryConsts::GCPrefix;
+  o << int8_t(prefix) << U32LEB(op);
+  if (atomic) {
+    parent.writeMemoryOrder(curr->order);
+  }
   parent.writeIndexedHeapType(heapType);
 }
 
@@ -2459,7 +2502,13 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
     emitUnreachable();
     return;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
+  if (curr->order == MemoryOrder::Unordered) {
+    o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
+  } else {
+    o << int8_t(BinaryConsts::AtomicPrefix)
+      << U32LEB(BinaryConsts::ArrayAtomicSet);
+    parent.writeMemoryOrder(curr->order);
+  }
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
@@ -2506,6 +2555,47 @@ void BinaryInstWriter::visitArrayInitElem(ArrayInitElem* curr) {
   o << U32LEB(BinaryConsts::ArrayInitElem);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+}
+
+void BinaryInstWriter::visitArrayRMW(ArrayRMW* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->op) {
+    case RMWAdd:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWAdd);
+      break;
+    case RMWSub:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWSub);
+      break;
+    case RMWAnd:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWAnd);
+      break;
+    case RMWOr:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWOr);
+      break;
+    case RMWXor:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWXor);
+      break;
+    case RMWXchg:
+      o << U32LEB(BinaryConsts::ArrayAtomicRMWXchg);
+      break;
+  }
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayCmpxchg(ArrayCmpxchg* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::AtomicPrefix)
+    << U32LEB(BinaryConsts::ArrayAtomicRMWCmpxchg);
+  parent.writeMemoryOrder(curr->order, /*isRMW=*/true);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
@@ -2732,8 +2822,8 @@ void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   o << int8_t(BinaryConsts::End);
-  if (func && !sourceMap) {
-    parent.writeDebugLocationEnd(curr, func);
+  if (func) {
+    parent.trackExpressionEnd(curr, func);
   }
 }
 
@@ -3209,12 +3299,9 @@ void StackIRToBinaryWriter::write() {
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
         if (sourceMap) {
-          parent.writeDebugLocation(inst->origin, func);
+          parent.writeSourceMapLocation(inst->origin, func);
         }
         writer.visit(inst->origin);
-        if (sourceMap) {
-          parent.writeDebugLocationEnd(inst->origin, func);
-        }
         break;
       }
       case StackInst::TryEnd:

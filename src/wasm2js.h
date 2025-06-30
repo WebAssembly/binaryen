@@ -2252,6 +2252,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitElemDrop(ElemDrop* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
@@ -2301,6 +2305,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitRefCast(RefCast* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitRefGetDesc(RefGetDesc* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2369,6 +2377,14 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitArrayInitElem(ArrayInitElem* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayRMW(ArrayRMW* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayCmpxchg(ArrayCmpxchg* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

@@ -81,7 +81,7 @@
 
   ;; CHECK:      (func $breaks (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $block (result (ref $struct))
+  ;; CHECK-NEXT:   (block $block (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (br $block
   ;; CHECK-NEXT:     (struct.new_default $struct)
   ;; CHECK-NEXT:    )
@@ -204,7 +204,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select (result (ref $struct))
+  ;; CHECK-NEXT:   (select (result (ref (exact $struct)))
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:    (struct.new_default $struct)
   ;; CHECK-NEXT:    (call $import)
@@ -991,7 +991,7 @@
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (block $parent (result (ref none))
   ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (br_on_cast $parent (ref $unrelated) (ref none)
+  ;; CHECK-NEXT:        (br_on_cast $parent (ref (exact $unrelated)) (ref none)
   ;; CHECK-NEXT:         (struct.new_default $unrelated)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -2405,8 +2405,8 @@
   ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (block (result (ref $struct))
-  ;; CHECK-NEXT:    (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct)))
+  ;; CHECK-NEXT:    (block (result (ref (exact $struct)))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
@@ -2488,7 +2488,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $substruct)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $substruct))
   ;; CHECK-NEXT:    (struct.new $substruct
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
@@ -2496,7 +2496,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $subsubstruct)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $subsubstruct))
   ;; CHECK-NEXT:    (struct.new $subsubstruct
   ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:     (i32.const 4)
@@ -2570,8 +2570,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref null $struct)
-  ;; CHECK-NEXT:    (select (result (ref null $struct))
+  ;; CHECK-NEXT:   (ref.cast (ref null (exact $struct))
+  ;; CHECK-NEXT:    (select (result (ref null (exact $struct)))
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 6)
@@ -2623,8 +2623,8 @@
 
   ;; CHECK:      (func $test-cones (type $4) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref null $struct)
-  ;; CHECK-NEXT:    (select (result (ref null $struct))
+  ;; CHECK-NEXT:   (ref.cast (ref null (exact $struct))
+  ;; CHECK-NEXT:    (select (result (ref null (exact $struct)))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -2773,8 +2773,8 @@
 
   ;; CHECK:      (func $ref.test-inexact (type $4) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test (ref $struct)
-  ;; CHECK-NEXT:    (select (result (ref null $struct))
+  ;; CHECK-NEXT:   (ref.test (ref (exact $struct))
+  ;; CHECK-NEXT:    (select (result (ref null (exact $struct)))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -3121,7 +3121,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (select (result (ref $substruct))
+  ;; CHECK-NEXT:    (select (result (ref (exact $substruct)))
   ;; CHECK-NEXT:     (struct.new $substruct
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:      (i32.const 4)
@@ -3584,7 +3584,7 @@
 
   ;; CHECK:      (func $foo (type $3) (result (ref $B))
   ;; CHECK-NEXT:  (local $A (ref null $A))
-  ;; CHECK-NEXT:  (ref.cast (ref $B)
+  ;; CHECK-NEXT:  (ref.cast (ref (exact $B))
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.tee $A
   ;; CHECK-NEXT:     (struct.new $B
@@ -5348,9 +5348,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $B (result (ref $B))
+  ;; CHECK-NEXT:     (block $B (result (ref none))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br_on_cast $B (ref $A) (ref $B)
+  ;; CHECK-NEXT:       (br_on_cast $B (ref (exact $A)) (ref none)
   ;; CHECK-NEXT:        (struct.new $A
   ;; CHECK-NEXT:         (i32.const 100)
   ;; CHECK-NEXT:        )
@@ -5365,9 +5365,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $A (result (ref $A))
+  ;; CHECK-NEXT:     (block $A (result (ref (exact $A)))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br_on_cast $A (ref $A) (ref $A)
+  ;; CHECK-NEXT:       (br_on_cast $A (ref (exact $A)) (ref (exact $A))
   ;; CHECK-NEXT:        (struct.new $A
   ;; CHECK-NEXT:         (i32.const 200)
   ;; CHECK-NEXT:        )
@@ -5933,7 +5933,7 @@
   ;; CHECK:      (export "func" (func $func))
 
   ;; CHECK:      (func $func (type $2) (result (ref $A))
-  ;; CHECK-NEXT:  (ref.cast (ref $B)
+  ;; CHECK-NEXT:  (ref.cast (ref (exact $B))
   ;; CHECK-NEXT:   (call $get-B-def-any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -6017,10 +6017,10 @@
   ;; CHECK-NEXT:   (struct.new_default $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label (result (ref null $A))
+  ;; CHECK-NEXT:   (block $label (result (ref null (exact $A)))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label (ref $A) (ref $A)
-  ;; CHECK-NEXT:      (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (br_on_cast $label (ref (exact $A)) (ref (exact $A))
+  ;; CHECK-NEXT:      (ref.cast (ref (exact $A))
   ;; CHECK-NEXT:       (local.get $temp)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -6069,8 +6069,13 @@
   ;; CHECK:      (func $test-set-bottom (type $2)
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.cast nullref
-  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.cast nullref
+  ;; CHECK-NEXT:       (global.get $global)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop

@@ -642,7 +642,7 @@
   ;; CHECK:      (func $non-exclusive-set (type $2) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (select (result (ref $struct.A))
+  ;; CHECK-NEXT:   (select (result (ref (exact $struct.A)))
   ;; CHECK-NEXT:    (struct.new_default $struct.A)
   ;; CHECK-NEXT:    (struct.new_default $struct.A)
   ;; CHECK-NEXT:    (i32.const 1)

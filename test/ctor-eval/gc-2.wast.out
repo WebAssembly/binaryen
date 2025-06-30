@@ -1,10 +1,10 @@
 (module
  (type $struct (sub (struct (field i32))))
  (type $1 (func (result i32)))
- (global $ctor-eval$global (ref $struct) (struct.new $struct
+ (global $ctor-eval$global (ref (exact $struct)) (struct.new $struct
   (i32.const 1337)
  ))
- (global $ctor-eval$global_4 (ref $struct) (struct.new $struct
+ (global $ctor-eval$global_4 (ref (exact $struct)) (struct.new $struct
   (i32.const 9999)
  ))
  (global $global1 (ref any) (global.get $ctor-eval$global))

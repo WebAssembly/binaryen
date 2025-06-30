@@ -229,7 +229,7 @@
  ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $other (result (ref $opt))
+ ;; CHECK-NEXT:     (block $other (result (ref (exact $opt)))
  ;; CHECK-NEXT:      (br $other
  ;; CHECK-NEXT:       (struct.new_default $opt)
  ;; CHECK-NEXT:      )
@@ -271,7 +271,7 @@
 
  ;; CHECK:      (func $if (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result (ref $sub))
+ ;; CHECK-NEXT:   (if (result (ref (exact $sub)))
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (struct.new_default $sub)
@@ -309,7 +309,7 @@
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (loop (result (ref $sub))
+ ;; CHECK-NEXT:   (loop (result (ref (exact $sub)))
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -335,9 +335,9 @@
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $super (result (ref $sub))
+ ;; CHECK-NEXT:   (block $super (result (ref (exact $sub)))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $sub (result (ref $sub))
+ ;; CHECK-NEXT:     (block $sub (result (ref (exact $sub)))
  ;; CHECK-NEXT:      (br_table $super $sub
  ;; CHECK-NEXT:       (struct.new_default $sub)
  ;; CHECK-NEXT:       (i32.const 0)
@@ -377,9 +377,9 @@
 
  ;; CHECK:      (func $br-table (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $super (result (ref $sub))
+ ;; CHECK-NEXT:   (block $super (result (ref (exact $sub)))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $sub (result (ref $sub))
+ ;; CHECK-NEXT:     (block $sub (result (ref (exact $sub)))
  ;; CHECK-NEXT:      (br_table $sub $super
  ;; CHECK-NEXT:       (struct.new_default $sub)
  ;; CHECK-NEXT:       (i32.const 0)
@@ -1067,15 +1067,14 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $1 (func))
 
- ;; CHECK:      (func $br-on-cast (type $2)
+ ;; CHECK:      (func $br-on-cast (type $1)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $super))
- ;; CHECK-NEXT:    (br_on_cast $l (ref $super) (ref $sub)
+ ;; CHECK-NEXT:   (block $l (result (ref (exact $super)))
+ ;; CHECK-NEXT:    (br_on_cast $l (ref (exact $super)) (ref none)
  ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -1104,8 +1103,8 @@
 
  ;; CHECK:      (func $br-on-cast-fail (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $sub))
- ;; CHECK-NEXT:    (br_on_cast_fail $l (ref $sub) (ref none)
+ ;; CHECK-NEXT:   (block $l (result (ref (exact $sub)))
+ ;; CHECK-NEXT:    (br_on_cast_fail $l (ref (exact $sub)) (ref none)
  ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

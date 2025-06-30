@@ -2,7 +2,19 @@
 ;; CHECK: ================================================================================
 ;; CHECK-NEXT: wasm-opt INFILE
 ;; CHECK-NEXT:
-;; CHECK-NEXT: Read, write, and optimize files
+;; CHECK-NEXT: Read, write, and optimize files.
+;; CHECK-NEXT:
+;; CHECK-NEXT: Example usage:
+;; CHECK-NEXT:
+;; CHECK-NEXT:   wasm-opt input.wasm -O3 -o output.wasm
+;; CHECK-NEXT:
+;; CHECK-NEXT: This reads an input wasm file, optimizes with -O3, and writes out the result.
+;; CHECK-NEXT:
+;; CHECK-NEXT: For more on how to optimize effectively, see
+;; CHECK-NEXT:
+;; CHECK-NEXT:   https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook
+;; CHECK-NEXT:   https://github.com/WebAssembly/binaryen/wiki/GC-Optimization-Guidebook
+;; CHECK-NEXT:
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
@@ -565,6 +577,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-refining                               apply more specific subtypes to
 ;; CHECK-NEXT:                                                 type fields where possible
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-refining-gufa                          apply more specific subtypes to
+;; CHECK-NEXT:                                                 type fields where possible
+;; CHECK-NEXT:                                                 (using GUFA)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
 ;; CHECK-NEXT:                                                 other optimizations

@@ -88,7 +88,7 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func, HeapType type)
-    : func(func), type(type, NonNullable) {
+    : func(func), type(type, NonNullable, Exact) {
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
@@ -607,6 +607,7 @@ public:
   Literal dotSI8x16toI16x8(const Literal& other) const;
   Literal dotUI8x16toI16x8(const Literal& other) const;
   Literal dotSI16x8toI32x4(const Literal& other) const;
+  Literal dotSI8x16toI16x8Add(const Literal& left, const Literal& right) const;
   Literal extMulLowSI32x4(const Literal& other) const;
   Literal extMulHighSI32x4(const Literal& other) const;
   Literal extMulLowUI32x4(const Literal& other) const;
@@ -774,8 +775,13 @@ struct GCData {
   // The element or field values.
   Literals values;
 
-  GCData(HeapType type, Literals&& values)
-    : type(type), values(std::move(values)) {}
+  // The descriptor, if it exists, or null.
+  Literal desc;
+
+  GCData(HeapType type,
+         Literals&& values,
+         const Literal& desc = Literal::makeNull(HeapType::none))
+    : type(type), values(std::move(values)), desc(desc) {}
 };
 
 // The data of a (ref exn) literal.

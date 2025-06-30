@@ -23,6 +23,7 @@
 #include "support/name.h"
 #include "support/result.h"
 #include "support/string.h"
+#include "wasm-annotations.h"
 #include "wasm-builder.h"
 #include "wasm-ir-builder.h"
 #include "wasm.h"
@@ -167,6 +168,8 @@ struct NullTypeParserCtx {
   Result<Index> getTypeIndex(Name) { return 1; }
   Result<HeapTypeT> getHeapTypeFromIdx(Index) { return Ok{}; }
 
+  HeapTypeT makeExact(HeapTypeT) { return Ok{}; }
+
   DataStringT makeDataString() { return Ok{}; }
   void appendDataString(DataStringT&, std::string_view) {}
 
@@ -180,8 +183,18 @@ struct NullTypeParserCtx {
 };
 
 template<typename Ctx> struct TypeParserCtx {
+  // Exactness is syntactically part of the heap type, but it is not part of the
+  // HeapType in our IR, so we have to store it separately.
+  struct HeapTypeT {
+    HeapType type;
+    Exactness exactness = Inexact;
+    // Implicitly convert to and from HeapType.
+    HeapTypeT(HeapType::BasicHeapType type) : type(type) {}
+    HeapTypeT(HeapType type) : type(type) {}
+    operator HeapType() { return type; }
+  };
+
   using IndexT = Index;
-  using HeapTypeT = HeapType;
   using TypeT = Type;
   using ParamsT = std::vector<NameType>;
   using ResultsT = std::vector<Type>;
@@ -251,6 +264,11 @@ template<typename Ctx> struct TypeParserCtx {
     return HeapTypes::nocont.getBasic(share);
   }
 
+  HeapTypeT makeExact(HeapTypeT type) {
+    type.exactness = Exact;
+    return type;
+  }
+
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
   TypeT makeF32() { return Type::f32; }
@@ -258,7 +276,7 @@ template<typename Ctx> struct TypeParserCtx {
   TypeT makeV128() { return Type::v128; }
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return Type(ht, nullability);
+    return Type(ht.type, nullability, ht.exactness);
   }
 
   std::vector<Type> makeTupleElemList() { return {}; }
@@ -682,6 +700,9 @@ struct NullInstrParserCtx {
   makeTableInit(Index, const std::vector<Annotation>&, TableIdxT*, ElemIdxT) {
     return Ok{};
   }
+  Result<> makeElemDrop(Index, const std::vector<Annotation>&, ElemIdxT) {
+    return Ok{};
+  }
   Result<> makeThrow(Index, const std::vector<Annotation>&, TagIdxT) {
     return Ok{};
   }
@@ -715,7 +736,11 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename TypeT>
-  Result<> makeRefCast(Index, const std::vector<Annotation>&, TypeT) {
+  Result<> makeRefCast(Index, const std::vector<Annotation>&, TypeT, bool) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeRefGetDesc(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
 
@@ -793,12 +818,13 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<>
-  makeArrayGet(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
+  Result<> makeArrayGet(
+    Index, const std::vector<Annotation>&, HeapTypeT, bool, MemoryOrder) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT) {
+  Result<>
+  makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT, MemoryOrder) {
     return Ok{};
   }
   Result<> makeArrayLen(Index, const std::vector<Annotation>&) { return Ok{}; }
@@ -823,6 +849,21 @@ struct NullInstrParserCtx {
                              const std::vector<Annotation>&,
                              HeapTypeT,
                              ElemIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayRMW(Index,
+                        const std::vector<Annotation>&,
+                        AtomicRMWOp,
+                        HeapTypeT,
+                        MemoryOrder) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayCmpxchg(Index,
+                            const std::vector<Annotation>&,
+                            HeapTypeT,
+                            MemoryOrder) {
     return Ok{};
   }
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
@@ -1118,7 +1159,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
       names(builder.size()) {}
 
   TypeT makeRefType(HeapTypeT ht, Nullability nullability) {
-    return builder.getTempRefType(ht, nullability);
+    return builder.getTempRefType(ht.type, nullability, ht.exactness);
   }
 
   TypeT makeTupleType(const std::vector<Type> types) {
@@ -1227,7 +1268,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     }
 
     auto sig = Signature(Type(paramTypes), Type(resultTypes));
-    auto [it, inserted] = sigTypes.insert({sig, HeapType::func});
+    auto [it, inserted] = sigTypes.insert({sig, HeapType(HeapType::func)});
     if (inserted) {
       auto type = HeapType(sig);
       it->second = type;
@@ -1239,9 +1280,47 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   }
 };
 
+struct AnnotationParserCtx {
+  // Return the inline hint for a call instruction, if there is one.
+  std::optional<std::uint8_t>
+  getInlineHint(const std::vector<Annotation>& annotations) {
+    // Find and apply (the last) inline hint.
+    const Annotation* hint = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::InlineHint) {
+        hint = &a;
+      }
+    }
+    if (!hint) {
+      return std::nullopt;
+    }
+
+    Lexer lexer(hint->contents);
+    if (lexer.empty()) {
+      std::cerr << "warning: empty InlineHint\n";
+      return std::nullopt;
+    }
+
+    auto str = lexer.takeString();
+    if (!str || str->size() != 1) {
+      std::cerr << "warning: invalid InlineHint string\n";
+      return std::nullopt;
+    }
+
+    uint8_t value = (*str)[0];
+    if (value > 127) {
+      std::cerr << "warning: invalid InlineHint value\n";
+      return std::nullopt;
+    }
+
+    return value;
+  }
+};
+
 // Phase 4: Parse and set the types of module elements.
 struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
-                             NullInstrParserCtx {
+                             NullInstrParserCtx,
+                             AnnotationParserCtx {
   // In this phase we have constructed all the types, so we can materialize and
   // validate them when they are used.
 
@@ -1349,6 +1428,13 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
         Builder::addVar(f.get(), l.name, l.type);
       }
     }
+    // TODO: Add function-level annotations (stored using the nullptr key, as
+    // they are tied to no instruction in particular), but this should wait on
+    // figuring out
+    // https://github.com/WebAssembly/tool-conventions/issues/251
+    // if (auto inline_ = getInlineHint(annotations)) {
+    //   f->codeAnnotations[nullptr].inline_ = inline_;
+    // }
     return Ok{};
   }
 
@@ -1409,7 +1495,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 };
 
 // Phase 5: Parse module element definitions, including instructions.
-struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
+struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx>, AnnotationParserCtx {
   using GlobalTypeT = Ok;
   using TableTypeT = Ok;
   using TypeUseT = HeapType;
@@ -1896,8 +1982,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     if (!type.isSignature()) {
       return in.err(pos, "expected function type");
     }
+    auto likely = getBranchHint(annotations);
     return withLoc(
-      pos, irBuilder.makeIf(label ? *label : Name{}, type.getSignature()));
+      pos,
+      irBuilder.makeIf(label ? *label : Name{}, type.getSignature(), likely));
   }
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
@@ -2309,7 +2397,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     const std::vector<Annotation>& annotations,
                     Name func,
                     bool isReturn) {
-    return withLoc(pos, irBuilder.makeCall(func, isReturn));
+    auto inline_ = getInlineHint(annotations);
+    return withLoc(pos, irBuilder.makeCall(func, isReturn, inline_));
   }
 
   Result<> makeCallIndirect(Index pos,
@@ -2319,14 +2408,52 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                             bool isReturn) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
-    return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
+    auto inline_ = getInlineHint(annotations);
+    return withLoc(pos,
+                   irBuilder.makeCallIndirect(*t, type, isReturn, inline_));
+  }
+
+  // Return the branch hint for a branching instruction, if there is one.
+  std::optional<bool>
+  getBranchHint(const std::vector<Annotation>& annotations) {
+    // Find and apply (the last) branch hint.
+    const Annotation* hint = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == Annotations::BranchHint) {
+        hint = &a;
+      }
+    }
+    if (!hint) {
+      return std::nullopt;
+    }
+
+    Lexer lexer(hint->contents);
+    if (lexer.empty()) {
+      std::cerr << "warning: empty BranchHint\n";
+      return std::nullopt;
+    }
+
+    auto str = lexer.takeString();
+    if (!str || str->size() != 1) {
+      std::cerr << "warning: invalid BranchHint string\n";
+      return std::nullopt;
+    }
+
+    auto value = (*str)[0];
+    if (value != 0 && value != 1) {
+      std::cerr << "warning: invalid BranchHint value\n";
+      return std::nullopt;
+    }
+
+    return bool(value);
   }
 
   Result<> makeBreak(Index pos,
                      const std::vector<Annotation>& annotations,
                      Index label,
                      bool isConditional) {
-    return withLoc(pos, irBuilder.makeBreak(label, isConditional));
+    auto likely = getBranchHint(annotations);
+    return withLoc(pos, irBuilder.makeBreak(label, isConditional, likely));
   }
 
   Result<> makeSwitch(Index pos,
@@ -2421,6 +2548,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeTableInit(elem, *t));
   }
 
+  Result<> makeElemDrop(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Name elem) {
+    return withLoc(pos, irBuilder.makeElemDrop(elem));
+  }
+
   Result<>
   makeThrow(Index pos, const std::vector<Annotation>& annotations, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
@@ -2459,7 +2592,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                        const std::vector<Annotation>& annotations,
                        HeapType type,
                        bool isReturn) {
-    return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
+    auto inline_ = getInlineHint(annotations);
+    return withLoc(pos, irBuilder.makeCallRef(type, isReturn, inline_));
   }
 
   Result<> makeRefI31(Index pos,
@@ -2482,8 +2616,15 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRefCast(Index pos,
                        const std::vector<Annotation>& annotations,
-                       Type type) {
-    return withLoc(pos, irBuilder.makeRefCast(type));
+                       Type type,
+                       bool isDesc) {
+    return withLoc(pos, irBuilder.makeRefCast(type, isDesc));
+  }
+
+  Result<> makeRefGetDesc(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          HeapType type) {
+    return withLoc(pos, irBuilder.makeRefGetDesc(type));
   }
 
   Result<> makeBrOn(Index pos,
@@ -2492,7 +2633,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     BrOnOp op,
                     Type in = Type::none,
                     Type out = Type::none) {
-    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out));
+    auto likely = getBranchHint(annotations);
+    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out, likely));
   }
 
   Result<> makeStructNew(Index pos,
@@ -2577,14 +2719,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<> makeArrayGet(Index pos,
                         const std::vector<Annotation>& annotations,
                         HeapType type,
-                        bool signed_) {
-    return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
+                        bool signed_,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayGet(type, signed_, order));
   }
 
   Result<> makeArraySet(Index pos,
                         const std::vector<Annotation>& annotations,
-                        HeapType type) {
-    return withLoc(pos, irBuilder.makeArraySet(type));
+                        HeapType type,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArraySet(type, order));
   }
 
   Result<> makeArrayLen(Index pos, const std::vector<Annotation>& annotations) {
@@ -2616,6 +2760,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                              HeapType type,
                              Name elem) {
     return withLoc(pos, irBuilder.makeArrayInitElem(type, elem));
+  }
+
+  Result<> makeArrayRMW(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        AtomicRMWOp op,
+                        HeapType type,
+                        MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayRMW(op, type, order));
+  }
+
+  Result<> makeArrayCmpxchg(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            HeapType type,
+                            MemoryOrder order) {
+    return withLoc(pos, irBuilder.makeArrayCmpxchg(type, order));
   }
 
   Result<>

@@ -400,6 +400,7 @@ inline Expression** getMostRefinedFallthrough(Expression** currp,
     return currp;
   }
   auto bestType = curr->type.getHeapType();
+  auto bestExactness = curr->type.getExactness();
   auto bestNullability = curr->type.getNullability();
   auto** bestp = currp;
   while (1) {
@@ -412,20 +413,23 @@ inline Expression** getMostRefinedFallthrough(Expression** currp,
     }
     assert(next->type.isRef());
     auto nextType = next->type.getHeapType();
+    auto nextExactness = next->type.getExactness();
     auto nextNullability = next->type.getNullability();
-    if (nextType == bestType) {
+    if (nextType == bestType && nextExactness == bestExactness) {
       // Heap types match: refine nullability if possible.
       if (bestNullability == Nullable && nextNullability == NonNullable) {
         bestp = nextp;
         bestNullability = NonNullable;
       }
-    } else {
-      // Refine heap type if possible, resetting nullability.
-      if (HeapType::isSubType(nextType, bestType)) {
-        bestp = nextp;
-        bestNullability = nextNullability;
-        bestType = nextType;
-      }
+    } else if ((nextType != bestType &&
+                HeapType::isSubType(nextType, bestType)) ||
+               (nextType == bestType && nextExactness == Exact &&
+                bestExactness == Inexact)) {
+      // Refine heap, resetting nullability.
+      bestp = nextp;
+      bestType = nextType;
+      bestExactness = nextExactness;
+      bestNullability = nextNullability;
     }
     currp = nextp;
   }
@@ -508,6 +512,41 @@ inline MemoryOrder getMemoryOrder(Expression* curr) {
     return MemoryOrder::SeqCst;
   }
   return MemoryOrder::Unordered;
+}
+
+// Whether this instruction will be unwritable in the text and binary formats
+// because it requires a type index immediate giving the type of a child that
+// has unreachable or null type, and therefore does not have a type index.
+inline bool hasUnwritableTypeImmediate(Expression* curr) {
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_FIELD_IMMEDIATE_TYPED_CHILD(id, field)                        \
+  if (curr->cast<id>()->field) {                                               \
+    auto type = curr->cast<id>()->field->type;                                 \
+    if (type == Type::unreachable || type.isNull()) {                          \
+      return true;                                                             \
+    }                                                                          \
+  }
+
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_INT_VECTOR(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_TYPE_VECTOR(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#include "wasm-delegations-fields.def"
+
+  return false;
 }
 
 // A "generative" expression is one that can generate different results for the

@@ -21,6 +21,15 @@ inline void
 MonotoneCFGAnalyzer<L, TxFn>::evaluateFunctionEntry(Function* func) {
   txfn.evaluateFunctionEntry(func, states[0]);
 }
+template<Lattice L, TransferFunction TxFn>
+inline void MonotoneCFGAnalyzer<L, TxFn>::evaluateFunctionExit(Function* func) {
+  for (size_t i = 0; i < cfg.size(); i++) {
+    if (cfg[i].isExit()) {
+      txfn.evaluateFunctionExit(func, states[i]);
+      break;
+    }
+  }
+}
 
 template<Lattice L, TransferFunction TxFn>
 inline void MonotoneCFGAnalyzer<L, TxFn>::evaluate() {

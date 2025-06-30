@@ -19,8 +19,6 @@ import os
 unfuzzable = [
     # Float16 is still experimental.
     'f16.wast',
-    # not all relaxed SIMD instructions are implemented in the interpreter
-    'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings
     'strings.wast',
     'simplify-locals-strings.wast',
@@ -86,6 +84,7 @@ unfuzzable = [
     'optimize-instructions-struct-rmw.wast',
     'gto-removals-rmw.wast',
     'type-refining-rmw.wast',
+    'type-ssa-exact-rmw.wast',
     'cfp-rmw.wast',
     # contains too many segments to run in a wasm VM
     'limit-segments_disable-bulk-memory.wast',
@@ -105,8 +104,34 @@ unfuzzable = [
     'stack_switching_resume.wast',
     'stack_switching_resume_throw.wast',
     'stack_switching_switch.wast',
+    'stack_switching_switch_2.wast',
+    'O3_stack-switching.wast',
+    'coalesce-locals-stack-switching.wast',
+    'dce-stack-switching.wast',
+    'precompute-stack-switching.wast',
+    'unsubtyping-stack-switching.wast',
+    'vacuum-stack-switching.wast',
     # TODO: fuzzer support for custom descriptors
+    'remove-unused-module-elements-refs-descriptors.wast',
     'custom-descriptors.wast',
+    'br_on_cast_desc.wast',
+    'ref.get_desc.wast',
+    'ref.cast_desc.wast',
+    'struct.new-desc.wast',
+    'remove-unused-types-descriptors.wast',
+    'unsubtyping-desc.wast',
+    'type-merging-desc.wast',
+    'heap2local-desc.wast',
+    'minimize-rec-groups-desc.wast',
+    'precompute-desc.wast',
+    'gc-desc.wast',
+    'simplify-locals-desc.wast',
+    'optimize-instructions-desc.wast',
+    # TODO: fix split_wast() on tricky escaping situations like a string ending
+    #       in \\" (the " is not escaped - there is an escaped \ before it)
+    'string-lifting-section.wast',
+    # TODO: fuzzer support for uninhabitable imported globals
+    'exact-references.wast',
 ]
 
 

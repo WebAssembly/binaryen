@@ -82,35 +82,35 @@ TableGetId: 45
 TableSetId: 46
 TableSizeId: 47
 TableGrowId: 48
-TryId: 52
-ThrowId: 54
-RethrowId: 55
-TupleMakeId: 57
-TupleExtractId: 58
-RefI31Id: 59
-I31GetId: 60
-CallRefId: 61
-RefTestId: 62
-RefCastId: 63
-BrOnId: 64
-StructNewId: 65
-StructGetId: 66
-StructSetId: 67
-ArrayNewId: 70
-ArrayNewFixedId: 73
-ArrayGetId: 74
-ArraySetId: 75
-ArrayLenId: 76
-ArrayCopy: 77
-RefAs: 81
-StringNew: 82
-StringConst: 83
-StringMeasure: 84
-StringEncode: 85
-StringConcat: 86
-StringEq: 87
-StringWTF16Get: 88
-StringSliceWTF: 89
+TryId: 53
+ThrowId: 55
+RethrowId: 56
+TupleMakeId: 58
+TupleExtractId: 59
+RefI31Id: 60
+I31GetId: 61
+CallRefId: 62
+RefTestId: 63
+RefCastId: 64
+BrOnId: 66
+StructNewId: 67
+StructGetId: 68
+StructSetId: 69
+ArrayNewId: 72
+ArrayNewFixedId: 75
+ArrayGetId: 76
+ArraySetId: 77
+ArrayLenId: 78
+ArrayCopy: 79
+RefAs: 85
+StringNew: 86
+StringConst: 87
+StringMeasure: 88
+StringEncode: 89
+StringConcat: 90
+StringEq: 91
+StringWTF16Get: 92
+StringSliceWTF: 93
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -2089,7 +2089,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (select (result (ref null $0))
+       (select (result (ref null (exact $0)))
         (ref.null nofunc)
         (ref.func $foobar)
         (i32.const 1)
@@ -2821,4 +2821,4 @@ sizeof Literal: 24
 )
 
 getExpressionInfo(memory.grow)={"id":21,"type":2,"delta":1}
-getExpressionInfo(switch)={"id":5,"type":1,"names":["label"],"defaultName":"label","condition":0,"value":0}
+getExpressionInfo(switch)={"id":5,"type":1,"numNames":1,"names":["label"],"defaultName":"label","condition":0,"value":0}

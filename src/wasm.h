@@ -608,6 +608,8 @@ enum BrOnOp {
   BrOnNonNull,
   BrOnCast,
   BrOnCastFail,
+  BrOnCastDesc,
+  BrOnCastDescFail,
 };
 
 enum StringNewOp {
@@ -706,6 +708,7 @@ public:
     TableFillId,
     TableCopyId,
     TableInitId,
+    ElemDropId,
     TryId,
     TryTableId,
     ThrowId,
@@ -718,6 +721,7 @@ public:
     CallRefId,
     RefTestId,
     RefCastId,
+    RefGetDescId,
     BrOnId,
     StructNewId,
     StructGetId,
@@ -735,6 +739,8 @@ public:
     ArrayFillId,
     ArrayInitDataId,
     ArrayInitElemId,
+    ArrayRMWId,
+    ArrayCmpxchgId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1364,7 +1370,7 @@ public:
   Name func;
 
   void finalize();
-  void finalize(Type type_);
+  void finalize(HeapType heapType);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
@@ -1462,6 +1468,16 @@ public:
   Expression* offset;
   Expression* size;
   Name table;
+
+  void finalize();
+};
+
+class ElemDrop : public SpecificExpression<Expression::ElemDropId> {
+public:
+  ElemDrop() = default;
+  ElemDrop(MixedArena& allocator) : ElemDrop() {}
+
+  Name segment;
 
   void finalize();
 };
@@ -1617,9 +1633,22 @@ public:
 
   Expression* ref;
 
+  // Used only for ref.cast_desc.
+  Expression* desc;
+
   void finalize();
 
   Type& getCastType() { return type; }
+};
+
+class RefGetDesc : public SpecificExpression<Expression::RefGetDescId> {
+public:
+  RefGetDesc() = default;
+  RefGetDesc(MixedArena& allocator) {}
+
+  Expression* ref;
+
+  void finalize();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1630,6 +1659,11 @@ public:
   BrOnOp op;
   Name name;
   Expression* ref;
+
+  // Only used for br_on_cast_desc{,_fail}
+  Expression* desc;
+
+  // Only used for br_on_cast{,_desc}{,_fail}
   Type castType;
 
   void finalize();
@@ -1648,6 +1682,8 @@ public:
   // struct with no fields ambiguous, but it doesn't make a difference in that
   // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
   ExpressionList operands;
+
+  Expression* desc = nullptr;
 
   bool isWithDefault() { return operands.empty(); }
 
@@ -1767,6 +1803,7 @@ public:
   Expression* index;
   // Packed fields have a sign.
   bool signed_ = false;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };
@@ -1779,6 +1816,7 @@ public:
   Expression* ref;
   Expression* index;
   Expression* value;
+  MemoryOrder order = MemoryOrder::Unordered;
 
   void finalize();
 };
@@ -1844,6 +1882,34 @@ public:
   Expression* index;
   Expression* offset;
   Expression* size;
+
+  void finalize();
+};
+
+class ArrayRMW : public SpecificExpression<Expression::ArrayRMWId> {
+public:
+  ArrayRMW() = default;
+  ArrayRMW(MixedArena& allocator) {}
+
+  AtomicRMWOp op;
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+  MemoryOrder order;
+
+  void finalize();
+};
+
+class ArrayCmpxchg : public SpecificExpression<Expression::ArrayCmpxchgId> {
+public:
+  ArrayCmpxchg() = default;
+  ArrayCmpxchg(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* index;
+  Expression* expected;
+  Expression* replacement;
+  MemoryOrder order;
 
   void finalize();
 };
@@ -2173,6 +2239,11 @@ public:
                ? columnNumber < other.columnNumber
                : symbolNameIndex < other.symbolNameIndex;
     }
+    void dump() {
+      std::cerr << (symbolNameIndex ? symbolNameIndex.value() : -1) << " @ "
+                << fileIndex << ":" << lineNumber << ":" << columnNumber
+                << "\n";
+    }
   };
   // One can explicitly set the debug location of an expression to
   // nullopt to stop the propagation of debug locations.
@@ -2186,6 +2257,23 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  // Code annotations for VMs. As with debug info, we do not store these on
+  // Expressions as we assume most instances are unannotated, and do not want to
+  // add constant memory overhead.
+  struct CodeAnnotation {
+    // Branch Hinting proposal: Whether the branch is likely, or unlikely.
+    std::optional<bool> branchLikely;
+
+    // Compilation Hints proposal.
+    static const uint8_t NeverInline = 0;
+    static const uint8_t AlwaysInline = 127;
+    std::optional<uint8_t> inline_;
+  };
+
+  // Function-level annotations are implemented with a key of nullptr, matching
+  // the 0 byte offset in the spec.
+  std::unordered_map<Expression*, CodeAnnotation> codeAnnotations;
+
   // The effects for this function, if they have been computed. We use a shared
   // ptr here to avoid compilation errors with the forward-declared
   // EffectAnalyzer.
@@ -2193,8 +2281,8 @@ public:
   // See addsEffects() in pass.h for more details.
   std::shared_ptr<EffectAnalyzer> effects;
 
-  // Inlining metadata: whether to disallow full and/or partial inlining (for
-  // details on what those mean, see Inlining.cpp).
+  // Inlining metadata: whether to disallow full and/or partial inlining. This
+  // is a toolchain-level hint. For more details, see Inlining.cpp.
   bool noFullInline = false;
   bool noPartialInline = false;
 
@@ -2401,9 +2489,15 @@ public:
   // Optional user section IR representation.
   std::unique_ptr<DylinkSection> dylinkSection;
 
-  // Source maps debug info.
+  // Source maps debug info. All of these fields are read directly in from the
+  // source map and are encoded as in the original JSON (UTF-8 encoded with
+  // with escaped quotes and slashes). The string values are uninterpreted in
+  // Binaryen, and they are written directly back out without re-encoding.
   std::vector<std::string> debugInfoFileNames;
   std::vector<std::string> debugInfoSymbolNames;
+  std::string debugInfoSourceRoot;
+  std::string debugInfoFile;
+  std::vector<std::string> debugInfoSourcesContent;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.

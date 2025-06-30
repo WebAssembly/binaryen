@@ -460,13 +460,13 @@
     ;; CHECK:       (type $Y (sub $X (struct)))
     (type $Y (sub $X (struct)))
 
-    ;; CHECK:       (type $A (sub (struct (field (ref $Y)))))
+    ;; CHECK:       (type $A (sub (struct (field (ref (exact $Y))))))
     (type $A (sub (struct (field (ref $X)))))
 
-    ;; CHECK:       (type $C (sub $A (struct (field (ref $Y)))))
+    ;; CHECK:       (type $C (sub $A (struct (field (ref (exact $Y))))))
     (type $C (sub $A (struct (field (ref $X)))))
 
-    ;; CHECK:       (type $B (sub $A (struct (field (ref $Y)))))
+    ;; CHECK:       (type $B (sub $A (struct (field (ref (exact $Y))))))
     (type $B (sub $A (struct (field (ref $X)))))
   )
 
@@ -539,19 +539,20 @@
 )
 
 (module
-  ;; CHECK:      (type $X (sub (struct)))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $X (sub (struct)))
   (type $X (sub (struct)))
 
-  ;; CHECK:      (type $Y (sub $X (struct)))
+  ;; CHECK:       (type $Y (sub $X (struct)))
   (type $Y (sub $X (struct)))
 
-  ;; CHECK:      (type $A (sub (struct (field (ref $X)))))
+  ;; CHECK:       (type $A (sub (struct (field (ref (exact $X))))))
   (type $A (sub (struct (field (ref $X)))))
 
-  ;; CHECK:      (type $B (sub $A (struct (field (ref $Y)))))
+  ;; CHECK:       (type $B (sub $A (struct (field (ref (exact $X))))))
   (type $B (sub $A (struct (field (ref $Y)))))
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:       (type $4 (func))
 
   ;; CHECK:      (func $foo (type $4)
   ;; CHECK-NEXT:  (local $unused2 (ref null $B))
@@ -824,13 +825,13 @@
   ;; CHECK:       (type $Leaf2-Inner (sub $Root-Inner (struct)))
   (type $Leaf2-Inner (sub $Root-Inner (struct )))
 
-  ;; CHECK:       (type $Root-Outer (sub (struct (field (ref $Leaf2-Inner)))))
+  ;; CHECK:       (type $Root-Outer (sub (struct (field (ref (exact $Leaf2-Inner))))))
   (type $Root-Outer (sub (struct (field (ref $Root-Inner)))))
 
-  ;; CHECK:       (type $Leaf1-Outer (sub $Root-Outer (struct (field (ref $Leaf2-Inner)))))
+  ;; CHECK:       (type $Leaf1-Outer (sub $Root-Outer (struct (field (ref (exact $Leaf2-Inner))))))
   (type $Leaf1-Outer (sub $Root-Outer (struct (field (ref $Leaf1-Inner)))))
 
-  ;; CHECK:       (type $Leaf2-Outer (sub $Root-Outer (struct (field (ref $Leaf2-Inner)))))
+  ;; CHECK:       (type $Leaf2-Outer (sub $Root-Outer (struct (field (ref (exact $Leaf2-Inner))))))
   (type $Leaf2-Outer (sub $Root-Outer (struct (field (ref $Leaf2-Inner)))))
 
   ;; CHECK:       (type $6 (func (param (ref null $Leaf1-Outer))))
@@ -1138,7 +1139,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (ref $B))))
+    ;; CHECK-NEXT:  (type $A (struct (field (ref (exact $B)))))
     (type $A (struct (field (ref struct))))
     ;; CHECK:       (type $B (struct))
     (type $B (struct))
@@ -1148,7 +1149,7 @@
 
   ;; CHECK:      (func $0 (type $2) (result (ref $A))
   ;; CHECK-NEXT:  (struct.new $A
-  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $B))
   ;; CHECK-NEXT:    (struct.get $A 0
   ;; CHECK-NEXT:     (struct.new $A
   ;; CHECK-NEXT:      (struct.new_default $B)
@@ -1532,7 +1533,7 @@
   ;; CHECK:      (type $3 (func (result (ref null $8))))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $5 (sub (struct (field (ref $3)))))
+  ;; CHECK-NEXT:  (type $5 (sub (struct (field (ref (exact $3))))))
   (type $5 (sub (struct (field (ref func)))))
   ;; CHECK:       (type $6 (sub $1 (struct (field (mut (ref null $1))))))
   (type $6 (sub $1 (struct (field (mut (ref null $1))))))
@@ -1648,7 +1649,7 @@
  )
  ;; CHECK:      (type $2 (func (param (ref null $A) (ref null $B))))
 
- ;; CHECK:      (type $optimizable (sub (struct (field (ref $2)))))
+ ;; CHECK:      (type $optimizable (sub (struct (field (ref (exact $2))))))
  (type $optimizable (sub (struct (field funcref))))
 
  ;; CHECK:      (elem declare func $test)

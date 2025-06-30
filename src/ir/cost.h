@@ -631,6 +631,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitTableInit(TableInit* curr) {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
+  CostType visitElemDrop(ElemDrop* curr) { return 6; }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
@@ -668,17 +669,32 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitRefCast(RefCast* curr) {
     return CastCost + nullCheckCost(curr->ref) + visit(curr->ref);
   }
+  CostType visitRefGetDesc(RefGetDesc* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
   CostType visitBrOn(BrOn* curr) {
     // BrOn of a null can be fairly fast, but anything else is a cast check.
-    CostType base =
-      curr->op == BrOnNull || curr->op == BrOnNonNull ? 2 : CastCost;
-    return base + nullCheckCost(curr->ref) + maybeVisit(curr->ref);
+    switch (curr->op) {
+      case BrOnNull:
+      case BrOnNonNull:
+        return 2 + nullCheckCost(curr->ref) + visit(curr->ref);
+      case BrOnCast:
+      case BrOnCastFail:
+        return CastCost + visit(curr->ref);
+      case BrOnCastDesc:
+      case BrOnCastDescFail:
+        // These are not as expensive as full casts, since they just do a
+        // identity check on the descriptor.
+        return 2 + visit(curr->ref) + visit(curr->desc);
+    }
+    WASM_UNREACHABLE("unexpected op");
   }
   CostType visitStructNew(StructNew* curr) {
     CostType ret = AllocationCost + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
+    ret += maybeVisit(curr->desc);
     return ret;
   }
   CostType visitStructGet(StructGet* curr) {
@@ -737,6 +753,15 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitArrayInitElem(ArrayInitElem* curr) {
     return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
            visit(curr->size);
+  }
+  CostType visitArrayRMW(ArrayRMW* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  CostType visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    return AtomicCost + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->expected) +
+           visit(curr->replacement);
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {

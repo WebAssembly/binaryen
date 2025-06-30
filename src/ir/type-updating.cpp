@@ -48,59 +48,73 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   std::unordered_set<HeapType> additionalSet(additionalPrivateTypes.begin(),
                                              additionalPrivateTypes.end());
 
-  std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>> privateSupertypes;
-  privateSupertypes.reserve(typeInfo.size());
+  // Check if a type is private, given the info for it.
+  auto isPublicGivenInfo = [&](HeapType type, auto& info) {
+    return info.visibility != ModuleUtils::Visibility::Private &&
+           !additionalSet.count(type);
+  };
+
+  // Check if a type is private, looking for its info (if there is none, it is
+  // not private).
+  auto isPublic = [&](HeapType type) {
+    auto it = typeInfo.find(type);
+    if (it == typeInfo.end()) {
+      return false;
+    }
+    return isPublicGivenInfo(type, it->second);
+  };
+
+  // For each type, note all the predecessors it must have, i.e., that must
+  // appear before it. That includes supertypes and described types.
+  std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>> privatePreds;
+  privatePreds.reserve(typeInfo.size());
   for (auto& [type, info] : typeInfo) {
-    if (info.visibility != ModuleUtils::Visibility::Private &&
-        !additionalSet.count(type)) {
+    if (isPublicGivenInfo(type, info)) {
       continue;
     }
-    privateSupertypes.push_back({type, {}});
+    privatePreds.push_back({type, {}});
 
-    if (auto super = getDeclaredSuperType(type)) {
-      auto it = typeInfo.find(*super);
-      // Record the supertype only if it is among the private types.
-      if ((it != typeInfo.end() &&
-           it->second.visibility == ModuleUtils::Visibility::Private) ||
-          additionalSet.count(*super)) {
-        privateSupertypes.back().second.push_back(*super);
-      }
+    // Check for a (private) supertype.
+    if (auto super = getDeclaredSuperType(type); super && !isPublic(*super)) {
+      privatePreds.back().second.push_back(*super);
+    }
+
+    // Check for a (private) described type.
+    if (auto desc = type.getDescribedType()) {
+      // It is not possible for a a described type to be public while its
+      // descriptor is private, or vice versa.
+      assert(!isPublic(*desc));
+      privatePreds.back().second.push_back(*desc);
     }
   }
 
-  // Topological sort to have subtypes first. This is the opposite of the
-  // order we need, so the comparison is the opposite of what we ultimately
-  // want.
   std::vector<HeapType> sorted;
   if (wasm.typeIndices.empty()) {
-    sorted = TopologicalSort::sortOf(privateSupertypes.begin(),
-                                     privateSupertypes.end());
+    sorted = TopologicalSort::sortOf(privatePreds.begin(), privatePreds.end());
   } else {
-    sorted =
-      TopologicalSort::minSortOf(privateSupertypes.begin(),
-                                 privateSupertypes.end(),
-                                 [&](Index a, Index b) {
-                                   auto typeA = privateSupertypes[a].first;
-                                   auto typeB = privateSupertypes[b].first;
-                                   // Preserve type order.
-                                   auto itA = wasm.typeIndices.find(typeA);
-                                   auto itB = wasm.typeIndices.find(typeB);
-                                   bool hasA = itA != wasm.typeIndices.end();
-                                   bool hasB = itB != wasm.typeIndices.end();
-                                   if (hasA != hasB) {
-                                     // Types with preserved indices must be
-                                     // sorted before (after in this reversed
-                                     // comparison) types without indices to
-                                     // maintain transitivity.
-                                     return !hasA;
-                                   }
-                                   if (hasA && *itA != *itB) {
-                                     return !(itA->second < itB->second);
-                                   }
-                                   // Break ties by the arbitrary order we
-                                   // have collected the types in.
-                                   return a > b;
-                                 });
+    sorted = TopologicalSort::minSortOf(
+      privatePreds.begin(), privatePreds.end(), [&](Index a, Index b) {
+        auto typeA = privatePreds[a].first;
+        auto typeB = privatePreds[b].first;
+        // Preserve type order.
+        auto itA = wasm.typeIndices.find(typeA);
+        auto itB = wasm.typeIndices.find(typeB);
+        bool hasA = itA != wasm.typeIndices.end();
+        bool hasB = itB != wasm.typeIndices.end();
+        if (hasA != hasB) {
+          // Types with preserved indices must be
+          // sorted before (after in this reversed
+          // comparison) types without indices to
+          // maintain transitivity.
+          return !hasA;
+        }
+        if (hasA && *itA != *itB) {
+          return !(itA->second < itB->second);
+        }
+        // Break ties by the arbitrary order we
+        // have collected the types in.
+        return a > b;
+      });
   }
   std::reverse(sorted.begin(), sorted.end());
   Index i = 0;
@@ -150,8 +164,12 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
         typeBuilder[i] = newArray;
         break;
       }
-      case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Cont: {
+        auto newCont = HeapType(typeBuilder[i]).getContinuation();
+        modifyContinuation(type, newCont);
+        typeBuilder[i] = newCont;
+        break;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -342,8 +360,8 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
-      return typeBuilder.getTempRefType(typeBuilder[it->second],
-                                        type.getNullability());
+      return typeBuilder.getTempRefType(
+        typeBuilder[it->second], type.getNullability(), type.getExactness());
     }
     // This type is not one that is eligible for optimizing. That is fine; just
     // use it unmodified.

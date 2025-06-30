@@ -258,6 +258,52 @@ public:
     std::copy(begin(), end(), ret.begin());
     return ret;
   }
+
+  // Writes bytes in the maximum amount for a U32 LEB placeholder. Return the
+  // offset we wrote it at. The LEB can then be patched with the proper value
+  // later, when the size is known.
+  BinaryLocation writeU32LEBPlaceholder() {
+    BinaryLocation ret = size();
+    *this << int32_t(0);
+    *this << int8_t(0);
+    return ret;
+  }
+
+  // Given the location of a maximum-size LEB placeholder, as returned from
+  // writeU32LEBPlaceholder, use the current buffer size to figure out the size
+  // that should be written there, and emit an optimal-size LEB. Move contents
+  // backwards if we used fewer bytes, and return the number of bytes we moved.
+  // (Thus, if we return >0, we moved code backwards, and the caller may need to
+  // adjust things.)
+  BinaryLocation emitRetroactiveSectionSizeLEB(BinaryLocation start) {
+    // Do not include the LEB itself in the section size.
+    auto sectionSize = size() - start - MaxLEB32Bytes;
+    auto sizeFieldSize = writeAt(start, U32LEB(sectionSize));
+
+    // We can move things back if the actual LEB for the size doesn't use the
+    // maximum 5 bytes. In that case we need to adjust offsets after we move
+    // things backwards.
+    auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
+    if (adjustmentForLEBShrinking) {
+      // We can save some room.
+      assert(sizeFieldSize < MaxLEB32Bytes);
+      std::move(&(*this)[start] + MaxLEB32Bytes,
+                &(*this)[start] + MaxLEB32Bytes + sectionSize,
+                &(*this)[start] + sizeFieldSize);
+      resize(size() - adjustmentForLEBShrinking);
+    }
+
+    return adjustmentForLEBShrinking;
+  }
+
+  void writeInlineString(std::string_view name) {
+    auto size = name.size();
+    auto data = name.data();
+    *this << U32LEB(size);
+    for (size_t i = 0; i < size; i++) {
+      *this << int8_t(data[i]);
+    }
+  }
 };
 
 namespace BinaryConsts {
@@ -304,6 +350,11 @@ enum SegmentFlag {
   UsesExpressions = 1 << 2
 };
 
+enum BrOnCastFlag {
+  InputNullable = 1 << 0,
+  OutputNullable = 1 << 1,
+};
+
 enum EncodedType {
   // value types
   i32 = -0x1,  // 0x7f
@@ -343,6 +394,8 @@ enum EncodedType {
   SubFinal = 0x4f,
   Shared = 0x65,
   SharedLEB = -0x1b, // Also 0x65 as an SLEB128
+  Exact = 0x62,
+  ExactLEB = -0x1e, // Also 0x62 as an SLEB128
   Rec = 0x4e,
   Descriptor = 0x4d,
   Describes = 0x4c,
@@ -1065,6 +1118,7 @@ enum ASTNodes {
   TableFill = 0x11,
   TableCopy = 0x0e,
   TableInit = 0x0c,
+  ElemDrop = 0x0d,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1119,14 +1173,19 @@ enum ASTNodes {
   RefTestNull = 0x15,
   RefCast = 0x16,
   RefCastNull = 0x17,
+  RefCastDesc = 0x23,
+  RefCastDescNull = 0x24,
   BrOnCast = 0x18,
   BrOnCastFail = 0x19,
+  BrOnCastDesc = 0x25,
+  BrOnCastDescFail = 0x26,
   AnyConvertExtern = 0x1a,
   ExternConvertAny = 0x1b,
   RefI31 = 0x1c,
   I31GetS = 0x1d,
   I31GetU = 0x1e,
   RefI31Shared = 0x1f,
+  RefGetDesc = 0x22,
 
   // Shared GC Opcodes
 
@@ -1143,6 +1202,17 @@ enum ASTNodes {
   StructAtomicRMWXor = 0x64,
   StructAtomicRMWXchg = 0x65,
   StructAtomicRMWCmpxchg = 0x66,
+  ArrayAtomicGet = 0x67,
+  ArrayAtomicGetS = 0x68,
+  ArrayAtomicGetU = 0x69,
+  ArrayAtomicSet = 0x6a,
+  ArrayAtomicRMWAdd = 0x6b,
+  ArrayAtomicRMWSub = 0x6c,
+  ArrayAtomicRMWAnd = 0x6d,
+  ArrayAtomicRMWOr = 0x6e,
+  ArrayAtomicRMWXor = 0x6f,
+  ArrayAtomicRMWXchg = 0x70,
+  ArrayAtomicRMWCmpxchg = 0x71,
 
   // stringref opcodes
 
@@ -1344,9 +1414,21 @@ public:
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeNoDebugLocation();
-  void writeDebugLocation(Expression* curr, Function* func);
-  void writeDebugLocationEnd(Expression* curr, Function* func);
-  void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
+  void writeSourceMapLocation(Expression* curr, Function* func);
+
+  // Track where expressions go in the binary format.
+  void trackExpressionStart(Expression* curr, Function* func);
+  void trackExpressionEnd(Expression* curr, Function* func);
+  void trackExpressionDelimiter(Expression* curr, Function* func, size_t id);
+
+  // Writes code annotations into a buffer and returns it. We cannot write them
+  // directly into the output since we write function code first (to get the
+  // offsets for the annotations), and only then can write annotations, which we
+  // must then insert before the code (as the spec requires that).
+  std::optional<BufferWithRandomAccess> writeCodeAnnotations();
+
+  std::optional<BufferWithRandomAccess> getBranchHintsBuffer();
+  std::optional<BufferWithRandomAccess> getInlineHintsBuffer();
 
   // helpers
   void writeInlineString(std::string_view name);
@@ -1368,7 +1450,7 @@ public:
 
   // Writes an arbitrary heap type, which may be indexed or one of the
   // basic types like funcref.
-  void writeHeapType(HeapType type);
+  void writeHeapType(HeapType type, Exactness exact);
   // Writes an indexed heap type. Note that this is encoded differently than a
   // general heap type because it does not allow negative values for basic heap
   // types.
@@ -1430,6 +1512,15 @@ private:
   std::unordered_map<Name, Index> stringIndexes;
 
   void prepare();
+
+  // Internal helper for emitting a code annotation section for a hint that is
+  // expression offset based. Receives the name of the section and two
+  // functions, one to check if the annotation we care about exists (receiving
+  // the annotation), and another to emit it (receiving the annotation and the
+  // buffer to write in).
+  template<typename HasFunc, typename EmitFunc>
+  std::optional<BufferWithRandomAccess>
+  writeExpressionHints(Name sectionName, HasFunc has, EmitFunc emit);
 };
 
 extern std::vector<char> defaultEmptySourceMap;
@@ -1462,7 +1553,7 @@ public:
   WasmBinaryReader(Module& wasm,
                    FeatureSet features,
                    const std::vector<char>& input,
-                   const std::vector<char>& sourceMap = defaultEmptySourceMap);
+                   std::vector<char>& sourceMap = defaultEmptySourceMap);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
@@ -1499,7 +1590,7 @@ public:
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int code);
-  HeapType getHeapType();
+  std::pair<HeapType, Exactness> getHeapType();
   HeapType getIndexedHeapType();
 
   Type getConcreteType();
@@ -1606,10 +1697,23 @@ public:
   void readTags();
 
   static Name escape(Name name);
-  void findAndReadNames();
-  void readFeatures(size_t);
-  void readDylink(size_t);
-  void readDylink0(size_t);
+  void readNames(size_t sectionPos, size_t payloadLen);
+  void readFeatures(size_t payloadLen);
+  void readDylink(size_t payloadLen);
+  void readDylink0(size_t payloadLen);
+
+  // We read branch hints *after* the code section, even though they appear
+  // earlier. That is simpler for us as we note expression locations as we scan
+  // code, and then just need to match them up. To do this, we note the branch
+  // hint position and size in the first pass, and handle it later.
+  size_t branchHintsPos = 0;
+  size_t branchHintsLen = 0;
+  void readBranchHints(size_t payloadLen);
+
+  // Like branch hints, we note where the section is to read it later.
+  size_t inlineHintsPos = 0;
+  size_t inlineHintsLen = 0;
+  void readInlineHints(size_t payloadLen);
 
   Index readMemoryAccess(Address& alignment, Address& offset);
   std::tuple<Name, Address, Address> getMemarg();
@@ -1620,7 +1724,21 @@ public:
   }
 
 private:
-  bool hasDWARFSections();
+  // In certain modes we need to note the locations of expressions, to match
+  // them against sections like DWARF or custom annotations. As this incurs
+  // overhead, we only note locations when we actually need to.
+  bool needCodeLocations = false;
+
+  // Scans ahead in the binary to check certain conditions like
+  // needCodeLocations.
+  void preScan();
+
+  // Internal helper for reading a code annotation section for a hint that is
+  // expression offset based. Receives the section name, payload length of the
+  // section and a function to read a single hint (receiving the annotation to
+  // update).
+  template<typename ReadFunc>
+  void readExpressionHints(Name sectionName, size_t payloadLen, ReadFunc read);
 };
 
 } // namespace wasm

@@ -482,6 +482,13 @@ struct Analyzer {
     }
 
     auto* new_ = curr->cast<StructNew>();
+
+    // Use the descriptor right now, normally. (We only have special
+    // optimization for struct.new operands, below.)
+    if (new_->desc) {
+      use(new_->desc);
+    }
+
     auto type = new_->type.getHeapType();
 
     for (Index i = 0; i < new_->operands.size(); i++) {

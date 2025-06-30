@@ -729,7 +729,7 @@
   ))
 
   ;; CHECK:      (func $test-expanded (type $3) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (select (result (ref $2))
+  ;; CHECK-NEXT:  (select (result (ref (exact $2)))
   ;; CHECK-NEXT:   (ref.func $A$func)
   ;; CHECK-NEXT:   (ref.func $B$func)
   ;; CHECK-NEXT:   (local.get $x)

@@ -53,7 +53,7 @@ Literal::Literal(Type type) : type(type) {
   }
 
   if (type.isNull()) {
-    assert(type.isNullable());
+    assert(type.isNullable() && !type.isExact());
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
@@ -72,7 +72,9 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
-  : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
+  : gcData(gcData), type(type,
+                         gcData ? NonNullable : Nullable,
+                         gcData && !type.isBasic() ? Exact : Inexact) {
   // The type must be a proper type for GC data: either a struct, array, or
   // string; or an externalized version of the same; or a null; or an
   // internalized string (which appears as an anyref).
@@ -2601,6 +2603,21 @@ Literal Literal::dotUI8x16toI16x8(const Literal& other) const {
 }
 Literal Literal::dotSI16x8toI32x4(const Literal& other) const {
   return dot<4, 2, &Literal::getLanesSI16x8>(*this, other);
+}
+
+Literal Literal::dotSI8x16toI16x8Add(const Literal& left,
+                                     const Literal& right) const {
+  auto temp = dotSI8x16toI16x8(left);
+
+  auto tempLanes = temp.getLanesSI16x8();
+  LaneArray<4> dest;
+  // TODO: the index on dest may be wrong, see
+  //       https://github.com/WebAssembly/relaxed-simd/issues/162
+  for (size_t i = 0; i < 4; i++) {
+    dest[i] = tempLanes[i * 2].add(tempLanes[i * 2 + 1]);
+  }
+
+  return Literal(dest).addI32x4(right);
 }
 
 Literal Literal::bitselectV128(const Literal& left,

@@ -35,7 +35,7 @@
   ;; CHECK-NEXT:   (struct.new_default $B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $B))
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -97,14 +97,14 @@
   ;; CHECK:      (func $funcs (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a funcref)
   ;; CHECK-NEXT:  (local.set $a
-  ;; CHECK-NEXT:   (select (result (ref $none_=>_none))
+  ;; CHECK-NEXT:   (select (result (ref (exact $none_=>_none)))
   ;; CHECK-NEXT:    (ref.func $func)
   ;; CHECK-NEXT:    (ref.func $funcs)
   ;; CHECK-NEXT:    (call $import)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast (ref $none_=>_none)
+  ;; CHECK-NEXT:   (ref.cast (ref (exact $none_=>_none))
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -296,11 +296,11 @@
 
   ;; CHECK:      (func $test (type $A)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $A))
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block (result (ref $A))
+  ;; CHECK-NEXT:     (block $block (result (ref (exact $A)))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (block (result (ref $A))
+  ;; CHECK-NEXT:       (block (result (ref (exact $A)))
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (br_if $block
   ;; CHECK-NEXT:          (ref.func $test)

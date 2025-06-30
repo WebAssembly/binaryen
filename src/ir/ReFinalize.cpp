@@ -127,6 +127,7 @@ void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
 void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
 void ReFinalize::visitTableInit(TableInit* curr) { curr->finalize(); }
+void ReFinalize::visitElemDrop(ElemDrop* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitTryTable(TryTable* curr) {
   curr->finalize();
@@ -147,10 +148,11 @@ void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
 void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
 void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
+void ReFinalize::visitRefGetDesc(RefGetDesc* curr) { curr->finalize(); }
 void ReFinalize::visitBrOn(BrOn* curr) {
   curr->finalize();
   if (curr->type == Type::unreachable) {
-    replaceUntaken(curr->ref, nullptr);
+    replaceUntaken(curr->ref, curr->desc);
   } else {
     updateBreakValueType(curr->name, curr->getSentType());
   }
@@ -171,6 +173,8 @@ void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitArrayFill(ArrayFill* curr) { curr->finalize(); }
 void ReFinalize::visitArrayInitData(ArrayInitData* curr) { curr->finalize(); }
 void ReFinalize::visitArrayInitElem(ArrayInitElem* curr) { curr->finalize(); }
+void ReFinalize::visitArrayRMW(ArrayRMW* curr) { curr->finalize(); }
+void ReFinalize::visitArrayCmpxchg(ArrayCmpxchg* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
 void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }
@@ -183,8 +187,18 @@ void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
 void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }
 void ReFinalize::visitContBind(ContBind* curr) { curr->finalize(); }
 void ReFinalize::visitSuspend(Suspend* curr) { curr->finalize(getModule()); }
-void ReFinalize::visitResume(Resume* curr) { curr->finalize(); }
-void ReFinalize::visitResumeThrow(ResumeThrow* curr) { curr->finalize(); }
+void ReFinalize::visitResume(Resume* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->handlerBlocks.size(); i++) {
+    updateBreakValueType(curr->handlerBlocks[i], curr->sentTypes[i]);
+  }
+}
+void ReFinalize::visitResumeThrow(ResumeThrow* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->handlerBlocks.size(); i++) {
+    updateBreakValueType(curr->handlerBlocks[i], curr->sentTypes[i]);
+  }
+}
 void ReFinalize::visitStackSwitch(StackSwitch* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
@@ -207,11 +221,11 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
 }
 
 // Replace an untaken branch/switch with an unreachable value.
-// A condition may also exist and may or may not be unreachable.
-void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
+// Another child may also exist and may or may not be unreachable.
+void ReFinalize::replaceUntaken(Expression* value, Expression* otherChild) {
   assert(value->type == Type::unreachable);
   auto* replacement = value;
-  if (condition) {
+  if (otherChild) {
     Builder builder(*getModule());
     // Even if we have
     //  (block
@@ -222,10 +236,10 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
     // the value is unreachable, and necessary since the type of
     // the condition did not have an impact before (the break/switch
     // type was unreachable), and might not fit in.
-    if (condition->type.isConcrete()) {
-      condition = builder.makeDrop(condition);
+    if (otherChild->type.isConcrete()) {
+      otherChild = builder.makeDrop(otherChild);
     }
-    replacement = builder.makeSequence(value, condition);
+    replacement = builder.makeSequence(value, otherChild);
     assert(replacement->type.isBasic() && "Basic type expected");
   }
   replaceCurrent(replacement);

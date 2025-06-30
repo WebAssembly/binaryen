@@ -6,9 +6,9 @@
  ;; CHECK:      (export "export" (func $test))
  (export "export" (func $test))
  ;; CHECK:      (func $test (type $1)
- ;; CHECK-NEXT:  (local $scratch (ref $\7bi32\7d))
+ ;; CHECK-NEXT:  (local $scratch (ref (exact $\7bi32\7d)))
  ;; CHECK-NEXT:  (call $help
- ;; CHECK-NEXT:   (block (result (ref $\7bi32\7d))
+ ;; CHECK-NEXT:   (block (result (ref (exact $\7bi32\7d)))
  ;; CHECK-NEXT:    (local.set $scratch
  ;; CHECK-NEXT:     (struct.new_default $\7bi32\7d)
  ;; CHECK-NEXT:    )

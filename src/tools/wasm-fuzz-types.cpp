@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <optional>
 #include <random>
 #include <string>
@@ -262,6 +263,18 @@ void Fuzzer::checkCanonicalization() {
           if (sub != super) {
             builder[sub].subTypeOf(builder[super]);
           }
+        }
+      }
+
+      // Set descriptors.
+      for (size_t i = 0; i < types.size(); ++i) {
+        if (auto desc = types[i].getDescriptorType()) {
+          // The correct descriptor index must be the next one greater than i.
+          auto& descriptors = typeIndices[*desc];
+          auto it = std::lower_bound(descriptors.begin(), descriptors.end(), i);
+          assert(it != descriptors.end());
+          builder[i].descriptor(builder[*it]);
+          builder[*it].describes(builder[i]);
         }
       }
 
@@ -542,7 +555,7 @@ void Fuzzer::checkRecGroupShapes() {
   };
 
   for (size_t i = 0; i < groups.size(); ++i) {
-    ComparableRecGroupShape shape(groups[i], less);
+    ComparableRecGroupShape shape(groups[i], FeatureSet::All, less);
     // A rec group should compare equal to itself.
     if (shape != shape) {
       Fatal() << "Rec group shape " << i << " not equal to itself";
@@ -556,7 +569,7 @@ void Fuzzer::checkRecGroupShapes() {
 
     // Check how it compares to other groups.
     for (size_t j = i + 1; j < groups.size(); ++j) {
-      ComparableRecGroupShape other(groups[j], less);
+      ComparableRecGroupShape other(groups[j], FeatureSet::All, less);
       bool isLess = shape < other;
       bool isEq = shape == other;
       bool isGreater = shape > other;
@@ -598,7 +611,7 @@ void Fuzzer::checkRecGroupShapes() {
 
       if (j + 1 < groups.size()) {
         // Check transitivity.
-        RecGroupShape third(groups[j + 1]);
+        RecGroupShape third(groups[j + 1], FeatureSet::All);
         if ((isLess && other <= third && shape >= third) ||
             (isEq && other == third && shape != third) ||
             (isGreater && other >= third && shape <= third)) {

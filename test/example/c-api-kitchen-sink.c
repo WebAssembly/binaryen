@@ -518,25 +518,29 @@ void test_core() {
   BinaryenType v128 = BinaryenTypeVec128();
   BinaryenType i8Array;
   BinaryenType i16Array;
+  BinaryenType funcArray;
   BinaryenType i32Struct;
   {
-    TypeBuilderRef tb = TypeBuilderCreate(3);
+    TypeBuilderRef tb = TypeBuilderCreate(4);
     TypeBuilderSetArrayType(
       tb, 0, BinaryenTypeInt32(), BinaryenPackedTypeInt8(), true);
     TypeBuilderSetArrayType(
       tb, 1, BinaryenTypeInt32(), BinaryenPackedTypeInt16(), true);
+    TypeBuilderSetArrayType(
+      tb, 2, BinaryenTypeFuncref(), BinaryenPackedTypeNotPacked(), true);
     TypeBuilderSetStructType(
       tb,
-      2,
+      3,
       (BinaryenType[]){BinaryenTypeInt32()},
       (BinaryenPackedType[]){BinaryenPackedTypeNotPacked()},
       (bool[]){true},
       1);
-    BinaryenHeapType builtHeapTypes[3];
+    BinaryenHeapType builtHeapTypes[4];
     TypeBuilderBuildAndDispose(tb, (BinaryenHeapType*)&builtHeapTypes, 0, 0);
     i8Array = BinaryenTypeFromHeapType(builtHeapTypes[0], true);
     i16Array = BinaryenTypeFromHeapType(builtHeapTypes[1], true);
-    i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
+    funcArray = BinaryenTypeFromHeapType(builtHeapTypes[2], true);
+    i32Struct = BinaryenTypeFromHeapType(builtHeapTypes[3], true);
   }
 
   // Memory. Add it before creating any memory-using instructions.
@@ -1170,12 +1174,30 @@ void test_core() {
                      makeInt32(module, 42)),
     BinaryenArrayLen(module,
                      BinaryenGlobalGet(module, "i8Array-global", i8Array)),
+    BinaryenArrayFill(module,
+                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                      makeInt32(module, 0),
+                      makeInt32(module, 1),
+                      makeInt32(module, 2)),
     BinaryenArrayCopy(module,
                       BinaryenGlobalGet(module, "i8Array-global", i8Array),
                       makeInt32(module, 0),
                       BinaryenGlobalGet(module, "i8Array-global", i8Array),
                       makeInt32(module, 1),
                       makeInt32(module, 2)),
+    BinaryenArrayInitData(module,
+                          "0",
+                          BinaryenGlobalGet(module, "i8Array-global", i8Array),
+                          makeInt32(module, 0),
+                          makeInt32(module, 1),
+                          makeInt32(module, 2)),
+    BinaryenArrayInitElem(
+      module,
+      "0",
+      BinaryenGlobalGet(module, "funcArray-global", funcArray),
+      makeInt32(module, 0),
+      makeInt32(module, 1),
+      makeInt32(module, 2)),
     // Strings
     BinaryenStringNew(module,
                       BinaryenStringNewLossyUTF8Array(),
@@ -1304,6 +1326,15 @@ void test_core() {
       module, BinaryenTypeGetHeapType(i16Array), makeInt32(module, 0), 0));
   BinaryenAddGlobal(
     module,
+    "funcArray-global",
+    funcArray,
+    true,
+    BinaryenArrayNew(module,
+                     BinaryenTypeGetHeapType(funcArray),
+                     makeInt32(module, 0),
+                     BinaryenRefNull(module, BinaryenTypeNullFuncref())));
+  BinaryenAddGlobal(
+    module,
     "i32Struct-global",
     i32Struct,
     true,
@@ -1376,6 +1407,7 @@ void test_core() {
                                                     0,
                                                     BinaryenNop(module));
   BinaryenSetStart(module, starter);
+  assert(BinaryenGetStart(module) == starter);
 
   BinaryenFeatures features = BinaryenFeatureAll();
   BinaryenModuleSetFeatures(module, features);

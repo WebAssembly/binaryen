@@ -137,12 +137,9 @@ struct GlobalStructInference : public Pass {
 
       auto type = global->init->type.getHeapType();
 
-      // The global's declared type must match the init's type. If not, say if
-      // we had a global declared as type |any| but that contains (ref $A), then
-      // that is not something we can optimize, as ref.eq on a global.get of
-      // that global will not validate. (This should not be a problem after
-      // GlobalSubtyping runs, which will specialize the type of the global.)
-      if (global->type != global->init->type) {
+      // The global's declared type must be equality comparable.
+      if (auto eq = wasm::HeapTypes::eq.getBasic(type.getShared());
+          !Type::isSubType(global->type, Type(eq, Nullable))) {
         unoptimizable.insert(type);
         continue;
       }
@@ -448,6 +445,13 @@ struct GlobalStructInference : public Pass {
               GlobalToUnnest{value.globals[0], fieldIndex, get});
 
             ret = get;
+          }
+
+          // If the type is more refined, we must refinalize. For example, we
+          // might have a struct.get that normally returns anyref, and know that
+          // field contains null, so we return nullref.
+          if (ret->type != curr->type) {
+            refinalize = true;
           }
 
           // This value replaces the struct.get, so it should have the same

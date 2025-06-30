@@ -150,8 +150,11 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
 
   void visitTupleExtract(TupleExtract* curr) {
     // We need the input to be a local, either from a tee or a get.
-    if (auto* set = curr->tuple->dynCast<LocalSet>()) {
-      validUses[set->index]++;
+    if (auto* tee = curr->tuple->dynCast<LocalSet>()) {
+      // The tee might not be of a tuple local if it is unreachable.
+      if (getFunction()->getLocalType(tee->index).isTuple()) {
+        validUses[tee->index]++;
+      }
     } else if (auto* get = curr->tuple->dynCast<LocalGet>()) {
       validUses[get->index]++;
     }

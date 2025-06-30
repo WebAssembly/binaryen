@@ -33,7 +33,7 @@
 // permutations, fall back to keeping the types distinct by adding distinct
 // brand types to the recursion groups to ensure they have different shapes.
 //
-// There are several possible algorithmic design for detecting when to generate
+// There are several possible algorithmic designs for detecting when to generate
 // permutations and determining what permutations to generate. They trade off
 // the amount of "wasted" work spent generating shapes that have already been
 // used with the amount of work spent trying to avoid the wasted work and with
@@ -161,23 +161,30 @@ struct BrandTypeIterator {
   }
 };
 
-// Create an adjacency list with edges from supertype to subtypes.
+// Create an adjacency list with edges from supertype to subtype and from
+// described type to descriptor.
 std::vector<std::vector<Index>>
-createSubtypeGraph(const std::vector<HeapType>& types) {
+createTypeOrderGraph(const std::vector<HeapType>& types) {
   std::unordered_map<HeapType, Index> indices;
   for (auto type : types) {
     indices.insert({type, indices.size()});
   }
 
-  std::vector<std::vector<Index>> subtypeGraph(types.size());
+  std::vector<std::vector<Index>> typeOrderGraph(types.size());
   for (Index i = 0; i < types.size(); ++i) {
     if (auto super = types[i].getDeclaredSuperType()) {
       if (auto it = indices.find(*super); it != indices.end()) {
-        subtypeGraph[it->second].push_back(i);
+        typeOrderGraph[it->second].push_back(i);
       }
     }
+    if (auto desc = types[i].getDescribedType()) {
+      // Described types must be in the same SCC / rec group.
+      auto it = indices.find(*desc);
+      assert(it != indices.end());
+      typeOrderGraph[it->second].push_back(i);
+    }
   }
-  return subtypeGraph;
+  return typeOrderGraph;
 }
 
 struct RecGroupInfo;
@@ -199,45 +206,45 @@ struct GroupClassInfo {
   // group, offset by 1 iff there is a brand type. Used to ensure that we only
   // find emit permutations that respect the constraint that supertypes must be
   // ordered before subtypes.
-  std::vector<std::vector<Index>> subtypeGraph;
+  std::vector<std::vector<Index>> typeOrderGraph;
   // A generator of valid permutations of the components in this class.
   TopologicalOrders orders;
 
-  // Initialize `subtypeGraph` and `orders` based on the canonical ordering
+  // Initialize `typeOrderGraph` and `orders` based on the canonical ordering
   // encoded by the group and permutation in `info`.
-  static std::vector<std::vector<Index>> initSubtypeGraph(RecGroupInfo& info);
+  static std::vector<std::vector<Index>> initTypeOrderGraph(RecGroupInfo& info);
   GroupClassInfo(RecGroupInfo& info);
 
-  void advance() {
+  void advance(FeatureSet features) {
     ++orders;
     if (orders == orders.end()) {
-      advanceBrand();
+      advanceBrand(features);
     }
   }
 
-  void advanceBrand() {
+  void advanceBrand(FeatureSet features) {
     if (brand) {
       ++*brand;
     } else {
       brand.emplace();
       // Make room in the subtype graph for the brand type, which goes at the
       // beginning of the canonical order.
-      subtypeGraph.insert(subtypeGraph.begin(), {{}});
+      typeOrderGraph.insert(typeOrderGraph.begin(), {{}});
       // Adjust indices.
-      for (Index i = 1; i < subtypeGraph.size(); ++i) {
-        for (auto& edge : subtypeGraph[i]) {
+      for (Index i = 1; i < typeOrderGraph.size(); ++i) {
+        for (auto& edge : typeOrderGraph[i]) {
           ++edge;
         }
       }
     }
     // Make sure the brand is not the same as the real type.
-    if (singletonType &&
-        RecGroupShape({**brand}) == RecGroupShape({*singletonType})) {
+    if (singletonType && RecGroupShape({**brand}, features) ==
+                           RecGroupShape({*singletonType}, features)) {
       ++*brand;
     }
     // Start back at the initial permutation with the new brand.
     orders.~TopologicalOrders();
-    new (&orders) TopologicalOrders(subtypeGraph);
+    new (&orders) TopologicalOrders(typeOrderGraph);
   }
 
   // Permute the types in the given group to match the current configuration in
@@ -266,7 +273,7 @@ struct RecGroupInfo {
 };
 
 std::vector<std::vector<Index>>
-GroupClassInfo::initSubtypeGraph(RecGroupInfo& info) {
+GroupClassInfo::initTypeOrderGraph(RecGroupInfo& info) {
   assert(!info.classInfo);
   assert(info.permutation.size() == info.group.size());
 
@@ -275,19 +282,19 @@ GroupClassInfo::initSubtypeGraph(RecGroupInfo& info) {
     canonical[info.permutation[i]] = info.group[i];
   }
 
-  return createSubtypeGraph(canonical);
+  return createTypeOrderGraph(canonical);
 }
 
 GroupClassInfo::GroupClassInfo(RecGroupInfo& info)
   : singletonType(info.group.size() == 1
                     ? std::optional<HeapType>(info.group[0])
                     : std::nullopt),
-    brand(std::nullopt), subtypeGraph(initSubtypeGraph(info)),
-    orders(subtypeGraph) {}
+    brand(std::nullopt), typeOrderGraph(initTypeOrderGraph(info)),
+    orders(typeOrderGraph) {}
 
 void GroupClassInfo::permute(RecGroupInfo& info) {
   assert(info.group.size() == info.permutation.size());
-  bool insertingBrand = info.group.size() < subtypeGraph.size();
+  bool insertingBrand = info.group.size() < typeOrderGraph.size();
   // First, un-permute the group to get back to the canonical order, offset by 1
   // if we are newly inserting a brand.
   std::vector<HeapType> canonical(info.group.size() + insertingBrand);
@@ -370,9 +377,13 @@ struct MinimizeRecGroups : Pass {
   // whose shapes we need to check for uniqueness to avoid deep recursions.
   std::vector<Index> shapesToUpdate;
 
+  // The comparison of rec group shapes depends on the features.
+  FeatureSet features;
+
   void run(Module* module) override {
+    features = module->features;
     // There are no recursion groups to minimize if GC is not enabled.
-    if (!module->features.hasGC()) {
+    if (!features.hasGC()) {
       return;
     }
 
@@ -402,7 +413,7 @@ struct MinimizeRecGroups : Pass {
     for (auto group : publicGroups) {
       publicGroupTypes.emplace_back(group.begin(), group.end());
       [[maybe_unused]] auto [_, inserted] = groupShapeIndices.insert(
-        {RecGroupShape(publicGroupTypes.back()), PublicGroupIndex});
+        {RecGroupShape(publicGroupTypes.back(), features), PublicGroupIndex});
       assert(inserted);
     }
 
@@ -418,9 +429,9 @@ struct MinimizeRecGroups : Pass {
       groups.emplace_back();
 
       // The SCC is not necessarily topologically sorted to have the supertypes
-      // come first. Fix that.
+      // and described types come first. Fix that.
       std::vector<HeapType> sccTypes(scc.begin(), scc.end());
-      auto deps = createSubtypeGraph(sccTypes);
+      auto deps = createTypeOrderGraph(sccTypes);
       auto permutation = *TopologicalOrders(deps).begin();
       groups.back().group.resize(sccTypes.size());
       for (Index i = 0; i < sccTypes.size(); ++i) {
@@ -452,8 +463,8 @@ struct MinimizeRecGroups : Pass {
   }
 
   void updateShape(Index group) {
-    auto [it, inserted] =
-      groupShapeIndices.insert({RecGroupShape(groups[group].group), group});
+    auto [it, inserted] = groupShapeIndices.insert(
+      {RecGroupShape(groups[group].group, features), group});
     if (inserted) {
       // This shape was unique. We're done.
       return;
@@ -509,7 +520,7 @@ struct MinimizeRecGroups : Pass {
         // We have everything we need to generate the next permutation of this
         // group.
         auto& classInfo = *groups[groupRep].classInfo;
-        classInfo.advance();
+        classInfo.advance(features);
         classInfo.permute(groupInfo);
         shapesToUpdate.push_back(group);
         return;
@@ -538,7 +549,7 @@ struct MinimizeRecGroups : Pass {
 
       // Move to the next permutation after advancing the type brand to skip
       // further repeated shapes.
-      classInfo.advanceBrand();
+      classInfo.advanceBrand(features);
       classInfo.permute(groupInfo);
 
       shapesToUpdate.push_back(group);
@@ -556,7 +567,7 @@ struct MinimizeRecGroups : Pass {
     // conflict.
     if (groups[groupRep].classInfo && groups[otherRep].classInfo) {
       auto& classInfo = *groups[groupRep].classInfo;
-      classInfo.advance();
+      classInfo.advance(features);
       classInfo.permute(groupInfo);
       shapesToUpdate.push_back(group);
       return;
@@ -578,7 +589,7 @@ struct MinimizeRecGroups : Pass {
       // same shape. Advance `group` to the next permutation.
       otherInfo.classInfo = std::nullopt;
       otherInfo.permutation = groupInfo.permutation;
-      classInfo.advance();
+      classInfo.advance(features);
       classInfo.permute(groupInfo);
 
       shapesToUpdate.push_back(group);
@@ -600,7 +611,7 @@ struct MinimizeRecGroups : Pass {
       // permutation.
       groupInfo.classInfo = std::nullopt;
       groupInfo.permutation = otherInfo.permutation;
-      classInfo.advance();
+      classInfo.advance(features);
       classInfo.permute(groupInfo);
 
       shapesToUpdate.push_back(group);
@@ -744,7 +755,9 @@ struct MinimizeRecGroups : Pass {
         if (seen.insert(curr).second) {
           dfsOrders[i].push_back(curr);
           auto children = curr.getReferencedHeapTypes();
-          workList.insert(workList.end(), children.rbegin(), children.rend());
+          for (auto child : children) {
+            workList.push_back(child);
+          }
         }
       }
       assert(dfsOrders[i].size() == types.size());
@@ -754,9 +767,10 @@ struct MinimizeRecGroups : Pass {
     // shapes to lists of automorphically equivalent root types.
     std::map<ComparableRecGroupShape, std::vector<HeapType>> typeClasses;
     for (const auto& order : dfsOrders) {
-      ComparableRecGroupShape shape(order, [this](HeapType a, HeapType b) {
-        return this->typeIndices.at(a) < this->typeIndices.at(b);
-      });
+      ComparableRecGroupShape shape(
+        order, features, [this](HeapType a, HeapType b) {
+          return this->typeIndices.at(a) < this->typeIndices.at(b);
+        });
       typeClasses[shape].push_back(order[0]);
     }
 

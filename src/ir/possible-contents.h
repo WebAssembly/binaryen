@@ -126,9 +126,12 @@ class PossibleContents {
 
   static constexpr Index FullDepth = -1;
 
-  // Internal convenience for creating a cone type of unbounded depth, i.e., the
-  // full cone of all subtypes for that type.
-  static ConeType FullConeType(Type type) { return ConeType{type, FullDepth}; }
+  // Internal convenience for creating a cone type carrying no information
+  // besides the type. For exact references, the depth is 0 and for all other
+  // types the depth is unbounded and includes all possible subtypes.
+  static ConeType DefaultConeType(Type type) {
+    return type.isExact() ? ExactType(type) : ConeType{type, FullDepth};
+  }
 
   template<typename T> PossibleContents(T value) : value(value) {}
 
@@ -148,10 +151,11 @@ public:
   static PossibleContents exactType(Type type) {
     return PossibleContents{ExactType(type)};
   }
-  // Helper for a cone with unbounded depth, i.e., the full cone of all subtypes
-  // for that type.
-  static PossibleContents fullConeType(Type type) {
-    return PossibleContents{FullConeType(type)};
+  // Helper for a cone with default depth for the given type. For exact
+  // references this is depth 0 and for all other this tyis is unbounded depth
+  // and includes all possible subtypes.
+  static PossibleContents coneType(Type type) {
+    return PossibleContents{DefaultConeType(type)};
   }
   static PossibleContents coneType(Type type, Index depth) {
     return PossibleContents{ConeType{type, depth}};
@@ -165,7 +169,7 @@ public:
 
     if (type.isRef()) {
       // For a reference, subtyping matters.
-      return fullConeType(type);
+      return coneType(type);
     }
 
     if (type == Type::unreachable) {
@@ -251,7 +255,7 @@ public:
     if (auto* literal = std::get_if<Literal>(&value)) {
       return ExactType(literal->type);
     } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
-      return FullConeType(global->type);
+      return DefaultConeType(global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       return *coneType;
     } else if (std::get_if<None>(&value)) {
@@ -328,12 +332,12 @@ public:
       WASM_UNREACHABLE("TODO: use Literals");
     } else if (std::get_if<GlobalInfo>(&value)) {
       WASM_UNREACHABLE("TODO");
-    } else if (auto* cone = std::get_if<ConeType>(&value)) {
+    } else if ([[maybe_unused]] auto* cone = std::get_if<ConeType>(&value)) {
       // Return a full cone of the appropriate type, as we lack depth info for
       // the separate items in the tuple (tuples themselves have no subtyping,
       // so the tuple's depth must be 0, i.e., an exact type).
       assert(cone->depth == 0);
-      return fullConeType(type[i]);
+      return coneType(type[i]);
     } else {
       WASM_UNREACHABLE("not a tuple");
     }

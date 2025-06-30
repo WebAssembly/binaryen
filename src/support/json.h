@@ -45,6 +45,18 @@ namespace json {
 
 using IString = wasm::IString;
 
+struct JsonParseException {
+  std::string errorText;
+
+  JsonParseException(std::string errorText) : errorText(errorText) {}
+  void dump(std::ostream& o) const { o << "JSON parse error: " << errorText; }
+};
+
+#define THROW_IF(expr, message)                                                \
+  if (expr) {                                                                  \
+    throw JsonParseException(message);                                         \
+  }
+
 // Main value type
 struct Value {
   struct Ref : public std::shared_ptr<Value> {
@@ -249,7 +261,16 @@ struct Value {
     return true;
   }
 
-  char* parse(char* curr) {
+  // The encoding into which we parse strings. The input encoding is always
+  // UTF8, but we can parse into ASCII (very quickly, and without many small
+  // allocations), or we can parse into WTF16 (which is the format used by
+  // StringConst).
+  enum StringEncoding {
+    ASCII,
+    WTF16,
+  };
+
+  char* parse(char* curr, StringEncoding stringEncoding) {
 #define is_json_space(x)                                                       \
   (x == 32 || x == 9 || x == 10 ||                                             \
    x == 13) /* space, tab, linefeed/newline, or return */
@@ -261,17 +282,29 @@ struct Value {
     skip();
     if (*curr == '"') {
       // String
-      // Start |close| at the opening ", and in the loop below we will always
+      // Start |close| after the opening ", and in the loop below we will always
       // begin looking at the first character after.
-      char* close = curr;
-      // Skip escaped "
-      do {
-        close = strchr(close + 1, '"');
-      } while (*(close - 1) == '\\');
-      assert(close);
+      char* close = curr + 1;
+      // Skip escaped ", which appears as \". We need to be careful though, as
+      // \" might also be \\" which would be an escaped \ and an *un*escaped ".
+      while (*close && *close != '"') {
+        if (*close == '\\') {
+          // Skip the \ and the character after it, which it escapes.
+          close++;
+          THROW_IF(!*close, "unexpected end of JSON string (quoting)");
+        }
+        close++;
+      }
+      THROW_IF(!close, "unexpected end of JSON string");
       *close = 0; // end this string, and reuse it straight from the input
       char* raw = curr + 1;
-      unescapeAndSetString(raw);
+      if (stringEncoding == ASCII) {
+        // Just use the current string.
+        setString(raw);
+      } else {
+        assert(stringEncoding == WTF16);
+        unescapeIntoWTF16(raw);
+      }
       curr = close + 1;
     } else if (*curr == '[') {
       // Array
@@ -281,29 +314,29 @@ struct Value {
       while (*curr != ']') {
         Ref temp = Ref(new Value());
         arr->push_back(temp);
-        curr = temp->parse(curr);
+        curr = temp->parse(curr, stringEncoding);
         skip();
         if (*curr == ']') {
           break;
         }
-        assert(*curr == ',');
+        THROW_IF(*curr != ',', "malformed JSON array");
         curr++;
         skip();
       }
       curr++;
     } else if (*curr == 'n') {
       // Null
-      assert(strncmp(curr, "null", 4) == 0);
+      THROW_IF(strncmp(curr, "null", 4) != 0, "unexpected JSON literal");
       setNull();
       curr += 4;
     } else if (*curr == 't') {
       // Bool true
-      assert(strncmp(curr, "true", 4) == 0);
+      THROW_IF(strncmp(curr, "true", 4) != 0, "unexpected JSON literal");
       setBool(true);
       curr += 4;
     } else if (*curr == 'f') {
       // Bool false
-      assert(strncmp(curr, "false", 5) == 0);
+      THROW_IF(strncmp(curr, "false", 5) != 0, "unexpected JSON literal");
       setBool(false);
       curr += 5;
     } else if (*curr == '{') {
@@ -312,25 +345,25 @@ struct Value {
       skip();
       setObject();
       while (*curr != '}') {
-        assert(*curr == '"');
+        THROW_IF(*curr != '"', "malformed key in JSON object");
         curr++;
         char* close = strchr(curr, '"');
-        assert(close);
+        THROW_IF(!close, "malformed key in JSON object");
         *close = 0; // end this string, and reuse it straight from the input
         IString key(curr);
         curr = close + 1;
         skip();
-        assert(*curr == ':');
+        THROW_IF(*curr != ':', "missing ':', in JSON object");
         curr++;
         skip();
         Ref value = Ref(new Value());
-        curr = value->parse(curr);
+        curr = value->parse(curr, stringEncoding);
         (*obj)[key] = value;
         skip();
         if (*curr == '}') {
           break;
         }
-        assert(*curr == ',');
+        THROW_IF(*curr != ',', "malformed value in JSON object");
         curr++;
         skip();
       }
@@ -412,20 +445,14 @@ struct Value {
   }
 
 private:
-  // If the string has no escaped characters, setString() the char* directly. If
-  // it does require escaping, do that and intern a new string with those
-  // contents.
-  void unescapeAndSetString(char* str) {
-    if (!strchr(str, '\\')) {
-      // No escaping slash.
-      setString(str);
-      return;
-    }
-
-    auto unescaped = wasm::String::unescapeJSONToWTF8(str);
-
-    setString(
-      IString(std::string_view(unescaped.data(), unescaped.size()), false));
+  // Unescape the input (UTF8) string into one of our internal strings (WTF16).
+  void unescapeIntoWTF16(char* str) {
+    // TODO: Optimize the unescaped path? But it is impossible to avoid an
+    //       allocation here.
+    std::stringstream ss;
+    wasm::String::unescapeUTF8JSONtoWTF16(ss, str);
+    // TODO: Use ss.view() once we have C++20.
+    setString(ss.str());
   }
 };
 

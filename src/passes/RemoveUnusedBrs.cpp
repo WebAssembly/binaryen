@@ -24,6 +24,8 @@
 #include "ir/effects.h"
 #include "ir/gc-type-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/localize.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "parsing.h"
 #include "pass.h"
@@ -859,8 +861,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (Type::isSubType(expr->type, type)) {
             return expr;
           }
-          if (HeapType::isSubType(expr->type.getHeapType(),
-                                  type.getHeapType())) {
+          if (type.isNonNullable() && expr->type.isNullable() &&
+              Type::isSubType(expr->type.with(NonNullable), type)) {
             return builder.makeRefAs(RefAsNonNull, expr);
           }
           return builder.makeRefCast(expr, type);
@@ -906,6 +908,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // further optimizations after this, and those optimizations might even
         // benefit from this improvement.
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+        if (!curr->castType.isExact()) {
+          // When custom descriptors is not enabled, nontrivial exact casts are
+          // not allowed.
+          glb = glb.withInexactIfNoCustomDescs(getModule()->features);
+        }
+        if (curr->op == BrOnCastFail) {
+          // BrOnCastFail sends the input type, with adjusted nullability. The
+          // input heap type makes sense for the branch target, and we will not
+          // change it anyhow, but we need to be careful with nullability: if
+          // the cast type was nullable, then we were sending a non-nullable
+          // value to the branch, and if we refined the cast type to non-
+          // nullable, we would no longer be doing that. In other words, we must
+          // not refine the nullability, as that would *un*refine the send type.
+          if (curr->castType.isNullable() && glb.isNonNullable()) {
+            glb = glb.with(Nullable);
+          }
+        }
         if (glb != Type::unreachable && glb != curr->castType) {
           curr->castType = glb;
           auto oldType = curr->type;
@@ -991,8 +1010,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             //       (...)
             //     (ref.null bot<X>)
             //   )
-            curr->ref = maybeCast(
-              curr->ref, Type(curr->getSentType().getHeapType(), Nullable));
+            //
+            // A RefCast is added in some cases, but this is still generally
+            // worth doing as the BrOnNonNull and the appended null may end up
+            // optimized with surrounding code.
+            auto* casted =
+              maybeCast(curr->ref, curr->getSentType().with(Nullable));
+            curr->ref = casted;
             curr->op = BrOnNonNull;
             curr->castType = Type::none;
             curr->type = Type::none;
@@ -1246,6 +1270,63 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           tablify(curr);
           // Pattern-patch ifs, recreating them when it makes sense.
           restructureIf(curr);
+
+          // Optimize block tails where a dropped `br_if`'s value is redundant
+          // when the br_if targets the block itself:
+          //
+          // (block $block (result i32)
+          // ..
+          //   (drop
+          //     (br_if $block ;; <- MUST target parent $block
+          //       (value)
+          //       (condition)
+          //     )
+          //   )
+          //   (value) ;; <- MUST be same as br_if's value
+          // )
+          // =>
+          // (block $block (result i32)
+          // ..
+          //   (drop
+          //     (condition)
+          //   )
+          //   (value)
+          // )
+          size_t size = curr->list.size();
+          auto* secondLast = curr->list[size - 2];
+          auto* last = curr->list[size - 1];
+          if (auto* drop = secondLast->dynCast<Drop>()) {
+            if (auto* br = drop->value->dynCast<Break>();
+                br && br->value && br->condition && br->name == curr->name &&
+                ExpressionAnalyzer::equal(br->value, last)) {
+              // The value must have no effects, as we are removing one copy
+              // of it. Also, the condition must not interfere with that
+              // value, or it might change, e.g.
+              //
+              //   (drop
+              //     (br_if $block
+              //       (read a value)     ;; this original value is returned,
+              //       (write that value) ;; if we branch
+              //     )
+              //   )
+              //   (read a value)
+              // =>
+              //   (drop
+              //     (write that value)
+              //   )
+              //   (read a value)         ;; now the written value is used
+              auto valueEffects =
+                EffectAnalyzer(passOptions, *getModule(), br->value);
+              if (!valueEffects.hasUnremovableSideEffects()) {
+                auto conditionEffects =
+                  EffectAnalyzer(passOptions, *getModule(), br->condition);
+                if (!conditionEffects.invalidates(valueEffects)) {
+                  // All conditions met, perform the update.
+                  drop->value = br->condition;
+                }
+              }
+            }
+          }
         }
       }
 
@@ -1800,6 +1881,36 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
           }
           start = end;
+        }
+      }
+
+      void visitBreak(Break* curr) {
+        if (!curr->condition) {
+          return;
+        }
+        auto* value = Properties::getFallthrough(
+          curr->condition, passOptions, *getModule());
+        // Optimize if condition's fallthrough is a constant.
+        if (auto* c = value->dynCast<Const>()) {
+          ChildLocalizer localizer(
+            curr, getFunction(), *getModule(), passOptions);
+          auto* block = localizer.getChildrenReplacement();
+          if (c->value.geti32()) {
+            // the branch is always taken, make it unconditional
+            curr->condition = nullptr;
+            curr->type = Type::unreachable;
+            block->list.push_back(curr);
+            block->finalize();
+            // The type changed, so refinalize.
+            refinalize = true;
+          } else {
+            // the branch is never taken, allow control flow to fall through
+            if (curr->value) {
+              block->list.push_back(curr->value);
+              block->finalize();
+            }
+          }
+          replaceCurrent(block);
         }
       }
     };

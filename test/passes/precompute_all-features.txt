@@ -301,7 +301,7 @@
    )
   )
   (drop
-   (block $l4 (result (ref null $1))
+   (block $l4 (result (ref null (exact $1)))
     (drop
      (block $l5
       (global.set $global-mut

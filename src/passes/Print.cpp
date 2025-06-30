@@ -19,6 +19,7 @@
 //
 
 #include <algorithm>
+#include <fstream>
 
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
@@ -27,6 +28,7 @@
 #include <pass.h>
 #include <pretty_printing.h>
 #include <support/string.h>
+#include <wasm-annotations.h>
 #include <wasm-stack.h>
 #include <wasm-type-printing.h>
 #include <wasm.h>
@@ -82,20 +84,20 @@ std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 // Print a name from the type section, if available. Otherwise print the type
 // normally.
 void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
-  if (type.isRef() && wasm) {
-    auto heapType = type.getHeapType();
-    auto iter = wasm->typeNames.find(heapType);
-    if (iter != wasm->typeNames.end()) {
-      o << iter->second.name;
-      if (type.isNullable()) {
-        o << " null";
+  struct Printer : TypeNameGeneratorBase<Printer> {
+    Module* wasm;
+    DefaultTypeNameGenerator fallback;
+    Printer(Module* wasm) : wasm(wasm) {}
+    TypeNames getNames(HeapType type) {
+      if (wasm) {
+        if (auto it = wasm->typeNames.find(type); it != wasm->typeNames.end()) {
+          return it->second;
+        }
       }
-      return;
+      return fallback.getNames(type);
     }
-  }
-
-  // No luck with a name, just print the test as best we can.
-  o << type;
+  } print{wasm};
+  o << print(type);
 }
 
 } // anonymous namespace
@@ -232,7 +234,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   std::ostream& printType(Type type) { return o << typePrinter(type); }
 
-  std::ostream& printHeapType(HeapType type) {
+  std::ostream& printHeapTypeName(HeapType type) {
     if (type.isBasic()) {
       return o << type;
     }
@@ -257,7 +259,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (sig.results.isTuple()) {
       if (auto it = signatureTypes.find(sig); it != signatureTypes.end()) {
         o << "(type ";
-        printHeapType(it->second);
+        printHeapTypeName(it->second);
         o << ") ";
       }
     }
@@ -267,15 +269,21 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void
   printDebugLocation(const std::optional<Function::DebugLocation>& location);
-  void printDebugLocation(Expression* curr);
 
   // Prints debug info for a delimiter in an expression.
   void printDebugDelimiterLocation(Expression* curr, Index i);
 
+  // Prints debug info and code annotations.
+  void printMetadata(Expression* curr);
+
+  // Print code annotations for an expression. If the expression is nullptr,
+  // prints for the current function.
+  void printCodeAnnotations(Expression* curr);
+
   void printExpressionContents(Expression* curr);
 
   void visit(Expression* curr) {
-    printDebugLocation(curr);
+    printMetadata(curr);
     UnifiedExpressionVisitor<PrintSExpression>::visit(curr);
   }
 
@@ -310,13 +318,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTry(Try* curr);
   void visitTryTable(TryTable* curr);
 
+  void printUnreachableReplacement(Expression* curr);
   bool maybePrintUnreachableReplacement(Expression* curr, Type type);
-  bool maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
-  void visitCallRef(CallRef* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->target->type)) {
-      visitExpression(curr);
-    }
-  }
   void visitRefCast(RefCast* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
@@ -324,26 +327,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void visitStructNew(StructNew* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructGet(StructGet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructSet(StructSet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructRMW(StructRMW* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitStructCmpxchg(StructCmpxchg* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
       visitExpression(curr);
     }
   }
@@ -367,63 +350,28 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       visitExpression(curr);
     }
   }
-  void visitArraySet(ArraySet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayGet(ArrayGet* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayCopy(ArrayCopy* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->srcRef->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->destRef->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayFill(ArrayFill* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayInitData(ArrayInitData* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
-  void visitArrayInitElem(ArrayInitElem* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
-      visitExpression(curr);
-    }
-  }
   void visitContNew(ContNew* curr) {
     if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitContBind(ContBind* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResume(Resume* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitResumeThrow(ResumeThrow* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
   void visitStackSwitch(StackSwitch* curr) {
-    if (!maybePrintUnreachableOrNullReplacement(curr, curr->cont->type) &&
-        !maybePrintUnreachableOrNullReplacement(curr, curr->type)) {
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
       visitExpression(curr);
     }
   }
@@ -471,8 +419,8 @@ struct PrintExpressionContents
 
   std::ostream& printType(Type type) { return parent.printType(type); }
 
-  std::ostream& printHeapType(HeapType type) {
-    return parent.printHeapType(type);
+  std::ostream& printHeapTypeName(HeapType type) {
+    return parent.printHeapTypeName(type);
   }
 
   std::ostream& printResultType(Type type) {
@@ -563,7 +511,7 @@ struct PrintExpressionContents
     o << '(';
     printMinor(o, "type ");
 
-    printHeapType(curr->heapType);
+    printHeapTypeName(curr->heapType);
 
     o << ')';
   }
@@ -2144,7 +2092,7 @@ struct PrintExpressionContents
   }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
@@ -2182,6 +2130,10 @@ struct PrintExpressionContents
     printMedium(o, "table.init ");
     curr->table.print(o);
     o << ' ';
+    curr->segment.print(o);
+  }
+  void visitElemDrop(ElemDrop* curr) {
+    printMedium(o, "elem.drop ");
     curr->segment.print(o);
   }
   void visitTry(Try* curr) {
@@ -2253,17 +2205,24 @@ struct PrintExpressionContents
 
   void visitCallRef(CallRef* curr) {
     printMedium(o, curr->isReturn ? "return_call_ref " : "call_ref ");
-    printHeapType(curr->target->type.getHeapType());
+    printHeapTypeName(curr->target->type.getHeapType());
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
     printType(curr->castType);
   }
   void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast ");
+    if (curr->desc) {
+      printMedium(o, "ref.cast_desc ");
+    } else {
+      printMedium(o, "ref.cast ");
+    }
     printType(curr->type);
   }
-
+  void visitRefGetDesc(RefGetDesc* curr) {
+    printMedium(o, "ref.get_desc ");
+    printHeapTypeName(curr->ref->type.getHeapType());
+  }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
@@ -2275,7 +2234,26 @@ struct PrintExpressionContents
         curr->name.print(o);
         return;
       case BrOnCast:
-        printMedium(o, "br_on_cast ");
+      case BrOnCastDesc:
+      case BrOnCastFail:
+      case BrOnCastDescFail:
+        switch (curr->op) {
+          case BrOnCast:
+            printMedium(o, "br_on_cast");
+            break;
+          case BrOnCastFail:
+            printMedium(o, "br_on_cast_fail");
+            break;
+          case BrOnCastDesc:
+            printMedium(o, "br_on_cast_desc");
+            break;
+          case BrOnCastDescFail:
+            printMedium(o, "br_on_cast_desc_fail");
+            break;
+          default:
+            WASM_UNREACHABLE("unexpected op");
+        }
+        o << ' ';
         curr->name.print(o);
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
@@ -2289,8 +2267,9 @@ struct PrintExpressionContents
         o << ' ';
         printType(curr->castType);
         return;
-      case BrOnCastFail:
-        printMedium(o, "br_on_cast_fail ");
+        printMedium(o,
+                    curr->op == BrOnCastFail ? "br_on_cast_fail "
+                                             : "br_on_cast_desc_fail ");
         curr->name.print(o);
         o << ' ';
         if (curr->ref->type == Type::unreachable) {
@@ -2310,7 +2289,7 @@ struct PrintExpressionContents
       printMedium(o, "_default");
     }
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void printFieldName(HeapType type, Index index) {
     auto names = parent.typePrinter.getNames(type).fieldNames;
@@ -2350,7 +2329,7 @@ struct PrintExpressionContents
       printMedium(o, ".get ");
     }
     printMemoryOrder(curr->order);
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2362,7 +2341,7 @@ struct PrintExpressionContents
     }
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2375,7 +2354,7 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2386,7 +2365,7 @@ struct PrintExpressionContents
     printMemoryOrder(curr->order);
     printMemoryOrder(curr->order);
     auto heapType = curr->ref->type.getHeapType();
-    printHeapType(heapType);
+    printHeapTypeName(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2396,68 +2375,98 @@ struct PrintExpressionContents
       printMedium(o, "_default");
     }
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitArrayNewData(ArrayNewData* curr) {
     printMedium(o, "array.new_data");
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayNewElem(ArrayNewElem* curr) {
     printMedium(o, "array.new_elem");
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     printMedium(o, "array.new_fixed");
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
     o << ' ';
     o << curr->values.size();
   }
   void visitArrayGet(ArrayGet* curr) {
     const auto& element = curr->ref->type.getHeapType().getArray().element;
+    printMedium(o, "array");
+    if (curr->order != MemoryOrder::Unordered) {
+      printMedium(o, ".atomic");
+    }
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
-        printMedium(o, "array.get_s ");
+        printMedium(o, ".get_s ");
       } else {
-        printMedium(o, "array.get_u ");
+        printMedium(o, ".get_u ");
       }
     } else {
-      printMedium(o, "array.get ");
+      printMedium(o, ".get ");
     }
-    printHeapType(curr->ref->type.getHeapType());
+    printMemoryOrder(curr->order);
+    printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
-    printMedium(o, "array.set ");
-    printHeapType(curr->ref->type.getHeapType());
+    if (curr->order == MemoryOrder::Unordered) {
+      printMedium(o, "array.set ");
+    } else {
+      printMedium(o, "array.atomic.set ");
+    }
+    printMemoryOrder(curr->order);
+    printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
     printMedium(o, "array.copy ");
-    printHeapType(curr->destRef->type.getHeapType());
+    printHeapTypeName(curr->destRef->type.getHeapType());
     o << ' ';
-    printHeapType(curr->srcRef->type.getHeapType());
+    printHeapTypeName(curr->srcRef->type.getHeapType());
   }
   void visitArrayFill(ArrayFill* curr) {
     printMedium(o, "array.fill ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
   }
   void visitArrayInitData(ArrayInitData* curr) {
     printMedium(o, "array.init_data ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
     printMedium(o, "array.init_elem ");
-    printHeapType(curr->ref->type.getHeapType());
+    printHeapTypeName(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
+  }
+  void visitArrayRMW(ArrayRMW* curr) {
+    prepareColor(o);
+    o << "array.atomic.rmw.";
+    printAtomicRMWOp(curr->op);
+    restoreNormalColor(o);
+    o << ' ';
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(heapType);
+  }
+  void visitArrayCmpxchg(ArrayCmpxchg* curr) {
+    prepareColor(o);
+    o << "array.atomic.rmw.cmpxchg ";
+    restoreNormalColor(o);
+    printMemoryOrder(curr->order);
+    printMemoryOrder(curr->order);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(heapType);
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
@@ -2547,14 +2556,14 @@ struct PrintExpressionContents
   void visitContNew(ContNew* curr) {
     assert(curr->type.isContinuation());
     printMedium(o, "cont.new ");
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitContBind(ContBind* curr) {
     assert(curr->cont->type.isContinuation() && curr->type.isContinuation());
     printMedium(o, "cont.bind ");
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
-    printHeapType(curr->type.getHeapType());
+    printHeapTypeName(curr->type.getHeapType());
   }
   void visitSuspend(Suspend* curr) {
     printMedium(o, "suspend ");
@@ -2582,7 +2591,7 @@ struct PrintExpressionContents
     printMedium(o, "resume");
 
     o << ' ';
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
 
     handleResumeTable(o, curr);
   }
@@ -2591,7 +2600,7 @@ struct PrintExpressionContents
     printMedium(o, "resume_throw");
 
     o << ' ';
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
 
@@ -2602,7 +2611,7 @@ struct PrintExpressionContents
     printMedium(o, "switch");
 
     o << ' ';
-    printHeapType(curr->cont->type.getHeapType());
+    printHeapTypeName(curr->cont->type.getHeapType());
     o << ' ';
     curr->tag.print(o);
   }
@@ -2677,20 +2686,20 @@ void PrintSExpression::printDebugLocation(
   doIndent(o, indent);
 }
 
-void PrintSExpression::printDebugLocation(Expression* curr) {
+void PrintSExpression::printMetadata(Expression* curr) {
   if (currFunction) {
-    // show an annotation, if there is one
-    auto& debugLocations = currFunction->debugLocations;
-    auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end()) {
+    // Show a debug location, if there is one.
+    if (auto iter = currFunction->debugLocations.find(curr);
+        iter != currFunction->debugLocations.end()) {
       printDebugLocation(iter->second);
     } else {
       printDebugLocation(std::nullopt);
     }
-    // show a binary position, if there is one
+
+    // Show a binary position, if there is one.
     if (debugInfo) {
-      auto iter = currFunction->expressionLocations.find(curr);
-      if (iter != currFunction->expressionLocations.end()) {
+      if (auto iter = currFunction->expressionLocations.find(curr);
+          iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
         o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
           << '\n';
@@ -2698,6 +2707,9 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
         doIndent(o, indent);
       }
     }
+
+    // Show code annotations.
+    printCodeAnnotations(curr);
   }
 }
 
@@ -2708,6 +2720,31 @@ void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
       auto& locations = iter->second;
       Colors::grey(o);
       o << ";; code offset: 0x" << std::hex << locations[i] << std::dec << '\n';
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
+  }
+}
+
+void PrintSExpression::printCodeAnnotations(Expression* curr) {
+  if (auto iter = currFunction->codeAnnotations.find(curr);
+      iter != currFunction->codeAnnotations.end()) {
+    auto& annotation = iter->second;
+    if (annotation.branchLikely) {
+      Colors::grey(o);
+      o << "(@" << Annotations::BranchHint << " \"\\0"
+        << (*annotation.branchLikely ? "1" : "0") << "\")\n";
+      restoreNormalColor(o);
+      doIndent(o, indent);
+    }
+    if (annotation.inline_) {
+      Colors::grey(o);
+      std::ofstream saved;
+      saved.copyfmt(o);
+      o << "(@" << Annotations::InlineHint << " \"\\" << std::hex
+        << std::setfill('0') << std::setw(2) << int(*annotation.inline_)
+        << "\")\n";
+      o.copyfmt(saved);
       restoreNormalColor(o);
       doIndent(o, indent);
     }
@@ -2760,6 +2797,11 @@ void PrintSExpression::maybePrintImplicitBlock(Expression* curr) {
 }
 
 void PrintSExpression::visitExpression(Expression* curr) {
+  if (Properties::hasUnwritableTypeImmediate(curr)) {
+    printUnreachableReplacement(curr);
+    return;
+  }
+
   o << '(';
   printExpressionContents(curr);
   auto it = ChildIterator(curr);
@@ -2781,7 +2823,7 @@ void PrintSExpression::visitBlock(Block* curr) {
   while (1) {
     if (stack.size() > 0) {
       doIndent(o, indent);
-      printDebugLocation(curr);
+      printMetadata(curr);
     }
     stack.push_back(curr);
     o << '(';
@@ -2971,16 +3013,7 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
   controlFlowDepth--;
 }
 
-bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
-                                                        Type type) {
-  // When we cannot print an instruction because the child from which it's
-  // supposed to get a type immediate is unreachable, then we print a
-  // semantically-equivalent block that drops each of the children and ends in
-  // an unreachable.
-  if (type != Type::unreachable) {
-    return false;
-  }
-
+void PrintSExpression::printUnreachableReplacement(Expression* curr) {
   // Emit a block with drops of the children.
   o << "(block";
   if (!minify) {
@@ -2996,15 +3029,19 @@ bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
   Unreachable unreachable;
   printFullLine(&unreachable);
   decIndent();
-  return true;
 }
 
-bool PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
-                                                              Type type) {
-  if (type.isNull()) {
-    type = Type::unreachable;
+bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
+                                                        Type type) {
+  // When we cannot print an instruction because the child from which it's
+  // supposed to get a type immediate is unreachable, then we print a
+  // semantically-equivalent block that drops each of the children and ends in
+  // an unreachable.
+  if (type == Type::unreachable) {
+    printUnreachableReplacement(curr);
+    return true;
   }
-  return maybePrintUnreachableReplacement(curr, type);
+  return false;
 }
 
 static bool requiresExplicitFuncType(HeapType type) {
@@ -3022,7 +3059,7 @@ void PrintSExpression::handleSignature(Function* curr,
   if ((currModule && currModule->features.hasGC()) ||
       requiresExplicitFuncType(curr->type)) {
     o << " (type ";
-    printHeapType(curr->type) << ')';
+    printHeapTypeName(curr->type) << ')';
   }
   bool inParam = false;
   Index i = 0;
@@ -3169,6 +3206,9 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   if (currFunction->prologLocation) {
     printDebugLocation(*currFunction->prologLocation);
   }
+  // TODO: print code annotations in the right place, depending on
+  // https://github.com/WebAssembly/tool-conventions/issues/251
+  // printCodeAnnotations(nullptr);
   handleSignature(curr, true);
   incIndent();
   for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -3247,7 +3287,7 @@ void PrintSExpression::visitDefinedTag(Tag* curr) {
 
 void PrintSExpression::printTagType(HeapType type) {
   o << "(type ";
-  printHeapType(type);
+  printHeapTypeName(type);
   o << ')';
   if (auto params = type.getSignature().params; params != Type::none) {
     o << maybeSpace << "(param";
