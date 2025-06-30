@@ -167,7 +167,7 @@ struct FunctionInfo {
     if (trivialInstruction == TrivialInstruction::MayNotShrink) {
       return true;
     }
-    // Trivial calls are already handled. Inline if
+    // Trivial instructions are already handled. Inline if
     // 1. The function doesn't have calls, and
     // 2. The function doesn't have loops, or we allow inlining with loops.
     return !hasCalls && (!hasLoops || options.inlining.allowFunctionsWithLoops);
@@ -265,8 +265,8 @@ struct FunctionInfoScanner
       }
 
       if (info.size == call->operands.size() + 1) {
-        // This function body is a call with some trivial (size 1) operands like
-        // LocalGet or Const, so it is a trivial call.
+        // This function body is an instruction with some trivial (size 1)
+        // operands like LocalGet or Const, so it is a trivial instruction.
         info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
 
@@ -276,14 +276,25 @@ struct FunctionInfoScanner
         if (auto* right = binary->right->dynCast<LocalGet>()) {
           if (right->index > left->index) {
             info.trivialInstruction = TrivialInstruction::Shrinks;
+            return;
           }
         }
+      }
+
+      if (info.size == 3) {
+        // Same as above: if arguments have size 1 we consider it a trivial
+        // instruction.
+        info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
 
     } else if (auto* unary = curr->body->dynCast<Unary>()) {
       info.trivialInstruction = TrivialInstruction::MayNotShrink;
       if (unary->value->dynCast<LocalGet>()) {
         info.trivialInstruction = TrivialInstruction::Shrinks;
+      } else if (info.size == 2) {
+        // Same as above: if the argument has size 1 we consider it a trivial
+        // instruction.
+        info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
     }
   }
