@@ -66,37 +66,43 @@
 namespace wasm {
 
 struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHints>> {
-  Name LOG_GUESS("log_guess");
-  Name LOG_TRUE("log_true");
-  Name LOG_FALSE("log_false");
+  Name LOG_GUESS = "log_guess";
+  Name LOG_TRUE = "log_true";
+  Name LOG_FALSE = "log_false";
 
   Index branchId = 0;
 
   void visitIf(If* curr) {
-    if (auto likely = getFunction()->codeAnnotations[curr].likely) {
+    if (auto likely = getFunction()->codeAnnotations[curr].branchLikely) {
       Builder builder(*getModule());
 
-      // Pick an ID for this branch.
+      // Pick an ID for this branch and a temp local.
+      auto temp = builder.addVar(getFunction(), Type::i32);
       auto id = branchId++;
 
-      // Instrument the condition to add a logging of the guess.
-      auto temp = builder.addVar(getFunction(), Type::i32);
-      auto* set = builder.makeLocalTee(temp, curr->condition);
-      auto* idc = builder.makeConst(Literal(int32_t(id)));
-      auto* guess = builder.makeConst(Literal(int32_t(*likely)));
-      auto* logGuess = builder.makeCall(LOG_GUESS, { idc, guess });
-      auto* get = builder.makeLocalGet(temp, Type::i32);
-      curr->condition = builder.makeBlock({ set, logGuess, get });
+      // Instrument the condition and the true branch.
+      instrumentCondition(curr->condition, temp, id, *likely);
 
       // Log the true branch.
-      auto* idc2 = builder.makeConst(Literal(int32_t(id)));
-      auto* logTrue = builder.makeCall(LOG_TRUE, { idc2 });
-      curr->ifTrue = builder.makeSequence({ logTrue, curr->ifTrue });
+      auto* idc = builder.makeConst(Literal(int32_t(id)));
+      auto* logTrue = builder.makeCall(LOG_TRUE, { idc }, Type::none);
+      curr->ifTrue = builder.makeSequence(logTrue, curr->ifTrue);
     }
   }
 
   void visitBreak(Break* curr) {
     // tidoo
+  }
+
+  // Given the condition of a branch, modify it in place, adding proper logging.
+  void instrumentCondition(Expression*& condition, Index tempLocal, Index id, bool likely) {
+    Builder builder(*getModule());
+    auto* set = builder.makeLocalSet(tempLocal, condition);
+    auto* idc = builder.makeConst(Literal(int32_t(id)));
+    auto* guess = builder.makeConst(Literal(int32_t(likely)));
+    auto* logGuess = builder.makeCall(LOG_GUESS, { idc, guess }, Type::none);
+    auto* get = builder.makeLocalGet(tempLocal, Type::i32);
+    condition = builder.makeBlock({ set, logGuess, get });
   }
 
   void visitModule(Module* curr) {
