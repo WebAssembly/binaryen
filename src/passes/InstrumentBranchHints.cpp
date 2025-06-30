@@ -66,10 +66,41 @@
 namespace wasm {
 
 struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHints>> {
+  Name LOG_GUESS("log_guess");
+  Name LOG_TRUE("log_true");
+  Name LOG_FALSE("log_false");
+
+  Index branchId = 0;
+
   void visitIf(If* curr) {
+    if (auto likely = getFunction()->codeAnnotations[curr].likely) {
+      Builder builder(*getModule());
+
+      // Pick an ID for this branch.
+      auto id = branchId++;
+
+      // Instrument the condition to add a logging of the guess.
+      auto temp = builder.addVar(getFunction(), Type::i32);
+      auto* set = builder.makeLocalTee(temp, curr->condition);
+      auto* idc = builder.makeConst(Literal(int32_t(id)));
+      auto* guess = builder.makeConst(Literal(int32_t(*likely)));
+      auto* logGuess = builder.makeCall(LOG_GUESS, { idc, guess });
+      auto* get = builder.makeLocalGet(temp, Type::i32);
+      curr->condition = builder.makeBlock({ set, logGuess, get });
+
+      // Log the true branch.
+      auto* idc2 = builder.makeConst(Literal(int32_t(id)));
+      auto* logTrue = builder.makeCall(LOG_TRUE, { idc2 });
+      curr->ifTrue = builder.makeSequence({ logTrue, curr->ifTrue });
+    }
   }
 
   void visitBreak(Break* curr) {
+    // tidoo
+  }
+
+  void visitModule(Module* curr) {
+    // Add imports
   }
 };
 

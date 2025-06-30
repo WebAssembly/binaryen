@@ -52,6 +52,7 @@ set(passes_SOURCES
   HeapStoreOptimization.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
+  InstrumentBranchHints.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp

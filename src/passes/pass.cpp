@@ -260,6 +260,10 @@ void PassRegistry::registerPasses() {
     "instrument the build with code to intercept specific function calls",
     createTraceCallsPass);
   registerPass(
+    "instrument-branch-hints",
+    "instrument branch hints so we can see which guessed right",
+    createInstrumentBranchHintsPass);
+  registerPass(
     "instrument-locals",
     "instrument the build with code to intercept all loads and stores",
     createInstrumentLocalsPass);

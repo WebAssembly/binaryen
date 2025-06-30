@@ -79,6 +79,7 @@ Pass* createLocalSubtypingPass();
 Pass* createLogExecutionPass();
 Pass* createIntrinsicLoweringPass();
 Pass* createTraceCallsPass();
+Pass* createInstrumentBranchHintsPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createLLVMMemoryCopyFillLoweringPass();
