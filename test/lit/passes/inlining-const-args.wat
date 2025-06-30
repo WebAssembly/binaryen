@@ -5,6 +5,9 @@
 ;;
 ;; A trivial argument for now is just an instruction with size 1. E.g.
 ;; `local.get`, constants.
+;;
+;; In this test we check inlining when the trivial call arguments are
+;; constants. In tests inlining-trivial-calls-{1,2,3}.wast we check locals.
 
 ;; RUN: foreach %s %t wasm-opt -all -O3 -S -o - | filecheck %s --check-prefix=O3
 ;; RUN: foreach %s %t wasm-opt -all -O2 -S -o - | filecheck %s --check-prefix=O2
@@ -83,6 +86,10 @@
  ;; Os-NEXT:  (call $call-foo)
  ;; Os-NEXT: )
  (func $main (type $2)
+  ;; All calls below should be inlined in -O3, but not in -O2 or -Os. We call
+  ;; it multiple times to make sure it won't be inlined because there's only
+  ;; one call, instead it will be inlined based on optimization settings and
+  ;; whether the call is trivial.
   (call $call-foo)
   (call $call-foo)
   (call $call-foo)))

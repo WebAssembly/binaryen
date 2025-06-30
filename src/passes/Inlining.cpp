@@ -67,23 +67,26 @@ enum class InliningMode {
   SplitPatternB
 };
 
-// Whether a function is just a single instruction with only `local.get`s and
-// constants as arguments, that always shrinks when inlined.
+// Whether a function is just one instruction that always shrinks when inlined.
 enum class TrivialInstruction {
   // Function is not a single instruction, or it may not shrink when inlined.
   NotTrivial,
 
-  // Function is just one instruction, with `local.get`s as arguments, and each
-  // `local` is used exactly once, in the order they appear in the argument
-  // list.
+  // Function is just one instruction, with `local.get`s as arguments, and with
+  // each `local` is used exactly once, and in the order they appear in the
+  // argument list.
   //
   // In this case, inlining the function generates smaller code, and it is also
   // good for runtime.
   Shrinks,
 
-  // Function is a single instruction, but maybe with arguments other than
-  // `local.get`s, or maybe some locals are used more than once. In this case
-  // code size does not always shrink.
+  // Function is a single instruction, but maybe with constant arguments, or
+  // maybe some locals are used more than once. In these cases code size does
+  // not always shrink: at the call sites, omitted locals can create `drop`
+  // instructions, a local used multiple times can create new locals, and
+  // encoding of constants may be larger than just a `local.get` with a small
+  // index. In these cases we still want to inline with `-O3`, but the code size
+  // may increase when inlined.
   MayNotShrink,
 };
 
@@ -159,11 +162,8 @@ struct FunctionInfo {
     if (options.shrinkLevel > 0 || options.optimizeLevel < 3) {
       return false;
     }
-    // The function just calls another function, but it's using locals in
-    // different order than the argument order, and/or using some locals more
-    // than once. In this case we inline if we're not optimizing for code size,
-    // as inlining it to more than one call site may increase code size by
-    // introducing locals.
+    // The function is just one instruction, but the code size may increase when
+    // inlined. We only inline it fully with `-O3`.
     if (trivialInstruction == TrivialInstruction::MayNotShrink) {
       return true;
     }
@@ -248,7 +248,7 @@ struct FunctionInfoScanner
       for (auto* operand : call->operands) {
         if (auto* localGet = operand->dynCast<LocalGet>()) {
           if (localGet->index == nextLocalGetIndex) {
-            nextLocalGetIndex += 1;
+            nextLocalGetIndex++;
           } else {
             shrinks = false;
             break;

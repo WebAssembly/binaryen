@@ -3604,11 +3604,14 @@ private:
     // Check left's max bits and right is constant.
     auto leftMaxBits = Bits::getMaxBits(left, this);
     uint64_t maskLeft;
-    if (!left->type.isNumber() || leftMaxBits == left->type.getByteSize() * 8) {
+    // leftMaxBits may be greater than size if the lhs is unreachable but has
+    // not been refinalized yet.
+    if (!left->type.isNumber() || leftMaxBits >= left->type.getByteSize() * 8) {
       // If we know nothing useful about the bits on the left,
       // we cannot optimize.
       return nullptr;
     } else {
+      assert(leftMaxBits < 64);
       maskLeft = (1ULL << leftMaxBits) - 1;
     }
     if (auto* c = right->dynCast<Const>()) {

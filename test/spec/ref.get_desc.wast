@@ -3,6 +3,12 @@
     (type $struct (descriptor $desc (struct)))
     (type $desc (describes $struct (struct)))
   )
+
+  (global $desc1 (ref (exact $desc)) (struct.new $desc))
+  (global $desc2 (ref (exact $desc)) (struct.new $desc))
+  (global $struct1 (ref $struct) (struct.new $struct (global.get $desc1)))
+  (global $struct2 (ref $struct) (struct.new $struct (global.get $desc2)))
+
   (func $unreachable (param $struct (ref null $struct)) (result (ref $desc))
     (ref.get_desc $struct
       (unreachable)
@@ -23,7 +29,24 @@
       (local.get $struct)
     )
   )
+
+  (func (export "check-descs") (result i32)
+    (i32.and
+      (i32.and
+        (ref.eq (ref.get_desc $struct (global.get $struct1)) (global.get $desc1))
+        (ref.eq (ref.get_desc $struct (global.get $struct2)) (global.get $desc2))
+      )
+      (i32.eqz (ref.eq (global.get $desc1) (global.get $desc2)))
+    )
+  )
+
+  (func (export "desc-trap") (result (ref $struct))
+    (struct.new $struct (unreachable))
+  )
 )
+
+(assert_return (invoke "check-descs") (i32.const 1))
+(assert_trap (invoke "desc-trap") "unreachable")
 
 (assert_invalid
   (module
