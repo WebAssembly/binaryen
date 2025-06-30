@@ -83,7 +83,8 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
       // Instrument the condition and the true branch.
       instrumentCondition(curr->condition, temp, id, *likely);
 
-      // Log the true branch.
+      // Log the true branch, which we can easily do by prepending in the ifTrue
+      // arm.
       auto* idc = builder.makeConst(Literal(int32_t(id)));
       auto* logTrue = builder.makeCall(LOG_TRUE, { idc }, Type::none);
       curr->ifTrue = builder.makeSequence(logTrue, curr->ifTrue);
@@ -91,7 +92,22 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
   }
 
   void visitBreak(Break* curr) {
-    // tidoo
+    if (auto likely = getFunction()->codeAnnotations[curr].branchLikely) {
+      Builder builder(*getModule());
+
+      // Pick an ID for this branch and a temp local.
+      auto temp = builder.addVar(getFunction(), Type::i32);
+      auto id = branchId++;
+
+      // Instrument the condition and the true branch.
+      instrumentCondition(curr->condition, temp, id, *likely);
+
+      // Log the false branch, which we can easily do by appending right after
+      // the break.
+      auto* idc = builder.makeConst(Literal(int32_t(id)));
+      auto* logFalse = builder.makeCall(LOG_FALSE, { idc }, Type::none);
+      replaceCurrent(builder.makeSequence(logFalse, curr));
+    }
   }
 
   // Given the condition of a branch, modify it in place, adding proper logging.
