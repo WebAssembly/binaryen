@@ -398,6 +398,8 @@ struct StringLowering : public StringGathering {
                                         Type::i32);
     // string.equals: string, string -> i32
     equalsImport = addImport(module, "equals", {nullExt, nullExt}, Type::i32);
+    // string.test: externref -> i32
+    testImport = addImport(module, "test", {nullExt}, Type::i32);
     // string.compare: string, string -> i32
     compareImport = addImport(module, "compare", {nullExt, nullExt}, Type::i32);
     // string.length: string -> i32
