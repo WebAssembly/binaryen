@@ -122,7 +122,18 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
   }
 
   void visitModule(Module* curr) {
-    // Add imports
+    // Add imports.
+    auto* logGuess =
+      curr->addFunction(Builder::makeFunction(LOG_GUESS, Signature({Type::i32, Type::i32}, Type::none), {}));
+    auto* logTrue =
+      curr->addFunction(Builder::makeFunction(LOG_TRUE, Signature(Type::i32, Type::none), {}));
+    auto* logFalse =
+      curr->addFunction(Builder::makeFunction(LOG_FALSE, Signature(Type::i32, Type::none), {}));
+
+    for (auto* func : {logGuess, logTrue, logFalse}) {
+      func->module = "fuzzing-support";
+      func->base = func->name;
+    }
   }
 };
 
