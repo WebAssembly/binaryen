@@ -881,36 +881,14 @@ struct RemoveUnusedModuleElements : public Pass {
           mayTrap = true;
           return;
         }
-        if (auto* get = curr->desc->dynCast<GlobalGet>()) {
-          // Search through a chain of global.gets providing the descriptor
-          // value to find a ref.null or nullable import, or alternatively an
-          // allocation. Cache the results to avoid searching the same globals
-          // again in the future.
-          auto* global = wasm.getGlobal(get->name);
-          while (true) {
-            if (global->type.isNonNullable()) {
-              // Only a null can cause a trap. Further globals must also be
-              // non-nullable.
-              return;
-            }
-            if (global->imported()) {
-              // Nullable imported globals may be null.
-              mayTrap = true;
-              return;
-            }
-            if (global->init->is<RefNull>()) {
-              mayTrap = true;
-              return;
-            }
-            if (global->init->is<StructNew>()) {
-              return;
-            }
-            if (auto* next = global->init->dynCast<GlobalGet>()) {
-              global = wasm.getGlobal(next->name);
-              continue;
-            }
-            WASM_UNREACHABLE("unexpected global init");
+        if (curr->desc->is<GlobalGet>()) {
+          // Other optimizations will refine the type of the global to be
+          // non-nullable if it is not null, so we can just assume the worst if
+          // we see a nullable global here.
+          if (curr->desc->type.isNullable()) {
+            mayTrap = true;
           }
+          return;
         }
         WASM_UNREACHABLE("unexpected descriptor");
       }
