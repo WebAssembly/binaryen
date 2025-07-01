@@ -1849,10 +1849,17 @@ class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
     def handle(self, wasm):
-        opts = get_random_opts()
+        opts = [
+          # Add random branch hints (so we have something to work with).
+          '--randomize-branch-hints',
+          # Instrument them for our fuzzing, then optimize.
+          '--instrument-branch-hints',
+        ] + get_random_opts() + [
+          # Instrument again, so our fuzzing can see if the optimizations
+          # messed anything up.
+          '--instrument-branch-hints',
+        ]
 
-        # Instrument the wasm with branch hints, optimize, and instrument again.
-        opts = ['--instrument-branch-hints'] + opts + ['--instrument-branch-hints']
         instrumented = wasm + '.ibh.wasm'
         run([in_bin('wasm-opt'), wasm] + opts + ['-o', instrumented] + FEATURE_OPTS)
 
