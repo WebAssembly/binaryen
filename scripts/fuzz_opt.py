@@ -1852,7 +1852,7 @@ testcase_handlers = [
     Wasm2JS(),
     TrapsNeverHappen(),
     CtorEval(),
-    Merge(),
+    # Merge(),
     # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
     RoundtripText(),

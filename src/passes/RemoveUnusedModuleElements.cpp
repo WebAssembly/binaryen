@@ -859,42 +859,23 @@ struct RemoveUnusedModuleElements : public Pass {
   }
 
   bool isMaybeTrappingInit(Module& wasm, Expression* root) {
-    // Traverse the expression, looking for literal null or imported nullable
-    // descriptors passed to struct.new. These are the only situations (beyond
-    // exceeded implementation limits, which we don't model) that can lead a
-    // constant expression to trap.
+    // Traverse the expression, looking for nullable descriptors passed to
+    // struct.new. The descriptors might be null, which is the only situations
+    // (beyond exceeded implementation limits, which we don't model) that can
+    // lead a constant expression to trap. We depend on other optimizations to
+    // make the descriptors non-nullable if we can determine that they are not
+    // null.
     struct NullDescFinder : PostWalker<NullDescFinder> {
-      RemoveUnusedModuleElements& parent;
-      Module& wasm;
       bool mayTrap = false;
-      NullDescFinder(RemoveUnusedModuleElements& parent, Module& wasm)
-        : parent(parent), wasm(wasm) {}
-
       void visitStructNew(StructNew* curr) {
-        if (!curr->desc) {
-          return;
-        }
-        if (curr->desc->is<StructNew>()) {
-          return;
-        }
-        if (curr->desc->is<RefNull>()) {
+        if (curr->desc && curr->desc->type.isNullable()) {
           mayTrap = true;
           return;
         }
-        if (curr->desc->is<GlobalGet>()) {
-          // Other optimizations will refine the type of the global to be
-          // non-nullable if it is not null, so we can just assume the worst if
-          // we see a nullable global here.
-          if (curr->desc->type.isNullable()) {
-            mayTrap = true;
-          }
-          return;
-        }
-        WASM_UNREACHABLE("unexpected descriptor");
       }
     };
 
-    NullDescFinder finder(*this, wasm);
+    NullDescFinder finder;
     finder.walk(root);
     return finder.mayTrap;
   }
