@@ -857,10 +857,6 @@ struct RemoveUnusedModuleElements : public Pass {
     }
   }
 
-  // For each global we have processed, true if it might be null and false
-  // if it definitely is not null.
-  std::unordered_map<Name, bool> globalMaybeNullCache;
-
   bool isMaybeTrappingInit(Module& wasm, Expression* root) {
     // Traverse the expression, looking for literal null or imported nullable
     // descriptors passed to struct.new. These are the only situations (beyond
@@ -889,35 +885,25 @@ struct RemoveUnusedModuleElements : public Pass {
           // value to find a ref.null or nullable import, or alternatively an
           // allocation. Cache the results to avoid searching the same globals
           // again in the future.
-          bool maybeNullGlobal;
           auto* global = wasm.getGlobal(get->name);
           std::vector<std::unordered_map<Name, bool>::iterator> cacheEntries;
           while (true) {
-            auto [it, inserted] =
-              parent.globalMaybeNullCache.insert({global->name, false});
-            if (!inserted) {
-              maybeNullGlobal = it->second;
-              break;
-            }
-            cacheEntries.push_back(it);
             if (global->type.isNonNullable()) {
               // Only a null can cause a trap. Further globals must also be
               // non-nullable.
-              maybeNullGlobal = false;
-              break;
+              return;
             }
             if (global->imported()) {
               // Nullable imported globals may be null.
-              maybeNullGlobal = true;
-              break;
-            }
-            if (global->init->is<StructNew>()) {
-              maybeNullGlobal = false;
-              break;
+              mayTrap = true;
+              return;
             }
             if (global->init->is<RefNull>()) {
-              maybeNullGlobal = true;
-              break;
+              mayTrap = true;
+              return;
+            }
+            if (global->init->is<StructNew>()) {
+              return;
             }
             if (auto* next = global->init->dynCast<GlobalGet>()) {
               global = wasm.getGlobal(next->name);
@@ -925,14 +911,6 @@ struct RemoveUnusedModuleElements : public Pass {
             }
             WASM_UNREACHABLE("unexpected global init");
           }
-          // Update the cache so we don't need to visit these globals again.
-          for (auto& it : cacheEntries) {
-            it->second = maybeNullGlobal;
-          }
-          if (maybeNullGlobal) {
-            mayTrap = true;
-          }
-          return;
         }
         WASM_UNREACHABLE("unexpected descriptor");
       }
