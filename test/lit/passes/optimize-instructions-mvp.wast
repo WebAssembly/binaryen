@@ -11922,6 +11922,8 @@
       )
       (i64.const 0)
     ))
+    ;; Add side effects on both arms of the i32.ge_u, which force us to
+    ;; look at the fallthrough in order to optimize.
     (drop (i32.ge_u
         (i32.load
           (i32.const 0)
