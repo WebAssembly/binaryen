@@ -36,7 +36,7 @@
 )
 
 ;; We cannot optimize out globals whose initializers might trap due to a null
-;; descriptor.
+;; descriptor (or conservatively even just a nullable descriptor).
 (module
  (rec
   ;; CHECK:      (rec
@@ -48,24 +48,12 @@
   (type $list (struct (field (ref $struct)) (field (ref null $list))))
  )
 
- ;; This may be null, so may cause traps in the globals that use it. Those
- ;; globals must be kept, so this must be kept as well.
- ;; CHECK:      (import "" "" (global $nullable-desc-import (ref null (exact $desc))))
- (import "" "" (global $nullable-desc-import (ref null (exact $desc))))
- ;; This is the same as the previous, but it is not used at all so it can be
- ;; removed.
- (import "" "" (global $nullable-desc-import-unused (ref null (exact $desc))))
- ;; This cannot cause traps in globals that use it, so it does not need to be
- ;; kept.
- (import "" "" (global $nn-desc-import (ref (exact $desc))))
- ;; This is the same as the previous, but it is used in globals that must be
- ;; kept, so it too must be kept.
- ;; CHECK:      (import "" "" (global $nn-desc-import-used (ref (exact $desc))))
- (import "" "" (global $nn-desc-import-used (ref (exact $desc))))
-
- ;; CHECK:      (global $null (ref null (exact $desc)) (ref.null none))
- (global $null (ref null (exact $desc)) (ref.null none))
- (global $desc (ref null (exact $desc)) struct.new $desc)
+ ;; CHECK:      (global $null nullref (ref.null none))
+ (global $null nullref (ref.null none))
+ ;; CHECK:      (global $nullable-desc (ref null (exact $desc)) (struct.new_default $desc))
+ (global $nullable-desc (ref null (exact $desc)) (struct.new $desc))
+ ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new_default $desc))
+ (global $desc (ref (exact $desc)) (struct.new $desc))
 
  ;; Trapping globals must be kept, but non-trapping globals can be removed.
  ;; CHECK:      (global $trap (ref $struct) (struct.new_default $struct
@@ -74,34 +62,15 @@
  (global $trap (ref $struct) (struct.new $struct (ref.null none)))
  (global $no-trap (ref $struct) (struct.new $struct (struct.new $desc)))
 
- ;; CHECK:      (global $trap-get (ref $struct) (struct.new_default $struct
+ ;; CHECK:      (global $trap-get-null (ref $struct) (struct.new_default $struct
  ;; CHECK-NEXT:  (global.get $null)
  ;; CHECK-NEXT: ))
- (global $trap-get (ref $struct) (struct.new $struct (global.get $null)))
+ (global $trap-get-null (ref $struct) (struct.new $struct (global.get $null)))
+ ;; CHECK:      (global $trap-get-nullable (ref $struct) (struct.new_default $struct
+ ;; CHECK-NEXT:  (global.get $nullable-desc)
+ ;; CHECK-NEXT: ))
+ (global $trap-get-nullable (ref $struct) (struct.new $struct (global.get $nullable-desc)))
  (global $no-trap-get (ref $struct) (struct.new $struct (global.get $desc)))
-
- ;; CHECK:      (global $trap-import (ref $struct) (struct.new_default $struct
- ;; CHECK-NEXT:  (global.get $nullable-desc-import)
- ;; CHECK-NEXT: ))
- (global $trap-import (ref $struct) (struct.new $struct (global.get $nullable-desc-import)))
- (global $no-trap-import (ref $struct) (struct.new $struct (global.get $nn-desc-import)))
-
- ;; CHECK:      (global $indirect-null-1 (ref null (exact $desc)) (global.get $null))
- (global $indirect-null-1 (ref null (exact $desc)) (global.get $null))
- ;; CHECK:      (global $indirect-null-2 (ref null (exact $desc)) (global.get $indirect-null-1))
- (global $indirect-null-2 (ref null (exact $desc)) (global.get $indirect-null-1))
- ;; CHECK:      (global $indirect-null-3 (ref null (exact $desc)) (global.get $indirect-null-2))
- (global $indirect-null-3 (ref null (exact $desc)) (global.get $indirect-null-2))
-
- (global $indirect-desc-1 (ref null (exact $desc)) (global.get $desc))
- (global $indirect-desc-2 (ref null (exact $desc)) (global.get $indirect-desc-1))
- (global $indirect-desc-3 (ref null (exact $desc)) (global.get $indirect-desc-2))
-
- ;; CHECK:      (global $trap-indirect (ref $struct) (struct.new_default $struct
- ;; CHECK-NEXT:  (global.get $indirect-null-3)
- ;; CHECK-NEXT: ))
- (global $trap-indirect (ref $struct) (struct.new $struct (global.get $indirect-null-3)))
- (global $no-trap-indirect (ref $struct) (struct.new $struct (global.get $indirect-desc-3)))
 
  ;; CHECK:      (global $trap-nested (ref $list) (struct.new $list
  ;; CHECK-NEXT:  (struct.new_default $struct
@@ -109,7 +78,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.new $list
  ;; CHECK-NEXT:   (struct.new_default $struct
- ;; CHECK-NEXT:    (global.get $nn-desc-import-used)
+ ;; CHECK-NEXT:    (global.get $desc)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (struct.new $list
  ;; CHECK-NEXT:    (struct.new_default $struct
@@ -123,7 +92,7 @@
   (struct.new $list
    (struct.new $struct (struct.new $desc))
    (struct.new $list
-    (struct.new $struct (global.get $nn-desc-import-used))
+    (struct.new $struct (global.get $desc))
     (struct.new $list
      (struct.new $struct (ref.null none))
      (ref.null none)
@@ -147,5 +116,14 @@
  ;; CHECK-NEXT: )))
  (elem $trap anyref (item (struct.new $struct (ref.null none))))
  (elem $no-trap anyref (item (struct.new $struct (struct.new $desc))))
+  ;; CHECK:      (elem $trap-get-null anyref (item (struct.new_default $struct
+  ;; CHECK-NEXT:  (global.get $null)
+  ;; CHECK-NEXT: )))
+  (elem $trap-get-null anyref (item (struct.new $struct (global.get $null))))
+ ;; CHECK:      (elem $trap-get-nullable anyref (item (struct.new_default $struct
+ ;; CHECK-NEXT:  (global.get $nullable-desc)
+ ;; CHECK-NEXT: )))
+ (elem $trap-get-nullable anyref (item (struct.new $struct (global.get $nullable-desc))))
+ (elem $no-trap-get anyref (item (struct.new $struct (global.get $desc))))
 )
 
