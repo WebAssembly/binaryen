@@ -106,6 +106,11 @@ struct InstrumentBranchHints
   // The internal name of our import.
   Name LOG_BRANCH;
 
+  // Whether we are the second pass of instrumentation. If so, we only add
+  // logic to parallel existing hints (for each such hint, we emit one with a
+  // negative ID, so they can be paired).
+  bool secondInstrumentation = false;
+
   void visitIf(If* curr) { processCondition(curr); }
 
   void visitBreak(Break* curr) {
@@ -148,9 +153,17 @@ struct InstrumentBranchHints
         id = -call->operands[0]->cast<Const>()->value.geti32();
       }
     }
-    // We never found one, or we gave up.
     if (!id) {
+      // We never found one, or we gave up.
+      if (secondInstrumentation) {
+        // We do not add new things in this case.
+        return;
+      }
       id = branchId++;
+    } else {
+      // We found an existing ID. This should only happen in the second
+      // instrumentation.
+      assert(secondInstrumentation);
     }
 
     // Instrument the condition.
@@ -179,6 +192,9 @@ struct InstrumentBranchHints
     for (auto& func : module->functions) {
       if (func->module == MODULE && func->base == BASE) {
         LOG_BRANCH = func->name;
+        // The logging function existed before, so this is the second
+        // instrumentation.
+        secondInstrumentation = true;
         break;
       }
     }

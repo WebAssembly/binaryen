@@ -357,10 +357,13 @@ var imports = {
     },
 
     'log-branch': (id, expected, actual) => {
-      // We only care about truthiness of the expected and actual values, when
-      // fuzzing.
+      // We only care about truthiness of the expected and actual values.
       expected = +!!expected;
       actual = +!!actual;
+      // Log out the expected and actual outcomes. This is useful for fuzzing,
+      // see fuzz_opt.py. For testing that expectations actually match reality
+      // (i.e. that branch hints are correct), you can adjust the logic here to
+      // throw on  expected != actual .
       console.log(`log-branch: hint ${id} of ${expected} and actual ${actual}`);
     },
   },

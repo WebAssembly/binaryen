@@ -578,58 +578,47 @@
   ;; TWICE-NEXT:  (local $2 i32)
   ;; TWICE-NEXT:  (local $3 i32)
   ;; TWICE-NEXT:  (local $4 i32)
-  ;; TWICE-NEXT:  (local $5 i32)
   ;; TWICE-NEXT:  (@metadata.code.branch_hint "\00")
   ;; TWICE-NEXT:  (if
   ;; TWICE-NEXT:   (block (result i32)
-  ;; TWICE-NEXT:    (local.set $5
-  ;; TWICE-NEXT:     (block (result i32)
-  ;; TWICE-NEXT:      (local.set $2
-  ;; TWICE-NEXT:       (@metadata.code.branch_hint "\01")
-  ;; TWICE-NEXT:       (if (result i32)
+  ;; TWICE-NEXT:    (local.set $2
+  ;; TWICE-NEXT:     (@metadata.code.branch_hint "\01")
+  ;; TWICE-NEXT:     (if (result i32)
+  ;; TWICE-NEXT:      (block (result i32)
+  ;; TWICE-NEXT:       (local.set $3
   ;; TWICE-NEXT:        (block (result i32)
-  ;; TWICE-NEXT:         (local.set $3
-  ;; TWICE-NEXT:          (block (result i32)
-  ;; TWICE-NEXT:           (local.set $0
-  ;; TWICE-NEXT:            (i32.const 42)
-  ;; TWICE-NEXT:           )
-  ;; TWICE-NEXT:           (call $log-branch
-  ;; TWICE-NEXT:            (i32.const 7)
-  ;; TWICE-NEXT:            (i32.const 1)
-  ;; TWICE-NEXT:            (local.get $0)
-  ;; TWICE-NEXT:           )
-  ;; TWICE-NEXT:           (local.get $0)
-  ;; TWICE-NEXT:          )
+  ;; TWICE-NEXT:         (local.set $0
+  ;; TWICE-NEXT:          (i32.const 42)
   ;; TWICE-NEXT:         )
   ;; TWICE-NEXT:         (call $log-branch
-  ;; TWICE-NEXT:          (i32.const -7)
+  ;; TWICE-NEXT:          (i32.const 7)
   ;; TWICE-NEXT:          (i32.const 1)
-  ;; TWICE-NEXT:          (local.get $3)
+  ;; TWICE-NEXT:          (local.get $0)
   ;; TWICE-NEXT:         )
-  ;; TWICE-NEXT:         (local.get $3)
-  ;; TWICE-NEXT:        )
-  ;; TWICE-NEXT:        (then
-  ;; TWICE-NEXT:         (i32.const 142)
-  ;; TWICE-NEXT:        )
-  ;; TWICE-NEXT:        (else
-  ;; TWICE-NEXT:         (i32.const 242)
+  ;; TWICE-NEXT:         (local.get $0)
   ;; TWICE-NEXT:        )
   ;; TWICE-NEXT:       )
+  ;; TWICE-NEXT:       (call $log-branch
+  ;; TWICE-NEXT:        (i32.const -7)
+  ;; TWICE-NEXT:        (i32.const 1)
+  ;; TWICE-NEXT:        (local.get $3)
+  ;; TWICE-NEXT:       )
+  ;; TWICE-NEXT:       (local.get $3)
   ;; TWICE-NEXT:      )
-  ;; TWICE-NEXT:      (call $log-branch
-  ;; TWICE-NEXT:       (i32.const 9)
-  ;; TWICE-NEXT:       (i32.const 0)
-  ;; TWICE-NEXT:       (local.get $2)
+  ;; TWICE-NEXT:      (then
+  ;; TWICE-NEXT:       (i32.const 142)
   ;; TWICE-NEXT:      )
-  ;; TWICE-NEXT:      (local.get $2)
+  ;; TWICE-NEXT:      (else
+  ;; TWICE-NEXT:       (i32.const 242)
+  ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:    )
   ;; TWICE-NEXT:    (call $log-branch
-  ;; TWICE-NEXT:     (i32.const 11)
+  ;; TWICE-NEXT:     (i32.const 9)
   ;; TWICE-NEXT:     (i32.const 0)
-  ;; TWICE-NEXT:     (local.get $5)
+  ;; TWICE-NEXT:     (local.get $2)
   ;; TWICE-NEXT:    )
-  ;; TWICE-NEXT:    (local.get $5)
+  ;; TWICE-NEXT:    (local.get $2)
   ;; TWICE-NEXT:   )
   ;; TWICE-NEXT:   (then
   ;; TWICE-NEXT:    (@metadata.code.branch_hint "\00")
