@@ -263,7 +263,6 @@ function oneIn(n) {
 
 // Import helpers.
 var tempRet0;
-var branchHints = {};
 
 // Set up the imports.
 var imports = {
@@ -358,6 +357,10 @@ var imports = {
     },
 
     'log-branch': (id, expected, actual) => {
+      // We only care about truthiness of the expected and actual values, when
+      // fuzzing.
+      expected = +!!expected;
+      actual = +!!actual;
       console.log(`log-branch: hint ${id} of ${expected} and actual ${actual}`);
     },
   },

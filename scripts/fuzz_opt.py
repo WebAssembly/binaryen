@@ -1930,6 +1930,7 @@ class BranchHintPreservation(TestCaseHandler):
         for pair in pairs:
             if len(pair) != 2:
                 continue
+            print(pair)
             first, second = pair
             _, _, first_id, _, first_hint, _, _, first_actual = first.split(' ')
             _, _, second_id, _, second_hint, _, _, second_actual = second.split(' ')
