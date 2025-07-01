@@ -83,6 +83,7 @@
 // with the actual result, see script/fuzz_opt.py's BranchHintPreservation.
 //
 
+#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/names.h"
 #include "pass.h"
@@ -163,6 +164,14 @@ struct InstrumentBranchHints
     addedCalls.insert(logBranch);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
     curr->condition = builder.makeBlock({set, logBranch, get2});
+  }
+
+  void visitFunction(Function* func) {
+    // Our added blocks may have caused nested pops.
+    if (!addedCalls.empty()) {
+      EHUtils::handleBlockNestedPops(func, *getModule());
+      addedCalls.clear();
+    }
   }
 
   void doWalkModule(Module* module) {
