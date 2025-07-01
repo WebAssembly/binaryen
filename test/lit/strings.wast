@@ -12,31 +12,38 @@
 ;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all --precompute -S -o - | filecheck %s
 
 (module
-  (memory 10 10)
-
   ;; CHECK:      (type $0 (func (param stringref stringref)))
 
   ;; CHECK:      (type $array (sub (array (mut i8))))
-  (type $array (sub (array (mut i8))))
+
   ;; CHECK:      (type $array16 (sub (array (mut i16))))
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (result externref)))
+
+  ;; CHECK:      (type $5 (func (param (ref string))))
+
+  ;; CHECK:      (type $6 (func (param stringref)))
+
+  ;; CHECK:      (type $7 (func (param (ref $array) (ref $array16))))
+
+  ;; CHECK:      (type $8 (func (param stringref (ref $array) (ref $array16))))
+
+  ;; CHECK:      (import "env" "get-string-ref" (func $get-string-ref (type $4) (result externref)))
+  (import "env" "get-string-ref" (func $get-string-ref  (result externref)))
+
+  (memory 10 10)
+
+  (type $array (sub (array (mut i8))))
   (type $array16 (sub (array (mut i16))))
-
-  ;; CHECK:      (type $3 (func (param (ref string))))
-
-  ;; CHECK:      (type $4 (func (param stringref)))
-
-  ;; CHECK:      (type $5 (func (param (ref $array) (ref $array16))))
-
-  ;; CHECK:      (type $6 (func (param stringref (ref $array) (ref $array16))))
-
-  ;; CHECK:      (type $7 (func))
 
   ;; CHECK:      (global $string-const stringref (string.const "string in a global \c2\a3_\e2\82\ac_\f0\90\8d\88 \01\00\t\t\n\n\r\r\"\"\'\'\\\\ "))
   (global $string-const stringref (string.const "string in a global \C2\A3_\E2\82\AC_\F0\90\8D\88 \01\00\t\t\n\n\r\r\"\"\'\'\\\\ "))
 
   ;; CHECK:      (memory $0 10 10)
 
-  ;; CHECK:      (func $string.const (type $3) (param $param (ref string))
+  ;; CHECK:      (func $string.const (type $5) (param $param (ref string))
   ;; CHECK-NEXT:  (call $string.const
   ;; CHECK-NEXT:   (string.const "foo")
   ;; CHECK-NEXT:  )
@@ -60,7 +67,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.measure (type $4) (param $ref stringref)
+  ;; CHECK:      (func $string.measure (type $6) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.measure_wtf16
@@ -148,7 +155,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.new.gc (type $5) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $string.new.gc (type $7) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16_array
   ;; CHECK-NEXT:    (local.get $array16)
@@ -181,7 +188,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.encode.gc (type $6) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $string.encode.gc (type $8) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (string.encode_wtf16_array
@@ -218,7 +225,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.from_code_point (type $7)
+  ;; CHECK:      (func $string.from_code_point (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.from_code_point
   ;; CHECK-NEXT:    (i32.const 1)
@@ -232,4 +239,15 @@
       )
     )
   )
+
+  ;; CHECK:      (func $string.test (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.test
+  ;; CHECK-NEXT:     (call $get-string-ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.test (drop (i32.eqz (string.test (call $get-string-ref)))))
 )
