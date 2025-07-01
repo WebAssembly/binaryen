@@ -2698,7 +2698,7 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
 }
 
 void BinaryInstWriter::visitStringTest(StringTest* curr) {
-  // TODO
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringTest);
 }
 
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {

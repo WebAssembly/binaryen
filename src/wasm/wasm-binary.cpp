@@ -1286,9 +1286,10 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     }
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
-    out << char(digit < 20
-                  ? 'g' + digit
-                  : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+    out << char(digit < 20    ? 'g' + digit
+                : digit < 30  ? '0' + digit - 20
+                : digit == 30 ? '+'
+                              : '/');
   }
 }
 
@@ -4663,6 +4664,8 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStringConcat();
         case BinaryConsts::StringEq:
           return builder.makeStringEq(StringEqEqual);
+        case BinaryConsts::StringTest:
+          return builder.makeStringTest();
         case BinaryConsts::StringCompare:
           return builder.makeStringEq(StringEqCompare);
         case BinaryConsts::StringViewWTF16GetCodePoint:
