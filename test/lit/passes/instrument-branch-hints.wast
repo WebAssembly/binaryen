@@ -17,9 +17,25 @@
   ;; CHECK:      (import "fuzzing-support" "log_false" (func $log_false (param i32)))
 
   ;; CHECK:      (func $if
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log_guess
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $log_true
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:    )
@@ -30,8 +46,75 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 142)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log_guess
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $log_true
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 11337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 199)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 242)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 21337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 299)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 342)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log_guess
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $log_true
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 31337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 399)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if
+    ;; An if with a 0 hint, a 1 hint, and no hint.
+    (@metadata.code.branch_hint "\00")
     (if
       (i32.const 42)
       (then
@@ -41,28 +124,118 @@
         (drop (i32.const 99))
       )
     )
+    (@metadata.code.branch_hint "\01")
+    (if
+      (i32.const 142)
+      (then
+        (drop (i32.const 11337))
+      )
+      (else
+        (drop (i32.const 199))
+      )
+    )
+    (if
+      (i32.const 242)
+      (then
+        (drop (i32.const 21337))
+      )
+      (else
+        (drop (i32.const 299))
+      )
+    )
+    ;; Another hint of 0, for more coverage (ensure hint value differs from
+    ;; break id).
+    (@metadata.code.branch_hint "\00")
+    (if
+      (i32.const 342)
+      (then
+        (drop (i32.const 31337))
+      )
+      (else
+        (drop (i32.const 399))
+      )
+    )
   )
 
   ;; CHECK:      (func $br
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (br_if $out
-  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (call $log_false
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (br_if $out
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $log_guess
+  ;; CHECK-NEXT:       (i32.const 3)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 99)
+  ;; CHECK-NEXT:  (block $out1
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (call $log_false
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (br_if $out1
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (i32.const 142)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $log_guess
+  ;; CHECK-NEXT:       (i32.const 4)
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 11337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $out2
+  ;; CHECK-NEXT:   (br_if $out2
+  ;; CHECK-NEXT:    (i32.const 242)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 21337)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br
+    ;; As above, with br_if.
     (block $out
+      (@metadata.code.branch_hint "\00")
       (br_if $out
         (i32.const 42)
       )
       (drop (i32.const 1337))
     )
-    (drop (i32.const 99))
+    (block $out1
+      (@metadata.code.branch_hint "\01")
+      (br_if $out1
+        (i32.const 142)
+      )
+      (drop (i32.const 11337))
+    )
+    (block $out2
+      (br_if $out2
+        (i32.const 242)
+      )
+      (drop (i32.const 21337))
+    )
   )
 )
