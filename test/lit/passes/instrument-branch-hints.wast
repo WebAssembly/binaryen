@@ -505,3 +505,84 @@
     )
   )
 )
+
+;; This module has our import, but with a minified internal name. We should
+;; still use it.
+(module
+  ;; CHECK:      (type $0 (func (param i32 i32 i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
+  ;; TWICE:      (type $0 (func (param i32 i32 i32)))
+
+  ;; TWICE:      (type $1 (func))
+
+  ;; TWICE:      (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
+  (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
+
+  ;; CHECK:      (func $if
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $min
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TWICE:      (func $if
+  ;; TWICE-NEXT:  (local $0 i32)
+  ;; TWICE-NEXT:  (local $1 i32)
+  ;; TWICE-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; TWICE-NEXT:  (if
+  ;; TWICE-NEXT:   (block (result i32)
+  ;; TWICE-NEXT:    (local.set $1
+  ;; TWICE-NEXT:     (block (result i32)
+  ;; TWICE-NEXT:      (local.set $0
+  ;; TWICE-NEXT:       (i32.const 42)
+  ;; TWICE-NEXT:      )
+  ;; TWICE-NEXT:      (call $min
+  ;; TWICE-NEXT:       (i32.const 1)
+  ;; TWICE-NEXT:       (i32.const 1)
+  ;; TWICE-NEXT:       (local.get $0)
+  ;; TWICE-NEXT:      )
+  ;; TWICE-NEXT:      (local.get $0)
+  ;; TWICE-NEXT:     )
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:    (call $min
+  ;; TWICE-NEXT:     (i32.const -1)
+  ;; TWICE-NEXT:     (i32.const 1)
+  ;; TWICE-NEXT:     (local.get $1)
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:    (local.get $1)
+  ;; TWICE-NEXT:   )
+  ;; TWICE-NEXT:   (then
+  ;; TWICE-NEXT:    (drop
+  ;; TWICE-NEXT:     (i32.const 1337)
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:   )
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT: )
+  (func $if
+    (@metadata.code.branch_hint "\01")
+    (if
+      (i32.const 42)
+      (then
+        (drop (i32.const 1337))
+      )
+    )
+  )
+)
