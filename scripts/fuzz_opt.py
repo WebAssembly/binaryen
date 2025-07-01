@@ -1849,22 +1849,35 @@ class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
     def handle(self, wasm):
-        opts = [
-          # Add random branch hints (so we have something to work with).
-          '--randomize-branch-hints',
-          # Instrument them for our fuzzing, then optimize.
-          '--instrument-branch-hints',
-        ] + get_random_opts() + [
-          # Instrument again, so our fuzzing can see if the optimizations
-          # messed anything up.
-          '--instrument-branch-hints',
-        ]
+        # Generate the middle wasm, which has the first round of instrumentation,
+        # then the final one with optimizations as well. We only run the final
+        # one, but the middle one is useful to compare when debugging an error.
+        middle = wasm + '.mid.wasm'
+        run([
+            in_bin('wasm-opt'),
+            wasm,
+            # Add random branch hints (so we have something to work with).
+            '--randomize-branch-hints',
+            # Instrument them for our fuzzing, then optimize.
+            '--instrument-branch-hints',
+            '-o', middle,
+            '-g',
+        ] + FEATURE_OPTS)
 
-        instrumented = wasm + '.ibh.wasm'
-        run([in_bin('wasm-opt'), wasm] + opts + ['-o', instrumented] + FEATURE_OPTS)
+        final = wasm + '.final.wasm'
+        run([
+            in_bin('wasm-opt'),
+            middle,
+        ] + get_random_opts() + [
+            # Instrument again after opts, so our fuzzing can see if the opts
+            # messed anything up.
+            '--instrument-branch-hints',
+            '-o', final,
+            '-g',
+        ] + FEATURE_OPTS)
 
         # Run.
-        out = run_d8_wasm(instrumented)
+        out = run_d8_wasm(final)
 
         # Process the output. We look at the lines like this:
         #
