@@ -84,6 +84,7 @@
 //
 
 #include "ir/find_all.h"
+#include "ir/names.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -92,11 +93,12 @@ namespace wasm {
 
 struct InstrumentBranchHints
   : public WalkerPass<PostWalker<InstrumentBranchHints>> {
+  // The module and base names of our import.
   Name MODULE = "fuzzing-support";
-  Name LOG_BRANCH = "log-branch";
+  Name BASE = "log-branch";
 
-  // Our logging function for branches.
-  Function* logBranch = nullptr;
+  // The internal name of our import.
+  Name LOG_BRANCH;
 
   // The branch id, which increments as we go.
   int branchId = 1;
@@ -157,14 +159,20 @@ struct InstrumentBranchHints
 
   void doWalkModule(Module* module) {
     // Find our import, if we were already run on this module.
-    auto* logBranch = module->getFunctionOrNull(LOG_BRANCH);
-    if (!logBranch) {
-      logBranch = module->addFunction(Builder::makeFunction(
-        LOG_BRANCH,
+    for (auto& func : module->functions) {
+      if (func->module == MODULE && func->base == BASE) {
+        LOG_BRANCH = func->name;
+        break;
+      }
+    }
+    if (!LOG_BRANCH) {
+      auto* func = module->addFunction(Builder::makeFunction(
+        Names::getValidFunctionName(*module, BASE),
         Signature({Type::i32, Type::i32, Type::i32}, Type::none),
         {}));
-      logBranch->module = MODULE;
-      logBranch->base = logBranch->name;
+      func->module = MODULE;
+      func->base = BASE;
+      LOG_BRANCH = func->name;
     }
 
     // Walk normally, using logBranch as we go.
