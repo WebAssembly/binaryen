@@ -1892,8 +1892,10 @@ class BranchHintPreservation(TestCaseHandler):
         # double instrumentation, matched by id:
         #
         #   log-branch: hint 123 of 1 and actual 0
-        #   log-branch: hint 123 of 1 and actual 1
+        #   log-branch: hint -123 of 1 and actual 1
         #
+        # The second phase of instrumentation adds negative ids, so here we
+        # would match 123 with -123.
         pairs = []
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
@@ -1908,7 +1910,7 @@ class BranchHintPreservation(TestCaseHandler):
                 assert len(last_pair) == 1
                 last_id = last_pair[0].split(' ')[2]
                 line_id = line.split(' ')[2]
-                if last_id == line_id:
+                if last_id >= 0 and last_id == -line_id:
                     last_pair.append(line)
                 else:
                     # They do not match. It is ok if a pair is not found, as the
@@ -1931,7 +1933,7 @@ class BranchHintPreservation(TestCaseHandler):
             first, second = pair
             _, _, first_id, _, first_hint, _, _, first_actual = first.split(' ')
             _, _, second_id, _, second_hint, _, _, second_actual = second.split(' ')
-            assert first_id == second_id
+            assert first_id >= 0 and first_id == -second_id
             first_alignment = (first_hint != first_actual)
             second_alignment = (second_hint != second_actual)
             assert first_alignment == second_alignment

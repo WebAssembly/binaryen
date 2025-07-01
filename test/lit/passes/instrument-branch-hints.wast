@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --instrument-branch-hints -S -o - | filecheck %s
 
 ;; Also test the results of running again. When a condition is instrumented
-;; twice, we should reuse the id.
+;; twice, we should reuse the id, but emit it negated.
 ;; RUN: foreach %s %t wasm-opt --instrument-branch-hints --instrument-branch-hints -S -o - | filecheck %s --check-prefix=TWICE
 
 (module
@@ -27,7 +27,7 @@
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
@@ -51,7 +51,7 @@
   ;; CHECK-NEXT:     (i32.const 142)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
@@ -88,7 +88,7 @@
   ;; CHECK-NEXT:     (i32.const 342)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (call $log-branch
-  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
@@ -130,7 +130,7 @@
   ;; TWICE-NEXT:       (i32.const 42)
   ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:      (call $log-branch
-  ;; TWICE-NEXT:       (i32.const 0)
+  ;; TWICE-NEXT:       (i32.const 1)
   ;; TWICE-NEXT:       (i32.const 0)
   ;; TWICE-NEXT:       (local.get $0)
   ;; TWICE-NEXT:      )
@@ -138,7 +138,7 @@
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:    )
   ;; TWICE-NEXT:    (call $log-branch
-  ;; TWICE-NEXT:     (i32.const 0)
+  ;; TWICE-NEXT:     (i32.const -1)
   ;; TWICE-NEXT:     (i32.const 0)
   ;; TWICE-NEXT:     (local.get $3)
   ;; TWICE-NEXT:    )
@@ -164,7 +164,7 @@
   ;; TWICE-NEXT:       (i32.const 142)
   ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:      (call $log-branch
-  ;; TWICE-NEXT:       (i32.const 1)
+  ;; TWICE-NEXT:       (i32.const 2)
   ;; TWICE-NEXT:       (i32.const 1)
   ;; TWICE-NEXT:       (local.get $1)
   ;; TWICE-NEXT:      )
@@ -172,7 +172,7 @@
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:    )
   ;; TWICE-NEXT:    (call $log-branch
-  ;; TWICE-NEXT:     (i32.const 1)
+  ;; TWICE-NEXT:     (i32.const -2)
   ;; TWICE-NEXT:     (i32.const 1)
   ;; TWICE-NEXT:     (local.get $4)
   ;; TWICE-NEXT:    )
@@ -211,7 +211,7 @@
   ;; TWICE-NEXT:       (i32.const 342)
   ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:      (call $log-branch
-  ;; TWICE-NEXT:       (i32.const 2)
+  ;; TWICE-NEXT:       (i32.const 3)
   ;; TWICE-NEXT:       (i32.const 0)
   ;; TWICE-NEXT:       (local.get $2)
   ;; TWICE-NEXT:      )
@@ -219,7 +219,7 @@
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:    )
   ;; TWICE-NEXT:    (call $log-branch
-  ;; TWICE-NEXT:     (i32.const 2)
+  ;; TWICE-NEXT:     (i32.const -3)
   ;; TWICE-NEXT:     (i32.const 0)
   ;; TWICE-NEXT:     (local.get $5)
   ;; TWICE-NEXT:    )
@@ -293,7 +293,7 @@
   ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (call $log-branch
-  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (i32.const 4)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
@@ -312,7 +312,7 @@
   ;; CHECK-NEXT:      (i32.const 142)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (call $log-branch
-  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:      (i32.const 5)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
@@ -347,7 +347,7 @@
   ;; TWICE-NEXT:        (i32.const 42)
   ;; TWICE-NEXT:       )
   ;; TWICE-NEXT:       (call $log-branch
-  ;; TWICE-NEXT:        (i32.const 3)
+  ;; TWICE-NEXT:        (i32.const 4)
   ;; TWICE-NEXT:        (i32.const 0)
   ;; TWICE-NEXT:        (local.get $0)
   ;; TWICE-NEXT:       )
@@ -355,7 +355,7 @@
   ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:     (call $log-branch
-  ;; TWICE-NEXT:      (i32.const 3)
+  ;; TWICE-NEXT:      (i32.const -4)
   ;; TWICE-NEXT:      (i32.const 0)
   ;; TWICE-NEXT:      (local.get $2)
   ;; TWICE-NEXT:     )
@@ -376,7 +376,7 @@
   ;; TWICE-NEXT:        (i32.const 142)
   ;; TWICE-NEXT:       )
   ;; TWICE-NEXT:       (call $log-branch
-  ;; TWICE-NEXT:        (i32.const 4)
+  ;; TWICE-NEXT:        (i32.const 5)
   ;; TWICE-NEXT:        (i32.const 1)
   ;; TWICE-NEXT:        (local.get $1)
   ;; TWICE-NEXT:       )
@@ -384,7 +384,7 @@
   ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:     (call $log-branch
-  ;; TWICE-NEXT:      (i32.const 4)
+  ;; TWICE-NEXT:      (i32.const -5)
   ;; TWICE-NEXT:      (i32.const 1)
   ;; TWICE-NEXT:      (local.get $3)
   ;; TWICE-NEXT:     )
@@ -441,7 +441,7 @@
   ;; CHECK-NEXT:       (i32.const 42)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (call $log-branch
-  ;; CHECK-NEXT:       (i32.const 5)
+  ;; CHECK-NEXT:       (i32.const 6)
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
@@ -471,7 +471,7 @@
   ;; TWICE-NEXT:         (i32.const 42)
   ;; TWICE-NEXT:        )
   ;; TWICE-NEXT:        (call $log-branch
-  ;; TWICE-NEXT:         (i32.const 5)
+  ;; TWICE-NEXT:         (i32.const 6)
   ;; TWICE-NEXT:         (i32.const 0)
   ;; TWICE-NEXT:         (local.get $1)
   ;; TWICE-NEXT:        )
@@ -479,7 +479,7 @@
   ;; TWICE-NEXT:       )
   ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:      (call $log-branch
-  ;; TWICE-NEXT:       (i32.const 5)
+  ;; TWICE-NEXT:       (i32.const -6)
   ;; TWICE-NEXT:       (i32.const 0)
   ;; TWICE-NEXT:       (local.get $2)
   ;; TWICE-NEXT:      )

@@ -74,8 +74,13 @@
 //  [id,0,0], [id,1,1] - actual and predicted both changed: good
 //  etc.
 //
+// To make it easy to pair the results, the ID is negative in subsequent
+// instrumentations. That is we will match an id of 42 in the first
+// instrumentation with an id of -42 in the last (that avoids us matching two
+// from the first, if e.g. a branch happens twice in a loop).
+//
 // Regardless of whether the hint was right or wrong, it should change in tandem
-// with the actual result.
+// with the actual result, see script/fuzz_opt.py's BranchHintPreservation.
 //
 
 #include "ir/find_all.h"
@@ -94,7 +99,7 @@ struct InstrumentBranchHints
   Function* logBranch = nullptr;
 
   // The branch id, which increments as we go.
-  Index branchId = 0;
+  int branchId = 1;
 
   void visitIf(If* curr) { processCondition(curr); }
 
@@ -114,21 +119,22 @@ struct InstrumentBranchHints
 
     // Pick an ID for this branch. If we see a nested logging (see above), we
     // copy that id.
-    Index id = -1;
+    int id = 0;
     for (auto* call : FindAll<Call>(curr->condition).list) {
       if (call->target == LOG_BRANCH) {
-        if (id != Index(-1)) {
+        if (id) {
           // We have seen another before, so give up.
-          id = -1;
+          id = 0;
           break;
         }
-        // This is the first one we see. Use it.
+        // This is the first one we see. Use it, negated to indicate it is from
+        // the second instrumentation.
         assert(call->operands.size() == 3);
-        id = call->operands[0]->cast<Const>()->value.geti32();
+        id = -call->operands[0]->cast<Const>()->value.geti32();
       }
     }
     // We never found one, or we gave up.
-    if (id == Index(-1)) {
+    if (!id) {
       id = branchId++;
     }
 
