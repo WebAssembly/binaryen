@@ -1854,7 +1854,7 @@ class BranchHintPreservation(TestCaseHandler):
         # Instrument the wasm with branch hints, optimize, and instrument again.
         opts = ['--instrument-branch-hints'] + opts + ['--instrument-branch-hints']
         instrumented = wasm + '.ibh.wasm'
-        run([in_bin('wasm-opt'), wasm] + opts + ['-o', instrumented])
+        run([in_bin('wasm-opt'), wasm] + opts + ['-o', instrumented] + FEATURE_OPTS)
 
         # Run.
         out = run_d8_wasm(instrumented)
@@ -1884,12 +1884,12 @@ class BranchHintPreservation(TestCaseHandler):
                     continue
 
                 # This may complete a pair.
-                last = pairs[-1]
-                assert len(last) == 1
-                last_id = last[0].split(' ')[2]
-                line_id = line[0].split(' ')[2]
-                if last_id == curr_id:
-                    last.append(line)
+                last_pair = pairs[-1]
+                assert len(last_pair) == 1
+                last_id = last_pair[0].split(' ')[2]
+                line_id = line.split(' ')[2]
+                if last_id == line_id:
+                    last_pair.append(line)
                 else:
                     # They do not match. It is ok if a pair is not found, as the
                     # optimizer may remove a branch hint or a logging. Start a
@@ -1905,13 +1905,20 @@ class BranchHintPreservation(TestCaseHandler):
         # optimization flipped the condition together with the arms - but the
         # hint did not flip with it. That is, we want the pair's hint and actual
         # to remain in sync (even if the hint is wrong).
-        for first, second in pairs:
-            _, _, first_id, _, first_hint, _, _, first_actual = first[0].split(' ')
-            _, _, second_id, _, second_hint, _, _, second_actual = second[0].split(' ')
+        for pair in pairs:
+            if len(pair) != 2:
+                continue
+            first, second = pair
+            _, _, first_id, _, first_hint, _, _, first_actual = first.split(' ')
+            _, _, second_id, _, second_hint, _, _, second_actual = second.split(' ')
             assert first_id == second_id
             first_alignment = (first_hint != first_actual)
             second_alignment = (second_hint != second_actual)
             assert first_alignment == second_alignment
+
+    def can_run_on_wasm(self, wasm):
+        # Avoid things d8 cannot fully run.
+        return all_disallowed(['shared-everything', 'strings'])
 
 
 # The global list of all test case handlers
