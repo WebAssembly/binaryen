@@ -103,6 +103,7 @@ set(passes_SOURCES
   Strip.cpp
   StripTargetFeatures.cpp
   TraceCalls.cpp
+  RandomizeBranchHints.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
   RemoveMemoryInit.cpp
