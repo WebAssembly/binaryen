@@ -96,9 +96,7 @@ struct InstrumentBranchHints
   // The branch id, which increments as we go.
   Index branchId = 0;
 
-  void visitIf(If* curr) {
-    processCondition(curr);
-  }
+  void visitIf(If* curr) { processCondition(curr); }
 
   void visitBreak(Break* curr) {
     if (curr->condition) {
@@ -106,8 +104,7 @@ struct InstrumentBranchHints
     }
   }
 
-  template<typename T>
-  void processCondition(T* curr) {
+  template<typename T> void processCondition(T* curr) {
     auto likely = getFunction()->codeAnnotations[curr].branchLikely;
     if (!likely) {
       return;
@@ -141,7 +138,8 @@ struct InstrumentBranchHints
     auto* idc = builder.makeConst(Literal(int32_t(id)));
     auto* guess = builder.makeConst(Literal(int32_t(*likely)));
     auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
-    auto* logBranch = builder.makeCall(LOG_BRANCH, {idc, guess, get1}, Type::none);
+    auto* logBranch =
+      builder.makeCall(LOG_BRANCH, {idc, guess, get1}, Type::none);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
     curr->condition = builder.makeBlock({set, logBranch, get2});
   }
@@ -151,7 +149,9 @@ struct InstrumentBranchHints
     auto* logBranch = module->getFunctionOrNull(LOG_BRANCH);
     if (!logBranch) {
       logBranch = module->addFunction(Builder::makeFunction(
-        LOG_BRANCH, Signature({Type::i32, Type::i32, Type::i32}, Type::none), {}));
+        LOG_BRANCH,
+        Signature({Type::i32, Type::i32, Type::i32}, Type::none),
+        {}));
       logBranch->module = MODULE;
       logBranch->base = logBranch->name;
     }

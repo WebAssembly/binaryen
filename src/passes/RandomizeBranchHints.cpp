@@ -25,7 +25,9 @@
 namespace wasm {
 
 struct RandomizeBranchHints
-  : public WalkerPass<PostWalker<RandomizeBranchHints, UnifiedExpressionVisitor<RandomizeBranchHints>>> {
+  : public WalkerPass<
+      PostWalker<RandomizeBranchHints,
+                 UnifiedExpressionVisitor<RandomizeBranchHints>>> {
 
   uint64_t hash = 42;
 
@@ -47,8 +49,7 @@ struct RandomizeBranchHints
     }
   }
 
-  template<typename T>
-  void processCondition(T* curr) {
+  template<typename T> void processCondition(T* curr) {
     auto& likely = getFunction()->codeAnnotations[curr].branchLikely;
     switch (hash % 3) {
       case 0:
