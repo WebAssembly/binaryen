@@ -106,7 +106,17 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
       // the break.
       auto* idc = builder.makeConst(Literal(int32_t(id)));
       auto* logFalse = builder.makeCall(LOG_FALSE, { idc }, Type::none);
-      replaceCurrent(builder.makeSequence(logFalse, curr));
+      if (curr->type.isConcrete()) {
+        // We must stash the result, log the false, then return the result,
+        // using another temp var.
+        auto tempValue = builder.addVar(getFunction(), curr->type);
+        auto* set = builder.makeLocalSet(tempValue, curr);
+        auto* get = builder.makeLocalGet(tempValue, curr->type);
+        replaceCurrent(builder.makeBlock({ set, logFalse, get }));
+      } else {
+        // No return value to bother with, so this is simple.
+        replaceCurrent(builder.makeSequence(curr, logFalse));
+      }
     }
   }
 

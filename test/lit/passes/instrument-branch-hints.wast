@@ -8,7 +8,9 @@
 
   ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $2 (func (param i32 i32)))
+  ;; CHECK:      (type $2 (func (result f64)))
+
+  ;; CHECK:      (type $3 (func (param i32 i32)))
 
   ;; CHECK:      (import "fuzzing-support" "log_guess" (func $log_guess (param i32 i32)))
 
@@ -162,9 +164,6 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (call $log_false
-  ;; CHECK-NEXT:     (i32.const 3)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:    (br_if $out
   ;; CHECK-NEXT:     (block (result i32)
@@ -178,6 +177,9 @@
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log_false
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 1337)
@@ -185,9 +187,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block $out1
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (call $log_false
-  ;; CHECK-NEXT:     (i32.const 4)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:    (br_if $out1
   ;; CHECK-NEXT:     (block (result i32)
@@ -200,6 +199,9 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log_false
+  ;; CHECK-NEXT:     (i32.const 4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -236,6 +238,53 @@
         (i32.const 242)
       )
       (drop (i32.const 21337))
+    )
+  )
+
+  ;; CHECK:      (func $br_value (result f64)
+  ;; CHECK-NEXT:  (local $scratch f64)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (block $out (result f64)
+  ;; CHECK-NEXT:   (local.set $scratch
+  ;; CHECK-NEXT:    (block (result f64)
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:      (br_if $out
+  ;; CHECK-NEXT:       (f64.const 3.14159)
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (i32.const 42)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (call $log_guess
+  ;; CHECK-NEXT:         (i32.const 5)
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $log_false
+  ;; CHECK-NEXT:      (i32.const 5)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $scratch)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_value (result f64)
+    ;; As above, but now with a value. We need to stash it to a local.
+    (block $out (result f64)
+      (@metadata.code.branch_hint "\00")
+      (br_if $out
+        (f64.const 3.14159)
+        (i32.const 42)
+      )
+      (drop (i32.const 1337))
     )
   )
 )
