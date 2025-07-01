@@ -95,7 +95,7 @@ namespace wasm {
 namespace {
 // The branch id, which increments as we go.
 int branchId = 1;
-}
+} // namespace
 
 struct InstrumentBranchHints
   : public WalkerPass<PostWalker<InstrumentBranchHints>> {
