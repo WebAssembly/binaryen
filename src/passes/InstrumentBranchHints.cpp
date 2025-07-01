@@ -20,45 +20,65 @@
 //
 //  @metadata.branch.hint B
 //  if (condition) {
-//    A;
+//    X
 //  } else {
-//    B;
+//    Y
 //  }
 //
 // into
 //
 //  @metadata.branch.hint B
-//  if (temp = condition; log("if on line 123 predicts B"; temp) {
-//    log("if on line 123 ended up true");
-//    A;
+//  ;; log the ID of the condition (123), the prediction (B), and the actual
+//  ;; runtime result (temp == condition).
+//  if (temp = condition; log(123, B, temp); temp) {
+//    X
 //  } else {
-//    B;
+//    Y
 //  }
-//
-// That is, the logging identifies the if, logs the prediction (0 or 1) for that
-// if, and then if the if were true, we log that, so by scanning all the
-// loggings, we can see both the hint and what actually executed. Similarly, for
-// br_if:
-//
-//  @metadata.branch.hint B
-//  (br_if $target (condition))
-//
-// into
-//
-//  @metadata.branch.hint B
-//  (br_if $target (temp = condition; log("br_if on line 456 predicts B"; temp))
-//  log("if on line 123 ended up false");
-//
-// Note how in this case it is simpler to add the logging on the "false" case,
-// since it is right after the br_if.
 //
 // The motivation for this pass is to fuzz branch hint updates: given a fuzz
 // case, we can instrument it and view the loggings, then optimize the original,
-// instrument that, and view those loggings. The amount of wrong predictions
-// should not decrease (the amount of right ones might, since an if might be
-// eliminated entirely by the optimizer).
+// instrument that, and view those loggings. Imagine, for example, that we flip
+// the condition but forget to flip the hint:
+//
+//  @metadata.branch.hint B
+//  if (!(temp = condition; log(123, B, temp); temp)) { ;; added a !
+//    Y                                                 ;; this moved
+//  } else {
+//    X                                                 ;; this moved
+//  }
+//
+// The logging before would be 123,B,C (where C is 0 or 1 - the hint might be
+// wrong or right, in a fuzz testcase), and the logging after will remain the
+// same, so this did not help us yet (because the ! is not the entire condition,
+// not just |condition|). But if we run this instrumentation again, we get this:
+//
+//  @metadata.branch.hint B
+//  if (temp2 = (
+//                !(temp = condition; log(123, B, temp); temp)
+//              ); log(123, B, temp2); temp2)) {
+//    Y
+//  } else {
+//    X
+//  }
+//
+// Note how the full !-ed condition is nested inside another instrumentation
+// with another temp local. Also, we inferred the same ID (123) in both cases,
+// by scanning the inside of the condition. Using that, the new logging will be
+// 123,B,C followed by 123,B,!C. We can therefore find pairs of loggings with
+// same ID, and consider the predicted and actual values:
+//
+//  [id,0,0], [id,0,0] - nothing changed: good
+//  [id,0,0], [id,0,1] - the actual result changed but not the prediction: bad
+//  [id,0,0], [id,1,0] - prediction changed but not actual result: bad
+//  [id,0,0], [id,1,1] - actual and predicted both changed: good
+//  etc.
+//
+// Regardless of whether the hint was right or wrong, it should change in tandem
+// with the actual result.
 //
 
+#include "ir/find_all.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -67,87 +87,77 @@ namespace wasm {
 
 struct InstrumentBranchHints
   : public WalkerPass<PostWalker<InstrumentBranchHints>> {
-  Name LOG_GUESS = "log_guess";
-  Name LOG_TRUE = "log_true";
-  Name LOG_FALSE = "log_false";
+  Name MODULE = "fuzzing-support";
+  Name LOG_BRANCH = "log-branch";
 
+  // Our logging function for branches.
+  Function* logBranch = nullptr;
+
+  // The branch id, which increments as we go.
   Index branchId = 0;
 
   void visitIf(If* curr) {
-    if (auto likely = getFunction()->codeAnnotations[curr].branchLikely) {
-      Builder builder(*getModule());
-
-      // Pick an ID for this branch and a temp local.
-      auto temp = builder.addVar(getFunction(), Type::i32);
-      auto id = branchId++;
-
-      // Instrument the condition and the true branch.
-      instrumentCondition(curr->condition, temp, id, *likely);
-
-      // Log the true branch, which we can easily do by prepending in the ifTrue
-      // arm.
-      auto* idc = builder.makeConst(Literal(int32_t(id)));
-      auto* logTrue = builder.makeCall(LOG_TRUE, {idc}, Type::none);
-      curr->ifTrue = builder.makeSequence(logTrue, curr->ifTrue);
-    }
+    processCondition(curr);
   }
 
   void visitBreak(Break* curr) {
-    if (auto likely = getFunction()->codeAnnotations[curr].branchLikely) {
-      Builder builder(*getModule());
+    if (curr->condition) {
+      processCondition(curr);
+    }
+  }
 
-      // Pick an ID for this branch and a temp local.
-      auto temp = builder.addVar(getFunction(), Type::i32);
-      auto id = branchId++;
+  template<typename T>
+  void processCondition(T* curr) {
+    auto likely = getFunction()->codeAnnotations[curr].branchLikely;
+    if (!likely) {
+      return;
+    }
 
-      // Instrument the condition and the true branch.
-      instrumentCondition(curr->condition, temp, id, *likely);
+    Builder builder(*getModule());
 
-      // Log the false branch, which we can easily do by appending right after
-      // the break.
-      auto* idc = builder.makeConst(Literal(int32_t(id)));
-      auto* logFalse = builder.makeCall(LOG_FALSE, {idc}, Type::none);
-      if (curr->type.isConcrete()) {
-        // We must stash the result, log the false, then return the result,
-        // using another temp var.
-        auto tempValue = builder.addVar(getFunction(), curr->type);
-        auto* set = builder.makeLocalSet(tempValue, curr);
-        auto* get = builder.makeLocalGet(tempValue, curr->type);
-        replaceCurrent(builder.makeBlock({set, logFalse, get}));
-      } else {
-        // No return value to bother with, so this is simple.
-        replaceCurrent(builder.makeSequence(curr, logFalse));
+    // Pick an ID for this branch. If we see a nested logging (see above), we
+    // copy that id.
+    Index id = -1;
+    for (auto* call : FindAll<Call>(curr->condition).list) {
+      if (call->target == LOG_BRANCH) {
+        if (id != Index(-1)) {
+          // We have seen another before, so give up.
+          id = -1;
+          break;
+        }
+        // This is the first one we see. Use it.
+        assert(call->operands.size() == 3);
+        id = call->operands[0]->cast<Const>()->value.geti32();
       }
     }
-  }
-
-  // Given the condition of a branch, modify it in place, adding proper logging.
-  void instrumentCondition(Expression*& condition,
-                           Index tempLocal,
-                           Index id,
-                           bool likely) {
-    Builder builder(*getModule());
-    auto* set = builder.makeLocalSet(tempLocal, condition);
-    auto* idc = builder.makeConst(Literal(int32_t(id)));
-    auto* guess = builder.makeConst(Literal(int32_t(likely)));
-    auto* logGuess = builder.makeCall(LOG_GUESS, {idc, guess}, Type::none);
-    auto* get = builder.makeLocalGet(tempLocal, Type::i32);
-    condition = builder.makeBlock({set, logGuess, get});
-  }
-
-  void visitModule(Module* curr) {
-    // Add imports.
-    auto* logGuess = curr->addFunction(Builder::makeFunction(
-      LOG_GUESS, Signature({Type::i32, Type::i32}, Type::none), {}));
-    auto* logTrue = curr->addFunction(
-      Builder::makeFunction(LOG_TRUE, Signature(Type::i32, Type::none), {}));
-    auto* logFalse = curr->addFunction(
-      Builder::makeFunction(LOG_FALSE, Signature(Type::i32, Type::none), {}));
-
-    for (auto* func : {logGuess, logTrue, logFalse}) {
-      func->module = "fuzzing-support";
-      func->base = func->name;
+    // We never found one, or we gave up.
+    if (id == Index(-1)) {
+      id = branchId++;
     }
+
+    // Instrument the condition.
+    auto tempLocal = builder.addVar(getFunction(), Type::i32);
+    auto* set = builder.makeLocalSet(tempLocal, curr->condition);
+    auto* idc = builder.makeConst(Literal(int32_t(id)));
+    auto* guess = builder.makeConst(Literal(int32_t(*likely)));
+    auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
+    auto* logBranch = builder.makeCall(LOG_BRANCH, {idc, guess, get1}, Type::none);
+    auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
+    curr->condition = builder.makeBlock({set, logBranch, get2});
+  }
+
+  void doWalkModule(Module* module) {
+    // Find our import, if we were already run on this module.
+    auto* logBranch = module->getFunctionOrNull(LOG_BRANCH);
+    if (!logBranch) {
+      logBranch = module->addFunction(Builder::makeFunction(
+        LOG_BRANCH, Signature({Type::i32, Type::i32, Type::i32}, Type::none), {}));
+      logBranch->module = MODULE;
+      logBranch->base = logBranch->name;
+    }
+
+    // Walk normally, using logBranch as we go.
+    WalkerPass<PostWalker<InstrumentBranchHints>>::doWalkModule(module);
   }
 };
 
