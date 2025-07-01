@@ -870,7 +870,6 @@ struct RemoveUnusedModuleElements : public Pass {
       void visitStructNew(StructNew* curr) {
         if (curr->desc && curr->desc->type.isNullable()) {
           mayTrap = true;
-          return;
         }
       }
     };
