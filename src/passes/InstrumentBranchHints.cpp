@@ -65,7 +65,8 @@
 
 namespace wasm {
 
-struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHints>> {
+struct InstrumentBranchHints
+  : public WalkerPass<PostWalker<InstrumentBranchHints>> {
   Name LOG_GUESS = "log_guess";
   Name LOG_TRUE = "log_true";
   Name LOG_FALSE = "log_false";
@@ -86,7 +87,7 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
       // Log the true branch, which we can easily do by prepending in the ifTrue
       // arm.
       auto* idc = builder.makeConst(Literal(int32_t(id)));
-      auto* logTrue = builder.makeCall(LOG_TRUE, { idc }, Type::none);
+      auto* logTrue = builder.makeCall(LOG_TRUE, {idc}, Type::none);
       curr->ifTrue = builder.makeSequence(logTrue, curr->ifTrue);
     }
   }
@@ -105,14 +106,14 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
       // Log the false branch, which we can easily do by appending right after
       // the break.
       auto* idc = builder.makeConst(Literal(int32_t(id)));
-      auto* logFalse = builder.makeCall(LOG_FALSE, { idc }, Type::none);
+      auto* logFalse = builder.makeCall(LOG_FALSE, {idc}, Type::none);
       if (curr->type.isConcrete()) {
         // We must stash the result, log the false, then return the result,
         // using another temp var.
         auto tempValue = builder.addVar(getFunction(), curr->type);
         auto* set = builder.makeLocalSet(tempValue, curr);
         auto* get = builder.makeLocalGet(tempValue, curr->type);
-        replaceCurrent(builder.makeBlock({ set, logFalse, get }));
+        replaceCurrent(builder.makeBlock({set, logFalse, get}));
       } else {
         // No return value to bother with, so this is simple.
         replaceCurrent(builder.makeSequence(curr, logFalse));
@@ -121,24 +122,27 @@ struct InstrumentBranchHints : public WalkerPass<PostWalker<InstrumentBranchHint
   }
 
   // Given the condition of a branch, modify it in place, adding proper logging.
-  void instrumentCondition(Expression*& condition, Index tempLocal, Index id, bool likely) {
+  void instrumentCondition(Expression*& condition,
+                           Index tempLocal,
+                           Index id,
+                           bool likely) {
     Builder builder(*getModule());
     auto* set = builder.makeLocalSet(tempLocal, condition);
     auto* idc = builder.makeConst(Literal(int32_t(id)));
     auto* guess = builder.makeConst(Literal(int32_t(likely)));
-    auto* logGuess = builder.makeCall(LOG_GUESS, { idc, guess }, Type::none);
+    auto* logGuess = builder.makeCall(LOG_GUESS, {idc, guess}, Type::none);
     auto* get = builder.makeLocalGet(tempLocal, Type::i32);
-    condition = builder.makeBlock({ set, logGuess, get });
+    condition = builder.makeBlock({set, logGuess, get});
   }
 
   void visitModule(Module* curr) {
     // Add imports.
-    auto* logGuess =
-      curr->addFunction(Builder::makeFunction(LOG_GUESS, Signature({Type::i32, Type::i32}, Type::none), {}));
-    auto* logTrue =
-      curr->addFunction(Builder::makeFunction(LOG_TRUE, Signature(Type::i32, Type::none), {}));
-    auto* logFalse =
-      curr->addFunction(Builder::makeFunction(LOG_FALSE, Signature(Type::i32, Type::none), {}));
+    auto* logGuess = curr->addFunction(Builder::makeFunction(
+      LOG_GUESS, Signature({Type::i32, Type::i32}, Type::none), {}));
+    auto* logTrue = curr->addFunction(
+      Builder::makeFunction(LOG_TRUE, Signature(Type::i32, Type::none), {}));
+    auto* logFalse = curr->addFunction(
+      Builder::makeFunction(LOG_FALSE, Signature(Type::i32, Type::none), {}));
 
     for (auto* func : {logGuess, logTrue, logFalse}) {
       func->module = "fuzzing-support";
