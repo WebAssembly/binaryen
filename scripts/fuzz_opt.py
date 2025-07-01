@@ -1846,54 +1846,76 @@ class PreserveImportsExports(TestCaseHandler):
 
 # Test that we preserve branch hints properly.
 class BranchHintPreservation(TestCaseHandler):
-    frequency = 0.1
+    frequency = 1 # XXX
 
     def handle(self, wasm):
-        # TODO
-        '''
-        # We will later verify that no imports or exports changed, by comparing
-        # to the unprocessed original text.
-        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
+        opts = get_random_opts()
 
-        # We leave if the module has (ref exn) in struct fields (because we have
-        # no way to generate an exn in a non-function context, and if we picked
-        # that struct for a global, we'd end up needing a (ref exn) in the
-        # global scope, which is impossible). The fuzzer is designed to be
-        # careful not to emit that in testcases, but after the optimizer runs,
-        # we may end up with struct fields getting refined to that, so we need
-        # this extra check (which should be hit very rarely).
-        structs = [line for line in original.split('\n') if '(struct ' in line]
-        if '(ref exn)' in '\n'.join(structs):
-            note_ignored_vm_run('has non-nullable exn in struct')
-            return
+        # Instrument the wasm with branch hints, optimize, and instrument again.
+        opts = ['--instrument-branch-hints'] + opts + ['--instrument-branch-hints']
+        instrumented = wasm + '.ibh.wasm'
+        run([in_bin('wasm-opt'), wasm] + opts + ['-o', instrumented])
 
-        # Generate some random input data.
-        data = abspath('preserve_input.dat')
-        make_random_input(random_size(), data)
+        # Run.
+        out = run_d8_wasm(instrumented)
 
-        # Process the existing wasm file.
-        processed = run([in_bin('wasm-opt'), data] + FEATURE_OPTS + [
-            '-ttf',
-            '--fuzz-preserve-imports-exports',
-            '--initial-fuzz=' + wasm,
-            '--print',
-        ])
+        # Process the output. We look at the lines like this:
+        #
+        #   log-branch: hint 123 of 1 and actual 0
+        #
+        # Each line reports a branch id, the hint for its condition, and the
+        # actual result (if the condition was true).
+        #
+        # It is fine for hints to not match expectations, in a fuzz testcase -
+        # that should happen half the time. What is not fine is if the hint and
+        # the actual result get out of sync, for which we track pairs from the
+        # double instrumentation, matched by id:
+        #
+        #   log-branch: hint 123 of 1 and actual 0
+        #   log-branch: hint 123 of 1 and actual 1
+        #
+        pairs = []
+        for line in out.splitlines():
+            if line.startswith('log-branch: hint'):
+                # Add this as the beginning of a possible pair, if there is
+                # nothing before us, or a complete pair.
+                if (not pairs) or len(pairs[-1]) == 2:
+                    pairs.append([line])
+                    continue
 
-        def get_relevant_lines(wat):
-            # Imports and exports are relevant.
-            lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
+                # This may complete a pair.
+                last = pairs[-1]
+                assert len(last) == 1
+                last_id = last[0].split(' ')[2]
+                line_id = line[0].split(' ')[2]
+                if last_id == curr_id:
+                    last.append(line)
+                else:
+                    # They do not match. It is ok if a pair is not found, as the
+                    # optimizer may remove a branch hint or a logging. Start a
+                    # new pair.
+                    pairs.append([line])
 
-            # Ignore type names, which may vary (e.g. one file may have $5 and
-            # another may call the same type $17).
-            lines = [re.sub(r'[(]type [$][0-9a-zA-Z_$]+[)]', '', line) for line in lines]
-
-            return '\n'.join(lines)
-
-        compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')'''
+        # Check the pairs. Consider:
+        #
+        #   log-branch: hint 123 of 1 and actual 0
+        #   log-branch: hint 123 of 1 and actual 1
+        #
+        # A pair like that is suspect: the actual result shifted - perhaps an
+        # optimization flipped the condition together with the arms - but the
+        # hint did not flip with it. That is, we want the pair's hint and actual
+        # to remain in sync (even if the hint is wrong).
+        for first, second in pairs:
+            _, _, first_id, _, first_hint, _, _, first_actual = first[0].split(' ')
+            _, _, second_id, _, second_hint, _, _, second_actual = second[0].split(' ')
+            assert first_id == second_id
+            first_alignment = (first_hint != first_actual)
+            second_alignment = (second_hint != second_actual)
+            assert first_alignment == second_alignment
 
 
 # The global list of all test case handlers
-testcase_handlers = [
+'''
     FuzzExec(),
     CompareVMs(),
     CheckDeterminism(),
@@ -1907,6 +1929,8 @@ testcase_handlers = [
     ClusterFuzz(),
     Two(),
     PreserveImportsExports(),
+'''
+testcase_handlers = [
     BranchHintPreservation(),
 ]
 

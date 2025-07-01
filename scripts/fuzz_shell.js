@@ -357,17 +357,8 @@ var imports = {
       });
     },
 
-    'log_guess': (id, expected) => {
-      // We are about to execute branch #id, and we expect its condition to
-      // either be true or false. Stash that expectation.
-      branchHints[id] = expected;
-    },
-    'log_true': (id) => {
-      var expected = branchHints[id];
-      assert(expected !== undefined);
-      // unify the two, add param...
-    },
-    'log_false': (id) => {
+    'log-branch': (id, expected, actual) => {
+      console.log(`log-branch: hint ${id} of ${expected} and actual ${actual}`);
     },
   },
   // Emscripten support.
