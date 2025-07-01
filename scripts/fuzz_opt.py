@@ -1844,6 +1844,54 @@ class PreserveImportsExports(TestCaseHandler):
         compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
+# Test that we preserve branch hints properly.
+class BranchHintPreservation(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        # TODO
+        '''
+        # We will later verify that no imports or exports changed, by comparing
+        # to the unprocessed original text.
+        original = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print'])
+
+        # We leave if the module has (ref exn) in struct fields (because we have
+        # no way to generate an exn in a non-function context, and if we picked
+        # that struct for a global, we'd end up needing a (ref exn) in the
+        # global scope, which is impossible). The fuzzer is designed to be
+        # careful not to emit that in testcases, but after the optimizer runs,
+        # we may end up with struct fields getting refined to that, so we need
+        # this extra check (which should be hit very rarely).
+        structs = [line for line in original.split('\n') if '(struct ' in line]
+        if '(ref exn)' in '\n'.join(structs):
+            note_ignored_vm_run('has non-nullable exn in struct')
+            return
+
+        # Generate some random input data.
+        data = abspath('preserve_input.dat')
+        make_random_input(random_size(), data)
+
+        # Process the existing wasm file.
+        processed = run([in_bin('wasm-opt'), data] + FEATURE_OPTS + [
+            '-ttf',
+            '--fuzz-preserve-imports-exports',
+            '--initial-fuzz=' + wasm,
+            '--print',
+        ])
+
+        def get_relevant_lines(wat):
+            # Imports and exports are relevant.
+            lines = [line for line in wat.splitlines() if '(export ' in line or '(import ' in line]
+
+            # Ignore type names, which may vary (e.g. one file may have $5 and
+            # another may call the same type $17).
+            lines = [re.sub(r'[(]type [$][0-9a-zA-Z_$]+[)]', '', line) for line in lines]
+
+            return '\n'.join(lines)
+
+        compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')'''
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -1859,6 +1907,7 @@ testcase_handlers = [
     ClusterFuzz(),
     Two(),
     PreserveImportsExports(),
+    BranchHintPreservation(),
 ]
 
 

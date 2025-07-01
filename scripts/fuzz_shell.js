@@ -261,8 +261,11 @@ function oneIn(n) {
   return (randomBits() % n) == 0;
 }
 
-// Set up the imports.
+// Import helpers.
 var tempRet0;
+var branchHints = {};
+
+// Set up the imports.
 var imports = {
   'fuzzing-support': {
     // Logging.
@@ -352,6 +355,19 @@ var imports = {
                //       on the "ms" (which would not be literal ms, but just
                //       how many time units to wait).
       });
+    },
+
+    'log_guess': (id, expected) => {
+      // We are about to execute branch #id, and we expect its condition to
+      // either be true or false. Stash that expectation.
+      branchHints[id] = expected;
+    },
+    'log_true': (id) => {
+      var expected = branchHints[id];
+      assert(expected !== undefined);
+      // unify the two, add param...
+    },
+    'log_false': (id) => {
     },
   },
   // Emscripten support.
