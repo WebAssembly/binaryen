@@ -887,7 +887,6 @@ struct RemoveUnusedModuleElements : public Pass {
           // allocation. Cache the results to avoid searching the same globals
           // again in the future.
           auto* global = wasm.getGlobal(get->name);
-          std::vector<std::unordered_map<Name, bool>::iterator> cacheEntries;
           while (true) {
             if (global->type.isNonNullable()) {
               // Only a null can cause a trap. Further globals must also be
