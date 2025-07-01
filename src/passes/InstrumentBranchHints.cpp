@@ -75,9 +75,11 @@
 //  etc.
 //
 // To make it easy to pair the results, the ID is negative in subsequent
-// instrumentations. That is we will match an id of 42 in the first
+// instrumentations. That is, we will match an ID of 42 in the first
 // instrumentation with an id of -42 in the last (that avoids us matching two
-// from the first, if e.g. a branch happens twice in a loop).
+// from the first, if e.g. a branch happens twice in a loop). Thus, the first
+// instrumentations adds positive IDs, and the second adds negative, which makes
+// it trivial to differentiate them.
 //
 // Regardless of whether the hint was right or wrong, it should change in tandem
 // with the actual result, see script/fuzz_opt.py's BranchHintPreservation.
@@ -108,7 +110,7 @@ struct InstrumentBranchHints
 
   // Whether we are the second pass of instrumentation. If so, we only add
   // logic to parallel existing hints (for each such hint, we emit one with a
-  // negative ID, so they can be paired).
+  // negative ID, so they can be paired, as mentioned above).
   bool secondInstrumentation = false;
 
   void visitIf(If* curr) { processCondition(curr); }
@@ -119,9 +121,7 @@ struct InstrumentBranchHints
     }
   }
 
-  // Note all the calls we add to our imports. They are definitely not calls
-  // from an earlier instrumentation.
-  std::unordered_set<Call*> addedCalls;
+  bool added = false;
 
   template<typename T> void processCondition(T* curr) {
     if (curr->condition->type == Type::unreachable) {
@@ -136,34 +136,29 @@ struct InstrumentBranchHints
 
     Builder builder(*getModule());
 
-    // Pick an ID for this branch. If we see a nested logging (see above), we
-    // copy that id.
+    // Pick an ID for this branch.
     int id = 0;
-    for (auto* call : FindAll<Call>(curr->condition).list) {
-      if (call->target == LOG_BRANCH && !addedCalls.count(call)) {
-        if (id) {
-          // We have seen another before, so give up (it is not worth the effort
-          // to figure out what belongs to what).
-          id = 0;
-          break;
-        }
-        // This is the first one we see. Use it, negated to indicate it is from
-        // the second instrumentation.
-        assert(call->operands.size() == 3);
-        id = -call->operands[0]->cast<Const>()->value.geti32();
-      }
-    }
-    if (!id) {
-      // We never found one, or we gave up.
-      if (secondInstrumentation) {
-        // We do not add new things in this case.
-        return;
-      }
+    if (!secondInstrumentation) {
+      // This is the first instrumentation. We instrument everything, using a
+      // new positive ID for each.
       id = branchId++;
     } else {
-      // We found an existing ID. This should only happen in the second
-      // instrumentation.
-      assert(secondInstrumentation);
+      // In the second instrumentation we find existing calls and add paired
+      // ones to them.
+      for (auto* call : FindAll<Call>(curr->condition).list) {
+        if (call->target == LOG_BRANCH) {
+          if (id) {
+            // We have seen another before, so give up (it is not worth the
+            // effort to figure out what belongs to what).
+            return;
+          }
+          // Use this ID, which must be from the first instrumentation.
+          assert(call->operands.size() == 3);
+          id = call->operands[0]->cast<Const>()->value.geti32();
+          // We will use it negated.
+          id = -id;
+        }
+      }
     }
 
     // Instrument the condition.
@@ -174,16 +169,16 @@ struct InstrumentBranchHints
     auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
     auto* logBranch =
       builder.makeCall(LOG_BRANCH, {idc, guess, get1}, Type::none);
-    addedCalls.insert(logBranch);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
     curr->condition = builder.makeBlock({set, logBranch, get2});
+    added = true;
   }
 
   void visitFunction(Function* func) {
     // Our added blocks may have caused nested pops.
-    if (!addedCalls.empty()) {
+    if (added) {
       EHUtils::handleBlockNestedPops(func, *getModule());
-      addedCalls.clear();
+      added = false;
     }
   }
 
