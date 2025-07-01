@@ -91,6 +91,11 @@
 
 namespace wasm {
 
+namespace {
+// The branch id, which increments as we go.
+int branchId = 1;
+}
+
 struct InstrumentBranchHints
   : public WalkerPass<PostWalker<InstrumentBranchHints>> {
   // The module and base names of our import.
@@ -99,9 +104,6 @@ struct InstrumentBranchHints
 
   // The internal name of our import.
   Name LOG_BRANCH;
-
-  // The branch id, which increments as we go.
-  int branchId = 1;
 
   void visitIf(If* curr) { processCondition(curr); }
 
@@ -134,7 +136,8 @@ struct InstrumentBranchHints
     for (auto* call : FindAll<Call>(curr->condition).list) {
       if (call->target == LOG_BRANCH && !addedCalls.count(call)) {
         if (id) {
-          // We have seen another before, so give up.
+          // We have seen another before, so give up (it is not worth the effort
+          // to figure out what belongs to what).
           id = 0;
           break;
         }

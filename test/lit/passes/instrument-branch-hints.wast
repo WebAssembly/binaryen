@@ -504,78 +504,192 @@
       (drop (i32.const 1337))
     )
   )
-)
 
-;; This module has our import, but with a minified internal name. We should
-;; still use it.
-(module
-  ;; CHECK:      (type $0 (func (param i32 i32 i32)))
-
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
-  ;; TWICE:      (type $0 (func (param i32 i32 i32)))
-
-  ;; TWICE:      (type $1 (func))
-
-  ;; TWICE:      (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
-  (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
-
-  ;; CHECK:      (func $if
+  ;; CHECK:      (func $nested
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $log-branch
+  ;; CHECK-NEXT:        (i32.const 7)
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (i32.const 142)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 242)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $min
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    (call $log-branch
+  ;; CHECK-NEXT:     (i32.const 9)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (i32.const 342)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $log-branch
+  ;; CHECK-NEXT:       (i32.const 8)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TWICE:      (func $if
+  ;; TWICE:      (func $nested
   ;; TWICE-NEXT:  (local $0 i32)
   ;; TWICE-NEXT:  (local $1 i32)
-  ;; TWICE-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; TWICE-NEXT:  (local $2 i32)
+  ;; TWICE-NEXT:  (local $3 i32)
+  ;; TWICE-NEXT:  (local $4 i32)
+  ;; TWICE-NEXT:  (local $5 i32)
+  ;; TWICE-NEXT:  (@metadata.code.branch_hint "\00")
   ;; TWICE-NEXT:  (if
   ;; TWICE-NEXT:   (block (result i32)
-  ;; TWICE-NEXT:    (local.set $1
+  ;; TWICE-NEXT:    (local.set $5
   ;; TWICE-NEXT:     (block (result i32)
-  ;; TWICE-NEXT:      (local.set $0
-  ;; TWICE-NEXT:       (i32.const 42)
+  ;; TWICE-NEXT:      (local.set $2
+  ;; TWICE-NEXT:       (@metadata.code.branch_hint "\01")
+  ;; TWICE-NEXT:       (if (result i32)
+  ;; TWICE-NEXT:        (block (result i32)
+  ;; TWICE-NEXT:         (local.set $3
+  ;; TWICE-NEXT:          (block (result i32)
+  ;; TWICE-NEXT:           (local.set $0
+  ;; TWICE-NEXT:            (i32.const 42)
+  ;; TWICE-NEXT:           )
+  ;; TWICE-NEXT:           (call $log-branch
+  ;; TWICE-NEXT:            (i32.const 7)
+  ;; TWICE-NEXT:            (i32.const 1)
+  ;; TWICE-NEXT:            (local.get $0)
+  ;; TWICE-NEXT:           )
+  ;; TWICE-NEXT:           (local.get $0)
+  ;; TWICE-NEXT:          )
+  ;; TWICE-NEXT:         )
+  ;; TWICE-NEXT:         (call $log-branch
+  ;; TWICE-NEXT:          (i32.const -7)
+  ;; TWICE-NEXT:          (i32.const 1)
+  ;; TWICE-NEXT:          (local.get $3)
+  ;; TWICE-NEXT:         )
+  ;; TWICE-NEXT:         (local.get $3)
+  ;; TWICE-NEXT:        )
+  ;; TWICE-NEXT:        (then
+  ;; TWICE-NEXT:         (i32.const 142)
+  ;; TWICE-NEXT:        )
+  ;; TWICE-NEXT:        (else
+  ;; TWICE-NEXT:         (i32.const 242)
+  ;; TWICE-NEXT:        )
+  ;; TWICE-NEXT:       )
   ;; TWICE-NEXT:      )
-  ;; TWICE-NEXT:      (call $min
-  ;; TWICE-NEXT:       (i32.const 1)
-  ;; TWICE-NEXT:       (i32.const 1)
-  ;; TWICE-NEXT:       (local.get $0)
+  ;; TWICE-NEXT:      (call $log-branch
+  ;; TWICE-NEXT:       (i32.const 9)
+  ;; TWICE-NEXT:       (i32.const 0)
+  ;; TWICE-NEXT:       (local.get $2)
   ;; TWICE-NEXT:      )
-  ;; TWICE-NEXT:      (local.get $0)
+  ;; TWICE-NEXT:      (local.get $2)
   ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:    )
-  ;; TWICE-NEXT:    (call $min
-  ;; TWICE-NEXT:     (i32.const -1)
-  ;; TWICE-NEXT:     (i32.const 1)
-  ;; TWICE-NEXT:     (local.get $1)
+  ;; TWICE-NEXT:    (call $log-branch
+  ;; TWICE-NEXT:     (i32.const 10)
+  ;; TWICE-NEXT:     (i32.const 0)
+  ;; TWICE-NEXT:     (local.get $5)
   ;; TWICE-NEXT:    )
-  ;; TWICE-NEXT:    (local.get $1)
+  ;; TWICE-NEXT:    (local.get $5)
   ;; TWICE-NEXT:   )
   ;; TWICE-NEXT:   (then
-  ;; TWICE-NEXT:    (drop
-  ;; TWICE-NEXT:     (i32.const 1337)
+  ;; TWICE-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; TWICE-NEXT:    (if
+  ;; TWICE-NEXT:     (block (result i32)
+  ;; TWICE-NEXT:      (local.set $4
+  ;; TWICE-NEXT:       (block (result i32)
+  ;; TWICE-NEXT:        (local.set $1
+  ;; TWICE-NEXT:         (i32.const 342)
+  ;; TWICE-NEXT:        )
+  ;; TWICE-NEXT:        (call $log-branch
+  ;; TWICE-NEXT:         (i32.const 8)
+  ;; TWICE-NEXT:         (i32.const 0)
+  ;; TWICE-NEXT:         (local.get $1)
+  ;; TWICE-NEXT:        )
+  ;; TWICE-NEXT:        (local.get $1)
+  ;; TWICE-NEXT:       )
+  ;; TWICE-NEXT:      )
+  ;; TWICE-NEXT:      (call $log-branch
+  ;; TWICE-NEXT:       (i32.const -8)
+  ;; TWICE-NEXT:       (i32.const 0)
+  ;; TWICE-NEXT:       (local.get $4)
+  ;; TWICE-NEXT:      )
+  ;; TWICE-NEXT:      (local.get $4)
+  ;; TWICE-NEXT:     )
+  ;; TWICE-NEXT:     (then
+  ;; TWICE-NEXT:      (drop
+  ;; TWICE-NEXT:       (i32.const 1337)
+  ;; TWICE-NEXT:      )
+  ;; TWICE-NEXT:     )
   ;; TWICE-NEXT:    )
   ;; TWICE-NEXT:   )
   ;; TWICE-NEXT:  )
   ;; TWICE-NEXT: )
+  (func $nested
+    ;; Do not reuse branch hint ids in the same instrumentation: even if we have
+    ;; nested conditions, we can see which calls we added, and not reuse their
+    ;; ids. Only TWICE should ever reuse ids in our output.
+    (@metadata.code.branch_hint "\00")
+    (if
+      (@metadata.code.branch_hint "\01")
+      (if (result i32)
+        (i32.const 42)
+        (then
+          (i32.const 142)
+        )
+        (else
+          (i32.const 242)
+        )
+      )
+      (then
+        (@metadata.code.branch_hint "\00")
+        (if
+          (i32.const 342)
+          (then
+            (drop (i32.const 1337))
+          )
+        )
+      )
+    )
+  )
+)
+
+;; This module has our import, but with a minified internal name. We should
+;; still use it.
+(;;module
+  (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
+
   (func $if
     (@metadata.code.branch_hint "\01")
     (if
@@ -585,4 +699,4 @@
       )
     )
   )
-)
+;;)
