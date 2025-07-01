@@ -33,7 +33,6 @@ struct RandomizeBranchHints
 
   void visitExpression(Expression* curr) {
     // Add some deterministic randomness as we go.
-    std::cout << "hash: " << hash << '\n';
     deterministic_hash_combine(hash, curr->_id);
   }
 

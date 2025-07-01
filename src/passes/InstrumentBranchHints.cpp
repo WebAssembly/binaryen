@@ -110,6 +110,11 @@ struct InstrumentBranchHints
   }
 
   template<typename T> void processCondition(T* curr) {
+    if (curr->condition->type == Type::unreachable) {
+      // This branch is not even reached.
+      return;
+    }
+
     auto likely = getFunction()->codeAnnotations[curr].branchLikely;
     if (!likely) {
       return;
