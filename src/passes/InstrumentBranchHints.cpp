@@ -111,6 +111,10 @@ struct InstrumentBranchHints
     }
   }
 
+  // Note all the calls we add to our imports. They are definitely not calls
+  // from an earlier instrumentation.
+  std::unordered_set<Call*> addedCalls;
+
   template<typename T> void processCondition(T* curr) {
     if (curr->condition->type == Type::unreachable) {
       // This branch is not even reached.
@@ -128,7 +132,7 @@ struct InstrumentBranchHints
     // copy that id.
     int id = 0;
     for (auto* call : FindAll<Call>(curr->condition).list) {
-      if (call->target == LOG_BRANCH) {
+      if (call->target == LOG_BRANCH && !addedCalls.count(call)) {
         if (id) {
           // We have seen another before, so give up.
           id = 0;
@@ -153,6 +157,7 @@ struct InstrumentBranchHints
     auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
     auto* logBranch =
       builder.makeCall(LOG_BRANCH, {idc, guess, get1}, Type::none);
+    addedCalls.insert(logBranch);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
     curr->condition = builder.makeBlock({set, logBranch, get2});
   }
