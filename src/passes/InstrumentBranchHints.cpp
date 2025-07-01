@@ -159,6 +159,10 @@ struct InstrumentBranchHints
           id = -id;
         }
       }
+      if (!id) {
+        // No call found.
+        return;
+      }
     }
 
     // Instrument the condition.
