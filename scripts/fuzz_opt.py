@@ -1941,7 +1941,7 @@ class BranchHintPreservation(TestCaseHandler):
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
-        return all_disallowed(['shared-everything', 'strings'])
+        return all_disallowed(['shared-everything', 'strings', 'custom-descriptors'])
 
 
 # The global list of all test case handlers
