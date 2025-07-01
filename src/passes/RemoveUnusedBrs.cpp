@@ -161,11 +161,11 @@ static std::optional<bool> getBranchHint(Expression* expr, Function* func) {
 }
 
 static void setBranchHint(Expression* expr, bool likely, Function* func) {
-  func->codeAnnotations[expr].branchLikely = likely;
+//  func->codeAnnotations[expr].branchLikely = likely;
 }
 
 static void clearBranchHint(Expression* expr, Function* func) {
-  func->codeAnnotations[expr].branchLikely = {};
+//  func->codeAnnotations[expr].branchLikely = {};
 }
 
 static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
@@ -460,7 +460,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               builder.makeSelect(br->condition, curr->condition, zero);
           }
           br->finalize();
-          //copyBranchHintTo(curr, br, getFunction());
+          copyBranchHintTo(curr, br, getFunction());
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
@@ -499,7 +499,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto currHint = getBranchHint(curr, getFunction());
         auto childHint = getBranchHint(child, getFunction());
         if (!currHint || currHint != childHint) {
-          //clearBranchHint(curr, getFunction());
+          clearBranchHint(curr, getFunction());
         }
         curr->ifTrue = child->ifTrue;
       }
@@ -731,7 +731,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
             last->name = brIf->name;
             brIf->name = loop->name;
-            //flipBranchHint(brIf, getFunction());
+            flipBranchHint(brIf, getFunction());
             return true;
           } else {
             // there are elements in the middle,
@@ -752,7 +752,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
                                stealSlice(builder, block, i + 1, list.size()));
-              //copyBranchHintTo(brIf, list[i], getFunction());
+              copyBranchHintTo(brIf, list[i], getFunction());
               // later: fuzz this: instrument "i am guessing at loc X" and "it
               // was true/it was false", then fuzzz that we don't decreaes times
               // we are right.
