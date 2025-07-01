@@ -1908,8 +1908,8 @@ class BranchHintPreservation(TestCaseHandler):
                 # This may complete a pair.
                 last_pair = pairs[-1]
                 assert len(last_pair) == 1
-                last_id = last_pair[0].split(' ')[2]
-                line_id = line.split(' ')[2]
+                last_id = int(last_pair[0].split(' ')[2])
+                line_id = int(line.split(' ')[2])
                 if last_id >= 0 and last_id == -line_id:
                     last_pair.append(line)
                 else:
@@ -1933,7 +1933,7 @@ class BranchHintPreservation(TestCaseHandler):
             first, second = pair
             _, _, first_id, _, first_hint, _, _, first_actual = first.split(' ')
             _, _, second_id, _, second_hint, _, _, second_actual = second.split(' ')
-            assert first_id >= 0 and first_id == -second_id
+            assert second_id == '-' + first_id
             first_alignment = (first_hint != first_actual)
             second_alignment = (second_hint != second_actual)
             assert first_alignment == second_alignment
