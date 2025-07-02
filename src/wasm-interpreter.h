@@ -2448,6 +2448,14 @@ public:
     }
     return Literal(result);
   }
+  Flow visitStringTest(StringTest* curr) {
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto value = flow.getSingleValue();
+    return Literal((uint32_t)value.isString());
+  }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     NOTE_ENTER("StringWTF16Get");
     Flow ref = visit(curr->ref);

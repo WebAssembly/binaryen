@@ -2697,6 +2697,10 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
   }
 }
 
+void BinaryInstWriter::visitStringTest(StringTest* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringTest);
+}
+
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
   // We need to convert the ref operand to a stringview, but it is under the pos
   // operand. Put the i32 in a scratch local, emit the conversion, then get the

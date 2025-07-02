@@ -105,6 +105,7 @@ DELEGATE(StringMeasure);
 DELEGATE(StringEncode);
 DELEGATE(StringConcat);
 DELEGATE(StringEq);
+DELEGATE(StringTest);
 DELEGATE(StringWTF16Get);
 DELEGATE(StringSliceWTF);
 DELEGATE(ContNew);

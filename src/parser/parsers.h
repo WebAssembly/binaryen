@@ -319,6 +319,8 @@ Result<> makeStringConcat(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeStringEq(Ctx&, Index, const std::vector<Annotation>&, StringEqOp);
 template<typename Ctx>
+Result<> makeStringTest(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeStringWTF16Get(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx&, Index, const std::vector<Annotation>&);
@@ -2625,6 +2627,13 @@ Result<> makeStringEq(Ctx& ctx,
                       const std::vector<Annotation>& annotations,
                       StringEqOp op) {
   return ctx.makeStringEq(pos, annotations, op);
+}
+
+template<typename Ctx>
+Result<> makeStringTest(Ctx& ctx,
+                        Index pos,
+                        const std::vector<Annotation>& annotations) {
+  return ctx.makeStringTest(pos, annotations);
 }
 
 template<typename Ctx>

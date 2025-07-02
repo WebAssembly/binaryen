@@ -662,9 +662,7 @@ struct InfoCollector
       info.calledFromOutside.insert(curr->func);
     }
   }
-  void visitRefEq(RefEq* curr) {
-    addRoot(curr);
-  }
+  void visitRefEq(RefEq* curr) { addRoot(curr); }
   void visitTableGet(TableGet* curr) {
     // TODO: be more precise
     addRoot(curr);
@@ -1140,6 +1138,10 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitStringEq(StringEq* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+  void visitStringTest(StringTest* curr) {
     // TODO: optimize when possible
     addRoot(curr);
   }
