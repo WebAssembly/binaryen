@@ -1937,7 +1937,7 @@ class BranchHintPreservation(TestCaseHandler):
             assert second_id == '-' + first_id
             first_alignment = (first_hint != first_actual)
             second_alignment = (second_hint != second_actual)
-            assert first_alignment == second_alignment
+            assert first_alignment == second_alignment, 'branch hints must change properly'
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
