@@ -238,8 +238,8 @@ struct InstrumentBranchHints
         // Great, this is indeed a prior instrumentation.
         call = iter->second;
       } else if (gets.size() == 1) {
-        // The set has only one get, but it might be a tee that flows into a
-        // call:
+        // The set has only one get, but the set might be a tee that flows into
+        // a call:
         //
         //  (call logBranch (local.tee $temp (..)))  ;; used in logging
         //  (if
