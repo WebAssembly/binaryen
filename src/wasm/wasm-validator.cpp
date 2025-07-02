@@ -3831,7 +3831,7 @@ void FunctionValidator::visitArrayCmpxchg(ArrayCmpxchg* curr) {
 void FunctionValidator::visitStringNew(StringNew* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 
   switch (curr->op) {
     case StringNewLossyUTF8Array:
@@ -3876,49 +3876,49 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
 void FunctionValidator::visitStringConst(StringConst* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringMeasure(StringMeasure* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringEncode(StringEncode* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringConcat(StringConcat* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringEq(StringEq* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringTest(StringTest* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringWTF16Get(StringWTF16Get* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitStringSliceWTF(StringSliceWTF* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
-               "string operations require reference-types [--enable-strings]");
+               "string operations require strings [--enable-strings]");
 }
 
 void FunctionValidator::visitContNew(ContNew* curr) {
