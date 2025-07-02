@@ -194,7 +194,8 @@ struct InstrumentBranchHints
       //  (if
       //    (local.get $temp)                       ;; and used in condition
       //
-      auto* fallthrough = Properties::getFallthrough(curr->condition, getPassOptions(), *getModule());
+      auto* fallthrough = Properties::getFallthrough(
+        curr->condition, getPassOptions(), *getModule());
       auto* get = fallthrough->template dynCast<LocalGet>();
       if (!get) {
         return;
