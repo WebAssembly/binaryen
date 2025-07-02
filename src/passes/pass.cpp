@@ -412,9 +412,9 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
-  registerPass("randomize-branch-hints",
-               "randomize branch hints (for fuzzing)",
-               createRandomizeBranchHintsPass);
+  registerTestPass("randomize-branch-hints",
+                   "randomize branch hints (for fuzzing)",
+                   createRandomizeBranchHintsPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
