@@ -259,6 +259,9 @@ void PassRegistry::registerPasses() {
     "trace-calls",
     "instrument the build with code to intercept specific function calls",
     createTraceCallsPass);
+  registerPass("instrument-branch-hints",
+               "instrument branch hints so we can see which guessed right",
+               createInstrumentBranchHintsPass);
   registerPass(
     "instrument-locals",
     "instrument the build with code to intercept all loads and stores",
@@ -409,6 +412,9 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
+  registerPass("randomize-branch-hints",
+               "randomize branch hints (for fuzzing)",
+               createRandomizeBranchHintsPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
