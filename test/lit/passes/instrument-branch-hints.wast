@@ -789,23 +789,27 @@
 (module
   ;; CHECK:      (type $0 (func (param i32 i32 i32)))
 
-  ;; CHECK:      (type $1 (func (param i32)))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (import "fuzzing-support" "log-branch" (func $min (type $0) (param i32 i32 i32)))
   ;; TWICE:      (type $0 (func (param i32 i32 i32)))
 
-  ;; TWICE:      (type $1 (func (param i32)))
+  ;; TWICE:      (type $1 (func))
 
   ;; TWICE:      (import "fuzzing-support" "log-branch" (func $min (type $0) (param i32 i32 i32)))
   (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
 
-  ;; CHECK:      (func $if (type $1) (param $x i32)
+  ;; CHECK:      (func $if (type $1)
+  ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (call $min
   ;; CHECK-NEXT:       (i32.const 42)
   ;; CHECK-NEXT:       (i32.const 1)
@@ -828,13 +832,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TWICE:      (func $if (type $1) (param $x i32)
+  ;; TWICE:      (func $if (type $1)
+  ;; TWICE-NEXT:  (local $x i32)
   ;; TWICE-NEXT:  (local $1 i32)
   ;; TWICE-NEXT:  (@metadata.code.branch_hint "\01")
   ;; TWICE-NEXT:  (if
   ;; TWICE-NEXT:   (block (result i32)
   ;; TWICE-NEXT:    (local.set $1
   ;; TWICE-NEXT:     (block (result i32)
+  ;; TWICE-NEXT:      (local.set $x
+  ;; TWICE-NEXT:       (i32.const 42)
+  ;; TWICE-NEXT:      )
   ;; TWICE-NEXT:      (call $min
   ;; TWICE-NEXT:       (i32.const 42)
   ;; TWICE-NEXT:       (i32.const 1)
@@ -857,10 +865,14 @@
   ;; TWICE-NEXT:   )
   ;; TWICE-NEXT:  )
   ;; TWICE-NEXT: )
-  (func $if (param $x i32)
+  (func $if
+    (local $x i32)
     (@metadata.code.branch_hint "\01")
     (if
       (block (result i32)
+        (local.set $x
+          (i32.const 42)
+        )
         (call $min
           (i32.const 42)
           (i32.const 1)
