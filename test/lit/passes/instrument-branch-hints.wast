@@ -1051,5 +1051,73 @@
     )
   )
 
-  ;; TODO: test with 3 uses of the local.set, and fail
+  ;; CHECK:      (func $optimized-bad (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $min
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TWICE:      (func $optimized-bad (type $0)
+  ;; TWICE-NEXT:  (local $x i32)
+  ;; TWICE-NEXT:  (local.set $x
+  ;; TWICE-NEXT:   (i32.const 42)
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT:  (call $min
+  ;; TWICE-NEXT:   (i32.const 42)
+  ;; TWICE-NEXT:   (i32.const 1)
+  ;; TWICE-NEXT:   (local.get $x)
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; TWICE-NEXT:  (if
+  ;; TWICE-NEXT:   (local.get $x)
+  ;; TWICE-NEXT:   (then
+  ;; TWICE-NEXT:    (drop
+  ;; TWICE-NEXT:     (i32.const 1337)
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:   )
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT:  (drop
+  ;; TWICE-NEXT:   (local.get $x)
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT: )
+  (func $optimized-bad
+    (local $x i32)
+    ;; As above, but the set has another use later, so we give up as the pattern
+    ;; is unfamiliar.
+    (local.set $x
+      (i32.const 42)
+    )
+    (call $min
+      (i32.const 42)
+      (i32.const 1)
+      (local.get $x)
+    )
+    (@metadata.code.branch_hint "\01")
+    (if
+      (local.get $x)
+      (then
+        (drop (i32.const 1337))
+      )
+    )
+    (drop
+      (local.get $x)  ;; extra use
+    )
+  )
 )
