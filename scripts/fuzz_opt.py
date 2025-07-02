@@ -1849,6 +1849,28 @@ class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
     def handle(self, wasm):
+        open(wasm, 'w').write('''
+(module
+  (func $loop-br_if-flip-reverse (param $x i32)
+    ;; As above, with a hint of 1, that should flip to 0.
+    (block $block
+      (loop $loop
+        (@metadata.code.branch_hint "\\01")
+        (br_if $block
+          (local.get $x)
+        )
+        (br $loop)
+      )
+    )
+  )
+)
+''')
+        # XXX bizarre we see no fuzz findings... hack this code to use a given
+        # wat file I see the bug on, and see that happens...
+        # so... the issue is that we add an eqz on the br_if... no local.get immediate to see! can we look through eqz..?
+        #   loo through eqz and fallthrough and perhaps more..?
+        # OR: if we see a prior instrumentation, we can look at that statically and see if it needs flipping, i guess.. not great
+
         # Generate the middle wasm, which has the first round of instrumentation,
         # then the final one with optimizations as well. We only run the final
         # one, but the middle one is useful to compare when debugging an error.
@@ -1868,7 +1890,8 @@ class BranchHintPreservation(TestCaseHandler):
         run([
             in_bin('wasm-opt'),
             middle,
-        ] + get_random_opts() + [
+            '--remove-unused-brs', # XXX
+        #] + get_random_opts() + [
             # Instrument again after opts, so our fuzzing can see if the opts
             # messed anything up.
             '--instrument-branch-hints',
