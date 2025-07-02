@@ -276,8 +276,7 @@
         (drop (i32.const 299))
       )
     )
-    ;; Another hint of 0, for more coverage (ensure hint value differs from
-    ;; break id).
+    ;; Another hint of 0, for more coverage.
     (@metadata.code.branch_hint "\00")
     (if
       (i32.const 342)
@@ -502,7 +501,7 @@
   ;; TWICE-NEXT:  )
   ;; TWICE-NEXT: )
   (func $br_value (result f64)
-    ;; As above, but now with a value. We need to stash it to a local.
+    ;; As above, but now with a value.
     (block $out (result f64)
       (@metadata.code.branch_hint "\00")
       (br_if $out
@@ -665,9 +664,10 @@
   ;; TWICE-NEXT:  )
   ;; TWICE-NEXT: )
   (func $nested
-    ;; Do not reuse branch hint ids in the same instrumentation: even if we have
-    ;; nested conditions, we can see which calls we added, and not reuse their
-    ;; ids. Only TWICE should ever reuse ids in our output.
+    ;; Do not be confused by our own output, in nested code: even if we have
+    ;; nested conditions, the first instrumentation should not think its output
+    ;; is from prior instrumentation. Only TWICE should ever emit negated IDs of
+    ;; existing ones.
     (@metadata.code.branch_hint "\00")
     (if
       (@metadata.code.branch_hint "\01")
