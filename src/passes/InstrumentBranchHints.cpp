@@ -36,7 +36,25 @@
 //    Y
 //  }
 //
-// The motivation for this pass is to fuzz branch hint updates: given a fuzz
+// Concretely, we emit calls to this logging function:
+//
+//  (import "fuzzing-support" "log-branch"
+//    (func $log-branch (param i32 i32 i32)) ;; ID, prediction, actual
+//  )
+//
+// This can be used to verify that branch hints are accurate, by implementing
+// the import like this for example:
+//
+//  imports['fuzzing-support']['log-branch'] = (id, prediction, actual) => {
+//    // We only care about truthiness of the expected and actual values.
+//    expected = +!!expected;
+//    actual = +!!actual;
+//    // Throw if the hint said this branch would be taken, but it was not, or
+//    // vice versa.
+//    if (expected != actual) throw `Bad branch hint! (${id})`;
+//  };
+//
+// Another use case for this pass is to fuzz branch hint updates: given a fuzz
 // case, we can instrument it and view the loggings, then optimize the original,
 // instrument that, and view those loggings. Imagine, for example, that we flip
 // the condition but forget to flip the hint:
@@ -66,7 +84,7 @@
 // with another temp local. Also, we inferred the same ID (123) in both cases,
 // by scanning the inside of the condition. Using that, the new logging will be
 // 123,B,C followed by 123,B,!C. We can therefore find pairs of loggings with
-// same ID, and consider the predicted and actual values:
+// the same ID, and consider the predicted and actual values:
 //
 //  [id,0,0], [id,0,0] - nothing changed: good
 //  [id,0,0], [id,0,1] - the actual result changed but not the prediction: bad
@@ -76,13 +94,11 @@
 //
 // To make it easy to pair the results, the ID is negative in subsequent
 // instrumentations. That is, we will match an ID of 42 in the first
-// instrumentation with an id of -42 in the last (that avoids us matching two
+// instrumentation with an id of -42 in the second (that avoids us matching two
 // from the first, if e.g. a branch happens twice in a loop). Thus, the first
 // instrumentations adds positive IDs, and the second adds negative, which makes
-// it trivial to differentiate them.
-//
-// Regardless of whether the hint was right or wrong, it should change in tandem
-// with the actual result, see script/fuzz_opt.py's BranchHintPreservation.
+// it trivial to differentiate them. (See script/fuzz_opt.py's
+// BranchHintPreservation for more details.)
 //
 
 #include "ir/eh-utils.h"
