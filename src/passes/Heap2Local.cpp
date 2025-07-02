@@ -752,8 +752,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
       }
     }
     if (curr->desc) {
-      contents.push_back(
-        builder.makeLocalSet(tempIndexes[numTemps - 1], curr->desc));
+      // Preserve the trapping on null descriptors by inserting a
+      // ref.as_non_null.
+      Expression* desc = curr->desc;
+      if (curr->desc->type.isNullable()) {
+        desc = builder.makeRefAs(RefAsNonNull, desc);
+      }
+      contents.push_back(builder.makeLocalSet(tempIndexes[numTemps - 1], desc));
     }
 
     // Store the values into the locals representing the fields.

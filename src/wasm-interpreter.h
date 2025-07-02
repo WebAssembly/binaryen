@@ -1811,6 +1811,9 @@ public:
     if (desc.breaking()) {
       return desc;
     }
+    if (desc.getSingleValue().isNull()) {
+      trap("null descriptor");
+    }
     return makeGCData(std::move(data), curr->type, desc.getSingleValue());
   }
   Flow visitStructGet(StructGet* curr) {
