@@ -266,15 +266,15 @@ struct InstrumentBranchHints
       if (!c) {
         return;
       }
-      // Emit logging to pair with it, with negated ID.
-      id = -c->value.geti32();
-      if (id > 0) {
-        // The seen ID was already negated, so we negated it again to be
-        // positive. That means the existing instrumentation was a second
-        // instrumentation, and we should only operate on positive IDs and emit
-        // negative ones.
+      // Emit logging to pair with it
+      id = c->value.geti32();
+      if (id < 0) {
+        // The seen ID is negative, but we should only operation on positive
+        // ones that we can be certain came from the first instrumentation.
         return;
       }
+      // The second logging we add is with a negated ID.
+      id = -id;
     }
 
     // Instrument the condition.
