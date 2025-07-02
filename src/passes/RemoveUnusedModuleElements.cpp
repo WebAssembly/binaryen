@@ -36,6 +36,7 @@
 //
 
 #include <memory>
+#include <vector>
 
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
@@ -45,8 +46,11 @@
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/stdckdint.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -712,6 +716,27 @@ struct RemoveUnusedModuleElements : public Pass {
       roots.emplace_back(ModuleElementKind::Function, name);
     });
 
+    // Just as out-of-bound segments may cause observable traps at instantiation
+    // time, so can struct.new instructions with null descriptors cause traps in
+    // global or element segment initializers.
+    if (!getPassOptions().trapsNeverHappen) {
+      for (auto& segment : module->elementSegments) {
+        for (auto* init : segment->data) {
+          if (isMaybeTrappingInit(*module, init)) {
+            roots.emplace_back(ModuleElementKind::ElementSegment,
+                               segment->name);
+            break;
+          }
+        }
+      }
+      for (auto& global : module->globals) {
+        if (auto* init = global->init;
+            init && isMaybeTrappingInit(*module, init)) {
+          roots.emplace_back(ModuleElementKind::Global, global->name);
+        }
+      }
+    }
+
     // Analyze the module.
     auto& options = getPassOptions();
     Analyzer analyzer(module, options, roots);
@@ -831,6 +856,27 @@ struct RemoveUnusedModuleElements : public Pass {
         *name = calledFunc->name;
       }
     }
+  }
+
+  bool isMaybeTrappingInit(Module& wasm, Expression* root) {
+    // Traverse the expression, looking for nullable descriptors passed to
+    // struct.new. The descriptors might be null, which is the only situations
+    // (beyond exceeded implementation limits, which we don't model) that can
+    // lead a constant expression to trap. We depend on other optimizations to
+    // make the descriptors non-nullable if we can determine that they are not
+    // null.
+    struct NullDescFinder : PostWalker<NullDescFinder> {
+      bool mayTrap = false;
+      void visitStructNew(StructNew* curr) {
+        if (curr->desc && curr->desc->type.isNullable()) {
+          mayTrap = true;
+        }
+      }
+    };
+
+    NullDescFinder finder;
+    finder.walk(root);
+    return finder.mayTrap;
   }
 };
 
