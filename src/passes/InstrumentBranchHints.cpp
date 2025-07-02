@@ -122,11 +122,11 @@ struct InstrumentBranchHints
   using Super = WalkerPass<PostWalker<InstrumentBranchHints>>;
 
   // The module and base names of our import.
-  Name MODULE = "fuzzing-support";
-  Name BASE = "log-branch";
+  static Name MODULE = "fuzzing-support";
+  static Name BASE = "log-branch";
 
   // The internal name of our import.
-  Name LOG_BRANCH;
+  Name logBranch;
 
   // Whether we are the second pass of instrumentation. If so, we only add
   // logic to parallel existing hints (for each such hint, we emit one with a
@@ -151,16 +151,19 @@ struct InstrumentBranchHints
   std::unordered_map<LocalSet*, Call*> teesOfPriorInstrumentation;
 
   void visitCall(Call* curr) {
-    if (curr->target != LOG_BRANCH) {
+    if (curr->target != logBranch) {
       return;
     }
     // Our logging has 3 fields: id, expected, actual.
-    assert(curr->operands.size() == 3);
-    if (auto* get = curr->operands[2]->dynCast<LocalGet>()) {
-      getsOfPriorInstrumentation[get] = curr;
-    } else if (auto* tee = curr->operands[2]->dynCast<LocalSet>()) {
-      teesOfPriorInstrumentation[tee] = curr;
+    if (curr->operands.size() == 3) {
+      if (auto* get = curr->operands[2]->dynCast<LocalGet>()) {
+        getsOfPriorInstrumentation[get] = curr;
+      } else if (auto* tee = curr->operands[2]->dynCast<LocalSet>()) {
+        teesOfPriorInstrumentation[tee] = curr;
+      }
     }
+    // Anything else is a pattern we don't recognize (perhaps this is a fuzzer-
+    // modified testcase), and we skip.
   }
 
   bool added = false;
@@ -191,7 +194,7 @@ struct InstrumentBranchHints
       // is, something like the pattern we emit below:
       //
       //  (local.set $temp ..)
-      //  (call LOG_BRANCH (local.get $temp))  ;; used in logging
+      //  (call logBranch (local.get $temp))  ;; used in logging
       //  (if
       //    (local.get $temp)                  ;; and used in condition
       //
@@ -200,13 +203,13 @@ struct InstrumentBranchHints
       //  (if
       //    (block
       //      (local.set $temp ..)
-      //      (call LOG_BRANCH (local.get $temp))  ;; used in logging
+      //      (call logBranch (local.get $temp))  ;; used in logging
       //      (local.get $temp)                    ;; and used in condition
       //    )
       //
       // We also consider a tee:
       //
-      //  (call LOG_BRANCH (local.tee $temp (..)))  ;; used in logging
+      //  (call logBranch (local.tee $temp (..)))  ;; used in logging
       //  (if
       //    (local.get $temp)                       ;; and used in condition
       //
@@ -255,9 +258,11 @@ struct InstrumentBranchHints
         return;
       }
 
-      // We found a potential call from a prior instrumentation. It should have
-      // a const ID.
-      assert(call->operands.size() == 3);
+      // We found a potential call from a prior instrumentation. It should be in
+      // the proper form, and have a const ID.
+      if (call->operands.size() != 3) {
+        return;
+      }
       auto* c = call->operands[0]->template dynCast<Const>();
       if (!c) {
         return;
@@ -280,7 +285,7 @@ struct InstrumentBranchHints
     auto* guess = builder.makeConst(Literal(int32_t(*likely)));
     auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
     auto* logBranch =
-      builder.makeCall(LOG_BRANCH, {idc, guess, get1}, Type::none);
+      builder.makeCall(logBranch, {idc, guess, get1}, Type::none);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
     curr->condition = builder.makeBlock({set, logBranch, get2});
     added = true;
@@ -305,21 +310,21 @@ struct InstrumentBranchHints
     // Find our import, if we were already run on this module.
     for (auto& func : module->functions) {
       if (func->module == MODULE && func->base == BASE) {
-        LOG_BRANCH = func->name;
+        logBranch = func->name;
         // The logging function existed before, so this is the second
         // instrumentation.
         secondInstrumentation = true;
         break;
       }
     }
-    if (!LOG_BRANCH) {
+    if (!logBranch) {
       auto* func = module->addFunction(Builder::makeFunction(
         Names::getValidFunctionName(*module, BASE),
         Signature({Type::i32, Type::i32, Type::i32}, Type::none),
         {}));
       func->module = MODULE;
       func->base = BASE;
-      LOG_BRANCH = func->name;
+      logBranch = func->name;
     }
 
     // Walk normally, using logBranch as we go.
