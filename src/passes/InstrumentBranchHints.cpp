@@ -122,8 +122,8 @@ struct InstrumentBranchHints
   using Super = WalkerPass<PostWalker<InstrumentBranchHints>>;
 
   // The module and base names of our import.
-  static Name MODULE = "fuzzing-support";
-  static Name BASE = "log-branch";
+  const Name MODULE = "fuzzing-support";
+  const Name BASE = "log-branch";
 
   // The internal name of our import.
   Name logBranch;
@@ -283,10 +283,10 @@ struct InstrumentBranchHints
     auto* idConst = builder.makeConst(Literal(int32_t(id)));
     auto* guess = builder.makeConst(Literal(int32_t(*likely)));
     auto* get1 = builder.makeLocalGet(tempLocal, Type::i32);
-    auto* logBranch =
+    auto* log =
       builder.makeCall(logBranch, {idConst, guess, get1}, Type::none);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
-    curr->condition = builder.makeBlock({set, logBranch, get2});
+    curr->condition = builder.makeBlock({set, log, get2});
     addedInstrumentation = true;
   }
 
