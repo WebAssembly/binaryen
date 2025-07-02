@@ -258,7 +258,7 @@ struct InstrumentBranchHints
       // We found a potential call from a prior instrumentation. It should have
       // a const ID.
       assert(call->operands.size() == 3);
-      auto* c = call->operands[0]->template cast<Const>();
+      auto* c = call->operands[0]->template dynCast<Const>();
       if (!c) {
         return;
       }
