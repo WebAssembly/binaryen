@@ -664,10 +664,10 @@
   ;; TWICE-NEXT:  )
   ;; TWICE-NEXT: )
   (func $nested
-    ;; Do not reuse branch hint ids in the same instrumentation: even if we have
+    ;; Do not be confused by our own output, in nested code: even if we have
     ;; nested conditions, the first instrumentation should not think its output
-    ;; is from. Only TWICE should ever reuse ids in our output (that is, emit
-    ;; negated IDs of existing ones).
+    ;; is from prior instrumentation. Only TWICE should ever emit negated IDs of
+    ;; existing ones.
     (@metadata.code.branch_hint "\00")
     (if
       (@metadata.code.branch_hint "\01")
