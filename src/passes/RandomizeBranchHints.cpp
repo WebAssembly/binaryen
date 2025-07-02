@@ -15,7 +15,8 @@
  */
 
 //
-// Apply random branch hints. This is really only useful for fuzzing.
+// Apply random branch hints. This is really only useful for fuzzing. The
+// randomness here is deterministic, so that reducing can work.
 //
 
 #include "pass.h"
