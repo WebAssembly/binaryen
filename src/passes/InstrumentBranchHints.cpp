@@ -255,10 +255,15 @@ struct InstrumentBranchHints
         return;
       }
 
-      // We found a call from a prior instrumentation. Emit one to pair with it,
-      // with negated ID.
+      // We found a potential call from a prior instrumentation. It should have
+      // a const ID.
       assert(call->operands.size() == 3);
-      id = -call->operands[0]->template cast<Const>()->value.geti32();
+      auto* c = call->operands[0]->template cast<Const>();
+      if (!c) {
+        return;
+      }
+      // Emit logging to pair with it, with negated ID.
+      id = -c->value.geti32();
       if (id > 0) {
         // The seen ID was already negated, so we negated it again to be
         // positive. That means the existing instrumentation was a second
