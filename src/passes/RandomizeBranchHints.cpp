@@ -20,7 +20,7 @@
 //
 
 #include "pass.h"
-#Include "support/hash.h"
+#include "support/hash.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
