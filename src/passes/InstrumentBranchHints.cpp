@@ -86,8 +86,9 @@
 //
 
 #include "ir/eh-utils.h"
-#include "ir/find_all.h"
+#include "ir/local-graph.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -101,6 +102,9 @@ int branchId = 1;
 
 struct InstrumentBranchHints
   : public WalkerPass<PostWalker<InstrumentBranchHints>> {
+
+  using Super = WalkerPass<PostWalker<InstrumentBranchHints>>;
+
   // The module and base names of our import.
   Name MODULE = "fuzzing-support";
   Name BASE = "log-branch";
@@ -113,11 +117,30 @@ struct InstrumentBranchHints
   // negative ID, so they can be paired, as mentioned above).
   bool secondInstrumentation = false;
 
+  std::unique_ptr<LocalGraph> localGraph;
+
   void visitIf(If* curr) { processCondition(curr); }
 
   void visitBreak(Break* curr) {
     if (curr->condition) {
       processCondition(curr);
+    }
+  }
+
+  // Track existing calls to our logging, and their gets, so that we can
+  // identify them and add the second instrumentation properly. This map stores
+  // gets that map to such calls, specifically their actual values (the same
+  // value used in the branch, which we want to instrument).
+  std::unordered_map<LocalGet*, Call*> getsOfPriorInstrumentation;
+
+  void visitCall(Call* curr) {
+    if (curr->target != LOG_BRANCH) {
+      return;
+    }
+    // Our logging has 3 fields: id, expected, actual.
+    assert(curr->operands.size() == 3);
+    if (auto* get = curr->operands[2]->cast<LocalGet>()) {
+      getsOfPriorInstrumentation[get] = curr;
     }
   }
 
@@ -143,24 +166,64 @@ struct InstrumentBranchHints
       // new positive ID for each.
       id = branchId++;
     } else {
-      // In the second instrumentation we find existing calls and add paired
-      // ones to them.
-      for (auto* call : FindAll<Call>(curr->condition).list) {
-        if (call->target == LOG_BRANCH) {
-          if (id) {
-            // We have seen another before, so give up (it is not worth the
-            // effort to figure out what belongs to what).
-            return;
-          }
-          // Use this ID, which must be from the first instrumentation.
-          assert(call->operands.size() == 3);
-          id = call->operands[0]->cast<Const>()->value.geti32();
-          // We will use it negated.
-          id = -id;
+      // In the second instrumentation we find existing instrumentation and add
+      // paired ones to them. To find the existing ones, we look for this
+      // condition being a local.get that is used in a call to our import, that
+      // is, something like the pattern we emit below:
+      //
+      //  (local.set $temp ..)
+      //  (call LOG_BRANCH (local.get $temp))  ;; used in logging
+      //  (if
+      //    (local.get $temp)                  ;; and used in condition
+      //
+      // We also consider the fallthrough, for the nested case:
+      //
+      //  (if
+      //    (block
+      //      (local.set $temp ..)
+      //      (call LOG_BRANCH (local.get $temp))  ;; used in logging
+      //      (local.get $temp)                    ;; and used in condition
+      //    )
+      //
+      // TODO tee?
+      auto* fallthrough = Properties::getFallthrough(curr->condition, getPassOptions(), *getModule());
+      auto* get = fallthrough->template dynCast<LocalGet>();
+      if (!get) {
+        return;
+      }
+      auto& sets = localGraph->getSets(get);
+      if (sets.size() != 1) {
+        return;
+      }
+      auto* set = *sets.begin();
+      // The set should have two gets: the get in the condition we began at, and
+      // another.
+      auto& gets = localGraph->getSetInfluences(set);
+      if (gets.size() != 2) {
+        return;
+      }
+      LocalGet* otherGet = nullptr;
+      for (auto* get2 : gets) {
+        if (get2 != get) {
+          otherGet = get2;
         }
       }
-      if (!id) {
-        // No call found.
+      assert(otherGet);
+      // See if that other get is used in a logging.
+      auto iter = getsOfPriorInstrumentation.find(otherGet);
+      if (iter == getsOfPriorInstrumentation.end()) {
+        return;
+      }
+      // Great, this is indeed a prior instrumentation! Add a second
+      // instrumentation for it, using the old ID (negated).
+      auto* call = iter->second;
+      assert(call->operands.size() == 3);
+      id = -call->operands[0]->template cast<Const>()->value.geti32();
+      if (id > 0) {
+        // The seen ID was already negated, so we negated it again to be
+        // positive. That means the existing instrumentation was a second
+        // instrumentation, and we should only operate on positive IDs and emit
+        // negative ones.
         return;
       }
     }
@@ -178,7 +241,14 @@ struct InstrumentBranchHints
     added = true;
   }
 
-  void visitFunction(Function* func) {
+  void doWalkFunction(Function* func) {
+    if (secondInstrumentation) {
+      localGraph = std::make_unique<LocalGraph>(func, getModule());
+      localGraph->computeSetInfluences();
+    }
+
+    Super::doWalkFunction(func);
+
     // Our added blocks may have caused nested pops.
     if (added) {
       EHUtils::handleBlockNestedPops(func, *getModule());
@@ -208,7 +278,7 @@ struct InstrumentBranchHints
     }
 
     // Walk normally, using logBranch as we go.
-    WalkerPass<PostWalker<InstrumentBranchHints>>::doWalkModule(module);
+    Super::doWalkModule(module);
   }
 };
 
