@@ -130,8 +130,9 @@ struct InstrumentBranchHints
   // Track existing calls to our logging, and their gets, so that we can
   // identify them and add the second instrumentation properly. This map stores
   // gets that map to such calls, specifically their actual values (the same
-  // value used in the branch, which we want to instrument).
+  // value used in the branch, which we want to instrument). We also map tees.
   std::unordered_map<LocalGet*, Call*> getsOfPriorInstrumentation;
+  std::unordered_map<LocalSet*, Call*> teesOfPriorInstrumentation;
 
   void visitCall(Call* curr) {
     if (curr->target != LOG_BRANCH) {
@@ -139,8 +140,10 @@ struct InstrumentBranchHints
     }
     // Our logging has 3 fields: id, expected, actual.
     assert(curr->operands.size() == 3);
-    if (auto* get = curr->operands[2]->cast<LocalGet>()) {
+    if (auto* get = curr->operands[2]->dynCast<LocalGet>()) {
       getsOfPriorInstrumentation[get] = curr;
+    } else if (auto* tee = curr->operands[2]->dynCast<LocalSet>()) {
+      teesOfPriorInstrumentation[tee] = curr;
     }
   }
 
@@ -185,7 +188,12 @@ struct InstrumentBranchHints
       //      (local.get $temp)                    ;; and used in condition
       //    )
       //
-      // TODO tee?
+      // We also consider a tee:
+      //
+      //  (call LOG_BRANCH (local.tee $temp (..)))  ;; used in logging
+      //  (if
+      //    (local.get $temp)                       ;; and used in condition
+      //
       auto* fallthrough = Properties::getFallthrough(curr->condition, getPassOptions(), *getModule());
       auto* get = fallthrough->template dynCast<LocalGet>();
       if (!get) {
@@ -196,27 +204,42 @@ struct InstrumentBranchHints
         return;
       }
       auto* set = *sets.begin();
-      // The set should have two gets: the get in the condition we began at, and
-      // another.
       auto& gets = localGraph->getSetInfluences(set);
-      if (gets.size() != 2) {
-        return;
-      }
-      LocalGet* otherGet = nullptr;
-      for (auto* get2 : gets) {
-        if (get2 != get) {
-          otherGet = get2;
+      Call* call = nullptr;
+      if (gets.size() == 2) {
+        // The set has two gets: the get in the condition we began at, and
+        // another.
+        LocalGet* otherGet = nullptr;
+        for (auto* get2 : gets) {
+          if (get2 != get) {
+            otherGet = get2;
+          }
         }
-      }
-      assert(otherGet);
-      // See if that other get is used in a logging.
-      auto iter = getsOfPriorInstrumentation.find(otherGet);
-      if (iter == getsOfPriorInstrumentation.end()) {
+        assert(otherGet);
+        // See if that other get is used in a logging.
+        auto iter = getsOfPriorInstrumentation.find(otherGet);
+        if (iter == getsOfPriorInstrumentation.end()) {
+          return;
+        }
+        // Great, this is indeed a prior instrumentation. Add a second
+        // instrumentation for it, using the old ID (negated).
+        call = iter->second;
+      } else if (gets.size() == 1) {
+        // The set has only one get, but it might be a tee that flows into a
+        // call.
+        auto iter = teesOfPriorInstrumentation.find(set);
+        if (iter == teesOfPriorInstrumentation.end()) {
+          return;
+        }
+        // Great, this is indeed a prior instrumentation! Add a second
+        // instrumentation for it, using the old ID (negated).
+        call = iter->second;
+      } else {
+        // The get has more uses; give up.
         return;
       }
-      // Great, this is indeed a prior instrumentation! Add a second
-      // instrumentation for it, using the old ID (negated).
-      auto* call = iter->second;
+
+      // We found a call from a prior instrumentation.
       assert(call->operands.size() == 3);
       id = -call->operands[0]->template cast<Const>()->value.geti32();
       if (id > 0) {

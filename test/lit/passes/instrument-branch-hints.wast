@@ -970,4 +970,86 @@
       )
     )
   )
+
+  ;; CHECK:      (func $optimized-moar (type $0)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $min
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $min
+  ;; CHECK-NEXT:     (i32.const -42)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; TWICE:      (func $optimized-moar (type $0)
+  ;; TWICE-NEXT:  (local $x i32)
+  ;; TWICE-NEXT:  (local $1 i32)
+  ;; TWICE-NEXT:  (call $min
+  ;; TWICE-NEXT:   (i32.const 42)
+  ;; TWICE-NEXT:   (i32.const 1)
+  ;; TWICE-NEXT:   (local.tee $x
+  ;; TWICE-NEXT:    (i32.const 42)
+  ;; TWICE-NEXT:   )
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; TWICE-NEXT:  (if
+  ;; TWICE-NEXT:   (block (result i32)
+  ;; TWICE-NEXT:    (local.set $1
+  ;; TWICE-NEXT:     (local.get $x)
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:    (call $min
+  ;; TWICE-NEXT:     (i32.const -42)
+  ;; TWICE-NEXT:     (i32.const 1)
+  ;; TWICE-NEXT:     (local.get $1)
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:    (local.get $1)
+  ;; TWICE-NEXT:   )
+  ;; TWICE-NEXT:   (then
+  ;; TWICE-NEXT:    (drop
+  ;; TWICE-NEXT:     (i32.const 1337)
+  ;; TWICE-NEXT:    )
+  ;; TWICE-NEXT:   )
+  ;; TWICE-NEXT:  )
+  ;; TWICE-NEXT: )
+  (func $optimized-moar
+    (local $x i32)
+    ;; As above, but optimized further, now using a tee. We should still add the
+    ;; second instrumentation.
+    (call $min
+      (i32.const 42)
+      (i32.const 1)
+      (local.tee $x
+        (i32.const 42)
+      )
+    )
+    (@metadata.code.branch_hint "\01")
+    (if
+      (local.get $x)
+      (then
+        (drop (i32.const 1337))
+      )
+    )
+  )
+
+  ;; TODO: test with 3 uses of the local.set, and fail
 )
