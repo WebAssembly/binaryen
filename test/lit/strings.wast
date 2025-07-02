@@ -249,5 +249,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $string.test (drop (i32.eqz (string.test (call $get-string-ref)))))
+  (func $string.test
+    (drop
+      (i32.eqz
+        (string.test
+          (call $get-string-ref)
+        )
+      )
+    )
+  )
 )
