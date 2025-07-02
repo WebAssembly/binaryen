@@ -238,8 +238,7 @@ struct InstrumentBranchHints
         if (iter == getsOfPriorInstrumentation.end()) {
           return;
         }
-        // Great, this is indeed a prior instrumentation. Add a second
-        // instrumentation for it, using the old ID (negated).
+        // Great, this is indeed a prior instrumentation.
         call = iter->second;
       } else if (gets.size() == 1) {
         // The set has only one get, but it might be a tee that flows into a
@@ -248,15 +247,16 @@ struct InstrumentBranchHints
         if (iter == teesOfPriorInstrumentation.end()) {
           return;
         }
-        // Great, this is indeed a prior instrumentation! Add a second
-        // instrumentation for it, using the old ID (negated).
+        // Great, this is indeed a prior instrumentation.
         call = iter->second;
       } else {
-        // The get has more uses; give up.
+        // The get has more uses; give up, as the pattern is not what we
+        // expect.
         return;
       }
 
-      // We found a call from a prior instrumentation.
+      // We found a call from a prior instrumentation. Emit one to pair with it,
+      // with negated ID.
       assert(call->operands.size() == 3);
       id = -call->operands[0]->template cast<Const>()->value.geti32();
       if (id > 0) {
