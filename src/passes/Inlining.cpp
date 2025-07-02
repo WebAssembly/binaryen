@@ -269,11 +269,7 @@ struct FunctionInfoScanner
       // If the operands are trivial (size 1) like LocalGet or Const, we still
       // consider this as trivial instruction, but the size may not shrink when
       // inlined.
-      uint32_t numOperands = 0;
-      for (auto* _ : ChildIterator(body)) {
-        numOperands++;
-      }
-
+      uint32_t numOperands = ChildIterator(body).children.size();
       if (info.size == numOperands + 1) {
         info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
