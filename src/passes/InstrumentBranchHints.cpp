@@ -207,12 +207,6 @@ struct InstrumentBranchHints
       //      (local.get $temp)                    ;; and used in condition
       //    )
       //
-      // We also consider a tee:
-      //
-      //  (call logBranch (local.tee $temp (..)))  ;; used in logging
-      //  (if
-      //    (local.get $temp)                       ;; and used in condition
-      //
       auto* fallthrough = Properties::getFallthrough(
         curr->condition, getPassOptions(), *getModule());
       auto* get = fallthrough->template dynCast<LocalGet>();
@@ -245,7 +239,12 @@ struct InstrumentBranchHints
         call = iter->second;
       } else if (gets.size() == 1) {
         // The set has only one get, but it might be a tee that flows into a
-        // call.
+        // call:
+        //
+        //  (call logBranch (local.tee $temp (..)))  ;; used in logging
+        //  (if
+        //    (local.get $temp)                      ;; and used in condition
+        //
         auto iter = teesOfPriorInstrumentation.find(set);
         if (iter == teesOfPriorInstrumentation.end()) {
           return;
