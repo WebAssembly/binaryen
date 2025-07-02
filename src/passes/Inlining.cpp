@@ -238,14 +238,16 @@ struct FunctionInfoScanner
 
     info.size = Measurer::measure(curr->body);
 
-    if (auto* call = curr->body->dynCast<Call>()) {
-      // If call arguments are function locals read in order, then the code size
-      // always shrinks when the call is inlined. Note that we don't allow
-      // skipping function arguments here, as that can create `drop`
-      // instructions at the call sites, increasing code size.
+    // If the body is a `call` instruction, or a binary or unary op, and
+    // arguments are function locals read in order, then the code size always
+    // shrinks when the call is inlined. Note that we don't allow skipping
+    // function arguments here, as that can create `drop` instructions at the
+    // call sites, increasing code size.
+    auto* body = curr->body;
+    if (body->is<Call>() || body->is<Binary>() || body->is<Unary>()) {
       bool shrinks = true;
       Index nextLocalGetIndex = 0;
-      for (auto* operand : call->operands) {
+      for (auto* operand : ChildIterator(body)) {
         if (auto* localGet = operand->dynCast<LocalGet>()) {
           if (localGet->index == nextLocalGetIndex) {
             nextLocalGetIndex++;
@@ -264,36 +266,14 @@ struct FunctionInfoScanner
         return;
       }
 
-      if (info.size == call->operands.size() + 1) {
+      uint32_t numOperands = 0;
+      for (auto* _ : ChildIterator(body)) {
+        numOperands++;
+      }
+
+      if (info.size == numOperands + 1) {
         // This function body is an instruction with some trivial (size 1)
         // operands like LocalGet or Const, so it is a trivial instruction.
-        info.trivialInstruction = TrivialInstruction::MayNotShrink;
-      }
-
-    } else if (auto* binary = curr->body->dynCast<Binary>()) {
-      info.trivialInstruction = TrivialInstruction::MayNotShrink;
-      if (auto* left = binary->left->dynCast<LocalGet>()) {
-        if (auto* right = binary->right->dynCast<LocalGet>()) {
-          if (right->index > left->index) {
-            info.trivialInstruction = TrivialInstruction::Shrinks;
-            return;
-          }
-        }
-      }
-
-      if (info.size == 3) {
-        // Same as above: if arguments have size 1 we consider it a trivial
-        // instruction.
-        info.trivialInstruction = TrivialInstruction::MayNotShrink;
-      }
-
-    } else if (auto* unary = curr->body->dynCast<Unary>()) {
-      info.trivialInstruction = TrivialInstruction::MayNotShrink;
-      if (unary->value->dynCast<LocalGet>()) {
-        info.trivialInstruction = TrivialInstruction::Shrinks;
-      } else if (info.size == 2) {
-        // Same as above: if the argument has size 1 we consider it a trivial
-        // instruction.
         info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
     }
