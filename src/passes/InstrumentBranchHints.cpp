@@ -166,7 +166,7 @@ struct InstrumentBranchHints
     // modified testcase), and we skip.
   }
 
-  bool added = false;
+  bool addedInstrumentation = false;
 
   template<typename T> void processCondition(T* curr) {
     if (curr->condition->type == Type::unreachable) {
@@ -288,7 +288,7 @@ struct InstrumentBranchHints
       builder.makeCall(logBranch, {idc, guess, get1}, Type::none);
     auto* get2 = builder.makeLocalGet(tempLocal, Type::i32);
     curr->condition = builder.makeBlock({set, logBranch, get2});
-    added = true;
+    addedInstrumentation = true;
   }
 
   void doWalkFunction(Function* func) {
@@ -300,9 +300,9 @@ struct InstrumentBranchHints
     Super::doWalkFunction(func);
 
     // Our added blocks may have caused nested pops.
-    if (added) {
+    if (addedInstrumentation) {
       EHUtils::handleBlockNestedPops(func, *getModule());
-      added = false;
+      addedInstrumentation = false;
     }
   }
 
