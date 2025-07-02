@@ -122,8 +122,8 @@ struct InstrumentBranchHints
   using Super = WalkerPass<PostWalker<InstrumentBranchHints>>;
 
   // The module and base names of our import.
-  static Name MODULE = "fuzzing-support";
-  static Name BASE = "log-branch";
+  const Name MODULE = "fuzzing-support";
+  const Name BASE = "log-branch";
 
   // The internal name of our import.
   Name logBranch;
