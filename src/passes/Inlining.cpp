@@ -46,6 +46,7 @@
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -189,6 +190,62 @@ static bool canHandleParams(Function* func) {
 
 using NameInfoMap = std::unordered_map<Name, FunctionInfo>;
 
+struct InlineMeasurer
+  : public PostWalker<InlineMeasurer,
+                      UnifiedExpressionVisitor<InlineMeasurer>> {
+  Index size = 0;
+  Index orderedGetCount = 0;
+  Index expectedGetIndex = 0;
+  bool isViolationOrderedAssumption = false;
+
+  void visitExpression(Expression* curr) {
+    size++;
+    // calculate the local.get count which should be duplicate after inlining
+    if (isViolationOrderedAssumption) {
+      return;
+    }
+    if (invalidOperation(curr)) {
+      isViolationOrderedAssumption = true;
+      return;
+    }
+    if (LocalGet* localGet = curr->dynCast<LocalGet>()) {
+      if (localGet->index >= expectedGetIndex) {
+        expectedGetIndex = localGet->index + 1;
+        orderedGetCount++;
+      } else {
+        // duplicated local.get, fallback to normal cases
+        // it will introduce temporary locals after inlining
+        isViolationOrderedAssumption = true;
+      }
+    }
+  }
+
+  bool invalidOperation(Expression* curr) {
+    return curr->is<GlobalGet>() || curr->is<LocalSet>() || curr->is<Const>();
+  }
+
+  // Measure the number of expressions for inlining purposes. This is similar to
+  // Measurer::measure, but ignore the local sequence of at the beginning of
+  // function body.
+  static Index measure(Function* func) {
+    InlineMeasurer measurer;
+    measurer.isViolationOrderedAssumption = func->getNumVars() != 0;
+    measurer.walkFunction(func);
+    // we don't count the local.get when the order is same as the
+    // parameters' order.
+    // It can enable the inlining for the function like:
+    // (func $foo (param $x i32) (param $y i32)
+    //   (call $bar
+    //     (local.get $x)
+    //     (local.get $y)
+    //   )
+    // )
+    return measurer.size - (measurer.isViolationOrderedAssumption
+                              ? 0
+                              : measurer.orderedGetCount);
+  }
+};
+
 struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
@@ -238,7 +295,7 @@ struct FunctionInfoScanner
       info.inliningMode = InliningMode::Uninlineable;
     }
 
-    info.size = Measurer::measure(curr->body);
+    info.size = InlineMeasurer::measure(curr);
 
     if (auto* call = curr->body->dynCast<Call>()) {
       // If call arguments are function locals read in order, then the code size
