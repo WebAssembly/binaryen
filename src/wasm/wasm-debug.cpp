@@ -18,7 +18,18 @@
 #include "wasm.h"
 
 #ifdef BUILD_LLVM_DWARF
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic warning "-Wdeprecated-declarations"
+#endif
+
 #include "llvm/ObjectYAML/DWARFEmitter.h"
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include "llvm/ObjectYAML/DWARFYAML.h"
 #include "llvm/include/llvm/DebugInfo/DWARFContext.h"
 
