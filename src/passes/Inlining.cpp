@@ -40,6 +40,7 @@
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
@@ -238,13 +239,15 @@ struct FunctionInfoScanner
 
     info.size = Measurer::measure(curr->body);
 
-    // If the body is a `call` instruction, or a binary or unary op, and
-    // arguments are function locals read in order, then the code size always
-    // shrinks when the call is inlined. Note that we don't allow skipping
-    // function arguments here, as that can create `drop` instructions at the
-    // call sites, increasing code size.
+    // If the body is a simple instruction with roughly the same encoded size as
+    // a `call` instruction, and arguments are function locals read in order,
+    // then the code size always shrinks when the call is inlined.
+    //
+    // Note that skipping arguments can create `drop` instructions, and using
+    // arguments multiple times can create new locals, at the call sites. So we
+    // don't consider the function as "always shrinks" in these cases.
     auto* body = curr->body;
-    if (body->is<Call>() || body->is<Binary>() || body->is<Unary>()) {
+    if (!Properties::isControlFlowStructure(body)) {
       bool shrinks = true;
       Index nextLocalGetIndex = 0;
       for (auto* operand : ChildIterator(body)) {
