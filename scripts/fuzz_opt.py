@@ -1870,6 +1870,12 @@ class BranchHintPreservation(TestCaseHandler):
         # so... the issue is that we add an eqz on the br_if... no local.get immediate to see! can we look through eqz..?
         #   loo through eqz and fallthrough and perhaps more..?
         # OR: if we see a prior instrumentation, we can look at that statically and see if it needs flipping, i guess.. not great
+        #
+        # Well... we should do this:
+        #   instrument, read it out, see which hints were right, an id that is never wrong no matter how many times branched
+        #   DELETE the branch hints that were wrong. now the wasm runs with 100% correct branch hints.
+        #     DELETE the instrumentation too.
+        #   optimize. run. instrument. all branch hints must be right! could be fewer, but no wrong ones!
 
         # Generate the middle wasm, which has the first round of instrumentation,
         # then the final one with optimizations as well. We only run the final
