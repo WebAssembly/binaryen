@@ -232,6 +232,9 @@
 ;; CHECK-NEXT:   --inlining-optimizing                         inline functions and optimizes
 ;; CHECK-NEXT:                                                 where we inlined
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --instrument-branch-hints                     instrument branch hints so we
+;; CHECK-NEXT:                                                 can see which guessed right
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --instrument-locals                           instrument the build with code
 ;; CHECK-NEXT:                                                 to intercept all loads and
 ;; CHECK-NEXT:                                                 stores
