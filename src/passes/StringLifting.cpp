@@ -44,6 +44,7 @@ struct StringLifting : public Pass {
   Name fromCodePointImport;
   Name concatImport;
   Name equalsImport;
+  Name testImport;
   Name compareImport;
   Name lengthImport;
   Name charCodeAtImport;
@@ -163,6 +164,12 @@ struct StringLifting : public Pass {
         }
         equalsImport = func->name;
         found = true;
+      } else if (func->base == "test") {
+        if (sig != Signature({externref}, i32)) {
+          Fatal() << "StringLifting: bad signature for test: " << sig;
+        }
+        testImport = func->name;
+        found = true;
       } else if (func->base == "compare") {
         if (sig != Signature({externref, externref}, i32)) {
           Fatal() << "StringLifting: bad signature for compare: " << sig;
@@ -247,6 +254,9 @@ struct StringLifting : public Pass {
                            .makeStringEq(StringEqEqual,
                                          curr->operands[0],
                                          curr->operands[1]));
+        } else if (curr->target == parent.testImport) {
+          replaceCurrent(
+            Builder(*getModule()).makeStringTest(curr->operands[0]));
         } else if (curr->target == parent.compareImport) {
           replaceCurrent(Builder(*getModule())
                            .makeStringEq(StringEqCompare,

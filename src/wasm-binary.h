@@ -1222,6 +1222,7 @@ enum ASTNodes {
   StringConcat = 0x88,
   StringEq = 0x89,
   StringIsUSV = 0x8a,
+  StringTest = 0x8b,
   StringAsWTF16 = 0x98,
   StringViewWTF16GetCodePoint = 0x9a,
   StringViewWTF16Slice = 0x9c,

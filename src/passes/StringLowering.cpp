@@ -362,6 +362,7 @@ struct StringLowering : public StringGathering {
   Name fromCodePointImport;
   Name concatImport;
   Name equalsImport;
+  Name testImport;
   Name compareImport;
   Name lengthImport;
   Name charCodeAtImport;
@@ -397,6 +398,8 @@ struct StringLowering : public StringGathering {
                                         Type::i32);
     // string.equals: string, string -> i32
     equalsImport = addImport(module, "equals", {nullExt, nullExt}, Type::i32);
+    // string.test: externref -> i32
+    testImport = addImport(module, "test", {nullExt}, Type::i32);
     // string.compare: string, string -> i32
     compareImport = addImport(module, "compare", {nullExt, nullExt}, Type::i32);
     // string.length: string -> i32
@@ -471,6 +474,12 @@ struct StringLowering : public StringGathering {
           default:
             WASM_UNREACHABLE("invalid string.eq*");
         }
+      }
+
+      void visitStringTest(StringTest* curr) {
+        Builder builder(*getModule());
+        replaceCurrent(
+          builder.makeCall(lowering.testImport, {curr->ref}, Type::i32));
       }
 
       void visitStringMeasure(StringMeasure* curr) {

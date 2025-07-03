@@ -1081,6 +1081,7 @@ private:
         }
       }
     }
+    void visitStringTest(StringTest* curr) {}
     void visitStringWTF16Get(StringWTF16Get* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;

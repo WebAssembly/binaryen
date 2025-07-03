@@ -1231,6 +1231,12 @@ public:
     ret->finalize();
     return ret;
   }
+  StringTest* makeStringTest(Expression* ref) {
+    auto* ret = wasm.allocator.alloc<StringTest>();
+    ret->ref = ref;
+    ret->finalize();
+    return ret;
+  }
   StringWTF16Get* makeStringWTF16Get(Expression* ref, Expression* pos) {
     auto* ret = wasm.allocator.alloc<StringWTF16Get>();
     ret->ref = ref;
