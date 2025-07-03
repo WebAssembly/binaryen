@@ -180,6 +180,7 @@ function initializeConstants() {
     'FP16',
     'BulkMemoryOpt',
     'CallIndirectOverlong',
+    'CustomPagesSize',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();

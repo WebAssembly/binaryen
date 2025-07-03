@@ -820,7 +820,37 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx& ctx) {
   return ctx.makeLimits(uint64_t(*n), m);
 }
 
-// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared?
+// mempagesize? ::= ('(' 'pagesize' u64 ')') ?
+template<typename Ctx> Result<std::optional<uint8_t>> mempagesize(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("pagesize"sv)) {
+    return std::nullopt; // No pagesize specified
+  }
+  auto pageSize = ctx.in.takeU64();
+  if (!pageSize) {
+    return ctx.in.err("expected page size");
+  }
+ 
+  //check whether is power of two
+  if (*pageSize == 0 || (*pageSize & (*pageSize - 1)) != 0) {
+    return ctx.in.err("page size must be a power of two");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of mempagesize");
+  }
+
+  // return the log2 of the page size, which is the number of trailing zeros
+  uint8_t trailingZeros = 0;
+  while (*pageSize > 1 && (*pageSize & 1) == 0) {
+    trailingZeros++;
+    *pageSize >>= 1;
+  }
+
+  return std::make_optional<uint8_t>(trailingZeros);
+
+}
+
+// memtype ::= (limits32 | 'i32' limits32 | 'i64' limit64) shared? mempagesize?
 //  note: the index type 'i32' or 'i64' is already parsed to simplify parsing of
 //  memory abbreviations.
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
@@ -842,7 +872,9 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type addressType) {
   if (ctx.in.takeKeyword("shared"sv)) {
     shared = true;
   }
-  return ctx.makeMemType(addressType, *limits, shared);
+  auto pageSize = mempagesize(ctx);
+  CHECK_ERR(pageSize);
+  return ctx.makeMemType(addressType, *limits, shared, *pageSize);
 }
 
 // memorder ::= '' | 'seqcst' | 'acqrel'
@@ -3443,6 +3475,8 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
 
   std::optional<typename Ctx::MemTypeT> mtype;
   std::optional<typename Ctx::DataStringT> data;
+  auto mempageSize = mempagesize(ctx);
+  CHECK_ERR(mempageSize);
   if (ctx.in.takeSExprStart("data"sv)) {
     if (import) {
       return ctx.in.err("imported memories cannot have inline data");
@@ -3452,9 +3486,13 @@ template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline data");
     }
-    mtype =
-      ctx.makeMemType(addressType, ctx.getLimitsFromData(*datastr), false);
+    mtype = ctx.makeMemType(
+      addressType, ctx.getLimitsFromData(*datastr, *mempageSize), false, *mempageSize);
     data = *datastr;
+  } else if ((*mempageSize).has_value()) {
+    // If we have a memory page size not within a memtype expression, we expect
+    // a memory abbreviation.
+    return ctx.in.err("expected data segment in memory abbreviation");
   } else {
     auto type = memtypeContinued(ctx, addressType);
     CHECK_ERR(type);

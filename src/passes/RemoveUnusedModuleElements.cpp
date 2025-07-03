@@ -693,7 +693,7 @@ struct RemoveUnusedModuleElements : public Pass {
                          segment->data.size(),
                          segment->offset,
                          memory,
-                         memory->initial * Memory::kPageSize);
+                         memory->initial << memory->pageSizelog2);
       }
     });
     ModuleUtils::iterActiveElementSegments(
