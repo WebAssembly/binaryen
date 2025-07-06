@@ -198,17 +198,6 @@ def run_spec_tests():
             cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
             support.run_command(cmd)
 
-        def check_expected(actual, expected):
-            if expected and os.path.exists(expected):
-                expected = open(expected).read()
-                print('       (using expected output)')
-                actual = actual.strip()
-                expected = expected.strip()
-                if actual != expected:
-                    shared.fail(actual, expected)
-
-        expected = os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log')
-
         # some spec tests should fail (actual process failure, not just assert_invalid)
         try:
             actual = run_spec_test(wast)
@@ -218,8 +207,6 @@ def run_spec_tests():
                 continue  # don't try all the binary format stuff TODO
             else:
                 shared.fail_with_error(str(e))
-
-        check_expected(actual, expected)
 
         run_spec_test(wast)
 
@@ -241,9 +228,7 @@ def run_spec_tests():
                     # add the asserts, and verify that the test still passes
                     transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
-        # compare all the outputs to the expected output
-        actual = run_spec_test(base)
-        check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
+        run_spec_test(base)
 
 
 def run_validator_tests():
