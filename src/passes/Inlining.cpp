@@ -251,6 +251,8 @@ struct FunctionInfoScanner
     // Note that skipping arguments can create `drop` instructions, and using
     // arguments multiple times can create new locals, at the call sites. So we
     // don't consider the function as "always shrinks" in these cases.
+    // TODO: Consider allowing drops, as at least in traps-never-happen mode
+    //       they can usually be removed.
     auto* body = curr->body;
     if (!Properties::isControlFlowStructure(body)) {
       bool shrinks = true;
