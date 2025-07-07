@@ -132,8 +132,6 @@ unfuzzable = [
     'string-lifting-section.wast',
     # TODO: fuzzer support for uninhabitable imported globals
     'exact-references.wast',
-    # We cannot re-instrument such code (see the pass).
-    'instrument-branch-hints.wast',
 ]
 
 
