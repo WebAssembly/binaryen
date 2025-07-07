@@ -1876,7 +1876,7 @@ class BranchHintPreservation(TestCaseHandler):
         #   DELETE the branch hints that were wrong. now the wasm runs with 100% correct branch hints.
         #     DELETE the instrumentation too.
         #   optimize. run. instrument. all branch hints must be right! could be fewer, but no wrong ones!
-
+READY!
         # Generate the middle wasm, which has the first round of instrumentation,
         # then the final one with optimizations as well. We only run the final
         # one, but the middle one is useful to compare when debugging an error.
