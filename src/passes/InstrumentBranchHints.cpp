@@ -230,6 +230,15 @@ struct InstrumentationProcessor
 
   // TODO: BrOn, but the condition there is not an i32
 
+  void doWalkFunction(Function* func) {
+    localGraph = std::make_unique<LocalGraph>(func, getModule());
+    localGraph->computeSetInfluences();
+
+    parents = std::make_unique<Parents>(func->body);
+
+    Super::doWalkFunction(func);
+  }
+
   void doWalkModule(Module* module) {
     logBranch = getLogBranchImport(module);
     if (!logBranch) {
@@ -280,7 +289,7 @@ struct InstrumentationProcessor
       return {};
     }
     auto* set = *sets.begin();
-    auto& gets = parent.localGraph->getSetInfluences(set);
+    auto& gets = parents.localGraph->getSetInfluences(set);
     if (gets.size() != 2) {
       return {};
     }
