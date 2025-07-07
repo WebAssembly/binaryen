@@ -254,6 +254,9 @@ struct FunctionInfoScanner
     // TODO: Consider allowing drops, as at least in traps-never-happen mode
     //       they can usually be removed.
     auto* body = curr->body;
+    // Skip control flow as those can be substantially larger (middle and end
+    // bytes in an If), or no situation exists where we can optimize them (a
+    // Block with only LocalGets would have been removed by other passes).
     if (!Properties::isControlFlowStructure(body)) {
       bool shrinks = true;
       Index nextLocalGetIndex = 0;
