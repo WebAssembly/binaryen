@@ -25,6 +25,7 @@
 #include "ir/eh-utils.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
@@ -461,6 +462,11 @@ struct GlobalTypeOptimization : public Pass {
 
       bool needEHFixups = false;
 
+      // Expressions that might trap that have been removed from module-level
+      // initializers. These need to be placed in new globals to preserve any
+      // instantiation-time traps.
+      std::vector<Expression*> removedTrappingInits;
+
       void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable) {
           return;
@@ -481,22 +487,31 @@ struct GlobalTypeOptimization : public Pass {
 
         // Ensure any children with non-trivial effects are replaced with
         // local.gets, so that we can remove/reorder to our hearts' content.
-        ChildLocalizer localizer(
-          curr, getFunction(), *getModule(), getPassOptions());
-        replaceCurrent(localizer.getReplacement());
-        // Adding a block here requires EH fixups.
-        needEHFixups = true;
+        // We can only do this inside functions. Outside of functions, we
+        // preserve traps during instantiation by creating new globals to hold
+        // removed and potentially-trapping operands instead.
+        auto* func = getFunction();
+        if (func) {
+          ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
+          replaceCurrent(localizer.getReplacement());
+          // Adding a block here requires EH fixups.
+          needEHFixups = true;
+        }
 
         // Remove and reorder operands.
         Index removed = 0;
         std::vector<Expression*> old(operands.begin(), operands.end());
-        for (Index i = 0; i < operands.size(); i++) {
+        for (Index i = 0; i < operands.size(); ++i) {
           auto newIndex = indexesAfterRemoval[i];
           if (newIndex != RemovedField) {
             assert(newIndex < operands.size());
             operands[newIndex] = old[i];
           } else {
-            removed++;
+            ++removed;
+            if (!func &&
+                EffectAnalyzer(getPassOptions(), *getModule(), old[i]).trap) {
+              removedTrappingInits.push_back(old[i]);
+            }
           }
         }
         if (removed) {
@@ -573,6 +588,16 @@ struct GlobalTypeOptimization : public Pass {
     FieldRemover remover(*this);
     remover.run(getPassRunner(), &wasm);
     remover.runOnModuleCode(getPassRunner(), &wasm);
+
+    // Insert globals necessary to preserve instantiation-time trapping of
+    // removed expressions.
+    for (Index i = 0; i < remover.removedTrappingInits.size(); ++i) {
+      auto* curr = remover.removedTrappingInits[i];
+      auto name = Names::getValidGlobalName(
+        wasm, std::string("gto-removed-") + std::to_string(i));
+      wasm.addGlobal(
+        Builder::makeGlobal(name, curr->type, curr, Builder::Immutable));
+    }
   }
 };
 
