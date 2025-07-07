@@ -231,7 +231,7 @@ struct InstrumentationProcessor
   // TODO: BrOn, but the condition there is not an i32
 
   void doWalkFunction(Function* func) {
-    localGraph = std::make_unique<LocalGraph>(func, getModule());
+    localGraph = std::make_unique<LocalGraph>(func, this->getModule());
     localGraph->computeSetInfluences();
 
     parents = std::make_unique<Parents>(func->body);
@@ -289,7 +289,7 @@ struct InstrumentationProcessor
       return {};
     }
     auto* set = *sets.begin();
-    auto& gets = parents.localGraph->getSetInfluences(set);
+    auto& gets = getSub()->localGraph->getSetInfluences(set);
     if (gets.size() != 2) {
       return {};
     }
@@ -304,7 +304,7 @@ struct InstrumentationProcessor
     assert(otherGet);
     // See if that other get is used in a logging. The parent should be a
     // logging call.
-    auto* call = getSub()->parents->getParent(otherGet)->dynCast<Call>();
+    auto* call = getSub()->parents->getParent(otherGet)->template dynCast<Call>();
     if (!call || call->target != logBranch) {
       return {};
     }
@@ -320,7 +320,7 @@ struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
   std::unordered_set<Index> idsToDelete;
 
   template<typename T> void processCondition(T* curr) {
-    if (auto info = getInstrumentation(curr->condition, logBranch)) {
+    if (auto info = getInstrumentation(curr->condition)) {
       auto id = info->call->operands[0]->template cast<Const>()->value.geti32();
       if (idsToDelete.count(id)) {
         // Remove the branch hint.
@@ -347,7 +347,7 @@ struct DeInstrumentBranchHints
   using Super = InstrumentationProcessor<DeInstrumentBranchHints>;
 
   template<typename T> void processCondition(T* curr) {
-    if (auto info = getInstrumentation(curr->condition, logBranch)) {
+    if (auto info = getInstrumentation(curr->condition)) {
       // Replace the instrumentated condition with the original one.
       curr->condition = info->originalCondition;
     }
