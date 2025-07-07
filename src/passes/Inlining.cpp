@@ -78,7 +78,12 @@ enum class TrivialInstruction {
   // argument list.
   //
   // In this case, inlining the function generates smaller code, and it is also
-  // good for runtime.
+  // good for runtime. (Note that in theory inlining an instruction might grow
+  // the size, if before we had a call - one byte+LEB - and after we have
+  // something like a prefixed instruction - two bytes - with some other LEB
+  // like a type index. Figuring out when the LEBs will cause growth here is
+  // hard, and probably not worth it, since doing a call to run a single
+  // instruction is almost always going to be larger and slower.)
   Shrinks,
 
   // Function is a single instruction, but maybe with constant arguments, or
