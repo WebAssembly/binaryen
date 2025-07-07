@@ -103,10 +103,6 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
-// Work around a gcc-14 issue
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnonnull"
-
 namespace wasm {
 
 namespace {
@@ -123,7 +119,7 @@ Name getLogBranchImport(Module* module) {
       return func->name;
     }
   }
-  return nullptr;
+  return Name();
 }
 
 // The branch id, which increments as we go.
@@ -324,8 +320,6 @@ struct DeInstrumentBranchHints
     Super::doWalkModule(module);
   }
 };
-
-#pragma GCC diagnostic pop
 
 } // anonymous namespace
 

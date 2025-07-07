@@ -3,6 +3,30 @@
 ;; RUN: foreach %s %t wasm-opt -all --deinstrument-branch-hints -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32 i32 i32)))
+
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log (type $1) (param i32 i32 i32)))
+  (import "fuzzing-support" "log-branch" (func $log (param i32 i32 i32)))
+
+  ;; CHECK:      (func $if (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 99)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if
     (local $temp i32)
     ;; The instrumentation should be removed, and if the if's condition should
@@ -13,7 +37,7 @@
         (local.set $temp
           (i32.const 42)
         )
-        (call $log-branch
+        (call $log
           (i32.const 1)
           (i32.const 0)
           (local.get $temp)
@@ -33,7 +57,16 @@
     )
   )
 
-  (func $br (type $temp)
+  ;; CHECK:      (func $br (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br
     ;; The same, with a br.
     (local $temp i32)
     (block $out
@@ -43,7 +76,7 @@
           (local.set $temp
             (i32.const 42)
           )
-          (call $log-branch
+          (call $log
             (i32.const 4)
             (i32.const 0)
             (local.get $temp)

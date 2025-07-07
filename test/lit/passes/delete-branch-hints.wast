@@ -3,6 +3,39 @@
 ;; RUN: foreach %s %t wasm-opt -all --delete-branch-hints=10,30 -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32 i32 i32)))
+
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log (type $1) (param i32 i32 i32)))
+  (import "fuzzing-support" "log-branch" (func $log (param i32 i32 i32)))
+
+  ;; CHECK:      (func $if-10 (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 99)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-10
     (local $temp i32)
     ;; The branch hint should be removed, since the ID "10" is in the list of
@@ -13,7 +46,7 @@
         (local.set $temp
           (i32.const 42)
         )
-        (call $log-branch
+        (call $log
           (i32.const 10)
           (i32.const 0)
           (local.get $temp)
@@ -33,6 +66,33 @@
     )
   )
 
+  ;; CHECK:      (func $if-20 (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $log
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 99)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-20
     (local $temp i32)
     ;; The branch hint should *not* be removed: 20 is not in the list.
@@ -42,7 +102,7 @@
         (local.set $temp
           (i32.const 42)
         )
-        (call $log-branch
+        (call $log
           (i32.const 20)
           (i32.const 0)
           (local.get $temp)
@@ -62,7 +122,25 @@
     )
   )
 
-  (func $br-3- (type $temp)
+  ;; CHECK:      (func $br-30 (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $temp
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $log
+  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (local.get $temp)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-30
     ;; The hint should be removed.
     (local $temp i32)
     (block $out
@@ -72,7 +150,7 @@
           (local.set $temp
             (i32.const 42)
           )
-          (call $log-branch
+          (call $log
             (i32.const 30)
             (i32.const 0)
             (local.get $temp)
