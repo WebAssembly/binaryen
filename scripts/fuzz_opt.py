@@ -1849,6 +1849,7 @@ class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
     def handle(self, wasm):
+        # Ensure a bugg
         open(wasm, 'w').write('''
 (module
   (func $loop-br_if-flip-reverse (param $x i32)
@@ -1865,108 +1866,72 @@ class BranchHintPreservation(TestCaseHandler):
   )
 )
 ''')
-        # XXX bizarre we see no fuzz findings... hack this code to use a given
-        # wat file I see the bug on, and see that happens...
-        # so... the issue is that we add an eqz on the br_if... no local.get immediate to see! can we look through eqz..?
-        #   loo through eqz and fallthrough and perhaps more..?
-        # OR: if we see a prior instrumentation, we can look at that statically and see if it needs flipping, i guess.. not great
-        #
-        # Well... we should do this:
-        #   instrument, read it out, see which hints were right, an id that is never wrong no matter how many times branched
-        #   DELETE the branch hints that were wrong. now the wasm runs with 100% correct branch hints.
-        #     DELETE the instrumentation too.
-        #   optimize. run. instrument. all branch hints must be right! could be fewer, but no wrong ones!
-READY!
-        # Generate the middle wasm, which has the first round of instrumentation,
-        # then the final one with optimizations as well. We only run the final
-        # one, but the middle one is useful to compare when debugging an error.
-        middle = wasm + '.mid.wasm'
+
+        # Generate an instrumented wasm.
+        instrumented = wasm + '.inst.wasm'
         run([
             in_bin('wasm-opt'),
             wasm,
+            '-o', instrumented,
             # Add random branch hints (so we have something to work with).
             '--randomize-branch-hints',
             # Instrument them for our fuzzing, then optimize.
             '--instrument-branch-hints',
-            '-o', middle,
             '-g',
         ] + FEATURE_OPTS)
 
-        final = wasm + '.final.wasm'
-        run([
-            in_bin('wasm-opt'),
-            middle,
-            '--remove-unused-brs', # XXX
-        #] + get_random_opts() + [
-            # Instrument again after opts, so our fuzzing can see if the opts
-            # messed anything up.
-            '--instrument-branch-hints',
-            '-o', final,
-            '-g',
-        ] + FEATURE_OPTS)
-
-        # Run.
-        out = run_d8_wasm(final)
+        # Log out the branch hints at runtime.
+        out = run_d8_wasm(instrumented)
 
         # Process the output. We look at the lines like this:
         #
         #   log-branch: hint 123 of 1 and actual 0
         #
-        # Each line reports a branch id, the hint for its condition, and the
-        # actual result (if the condition was true).
+        # Any ID (a particular branch) that we predict wrong is a problem, and
+        # we will remove that branch hint from the binary. After doing so, we
+        # will end up with a binary where all branch hints are correct, and we
+        # then verify that that property is preserved after optimizations.
         #
-        # It is fine for hints to not match expectations, in a fuzz testcase -
-        # that should happen half the time. What is not fine is if the hint and
-        # the actual result get out of sync, for which we track pairs from the
-        # double instrumentation, matched by id:
-        #
-        #   log-branch: hint 123 of 1 and actual 0
-        #   log-branch: hint -123 of 1 and actual 1
-        #
-        # The second phase of instrumentation adds negative ids, so here we
-        # would match 123 with -123.
-        pairs = []
+        # (In theory, optimizations could make branch hints wrong in return for
+        # some benefit that makes things overall faster, but we don't have such
+        # optimizations for now.)
+        bad_ids = set()
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
-                # Add this as the beginning of a possible pair, if there is
-                # nothing before us, or a complete pair.
-                if (not pairs) or len(pairs[-1]) == 2:
-                    pairs.append([line])
-                    continue
+                # Parse the ID, the hint, and whether we actually branched.
+                _, _, id_, _, hint, _, _, actual = first.split(' ')
+                if hint != actual:
+                    # This hint was misleading.
+                    bad_ids.add(id_)
 
-                # This may complete a pair.
-                last_pair = pairs[-1]
-                assert len(last_pair) == 1
-                last_id = int(last_pair[0].split(' ')[2])
-                line_id = int(line.split(' ')[2])
-                if last_id >= 0 and last_id == -line_id:
-                    last_pair.append(line)
-                else:
-                    # They do not match. It is ok if a pair is not found, as the
-                    # optimizer may remove a branch hint or a logging. Start a
-                    # new pair.
-                    pairs.append([line])
+        # Remove the bad ids (using the instrumentation to identify them by ID),
+        # and also the instrumentation itself. Then add new instrumentation,
+        # which we will use to see if any remaining hints are wrong.
+        final = wasm + '.de_inst.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            instrumented,
+            '-o', final,
+        ]
+        if bad_ids:
+            args += [
+                '--delete-branch-hints=' + ','.join(bad_ids),
+            ]
+        args += [
+            '--deinstrument-branch-hints',
+            '--instrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS)
+        run(args)
 
-        # Check the pairs. Consider:
-        #
-        #   log-branch: hint 123 of 1 and actual 0
-        #   log-branch: hint 123 of 1 and actual 1
-        #
-        # A pair like that is suspect: the actual result shifted - perhaps an
-        # optimization flipped the condition together with the arms - but the
-        # hint did not flip with it. That is, we want the pair's hint and actual
-        # to remain in sync (even if the hint is wrong).
-        for pair in pairs:
-            if len(pair) != 2:
-                continue
-            print(pair) # XXX
-            first, second = pair
-            _, _, first_id, _, first_hint, _, _, first_actual = first.split(' ')
-            _, _, second_id, _, second_hint, _, _, second_actual = second.split(' ')
-            assert second_id == '-' + first_id
-            first_alignment = (first_hint != first_actual)
-            second_alignment = (second_hint != second_actual)
-            assert first_alignment == second_alignment, 'branch hints must change properly'
+        # Log out the branch hints at runtime.
+        out = run_d8_wasm(final)
+
+        # See if any branch hint was wrong.
+        for line in out.splitlines():
+            if line.startswith('log-branch: hint'):
+                _, _, id_, _, hint, _, _, actual = first.split(' ')
+                assert hint == actual, 'Branch hint misled us'
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
