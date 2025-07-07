@@ -257,6 +257,7 @@ public:
   Result<> makeStringEncode(StringEncodeOp op);
   Result<> makeStringConcat();
   Result<> makeStringEq(StringEqOp op);
+  Result<> makeStringTest();
   Result<> makeStringWTF8Advance();
   Result<> makeStringWTF16Get();
   Result<> makeStringIterNext();

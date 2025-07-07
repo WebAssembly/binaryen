@@ -4670,6 +4670,8 @@ Result<> WasmBinaryReader::readInst() {
           return builder.makeStringConcat();
         case BinaryConsts::StringEq:
           return builder.makeStringEq(StringEqEqual);
+        case BinaryConsts::StringTest:
+          return builder.makeStringTest();
         case BinaryConsts::StringCompare:
           return builder.makeStringEq(StringEqCompare);
         case BinaryConsts::StringViewWTF16GetCodePoint:
