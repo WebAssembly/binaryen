@@ -108,7 +108,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if
-    ;; An if with a 0 hint, a 1 hint, and no hint.
+    ;; An if with a 0 hint and another with a 1 hint.
     (@metadata.code.branch_hint "\00")
     (if
       (i32.const 42)
@@ -129,6 +129,10 @@
         (drop (i32.const 199))
       )
     )
+  )
+
+  (func $if-2
+    ;; An if with no hint, and another with 0 for more coverage.
     (if
       (i32.const 242)
       (then
@@ -138,7 +142,6 @@
         (drop (i32.const 299))
       )
     )
-    ;; Another hint of 0, for more coverage.
     (@metadata.code.branch_hint "\00")
     (if
       (i32.const 342)
@@ -202,7 +205,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br
-    ;; As above, with br_if.
+    ;; As above, with br_if, hints of 0 and 1.
     (block $out
       (@metadata.code.branch_hint "\00")
       (br_if $out
@@ -217,6 +220,10 @@
       )
       (drop (i32.const 11337))
     )
+  )
+
+  (func $br-no
+    ;; A br_if with no hint.
     (block $out2
       (br_if $out2
         (i32.const 242)
@@ -324,9 +331,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested
-    ;; Do not be confused by our own output, in nested code: even if we have
-    ;; nested conditions, the first instrumentation should not think its output
-    ;; existing ones.
+    ;; We should instrument all these, even the nested ones.
     (@metadata.code.branch_hint "\00")
     (if
       (@metadata.code.branch_hint "\01")
@@ -400,8 +405,8 @@
   )
 )
 
-;; This module has our import, but with a minified internal name. We should
-;; still use it, and assume we are doing the second instrumentation. That is,
+;; This module has our import, but with a minified internal name. We should use
+;; that import.
 (module
   ;; CHECK:      (type $0 (func))
 
@@ -463,157 +468,6 @@
       (then
         (drop (i32.const 1337))
       )
-    )
-  )
-
-  ;; CHECK:      (func $optimized (type $0)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $min
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $min
-  ;; CHECK-NEXT:     (i32.const -42)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1337)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimized
-    (local $x i32)
-    ;; As above, but now the existing instrumentation looks like it was
-    ;; optimized a little: the local.set and call were moved out of the if
-    ;; (something that merge-blocks would do). We should still add the second
-    ;; instrumentation.
-    (local.set $x
-      (i32.const 42)
-    )
-    (call $min
-      (i32.const 42)
-      (i32.const 1)
-      (local.get $x)
-    )
-    (@metadata.code.branch_hint "\01")
-    (if
-      (local.get $x)
-      (then
-        (drop (i32.const 1337))
-      )
-    )
-  )
-
-  ;; CHECK:      (func $optimized-moar (type $0)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (call $min
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $min
-  ;; CHECK-NEXT:     (i32.const -42)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1337)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimized-moar
-    (local $x i32)
-    ;; As above, but optimized further, now using a tee. We should still add the
-    ;; second instrumentation.
-    (call $min
-      (i32.const 42)
-      (i32.const 1)
-      (local.tee $x
-        (i32.const 42)
-      )
-    )
-    (@metadata.code.branch_hint "\01")
-    (if
-      (local.get $x)
-      (then
-        (drop (i32.const 1337))
-      )
-    )
-  )
-
-  ;; CHECK:      (func $optimized-bad (type $0)
-  ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $min
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1337)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $optimized-bad
-    (local $x i32)
-    ;; As above, but the set has another use later, so we give up as the pattern
-    ;; is unfamiliar.
-    (local.set $x
-      (i32.const 42)
-    )
-    (call $min
-      (i32.const 42)
-      (i32.const 1)
-      (local.get $x)
-    )
-    (@metadata.code.branch_hint "\01")
-    (if
-      (local.get $x)
-      (then
-        (drop (i32.const 1337))
-      )
-    )
-    (drop
-      (local.get $x)  ;; extra use
     )
   )
 )
