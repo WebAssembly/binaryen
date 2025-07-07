@@ -40,6 +40,7 @@
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
@@ -67,22 +68,25 @@ enum class InliningMode {
   SplitPatternB
 };
 
-// Whether a function just calls another function in a way that always shrinks
-// when the calling function is inlined.
-enum class TrivialCall {
-  // Function does not just call another function, or it may not shrink when
-  // inlined.
+// Whether a function is just one instruction that always shrinks when inlined.
+enum class TrivialInstruction {
+  // Function is not a single instruction, or it may not shrink when inlined.
   NotTrivial,
 
-  // Function just calls another function, with `local.get`s as arguments, and
-  // with each `local` is used exactly once, and in the order they appear in the
+  // Function is just one instruction, with `local.get`s as arguments, and with
+  // each `local` is used exactly once, and in the order they appear in the
   // argument list.
   //
   // In this case, inlining the function generates smaller code, and it is also
-  // good for runtime.
+  // good for runtime. (Note that in theory inlining an instruction might grow
+  // the size, if before we had a call - one byte+LEB - and after we have
+  // something like a prefixed instruction - two bytes - with some other LEB
+  // like a type index. Figuring out when the LEBs will cause growth here is
+  // hard, and probably not worth it, since doing a call to run a single
+  // instruction is almost always going to be larger and slower.)
   Shrinks,
 
-  // Function just calls another function, but maybe with constant arguments, or
+  // Function is a single instruction, but maybe with constant arguments, or
   // maybe some locals are used more than once. In these cases code size does
   // not always shrink: at the call sites, omitted locals can create `drop`
   // instructions, a local used multiple times can create new locals, and
@@ -102,7 +106,7 @@ struct FunctionInfo {
   // Something is used globally if there is a reference to it in a table or
   // export etc.
   bool usedGlobally;
-  TrivialCall trivialCall;
+  TrivialInstruction trivialInstruction;
   InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
@@ -114,7 +118,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
-    trivialCall = TrivialCall::NotTrivial;
+    trivialInstruction = TrivialInstruction::NotTrivial;
     inliningMode = InliningMode::Unknown;
   }
 
@@ -126,7 +130,7 @@ struct FunctionInfo {
     hasLoops = other.hasLoops;
     hasTryDelegate = other.hasTryDelegate;
     usedGlobally = other.usedGlobally;
-    trivialCall = other.trivialCall;
+    trivialInstruction = other.trivialInstruction;
     inliningMode = other.inliningMode;
     return *this;
   }
@@ -150,7 +154,7 @@ struct FunctionInfo {
     }
     // If the function calls another one in a way that always shrinks when
     // inlined, inline it in all optimization and shrink modes.
-    if (trivialCall == TrivialCall::Shrinks) {
+    if (trivialInstruction == TrivialInstruction::Shrinks) {
       return true;
     }
     // If it's so big that we have no flexible options that could allow it,
@@ -164,12 +168,12 @@ struct FunctionInfo {
     if (options.shrinkLevel > 0 || options.optimizeLevel < 3) {
       return false;
     }
-    // The function just calls another function, but the code size may increase
-    // when inlined. We only inline it fully with `-O3`.
-    if (trivialCall == TrivialCall::MayNotShrink) {
+    // The function is just one instruction, but the code size may increase when
+    // inlined. We only inline it fully with `-O3`.
+    if (trivialInstruction == TrivialInstruction::MayNotShrink) {
       return true;
     }
-    // Trivial calls are already handled. Inline if
+    // Trivial instructions are already handled. Inline if
     // 1. The function doesn't have calls, and
     // 2. The function doesn't have loops, or we allow inlining with loops.
     return !hasCalls && (!hasLoops || options.inlining.allowFunctionsWithLoops);
@@ -240,14 +244,23 @@ struct FunctionInfoScanner
 
     info.size = Measurer::measure(curr->body);
 
-    if (auto* call = curr->body->dynCast<Call>()) {
-      // If call arguments are function locals read in order, then the code size
-      // always shrinks when the call is inlined. Note that we don't allow
-      // skipping function arguments here, as that can create `drop`
-      // instructions at the call sites, increasing code size.
+    // If the body is a simple instruction with roughly the same encoded size as
+    // a `call` instruction, and arguments are function locals read in order,
+    // then the code size always shrinks when the call is inlined.
+    //
+    // Note that skipping arguments can create `drop` instructions, and using
+    // arguments multiple times can create new locals, at the call sites. So we
+    // don't consider the function as "always shrinks" in these cases.
+    // TODO: Consider allowing drops, as at least in traps-never-happen mode
+    //       they can usually be removed.
+    auto* body = curr->body;
+    // Skip control flow as those can be substantially larger (middle and end
+    // bytes in an If), or no situation exists where we can optimize them (a
+    // Block with only LocalGets would have been removed by other passes).
+    if (!Properties::isControlFlowStructure(body)) {
       bool shrinks = true;
       Index nextLocalGetIndex = 0;
-      for (auto* operand : call->operands) {
+      for (auto* operand : ChildIterator(body)) {
         if (auto* localGet = operand->dynCast<LocalGet>()) {
           if (localGet->index == nextLocalGetIndex) {
             nextLocalGetIndex++;
@@ -262,14 +275,16 @@ struct FunctionInfoScanner
       }
 
       if (shrinks) {
-        info.trivialCall = TrivialCall::Shrinks;
+        info.trivialInstruction = TrivialInstruction::Shrinks;
         return;
       }
 
-      if (info.size == call->operands.size() + 1) {
-        // This function body is a call with some trivial (size 1) operands like
-        // LocalGet or Const, so it is a trivial call.
-        info.trivialCall = TrivialCall::MayNotShrink;
+      // If the operands are trivial (size 1) like LocalGet or Const, we still
+      // consider this as trivial instruction, but the size may not shrink when
+      // inlined.
+      uint32_t numOperands = ChildIterator(body).children.size();
+      if (info.size == numOperands + 1) {
+        info.trivialInstruction = TrivialInstruction::MayNotShrink;
       }
     }
   }
