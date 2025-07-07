@@ -54,17 +54,72 @@
 //    if (expected != actual) throw `Bad branch hint! (${id})`;
 //  };
 //
+// A pass to delete branch hints is also provided, which finds instrumentations
+// and the IDs in those calls, and deletes branch hints that were provded. For
+// example,
+//
+//  --delete-branch-hints=10,20
+//
+// would do this transformation:
+//
+//  @metadata.branch.hint A
+//  if (temp = condition; log(10, A, temp); temp) { // 10 matches one of 10,20
+//    X
+//  }
+//  @metadata.branch.hint B
+//  if (temp = condition; log(99, B, temp); temp) { // 99 does not match
+//    Y
+//  }
+//
+// =>
+//
+//  // Used to be a branch hint here, but it was deleted.
+//  if (temp = condition; log(10, A, temp); temp) {
+//    X
+//  }
+//  @metadata.branch.hint B // this one is unmodified.
+//  if (temp = condition; log(99, B, temp); temp) {
+//    Y
+//  }
+//
+// A pass to undo the instrumentation is also provided, which does
+//
+//  if (temp = condition; log(123, A, temp); temp) {
+//    X
+//  }
+//
+// =>
+//
+//  if (condition) {
+//    X
+//  }
+//
 
 #include "ir/eh-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
+
+// The module and base names of our import.
+const Name MODULE = "fuzzing-support";
+const Name BASE = "log-branch";
+
+// Finds our import, if it exists.
+Name getLogBranchImport(Module* module) {
+  // Find our import, if we were already run on this module.
+  for (auto& func : module->functions) {
+    if (func->module == MODULE && func->base == BASE) {
+      return func->name;
+    }
+  }
+}
 
 // The branch id, which increments as we go.
 int branchId = 1;
@@ -73,10 +128,6 @@ struct InstrumentBranchHints
   : public WalkerPass<PostWalker<InstrumentBranchHints>> {
 
   using Super = WalkerPass<PostWalker<InstrumentBranchHints>>;
-
-  // The module and base names of our import.
-  const Name MODULE = "fuzzing-support";
-  const Name BASE = "log-branch";
 
   // The internal name of our import.
   Name logBranch;
@@ -132,14 +183,8 @@ struct InstrumentBranchHints
   }
 
   void doWalkModule(Module* module) {
-    // Find our import, if we were already run on this module.
-    for (auto& func : module->functions) {
-      if (func->module == MODULE && func->base == BASE) {
-        logBranch = func->name;
-        break;
-      }
-    }
-    // Otherwise, add it.
+    logBranch = getLogBranchImport(module);
+    // If it doesn't exist, add it.
     if (!logBranch) {
       auto* func = module->addFunction(Builder::makeFunction(
         Names::getValidFunctionName(*module, BASE),
@@ -155,8 +200,124 @@ struct InstrumentBranchHints
   }
 };
 
+// Instrumentation info for a chunk of code that is the result of the
+// instrumentation pass.
+struct Instrumentation {
+  // The condition before the instrumentation.
+  Expression* originalCondition;
+  // The call to the logging that the instrumentation added.
+  Call* call;
+};
+
+// Check if an expression's condition is an instrumentation, and return the info
+// if so. We are provided the internal name of the logging function.
+std::optional<Instrumentation> getInstrumentation(Expression* condition, Name logBranch) {
+  // We must identify this pattern:
+  //
+  //  (block
+  //    (local.set $temp (condition))
+  //    (call $log (id, prediction, (local.get $temp)))
+  //    (local.get $temp)
+  //  )
+  //
+  auto* block = condition->dynCast<Block>();
+  if (!block) {
+    return {};
+  }
+  auto& list = block->list;
+  if (block->list.size() != 3) {
+    return {};
+  }
+  auto *call = list[1]->dynCast<Call>();
+  if (!call || call->target != logBranch) {
+    return {};
+  }
+  // We found the call, so the rest must be in the proper form.
+  auto* set = list[0]->cast<LocalSet>();
+  return { set->value, call };
+}
+
+struct DeleteBranchHints
+  : public WalkerPass<PostWalker<DeleteBranchHints>> {
+
+  using Super = WalkerPass<PostWalker<DeleteBranchHints>>;
+
+  // The internal name of our import.
+  Name logBranch;
+
+  // The set of IDs to delete.
+  std::unordered_set<Index> idsToDelete;
+
+  void visitIf(If* curr) { processCondition(curr); }
+
+  void visitBreak(Break* curr) {
+    if (curr->condition) {
+      processCondition(curr);
+    }
+  }
+
+  // TODO: BrOn, but the condition there is not an i32
+
+  template<typename T> void processCondition(T* curr) {
+    if (auto info = getInstrumentation(curr->condition, logBranch)) {
+      auto id = info->call->operands[0]->cast<Const>()->value.geti32();
+      if (idsToDelete.count(id)) {
+        // Remove the branch hint.
+        getFunction()->codeAnnotations[curr].branchLikely = {};
+      }
+    }
+  }
+
+  void doWalkModule(Module* module) {
+    logBranch = getLogBranchImport(module);
+
+    auto arg = getArgument(
+      "delete-branch-hints",
+      "DeleteBranchHints usage:  wasm-opt --delete-branch-hints=10,20,30");
+    for (auto& str : String::Split(arg, String::Split::NewLineOr(","))) {
+      idsToDelete.insert(std::stoi(str));
+    }
+
+    Super::doWalkModule(module);
+  }
+};
+
+struct DeInstrumentBranchHints
+  : public WalkerPass<PostWalker<DeInstrumentBranchHints>> {
+
+  using Super = WalkerPass<PostWalker<DeInstrumentBranchHints>>;
+
+  // The internal name of our import.
+  Name logBranch;
+
+  void visitIf(If* curr) { processCondition(curr); }
+
+  void visitBreak(Break* curr) {
+    if (curr->condition) {
+      processCondition(curr);
+    }
+  }
+
+  // TODO: BrOn, but the condition there is not an i32
+
+  template<typename T> void processCondition(T* curr) {
+    if (auto info = getInstrumentation(curr->condition, logBranch)) {
+      // Replace the instrumentated condition with the original one.
+      replaceCurrent(info->originalCondition);
+    }
+  }
+
+  void doWalkModule(Module* module) {
+    logBranch = getLogBranchImport(module);
+
+    Super::doWalkModule(module);
+  }
+};
+
 } // anonymous namespace
 
 Pass* createInstrumentBranchHintsPass() { return new InstrumentBranchHints(); }
+Pass* createDeleteBranchHintsPass() { return new DeleteBranchHints(); }
+Pass* createDeInstrumentBranchHintsPass() { return new DeInstrumentBranchHints(); }
 
 } // namespace wasm

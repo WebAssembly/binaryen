@@ -161,11 +161,11 @@ static std::optional<bool> getBranchHint(Expression* expr, Function* func) {
 }
 
 static void setBranchHint(Expression* expr, bool likely, Function* func) {
-//  func->codeAnnotations[expr].branchLikely = likely;
+  func->codeAnnotations[expr].branchLikely = likely;
 }
 
 static void clearBranchHint(Expression* expr, Function* func) {
-//  func->codeAnnotations[expr].branchLikely = {};
+  func->codeAnnotations[expr].branchLikely = {};
 }
 
 static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
@@ -176,6 +176,7 @@ static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
 }
 
 static void flipBranchHint(Expression* expr, Function* func) {
+return;
   if (auto likely = getBranchHint(expr, func)) {
     setBranchHint(expr, !*likely, func);
   }
