@@ -81,30 +81,12 @@ struct InstrumentBranchHints
   // The internal name of our import.
   Name logBranch;
 
-  std::unique_ptr<LocalGraph> localGraph;
-
   void visitIf(If* curr) { processCondition(curr); }
 
   void visitBreak(Break* curr) {
     if (curr->condition) {
       processCondition(curr);
     }
-  }
-
-  void visitCall(Call* curr) {
-    if (curr->target != logBranch) {
-      return;
-    }
-    // Our logging has 3 fields: id, expected, actual.
-    if (curr->operands.size() == 3) {
-      if (auto* get = curr->operands[2]->dynCast<LocalGet>()) {
-        getsOfPriorInstrumentation[get] = curr;
-      } else if (auto* tee = curr->operands[2]->dynCast<LocalSet>()) {
-        teesOfPriorInstrumentation[tee] = curr;
-      }
-    }
-    // Anything else is a pattern we don't recognize (perhaps this is a fuzzer-
-    // modified testcase), and we skip.
   }
 
   bool addedInstrumentation = false;
