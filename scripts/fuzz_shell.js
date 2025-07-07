@@ -261,8 +261,10 @@ function oneIn(n) {
   return (randomBits() % n) == 0;
 }
 
-// Set up the imports.
+// Import helpers.
 var tempRet0;
+
+// Set up the imports.
 var imports = {
   'fuzzing-support': {
     // Logging.
@@ -352,6 +354,17 @@ var imports = {
                //       on the "ms" (which would not be literal ms, but just
                //       how many time units to wait).
       });
+    },
+
+    'log-branch': (id, expected, actual) => {
+      // We only care about truthiness of the expected and actual values.
+      expected = +!!expected;
+      actual = +!!actual;
+      // Log out the expected and actual outcomes. This is useful for fuzzing,
+      // see fuzz_opt.py. For testing that expectations actually match reality
+      // (i.e. that branch hints are correct), you can adjust the logic here to
+      // throw on  expected != actual .
+      console.log(`log-branch: hint ${id} of ${expected} and actual ${actual}`);
     },
   },
   // Emscripten support.
