@@ -119,6 +119,8 @@ Name getLogBranchImport(Module* module) {
       return func->name;
     }
   }
+
+  Fatal() << "No branch hint logging import found. Was this code instrumented?";
 }
 
 // The branch id, which increments as we go.
@@ -234,7 +236,7 @@ std::optional<Instrumentation> getInstrumentation(Expression* condition, Name lo
   }
   // We found the call, so the rest must be in the proper form.
   auto* set = list[0]->cast<LocalSet>();
-  return { set->value, call };
+  return Instrumentation{ set->value, call };
 }
 
 struct DeleteBranchHints
@@ -260,7 +262,7 @@ struct DeleteBranchHints
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition, logBranch)) {
-      auto id = info->call->operands[0]->cast<Const>()->value.geti32();
+      auto id = info->call->operands[0]->template cast<Const>()->value.geti32();
       if (idsToDelete.count(id)) {
         // Remove the branch hint.
         getFunction()->codeAnnotations[curr].branchLikely = {};
