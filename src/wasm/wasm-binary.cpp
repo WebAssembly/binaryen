@@ -2518,15 +2518,11 @@ getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
               Name name,
               std::unordered_set<Name>& usedNames) {
   if (auto it = nameMap.find(i); it != nameMap.end()) {
-    auto name = it->second;
-    auto [_, inserted] = usedNames.insert(name);
-    if (inserted) {
-      return {name, true};
-    }
-    // Otherwise, we cannot use the name from the names section, which is
-    // unfortunate, and fall through to generate a new unique name. (This only
-    // commonly happens in our own testcases' outputs, where existing names
-    // happen to match the names we invent for things, and overlaps can occur.)
+    // We found a name in the names section. Use it, and also note it as used
+    // so we don't generate such a name below, later.
+    auto mappedName = it->second;
+    usedNames.insert(mappedName);
+    return {mappedName, true};
   }
   auto valid = Names::getValidNameGivenExisting(name, usedNames);
   usedNames.insert(valid);
