@@ -280,7 +280,9 @@ struct InstrumentationProcessor
     //  (br_if
     //    (local.get $temp)
     //
-    auto* get = condition->template dynCast<LocalGet>();
+    auto* fallthrough = Properties::getFallthrough(
+      condition, this->getPassOptions(), *this->getModule());
+    auto* get = fallthrough->template dynCast<LocalGet>();
     if (!get) {
       return {};
     }
