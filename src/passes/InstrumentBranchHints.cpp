@@ -103,6 +103,10 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+// Work around a gcc-14 issue
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull"
+
 namespace wasm {
 
 namespace {
@@ -119,8 +123,7 @@ Name getLogBranchImport(Module* module) {
       return func->name;
     }
   }
-
-  Fatal() << "No branch hint logging import found. Was this code instrumented?";
+  return nullptr;
 }
 
 // The branch id, which increments as we go.
@@ -272,6 +275,9 @@ struct DeleteBranchHints
 
   void doWalkModule(Module* module) {
     logBranch = getLogBranchImport(module);
+    if (!logBranch) {
+      Fatal() << "No branch hint logging import found. Was this code instrumented?";
+    }
 
     auto arg = getArgument(
       "delete-branch-hints",
@@ -305,16 +311,21 @@ struct DeInstrumentBranchHints
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition, logBranch)) {
       // Replace the instrumentated condition with the original one.
-      replaceCurrent(info->originalCondition);
+      curr->condition = info->originalCondition;
     }
   }
 
   void doWalkModule(Module* module) {
     logBranch = getLogBranchImport(module);
+    if (!logBranch) {
+      Fatal() << "No branch hint logging import found. Was this code instrumented?";
+    }
 
     Super::doWalkModule(module);
   }
 };
+
+#pragma GCC diagnostic pop
 
 } // anonymous namespace
 
