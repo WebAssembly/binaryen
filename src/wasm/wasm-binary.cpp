@@ -2518,12 +2518,13 @@ getOrMakeName(const std::unordered_map<Index, Name>& nameMap,
               Name name,
               std::unordered_set<Name>& usedNames) {
   if (auto it = nameMap.find(i); it != nameMap.end()) {
-    return {it->second, true};
-  } else {
-    auto valid = Names::getValidNameGivenExisting(name, usedNames);
-    usedNames.insert(valid);
-    return {valid, false};
+    auto name = it->second;
+    usedNames.insert(name);
+    return {name, true};
   }
+  auto valid = Names::getValidNameGivenExisting(name, usedNames);
+  usedNames.insert(valid);
+  return {valid, false};
 }
 
 void WasmBinaryReader::readMemories() {
