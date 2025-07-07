@@ -97,6 +97,8 @@
 
 #include "ir/eh-utils.h"
 #include "ir/names.h"
+#include "ir/local-graph.h"
+#include "ir/parents.h"
 #include "ir/properties.h"
 #include "pass.h"
 #include "support/string.h"
@@ -201,63 +203,112 @@ struct InstrumentBranchHints
   }
 };
 
-// Instrumentation info for a chunk of code that is the result of the
-// instrumentation pass.
-struct Instrumentation {
-  // The condition before the instrumentation.
-  Expression* originalCondition;
-  // The call to the logging that the instrumentation added.
-  Call* call;
-};
+template<typename Sub>
+struct InstrumentationProcessor
+  : public WalkerPass<PostWalker<Sub>> {
 
-// Check if an expression's condition is an instrumentation, and return the info
-// if so. We are provided the internal name of the logging function.
-std::optional<Instrumentation> getInstrumentation(Expression* condition, Name logBranch) {
-  // We must identify this pattern:
-  //
-  //  (block
-  //    (local.set $temp (condition))
-  //    (call $log (id, prediction, (local.get $temp)))
-  //    (local.get $temp)
-  //  )
-  //
-  auto* block = condition->dynCast<Block>();
-  if (!block) {
-    return {};
-  }
-  auto& list = block->list;
-  if (block->list.size() != 3) {
-    return {};
-  }
-  auto *call = list[1]->dynCast<Call>();
-  if (!call || call->target != logBranch) {
-    return {};
-  }
-  // We found the call, so the rest must be in the proper form.
-  auto* set = list[0]->cast<LocalSet>();
-  return Instrumentation{ set->value, call };
-}
-
-struct DeleteBranchHints
-  : public WalkerPass<PostWalker<DeleteBranchHints>> {
-
-  using Super = WalkerPass<PostWalker<DeleteBranchHints>>;
+  using Super = WalkerPass<PostWalker<Sub>>;
 
   // The internal name of our import.
   Name logBranch;
 
-  // The set of IDs to delete.
-  std::unordered_set<Index> idsToDelete;
+  // A LocalGraph, so we can identify the pattern.
+  std::unique_ptr<LocalGraph> localGraph;
 
-  void visitIf(If* curr) { processCondition(curr); }
+  // A map of expressions to their parents, so we can identify the pattern.
+  std::unique_ptr<Parents> parents;
+
+  Sub* getSub() { return (Sub*)this; }
+
+  void visitIf(If* curr) { getSub()->processCondition(curr); }
 
   void visitBreak(Break* curr) {
     if (curr->condition) {
-      processCondition(curr);
+      getSub()->processCondition(curr);
     }
   }
 
   // TODO: BrOn, but the condition there is not an i32
+
+  void doWalkModule(Module* module) {
+    logBranch = getLogBranchImport(module);
+    if (!logBranch) {
+      Fatal() << "No branch hint logging import found. Was this code instrumented?";
+    }
+
+    Super::doWalkModule(module);
+  }
+
+  // Helpers
+
+  // Instrumentation info for a chunk of code that is the result of the
+  // instrumentation pass.
+  struct Instrumentation {
+    // The condition before the instrumentation.
+    Expression* originalCondition;
+    // The call to the logging that the instrumentation added.
+    Call* call;
+  };
+
+  // Check if an expression's condition is an instrumentation, and return the info
+  // if so. We are provided the internal name of the logging function, and a
+  // LocalGraph so we can follow gets to their sets.
+  std::optional<Instrumentation> getInstrumentation(Expression* condition) {
+    // We must identify this pattern:
+    //
+    //  (br_if
+    //    (block
+    //      (local.set $temp (condition))
+    //      (call $log (id, prediction, (local.get $temp)))
+    //      (local.get $temp)
+    //    )
+    //
+    // The block may vanish during roundtrip though, so we just follow back from
+    // the last local.get, which appears in the condition:
+    //
+    //  (local.set $temp (condition))
+    //  (call $log (id, prediction, (local.get $temp)))
+    //  (br_if
+    //    (local.get $temp)
+    //
+    auto* get = condition->template dynCast<LocalGet>();
+    if (!get) {
+      return {};
+    }
+    auto& sets = getSub()->localGraph->getSets(get);
+    if (sets.size() != 1) {
+      return {};
+    }
+    auto* set = *sets.begin();
+    auto& gets = parent.localGraph->getSetInfluences(set);
+    if (gets.size() != 2) {
+      return {};
+    }
+    // The set has two gets: the get in the condition we began at, and
+    // another.
+    LocalGet* otherGet = nullptr;
+    for (auto* get2 : gets) {
+      if (get2 != get) {
+        otherGet = get2;
+      }
+    }
+    assert(otherGet);
+    // See if that other get is used in a logging. The parent should be a
+    // logging call.
+    auto* call = getSub()->parents->getParent(otherGet)->dynCast<Call>();
+    if (!call || call->target != logBranch) {
+      return {};
+    }
+    // Great, this is indeed a prior instrumentation.
+    return Instrumentation{ set->value, call };
+  }
+};
+
+struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
+  using Super = InstrumentationProcessor<DeleteBranchHints>;
+
+  // The set of IDs to delete.
+  std::unordered_set<Index> idsToDelete;
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition, logBranch)) {
@@ -270,11 +321,6 @@ struct DeleteBranchHints
   }
 
   void doWalkModule(Module* module) {
-    logBranch = getLogBranchImport(module);
-    if (!logBranch) {
-      Fatal() << "No branch hint logging import found. Was this code instrumented?";
-    }
-
     auto arg = getArgument(
       "delete-branch-hints",
       "DeleteBranchHints usage:  wasm-opt --delete-branch-hints=10,20,30");
@@ -287,37 +333,15 @@ struct DeleteBranchHints
 };
 
 struct DeInstrumentBranchHints
-  : public WalkerPass<PostWalker<DeInstrumentBranchHints>> {
+  : public InstrumentationProcessor<DeInstrumentBranchHints> {
 
-  using Super = WalkerPass<PostWalker<DeInstrumentBranchHints>>;
-
-  // The internal name of our import.
-  Name logBranch;
-
-  void visitIf(If* curr) { processCondition(curr); }
-
-  void visitBreak(Break* curr) {
-    if (curr->condition) {
-      processCondition(curr);
-    }
-  }
-
-  // TODO: BrOn, but the condition there is not an i32
+  using Super = InstrumentationProcessor<DeInstrumentBranchHints>;
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition, logBranch)) {
       // Replace the instrumentated condition with the original one.
       curr->condition = info->originalCondition;
     }
-  }
-
-  void doWalkModule(Module* module) {
-    logBranch = getLogBranchImport(module);
-    if (!logBranch) {
-      Fatal() << "No branch hint logging import found. Was this code instrumented?";
-    }
-
-    Super::doWalkModule(module);
   }
 };
 

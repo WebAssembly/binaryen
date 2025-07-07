@@ -1921,7 +1921,7 @@ class BranchHintPreservation(TestCaseHandler):
             '--deinstrument-branch-hints',
             '--instrument-branch-hints',
             '-g',
-        ] + FEATURE_OPTS)
+        ] + FEATURE_OPTS
         run(args)
 
         # Log out the branch hints at runtime.
