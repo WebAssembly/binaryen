@@ -436,8 +436,6 @@
 ;; This module has our import, but with a minified internal name. We should use
 ;; that import.
 (module
-
-
   ;; CHECK:      (type $0 (func (param i32 i32 i32)))
 
   ;; CHECK:      (type $1 (func))
