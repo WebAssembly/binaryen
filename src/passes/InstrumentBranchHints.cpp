@@ -89,6 +89,8 @@ struct InstrumentBranchHints
     }
   }
 
+  // TODO: BrOn, but the condition there is not an i32
+
   bool addedInstrumentation = false;
 
   template<typename T> void processCondition(T* curr) {

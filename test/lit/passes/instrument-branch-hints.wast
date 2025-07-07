@@ -10,9 +10,11 @@
 
   ;; CHECK:      (type $2 (func (result f64)))
 
-  ;; CHECK:      (type $3 (func (param i32 i32 i32)))
+  ;; CHECK:      (type $3 (func (param anyref)))
 
-  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $3) (param i32 i32 i32)))
+  ;; CHECK:      (type $4 (func (param i32 i32 i32)))
+
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $4) (param i32 i32 i32)))
 
   ;; CHECK:      (tag $i32 (type $1) (param i32))
   (tag $i32 (param i32))
@@ -355,6 +357,29 @@
           (then
             (drop (i32.const 1337))
           )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $br_on (type $3) (param $x anyref)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (br_on_null $out
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on (param $x anyref)
+    ;; We do not instrument BrOn yet: the condition is not an i32 in this case,
+    ;; so logging is trickier. TODO
+    (block $out
+      (drop
+        (@metadata.code.branch_hint "\00")
+        (br_on_null $out
+          (local.get $x)
         )
       )
     )
