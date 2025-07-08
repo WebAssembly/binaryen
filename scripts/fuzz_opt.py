@@ -1886,12 +1886,13 @@ class BranchHintPreservation(TestCaseHandler):
                     # This hint was misleading.
                     bad_ids.add(id_)
 
-        # Generate the final wasm for testing.
-        final = wasm + '.de_inst.wasm'
+        # Generate proper hints for testing: A wasm file with 100% valid branch
+        # hints, and instrumentation to verify that.
+        de_instrumented = wasm + '.de_inst.wasm'
         args = [
             in_bin('wasm-opt'),
             instrumented,
-            '-o', final,
+            '-o', de_instrumented,
         ]
         # Remove the bad ids (using the instrumentation to identify them by ID).
         if bad_ids:
@@ -1906,8 +1907,18 @@ class BranchHintPreservation(TestCaseHandler):
             '--instrument-branch-hints',
             '-g',
         ] + FEATURE_OPTS
-        # Add optimizations to see if things break.
-        args += get_random_opts()
+        run(args)
+
+        # Add optimizations to see if things break. We must do this in a
+        # separate invocation from deinstrumentation etc., due to flags like
+        # --converge (which would deinstrument multiple times, and after opts).
+        final = wasm + '.final.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            de_instrumented,
+            '-o', final,
+            '-g',
+        ] + get_random_opts() + FEATURE_OPTS
         run(args)
 
         # Log out the branch hints at runtime.
