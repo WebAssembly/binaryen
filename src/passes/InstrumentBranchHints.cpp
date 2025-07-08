@@ -370,9 +370,12 @@ struct DeInstrumentBranchHints
     // walk to identify instrumentation).
     for (auto* call : FindAll<Call>(func->body).list) {
       if (call->target == logBranch) {
-        // We would not instrument unreachable code.
-        assert(call->type == Type::none);
-        ExpressionManipulator::nop(call);
+        if (call->type == Type::none) {
+          ExpressionManipulator::nop(call);
+        } else {
+          assert(call->type == Type::unreachable);
+          ExpressionManipulator::unreachable(call);
+        }
       }
     }
   }
