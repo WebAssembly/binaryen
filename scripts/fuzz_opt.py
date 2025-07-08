@@ -1918,6 +1918,13 @@ class BranchHintPreservation(TestCaseHandler):
         ] + FEATURE_OPTS
         run(args)
 
+        # After that filtering, no invalid branch hint should remain.
+        out = run_bynterp(de_instrumented, ['--fuzz-exec-before', '-all'])
+        for line in out.splitlines():
+            if line.startswith(LEI_LOG_BRANCH):
+                _, _, id_, hint, actual = line[1:-1].split(' ')
+                assert hint == actual, 'Branch hint misled us'
+
         # Add optimizations to see if things break. We must do this in a
         # separate invocation from deinstrumentation etc., due to flags like
         # --converge (which would deinstrument multiple times, and after opts).
@@ -1930,14 +1937,10 @@ class BranchHintPreservation(TestCaseHandler):
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 
-        # Log out the branch hints at runtime.
-        out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
-
-        # See if any branch hint was wrong.
-        for line in out.splitlines():
-            if line.startswith(LEI_LOG_BRANCH):
-                _, _, id_, hint, actual = line[1:-1].split(' ')
-                assert hint == actual, 'Branch hint misled us'
+        # The output should be identical to before, including the fact that all
+        # branch hints are valid.
+        out2 = run_bynterp(final, ['--fuzz-exec-before', '-all'])
+        compare(out, out2, 'BranchHintPreservation')
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
