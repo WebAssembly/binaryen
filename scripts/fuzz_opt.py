@@ -1874,15 +1874,21 @@ def test_one(random_input, given_wasm):
     print()
 
     if given_wasm:
-        # if given a wasm file we want to use it as is, but we also want to
-        # apply properties like not having any NaNs, which the original fuzz
-        # wasm had applied. that is, we need to preserve properties like not
-        # having nans through reduction.
-        try:
-            run([in_bin('wasm-opt'), given_wasm, '-o', abspath('a.wasm')] + GEN_ARGS + FEATURE_OPTS)
-        except Exception as e:
-            print("Internal error in fuzzer! Could not run given wasm")
-            raise e
+        # We are given a wasm file to operate on. By default we modify it in the
+        # usual ways, like running DeNAN on it, which is important in many cases
+        # (imagine the reducer generates a NAN, then we need to restore the
+        # property of not having any). However, in some cases we do need to
+        # trust the wasm is correct, as any change may alter the properties we
+        # want there, so we have an env var to control that,
+        # BINARYEN_TRUST_GIVEN_WASM.
+        if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
+            shutil.copyfile(given_wasm, abspath('a.wasm'))
+        else:
+            try:
+                run([in_bin('wasm-opt'), given_wasm, '-o', abspath('a.wasm')] + GEN_ARGS + FEATURE_OPTS)
+            except Exception as e:
+                print("Internal error in fuzzer! Could not run given wasm")
+                raise e
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
@@ -2351,7 +2357,9 @@ The following value should be 1:
 (If it does not, then one possible issue is that the fuzzer fails to write a
 valid binary. If so, you can print the output of the fuzzer's first command
 (using -ttf / --translate-to-fuzz) in text form and run the reduction from that,
-passing --text to the reducer.)
+passing --text to the reducer. Another possible fix is to avoid re-processing
+the wasm for fuzzing in each iteration, by adding
+BINARYEN_TRUST_GIVEN_WASM=1 in the env.)
 
 You can also read "%(reduce_sh)s" which has been filled out for you and includes
 docs and suggestions.
