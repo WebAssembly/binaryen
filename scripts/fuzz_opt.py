@@ -1909,41 +1909,50 @@ class BranchHintPreservation(TestCaseHandler):
                 '--delete-branch-hints=' + ','.join(bad_ids),
             ]
         args += [
-            # Remove all prior instrumentation (so it does not confuse us), and
-            # add new instrumentation of hints we left around, which were all
-            # valid.
+            # Remove all prior instrumentation, so it does not confuse us later
+            # when we log our final hints, and also so it does not inhibit
+            # optimizations.
             '--deinstrument-branch-hints',
-            '--instrument-branch-hints',
             '-g',
         ] + FEATURE_OPTS
         run(args)
 
         # After that filtering, no invalid branch hint should remain.
-        out = run_bynterp(de_instrumented, ['--fuzz-exec-before', '-all'])
-        for line in out.splitlines():
-            if line.startswith(LEI_LOG_BRANCH):
-                _, _, id_, hint, actual = line[1:-1].split(' ')
-                assert hint == actual, 'Branch hint misled us'
+        def check_bad_hints(wasm, stage):
+            out = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
+            for line in out.splitlines():
+                if line.startswith(LEI_LOG_BRANCH):
+                    _, _, id_, hint, actual = line[1:-1].split(' ')
+                    assert hint == actual, stage
 
-        # Add optimizations to see if things break. We must do this in a
-        # separate invocation from deinstrumentation etc., due to flags like
-        # --converge (which would deinstrument multiple times, and after opts).
-        final = wasm + '.final.wasm'
+        check_bad_hints(de_instrumented, 'Bad hint after deletions')
+
+        # Add optimizations to see if things break.
+        opted = wasm + '.opted.wasm'
         args = [
             in_bin('wasm-opt'),
             de_instrumented,
-            '-o', final,
+            '-o', opted,
             '-g',
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 
-        # The output should be identical to before, including the fact that all
-        # branch hints are valid.
-        out2 = run_bynterp(final, ['--fuzz-exec-before', '-all'])
-        # Filter outputs to relevant lines.
-        def filter(text):
-            return '\n'.join([line for line in text.splitlines() if line.startswith(LEI_LOG_BRANCH)])
-        compare(filter(out), filter(out2), 'BranchHintPreservation')
+        # Add instrumentation, to see if any branch hints are wrong after
+        # optimizations. We must do this in a separate invocation from the
+        # optimizations due to flags like --converge (which would instrument
+        # multiple times).
+        final = wasm + '.final.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            opted,
+            '-o', final,
+            '--instrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS
+        run(args)
+
+        # No bad hints should pop up after optimizations.
+        check_bad_hints(final, 'Bad hint after optimizations')
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
