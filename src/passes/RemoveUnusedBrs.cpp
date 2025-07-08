@@ -176,7 +176,6 @@ static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
 }
 
 static void flipBranchHint(Expression* expr, Function* func) {
-return;
   if (auto likely = getBranchHint(expr, func)) {
     setBranchHint(expr, !*likely, func);
   }
