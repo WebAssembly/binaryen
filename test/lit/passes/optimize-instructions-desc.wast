@@ -11,7 +11,18 @@
     (type $desc (describes $struct (struct)))
   )
 
-  ;; CHECK:      (func $trap-null-desc (type $2) (result (ref (exact $struct)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct-i32 (descriptor $struct-i32.desc (struct (field i32))))
+    (type $struct-i32 (descriptor $struct-i32.desc (struct (field i32))))
+    ;; CHECK:       (type $struct-i32.desc (describes $struct-i32 (struct)))
+    (type $struct-i32.desc (describes $struct-i32 (struct)))
+  )
+
+  ;; CHECK:      (import "" "" (func $effect (type $5)))
+  (import "" "" (func $effect))
+
+  ;; CHECK:      (func $trap-null-desc (type $4) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $trap-null-desc (result (ref (exact $struct)))
@@ -20,7 +31,7 @@
     )
   )
 
-  ;; CHECK:      (func $trap-null-desc-fallthrough (type $2) (result (ref (exact $struct)))
+  ;; CHECK:      (func $trap-null-desc-fallthrough (type $4) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (local $desc (ref null (exact $desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $desc
@@ -38,7 +49,7 @@
     )
   )
 
-  ;; CHECK:      (func $nonnull-cast-desc (type $3) (param $desc (ref null (exact $desc))) (result (ref (exact $struct)))
+  ;; CHECK:      (func $nonnull-cast-desc (type $6) (param $desc (ref null (exact $desc))) (result (ref (exact $struct)))
   ;; CHECK-NEXT:  (struct.new_default $struct
   ;; CHECK-NEXT:   (local.get $desc)
   ;; CHECK-NEXT:  )
@@ -47,6 +58,28 @@
     (struct.new $struct
       (ref.as_non_null
         (local.get $desc)
+      )
+    )
+  )
+
+  ;; Test that when we optimize a struct.new to a struct.new_default, we drop
+  ;; the field operands but keep the descriptor.
+  ;; CHECK:      (func $new-default-keep-desc (type $7) (result anyref)
+  ;; CHECK-NEXT:  (struct.new_default $struct-i32
+  ;; CHECK-NEXT:   (block (result (ref (exact $struct-i32.desc)))
+  ;; CHECK-NEXT:    (call $effect)
+  ;; CHECK-NEXT:    (struct.new_default $struct-i32.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $new-default-keep-desc (result anyref)
+    (struct.new $struct-i32
+      (i32.const 0)
+      (block (result (ref (exact $struct-i32.desc)))
+        ;; This would cause the descriptor to be dropped if it were dropped with
+        ;; the other children.
+        (call $effect)
+        (struct.new_default $struct-i32.desc)
       )
     )
   )
