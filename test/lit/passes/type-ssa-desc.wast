@@ -166,7 +166,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-opt-desc-identity (result i32)
-    ;; Same as above, but now we cannot optimize because the identify of the
+    ;; Same as above, but now we cannot optimize because the identity of the
     ;; descriptors matters and we cannot replace them with different subtypes.
     (ref.eq
       (ref.get_desc $struct
