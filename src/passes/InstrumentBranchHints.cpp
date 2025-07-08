@@ -205,6 +205,8 @@ struct InstrumentBranchHints
   }
 };
 
+// Helper class that provides basic utilities for identifying and processing
+// instrumentation from InstrumentBranchHints.
 template<typename Sub>
 struct InstrumentationProcessor
   : public WalkerPass<PostWalker<Sub>> {
