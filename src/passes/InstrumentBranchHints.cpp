@@ -208,8 +208,7 @@ struct InstrumentBranchHints
 // Helper class that provides basic utilities for identifying and processing
 // instrumentation from InstrumentBranchHints.
 template<typename Sub>
-struct InstrumentationProcessor
-  : public WalkerPass<PostWalker<Sub>> {
+struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
 
   using Super = WalkerPass<PostWalker<Sub>>;
 
@@ -246,7 +245,8 @@ struct InstrumentationProcessor
   void doWalkModule(Module* module) {
     logBranch = getLogBranchImport(module);
     if (!logBranch) {
-      Fatal() << "No branch hint logging import found. Was this code instrumented?";
+      Fatal()
+        << "No branch hint logging import found. Was this code instrumented?";
     }
 
     Super::doWalkModule(module);
@@ -264,9 +264,9 @@ struct InstrumentationProcessor
     Call* call;
   };
 
-  // Check if an expression's condition is an instrumentation, and return the info
-  // if so. We are provided the internal name of the logging function, and a
-  // LocalGraph so we can follow gets to their sets.
+  // Check if an expression's condition is an instrumentation, and return the
+  // info if so. We are provided the internal name of the logging function, and
+  // a LocalGraph so we can follow gets to their sets.
   std::optional<Instrumentation> getInstrumentation(Expression* condition) {
     // We must identify this pattern:
     //
@@ -311,12 +311,13 @@ struct InstrumentationProcessor
     assert(otherGet);
     // See if that other get is used in a logging. The parent should be a
     // logging call.
-    auto* call = getSub()->parents->getParent(otherGet)->template dynCast<Call>();
+    auto* call =
+      getSub()->parents->getParent(otherGet)->template dynCast<Call>();
     if (!call || call->target != logBranch) {
       return {};
     }
     // Great, this is indeed a prior instrumentation.
-    return Instrumentation{ &set->value, call };
+    return Instrumentation{&set->value, call};
   }
 };
 
@@ -385,6 +386,8 @@ struct DeInstrumentBranchHints
 
 Pass* createInstrumentBranchHintsPass() { return new InstrumentBranchHints(); }
 Pass* createDeleteBranchHintsPass() { return new DeleteBranchHints(); }
-Pass* createDeInstrumentBranchHintsPass() { return new DeInstrumentBranchHints(); }
+Pass* createDeInstrumentBranchHintsPass() {
+  return new DeInstrumentBranchHints();
+}
 
 } // namespace wasm
