@@ -1844,7 +1844,14 @@ class PreserveImportsExports(TestCaseHandler):
         compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
-# Test that we preserve branch hints properly.
+# Test that we preserve branch hints properly. The invariant that we test here
+# is that, given correct branch hints (that is, the input wasm's branch hints
+# are always correct, a branch is taken iff the hint is that it is taken), then
+# the optimizer does not end up with incorrect branch hints. It is fine if the
+# optimizer removes some hints (it may remove entire chunks of code in DCE, for
+# example, and it may find ways to simplify code so fewer things execute), but
+# it should not emit a branch hint that is wrong - if it is not certain, it
+# should remove the branch hint.
 class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
@@ -1857,12 +1864,12 @@ class BranchHintPreservation(TestCaseHandler):
             '-o', instrumented,
             # Add random branch hints (so we have something to work with).
             '--randomize-branch-hints',
-            # Instrument them for our fuzzing, then optimize.
+            # Instrument them with logging.
             '--instrument-branch-hints',
             '-g',
         ] + FEATURE_OPTS)
 
-        # Log out the branch hints at runtime.
+        # Collect the logging.
         out = run_bynterp(instrumented, ['--fuzz-exec-before', '-all'])
 
         # Process the output. We look at the lines like this:
@@ -1870,29 +1877,20 @@ class BranchHintPreservation(TestCaseHandler):
         #   [LoggingExternalInterface log-branch 1 0 0]
         #
         # where the three integers are: ID, predicted, actual.
-        #
-        # Any ID (a particular branch) that we predict wrong is a problem, and
-        # we will remove that branch hint from the binary. After doing so, we
-        # will end up with a binary where all branch hints are correct, and we
-        # then verify that that property is preserved after optimizations.
-        #
-        # (In theory, optimizations could make branch hints wrong in return for
-        # some benefit that makes things overall faster, but we don't have such
-        # optimizations for now.)
         all_ids = set()
         bad_ids = set()
         LEI_LOG_BRANCH = '[LoggingExternalInterface log-branch'
         for line in out.splitlines():
             if line.startswith(LEI_LOG_BRANCH):
-                # Parse the ID, the hint, and whether we actually branched.
-                # (1:-1 strips away the [ ] at the edges)
+                # (1:-1 strips away the '[', ']' at the edges)
                 _, _, id_, hint, actual = line[1:-1].split(' ')
                 all_ids.add(id_)
                 if hint != actual:
                     # This hint was misleading.
                     bad_ids.add(id_)
 
-        # If no good ids remain, there is nothing to test.
+        # If no good ids remain, there is nothing to test (no hints will remain
+        # later down, after we remove bad ones).
         if bad_ids == all_ids:
             note_ignored_vm_run('no good ids')
             return
