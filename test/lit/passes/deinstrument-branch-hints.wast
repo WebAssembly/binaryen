@@ -86,4 +86,42 @@
       )
     )
   )
+
+  ;; CHECK:      (func $br-before (type $0)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (local.set $temp
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $log
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br-before
+    ;; As above, but the instrumentation is before us, leaving only a local.get
+    ;; in the br's condition. We should still identify the pattern and remove
+    ;; the logging (but we leave the local.set for other things to clean up).
+    (local $temp i32)
+    (block $out
+      (local.set $temp
+        (i32.const 42)
+      )
+      (call $log
+        (i32.const 4)
+        (i32.const 0)
+        (local.get $temp)
+      )
+      (@metadata.code.branch_hint "\01")
+      (br_if $out
+        (local.get $temp)
+      )
+    )
+  )
 )
