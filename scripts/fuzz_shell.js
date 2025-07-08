@@ -364,7 +364,7 @@ var imports = {
       // see fuzz_opt.py. For testing that expectations actually match reality
       // (i.e. that branch hints are correct), you can adjust the logic here to
       // throw on  expected != actual .
-      console.log(`log-branch: hint ${id} of ${expected} and actual ${actual}`);
+      console.log(`log-branch: hint ${id} of ${expected} and actual ${actual} (${expected === actual ? 'right' : 'WRONG'})`);
     },
   },
   // Emscripten support.

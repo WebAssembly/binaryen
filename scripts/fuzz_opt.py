@@ -1882,7 +1882,7 @@ class BranchHintPreservation(TestCaseHandler):
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
                 # Parse the ID, the hint, and whether we actually branched.
-                _, _, id_, _, hint, _, _, actual = line.split(' ')
+                _, _, id_, _, hint, _, _, actual, _ = line.split(' ')
                 all_ids.add(id_)
                 if hint != actual:
                     # This hint was misleading.
@@ -1934,7 +1934,7 @@ class BranchHintPreservation(TestCaseHandler):
         # See if any branch hint was wrong.
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
-                _, _, id_, _, hint, _, _, actual = line.split(' ')
+                _, _, id_, _, hint, _, _, actual, _ = line.split(' ')
                 assert hint == actual, 'Branch hint misled us'
 
     def can_run_on_wasm(self, wasm):
