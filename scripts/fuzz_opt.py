@@ -1891,7 +1891,6 @@ class BranchHintPreservation(TestCaseHandler):
         # If no good ids remain, there is nothing to test.
         if bad_ids == all_ids:
             note_ignored_vm_run('no good ids')
-            1/0
             return
 
         # Generate proper hints for testing: A wasm file with 100% valid branch
