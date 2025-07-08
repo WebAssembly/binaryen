@@ -1863,11 +1863,13 @@ class BranchHintPreservation(TestCaseHandler):
         ] + FEATURE_OPTS)
 
         # Log out the branch hints at runtime.
-        out = run_d8_wasm(instrumented)
+        out = run_bynterp(instrumented, ['--fuzz-exec-before', '-all'])
 
         # Process the output. We look at the lines like this:
         #
-        #   log-branch: hint 123 of 1 and actual 0
+        #   [LoggingExternalInterface log-branch 1 0 0]
+        #
+        # where the three integers are: ID, predicted, actual.
         #
         # Any ID (a particular branch) that we predict wrong is a problem, and
         # we will remove that branch hint from the binary. After doing so, we
@@ -1879,10 +1881,12 @@ class BranchHintPreservation(TestCaseHandler):
         # optimizations for now.)
         all_ids = set()
         bad_ids = set()
+        LEI_LOG_BRANCH = '[LoggingExternalInterface log-branch'
         for line in out.splitlines():
-            if line.startswith('log-branch: hint'):
+            if line.startswith(LEI_LOG_BRANCH):
                 # Parse the ID, the hint, and whether we actually branched.
-                _, _, id_, _, hint, _, _, actual, _ = line.split(' ')
+                # (1:-1 strips away the [ ] at the edges)
+                _, _, id_, hint, actual = line[1:-1].split(' ')
                 all_ids.add(id_)
                 if hint != actual:
                     # This hint was misleading.
@@ -1929,12 +1933,12 @@ class BranchHintPreservation(TestCaseHandler):
         run(args)
 
         # Log out the branch hints at runtime.
-        out = run_d8_wasm(final)
+        out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
 
         # See if any branch hint was wrong.
         for line in out.splitlines():
-            if line.startswith('log-branch: hint'):
-                _, _, id_, _, hint, _, _, actual, _ = line.split(' ')
+            if line.startswith(LEI_LOG_BRANCH):
+                _, _, id_, hint, actual = line[1:-1].split(' ')
                 assert hint == actual, 'Branch hint misled us'
 
     def can_run_on_wasm(self, wasm):
