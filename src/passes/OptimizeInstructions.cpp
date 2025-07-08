@@ -1863,9 +1863,15 @@ struct OptimizeInstructions
       }
     }
 
-    // Success! Drop the children and return a struct.new_with_default.
+    // Success! Drop the children and return a struct.new_with_default. We don't
+    // want the descriptor to be dropped, however, so temporarily remove it
+    // while we drop the other children. If the descriptor is null, this makes
+    // no difference.
+    auto* desc = curr->desc;
+    curr->desc = nullptr;
     auto* rep = getDroppedChildrenAndAppend(curr, curr);
     curr->operands.clear();
+    curr->desc = desc;
     assert(curr->isWithDefault());
     replaceCurrent(rep);
   }
