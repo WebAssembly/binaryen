@@ -1878,9 +1878,9 @@ def test_one(random_input, given_wasm):
         # usual ways, like running DeNAN on it, which is important in many cases
         # (imagine the reducer generates a NAN, then we need to restore the
         # property of not having any). However, in some cases we do need to
-        # trust the wasm is correct, as any change may alter the properties we
-        # want there, so we have an env var to control that,
-        # BINARYEN_TRUST_GIVEN_WASM.
+        # trust the wasm is correct, or it is simpler to debug things without
+        # constant changes in each reduction cycle, so we have an env var to
+        # control that, BINARYEN_TRUST_GIVEN_WASM.
         if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
             shutil.copyfile(given_wasm, abspath('a.wasm'))
         else:
