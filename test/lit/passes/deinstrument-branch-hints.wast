@@ -91,13 +91,9 @@
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $log
-  ;; CHECK-NEXT:    (i32.const 4)
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $temp)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:   (br_if $out
   ;; CHECK-NEXT:    (i32.const 42)

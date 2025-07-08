@@ -96,8 +96,10 @@
 //
 
 #include "ir/eh-utils.h"
-#include "ir/names.h"
+#include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "ir/manipulation.h"
+#include "ir/names.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
 #include "pass.h"
@@ -253,8 +255,9 @@ struct InstrumentationProcessor
   // Instrumentation info for a chunk of code that is the result of the
   // instrumentation pass.
   struct Instrumentation {
-    // The condition before the instrumentation.
-    Expression* originalCondition;
+    // The condition before the instrumentation (a pointer to it, so we can
+    // replace it).
+    Expression** originalCondition;
     // The call to the logging that the instrumentation added.
     Call* call;
   };
@@ -311,7 +314,7 @@ struct InstrumentationProcessor
       return {};
     }
     // Great, this is indeed a prior instrumentation.
-    return Instrumentation{ set->value, call };
+    return Instrumentation{ &set->value, call };
   }
 };
 
@@ -350,8 +353,25 @@ struct DeInstrumentBranchHints
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition)) {
-      // Replace the instrumentated condition with the original one.
-      curr->condition = info->originalCondition;
+      // Replace the instrumentated condition with the original one (swap so
+      // that the IR remains valid; the other use of the local will not matter,
+      // as we remove the logging calls).
+      std::swap(curr->condition, *info->originalCondition);
+    }
+  }
+
+  void visitFunction(Function* func) {
+    if (func->imported()) {
+      return;
+    }
+    // At the very end, remove all logging calls (we use them during the main
+    // walk to identify instrumentation).
+    for (auto* call : FindAll<Call>(func->body).list) {
+      if (call->target == logBranch) {
+        // We would not instrument unreachable code.
+        assert(call->type == Type::none);
+        ExpressionManipulator::nop(call);
+      }
     }
   }
 };
