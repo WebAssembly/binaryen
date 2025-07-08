@@ -1849,24 +1849,6 @@ class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
     def handle(self, wasm):
-        # Ensure a bugg
-        open(wasm, 'w').write('''
-(module
-  (func $loop-br_if-flip-reverse (param $x i32)
-    ;; As above, with a hint of 1, that should flip to 0.
-    (block $block
-      (loop $loop
-        (@metadata.code.branch_hint "\\01")
-        (br_if $block
-          (local.get $x)
-        )
-        (br $loop)
-      )
-    )
-  )
-)
-''')
-
         # Generate an instrumented wasm.
         instrumented = wasm + '.inst.wasm'
         run([
@@ -1899,29 +1881,33 @@ class BranchHintPreservation(TestCaseHandler):
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
                 # Parse the ID, the hint, and whether we actually branched.
-                _, _, id_, _, hint, _, _, actual = first.split(' ')
+                _, _, id_, _, hint, _, _, actual = line.split(' ')
                 if hint != actual:
                     # This hint was misleading.
                     bad_ids.add(id_)
 
-        # Remove the bad ids (using the instrumentation to identify them by ID),
-        # and also the instrumentation itself. Then add new instrumentation,
-        # which we will use to see if any remaining hints are wrong.
+        # Generate the final wasm for testing.
         final = wasm + '.de_inst.wasm'
         args = [
             in_bin('wasm-opt'),
             instrumented,
             '-o', final,
         ]
+        # Remove the bad ids (using the instrumentation to identify them by ID).
         if bad_ids:
             args += [
                 '--delete-branch-hints=' + ','.join(bad_ids),
             ]
         args += [
+            # Remove all prior instrumentation (so it does not confuse us), and
+            # add new instrumentation of hints we left around, which were all
+            # valid.
             '--deinstrument-branch-hints',
             '--instrument-branch-hints',
             '-g',
         ] + FEATURE_OPTS
+        # Add optimizations to see if things break.
+        args += get_random_opts()
         run(args)
 
         # Log out the branch hints at runtime.
@@ -1930,7 +1916,7 @@ class BranchHintPreservation(TestCaseHandler):
         # See if any branch hint was wrong.
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
-                _, _, id_, _, hint, _, _, actual = first.split(' ')
+                _, _, id_, _, hint, _, _, actual = line.split(' ')
                 assert hint == actual, 'Branch hint misled us'
 
     def can_run_on_wasm(self, wasm):
