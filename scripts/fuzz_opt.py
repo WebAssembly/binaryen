@@ -1877,14 +1877,22 @@ class BranchHintPreservation(TestCaseHandler):
         # (In theory, optimizations could make branch hints wrong in return for
         # some benefit that makes things overall faster, but we don't have such
         # optimizations for now.)
+        all_ids = set()
         bad_ids = set()
         for line in out.splitlines():
             if line.startswith('log-branch: hint'):
                 # Parse the ID, the hint, and whether we actually branched.
                 _, _, id_, _, hint, _, _, actual = line.split(' ')
+                all_ids.add(id_)
                 if hint != actual:
                     # This hint was misleading.
                     bad_ids.add(id_)
+
+        # If no good ids remain, there is nothing to test.
+        if bad_ids == all_ids:
+            note_ignored_vm_run('no good ids')
+            1/0
+            return
 
         # Generate proper hints for testing: A wasm file with 100% valid branch
         # hints, and instrumentation to verify that.
