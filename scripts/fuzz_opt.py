@@ -1940,7 +1940,7 @@ class BranchHintPreservation(TestCaseHandler):
         # The output should be identical to before, including the fact that all
         # branch hints are valid.
         out2 = run_bynterp(final, ['--fuzz-exec-before', '-all'])
-        compare(out, out2, 'BranchHintPreservation')
+        compare_between_vms(out, out2, 'BranchHintPreservation')
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
