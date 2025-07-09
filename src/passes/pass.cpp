@@ -594,11 +594,11 @@ void PassRegistry::registerPasses() {
                    "fixup nested pops within catches",
                    createCatchPopFixupPass);
   registerTestPass("deinstrument-branch-hints",
-               "de-instrument branch hint instrumentation",
-               createDeInstrumentBranchHintsPass);
+                   "de-instrument branch hint instrumentation",
+                   createDeInstrumentBranchHintsPass);
   registerTestPass("delete-branch-hints",
-               "delete branch hints using a list of instrumented IDs",
-               createDeleteBranchHintsPass);
+                   "delete branch hints using a list of instrumented IDs",
+                   createDeleteBranchHintsPass);
   registerTestPass("experimental-type-generalizing",
                    "generalize types (not yet sound)",
                    createTypeGeneralizingPass);
