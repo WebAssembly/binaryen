@@ -95,10 +95,10 @@
 //  }
 //
 
+#include "ir/drop.h"
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
-#include "ir/manipulation.h"
 #include "ir/names.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
@@ -367,14 +367,17 @@ struct DeInstrumentBranchHints
     }
     // At the very end, remove all logging calls (we use them during the main
     // walk to identify instrumentation).
-    for (auto* call : FindAll<Call>(func->body).list) {
+    for (auto** callp : FindAllPointers<Call>(func->body).list) {
+      auto* call = (*callp)->cast<Call>();
       if (call->target == logBranch) {
+        Builder builder(*getModule());
+        Expression* last;
         if (call->type == Type::none) {
-          ExpressionManipulator::nop(call);
+          last = builder.makeNop();
         } else {
-          assert(call->type == Type::unreachable);
-          ExpressionManipulator::unreachable(call);
+          last = builder.makeUnreachable();
         }
+        *callp = getDroppedChildrenAndAppend(call, *getModule(), getPassOptions(), last, DropMode::IgnoreParentEffects);
       }
     }
   }
