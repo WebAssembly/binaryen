@@ -1992,12 +1992,13 @@ def test_one(random_input, given_wasm):
     print()
 
     if given_wasm:
-        # if given a wasm file we want to use it as is, but we also want to
-        # apply properties like not having any NaNs, which the original fuzz
-        # wasm had applied. that is, we need to preserve properties like not
-        # having nans through reduction. still, in some cases we must trust the
-        # given wasm blindly, without modifications, so we have an env var for
-        # that.
+        # We are given a wasm file to operate on. By default we modify it in the
+        # usual ways, like running DeNAN on it, which is important in many cases
+        # (imagine the reducer generates a NAN, then we need to restore the
+        # property of not having any). However, in some cases we do need to
+        # trust the wasm is correct, or it is simpler to debug things without
+        # constant changes in each reduction cycle, so we have an env var to
+        # control that, BINARYEN_TRUST_GIVEN_WASM.
         if os.environ.get('BINARYEN_TRUST_GIVEN_WASM'):
             shutil.copyfile(given_wasm, abspath('a.wasm'))
         else:
