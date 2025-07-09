@@ -11,7 +11,7 @@
   ;; CHECK:      (tag $e (type $2))
   (tag $e)
 
-  ;; CHECK:      (func $if-br (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-br (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
@@ -36,7 +36,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-br_0 (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-br_0 (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-br_if (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-br_if (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
@@ -89,7 +89,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-if-1* (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-if-1* (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
@@ -168,7 +168,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-if-0* (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-if-0* (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (local.get $x)
@@ -247,7 +247,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-if-?* (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-if-?* (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (local.get $x)
@@ -319,7 +319,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-br_if-flip (type $1) (param $x i32)
+  ;; CHECK:      (func $loop-br_if-flip (type $0) (param $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (block $block
   ;; CHECK-NEXT:    (block
@@ -347,7 +347,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-br_if-flip-reverse (type $1) (param $x i32)
+  ;; CHECK:      (func $loop-br_if-flip-reverse (type $0) (param $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (block $block
   ;; CHECK-NEXT:    (block
@@ -374,7 +374,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-br_if-if (type $1) (param $x i32)
+  ;; CHECK:      (func $loop-br_if-if (type $0) (param $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
   ;; CHECK-NEXT:   (if
@@ -408,7 +408,7 @@
     )
   )
 
-  ;; CHECK:      (func $throw-if-br_if-0 (type $1) (param $x i32)
+  ;; CHECK:      (func $throw-if-br_if-0 (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
@@ -433,7 +433,7 @@
     )
   )
 
-  ;; CHECK:      (func $throw-if-br_if-1 (type $1) (param $x i32)
+  ;; CHECK:      (func $throw-if-br_if-1 (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
   ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
@@ -458,7 +458,7 @@
     )
   )
 
-  ;; CHECK:      (func $throw-if-br_if-no (type $1) (param $x i32)
+  ;; CHECK:      (func $throw-if-br_if-no (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
   ;; CHECK-NEXT:    (br_if $catch
@@ -478,6 +478,35 @@
           )
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $unexitable-loops-result (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $none)
+  ;; CHECK-NEXT:   (call $none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unexitable-loops-result (param $x i32)
+    ;; This if with a br arm can turn into a br_if. The hint should be copied.
+    (loop $loop
+      (@metadata.code.branch_hint "\01")
+      (if
+        (local.get $x)
+        (then
+          (br $loop)
+        )
+        (else
+          ;; This call, and the one below, are needed for the pattern that is
+          ;; recognized here.
+          (call $none)
+        )
+      )
+      (call $none)
     )
   )
 )

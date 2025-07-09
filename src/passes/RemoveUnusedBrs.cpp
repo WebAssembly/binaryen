@@ -1225,7 +1225,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
             BranchHints::copyTo(iff, ifTrueBreak, getFunction());
-            abort();
             ifTrueBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
