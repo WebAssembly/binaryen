@@ -29,7 +29,7 @@
   ;; CHECK-NEXT: )
   (func $if
     (local $temp i32)
-    ;; The instrumentation should be removed, and if the if's condition should
+    ;; The instrumentation should be removed, and the if's condition should
     ;; be 42.
     (@metadata.code.branch_hint "\00")
     (if
