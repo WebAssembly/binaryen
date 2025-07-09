@@ -1263,8 +1263,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   Builder builder(*getModule());
                   br1->condition =
                     builder.makeBinary(OrInt32, br1->condition, br2->condition);
-                  // waka
+                  BranchHints::applyOrTo(br1, br2, br1, getFunction());
                   ExpressionManipulator::nop(br2);
+                  BranchHints::clear(br2, getFunction());
                 }
               }
             } else {

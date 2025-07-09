@@ -96,6 +96,17 @@ inline void applyAndTo(Expression* from1, Expression* from2, Expression* to, Fun
   }
 }
 
+// As |applyAndTo|, but now the condition on |to| the OR of |from1| and |from2|.
+inline void applyOrTo(Expression* from1, Expression* from2, Expression* to, Function* func) {
+  // If from1 and from2 are both likely, then from1 || from2 is even more
+  // likely. If from1 and from2 are both unlikely, then from1 || from2 is
+  // slightly more likely, but we assume our hints are nearly certain, so we
+  // apply it. That is, the math works out the same for |applyAndTo|, so we just
+  // call that, but we leave the methods separate for clarity and future
+  // refactoring.
+  applyAndTo(from1, from2, to, func);
+}
+
 } // namespace wasm::BranchHints
 
 #endif // wasm_ir_branch_hint_h
