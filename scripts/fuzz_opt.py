@@ -1853,7 +1853,7 @@ class PreserveImportsExports(TestCaseHandler):
 # it should not emit a branch hint that is wrong - if it is not certain, it
 # should remove the branch hint.
 class BranchHintPreservation(TestCaseHandler):
-    frequency = 1 # XXX
+    frequency = 0.1
 
     def handle(self, wasm):
         # Generate an instrumented wasm.
@@ -1955,7 +1955,7 @@ class BranchHintPreservation(TestCaseHandler):
 
 
 # The global list of all test case handlers
-'''
+testcase_handlers = [
     FuzzExec(),
     CompareVMs(),
     CheckDeterminism(),
@@ -1969,8 +1969,6 @@ class BranchHintPreservation(TestCaseHandler):
     ClusterFuzz(),
     Two(),
     PreserveImportsExports(),
-'''
-testcase_handlers = [
     BranchHintPreservation(),
 ]
 
