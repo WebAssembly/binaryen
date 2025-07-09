@@ -1405,9 +1405,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);
-                replaceCurrent(builder.makeIf(
-                  builder.makeUnary(EqZInt32, br->condition), curr));
+                auto* iff = builder.makeIf(
+                  builder.makeUnary(EqZInt32, br->condition), curr);
+                replaceCurrent(iff);
+                BranchHints::copyFlippedTo(br, iff, getFunction());
                 ExpressionManipulator::nop(br);
+                BranchHints::clear(br, getFunction());
                 curr->finalize(curr->type);
               } else {
                 // To use an if, the value must have no side effects, as in the

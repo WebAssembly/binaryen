@@ -538,4 +538,30 @@
       (call $none)
     )
   )
+
+  ;; CHECK:      (func $restructure-if (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (block $block
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (call $none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-if (param $x i32)
+    (block $block
+      ;; We will emit an if with flipped condition, which should get a flipped
+      ;; hint.
+      (@metadata.code.branch_hint "\01")
+      (br_if $block
+        (local.get $x)
+      )
+      (call $none)
+    )
+  )
 )
