@@ -1421,8 +1421,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   if (EffectAnalyzer::canReorder(
                         passOptions, *getModule(), br->condition, br->value)) {
                     ExpressionManipulator::nop(list[0]);
-                    replaceCurrent(
-                      builder.makeIf(br->condition, br->value, curr));
+                    auto* iff = builder.makeIf(br->condition, br->value, curr);
+                    BranchHints::copyTo(br, iff, getFunction());
+                    replaceCurrent(iff);
                   }
                 } else {
                   // The value has side effects, so it must always execute. We

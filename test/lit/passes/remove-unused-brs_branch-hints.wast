@@ -564,4 +564,34 @@
       (call $none)
     )
   )
+
+  ;; CHECK:      (func $restructure-if-value (type $4) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (block $value (result i32)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-if-value (param $x i32) (result i32)
+    ;; We will emit an if with the same condition, which should get the same
+    ;; hint.
+    (block $value (result i32)
+      (drop
+        (@metadata.code.branch_hint "\01")
+        (br_if $value
+          (i32.const 0)
+          (local.get $x)
+        )
+      )
+      (unreachable)
+    )
+  )
 )
