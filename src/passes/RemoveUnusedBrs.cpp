@@ -1545,7 +1545,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // Flip an if's condition with an eqz, and flip its arms.
       void flip(If* iff) {
         std::swap(iff->ifTrue, iff->ifFalse);
-        iff->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+        iff->condition =
+          Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
         BranchHints::flip(iff, getFunction());
       }
 

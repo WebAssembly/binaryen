@@ -81,7 +81,10 @@ inline void copyFlippedTo(Expression* from, Expression* to, Function* func) {
 // Given two expressions to read from, apply the AND hint to a target. That is,
 // the target will be true when both inputs are true. |to| may be equal to
 // |from1| or |from2|. The hint of |to| is trampled.
-inline void applyAndTo(Expression* from1, Expression* from2, Expression* to, Function* func) {
+inline void applyAndTo(Expression* from1,
+                       Expression* from2,
+                       Expression* to,
+                       Function* func) {
   // If from1 and from2 are both likely, then from1 && from2 is slightly less
   // likely, but we assume our hints are nearly certain, so we apply it. And,
   // converse, if from1 and from2 and both unlikely, then from1 && from2 is even
@@ -97,7 +100,10 @@ inline void applyAndTo(Expression* from1, Expression* from2, Expression* to, Fun
 }
 
 // As |applyAndTo|, but now the condition on |to| the OR of |from1| and |from2|.
-inline void applyOrTo(Expression* from1, Expression* from2, Expression* to, Function* func) {
+inline void applyOrTo(Expression* from1,
+                      Expression* from2,
+                      Expression* to,
+                      Function* func) {
   // If from1 and from2 are both likely, then from1 || from2 is even more
   // likely. If from1 and from2 are both unlikely, then from1 || from2 is
   // slightly more likely, but we assume our hints are nearly certain, so we
