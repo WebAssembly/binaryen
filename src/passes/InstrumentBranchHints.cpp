@@ -117,7 +117,6 @@ const Name BASE = "log-branch";
 
 // Finds our import, if it exists.
 Name getLogBranchImport(Module* module) {
-  // Find our import, if we were already run on this module.
   for (auto& func : module->functions) {
     if (func->module == MODULE && func->base == BASE) {
       return func->name;
@@ -265,8 +264,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
   };
 
   // Check if an expression's condition is an instrumentation, and return the
-  // info if so. We are provided the internal name of the logging function, and
-  // a LocalGraph so we can follow gets to their sets.
+  // info if so.
   std::optional<Instrumentation> getInstrumentation(Expression* condition) {
     // We must identify this pattern:
     //
@@ -356,9 +354,9 @@ struct DeInstrumentBranchHints
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition)) {
-      // Replace the instrumentated condition with the original one (swap so
-      // that the IR remains valid; the other use of the local will not matter,
-      // as we remove the logging calls).
+      // Replace the instrumented condition with the original one (swap so that
+      // the IR remains valid; the other use of the local will not matter, as we
+      // remove the logging calls).
       std::swap(curr->condition, *info->originalCondition);
     }
   }
