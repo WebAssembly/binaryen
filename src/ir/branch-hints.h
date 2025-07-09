@@ -37,12 +37,10 @@ inline std::optional<bool> get(Expression* expr, Function* func) {
 
 // Set the branch hint for an expression, trampling anything existing before.
 inline void set(Expression* expr, std::optional<bool> likely, Function* func) {
-  if (!likely) {
-    // We are writing an empty hint. Do not create an empty annotation if one
-    // did not exist.
-    if (!func->codeAnnotations.count(expr)) {
-      return;
-    }
+  // When we are writing an empty hint, do not create an empty annotation if one
+  // did not exist.
+  if (!likely && !func->codeAnnotations.count(expr)) {
+    return;
   }
   func->codeAnnotations[expr].branchLikely = likely;
 }
@@ -88,7 +86,8 @@ inline void applyAndTo(Expression* from1,
   // If from1 and from2 are both likely, then from1 && from2 is slightly less
   // likely, but we assume our hints are nearly certain, so we apply it. And,
   // converse, if from1 and from2 and both unlikely, then from1 && from2 is even
-  // less likely, so we can once more apply a hint.
+  // less likely, so we can once more apply a hint. If the hints differ, than
+  // one is unlikely or unknown, and we can't say anything about from1 && from2.
   auto from1Hint = BranchHints::get(from1, func);
   auto from2Hint = BranchHints::get(from2, func);
   if (from1Hint == from2Hint) {
@@ -104,13 +103,22 @@ inline void applyOrTo(Expression* from1,
                       Expression* from2,
                       Expression* to,
                       Function* func) {
-  // If from1 and from2 are both likely, then from1 || from2 is even more
-  // likely. If from1 and from2 are both unlikely, then from1 || from2 is
-  // slightly more likely, but we assume our hints are nearly certain, so we
-  // apply it. That is, the math works out the same for |applyAndTo|, so we just
-  // call that, but we leave the methods separate for clarity and future
-  // refactoring.
-  applyAndTo(from1, from2, to, func);
+  // If one is likely then so is the from1 || from2. If both are unlikely then
+  // from1 || from2 is slightly more likely, but we assume our hints are nearly
+  // certain, so we apply it. 
+  auto from1Hint = BranchHints::get(from1, func);
+  auto from2Hint = BranchHints::get(from2, func);
+  if ((from1Hint && *from1Hint) || (from2Hint && *from2Hint)) {
+    set(to, true, func);
+  } else if (from1Hint && from2Hint) {
+    // We ruled out that either one is present and true, so if both are present,
+    // both must be false.
+    assert(!*from1Hint && !*from2Hint);
+    set(to, false, func);
+  } else {
+    // We don't know.
+    BranchHints::clear(to, func);
+  }
 }
 
 } // namespace wasm::BranchHints

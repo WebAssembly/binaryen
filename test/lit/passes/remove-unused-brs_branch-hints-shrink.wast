@@ -144,8 +144,77 @@
     )
   )
 
+  ;; CHECK:      (func $join-br_ifs-yes-one (type $0) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (call $none)
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $join-br_ifs-yes-one (param $x i32) (param $y i32)
+    ;; One has a 1 hint, so we can use that.
+    (block $out
+      (@metadata.code.branch_hint "\01")
+      (br_if $out
+        (local.get $x)
+      )
+      (br_if $out
+        (local.get $y)
+      )
+
+      (call $none)
+      (br_if $out
+        (local.get $y)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $join-br_ifs-yes-other (type $0) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (i32.or
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (call $none)
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $join-br_ifs-yes-other (param $x i32) (param $y i32)
+    ;; As above, but the other has the 1, which we can still use.
+    (block $out
+      (br_if $out
+        (local.get $x)
+      )
+      (@metadata.code.branch_hint "\01")
+      (br_if $out
+        (local.get $y)
+      )
+
+      (call $none)
+      (br_if $out
+        (local.get $y)
+      )
+    )
+  )
+
   ;; CHECK:      (func $join-br_ifs-mismatch (type $0) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:   (br_if $out
   ;; CHECK-NEXT:    (i32.or
   ;; CHECK-NEXT:     (local.get $x)
@@ -160,7 +229,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $join-br_ifs-mismatch (param $x i32) (param $y i32)
-    ;; The hints do not match, so we clear the hint.
+    ;; The hints do not match, but we can still use the 1 hint.
     (block $out
       (@metadata.code.branch_hint "\00")
       (br_if $out
