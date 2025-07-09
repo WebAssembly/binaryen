@@ -1542,6 +1542,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         optimizeSetIf(getCurrentPointer());
       }
 
+      // Flip an if's condition with an eqz, and flip its arms.
+      void flip(If* iff) {
+        std::swap(iff->ifTrue, iff->ifFalse);
+        iff->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+      }
+
       void optimizeSetIf(Expression** currp) {
         if (optimizeSetIfWithBrArm(currp)) {
           return;
@@ -1583,12 +1589,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // Wonderful, do it!
                   Builder builder(*getModule());
                   if (flipCondition) {
-                    builder.flip(iff);
-                    BranchHints::copyFlippedTo(iff, br, getFunction());
-                  } else {
-                    BranchHints::copyTo(iff, br, getFunction());
+                    flip(iff);
                   }
                   br->condition = iff->condition;
+                  BranchHints::copyTo(iff, br, getFunction());
                   br->finalize();
                   set->value = two;
                   auto* block = builder.makeSequence(br, set);
@@ -1656,7 +1660,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         LocalGet* get = iff->ifTrue->dynCast<LocalGet>();
         if (get && get->index == set->index) {
-          builder.flip(iff);
+          flip(iff);
         } else {
           get = iff->ifFalse->dynCast<LocalGet>();
           if (get && get->index != set->index) {

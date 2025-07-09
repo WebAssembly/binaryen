@@ -1481,11 +1481,6 @@ public:
     return makeDrop(curr);
   }
 
-  void flip(If* iff) {
-    std::swap(iff->ifTrue, iff->ifFalse);
-    iff->condition = makeUnary(EqZInt32, iff->condition);
-  }
-
   // Returns a replacement with the precise same type, and with minimal contents
   // as best we can. As a replacement, this may reuse the input node.
   template<typename T> Expression* replaceWithIdenticalType(T* curr) {
