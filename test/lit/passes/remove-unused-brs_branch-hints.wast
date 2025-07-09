@@ -481,7 +481,7 @@
     )
   )
 
-  ;; CHECK:      (func $unexitable-loops-result (type $0) (param $x i32)
+  ;; CHECK:      (func $loop-if-br (type $0) (param $x i32)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:   (br_if $loop
@@ -491,7 +491,7 @@
   ;; CHECK-NEXT:   (call $none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unexitable-loops-result (param $x i32)
+  (func $loop-if-br (param $x i32)
     ;; This if with a br arm can turn into a br_if. The hint should be copied.
     (loop $loop
       (@metadata.code.branch_hint "\01")
@@ -504,6 +504,35 @@
           ;; This call, and the one below, are needed for the pattern that is
           ;; recognized here.
           (call $none)
+        )
+      )
+      (call $none)
+    )
+  )
+
+  ;; CHECK:      (func $loop-if-br-reverse (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:   (br_if $loop
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $none)
+  ;; CHECK-NEXT:   (call $none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop-if-br-reverse (param $x i32)
+    ;; As above, with arms flipped. Now the condition flips.
+    (loop $loop
+      (@metadata.code.branch_hint "\01")
+      (if
+        (local.get $x)
+        (then
+          (call $none)
+        )
+        (else
+          (br $loop)
         )
       )
       (call $none)

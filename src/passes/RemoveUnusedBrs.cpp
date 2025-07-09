@@ -1239,6 +1239,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                 *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+            BranchHints::copyFlippedTo(iff, ifFalseBreak, getFunction());
             ifFalseBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);

@@ -53,7 +53,7 @@ inline void clear(Expression* expr, Function* func) {
 }
 
 // Copy the branch hint for an expression to another, trampling anything
-// existing before.
+// existing before for the latter.
 inline void copyTo(Expression* from, Expression* to, Function* func) {
   auto fromLikely = get(from, func);
   set(to, fromLikely, func);
@@ -64,6 +64,13 @@ inline void flip(Expression* expr, Function* func) {
   if (auto likely = get(expr, func)) {
     set(expr, !*likely, func);
   }
+}
+
+// Copy the branch hint for an expression to another, flipping it while we do
+// so.
+inline void copyFlippedTo(Expression* from, Expression* to, Function* func) {
+  copyTo(from, to, func);
+  flip(to, func);
 }
 
 } // namespace wasm::BranchHints
