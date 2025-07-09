@@ -137,6 +137,12 @@ void PassRegistry::registerPasses() {
     "propagate-debug-locs",
     "propagate debug location from parents or previous siblings to child nodes",
     createDebugLocationPropagationPass);
+  registerPass("deinstrument-branch-hints",
+               "de-instrument branch hint instrumentation",
+               createDeInstrumentBranchHintsPass);
+  registerPass("delete-branch-hints",
+               "delete branch hints using a list of instrumented IDs",
+               createDeleteBranchHintsPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);

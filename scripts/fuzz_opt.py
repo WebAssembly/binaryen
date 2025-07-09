@@ -1844,8 +1844,118 @@ class PreserveImportsExports(TestCaseHandler):
         compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
+# Test that we preserve branch hints properly. The invariant that we test here
+# is that, given correct branch hints (that is, the input wasm's branch hints
+# are always correct: a branch is taken iff the hint is that it is taken), then
+# the optimizer does not end up with incorrect branch hints. It is fine if the
+# optimizer removes some hints (it may remove entire chunks of code in DCE, for
+# example, and it may find ways to simplify code so fewer things execute), but
+# it should not emit a branch hint that is wrong - if it is not certain, it
+# should remove the branch hint.
+class BranchHintPreservation(TestCaseHandler):
+    frequency = 1 # XXX
+
+    def handle(self, wasm):
+        # Generate an instrumented wasm.
+        instrumented = wasm + '.inst.wasm'
+        run([
+            in_bin('wasm-opt'),
+            wasm,
+            '-o', instrumented,
+            # Add random branch hints (so we have something to work with).
+            '--randomize-branch-hints',
+            # Instrument them with logging.
+            '--instrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS)
+
+        # Collect the logging.
+        out = run_bynterp(instrumented, ['--fuzz-exec-before', '-all'])
+
+        # Process the output. We look at the lines like this:
+        #
+        #   [LoggingExternalInterface log-branch 1 0 0]
+        #
+        # where the three integers are: ID, predicted, actual.
+        all_ids = set()
+        bad_ids = set()
+        LEI_LOG_BRANCH = '[LoggingExternalInterface log-branch'
+        for line in out.splitlines():
+            if line.startswith(LEI_LOG_BRANCH):
+                # (1:-1 strips away the '[', ']' at the edges)
+                _, _, id_, hint, actual = line[1:-1].split(' ')
+                all_ids.add(id_)
+                if hint != actual:
+                    # This hint was misleading.
+                    bad_ids.add(id_)
+
+        # If no good ids remain, there is nothing to test (no hints will remain
+        # later down, after we remove bad ones).
+        if bad_ids == all_ids:
+            note_ignored_vm_run('no good ids')
+            return
+
+        # Generate proper hints for testing: A wasm file with 100% valid branch
+        # hints, and instrumentation to verify that.
+        de_instrumented = wasm + '.de_inst.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            instrumented,
+            '-o', de_instrumented,
+        ]
+        # Remove the bad ids (using the instrumentation to identify them by ID).
+        if bad_ids:
+            args += [
+                '--delete-branch-hints=' + ','.join(bad_ids),
+            ]
+        args += [
+            # Remove all prior instrumentation, so it does not confuse us later
+            # when we log our final hints, and also so it does not inhibit
+            # optimizations.
+            '--deinstrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS
+        run(args)
+
+        # Add optimizations to see if things break.
+        opted = wasm + '.opted.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            de_instrumented,
+            '-o', opted,
+            '-g',
+        ] + get_random_opts() + FEATURE_OPTS
+        run(args)
+
+        # Add instrumentation, to see if any branch hints are wrong after
+        # optimizations. We must do this in a separate invocation from the
+        # optimizations due to flags like --converge (which would instrument
+        # multiple times).
+        final = wasm + '.final.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            opted,
+            '-o', final,
+            '--instrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS
+        run(args)
+
+        # No bad hints should pop up after optimizations.
+        # After that filtering, no invalid branch hint should remain.
+        out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
+        for line in out.splitlines():
+            if line.startswith(LEI_LOG_BRANCH):
+                _, _, id_, hint, actual = line[1:-1].split(' ')
+                assert hint == actual, 'Bad hint after optimizations'
+
+    def can_run_on_wasm(self, wasm):
+        # Avoid things d8 cannot fully run.
+        return all_disallowed(['shared-everything', 'strings', 'custom-descriptors'])
+
+
 # The global list of all test case handlers
-testcase_handlers = [
+'''
     FuzzExec(),
     CompareVMs(),
     CheckDeterminism(),
@@ -1859,6 +1969,9 @@ testcase_handlers = [
     ClusterFuzz(),
     Two(),
     PreserveImportsExports(),
+'''
+testcase_handlers = [
+    BranchHintPreservation(),
 ]
 
 
