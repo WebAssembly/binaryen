@@ -1946,6 +1946,10 @@ class BranchHintPreservation(TestCaseHandler):
         for line in out.splitlines():
             if line.startswith(LEI_LOG_BRANCH):
                 _, _, id_, hint, actual = line[1:-1].split(' ')
+                # We do not care about the integer value of the condition, only
+                # if it was 0 or non-zero (and the hint itself must be 0/1).
+                assert hint in (0, 1)
+                actual = (actual != 0)
                 assert hint == actual, 'Bad hint after optimizations'
 
 
