@@ -1951,7 +1951,7 @@ class BranchHintPreservation(TestCaseHandler):
                 assert hint in (0, 1)
                 # We do not care about the integer value of the condition, only
                 # if it was 0 or non-zero.
-                actual = (actual != '0')
+                actual = (actual != 0)
                 assert hint == actual, 'Bad hint after optimizations'
 
 
