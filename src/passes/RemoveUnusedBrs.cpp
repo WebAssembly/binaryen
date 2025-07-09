@@ -461,16 +461,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         curr->condition = builder.makeSelect(
           child->condition, curr->condition, builder.makeConst(int32_t(0)));
-        // If two conditions A and B are likely, then A && B is also likely
-        // (though, in theory, slightly less likely, but our branch hints are
-        // close to certainty). If one of them lacks a hint, we know nothing. If
-        // both are unlikely, we can say that A && B is also unlikely (in fact
-        // it is less likely).
-        auto currHint = BranchHints::get(curr, getFunction());
-        auto childHint = BranchHints::get(child, getFunction());
-        if (!currHint || currHint != childHint) {
-          BranchHints::clear(curr, getFunction());
-        }
+        BranchHints::applyAndTo(curr, child, curr, getFunction());
         curr->ifTrue = child->ifTrue;
       }
     }
@@ -1272,6 +1263,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   Builder builder(*getModule());
                   br1->condition =
                     builder.makeBinary(OrInt32, br1->condition, br2->condition);
+                  // waka
                   ExpressionManipulator::nop(br2);
                 }
               }

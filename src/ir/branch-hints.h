@@ -49,7 +49,12 @@ inline void set(Expression* expr, std::optional<bool> likely, Function* func) {
 
 // Clear the branch hint for an expression.
 inline void clear(Expression* expr, Function* func) {
-  func->codeAnnotations[expr].branchLikely = {};
+  // Do not create an empty annotation if one did not exist.
+  auto iter = func->codeAnnotations.find(expr);
+  if (iter == func->codeAnnotations.end()) {
+    return;
+  }
+  iter->second.branchLikely = {};
 }
 
 // Copy the branch hint for an expression to another, trampling anything
@@ -71,6 +76,24 @@ inline void flip(Expression* expr, Function* func) {
 inline void copyFlippedTo(Expression* from, Expression* to, Function* func) {
   copyTo(from, to, func);
   flip(to, func);
+}
+
+// Given two expressions to read from, apply the AND hint to a target. That is,
+// the target will be true when both inputs are true. |to| may be equal to
+// |from1| or |from2|. The hint of |to| is trampled.
+inline void applyAndTo(Expression* from1, Expression* from2, Expression* to, Function* func) {
+  // If from1 and from2 are both likely, then from1 && from2 is slightly less
+  // likely, but we assume our hints are nearly certain, so we apply it. And,
+  // converse, if from1 and from2 and both unlikely, then from1 && from2 is even
+  // less likely, so we can once more apply a hint.
+  auto from1Hint = BranchHints::get(from1, func);
+  auto from2Hint = BranchHints::get(from2, func);
+  if (from1Hint == from2Hint) {
+    set(to, from1Hint, func);
+  } else {
+    // The hints do not even match.
+    BranchHints::clear(to, func);
+  }
 }
 
 } // namespace wasm::BranchHints
