@@ -1942,7 +1942,6 @@ class BranchHintPreservation(TestCaseHandler):
         run(args)
 
         # No bad hints should pop up after optimizations.
-        # After that filtering, no invalid branch hint should remain.
         out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
         for line in out.splitlines():
             if line.startswith(LEI_LOG_BRANCH):
