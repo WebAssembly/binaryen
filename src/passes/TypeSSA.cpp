@@ -460,8 +460,14 @@ struct TypeSSA : public Pass {
       return false;
     }
 
-    if (!curr->type.getHeapType().isOpen()) {
+    auto type = curr->type.getHeapType();
+    if (!type.isOpen()) {
       // We can't create new subtypes of a final type anyway.
+      return false;
+    }
+
+    // Do not attempt to optimize types with descriptors or describees yet.
+    if (type.getDescribedType() || type.getDescriptorType()) {
       return false;
     }
 
@@ -490,8 +496,6 @@ struct TypeSSA : public Pass {
 
       return false;
     };
-
-    auto type = curr->type.getHeapType();
 
     if (auto* structNew = curr->dynCast<StructNew>()) {
       if (structNew->isWithDefault()) {
