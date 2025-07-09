@@ -18,6 +18,7 @@
 // Removes branches for which we go to where they go anyhow
 //
 
+#include "ir/branch-hints.h"
 #include "ir/branch-utils.h"
 #include "ir/cost.h"
 #include "ir/drop.h"
@@ -429,6 +430,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               builder.makeSelect(br->condition, curr->condition, zero);
           }
           br->finalize();
+          BranchHints::copyTo(curr, br, getFunction());
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
@@ -459,6 +461,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         curr->condition = builder.makeSelect(
           child->condition, curr->condition, builder.makeConst(int32_t(0)));
+        BranchHints::applyAndTo(curr, child, curr, getFunction());
         curr->ifTrue = child->ifTrue;
       }
     }
@@ -689,6 +692,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
             last->name = brIf->name;
             brIf->name = loop->name;
+            BranchHints::flip(brIf, getFunction());
             return true;
           } else {
             // there are elements in the middle,
@@ -709,6 +713,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
                                stealSlice(builder, block, i + 1, list.size()));
+              BranchHints::copyTo(brIf, list[i], getFunction());
               block->finalize();
               return true;
             }
@@ -1210,6 +1215,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
+            BranchHints::copyTo(iff, ifTrueBreak, getFunction());
             ifTrueBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
@@ -1224,6 +1230,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                 *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+            BranchHints::copyFlippedTo(iff, ifFalseBreak, getFunction());
             ifFalseBreak->finalize();
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
@@ -1256,7 +1263,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   Builder builder(*getModule());
                   br1->condition =
                     builder.makeBinary(OrInt32, br1->condition, br2->condition);
+                  BranchHints::applyOrTo(br1, br2, br1, getFunction());
                   ExpressionManipulator::nop(br2);
+                  BranchHints::clear(br2, getFunction());
                 }
               }
             } else {
@@ -1396,9 +1405,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);
-                replaceCurrent(builder.makeIf(
-                  builder.makeUnary(EqZInt32, br->condition), curr));
+                auto* iff = builder.makeIf(
+                  builder.makeUnary(EqZInt32, br->condition), curr);
+                replaceCurrent(iff);
+                BranchHints::copyFlippedTo(br, iff, getFunction());
                 ExpressionManipulator::nop(br);
+                BranchHints::clear(br, getFunction());
                 curr->finalize(curr->type);
               } else {
                 // To use an if, the value must have no side effects, as in the
@@ -1409,8 +1421,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   if (EffectAnalyzer::canReorder(
                         passOptions, *getModule(), br->condition, br->value)) {
                     ExpressionManipulator::nop(list[0]);
-                    replaceCurrent(
-                      builder.makeIf(br->condition, br->value, curr));
+                    auto* iff = builder.makeIf(br->condition, br->value, curr);
+                    BranchHints::copyTo(br, iff, getFunction());
+                    replaceCurrent(iff);
                   }
                 } else {
                   // The value has side effects, so it must always execute. We
@@ -1529,6 +1542,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         optimizeSetIf(getCurrentPointer());
       }
 
+      // Flip an if's condition with an eqz, and flip its arms.
+      void flip(If* iff) {
+        std::swap(iff->ifTrue, iff->ifFalse);
+        iff->condition =
+          Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+        BranchHints::flip(iff, getFunction());
+      }
+
       void optimizeSetIf(Expression** currp) {
         if (optimizeSetIfWithBrArm(currp)) {
           return;
@@ -1570,9 +1591,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // Wonderful, do it!
                   Builder builder(*getModule());
                   if (flipCondition) {
-                    builder.flip(iff);
+                    flip(iff);
                   }
                   br->condition = iff->condition;
+                  BranchHints::copyTo(iff, br, getFunction());
                   br->finalize();
                   set->value = two;
                   auto* block = builder.makeSequence(br, set);
@@ -1640,7 +1662,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         LocalGet* get = iff->ifTrue->dynCast<LocalGet>();
         if (get && get->index == set->index) {
-          builder.flip(iff);
+          flip(iff);
         } else {
           get = iff->ifFalse->dynCast<LocalGet>();
           if (get && get->index != set->index) {
@@ -1901,6 +1923,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             curr->type = Type::unreachable;
             block->list.push_back(curr);
             block->finalize();
+            BranchHints::clear(curr, getFunction());
             // The type changed, so refinalize.
             refinalize = true;
           } else {
