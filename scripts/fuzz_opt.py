@@ -1948,10 +1948,6 @@ class BranchHintPreservation(TestCaseHandler):
                 _, _, id_, hint, actual = line[1:-1].split(' ')
                 assert hint == actual, 'Bad hint after optimizations'
 
-    def can_run_on_wasm(self, wasm):
-        # Avoid things d8 cannot fully run.
-        return all_disallowed(['shared-everything', 'strings', 'custom-descriptors'])
-
 
 # The global list of all test case handlers
 testcase_handlers = [
