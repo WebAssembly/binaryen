@@ -1546,6 +1546,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       void flip(If* iff) {
         std::swap(iff->ifTrue, iff->ifFalse);
         iff->condition = Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
+        BranchHints::flip(iff, getFunction());
       }
 
       void optimizeSetIf(Expression** currp) {
@@ -1921,6 +1922,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             curr->type = Type::unreachable;
             block->list.push_back(curr);
             block->finalize();
+            BranchHints::clear(curr, getFunction());
             // The type changed, so refinalize.
             refinalize = true;
           } else {
