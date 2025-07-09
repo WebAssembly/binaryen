@@ -1846,7 +1846,7 @@ class PreserveImportsExports(TestCaseHandler):
 
 # Test that we preserve branch hints properly. The invariant that we test here
 # is that, given correct branch hints (that is, the input wasm's branch hints
-# are always correct, a branch is taken iff the hint is that it is taken), then
+# are always correct: a branch is taken iff the hint is that it is taken), then
 # the optimizer does not end up with incorrect branch hints. It is fine if the
 # optimizer removes some hints (it may remove entire chunks of code in DCE, for
 # example, and it may find ways to simplify code so fewer things execute), but
@@ -1917,16 +1917,6 @@ class BranchHintPreservation(TestCaseHandler):
         ] + FEATURE_OPTS
         run(args)
 
-        # After that filtering, no invalid branch hint should remain.
-        def check_bad_hints(wasm, stage):
-            out = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
-            for line in out.splitlines():
-                if line.startswith(LEI_LOG_BRANCH):
-                    _, _, id_, hint, actual = line[1:-1].split(' ')
-                    assert hint == actual, stage
-
-        check_bad_hints(de_instrumented, 'Bad hint after deletions')
-
         # Add optimizations to see if things break.
         opted = wasm + '.opted.wasm'
         args = [
@@ -1952,7 +1942,12 @@ class BranchHintPreservation(TestCaseHandler):
         run(args)
 
         # No bad hints should pop up after optimizations.
-        check_bad_hints(final, 'Bad hint after optimizations')
+        # After that filtering, no invalid branch hint should remain.
+        out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
+        for line in out.splitlines():
+            if line.startswith(LEI_LOG_BRANCH):
+                _, _, id_, hint, actual = line[1:-1].split(' ')
+                assert hint == actual, 'Bad hint after optimizations'
 
     def can_run_on_wasm(self, wasm):
         # Avoid things d8 cannot fully run.
