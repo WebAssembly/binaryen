@@ -594,4 +594,73 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $set-if-br-arm (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (br_if $out
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set-if-br-arm (param $x i32)
+    (local $temp i32)
+    ;; The if will turn into a br_if, with the same hint.
+    (block $out
+      (local.set $temp
+        (@metadata.code.branch_hint "\00")
+        (if (result i32)
+          (local.get $x)
+          (then
+            (br $out)
+          )
+          (else
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $set-if-br-arm-flip (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (br_if $out
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set-if-br-arm-flip (param $x i32)
+    (local $temp i32)
+    ;; As above, but with arms reversed.
+    ;; The if will turn into a flipped br_if, with a flipped hint.
+    (block $out
+      (local.set $temp
+        (@metadata.code.branch_hint "\00")
+        (if (result i32)
+          (local.get $x)
+          (then
+            (i32.const 0)
+          )
+          (else
+            (br $out)
+          )
+        )
+      )
+    )
+  )
 )

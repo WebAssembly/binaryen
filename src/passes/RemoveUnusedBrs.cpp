@@ -1584,6 +1584,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   Builder builder(*getModule());
                   if (flipCondition) {
                     builder.flip(iff);
+                    BranchHints::copyFlippedTo(iff, br, getFunction());
+                  } else {
+                    BranchHints::copyTo(iff, br, getFunction());
                   }
                   br->condition = iff->condition;
                   br->finalize();
