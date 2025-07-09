@@ -1924,7 +1924,7 @@ class BranchHintPreservation(TestCaseHandler):
             de_instrumented,
             '-o', opted,
             '-g',
-        ] + get_random_opts() + FEATURE_OPTS
+        ] + ['--remove-unused-brs'] + FEATURE_OPTS
         run(args)
 
         # Add instrumentation, to see if any branch hints are wrong after
