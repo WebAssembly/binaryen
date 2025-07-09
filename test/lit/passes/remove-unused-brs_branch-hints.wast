@@ -119,6 +119,34 @@
     )
   )
 
+  ;; CHECK:      (func $if-br_if-no-2 (type $1) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-br_if-no-2 (param $x i32) (param $y i32)
+    (block $out
+      (nop)
+      ;; As above, but now the if lacks a hint, so we emit no hint.
+      (if
+        (local.get $x)
+        (then
+          (@metadata.code.branch_hint "\01")
+          (br_if $out
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $if-if-1* (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
   ;; CHECK-NEXT:  (if
