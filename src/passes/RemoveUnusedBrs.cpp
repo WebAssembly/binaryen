@@ -18,6 +18,7 @@
 // Removes branches for which we go to where they go anyhow
 //
 
+#include "ir/branch-hints.h"
 #include "ir/branch-utils.h"
 #include "ir/cost.h"
 #include "ir/drop.h"
@@ -148,38 +149,6 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   // either the cost of running one or two, so the maximum is the worst case.
   auto max = std::max(CostAnalyzer(one).cost, CostAnalyzer(two).cost);
   return tooCostlyToRunUnconditionally(passOptions, max);
-}
-
-// Branch hint utilities.
-static std::optional<bool> getBranchHint(Expression* expr, Function* func) {
-  auto iter = func->codeAnnotations.find(expr);
-  if (iter == func->codeAnnotations.end()) {
-    // No annotations at all.
-    return {};
-  }
-  return iter->second.branchLikely;
-}
-
-static void setBranchHint(Expression* expr, bool likely, Function* func) {
-  func->codeAnnotations[expr].branchLikely = likely;
-}
-
-static void clearBranchHint(Expression* expr, Function* func) {
-  func->codeAnnotations[expr].branchLikely = {};
-}
-
-static void copyBranchHintTo(Expression* from, Expression* to, Function* func) {
-  auto fromLikely = getBranchHint(from, func);
-  if (fromLikely) {
-    setBranchHint(to, *fromLikely, func);
-  }
-}
-
-static void flipBranchHint(Expression* expr, Function* func) {
-  return; // CAUSE BUG
-  if (auto likely = getBranchHint(expr, func)) {
-    setBranchHint(expr, !*likely, func);
-  }
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
@@ -461,7 +430,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               builder.makeSelect(br->condition, curr->condition, zero);
           }
           br->finalize();
-          copyBranchHintTo(curr, br, getFunction());
+          BranchHints::copyTo(curr, br, getFunction());
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
@@ -497,10 +466,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // close to certainty). If one of them lacks a hint, we know nothing. If
         // both are unlikely, we can say that A && B is also unlikely (in fact
         // it is less likely).
-        auto currHint = getBranchHint(curr, getFunction());
-        auto childHint = getBranchHint(child, getFunction());
+        auto currHint = BranchHints::get(curr, getFunction());
+        auto childHint = BranchHints::get(child, getFunction());
         if (!currHint || currHint != childHint) {
-          clearBranchHint(curr, getFunction());
+          BranchHints::clear(curr, getFunction());
         }
         curr->ifTrue = child->ifTrue;
       }
@@ -732,7 +701,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             brIf->condition = builder.makeUnary(EqZInt32, brIf->condition);
             last->name = brIf->name;
             brIf->name = loop->name;
-            flipBranchHint(brIf, getFunction());
+            BranchHints::flip(brIf, getFunction());
             return true;
           } else {
             // there are elements in the middle,
@@ -753,7 +722,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
                                stealSlice(builder, block, i + 1, list.size()));
-              copyBranchHintTo(brIf, list[i], getFunction());
+              BranchHints::copyTo(brIf, list[i], getFunction());
               // later: fuzz this: instrument "i am guessing at loc X" and "it
               // was true/it was false", then fuzzz that we don't decreaes times
               // we are right.
