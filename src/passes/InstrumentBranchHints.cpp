@@ -377,7 +377,12 @@ struct DeInstrumentBranchHints
         } else {
           last = builder.makeUnreachable();
         }
-        *callp = getDroppedChildrenAndAppend(call, *getModule(), getPassOptions(), last, DropMode::IgnoreParentEffects);
+        *callp = getDroppedChildrenAndAppend(call,
+                                             *getModule(),
+                                             getPassOptions(),
+                                             last,
+                                             // We know the call is removable.
+                                             DropMode::IgnoreParentEffects);
       }
     }
   }
