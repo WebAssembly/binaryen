@@ -25,6 +25,7 @@
 
 namespace wasm::BranchHints {
 
+// Get the branch hint for an expression.
 inline std::optional<bool> get(Expression* expr, Function* func) {
   auto iter = func->codeAnnotations.find(expr);
   if (iter == func->codeAnnotations.end()) {
@@ -34,21 +35,31 @@ inline std::optional<bool> get(Expression* expr, Function* func) {
   return iter->second.branchLikely;
 }
 
-inline void set(Expression* expr, bool likely, Function* func) {
+// Set the branch hint for an expression, trampling anything existing before.
+inline void set(Expression* expr, std::optional<bool> likely, Function* func) {
+  if (!likely) {
+    // We are writing an empty hint. Do not create an empty annotation if one
+    // did not exist.
+    if (!func->codeAnnotations.count(expr)) {
+      return;
+    }
+  }
   func->codeAnnotations[expr].branchLikely = likely;
 }
 
+// Clear the branch hint for an expression.
 inline void clear(Expression* expr, Function* func) {
   func->codeAnnotations[expr].branchLikely = {};
 }
 
+// Copy the branch hint for an expression to another, trampling anything
+// existing before.
 inline void copyTo(Expression* from, Expression* to, Function* func) {
   auto fromLikely = get(from, func);
-  if (fromLikely) {
-    set(to, *fromLikely, func);
-  }
+  set(to, *fromLikely, func);
 }
 
+// Flip the branch hint for an expression (if it exists).
 inline void flip(Expression* expr, Function* func) {
   if (auto likely = get(expr, func)) {
     set(expr, !*likely, func);
