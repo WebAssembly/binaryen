@@ -3,10 +3,13 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (import "a" "b" (func $i32 (type $2) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $i32 (type $3) (result i32)))
   (import "a" "b" (func $i32 (result i32)))
-  ;; CHECK:      (import "a" "b" (func $none (type $3)))
+  ;; CHECK:      (import "a" "b" (func $none (type $2)))
   (import "a" "b" (func $none))
+
+  ;; CHECK:      (tag $e (type $2))
+  (tag $e)
 
   ;; CHECK:      (func $if-br (type $0) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
@@ -401,6 +404,79 @@
         ;; Extra code so simpler optimizations do not kick in.
         (drop (i32.const 42))
         (br $loop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $throw-if-br_if-0 (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+  ;; CHECK-NEXT:    (br_if $catch
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-if-br_if-0 (param $x i32)
+    (block $catch
+      (try_table (catch_all $catch)
+        ;; This if can turn into a br_if. The branch hint should be copied.
+        (@metadata.code.branch_hint "\00")
+        (if
+          (local.get $x)
+          (then
+            (throw $e)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $throw-if-br_if-1 (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:    (br_if $catch
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-if-br_if-1 (param $x i32)
+    ;; As above, but the hint is 1.
+    (block $catch
+      (try_table (catch_all $catch)
+        (@metadata.code.branch_hint "\01")
+        (if
+          (local.get $x)
+          (then
+            (throw $e)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $throw-if-br_if-no (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (br_if $catch
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-if-br_if-no (param $x i32)
+    ;; As above, but there is no branch hint, so we should emit none.
+    (block $catch
+      (try_table (catch_all $catch)
+        (if
+          (local.get $x)
+          (then
+            (throw $e)
+          )
+        )
       )
     )
   )

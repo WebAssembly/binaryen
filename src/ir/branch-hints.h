@@ -56,7 +56,7 @@ inline void clear(Expression* expr, Function* func) {
 // existing before.
 inline void copyTo(Expression* from, Expression* to, Function* func) {
   auto fromLikely = get(from, func);
-  set(to, *fromLikely, func);
+  set(to, fromLikely, func);
 }
 
 // Flip the branch hint for an expression (if it exists).
