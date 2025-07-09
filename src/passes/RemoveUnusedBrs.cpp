@@ -397,6 +397,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               curr->condition, br->value, getPassOptions(), *getModule())) {
           if (!br->condition) {
             br->condition = curr->condition;
+            BranchHints::copyTo(curr, br, getFunction());
           } else {
             // In this case we can replace
             //   if (condition1) br_if (condition2)
@@ -428,9 +429,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // That keeps the order of the two conditions as it was originally.
             br->condition =
               builder.makeSelect(br->condition, curr->condition, zero);
+            BranchHints::applyAndTo(curr, br, br, getFunction());
           }
           br->finalize();
-          BranchHints::copyTo(curr, br, getFunction());
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }

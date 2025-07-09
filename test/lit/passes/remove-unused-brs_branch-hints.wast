@@ -76,7 +76,37 @@
     (block $out
       (nop)
       ;; As above, but the br has a condition. We can merge conditions (using a
-      ;; select), and then move the hint to the br_if.
+      ;; select), and then move the hint to the br_if, as the br_if has the
+      ;; same hint as the if.
+      (@metadata.code.branch_hint "\01")
+      (if
+        (local.get $x)
+        (then
+          (@metadata.code.branch_hint "\01")
+          (br_if $out
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if-br_if-no (type $1) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-br_if-no (param $x i32) (param $y i32)
+    (block $out
+      (nop)
+      ;; As above, but the br lacks a hint, so we emit no hint.
       (@metadata.code.branch_hint "\01")
       (if
         (local.get $x)
