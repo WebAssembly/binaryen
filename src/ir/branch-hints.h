@@ -86,7 +86,7 @@ inline void applyAndTo(Expression* from1,
   // If from1 and from2 are both likely, then from1 && from2 is slightly less
   // likely, but we assume our hints are nearly certain, so we apply it. And,
   // converse, if from1 and from2 and both unlikely, then from1 && from2 is even
-  // less likely, so we can once more apply a hint. If the hints differ, than
+  // less likely, so we can once more apply a hint. If the hints differ, then
   // one is unlikely or unknown, and we can't say anything about from1 && from2.
   auto from1Hint = BranchHints::get(from1, func);
   auto from2Hint = BranchHints::get(from2, func);
