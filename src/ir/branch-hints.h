@@ -105,7 +105,7 @@ inline void applyOrTo(Expression* from1,
                       Function* func) {
   // If one is likely then so is the from1 || from2. If both are unlikely then
   // from1 || from2 is slightly more likely, but we assume our hints are nearly
-  // certain, so we apply it. 
+  // certain, so we apply it.
   auto from1Hint = BranchHints::get(from1, func);
   auto from2Hint = BranchHints::get(from2, func);
   if ((from1Hint && *from1Hint) || (from2Hint && *from2Hint)) {
