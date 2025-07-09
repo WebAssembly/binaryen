@@ -137,12 +137,6 @@ void PassRegistry::registerPasses() {
     "propagate-debug-locs",
     "propagate debug location from parents or previous siblings to child nodes",
     createDebugLocationPropagationPass);
-  registerPass("deinstrument-branch-hints",
-               "de-instrument branch hint instrumentation",
-               createDeInstrumentBranchHintsPass);
-  registerPass("delete-branch-hints",
-               "delete branch hints using a list of instrumented IDs",
-               createDeleteBranchHintsPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);
@@ -418,9 +412,6 @@ void PassRegistry::registerPasses() {
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
-  registerTestPass("randomize-branch-hints",
-                   "randomize branch hints (for fuzzing)",
-                   createRandomizeBranchHintsPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
@@ -457,9 +448,6 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-globals",
                "sorts globals by access frequency",
                createReorderGlobalsPass);
-  registerTestPass("reorder-globals-always",
-                   "sorts globals by access frequency (even if there are few)",
-                   createReorderGlobalsAlwaysPass);
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);
@@ -605,9 +593,21 @@ void PassRegistry::registerPasses() {
   registerTestPass("catch-pop-fixup",
                    "fixup nested pops within catches",
                    createCatchPopFixupPass);
+  registerTestPass("deinstrument-branch-hints",
+               "de-instrument branch hint instrumentation",
+               createDeInstrumentBranchHintsPass);
+  registerTestPass("delete-branch-hints",
+               "delete branch hints using a list of instrumented IDs",
+               createDeleteBranchHintsPass);
   registerTestPass("experimental-type-generalizing",
                    "generalize types (not yet sound)",
                    createTypeGeneralizingPass);
+  registerTestPass("randomize-branch-hints",
+                   "randomize branch hints (for fuzzing)",
+                   createRandomizeBranchHintsPass);
+  registerTestPass("reorder-globals-always",
+                   "sorts globals by access frequency (even if there are few)",
+                   createReorderGlobalsAlwaysPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
