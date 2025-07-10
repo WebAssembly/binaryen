@@ -57,6 +57,7 @@ struct Continuation;
 struct Field;
 struct Struct;
 struct Array;
+struct DescriptorChain;
 
 using TypeList = std::vector<Type>;
 using Tuple = TypeList;
@@ -201,6 +202,7 @@ public:
   // Get this type's descriptor or described types if they exist.
   std::optional<HeapType> getDescriptorType() const;
   std::optional<HeapType> getDescribedType() const;
+  DescriptorChain getDescriptorChain() const;
 
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.
@@ -945,6 +947,49 @@ struct TypeBuilder {
 
   void dump();
 };
+
+// An iterable providing access to a heap type's descriptor chain, starting from
+// itself and iterating through each successive descriptor type.
+struct DescriptorChain {
+  HeapType base;
+  struct Iterator {
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = HeapType;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const HeapType*;
+    using reference = const HeapType&;
+
+    // The current type. An end iterator contains no type.
+    std::optional<HeapType> type;
+
+    reference operator*() const { return *type; }
+
+    pointer operator->() const { return &*type; }
+
+    Iterator& operator++() {
+      type = type->getDescriptorType();
+      return *this;
+    }
+
+    Iterator operator++(int) {
+      Iterator it = *this;
+      ++(*this);
+      return it;
+    }
+
+    bool operator==(const Iterator& other) const { return type == other.type; }
+
+    bool operator!=(const Iterator& other) const { return !(*this == other); }
+  };
+
+  Iterator begin() const { return Iterator{base}; }
+
+  Iterator end() const { return Iterator{std::nullopt}; }
+};
+
+inline DescriptorChain HeapType::getDescriptorChain() const {
+  return DescriptorChain{*this};
+}
 
 // We consider certain specific types to always be public, to allow closed-
 // world to operate even if they escape. Specifically, "plain old data" types
