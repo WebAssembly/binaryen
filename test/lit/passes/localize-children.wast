@@ -19,26 +19,80 @@
   ;; OPTS:      (memory $memory 10 20)
   (memory $memory 10 20)
 
+
   ;; CHECK:      (export "interactions" (func $interactions))
 
-  ;; CHECK:      (func $add (result i32)
+  ;; CHECK:      (func $fallthrough-const (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (call $fallthrough-const)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $fallthrough-const)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (call $add)
-  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTS:      (export "interactions" (func $interactions))
 
-  ;; OPTS:      (func $add (result i32)
+  ;; OPTS:      (func $fallthrough-const (result i32)
+  ;; OPTS-NEXT:  (local $0 i32)
+  ;; OPTS-NEXT:  (local $1 i32)
+  ;; OPTS-NEXT:  (local.set $0
+  ;; OPTS-NEXT:   (call $fallthrough-const)
+  ;; OPTS-NEXT:  )
+  ;; OPTS-NEXT:  (local.set $1
+  ;; OPTS-NEXT:   (block (result i32)
+  ;; OPTS-NEXT:    (drop
+  ;; OPTS-NEXT:     (call $fallthrough-const)
+  ;; OPTS-NEXT:    )
+  ;; OPTS-NEXT:    (i32.const 42)
+  ;; OPTS-NEXT:   )
+  ;; OPTS-NEXT:  )
   ;; OPTS-NEXT:  (i32.add
-  ;; OPTS-NEXT:   (call $add)
+  ;; OPTS-NEXT:   (local.get $0)
   ;; OPTS-NEXT:   (i32.const 42)
   ;; OPTS-NEXT:  )
   ;; OPTS-NEXT: )
-  (func $add (result i32)
-    ;; The call should be moved to a local.
+  (func $fallthrough-const (result i32)
+    ;; We move the children out to locals, as there is a constant that looks
+    ;; promising to optimize.
     (i32.add
-      (call $add)
+      (call $fallthrough-const)
+      (block (result i32)
+        (drop
+          (call $fallthrough-const)
+        )
+        (i32.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $call-ignore (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (call $call-ignore)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPTS:      (func $call-ignore (result i32)
+  ;; OPTS-NEXT:  (i32.add
+  ;; OPTS-NEXT:   (call $call-ignore)
+  ;; OPTS-NEXT:   (i32.const 42)
+  ;; OPTS-NEXT:  )
+  ;; OPTS-NEXT: )
+  (func $call-ignore (result i32)
+    ;; The call has effects, but we ignore it: we look for falling-through
+    ;; constants.
+    (i32.add
+      (call $call-ignore)
       (i32.const 42)
     )
   )
