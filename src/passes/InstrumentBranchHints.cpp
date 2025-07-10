@@ -187,17 +187,22 @@ struct InstrumentBranchHints
   }
 
   void doWalkModule(Module* module) {
-    logBranch = getLogBranchImport(module);
-    // If it doesn't exist, add it.
-    if (!logBranch) {
-      auto* func = module->addFunction(Builder::makeFunction(
-        Names::getValidFunctionName(*module, BASE),
-        Signature({Type::i32, Type::i32, Type::i32}, Type::none),
-        {}));
-      func->module = MODULE;
-      func->base = BASE;
-      logBranch = func->name;
+    if (auto existing = getLogBranchImport(module)) {
+      // This file already has our import. We nop it out, as whatever the
+      // current code does may be dangerous (it may log incorrect hints).
+      auto* func = module->getFunction(existing);
+      func->body = Builder(*module).makeNop();
+      func->module = func->base = Name();
     }
+
+    // Add our import.
+    auto* func = module->addFunction(Builder::makeFunction(
+      Names::getValidFunctionName(*module, BASE),
+      Signature({Type::i32, Type::i32, Type::i32}, Type::none),
+      {}));
+    func->module = MODULE;
+    func->base = BASE;
+    logBranch = func->name;
 
     // Walk normally, using logBranch as we go.
     Super::doWalkModule(module);

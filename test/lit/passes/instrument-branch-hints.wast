@@ -436,12 +436,17 @@
 ;; This module has our import, but with a minified internal name. We should use
 ;; that import.
 (module
+  (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
+
   ;; CHECK:      (type $0 (func (param i32 i32 i32)))
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $min (type $0) (param i32 i32 i32)))
-  (import "fuzzing-support" "log-branch" (func $min (param i32 i32 i32)))
+  ;; CHECK:      (import "fuzzing-support" "log-branch" (func $log-branch (type $0) (param i32 i32 i32)))
+
+  ;; CHECK:      (func $min (type $0) (param $0 i32) (param $1 i32) (param $2 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $if (type $1)
   ;; CHECK-NEXT:  (local $x i32)
@@ -462,7 +467,7 @@
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $min
+  ;; CHECK-NEXT:    (call $log-branch
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (local.get $1)
