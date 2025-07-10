@@ -249,6 +249,9 @@ void PassRegistry::registerPasses() {
   registerPass("local-subtyping",
                "apply more specific subtypes to locals where possible",
                createLocalSubtypingPass);
+  registerPass("localize-children",
+               "move children with effects to locals",
+               createLocalizeChildrenPass);
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);

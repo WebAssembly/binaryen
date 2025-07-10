@@ -76,6 +76,7 @@ Pass* createLegalizeJSInterfacePass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
 Pass* createLocalSubtypingPass();
+Pass* createLocalizeChildrenPass();
 Pass* createLogExecutionPass();
 Pass* createIntrinsicLoweringPass();
 Pass* createTraceCallsPass();
