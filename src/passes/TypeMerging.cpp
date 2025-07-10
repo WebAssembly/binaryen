@@ -119,6 +119,17 @@ struct CastFinder : public PostWalker<CastFinder> {
   }
 };
 
+HeapType getBaseDescribedType(HeapType type) {
+  while (true) {
+    if (auto next = type.getDescribedType()) {
+      type = *next;
+      continue;
+    }
+    break;
+  }
+  return type;
+}
+
 // We are going to treat the type graph as a partitioned DFA where each type is
 // a state with transitions to its children. We will partition the DFA states so
 // that types that may be mergeable will be in the same partition and types that
@@ -351,10 +362,12 @@ bool TypeMerging::merge(MergeKind kind) {
       continue;
     }
     // We need partitions for any public children of this type since those
-    // children will participate in the DFA we're creating.
+    // children will participate in the DFA we're creating. We use the base
+    // described type of the child because that's the type that the DFA state
+    // for the current type will point to.
     for (auto t : type.getDescriptorChain()) {
       for (auto child : getPublicChildren(t)) {
-        ensurePartition(child);
+        ensurePartition(getBaseDescribedType(child));
       }
     }
     // If the type is distinguished by the module or public, we cannot merge it,
@@ -591,14 +604,7 @@ DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
           // chain. Different child types in the same descriptor chain are
           // differentiated by including their chain index in the hashed
           // top-level shape of the parent.
-          while (true) {
-            if (auto next = child.getDescribedType()) {
-              child = *next;
-              continue;
-            }
-            break;
-          }
-          succs.push_back(getMerged(child));
+          succs.push_back(getMerged(getBaseDescribedType(child)));
         }
       }
     }

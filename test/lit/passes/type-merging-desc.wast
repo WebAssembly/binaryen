@@ -320,13 +320,34 @@
   )
 
   ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (ref null $public) (ref.null none))
 
   ;; CHECK:      (global $use-public (ref null $use-public) (ref.null none))
+  (global $use-public (ref null $use-public) (ref.null none))
 
   ;; CHECK:      (export "public" (global $public))
   (export "public" (global $public))
+)
 
+(module
+  ;; Referring to a public child that is itself later in a chain should not
+  ;; cause a crash.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $public (descriptor $public.desc (struct)))
+    (type $public (descriptor $public.desc (struct)))
+    ;; CHECK:       (type $public.desc (describes $public (struct)))
+    (type $public.desc (describes $public (struct)))
+  )
+  ;; CHECK:      (type $use-public (struct (field (ref null $public.desc))))
+  (type $use-public (struct (ref null $public.desc)))
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
   (global $public (ref null $public) (ref.null none))
 
+  ;; CHECK:      (global $use-public (ref null $use-public) (ref.null none))
   (global $use-public (ref null $use-public) (ref.null none))
+
+  ;; CHECK:      (export "public" (global $public))
+  (export "public" (global $public))
 )
