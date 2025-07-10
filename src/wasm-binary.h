@@ -1658,6 +1658,11 @@ public:
   std::unordered_map<Index, Name> dataNames;
   std::unordered_map<Index, Name> elemNames;
 
+  // The names that are already used (either from the names section, or that we
+  // generate as internal names for un-named things).
+  std::unordered_set<Name> usedFunctionNames, usedTableNames, usedMemoryNames,
+    usedGlobalNames, usedTagNames;
+
   Function* currFunction = nullptr;
   // before we see a function (like global init expressions), there is no end of
   // function to check
