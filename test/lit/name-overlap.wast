@@ -11,6 +11,15 @@
 ;; import names.
 
 (module
+ ;; CHECK:      (type $0 (func (param i64)))
+
+ ;; CHECK:      (type $1 (func (param f32)))
+
+ ;; CHECK:      (type $2 (func (param i32 i32 i32)))
+
+ ;; CHECK:      (import "fuzzing-support" "log-i64" (func $fimport$2 (type $0) (param i64)))
  (import "fuzzing-support" "log-i64" (func $fimport$2 (param i64)))
+ ;; CHECK:      (import "fuzzing-support" "log-f32" (func $fimport$3 (type $1) (param f32)))
  (import "fuzzing-support" "log-f32" (func $fimport$3 (param f32)))
 )
+;; CHECK:      (import "fuzzing-support" "log-branch" (func $fimport$2_2 (type $2) (param i32 i32 i32)))
