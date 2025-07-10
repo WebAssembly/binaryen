@@ -22,24 +22,16 @@
   ;; CHECK:      (export "interactions" (func $interactions))
 
   ;; CHECK:      (func $add (result i32)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (call $add)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (call $add)
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; OPTS:      (export "interactions" (func $interactions))
 
   ;; OPTS:      (func $add (result i32)
-  ;; OPTS-NEXT:  (local $0 i32)
-  ;; OPTS-NEXT:  (local.set $0
-  ;; OPTS-NEXT:   (call $add)
-  ;; OPTS-NEXT:  )
   ;; OPTS-NEXT:  (i32.add
-  ;; OPTS-NEXT:   (local.get $0)
+  ;; OPTS-NEXT:   (call $add)
   ;; OPTS-NEXT:   (i32.const 42)
   ;; OPTS-NEXT:  )
   ;; OPTS-NEXT: )

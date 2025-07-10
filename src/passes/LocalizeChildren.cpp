@@ -15,6 +15,7 @@
  */
 
 #include "ir/localize.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm.h"
 
@@ -28,12 +29,28 @@ struct LocalizeChildren : public WalkerPass<PostWalker<LocalizeChildren>> {
   }
 
   // TODO add other things that might benefit
-  void visitBinary(Expression* curr) {
-    ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
-    auto* rep = localizer.getReplacement();
-    if (rep != curr) {
-      replaceCurrent(rep);
+  void visitBinary(Binary* curr) {
+    // Consider localizing when we see something potentially optimizable, like
+    // a falling-through constant.
+    if (isFallingThroughConstant(curr->left) ||
+        isFallingThroughConstant(curr->right)) {
+      ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
+      auto* rep = localizer.getReplacement();
+      if (rep != curr) {
+        replaceCurrent(rep);
+      }
     }
+  }
+
+private:
+  // Check if something is a falling-through constant (but not a constant
+  // already).
+  bool isFallingThroughConstant(Expression* curr) {
+    if (Properties::isSingleConstantExpression(curr)) {
+      return false;
+    }
+    curr = Properties::getFallthrough(curr, getPassOptions(), *getModule());
+    return Properties::isSingleConstantExpression(curr);
   }
 };
 

@@ -45,6 +45,9 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.or
   ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (global.get $__asyncify_state)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (if (result i32)
   ;; CHECK-NEXT:      (i32.eq
   ;; CHECK-NEXT:       (global.get $__asyncify_state)
@@ -70,9 +73,6 @@
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.eqz
-  ;; CHECK-NEXT:     (global.get $__asyncify_state)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (then
