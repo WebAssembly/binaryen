@@ -34,7 +34,8 @@ struct LocalizeChildren : public WalkerPass<PostWalker<LocalizeChildren>> {
     // a falling-through constant.
     if (isFallingThroughConstant(curr->left) ||
         isFallingThroughConstant(curr->right)) {
-      ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
+      ChildLocalizer localizer(
+        curr, getFunction(), *getModule(), getPassOptions());
       auto* rep = localizer.getReplacement();
       if (rep != curr) {
         replaceCurrent(rep);
