@@ -2988,8 +2988,7 @@
  ;; CHECK:      (func $assembly/index/getBody (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (if (result i32)
- ;; CHECK-NEXT:   (i32.lt_u
- ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   (i32.gt_u
  ;; CHECK-NEXT:    (i32.load offset=4
  ;; CHECK-NEXT:     (local.tee $1
  ;; CHECK-NEXT:      (i32.load
@@ -2997,11 +2996,11 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (if (result i32)
- ;; CHECK-NEXT:     (i32.lt_u
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     (i32.gt_u
  ;; CHECK-NEXT:      (i32.shr_u
  ;; CHECK-NEXT:       (i32.load
  ;; CHECK-NEXT:        (local.tee $1
@@ -3012,6 +3011,7 @@
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (i32.const 2)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (i32.load offset=8

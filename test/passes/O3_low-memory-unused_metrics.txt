@@ -9,14 +9,14 @@ total
  [table-data]   : 0       
  [tables]       : 0       
  [tags]         : 0       
- [total]        : 1953    
+ [total]        : 1957    
  [vars]         : 9       
- Binary         : 238     
+ Binary         : 240     
  Block          : 68      
  Break          : 90      
  Call           : 22      
  CallIndirect   : 1       
- Const          : 174     
+ Const          : 176     
  Drop           : 8       
  If             : 27      
  Load           : 311     
@@ -199,10 +199,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $3)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $3)
                      )
                      (i32.const 31)
                     )
@@ -219,10 +219,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $3)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $3)
                      )
                      (i32.const 139)
                     )
@@ -239,10 +239,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $3)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $3)
                      )
                      (i32.const 8)
                     )
@@ -268,10 +268,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $3)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $3)
                        )
                        (i32.const 0)
                       )
@@ -288,10 +288,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $3)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $3)
                        )
                        (i32.const 0)
                       )
@@ -308,10 +308,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $3)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $3)
                        )
                        (i32.const 0)
                       )
@@ -328,10 +328,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $3)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $3)
                        )
                        (i32.const 0)
                       )
@@ -348,10 +348,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $3)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $3)
                        )
                        (i32.const 0)
                       )
@@ -401,10 +401,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $4)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $4)
                        )
                        (local.get $3)
                       )
@@ -421,10 +421,10 @@ total
                       )
                       (i32.store8
                        (i32.add
-                        (local.get $3)
                         (i32.load offset=8
                          (local.get $2)
                         )
+                        (local.get $3)
                        )
                        (i32.const 3)
                       )
@@ -476,10 +476,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $10)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $10)
                      )
                      (i32.or
                       (i32.or
@@ -542,10 +542,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $5)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $5)
                      )
                      (local.get $4)
                     )
@@ -569,10 +569,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $5)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $5)
                      )
                      (i32.shr_u
                       (local.get $4)
@@ -580,9 +580,12 @@ total
                      )
                     )
                     (local.set $4
-                     (i32.load16_u offset=6
-                      (i32.load offset=28
-                       (local.get $2)
+                     (i32.load16_u
+                      (i32.add
+                       (i32.load offset=28
+                        (local.get $2)
+                       )
+                       (i32.const 6)
                       )
                      )
                     )
@@ -599,17 +602,20 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $5)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $5)
                      )
                      (local.get $4)
                     )
                     (local.set $4
-                     (i32.load8_u offset=7
-                      (i32.load offset=28
-                       (local.get $2)
+                     (i32.load8_u
+                      (i32.add
+                       (i32.load offset=28
+                        (local.get $2)
+                       )
+                       (i32.const 7)
                       )
                      )
                     )
@@ -626,10 +632,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $5)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $5)
                      )
                      (local.get $4)
                     )
@@ -676,10 +682,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $4)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $4)
                      )
                      (local.get $3)
                     )
@@ -703,10 +709,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $4)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $4)
                      )
                      (local.get $3)
                     )
@@ -739,10 +745,10 @@ total
                         )
                         (i32.store8
                          (i32.add
-                          (local.get $4)
                           (i32.load offset=8
                            (local.get $2)
                           )
+                          (local.get $4)
                          )
                          (local.get $3)
                         )
@@ -766,10 +772,10 @@ total
                         )
                         (i32.store8
                          (i32.add
-                          (local.get $4)
                           (i32.load offset=8
                            (local.get $2)
                           )
+                          (local.get $4)
                          )
                          (i32.shr_u
                           (local.get $3)
@@ -883,10 +889,10 @@ total
                   )
                   (i32.store8
                    (i32.add
-                    (local.get $4)
                     (i32.load offset=8
                      (local.get $2)
                     )
+                    (local.get $4)
                    )
                    (i32.shr_u
                     (local.tee $3
@@ -922,10 +928,10 @@ total
                   )
                   (i32.store8
                    (i32.add
-                    (local.get $4)
                     (i32.load offset=8
                      (local.get $2)
                     )
+                    (local.get $4)
                    )
                    (i32.xor
                     (i32.or
@@ -961,10 +967,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $4)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $4)
                      )
                      (i32.shr_u
                       (local.get $3)
@@ -984,10 +990,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $4)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $4)
                      )
                      (i32.shr_u
                       (local.get $3)
@@ -1012,10 +1018,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $4)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $4)
                      )
                      (i32.shr_u
                       (local.get $3)
@@ -1035,10 +1041,10 @@ total
                     )
                     (i32.store8
                      (i32.add
-                      (local.get $4)
                       (i32.load offset=8
                        (local.get $2)
                       )
+                      (local.get $4)
                      )
                      (local.get $3)
                     )
@@ -1099,10 +1105,10 @@ total
                   (loop $label$28
                    (if
                     (i32.eq
+                     (local.get $3)
                      (i32.load offset=12
                       (local.get $2)
                      )
-                     (local.get $3)
                     )
                     (then
                      (block $label$30
@@ -1302,7 +1308,8 @@ total
                     )
                    )
                    (if
-                    (i32.le_u
+                    (i32.ge_u
+                     (local.get $6)
                      (i32.load16_u offset=20
                       (local.tee $5
                        (i32.load offset=28
@@ -1310,7 +1317,6 @@ total
                        )
                       )
                      )
-                     (local.get $6)
                     )
                     (then
                      (local.set $3
@@ -1437,10 +1443,10 @@ total
                 (block $label$36
                  (if
                   (i32.eq
+                   (local.get $3)
                    (i32.load offset=12
                     (local.get $2)
                    )
-                   (local.get $3)
                   )
                   (then
                    (block $label$39
@@ -1750,10 +1756,10 @@ total
             (block $label$44
              (if
               (i32.eq
+               (local.get $3)
                (i32.load offset=12
                 (local.get $2)
                )
-               (local.get $3)
               )
               (then
                (block $label$47
@@ -2209,10 +2215,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $4)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $4)
          )
          (i32.shr_u
           (local.get $3)
@@ -2738,10 +2744,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (local.get $1)
         )
@@ -2763,10 +2769,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (i32.shr_u
           (local.get $1)
@@ -2791,10 +2797,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (local.get $1)
         )
@@ -2816,10 +2822,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (local.get $1)
         )
@@ -2841,10 +2847,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (local.get $1)
         )
@@ -2866,10 +2872,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (i32.shr_u
           (local.get $1)
@@ -2894,10 +2900,10 @@ total
         )
         (i32.store8
          (i32.add
-          (local.get $3)
           (i32.load offset=8
            (local.get $2)
           )
+          (local.get $3)
          )
          (local.get $1)
         )
@@ -2922,10 +2928,10 @@ total
       )
       (i32.store8
        (i32.add
-        (local.get $3)
         (i32.load offset=8
          (local.get $2)
         )
+        (local.get $3)
        )
        (i32.shr_u
         (local.get $1)
@@ -2945,10 +2951,10 @@ total
       )
       (i32.store8
        (i32.add
-        (local.get $3)
         (i32.load offset=8
          (local.get $2)
         )
+        (local.get $3)
        )
        (i32.shr_u
         (local.get $1)
@@ -2973,10 +2979,10 @@ total
       )
       (i32.store8
        (i32.add
-        (local.get $1)
         (i32.load offset=8
          (local.get $2)
         )
+        (local.get $1)
        )
        (i32.shr_u
         (local.get $3)
@@ -2997,10 +3003,10 @@ total
      )
      (i32.store8
       (i32.add
-       (local.get $1)
        (i32.load offset=8
         (local.get $2)
        )
+       (local.get $1)
       )
       (local.get $3)
      )

@@ -646,6 +646,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("remove-unused-brs");
   addIfNoDWARFIssues("remove-unused-names");
+  addIfNoDWARFIssues("localize-children");
   addIfNoDWARFIssues("optimize-instructions");
   if (wasm->features.hasGC()) {
     addIfNoDWARFIssues("heap-store-optimization");
