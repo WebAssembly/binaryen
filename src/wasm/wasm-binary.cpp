@@ -3008,7 +3008,6 @@ void WasmBinaryReader::readFunctionSignatures() {
       std::cerr << "warning: function index out of bounds in name section: "
                 << name << " at index " << index << '\n';
     }
-    usedFunctionNames.insert(name);
   }
   // Also check that the function indices in the local names subsection are
   // in-bounds, even though we don't use them here.
