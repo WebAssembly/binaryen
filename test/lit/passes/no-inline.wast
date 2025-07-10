@@ -509,7 +509,9 @@
 
  ;; NO_PART:      (func $maybe-partial-or-full-1 (param $x i32)
  ;; NO_PART-NEXT:  (if
- ;; NO_PART-NEXT:   (local.get $x)
+ ;; NO_PART-NEXT:   (i32.eqz
+ ;; NO_PART-NEXT:    (local.get $x)
+ ;; NO_PART-NEXT:   )
  ;; NO_PART-NEXT:   (then
  ;; NO_PART-NEXT:    (call $import)
  ;; NO_PART-NEXT:   )
@@ -517,7 +519,9 @@
  ;; NO_PART-NEXT: )
  ;; NO_BOTH:      (func $maybe-partial-or-full-1 (param $x i32)
  ;; NO_BOTH-NEXT:  (if
- ;; NO_BOTH-NEXT:   (local.get $x)
+ ;; NO_BOTH-NEXT:   (i32.eqz
+ ;; NO_BOTH-NEXT:    (local.get $x)
+ ;; NO_BOTH-NEXT:   )
  ;; NO_BOTH-NEXT:   (then
  ;; NO_BOTH-NEXT:    (call $import)
  ;; NO_BOTH-NEXT:   )
@@ -529,7 +533,7 @@
   ;; inlining is disabled but partial inlining is enabled, we should only
   ;; partially inline it.
   (if
-   (local.get $x)
+   (i32.eqz (local.get $x))
    (then
     (call $import)
    )
@@ -538,7 +542,9 @@
 
  ;; NO_PART:      (func $maybe-partial-or-full-2 (param $x i32)
  ;; NO_PART-NEXT:  (if
- ;; NO_PART-NEXT:   (local.get $x)
+ ;; NO_PART-NEXT:   (i32.eqz
+ ;; NO_PART-NEXT:    (local.get $x)
+ ;; NO_PART-NEXT:   )
  ;; NO_PART-NEXT:   (then
  ;; NO_PART-NEXT:    (return)
  ;; NO_PART-NEXT:   )
@@ -571,7 +577,9 @@
  ;; NO_PART-NEXT: )
  ;; NO_BOTH:      (func $maybe-partial-or-full-2 (param $x i32)
  ;; NO_BOTH-NEXT:  (if
- ;; NO_BOTH-NEXT:   (local.get $x)
+ ;; NO_BOTH-NEXT:   (i32.eqz
+ ;; NO_BOTH-NEXT:    (local.get $x)
+ ;; NO_BOTH-NEXT:   )
  ;; NO_BOTH-NEXT:   (then
  ;; NO_BOTH-NEXT:    (return)
  ;; NO_BOTH-NEXT:   )
@@ -606,7 +614,7 @@
   ;; As above, but for another form of partial inlining. Here we need to add
   ;; some extra things to the function size for partial inlining to kick in.
   (if
-   (local.get $x)
+   (i32.eqz (local.get $x))
    (then
     (return)
    )
@@ -648,7 +656,9 @@
  ;; YES_ALL-NEXT:    (i32.const 0)
  ;; YES_ALL-NEXT:   )
  ;; YES_ALL-NEXT:   (if
- ;; YES_ALL-NEXT:    (local.get $0)
+ ;; YES_ALL-NEXT:    (i32.eqz
+ ;; YES_ALL-NEXT:     (local.get $0)
+ ;; YES_ALL-NEXT:    )
  ;; YES_ALL-NEXT:    (then
  ;; YES_ALL-NEXT:     (call $import)
  ;; YES_ALL-NEXT:    )
@@ -659,7 +669,9 @@
  ;; YES_ALL-NEXT:    (i32.const 1)
  ;; YES_ALL-NEXT:   )
  ;; YES_ALL-NEXT:   (if
- ;; YES_ALL-NEXT:    (local.get $1)
+ ;; YES_ALL-NEXT:    (i32.eqz
+ ;; YES_ALL-NEXT:     (local.get $1)
+ ;; YES_ALL-NEXT:    )
  ;; YES_ALL-NEXT:    (then
  ;; YES_ALL-NEXT:     (call $import)
  ;; YES_ALL-NEXT:    )
@@ -671,7 +683,9 @@
  ;; YES_ALL-NEXT:   )
  ;; YES_ALL-NEXT:   (block
  ;; YES_ALL-NEXT:    (if
- ;; YES_ALL-NEXT:     (local.get $2)
+ ;; YES_ALL-NEXT:     (i32.eqz
+ ;; YES_ALL-NEXT:      (local.get $2)
+ ;; YES_ALL-NEXT:     )
  ;; YES_ALL-NEXT:     (then
  ;; YES_ALL-NEXT:      (br $__inlined_func$maybe-partial-or-full-2$2)
  ;; YES_ALL-NEXT:     )
@@ -709,7 +723,9 @@
  ;; YES_ALL-NEXT:   )
  ;; YES_ALL-NEXT:   (block
  ;; YES_ALL-NEXT:    (if
- ;; YES_ALL-NEXT:     (local.get $3)
+ ;; YES_ALL-NEXT:     (i32.eqz
+ ;; YES_ALL-NEXT:      (local.get $3)
+ ;; YES_ALL-NEXT:     )
  ;; YES_ALL-NEXT:     (then
  ;; YES_ALL-NEXT:      (br $__inlined_func$maybe-partial-or-full-2$3)
  ;; YES_ALL-NEXT:     )
@@ -766,7 +782,9 @@
  ;; NO_FULL-NEXT:    (i32.const 0)
  ;; NO_FULL-NEXT:   )
  ;; NO_FULL-NEXT:   (if
- ;; NO_FULL-NEXT:    (local.get $0)
+ ;; NO_FULL-NEXT:    (i32.eqz
+ ;; NO_FULL-NEXT:     (local.get $0)
+ ;; NO_FULL-NEXT:    )
  ;; NO_FULL-NEXT:    (then
  ;; NO_FULL-NEXT:     (call $byn-split-outlined-B$maybe-partial-or-full-1
  ;; NO_FULL-NEXT:      (local.get $0)
@@ -779,7 +797,9 @@
  ;; NO_FULL-NEXT:    (i32.const 1)
  ;; NO_FULL-NEXT:   )
  ;; NO_FULL-NEXT:   (if
- ;; NO_FULL-NEXT:    (local.get $1)
+ ;; NO_FULL-NEXT:    (i32.eqz
+ ;; NO_FULL-NEXT:     (local.get $1)
+ ;; NO_FULL-NEXT:    )
  ;; NO_FULL-NEXT:    (then
  ;; NO_FULL-NEXT:     (call $byn-split-outlined-B$maybe-partial-or-full-1
  ;; NO_FULL-NEXT:      (local.get $1)
@@ -793,7 +813,9 @@
  ;; NO_FULL-NEXT:   )
  ;; NO_FULL-NEXT:   (if
  ;; NO_FULL-NEXT:    (i32.eqz
- ;; NO_FULL-NEXT:     (local.get $2)
+ ;; NO_FULL-NEXT:     (i32.eqz
+ ;; NO_FULL-NEXT:      (local.get $2)
+ ;; NO_FULL-NEXT:     )
  ;; NO_FULL-NEXT:    )
  ;; NO_FULL-NEXT:    (then
  ;; NO_FULL-NEXT:     (call $byn-split-outlined-A$maybe-partial-or-full-2
@@ -808,7 +830,9 @@
  ;; NO_FULL-NEXT:   )
  ;; NO_FULL-NEXT:   (if
  ;; NO_FULL-NEXT:    (i32.eqz
- ;; NO_FULL-NEXT:     (local.get $3)
+ ;; NO_FULL-NEXT:     (i32.eqz
+ ;; NO_FULL-NEXT:      (local.get $3)
+ ;; NO_FULL-NEXT:     )
  ;; NO_FULL-NEXT:    )
  ;; NO_FULL-NEXT:    (then
  ;; NO_FULL-NEXT:     (call $byn-split-outlined-A$maybe-partial-or-full-2
