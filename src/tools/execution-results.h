@@ -79,7 +79,15 @@ public:
     if (import->module == "fuzzing-support") {
       if (import->base.startsWith("log")) {
         // This is a logging function like log-i32 or log-f64
-        std::cout << "[LoggingExternalInterface logging";
+        std::cout << "[LoggingExternalInterface ";
+        if (import->base == "log-branch") {
+          // Report this as a special logging, so we can differentiate it from
+          // the others in the fuzzer.
+          std::cout << "log-branch";
+        } else {
+          // All others are just reported as loggings.
+          std::cout << "logging";
+        }
         loggings.push_back(Literal()); // buffer with a None between calls
         for (auto argument : arguments) {
           if (argument.type == Type::i64) {
