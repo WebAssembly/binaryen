@@ -94,7 +94,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $meta (result (ref $B.meta))
-    ;; If we did merged $B into $A, this IR would become invalid and cause
+    ;; If we did merge $B into $A, this IR would become invalid and cause
     ;; assertion failures because $A's descriptor does not itself have a
     ;; descriptor.
     (ref.get_desc $B.desc
