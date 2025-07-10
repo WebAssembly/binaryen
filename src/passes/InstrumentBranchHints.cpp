@@ -294,6 +294,9 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
       return {};
     }
     auto* set = *sets.begin();
+    if (!set) {
+      return {};
+    }
     auto& gets = getSub()->localGraph->getSetInfluences(set);
     if (gets.size() != 2) {
       return {};
@@ -327,10 +330,12 @@ struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition)) {
-      auto id = info->call->operands[0]->template cast<Const>()->value.geti32();
-      if (idsToDelete.count(id)) {
-        // Remove the branch hint.
-        getFunction()->codeAnnotations[curr].branchLikely = {};
+      if (auto* c = info->call->operands[0]->template dynCast<Const>()) {
+        auto id = c->value.geti32();
+        if (idsToDelete.count(id)) {
+          // Remove the branch hint.
+          getFunction()->codeAnnotations[curr].branchLikely = {};
+        }
       }
     }
   }
@@ -349,8 +354,6 @@ struct DeleteBranchHints : public InstrumentationProcessor<DeleteBranchHints> {
 
 struct DeInstrumentBranchHints
   : public InstrumentationProcessor<DeInstrumentBranchHints> {
-
-  using Super = InstrumentationProcessor<DeInstrumentBranchHints>;
 
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition)) {
