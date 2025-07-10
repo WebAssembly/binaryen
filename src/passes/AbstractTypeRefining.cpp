@@ -112,8 +112,17 @@ struct AbstractTypeRefining : public Pass {
     //       module, given closed world, but we'd also need to make sure that
     //       we don't need to make any changes to public types that refer to
     //       them.
-    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
-      createdTypes.insert(type);
+    // Similarly, treat all descriptor and described types as allocated because
+    // we cannot yet optimize them correctly.
+    auto heapTypes = ModuleUtils::collectHeapTypeInfo(
+      *module,
+      ModuleUtils::TypeInclusion::AllTypes,
+      ModuleUtils::VisibilityHandling::FindVisibility);
+    for (auto& [type, info] : heapTypes) {
+      if (info.visibility == ModuleUtils::Visibility::Public ||
+          type.getDescribedType() || type.getDescriptorType()) {
+        createdTypes.insert(type);
+      }
     }
 
     SubTypes subTypes(*module);
