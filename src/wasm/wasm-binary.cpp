@@ -2536,8 +2536,8 @@ void WasmBinaryReader::readMemories() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] =
-      getOrMakeName(memoryNames, numImports + i, makeName("", i), usedMemoryNames);
+    auto [name, isExplicit] = getOrMakeName(
+      memoryNames, numImports + i, makeName("", i), usedMemoryNames);
     auto memory = Builder::makeMemory(name);
     memory->hasExplicitName = isExplicit;
     getResizableLimits(memory->initial,
@@ -3003,14 +3003,12 @@ void WasmBinaryReader::setLocalNames(Function& func, Index i) {
 void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   auto numImports = wasm.functions.size();
-std::cout << "adding existing\n";
   for (auto& [index, name] : functionNames) {
     if (index >= num + numImports) {
       std::cerr << "warning: function index out of bounds in name section: "
                 << name << " at index " << index << '\n';
     }
     usedFunctionNames.insert(name);
-std::cout << "  adding: " << name << "\n";
   }
   // Also check that the function indices in the local names subsection are
   // in-bounds, even though we don't use them here.
@@ -3022,8 +3020,8 @@ std::cout << "  adding: " << name << "\n";
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] =
-      getOrMakeName(functionNames, numImports + i, makeName("", i), usedFunctionNames);
+    auto [name, isExplicit] = getOrMakeName(
+      functionNames, numImports + i, makeName("", i), usedFunctionNames);
     auto index = getU32LEB();
     HeapType type = getTypeByIndex(index);
     functionTypes.push_back(type);
@@ -4862,8 +4860,8 @@ void WasmBinaryReader::readTableDeclarations() {
     }
   }
   for (size_t i = 0; i < num; i++) {
-    auto [name, isExplicit] =
-      getOrMakeName(tableNames, numImports + i, makeName("", i), usedTableNames);
+    auto [name, isExplicit] = getOrMakeName(
+      tableNames, numImports + i, makeName("", i), usedTableNames);
     auto elemType = getType();
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
@@ -4978,8 +4976,8 @@ void WasmBinaryReader::readTags() {
   }
   for (size_t i = 0; i < num; i++) {
     getInt8(); // Reserved 'attribute' field
-    auto [name, isExplicit] =
-      getOrMakeName(tagNames, numImports + i, makeName("tag$", i), usedTagNames);
+    auto [name, isExplicit] = getOrMakeName(
+      tagNames, numImports + i, makeName("tag$", i), usedTagNames);
     auto typeIndex = getU32LEB();
     auto tag = Builder::makeTag(name, getSignatureByTypeIndex(typeIndex));
     tag->hasExplicitName = isExplicit;
