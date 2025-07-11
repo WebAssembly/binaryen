@@ -14,8 +14,9 @@
     (return)
    )
   )
+  ;; More code, so this is not trivial.
   (loop $l
-   (unreachable)
+   (nop)
   )
  )
  ;; CHECK:      (type $0 (func))
@@ -69,6 +70,6 @@
 )
 ;; CHECK:      (func $byn-split-outlined-A$func (type $1) (param $0 i32)
 ;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (nop)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
