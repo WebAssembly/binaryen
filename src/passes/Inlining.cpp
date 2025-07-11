@@ -30,14 +30,15 @@
 
 #include <atomic>
 
+#include "ir/branch-hints.h"
 #include "ir/branch-utils.h"
-#include "ir/debuginfo.h"
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/localize.h"
+#include "ir/metadata.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/properties.h"
@@ -634,7 +635,7 @@ static void doCodeInlining(Module* module,
 
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
-  debuginfo::copyBetweenFunctions(from->body, contents, from, into);
+  metadata::copyBetweenFunctions(from->body, contents, from, into);
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;
@@ -1097,6 +1098,7 @@ private:
       auto* inlineableIf = getIf(inlineable->body);
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
+      BranchHints::flip(inlineableIf, inlineable);
       inlineableIf->ifTrue = builder.makeCall(
         outlined->name, getForwardedArgs(func, builder), Type::none);
       inlineable->body = inlineableIf;
