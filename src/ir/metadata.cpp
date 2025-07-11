@@ -79,7 +79,11 @@ void copyBetweenFunctions(Expression* origin,
 // Given two expressions to use as keys, see if they have identical values (or
 // are both absent) in two maps.
 template<typename T, typename V>
-bool compare(Expression* a, Expression* b, const T& aMap, const T& bMap, const V& defaultValue) {
+bool compare(Expression* a,
+             Expression* b,
+             const T& aMap,
+             const T& bMap,
+             const V& defaultValue) {
   auto aIter = aMap.find(a);
   auto aItem = aIter != aMap.end() ? aIter->second : defaultValue;
   auto bIter = bMap.find(b);
@@ -113,8 +117,11 @@ bool equal(Function* a, Function* b) {
 
   assert(aList.list.size() == bList.list.size());
   for (Index i = 0; i < aList.list.size(); i++) {
-    if (!compare(
-          aList.list[i], bList.list[i], a->debugLocations, b->debugLocations, Function::DebugLocation()) ||
+    if (!compare(aList.list[i],
+                 bList.list[i],
+                 a->debugLocations,
+                 b->debugLocations,
+                 Function::DebugLocation()) ||
         !compare(aList.list[i],
                  bList.list[i],
                  a->codeAnnotations,
