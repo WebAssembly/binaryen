@@ -2233,7 +2233,7 @@ public:
   // Source maps debugging info: map expression nodes to their file, line, col,
   // symbol name.
   struct DebugLocation {
-    BinaryLocation fileIndex, lineNumber, columnNumber;
+    BinaryLocation fileIndex = -1, lineNumber = -1, columnNumber = -1;
     std::optional<BinaryLocation> symbolNameIndex;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
