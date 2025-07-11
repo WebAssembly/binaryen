@@ -36,6 +36,9 @@
 // passes in between.
 //
 
+#include <algorithm>
+#include <unordered_map>
+
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -44,6 +47,7 @@
 #include "support/small_set.h"
 #include "wasm-builder.h"
 #include "wasm-type-ordering.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 #define TYPE_MERGING_DEBUG 0
@@ -114,6 +118,17 @@ struct CastFinder : public PostWalker<CastFinder> {
     }
   }
 };
+
+HeapType getBaseDescribedType(HeapType type) {
+  while (true) {
+    if (auto next = type.getDescribedType()) {
+      type = *next;
+      continue;
+    }
+    break;
+  }
+  return type;
+}
 
 // We are going to treat the type graph as a partitioned DFA where each type is
 // a state with transitions to its children. We will partition the DFA states so
@@ -339,14 +354,30 @@ bool TypeMerging::merge(MergeKind kind) {
   // For each type, either create a new partition or add to its supertype's
   // partition.
   for (auto type : mergeableSupertypesFirst(mergeable)) {
+    // Skip descriptor types. Since types in descriptor chains all have to be
+    // merged into matching descriptor chains together, only the base described
+    // type in each chain is considered, and its DFA state will include the
+    // shape of its entire descriptor chain.
+    if (type.getDescribedType()) {
+      continue;
+    }
     // We need partitions for any public children of this type since those
-    // children will participate in the DFA we're creating.
-    for (auto child : getPublicChildren(type)) {
-      ensurePartition(child);
+    // children will participate in the DFA we're creating. We use the base
+    // described type of the child because that's the type that the DFA state
+    // for the current type will point to.
+    for (auto t : type.getDescriptorChain()) {
+      for (auto child : getPublicChildren(t)) {
+        ensurePartition(getBaseDescribedType(child));
+      }
     }
     // If the type is distinguished by the module or public, we cannot merge it,
     // so create a new partition for it.
-    if (castTypes.count(type) || !privateTypes.count(type)) {
+    auto chain = type.getDescriptorChain();
+    bool hasCast =
+      std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
+        return castTypes.count(type);
+      });
+    if (hasCast || !privateTypes.count(type)) {
       ensurePartition(type);
       continue;
     }
@@ -354,7 +385,12 @@ bool TypeMerging::merge(MergeKind kind) {
     switch (kind) {
       case Supertypes: {
         auto super = type.getDeclaredSuperType();
-        bool superHasExactCast = super && exactCastTypes.count(*super);
+        bool superHasExactCast =
+          super &&
+          std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
+            auto super = t.getDeclaredSuperType();
+            return super && exactCastTypes.count(*super);
+          });
         if (!super || !shapeEq(type, *super) || superHasExactCast) {
           // Create a new partition for this type and bail.
           ensurePartition(type);
@@ -556,10 +592,20 @@ DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   // other direction, including the children is not necessary to differentiate
   // types reached by the public types because all such reachable types are also
   // public and not eligible to be merged.
+  //
+  // For private types, full descriptor chains are included in a single DFA
+  // represented by their base described type.
   if (privateTypes.count(type)) {
-    for (auto child : type.getHeapTypeChildren()) {
-      if (!child.isBasic()) {
-        succs.push_back(getMerged(child));
+    assert(!type.getDescribedType());
+    for (auto t : type.getDescriptorChain()) {
+      for (auto child : t.getHeapTypeChildren()) {
+        if (!child.isBasic()) {
+          // The child's partition is represented by the base of its descriptor
+          // chain. Different child types in the same descriptor chain are
+          // differentiated by including their chain index in the hashed
+          // top-level shape of the parent.
+          succs.push_back(getMerged(getBaseDescribedType(child)));
+        }
       }
     }
   }
@@ -571,77 +617,104 @@ void TypeMerging::applyMerges() {
     return;
   }
 
-  // Flatten merges, which might be an arbitrary tree at this point.
+  // Flatten merges, which might be an arbitrary tree at this point. Also expand
+  // the mapping to cover every type in each descriptor chain.
+  std::unordered_map<HeapType, HeapType> replacements;
   for (auto [type, _] : merges) {
-    merges[type] = getMerged(type);
+    auto target = getMerged(type);
+    auto chain = type.getDescriptorChain();
+    auto targetChain = target.getDescriptorChain();
+    auto targetIt = targetChain.begin();
+    for (auto it = chain.begin(); it != chain.end(); ++it) {
+      assert(targetIt != targetChain.end());
+      replacements[*it] = *targetIt++;
+    }
   }
 
   // We found things to optimize! Rewrite types in the module to apply those
   // changes.
-  TypeMapper(*module, merges).map();
+  TypeMapper(*module, replacements).map();
 }
 
 bool shapeEq(HeapType a, HeapType b) {
   // Check whether `a` and `b` have the same top-level structure, including the
   // position and identity of any children that are not included as transitions
-  // in the DFA, i.e. any children that are not nontrivial references.
-  if (a.isOpen() != b.isOpen()) {
-    return false;
+  // in the DFA, i.e. any children that are not nontrivial references. We treat
+  // full descriptor chains as single units, so compare the shape of every type
+  // in the chains rooted at `a` and `b`.
+  assert(!a.getDescribedType() && !b.getDescribedType());
+  auto chainA = a.getDescriptorChain();
+  auto chainB = b.getDescriptorChain();
+  auto itA = chainA.begin();
+  auto itB = chainB.begin();
+  while (itA != chainA.end() && itB != chainB.end()) {
+    a = *itA++;
+    b = *itB++;
+    if (a.isOpen() != b.isOpen()) {
+      return false;
+    }
+    if (a.isShared() != b.isShared()) {
+      return false;
+    }
+    // Ignore supertype because we want to be able to merge into parents.
+    auto aKind = a.getKind();
+    auto bKind = b.getKind();
+    if (aKind != bKind) {
+      return false;
+    }
+    switch (aKind) {
+      case HeapTypeKind::Func:
+        if (!shapeEq(a.getSignature(), b.getSignature())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Struct:
+        if (!shapeEq(a.getStruct(), b.getStruct())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Array:
+        if (!shapeEq(a.getArray(), b.getArray())) {
+          return false;
+        }
+        break;
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
+    }
   }
-  if (a.isShared() != b.isShared()) {
-    return false;
-  }
-  // Ignore supertype because we want to be able to merge into parents.
-  if (!!a.getDescriptorType() != !!b.getDescriptorType()) {
-    return false;
-  }
-  if (!!a.getDescribedType() != !!b.getDescribedType()) {
-    return false;
-  }
-  auto aKind = a.getKind();
-  auto bKind = b.getKind();
-  if (aKind != bKind) {
-    return false;
-  }
-  switch (aKind) {
-    case HeapTypeKind::Func:
-      return shapeEq(a.getSignature(), b.getSignature());
-    case HeapTypeKind::Struct:
-      return shapeEq(a.getStruct(), b.getStruct());
-    case HeapTypeKind::Array:
-      return shapeEq(a.getArray(), b.getArray());
-    case HeapTypeKind::Cont:
-      WASM_UNREACHABLE("TODO: cont");
-    case HeapTypeKind::Basic:
-      WASM_UNREACHABLE("unexpected kind");
-  }
-  return false;
+  return itA == chainA.end() && itB == chainB.end();
 }
 
 size_t shapeHash(HeapType a) {
-  size_t digest = hash(a.isOpen());
-  rehash(digest, a.isShared());
-  // Ignore supertype because we want to be able to merge into parents.
-  rehash(digest, !!a.getDescriptorType());
-  rehash(digest, !!a.getDescribedType());
-  auto kind = a.getKind();
-  rehash(digest, kind);
-  switch (kind) {
-    case HeapTypeKind::Func:
-      hash_combine(digest, shapeHash(a.getSignature()));
-      return digest;
-    case HeapTypeKind::Struct:
-      hash_combine(digest, shapeHash(a.getStruct()));
-      return digest;
-    case HeapTypeKind::Array:
-      hash_combine(digest, shapeHash(a.getArray()));
-      return digest;
-    case HeapTypeKind::Cont:
-      WASM_UNREACHABLE("TODO: cont");
-    case HeapTypeKind::Basic:
-      break;
+  assert(!a.getDescribedType());
+  size_t digest = 0xA76F35EC;
+  for (auto type : a.getDescriptorChain()) {
+    rehash(digest, 0xCC6B0DD9);
+    rehash(digest, type.isOpen());
+    rehash(digest, type.isShared());
+    // Ignore supertype because we want to be able to merge into parents.
+    auto kind = type.getKind();
+    rehash(digest, kind);
+    switch (kind) {
+      case HeapTypeKind::Func:
+        hash_combine(digest, shapeHash(type.getSignature()));
+        continue;
+      case HeapTypeKind::Struct:
+        hash_combine(digest, shapeHash(type.getStruct()));
+        continue;
+      case HeapTypeKind::Array:
+        hash_combine(digest, shapeHash(type.getArray()));
+        continue;
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        continue;
+    }
+    WASM_UNREACHABLE("unexpected kind");
   }
-  WASM_UNREACHABLE("unexpected kind");
+  return digest;
 }
 
 bool shapeEq(const Struct& a, const Struct& b) {
@@ -690,6 +763,18 @@ size_t shapeHash(Field a) {
   return digest;
 }
 
+Index chainIndex(HeapType type) {
+  Index i = 0;
+  while (true) {
+    if (auto next = type.getDescribedType()) {
+      type = *next;
+      ++i;
+      continue;
+    }
+    return i;
+  }
+}
+
 bool shapeEq(Type a, Type b) {
   if (a == b) {
     return true;
@@ -711,6 +796,13 @@ bool shapeEq(Type a, Type b) {
     return false;
   }
   if (a.getExactness() != b.getExactness()) {
+    return false;
+  }
+  // Since partition refinement treats descriptor chains as units, it cannot
+  // differentiate between different types in the same chain. Two types in the
+  // same chain will never be merged, so we can differentiate them here by index
+  // in their chain instead.
+  if (chainIndex(a.getHeapType()) != chainIndex(b.getHeapType())) {
     return false;
   }
   return true;
@@ -735,6 +827,7 @@ size_t shapeHash(Type a) {
   rehash(digest, 4);
   rehash(digest, (int)a.getNullability());
   rehash(digest, (int)a.getExactness());
+  rehash(digest, chainIndex(a.getHeapType()));
   return digest;
 }
 
