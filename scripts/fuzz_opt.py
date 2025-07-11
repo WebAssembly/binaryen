@@ -1984,7 +1984,7 @@ class BranchHintPreservation(TestCaseHandler):
         for group in line_groups:
             if not group or group[-1] == '[trap unreachable]':
                 continue
-            for line in out.splitlines():
+            for line in group:
                 if line.startswith(LEI_LOG_BRANCH):
                     _, _, id_, hint, actual = line[1:-1].split(' ')
                     hint = int(hint)
