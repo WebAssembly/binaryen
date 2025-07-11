@@ -25,6 +25,7 @@
 #include <ir/abstract.h>
 #include <ir/bits.h>
 #include <ir/boolean.h>
+#include <ir/branch-hints.h>
 #include <ir/cost.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
@@ -1171,6 +1172,7 @@ struct OptimizeInstructions
           // flip if-else arms to get rid of an eqz
           curr->condition = unary->value;
           std::swap(curr->ifTrue, curr->ifFalse);
+          BranchHints::flip(curr, getFunction());
         }
       }
       if (curr->condition->type != Type::unreachable &&
