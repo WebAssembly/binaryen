@@ -30,7 +30,7 @@
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.eqz
  ;; CHECK-NEXT:     (local.get $0)
@@ -46,7 +46,7 @@
  ;; CHECK-NEXT:   (local.set $1
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:   (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.eqz
  ;; CHECK-NEXT:     (local.get $1)

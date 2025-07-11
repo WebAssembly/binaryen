@@ -30,6 +30,7 @@
 
 #include <atomic>
 
+#include "ir/branch-hints.h"
 #include "ir/branch-utils.h"
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
@@ -1097,6 +1098,7 @@ private:
       auto* inlineableIf = getIf(inlineable->body);
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
+      BranchHints::flip(inlineableIf, inlineable);
       inlineableIf->ifTrue = builder.makeCall(
         outlined->name, getForwardedArgs(func, builder), Type::none);
       inlineable->body = inlineableIf;
