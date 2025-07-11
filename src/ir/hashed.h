@@ -17,10 +17,11 @@
 #ifndef _wasm_ir_hashed_h
 #define _wasm_ir_hashed_h
 
+#include <functional>
+
 #include "ir/utils.h"
 #include "support/hash.h"
 #include "wasm.h"
-#include <functional>
 
 namespace wasm {
 
@@ -65,6 +66,8 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     }
     hash_combine(digest,
                  ExpressionAnalyzer::flexibleHash(func->body, customHasher));
+    // TODO: Hash metadata (debug info, code annotations), though it would be
+    //       very rare to get a false collision for these reasons.
     return digest;
   }
 
