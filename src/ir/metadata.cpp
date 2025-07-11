@@ -83,7 +83,7 @@ bool compare(Expression* a,
              Expression* b,
              const T& aMap,
              const T& bMap,
-             const V& defaultValue) {
+             const V defaultValue) {
   auto aIter = aMap.find(a);
   auto aItem = aIter != aMap.end() ? aIter->second : defaultValue;
   auto bIter = bMap.find(b);
