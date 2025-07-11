@@ -77,7 +77,7 @@ void copyBetweenFunctions(Expression* origin,
 }
 
 // Given two expressions to use as keys, see if they have identical values (or
-// identically is absent from) in two maps.
+// are both absent) in two maps.
 template<typename T, typename V>
 bool compare(Expression* a, Expression* b, const T& aMap, const T& bMap, const V& defaultValue) {
   auto aIter = aMap.find(a);
