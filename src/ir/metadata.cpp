@@ -20,6 +20,24 @@
 
 namespace wasm::metadata {
 
+namespace {
+
+// List out instructions serially, so we can match them between the old and
+// new copies.
+//
+// This is not that efficient, and in theory we could copy this in the
+// caller context as the code is copied. However, we assume that most
+// functions have no metadata, so this is faster in that common case.
+struct Serializer : public PostWalker<Serializer, UnifiedExpressionVisitor<Serializer>> {
+  Serializer(Expression* expr) { walk(expr); }
+
+  std::vector<Expression*> list;
+
+  void visitExpression(Expression* curr) { list.push_back(curr); }
+};
+
+} // anonymous namespace
+
 void copyBetweenFunctions(Expression* origin,
                           Expression* copy,
                           Function* originFunc,
@@ -30,21 +48,8 @@ void copyBetweenFunctions(Expression* origin,
     return;
   }
 
-  // List out instructions serially, so we can match them between the old and
-  // new copies.
-  //
-  // This is not that efficient, and in theory we could copy this in the
-  // caller context as the code is copied. However, we assume that most
-  // functions have no metadata, so this is faster in that common case.
-  struct Lister : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
-    std::vector<Expression*> list;
-    void visitExpression(Expression* curr) { list.push_back(curr); }
-  };
-
-  Lister originList;
-  originList.walk(origin);
-  Lister copyList;
-  copyList.walk(copy);
+  Serializer originList(origin);
+  Serializer copyList(copy);
 
   auto& originDebug = originFunc->debugLocations;
   auto& copyDebug = copyFunc->debugLocations;
@@ -68,6 +73,42 @@ void copyBetweenFunctions(Expression* origin,
       }
     }
   }
+}
+
+// Given two expressions to use as keys, see if they have identical values (or
+// identically is absent from) in two maps.
+template<typename T>
+bool compare(Expression* a, Expression* b, const T& aMap, const T& bMap) {
+  auto aIter = aMap.find(a);
+  auto bIter = bMap.find(b);
+  if (aIter == aMap.end() && bIter == bMap.end()) {
+    return true;
+  }
+  if (aIter == aMap.end() || bIter == bMap.end()) {
+    return false;
+  }
+  return aIter->second == bIter->second;
+}
+
+bool equal(Function* a, Function* b) {
+  if (a->debugLocations.empty() && b->debugLocations.empty() &&
+      a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
+    // Nothing to compare; no differences.
+    return true;
+  }
+
+  Serializer aList(a->body);
+  Serializer bList(b->body);
+
+  assert(aList.list.size() == bList.list.size());
+  for (Index i = 0; i < aList.list.size(); i++) {
+    if (!compare(aList.list[i], bList.list[i], a->debugLocations, b->debugLocations) ||
+        !compare(aList.list[i], bList.list[i], a->codeAnnotations, b->codeAnnotations)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 } // namespace wasm::metadata

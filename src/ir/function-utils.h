@@ -17,6 +17,7 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
+#include "ir/metadata.h"
 #include "ir/utils.h"
 #include "wasm.h"
 
@@ -37,10 +38,18 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
-  if (!left->imported() && !right->imported()) {
-    return ExpressionAnalyzer::equal(left->body, right->body);
+  if (left->imported() && right->imported()) {
+    return true;
   }
-  return left->imported() && right->imported();
+  if (left->imported() || right->imported()) {
+    return false;
+  }
+
+  // Look at the code as well.
+  if (!ExpressionAnalyzer::equal(left->body, right->body)) {
+    return false;
+  }
+  return metadata::equal(left, right);
 }
 
 } // namespace wasm::FunctionUtils
