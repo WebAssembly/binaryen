@@ -61,12 +61,6 @@ inline void copyOriginalToReplacement(Expression* original,
   }
 }
 
-// Given an expression and a copy of it in another function, copy the debug
-// info into the second function.
-void copyBetweenFunctions(Expression* origin,
-                          Expression* copy,
-                          Function* originFunc,
-                          Function* copyFunc);
 } // namespace wasm::debuginfo
 
 #endif // wasm_ir_debuginfo_h

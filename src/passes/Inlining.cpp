@@ -634,7 +634,7 @@ static void doCodeInlining(Module* module,
 
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
-  debuginfo::copyBetweenFunctions(from->body, contents, from, into);
+  metadata::copyBetweenFunctions(from->body, contents, from, into);
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;
@@ -1097,7 +1097,6 @@ private:
       auto* inlineableIf = getIf(inlineable->body);
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
-      abort();
       inlineableIf->ifTrue = builder.makeCall(
         outlined->name, getForwardedArgs(func, builder), Type::none);
       inlineable->body = inlineableIf;

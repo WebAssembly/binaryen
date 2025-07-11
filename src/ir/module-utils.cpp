@@ -72,7 +72,7 @@ copyFunctionWithoutAdd(Function* func,
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->body = ExpressionManipulator::copy(func->body, out);
-  debuginfo::copyBetweenFunctions(func->body, ret->body, func, ret.get());
+  metadata::copyBetweenFunctions(func->body, ret->body, func, ret.get());
   ret->prologLocation = func->prologLocation;
   ret->epilogLocation = func->epilogLocation;
   // Update file indices if needed
