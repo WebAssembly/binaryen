@@ -28,7 +28,8 @@ namespace {
 // This is not that efficient, and in theory we could copy this in the
 // caller context as the code is copied. However, we assume that most
 // functions have no metadata, so this is faster in that common case.
-struct Serializer : public PostWalker<Serializer, UnifiedExpressionVisitor<Serializer>> {
+struct Serializer
+  : public PostWalker<Serializer, UnifiedExpressionVisitor<Serializer>> {
   Serializer(Expression* expr) { walk(expr); }
 
   std::vector<Expression*> list;
@@ -102,8 +103,12 @@ bool equal(Function* a, Function* b) {
 
   assert(aList.list.size() == bList.list.size());
   for (Index i = 0; i < aList.list.size(); i++) {
-    if (!compare(aList.list[i], bList.list[i], a->debugLocations, b->debugLocations) ||
-        !compare(aList.list[i], bList.list[i], a->codeAnnotations, b->codeAnnotations)) {
+    if (!compare(
+          aList.list[i], bList.list[i], a->debugLocations, b->debugLocations) ||
+        !compare(aList.list[i],
+                 bList.list[i],
+                 a->codeAnnotations,
+                 b->codeAnnotations)) {
       return false;
     }
   }

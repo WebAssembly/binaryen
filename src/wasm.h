@@ -2281,8 +2281,7 @@ public:
     std::optional<uint8_t> inline_;
 
     bool operator==(const CodeAnnotation& other) const {
-      return branchLikely == other.branchLikely &&
-             inline_ == other.inline_;
+      return branchLikely == other.branchLikely && inline_ == other.inline_;
     }
   };
 
