@@ -90,14 +90,14 @@ bool compare(Expression* a, Expression* b, const T& aMap, const T& bMap) {
   return aIter->second == bIter->second;
 }
 
-bool compare(Function* a, Function* b) {
+bool equal(Function* a, Function* b) {
   Serializer aList(a->body);
   Serializer bList(b->body);
 
   assert(aList.list.size() == bList.list.size());
   for (Index i = 0; i < aList.list.size(); i++) {
-    if (!compare(aList[i], bList[i], a->debugLocations, b->debugLocations) ||
-        !compare(aList[i], bList[i], a->codeAnnotations, b->codeAnnotations)) {
+    if (!compare(aList[i].list, bList[i].list, a->debugLocations, b->debugLocations) ||
+        !compare(aList[i].list, bList[i].list, a->codeAnnotations, b->codeAnnotations)) {
       return false;
     }
   }

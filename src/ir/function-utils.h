@@ -48,6 +48,7 @@ inline bool equal(Function* left, Function* right) {
   if (!ExpressionAnalyzer::equal(left->body, right->body)) {
     return false;
   }
+  return metadata::equal(left, right);
 }
 
 } // namespace wasm::FunctionUtils

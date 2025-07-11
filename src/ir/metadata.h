@@ -30,7 +30,7 @@ void copyBetweenFunctions(Expression* origin,
 
 // Assuming two functions have identical code, check if they also have
 // identical metadata.
-bool compare(Function* a, Function* b);
+bool equal(Function* a, Function* b);
 
 } // namespace wasm::metadata
 
