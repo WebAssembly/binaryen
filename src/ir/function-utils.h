@@ -17,6 +17,7 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
+#include "ir/metadata.h"
 #include "ir/utils.h"
 #include "wasm.h"
 

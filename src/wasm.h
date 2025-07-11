@@ -2279,6 +2279,11 @@ public:
     static const uint8_t NeverInline = 0;
     static const uint8_t AlwaysInline = 127;
     std::optional<uint8_t> inline_;
+
+    bool operator==(const CodeAnnotation& other) const {
+      return branchLikely == other.branchLikely &&
+             inline_ == other.inline_;
+    }
   };
 
   // Function-level annotations are implemented with a key of nullptr, matching

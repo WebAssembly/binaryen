@@ -91,16 +91,24 @@ bool compare(Expression* a, Expression* b, const T& aMap, const T& bMap) {
 }
 
 bool equal(Function* a, Function* b) {
+  if (a->debugLocations.empty() && b->debugLocations.empty() &&
+      a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
+    // Nothing to compare; no differences.
+    return true;
+  }
+
   Serializer aList(a->body);
   Serializer bList(b->body);
 
   assert(aList.list.size() == bList.list.size());
   for (Index i = 0; i < aList.list.size(); i++) {
-    if (!compare(aList[i].list, bList[i].list, a->debugLocations, b->debugLocations) ||
-        !compare(aList[i].list, bList[i].list, a->codeAnnotations, b->codeAnnotations)) {
+    if (!compare(aList.list[i], bList.list[i], a->debugLocations, b->debugLocations) ||
+        !compare(aList.list[i], bList.list[i], a->codeAnnotations, b->codeAnnotations)) {
       return false;
     }
   }
+
+  return true;
 }
 
 } // namespace wasm::metadata
