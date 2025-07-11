@@ -1941,18 +1941,59 @@ class BranchHintPreservation(TestCaseHandler):
         ] + FEATURE_OPTS
         run(args)
 
-        # No bad hints should pop up after optimizations.
+        # Run the final wasm.
         out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
+
+        # Preprocess the logging. We must discard all lines from functions that
+        # trap, because we are fuzzing branch hints, which are not an effect,
+        # and so they can be reordered with traps; consider this:
+        #
+        #  (i32.add
+        #    (block
+        #      (if (X) (unreachable)
+        #      (i32.const 10)
+        #    )
+        #    (block
+        #      (@metadata.code.branch_hint "\00")
+        #      (if (Y) (unreachable)
+        #      (i32.const 20)
+        #    )
+        #  )
+        #
+        # It is ok to reorder traps, so the optimizer might flip the arms of
+        # this add (imagine other code inside the arms justified that). That
+        # reordering is fine since the branch hint has no effect that the
+        # optimizer needs to care about. However, after we instrument, there
+        # *is* an effect, the visible logging, so if X is true we trap and do
+        # not log a branch hint, but if we reorder, we do log, then trap.
+        #
+        # Note that this problem is specific to traps, because the optimizer can
+        # reorder them, and does not care about identity.
+        #
+        # To handle this, gather lines for each call, and then see which groups
+        # end in traps. (Initialize the list of groups with an empty group, for
+        # any logging before the first call.)
+        line_groups = [['before calls']]
         for line in out.splitlines():
-            if line.startswith(LEI_LOG_BRANCH):
-                _, _, id_, hint, actual = line[1:-1].split(' ')
-                hint = int(hint)
-                actual = int(actual)
-                assert hint in (0, 1)
-                # We do not care about the integer value of the condition, only
-                # if it was 0 or non-zero.
-                actual = (actual != 0)
-                assert hint == actual, 'Bad hint after optimizations'
+            if line.startswith(FUZZ_EXEC_CALL_PREFIX):
+                line_groups.append([line])
+            else:
+                line_groups[-1].append(line)
+
+        # No bad hints should pop up after optimizations.
+        for group in line_groups:
+            if not group or group[-1] == '[trap unreachable]':
+                continue
+            for line in out.splitlines():
+                if line.startswith(LEI_LOG_BRANCH):
+                    _, _, id_, hint, actual = line[1:-1].split(' ')
+                    hint = int(hint)
+                    actual = int(actual)
+                    assert hint in (0, 1)
+                    # We do not care about the integer value of the condition,
+                    # only if it was 0 or non-zero.
+                    actual = (actual != 0)
+                    assert hint == actual, 'Bad hint after optimizations'
 
 
 # The global list of all test case handlers
