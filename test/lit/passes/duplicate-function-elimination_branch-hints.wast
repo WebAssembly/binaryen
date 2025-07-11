@@ -5,7 +5,22 @@
 
 ;; The functions here differ in branch hints, and should not be merged.
 (module
- (func $zero (export "zero") (param $x i32)
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $b))
+
+ ;; CHECK:      (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (export "a") (param $x i32)
   (@metadata.code.branch_hint "\00")
   (if
    (local.get $x)
@@ -15,7 +30,16 @@
   )
  )
 
- (func $one (export "one") (param $x i32)
+ ;; CHECK:      (func $b (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $b (export "b") (param $x i32)
   (@metadata.code.branch_hint "\01")
   (if
    (local.get $x)
@@ -29,7 +53,22 @@
 ;; These also differ, now one is missing a hint, and they should not be merged.
 ;; TODO: Perhaps when optimizing for size, we should merge and drop the hint?
 (module
- (func $zero (export "zero") (param $x i32)
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $b))
+
+ ;; CHECK:      (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (export "a") (param $x i32)
   (@metadata.code.branch_hint "\00")
   (if
    (local.get $x)
@@ -39,7 +78,15 @@
   )
  )
 
- (func $one (export "one") (param $x i32)
+ ;; CHECK:      (func $b (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $b (export "b") (param $x i32)
   (if
    (local.get $x)
    (then
@@ -52,7 +99,21 @@
 ;; Flipped case of the above, now the other one is the only one with a hint,
 ;; and that hint is flipped.
 (module
- (func $zero (export "zero") (param $x i32)
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $b))
+
+ ;; CHECK:      (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (export "a") (param $x i32)
   (if
    (local.get $x)
    (then
@@ -61,7 +122,16 @@
   )
  )
 
- (func $one (export "one") (param $x i32)
+ ;; CHECK:      (func $b (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $b (export "b") (param $x i32)
   (@metadata.code.branch_hint "\01")
   (if
    (local.get $x)
@@ -74,7 +144,22 @@
 
 ;; Identical branch hints: We can merge here.
 (module
- (func $zero (export "zero") (param $x i32)
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $a))
+
+ ;; CHECK:      (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (export "a") (param $x i32)
   (@metadata.code.branch_hint "\00")
   (if
    (local.get $x)
@@ -84,7 +169,7 @@
   )
  )
 
- (func $one (export "one") (param $x i32)
+ (func $b (export "b") (param $x i32)
   (@metadata.code.branch_hint "\00")
   (if
    (local.get $x)
@@ -97,7 +182,22 @@
 
 ;; Ditto, with identical hints of 1.
 (module
- (func $zero (export "zero") (param $x i32)
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $a))
+
+ ;; CHECK:      (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (export "a") (param $x i32)
   (@metadata.code.branch_hint "\01")
   (if
    (local.get $x)
@@ -107,7 +207,7 @@
   )
  )
 
- (func $one (export "one") (param $x i32)
+ (func $b (export "b") (param $x i32)
   (@metadata.code.branch_hint "\01")
   (if
    (local.get $x)
