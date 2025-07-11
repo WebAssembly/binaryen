@@ -1097,6 +1097,7 @@ private:
       auto* inlineableIf = getIf(inlineable->body);
       inlineableIf->condition =
         builder.makeUnary(EqZInt32, inlineableIf->condition);
+      abort();
       inlineableIf->ifTrue = builder.makeCall(
         outlined->name, getForwardedArgs(func, builder), Type::none);
       inlineable->body = inlineableIf;
