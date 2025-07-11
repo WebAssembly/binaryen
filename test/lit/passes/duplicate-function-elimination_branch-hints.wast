@@ -25,3 +25,96 @@
   )
  )
 )
+
+;; These also differ, now one is missing a hint, and they should not be merged.
+;; TODO: Perhaps when optimizing for size, we should merge and drop the hint?
+(module
+ (func $zero (export "zero") (param $x i32)
+  (@metadata.code.branch_hint "\00")
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+
+ (func $one (export "one") (param $x i32)
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+)
+
+;; Flipped case of the above, now the other one is the only one with a hint,
+;; and that hint is flipped.
+(module
+ (func $zero (export "zero") (param $x i32)
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+
+ (func $one (export "one") (param $x i32)
+  (@metadata.code.branch_hint "\01")
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+)
+
+;; Identical branch hints: We can merge here.
+(module
+ (func $zero (export "zero") (param $x i32)
+  (@metadata.code.branch_hint "\00")
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+
+ (func $one (export "one") (param $x i32)
+  (@metadata.code.branch_hint "\00")
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+)
+
+;; Ditto, with identical hints of 1.
+(module
+ (func $zero (export "zero") (param $x i32)
+  (@metadata.code.branch_hint "\01")
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+
+ (func $one (export "one") (param $x i32)
+  (@metadata.code.branch_hint "\01")
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+)
+

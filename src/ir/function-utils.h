@@ -37,10 +37,17 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
-  if (!left->imported() && !right->imported()) {
-    return ExpressionAnalyzer::equal(left->body, right->body);
+  if (left->imported() && right->imported()) {
+    return true;
   }
-  return left->imported() && right->imported();
+  if (left->imported() || right->imported()) {
+    return false;
+  }
+
+  // Look at the code as well.
+  if (!ExpressionAnalyzer::equal(left->body, right->body)) {
+    return false;
+  }
 }
 
 } // namespace wasm::FunctionUtils
