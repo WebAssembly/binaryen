@@ -15,9 +15,9 @@
  */
 
 #include "module-utils.h"
-#include "ir/debuginfo.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
+#include "ir/metadata.h"
 #include "ir/properties.h"
 #include "support/insert_ordered.h"
 #include "support/topological_sort.h"
