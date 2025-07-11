@@ -44,12 +44,10 @@ inline bool equal(Function* left, Function* right) {
   if (left->imported() || right->imported()) {
     return false;
   }
-
-  // Look at the code as well.
-  if (!ExpressionAnalyzer::equal(left->body, right->body)) {
+  if (!metadata::equal(left, right)) {
     return false;
   }
-  return metadata::equal(left, right);
+  return ExpressionAnalyzer::equal(left->body, right->body);
 }
 
 } // namespace wasm::FunctionUtils

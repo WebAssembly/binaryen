@@ -28,8 +28,11 @@ void copyBetweenFunctions(Expression* origin,
                           Function* originFunc,
                           Function* copyFunc);
 
-// Assuming two functions have identical code, check if they also have
-// identical metadata.
+// Check if two functions have identical metadata. We consider differences like
+// one being imported and the other not, or having different numbers of
+// instructions, to mean they are not equal (as the meaning of comparisons
+// becomes hard in such cases, and the main use here is to compare metadata
+// after all else is known equal).
 bool equal(Function* a, Function* b);
 
 } // namespace wasm::metadata
