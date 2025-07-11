@@ -77,21 +77,31 @@ void copyBetweenFunctions(Expression* origin,
 }
 
 // Given two expressions to use as keys, see if they have identical values (or
-// identically is absent from) in two maps.
-template<typename T>
-bool compare(Expression* a, Expression* b, const T& aMap, const T& bMap) {
+// are both absent) in two maps.
+template<typename T, typename V>
+bool compare(Expression* a,
+             Expression* b,
+             const T& aMap,
+             const T& bMap,
+             const V& defaultValue) {
   auto aIter = aMap.find(a);
+  auto aItem = aIter != aMap.end() ? aIter->second : defaultValue;
   auto bIter = bMap.find(b);
-  if (aIter == aMap.end() && bIter == bMap.end()) {
-    return true;
-  }
-  if (aIter == aMap.end() || bIter == bMap.end()) {
-    return false;
-  }
-  return aIter->second == bIter->second;
+  auto bItem = bIter != bMap.end() ? bIter->second : defaultValue;
+  return aItem == bItem;
 }
 
 bool equal(Function* a, Function* b) {
+  if (a->imported() && b->imported()) {
+    // No code metadata, and we don't yet store function-level metadata.
+    return true;
+  }
+  if (a->imported() || b->imported()) {
+    // See comment on declaration, we consider such a difference as making them
+    // unequal.
+    return false;
+  }
+
   if (a->debugLocations.empty() && b->debugLocations.empty() &&
       a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
     // Nothing to compare; no differences.
@@ -101,14 +111,22 @@ bool equal(Function* a, Function* b) {
   Serializer aList(a->body);
   Serializer bList(b->body);
 
+  if (aList.list.size() != bList.list.size()) {
+    return false;
+  }
+
   assert(aList.list.size() == bList.list.size());
   for (Index i = 0; i < aList.list.size(); i++) {
-    if (!compare(
-          aList.list[i], bList.list[i], a->debugLocations, b->debugLocations) ||
+    if (!compare(aList.list[i],
+                 bList.list[i],
+                 a->debugLocations,
+                 b->debugLocations,
+                 Function::DebugLocation()) ||
         !compare(aList.list[i],
                  bList.list[i],
                  a->codeAnnotations,
-                 b->codeAnnotations)) {
+                 b->codeAnnotations,
+                 Function::CodeAnnotation())) {
       return false;
     }
   }

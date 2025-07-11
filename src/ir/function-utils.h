@@ -38,18 +38,16 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
+  if (!metadata::equal(left, right)) {
+    return false;
+  }
   if (left->imported() && right->imported()) {
     return true;
   }
   if (left->imported() || right->imported()) {
     return false;
   }
-
-  // Look at the code as well.
-  if (!ExpressionAnalyzer::equal(left->body, right->body)) {
-    return false;
-  }
-  return metadata::equal(left, right);
+  return ExpressionAnalyzer::equal(left->body, right->body);
 }
 
 } // namespace wasm::FunctionUtils
