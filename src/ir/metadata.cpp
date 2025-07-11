@@ -99,7 +99,7 @@ bool equal(Function* a, Function* b) {
   if (a->imported() || b->imported()) {
     // See comment on declaration, we consider such a difference as making them
     // unequal.
-    return true;
+    return false;
   }
 
   if (a->debugLocations.empty() && b->debugLocations.empty() &&
