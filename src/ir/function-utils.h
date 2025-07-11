@@ -38,13 +38,13 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
+  if (!metadata::equal(left, right)) {
+    return false;
+  }
   if (left->imported() && right->imported()) {
     return true;
   }
   if (left->imported() || right->imported()) {
-    return false;
-  }
-  if (!metadata::equal(left, right)) {
     return false;
   }
   return ExpressionAnalyzer::equal(left->body, right->body);
