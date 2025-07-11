@@ -19,6 +19,7 @@
 //
 
 #include <ir/block-utils.h>
+#include <ir/branch-hints.h>
 #include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/iteration.h>
@@ -297,6 +298,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr->ifFalse = nullptr;
         curr->condition =
           Builder(*getModule()).makeUnary(EqZInt32, curr->condition);
+        BranchHints::flip(curr, getFunction());
       } else if (curr->ifTrue->is<Drop>() && curr->ifFalse->is<Drop>()) {
         // instead of dropping both sides, drop the if, if they are the same
         // type
