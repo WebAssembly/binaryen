@@ -2,10 +2,25 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (func $if (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (i32.eqz
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (call $if
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $if (param $x i32)
   ;; When we flip the if, the hint should flip too.
   (@metadata.code.branch_hint "\00")
-  (if (result i32)
+  (if
    (i32.eqz
     (local.get $x)
    )
