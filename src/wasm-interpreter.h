@@ -1665,6 +1665,10 @@ public:
       trap("null descriptor");
     }
     Literal val = ref.getSingleValue();
+    if (!val.isData() && !val.isNull()) {
+      // For example, i31ref.
+      return typename Cast::Failure{val};
+    }
     auto data = val.getGCData();
     if (!data) {
       // Check whether null is allowed.
