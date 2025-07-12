@@ -145,6 +145,25 @@
       )
     )
   )
+
+  (func (export "cast-branch-ref") (result i32)
+    (drop
+      (ref.cast_desc (ref $super)
+        (return (i32.const 1))
+        (ref.null none)
+      )
+    )
+    (i32.const 0)
+  )
+  (func (export "cast-branch-desc") (result i32)
+    (drop
+      (ref.cast_desc (ref $super)
+        (ref.null none)
+        (return (i32.const 1))
+      )
+    )
+    (i32.const 0)
+  )
 )
 
 (assert_return (invoke "cast-success"))
@@ -157,6 +176,8 @@
 (assert_trap (invoke "cast-nn-fail-null") "cast error")
 (assert_trap (invoke "cast-nn-fail-wrong-desc") "cast error")
 (assert_trap (invoke "cast-nn-fail-null-desc") "null descriptor")
+(assert_return (invoke "cast-branch-ref") (i32.const 1))
+(assert_return (invoke "cast-branch-desc") (i32.const 1))
 
 (assert_malformed
   ;; Cast type must be a reference.
