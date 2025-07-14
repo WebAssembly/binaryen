@@ -1929,6 +1929,9 @@ class BranchHintPreservation(TestCaseHandler):
             # that will show up as a false positive here (as it breaks our
             # assumption that only valid branch hints remained in the module).
             '--pass-arg=remove-unused-brs-never-unconditionalize',
+            # Some passes that can unconditionalize code can just be disabled,
+            # as they do not modify ifs or brs.
+            '--skip-pass=heap-store-optimization',
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 
