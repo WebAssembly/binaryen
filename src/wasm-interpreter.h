@@ -1658,7 +1658,7 @@ public:
     }
     Flow desc = self()->visit(curr->desc);
     if (desc.breaking()) {
-      return typename Cast::Breaking{ref};
+      return typename Cast::Breaking{desc};
     }
     auto expected = desc.getSingleValue().getGCData();
     if (!expected) {
