@@ -1924,6 +1924,11 @@ class BranchHintPreservation(TestCaseHandler):
             de_instrumented,
             '-o', opted,
             '-g',
+            # Do not unconditionalize code: if a branch hint does not run, but
+            # we start to run it all the time, it may have been a wrong hint
+            # that will show up as a false positive here (as it breaks our
+            # assumption that only valid branch hints remained in the module).
+            '--pass-arg=remove-unused-brs-never-unconditionalize',
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 

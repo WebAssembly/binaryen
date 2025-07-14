@@ -15,7 +15,17 @@
  */
 
 //
-// Removes branches for which we go to where they go anyhow
+// Removes branches for which we go to where they go anyhow.
+//
+// Arguments:
+//
+//   --pass-arg=remove-unused-brs-never-unconditionalize
+//
+//      This is used during fuzzing, to prevent us from unconditionalizing code
+//      (making it always run, when it didn't before). Unconditionalizing code
+//      is a problem for fuzzing branch hints, as a branch hint that never ran
+//      might be wrong, and if we start to run it, the fuzzer could think it
+//      found a bug.
 //
 
 #include "ir/branch-hints.h"
@@ -1183,6 +1193,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
       bool shrink;
+      // Whether we are allowed to unconditionalize code, that is, make code
+      // run unconditionally that previously might not have run.
+      bool neverUnconditionalize;
       PassOptions& passOptions;
 
       bool needUniqify = false;
@@ -1485,10 +1498,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       // Convert an if into a select, if possible and beneficial to do so.
-      // XXX we may run more code... with branch hints that are wrongg
-      // XXX 1. assert-build flag to disable enabling unrun code..?\
-      //     2. or don't run unrun code with branch hints..? nah
       Select* selectify(If* iff) {
+        if (neverUnconditionalize) {
+          return nullptr;
+        }
         // Only an if-else can be turned into a select.
         if (!iff->ifFalse) {
           return nullptr;
@@ -1944,6 +1957,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());
     finalOptimizer.shrink = getPassRunner()->options.shrinkLevel > 0;
+    finalOptimizer.neverUnconditionalize =
+      hasArgument("remove-unused-brs-never-unconditionalize");
+
     finalOptimizer.walkFunction(func);
     if (finalOptimizer.needUniqify) {
       wasm::UniqueNameMapper::uniquify(func->body);
