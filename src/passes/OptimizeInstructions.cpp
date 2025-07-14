@@ -2298,10 +2298,10 @@ struct OptimizeInstructions
             if (curr->desc->type.isNullable()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
-            replaceCurrent(builder.blockify(
-              builder.makeDrop(curr->ref),
-              builder.makeDrop(curr->desc),
-              builder.makeRefNull(curr->type.getHeapType().getBottom())));
+            replaceCurrent(getDroppedChildrenAndAppend(
+              curr,
+              builder.makeRefNull(curr->type.getHeapType()),
+              DropMode::IgnoreParentEffects));
             return true;
           }
           return false;

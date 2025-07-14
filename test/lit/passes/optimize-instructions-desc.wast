@@ -759,17 +759,7 @@
 
   ;; CHECK:      (func $cast-desc-stronger-fallthrough-null (type $14) (param $null nullref) (param $desc (ref $desc))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.get $null)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $desc)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NTRAP:      (func $cast-desc-stronger-fallthrough-null (type $14) (param $null nullref) (param $desc (ref $desc))
@@ -789,45 +779,45 @@
     )
   )
 
-    ;; CHECK:      (func $cast-desc-stronger-fallthrough-null-effects (type $14) (param $null nullref) (param $desc (ref $desc))
-    ;; CHECK-NEXT:  (drop
-    ;; CHECK-NEXT:   (block (result nullref)
-    ;; CHECK-NEXT:    (drop
-    ;; CHECK-NEXT:     (block (result nullref)
-    ;; CHECK-NEXT:      (call $effect)
-    ;; CHECK-NEXT:      (local.get $null)
-    ;; CHECK-NEXT:     )
-    ;; CHECK-NEXT:    )
-    ;; CHECK-NEXT:    (drop
-    ;; CHECK-NEXT:     (block (result (ref $desc))
-    ;; CHECK-NEXT:      (call $effect)
-    ;; CHECK-NEXT:      (local.get $desc)
-    ;; CHECK-NEXT:     )
-    ;; CHECK-NEXT:    )
-    ;; CHECK-NEXT:    (ref.null none)
-    ;; CHECK-NEXT:   )
-    ;; CHECK-NEXT:  )
-    ;; CHECK-NEXT: )
-    ;; NTRAP:      (func $cast-desc-stronger-fallthrough-null-effects (type $14) (param $null nullref) (param $desc (ref $desc))
-    ;; NTRAP-NEXT:  (drop
-    ;; NTRAP-NEXT:   (block (result nullref)
-    ;; NTRAP-NEXT:    (drop
-    ;; NTRAP-NEXT:     (block (result nullref)
-    ;; NTRAP-NEXT:      (call $effect)
-    ;; NTRAP-NEXT:      (local.get $null)
-    ;; NTRAP-NEXT:     )
-    ;; NTRAP-NEXT:    )
-    ;; NTRAP-NEXT:    (drop
-    ;; NTRAP-NEXT:     (block (result (ref $desc))
-    ;; NTRAP-NEXT:      (call $effect)
-    ;; NTRAP-NEXT:      (local.get $desc)
-    ;; NTRAP-NEXT:     )
-    ;; NTRAP-NEXT:    )
-    ;; NTRAP-NEXT:    (ref.null none)
-    ;; NTRAP-NEXT:   )
-    ;; NTRAP-NEXT:  )
-    ;; NTRAP-NEXT: )
-    (func $cast-desc-stronger-fallthrough-null-effects (param $null nullref) (param $desc (ref $desc))
+  ;; CHECK:      (func $cast-desc-stronger-fallthrough-null-effects (type $14) (param $null nullref) (param $desc (ref $desc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $null)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $desc))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NTRAP:      (func $cast-desc-stronger-fallthrough-null-effects (type $14) (param $null nullref) (param $desc (ref $desc))
+  ;; NTRAP-NEXT:  (drop
+  ;; NTRAP-NEXT:   (block (result nullref)
+  ;; NTRAP-NEXT:    (drop
+  ;; NTRAP-NEXT:     (block (result nullref)
+  ;; NTRAP-NEXT:      (call $effect)
+  ;; NTRAP-NEXT:      (local.get $null)
+  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    )
+  ;; NTRAP-NEXT:    (drop
+  ;; NTRAP-NEXT:     (block (result (ref $desc))
+  ;; NTRAP-NEXT:      (call $effect)
+  ;; NTRAP-NEXT:      (local.get $desc)
+  ;; NTRAP-NEXT:     )
+  ;; NTRAP-NEXT:    )
+  ;; NTRAP-NEXT:    (ref.null none)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT: )
+  (func $cast-desc-stronger-fallthrough-null-effects (param $null nullref) (param $desc (ref $desc))
     (drop
       ;; Like above, but now with effects.
       (ref.cast_desc (ref null $struct)
@@ -846,11 +836,6 @@
   ;; CHECK:      (func $cast-desc-stronger-fallthrough-null-null-desc (type $15) (param $null nullref) (param $desc (ref null $desc))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.get $null)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $desc)
