@@ -76,6 +76,9 @@ void copyBetweenFunctions(Expression* origin,
   }
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 // Given two expressions to use as keys, see if they have identical values (or
 // are both absent) in two maps.
 template<typename T, typename V>
@@ -133,5 +136,7 @@ bool equal(Function* a, Function* b) {
 
   return true;
 }
+
+#pragma GCC diagnostic pop
 
 } // namespace wasm::metadata
