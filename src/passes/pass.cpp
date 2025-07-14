@@ -552,8 +552,9 @@ void PassRegistry::registerPasses() {
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
-  registerPass(
-    "tail-call", "transform call to return call", createTailCallPass);
+  registerPass("tail-call-optimization",
+               "transform call to return call",
+               createTailCallPass);
   registerPass("translate-to-new-eh",
                "deprecated; same as translate-to-exnref",
                createTranslateToExnrefPass);

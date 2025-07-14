@@ -494,6 +494,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --table64-lowering                            alias for memory64-lowering
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --tail-call-optimization                      transform call to return call 
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trace-calls                                 instrument the build with code
 ;; CHECK-NEXT:                                                 to intercept specific function
 ;; CHECK-NEXT:                                                 calls

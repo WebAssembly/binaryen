@@ -1,5 +1,6 @@
 
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -50,6 +51,14 @@ private:
       } else if (auto* ifElse = target->dynCast<If>()) {
         workList.push(ifElse->ifTrue);
         workList.push(ifElse->ifFalse);
+      } else if (auto* tryy = target->dynCast<Try>()) {
+        for (Expression* catchBody : tryy->catchBodies) {
+          workList.push(catchBody);
+        }
+      } else if (auto* block = target->dynCast<Block>()) {
+        if (!block->list.empty()) {
+          workList.push(block->list.back());
+        }
       } else {
         Expression* const next = Properties::getImmediateFallthrough(
           target, passOptions, *getModule());
@@ -77,15 +86,14 @@ struct TailCallOptimizer : public Pass {
     for (Call* call : finder.tailCalls) {
       if (!call->isReturn) {
         call->isReturn = true;
-        call->finalize();
       }
     }
     for (CallIndirect* call : finder.tailCallIndirects) {
       if (!call->isReturn) {
         call->isReturn = true;
-        call->finalize();
       }
     }
+    ReFinalize{}.walkFunctionInModule(function, module);
   }
 };
 
