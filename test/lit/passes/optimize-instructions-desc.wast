@@ -174,7 +174,7 @@
   (func $cast-desc-no-glb (param $nn-sub (ref $sub)) (param $desc (ref $desc))
     (drop
       ;; We cannot improve the cast target heap type, but we can improve the
-      ;; nullability. With TNH we can optimize fully.
+      ;; nullability. With traps-never-happen we can optimize fully.
       (ref.cast_desc (ref null $struct)
         (local.get $nn-sub)
         (local.get $desc)
@@ -325,7 +325,7 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-unrelated-type-nullable (param $struct-i32 (ref null $struct-i32)) (param $desc (ref $desc))
     (drop
-      ;; Same as above, but now we allow nulls. We can optimize with TNH.
+      ;; Same as above, but now we allow nulls. We can optimize with traps-never-happen.
       (ref.cast_desc (ref null $struct)
         (local.get $struct-i32)
         (local.get $desc)
@@ -410,8 +410,8 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-wrong-desc
     (drop
-      ;; With TNH we assume the cast will succeed and optimize it out, even
-      ;; even though it would actually fail.
+      ;; With traps-never-happen we assume the cast will succeed and optimize it
+      ;; out, even even though it would actually fail.
       ;; TODO: We could see that the descriptor used in the allocation and the
       ;; descriptor used in the cast are different and optimize without TNH.
       (ref.cast_desc (ref (exact $struct))
@@ -479,7 +479,8 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-stronger-nondesc-child (param $ref anyref) (param $desc (ref $desc))
     (drop
-      ;; With TNH we assume the outer cast will succeed and optimize it out.
+      ;; With traps-never-happen we assume the outer cast will succeed and
+      ;; optimize it out.
       (ref.cast_desc (ref $struct)
         (ref.cast (ref $sub)
           (local.get $ref)
@@ -519,9 +520,9 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-weaker-desc-child (param $ref anyref) (param $desc (ref $desc)) (param $sub.desc (ref $sub.desc))
     (drop
-      ;; We can only optimize the weaker child cast with TNH because it might
-      ;; fail due to an incorrect descriptor even when the parent cast would
-      ;; succeed.
+      ;; We can only optimize the weaker child cast with traps-never-happn
+      ;; because it might fail due to an incorrect descriptor even when the
+      ;; parent cast would succeed.
       (ref.cast_desc (ref $sub)
         (ref.cast_desc (ref $struct)
           (local.get $ref)
@@ -562,8 +563,8 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-stronger-desc-child (param $ref anyref) (param $desc (ref $desc)) (param $sub.desc (ref $sub.desc))
     (drop
-      ;; Like above, but now when we optimize with TNH we replace the parent
-      ;; with the child.
+      ;; Like above, but now when we optimize with traps-never-happen we replace
+      ;; the parent with the child.
       (ref.cast_desc (ref $struct)
         (ref.cast_desc (ref $sub)
           (local.get $ref)
