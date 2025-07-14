@@ -1485,6 +1485,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       // Convert an if into a select, if possible and beneficial to do so.
+      // XXX we may run more code... with branch hints that are wrongg
+      // XXX 1. assert-build flag to disable enabling unrun code..?\
+      //     2. or don't run unrun code with branch hints..? nah
       Select* selectify(If* iff) {
         // Only an if-else can be turned into a select.
         if (!iff->ifFalse) {
