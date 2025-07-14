@@ -2936,8 +2936,7 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
 void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc [--enable-gc]");
-  if (curr->ref->type == Type::unreachable ||
-      (curr->desc && curr->desc->type == Type::unreachable)) {
+  if (curr->type == Type::unreachable) {
     return;
   }
   if (!shouldBeTrue(

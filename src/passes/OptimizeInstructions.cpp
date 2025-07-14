@@ -1614,10 +1614,12 @@ struct OptimizeInstructions
   }
 
   // Appends a result after the dropped children, if we need them.
-  Expression* getDroppedChildrenAndAppend(Expression* curr,
-                                          Expression* result) {
+  Expression*
+  getDroppedChildrenAndAppend(Expression* curr,
+                              Expression* result,
+                              DropMode mode = DropMode::NoticeParentEffects) {
     return wasm::getDroppedChildrenAndAppend(
-      curr, *getModule(), getPassOptions(), result);
+      curr, *getModule(), getPassOptions(), result, mode);
   }
 
   Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
@@ -2365,14 +2367,10 @@ struct OptimizeInstructions
             // Unreachable, so we'll not hit this assertion.
             assert(curr->type.isNullable());
             auto nullType = curr->type.getHeapType().getBottom();
-            auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-            if (curr->desc) {
-              replacement =
-                builder.blockify(replacement, builder.makeDrop(curr->desc));
-            }
-            replacement =
-              builder.blockify(replacement, builder.makeRefNull(nullType));
-            replaceCurrent(replacement);
+            replaceCurrent(
+              getDroppedChildrenAndAppend(curr,
+                                          builder.makeRefNull(nullType),
+                                          DropMode::IgnoreParentEffects));
             return true;
           }
 
@@ -2392,13 +2390,8 @@ struct OptimizeInstructions
           if (needsNullCheck) {
             get = builder.makeRefAs(RefAsNonNull, get);
           }
-          auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-          if (curr->desc) {
-            replacement =
-              builder.blockify(replacement, builder.makeDrop(curr->desc));
-          }
-          replacement = builder.blockify(replacement, get);
-          replaceCurrent(replacement);
+          replaceCurrent(getDroppedChildrenAndAppend(
+            curr, get, DropMode::IgnoreParentEffects));
           return true;
         }
         // If we get here, then we know that the heap type of the cast input is
@@ -2423,15 +2416,10 @@ struct OptimizeInstructions
         // The cast either returns null or traps. In trapsNeverHappen mode
         // we know the result, since by assumption it will not trap.
         if (getPassOptions().trapsNeverHappen) {
-          auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-          if (curr->desc) {
-            replacement =
-              builder.blockify(replacement, builder.makeDrop(curr->desc));
-          }
-          replacement = builder.blockify(
-            replacement, builder.makeRefNull(curr->type.getHeapType()));
-          replacement->type = curr->type;
-          replaceCurrent(replacement);
+          replaceCurrent(getDroppedChildrenAndAppend(
+            curr,
+            builder.makeRefNull(curr->type.getHeapType()),
+            DropMode::IgnoreParentEffects));
           return true;
         }
         return false;
@@ -2439,16 +2427,9 @@ struct OptimizeInstructions
       case GCTypeUtils::Unreachable:
       case GCTypeUtils::Failure:
         // This cast cannot succeed, or it cannot even be reached, so we can
-        // trap. Make sure to emit a block with the same type as us; leave
-        // updating types for other passes.
-        auto* replacement = builder.blockify(builder.makeDrop(curr->ref));
-        if (curr->desc) {
-          replacement =
-            builder.blockify(replacement, builder.makeDrop(curr->desc));
-        }
-        replacement = builder.blockify(replacement, builder.makeUnreachable());
-        replacement->type = curr->type;
-        replaceCurrent(replacement);
+        // trap.
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, builder.makeUnreachable(), DropMode::IgnoreParentEffects));
         return true;
     }
     WASM_UNREACHABLE("unexpected result");
