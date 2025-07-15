@@ -143,15 +143,15 @@
  ;; CHECK:      (type $A (sub (func)))
  (type $A (sub (func)))
 
- ;; CHECK:      (type $1 (func))
-
  ;; CHECK:      (type $B (sub (func (param f64))))
  (type $B (sub (func (param f64))))
 
+ ;; CHECK:      (type $2 (func (param f32)))
+
+ ;; CHECK:      (type $3 (func))
+
  ;; CHECK:      (type $subA (sub $A (func)))
  (type $subA (sub $A (func)))
-
- ;; CHECK:      (type $4 (func (param f32)))
 
  ;; CHECK:      (table $t1 60 60 funcref)
  (table $t1 60 60 funcref)
@@ -159,11 +159,15 @@
  ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
  (elem $t1-withA (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
 
+ ;; CHECK:      (elem $t1-noA (i32.const 10) $B2 $C2)
  (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
 
  ;; CHECK:      (export "export" (func $export))
 
- ;; CHECK:      (func $export (type $1)
+ ;; CHECK:      (export "table" (table $t1))
+ (export "table" (table $t1))
+
+ ;; CHECK:      (func $export (type $3)
  ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
  ;; CHECK-NEXT:   (i32.const -1)
  ;; CHECK-NEXT:  )
@@ -184,11 +188,12 @@
  )
 
  ;; CHECK:      (func $B1 (type $B) (param $p f64)
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $B1 (type $B) (param $p f64)
-  ;; We can empty this out, as while a segment references it, no call_indirect
-  ;; exists.
+  ;; The table export causes this to be kept in full.
   (drop (i32.const 20))
  )
 
@@ -201,22 +206,33 @@
   (drop (i32.const 30))
  )
 
- ;; CHECK:      (func $C1 (type $4) (param $p f32)
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK:      (func $C1 (type $2) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 40)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $C1 (param $p f32)
-  ;; We can empty this out, as while a segment references it, no call_indirect
-  ;; exists.
+  ;; The table export causes this to be kept in full.
   (drop (i32.const 40))
  )
 
+ ;; CHECK:      (func $B2 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 50)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $B2 (type $B) (param $p f64)
-  ;; No viable uses exist of this, it is in a segment with no uses.
+  ;; The table export causes this to be kept in full.
   (drop (i32.const 50))
  )
 
+ ;; CHECK:      (func $C2 (type $2) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 60)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $C2 (param $p f32)
-  ;; No viable uses exist of this, it is in a segment with no uses.
+  ;; The table export causes this to be kept in full.
   (drop (i32.const 60))
  )
 )
