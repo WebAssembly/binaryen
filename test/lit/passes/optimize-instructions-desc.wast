@@ -652,7 +652,7 @@
   ;; NTRAP-NEXT: )
   (func $cast-desc-weaker-desc-child (param $ref anyref) (param $desc (ref $desc)) (param $sub.desc (ref $sub.desc))
     (drop
-      ;; We can only optimize the weaker child cast with traps-never-happn
+      ;; We can only optimize the weaker child cast with traps-never-happen
       ;; because it might fail due to an incorrect descriptor even when the
       ;; parent cast would succeed.
       (ref.cast_desc (ref $sub)
