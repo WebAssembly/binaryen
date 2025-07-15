@@ -3,14 +3,12 @@
 ;; RUN: wasm-merge %s first %s.second second --rename-export-conflicts -all -S -o - | filecheck %s
 
 ;; An empty module. The interesting part is in the second module: we should
-;; copy the i64 table properly.
+;; copy the i64 table properly (but not the elem, as no call uses it).
 (module
 )
 ;; CHECK:      (type $0 (func))
 
 ;; CHECK:      (table $table i64 15 15 funcref)
-
-;; CHECK:      (elem $0 (i64.const 0) $second)
 
 ;; CHECK:      (export "table" (table $table))
 
