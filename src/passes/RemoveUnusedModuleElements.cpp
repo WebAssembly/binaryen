@@ -368,7 +368,7 @@ struct Analyzer {
           }
         }
         if (segmentNeeded) {
-            referenced.insert(ModuleElementKind::ElementSegment, segment->name
+          referenced.insert({ModuleElementKind::ElementSegment, segment->name});
         }
       });
   });
