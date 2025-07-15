@@ -143,15 +143,15 @@
  ;; CHECK:      (type $A (sub (func)))
  (type $A (sub (func)))
 
+ ;; CHECK:      (type $1 (func))
+
  ;; CHECK:      (type $B (sub (func (param f64))))
  (type $B (sub (func (param f64))))
 
  ;; CHECK:      (type $subA (sub $A (func)))
  (type $subA (sub $A (func)))
 
- ;; CHECK:      (type $3 (func (param f32)))
-
- ;; CHECK:      (type $4 (func))
+ ;; CHECK:      (type $4 (func (param f32)))
 
  ;; CHECK:      (table $t1 60 60 funcref)
  (table $t1 60 60 funcref)
@@ -161,7 +161,9 @@
 
  (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
 
- ;; CHECK:      (func $export (type $4)
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $1)
  ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
  ;; CHECK-NEXT:   (i32.const -1)
  ;; CHECK-NEXT:  )
@@ -199,7 +201,7 @@
   (drop (i32.const 30))
  )
 
- ;; CHECK:      (func $C1 (type $3) (param $p f32)
+ ;; CHECK:      (func $C1 (type $4) (param $p f32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $C1 (param $p f32)
