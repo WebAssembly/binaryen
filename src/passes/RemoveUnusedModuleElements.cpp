@@ -370,8 +370,8 @@ struct Analyzer {
         if (segmentNeeded) {
           referenced.insert({ModuleElementKind::ElementSegment, segment->name});
         }
-      });
-  });
+      }));
+  }
 }
 
   void useRefFunc(Name func) {
