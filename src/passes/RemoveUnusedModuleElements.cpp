@@ -262,7 +262,7 @@ struct Analyzer {
             if (!segment->data.empty()) {
               use({ModuleElementKind::ElementSegment, segment->name});
             }
-          })
+          }
         );
       }
     }
