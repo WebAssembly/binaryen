@@ -354,6 +354,7 @@ struct Analyzer {
     auto table = call.first;
     auto type = call.second;
 
+/*
     // Any function in the table of that signature may be called.
     ModuleUtils::iterTableSegments(
       *module, table, [&](ElementSegment* segment) {
@@ -371,6 +372,7 @@ struct Analyzer {
           referenced.insert({ModuleElementKind::ElementSegment, segment->name});
         }
       });
+*/
   }
 }
 
