@@ -368,15 +368,7 @@ struct Analyzer {
           }
         }
         if (segmentNeeded) {
-          referenced.insert({ModuleElementKind::ElementSegment, segment->name});
-          for (auto* item : segment->data) {
-            if (auto* refFunc = item->dynCast<RefFunc>()) {
-              referenced.insert({ModuleElementKind::Function, refFunc->func});
-            } else {
-              // For anything else, add a full use.
-              use({ModuleElementKind::ElementSegment, segment->name});
-            }
-          }
+          reference({ModuleElementKind::ElementSegment, segment->name});
         }
       });
   }
@@ -406,7 +398,7 @@ struct Analyzer {
       // We've never seen a CallRef for this, but might see one later.
       uncalledRefFuncMap[type].insert(func);
 
-      referenced.insert(element);
+      reference(element);
     }
   }
 
@@ -615,33 +607,7 @@ struct Analyzer {
     finder.walk(curr);
 
     for (auto element : finder.elements) {
-      // Avoid repeated work. Note that globals with multiple references to
-      // previous globals can lead to exponential work, so this is important.
-      // (If C refers twice to B, and B refers twice to A, then when we process
-      // C we would, naively, scan B twice and A four times.)
-      auto [_, inserted] = referenced.insert(element);
-      if (!inserted) {
-        continue;
-      }
-
-      auto& [kind, value] = element;
-      if (kind == ModuleElementKind::Global) {
-        // Like functions, (non-imported) globals have contents. For functions,
-        // things are simple: if a function ends up with references but no uses
-        // then we can simply empty out the function (by setting its body to an
-        // unreachable). We don't have a simple way to do the same for globals,
-        // unfortunately. For now, scan the global's contents and add references
-        // as needed.
-        // TODO: We could try to empty the global out, for example, replace it
-        //       with a null if it is nullable, or replace all gets of it with
-        //       something else, but that is not trivial.
-        auto* global = module->getGlobal(value);
-        if (!global->imported()) {
-          // Note that infinite recursion is not a danger here since a global
-          // can only refer to previous globals.
-          addReferences(global->init);
-        }
-      }
+      reference(element);
     }
 
     for (auto func : finder.refFuncs) {
@@ -654,7 +620,7 @@ struct Analyzer {
       // just adding a reference to the function, and not actually using the
       // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
       // to make a function itself used.)
-      referenced.insert({ModuleElementKind::Function, func});
+      reference({ModuleElementKind::Function, func});
     }
 
     // Note: nothing to do with |callRefTypes| and |structFields|, which only
@@ -662,6 +628,44 @@ struct Analyzer {
     // elements like functions, globals, and tables. (References to types are
     // handled in an entirely different way in Binaryen IR, and we don't need to
     // worry about it.)
+  }
+
+  void reference(ModuleElement element) {
+    // Avoid repeated work. Note that globals with multiple references to
+    // previous globals can lead to exponential work, so this is important.
+    // (If C refers twice to B, and B refers twice to A, then when we process
+    // C we would, naively, scan B twice and A four times.)
+    auto [_, inserted] = referenced.insert(element);
+    if (!inserted) {
+      return;
+    }
+
+    // Some references force references to their internals, just by being
+    // referenced and present in the output.
+    auto& [kind, value] = element;
+    if (kind == ModuleElementKind::Global) {
+      // Like functions, (non-imported) globals have contents. For functions,
+      // things are simple: if a function ends up with references but no uses
+      // then we can simply empty out the function (by setting its body to an
+      // unreachable). We don't have a simple way to do the same for globals,
+      // unfortunately. For now, scan the global's contents and add references
+      // as needed.
+      // TODO: We could try to empty the global out, for example, replace it
+      //       with a null if it is nullable, or replace all gets of it with
+      //       something else, but that is not trivial.
+      auto* global = module->getGlobal(value);
+      if (!global->imported()) {
+        // Note that infinite recursion is not a danger here since a global
+        // can only refer to previous globals.
+        addReferences(global->init);
+      }
+    } else if (kind == ModuleElementKind::ElementSegment) {
+      // TODO: We could empty out parts of the segment we don't need.
+      auto* segment = module->getElementSegment(value);
+      for (auto* item : segment->data) {
+        addReferences(item);
+      }
+    }
   }
 };
 
