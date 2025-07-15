@@ -82,7 +82,9 @@ struct ReferenceFinder
   void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
   void note(StructField structField) { structFields.push_back(structField); }
-  void noteIndirectCall(Name table, HeapType type) { indirectCalls.push_back({table, type}); }
+  void noteIndirectCall(Name table, HeapType type) {
+    indirectCalls.push_back({table, type});
+  }
 
   // Generic visitor
 
@@ -254,7 +256,9 @@ struct Analyzer {
       auto [kind, value] = element;
       if (kind == ModuleElementKind::Table) {
         ModuleUtils::iterTableSegments(
-          *module, value, [&](ElementSegment* segment) {
+          *module,
+          value,
+          [&](ElementSegment* segment) {
             if (!segment->data.empty()) {
               use({ModuleElementKind::ElementSegment, segment->name});
             }
@@ -367,39 +371,40 @@ struct Analyzer {
           }
         }
         if (segmentNeeded) {
-          referenced.insert(ModuleElementKind::ElementSegment, segment->name});
+            referenced.insert(ModuleElementKind::ElementSegment, segment->name
         }
       });
-  }
+  });
+}
 
   void useRefFunc(Name func) {
-    if (!options.closedWorld) {
-      // The world is open, so assume the worst and something (inside or outside
-      // of the module) can call this.
-      use({ModuleElementKind::Function, func});
-      return;
-    }
-
-    // Otherwise, we are in a closed world, and so we can try to optimize the
-    // case where the target function is referenced but not used.
-    auto element = ModuleElement{ModuleElementKind::Function, func};
-
-    auto type = module->getFunction(func)->type;
-    if (calledSignatures.count(type)) {
-      // We must not have a type in both calledSignatures and
-      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
-      // any more.
-      assert(uncalledRefFuncMap.count(type) == 0);
-
-      // We've seen a RefFunc for this, so it is used.
-      use(element);
-    } else {
-      // We've never seen a CallRef for this, but might see one later.
-      uncalledRefFuncMap[type].insert(func);
-
-      referenced.insert(element);
-    }
+  if (!options.closedWorld) {
+    // The world is open, so assume the worst and something (inside or outside
+    // of the module) can call this.
+    use({ModuleElementKind::Function, func});
+    return;
   }
+
+  // Otherwise, we are in a closed world, and so we can try to optimize the
+  // case where the target function is referenced but not used.
+  auto element = ModuleElement{ModuleElementKind::Function, func};
+
+  auto type = module->getFunction(func)->type;
+  if (calledSignatures.count(type)) {
+    // We must not have a type in both calledSignatures and
+    // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
+    // any more.
+    assert(uncalledRefFuncMap.count(type) == 0);
+
+    // We've seen a RefFunc for this, so it is used.
+    use(element);
+  } else {
+    // We've never seen a CallRef for this, but might see one later.
+    uncalledRefFuncMap[type].insert(func);
+
+    referenced.insert(element);
+  }
+}
 
   void useStructField(StructField structField) {
     if (!readStructFields.count(structField)) {
