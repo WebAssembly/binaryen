@@ -325,7 +325,14 @@ struct Analyzer {
     }
   }
 
+  std::unordered_set<IndirectCall> usedIndirectCalls;
+
   void useIndirectCall(IndirectCall call) {
+    auto [_, inserted] = usedIndirectCalls.insert(call);
+    if (!inserted) {
+      return;
+    }
+
     // TODO: use structured bindings with c++20, needed for the capture below
     auto table = call.first;
     auto type = call.second;
