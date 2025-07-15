@@ -254,7 +254,6 @@ struct Analyzer {
       // table is useable from the outside, and we can't track how it will be
       // used from there.
       auto [kind, value] = element;
-/*
       if (kind == ModuleElementKind::Table) {
         ModuleUtils::iterTableSegments(
           *module, value, [&](ElementSegment* segment) {
@@ -263,7 +262,6 @@ struct Analyzer {
             }
           });
       }
-*/
     }
 
     // Main loop on both the module and the expression queues.
@@ -356,7 +354,6 @@ struct Analyzer {
     auto table = call.first;
     auto type = call.second;
 
-/*
     // Any function in the table of that signature may be called.
     ModuleUtils::iterTableSegments(
       *module, table, [&](ElementSegment* segment) {
@@ -374,7 +371,6 @@ struct Analyzer {
           referenced.insert({ModuleElementKind::ElementSegment, segment->name});
         }
       });
-*/
   }
 
   void useRefFunc(Name func) {
