@@ -48,6 +48,7 @@
 #include <wasm.h>
 
 #include "call-utils.h"
+#include "support/utilities.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.
@@ -1613,10 +1614,12 @@ struct OptimizeInstructions
   }
 
   // Appends a result after the dropped children, if we need them.
-  Expression* getDroppedChildrenAndAppend(Expression* curr,
-                                          Expression* result) {
+  Expression*
+  getDroppedChildrenAndAppend(Expression* curr,
+                              Expression* result,
+                              DropMode mode = DropMode::NoticeParentEffects) {
     return wasm::getDroppedChildrenAndAppend(
-      curr, *getModule(), getPassOptions(), result);
+      curr, *getModule(), getPassOptions(), result, mode);
   }
 
   Expression* getDroppedChildrenAndAppend(Expression* curr, Literal value) {
@@ -2269,54 +2272,40 @@ struct OptimizeInstructions
     // TODO: more opts like StructCmpxchg
   }
 
-  void visitRefCast(RefCast* curr) {
-    // Note we must check the ref's type here and not our own, since we only
-    // refinalize at the end, which means our type may not have been updated yet
-    // after a change in the child.
-    // TODO: we could update unreachability up the stack perhaps, or just move
-    //       all patterns that can add unreachability to a pass that does so
-    //       already like vacuum or dce.
-    if (curr->ref->type == Type::unreachable) {
-      return;
-    }
-
-    if (curr->type.isNonNullable() && trapOnNull(curr, curr->ref)) {
-      return;
-    }
-
+  bool optimizeKnownCastResult(RefCast* curr, Type refType) {
     Builder builder(*getModule());
-
-    // Look at all the fallthrough values to get the most precise possible type
-    // of the value we are casting. local.tee, br_if, and blocks can all "lose"
-    // type information, so looking at all the fallthrough values can give us a
-    // more precise type than is stored in the IR.
-    Type refType = getFallthroughType(curr->ref);
-
-    // As a first step, we can tighten up the cast type to be the greatest lower
-    // bound of the original cast type and the type we know the cast value to
-    // have. We know any less specific type either cannot appear or will fail
-    // the cast anyways.
-    auto glb = Type::getGreatestLowerBound(curr->type, refType);
-    if (glb != Type::unreachable && glb != curr->type) {
-      curr->type = glb;
-      refinalize = true;
-      // Call replaceCurrent() to make us re-optimize this node, as we may have
-      // just unlocked further opportunities. (We could just continue down to
-      // the rest, but we'd need to do more work to make sure all the local
-      // state in this function is in sync which this change; it's easier to
-      // just do another clean pass on this node.)
-      replaceCurrent(curr);
-      return;
-    }
-
     // Given what we know about the type of the value, determine what we know
     // about the results of the cast and optimize accordingly.
     switch (GCTypeUtils::evaluateCastCheck(refType, curr->type)) {
       case GCTypeUtils::Unknown:
         // The cast may or may not succeed, so we cannot optimize.
-        break;
+        return false;
       case GCTypeUtils::Success:
       case GCTypeUtils::SuccessOnlyIfNonNull: {
+        // Knowing the types match is not sufficient to know a descriptor cast
+        // succeeds. We must also know that the descriptor values match.
+        // However, if traps never happen, we can assume the descriptors will
+        // match and optimize anyway.
+        // TODO: Maybe we can determine that the descriptors values match in
+        // some cases.
+        if (curr->desc && !getPassOptions().trapsNeverHappen) {
+          // As a special case, we can still optimize if we know the value is
+          // null, because then we never get around to comparing the
+          // descriptors. We still need to preserve the trap on null
+          // descriptors, though.
+          if (refType.isNull()) {
+            assert(curr->type.isNullable());
+            if (curr->desc->type.isNullable()) {
+              curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
+            }
+            replaceCurrent(getDroppedChildrenAndAppend(
+              curr,
+              builder.makeRefNull(curr->type.getHeapType()),
+              DropMode::IgnoreParentEffects));
+            return true;
+          }
+          return false;
+        }
         // We know the cast will succeed, or at most requires a null check, so
         // we can try to optimize it out. Find the best-typed fallthrough value
         // to propagate.
@@ -2341,11 +2330,21 @@ struct OptimizeInstructions
           // exactness.
           if (ref == curr->ref && !needsExactCast) {
             if (needsNullCheck) {
-              replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
-            } else {
-              replaceCurrent(ref);
+              curr->ref = builder.makeRefAs(RefAsNonNull, curr->ref);
             }
-            return;
+            if (curr->desc) {
+              // We must move the ref past the descriptor operand.
+              auto* block =
+                ChildLocalizer(
+                  curr, getFunction(), *getModule(), getPassOptions())
+                  .getChildrenReplacement();
+              block->list.push_back(curr->ref);
+              block->type = curr->ref->type;
+              replaceCurrent(block);
+            } else {
+              replaceCurrent(curr->ref);
+            }
+            return true;
           }
           // Otherwise we can't just remove the cast and replace it with `ref`
           // because the intermediate expressions might have had side effects or
@@ -2370,9 +2369,11 @@ struct OptimizeInstructions
             // Unreachable, so we'll not hit this assertion.
             assert(curr->type.isNullable());
             auto nullType = curr->type.getHeapType().getBottom();
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                                builder.makeRefNull(nullType)));
-            return;
+            replaceCurrent(
+              getDroppedChildrenAndAppend(curr,
+                                          builder.makeRefNull(nullType),
+                                          DropMode::IgnoreParentEffects));
+            return true;
           }
 
           // At this point we know the cast will succeed as long as nullability
@@ -2380,7 +2381,7 @@ struct OptimizeInstructions
           // is not present in the value's static type, so there's nothing we
           // can do.
           if (needsExactCast) {
-            return;
+            return false;
           }
 
           // We need to use a tee to return the value since we can't materialize
@@ -2391,9 +2392,9 @@ struct OptimizeInstructions
           if (needsNullCheck) {
             get = builder.makeRefAs(RefAsNonNull, get);
           }
-          replaceCurrent(
-            builder.makeSequence(builder.makeDrop(curr->ref), get));
-          return;
+          replaceCurrent(getDroppedChildrenAndAppend(
+            curr, get, DropMode::IgnoreParentEffects));
+          return true;
         }
         // If we get here, then we know that the heap type of the cast input is
         // more refined than the heap type of the best available fallthrough
@@ -2417,48 +2418,114 @@ struct OptimizeInstructions
         // The cast either returns null or traps. In trapsNeverHappen mode
         // we know the result, since by assumption it will not trap.
         if (getPassOptions().trapsNeverHappen) {
-          replaceCurrent(
-            builder.makeBlock({builder.makeDrop(curr->ref),
-                               builder.makeRefNull(curr->type.getHeapType())},
-                              curr->type));
-          return;
+          replaceCurrent(getDroppedChildrenAndAppend(
+            curr,
+            builder.makeRefNull(curr->type.getHeapType()),
+            DropMode::IgnoreParentEffects));
+          return true;
         }
-        // Otherwise, we should have already refined the cast type to cast
-        // directly to null. We do not further refine the cast type to exact
-        // null because the extra precision is not useful and doing so would
-        // increase the size of the instruction encoding.
-        assert(curr->type.isNull());
-        break;
+        return false;
       }
       case GCTypeUtils::Unreachable:
       case GCTypeUtils::Failure:
         // This cast cannot succeed, or it cannot even be reached, so we can
-        // trap. Make sure to emit a block with the same type as us; leave
-        // updating types for other passes.
-        replaceCurrent(builder.makeBlock(
-          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-          curr->type));
-        return;
+        // trap.
+        replaceCurrent(getDroppedChildrenAndAppend(
+          curr, builder.makeUnreachable(), DropMode::IgnoreParentEffects));
+        return true;
+    }
+    WASM_UNREACHABLE("unexpected result");
+  }
+
+  void visitRefCast(RefCast* curr) {
+    // Note we must check the ref's type here and not our own, since we only
+    // refinalize at the end, which means our type may not have been updated yet
+    // after a change in the child.
+    // TODO: we could update unreachability up the stack perhaps, or just move
+    //       all patterns that can add unreachability to a pass that does so
+    //       already like vacuum or dce.
+    if (curr->ref->type == Type::unreachable ||
+        (curr->desc && curr->desc->type == Type::unreachable)) {
+      return;
+    }
+
+    if (curr->type.isNonNullable() && trapOnNull(curr, curr->ref)) {
+      return;
+    }
+
+    if (curr->desc && trapOnNull(curr, curr->desc)) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    // Look at all the fallthrough values to get the most precise possible type
+    // of the value we are casting.
+    Type refType = getFallthroughType(curr->ref);
+
+    // As a first step, we can tighten up the cast type. For normal casts we can
+    // use the greatest lower bound of the original cast type and the type we
+    // know the cast value to have. For descriptor casts we cannot change the
+    // target heap type because it is controlled by the descriptor operand, but
+    // we can improve nullability.
+    Type improvedType = curr->type;
+    if (curr->desc) {
+      if (curr->type.isNullable() && refType.isNonNullable()) {
+        improvedType = curr->type.with(NonNullable);
+      }
+    } else {
+      improvedType = Type::getGreatestLowerBound(curr->type, refType);
+    }
+    if (improvedType != Type::unreachable && improvedType != curr->type) {
+      curr->type = improvedType;
+      refinalize = true;
+      // Call replaceCurrent() to make us re-optimize this node, as we may
+      // have just unlocked further opportunities. (We could just continue
+      // down to the rest, but we'd need to do more work to make sure all the
+      // local state in this function is in sync which this change; it's
+      // easier to just do another clean pass on this node.)
+      replaceCurrent(curr);
+      return;
+    }
+
+    // Try to optimize based on what we know statically about the result of the
+    // cast.
+    if (optimizeKnownCastResult(curr, refType)) {
+      return;
     }
 
     // If we got past the optimizations above, it must be the case that we
-    // cannot tell from the static types whether the cast will succeed or not,
-    // which means we must have a proper down cast.
-    assert(Type::isSubType(curr->type, curr->ref->type));
+    // cannot tell statically whether the cast will succeed or not.
 
     if (auto* child = curr->ref->dynCast<RefCast>()) {
-      // Repeated casts can be removed, leaving just the most demanding of them.
-      // Since we know the current cast is a downcast, it must be strictly
-      // stronger than its child cast and we can remove the child cast entirely.
-      curr->ref = child->ref;
-      return;
+      // If the current cast is at least as strong as the child cast, then we
+      // can remove the child cast. If the child cast is a descriptor cast and
+      // traps are allowed, then we cannot remove the potentially-trapping
+      // child, though.
+      bool notWeaker = Type::isSubType(curr->type, child->type);
+      bool safe = !child->desc || getPassOptions().trapsNeverHappen;
+      if (notWeaker && safe) {
+        if (child->desc) {
+          // Reorder the child's reference past its dropped descriptor if
+          // necessary.
+          auto* block =
+            ChildLocalizer(child, getFunction(), *getModule(), getPassOptions())
+              .getChildrenReplacement();
+          block->list.push_back(child->ref);
+          block->type = child->ref->type;
+          curr->ref = block;
+        } else {
+          curr->ref = child->ref;
+        }
+        return;
+      }
     }
 
     // Similarly, ref.cast can be combined with ref.as_non_null.
     //
-    //   (ref.cast null (ref.as_non_null ..))
+    //   (ref.cast (ref null T) (ref.as_non_null ..))
     // =>
-    //   (ref.cast ..)
+    //   (ref.cast (ref T) ..)
     //
     if (auto* as = curr->ref->dynCast<RefAs>(); as && as->op == RefAsNonNull) {
       curr->ref = as->value;
