@@ -256,14 +256,11 @@ struct Analyzer {
       auto [kind, value] = element;
       if (kind == ModuleElementKind::Table) {
         ModuleUtils::iterTableSegments(
-          *module,
-          value,
-          [&](ElementSegment* segment) {
+          *module, value, [&](ElementSegment* segment) {
             if (!segment->data.empty()) {
               use({ModuleElementKind::ElementSegment, segment->name});
             }
-          }
-        );
+          });
       }
     }
 
