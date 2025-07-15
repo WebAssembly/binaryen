@@ -15,7 +15,6 @@
 ;;  * elem $t1-withSubA has a subtype of $A, so it is similar to $t1-withA.
 ;;  * elem $t2-withA has $A, but no call goes to that table.
 ;;
-;; In closed world we can do even better TODO
 (module
  ;; CHECK:      (type $A (sub (func)))
  (type $A (sub (func)))
@@ -134,5 +133,88 @@
  (func $A2 (type $A)
   ;; No viable uses exist of this, it is in the wrong table.
   (drop (i32.const 100))
+ )
+)
+
+;; Similar to above, but now the table is exported, and the test is a bit
+;; simplified to focus on the changes from that. Given the export, we must
+;; assume the outside can call anything in the table.
+(module
+ ;; CHECK:      (type $A (sub (func)))
+ (type $A (sub (func)))
+
+ ;; CHECK:      (type $B (sub (func (param f64))))
+ (type $B (sub (func (param f64))))
+
+ ;; CHECK:      (type $subA (sub $A (func)))
+ (type $subA (sub $A (func)))
+
+ ;; CHECK:      (type $3 (func (param f32)))
+
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (table $t1 60 60 funcref)
+ (table $t1 60 60 funcref)
+
+ ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
+ (elem $t1-withA (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
+
+ (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
+
+ ;; CHECK:      (func $export (type $4)
+ ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (call_indirect $t1 (type $A)
+   (i32.const -1)
+  )
+ )
+
+ ;; CHECK:      (func $A1 (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A1 (type $A)
+  (drop (i32.const 10))
+ )
+
+ ;; CHECK:      (func $B1 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $B1 (type $B) (param $p f64)
+  ;; We can empty this out, as while a segment references it, no call_indirect
+  ;; exists.
+  (drop (i32.const 20))
+ )
+
+ ;; CHECK:      (func $subA1 (type $subA)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subA1 (type $subA)
+  (drop (i32.const 30))
+ )
+
+ ;; CHECK:      (func $C1 (type $3) (param $p f32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $C1 (param $p f32)
+  ;; We can empty this out, as while a segment references it, no call_indirect
+  ;; exists.
+  (drop (i32.const 40))
+ )
+
+ (func $B2 (type $B) (param $p f64)
+  ;; No viable uses exist of this, it is in a segment with no uses.
+  (drop (i32.const 50))
+ )
+
+ (func $C2 (param $p f32)
+  ;; No viable uses exist of this, it is in a segment with no uses.
+  (drop (i32.const 60))
  )
 )
