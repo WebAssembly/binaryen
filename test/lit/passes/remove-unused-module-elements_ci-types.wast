@@ -236,3 +236,92 @@
   (drop (i32.const 60))
  )
 )
+
+;; A chain of indirect calls: an export calls type $A, and a function of type $A
+;; calls $B, and $B calls $C. All those are used, but a final function of type
+;; $D is not, and can be cleared out.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (func))
+  (type $A (func))
+  ;; CHECK:       (type $B (func))
+  (type $B (func))
+  ;; CHECK:       (type $C (func))
+  (type $C (func))
+  ;; CHECK:       (type $D (func))
+  (type $D (func))
+ )
+
+ ;; CHECK:      (type $4 (func))
+
+ ;; CHECK:      (table $t 60 60 funcref)
+ (table $t 60 60 funcref)
+
+ ;; CHECK:      (elem $elem (i32.const 0) $A $B $C $D)
+ (elem $elem (table $t) (i32.const 0) func $A $B $C $D)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $4)
+ ;; CHECK-NEXT:  (call_indirect $t (type $A)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (call_indirect $t (type $A)
+   (i32.const -1)
+  )
+ )
+
+ ;; CHECK:      (func $A (type $A)
+ ;; CHECK-NEXT:  (call_indirect $t (type $B)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A (type $A)
+  (call_indirect $t (type $B)
+   (i32.const -1)
+  )
+ )
+
+ ;; CHECK:      (func $B (type $B)
+ ;; CHECK-NEXT:  (call_indirect $t (type $C)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B (type $B)
+  (call_indirect $t (type $C)
+   (i32.const -1)
+  )
+ )
+
+ ;; CHECK:      (func $C (type $C)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $C (type $C)
+  ;; Chain breaks here, no call to $D.
+  (drop (i32.const 30))
+ )
+
+ ;; CHECK:      (func $D (type $D)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $D (type $D)
+  ;; Add calls to all types, to check unreached code does not confuse us.
+  (call_indirect $t (type $A)
+   (i32.const -1)
+  )
+  (call_indirect $t (type $B)
+   (i32.const -1)
+  )
+  (call_indirect $t (type $C)
+   (i32.const -1)
+  )
+  (call_indirect $t (type $D)
+   (i32.const -1)
+  )
+ )
+)
