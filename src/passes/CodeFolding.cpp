@@ -250,7 +250,7 @@ struct CodeFolding
     auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
       // If other is a suffix of the block, wrap it in a block.
       if (block->list.empty() ||
-          !ExpressionAnalyzer::equal(other, block->list.back())) {
+          !ExpressionAnalyzer::equal(other, block->list.back())) { // meta? others?
         return nullptr;
       }
       // Do it, assign to the out param `other`, and return the block.

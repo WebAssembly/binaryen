@@ -157,7 +157,7 @@ struct HEComparer {
     if (a.digest != b.digest) {
       return false;
     }
-    return ExpressionAnalyzer::equal(a.expr, b.expr);
+    return ExpressionAnalyzer::equal(a.expr, b.expr); // meta?
   }
 };
 

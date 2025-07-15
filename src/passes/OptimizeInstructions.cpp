@@ -1176,7 +1176,7 @@ struct OptimizeInstructions
         }
       }
       if (curr->condition->type != Type::unreachable &&
-          ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
+          ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) { // META!
         // The sides are identical, so fold. If we can replace the If with one
         // arm and there are no side effects in the condition, replace it. But
         // make sure not to change a concrete expression to an unreachable
@@ -3171,7 +3171,7 @@ private:
       // Sides are identical, fold
       Expression *ifTrue, *ifFalse, *c;
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
-          ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
+          ExpressionAnalyzer::equal(ifTrue, ifFalse)) { // meta!
         auto value = effects(ifTrue);
         if (value.hasSideEffects()) {
           // At best we don't need the condition, but need to execute the
