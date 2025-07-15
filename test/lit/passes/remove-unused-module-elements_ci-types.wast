@@ -31,8 +31,6 @@
  ;; CHECK:      (type $4 (func))
 
  ;; CHECK:      (table $t1 60 60 funcref)
-
-
  (table $t1 60 60 funcref)
 
  (table $t2 60 60 funcref)
@@ -54,7 +52,6 @@
  ;; CHECK-NEXT:   (i32.const -1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
-
  (func $export (export "export")
   (call_indirect $t1 (type $A)
    (i32.const -1)

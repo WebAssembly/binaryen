@@ -437,10 +437,13 @@
  ;; GUFA:      (type $0 (func (param (ref none)) (result i32)))
 
  ;; GUFA:      (table $0 1 funcref)
+ ;; O3O3:      (type $0 (func (param (ref none)) (result i32)))
+
  ;; O3O3:      (table $0 1 funcref)
  (table $0 1 funcref)
  ;; NRML:      (elem $0 (i32.const 0) $test)
  ;; GUFA:      (elem $0 (i32.const 0) $test)
+ ;; O3O3:      (elem $0 (i32.const 0) $test)
  (elem $0 (i32.const 0) $test)
 
  ;; NRML:      (export "table" (table $0))
@@ -464,6 +467,9 @@
  ;; GUFA-NEXT:   (unreachable)
  ;; GUFA-NEXT:  )
  ;; GUFA-NEXT: )
+ ;; O3O3:      (func $test (type $0) (param $0 (ref none)) (result i32)
+ ;; O3O3-NEXT:  (unreachable)
+ ;; O3O3-NEXT: )
  (func $test (param $i8 (ref none)) (result i32)
   (struct.get_s $i8 0
    (local.get $i8)
