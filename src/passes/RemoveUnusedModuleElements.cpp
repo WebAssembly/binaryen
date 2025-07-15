@@ -259,6 +259,8 @@ struct Analyzer {
           *module,
           value,
           [&](ElementSegment* segment) {
+            if (!segment->data.empty()) {
+            }
           })
         );
       }
