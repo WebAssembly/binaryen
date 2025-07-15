@@ -357,20 +357,20 @@ struct Analyzer {
     // Any function in the table of that signature may be called.
     ModuleUtils::iterTableSegments(
       *module, table, [&](ElementSegment* segment) {
-        auto segmentNeeded = false;
-        for (auto* item : segment->data) {
-          if (auto* refFunc = item->dynCast<RefFunc>()) {
-            auto* func = module->getFunction(refFunc->func);
-            if (HeapType::isSubType(func->type, type)) {
-              use({ModuleElementKind::Function, refFunc->func});
-              segmentNeeded = true;
-            }
+      auto segmentNeeded = false;
+      for (auto* item : segment->data) {
+        if (auto* refFunc = item->dynCast<RefFunc>()) {
+          auto* func = module->getFunction(refFunc->func);
+          if (HeapType::isSubType(func->type, type)) {
+            use({ModuleElementKind::Function, refFunc->func});
+            segmentNeeded = true;
           }
         }
-        if (segmentNeeded) {
-          referenced.insert({ModuleElementKind::ElementSegment, segment->name});
-        }
-      }));
+      }
+      if (segmentNeeded) {
+        referenced.insert({ModuleElementKind::ElementSegment, segment->name});
+      }
+      });
   }
 }
 
