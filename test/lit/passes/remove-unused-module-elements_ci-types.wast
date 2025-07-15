@@ -13,6 +13,7 @@
 ;;    emptied stubs for $B1 and $C1.
 ;;  * elem $t1-noA has no $A or a subtype, so the segment is removed entirely.
 ;;  * elem $t1-withSubA has a subtype of $A, so it is similar to $t1-withA.
+;;  * elem $t2-withA has $A, but no call goes to that table.
 ;;
 (module
  ;; CHECK:      (type $A (sub (func)))
@@ -40,6 +41,8 @@
 
  ;; CHECK:      (elem $t1-withSubA (i32.const 20) $B3 $subA3 $C3)
  (elem $t1-withSubA (table $t1) (i32.const 20) func $B3 $subA3 $C3)
+
+ (elem $t2-withA (table $t2) (i32.const 0) func $A2)
 
  ;; CHECK:      (export "export" (func $export))
 
@@ -101,37 +104,46 @@
 
  ;; CHECK:      (func $C2 (type $2) (param $p f32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 70)
+ ;; CHECK-NEXT:   (i32.const 60)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $C2 (param $p f32)
-  (drop (i32.const 70))
+  (drop (i32.const 60))
  )
 
  ;; CHECK:      (func $B3 (type $B) (param $p f64)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 50)
+ ;; CHECK-NEXT:   (i32.const 70)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $B3 (type $B) (param $p f64)
-  (drop (i32.const 50))
+  (drop (i32.const 70))
  )
 
  ;; CHECK:      (func $subA3 (type $subA)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 60)
+ ;; CHECK-NEXT:   (i32.const 80)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $subA3 (type $subA)
-  (drop (i32.const 60))
+  (drop (i32.const 80))
  )
 
  ;; CHECK:      (func $C3 (type $2) (param $p f32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 70)
+ ;; CHECK-NEXT:   (i32.const 90)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $C3 (param $p f32)
-  (drop (i32.const 70))
+  (drop (i32.const 90))
+ )
+
+ ;; CHECK:      (func $A2 (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 100)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A2 (type $A)
+  (drop (i32.const 100))
  )
 )
