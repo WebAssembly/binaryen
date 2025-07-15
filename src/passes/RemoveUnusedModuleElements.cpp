@@ -62,6 +62,9 @@ using ModuleElementKind = ModuleItemKind;
 // name of the particular element.
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
+// Information from an indirect call: the name of the table, and the heap type.
+using IndirectCall = std::pair<Name, HeapType>;
+
 // Visit or walk an expression to find what things are referenced.
 struct ReferenceFinder
   : public PostWalker<ReferenceFinder,
@@ -72,12 +75,14 @@ struct ReferenceFinder
   std::vector<HeapType> callRefTypes;
   std::vector<Name> refFuncs;
   std::vector<StructField> structFields;
+  std::vector<IndirectCall> indirectCalls;
 
   // Add an item to the output data structures.
   void note(ModuleElement element) { elements.push_back(element); }
   void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
   void note(StructField structField) { structFields.push_back(structField); }
+  void noteIndirectCall(Name table, HeapType type) { indirectCalls.push_back({table, type}); }
 
   // Generic visitor
 
@@ -137,7 +142,8 @@ struct ReferenceFinder
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    note({ModuleElementKind::Table, curr->table});
+    note({ModuleElementKind::Table, curr->table}); // XXX remove code later that pulls in all things form teh tabl
+    noteIndirectCall(curr->table, curr->heapType);
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
     // is written into the table we could do better here; we could also see
@@ -274,6 +280,9 @@ struct Analyzer {
       for (auto structField : finder.structFields) {
         useStructField(structField);
       }
+      for (auto call : finder.indirectCalls) {
+        useIndirectCall(call);
+      }
 
       // Scan the children to continue our work.
       scanChildren(curr);
@@ -314,6 +323,30 @@ struct Analyzer {
 
       calledSignatures.insert(subType);
     }
+  }
+
+  void useIndirectCall(IndirectCall call) {
+    // TODO: use structured bindings with c++20, needed for the capture below
+    auto table = call.first;
+    auto type = call.second;
+
+    // Any function in the table of that signature may be called.
+    ModuleUtils::iterTableSegments(
+      *module, table, [&](ElementSegment* segment) {
+        auto usedSegment = false;
+        for (auto* item : segment->data) {
+          if (auto* refFunc = item->dynCast<RefFunc>()) {
+            auto* func = module->getFunction(refFunc->func);
+            if (HeapType::isSubType(func->type, type)) {
+              use({ModuleElementKind::Function, refFunc->func});
+              usedSegment = true;
+            }
+          }
+        }
+        if (usedSegment) {
+          use({ModuleElementKind::ElementSegment, segment->name});
+        }
+      });
   }
 
   void useRefFunc(Name func) {
@@ -414,12 +447,7 @@ struct Analyzer {
             });
           break;
         case ModuleElementKind::Table:
-          ModuleUtils::iterTableSegments(
-            *module, value, [&](ElementSegment* segment) {
-              if (!segment->data.empty()) {
-                use({ModuleElementKind::ElementSegment, segment->name});
-              }
-            });
+          // Nothing to do here, this is handled by indirectCalls.
           break;
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
