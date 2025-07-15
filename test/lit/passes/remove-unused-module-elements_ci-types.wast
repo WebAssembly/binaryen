@@ -7,42 +7,113 @@
 ;; We have an indirect call of $A, but not of $B. This keeps alive segments with
 ;; relevant functions, but not other segments. It also does not keep alive other
 ;; functions in those segments (we refer to them, but can empty out their
-;; contents).
+;; contents). Specifically:
+;;
+;;  * elem $t1-withA contains $A, so it keeps alive func $A and $subA1, and
+;;    emptied stubs for $B1 and $C1.
+;;  * elem $t1-noA has no $A or a subtype, so the segment is removed entirely.
+;;  * elem $t1-withSubA has a subtype of $A, so it is similar to $t1-withA.
+;;
 (module
- (type $A (func))
+ ;; CHECK:      (type $A (sub (func)))
+ (type $A (sub (func)))
 
- (type $B (func (param f64)))
+ ;; CHECK:      (type $B (sub (func (param f64))))
+ (type $B (sub (func (param f64))))
 
+ ;; CHECK:      (type $subA (sub $A (func)))
  (type $subA (sub $A (func)))
 
- (table $t1 6 6 funcref)
+ ;; CHECK:      (type $3 (func (param f32)))
 
- (table $t2 6 6 funcref)
+ ;; CHECK:      (type $4 (func))
 
- (elem $t1-e1 (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
+ ;; CHECK:      (table $t1 60 60 funcref)
+ (table $t1 60 60 funcref)
 
+ (table $t2 60 60 funcref)
+
+ ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
+ (elem $t1-withA (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
+
+ (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
+
+ ;; CHECK:      (elem $t1-withSubA (i32.const 10) $B2 $subA2 $C2)
+ (elem $t1-withSubA (table $t1) (i32.const 10) func $B2 $subA2 $C2)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $4)
+ ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $export (export "export")
-  (drop
-   (call_indirect $t1 (type $0)
-    (f64.const 1)
-    (i32.const -1)
-   )
+  (call_indirect $t1 (type $A)
+   (i32.const -1)
   )
  )
 
+ ;; CHECK:      (func $A1 (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $A1 (type $A)
   (drop (i32.const 10))
  )
 
- (func $B1 (type $A) (param $p f64)
+ ;; CHECK:      (func $B1 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B1 (type $B) (param $p f64)
   (drop (i32.const 20))
  )
 
+ ;; CHECK:      (func $subA1 (type $subA)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $subA1 (type $subA)
   (drop (i32.const 30))
  )
 
- (func $C (param $p f32)
+ ;; CHECK:      (func $C1 (type $3) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 40)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $C1 (param $p f32)
   (drop (i32.const 40))
+ )
+
+ ;; CHECK:      (func $B2 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 50)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B2 (type $B) (param $p f64)
+  (drop (i32.const 50))
+ )
+
+ ;; CHECK:      (func $subA2 (type $subA)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 60)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subA2 (type $subA)
+  (drop (i32.const 60))
+ )
+
+ ;; CHECK:      (func $C2 (type $3) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 70)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $C2 (param $p f32)
+  (drop (i32.const 70))
  )
 )
