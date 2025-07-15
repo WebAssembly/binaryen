@@ -1852,6 +1852,9 @@ class PreserveImportsExports(TestCaseHandler):
 # example, and it may find ways to simplify code so fewer things execute), but
 # it should not emit a branch hint that is wrong - if it is not certain, it
 # should remove the branch hint.
+#
+# Note that bugs found by this fuzzer tend to require the following during
+# reducing: BINARYEN_TRUST_GIVEN_WASM=1 in the env, and --text as a parameter.
 class BranchHintPreservation(TestCaseHandler):
     frequency = 1 # XXX
 
@@ -1932,6 +1935,7 @@ class BranchHintPreservation(TestCaseHandler):
             # Some passes that can unconditionalize code can just be disabled,
             # as they do not modify ifs or brs.
             '--skip-pass=heap-store-optimization',
+            '--skip-pass=licm',
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 
