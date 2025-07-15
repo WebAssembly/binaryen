@@ -260,6 +260,7 @@ struct Analyzer {
           value,
           [&](ElementSegment* segment) {
             if (!segment->data.empty()) {
+              use({ModuleElementKind::ElementSegment, segment->name});
             }
           })
         );
