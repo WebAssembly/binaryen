@@ -369,6 +369,14 @@ struct Analyzer {
         }
         if (segmentNeeded) {
           referenced.insert({ModuleElementKind::ElementSegment, segment->name});
+          for (auto* item : segment->data) {
+            if (auto* refFunc = item->dynCast<RefFunc>()) {
+              referenced.insert({ModuleElementKind::Function, refFunc->func});
+            } else {
+              // For anything else, add a full use.
+              use({ModuleElementKind::ElementSegment, segment->name});
+            }
+          }
         }
       });
   }
