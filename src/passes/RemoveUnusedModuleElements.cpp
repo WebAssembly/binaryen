@@ -142,7 +142,7 @@ struct ReferenceFinder
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    note({ModuleElementKind::Table, curr->table}); // XXX remove code later that pulls in all things form teh tabl
+    note({ModuleElementKind::Table, curr->table});
     noteIndirectCall(curr->table, curr->heapType);
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
@@ -245,6 +245,22 @@ struct Analyzer {
     // All roots are used.
     for (auto& element : roots) {
       use(element);
+
+      // Rooted tables are not only used, but we must assume all their contents
+      // are used. Unlike an internal table, where we can track indirect calls
+      // to see which items in the table may be called in practice, a rooted
+      // table is useable from the outside, and we can't track how it will be
+      // used from there.
+      auto [kind, value] = element;
+      if (kind == ModuleElementKind::Table) {
+        ModuleUtils::iterTableSegments(
+          *module, value, [&](ElementSegment* segment) {
+            if (!segment->data.empty()) {
+              use({ModuleElementKind::ElementSegment, segment->name});
+            }
+          })
+        );
+      }
     }
 
     // Main loop on both the module and the expression queues.
@@ -340,18 +356,18 @@ struct Analyzer {
     // Any function in the table of that signature may be called.
     ModuleUtils::iterTableSegments(
       *module, table, [&](ElementSegment* segment) {
-        auto usedSegment = false;
+        auto segmentNeeded = false;
         for (auto* item : segment->data) {
           if (auto* refFunc = item->dynCast<RefFunc>()) {
             auto* func = module->getFunction(refFunc->func);
             if (HeapType::isSubType(func->type, type)) {
               use({ModuleElementKind::Function, refFunc->func});
-              usedSegment = true;
+              segmentNeeded = true;
             }
           }
         }
-        if (usedSegment) {
-          use({ModuleElementKind::ElementSegment, segment->name});
+        if (segmentNeeded) {
+          referenced.insert(ModuleElementKind::ElementSegment, segment->name});
         }
       });
   }
