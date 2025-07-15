@@ -18,15 +18,12 @@
 ;; In closed world we can do even better TODO
 (module
  ;; CHECK:      (type $A (sub (func)))
- ;; CLOSD:      (type $A (sub (func)))
  (type $A (sub (func)))
 
  ;; CHECK:      (type $B (sub (func (param f64))))
- ;; CLOSD:      (type $B (sub (func (param f64))))
  (type $B (sub (func (param f64))))
 
  ;; CHECK:      (type $subA (sub $A (func)))
- ;; CLOSD:      (type $subA (sub $A (func)))
  (type $subA (sub $A (func)))
 
  ;; CHECK:      (type $3 (func (param f32)))
@@ -34,23 +31,18 @@
  ;; CHECK:      (type $4 (func))
 
  ;; CHECK:      (table $t1 60 60 funcref)
- ;; CLOSD:      (type $3 (func (param f32)))
 
- ;; CLOSD:      (type $4 (func))
 
- ;; CLOSD:      (table $t1 60 60 funcref)
  (table $t1 60 60 funcref)
 
  (table $t2 60 60 funcref)
 
  ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
- ;; CLOSD:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
  (elem $t1-withA (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
 
  (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
 
  ;; CHECK:      (elem $t1-withSubA (i32.const 20) $B3 $subA3 $C3)
- ;; CLOSD:      (elem $t1-withSubA (i32.const 20) $B3 $subA3 $C3)
  (elem $t1-withSubA (table $t1) (i32.const 20) func $B3 $subA3 $C3)
 
  (elem $t2-withA (table $t2) (i32.const 0) func $A2)
@@ -62,13 +54,7 @@
  ;; CHECK-NEXT:   (i32.const -1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; CLOSD:      (export "export" (func $export))
 
- ;; CLOSD:      (func $export (type $4)
- ;; CLOSD-NEXT:  (call_indirect $t1 (type $A)
- ;; CLOSD-NEXT:   (i32.const -1)
- ;; CLOSD-NEXT:  )
- ;; CLOSD-NEXT: )
  (func $export (export "export")
   (call_indirect $t1 (type $A)
    (i32.const -1)
@@ -80,11 +66,6 @@
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $A1 (type $A)
- ;; CLOSD-NEXT:  (drop
- ;; CLOSD-NEXT:   (i32.const 10)
- ;; CLOSD-NEXT:  )
- ;; CLOSD-NEXT: )
  (func $A1 (type $A)
   (drop (i32.const 10))
  )
@@ -92,9 +73,6 @@
  ;; CHECK:      (func $B1 (type $B) (param $p f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $B1 (type $B) (param $p f64)
- ;; CLOSD-NEXT:  (unreachable)
- ;; CLOSD-NEXT: )
  (func $B1 (type $B) (param $p f64)
   ;; We can empty this out, as while a segment references it, no call_indirect
   ;; exists.
@@ -106,11 +84,6 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $subA1 (type $subA)
- ;; CLOSD-NEXT:  (drop
- ;; CLOSD-NEXT:   (i32.const 30)
- ;; CLOSD-NEXT:  )
- ;; CLOSD-NEXT: )
  (func $subA1 (type $subA)
   (drop (i32.const 30))
  )
@@ -118,9 +91,6 @@
  ;; CHECK:      (func $C1 (type $3) (param $p f32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $C1 (type $3) (param $p f32)
- ;; CLOSD-NEXT:  (unreachable)
- ;; CLOSD-NEXT: )
  (func $C1 (param $p f32)
   ;; We can empty this out, as while a segment references it, no call_indirect
   ;; exists.
@@ -140,9 +110,6 @@
  ;; CHECK:      (func $B3 (type $B) (param $p f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $B3 (type $B) (param $p f64)
- ;; CLOSD-NEXT:  (unreachable)
- ;; CLOSD-NEXT: )
  (func $B3 (type $B) (param $p f64)
   ;; We can empty this out, as while a segment references it, no call_indirect
   ;; exists.
@@ -154,11 +121,6 @@
  ;; CHECK-NEXT:   (i32.const 80)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $subA3 (type $subA)
- ;; CLOSD-NEXT:  (drop
- ;; CLOSD-NEXT:   (i32.const 80)
- ;; CLOSD-NEXT:  )
- ;; CLOSD-NEXT: )
  (func $subA3 (type $subA)
   (drop (i32.const 80))
  )
@@ -166,9 +128,6 @@
  ;; CHECK:      (func $C3 (type $3) (param $p f32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; CLOSD:      (func $C3 (type $3) (param $p f32)
- ;; CLOSD-NEXT:  (unreachable)
- ;; CLOSD-NEXT: )
  (func $C3 (param $p f32)
   ;; In closed world we can empty this out, as while a segment references it,
   ;; no call_indirect exists.
