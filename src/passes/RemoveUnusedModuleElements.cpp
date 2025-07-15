@@ -376,7 +376,6 @@ struct Analyzer {
       });
 */
   }
-}
 
   void useRefFunc(Name func) {
   if (!options.closedWorld) {
