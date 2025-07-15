@@ -20,6 +20,25 @@
 
 namespace wasm::metadata {
 
+namespace {
+
+// List out instructions serially, so we can match them between the old and
+// new copies.
+//
+// This is not that efficient, and in theory we could copy this in the
+// caller context as the code is copied. However, we assume that most
+// functions have no metadata, so this is faster in that common case.
+struct Serializer
+  : public PostWalker<Serializer, UnifiedExpressionVisitor<Serializer>> {
+  Serializer(Expression* expr) { walk(expr); }
+
+  std::vector<Expression*> list;
+
+  void visitExpression(Expression* curr) { list.push_back(curr); }
+};
+
+} // anonymous namespace
+
 void copyBetweenFunctions(Expression* origin,
                           Expression* copy,
                           Function* originFunc,
@@ -30,21 +49,8 @@ void copyBetweenFunctions(Expression* origin,
     return;
   }
 
-  // List out instructions serially, so we can match them between the old and
-  // new copies.
-  //
-  // This is not that efficient, and in theory we could copy this in the
-  // caller context as the code is copied. However, we assume that most
-  // functions have no metadata, so this is faster in that common case.
-  struct Lister : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
-    std::vector<Expression*> list;
-    void visitExpression(Expression* curr) { list.push_back(curr); }
-  };
-
-  Lister originList;
-  originList.walk(origin);
-  Lister copyList;
-  copyList.walk(copy);
+  Serializer originList(origin);
+  Serializer copyList(copy);
 
   auto& originDebug = originFunc->debugLocations;
   auto& copyDebug = copyFunc->debugLocations;
@@ -69,5 +75,68 @@ void copyBetweenFunctions(Expression* origin,
     }
   }
 }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+// Given two expressions to use as keys, see if they have identical values (or
+// are both absent) in two maps.
+template<typename T, typename V>
+bool compare(Expression* a,
+             Expression* b,
+             const T& aMap,
+             const T& bMap,
+             const V defaultValue) {
+  auto aIter = aMap.find(a);
+  auto aItem = aIter != aMap.end() ? aIter->second : defaultValue;
+  auto bIter = bMap.find(b);
+  auto bItem = bIter != bMap.end() ? bIter->second : defaultValue;
+  return aItem == bItem;
+}
+
+bool equal(Function* a, Function* b) {
+  if (a->imported() && b->imported()) {
+    // No code metadata, and we don't yet store function-level metadata.
+    return true;
+  }
+  if (a->imported() || b->imported()) {
+    // See comment on declaration, we consider such a difference as making them
+    // unequal.
+    return false;
+  }
+
+  if (a->debugLocations.empty() && b->debugLocations.empty() &&
+      a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
+    // Nothing to compare; no differences.
+    return true;
+  }
+
+  Serializer aList(a->body);
+  Serializer bList(b->body);
+
+  if (aList.list.size() != bList.list.size()) {
+    return false;
+  }
+
+  assert(aList.list.size() == bList.list.size());
+  for (Index i = 0; i < aList.list.size(); i++) {
+    if (!compare(aList.list[i],
+                 bList.list[i],
+                 a->debugLocations,
+                 b->debugLocations,
+                 Function::DebugLocation()) ||
+        !compare(aList.list[i],
+                 bList.list[i],
+                 a->codeAnnotations,
+                 b->codeAnnotations,
+                 Function::CodeAnnotation())) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+#pragma GCC diagnostic pop
 
 } // namespace wasm::metadata

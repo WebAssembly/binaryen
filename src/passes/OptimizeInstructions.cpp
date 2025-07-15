@@ -2298,10 +2298,10 @@ struct OptimizeInstructions
             if (curr->desc->type.isNullable()) {
               curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
             }
-            replaceCurrent(builder.blockify(
-              builder.makeDrop(curr->ref),
-              builder.makeDrop(curr->desc),
-              builder.makeRefNull(curr->type.getHeapType().getBottom())));
+            replaceCurrent(getDroppedChildrenAndAppend(
+              curr,
+              builder.makeRefNull(curr->type.getHeapType()),
+              DropMode::IgnoreParentEffects));
             return true;
           }
           return false;
@@ -2330,17 +2330,19 @@ struct OptimizeInstructions
           // exactness.
           if (ref == curr->ref && !needsExactCast) {
             if (needsNullCheck) {
-              ref = builder.makeRefAs(RefAsNonNull, ref);
+              curr->ref = builder.makeRefAs(RefAsNonNull, curr->ref);
             }
             if (curr->desc) {
               // We must move the ref past the descriptor operand.
-              Index temp = builder.addVar(getFunction(), ref->type);
-              replaceCurrent(
-                builder.blockify(builder.makeLocalSet(temp, ref),
-                                 builder.makeDrop(curr->desc),
-                                 builder.makeLocalGet(temp, ref->type)));
+              auto* block =
+                ChildLocalizer(
+                  curr, getFunction(), *getModule(), getPassOptions())
+                  .getChildrenReplacement();
+              block->list.push_back(curr->ref);
+              block->type = curr->ref->type;
+              replaceCurrent(block);
             } else {
-              replaceCurrent(ref);
+              replaceCurrent(curr->ref);
             }
             return true;
           }
@@ -2504,12 +2506,14 @@ struct OptimizeInstructions
       bool safe = !child->desc || getPassOptions().trapsNeverHappen;
       if (notWeaker && safe) {
         if (child->desc) {
-          // Reorder the child's reference past its dropped descriptor.
-          Index temp = builder.addVar(getFunction(), child->ref->type);
-          curr->ref =
-            builder.blockify(builder.makeLocalSet(temp, child->ref),
-                             builder.makeDrop(child->desc),
-                             builder.makeLocalGet(temp, child->ref->type));
+          // Reorder the child's reference past its dropped descriptor if
+          // necessary.
+          auto* block =
+            ChildLocalizer(child, getFunction(), *getModule(), getPassOptions())
+              .getChildrenReplacement();
+          block->list.push_back(child->ref);
+          block->type = child->ref->type;
+          curr->ref = block;
         } else {
           curr->ref = child->ref;
         }
