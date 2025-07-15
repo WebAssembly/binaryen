@@ -21,10 +21,10 @@
  ;; CHECK:      (type $B (sub (func (param f64))))
  (type $B (sub (func (param f64))))
 
+ ;; CHECK:      (type $2 (func (param f32)))
+
  ;; CHECK:      (type $subA (sub $A (func)))
  (type $subA (sub $A (func)))
-
- ;; CHECK:      (type $3 (func (param f32)))
 
  ;; CHECK:      (type $4 (func))
 
@@ -38,8 +38,8 @@
 
  (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
 
- ;; CHECK:      (elem $t1-withSubA (i32.const 10) $B2 $subA2 $C2)
- (elem $t1-withSubA (table $t1) (i32.const 10) func $B2 $subA2 $C2)
+ ;; CHECK:      (elem $t1-withSubA (i32.const 20) $B3 $subA3 $C3)
+ (elem $t1-withSubA (table $t1) (i32.const 20) func $B3 $subA3 $C3)
 
  ;; CHECK:      (export "export" (func $export))
 
@@ -81,7 +81,7 @@
   (drop (i32.const 30))
  )
 
- ;; CHECK:      (func $C1 (type $3) (param $p f32)
+ ;; CHECK:      (func $C1 (type $2) (param $p f32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 40)
  ;; CHECK-NEXT:  )
@@ -99,21 +99,39 @@
   (drop (i32.const 50))
  )
 
- ;; CHECK:      (func $subA2 (type $subA)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.const 60)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $subA2 (type $subA)
-  (drop (i32.const 60))
- )
-
- ;; CHECK:      (func $C2 (type $3) (param $p f32)
+ ;; CHECK:      (func $C2 (type $2) (param $p f32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 70)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $C2 (param $p f32)
+  (drop (i32.const 70))
+ )
+
+ ;; CHECK:      (func $B3 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 50)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B3 (type $B) (param $p f64)
+  (drop (i32.const 50))
+ )
+
+ ;; CHECK:      (func $subA3 (type $subA)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 60)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subA3 (type $subA)
+  (drop (i32.const 60))
+ )
+
+ ;; CHECK:      (func $C3 (type $2) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 70)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $C3 (param $p f32)
   (drop (i32.const 70))
  )
 )
