@@ -105,8 +105,14 @@ bool equal(Function* a, Function* b) {
     return false;
   }
 
-  if (a->debugLocations.empty() && b->debugLocations.empty() &&
-      a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
+  // TODO: We do not consider debug locations here. This is often what is
+  //       desired in optimized builds (e.g. if we are trying to fold two
+  //       pieces of code together, that benefit outweighs slightly inaccurate
+  //       debug info). If we find that non-optimizer locations call this in
+  //       ways that lead to degraded debug info, we could add an option to
+  //       control it.
+
+  if (a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
     // Nothing to compare; no differences.
     return true;
   }
@@ -121,11 +127,6 @@ bool equal(Function* a, Function* b) {
   assert(aList.list.size() == bList.list.size());
   for (Index i = 0; i < aList.list.size(); i++) {
     if (!compare(aList.list[i],
-                 bList.list[i],
-                 a->debugLocations,
-                 b->debugLocations,
-                 Function::DebugLocation()) ||
-        !compare(aList.list[i],
                  bList.list[i],
                  a->codeAnnotations,
                  b->codeAnnotations,
