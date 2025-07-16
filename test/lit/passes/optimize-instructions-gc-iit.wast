@@ -37,12 +37,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref none))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $child)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; TNH:      (func $ref-cast-iit (type $4) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
@@ -58,12 +53,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block (result (ref none))
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (local.get $child)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (unreachable)
-  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   (func $ref-cast-iit
