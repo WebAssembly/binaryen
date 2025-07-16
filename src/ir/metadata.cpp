@@ -111,6 +111,8 @@ bool equal(Function* a, Function* b) {
 bool equal(Expression* a, Expression* b, Function* aFunc, Function* bFunc) {
   assert(aFunc && bFunc);
 
+  // When optimizing, should we ignore debugLocations..? We are ok to lose
+  // those but not code annotations, then?
   if (aFunc->debugLocations.empty() && bFunc->debugLocations.empty() &&
       aFunc->codeAnnotations.empty() && bFunc->codeAnnotations.empty()) {
     // Nothing to compare; no differences.
