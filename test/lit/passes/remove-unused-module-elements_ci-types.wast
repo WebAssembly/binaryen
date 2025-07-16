@@ -372,3 +372,43 @@
  )
 )
 
+;; As above, but without table.init. We could optimize here, but do not yet -
+;; we would need to track table.* operations fully.
+(module
+ ;; CHECK:      (type $A (func))
+ (type $A (func))
+
+ ;; CHECK:      (table $table 22 funcref)
+ (table $table 22 funcref)
+
+ ;; CHECK:      (elem $later func $A)
+ (elem $later $A)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $A)
+ ;; CHECK-NEXT:  (elem.drop $later)
+ ;; CHECK-NEXT:  (call_indirect $table (type $A)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (call_indirect $table (type $A)
+   (i32.const 0)
+  )
+  ;; No table.init, so that elem is never written. We do use it so it doesn't
+  ;; vanish entirely.
+  (elem.drop $later)
+ )
+
+ ;; CHECK:      (func $A (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A (type $A)
+  ;; TODO: optimize this
+  (drop (i32.const 42))
+ )
+)
+
