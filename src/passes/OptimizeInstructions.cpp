@@ -3236,8 +3236,12 @@ private:
       }
     }
     {
-      // Sides are identical, fold
+      // If sides are identical, fold.
       Expression *ifTrue, *ifFalse, *c;
+      // Note we do not compare metadata here: This is a select, so both arms
+      // execute anyhow, and things like branch hints were already being run.
+      // After optimization, we will only run fewer things, and run no risk of
+      // running new bad things.
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
           ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
         auto value = effects(ifTrue);

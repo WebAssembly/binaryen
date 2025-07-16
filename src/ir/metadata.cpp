@@ -117,7 +117,7 @@ bool equal(Expression* a, Expression* b, Function* aFunc, Function* bFunc) {
   //       debug info). If we find that non-optimizer locations call this in
   //       ways that lead to degraded debug info, we could add an option to
   //       control it.
-  if (a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
+  if (aFunc->codeAnnotations.empty() && bFunc->codeAnnotations.empty()) {
     // Nothing to compare; no differences.
     return true;
   }
@@ -133,8 +133,8 @@ bool equal(Expression* a, Expression* b, Function* aFunc, Function* bFunc) {
   for (Index i = 0; i < aList.list.size(); i++) {
     if (!compare(aList.list[i],
                  bList.list[i],
-                 a->codeAnnotations,
-                 b->codeAnnotations,
+                 aFunc->codeAnnotations,
+                 bFunc->codeAnnotations,
                  Function::CodeAnnotation())) {
       return false;
     }
