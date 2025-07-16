@@ -1168,16 +1168,18 @@ struct OptimizeInstructions
   void visitIf(If* curr) {
     curr->condition = optimizeBoolean(curr->condition);
     if (curr->ifFalse) {
+      auto* func = getFunction();
       if (auto* unary = curr->condition->dynCast<Unary>()) {
         if (unary->op == EqZInt32) {
           // flip if-else arms to get rid of an eqz
           curr->condition = unary->value;
           std::swap(curr->ifTrue, curr->ifFalse);
-          BranchHints::flip(curr, getFunction());
+          BranchHints::flip(curr, func);
         }
       }
       if (curr->condition->type != Type::unreachable &&
-          ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
+          ExpressionAnalyzer::equalIncludingMetadata(
+            curr->ifTrue, curr->ifFalse, func)) {
         // The sides are identical, so fold. If we can replace the If with one
         // arm and there are no side effects in the condition, replace it. But
         // make sure not to change a concrete expression to an unreachable
@@ -3235,8 +3237,12 @@ private:
       }
     }
     {
-      // Sides are identical, fold
+      // If sides are identical, fold.
       Expression *ifTrue, *ifFalse, *c;
+      // Note we do not compare metadata here: This is a select, so both arms
+      // execute anyhow, and things like branch hints were already being run.
+      // After optimization, we will only run fewer things, and run no risk of
+      // running new bad things.
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
           ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
         auto value = effects(ifTrue);

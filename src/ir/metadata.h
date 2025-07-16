@@ -35,6 +35,10 @@ void copyBetweenFunctions(Expression* origin,
 // after all else is known equal).
 bool equal(Function* a, Function* b);
 
+// Check if two expressions are equal in metadata. They may or may not be from
+// the same function.
+bool equal(Expression* a, Expression* b, Function* aFunc, Function* bFunc);
+
 } // namespace wasm::metadata
 
 #endif // wasm_ir_metadata_h

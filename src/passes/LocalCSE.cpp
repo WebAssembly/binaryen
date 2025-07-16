@@ -157,6 +157,11 @@ struct HEComparer {
     if (a.digest != b.digest) {
       return false;
     }
+    // Note that we do not consider metadata here. That means we may replace two
+    // identical expressions with different metadata, say, different branch
+    // hints, but that is ok: we are only removing things from executing (by
+    // reusing the first computed value), so this will not cause new invalid
+    // branch hints to execute.
     return ExpressionAnalyzer::equal(a.expr, b.expr);
   }
 };
