@@ -249,8 +249,8 @@ struct CodeFolding
     // run the rest of the optimization mormally.
     auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
       // If other is a suffix of the block, wrap it in a block.
-      if (block->list.empty() ||
-          !ExpressionAnalyzer::equalIncludingMetadata(other, block->list.back(), getFunction())) {
+      if (block->list.empty() || !ExpressionAnalyzer::equalIncludingMetadata(
+                                   other, block->list.back(), getFunction())) {
         return nullptr;
       }
       // Do it, assign to the out param `other`, and return the block.
@@ -395,7 +395,8 @@ private:
       Index tail = 1;
       for (; tail < tails.size(); ++tail) {
         auto* other = getMergeable(tails[tail], num);
-        if (!other || !ExpressionAnalyzer::equalIncludingMetadata(item, other, getFunction())) {
+        if (!other || !ExpressionAnalyzer::equalIncludingMetadata(
+                        item, other, getFunction())) {
           // Other tail too short or has a difference.
           break;
         }
@@ -673,7 +674,8 @@ private:
                            [&](Expression* item) {
                              if (item ==
                                    first || // don't bother comparing the first
-                                 ExpressionAnalyzer::equalIncludingMetadata(item, first, getFunction())) {
+                                 ExpressionAnalyzer::equalIncludingMetadata(
+                                   item, first, getFunction())) {
                                // equal, keep it
                                return false;
                              } else {
@@ -691,8 +693,9 @@ private:
                                          explore.end(),
                                          [&](Tail& tail) {
                                            auto* item = getItem(tail, num);
-                                           return !ExpressionAnalyzer::equalIncludingMetadata(
-                                             item, correct, getFunction());
+                                           return !ExpressionAnalyzer::
+                                             equalIncludingMetadata(
+                                               item, correct, getFunction());
                                          }),
                           explore.end());
             // try to optimize this deeper tail. if we succeed, then stop here,

@@ -72,7 +72,10 @@ struct ExpressionAnalyzer {
 
   // Compare two expressions and their metadata as well. If just the first
   // function is provided, we consider them both to arrive from the same one.
-  static bool equalIncludingMetadata(Expression* left, Expression* right, Function* leftFunc=nullptr, Function* rightFunc=nullptr) {
+  static bool equalIncludingMetadata(Expression* left,
+                                     Expression* right,
+                                     Function* leftFunc = nullptr,
+                                     Function* rightFunc = nullptr) {
     if (!equal(left, right)) {
       return false;
     }
