@@ -325,3 +325,50 @@
   )
  )
 )
+
+;; Check that functions applied using table.init are handled properly. The
+;; function $A will be called after the table.init, so we cannot empty it or
+;; remove it.
+(module
+ ;; CHECK:      (type $A (func))
+ (type $A (func))
+
+ ;; CHECK:      (table $table 22 funcref)
+ (table $table 22 funcref)
+
+ ;; CHECK:      (elem $later func $A)
+ (elem $later $A)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $A)
+ ;; CHECK-NEXT:  (table.init $table $later
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $table (type $A)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (table.init $table $later
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 1)
+  )
+  (call_indirect $table (type $A)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $A (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A (type $A)
+  (drop (i32.const 42))
+ )
+)
+
