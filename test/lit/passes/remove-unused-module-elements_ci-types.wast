@@ -125,14 +125,19 @@
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $C3 (param $p f32)
-  ;; In closed world we can empty this out, as while a segment references it,
-  ;; no call_indirect exists.
-  (drop (i32.const 90))
+  ;; We can empty this out, as while a segment references it, no call_indirect
+  ;; exists. We can also remove the thing it calls.
+  (drop (call $C3-called))
+ )
+
+ (func $C3-called (result i32)
+  ;; The only caller of this is emptied out, so we don't need it.
+  (i32.const 100)
  )
 
  (func $A2 (type $A)
   ;; No viable uses exist of this, it is in the wrong table.
-  (drop (i32.const 100))
+  (drop (i32.const 110))
  )
 )
 
@@ -387,10 +392,10 @@
  ;; CHECK:      (export "export" (func $export))
 
  ;; CHECK:      (func $export (type $A)
- ;; CHECK-NEXT:  (elem.drop $later)
  ;; CHECK-NEXT:  (call_indirect $table (type $A)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (elem.drop $later)
  ;; CHECK-NEXT: )
  (func $export (export "export")
   (call_indirect $table (type $A)
