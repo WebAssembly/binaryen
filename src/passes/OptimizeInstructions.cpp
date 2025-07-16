@@ -1168,16 +1168,17 @@ struct OptimizeInstructions
   void visitIf(If* curr) {
     curr->condition = optimizeBoolean(curr->condition);
     if (curr->ifFalse) {
+      auto* func = getFunction();
       if (auto* unary = curr->condition->dynCast<Unary>()) {
         if (unary->op == EqZInt32) {
           // flip if-else arms to get rid of an eqz
           curr->condition = unary->value;
           std::swap(curr->ifTrue, curr->ifFalse);
-          BranchHints::flip(curr, getFunction());
+          BranchHints::flip(curr, func);
         }
       }
       if (curr->condition->type != Type::unreachable &&
-          ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) { // META!
+          ExpressionAnalyzer::equalIncludingMetadata(curr->ifTrue, curr->ifFalse, func)) {
         // The sides are identical, so fold. If we can replace the If with one
         // arm and there are no side effects in the condition, replace it. But
         // make sure not to change a concrete expression to an unreachable

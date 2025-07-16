@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --optimize-instructions -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $conditionals (type $0) (param $x i32) (result i32)
+ ;; CHECK:      (func $conditionals (type $1) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (local.get $x)
@@ -27,6 +27,130 @@
    (else
     (i32.const 1337)
    )
+  )
+ )
+
+ ;; CHECK:      (func $no-merge (type $0) (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
+ ;; CHECK-NEXT:    (if
+ ;; CHECK-NEXT:     (local.get $y)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:    (if
+ ;; CHECK-NEXT:     (local.get $y)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $no-merge (param $x i32) (param $y i32)
+  ;; Do not merge if arms if metadata differs (perhaps the hint is intentionally
+  ;; different, reflecting different runtime behavior).
+  (if
+   (local.get $x)
+   (then
+    (@metadata.code.branch_hint "\00")
+    (if
+     (local.get $y)
+     (then
+      (unreachable)
+     )
+    )
+   )
+   (else
+    (@metadata.code.branch_hint "\01")
+    (if
+     (local.get $y)
+     (then
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $yes-merge (type $0) (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $yes-merge (param $x i32) (param $y i32)
+  ;; As above, but now the hints match, so we merge.
+  (if
+   (local.get $x)
+   (then
+    (@metadata.code.branch_hint "\01")
+    (if
+     (local.get $y)
+     (then
+      (unreachable)
+     )
+    )
+   )
+   (else
+    (@metadata.code.branch_hint "\01")
+    (if
+     (local.get $y)
+     (then
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $always-merge-select (type $2) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $always-merge-select (param $x i32) (param $y i32) (result i32)
+  ;; A select with different metadata is still merged: the code was executed
+  ;; anyhow, so it's fine if we execute just one of the two (we pick the first,
+  ;; arbitrarily).
+  (select
+   (@metadata.code.branch_hint "\00")
+   (if (result i32)
+    (local.get $x)
+    (then
+     (i32.const 10)
+    )
+    (else
+     (i32.const 20)
+    )
+   )
+   (@metadata.code.branch_hint "\01")
+   (if (result i32)
+    (local.get $x)
+    (then
+     (i32.const 10)
+    )
+    (else
+     (i32.const 20)
+    )
+   )
+   (local.get $y)
   )
  )
 )

@@ -18,6 +18,7 @@
 #define wasm_ir_utils_h
 
 #include "ir/branch-utils.h"
+#include "ir/metadata.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -67,6 +68,18 @@ struct ExpressionAnalyzer {
   static bool equal(Expression* left, Expression* right) {
     auto comparer = [](Expression* left, Expression* right) { return false; };
     return flexibleEqual(left, right, comparer);
+  }
+
+  // Compare two expressions and their metadata as well. If just the first
+  // function is provided, we consider them both to arrive from the same one.
+  static bool equalIncludingMetadata(Expression* left, Expression* right, Function* leftFunc=nullptr, Function* rightFunc=nullptr) {
+    if (!equal(left, right)) {
+      return false;
+    }
+    if (!rightFunc) {
+      rightFunc = leftFunc;
+    }
+    return metadata::equal(left, right, leftFunc, rightFunc);
   }
 
   // A shallow comparison, ignoring child nodes.

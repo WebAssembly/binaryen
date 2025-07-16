@@ -105,14 +105,20 @@ bool equal(Function* a, Function* b) {
     return false;
   }
 
-  if (a->debugLocations.empty() && b->debugLocations.empty() &&
-      a->codeAnnotations.empty() && b->codeAnnotations.empty()) {
+  return equal(a->body, b->body, a, b);
+}
+
+bool equal(Expression* a, Expression* b, Function* aFunc, Function* bFunc) {
+  assert(aFunc && bFunc);
+
+  if (aFunc->debugLocations.empty() && bFunc->debugLocations.empty() &&
+      aFunc->codeAnnotations.empty() && bFunc->codeAnnotations.empty()) {
     // Nothing to compare; no differences.
     return true;
   }
 
-  Serializer aList(a->body);
-  Serializer bList(b->body);
+  Serializer aList(a);
+  Serializer bList(b);
 
   if (aList.list.size() != bList.list.size()) {
     return false;
@@ -122,13 +128,13 @@ bool equal(Function* a, Function* b) {
   for (Index i = 0; i < aList.list.size(); i++) {
     if (!compare(aList.list[i],
                  bList.list[i],
-                 a->debugLocations,
-                 b->debugLocations,
+                 aFunc->debugLocations,
+                 bFunc->debugLocations,
                  Function::DebugLocation()) ||
         !compare(aList.list[i],
                  bList.list[i],
-                 a->codeAnnotations,
-                 b->codeAnnotations,
+                 aFunc->codeAnnotations,
+                 bFunc->codeAnnotations,
                  Function::CodeAnnotation())) {
       return false;
     }
