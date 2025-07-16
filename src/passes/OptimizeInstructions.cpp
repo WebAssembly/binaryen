@@ -3239,7 +3239,7 @@ private:
       // Sides are identical, fold
       Expression *ifTrue, *ifFalse, *c;
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
-          ExpressionAnalyzer::equal(ifTrue, ifFalse)) { // meta!
+          ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
         auto value = effects(ifTrue);
         if (value.hasSideEffects()) {
           // At best we don't need the condition, but need to execute the
