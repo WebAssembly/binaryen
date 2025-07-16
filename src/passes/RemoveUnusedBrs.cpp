@@ -32,6 +32,7 @@
 #include "pass.h"
 #include "support/small_set.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -874,180 +875,249 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return builder.makeRefCast(expr, type);
         };
 
-        if (curr->op == BrOnNull) {
-          if (refType.isNull()) {
-            // The branch will definitely be taken.
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                                builder.makeBreak(curr->name)));
-            worked = true;
-            return;
+        // When we optimize out a cast, we still need the ref value to either
+        // send on the optimized branch or return from the current expression.
+        // When we have a descriptor cast, the ref value needs to be moved
+        // across the descriptor value, which might have side effects. If so, we
+        // need to use a scratch local.
+        auto getRefValue = [&]() -> Expression* {
+          if (curr->desc) {
+            // Preserve the trap on a null descriptor.
+            if (curr->desc->type.isNullable()) {
+              curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
+            }
+            Block* ref =
+              ChildLocalizer(curr, getFunction(), *getModule(), passOptions)
+                .getChildrenReplacement();
+            ref->list.push_back(curr->ref);
+            ref->type = curr->ref->type;
+            return ref;
           }
-          if (refType.isNonNullable()) {
-            // The branch will definitely not be taken.
-            replaceCurrent(maybeCast(curr->ref, curr->type));
-            worked = true;
-            return;
-          }
-          return;
-        }
+          return curr->ref;
+        };
 
-        if (curr->op == BrOnNonNull) {
-          if (refType.isNull()) {
-            // Definitely not taken.
-            replaceCurrent(builder.makeDrop(curr->ref));
-            worked = true;
+        switch (curr->op) {
+          case BrOnNull:
+            if (refType.isNull()) {
+              // The branch will definitely be taken.
+              replaceCurrent(builder.makeSequence(
+                builder.makeDrop(curr->ref), builder.makeBreak(curr->name)));
+              worked = true;
+              return;
+            }
+            if (refType.isNonNullable()) {
+              // The branch will definitely not be taken.
+              replaceCurrent(maybeCast(curr->ref, curr->type));
+              worked = true;
+              return;
+            }
             return;
-          }
-          if (refType.isNonNullable()) {
-            // Definitely taken.
-            replaceCurrent(builder.makeBreak(
-              curr->name, maybeCast(curr->ref, curr->getSentType())));
-            worked = true;
+          case BrOnNonNull:
+            if (refType.isNull()) {
+              // Definitely not taken.
+              replaceCurrent(builder.makeDrop(curr->ref));
+              worked = true;
+              return;
+            }
+            if (refType.isNonNullable()) {
+              // Definitely taken.
+              replaceCurrent(builder.makeBreak(
+                curr->name, maybeCast(curr->ref, curr->getSentType())));
+              worked = true;
+              return;
+            }
             return;
-          }
-          return;
-        }
+          case BrOnCast:
+          case BrOnCastFail:
+          case BrOnCastDesc:
+          case BrOnCastDescFail: {
+            bool onFail =
+              curr->op == BrOnCastFail || curr->op == BrOnCastDescFail;
+            bool isDesc =
+              curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail;
 
-        // Improve the cast target type as much as possible given what we know
-        // about the input. Unlike in BrOn::finalize(), we consider type
-        // information from all the fallthrough values here. We can continue to
-        // further optimizations after this, and those optimizations might even
-        // benefit from this improvement.
-        auto glb = Type::getGreatestLowerBound(curr->castType, refType);
-        if (!curr->castType.isExact()) {
-          // When custom descriptors is not enabled, nontrivial exact casts are
-          // not allowed.
-          glb = glb.withInexactIfNoCustomDescs(getModule()->features);
-        }
-        if (curr->op == BrOnCastFail) {
-          // BrOnCastFail sends the input type, with adjusted nullability. The
-          // input heap type makes sense for the branch target, and we will not
-          // change it anyhow, but we need to be careful with nullability: if
-          // the cast type was nullable, then we were sending a non-nullable
-          // value to the branch, and if we refined the cast type to non-
-          // nullable, we would no longer be doing that. In other words, we must
-          // not refine the nullability, as that would *un*refine the send type.
-          if (curr->castType.isNullable() && glb.isNonNullable()) {
-            glb = glb.with(Nullable);
-          }
-        }
-        if (glb != Type::unreachable && glb != curr->castType) {
-          curr->castType = glb;
-          auto oldType = curr->type;
-          curr->finalize();
-          worked = true;
+            // Improve the cast target type as much as possible given what we
+            // know about the input. Unlike in BrOn::finalize(), we consider
+            // type information from all the fallthrough values here. We can
+            // continue to further optimizations after this, and those
+            // optimizations might even benefit from this improvement.
+            auto improvedType = curr->castType;
+            if (!isDesc) {
+              improvedType = Type::getGreatestLowerBound(improvedType, refType);
+            } else {
+              // For descriptor casts, the target heap type is controlled by the
+              // descriptor operand, but we can still improve nullability.
+              if (improvedType.isNullable() && refType.isNonNullable()) {
+                improvedType = improvedType.with(NonNullable);
+              }
+            }
+            if (!curr->castType.isExact()) {
+              // When custom descriptors is not enabled, nontrivial exact casts
+              // are not allowed.
+              improvedType =
+                improvedType.withInexactIfNoCustomDescs(getModule()->features);
+            }
+            if (onFail) {
+              // BrOnCastFail sends the input type, with adjusted nullability.
+              // The input heap type makes sense for the branch target, and we
+              // will not change it anyhow, but we need to be careful with
+              // nullability: if the cast type was nullable, then we were
+              // sending a non-nullable value to the branch, and if we refined
+              // the cast type to non- nullable, we would no longer be doing
+              // that. In other words, we must not refine the nullability, as
+              // that would *un*refine the send type.
+              // TODO: Consider allowing this change if the branch target
+              // expects a nullable type anyway.
+              if (curr->castType.isNullable() && improvedType.isNonNullable()) {
+                improvedType = improvedType.with(Nullable);
+              }
+            }
+            if (improvedType != Type::unreachable &&
+                improvedType != curr->castType) {
+              curr->castType = improvedType;
+              auto oldType = curr->type;
+              curr->finalize();
+              worked = true;
 
-          // We refined the castType, which may *un*-refine the BrOn itself.
-          // Imagine the castType was nullable before, then nulls would go on
-          // the branch, and so the BrOn could only flow out a non-nullable
-          // value, and that was its type. If we refine the castType to be
-          // non-nullable then nulls no longer go through, making the BrOn
-          // itself nullable. This should not normally happen, but can occur
-          // because we look at the fallthrough of the ref:
-          //
-          //   (br_on_cast
-          //     (local.tee $unrefined
-          //       (refined
-          //
-          // That is, we may see a more refined type for our GLB computation
-          // than the wasm type system does, if a local.tee or such ends up
-          // unrefining the type.
-          //
-          // To check for this and fix it, see if we need a cast in order to be
-          // a subtype of the old type.
-          auto* rep = maybeCast(curr, oldType);
-          if (rep != curr) {
-            replaceCurrent(rep);
-            // Exit after doing so, leaving further work for other cycles.
-            return;
-          }
-        }
+              // We refined the castType, which may *un*-refine the BrOn itself.
+              // Imagine the castType was nullable before, then nulls would go
+              // on the branch, and so the BrOn could only flow out a
+              // non-nullable value, and that was its type. If we refine the
+              // castType to be non-nullable then nulls no longer go through,
+              // making the BrOn itself nullable. This should not normally
+              // happen, but can occur because we look at the fallthrough of the
+              // ref:
+              //
+              //   (br_on_cast
+              //     (local.tee $unrefined
+              //       (refined
+              //
+              // That is, we may see a more refined type for our GLB computation
+              // than the wasm type system does, if a local.tee or such ends up
+              // unrefining the type.
+              //
+              // To check for this and fix it, see if we need a cast in order to
+              // be a subtype of the old type.
+              auto* rep = maybeCast(curr, oldType);
+              if (rep != curr) {
+                replaceCurrent(rep);
+                // Exit after doing so, leaving further work for other cycles.
+                return;
+              }
+            }
 
-        // Depending on what we know about the cast results, we may be able to
-        // optimize.
-        auto result = GCTypeUtils::evaluateCastCheck(refType, curr->castType);
-        if (curr->op == BrOnCastFail) {
-          result = GCTypeUtils::flipEvaluationResult(result);
-        }
+            // Depending on what we know about the cast results, we may be able
+            // to optimize.
+            auto result =
+              GCTypeUtils::evaluateCastCheck(refType, curr->castType);
 
-        switch (result) {
-          case GCTypeUtils::Unknown:
-            // Anything could happen, so we cannot optimize.
-            return;
-          case GCTypeUtils::Success: {
-            replaceCurrent(builder.makeBreak(
-              curr->name, maybeCast(curr->ref, curr->getSentType())));
-            worked = true;
-            return;
-          }
-          case GCTypeUtils::Failure: {
-            replaceCurrent(maybeCast(curr->ref, curr->type));
-            worked = true;
-            return;
-          }
-          case GCTypeUtils::SuccessOnlyIfNull: {
-            // TODO: optimize this case using the following replacement, which
-            // avoids using any scratch locals and only does a single null
-            // check, but does require generating a fresh label:
-            //
-            //   (br_on_cast $l (ref null $X) (ref null $Y)
-            //     (...)
-            //   )
-            //     =>
-            //   (block $l' (result (ref $X))
-            //     (br_on_non_null $l' ;; reuses `curr`
-            //       (...)
-            //     )
-            //     (br $l
-            //       (ref.null bot<X>)
-            //     )
-            //   )
-            return;
-          }
-          case GCTypeUtils::SuccessOnlyIfNonNull: {
-            // Perform this replacement:
-            //
-            //   (br_on_cast $l (ref null $X') (ref $X))
-            //     (...)
-            //   )
-            //     =>
-            //   (block (result (ref bot<X>))
-            //     (br_on_non_null $l ;; reuses `curr`
-            //       (...)
-            //     (ref.null bot<X>)
-            //   )
-            //
-            // A RefCast is added in some cases, but this is still generally
-            // worth doing as the BrOnNonNull and the appended null may end up
-            // optimized with surrounding code.
-            auto* casted =
-              maybeCast(curr->ref, curr->getSentType().with(Nullable));
-            curr->ref = casted;
-            curr->op = BrOnNonNull;
-            curr->castType = Type::none;
-            curr->type = Type::none;
+            if (isDesc) {
+              // Knowing that the types work out is insufficient to know that a
+              // descriptor cast will succeed. We would need to know that the
+              // descriptor values match as well.
+              switch (result) {
+                case GCTypeUtils::Success:
+                case GCTypeUtils::SuccessOnlyIfNonNull:
+                  // We cannot optimize.
+                  return;
+                case GCTypeUtils::Unknown:
+                case GCTypeUtils::Failure:
+                case GCTypeUtils::Unreachable:
+                case GCTypeUtils::SuccessOnlyIfNull:
+                  break;
+              }
+            }
 
-            assert(curr->ref->type.isRef());
-            auto* refNull = builder.makeRefNull(curr->ref->type.getHeapType());
-            replaceCurrent(builder.makeBlock({curr, refNull}, refNull->type));
-            worked = true;
-            return;
-          }
-          case GCTypeUtils::Unreachable: {
-            // The cast is never executed, possibly because its input type is
-            // uninhabitable. Replace it with unreachable.
-            auto* drop = builder.makeDrop(curr->ref);
-            auto* unreachable = ExpressionManipulator::unreachable(curr);
-            replaceCurrent(builder.makeBlock({drop, unreachable}));
-            worked = true;
-            return;
+            if (onFail) {
+              result = GCTypeUtils::flipEvaluationResult(result);
+            }
+
+            switch (result) {
+              case GCTypeUtils::Unknown:
+                // Anything could happen, so we cannot optimize.
+                return;
+              case GCTypeUtils::Success: {
+                replaceCurrent(builder.makeBreak(
+                  curr->name, maybeCast(getRefValue(), curr->getSentType())));
+                worked = true;
+                return;
+              }
+              case GCTypeUtils::Failure: {
+                replaceCurrent(maybeCast(getRefValue(), curr->type));
+                worked = true;
+                return;
+              }
+              case GCTypeUtils::SuccessOnlyIfNull: {
+                // TODO: optimize this case using the following replacement,
+                // which avoids using any scratch locals and only does a single
+                // null check, but does require generating a fresh label:
+                //
+                //   (br_on_cast $l (ref null $X) (ref null $Y)
+                //     (...)
+                //   )
+                //     =>
+                //   (block $l' (result (ref $X))
+                //     (br_on_non_null $l' ;; reuses `curr`
+                //       (...)
+                //     )
+                //     (br $l
+                //       (ref.null bot<X>)
+                //     )
+                //   )
+                return;
+              }
+              case GCTypeUtils::SuccessOnlyIfNonNull: {
+                // Perform this replacement:
+                //
+                //   (br_on_cast $l (ref null $X') (ref $X))
+                //     (...)
+                //   )
+                //     =>
+                //   (block (result (ref bot<X>))
+                //     (br_on_non_null $l ;; reuses `curr`
+                //       (...)
+                //     (ref.null bot<X>)
+                //   )
+                //
+                // A RefCast is added in some cases, but this is still generally
+                // worth doing as the BrOnNonNull and the appended null may end
+                // up optimized with surrounding code.
+                auto* casted =
+                  maybeCast(getRefValue(), curr->getSentType().with(Nullable));
+                curr->ref = casted;
+                curr->desc = nullptr;
+                curr->op = BrOnNonNull;
+                curr->castType = Type::none;
+                curr->type = Type::none;
+
+                assert(curr->ref->type.isRef());
+                auto* refNull =
+                  builder.makeRefNull(curr->ref->type.getHeapType());
+                replaceCurrent(
+                  builder.makeBlock({curr, refNull}, refNull->type));
+                worked = true;
+                return;
+              }
+              case GCTypeUtils::Unreachable: {
+                // The cast is never executed, possibly because its input type
+                // is uninhabitable. Replace it with unreachable.
+                replaceCurrent(
+                  getDroppedChildrenAndAppend(curr,
+                                              *getModule(),
+                                              passOptions,
+                                              builder.makeUnreachable(),
+                                              DropMode::IgnoreParentEffects));
+                worked = true;
+                return;
+              }
+            }
+            break;
           }
         }
       }
     } optimizer(getPassOptions());
 
-    optimizer.setModule(getModule());
-    optimizer.doWalkFunction(func);
+    optimizer.walkFunctionInModule(func, getModule());
 
     // If we removed any BrOn instructions, that might affect the reachability
     // of the things they used to break to, so update types.
