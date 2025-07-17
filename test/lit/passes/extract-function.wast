@@ -36,8 +36,6 @@
 
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (import "env" "other" (func $other))
-
   ;; CHECK:      (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo
