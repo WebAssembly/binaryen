@@ -104,20 +104,33 @@ struct J2CLItableMerging : public Pass {
         continue;
       }
 
+      if (typeNameInfo.fieldNames.empty()) {
+        continue;
+      }
+
+      // The vtable may either be the first field or the custom descriptor.
+      std::optional<HeapType> vtabletype;
+      std::optional<HeapType> itabletype;
       auto type = heapType.getStruct();
-      if (typeNameInfo.fieldNames.empty() ||
-          !typeNameInfo.fieldNames[0].equals("vtable")) {
-        continue;
-      }
-      if (typeNameInfo.fieldNames.size() < 1 ||
-          !typeNameInfo.fieldNames[1].equals("itable")) {
-        continue;
+      if (auto descriptor = heapType.getDescriptorType()) {
+        if (!typeNameInfo.fieldNames[0].equals("itable")) {
+          continue;
+        }
+        vtabletype = descriptor;
+        itabletype = type.fields[0].type.getHeapType();
+      } else {
+        if (!typeNameInfo.fieldNames[0].equals("vtable")) {
+          continue;
+        }
+        if (!typeNameInfo.fieldNames.count(1) ||
+            !typeNameInfo.fieldNames[1].equals("itable")) {
+          continue;
+        }
+        vtabletype = type.fields[0].type.getHeapType();
+        itabletype = type.fields[1].type.getHeapType();
       }
 
-      auto vtabletype = type.fields[0].type.getHeapType();
-      auto itabletype = type.fields[1].type.getHeapType();
-
-      auto structItableSize = itabletype.getStruct().fields.size();
+      auto structItableSize = itabletype->getStruct().fields.size();
 
       if (itableSize != 0 && itableSize != structItableSize) {
         Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
@@ -128,11 +141,11 @@ struct J2CLItableMerging : public Pass {
 
       // Add a new StructInfo to the list by value so that its memory gets
       // reclaimed automatically on exit.
-      structInfos.push_back(StructInfo{heapType, vtabletype, itabletype});
+      structInfos.push_back(StructInfo{heapType, *vtabletype, *itabletype});
       // Point to the StructInfo just added to the list to be able to look it
       // up by its vtable and itable types.
-      structInfoByVtableType[vtabletype] = &structInfos.back();
-      structInfoByITableType[itabletype] = &structInfos.back();
+      structInfoByVtableType[*vtabletype] = &structInfos.back();
+      structInfoByITableType[*itabletype] = &structInfos.back();
     }
 
     // 2. Collect the globals for vtables and itables.
@@ -275,16 +288,22 @@ struct J2CLItableMerging : public Pass {
         }
 
         // This is a struct.get that returns an itable type;
-        // Change to return the corresponding vtable type.
+        // Change to return the corresponding vtable type. If the vtable is a
+        // custom descriptor, change to a ref.get_desc instruction.
         Builder builder(*getModule());
-        replaceCurrent(builder.makeStructGet(
-          0,
-          curr->ref,
-          MemoryOrder::Unordered,
-          parent.structInfoByITableType[curr->type.getHeapType()]
-            ->javaClass.getStruct()
-            .fields[0]
-            .type));
+
+        HeapType& javaClass = parent.structInfoByITableType[curr->type.getHeapType()]->javaClass;
+        if (javaClass.getDescriptorType()) {
+          replaceCurrent(builder.makeRefGetDesc(curr->ref));
+        } else {
+          replaceCurrent(builder.makeStructGet(
+            0,
+            curr->ref,
+            MemoryOrder::Unordered,
+            javaClass.getStruct()
+              .fields[0]
+              .type));
+        }
       }
     };
 
