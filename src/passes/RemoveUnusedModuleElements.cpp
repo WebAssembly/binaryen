@@ -89,8 +89,10 @@ struct ReferenceFinder
     indirectCalls.push_back({table, type});
   }
 
-  // Generic visitor
-
+  // Generic visitor: Use all the things referenced. This handles e.g. using the
+  // table of a table.get. When we do not want such unconditional use, we
+  // override (e.g. for call_indirect, we don't want to mark the entire table as
+  // ued, see below).
   void visitExpression(Expression* curr) {
 #define DELEGATE_ID curr->_id
 
@@ -165,10 +167,6 @@ struct ReferenceFinder
     }
 
     noteCallRef(curr->target->type.getHeapType());
-  }
-
-  void visitTableGet(TableGet* curr) {
-    use({ModuleElementKind::Table, curr->table});
   }
 
   void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
