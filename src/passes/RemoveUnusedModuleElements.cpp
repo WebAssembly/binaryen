@@ -71,17 +71,18 @@ struct ReferenceFinder
                       UnifiedExpressionVisitor<ReferenceFinder>> {
   // Our findings are placed in these data structures, which the user of this
   // code can then process.
-  std::vector<ModuleElement> elements;
+  std::vector<ModuleElement> used, referenced;
   std::vector<HeapType> callRefTypes;
   std::vector<Name> refFuncs;
   std::vector<StructField> structFields;
   std::vector<IndirectCall> indirectCalls;
 
   // Add an item to the output data structures.
-  void note(ModuleElement element) { elements.push_back(element); }
+  void use(ModuleElement element) { used.push_back(element); }
+  void reference(ModuleElement element) { referenced.push_back(element); }
   void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
-  void note(StructField structField) { structFields.push_back(structField); }
+  void noteStructField(StructField structField) { structFields.push_back(structField); }
   void noteIndirectCall(Name table, HeapType type) {
     indirectCalls.push_back({table, type});
   }
@@ -108,7 +109,7 @@ struct ReferenceFinder
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
-    note({kind, cast->field});                                                 \
+    use({kind, cast->field});                                                 \
   }
 
 #include "wasm-delegations-fields.def"
@@ -117,7 +118,7 @@ struct ReferenceFinder
   // Specific visitors
 
   void visitCall(Call* curr) {
-    note({ModuleElementKind::Function, curr->target});
+    use({ModuleElementKind::Function, curr->target});
 
     if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
@@ -144,7 +145,9 @@ struct ReferenceFinder
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    note({ModuleElementKind::Table, curr->table});
+    // We refer to the table, but may not use all parts of it, that depends on
+    // the heap type we call with.
+    reference({ModuleElementKind::Table, curr->table});
     noteIndirectCall(curr->table, curr->heapType);
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
@@ -162,6 +165,10 @@ struct ReferenceFinder
     noteCallRef(curr->target->type.getHeapType());
   }
 
+  void visitTableGet(TableGet* curr) {
+    use({ModuleElementKind::Table, curr->table});
+  }
+
   void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
 
   void visitStructGet(StructGet* curr) {
@@ -169,7 +176,7 @@ struct ReferenceFinder
       return;
     }
     auto type = curr->ref->type.getHeapType();
-    note(StructField{type, curr->index});
+    noteStructField(StructField{type, curr->index});
   }
 };
 
@@ -247,21 +254,6 @@ struct Analyzer {
     // All roots are used.
     for (auto& element : roots) {
       use(element);
-
-      // Rooted tables are not only used, but we must assume all their contents
-      // are used. Unlike an internal table, where we can track indirect calls
-      // to see which items in the table may be called in practice, a rooted
-      // table is useable from the outside, and we can't track how it will be
-      // used from there.
-      auto [kind, value] = element;
-      if (kind == ModuleElementKind::Table) {
-        ModuleUtils::iterTableSegments(
-          *module, value, [&](ElementSegment* segment) {
-            if (!segment->data.empty()) {
-              use({ModuleElementKind::ElementSegment, segment->name});
-            }
-          });
-      }
     }
 
     // Main loop on both the module and the expression queues.
@@ -285,8 +277,11 @@ struct Analyzer {
       ReferenceFinder finder;
       finder.setModule(module);
       finder.visit(curr);
-      for (auto element : finder.elements) {
+      for (auto element : finder.used) {
         use(element);
+      }
+      for (auto element : finder.referenced) {
+        reference(element);
       }
       for (auto type : finder.callRefTypes) {
         useCallRefType(type);
@@ -471,9 +466,12 @@ struct Analyzer {
             });
           break;
         case ModuleElementKind::Table:
-          // Nothing to do here, this is handled elsewhere: indirect calls will
-          // use relevant things in the table as needed, and rooted tables
-          // (imported/exported) will have their contents used already.
+          ModuleUtils::iterTableSegments(
+            *module, value, [&](ElementSegment* segment) {
+              if (!segment->data.empty()) {
+                use({ModuleElementKind::ElementSegment, segment->name});
+              }
+            });
           break;
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
@@ -608,7 +606,10 @@ struct Analyzer {
     finder.setModule(module);
     finder.walk(curr);
 
-    for (auto element : finder.elements) {
+    for (auto element : finder.used) {
+      reference(element);
+    }
+    for (auto element : finder.referenced) {
       reference(element);
     }
 

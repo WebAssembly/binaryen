@@ -514,3 +514,35 @@
  )
 )
 
+;; Test that table.get ensures that elements are kept around, so that their
+;; data can be read.
+(module
+ ;; CHECK:      (type $0 (func (result i32)))
+
+ ;; CHECK:      (table $t 354 354 i31ref)
+ (table $t 354 354 i31ref)
+
+ ;; CHECK:      (elem $e (table $t) (i32.const 0) i31ref (item (ref.i31
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )))
+ (elem $e (table $t) (i32.const 0) i31ref (item (ref.i31
+  (i32.const 0)
+ )))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $0) (result i32)
+ ;; CHECK-NEXT:  (i31.get_u
+ ;; CHECK-NEXT:   (table.get $t
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (result i32)
+  (i31.get_u
+   (table.get $t
+    (i32.const 0)
+   )
+  )
+ )
+)
