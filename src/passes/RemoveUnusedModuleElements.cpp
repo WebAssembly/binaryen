@@ -357,17 +357,17 @@ struct Analyzer {
     // Any function in the table of that signature may be called.
     ModuleUtils::iterTableSegments(
       *module, table, [&](ElementSegment* segment) {
-        auto segmentNeeded = false;
+        auto segmentReferenced = false;
         for (auto* item : segment->data) {
           if (auto* refFunc = item->dynCast<RefFunc>()) {
             auto* func = module->getFunction(refFunc->func);
             if (HeapType::isSubType(func->type, type)) {
               use({ModuleElementKind::Function, refFunc->func});
-              segmentNeeded = true;
+              segmentReferenced = true;
             }
           }
         }
-        if (segmentNeeded) {
+        if (segmentReferenced) {
           reference({ModuleElementKind::ElementSegment, segment->name});
         }
       });
@@ -471,7 +471,9 @@ struct Analyzer {
             });
           break;
         case ModuleElementKind::Table:
-          // Nothing to do here, this is handled by indirectCalls.
+          // Nothing to do here, this is handled elsewhere: indirect calls will
+          // use relevant things in the table as needed, and rooted tables
+          // (imported/exported) will have their contents used already.
           break;
         case ModuleElementKind::DataSegment: {
           auto* segment = module->getDataSegment(value);
