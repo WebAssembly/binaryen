@@ -164,6 +164,15 @@
     )
     (i32.const 0)
   )
+
+  (func (export "cast-i31ref")
+    (drop
+      (ref.cast_desc (ref $super)
+        (ref.i31 (i32.const 0))
+        (struct.new $super.desc)
+      )
+    )
+  )
 )
 
 (assert_return (invoke "cast-success"))
@@ -178,6 +187,7 @@
 (assert_trap (invoke "cast-nn-fail-null-desc") "null descriptor")
 (assert_return (invoke "cast-branch-ref") (i32.const 1))
 (assert_return (invoke "cast-branch-desc") (i32.const 1))
+(assert_trap (invoke "cast-i31ref") "cast error")
 
 (assert_malformed
   ;; Cast type must be a reference.

@@ -218,3 +218,43 @@
  )
 )
 
+;; Source file location (debug info) does *not* prevent optimization. We
+;; prioritize optimization over debug info quality.
+(module
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (export "a" (func $a))
+
+ ;; CHECK:      (export "b" (func $a))
+
+ ;; CHECK:      (func $a (type $0) (param $x i32)
+ ;; CHECK-NEXT:  ;;@ src.cpp:10:1
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (export "a") (param $x i32)
+  ;; After we merge, this hint will remain in the single function.
+  ;;@ src.cpp:10:1
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+
+ (func $b (export "b") (param $x i32)
+  ;;@ src.cpp:20:1
+  (if
+   (local.get $x)
+   (then
+    (unreachable)
+   )
+  )
+ )
+)
+
