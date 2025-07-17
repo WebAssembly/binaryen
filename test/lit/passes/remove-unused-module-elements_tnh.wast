@@ -143,18 +143,21 @@
  (data $ok3 (i32.const 131071) "a")
 )
 
-;; Similar testing for element segments. One bad segment keeps itself alive
+;; Similar testing for element segments. One bad segment keeps it all alive
 ;; here.
 (module
  (table 10 10 funcref)
 
- (elem $ok1 (i32.const 0) $func)
- (elem $ok2 (i32.const 8) $func $func)
- (elem $ok3 (i32.const 9) $func)
  ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (table $0 10 10 funcref)
 
+ ;; CHECK:      (elem $ok1 (i32.const 0) $func)
+ (elem $ok1 (i32.const 0) $func)
+ ;; CHECK:      (elem $ok2 (i32.const 8) $func $func)
+ (elem $ok2 (i32.const 8) $func $func)
+ ;; CHECK:      (elem $ok3 (i32.const 9) $func)
+ (elem $ok3 (i32.const 9) $func)
  ;; CHECK:      (elem $bad (i32.const 10) $func)
  (elem $bad (i32.const 10) $func)
 
@@ -167,13 +170,16 @@
 (module
  (table 10 10 funcref)
 
- (elem $ok1 (i32.const 0) $func)
- (elem $ok2 (i32.const 8) $func $func)
- (elem $ok3 (i32.const 9) $func)
  ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (table $0 10 10 funcref)
 
+ ;; CHECK:      (elem $ok1 (i32.const 0) $func)
+ (elem $ok1 (i32.const 0) $func)
+ ;; CHECK:      (elem $ok2 (i32.const 8) $func $func)
+ (elem $ok2 (i32.const 8) $func $func)
+ ;; CHECK:      (elem $ok3 (i32.const 9) $func)
+ (elem $ok3 (i32.const 9) $func)
  ;; CHECK:      (elem $bad (i32.const 9) $func $func)
  (elem $bad (i32.const 9) $func $func)
 
