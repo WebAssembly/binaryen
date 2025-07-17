@@ -5671,7 +5671,7 @@ private:
       while (1) {
         // Ignore control flow structures (which are handled in MergeBlocks).
         if (!Properties::isControlFlowStructure(curr->ifTrue) &&
-            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
+            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) { // This too! XXX
           // TODO: consider the case with more than one child.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
