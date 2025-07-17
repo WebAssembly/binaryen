@@ -225,3 +225,14 @@
 
  (data $b (memory $big)   (i32.const 100000) "cd")
 )
+
+;; Add a module T_N_H cannot remove, as otherwise lit errors on not finding
+;; any check strings with that prefix.
+(module
+ ;; CHECK:      (memory $mem 2 2)
+ ;; T_N_H:      (memory $mem 2 2)
+ (memory $mem 2 2)
+ ;; CHECK:      (export "mem" (memory $mem))
+ ;; T_N_H:      (export "mem" (memory $mem))
+ (export "mem" (memory $mem))
+)
