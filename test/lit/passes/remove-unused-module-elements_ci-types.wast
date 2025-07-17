@@ -242,6 +242,103 @@
  )
 )
 
+;; As above, but the table is imported instead of exported. That still means it
+;; is externally accessible, so we must root its contents.
+(module
+ ;; CHECK:      (type $A (sub (func)))
+ (type $A (sub (func)))
+
+ ;; CHECK:      (type $B (sub (func (param f64))))
+ (type $B (sub (func (param f64))))
+
+ ;; CHECK:      (type $2 (func (param f32)))
+
+ ;; CHECK:      (type $3 (func))
+
+ ;; CHECK:      (type $subA (sub $A (func)))
+ (type $subA (sub $A (func)))
+
+ ;; CHECK:      (import "a" "b" (table $t1 60 60 funcref))
+ (import "a" "b" (table $t1 60 60 funcref))
+
+ ;; CHECK:      (elem $t1-withA (i32.const 0) $A1 $B1 $subA1 $C1)
+ (elem $t1-withA (table $t1) (i32.const 0) func $A1 $B1 $subA1 $C1)
+
+ ;; CHECK:      (elem $t1-noA (i32.const 10) $B2 $C2)
+ (elem $t1-noA (table $t1) (i32.const 10) func $B2 $C2)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $3)
+ ;; CHECK-NEXT:  (call_indirect $t1 (type $A)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  (call_indirect $t1 (type $A)
+   (i32.const -1)
+  )
+ )
+
+ ;; CHECK:      (func $A1 (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A1 (type $A)
+  (drop (i32.const 10))
+ )
+
+ ;; CHECK:      (func $B1 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B1 (type $B) (param $p f64)
+  ;; The table import causes this to be kept in full.
+  (drop (i32.const 20))
+ )
+
+ ;; CHECK:      (func $subA1 (type $subA)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $subA1 (type $subA)
+  (drop (i32.const 30))
+ )
+
+ ;; CHECK:      (func $C1 (type $2) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 40)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $C1 (param $p f32)
+  ;; The table import causes this to be kept in full.
+  (drop (i32.const 40))
+ )
+
+ ;; CHECK:      (func $B2 (type $B) (param $p f64)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 50)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B2 (type $B) (param $p f64)
+  ;; The table import causes this to be kept in full.
+  (drop (i32.const 50))
+ )
+
+ ;; CHECK:      (func $C2 (type $2) (param $p f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 60)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $C2 (param $p f32)
+  ;; The table import causes this to be kept in full.
+  (drop (i32.const 60))
+ )
+)
+
 ;; A chain of indirect calls: an export calls type $A, and a function of type $A
 ;; calls $B, and $B calls $C. All those are used, but a final function of type
 ;; $D is not, and can be cleared out.
