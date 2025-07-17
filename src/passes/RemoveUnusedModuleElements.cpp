@@ -82,7 +82,9 @@ struct ReferenceFinder
   void reference(ModuleElement element) { referenced.push_back(element); }
   void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
-  void noteStructField(StructField structField) { structFields.push_back(structField); }
+  void noteStructField(StructField structField) {
+    structFields.push_back(structField);
+  }
   void noteIndirectCall(Name table, HeapType type) {
     indirectCalls.push_back({table, type});
   }
@@ -109,7 +111,7 @@ struct ReferenceFinder
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
-    use({kind, cast->field});                                                 \
+    use({kind, cast->field});                                                  \
   }
 
 #include "wasm-delegations-fields.def"
