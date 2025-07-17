@@ -12,7 +12,7 @@
  ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (local.get $y)
  ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
@@ -21,7 +21,7 @@
  ;; CHECK-NEXT:   (else
  ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (local.get $y)
  ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
@@ -38,7 +38,7 @@
     (block (result f32)
      (@metadata.code.branch_hint "\00")
      (if
-      (local.get $x)
+      (local.get $y)
       (then
        (nop)
       )
@@ -50,7 +50,7 @@
     (block (result f32)
      (@metadata.code.branch_hint "\01")
      (if
-      (local.get $x)
+      (local.get $y)
       (then
        (nop)
       )
@@ -67,7 +67,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
@@ -82,7 +82,7 @@
     (block (result f32)
      (@metadata.code.branch_hint "\00")
      (if
-      (local.get $x)
+      (local.get $y)
       (then
        (nop)
       )
@@ -94,7 +94,7 @@
     (block (result f32)
      (@metadata.code.branch_hint "\00")
      (if
-      (local.get $x)
+      (local.get $y)
       (then
        (nop)
       )
