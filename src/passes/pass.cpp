@@ -761,6 +761,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       addIfNoDWARFIssues("cfp");
       addIfNoDWARFIssues("gsi");
       addIfNoDWARFIssues("abstract-type-refining");
+      addIfNoDWARFIssues("unsubtyping");
     }
   }
   // TODO: generate-global-effects here, right before function passes, then

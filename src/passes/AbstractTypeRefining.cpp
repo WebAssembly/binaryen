@@ -275,29 +275,26 @@ struct AbstractTypeRefining : public Pass {
       return;
     }
 
-    // A TypeMapper that handles the patterns we have in our mapping, where we
-    // end up mapping a type to a *subtype*. We need to properly create
-    // supertypes while doing this rewriting. For example, say we have this:
+    // Rewriting types can usually rewrite subtype relationships. For example,
+    // if we have this:
     //
-    //  A :> B :> C
+    //  C <: B <: A
     //
-    // Say we see B is never created, so we want to map B to its subtype C. C's
-    // supertype must now be A.
+    // And we see that B is never created, we would naively map B to its subtype
+    // C. But if we rewrote C's supertype, C would declare itself to be its own
+    // supertype, which is not allowed. We could fix this by walking up the
+    // supertype chain to find a supertype that is not being rewritten, but
+    // changing subtype relationships and keeping descriptor chains valid is
+    // nontrivial. Instead, avoid changing subtype relationships entirely: leave
+    // that for Unsubtyping.
     class AbstractTypeRefiningTypeMapper : public TypeMapper {
     public:
       AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
         : TypeMapper(wasm, mapping) {}
 
       std::optional<HeapType> getDeclaredSuperType(HeapType oldType) override {
-        auto super = oldType.getDeclaredSuperType();
-
-        // Go up the chain of supertypes, skipping things we are mapping away,
-        // as those things will not appear in the output. This skips B in the
-        // example above.
-        while (super && mapping.count(*super)) {
-          super = super->getDeclaredSuperType();
-        }
-        return super;
+        // We do not want to update subtype relationships.
+        return oldType.getDeclaredSuperType();
       }
     };
 
