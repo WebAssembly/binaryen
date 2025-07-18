@@ -133,8 +133,13 @@ struct TypeTree {
     // Remove sub from its old supertype if necessary.
     if (auto oldParentIndex = nodes[subIndex].parent;
         oldParentIndex != subIndex) {
+      // Move sub to the back of its parent's children and then pop it.
       auto& children = nodes[oldParentIndex].children;
+      auto& swapped = nodes[children.back()];
+      // Swap the indices in the parent's child vector.
       std::swap(children[nodes[subIndex].indexInParent], children.back());
+      // Swap the indices in the children.
+      std::swap(nodes[subIndex].indexInParent, swapped.indexInParent);
       children.pop_back();
     }
     nodes[subIndex].parent = superIndex;
