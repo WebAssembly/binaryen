@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
+#define UNSUBTYPING_DEBUG 0
+
 #include <cstddef>
+
+#if !UNSUBTYPING_DEBUG
 #include <unordered_map>
 #include <unordered_set>
+#endif
 
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
@@ -26,6 +31,10 @@
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
+
+#if UNSUBTYPING_DEBUG
+#include "support/insert_ordered.h"
+#endif
 
 // Compute and use the minimal subtype relation required to maintain module
 // validity and behavior. This minimal relation will be a subset of the original
@@ -105,6 +114,13 @@ namespace wasm {
 
 namespace {
 
+#if UNSUBTYPING_DEBUG
+template<typename K, typename V> using Map = InsertOrderedMap<K, V>;
+template<typename T> using Set = InsertOrderedSet<T>;
+#else
+template<typename K, typename V> using Map = std::unordered_map<K, V>;
+template<typename T> using Set = std::unordered_set<T>;
+#endif
 // A tree (or rather a forest) of types with the ability to query and set
 // supertypes in constant time and efficiently iterate over supertypes and
 // subtypes.
@@ -125,26 +141,30 @@ struct TypeTree {
   };
 
   std::vector<Node> nodes;
-  std::unordered_map<HeapType, Index> indices;
+  Map<HeapType, Index> indices;
 
   void setSupertype(HeapType sub, HeapType super) {
     auto subIndex = getNode(sub);
     auto superIndex = getNode(super);
+    auto& childNode = nodes[subIndex];
+    auto& parentNode = nodes[superIndex];
     // Remove sub from its old supertype if necessary.
-    if (auto oldParentIndex = nodes[subIndex].parent;
-        oldParentIndex != subIndex) {
+    if (auto oldParentIndex = childNode.parent; oldParentIndex != subIndex) {
+      auto& oldParentNode = nodes[oldParentIndex];
       // Move sub to the back of its parent's children and then pop it.
-      auto& children = nodes[oldParentIndex].children;
-      auto& swapped = nodes[children.back()];
+      auto& children = oldParentNode.children;
+      assert(children[childNode.indexInParent] == subIndex);
+      auto& swappedNode = nodes[children.back()];
+      assert(swappedNode.indexInParent == children.size() - 1);
       // Swap the indices in the parent's child vector.
-      std::swap(children[nodes[subIndex].indexInParent], children.back());
+      std::swap(children[childNode.indexInParent], children.back());
       // Swap the indices in the children.
-      std::swap(nodes[subIndex].indexInParent, swapped.indexInParent);
+      std::swap(childNode.indexInParent, swappedNode.indexInParent);
       children.pop_back();
     }
-    nodes[subIndex].parent = superIndex;
-    nodes[subIndex].indexInParent = nodes[superIndex].children.size();
-    nodes[superIndex].children.push_back(subIndex);
+    childNode.parent = superIndex;
+    childNode.indexInParent = parentNode.children.size();
+    parentNode.children.push_back(subIndex);
   }
 
   std::optional<HeapType> getSupertype(HeapType type) {
@@ -272,7 +292,7 @@ struct Unsubtyping : Pass {
   TypeTree types;
 
   // Map from cast source types to their destinations.
-  std::unordered_map<HeapType, std::vector<HeapType>> casts;
+  Map<HeapType, std::vector<HeapType>> casts;
 
   void run(Module* wasm) override {
     if (!wasm->features.hasGC()) {
@@ -337,10 +357,10 @@ struct Unsubtyping : Pass {
   void analyzeModule(Module& wasm) {
     struct Info {
       // (source, target) pairs for casts.
-      std::unordered_set<std::pair<HeapType, HeapType>> casts;
+      Set<std::pair<HeapType, HeapType>> casts;
 
       // Observed (sub, super) subtype constraints.
-      std::unordered_set<std::pair<HeapType, HeapType>> subtypings;
+      Set<std::pair<HeapType, HeapType>> subtypings;
     };
 
     struct Collector
