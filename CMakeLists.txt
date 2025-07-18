@@ -401,6 +401,8 @@ if(MSVC)
   add_compile_flag("/WX-")
   add_compile_flag("/D_CRT_SECURE_NO_WARNINGS")
   add_compile_flag("/D_SCL_SECURE_NO_WARNINGS")
+  # add warnings specifically to non exhaustive switch on enums
+  add_compile_flag("/w14062")
 
   if(RUN_STATIC_ANALYZER)
     add_definitions(/analyze)
