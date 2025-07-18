@@ -284,8 +284,9 @@ struct AbstractTypeRefining : public Pass {
     // C. But if we rewrote C's supertype, C would declare itself to be its own
     // supertype, which is not allowed. We could fix this by walking up the
     // supertype chain to find a supertype that is not being rewritten, but
-    // changing subtype relationships and keep descriptor chains valid is
-    // nontrivial. Instead, avoid changing subtype relationships entirely.
+    // changing subtype relationships and keeping descriptor chains valid is
+    // nontrivial. Instead, avoid changing subtype relationships entirely: leave
+    // that for Unsubtyping.
     class AbstractTypeRefiningTypeMapper : public TypeMapper {
     public:
       AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
