@@ -9,7 +9,7 @@
 ;; functions in those segments (we refer to them, but can empty out their
 ;; contents). Specifically:
 ;;
-;;  * elem $t1-withA contains $A, so it keeps alive func $A and $subA1, and
+;;  * elem $t1-withA contains $A, so it keeps alive func $A1 and $subA1, and
 ;;    emptied stubs for $B1 and $C1.
 ;;  * elem $t1-noA has no $A or a subtype, so the segment is removed entirely.
 ;;  * elem $t1-withSubA has a subtype of $A, so it is similar to $t1-withA.
