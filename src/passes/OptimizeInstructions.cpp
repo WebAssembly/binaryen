@@ -1188,8 +1188,7 @@ struct OptimizeInstructions
       // metadata when trying to fold code together, preferring certain
       // optimization over possible benefits of profiling data.
       if (!neverFold && curr->condition->type != Type::unreachable &&
-          ExpressionAnalyzer::equal(
-            curr->ifTrue, curr->ifFalse, func)) {
+          ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse, func)) {
         // The sides are identical, so fold. If we can replace the If with one
         // arm and there are no side effects in the condition, replace it. But
         // make sure not to change a concrete expression to an unreachable
