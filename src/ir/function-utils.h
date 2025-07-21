@@ -17,7 +17,6 @@
 #ifndef wasm_ir_function_h
 #define wasm_ir_function_h
 
-#include "ir/metadata.h"
 #include "ir/utils.h"
 #include "wasm.h"
 
@@ -38,9 +37,10 @@ inline bool equal(Function* left, Function* right) {
       return false;
     }
   }
-  if (!metadata::equal(left, right)) {
-    return false;
-  }
+  // We could in principle compare metadata here, but intentionally do not, as
+  // for optimization purposes we do want to e.g. merge functions that differ
+  // only in metadata (following LLVM's example). If we have a non-optimization
+  // reason for comparing metadata here then we could add a flag for it.
   if (left->imported() && right->imported()) {
     return true;
   }
