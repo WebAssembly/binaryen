@@ -38,3 +38,37 @@
     )
   )
 )
+
+(module
+  ;; Same as above, but now we should see references to $A.desc and $B.desc
+  ;; optimized to nullref because they are not instantiated. Similarly, $A is
+  ;; optimized to $B with TNH.
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $A (sub (descriptor $A.desc (struct (field (ref null $B)) (field (ref null $B))))))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $A (sub (descriptor $A.desc (struct (field (ref null $A)) (field (ref null $B))))))
+    (type $A (sub (descriptor $A.desc (struct (field (ref null $A) (ref null $B))))))
+    ;; YESTNH:       (type $A.desc (sub (describes $A (struct (field nullref) (field nullref)))))
+    ;; NO_TNH:       (type $A.desc (sub (describes $A (struct (field nullref) (field nullref)))))
+    (type $A.desc (sub (describes $A (struct (field (ref null $A.desc) (ref null $B.desc))))))
+    ;; YESTNH:       (type $B (sub $A (descriptor $B.desc (struct (field (ref null $B)) (field (ref null $B))))))
+    ;; NO_TNH:       (type $B (sub $A (descriptor $B.desc (struct (field (ref null $A)) (field (ref null $B))))))
+    (type $B (sub $A (descriptor $B.desc (struct (field (ref null $A) (ref null $B))))))
+    ;; YESTNH:       (type $B.desc (sub $A.desc (describes $B (struct (field nullref) (field nullref)))))
+    ;; NO_TNH:       (type $B.desc (sub $A.desc (describes $B (struct (field nullref) (field nullref)))))
+    (type $B.desc (sub $A.desc (describes $B (struct (field (ref null $A.desc) (ref null $B.desc))))))
+  )
+
+  ;; YESTNH:      (global $g (ref (exact $B)) (struct.new_default $B
+  ;; YESTNH-NEXT:  (ref.null none)
+  ;; YESTNH-NEXT: ))
+  ;; NO_TNH:      (global $g (ref (exact $B)) (struct.new_default $B
+  ;; NO_TNH-NEXT:  (ref.null none)
+  ;; NO_TNH-NEXT: ))
+  (global $g (ref (exact $B))
+    (struct.new_default $B
+      (ref.null none)
+    )
+  )
+)
