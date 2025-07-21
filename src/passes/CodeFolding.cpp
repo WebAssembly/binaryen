@@ -249,6 +249,10 @@ struct CodeFolding
     // run the rest of the optimization mormally.
     auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
       // If other is a suffix of the block, wrap it in a block.
+      //
+      // Note that we do not consider metadata here. Like LLVM, we ignore
+      // metadata when trying to fold code together, preferring certain
+      // optimization over possible benefits of profiling data.
       if (block->list.empty() ||
           !ExpressionAnalyzer::equal(other, block->list.back())) {
         return nullptr;

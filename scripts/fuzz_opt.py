@@ -1927,11 +1927,6 @@ class BranchHintPreservation(TestCaseHandler):
             de_instrumented,
             '-o', opted,
             '-g',
-            # Do not unconditionalize code: if a branch hint does not run, but
-            # we start to run it all the time, it may have been a wrong hint
-            # that will show up as a false positive here (as it breaks our
-            # assumption that only valid branch hints remained in the module).
-            '--pass-arg=remove-unused-brs-never-unconditionalize',
             # Some passes that can unconditionalize code can just be disabled,
             # as they do not modify ifs or brs:
             # LICM moves code out of loops, possibly past a trap that would have
@@ -1939,6 +1934,19 @@ class BranchHintPreservation(TestCaseHandler):
             '--skip-pass=licm',
             # HeapStoreOptimization moves struct.sets closer to struct.news.
             '--skip-pass=heap-store-optimization',
+            # CodeFolding and DuplicateFunctionElimination merge code, keeping
+            # a random branch hint from the duplicates, which might be wrong.
+            '--skip-pass=code-folding',
+            '--skip-pass=duplicate-function-elimination',
+            # Do not fold inside OptimizeInstructions either (we do not
+            # disable the entire pass, as it does many other things).
+            '--pass-arg=optimize-instructions-never-fold',
+            # Do not unconditionalize code: if a branch hint does not run, but
+            # we start to run it all the time, it may have been a wrong hint
+            # that will show up as a false positive here (as it breaks our
+            # assumption that only valid branch hints remained in the module).
+            '--pass-arg=remove-unused-brs-never-unconditionalize',
+            # Do not
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 

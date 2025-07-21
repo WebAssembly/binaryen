@@ -228,11 +228,19 @@ struct OptimizeInstructions
 
   bool fastMath;
 
+  // If set, we never fold/merge code together. This is important when fuzzing
+  // branch hints, as if we allow folding, then we may fold code identical in
+  // all ways but for branch hints, leading to an invalid branch hint executing
+  // later (imagine one arm had the right hint and the other the wrong one; we
+  // leave one of the two arbitrarily, so we might get unlucky).
+  bool neverFold;
+
   // In rare cases we make a change to a type, and will do a refinalize.
   bool refinalize = false;
 
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
+    neverFold = hasArgument("optimize-instructions-never-fold");
 
     // First, scan locals.
     {
@@ -1168,17 +1176,19 @@ struct OptimizeInstructions
   void visitIf(If* curr) {
     curr->condition = optimizeBoolean(curr->condition);
     if (curr->ifFalse) {
-      auto* func = getFunction();
       if (auto* unary = curr->condition->dynCast<Unary>()) {
         if (unary->op == EqZInt32) {
           // flip if-else arms to get rid of an eqz
           curr->condition = unary->value;
           std::swap(curr->ifTrue, curr->ifFalse);
-          BranchHints::flip(curr, func);
+          BranchHints::flip(curr, getFunction());
         }
       }
-      if (curr->condition->type != Type::unreachable &&
-          ExpressionAnalyzer::equalIncludingMetadata(
+      // Note that we do not consider metadata here. Like LLVM, we ignore
+      // metadata when trying to fold code together, preferring certain
+      // optimization over possible benefits of profiling data.
+      if (!neverFold && curr->condition->type != Type::unreachable &&
+          ExpressionAnalyzer::equal(
             curr->ifTrue, curr->ifFalse, func)) {
         // The sides are identical, so fold. If we can replace the If with one
         // arm and there are no side effects in the condition, replace it. But
@@ -5648,7 +5658,7 @@ private:
       }
     }
 
-    {
+    if (!neverFold) {
       // Identical code on both arms can be folded out, e.g.
       //
       //  (select
@@ -5671,7 +5681,7 @@ private:
       while (1) {
         // Ignore control flow structures (which are handled in MergeBlocks).
         if (!Properties::isControlFlowStructure(curr->ifTrue) &&
-            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) { // This too! XXX
+            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
           // TODO: consider the case with more than one child.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
