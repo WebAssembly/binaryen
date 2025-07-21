@@ -24,7 +24,8 @@
 //  * No references at all. We can simply remove it.
 //  * References, but no uses. We can't remove it, but we can change it (see
 //    below).
-//  * Uses (which imply references). We must keep it as it is.
+//  * Uses (which imply references). We must keep it as it is, because it is
+//    fully used (e.g. for a function, it is called and may execute).
 //
 // An example of something with a reference but *not* a use is a RefFunc to a
 // function that has no corresponding CallRef to that type. We cannot just
@@ -70,7 +71,9 @@ struct ReferenceFinder
   : public PostWalker<ReferenceFinder,
                       UnifiedExpressionVisitor<ReferenceFinder>> {
   // Our findings are placed in these data structures, which the user of this
-  // code can then process.
+  // code can then process. We mark both uses and references, and also note
+  // specific things that require special handling in the note*() methods
+  // below.
   std::vector<ModuleElement> used, referenced;
   std::vector<HeapType> callRefTypes;
   std::vector<Name> refFuncs;
