@@ -1850,3 +1850,25 @@
   )
  )
 )
+
+;; Regression test for assertion failure on incorrect updating of type tree
+;; state.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $0 (sub (struct)))
+    (type $0 (sub (struct)))
+    ;; CHECK:       (type $1 (sub $0 (struct (field (ref null $0)))))
+    (type $1 (sub $0 (struct (field (ref null $0)))))
+    ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $3)))))
+    (type $2 (sub $1 (struct (field (ref null $3)))))
+    ;; CHECK:       (type $3 (sub $0 (struct)))
+    (type $3 (sub $0 (struct)))
+   )
+   ;; CHECK:      (global $g (ref struct) (struct.new_default $2))
+   (global $g (ref struct) (struct.new_default $2))
+   ;; CHECK:      (global $g2 (ref null $1) (ref.null none))
+   (global $g2 (ref null $1) (ref.null none))
+   ;; CHECK:      (export "" (global $g2))
+   (export "" (global $g2))
+)
