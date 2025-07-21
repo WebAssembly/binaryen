@@ -850,9 +850,6 @@ private:
     }
     void visitRefTest(RefTest* curr) {}
     void maybeHandleDescriptor(Expression* desc) {
-      if (!desc) {
-        return;
-      }
       if (desc) {
         // Traps when the descriptor is null.
         if (desc->type.isNull()) {
