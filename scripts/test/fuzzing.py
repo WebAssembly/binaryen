@@ -125,12 +125,12 @@ unfuzzable = [
     'minimize-rec-groups-desc.wast',
     'precompute-desc.wast',
     'gc-desc.wast',
-    'simplify-locals-desc.wast',
     'optimize-instructions-desc.wast',
     'gto-desc.wast',
     'type-ssa-desc.wast',
     'abstract-type-refining-desc.wast',
     'remove-unused-brs-desc.wast',
+    'vacuum-desc.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
