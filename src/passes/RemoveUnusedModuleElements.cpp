@@ -619,10 +619,10 @@ struct Analyzer {
       // validates. For that reason all we need to do here is mark the function
       // as referenced - we don't need to do anything with the body.
       //
-      // Note that it is crucial that we do not call processRefFunc() here: we are
-      // just adding a reference to the function, and not actually using the
-      // RefFunc. (Only processRefFunc() + a CallRef of the proper type are enough
-      // to make a function itself used.)
+      // Note that it is crucial that we do not call processRefFunc() here: we
+      // are just adding a reference to the function, and not actually using the
+      // RefFunc. (Only processRefFunc() + a CallRef of the proper type are
+      // enough to make a function itself used.)
       reference({ModuleElementKind::Function, func});
     }
 
