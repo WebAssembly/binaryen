@@ -407,15 +407,13 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   HeapType lubUnshared;
   switch (HeapType(a).getBasic(Unshared)) {
     case HeapType::ext:
-      if (bUnshared != HeapType::string) {
-        return std::nullopt;
-      }
+      assert(bUnshared == HeapType::string);
       lubUnshared = HeapType::ext;
       break;
     case HeapType::func:
     case HeapType::cont:
     case HeapType::exn:
-      return std::nullopt;
+      WASM_UNREACHABLE("Unexpected non-bottom type in same hierarchy");
     case HeapType::any:
       lubUnshared = HeapType::any;
       break;

@@ -144,31 +144,31 @@ struct TypeTree {
   Map<HeapType, Index> indices;
 
   void setSupertype(HeapType sub, HeapType super) {
-    auto subIndex = getNode(sub);
-    auto superIndex = getNode(super);
-    auto& childNode = nodes[subIndex];
-    auto& parentNode = nodes[superIndex];
+    auto childIndex = getIndex(sub);
+    auto parentIndex = getIndex(super);
+    auto& childNode = nodes[childIndex];
+    auto& parentNode = nodes[parentIndex];
     // Remove sub from its old supertype if necessary.
-    if (auto oldParentIndex = childNode.parent; oldParentIndex != subIndex) {
+    if (auto oldParentIndex = childNode.parent; oldParentIndex != childIndex) {
       auto& oldParentNode = nodes[oldParentIndex];
       // Move sub to the back of its parent's children and then pop it.
       auto& children = oldParentNode.children;
-      assert(children[childNode.indexInParent] == subIndex);
+      assert(children[childNode.indexInParent] == childIndex);
       auto& swappedNode = nodes[children.back()];
       assert(swappedNode.indexInParent == children.size() - 1);
       // Swap the indices in the parent's child vector.
       std::swap(children[childNode.indexInParent], children.back());
-      // Swap the indices in the children.
-      std::swap(childNode.indexInParent, swappedNode.indexInParent);
+      // Swap the index in the kept child.
+      swappedNode.indexInParent = childNode.indexInParent;
       children.pop_back();
     }
-    childNode.parent = superIndex;
+    childNode.parent = parentIndex;
     childNode.indexInParent = parentNode.children.size();
-    parentNode.children.push_back(subIndex);
+    parentNode.children.push_back(childIndex);
   }
 
   std::optional<HeapType> getSupertype(HeapType type) {
-    auto index = getNode(type);
+    auto index = getIndex(type);
     auto parentIndex = nodes[index].parent;
     if (parentIndex == index) {
       return std::nullopt;
@@ -217,7 +217,7 @@ struct TypeTree {
     SupertypeIterator end() { return {parent, std::nullopt}; }
   };
 
-  Supertypes supertypes(HeapType type) { return {this, getNode(type)}; }
+  Supertypes supertypes(HeapType type) { return {this, getIndex(type)}; }
 
   struct SubtypeIterator {
     using value_type = const HeapType;
@@ -245,17 +245,15 @@ struct TypeTree {
           return *this;
         }
         auto& [index, childIndex] = stack.back();
-        if (childIndex == parent->nodes[index].children.size()) {
+        auto& children = parent->nodes[index].children;
+        if (childIndex == children.size()) {
           stack.pop_back();
-          continue;
+        } else {
+          auto child = children[childIndex++];
+          stack.push_back({child, 0u});
+          return *this;
         }
-        break;
       }
-      auto& [index, childIndex] = stack.back();
-      auto child = parent->nodes[index].children[childIndex];
-      ++childIndex;
-      stack.push_back({child, 0u});
-      return *this;
     }
     SubtypeIterator operator++(int) {
       auto it = *this;
@@ -271,10 +269,10 @@ struct TypeTree {
     SubtypeIterator end() { return {parent, {}}; }
   };
 
-  Subtypes subtypes(HeapType type) { return {this, getNode(type)}; }
+  Subtypes subtypes(HeapType type) { return {this, getIndex(type)}; }
 
 private:
-  Index getNode(HeapType type) {
+  Index getIndex(HeapType type) {
     auto [it, inserted] = indices.insert({type, nodes.size()});
     if (inserted) {
       nodes.emplace_back(type, nodes.size());
@@ -319,37 +317,35 @@ struct Unsubtyping : Pass {
     ReFinalize().run(getPassRunner(), wasm);
   }
 
-  size_t noteCount = 0;
-  void note(HeapType sub, HeapType super) {
+  void noteSubtype(HeapType sub, HeapType super) {
     // Bottom types are uninteresting, but other basic heap types can be
     // interesting because of their interactions with casts.
     if (sub == super || sub.isBottom()) {
       return;
     }
-    ++noteCount;
 
     work.push_back({sub, super});
   }
 
-  void note(Type sub, Type super) {
+  void noteSubtype(Type sub, Type super) {
     if (sub.isTuple()) {
       assert(super.isTuple() && sub.size() == super.size());
       for (size_t i = 0, size = sub.size(); i < size; ++i) {
-        note(sub[i], super[i]);
+        noteSubtype(sub[i], super[i]);
       }
       return;
     }
     if (!sub.isRef() || !super.isRef()) {
       return;
     }
-    note(sub.getHeapType(), super.getHeapType());
+    noteSubtype(sub.getHeapType(), super.getHeapType());
   }
 
   void analyzePublicTypes(Module& wasm) {
     // We cannot change supertypes for anything public.
     for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
       if (auto super = type.getDeclaredSuperType()) {
-        note(type, *super);
+        noteSubtype(type, *super);
       }
     }
   }
@@ -477,16 +473,14 @@ struct Unsubtyping : Pass {
 
     // Prepare the collected information for the upcoming processing loop.
     for (auto& [sub, super] : collectedInfo.subtypings) {
-      note(sub, super);
+      noteSubtype(sub, super);
     }
     for (auto [src, dst] : collectedInfo.casts) {
       casts[src].push_back(dst);
     }
   }
 
-  size_t processCount = 0;
   void process(HeapType sub, HeapType super) {
-    ++processCount;
     auto oldSuper = types.getSupertype(sub);
     if (oldSuper) {
       // We already had a recorded supertype. The new supertype might be
@@ -498,7 +492,7 @@ struct Unsubtyping : Pass {
       }
       if (HeapType::isSubType(*oldSuper, super)) {
         // sub <: oldSuper <: super
-        note(*oldSuper, super);
+        noteSubtype(*oldSuper, super);
         // We already handled sub <: oldSuper, so we're done.
         return;
       }
@@ -526,21 +520,21 @@ struct Unsubtyping : Pass {
       case HeapTypeKind::Func: {
         auto sig = sub.getSignature();
         auto superSig = super.getSignature();
-        note(superSig.params, sig.params);
-        note(sig.results, superSig.results);
+        noteSubtype(superSig.params, sig.params);
+        noteSubtype(sig.results, superSig.results);
         break;
       }
       case HeapTypeKind::Struct: {
         const auto& fields = sub.getStruct().fields;
         const auto& superFields = super.getStruct().fields;
         for (size_t i = 0, size = superFields.size(); i < size; ++i) {
-          note(fields[i].type, superFields[i].type);
+          noteSubtype(fields[i].type, superFields[i].type);
         }
         break;
       }
       case HeapTypeKind::Array: {
         auto elem = sub.getArray().element;
-        note(elem.type, super.getArray().element.type);
+        noteSubtype(elem.type, super.getArray().element.type);
         break;
       }
       case HeapTypeKind::Cont:
@@ -550,18 +544,18 @@ struct Unsubtyping : Pass {
     }
     if (auto desc = sub.getDescriptorType()) {
       if (auto superDesc = super.getDescriptorType()) {
-        note(*desc, *superDesc);
+        noteSubtype(*desc, *superDesc);
       }
     }
   }
 
   void
   processCasts(HeapType sub, HeapType super, std::optional<HeapType> oldSuper) {
-    // We are either attaching the one tree rooted at `type` under a new
-    // supertype in another tree, or we are reparenting `type` below a
+    // We are either attaching the one tree rooted at `sub` under a new
+    // supertype in another tree, or we are reparenting `sub` below a
     // descendent of `oldSuper` in the same tree. In the former case, we must
-    // evaluate `type` and all its subtypes against all its new supertypes and
-    // their cast destinations. In the latter case, `type` and all its subtypes
+    // evaluate `sub` and all its subtypes against all its new supertypes and
+    // their cast destinations. In the latter case, `sub` and all its subtypes
     // must have already been evaluated against `oldSuper` and its supertypes,
     // so we only need to additionally evaluate them against supertypes up to
     // `oldSuper`.
@@ -572,7 +566,7 @@ struct Unsubtyping : Pass {
         }
         for (auto dst : casts[src]) {
           if (HeapType::isSubType(type, dst)) {
-            note(type, dst);
+            noteSubtype(type, dst);
           }
         }
       }
