@@ -12,7 +12,7 @@
 
  ;; CHECK:      (export "a" (func $a))
 
- ;; CHECK:      (export "b" (func $b))
+ ;; CHECK:      (export "b" (func $a))
 
  ;; CHECK:      (func $a (type $0) (param $x i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
@@ -33,15 +33,6 @@
   )
  )
 
- ;; CHECK:      (func $b (type $0) (param $x i32)
- ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $b (export "b") (param $x i32)
   (@metadata.code.branch_hint "\01")
   (if
@@ -59,7 +50,7 @@
 
  ;; CHECK:      (export "a" (func $a))
 
- ;; CHECK:      (export "b" (func $b))
+ ;; CHECK:      (export "b" (func $a))
 
  ;; CHECK:      (func $a (type $0) (param $x i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
@@ -80,14 +71,6 @@
   )
  )
 
- ;; CHECK:      (func $b (type $0) (param $x i32)
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $b (export "b") (param $x i32)
   (if
    (local.get $x)
@@ -105,7 +88,7 @@
 
  ;; CHECK:      (export "a" (func $a))
 
- ;; CHECK:      (export "b" (func $b))
+ ;; CHECK:      (export "b" (func $a))
 
  ;; CHECK:      (func $a (type $0) (param $x i32)
  ;; CHECK-NEXT:  (if
@@ -124,15 +107,6 @@
   )
  )
 
- ;; CHECK:      (func $b (type $0) (param $x i32)
- ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $b (export "b") (param $x i32)
   (@metadata.code.branch_hint "\01")
   (if
