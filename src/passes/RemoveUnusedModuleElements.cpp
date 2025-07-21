@@ -284,16 +284,16 @@ struct Analyzer {
         reference(element);
       }
       for (auto type : finder.callRefTypes) {
-        useCallRefType(type);
+        processCallRefType(type);
       }
       for (auto func : finder.refFuncs) {
-        useRefFunc(func);
+        processRefFunc(func);
       }
       for (auto structField : finder.structFields) {
-        useStructField(structField);
+        processStructField(structField);
       }
       for (auto call : finder.indirectCalls) {
-        useIndirectCall(call);
+        processIndirectCall(call);
       }
 
       // Scan the children to continue our work.
@@ -305,7 +305,7 @@ struct Analyzer {
   // We'll compute SubTypes if we need them.
   std::optional<SubTypes> subTypes;
 
-  void useCallRefType(HeapType type) {
+  void processCallRefType(HeapType type) {
     if (type.isBasic()) {
       // Nothing to do for something like a bottom type; attempts to call such a
       // type will trap at runtime.
@@ -339,7 +339,7 @@ struct Analyzer {
 
   std::unordered_set<IndirectCall> usedIndirectCalls;
 
-  void useIndirectCall(IndirectCall call) {
+  void processIndirectCall(IndirectCall call) {
     auto [_, inserted] = usedIndirectCalls.insert(call);
     if (!inserted) {
       return;
@@ -368,7 +368,7 @@ struct Analyzer {
       });
   }
 
-  void useRefFunc(Name func) {
+  void processRefFunc(Name func) {
     if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
@@ -397,7 +397,7 @@ struct Analyzer {
     }
   }
 
-  void useStructField(StructField structField) {
+  void processStructField(StructField structField) {
     if (!readStructFields.count(structField)) {
       // Avoid a structured binding as the C++ spec does not allow capturing
       // them in lambdas, which we need below.
@@ -619,9 +619,9 @@ struct Analyzer {
       // validates. For that reason all we need to do here is mark the function
       // as referenced - we don't need to do anything with the body.
       //
-      // Note that it is crucial that we do not call useRefFunc() here: we are
+      // Note that it is crucial that we do not call processRefFunc() here: we are
       // just adding a reference to the function, and not actually using the
-      // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
+      // RefFunc. (Only processRefFunc() + a CallRef of the proper type are enough
       // to make a function itself used.)
       reference({ModuleElementKind::Function, func});
     }
