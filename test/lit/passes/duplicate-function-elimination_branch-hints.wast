@@ -3,7 +3,10 @@
 
 ;; RUN: foreach %s %t wasm-opt --duplicate-function-elimination --all-features -S -o - | filecheck %s
 
-;; The functions here differ in branch hints, and should not be merged.
+;; Test that we merge functions even if they differ in branch hints. This is
+;; good for code size, and follows what LLVM does.
+
+;; The functions here differ in branch hints (but we still merge).
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
@@ -50,8 +53,7 @@
  )
 )
 
-;; These also differ, now one is missing a hint, and they should not be merged.
-;; TODO: Perhaps when optimizing for size, we should merge and drop the hint?
+;; These also differ, now one is missing a hint (but we still merge).
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
@@ -97,7 +99,7 @@
 )
 
 ;; Flipped case of the above, now the other one is the only one with a hint,
-;; and that hint is flipped.
+;; and that hint is flipped (but we still merge).
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
@@ -142,7 +144,7 @@
  )
 )
 
-;; Identical branch hints: We can merge here.
+;; Identical branch hints: We can definitely merge here.
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
@@ -218,8 +220,9 @@
  )
 )
 
-;; Source file location (debug info) does *not* prevent optimization. We
-;; prioritize optimization over debug info quality.
+;; Source file location (debug info) does not prevent optimization (and has
+;; even less reason to do so than branch hints, as we prioritize optimization
+;; over debug info quality).
 (module
  ;; CHECK:      (type $0 (func (param i32)))
 
