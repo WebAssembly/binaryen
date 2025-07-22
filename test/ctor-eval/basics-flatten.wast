@@ -1,6 +1,6 @@
 (module
   (type $v (func))
-  (memory 256 256)
+  (memory $m 256 256)
   ;; test flattening of multiple segments
   (data (i32.const 10) "waka ")
   (data (i32.const 15) "waka") ;; skip a byte here
@@ -10,6 +10,7 @@
   (export "test1" (func $test1))
   (export "test2" (func $test2))
   (export "test3" (func $test3))
+  (export "memory" (memory $m)) ;; export memory so we can see the flattened data
   (func $test1
     (drop (i32.const 0)) ;; no work at all, really
     (call $safe-to-call) ;; safe to call
