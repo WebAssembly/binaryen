@@ -317,8 +317,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     assert(otherGet);
     // See if that other get is used in a logging. The parent should be a
     // logging call.
-    auto* call =
-      parents->getParent(otherGet)->template dynCast<Call>();
+    auto* call = parents->getParent(otherGet)->template dynCast<Call>();
     if (!call || call->target != logBranch) {
       return {};
     }
