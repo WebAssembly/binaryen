@@ -515,10 +515,10 @@ def compare_between_vms(x, y, context):
         y_line = y_lines[i]
         if x_line != y_line:
             # this is different, but maybe it's a vm difference we can ignore
-            LEI_LOGGING = '[LoggingExternalInterface logging'
-            if x_line.startswith(LEI_LOGGING) and y_line.startswith(LEI_LOGGING):
-                x_val = x_line[len(LEI_LOGGING) + 1:-1]
-                y_val = y_line[len(LEI_LOGGING) + 1:-1]
+            LOGGING_PREFIX = '[LoggingExternalInterface logging'
+            if x_line.startswith(LOGGING_PREFIX) and y_line.startswith(LOGGING_PREFIX):
+                x_val = x_line[len(LOGGING_PREFIX) + 1:-1]
+                y_val = y_line[len(LOGGING_PREFIX) + 1:-1]
                 if numbers_are_close_enough(x_val, y_val):
                     continue
             if x_line.startswith(FUZZ_EXEC_NOTE_RESULT) and y_line.startswith(FUZZ_EXEC_NOTE_RESULT):
@@ -1882,9 +1882,9 @@ class BranchHintPreservation(TestCaseHandler):
         # where the three integers are: ID, predicted, actual.
         all_ids = set()
         bad_ids = set()
-        LEI_LOG_BRANCH = '[LoggingExternalInterface log-branch'
+        LOG_BRANCH_PREFIX = '[LoggingExternalInterface log-branch'
         for line in out.splitlines():
-            if line.startswith(LEI_LOG_BRANCH):
+            if line.startswith(LOG_BRANCH_PREFIX):
                 # (1:-1 strips away the '[', ']' at the edges)
                 _, _, id_, hint, actual = line[1:-1].split(' ')
                 all_ids.add(id_)
@@ -2013,7 +2013,7 @@ class BranchHintPreservation(TestCaseHandler):
             if not group or group[-1] == '[trap unreachable]':
                 continue
             for line in group:
-                if line.startswith(LEI_LOG_BRANCH):
+                if line.startswith(LOG_BRANCH_PREFIX):
                     _, _, id_, hint, actual = line[1:-1].split(' ')
                     hint = int(hint)
                     actual = int(actual)
