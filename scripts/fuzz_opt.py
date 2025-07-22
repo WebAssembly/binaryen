@@ -1927,26 +1927,31 @@ class BranchHintPreservation(TestCaseHandler):
             de_instrumented,
             '-o', opted,
             '-g',
-            # Some passes that can unconditionalize code can just be disabled,
-            # as they do not modify ifs or brs:
-            # LICM moves code out of loops, possibly past a trap that would have
-            # prevented execution.
+
+            # Some passes are just skipped, as they do not modify ifs or brs,
+            # but they do break the invariant of not adding bad branch hints:
+            # * LICM moves code out of loops, possibly past a trap that would've
+            #   prevented execution. Unconditionally running code like this is
+            #   dangerous as branch hints are not an "effect" from the
+            #   optimizer's point of view, but our invariant can break if a
+            #   "bad" branch hint was not executed, but starts to be.
             '--skip-pass=licm',
-            # HeapStoreOptimization moves struct.sets closer to struct.news.
+            # * HeapStoreOptimization moves struct.sets closer to struct.news.
             '--skip-pass=heap-store-optimization',
-            # CodeFolding and DuplicateFunctionElimination merge code, keeping
-            # a random branch hint from the duplicates, which might be wrong.
+            # * CodeFolding and DuplicateFunctionElimination merge code, keeping
+            #   a random branch hint from the duplicates, which might be wrong
+            #   (we follow LLVM here, see details in the passes).
             '--skip-pass=code-folding',
             '--skip-pass=duplicate-function-elimination',
-            # Do not fold inside OptimizeInstructions either (we do not
-            # disable the entire pass, as it does many other things).
+
+            # Some passes break the invariant in some cases, but we do not want
+            # to skip them entirely, as they have other things we need to fuzz.
+            # We add pass-args for them:
+            # * Do not fold inside OptimizeInstructions.
             '--pass-arg=optimize-instructions-never-fold',
-            # Do not unconditionalize code: if a branch hint does not run, but
-            # we start to run it all the time, it may have been a wrong hint
-            # that will show up as a false positive here (as it breaks our
-            # assumption that only valid branch hints remained in the module).
+            # * Do not unconditionalize code in RemoveUnusedBrs.
             '--pass-arg=remove-unused-brs-never-unconditionalize',
-            # Do not
+
         ] + get_random_opts() + FEATURE_OPTS
         run(args)
 
