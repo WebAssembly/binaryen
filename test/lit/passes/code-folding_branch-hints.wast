@@ -7,31 +7,20 @@
  ;; CHECK:      (type $0 (func (param i32 i32) (result f32)))
 
  ;; CHECK:      (func $different (type $0) (param $x i32) (param $y i32) (result f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
- ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:      (nop)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
- ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:      (nop)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (f32.const 0)
  ;; CHECK-NEXT: )
  (func $different (param $x i32) (param $y i32) (result f32)
-  ;; The branch hints differ, so we do not optimize.
+  ;; The branch hints differ, but we still optimize (like LLVM).
   (if (result f32)
    (local.get $x)
    (then
@@ -75,7 +64,7 @@
  ;; CHECK-NEXT:  (f32.const 0)
  ;; CHECK-NEXT: )
  (func $same (param $x i32) (param $y i32) (result f32)
-  ;; The branch hints are the same, so we optimize.
+  ;; The branch hints are the same, so we definitely optimize.
   (if (result f32)
    (local.get $x)
    (then
