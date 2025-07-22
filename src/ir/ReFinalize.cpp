@@ -221,7 +221,7 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
   }
 }
 
-// Replace an branch/switch that is untaken because it is unreachable with an
+// Replace a branch/switch that is untaken because it is unreachable with an
 // unreachable non-branching expression. There is one or both of a value and
 // condition/descriptor, at least one of which is unreachable.
 void ReFinalize::replaceUntaken(Expression* value, Expression* otherChild) {
