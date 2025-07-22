@@ -2,12 +2,12 @@
 
 ;; RUN: wasm-opt %s --optimize-instructions -all -S -o - | filecheck %s
 
-;; RUN: wasm-opt %s --optimize-instructions -all --pass-arg=optimize-instructions-never-fold -S -o - \
-;; RUN:   | filecheck %s --check-prefix=NO_FO
-
 ;; Also verify that the "never-fold" flag is respected: when set, we do not fold
 ;; code together. This is important as we keep one of the two branch hints, and
 ;; it may be wrong, which can confuse the fuzzer.
+
+;; RUN: wasm-opt %s --optimize-instructions -all --pass-arg=optimize-instructions-never-fold -S -o - \
+;; RUN:   | filecheck %s --check-prefix=NO_FO
 
 (module
  ;; CHECK:      (func $conditionals (type $1) (param $x i32) (result i32)
@@ -22,6 +22,18 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; NO_FO:      (func $conditionals (type $1) (param $x i32) (result i32)
+ ;; NO_FO-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; NO_FO-NEXT:  (if (result i32)
+ ;; NO_FO-NEXT:   (local.get $x)
+ ;; NO_FO-NEXT:   (then
+ ;; NO_FO-NEXT:    (i32.const 1337)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:   (else
+ ;; NO_FO-NEXT:    (i32.const 42)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
  (func $conditionals (param $x i32) (result i32)
   ;; When we flip the if, the hint should flip too.
   (@metadata.code.branch_hint "\00")
@@ -38,7 +50,7 @@
   )
  )
 
- ;; CHECK:      (func $still-merge (type $0) (param $x i32) (param $y i32)
+ ;; CHECK:      (func $still-fold (type $0) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $y)
@@ -47,8 +59,32 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $still-merge (param $x i32) (param $y i32)
-  ;; We merge if arms even if metadata differs (like LLVM).
+ ;; NO_FO:      (func $still-fold (type $0) (param $x i32) (param $y i32)
+ ;; NO_FO-NEXT:  (if
+ ;; NO_FO-NEXT:   (local.get $x)
+ ;; NO_FO-NEXT:   (then
+ ;; NO_FO-NEXT:    (@metadata.code.branch_hint "\00")
+ ;; NO_FO-NEXT:    (if
+ ;; NO_FO-NEXT:     (local.get $y)
+ ;; NO_FO-NEXT:     (then
+ ;; NO_FO-NEXT:      (unreachable)
+ ;; NO_FO-NEXT:     )
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:   (else
+ ;; NO_FO-NEXT:    (@metadata.code.branch_hint "\01")
+ ;; NO_FO-NEXT:    (if
+ ;; NO_FO-NEXT:     (local.get $y)
+ ;; NO_FO-NEXT:     (then
+ ;; NO_FO-NEXT:      (unreachable)
+ ;; NO_FO-NEXT:     )
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $still-fold (param $x i32) (param $y i32)
+  ;; We fold if arms even if metadata differs (like LLVM). We do not fold if the
+  ;; flag was passed, however.
   (if
    (local.get $x)
    (then
@@ -72,7 +108,7 @@
   )
  )
 
- ;; CHECK:      (func $yes-merge (type $0) (param $x i32) (param $y i32)
+ ;; CHECK:      (func $yes-fold (type $0) (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $y)
@@ -81,8 +117,31 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $yes-merge (param $x i32) (param $y i32)
-  ;; Now the hints match, so we definitely merge.
+ ;; NO_FO:      (func $yes-fold (type $0) (param $x i32) (param $y i32)
+ ;; NO_FO-NEXT:  (if
+ ;; NO_FO-NEXT:   (local.get $x)
+ ;; NO_FO-NEXT:   (then
+ ;; NO_FO-NEXT:    (@metadata.code.branch_hint "\01")
+ ;; NO_FO-NEXT:    (if
+ ;; NO_FO-NEXT:     (local.get $y)
+ ;; NO_FO-NEXT:     (then
+ ;; NO_FO-NEXT:      (unreachable)
+ ;; NO_FO-NEXT:     )
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:   (else
+ ;; NO_FO-NEXT:    (@metadata.code.branch_hint "\01")
+ ;; NO_FO-NEXT:    (if
+ ;; NO_FO-NEXT:     (local.get $y)
+ ;; NO_FO-NEXT:     (then
+ ;; NO_FO-NEXT:      (unreachable)
+ ;; NO_FO-NEXT:     )
+ ;; NO_FO-NEXT:    )
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $yes-fold (param $x i32) (param $y i32)
+  ;; Now the hints match, so we definitely fold (without the flag).
   (if
    (local.get $x)
    (then
@@ -106,7 +165,7 @@
   )
  )
 
- ;; CHECK:      (func $always-merge-select (type $2) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK:      (func $always-fold-select (type $2) (param $x i32) (param $y i32) (result i32)
  ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (local.get $x)
@@ -118,10 +177,22 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $always-merge-select (param $x i32) (param $y i32) (result i32)
-  ;; A select with different metadata is still merged: the code was executed
+ ;; NO_FO:      (func $always-fold-select (type $2) (param $x i32) (param $y i32) (result i32)
+ ;; NO_FO-NEXT:  (@metadata.code.branch_hint "\00")
+ ;; NO_FO-NEXT:  (if (result i32)
+ ;; NO_FO-NEXT:   (local.get $x)
+ ;; NO_FO-NEXT:   (then
+ ;; NO_FO-NEXT:    (i32.const 10)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:   (else
+ ;; NO_FO-NEXT:    (i32.const 20)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $always-fold-select (param $x i32) (param $y i32) (result i32)
+  ;; A select with different metadata is still foldable: the code was executed
   ;; anyhow, so it's fine if we execute just one of the two (we pick the first,
-  ;; arbitrarily).
+  ;; arbitrarily). We do so even with the flag.
   (select
    (@metadata.code.branch_hint "\00")
    (if (result i32)
