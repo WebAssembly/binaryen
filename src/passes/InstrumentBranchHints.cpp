@@ -294,7 +294,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     if (!get) {
       return {};
     }
-    auto& sets = self()->localGraph->getSets(get);
+    auto& sets = localGraph->getSets(get);
     if (sets.size() != 1) {
       return {};
     }
@@ -302,7 +302,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     if (!set) {
       return {};
     }
-    auto& gets = self()->localGraph->getSetInfluences(set);
+    auto& gets = localGraph->getSetInfluences(set);
     if (gets.size() != 2) {
       return {};
     }
@@ -318,7 +318,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     // See if that other get is used in a logging. The parent should be a
     // logging call.
     auto* call =
-      self()->parents->getParent(otherGet)->template dynCast<Call>();
+      parents->getParent(otherGet)->template dynCast<Call>();
     if (!call || call->target != logBranch) {
       return {};
     }
@@ -363,8 +363,10 @@ struct DeInstrumentBranchHints
   template<typename T> void processCondition(T* curr) {
     if (auto info = getInstrumentation(curr->condition)) {
       // Replace the instrumented condition with the original one (swap so that
-      // the IR remains valid; the other use of the local will not matter, as we
-      // remove the logging calls).
+      // the IR remains valid: we cannot use the same expression twice in our
+      // IR, and the original condition is still used in another place, until
+      // we remove the logging calls; since we will remove the calls anyhow, we
+      // just need some valid IR there).
       std::swap(curr->condition, *info->originalCondition);
     }
   }
