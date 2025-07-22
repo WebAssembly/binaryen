@@ -33,6 +33,8 @@
 // must fail unless it allows null.
 //
 
+#include <memory>
+
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -41,7 +43,6 @@
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
-#include <memory>
 
 namespace wasm {
 
