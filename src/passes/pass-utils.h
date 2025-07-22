@@ -36,7 +36,10 @@ struct FilteredPass : public Pass {
   }
 
   FilteredPass(std::unique_ptr<Pass>&& pass, const FuncSet& relevantFuncs)
-    : pass(std::move(pass)), relevantFuncs(relevantFuncs) {}
+    : pass(std::move(pass)), relevantFuncs(relevantFuncs) {
+    // Copy the pass's name, for debugging and for --skip-pass support.
+    name = pass->name;
+  }
 
   bool isFunctionParallel() override {
     assert(pass->isFunctionParallel());
