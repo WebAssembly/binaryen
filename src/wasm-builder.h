@@ -29,7 +29,7 @@ namespace wasm {
 struct NameType {
   Name name;
   Type type;
-  NameType() : name(), type(Type::none) {}
+  NameType() : type(Type::none) {}
   NameType(Name name, Type type) : name(name), type(type) {}
 };
 
