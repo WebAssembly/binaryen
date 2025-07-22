@@ -74,7 +74,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $yes-merge (param $x i32) (param $y i32)
-  ;; As above, but now the hints match, so we merge.
+  ;; Now the hints match, so we definitely merge.
   (if
    (local.get $x)
    (then
