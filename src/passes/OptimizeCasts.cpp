@@ -167,6 +167,7 @@ struct EarlyCastFinder
 
     // TODO: generalize this when we handle more than RefAsNonNull.
     RefCast dummyRefCast(module->allocator);
+    dummyRefCast.desc = nullptr;
     RefAs dummyRefAs(module->allocator);
     dummyRefAs.op = RefAsNonNull;
 

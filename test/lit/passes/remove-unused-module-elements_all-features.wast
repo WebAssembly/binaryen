@@ -624,6 +624,12 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_indirect $defined-used (type $0)
+ ;; CHECK-NEXT:    (f64.const 1)
+ ;; CHECK-NEXT:    (i32.const -1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if (result f64)
  ;; CHECK-NEXT:   (f64.eq
  ;; CHECK-NEXT:    (f64.const 1)
@@ -641,6 +647,13 @@
   (drop
    (table.get $defined-used
     (i32.const 0)
+   )
+  )
+  ;; An indirect call, so the segment is used.
+  (drop
+   (call_indirect $defined-used (type $0)
+    (f64.const 1)
+    (i32.const -1)
    )
   )
   (if (result f64)

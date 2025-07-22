@@ -849,25 +849,30 @@ private:
       }
     }
     void visitRefTest(RefTest* curr) {}
+    void maybeHandleDescriptor(Expression* desc) {
+      if (desc) {
+        // Traps when the descriptor is null.
+        if (desc->type.isNull()) {
+          parent.trap = true;
+        } else if (desc->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
+      }
+    }
     void visitRefCast(RefCast* curr) {
       // Traps if the cast fails.
       parent.implicitTrap = true;
+      maybeHandleDescriptor(curr->desc);
     }
     void visitRefGetDesc(RefGetDesc* curr) {
       // Traps if the ref is null.
       parent.implicitTrap = true;
     }
-    void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
-    void visitStructNew(StructNew* curr) {
-      if (curr->desc) {
-        // Traps when the descriptor is null.
-        if (curr->desc->type.isNull()) {
-          parent.trap = true;
-        } else if (curr->desc->type.isNullable()) {
-          parent.implicitTrap = true;
-        }
-      }
+    void visitBrOn(BrOn* curr) {
+      parent.breakTargets.insert(curr->name);
+      maybeHandleDescriptor(curr->desc);
     }
+    void visitStructNew(StructNew* curr) { maybeHandleDescriptor(curr->desc); }
     void visitStructGet(StructGet* curr) {
       if (curr->ref->type == Type::unreachable) {
         return;

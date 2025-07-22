@@ -12768,13 +12768,6 @@ function asmFunc(imports) {
   return $1_1 | 0;
  }
  
- function f($0_1, $1_1, $2_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  return -1 | 0;
- }
- 
  function $36() {
   var $1_1 = 0;
   block : {
