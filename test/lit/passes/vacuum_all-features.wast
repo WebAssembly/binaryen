@@ -982,10 +982,8 @@
   ;; CHECK-NEXT:  (block $label$0
   ;; CHECK-NEXT:   (loop $label$1
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_if $label$0
-  ;; CHECK-NEXT:      (loop $label$9
-  ;; CHECK-NEXT:       (br $label$9)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (loop $label$9
+  ;; CHECK-NEXT:      (br $label$9)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
