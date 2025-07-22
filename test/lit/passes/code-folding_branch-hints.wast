@@ -50,6 +50,51 @@
   )
  )
 
+ ;; CHECK:      (func $different-flip (type $0) (param $x i32) (param $y i32) (result f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\01")
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.const 0)
+ ;; CHECK-NEXT: )
+ (func $different-flip (param $x i32) (param $y i32) (result f32)
+  ;; As above, but flipped. We still optimize, still keeping the first branch
+  ;; hint (now "\01").
+  (if (result f32)
+   (local.get $x)
+   (then
+    (block (result f32)
+     (@metadata.code.branch_hint "\01")
+     (if
+      (local.get $x)
+      (then
+       (nop)
+      )
+     )
+     (f32.const 0)
+    )
+   )
+   (else
+    (block (result f32)
+     (@metadata.code.branch_hint "\00")
+     (if
+      (local.get $x)
+      (then
+       (nop)
+      )
+     )
+     (f32.const 0)
+    )
+   )
+  )
+ )
+
  ;; CHECK:      (func $same (type $0) (param $x i32) (param $y i32) (result f32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
