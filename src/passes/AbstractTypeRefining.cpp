@@ -348,10 +348,10 @@ struct AbstractTypeRefining : public Pass {
         if (curr->op != BrOnCastDesc && curr->op != BrOnCastDescFail) {
           return;
         }
-        bool isFail = curr->op == BrOnCastDescFail;
         if (!curr->castType.isNull()) {
           return;
         }
+        bool isFail = curr->op == BrOnCastDescFail;
         Block* replacement =
           ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
             .getChildrenReplacement();
