@@ -1929,21 +1929,26 @@ class BranchHintPreservation(TestCaseHandler):
             '-g',
 
             # Some passes are just skipped, as they do not modify ifs or brs,
-            # but they do break the invariant of not adding bad branch hints:
-            # * LICM moves code out of loops, possibly past a trap that would've
-            #   prevented execution. Unconditionally running code like this is
-            #   dangerous as branch hints are not an "effect" from the
-            #   optimizer's point of view, but our invariant can break if a
-            #   "bad" branch hint was not executed, but starts to be.
+            # but they do break the invariant of not adding bad branch hints.
+            # There are two main issues here:
+            # * Moving code around, possibly causing it to start to execute if
+            #   it previously was not reached due to a trap (a branch hint
+            #   seems to have no effects in the optimizer, so it will do such
+            #   movements). And if it starts to execute and is a wrong hint, we
+            #   get an invalid fuzzer finding.
+            #   * LICM moves code out of loops.
             '--skip-pass=licm',
-            # * HeapStoreOptimization moves struct.sets closer to struct.news
-            #   (and so, like LICM, it might move code to a place where it
-            #   executes unconditionally).
+            #   * HeapStoreOptimization moves struct.sets closer to struct.news.
             '--skip-pass=heap-store-optimization',
-            # * CodeFolding and DuplicateFunctionElimination merge code, keeping
-            #   a random branch hint from the duplicates, which might be wrong
-            #   (we follow LLVM here, see details in the passes).
+            #   * MergeBlocks moves code out of inner blocks to outer blocks.
+            '--skip-pass=merge-blocks',
+            # * Merging/folding code. When we do so, code identical in content
+            #   but differing in metadata will end up with the metadata from one
+            #   of the copies, which might be wrong (we follow LLVM here, see
+            #   details in the passes).
+            #   * CodeFolding merges code blocks inside functions.
             '--skip-pass=code-folding',
+            #   * DuplicateFunctionElimination merges functions.
             '--skip-pass=duplicate-function-elimination',
 
             # Some passes break the invariant in some cases, but we do not want
