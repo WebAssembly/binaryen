@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "ir/branch-utils.h"
-#include "ir/find_all.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -60,7 +58,8 @@ void ReFinalize::visitLoop(Loop* curr) { curr->finalize(); }
 void ReFinalize::visitBreak(Break* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == Type::unreachable) {
+  if (valueType == Type::unreachable ||
+      getValueType(curr->condition) == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     updateBreakValueType(curr->name, valueType);
@@ -69,7 +68,8 @@ void ReFinalize::visitBreak(Break* curr) {
 void ReFinalize::visitSwitch(Switch* curr) {
   curr->finalize();
   auto valueType = getValueType(curr->value);
-  if (valueType == Type::unreachable) {
+  if (valueType == Type::unreachable ||
+      getValueType(curr->condition) == Type::unreachable) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     for (auto target : curr->targets) {
@@ -221,29 +221,26 @@ void ReFinalize::updateBreakValueType(Name name, Type type) {
   }
 }
 
-// Replace an untaken branch/switch with an unreachable value.
-// Another child may also exist and may or may not be unreachable.
+// Replace a branch/switch that is untaken because it is unreachable with an
+// unreachable non-branching expression. There is one or both of a value and
+// condition/descriptor, at least one of which is unreachable.
 void ReFinalize::replaceUntaken(Expression* value, Expression* otherChild) {
-  assert(value->type == Type::unreachable);
-  auto* replacement = value;
-  if (otherChild) {
-    Builder builder(*getModule());
-    // Even if we have
-    //  (block
-    //   (unreachable)
-    //   (i32.const 1)
-    //  )
-    // we want the block type to be unreachable. That is valid as
-    // the value is unreachable, and necessary since the type of
-    // the condition did not have an impact before (the break/switch
-    // type was unreachable), and might not fit in.
-    if (otherChild->type.isConcrete()) {
+  assert((value && value->type == Type::unreachable) ||
+         (otherChild && otherChild->type == Type::unreachable));
+  Builder builder(*getModule());
+  if (value && otherChild) {
+    if (value->type.isConcrete()) {
+      value = builder.makeDrop(value);
+    } else if (otherChild->type.isConcrete()) {
       otherChild = builder.makeDrop(otherChild);
     }
-    replacement = builder.makeSequence(value, otherChild);
-    assert(replacement->type.isBasic() && "Basic type expected");
+    replaceCurrent(builder.makeBlock({value, otherChild}, Type::unreachable));
+  } else if (value) {
+    replaceCurrent(value);
+  } else {
+    assert(otherChild);
+    replaceCurrent(otherChild);
   }
-  replaceCurrent(replacement);
 }
 
 } // namespace wasm

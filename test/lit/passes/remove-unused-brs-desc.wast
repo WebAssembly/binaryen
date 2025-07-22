@@ -747,4 +747,40 @@
       (ref.null none)
     )
   )
+
+  ;; CHECK:      (func $refinalize-untaken (type $16) (result anyref)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $block0
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.new_default $super.desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $refinalize-untaken (result anyref)
+    (block $block (result anyref)
+      ;; 3) ReFinalize will make this unreachable BrOn a block. The ref.null
+      ;; below needs to be dropped for the block to be valid.
+      (br_on_cast_desc $block nullref (ref null $super)
+        (ref.null none)
+        ;; 2) ReFinalize will make this block unreachable because it is no
+        ;; longer a branch target.
+        (block $block (result (ref $super.desc))
+          (drop
+            ;; 1) This branch will be optimized out, prompting ReFinalization.
+            (br_on_cast_fail $block (ref $super.desc) (ref $super.desc)
+              (struct.new_default $super.desc)
+            )
+          )
+          (unreachable)
+        )
+      )
+    )
+  )
 )
