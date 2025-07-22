@@ -55,7 +55,7 @@
 //  };
 //
 // A pass to delete branch hints is also provided, which finds instrumentations
-// and the IDs in those calls, and deletes branch hints that were provded. For
+// and the IDs in those calls, and deletes branch hints that were listed. For
 // example,
 //
 //  --delete-branch-hints=10,20
