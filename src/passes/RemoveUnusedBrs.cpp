@@ -17,16 +17,6 @@
 //
 // Removes branches for which we go to where they go anyhow.
 //
-// Arguments:
-//
-//   --pass-arg=remove-unused-brs-never-unconditionalize
-//
-//      This is used during fuzzing, to prevent us from unconditionalizing code
-//      (making it always run, when it didn't before). Unconditionalizing code
-//      is a problem for fuzzing branch hints, as a branch hint that never ran
-//      might be wrong, and if we start to run it, the fuzzer could think it
-//      found a bug.
-//
 
 #include "ir/branch-hints.h"
 #include "ir/branch-utils.h"
@@ -1264,7 +1254,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
       bool shrink;
       // Whether we are allowed to unconditionalize code, that is, make code
-      // run unconditionally that previously might not have run.
+      // run that previously might not have. Unconditionalizing code is a
+      // problem for fuzzing branch hints: a branch hint that never ran might be
+      // wrong, and if we start to run it, the fuzzer would report a finding.
       bool neverUnconditionalize;
       PassOptions& passOptions;
 
