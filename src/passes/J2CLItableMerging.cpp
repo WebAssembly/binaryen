@@ -26,18 +26,15 @@
 // `Foo[vtable] = { i1, i2, ...., m1, m2, m3, ... }`, and fixes all accesses
 // and initializations accordingly.
 
+#include <memory>
+#include <string_view>
 #include <unordered_map>
-#include <unordered_set>
 
-#include "ir/effects.h"
-#include "ir/localize.h"
-#include "ir/ordering.h"
-#include "ir/struct-utils.h"
-#include "ir/subtypes.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -53,6 +50,11 @@ struct StructInfo {
 };
 
 struct J2CLItableMerging : public Pass {
+  // Number of entries at the start of the descriptor that should not change
+  // index. If the vtable is a custom descriptor, itable fields are inserted at
+  // index 1. Index 0 is preserved for a possible JS prototype.
+  static const Index kPreservedDescriptorFields = 1;
+
   // Keep track of all the structInfos so that they will be automatically
   // released after the pass is done.
   std::list<StructInfo> structInfos;
@@ -105,7 +107,6 @@ struct J2CLItableMerging : public Pass {
 
     // 1. Collect all structs that correspond that a Java type.
     for (auto [heapType, typeNameInfo] : wasm.typeNames) {
-
       if (!heapType.isStruct()) {
         continue;
       }
@@ -113,18 +114,30 @@ struct J2CLItableMerging : public Pass {
       // The vtable may either be the first field or the custom descriptor.
       HeapType vtabletype;
       HeapType itabletype;
-      auto type = heapType.getStruct();
+      auto& type = heapType.getStruct();
       if (auto descriptor = heapType.getDescriptorType()) {
         if (!hasField(typeNameInfo, 0, "itable")) {
           continue;
         }
+
         vtabletype = *descriptor;
+        // If the vtable is a descriptor, we enforce that it has at least 1
+        // field for the possible JS prototype and simply assume this
+        // downstream. In practice, this is necessary anyway to allow vtables to
+        // subtype each other.
+        if (vtabletype.getStruct().fields.size() < kPreservedDescriptorFields) {
+          Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
+                  << "on j2cl output. (descriptor has fewer than expected "
+                  << "fields)";
+        }
+
         itabletype = type.fields[0].type.getHeapType();
       } else {
-        if (!hasField(typeNameInfo, 0, "vtable")
-            || !hasField(typeNameInfo, 1, "itable")) {
+        if (!hasField(typeNameInfo, 0, "vtable") ||
+            !hasField(typeNameInfo, 1, "itable")) {
           continue;
         }
+
         vtabletype = type.fields[0].type.getHeapType();
         itabletype = type.fields[1].type.getHeapType();
       }
@@ -182,33 +195,32 @@ struct J2CLItableMerging : public Pass {
       }
 
       void visitStructGet(StructGet* curr) {
-        if (curr->ref->type == Type::unreachable) {
+        auto* structInfo = getStructInfoByVtableType(curr->ref->type);
+        if (!structInfo) {
           return;
         }
 
-        if (!parent.structInfoByVtableType.count(
-              curr->ref->type.getHeapType())) {
-          return;
-        }
         // This is a struct.get on the vtable.
         // It is ok to just change the index since the field has moved but
         // the type is the same.
-        curr->index += parent.itableSize;
+        if (structInfo->javaClass.getDescriptorType()) {
+          if (curr->index >= kPreservedDescriptorFields) {
+            curr->index += parent.itableSize;
+          }
+        } else {
+          curr->index += parent.itableSize;
+        }
       }
 
       void visitStructNew(StructNew* curr) {
-        if (curr->type == Type::unreachable) {
+        auto* structInfo = getStructInfoByVtableType(curr->type);
+        if (!structInfo) {
           return;
         }
 
-        auto it = parent.structInfoByVtableType.find(curr->type.getHeapType());
-        if (it == parent.structInfoByVtableType.end()) {
-          return;
-        }
         // The struct.new is for a vtable type and structInfo has the
         // information relating the struct types for the Java class, its vtable
         // and its itable.
-        auto structInfo = it->second;
 
         // Get the global that holds the corresponding itable instance.
         auto* itableGlobal = parent.tableGlobalsByType[structInfo->itable];
@@ -233,13 +245,18 @@ struct J2CLItableMerging : public Pass {
         }
         auto& itableFieldInitializers = itableStructNew->operands;
 
+        size_t insertIndex =
+          structInfo->javaClass.getDescriptorType().has_value()
+            ? kPreservedDescriptorFields
+            : 0;
+
         // Add the initialization for the itable fields.
         for (Index i = parent.itableSize; i > 0; i--) {
           if (itableFieldInitializers.size() >= i) {
             // The itable was initialized with a struct.new, copy the
             // initialization values.
             curr->operands.insertAt(
-              0,
+              insertIndex,
               ExpressionManipulator::copy(itableFieldInitializers[i - 1],
                                           *getModule()));
           } else {
@@ -247,13 +264,24 @@ struct J2CLItableMerging : public Pass {
             // null values to initialize the itable fields.
             Builder builder(*getModule());
             curr->operands.insertAt(
-              0,
+              insertIndex,
               builder.makeRefNull(itableStructNew->type.getHeapType()
                                     .getStruct()
                                     .fields[i - 1]
                                     .type.getHeapType()));
           }
         }
+      }
+
+      StructInfo* getStructInfoByVtableType(Type type) {
+        if (type == Type::unreachable) {
+          return nullptr;
+        }
+        if (auto it = parent.structInfoByVtableType.find(type.getHeapType());
+            it != parent.structInfoByVtableType.end()) {
+          return it->second;
+        }
+        return nullptr;
       }
     };
 
@@ -277,32 +305,69 @@ struct J2CLItableMerging : public Pass {
       }
 
       void visitStructGet(StructGet* curr) {
-        if (curr->ref->type == Type::unreachable) {
+        // Determine if the struct.get is to get a field from the itable or the
+        // to get the itable itself.
+
+        if (auto* structInfo = getStructInfoByItableType(curr->ref->type)) {
+          // This is a struct.get that returns an itable field.
+          updateGetItableField(curr, structInfo->javaClass);
           return;
         }
 
-        if (!curr->type.isStruct() ||
-            !parent.structInfoByITableType.count(curr->type.getHeapType())) {
+        if (auto* structInfo = getStructInfoByItableType(curr->type)) {
+          // This is a struct.get that returns an itable type.
+          updateGetItable(curr, structInfo->javaClass);
+          return;
+        }
+      }
+
+      StructInfo* getStructInfoByItableType(Type type) {
+        if (type == Type::unreachable || !type.isStruct()) {
+          return nullptr;
+        }
+        if (auto it = parent.structInfoByITableType.find(type.getHeapType());
+            it != parent.structInfoByITableType.end()) {
+          return it->second;
+        }
+        return nullptr;
+      }
+
+      void updateGetItableField(StructGet* curr, HeapType javaClass) {
+        if (!javaClass.getDescriptorType()) {
           return;
         }
 
-        // This is a struct.get that returns an itable type;
-        // Change to return the corresponding vtable type. If the vtable is a
-        // custom descriptor, change to a ref.get_desc instruction.
-        Builder builder(*getModule());
+        curr->index += kPreservedDescriptorFields;
+        if (auto childGet = curr->ref->dynCast<StructGet>()) {
+          // The reference is another struct.get. It is getting the itable for
+          // the type.
+          // Replace it with a ref.get_desc for the vtable, which is the
+          // descriptor.
+          Builder builder(*getModule());
+          curr->ref = builder.makeRefGetDesc(childGet->ref);
+          return;
+        }
 
-        HeapType javaClass = parent.structInfoByITableType[curr->type.getHeapType()]->javaClass;
+        // We expect the reference to be another struct.get.
+        Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
+                << "on j2cl output. (itable getter not found) ";
+      }
+
+      void updateGetItable(StructGet* curr, HeapType javaClass) {
         if (javaClass.getDescriptorType()) {
-          replaceCurrent(builder.makeRefGetDesc(curr->ref));
-        } else {
-          replaceCurrent(builder.makeStructGet(
-            0,
-            curr->ref,
-            MemoryOrder::Unordered,
-            javaClass.getStruct()
-              .fields[0]
-              .type));
+          return;
         }
+
+        // Change to return the corresponding vtable type (field 0).
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeStructGet(
+          0,
+          curr->ref,
+          MemoryOrder::Unordered,
+          parent.structInfoByITableType[curr->type.getHeapType()]
+            ->javaClass.getStruct()
+            .fields[0]
+            .type));
       }
     };
 
@@ -322,32 +387,51 @@ struct J2CLItableMerging : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
-        if (parent.structInfoByVtableType.count(oldStructType)) {
-          auto& newFields = struct_.fields;
+        auto structInfoIt = parent.structInfoByVtableType.find(oldStructType);
+        if (structInfoIt == parent.structInfoByVtableType.end()) {
+          return;
+        }
 
-          auto structInfo = parent.structInfoByVtableType[oldStructType];
-          // Add the itable fields to the beginning of the vtable.
-          auto it = structInfo->itable.getStruct().fields.rbegin();
-          while (it != structInfo->itable.getStruct().fields.rend()) {
-            newFields.insert(newFields.begin(), *it++);
-            newFields[0].type = getTempType(newFields[0].type);
+        auto& newFields = struct_.fields;
+
+        auto* structInfo = structInfoIt->second;
+
+        Index insertIndex =
+          structInfo->javaClass.getDescriptorType().has_value()
+            ? kPreservedDescriptorFields
+            : 0;
+
+        // Add the itable fields to the beginning of the vtable.
+        auto& itableFields = structInfo->itable.getStruct().fields;
+        newFields.insert(newFields.begin() + insertIndex,
+                          itableFields.begin(),
+                          itableFields.end());
+        for (Index i = 0; i < parent.itableSize; i++) {
+          newFields[insertIndex + i].type =
+              getTempType(newFields[insertIndex + i].type);
+        }
+
+        // Update field names as well. The Type Rewriter cannot do this for
+        // us, as it does not know which old fields map to which new ones
+        // (it just keeps the names in sequence).
+        auto& nameInfo = wasm.typeNames[oldStructType];
+
+        // Make a copy of the old ones before clearing them.
+        auto oldFieldNames = nameInfo.fieldNames;
+
+        // Clear the old names and write the new ones.
+        nameInfo.fieldNames.clear();
+        // Only need to preserve the field names for the vtable fields; the
+        // itable fields do not have names (in the original .wat file they
+        // are accessed by index).
+        for (Index i = 0; i < insertIndex; i++) {
+          if (auto name = oldFieldNames[i]) {
+            nameInfo.fieldNames[i] = name;
           }
-
-          // Update field names as well. The Type Rewriter cannot do this for
-          // us, as it does not know which old fields map to which new ones
-          // (it just keeps the names in sequence).
-          auto& nameInfo = wasm.typeNames[oldStructType];
-
-          // Make a copy of the old ones before clearing them.
-          auto oldFieldNames = nameInfo.fieldNames;
-
-          // Clear the old names and write the new ones.
-          nameInfo.fieldNames.clear();
-          // Only need to preserve the field names for the vtable fields; the
-          // itable fields do not have names (in the original .wat file they
-          // are accessed by index).
-          for (Index i = 0; i < oldFieldNames.size(); i++) {
-            nameInfo.fieldNames[i + parent.itableSize] = oldFieldNames[i];
+        }
+        for (Index i = insertIndex; i < oldFieldNames.size(); i++) {
+          if (auto name = oldFieldNames[i]) {
+            nameInfo.fieldNames[i + parent.itableSize] = name;
           }
         }
       }
@@ -361,3 +445,4 @@ struct J2CLItableMerging : public Pass {
 
 Pass* createJ2CLItableMergingPass() { return new J2CLItableMerging(); }
 } // namespace wasm
+
