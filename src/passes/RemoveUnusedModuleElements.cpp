@@ -67,29 +67,11 @@ using ModuleElement = std::pair<ModuleElementKind, Name>;
 using IndirectCall = std::pair<Name, HeapType>;
 
 // Visit or walk an expression to find what things are referenced.
-struct ReferenceFinder
-  : public PostWalker<ReferenceFinder,
-                      UnifiedExpressionVisitor<ReferenceFinder>> {
-  // Our findings are placed in these data structures, which the user of this
-  // code can then process. We mark both uses and references, and also note
-  // uses of specific things that require special handling, like refFuncs.
-  std::vector<ModuleElement> used, referenced;
-  std::vector<HeapType> callRefTypes;
-  std::vector<Name> refFuncs;
-  std::vector<StructField> structFields;
-  std::vector<IndirectCall> indirectCalls;
+struct Analyzer
+  : public PostWalker<Analyzer,
+                      UnifiedExpressionVisitor<Analyzer>> {
 
-  // Add an item to the output data structures.
-  void use(ModuleElement element) { used.push_back(element); }
-  void reference(ModuleElement element) { referenced.push_back(element); }
-  void useCallRef(HeapType type) { callRefTypes.push_back(type); }
-  void useRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
-  void useStructField(StructField structField) {
-    structFields.push_back(structField);
-  }
-  void useIndirectCall(Name table, HeapType type) {
-    indirectCalls.push_back({table, type});
-  }
+  // Visiting logic.
 
   // Generic visitor: Use all the things referenced. This handles e.g. using the
   // table of a table.get. When we do not want such unconditional use, we
@@ -154,7 +136,7 @@ struct ReferenceFinder
     // We refer to the table, but may not use all parts of it, that depends on
     // the heap type we call with.
     reference({ModuleElementKind::Table, curr->table});
-    useIndirectCall(curr->table, curr->heapType);
+    useIndirectCall({curr->table, curr->heapType});
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
     // is written into the table we could do better here; we could also see
@@ -180,10 +162,9 @@ struct ReferenceFinder
     auto type = curr->ref->type.getHeapType();
     useStructField(StructField{type, curr->index});
   }
-};
 
-// Analyze a module to find what things are referenced and what things are used.
-struct Analyzer {
+  // Main logic to analyze a module to find things referenced and used.
+
   Module* module;
   const PassOptions& options;
 
@@ -253,6 +234,9 @@ struct Analyzer {
            const std::vector<ModuleElement>& roots)
     : module(module), options(options) {
 
+    // Set the module for the visit* logic.
+    setModule(module);
+
     // All roots are used.
     for (auto& element : roots) {
       use(element);
@@ -276,27 +260,11 @@ struct Analyzer {
 
       // Find references in this expression, and apply them. Anything found here
       // is used.
-      ReferenceFinder finder;
-      finder.setModule(module);
-      finder.visit(curr);
-      for (auto element : finder.used) {
-        use(element);
-      }
-      for (auto element : finder.referenced) {
-        reference(element);
-      }
-      for (auto type : finder.callRefTypes) {
-        useCallRefType(type);
-      }
-      for (auto func : finder.refFuncs) {
-        useRefFunc(func);
-      }
-      for (auto structField : finder.structFields) {
-        useStructField(structField);
-      }
-      for (auto call : finder.indirectCalls) {
-        useIndirectCall(call);
-      }
+      //
+      // This main loop scans for uses, not only references, so that flag must
+      // not be set.
+      assert(!walkingForReferencesOnly);
+      visit(curr);
 
       // Scan the children to continue our work.
       scanChildren(curr);
@@ -304,10 +272,22 @@ struct Analyzer {
     return worked;
   }
 
+  // We use the visit* logic to walk and find things that are reached. Normally
+  // we do so for all things of interest, but when we scan only for references,
+  // we set this, which disables some of the use*() methods.
+  bool walkingForReferencesOnly = false;
+
   // We'll compute SubTypes if we need them.
   std::optional<SubTypes> subTypes;
 
-  void useCallRefType(HeapType type) {
+  void useCallRef(HeapType type) {
+    // There is no meaning to a call_ref causing something else to be kept
+    // around for validation purposes (except for the type itself, which is
+    // handled automatically in the IR).
+    if (walkingForReferencesOnly) {
+      return;
+    }
+
     if (type.isBasic()) {
       // Nothing to do for something like a bottom type; attempts to call such a
       // type will trap at runtime.
@@ -342,6 +322,14 @@ struct Analyzer {
   std::unordered_set<IndirectCall> usedIndirectCalls;
 
   void useIndirectCall(IndirectCall call) {
+    // There is no meaning to an indirect call causing something else to be kept
+    // around for validation purposes (except for the table and the type, but
+    // the type is handled automatically in the IR, and the table is set in
+    // visitCallIndirect).
+    if (walkingForReferencesOnly) {
+      return;
+    }
+
     auto [_, inserted] = usedIndirectCalls.insert(call);
     if (!inserted) {
       return;
@@ -400,6 +388,13 @@ struct Analyzer {
   }
 
   void useStructField(StructField structField) {
+    // There is no meaning to a struct field causing something else to be kept
+    // around for validation purposes (except for the type itself, which is
+    // handled automatically in the IR).
+    if (walkingForReferencesOnly) {
+      return;
+    }
+
     if (!readStructFields.count(structField)) {
       // Avoid a structured binding as the C++ spec does not allow capturing
       // them in lambdas, which we need below.
@@ -604,35 +599,9 @@ struct Analyzer {
   // here).
   void addReferences(Expression* curr) {
     // Find references anywhere in this expression so we can apply them.
-    ReferenceFinder finder;
-    finder.setModule(module);
-    finder.walk(curr);
-
-    for (auto element : finder.used) {
-      reference(element);
-    }
-    for (auto element : finder.referenced) {
-      reference(element);
-    }
-
-    for (auto func : finder.refFuncs) {
-      // If a function ends up referenced but not used then later down we will
-      // empty it out by replacing its body with an unreachable, which always
-      // validates. For that reason all we need to do here is mark the function
-      // as referenced - we don't need to do anything with the body.
-      //
-      // Note that it is crucial that we do not call useRefFunc() here: we are
-      // just adding a reference to the function, and not actually using the
-      // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
-      // to make a function itself used.)
-      reference({ModuleElementKind::Function, func});
-    }
-
-    // Note: nothing to do with |callRefTypes| and |structFields|, which only
-    // involve types. This function only cares about references to module
-    // elements like functions, globals, and tables. (References to types are
-    // handled in an entirely different way in Binaryen IR, and we don't need to
-    // worry about it.)
+    walkingForReferencesOnly = true;
+    walk(curr);
+    walkingForReferencesOnly = false;
   }
 
   void reference(ModuleElement element) {
