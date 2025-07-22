@@ -1936,7 +1936,9 @@ class BranchHintPreservation(TestCaseHandler):
             #   optimizer's point of view, but our invariant can break if a
             #   "bad" branch hint was not executed, but starts to be.
             '--skip-pass=licm',
-            # * HeapStoreOptimization moves struct.sets closer to struct.news.
+            # * HeapStoreOptimization moves struct.sets closer to struct.news
+            #   (and so, like LICM, it might move code to a place where it
+            #   executes unconditionally).
             '--skip-pass=heap-store-optimization',
             # * CodeFolding and DuplicateFunctionElimination merge code, keeping
             #   a random branch hint from the duplicates, which might be wrong
