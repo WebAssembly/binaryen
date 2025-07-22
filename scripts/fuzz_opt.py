@@ -2024,7 +2024,7 @@ class BranchHintPreservation(TestCaseHandler):
                     assert hint == actual, 'Bad hint after optimizations'
 
 
-# The global list of all test case handlers
+# The global list of all test case handlers XXX
 '''
     FuzzExec(),
     CompareVMs(),

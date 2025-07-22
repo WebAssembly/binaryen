@@ -225,13 +225,13 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
   // A map of expressions to their parents, so we can identify the pattern.
   std::unique_ptr<Parents> parents;
 
-  Sub* getSub() { return (Sub*)this; }
+  Sub* self() { return static_cast<Sub*>(this); }
 
-  void visitIf(If* curr) { getSub()->processCondition(curr); }
+  void visitIf(If* curr) { self()->processCondition(curr); }
 
   void visitBreak(Break* curr) {
     if (curr->condition) {
-      getSub()->processCondition(curr);
+      self()->processCondition(curr);
     }
   }
 
@@ -294,7 +294,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     if (!get) {
       return {};
     }
-    auto& sets = getSub()->localGraph->getSets(get);
+    auto& sets = self()->localGraph->getSets(get);
     if (sets.size() != 1) {
       return {};
     }
@@ -302,7 +302,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     if (!set) {
       return {};
     }
-    auto& gets = getSub()->localGraph->getSetInfluences(set);
+    auto& gets = self()->localGraph->getSetInfluences(set);
     if (gets.size() != 2) {
       return {};
     }
@@ -318,7 +318,7 @@ struct InstrumentationProcessor : public WalkerPass<PostWalker<Sub>> {
     // See if that other get is used in a logging. The parent should be a
     // logging call.
     auto* call =
-      getSub()->parents->getParent(otherGet)->template dynCast<Call>();
+      self()->parents->getParent(otherGet)->template dynCast<Call>();
     if (!call || call->target != logBranch) {
       return {};
     }
