@@ -72,8 +72,7 @@ struct ReferenceFinder
                       UnifiedExpressionVisitor<ReferenceFinder>> {
   // Our findings are placed in these data structures, which the user of this
   // code can then process. We mark both uses and references, and also note
-  // specific things that require special handling in the note*() methods
-  // below.
+  // uses of specific things that require special handling, like refFuncs.
   std::vector<ModuleElement> used, referenced;
   std::vector<HeapType> callRefTypes;
   std::vector<Name> refFuncs;
@@ -83,12 +82,12 @@ struct ReferenceFinder
   // Add an item to the output data structures.
   void use(ModuleElement element) { used.push_back(element); }
   void reference(ModuleElement element) { referenced.push_back(element); }
-  void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
-  void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
-  void noteStructField(StructField structField) {
+  void useCallRef(HeapType type) { callRefTypes.push_back(type); }
+  void useRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
+  void useStructField(StructField structField) {
     structFields.push_back(structField);
   }
-  void noteIndirectCall(Name table, HeapType type) {
+  void useIndirectCall(Name table, HeapType type) {
     indirectCalls.push_back({table, type});
   }
 
@@ -155,12 +154,12 @@ struct ReferenceFinder
     // We refer to the table, but may not use all parts of it, that depends on
     // the heap type we call with.
     reference({ModuleElementKind::Table, curr->table});
-    noteIndirectCall(curr->table, curr->heapType);
+    useIndirectCall(curr->table, curr->heapType);
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
     // is written into the table we could do better here; we could also see
     // which tables are immutable. TODO
-    noteCallRef(curr->heapType);
+    useCallRef(curr->heapType);
   }
 
   void visitCallRef(CallRef* curr) {
@@ -169,17 +168,17 @@ struct ReferenceFinder
       return;
     }
 
-    noteCallRef(curr->target->type.getHeapType());
+    useCallRef(curr->target->type.getHeapType());
   }
 
-  void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
+  void visitRefFunc(RefFunc* curr) { useRefFunc(curr->func); }
 
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return;
     }
     auto type = curr->ref->type.getHeapType();
-    noteStructField(StructField{type, curr->index});
+    useStructField(StructField{type, curr->index});
   }
 };
 
@@ -287,16 +286,16 @@ struct Analyzer {
         reference(element);
       }
       for (auto type : finder.callRefTypes) {
-        processCallRefType(type);
+        useCallRefType(type);
       }
       for (auto func : finder.refFuncs) {
-        processRefFunc(func);
+        useRefFunc(func);
       }
       for (auto structField : finder.structFields) {
-        processStructField(structField);
+        useStructField(structField);
       }
       for (auto call : finder.indirectCalls) {
-        processIndirectCall(call);
+        useIndirectCall(call);
       }
 
       // Scan the children to continue our work.
@@ -308,7 +307,7 @@ struct Analyzer {
   // We'll compute SubTypes if we need them.
   std::optional<SubTypes> subTypes;
 
-  void processCallRefType(HeapType type) {
+  void useCallRefType(HeapType type) {
     if (type.isBasic()) {
       // Nothing to do for something like a bottom type; attempts to call such a
       // type will trap at runtime.
@@ -342,7 +341,7 @@ struct Analyzer {
 
   std::unordered_set<IndirectCall> usedIndirectCalls;
 
-  void processIndirectCall(IndirectCall call) {
+  void useIndirectCall(IndirectCall call) {
     auto [_, inserted] = usedIndirectCalls.insert(call);
     if (!inserted) {
       return;
@@ -371,7 +370,7 @@ struct Analyzer {
       });
   }
 
-  void processRefFunc(Name func) {
+  void useRefFunc(Name func) {
     if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
@@ -400,7 +399,7 @@ struct Analyzer {
     }
   }
 
-  void processStructField(StructField structField) {
+  void useStructField(StructField structField) {
     if (!readStructFields.count(structField)) {
       // Avoid a structured binding as the C++ spec does not allow capturing
       // them in lambdas, which we need below.
@@ -622,10 +621,10 @@ struct Analyzer {
       // validates. For that reason all we need to do here is mark the function
       // as referenced - we don't need to do anything with the body.
       //
-      // Note that it is crucial that we do not call processRefFunc() here: we
-      // are just adding a reference to the function, and not actually using the
-      // RefFunc. (Only processRefFunc() + a CallRef of the proper type are
-      // enough to make a function itself used.)
+      // Note that it is crucial that we do not call useRefFunc() here: we are
+      // just adding a reference to the function, and not actually using the
+      // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
+      // to make a function itself used.)
       reference({ModuleElementKind::Function, func});
     }
 
