@@ -30,32 +30,17 @@
   )
  )
 
- ;; CHECK:      (func $no-merge (type $0) (param $x i32) (param $y i32)
+ ;; CHECK:      (func $still-merge (type $0) (param $x i32) (param $y i32)
+ ;; CHECK-NEXT:  (@metadata.code.branch_hint "\00")
  ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:   (then
- ;; CHECK-NEXT:    (@metadata.code.branch_hint "\00")
- ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (local.get $y)
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (else
- ;; CHECK-NEXT:    (@metadata.code.branch_hint "\01")
- ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (local.get $y)
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $no-merge (param $x i32) (param $y i32)
-  ;; Do not merge if arms if metadata differs (perhaps the hint is intentionally
-  ;; different, reflecting different runtime behavior).
+ (func $still-merge (param $x i32) (param $y i32)
+  ;; We merge if arms even if metadata differs (like LLVM).
   (if
    (local.get $x)
    (then
