@@ -1955,7 +1955,7 @@ class BranchHintPreservation(TestCaseHandler):
             # to skip them entirely, as they have other things we need to fuzz.
             # We add pass-args for them:
             # * Do not fold inside OptimizeInstructions.
-            '--pass-arg=optimize-instructions-never-fold',
+            '--pass-arg=optimize-instructions-never-fold-or-reorder',
             # * Do not unconditionalize code in RemoveUnusedBrs.
             '--pass-arg=remove-unused-brs-never-unconditionalize',
 

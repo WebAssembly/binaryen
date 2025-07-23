@@ -2,11 +2,13 @@
 
 ;; RUN: wasm-opt %s --optimize-instructions -all -S -o - | filecheck %s
 
-;; Also verify that the "never-fold" flag is respected: when set, we do not fold
-;; code together. This is important as we keep one of the two branch hints, and
-;; it may be wrong, which can confuse the fuzzer.
+;; Also verify that the "never-fold-or-reorder" flag is respected: when set, we
+;; do not fold code together (important, as we keep one of the branch hints, and
+;; it may be wrong, which can confuse the fuzzer), and we never reorder (which
+;; can move a branch hint to execute before a trap, which can also cause the
+;; fuzzer to alert).
 
-;; RUN: wasm-opt %s --optimize-instructions -all --pass-arg=optimize-instructions-never-fold -S -o - \
+;; RUN: wasm-opt %s --optimize-instructions -all --pass-arg=optimize-instructions-never-fold-or-reorder -S -o - \
 ;; RUN:   | filecheck %s --check-prefix=NO_FO
 
 (module
@@ -215,6 +217,52 @@
     )
    )
    (local.get $y)
+  )
+ )
+
+ ;; CHECK:      (func $ordering (type $3) (param $x i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NO_FO:      (func $ordering (type $3) (param $x i32)
+ ;; NO_FO-NEXT:  (drop
+ ;; NO_FO-NEXT:   (i32.add
+ ;; NO_FO-NEXT:    (local.get $x)
+ ;; NO_FO-NEXT:    (i32.const 42)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT:  (drop
+ ;; NO_FO-NEXT:   (i32.add
+ ;; NO_FO-NEXT:    (i32.const 42)
+ ;; NO_FO-NEXT:    (local.get $x)
+ ;; NO_FO-NEXT:   )
+ ;; NO_FO-NEXT:  )
+ ;; NO_FO-NEXT: )
+ (func $ordering (param $x i32)
+  ;; Normally we canonicalize the sides of a binary like this (so after the
+  ;; pass, both the below expressions would be identical), but we refrain from
+  ;; doing so with the flag.
+  (drop
+   (i32.add
+    (local.get $x)
+    (i32.const 42)
+   )
+  )
+  (drop
+   (i32.add
+    (i32.const 42)
+    (local.get $x)
+   )
   )
  )
 )

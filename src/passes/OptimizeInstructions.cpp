@@ -235,12 +235,18 @@ struct OptimizeInstructions
   // leave one of the two arbitrarily, so we might get unlucky).
   bool neverFold;
 
+  // As neverFold, but for reordering code. If we move a branch hint around code
+  // that might trap, and the trap happens later, the branch hint might start to
+  // execute, and it could be wrong.
+  bool neverReorder;
+
   // In rare cases we make a change to a type, and will do a refinalize.
   bool refinalize = false;
 
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
-    neverFold = hasArgument("optimize-instructions-never-fold");
+    neverFold = neverReorder =
+      hasArgument("optimize-instructions-never-fold-or-reorder");
 
     // First, scan locals.
     {
@@ -320,6 +326,9 @@ struct OptimizeInstructions
   }
 
   bool canReorder(Expression* a, Expression* b) {
+    if (neverReorder) {
+      return false;
+    }
     return EffectAnalyzer::canReorder(getPassOptions(), *getModule(), a, b);
   }
 
@@ -2831,6 +2840,9 @@ private:
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
     assert(shouldCanonicalize(binary));
+    if (neverReorder) {
+      return;
+    }
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
       if (binary->isRelational()) {
