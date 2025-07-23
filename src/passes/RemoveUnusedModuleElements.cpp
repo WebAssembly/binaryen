@@ -274,8 +274,10 @@ struct Analyzer
     return worked;
   }
 
+  // Like processExpressions, but for references only. This scans the entire
+  // expressions it receives and ensures a reference to all things appearing
+  // there.
   bool processExpressionReferences() {
-
     bool worked = false;
     while (expressionReferenceQueue.size()) {
       worked = true;
@@ -286,7 +288,7 @@ struct Analyzer
       // Find references anywhere in this expression so we can apply them.
       assert(!walkingForReferencesOnly);
       walkingForReferencesOnly = true;
-      walk(curr); // XXX
+      walk(curr);
       walkingForReferencesOnly = false;
     }
     return worked;
@@ -629,6 +631,8 @@ struct Analyzer
   // effects then we would have had to assume the worst earlier, and not get
   // here).
   void addReferences(Expression* curr) {
+    // We use a queue here, as doing a walk right now could recurse, depending
+    // on who called us, and we cannot nest walk()s.
     expressionReferenceQueue.push_back(curr);
   }
 
