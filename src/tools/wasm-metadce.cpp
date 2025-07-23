@@ -356,9 +356,11 @@ public:
       // If all uses of this import went away, we can remove it.
       bool used = false;
       for (auto [kind, internalName] : iter->second) {
-        // Only function imports are important here, as we do things like generate
-        // minification maps for them, etc., but we could add others as well.
-        // TODO: use something like iterImportable, abstracted over ExternalKind,
+        // Only function imports are important here, as we do things like
+        // generate minification maps for them, etc., but we could add others as
+        // well.
+        // TODO: use something like iterImportable, abstracted over
+        // ExternalKind,
         //       to get*OrNull(), and to remove*().
         if (kind != ModuleItemKind::Function ||
             wasm.getFunctionOrNull(internalName)) {
