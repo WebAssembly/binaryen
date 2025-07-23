@@ -196,6 +196,8 @@ struct Analyzer
   // perform that analysis in readStructFields  unreadStructFieldExprMap, below.
   std::vector<Expression*> expressionQueue;
 
+  std::vector<Expression*> expressionReferenceQueue;
+
   // The signatures that we have seen a call_ref for. When we see a RefFunc of a
   // signature in here, we know it is used; otherwise it may only be referred
   // to.
@@ -243,7 +245,7 @@ struct Analyzer
     }
 
     // Main loop on both the module and the expression queues.
-    while (processExpressions() || processModule()) {
+    while (processExpressions() || processModule() || processExpressionReferences()) {
     }
   }
 
@@ -268,6 +270,24 @@ struct Analyzer
 
       // Scan the children to continue our work.
       scanChildren(curr);
+    }
+    return worked;
+  }
+
+  bool processExpressionReferences() {
+
+    bool worked = false;
+    while (expressionReferenceQueue.size()) {
+      worked = true;
+
+      auto* curr = expressionReferenceQueue.back();
+      expressionReferenceQueue.pop_back();
+
+      // Find references anywhere in this expression so we can apply them.
+      assert(!walkingForReferencesOnly);
+      walkingForReferencesOnly = true;
+      walk(curr); // XXX
+      walkingForReferencesOnly = false;
     }
     return worked;
   }
@@ -609,10 +629,7 @@ struct Analyzer
   // effects then we would have had to assume the worst earlier, and not get
   // here).
   void addReferences(Expression* curr) {
-    // Find references anywhere in this expression so we can apply them.
-    walkingForReferencesOnly = true;
-    walk(curr);
-    walkingForReferencesOnly = false;
+    expressionReferenceQueue.push_back(curr);
   }
 
   void reference(ModuleElement element) {
