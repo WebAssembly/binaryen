@@ -89,8 +89,11 @@ struct MetaDCEGraph {
   // import module.base => DCE name
   std::unordered_map<Name, Name> importIdToDCENode;
 
-  // import DCE name => item in the wasm { kind, internal name }
-  std::unordered_map<Name, KindName> DCENodeToImport;
+  // import DCE name => items in the wasm { kind, internal name }
+  // (a vector is needed here as an import from the outside may be imported
+  // multiple times inside the wasm, and we can only remove it from the
+  // outside if all wasm uses go away)
+  std::unordered_map<Name, std::vector<KindName>> DCENodeToImports;
 
   Module& wasm;
 
@@ -121,10 +124,10 @@ struct MetaDCEGraph {
           // (i.e., this import was not referred to from outside the wasm).
           auto dceName = getName("importId", import->name.toString());
           importIdToDCENode[id] = dceName;
-          DCENodeToImport[dceName] = {kind, item->name};
+          DCENodeToImports[dceName].push_back({kind, item->name});
         } else {
           // This is an existing import, mentioned in the outside graph.
-          DCENodeToImport[iter->second] = {kind, item->name};
+          DCENodeToImports[iter->second].push_back({kind, item->name});
         }
         return;
       }
@@ -341,24 +344,31 @@ public:
     // pass, but imports might no longer have any uses. To find imports that
     // were removed, scan the nodes and see what is no longer in the module.
     for (auto& [_, dceName] : importIdToDCENode) {
-      auto iter = DCENodeToImport.find(dceName);
-      if (iter == DCENodeToImport.end()) {
+      auto iter = DCENodeToImports.find(dceName);
+      if (iter == DCENodeToImports.end()) {
         // This appears in the graph, but did not even begin in the wasm. That
         // is, the outside was sending it to the wasm, but the wasm never
         // imported it, which means the graph was not very optimized. Just
         // ignore this.
         continue;
       }
-      auto [kind, internalName] = iter->second;
-      // Only function imports are important here, as we do things like generate
-      // minification maps for them, etc., but we could add others as well.
-      // TODO: use something like iterImportable, abstracted over ExternalKind,
-      //       to get*OrNull(), and to remove*().
-      if (kind == ModuleItemKind::Function) {
-        if (!wasm.getFunctionOrNull(internalName)) {
-          // This was removed from the wasm. Remove it from the graph.
-          reached.erase(dceName);
+
+      // If all uses of this import went away, we can remove it.
+      bool used = false;
+      for (auto [kind, internalName] : iter->second) {
+        // Only function imports are important here, as we do things like generate
+        // minification maps for them, etc., but we could add others as well.
+        // TODO: use something like iterImportable, abstracted over ExternalKind,
+        //       to get*OrNull(), and to remove*().
+        if (kind != ModuleItemKind::Function ||
+            wasm.getFunctionOrNull(internalName)) {
+          used = true;
+          break;
         }
+      }
+      if (!used) {
+        // This was removed from the wasm. Remove it from the graph.
+        reached.erase(dceName);
       }
     }
   }
