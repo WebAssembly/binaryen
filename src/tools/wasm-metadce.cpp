@@ -360,8 +360,7 @@ public:
         // generate minification maps for them, etc., but we could add others as
         // well.
         // TODO: use something like iterImportable, abstracted over
-        // ExternalKind,
-        //       to get*OrNull(), and to remove*().
+        //       ExternalKind, to get*OrNull(), and to remove*().
         if (kind != ModuleItemKind::Function ||
             wasm.getFunctionOrNull(internalName)) {
           used = true;
