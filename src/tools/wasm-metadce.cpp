@@ -337,7 +337,7 @@ public:
     // signatures work, traps-never-happen, etc.) which can lead to even more
     // things vanishing. Anything it removes, we can remove from our graph.
     //
-    // The only thing of interest are imports: exports are never removed by that
+    // The only things of interest are imports: exports are not removed by that
     // pass, but imports might no longer have any uses. To find imports that
     // were removed, scan the nodes and see what is no longer in the module.
     for (auto& [_, dceName] : importIdToDCENode) {

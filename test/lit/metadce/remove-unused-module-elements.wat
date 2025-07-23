@@ -7,7 +7,7 @@
 ;; The export "used" is used, based on the graph file, while the other export
 ;; "unused" is not. Metadce itself can remove $unused. After that,
 ;; remove-unused-module-elements sees that no call_indirect exists that can
-;; reach $A, even though it is in the table, and we remove remove $A. Removing
+;; reach $A, even though it is in the table, and we can remove $A. Removing
 ;; $A then removes the import, which we should report.
 (module
  (type $A (func))
