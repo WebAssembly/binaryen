@@ -359,6 +359,11 @@ struct Analyzer
   }
 
   void useRefFunc(Name func) {
+    if (walkingForReferencesOnly) {
+      reference({ModuleElementKind::Function, func});
+      return;
+    }
+
     if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
@@ -500,6 +505,10 @@ struct Analyzer
   // Mark something as used, if it hasn't already been, and if so add it to the
   // queue so we can process the things it can reach.
   void use(ModuleElement element) {
+    if (walkingForReferencesOnly) {
+      reference(element);
+      return;
+    }
     auto [_, inserted] = used.emplace(element);
     if (inserted) {
       moduleQueue.emplace_back(element);
@@ -510,6 +519,8 @@ struct Analyzer
   }
 
   void use(Expression* curr) {
+    assert(!walkingForReferencesOnly);
+
     // For expressions we do not need to check if they have already been seen:
     // the tree structure guarantees that traversing children, recursively, will
     // only visit each expression once, since each expression has a single
