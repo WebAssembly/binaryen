@@ -68,8 +68,7 @@ using IndirectCall = std::pair<Name, HeapType>;
 
 // Visit or walk an expression to find what things are referenced.
 struct Analyzer
-  : public PostWalker<Analyzer,
-                      UnifiedExpressionVisitor<Analyzer>> {
+  : public PostWalker<Analyzer, UnifiedExpressionVisitor<Analyzer>> {
 
   // Visiting logic.
 
@@ -245,7 +244,8 @@ struct Analyzer
     }
 
     // Main loop on both the module and the expression queues.
-    while (processExpressions() || processModule() || processExpressionReferences()) {
+    while (processExpressions() || processModule() ||
+           processExpressionReferences()) {
     }
   }
 
