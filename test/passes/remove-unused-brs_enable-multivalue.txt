@@ -1154,9 +1154,7 @@
   (block $label$8
    (block $label$11
     (block $label$14
-     (br_if $label$8
-      (br $label$8)
-     )
+     (br $label$8)
     )
    )
   )
@@ -2199,13 +2197,9 @@
      (block $label$2
       (local.tee $0
        (loop $label$5
-        (br_if $label$5
-         (block
-          (unreachable)
-          (drop
-           (i32.const 0)
-          )
-         )
+        (unreachable)
+        (drop
+         (i32.const 0)
         )
        )
       )
@@ -2433,17 +2427,15 @@
    (else
     (drop
      (loop $label$3 (result i64)
-      (br_if $label$3
-       (if
-        (i32.const 0)
-        (then
-         (block $label$4
-          (unreachable)
-         )
-        )
-        (else
+      (if
+       (i32.const 0)
+       (then
+        (block $label$4
          (unreachable)
         )
+       )
+       (else
+        (unreachable)
        )
       )
       (i64.const -9)

@@ -9,11 +9,11 @@ total
  [table-data]   : 25      
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 6800    
+ [total]        : 6791    
  [vars]         : 256     
  Binary         : 454     
  Block          : 1201    
- Break          : 196     
+ Break          : 188     
  Call           : 205     
  CallIndirect   : 61      
  Const          : 1131    
@@ -30,6 +30,5 @@ total
  Return         : 58      
  Select         : 52      
  Store          : 41      
- Switch         : 1       
  Unary          : 451     
  Unreachable    : 246     

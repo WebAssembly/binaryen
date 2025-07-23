@@ -123,9 +123,7 @@
  (func $refinalize-br-condition-unreachable (type $1)
   (block $label$1
    (drop
-    (br_if $label$1
-     (unreachable)
-    )
+    (unreachable)
    )
   )
  )
@@ -133,8 +131,10 @@
   (drop
    (block $label$1 (result i32)
     (drop
-     (br_if $label$1
-      (i32.const 100)
+     (block
+      (drop
+       (i32.const 100)
+      )
       (block $label$3
        (unreachable)
       )
