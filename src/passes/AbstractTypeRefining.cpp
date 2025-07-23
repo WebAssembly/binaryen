@@ -33,6 +33,9 @@
 // must fail unless it allows null.
 //
 
+#include <memory>
+
+#include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -112,14 +115,8 @@ struct AbstractTypeRefining : public Pass {
     //       module, given closed world, but we'd also need to make sure that
     //       we don't need to make any changes to public types that refer to
     //       them.
-    auto heapTypes = ModuleUtils::collectHeapTypeInfo(
-      *module,
-      ModuleUtils::TypeInclusion::AllTypes,
-      ModuleUtils::VisibilityHandling::FindVisibility);
-    for (auto& [type, info] : heapTypes) {
-      if (info.visibility == ModuleUtils::Visibility::Public) {
-        createdTypes.insert(type);
-      }
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      createdTypes.insert(type);
     }
 
     SubTypes subTypes(*module);
@@ -243,6 +240,12 @@ struct AbstractTypeRefining : public Pass {
 
     TypeMapper::TypeUpdates mapping;
 
+    // Track whether we optimize any described types to bottom. If we do, then
+    // we could end up with descriptor casts to nullref, which need to be fixed
+    // up before ReFinalize reintroduces the cast result type that was supposed
+    // to be optimized out.
+    bool optimizedDescribedType = false;
+
     for (auto type : subTypes.types) {
       if (!type.isStruct()) {
         // TODO: support arrays and funcs
@@ -259,6 +262,9 @@ struct AbstractTypeRefining : public Pass {
       // We check this first as it is the most powerful change.
       if (createdTypesOrSubTypes.count(type) == 0) {
         mapping[type] = type.getBottom();
+        if (type.getDescriptorType()) {
+          optimizedDescribedType = true;
+        }
         continue;
       }
 
@@ -297,10 +303,68 @@ struct AbstractTypeRefining : public Pass {
 
     AbstractTypeRefiningTypeMapper(*module, mapping).map();
 
+    if (optimizedDescribedType) {
+      // At this point we may have casts like this:
+      //
+      // (ref.cast_desc nullref
+      //   (some struct...)
+      //   (some desc...)
+      // )
+      //
+      // ReFinalize would fix up the cast target to be the struct type described
+      // by the descriptor, but that struct type was supposed to have been
+      // optimized out. Optimize out the cast (which we know must either be a
+      // null check or unconditional trap) before ReFinalize can get to it.
+      fixupDescriptorCasts(*module);
+    }
+
     // Refinalize to propagate the type changes we made. For example, a refined
     // cast may lead to a struct.get reading a more refined type using that
     // type.
     ReFinalize().run(getPassRunner(), module);
+  }
+
+  void fixupDescriptorCasts(Module& module) {
+    struct CastFixer : WalkerPass<PostWalker<CastFixer>> {
+      bool isFunctionParallel() override { return true; }
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<CastFixer>();
+      }
+      void visitRefCast(RefCast* curr) {
+        if (!curr->desc || !curr->type.isNull()) {
+          return;
+        }
+        Block* replacement =
+          ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+            .getChildrenReplacement();
+        // Reuse `curr` as the cast to nullref. Leave further optimization of
+        // the cast to OptimizeInstructions.
+        curr->desc = nullptr;
+        replacement->list.push_back(curr);
+        replacement->type = curr->type;
+        replaceCurrent(replacement);
+      }
+      void visitBrOn(BrOn* curr) {
+        if (curr->op != BrOnCastDesc && curr->op != BrOnCastDescFail) {
+          return;
+        }
+        if (!curr->castType.isNull()) {
+          return;
+        }
+        bool isFail = curr->op == BrOnCastDescFail;
+        Block* replacement =
+          ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
+            .getChildrenReplacement();
+        // Reuse `curr` as a br_on_cast to nullref. Leave further optimization
+        // of the branch to RemoveUnusedBrs.
+        curr->desc = nullptr;
+        curr->op = isFail ? BrOnCastFail : BrOnCast;
+        replacement->list.push_back(curr);
+        replacement->type = curr->type;
+        replaceCurrent(replacement);
+      }
+    } fixer;
+    fixer.run(getPassRunner(), &module);
   }
 };
 
