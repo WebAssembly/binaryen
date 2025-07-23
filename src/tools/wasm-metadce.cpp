@@ -341,9 +341,15 @@ public:
     // pass, but imports might no longer have any uses. To find imports that
     // were removed, scan the nodes and see what is no longer in the module.
     for (auto& [_, dceName] : importIdToDCENode) {
-      auto [kind, internalName] = DCENodeToImport[dceName];
-      // The item must appear in the map.
-      assert(!internalName.isNull());
+      auto iter = DCENodeToImport.find(dceName);
+      if (iter == DCENodeToImport.end()) {
+        // This appears in the graph, but did not even begin in the wasm. That
+        // is, the outside was sending it to the wasm, but the wasm never
+        // imported it, which means the graph was not very optimized. Just
+        // ignore this.
+        continue;
+      }
+      auto [kind, internalName] = iter->second;
       // Only function imports are important here, as we do things like generate
       // minification maps for them, etc., but we could add others as well.
       // TODO: use something like iterImportable, abstracted over ExternalKind,
