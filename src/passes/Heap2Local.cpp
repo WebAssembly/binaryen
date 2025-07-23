@@ -156,6 +156,7 @@
 #include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "ir/localize.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
 #include "ir/type-updating.h"
@@ -598,15 +599,18 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   Function* func;
   Module& wasm;
+  const PassOptions& options;
   Builder builder;
   const FieldList& fields;
 
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
-               Module& wasm)
+               Module& wasm,
+               const PassOptions& options)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
+      options(options), builder(wasm),
+      fields(allocation->type.getHeapType().getStruct().fields) {
 
     // Allocate locals to store the allocation's fields and descriptor in.
     for (auto field : fields) {
@@ -850,19 +854,34 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     if (curr->desc) {
-      // If we are doing a ref.cast_desc of the optimized allocation, but we
-      // know it does not have a descriptor, then we know the cast must fail. We
-      // also know the cast must fail if the optimized allocation flows in as
-      // the descriptor, since it cannot possibly have been used in the
-      // allocation of the cast value without having been considered to escape.
-      if (!allocation->desc || analyzer.getInteraction(curr->desc) ==
-                                 ParentChildInteraction::Flows) {
-        // The allocation does not have a descriptor, so there is no way for the
-        // cast to succeed.
-        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->desc),
-                                        builder.makeUnreachable()));
+      // If we are doing a ref.cast_desc of the optimized allocation, but the
+      // allocation does not have a descriptor, then we know the cast must fail.
+      // We also know the cast must fail (except for nulls it might let through)
+      // if the optimized allocation flows in as the descriptor, since it cannot
+      // possibly have been used in the allocation of the cast value without
+      // having been considered to escape.
+      bool allocIsCastDesc =
+        analyzer.getInteraction(curr->desc) == ParentChildInteraction::Flows;
+      if (!allocation->desc || allocIsCastDesc) {
+        auto* replacement =
+          ChildLocalizer(curr, func, wasm, options).getChildrenReplacement();
+        if (allocIsCastDesc && curr->type.isNullable()) {
+          // There might be a null value to let through. Reuse curr as a cast to
+          // null.
+          curr->desc = nullptr;
+          curr->type = curr->type.with(curr->type.getHeapType().getBottom());
+          replacement->list.push_back(curr);
+          replacement->type = curr->type;
+        } else {
+          // Either the cast does not allow nulls or we know the value isn't
+          // null anyway, so the cast certainly fails.
+          replacement->list.push_back(builder.makeUnreachable());
+          replacement->type = Type::unreachable;
+        }
+        replaceCurrent(replacement);
       } else {
+        assert(analyzer.getInteraction(curr->ref) ==
+               ParentChildInteraction::Flows);
         // The cast succeeds iff the optimized allocation's descriptor is the
         // same as the given descriptor and traps otherwise.
         auto type = allocation->desc->type;
@@ -1423,7 +1442,7 @@ struct Heap2Local {
         // the struct into locals.
         auto* structNew =
           Array2Struct(allocation, analyzer, func, wasm).structNew;
-        Struct2Local(structNew, analyzer, func, wasm);
+        Struct2Local(structNew, analyzer, func, wasm, passOptions);
         optimized = true;
       }
     }
@@ -1440,7 +1459,7 @@ struct Heap2Local {
       EscapeAnalyzer analyzer(
         localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
-        Struct2Local(allocation, analyzer, func, wasm);
+        Struct2Local(allocation, analyzer, func, wasm, passOptions);
         optimized = true;
       }
     }
