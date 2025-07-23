@@ -240,23 +240,20 @@
     (type $SubObject (sub $Object (descriptor $SubObject.vtable (struct
       (field $itable (ref $Object.itable))))))
 
-    ;; CHECK:       (type $function0 (func))
-    (type $function0 (func))
-
     ;; CHECK:       (type $function (func))
     (type $function (func))
 
     ;; The $Object.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $Object.vtable (sub (describes $Object (struct (field (ref $function0)) (field structref)))))
+    ;; CHECK:       (type $Object.vtable (sub (describes $Object (struct (field externref) (field structref)))))
     (type $Object.vtable (sub (describes $Object (struct
-      (field (ref $function0))))))
+      (field externref)))))
 
     ;; The $Object.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct (field (ref $function0)) (field structref) (field (ref $function))))))
+    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct (field externref) (field structref) (field (ref $function))))))
     (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct
-      (field (ref $function0))
+      (field externref)
       (field (ref $function))))))
 
     ;; CHECK:       (type $Object.itable (struct (field structref)))
@@ -264,7 +261,7 @@
 	    (field (ref null struct))))
   )
 
-  ;; CHECK:       (type $7 (func))
+  ;; CHECK:       (type $6 (func))
 
   ;; CHECK:      (global $Object.itable (ref $Object.itable) (struct.new_default $Object.itable))
   (global $Object.itable (ref $Object.itable)
@@ -277,28 +274,22 @@
   ;; The initialization for the itable field (null struct) will be added to this
   ;; vtable instance.
   ;; CHECK:      (global $SubObject.vtable (ref (exact $SubObject.vtable)) (struct.new $SubObject.vtable
-  ;; CHECK-NEXT:  (ref.func $Object.f)
+  ;; CHECK-NEXT:  (ref.null noextern)
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
   ;; CHECK-NEXT: ))
   (global $SubObject.vtable (ref (exact $SubObject.vtable))
-    (struct.new $SubObject.vtable (ref.func $Object.f) (ref.func $SubObject.f)))
+    (struct.new $SubObject.vtable (ref.null extern) (ref.func $SubObject.f)))
 
 
   ;; The initialization for the itable field (null struct) will be added to this
   ;; vtable instance.
   ;; CHECK:      (global $Object.vtable (ref (exact $Object.vtable)) (struct.new $Object.vtable
-  ;; CHECK-NEXT:  (ref.func $Object.f)
+  ;; CHECK-NEXT:  (ref.null noextern)
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $Object.vtable (ref (exact $Object.vtable))
-    (struct.new $Object.vtable (ref.func $Object.f)))
-
-  ;; CHECK:      (func $Object.f (type $function0)
-  ;; CHECK-NEXT: )
-  (func $Object.f
-    (type $function0)
-  )
+    (struct.new $Object.vtable (ref.null extern)))
 
   ;; CHECK:      (func $SubObject.f (type $function)
   ;; CHECK-NEXT: )
@@ -306,7 +297,7 @@
     (type $function)
   )
 
-  ;; CHECK:      (func $usages (type $7)
+  ;; CHECK:      (func $usages (type $6)
   ;; CHECK-NEXT:  (local $o (ref null $SubObject))
   ;; CHECK-NEXT:  (local.set $o
   ;; CHECK-NEXT:   (struct.new $SubObject
@@ -375,9 +366,6 @@
     (type $SubObject (sub $Object (descriptor $SubObject.vtable (struct
       (field $itable (ref $SubObject.itable))))))
 
-    ;; CHECK:       (type $function0 (func))
-    (type $function0 (func))
-
     ;; CHECK:       (type $function (func))
     (type $function (func))
 
@@ -391,29 +379,29 @@
 
     ;; The $Object.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $Object.vtable (sub (describes $Object (struct (field (ref $function0)) (field structref)))))
+    ;; CHECK:       (type $Object.vtable (sub (describes $Object (struct (field externref) (field structref)))))
     (type $Object.vtable (sub (describes $Object (struct
-      (field (ref $function0))))))
+      (field externref)))))
 
     ;; The $SubObject.itable field (a structref) will be added as a field after
     ;; the first field of this vtable.
-    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct (field (ref $function0)) (field structref) (field (ref $function))))))
+    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct (field externref) (field structref) (field (ref $function))))))
     (type $SubObject.vtable (sub $Object.vtable (describes $SubObject (struct
-      (field (ref $function0))
+      (field externref)
       (field (ref $function))))))
   )
 
   ;; The initialization for the itable field (null struct) will be added to this
   ;; vtable instance.
-  ;; CHECK:       (type $8 (func))
+  ;; CHECK:       (type $7 (func))
 
   ;; CHECK:      (global $SubObject.vtable (ref (exact $SubObject.vtable)) (struct.new $SubObject.vtable
-  ;; CHECK-NEXT:  (ref.func $Object.f)
+  ;; CHECK-NEXT:  (ref.null noextern)
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
   ;; CHECK-NEXT: ))
   (global $SubObject.vtable (ref (exact $SubObject.vtable))
-    (struct.new $SubObject.vtable (ref.func $Object.f) (ref.func $SubObject.f)))
+    (struct.new $SubObject.vtable (ref.null extern) (ref.func $SubObject.f)))
 
   ;; CHECK:      (global $SubObject.itable (ref $SubObject.itable) (struct.new_default $SubObject.itable))
   (global $SubObject.itable (ref $SubObject.itable)
@@ -422,21 +410,15 @@
   ;; The initialization for the itable field (null struct) will be added to this
   ;; vtable instance.
   ;; CHECK:      (global $Object.vtable (ref (exact $Object.vtable)) (struct.new $Object.vtable
-  ;; CHECK-NEXT:  (ref.func $Object.f)
+  ;; CHECK-NEXT:  (ref.null noextern)
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $Object.vtable (ref (exact $Object.vtable))
-    (struct.new $Object.vtable (ref.func $Object.f)))
+    (struct.new $Object.vtable (ref.null extern)))
 
   ;; CHECK:      (global $Object.itable (ref $Object.itable) (struct.new_default $Object.itable))
   (global $Object.itable (ref $Object.itable)
     (struct.new_default $Object.itable))
-
-  ;; CHECK:      (func $Object.f (type $function0)
-  ;; CHECK-NEXT: )
-  (func $Object.f
-    (type $function0)
-  )
 
   ;; CHECK:      (func $SubObject.f (type $function)
   ;; CHECK-NEXT: )
@@ -444,7 +426,7 @@
     (type $function)
   )
 
-  ;; CHECK:      (func $usages (type $8)
+  ;; CHECK:      (func $usages (type $7)
   ;; CHECK-NEXT:  (local $o (ref null $SubObject))
   ;; CHECK-NEXT:  (local.set $o
   ;; CHECK-NEXT:   (struct.new $SubObject
