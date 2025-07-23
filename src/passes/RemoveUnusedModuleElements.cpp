@@ -248,10 +248,19 @@ struct Analyzer {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
+  // We will find references in functions in parallel.
+  ModuleUtils::ParallelFunctionAnalysis<ReferenceFinder> functionReferences;
+
   Analyzer(Module* module,
            const PassOptions& options,
            const std::vector<ModuleElement>& roots)
-    : module(module), options(options) {
+    : module(module), options(options), functionReferences(
+      *module, [&](Function* func, ReferenceFinder& finder) {
+        if (!func->imported()) {
+          finder.setModule(module);
+          finder.visit(func->body);
+        }
+      }) {
 
     // All roots are used.
     for (auto& element : roots) {
@@ -279,29 +288,35 @@ struct Analyzer {
       ReferenceFinder finder;
       finder.setModule(module);
       finder.visit(curr);
-      for (auto element : finder.used) {
-        use(element);
-      }
-      for (auto element : finder.referenced) {
-        reference(element);
-      }
-      for (auto type : finder.callRefTypes) {
-        useCallRefType(type);
-      }
-      for (auto func : finder.refFuncs) {
-        useRefFunc(func);
-      }
-      for (auto structField : finder.structFields) {
-        useStructField(structField);
-      }
-      for (auto call : finder.indirectCalls) {
-        useIndirectCall(call);
-      }
+      apply(finder);
 
       // Scan the children to continue our work.
       scanChildren(curr);
     }
     return worked;
+  }
+
+  // Apply the findings in a ReferenceFinder. This happens when we learn that it
+  // is reached.
+  void apply(const ReferenceFinder& finder) {
+    for (auto element : finder.used) {
+      use(element);
+    }
+    for (auto element : finder.referenced) {
+      reference(element);
+    }
+    for (auto type : finder.callRefTypes) {
+      useCallRefType(type);
+    }
+    for (auto func : finder.refFuncs) {
+      useRefFunc(func);
+    }
+    for (auto structField : finder.structFields) {
+      useStructField(structField);
+    }
+    for (auto call : finder.indirectCalls) {
+      useIndirectCall(call);
+    }
   }
 
   // We'll compute SubTypes if we need them.
@@ -445,7 +460,12 @@ struct Analyzer {
           // if not an import, walk it
           auto* func = module->getFunction(value);
           if (!func->imported()) {
-            use(func->body);
+            // We have already scanned function bodies in advance in parallel.
+            // Use those findings.
+            apply(functionReferences.map[func]);
+
+            // Scan the children to continue our work.
+            scanChildren(func->body); // XXX move to apply?
           }
           break;
         }
