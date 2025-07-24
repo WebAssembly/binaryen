@@ -80,9 +80,7 @@ using IndirectCall = std::pair<Name, HeapType>;
 // advance, rather than as we go (single-threaded). However, this turns out not
 // to be faster in practice (perhaps because the single-threaded approach uses
 // less memory).
-struct Noter
-  : public PostWalker<Noter,
-                      UnifiedExpressionVisitor<Noter>> {
+struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   // We mark both uses and references, and also note specific things that
   // require special handling, like refFuncs.
   std::vector<ModuleElement> used, referenced;
