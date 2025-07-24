@@ -445,4 +445,3 @@ struct J2CLItableMerging : public Pass {
 
 Pass* createJ2CLItableMergingPass() { return new J2CLItableMerging(); }
 } // namespace wasm
-
