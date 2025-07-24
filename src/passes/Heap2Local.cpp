@@ -154,7 +154,6 @@
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
-#include "ir/find_all.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
@@ -402,7 +401,11 @@ struct EscapeAnalyzer {
             fullyConsumes = true;
           }
         } else {
-          assert(curr->desc == child);
+          // Either the child is the descriptor, in which case we consume it, or
+          // we have already optimized this ref.cast_desc for an allocation that
+          // flowed through as its `ref`. In the latter case the current child
+          // must have originally been the descriptor, so we can still say it's
+          // fully consumed, but we cannot assert that curr->desc == child.
           fullyConsumes = true;
         }
       }
@@ -850,19 +853,42 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     if (curr->desc) {
-      // If we are doing a ref.cast_desc of the optimized allocation, but we
-      // know it does not have a descriptor, then we know the cast must fail. We
-      // also know the cast must fail if the optimized allocation flows in as
-      // the descriptor, since it cannot possibly have been used in the
-      // allocation of the cast value without having been considered to escape.
-      if (!allocation->desc || analyzer.getInteraction(curr->desc) ==
-                                 ParentChildInteraction::Flows) {
-        // The allocation does not have a descriptor, so there is no way for the
-        // cast to succeed.
-        replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
-                                        builder.makeDrop(curr->desc),
-                                        builder.makeUnreachable()));
+      // If we are doing a ref.cast_desc of the optimized allocation, but the
+      // allocation does not have a descriptor, then we know the cast must fail.
+      // We also know the cast must fail (except for nulls it might let through)
+      // if the optimized allocation flows in as the descriptor, since it cannot
+      // possibly have been used in the allocation of the cast value without
+      // having been considered to escape.
+      bool allocIsCastDesc =
+        analyzer.getInteraction(curr->desc) == ParentChildInteraction::Flows;
+      if (!allocation->desc || allocIsCastDesc) {
+        // It would seem convenient to use ChildLocalizer here, but we cannot.
+        // ChildLocalizer would create a local.set for a desc operand with
+        // side effects, but that local.set would not be reflected in the parent
+        // map, so it would not be updated if the allocation flowing through
+        // that desc operand were later optimized.
+        if (allocIsCastDesc && curr->type.isNullable()) {
+          // There might be a null value to let through. Reuse curr as a cast to
+          // null. Use a scratch local to move the reference value past the desc
+          // value.
+          Index scratch = builder.addVar(func, curr->ref->type);
+          replaceCurrent(
+            builder.blockify(builder.makeLocalSet(scratch, curr->ref),
+                             builder.makeDrop(curr->desc),
+                             curr));
+          curr->desc = nullptr;
+          curr->type = curr->type.with(curr->type.getHeapType().getBottom());
+          curr->ref = builder.makeLocalGet(scratch, curr->ref->type);
+        } else {
+          // Either the cast does not allow nulls or we know the value isn't
+          // null anyway, so the cast certainly fails.
+          replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->desc),
+                                          builder.makeUnreachable()));
+        }
       } else {
+        assert(analyzer.getInteraction(curr->ref) ==
+               ParentChildInteraction::Flows);
         // The cast succeeds iff the optimized allocation's descriptor is the
         // same as the given descriptor and traps otherwise.
         auto type = allocation->desc->type;
