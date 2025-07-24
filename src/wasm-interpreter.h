@@ -308,7 +308,6 @@ public:
 
   Flow visitBlock(Block* curr) {
     NOTE_ENTER("Block");
-std::cout << indent() << "BLOCK name " << curr->name << '\n';
     // special-case Block, because Block nesting (in their first element) can be
     // incredibly deep
     std::vector<Block*> stack;
@@ -324,7 +323,6 @@ std::cout << indent() << "BLOCK name " << curr->name << '\n';
       stack.pop_back();
       if (flow.breaking()) {
         flow.clearIf(curr->name);
-std::cout << indent() << " breaking, me" << curr->name << " leaving " << flow << '\n';
         continue;
       }
       auto& list = curr->list;
@@ -336,12 +334,10 @@ std::cout << indent() << " breaking, me" << curr->name << " leaving " << flow <<
         flow = visit(list[i]);
         if (flow.breaking()) {
           flow.clearIf(curr->name);
-std::cout << indent() << "inner breaking, me" << curr->name << " leaving " << flow << '\n';
           break;
         }
       }
     }
-std::cout << indent() << "BLOCK final flow, me" << curr->name << " leaving " << flow << '\n';
     return flow;
   }
   Flow visitIf(If* curr) {
