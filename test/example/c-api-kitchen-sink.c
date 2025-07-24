@@ -374,6 +374,8 @@ void test_features() {
   printf("BinaryenFeatureRelaxedSIMD: %d\n", BinaryenFeatureRelaxedSIMD());
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
+  printf("BinaryenFeatureCustomPageSizes: %d\n",
+         BinaryenFeatureCustomPageSizes());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
