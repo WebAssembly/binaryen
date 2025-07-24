@@ -1,3 +1,4 @@
+#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -25,6 +26,7 @@
 
 #include <cmath>
 #include <limits.h>
+#include <queue>
 #include <sstream>
 #include <variant>
 
@@ -114,54 +116,12 @@ public:
   }
 };
 
-// Debugging helpers
-#ifdef WASM_INTERPRETER_DEBUG
-class Indenter {
-  static int indentLevel;
-
-  const char* entryName;
-
-public:
-  Indenter(const char* entry);
-  ~Indenter();
-
-  static void print();
-};
-
-#define NOTE_ENTER(x)                                                          \
-  Indenter _int_blah(x);                                                       \
-  {                                                                            \
-    Indenter::print();                                                         \
-    std::cout << "visit " << x << " : " << curr << "\n";                       \
-  }
-#define NOTE_ENTER_(x)                                                         \
-  Indenter _int_blah(x);                                                       \
-  {                                                                            \
-    Indenter::print();                                                         \
-    std::cout << "visit " << x << "\n";                                        \
-  }
-#define NOTE_NAME(p0)                                                          \
-  {                                                                            \
-    Indenter::print();                                                         \
-    std::cout << "name " << '(' << Name(p0) << ")\n";                          \
-  }
-#define NOTE_EVAL1(p0)                                                         \
-  {                                                                            \
-    Indenter::print();                                                         \
-    std::cout << "eval " #p0 " (" << p0 << ")\n";                              \
-  }
-#define NOTE_EVAL2(p0, p1)                                                     \
-  {                                                                            \
-    Indenter::print();                                                         \
-    std::cout << "eval " #p0 " (" << p0 << "), " #p1 " (" << p1 << ")\n";      \
-  }
-#else // WASM_INTERPRETER_DEBUG
+// Debugging helpers XXX remove
 #define NOTE_ENTER(x)
 #define NOTE_ENTER_(x)
 #define NOTE_NAME(p0)
 #define NOTE_EVAL1(p0)
 #define NOTE_EVAL2(p0, p1)
-#endif // WASM_INTERPRETER_DEBUG
 
 // Execute an expression
 template<typename SubType>
@@ -240,12 +200,26 @@ protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
   // TODO: Literals here and not Flows
-  std::vector<Flow> valueStack;
+  std::queue<Flow> valueStack;
+
+#if WASM_INTERPRETER_DEBUG
+  std::string indent() {
+    std::string ret;
+    for (Index i = 0; i < depth; i++) {
+      ret += ' ';
+    }
+    return ret;
+  }
+#endif
+
 
   Flow pop() {
     assert(!valueStack.empty());
-    auto ret = valueStack.back();
-    valueStack.pop_back();
+    auto ret = valueStack.front();
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "popping " << ret << '\n';
+#endif
+    valueStack.pop();
     return ret;
   }
 
@@ -260,6 +234,9 @@ public:
   void setRelaxedBehavior(RelaxedBehavior value) { relaxedBehavior = value; }
 
   Flow visit(Expression* curr) {
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "visit(" << getExpressionName(curr) << ")\n";
+#endif
     depth++;
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       hostLimit("interpreter recursion limit");
@@ -272,7 +249,10 @@ public:
         if (flow.breaking()) {
           return flow;
         }
-        valueStack.push_back(flow);
+#if WASM_INTERPRETER_DEBUG
+        std::cout << indent() << " visited child, adding to value stack " << flow << '\n';
+#endif
+        valueStack.push(flow);
       }
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
