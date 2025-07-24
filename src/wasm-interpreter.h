@@ -1,4 +1,4 @@
-#define WASM_INTERPRETER_DEBUG 1
+//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -144,7 +144,7 @@ protected:
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
     for (Index i = 0; i < operands.size(); i++) {
-      Flow flow = pop();
+      Flow flow = getChild();
       NOTE_EVAL1(flow.values);
       arguments.push_back(flow.getSingleValue());
     }
@@ -212,8 +212,9 @@ protected:
   }
 #endif
 
-
-  Flow pop() {
+  // Get a child value. This returns values in the natural order, the same as in
+  // the wat and in wasm.h.
+  Flow getChild() {
     assert(!valueStack.empty());
     auto ret = valueStack.back();
 #if WASM_INTERPRETER_DEBUG
@@ -263,8 +264,8 @@ public:
       // Then we first process bar, then quux, leaving quux last on the stack.
       // But we want to write, in visitFoo(),
       //
-      //   auto bar = pop();
-      //   auto quux = pop();
+      //   auto bar = getChild();
+      //   auto quux = getChild();
       //
       // (otherwise, we could reverse the order in the visit*() methods, but at
       // the cost of readability).
@@ -374,10 +375,10 @@ public:
     bool condition = true;
     Flow flow;
     if (curr->value) {
-      flow = pop();
+      flow = getChild();
     }
     if (curr->condition) {
-      Flow conditionFlow = pop();
+      Flow conditionFlow = getChild();
       condition = conditionFlow.getSingleValue().getInteger() != 0;
       if (!condition) {
         return flow;
@@ -391,10 +392,10 @@ public:
     Flow flow;
     Literals values;
     if (curr->value) {
-      flow = pop();
+      flow = getChild();
       values = flow.values;
     }
-    flow = pop();
+    flow = getChild();
     int64_t index = flow.getSingleValue().getInteger();
     Name target = curr->default_;
     if (index >= 0 && (size_t)index < curr->targets.size()) {
@@ -416,7 +417,7 @@ public:
 
   Flow visitUnary(Unary* curr) {
     NOTE_ENTER("Unary");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
     switch (curr->op) {
@@ -696,9 +697,9 @@ public:
   }
   Flow visitBinary(Binary* curr) {
     NOTE_ENTER("Binary");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal left = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     Literal right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     assert(curr->left->type.isConcrete() ? left.type == curr->left->type
@@ -1183,7 +1184,7 @@ public:
   }
   Flow visitSIMDExtract(SIMDExtract* curr) {
     NOTE_ENTER("SIMDExtract");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal vec = flow.getSingleValue();
     switch (curr->op) {
       case ExtractLaneSVecI8x16:
@@ -1209,9 +1210,9 @@ public:
   }
   Flow visitSIMDReplace(SIMDReplace* curr) {
     NOTE_ENTER("SIMDReplace");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal vec = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     Literal value = flow.getSingleValue();
     switch (curr->op) {
       case ReplaceLaneVecI8x16:
@@ -1233,19 +1234,19 @@ public:
   }
   Flow visitSIMDShuffle(SIMDShuffle* curr) {
     NOTE_ENTER("SIMDShuffle");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal left = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     Literal right = flow.getSingleValue();
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDTernary(SIMDTernary* curr) {
     NOTE_ENTER("SIMDBitselect");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal a = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     Literal b = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
@@ -1295,9 +1296,9 @@ public:
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
-    Flow flow = pop();
+    Flow flow = getChild();
     Literal vec = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     Literal shift = flow.getSingleValue();
     switch (curr->op) {
       case ShlVecI8x16:
@@ -1329,22 +1330,22 @@ public:
   }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
-    Flow ifTrue = pop();
-    Flow ifFalse = pop();
-    Flow condition = pop();
+    Flow ifTrue = getChild();
+    Flow ifFalse = getChild();
+    Flow condition = getChild();
     NOTE_EVAL1(condition.getSingleValue());
     return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
-    Flow value = pop();
+    Flow value = getChild();
     return Flow();
   }
   Flow visitReturn(Return* curr) {
     NOTE_ENTER("Return");
     Flow flow;
     if (curr->value) {
-      flow = pop();
+      flow = getChild();
       NOTE_EVAL1(flow.getSingleValue());
     }
     flow.breakTo = RETURN_FLOW;
@@ -1440,7 +1441,7 @@ public:
   }
   Flow visitTupleExtract(TupleExtract* curr) {
     NOTE_ENTER("tuple.extract");
-    Flow flow = pop();
+    Flow flow = getChild();
     assert(flow.values.size() > curr->index);
     return Flow(flow.values[curr->index]);
   }
@@ -1477,7 +1478,7 @@ public:
   }
   Flow visitRefIsNull(RefIsNull* curr) {
     NOTE_ENTER("RefIsNull");
-    Flow flow = pop();
+    Flow flow = getChild();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(int32_t(value.isNull()));
@@ -1489,9 +1490,9 @@ public:
   }
   Flow visitRefEq(RefEq* curr) {
     NOTE_ENTER("RefEq");
-    Flow flow = pop();
+    Flow flow = getChild();
     auto left = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     auto right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     return Literal(int32_t(left == right));
@@ -1520,7 +1521,7 @@ public:
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrowRef(ThrowRef* curr) {
     NOTE_ENTER("ThrowRef");
-    Flow flow = pop();
+    Flow flow = getChild();
     const auto& exnref = flow.getSingleValue();
     NOTE_EVAL1(exnref);
     if (exnref.isNull()) {
@@ -1532,7 +1533,7 @@ public:
   }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
-    Flow flow = pop();
+    Flow flow = getChild();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal::makeI31(value.geti32(),
@@ -1540,7 +1541,7 @@ public:
   }
   Flow visitI31Get(I31Get* curr) {
     NOTE_ENTER("I31Get");
-    Flow flow = pop();
+    Flow flow = getChild();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     if (value.isNull()) {
@@ -1574,7 +1575,7 @@ public:
   };
 
   template<typename T> Cast doCast(T* curr) {
-    Flow ref = pop();
+    Flow ref = getChild();
     Literal val = ref.getSingleValue();
     Type castType = curr->getCastType();
     if (Type::isSubType(val.type, castType)) {
@@ -1584,8 +1585,8 @@ public:
     }
   }
   template<typename T> Cast doDescCast(T* curr) {
-    Flow ref = pop();
-    Flow desc = pop();
+    Flow ref = getChild();
+    Flow desc = getChild();
     auto expected = desc.getSingleValue().getGCData();
     if (!expected) {
       trap("null descriptor");
@@ -1635,7 +1636,7 @@ public:
   }
   Flow visitRefGetDesc(RefGetDesc* curr) {
     NOTE_ENTER("RefGetDesc");
-    Flow ref = pop();
+    Flow ref = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1672,7 +1673,7 @@ public:
       case BrOnNull:
       case BrOnNonNull: {
         // Otherwise we are just checking for null.
-        Flow flow = pop();
+        Flow flow = getChild();
         const auto& value = flow.getSingleValue();
         NOTE_EVAL1(value);
         if (curr->op == BrOnNull) {
@@ -1708,14 +1709,14 @@ public:
       if (curr->isWithDefault()) {
         data[i] = Literal::makeZero(field.type);
       } else {
-        auto value = pop();
+        auto value = getChild();
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
     if (!curr->desc) {
       return makeGCData(std::move(data), curr->type);
     }
-    auto desc = pop();
+    auto desc = getChild();
     if (desc.getSingleValue().isNull()) {
       trap("null descriptor");
     }
@@ -1723,7 +1724,7 @@ public:
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
-    Flow ref = pop();
+    Flow ref = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1733,8 +1734,8 @@ public:
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
-    Flow ref = pop();
-    Flow value = pop();
+    Flow ref = getChild();
+    Flow value = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1747,8 +1748,8 @@ public:
 
   Flow visitStructRMW(StructRMW* curr) {
     NOTE_ENTER("StructRMW");
-    Flow ref = pop();
-    Flow value = pop();
+    Flow ref = getChild();
+    Flow value = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1781,9 +1782,9 @@ public:
 
   Flow visitStructCmpxchg(StructCmpxchg* curr) {
     NOTE_ENTER("StructCmpxchg");
-    Flow ref = pop();
-    Flow expected = pop();
-    Flow replacement = pop();
+    Flow ref = getChild();
+    Flow expected = getChild();
+    Flow replacement = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1806,9 +1807,9 @@ public:
     NOTE_ENTER("ArrayNew");
     Flow init;
     if (!curr->isWithDefault()) {
-      init = pop();
+      init = getChild();
     }
-    auto size = pop();
+    auto size = getChild();
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // visit the unreachable child, and stop there.
@@ -1853,15 +1854,15 @@ public:
     auto field = heapType.getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
-      auto value = pop();
+      auto value = getChild();
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
     return makeGCData(std::move(data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
-    Flow ref = pop();
-    Flow index = pop();
+    Flow ref = getChild();
+    Flow index = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1875,9 +1876,9 @@ public:
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
-    Flow ref = pop();
-    Flow index = pop();
-    Flow value = pop();
+    Flow ref = getChild();
+    Flow index = getChild();
+    Flow value = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1892,7 +1893,7 @@ public:
   }
   Flow visitArrayLen(ArrayLen* curr) {
     NOTE_ENTER("ArrayLen");
-    Flow ref = pop();
+    Flow ref = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1901,11 +1902,11 @@ public:
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
     NOTE_ENTER("ArrayCopy");
-    Flow destRef = pop();
-    Flow destIndex = pop();
-    Flow srcRef = pop();
-    Flow srcIndex = pop();
-    Flow length = pop();
+    Flow destRef = getChild();
+    Flow destIndex = getChild();
+    Flow srcRef = getChild();
+    Flow srcIndex = getChild();
+    Flow length = getChild();
     auto destData = destRef.getSingleValue().getGCData();
     if (!destData) {
       trap("null ref");
@@ -1935,10 +1936,10 @@ public:
   }
   Flow visitArrayFill(ArrayFill* curr) {
     NOTE_ENTER("ArrayFill");
-    Flow ref = pop();
-    Flow index = pop();
-    Flow value = pop();
-    Flow size = pop();
+    Flow ref = getChild();
+    Flow index = getChild();
+    Flow value = getChild();
+    Flow size = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1964,9 +1965,9 @@ public:
   Flow visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayRMW(ArrayRMW* curr) {
     NOTE_ENTER("ArrayRMW");
-    Flow ref = pop();
-    Flow index = pop();
-    Flow value = pop();
+    Flow ref = getChild();
+    Flow index = getChild();
+    Flow value = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2000,10 +2001,10 @@ public:
 
   Flow visitArrayCmpxchg(ArrayCmpxchg* curr) {
     NOTE_ENTER("ArrayCmpxchg");
-    Flow ref = pop();
-    Flow index = pop();
-    Flow expected = pop();
-    Flow replacement = pop();
+    Flow ref = getChild();
+    Flow index = getChild();
+    Flow expected = getChild();
+    Flow replacement = getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2018,7 +2019,7 @@ public:
   }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
-    Flow flow = pop();
+    Flow flow = getChild();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     switch (curr->op) {
@@ -2035,11 +2036,11 @@ public:
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }
   Flow visitStringNew(StringNew* curr) {
-    Flow ptr = pop();
+    Flow ptr = getChild();
     switch (curr->op) {
       case StringNewWTF16Array: {
-        Flow start = pop();
-        Flow end = pop();
+        Flow start = getChild();
+        Flow end = getChild();
         auto ptrData = ptr.getSingleValue().getGCData();
         if (!ptrData) {
           trap("null ref");
@@ -2083,7 +2084,7 @@ public:
       return Flow(NONCONSTANT_FLOW);
     }
 
-    Flow flow = pop();
+    Flow flow = getChild();
     auto value = flow.getSingleValue();
     auto data = value.getGCData();
     if (!data) {
@@ -2094,9 +2095,9 @@ public:
   }
   Flow visitStringConcat(StringConcat* curr) {
     NOTE_ENTER("StringConcat");
-    Flow flow = pop();
+    Flow flow = getChild();
     auto left = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     auto right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     auto leftData = left.getGCData();
@@ -2127,9 +2128,9 @@ public:
       return Flow(NONCONSTANT_FLOW);
     }
 
-    Flow str = pop();
-    Flow array = pop();
-    Flow start = pop();
+    Flow str = getChild();
+    Flow array = getChild();
+    Flow start = getChild();
 
     auto strData = str.getSingleValue().getGCData();
     auto arrayData = array.getSingleValue().getGCData();
@@ -2153,9 +2154,9 @@ public:
   }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
-    Flow flow = pop();
+    Flow flow = getChild();
     auto left = flow.getSingleValue();
-    flow = pop();
+    flow = getChild();
     auto right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     auto leftData = left.getGCData();
@@ -2212,14 +2213,14 @@ public:
     return Literal(result);
   }
   Flow visitStringTest(StringTest* curr) {
-    Flow flow = pop();
+    Flow flow = getChild();
     auto value = flow.getSingleValue();
     return Literal((uint32_t)value.isString());
   }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     NOTE_ENTER("StringWTF16Get");
-    Flow ref = pop();
-    Flow pos = pop();
+    Flow ref = getChild();
+    Flow pos = getChild();
     auto refValue = ref.getSingleValue();
     auto data = refValue.getGCData();
     if (!data) {
@@ -2234,9 +2235,9 @@ public:
     return Literal(values[i].geti32());
   }
   Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    Flow ref = pop();
-    Flow start = pop();
-    Flow end = pop();
+    Flow ref = getChild();
+    Flow start = getChild();
+    Flow end = getChild();
 
     auto refData = ref.getSingleValue().getGCData();
     if (!refData) {
@@ -3206,7 +3207,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Flow target = self()->pop();
+    Flow target = self()->getChild();
 
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
@@ -3237,7 +3238,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Flow target = self()->pop();
+    Flow target = self()->getChild();
     auto targetRef = target.getSingleValue();
     if (targetRef.isNull()) {
       trap("null target in call_ref");
@@ -3259,15 +3260,15 @@ public:
 
   Flow visitTableGet(TableGet* curr) {
     NOTE_ENTER("TableGet");
-    Flow index = self()->pop();
+    Flow index = self()->getChild();
     auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
     return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow index = self()->pop();
-    Flow value = self()->pop();
+    Flow index = self()->getChild();
+    Flow value = self()->getChild();
     auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
     info.interface()->tableStore(info.name, address, value.getSingleValue());
@@ -3284,8 +3285,8 @@ public:
 
   Flow visitTableGrow(TableGrow* curr) {
     NOTE_ENTER("TableGrow");
-    Flow valueFlow = self()->pop();
-    Flow deltaFlow = self()->pop();
+    Flow valueFlow = self()->getChild();
+    Flow deltaFlow = self()->getChild();
     auto info = getTableInstanceInfo(curr->table);
 
     uint64_t tableSize = info.interface()->tableSize(info.name);
@@ -3312,9 +3313,9 @@ public:
 
   Flow visitTableFill(TableFill* curr) {
     NOTE_ENTER("TableFill");
-    Flow destFlow = self()->pop();
-    Flow valueFlow = self()->pop();
-    Flow sizeFlow = self()->pop();
+    Flow destFlow = self()->getChild();
+    Flow valueFlow = self()->getChild();
+    Flow sizeFlow = self()->getChild();
     auto info = getTableInstanceInfo(curr->table);
 
     auto dest = destFlow.getSingleValue().getUnsigned();
@@ -3334,9 +3335,9 @@ public:
 
   Flow visitTableCopy(TableCopy* curr) {
     NOTE_ENTER("TableCopy");
-    Flow dest = self()->pop();
-    Flow source = self()->pop();
-    Flow size = self()->pop();
+    Flow dest = self()->getChild();
+    Flow source = self()->getChild();
+    Flow size = self()->getChild();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(source);
     NOTE_EVAL1(size);
@@ -3376,9 +3377,9 @@ public:
 
   Flow visitTableInit(TableInit* curr) {
     NOTE_ENTER("TableInit");
-    Flow dest = self()->pop();
-    Flow offset = self()->pop();
-    Flow size = self()->pop();
+    Flow dest = self()->getChild();
+    Flow offset = self()->getChild();
+    Flow size = self()->getChild();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
@@ -3429,7 +3430,7 @@ public:
   Flow visitLocalSet(LocalSet* curr) {
     NOTE_ENTER("LocalSet");
     auto index = curr->index;
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     NOTE_EVAL1(index);
     NOTE_EVAL1(flow.getSingleValue());
     assert(curr->isTee() ? Type::isSubType(flow.getType(), curr->type) : true);
@@ -3446,7 +3447,7 @@ public:
   Flow visitGlobalSet(GlobalSet* curr) {
     NOTE_ENTER("GlobalSet");
     auto name = curr->name;
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     NOTE_EVAL1(name);
     NOTE_EVAL1(flow.getSingleValue());
 
@@ -3456,7 +3457,7 @@ public:
 
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3472,8 +3473,8 @@ public:
   }
   Flow visitStore(Store* curr) {
     NOTE_ENTER("Store");
-    Flow ptr = self()->pop();
-    Flow value = self()->pop();
+    Flow ptr = self()->getChild();
+    Flow value = self()->getChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
@@ -3489,8 +3490,8 @@ public:
 
   Flow visitAtomicRMW(AtomicRMW* curr) {
     NOTE_ENTER("AtomicRMW");
-    Flow ptr = self()->pop();
-    auto value = self()->pop();
+    Flow ptr = self()->getChild();
+    auto value = self()->getChild();
     NOTE_EVAL1(ptr);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3527,10 +3528,10 @@ public:
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     NOTE_ENTER("AtomicCmpxchg");
-    Flow ptr = self()->pop();
+    Flow ptr = self()->getChild();
     NOTE_EVAL1(ptr);
-    auto expected = self()->pop();
-    auto replacement = self()->pop();
+    auto expected = self()->getChild();
+    auto replacement = self()->getChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
@@ -3550,7 +3551,7 @@ public:
   }
   Flow visitAtomicWait(AtomicWait* curr) {
     NOTE_ENTER("AtomicWait");
-    Flow ptr = self()->pop();
+    Flow ptr = self()->getChild();
     NOTE_EVAL1(ptr);
     auto expected = self()->visit(curr->expected);
     NOTE_EVAL1(expected);
@@ -3585,7 +3586,7 @@ public:
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
-    Flow ptr = self()->pop();
+    Flow ptr = self()->getChild();
     NOTE_EVAL1(ptr);
     auto count = self()->visit(curr->notifyCount);
     NOTE_EVAL1(count);
@@ -3650,11 +3651,11 @@ public:
         WASM_UNREACHABLE("invalid op");
     }
     load.finalize();
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     return (flow.getSingleValue().*splat)();
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     NOTE_EVAL1(flow);
     Address src(flow.getSingleValue().getUnsigned());
     auto info = getMemoryInstanceInfo(curr->memory);
@@ -3711,7 +3712,7 @@ public:
     WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDLoadZero(SIMDLoad* curr) {
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3729,9 +3730,9 @@ public:
   }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     NOTE_ENTER("SIMDLoadStoreLane");
-    Flow ptrFlow = self()->pop();
+    Flow ptrFlow = self()->getChild();
     NOTE_EVAL1(ptrFlow);
-    Flow vecFlow = self()->pop();
+    Flow vecFlow = self()->getChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     Address addr = info.instance->getFinalAddress(
@@ -3802,7 +3803,7 @@ public:
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
-    Flow flow = self()->pop();
+    Flow flow = self()->getChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
@@ -3838,9 +3839,9 @@ public:
   }
   Flow visitMemoryInit(MemoryInit* curr) {
     NOTE_ENTER("MemoryInit");
-    Flow dest = self()->pop();
-    Flow offset = self()->pop();
-    Flow size = self()->pop();
+    Flow dest = self()->getChild();
+    Flow offset = self()->getChild();
+    Flow size = self()->getChild();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
@@ -3878,9 +3879,9 @@ public:
   }
   Flow visitMemoryCopy(MemoryCopy* curr) {
     NOTE_ENTER("MemoryCopy");
-    Flow dest = self()->pop();
-    Flow source = self()->pop();
-    Flow size = self()->pop();
+    Flow dest = self()->getChild();
+    Flow source = self()->getChild();
+    Flow size = self()->getChild();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(source);
     NOTE_EVAL1(size);
@@ -3923,9 +3924,9 @@ public:
   }
   Flow visitMemoryFill(MemoryFill* curr) {
     NOTE_ENTER("MemoryFill");
-    Flow dest = self()->pop();
-    Flow value = self()->pop();
-    Flow size = self()->pop();
+    Flow dest = self()->getChild();
+    Flow value = self()->getChild();
+    Flow size = self()->getChild();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(value);
     NOTE_EVAL1(size);
@@ -3951,8 +3952,8 @@ public:
   }
   Flow visitArrayNewData(ArrayNewData* curr) {
     NOTE_ENTER("ArrayNewData");
-    auto offsetFlow = self()->pop();
-    auto sizeFlow = self()->pop();
+    auto offsetFlow = self()->getChild();
+    auto sizeFlow = self()->getChild();
 
     uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
@@ -3986,8 +3987,8 @@ public:
   }
   Flow visitArrayNewElem(ArrayNewElem* curr) {
     NOTE_ENTER("ArrayNewElem");
-    auto offsetFlow = self()->pop();
-    auto sizeFlow = self()->pop();
+    auto offsetFlow = self()->getChild();
+    auto sizeFlow = self()->getChild();
 
     uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
@@ -4011,10 +4012,10 @@ public:
   }
   Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInit");
-    Flow ref = self()->pop();
-    Flow index = self()->pop();
-    Flow offset = self()->pop();
-    Flow size = self()->pop();
+    Flow ref = self()->getChild();
+    Flow index = self()->getChild();
+    Flow offset = self()->getChild();
+    Flow size = self()->getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -4048,10 +4049,10 @@ public:
   }
   Flow visitArrayInitElem(ArrayInitElem* curr) {
     NOTE_ENTER("ArrayInit");
-    Flow ref = self()->pop();
-    Flow index = self()->pop();
-    Flow offset = self()->pop();
-    Flow size = self()->pop();
+    Flow ref = self()->getChild();
+    Flow index = self()->getChild();
+    Flow offset = self()->getChild();
+    Flow size = self()->getChild();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
