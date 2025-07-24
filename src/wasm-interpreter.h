@@ -249,10 +249,13 @@ public:
       for (auto* child : ChildIterator(curr)) {
         Flow flow = visit(child);
         if (flow.breaking()) {
-          depth--;
 #if WASM_INTERPRETER_DEBUG
           std::cout << indent() << "=> breaking: " << flow << '\n';
 #endif
+          depth--;
+          // We don't need to add any values on the stack, as the parent will
+          // not read them.
+          valueStack.resize(sizeBefore);
           return flow;
         }
         valueStack.push_back(flow);
@@ -4265,6 +4268,9 @@ public:
       std::cout << "exiting " << function->name << " with " << flow.values
                 << '\n';
 #endif
+
+      // All values should have been consumed.
+      assert(self()->valueStack.empty());
 
       if (flow.breakTo != RETURN_CALL_FLOW) {
         break;
