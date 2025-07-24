@@ -18,7 +18,8 @@ while i < len(lines):
   if ' = visit(' in line or ' = self()->visit(' in line:
     print(line.rstrip())
     parts = line.split(' ')
-    eq_index = parts.index('=')
+    parts[-1] = 'pop();'
+    line = ' '.join(parts) + '\n'
 
   new.append(line)
   i += 1
