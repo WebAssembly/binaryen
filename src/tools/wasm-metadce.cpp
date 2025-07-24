@@ -89,6 +89,12 @@ struct MetaDCEGraph {
   // import module.base => DCE name
   std::unordered_map<Name, Name> importIdToDCENode;
 
+  // import DCE name => items in the wasm { kind, internal name }
+  // (a vector is needed here as an import from the outside may be imported
+  // multiple times inside the wasm, and we can only remove it from the
+  // outside if all wasm uses go away)
+  std::unordered_map<Name, std::vector<KindName>> DCENodeToImports;
+
   Module& wasm;
 
   MetaDCEGraph(Module& wasm) : wasm(wasm) {}
@@ -112,9 +118,16 @@ struct MetaDCEGraph {
     ModuleUtils::iterModuleItems(wasm, [&](ModuleItemKind kind, Named* item) {
       if (auto* import = wasm.getImportOrNull(kind, item->name)) {
         auto id = getImportId(import->module, import->base);
-        if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto iter = importIdToDCENode.find(id);
+        if (iter == importIdToDCENode.end()) {
+          // This is a new import, not mentioned in the graph we were given
+          // (i.e., this import was not referred to from outside the wasm).
           auto dceName = getName("importId", import->name.toString());
           importIdToDCENode[id] = dceName;
+          DCENodeToImports[dceName].push_back({kind, item->name});
+        } else {
+          // This is an existing import, mentioned in the outside graph.
+          DCENodeToImports[iter->second].push_back({kind, item->name});
         }
         return;
       }
@@ -319,6 +332,46 @@ public:
     // removing functions may alter the optimum order, as # of calls can change
     passRunner.add("reorder-functions");
     passRunner.run();
+
+    // Standard optimizations might succeed in removing even more than our own
+    // analysis found. That is, we build a graph of connections between things
+    // and find which are not reached, but --remove-unused-module-elements can
+    // use detailed understanding of wasm semantics (like how call_indirect
+    // signatures work, traps-never-happen, etc.) which can lead to even more
+    // things vanishing. Anything it removes, we can remove from our graph.
+    //
+    // The only things of interest are imports: exports are not removed by that
+    // pass, but imports might no longer have any uses. To find imports that
+    // were removed, scan the nodes and see what is no longer in the module.
+    for (auto& [_, dceName] : importIdToDCENode) {
+      auto iter = DCENodeToImports.find(dceName);
+      if (iter == DCENodeToImports.end()) {
+        // This appears in the graph, but did not even begin in the wasm. That
+        // is, the outside was sending it to the wasm, but the wasm never
+        // imported it, which means the graph was not very optimized. Just
+        // ignore this.
+        continue;
+      }
+
+      // If all uses of this import went away, we can remove it.
+      bool used = false;
+      for (auto [kind, internalName] : iter->second) {
+        // Only function imports are important here, as we do things like
+        // generate minification maps for them, etc., but we could add others as
+        // well.
+        // TODO: use something like iterImportable, abstracted over
+        //       ExternalKind, to get*OrNull(), and to remove*().
+        if (kind != ModuleItemKind::Function ||
+            wasm.getFunctionOrNull(internalName)) {
+          used = true;
+          break;
+        }
+      }
+      if (!used) {
+        // This was removed from the wasm. Remove it from the graph.
+        reached.erase(dceName);
+      }
+    }
   }
 
   // Print out everything we found is not used, and so can be

@@ -62,3 +62,75 @@
   ;; CHECK:      (global $A.desc (ref null $A.desc) (global.get $B.desc))
   (global $A.desc (ref null $A.desc) (global.get $B.desc))
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+  )
+
+  ;; top -> top.desc
+  ;; ^
+  ;; |(2) mid -> mid.desc
+  ;; |            ^ (1)
+  ;; bot -> bot.desc
+  ;;
+  ;; bot <: top implies bot.desc <: top.desc, but we already have
+  ;; bot.desc <: mid.desc, so that gives us bot.desc <: mid.desc <: top.desc.
+  ;; This is only valid if we also have bot <: mid <: top.
+
+  ;; CHECK:      (global $bot-mid-desc (ref null $mid.desc) (struct.new_default $bot.desc))
+  (global $bot-mid-desc (ref null $mid.desc) (struct.new $bot.desc))
+  ;; CHECK:      (global $bot-top (ref null $top) (struct.new_default $bot
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $bot-top (ref null $top) (struct.new $bot (ref.null none)))
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $top (sub (descriptor $top.desc (struct))))
+    (type $top (sub (descriptor $top.desc (struct))))
+    ;; CHECK:       (type $mid (sub $top (descriptor $mid.desc (struct))))
+    (type $mid (sub $top (descriptor $mid.desc (struct))))
+    ;; CHECK:       (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    (type $bot (sub $mid (descriptor $bot.desc (struct))))
+    ;; CHECK:       (type $top.desc (sub (describes $top (struct))))
+    (type $top.desc (sub (describes $top (struct))))
+    ;; CHECK:       (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    (type $mid.desc (sub $top.desc (describes $mid (struct))))
+    ;; CHECK:       (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+    (type $bot.desc (sub $mid.desc (describes $bot (struct))))
+  )
+
+  ;; Same as above, but the order of the initial subtypings is reversed.
+  ;;
+  ;; top -> top.desc
+  ;; ^
+  ;; |(1) mid -> mid.desc
+  ;; |            ^ (2)
+  ;; bot -> bot.desc
+  ;;
+  ;; bot <: top implies bot.desc <: top.desc. When we add bot.desc <: mid.desc,
+  ;; that gives us bot.desc <: mid.desc <: top.desc. This is only valid if we
+  ;; also have bot <: mid <: top.
+
+  ;; CHECK:      (global $bot-top (ref null $top) (struct.new_default $bot
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  (global $bot-top (ref null $top) (struct.new $bot (ref.null none)))
+  ;; CHECK:      (global $bot-mid-desc (ref null $mid.desc) (struct.new_default $bot.desc))
+  (global $bot-mid-desc (ref null $mid.desc) (struct.new $bot.desc))
+)
