@@ -403,11 +403,9 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (unsigned(a) > unsigned(b)) {
     std::swap(a, b);
   }
-  auto bUnshared = HeapType(b).getBasic(Unshared);
   HeapType lubUnshared;
   switch (HeapType(a).getBasic(Unshared)) {
     case HeapType::ext:
-      assert(bUnshared == HeapType::string);
       lubUnshared = HeapType::ext;
       break;
     case HeapType::func:
