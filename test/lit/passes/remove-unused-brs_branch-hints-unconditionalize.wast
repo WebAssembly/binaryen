@@ -77,4 +77,47 @@
       )
     )
   )
+
+  ;; CHECK:      (func $if-select (type $1) (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NO_UN:      (func $if-select (type $1) (param $x i32) (param $y i32)
+  ;; NO_UN-NEXT:  (@metadata.code.branch_hint "\01")
+  ;; NO_UN-NEXT:  (if
+  ;; NO_UN-NEXT:   (local.get $x)
+  ;; NO_UN-NEXT:   (then
+  ;; NO_UN-NEXT:    (block $out
+  ;; NO_UN-NEXT:     (@metadata.code.branch_hint "\01")
+  ;; NO_UN-NEXT:     (br_if $out
+  ;; NO_UN-NEXT:      (local.get $y)
+  ;; NO_UN-NEXT:     )
+  ;; NO_UN-NEXT:    )
+  ;; NO_UN-NEXT:   )
+  ;; NO_UN-NEXT:  )
+  ;; NO_UN-NEXT: )
+  (func $if-select (param $x i32) (param $y i32)
+    ;; The br_if can be combined with the if using a select, but not when the
+    ;; flag is passed.
+    (block $out
+      (@metadata.code.branch_hint "\01")
+      (if
+        (local.get $x)
+        (then
+          (@metadata.code.branch_hint "\01")
+          (br_if $out
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
 )

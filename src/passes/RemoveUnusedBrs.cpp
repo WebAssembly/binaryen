@@ -161,6 +161,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   bool anotherCycle;
 
+  // Whether we are allowed to unconditionalize code, that is, make code run
+  // that previously might not have. Unconditionalizing code is a problem for
+  // fuzzing branch hints: a branch hint that never ran might be wrong, and if
+  // we start to run it, the fuzzer would report a finding.
+  bool neverUnconditionalize;
+
   using Flows = std::vector<Expression**>;
 
   // list of breaks that are currently flowing. if they reach their target
@@ -408,7 +414,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // zero (also 3 bytes). The size is unchanged, but the select may
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
-            // Multivalue selects are not supported
+            if (neverUnconditionalize) {
+              // Creating a select, below, would unconditionally run the
+              // select's condition.
+              return;
+            }
+            // Multivalue selects are not supported.
             if (br->value && br->value->type.isTuple()) {
               return;
             }
@@ -1129,6 +1140,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void doWalkFunction(Function* func) {
+    neverUnconditionalize =
+      hasArgument("remove-unused-brs-never-unconditionalize");
+
     // multiple cycles may be needed
     do {
       anotherCycle = false;
@@ -1252,13 +1266,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
-      bool shrink;
-      // Whether we are allowed to unconditionalize code, that is, make code
-      // run that previously might not have. Unconditionalizing code is a
-      // problem for fuzzing branch hints: a branch hint that never ran might be
-      // wrong, and if we start to run it, the fuzzer would report a finding.
-      bool neverUnconditionalize;
       PassOptions& passOptions;
+
+      bool shrink;
+      bool neverUnconditionalize;
 
       bool needUniqify = false;
       bool refinalize = false;
@@ -2019,8 +2030,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());
     finalOptimizer.shrink = getPassRunner()->options.shrinkLevel > 0;
-    finalOptimizer.neverUnconditionalize =
-      hasArgument("remove-unused-brs-never-unconditionalize");
+    finalOptimizer.neverUnconditionalize = neverUnconditionalize;
 
     finalOptimizer.walkFunction(func);
     if (finalOptimizer.needUniqify) {
