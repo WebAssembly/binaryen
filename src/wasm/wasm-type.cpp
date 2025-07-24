@@ -403,11 +403,9 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (unsigned(a) > unsigned(b)) {
     std::swap(a, b);
   }
-  auto bUnshared = HeapType(b).getBasic(Unshared);
   HeapType lubUnshared;
   switch (HeapType(a).getBasic(Unshared)) {
     case HeapType::ext:
-      assert(bUnshared == HeapType::string);
       lubUnshared = HeapType::ext;
       break;
     case HeapType::func:
@@ -418,36 +416,16 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       lubUnshared = HeapType::any;
       break;
     case HeapType::eq:
-      if (bUnshared == HeapType::i31 || bUnshared == HeapType::struct_ ||
-          bUnshared == HeapType::array) {
-        lubUnshared = HeapType::eq;
-      } else {
-        lubUnshared = HeapType::any;
-      }
-      break;
     case HeapType::i31:
-      if (bUnshared == HeapType::struct_ || bUnshared == HeapType::array) {
-        lubUnshared = HeapType::eq;
-      } else {
-        lubUnshared = HeapType::any;
-      }
-      break;
     case HeapType::struct_:
-      if (bUnshared == HeapType::array) {
-        lubUnshared = HeapType::eq;
-      } else {
-        lubUnshared = HeapType::any;
-      }
+      lubUnshared = HeapType::eq;
       break;
     case HeapType::array:
-      lubUnshared = HeapType::any;
-      break;
     case HeapType::string:
-      // String has already been handled: we sorted before in a way that ensures
-      // the type the string is compared to is of a higher index, which means it
-      // is a bottom type (string is the last type that is not a bottom type),
-      // but we have handled the case of either a or b being a bottom type
-      // earlier already.
+      // As the last non-bottom types in their hierarchies, it should not be
+      // possible for `a` to be array or string. We know that `b` != `a` and
+      // that `b` is not bottom, but that `b` and `a` are in the same hierarchy,
+      // so there are no possible value for `b`.
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
