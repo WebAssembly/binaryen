@@ -7,8 +7,10 @@ if diff:
   sys.exit(1)
 
 new = []
-
-for line in open('src/wasm-interpreter.h').readlines():
+lines = open('src/wasm-interpreter.h').readlines()
+i = 0
+while i < len(lines):
+  line = lines[i]
   # look for
   #           Flow flow = visit(expression);
   # or
@@ -19,5 +21,6 @@ for line in open('src/wasm-interpreter.h').readlines():
     eq_index = parts.index('=')
 
   new.append(line)
+  i += 1
 
 open('src/wasm-interpreter.h', 'w').write(''.join(new))
