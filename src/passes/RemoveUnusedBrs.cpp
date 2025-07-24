@@ -460,6 +460,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (child->ifFalse) {
           return;
         }
+        if (neverUnconditionalize) {
+          // Creating a select, below, would unconditionally run the inner if's
+          // condition (condition-B, in the comment above).
+          return;
+        }
         // If running the child's condition unconditionally is too expensive,
         // give up.
         if (tooCostlyToRunUnconditionally(getPassOptions(), child->condition)) {
