@@ -2412,7 +2412,7 @@ public:
       auto* global = this->module->getGlobal(curr->name);
       // Check if the global has an immutable value anyway
       if (!global->imported() && !global->mutable_) {
-        return self()->getChild();
+        return ExpressionRunner<SubType>::visit(global->init);
       }
     }
     // Check if a constant value has been set in the context of this runner.
