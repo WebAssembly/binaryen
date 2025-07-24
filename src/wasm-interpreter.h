@@ -183,11 +183,8 @@ protected:
   Flow generateArguments(const ExpressionList& operands, Literals& arguments) {
     NOTE_ENTER_("generateArguments");
     arguments.reserve(operands.size());
-    for (auto expression : operands) {
-      Flow flow = self()->visit(expression);
-      if (flow.breaking()) {
-        return flow;
-      }
+    for (Index i = 0; i < operands.size(); i++) {
+      Flow flow = pop();
       NOTE_EVAL1(flow.values);
       arguments.push_back(flow.getSingleValue());
     }
@@ -267,7 +264,7 @@ public:
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       hostLimit("interpreter recursion limit");
     }
-    if (!Properties::isControlFlow(curr)) {
+    if (!Properties::isControlFlowStructure(curr)) {
       // Visit the children and add them to the value stack. (Control flow
       // expressions handle things manually.)
       for (auto* child : ChildIterator(curr)) {
@@ -375,16 +372,10 @@ public:
     bool condition = true;
     Flow flow;
     if (curr->value) {
-      flow = visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
+      flow = pop();
     }
     if (curr->condition) {
-      Flow conditionFlow = visit(curr->condition);
-      if (conditionFlow.breaking()) {
-        return conditionFlow;
-      }
+      Flow conditionFlow = pop();
       condition = conditionFlow.getSingleValue().getInteger() != 0;
       if (!condition) {
         return flow;
@@ -398,16 +389,10 @@ public:
     Flow flow;
     Literals values;
     if (curr->value) {
-      flow = visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
+      flow = pop();
       values = flow.values;
     }
-    flow = visit(curr->condition);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     int64_t index = flow.getSingleValue().getInteger();
     Name target = curr->default_;
     if (index >= 0 && (size_t)index < curr->targets.size()) {
@@ -429,10 +414,7 @@ public:
 
   Flow visitUnary(Unary* curr) {
     NOTE_ENTER("Unary");
-    Flow flow = visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal value = flow.getSingleValue();
     NOTE_EVAL1(value);
     switch (curr->op) {
@@ -712,15 +694,9 @@ public:
   }
   Flow visitBinary(Binary* curr) {
     NOTE_ENTER("Binary");
-    Flow flow = visit(curr->left);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     Literal right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     assert(curr->left->type.isConcrete() ? left.type == curr->left->type
@@ -1205,10 +1181,7 @@ public:
   }
   Flow visitSIMDExtract(SIMDExtract* curr) {
     NOTE_ENTER("SIMDExtract");
-    Flow flow = self()->visit(curr->vec);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal vec = flow.getSingleValue();
     switch (curr->op) {
       case ExtractLaneSVecI8x16:
@@ -1234,15 +1207,9 @@ public:
   }
   Flow visitSIMDReplace(SIMDReplace* curr) {
     NOTE_ENTER("SIMDReplace");
-    Flow flow = self()->visit(curr->vec);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal vec = flow.getSingleValue();
-    flow = self()->visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     Literal value = flow.getSingleValue();
     switch (curr->op) {
       case ReplaceLaneVecI8x16:
@@ -1264,34 +1231,19 @@ public:
   }
   Flow visitSIMDShuffle(SIMDShuffle* curr) {
     NOTE_ENTER("SIMDShuffle");
-    Flow flow = self()->visit(curr->left);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal left = flow.getSingleValue();
-    flow = self()->visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     Literal right = flow.getSingleValue();
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDTernary(SIMDTernary* curr) {
     NOTE_ENTER("SIMDBitselect");
-    Flow flow = self()->visit(curr->a);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal a = flow.getSingleValue();
-    flow = self()->visit(curr->b);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     Literal b = flow.getSingleValue();
-    flow = self()->visit(curr->c);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
@@ -1341,15 +1293,9 @@ public:
   }
   Flow visitSIMDShift(SIMDShift* curr) {
     NOTE_ENTER("SIMDShift");
-    Flow flow = self()->visit(curr->vec);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     Literal vec = flow.getSingleValue();
-    flow = self()->visit(curr->shift);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     Literal shift = flow.getSingleValue();
     switch (curr->op) {
       case ShlVecI8x16:
@@ -1381,37 +1327,22 @@ public:
   }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
-    Flow ifTrue = visit(curr->ifTrue);
-    if (ifTrue.breaking()) {
-      return ifTrue;
-    }
-    Flow ifFalse = visit(curr->ifFalse);
-    if (ifFalse.breaking()) {
-      return ifFalse;
-    }
-    Flow condition = visit(curr->condition);
-    if (condition.breaking()) {
-      return condition;
-    }
+    Flow ifTrue = pop();
+    Flow ifFalse = pop();
+    Flow condition = pop();
     NOTE_EVAL1(condition.getSingleValue());
     return condition.getSingleValue().geti32() ? ifTrue : ifFalse; // ;-)
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
-    Flow value = visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow value = pop();
     return Flow();
   }
   Flow visitReturn(Return* curr) {
     NOTE_ENTER("Return");
     Flow flow;
     if (curr->value) {
-      flow = visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
+      flow = pop();
       NOTE_EVAL1(flow.getSingleValue());
     }
     flow.breakTo = RETURN_FLOW;
@@ -1507,10 +1438,7 @@ public:
   }
   Flow visitTupleExtract(TupleExtract* curr) {
     NOTE_ENTER("tuple.extract");
-    Flow flow = visit(curr->tuple);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     assert(flow.values.size() > curr->index);
     return Flow(flow.values[curr->index]);
   }
@@ -1547,10 +1475,7 @@ public:
   }
   Flow visitRefIsNull(RefIsNull* curr) {
     NOTE_ENTER("RefIsNull");
-    Flow flow = visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(int32_t(value.isNull()));
@@ -1562,15 +1487,9 @@ public:
   }
   Flow visitRefEq(RefEq* curr) {
     NOTE_ENTER("RefEq");
-    Flow flow = visit(curr->left);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     auto left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     auto right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     return Literal(int32_t(left == right));
@@ -1599,10 +1518,7 @@ public:
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrowRef(ThrowRef* curr) {
     NOTE_ENTER("ThrowRef");
-    Flow flow = visit(curr->exnref);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     const auto& exnref = flow.getSingleValue();
     NOTE_EVAL1(exnref);
     if (exnref.isNull()) {
@@ -1614,10 +1530,7 @@ public:
   }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
-    Flow flow = visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal::makeI31(value.geti32(),
@@ -1625,10 +1538,7 @@ public:
   }
   Flow visitI31Get(I31Get* curr) {
     NOTE_ENTER("I31Get");
-    Flow flow = visit(curr->i31);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     if (value.isNull()) {
@@ -1662,10 +1572,7 @@ public:
   };
 
   template<typename T> Cast doCast(T* curr) {
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return typename Cast::Breaking{ref};
-    }
+    Flow ref = pop();
     Literal val = ref.getSingleValue();
     Type castType = curr->getCastType();
     if (Type::isSubType(val.type, castType)) {
@@ -1675,14 +1582,8 @@ public:
     }
   }
   template<typename T> Cast doDescCast(T* curr) {
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return typename Cast::Breaking{ref};
-    }
-    Flow desc = self()->visit(curr->desc);
-    if (desc.breaking()) {
-      return typename Cast::Breaking{desc};
-    }
+    Flow ref = pop();
+    Flow desc = pop();
     auto expected = desc.getSingleValue().getGCData();
     if (!expected) {
       trap("null descriptor");
@@ -1732,10 +1633,7 @@ public:
   }
   Flow visitRefGetDesc(RefGetDesc* curr) {
     NOTE_ENTER("RefGetDesc");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
+    Flow ref = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1772,10 +1670,7 @@ public:
       case BrOnNull:
       case BrOnNonNull: {
         // Otherwise we are just checking for null.
-        Flow flow = visit(curr->ref);
-        if (flow.breaking()) {
-          return flow;
-        }
+        Flow flow = pop();
         const auto& value = flow.getSingleValue();
         NOTE_EVAL1(value);
         if (curr->op == BrOnNull) {
@@ -1802,17 +1697,11 @@ public:
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // find why we are unreachable, and stop there.
-      for (auto* operand : curr->operands) {
-        auto value = self()->visit(operand);
-        if (value.breaking()) {
-          return value;
-        }
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        auto value = pop();
       }
       if (curr->desc) {
-        auto value = self()->visit(curr->desc);
-        if (value.breaking()) {
-          return value;
-        }
+        auto value = pop();
       }
       WASM_UNREACHABLE("unreachable but no unreachable child");
     }
@@ -1824,20 +1713,14 @@ public:
       if (curr->isWithDefault()) {
         data[i] = Literal::makeZero(field.type);
       } else {
-        auto value = self()->visit(curr->operands[i]);
-        if (value.breaking()) {
-          return value;
-        }
+        auto value = pop();
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
     if (!curr->desc) {
       return makeGCData(std::move(data), curr->type);
     }
-    auto desc = self()->visit(curr->desc);
-    if (desc.breaking()) {
-      return desc;
-    }
+    auto desc = pop();
     if (desc.getSingleValue().isNull()) {
       trap("null descriptor");
     }
@@ -1845,10 +1728,7 @@ public:
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
+    Flow ref = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1858,14 +1738,8 @@ public:
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow ref = pop();
+    Flow value = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1878,14 +1752,8 @@ public:
 
   Flow visitStructRMW(StructRMW* curr) {
     NOTE_ENTER("StructRMW");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow ref = pop();
+    Flow value = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1918,18 +1786,9 @@ public:
 
   Flow visitStructCmpxchg(StructCmpxchg* curr) {
     NOTE_ENTER("StructCmpxchg");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow expected = self()->visit(curr->expected);
-    if (expected.breaking()) {
-      return expected;
-    }
-    Flow replacement = self()->visit(curr->replacement);
-    if (replacement.breaking()) {
-      return replacement;
-    }
+    Flow ref = pop();
+    Flow expected = pop();
+    Flow replacement = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -1952,15 +1811,9 @@ public:
     NOTE_ENTER("ArrayNew");
     Flow init;
     if (!curr->isWithDefault()) {
-      init = self()->visit(curr->init);
-      if (init.breaking()) {
-        return init;
-      }
+      init = pop();
     }
-    auto size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    auto size = pop();
     if (curr->type == Type::unreachable) {
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // visit the unreachable child, and stop there.
@@ -2001,10 +1854,7 @@ public:
       // We cannot proceed to compute the heap type, as there isn't one. Just
       // find why we are unreachable, and stop there.
       for (auto* value : curr->values) {
-        auto result = self()->visit(value);
-        if (result.breaking()) {
-          return result;
-        }
+        auto result = pop();
       }
       WASM_UNREACHABLE("unreachable but no unreachable child");
     }
@@ -2012,24 +1862,15 @@ public:
     auto field = heapType.getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
-      auto value = self()->visit(curr->values[i]);
-      if (value.breaking()) {
-        return value;
-      }
+      auto value = pop();
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
     return makeGCData(std::move(data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
+    Flow ref = pop();
+    Flow index = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2043,18 +1884,9 @@ public:
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow ref = pop();
+    Flow index = pop();
+    Flow value = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2069,10 +1901,7 @@ public:
   }
   Flow visitArrayLen(ArrayLen* curr) {
     NOTE_ENTER("ArrayLen");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
+    Flow ref = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2081,26 +1910,11 @@ public:
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
     NOTE_ENTER("ArrayCopy");
-    Flow destRef = self()->visit(curr->destRef);
-    if (destRef.breaking()) {
-      return destRef;
-    }
-    Flow destIndex = self()->visit(curr->destIndex);
-    if (destIndex.breaking()) {
-      return destIndex;
-    }
-    Flow srcRef = self()->visit(curr->srcRef);
-    if (srcRef.breaking()) {
-      return srcRef;
-    }
-    Flow srcIndex = self()->visit(curr->srcIndex);
-    if (srcIndex.breaking()) {
-      return srcIndex;
-    }
-    Flow length = self()->visit(curr->length);
-    if (length.breaking()) {
-      return length;
-    }
+    Flow destRef = pop();
+    Flow destIndex = pop();
+    Flow srcRef = pop();
+    Flow srcIndex = pop();
+    Flow length = pop();
     auto destData = destRef.getSingleValue().getGCData();
     if (!destData) {
       trap("null ref");
@@ -2130,22 +1944,10 @@ public:
   }
   Flow visitArrayFill(ArrayFill* curr) {
     NOTE_ENTER("ArrayFill");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow ref = pop();
+    Flow index = pop();
+    Flow value = pop();
+    Flow size = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2171,18 +1973,9 @@ public:
   Flow visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayRMW(ArrayRMW* curr) {
     NOTE_ENTER("ArrayRMW");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow ref = pop();
+    Flow index = pop();
+    Flow value = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2216,22 +2009,10 @@ public:
 
   Flow visitArrayCmpxchg(ArrayCmpxchg* curr) {
     NOTE_ENTER("ArrayCmpxchg");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow expected = self()->visit(curr->expected);
-    if (expected.breaking()) {
-      return expected;
-    }
-    Flow replacement = self()->visit(curr->replacement);
-    if (replacement.breaking()) {
-      return replacement;
-    }
+    Flow ref = pop();
+    Flow index = pop();
+    Flow expected = pop();
+    Flow replacement = pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -2246,10 +2027,7 @@ public:
   }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
-    Flow flow = visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     switch (curr->op) {
@@ -2266,20 +2044,11 @@ public:
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }
   Flow visitStringNew(StringNew* curr) {
-    Flow ptr = visit(curr->ref);
-    if (ptr.breaking()) {
-      return ptr;
-    }
+    Flow ptr = pop();
     switch (curr->op) {
       case StringNewWTF16Array: {
-        Flow start = visit(curr->start);
-        if (start.breaking()) {
-          return start;
-        }
-        Flow end = visit(curr->end);
-        if (end.breaking()) {
-          return end;
-        }
+        Flow start = pop();
+        Flow end = pop();
         auto ptrData = ptr.getSingleValue().getGCData();
         if (!ptrData) {
           trap("null ref");
@@ -2323,10 +2092,7 @@ public:
       return Flow(NONCONSTANT_FLOW);
     }
 
-    Flow flow = visit(curr->ref);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     auto value = flow.getSingleValue();
     auto data = value.getGCData();
     if (!data) {
@@ -2337,15 +2103,9 @@ public:
   }
   Flow visitStringConcat(StringConcat* curr) {
     NOTE_ENTER("StringConcat");
-    Flow flow = visit(curr->left);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     auto left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     auto right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     auto leftData = left.getGCData();
@@ -2376,18 +2136,9 @@ public:
       return Flow(NONCONSTANT_FLOW);
     }
 
-    Flow str = visit(curr->str);
-    if (str.breaking()) {
-      return str;
-    }
-    Flow array = visit(curr->array);
-    if (array.breaking()) {
-      return array;
-    }
-    Flow start = visit(curr->start);
-    if (start.breaking()) {
-      return start;
-    }
+    Flow str = pop();
+    Flow array = pop();
+    Flow start = pop();
 
     auto strData = str.getSingleValue().getGCData();
     auto arrayData = array.getSingleValue().getGCData();
@@ -2411,15 +2162,9 @@ public:
   }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
-    Flow flow = visit(curr->left);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     auto left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    flow = pop();
     auto right = flow.getSingleValue();
     NOTE_EVAL2(left, right);
     auto leftData = left.getGCData();
@@ -2476,23 +2221,14 @@ public:
     return Literal(result);
   }
   Flow visitStringTest(StringTest* curr) {
-    Flow flow = visit(curr->ref);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = pop();
     auto value = flow.getSingleValue();
     return Literal((uint32_t)value.isString());
   }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     NOTE_ENTER("StringWTF16Get");
-    Flow ref = visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow pos = visit(curr->pos);
-    if (pos.breaking()) {
-      return pos;
-    }
+    Flow ref = pop();
+    Flow pos = pop();
     auto refValue = ref.getSingleValue();
     auto data = refValue.getGCData();
     if (!data) {
@@ -2507,18 +2243,9 @@ public:
     return Literal(values[i].geti32());
   }
   Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    Flow ref = visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow start = visit(curr->start);
-    if (start.breaking()) {
-      return start;
-    }
-    Flow end = visit(curr->end);
-    if (end.breaking()) {
-      return end;
-    }
+    Flow ref = pop();
+    Flow start = pop();
+    Flow end = pop();
 
     auto refData = ref.getSingleValue().getGCData();
     if (!refData) {
@@ -3488,10 +3215,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Flow target = self()->visit(curr->target);
-    if (target.breaking()) {
-      return target;
-    }
+    Flow target = self()->pop();
 
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
@@ -3522,10 +3246,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Flow target = self()->visit(curr->target);
-    if (target.breaking()) {
-      return target;
-    }
+    Flow target = self()->pop();
     auto targetRef = target.getSingleValue();
     if (targetRef.isNull()) {
       trap("null target in call_ref");
@@ -3547,24 +3268,15 @@ public:
 
   Flow visitTableGet(TableGet* curr) {
     NOTE_ENTER("TableGet");
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
+    Flow index = self()->pop();
     auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
     return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow index = self()->pop();
+    Flow value = self()->pop();
     auto info = getTableInstanceInfo(curr->table);
     auto address = index.getSingleValue().getUnsigned();
     info.interface()->tableStore(info.name, address, value.getSingleValue());
@@ -3581,14 +3293,8 @@ public:
 
   Flow visitTableGrow(TableGrow* curr) {
     NOTE_ENTER("TableGrow");
-    Flow valueFlow = self()->visit(curr->value);
-    if (valueFlow.breaking()) {
-      return valueFlow;
-    }
-    Flow deltaFlow = self()->visit(curr->delta);
-    if (deltaFlow.breaking()) {
-      return deltaFlow;
-    }
+    Flow valueFlow = self()->pop();
+    Flow deltaFlow = self()->pop();
     auto info = getTableInstanceInfo(curr->table);
 
     uint64_t tableSize = info.interface()->tableSize(info.name);
@@ -3615,18 +3321,9 @@ public:
 
   Flow visitTableFill(TableFill* curr) {
     NOTE_ENTER("TableFill");
-    Flow destFlow = self()->visit(curr->dest);
-    if (destFlow.breaking()) {
-      return destFlow;
-    }
-    Flow valueFlow = self()->visit(curr->value);
-    if (valueFlow.breaking()) {
-      return valueFlow;
-    }
-    Flow sizeFlow = self()->visit(curr->size);
-    if (sizeFlow.breaking()) {
-      return sizeFlow;
-    }
+    Flow destFlow = self()->pop();
+    Flow valueFlow = self()->pop();
+    Flow sizeFlow = self()->pop();
     auto info = getTableInstanceInfo(curr->table);
 
     auto dest = destFlow.getSingleValue().getUnsigned();
@@ -3646,18 +3343,9 @@ public:
 
   Flow visitTableCopy(TableCopy* curr) {
     NOTE_ENTER("TableCopy");
-    Flow dest = self()->visit(curr->dest);
-    if (dest.breaking()) {
-      return dest;
-    }
-    Flow source = self()->visit(curr->source);
-    if (source.breaking()) {
-      return source;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow dest = self()->pop();
+    Flow source = self()->pop();
+    Flow size = self()->pop();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(source);
     NOTE_EVAL1(size);
@@ -3697,18 +3385,9 @@ public:
 
   Flow visitTableInit(TableInit* curr) {
     NOTE_ENTER("TableInit");
-    Flow dest = self()->visit(curr->dest);
-    if (dest.breaking()) {
-      return dest;
-    }
-    Flow offset = self()->visit(curr->offset);
-    if (offset.breaking()) {
-      return offset;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow dest = self()->pop();
+    Flow offset = self()->pop();
+    Flow size = self()->pop();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
@@ -3759,10 +3438,7 @@ public:
   Flow visitLocalSet(LocalSet* curr) {
     NOTE_ENTER("LocalSet");
     auto index = curr->index;
-    Flow flow = self()->visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     NOTE_EVAL1(index);
     NOTE_EVAL1(flow.getSingleValue());
     assert(curr->isTee() ? Type::isSubType(flow.getType(), curr->type) : true);
@@ -3779,10 +3455,7 @@ public:
   Flow visitGlobalSet(GlobalSet* curr) {
     NOTE_ENTER("GlobalSet");
     auto name = curr->name;
-    Flow flow = self()->visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     NOTE_EVAL1(name);
     NOTE_EVAL1(flow.getSingleValue());
 
@@ -3792,10 +3465,7 @@ public:
 
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
-    Flow flow = self()->visit(curr->ptr);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3811,14 +3481,8 @@ public:
   }
   Flow visitStore(Store* curr) {
     NOTE_ENTER("Store");
-    Flow ptr = self()->visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow ptr = self()->pop();
+    Flow value = self()->pop();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
@@ -3834,14 +3498,8 @@ public:
 
   Flow visitAtomicRMW(AtomicRMW* curr) {
     NOTE_ENTER("AtomicRMW");
-    Flow ptr = self()->visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
-    }
-    auto value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
+    Flow ptr = self()->pop();
+    auto value = self()->pop();
     NOTE_EVAL1(ptr);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3878,19 +3536,10 @@ public:
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     NOTE_ENTER("AtomicCmpxchg");
-    Flow ptr = self()->visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
-    }
+    Flow ptr = self()->pop();
     NOTE_EVAL1(ptr);
-    auto expected = self()->visit(curr->expected);
-    if (expected.breaking()) {
-      return expected;
-    }
-    auto replacement = self()->visit(curr->replacement);
-    if (replacement.breaking()) {
-      return replacement;
-    }
+    auto expected = self()->pop();
+    auto replacement = self()->pop();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
@@ -3910,10 +3559,7 @@ public:
   }
   Flow visitAtomicWait(AtomicWait* curr) {
     NOTE_ENTER("AtomicWait");
-    Flow ptr = self()->visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
-    }
+    Flow ptr = self()->pop();
     NOTE_EVAL1(ptr);
     auto expected = self()->visit(curr->expected);
     NOTE_EVAL1(expected);
@@ -3948,10 +3594,7 @@ public:
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
-    Flow ptr = self()->visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
-    }
+    Flow ptr = self()->pop();
     NOTE_EVAL1(ptr);
     auto count = self()->visit(curr->notifyCount);
     NOTE_EVAL1(count);
@@ -4016,17 +3659,11 @@ public:
         WASM_UNREACHABLE("invalid op");
     }
     load.finalize();
-    Flow flow = self()->visit(&load);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     return (flow.getSingleValue().*splat)();
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
-    Flow flow = self()->visit(curr->ptr);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     NOTE_EVAL1(flow);
     Address src(flow.getSingleValue().getUnsigned());
     auto info = getMemoryInstanceInfo(curr->memory);
@@ -4083,10 +3720,7 @@ public:
     WASM_UNREACHABLE("invalid op");
   }
   Flow visitSIMDLoadZero(SIMDLoad* curr) {
-    Flow flow = self()->visit(curr->ptr);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     NOTE_EVAL1(flow);
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -4104,15 +3738,9 @@ public:
   }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     NOTE_ENTER("SIMDLoadStoreLane");
-    Flow ptrFlow = self()->visit(curr->ptr);
-    if (ptrFlow.breaking()) {
-      return ptrFlow;
-    }
+    Flow ptrFlow = self()->pop();
     NOTE_EVAL1(ptrFlow);
-    Flow vecFlow = self()->visit(curr->vec);
-    if (vecFlow.breaking()) {
-      return vecFlow;
-    }
+    Flow vecFlow = self()->pop();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     Address addr = info.instance->getFinalAddress(
@@ -4183,10 +3811,7 @@ public:
   }
   Flow visitMemoryGrow(MemoryGrow* curr) {
     NOTE_ENTER("MemoryGrow");
-    Flow flow = self()->visit(curr->delta);
-    if (flow.breaking()) {
-      return flow;
-    }
+    Flow flow = self()->pop();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto* memory = info.instance->wasm.getMemory(info.name);
@@ -4222,18 +3847,9 @@ public:
   }
   Flow visitMemoryInit(MemoryInit* curr) {
     NOTE_ENTER("MemoryInit");
-    Flow dest = self()->visit(curr->dest);
-    if (dest.breaking()) {
-      return dest;
-    }
-    Flow offset = self()->visit(curr->offset);
-    if (offset.breaking()) {
-      return offset;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow dest = self()->pop();
+    Flow offset = self()->pop();
+    Flow size = self()->pop();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
@@ -4271,18 +3887,9 @@ public:
   }
   Flow visitMemoryCopy(MemoryCopy* curr) {
     NOTE_ENTER("MemoryCopy");
-    Flow dest = self()->visit(curr->dest);
-    if (dest.breaking()) {
-      return dest;
-    }
-    Flow source = self()->visit(curr->source);
-    if (source.breaking()) {
-      return source;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow dest = self()->pop();
+    Flow source = self()->pop();
+    Flow size = self()->pop();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(source);
     NOTE_EVAL1(size);
@@ -4325,18 +3932,9 @@ public:
   }
   Flow visitMemoryFill(MemoryFill* curr) {
     NOTE_ENTER("MemoryFill");
-    Flow dest = self()->visit(curr->dest);
-    if (dest.breaking()) {
-      return dest;
-    }
-    Flow value = self()->visit(curr->value);
-    if (value.breaking()) {
-      return value;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow dest = self()->pop();
+    Flow value = self()->pop();
+    Flow size = self()->pop();
     NOTE_EVAL1(dest);
     NOTE_EVAL1(value);
     NOTE_EVAL1(size);
@@ -4362,14 +3960,8 @@ public:
   }
   Flow visitArrayNewData(ArrayNewData* curr) {
     NOTE_ENTER("ArrayNewData");
-    auto offsetFlow = self()->visit(curr->offset);
-    if (offsetFlow.breaking()) {
-      return offsetFlow;
-    }
-    auto sizeFlow = self()->visit(curr->size);
-    if (sizeFlow.breaking()) {
-      return sizeFlow;
-    }
+    auto offsetFlow = self()->pop();
+    auto sizeFlow = self()->pop();
 
     uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
@@ -4403,14 +3995,8 @@ public:
   }
   Flow visitArrayNewElem(ArrayNewElem* curr) {
     NOTE_ENTER("ArrayNewElem");
-    auto offsetFlow = self()->visit(curr->offset);
-    if (offsetFlow.breaking()) {
-      return offsetFlow;
-    }
-    auto sizeFlow = self()->visit(curr->size);
-    if (sizeFlow.breaking()) {
-      return sizeFlow;
-    }
+    auto offsetFlow = self()->pop();
+    auto sizeFlow = self()->pop();
 
     uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
@@ -4434,22 +4020,10 @@ public:
   }
   Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInit");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow offset = self()->visit(curr->offset);
-    if (offset.breaking()) {
-      return offset;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow ref = self()->pop();
+    Flow index = self()->pop();
+    Flow offset = self()->pop();
+    Flow size = self()->pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
@@ -4483,22 +4057,10 @@ public:
   }
   Flow visitArrayInitElem(ArrayInitElem* curr) {
     NOTE_ENTER("ArrayInit");
-    Flow ref = self()->visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
-    }
-    Flow index = self()->visit(curr->index);
-    if (index.breaking()) {
-      return index;
-    }
-    Flow offset = self()->visit(curr->offset);
-    if (offset.breaking()) {
-      return offset;
-    }
-    Flow size = self()->visit(curr->size);
-    if (size.breaking()) {
-      return size;
-    }
+    Flow ref = self()->pop();
+    Flow index = self()->pop();
+    Flow offset = self()->pop();
+    Flow size = self()->pop();
     auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
