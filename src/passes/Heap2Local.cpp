@@ -154,9 +154,7 @@
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
-#include "ir/find_all.h"
 #include "ir/local-graph.h"
-#include "ir/localize.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
 #include "ir/type-updating.h"
@@ -403,7 +401,11 @@ struct EscapeAnalyzer {
             fullyConsumes = true;
           }
         } else {
-          assert(curr->desc == child);
+          // Either the child is the descriptor, in which case we consume it, or
+          // we have already optimized this ref.cast_desc for an allocation that
+          // flowed through as its `ref`. In the latter case the current child
+          // must have originally been the descriptor, so we can still say it's
+          // fully consumed, but we cannot assert that curr->desc == child.
           fullyConsumes = true;
         }
       }
@@ -863,22 +865,30 @@ struct Struct2Local : PostWalker<Struct2Local> {
       bool allocIsCastDesc =
         analyzer.getInteraction(curr->desc) == ParentChildInteraction::Flows;
       if (!allocation->desc || allocIsCastDesc) {
-        auto* replacement =
-          ChildLocalizer(curr, func, wasm, options).getChildrenReplacement();
+        // It would seem convenient to use ChildLocalizer here, but we cannot.
+        // ChildLocalizer would create a local.set for a desc operand with
+        // side effects, but that local.set would not be reflected in the parent
+        // map, so it would not be updated if the allocation flowing through
+        // that desc operand were later optimized.
         if (allocIsCastDesc && curr->type.isNullable()) {
           // There might be a null value to let through. Reuse curr as a cast to
-          // null.
+          // null. Use a scratch local to move the reference value past the desc
+          // value.
+          Index scratch = builder.addVar(func, curr->ref->type);
+          replaceCurrent(
+            builder.blockify(builder.makeLocalSet(scratch, curr->ref),
+                             builder.makeDrop(curr->desc),
+                             curr));
           curr->desc = nullptr;
           curr->type = curr->type.with(curr->type.getHeapType().getBottom());
-          replacement->list.push_back(curr);
-          replacement->type = curr->type;
+          curr->ref = builder.makeLocalGet(scratch, curr->ref->type);
         } else {
           // Either the cast does not allow nulls or we know the value isn't
           // null anyway, so the cast certainly fails.
-          replacement->list.push_back(builder.makeUnreachable());
-          replacement->type = Type::unreachable;
+          replaceCurrent(builder.blockify(builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->desc),
+                                          builder.makeUnreachable()));
         }
-        replaceCurrent(replacement);
       } else {
         assert(analyzer.getInteraction(curr->ref) ==
                ParentChildInteraction::Flows);
