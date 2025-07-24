@@ -24,9 +24,9 @@
 #ifndef wasm_wasm_interpreter_h
 #define wasm_wasm_interpreter_h
 
+#include <algorithm>
 #include <cmath>
 #include <limits.h>
-#include <queue>
 #include <sstream>
 #include <variant>
 
@@ -200,7 +200,7 @@ protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
   // TODO: Literals here and not Flows
-  std::queue<Flow> valueStack;
+  std::vector<Flow> valueStack;
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
@@ -215,11 +215,11 @@ protected:
 
   Flow pop() {
     assert(!valueStack.empty());
-    auto ret = valueStack.front();
+    auto ret = valueStack.back();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "popping " << ret << '\n';
 #endif
-    valueStack.pop();
+    valueStack.pop_back();
     return ret;
   }
 
@@ -244,15 +244,34 @@ public:
     if (!Properties::isControlFlowStructure(curr)) {
       // Visit the children and add them to the value stack. (Control flow
       // expressions handle things manually.)
+      auto sizeBefore = valueStack.size();
       for (auto* child : ChildIterator(curr)) {
         Flow flow = visit(child);
         if (flow.breaking()) {
           return flow;
         }
-#if WASM_INTERPRETER_DEBUG
-        std::cout << indent() << " visited child, adding to value stack " << flow << '\n';
-#endif
-        valueStack.push(flow);
+        valueStack.push_back(flow);
+      }
+      // Reverse the children, so that pops written in the natural order in the
+      // visit*() methods pop the right things. That is, if we have
+      //
+      //   (foo
+      //     (bar)
+      //     (quux)
+      //   )
+      //
+      // Then we first process bar, then quux, leaving quux last on the stack.
+      // But we want to write, in visitFoo(),
+      //
+      //   auto bar = pop();
+      //   auto quux = pop();
+      //
+      // (otherwise, we could reverse the order in the visit*() methods, but at
+      // the cost of readability).
+      auto sizeAfter = valueStack.size();
+      if (sizeAfter >= sizeBefore + 2) {
+        std::reverse(valueStack.begin() + sizeBefore,
+                     valueStack.begin() + sizeAfter);
       }
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -270,6 +289,9 @@ public:
       }
     }
     depth--;
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "=> returning: " << ret << '\n';
+#endif
     return ret;
   }
 
