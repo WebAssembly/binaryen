@@ -11,7 +11,7 @@
 ;; can confuse the fuzzer.
 
 (module
-  ;; CHECK:      (func $selectify (type $1) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK:      (func $selectify (type $0) (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:   (@metadata.code.branch_hint "\01")
@@ -30,7 +30,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NO_UN:      (func $selectify (type $1) (param $x i32) (param $y i32) (result i32)
+  ;; NO_UN:      (func $selectify (type $0) (param $x i32) (param $y i32) (result i32)
   ;; NO_UN-NEXT:  (if (result i32)
   ;; NO_UN-NEXT:   (local.get $x)
   ;; NO_UN-NEXT:   (then
@@ -78,7 +78,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-select (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-select (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (br_if $out
   ;; CHECK-NEXT:    (select
@@ -89,7 +89,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NO_UN:      (func $if-select (type $0) (param $x i32) (param $y i32)
+  ;; NO_UN:      (func $if-select (type $1) (param $x i32) (param $y i32)
   ;; NO_UN-NEXT:  (if
   ;; NO_UN-NEXT:   (local.get $x)
   ;; NO_UN-NEXT:   (then
@@ -116,7 +116,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-select-2 (type $0) (param $x i32) (param $y i32)
+  ;; CHECK:      (func $if-select-2 (type $1) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (local.get $x)
@@ -128,7 +128,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NO_UN:      (func $if-select-2 (type $0) (param $x i32) (param $y i32)
+  ;; NO_UN:      (func $if-select-2 (type $1) (param $x i32) (param $y i32)
   ;; NO_UN-NEXT:  (if
   ;; NO_UN-NEXT:   (local.get $x)
   ;; NO_UN-NEXT:   (then
@@ -154,6 +154,60 @@
           )
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $nothing (type $2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; NO_UN:      (func $nothing (type $2)
+  ;; NO_UN-NEXT:  (nop)
+  ;; NO_UN-NEXT: )
+  (func $nothing
+    ;; Helper for below.
+    (nop)
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-effectful (type $0) (param $x i32) (param $y i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (call $nothing)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block $x (result i32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NO_UN:      (func $restructure-br_if-value-effectful (type $0) (param $x i32) (param $y i32) (result i32)
+  ;; NO_UN-NEXT:  (block $x (result i32)
+  ;; NO_UN-NEXT:   (drop
+  ;; NO_UN-NEXT:    (br_if $x
+  ;; NO_UN-NEXT:     (block (result i32)
+  ;; NO_UN-NEXT:      (call $nothing)
+  ;; NO_UN-NEXT:      (local.get $y)
+  ;; NO_UN-NEXT:     )
+  ;; NO_UN-NEXT:     (local.get $x)
+  ;; NO_UN-NEXT:    )
+  ;; NO_UN-NEXT:   )
+  ;; NO_UN-NEXT:   (i32.const 0)
+  ;; NO_UN-NEXT:  )
+  ;; NO_UN-NEXT: )
+  (func $restructure-br_if-value-effectful (param $x i32) (param $y i32) (result i32)
+    ;; We can restructure this to a select, but not when the flag is passed.
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (block (result i32)
+            (call $nothing)
+            (local.get $y)
+          )
+          (local.get $x)
+        )
+      )
+      (i32.const 0)
     )
   )
 )

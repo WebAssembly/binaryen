@@ -1541,6 +1541,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // must not have side effects.
                   // TODO: we can do this when there *are* other refs to $x,
                   //       with a larger refactoring here.
+                  if (neverUnconditionalize) {
+                    // If we optimize, we'd unconditionally execute the rest of
+                    // the block.
+                    return;
+                  }
 
                   // Test for the conditions with a temporary nop instead of the
                   // br_if.
