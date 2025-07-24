@@ -601,18 +601,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   Function* func;
   Module& wasm;
-  const PassOptions& options;
   Builder builder;
   const FieldList& fields;
 
   Struct2Local(StructNew* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
-               Module& wasm,
-               const PassOptions& options)
+               Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      options(options), builder(wasm),
-      fields(allocation->type.getHeapType().getStruct().fields) {
+      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
 
     // Allocate locals to store the allocation's fields and descriptor in.
     for (auto field : fields) {
@@ -1452,7 +1449,7 @@ struct Heap2Local {
         // the struct into locals.
         auto* structNew =
           Array2Struct(allocation, analyzer, func, wasm).structNew;
-        Struct2Local(structNew, analyzer, func, wasm, passOptions);
+        Struct2Local(structNew, analyzer, func, wasm);
         optimized = true;
       }
     }
@@ -1469,7 +1466,7 @@ struct Heap2Local {
       EscapeAnalyzer analyzer(
         localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
-        Struct2Local(allocation, analyzer, func, wasm, passOptions);
+        Struct2Local(allocation, analyzer, func, wasm);
         optimized = true;
       }
     }
