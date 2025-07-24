@@ -516,7 +516,7 @@ struct Unsubtyping : Pass {
 
   void processDescribed(HeapType sub, HeapType mid, HeapType super) {
     // We are establishing sub <: mid <: super. If super describes the immediate
-    // supertype of the type sub describes. Then once we insert mid between them
+    // supertype of the type sub describes, then once we insert mid between them
     // we would have this:
     //
     // A -> super
