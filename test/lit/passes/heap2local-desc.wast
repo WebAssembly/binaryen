@@ -496,7 +496,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast-desc-fail-param-nullable-effect (param $ref (ref null (exact $super)))
-    ;; Now the cast admits nulls and there are
+    ;; Now the cast admits nulls and there are effects we cannot remove.
     (drop
       (ref.cast_desc (ref null (exact $super))
         (block (result (ref null (exact $super)))
