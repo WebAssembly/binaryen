@@ -1810,13 +1810,10 @@ public:
       init = getChild();
     }
     auto size = getChild();
-    if (curr->type == Type::unreachable) {
-      // We cannot proceed to compute the heap type, as there isn't one. Just
-      // visit the unreachable child, and stop there.
-      auto init = self()->visit(curr->init);
-      assert(init.breaking());
-      return init;
-    }
+    // If we are unreachable then we cannot proceed to compute the heap type,
+    // below, as there isn't one. But if we are unreachable then we should not
+    // get here, as the child would break in visit().
+    assert(curr->type != Type::unreachable);
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
@@ -2357,6 +2354,8 @@ protected:
   // Map remembering concrete global values set in the context of this flow.
   std::unordered_map<Name, Literals> globalValues;
 
+  SubType* self() { return static_cast<SubType*>(this); }
+
 public:
   ConstantExpressionRunner(Module* module,
                            Flags flags,
@@ -2394,7 +2393,7 @@ public:
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, and see if there is a value flowing through
       // a tee.
-      auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
+      auto setFlow = self()->getChild();
       if (!setFlow.breaking()) {
         setLocalValue(curr->index, setFlow.values);
         if (curr->type.isConcrete()) {
@@ -2413,7 +2412,7 @@ public:
       auto* global = this->module->getGlobal(curr->name);
       // Check if the global has an immutable value anyway
       if (!global->imported() && !global->mutable_) {
-        return ExpressionRunner<SubType>::visit(global->init);
+        return self()->getChild();
       }
     }
     // Check if a constant value has been set in the context of this runner.
@@ -2431,7 +2430,7 @@ public:
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
       assert(this->module->getGlobal(curr->name)->mutable_);
-      auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
+      auto setFlow = self()->getChild();
       if (!setFlow.breaking()) {
         setGlobalValue(curr->name, setFlow.values);
         return Flow();
@@ -3553,16 +3552,8 @@ public:
     NOTE_ENTER("AtomicWait");
     Flow ptr = self()->getChild();
     NOTE_EVAL1(ptr);
-    auto expected = self()->visit(curr->expected);
-    NOTE_EVAL1(expected);
-    if (expected.breaking()) {
-      return expected;
-    }
-    auto timeout = self()->visit(curr->timeout);
-    NOTE_EVAL1(timeout);
-    if (timeout.breaking()) {
-      return timeout;
-    }
+    auto expected = self()->getChild();
+    auto timeout = self()->getChild();
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3588,11 +3579,7 @@ public:
     NOTE_ENTER("AtomicNotify");
     Flow ptr = self()->getChild();
     NOTE_EVAL1(ptr);
-    auto count = self()->visit(curr->notifyCount);
-    NOTE_EVAL1(count);
-    if (count.breaking()) {
-      return count;
-    }
+    auto count = self()->getChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =

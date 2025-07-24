@@ -8,13 +8,13 @@
  (memory $0 23 256 shared)
 
  ;; CHECK:      [fuzz-exec] calling wait_and_log
- ;; CHECK-NEXT: [LoggingExternalInterface logging 2]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 0 0]
  (func $wait_and_log (export "wait_and_log")
   (call $log
    (memory.atomic.wait64
-    (i32.const 0)
-    (i64.const 0)
-    (i64.const 0)
+    (i32.const 32)
+    (i64.const 64)
+    (i64.const 128)
    )
   )
  )
