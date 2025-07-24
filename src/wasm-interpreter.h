@@ -242,9 +242,10 @@ public:
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
-  std::vector<Literals> valueStack;
+  // TODO: Literals here and not Flows
+  std::vector<Flow> valueStack;
 
-  Literals pop() {
+  Flow pop() {
     assert(!valueStack.empty());
     auto ret = valueStack.back();
     valueStack.pop_back();
@@ -274,7 +275,7 @@ public:
         if (flow.breaking()) {
           return flow;
         }
-        valueStack.push_back(flow.values);
+        valueStack.push_back(flow);
       }
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
