@@ -1,4 +1,4 @@
-//#define WASM_INTERPRETER_DEBUG 1
+#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -218,7 +218,7 @@ protected:
     assert(!valueStack.empty());
     auto ret = valueStack.back();
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "popping " << ret << '\n';
+    std::cout << indent() << "getting child " << ret << '\n';
 #endif
     valueStack.pop_back();
     return ret;
@@ -249,6 +249,10 @@ public:
       for (auto* child : ChildIterator(curr)) {
         Flow flow = visit(child);
         if (flow.breaking()) {
+          depth--;
+#if WASM_INTERPRETER_DEBUG
+          std::cout << indent() << "=> breaking: " << flow << '\n';
+#endif
           return flow;
         }
         valueStack.push_back(flow);
@@ -301,6 +305,7 @@ public:
 
   Flow visitBlock(Block* curr) {
     NOTE_ENTER("Block");
+std::cout << indent() << "BLOCK name " << curr->name << '\n';
     // special-case Block, because Block nesting (in their first element) can be
     // incredibly deep
     std::vector<Block*> stack;
@@ -316,6 +321,7 @@ public:
       stack.pop_back();
       if (flow.breaking()) {
         flow.clearIf(curr->name);
+std::cout << indent() << " breaking, me" << curr->name << " leaving " << flow << '\n';
         continue;
       }
       auto& list = curr->list;
@@ -327,10 +333,12 @@ public:
         flow = visit(list[i]);
         if (flow.breaking()) {
           flow.clearIf(curr->name);
+std::cout << indent() << "inner breaking, me" << curr->name << " leaving " << flow << '\n';
           break;
         }
       }
     }
+std::cout << indent() << "BLOCK final flow, me" << curr->name << " leaving " << flow << '\n';
     return flow;
   }
   Flow visitIf(If* curr) {
