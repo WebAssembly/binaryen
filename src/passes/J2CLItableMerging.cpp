@@ -99,11 +99,11 @@ struct J2CLItableMerging : public Pass {
   // Collects all structs corresponding to Java classes, their vtables and
   // their itables. This is very tied to the way j2cl emits these constructs.
   void collectVtableAndItableTypes(Module& wasm) {
-    auto hasField = [](TypeNames& typeNameInfo, int index,
-                       std::string_view name) {
-      auto it = typeNameInfo.fieldNames.find(index);
-      return it != typeNameInfo.fieldNames.end() && it->second.equals(name);
-    };
+    auto hasField =
+      [](TypeNames& typeNameInfo, int index, std::string_view name) {
+        auto it = typeNameInfo.fieldNames.find(index);
+        return it != typeNameInfo.fieldNames.end() && it->second.equals(name);
+      };
 
     // 1. Collect all structs that correspond that a Java type.
     for (auto [heapType, typeNameInfo] : wasm.typeNames) {
@@ -404,11 +404,11 @@ struct J2CLItableMerging : public Pass {
         // Add the itable fields to the beginning of the vtable.
         auto& itableFields = structInfo->itable.getStruct().fields;
         newFields.insert(newFields.begin() + insertIndex,
-                          itableFields.begin(),
-                          itableFields.end());
+                         itableFields.begin(),
+                         itableFields.end());
         for (Index i = 0; i < parent.itableSize; i++) {
           newFields[insertIndex + i].type =
-              getTempType(newFields[insertIndex + i].type);
+            getTempType(newFields[insertIndex + i].type);
         }
 
         // Update field names as well. The Type Rewriter cannot do this for
