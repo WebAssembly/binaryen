@@ -17,9 +17,23 @@ while i < len(lines):
   #           Flow flow = self()->visit(expression);
   if ' = visit(' in line or ' = self()->visit(' in line:
     print(line.rstrip())
-    parts = line.split(' ')
-    parts[-1] = 'pop();'
-    line = ' '.join(parts) + '\n'
+    # next, we should see
+    #
+    #    if (flow.breaking()) {
+    #      return flow;
+    #    }
+    #
+    next = lines[i + 1]
+    if '.breaking()) {' in next:
+      next = lines[i + 2]
+      if 'return ' in next:
+        next = lines[i + 3]
+        if '}' in next:
+          # success! turn it all into a pop
+          parts = line.split(' ')
+          parts[-1] = 'pop();'
+          line = ' '.join(parts) + '\n'
+          i += 3
 
   new.append(line)
   i += 1
