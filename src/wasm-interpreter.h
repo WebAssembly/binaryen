@@ -29,8 +29,10 @@
 #include <variant>
 
 #include "fp16.h"
+#include "ir/iteration.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/properties.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
@@ -240,6 +242,8 @@ public:
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
+  std::vector<Literals> valueStack;
+
 public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
@@ -254,6 +258,17 @@ public:
     depth++;
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       hostLimit("interpreter recursion limit");
+    }
+    if (!Properties::isControlFlow(curr)) {
+      // Visit the children and add them to the value stack. (Control flow
+      // expressions handle things manually.)
+      for (auto* child : ChildIterator(curr)) {
+        Flow flow = visit(child);
+        if (flow.breaking()) {
+          return flow;
+        }
+        valueStack.push_back(flow.values);
+      }
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking()) {
