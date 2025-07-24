@@ -1942,6 +1942,21 @@ class BranchHintPreservation(TestCaseHandler):
             '--skip-pass=heap-store-optimization',
             #   * MergeBlocks moves code out of inner blocks to outer blocks.
             '--skip-pass=merge-blocks',
+            #   * Monomorphize can subtly reorder code:
+            #
+            #       (call $foo
+            #         (select
+            #           (i32.div_s ..which will trap..)
+            #           (if with branch hint)
+            #     =>
+            #       (call $foo_1
+            #         (if with branch hint)
+            #
+            #     where $foo_1 receives the if's result and uses it in the
+            #     ("reverse-inlined") select. Now the if executes first, when
+            #     previously the trap stopped it.
+            '--skip-pass=monomorphize',
+            '--skip-pass=monomorphize-always',
             # * Merging/folding code. When we do so, code identical in content
             #   but differing in metadata will end up with the metadata from one
             #   of the copies, which might be wrong (we follow LLVM here, see
