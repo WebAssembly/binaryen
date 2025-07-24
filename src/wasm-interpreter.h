@@ -244,6 +244,13 @@ protected:
 
   std::vector<Literals> valueStack;
 
+  Literals pop() {
+    assert(!valueStack.empty());
+    auto ret = valueStack.back();
+    valueStack.pop_back();
+    return ret;
+  }
+
 public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
