@@ -1694,17 +1694,10 @@ public:
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    if (curr->type == Type::unreachable) {
-      // We cannot proceed to compute the heap type, as there isn't one. Just
-      // find why we are unreachable, and stop there.
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        auto value = pop();
-      }
-      if (curr->desc) {
-        auto value = pop();
-      }
-      WASM_UNREACHABLE("unreachable but no unreachable child");
-    }
+    // If we are unreachable then we cannot proceed to compute the heap type,
+    // below, as there isn't one. But if we are unreachable then we should not
+    // get here, as the child would break in visit().
+    assert(curr->type != Type::unreachable);
     auto heapType = curr->type.getHeapType();
     const auto& fields = heapType.getStruct().fields;
     Literals data(fields.size());
@@ -1850,14 +1843,10 @@ public:
     if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
-    if (curr->type == Type::unreachable) {
-      // We cannot proceed to compute the heap type, as there isn't one. Just
-      // find why we are unreachable, and stop there.
-      for (auto* value : curr->values) {
-        auto result = pop();
-      }
-      WASM_UNREACHABLE("unreachable but no unreachable child");
-    }
+    // If we are unreachable then we cannot proceed to compute the heap type,
+    // below, as there isn't one. But if we are unreachable then we should not
+    // get here, as the child would break in visit().
+    assert(curr->type != Type::unreachable);
     auto heapType = curr->type.getHeapType();
     auto field = heapType.getArray().element;
     Literals data(num);
