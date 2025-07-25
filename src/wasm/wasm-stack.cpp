@@ -569,6 +569,10 @@ void BinaryInstWriter::visitAtomicFence(AtomicFence* curr) {
     << int8_t(curr->order);
 }
 
+void BinaryInstWriter::visitPause(Pause* curr) {
+  o << int8_t(BinaryConsts::AtomicPrefix) << U32LEB(BinaryConsts::Pause);
+}
+
 void BinaryInstWriter::visitSIMDExtract(SIMDExtract* curr) {
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {

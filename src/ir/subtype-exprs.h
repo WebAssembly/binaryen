@@ -188,6 +188,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitAtomicWait(AtomicWait* curr) {}
   void visitAtomicNotify(AtomicNotify* curr) {}
   void visitAtomicFence(AtomicFence* curr) {}
+  void visitPause(Pause* curr) {}
   void visitSIMDExtract(SIMDExtract* curr) {}
   void visitSIMDReplace(SIMDReplace* curr) {}
   void visitSIMDShuffle(SIMDShuffle* curr) {}

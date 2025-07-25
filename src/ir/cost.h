@@ -116,6 +116,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return AtomicCost + visit(curr->ptr) + visit(curr->notifyCount);
   }
   CostType visitAtomicFence(AtomicFence* curr) { return AtomicCost; }
+  CostType visitPause(Pause* curr) {
+    // When used properly, pause only makes things more efficient, so we do not
+    // model it as having any cost.
+    return 0;
+  }
   CostType visitConst(Const* curr) { return 1; }
   CostType visitUnary(Unary* curr) {
     CostType ret = 0;

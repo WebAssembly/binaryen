@@ -33,6 +33,7 @@ DELEGATE(AtomicCmpxchg);
 DELEGATE(AtomicWait);
 DELEGATE(AtomicNotify);
 DELEGATE(AtomicFence);
+DELEGATE(Pause);
 DELEGATE(SIMDExtract);
 DELEGATE(SIMDReplace);
 DELEGATE(SIMDShuffle);

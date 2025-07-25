@@ -244,6 +244,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitAtomicFence(AtomicFence* curr) {}
 
+  void visitPause(Pause* curr) {}
+
   void visitSIMDExtract(SIMDExtract* curr) { note(&curr->vec, Type::v128); }
 
   void visitSIMDReplace(SIMDReplace* curr) {

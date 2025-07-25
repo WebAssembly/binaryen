@@ -4859,12 +4859,23 @@ switch (buf[0]) {
       return Ok{};
     }
     goto parse_error;
-  case 'p':
-    if (op == "pop"sv) {
-      CHECK_ERR(makePop(ctx, pos, annotations));
-      return Ok{};
+  case 'p': {
+    switch (buf[1]) {
+      case 'a':
+        if (op == "pause"sv) {
+          CHECK_ERR(makePause(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
+      case 'o':
+        if (op == "pop"sv) {
+          CHECK_ERR(makePop(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
+      default: goto parse_error;
     }
-    goto parse_error;
+  }
   case 'r': {
     switch (buf[2]) {
       case 'f': {

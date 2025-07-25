@@ -1648,6 +1648,11 @@ Result<> IRBuilder::makeAtomicFence() {
   return Ok{};
 }
 
+Result<> IRBuilder::makePause() {
+  push(builder.makePause());
+  return Ok{};
+}
+
 Result<> IRBuilder::makeSIMDExtract(SIMDExtractOp op, uint8_t lane) {
   SIMDExtract curr;
   CHECK_ERR(visitSIMDExtract(&curr));

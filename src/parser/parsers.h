@@ -142,6 +142,8 @@ Result<> makeAtomicNotify(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeAtomicFence(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makePause(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeSIMDExtract(
   Ctx&, Index, const std::vector<Annotation>&, SIMDExtractOp op, size_t lanes);
 template<typename Ctx>
@@ -1813,6 +1815,12 @@ Result<> makeAtomicFence(Ctx& ctx,
                          Index pos,
                          const std::vector<Annotation>& annotations) {
   return ctx.makeAtomicFence(pos, annotations);
+}
+
+template<typename Ctx>
+Result<>
+makePause(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  return ctx.makePause(pos, annotations);
 }
 
 template<typename Ctx>

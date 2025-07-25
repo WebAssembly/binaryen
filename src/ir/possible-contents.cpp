@@ -593,6 +593,7 @@ struct InfoCollector
   void visitAtomicWait(AtomicWait* curr) { addRoot(curr); }
   void visitAtomicNotify(AtomicNotify* curr) { addRoot(curr); }
   void visitAtomicFence(AtomicFence* curr) {}
+  void visitPause(Pause* curr) {}
   void visitSIMDExtract(SIMDExtract* curr) { addRoot(curr); }
   void visitSIMDReplace(SIMDReplace* curr) { addRoot(curr); }
   void visitSIMDShuffle(SIMDShuffle* curr) { addRoot(curr); }
