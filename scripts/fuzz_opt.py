@@ -1957,6 +1957,18 @@ class BranchHintPreservation(TestCaseHandler):
             #     previously the trap stopped it.
             '--skip-pass=monomorphize',
             '--skip-pass=monomorphize-always',
+            # SimplifyGlobals finds globals that are "read only to be written",
+            # and can remove the ifs that do so:
+            #
+            #         if (foo) { foo = 1 }
+            #     =>
+            #         if (0) {}
+            #
+            # This is valid if the global's value is never read otherwise, but
+            # it does alter the if's behavior.
+            '--skip-pass=simplify-globals',
+            '--skip-pass=simplify-globals-optimizing',
+
             # * Merging/folding code. When we do so, code identical in content
             #   but differing in metadata will end up with the metadata from one
             #   of the copies, which might be wrong (we follow LLVM here, see
