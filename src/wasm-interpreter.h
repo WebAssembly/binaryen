@@ -31,8 +31,8 @@
 #include <variant>
 
 #include "fp16.h"
-#include "ir/iteration.h"
 #include "ir/intrinsics.h"
+#include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "support/bits.h"
@@ -3084,7 +3084,8 @@ public:
 
     Flow ret = callFunction(target, arguments);
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "(returned to " << scope->function->name << ")\n";
+    std::cout << self()->indent() << "(returned to " << scope->function->name
+              << ")\n";
 #endif
     return ret;
   }
@@ -3114,7 +3115,8 @@ public:
     Flow ret = info.interface()->callTable(
       info.name, index, curr->heapType, arguments, curr->type, *self());
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "(returned to " << scope->function->name << ")\n";
+    std::cout << self()->indent() << "(returned to " << scope->function->name
+              << ")\n";
 #endif
     return ret;
   }
@@ -3140,7 +3142,8 @@ public:
 
     Flow ret = callFunction(targetRef.getFunc(), arguments);
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "(returned to " << scope->function->name << ")\n";
+    std::cout << self()->indent() << "(returned to " << scope->function->name
+              << ")\n";
 #endif
     return ret;
   }
@@ -4065,7 +4068,8 @@ public:
       FunctionScope scope(function, arguments, *self());
 
 #if WASM_INTERPRETER_DEBUG
-      std::cout << self()->indent() << "entering " << function->name << "\n  with arguments:\n";
+      std::cout << self()->indent() << "entering " << function->name
+                << "\n  with arguments:\n";
       for (unsigned i = 0; i < arguments.size(); ++i) {
         std::cout << "    $" << i << ": " << arguments[i] << '\n';
       }
@@ -4074,8 +4078,8 @@ public:
       flow = self()->visit(function->body);
 
 #if WASM_INTERPRETER_DEBUG
-      std::cout << self()->indent() << "exiting " << function->name << " with " << flow.values
-                << '\n';
+      std::cout << self()->indent() << "exiting " << function->name << " with "
+                << flow.values << '\n';
 #endif
 
       if (flow.breakTo != RETURN_CALL_FLOW) {
