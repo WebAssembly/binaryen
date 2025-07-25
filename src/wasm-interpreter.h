@@ -4646,23 +4646,25 @@ public:
     return ret;
   }
   Flow visitContNew(ContNew* curr) {
+    auto funcFlow = self()->visit(curr->func);
+    if (funcFlow.breaking()) {
+      return funcFlow;
+    }
+    auto* refFunc = funcFlow->getSingleValue()->cast<RefFunc>();
+    // The initial data is empty, as nothing has executed yet, so we don't
+    // need any information about how to resume (we resume by just running).
+    return std::make_shared<ContData>(refFunc->func, {});
+  }
+  Flow visitContBind(ContBind* curr) {
+    return Flow(NONCONSTANT_FLOW);
+/*
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
-    auto contFlow = self()->visit(curr->cont);
-    if (contFlow.breaking()) {
-      return contFlow;
-    }
-    if (auto* refFunc = contFlow->getSingleValue()->dynCast<RefFunc>()) {
-      // The initial data is empty, as nothing has executed yet, so we don't
-      // need any information about how to resume (we resume by just running).
-      return std::make_shared<ContData>(refFunc->func, {});
-    }
-    trap("non-function in cont.new");
+*/
   }
-  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
