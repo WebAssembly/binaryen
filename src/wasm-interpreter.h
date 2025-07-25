@@ -2916,7 +2916,10 @@ public:
     if (!export_ || export_->kind != ExternalKind::Function) {
       externalInterface->trap("callExport not found");
     }
-    return callFunction(*export_->getInternalName(), arguments);
+    auto ret = callFunction(*export_->getInternalName(), arguments);
+    // All values should have been consumed.
+    assert(self()->valueStack.empty());
+    return ret;
   }
 
   Literals callExport(Name name) { return callExport(name, Literals()); }
@@ -3200,8 +3203,8 @@ public:
     }
 
     Flow ret = callFunction(target, arguments);
-#ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "(returned to " << scope->function->name << ")\n";
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "(returned to " << scope->function->name << ")\n";
 #endif
     return ret;
   }
@@ -3231,8 +3234,8 @@ public:
 
     Flow ret = info.interface()->callTable(
       info.name, index, curr->heapType, arguments, curr->type, *self());
-#ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "(returned to " << scope->function->name << ")\n";
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "(returned to " << scope->function->name << ")\n";
 #endif
     return ret;
   }
@@ -3258,8 +3261,8 @@ public:
     }
 
     Flow ret = callFunction(targetRef.getFunc(), arguments);
-#ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "(returned to " << scope->function->name << ")\n";
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "(returned to " << scope->function->name << ")\n";
 #endif
     return ret;
   }
@@ -4251,8 +4254,8 @@ public:
 
       FunctionScope scope(function, arguments, *self());
 
-#ifdef WASM_INTERPRETER_DEBUG
-      std::cout << "entering " << function->name << "\n  with arguments:\n";
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent() << "entering " << function->name << "\n  with arguments:\n";
       for (unsigned i = 0; i < arguments.size(); ++i) {
         std::cout << "    $" << i << ": " << arguments[i] << '\n';
       }
@@ -4260,13 +4263,10 @@ public:
 
       flow = self()->visit(function->body);
 
-#ifdef WASM_INTERPRETER_DEBUG
-      std::cout << "exiting " << function->name << " with " << flow.values
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent() << "exiting " << function->name << " with " << flow.values
                 << '\n';
 #endif
-
-      // All values should have been consumed.
-      assert(self()->valueStack.empty());
 
       if (flow.breakTo != RETURN_CALL_FLOW) {
         break;
