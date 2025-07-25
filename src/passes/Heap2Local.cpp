@@ -859,6 +859,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // if the optimized allocation flows in as the descriptor, since it cannot
       // possibly have been used in the allocation of the cast value without
       // having been considered to escape.
+      bool allocIsCastRef =
+        analyzer.getInteraction(curr->ref) == ParentChildInteraction::Flows;
       bool allocIsCastDesc =
         analyzer.getInteraction(curr->desc) == ParentChildInteraction::Flows;
       if (!allocation->desc || allocIsCastDesc) {
@@ -867,7 +869,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
         // side effects, but that local.set would not be reflected in the parent
         // map, so it would not be updated if the allocation flowing through
         // that desc operand were later optimized.
-        if (allocIsCastDesc && curr->type.isNullable()) {
+        if (allocIsCastDesc && !allocIsCastRef && curr->type.isNullable()) {
           // There might be a null value to let through. Reuse curr as a cast to
           // null. Use a scratch local to move the reference value past the desc
           // value.
@@ -887,8 +889,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
                                           builder.makeUnreachable()));
         }
       } else {
-        assert(analyzer.getInteraction(curr->ref) ==
-               ParentChildInteraction::Flows);
+        assert(allocIsCastRef);
         // The cast succeeds iff the optimized allocation's descriptor is the
         // same as the given descriptor and traps otherwise.
         auto type = allocation->desc->type;
