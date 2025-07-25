@@ -4645,7 +4645,9 @@ public:
     multiValues.pop_back();
     return ret;
   }
-  Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitContNew(ContNew* curr) {
+    
+  }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4664,7 +4666,7 @@ public:
         if (handlerTag == flow.suspendTag) {
           // Switch the flow from suspending to branching, and keep sending the
           // same values (which include the tag values + a new continuation at
-          // the end, so we have nothing to add here).
+          // the end, so we have nothing to add here). // TODO: doc on Flow
           flow.suspendTag = Name();
           flow.breakTo = curr->handlerBlocks[i];
           return flow;

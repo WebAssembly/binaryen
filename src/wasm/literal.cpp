@@ -91,6 +91,12 @@ Literal::Literal(std::shared_ptr<ExnData> exnData)
   assert(exnData);
 }
 
+Literal::Literal(std::shared_ptr<ContData> contData)
+  : contData(contData), type(HeapType::exn, NonNullable) {
+  // The data must not be null.
+  assert(contData);
+}
+
 Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
   // TODO: we could in theory internalize strings
@@ -140,6 +146,10 @@ Literal::Literal(const Literal& other) : type(other.type) {
     func = other.func;
     return;
   }
+  if (type.isContinuation()) {
+    new (&contData) std::shared_ptr<ContData>(other.contData);
+    return;
+  }
   switch (heapType.getBasic(Unshared)) {
     case HeapType::i31:
       i32 = other.i32;
@@ -182,6 +192,8 @@ Literal::~Literal() {
     gcData.~shared_ptr();
   } else if (isExn()) {
     exnData.~shared_ptr();
+  } else if (isContinuation()) {
+    contData.~shared_ptr();
   }
 }
 
@@ -335,6 +347,12 @@ std::shared_ptr<ExnData> Literal::getExnData() const {
   assert(isExn());
   assert(exnData);
   return exnData;
+}
+
+std::shared_ptr<ContData> Literal::getContData() const {
+  assert(isExn());
+  assert(contData);
+  return contData;
 }
 
 Literal Literal::castToF32() {

@@ -33,6 +33,7 @@ namespace wasm {
 class Literals;
 struct GCData;
 struct ExnData;
+struct ContData;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -63,6 +64,8 @@ class Literal {
     std::shared_ptr<GCData> gcData;
     // A reference to Exn data.
     std::shared_ptr<ExnData> exnData;
+    // A reference to a Continuation.
+    std::shared_ptr<ContData> contData;
   };
 
 public:
@@ -93,6 +96,7 @@ public:
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   explicit Literal(std::shared_ptr<ExnData> exnData);
+  explicit Literal(std::shared_ptr<ContData> contData);
   explicit Literal(std::string_view string);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -105,6 +109,7 @@ public:
   // a null or i31). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
   bool isExn() const { return type.isExn(); }
+  bool isContinuation() const { return type.isContinuation(); }
   bool isString() const { return type.isString(); }
 
   bool isNull() const { return type.isNull(); }
@@ -312,6 +317,7 @@ public:
   }
   std::shared_ptr<GCData> getGCData() const;
   std::shared_ptr<ExnData> getExnData() const;
+  std::shared_ptr<ContData> getContData() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -794,6 +800,19 @@ struct ExnData {
   Literals payload;
 
   ExnData(Name tag, Literals payload) : tag(tag), payload(payload) {}
+};
+
+// The data of a (ref cont) literal.
+struct ContData {
+  // The function this continuation begins in.
+  // TODO: handle cross-module calls using something other than a Name here.
+  Name func;
+
+  // Information about how to resume execution, a list of instruction and data
+  // that we "replay" into the value and call stacks.
+  Literals resumeInfo;
+
+  ContData(Name func, Literals resumeInfo) : func(func), resumeInfo(resumeInfo) {}
 };
 
 } // namespace wasm
