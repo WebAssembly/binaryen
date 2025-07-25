@@ -4652,7 +4652,24 @@ public:
     }
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
-  Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResume(Resume* curr) {
+    auto flow = self()->visit(curr->cont);
+    if (flow.suspendTag) {
+      // See if a suspension arrived that we support.
+      for (size_t i = 0; i < curr->handlerTags.size(); i++) {
+        auto handlerTag = curr->handlerTags[i];
+        if (handlerTag == flow.suspendTag) {
+          // Switch the flow from suspending to branching, and keep sending the
+          // same values (which include the tag values + a new continuation at
+          // the end, so we have nothing to add here).
+          flow.suspendTag = Name();
+          flow.breakTo = curr->handlerBlocks[i];
+          return flow;
+        }
+      }
+    }
+    return flow;
+  }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
