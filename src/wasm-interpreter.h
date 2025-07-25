@@ -417,8 +417,7 @@ public:
   // delegate to the Literal::* methods, except we handle traps here.
 
   Flow visitUnary(Unary* curr) {
-    Flow flow = getChild();
-    Literal value = flow.getSingleValue();
+    auto value = getSingleChild();
     switch (curr->op) {
       case ClzInt32:
       case ClzInt64:
@@ -695,10 +694,8 @@ public:
     WASM_UNREACHABLE("invalid op");
   }
   Flow visitBinary(Binary* curr) {
-    Flow flow = getChild();
-    Literal left = flow.getSingleValue();
-    flow = getChild();
-    Literal right = flow.getSingleValue();
+    auto left = getSingleChild();
+    auto right = getSingleChild();
     assert(curr->left->type.isConcrete() ? left.type == curr->left->type
                                          : true);
     assert(curr->right->type.isConcrete() ? right.type == curr->right->type
