@@ -4087,9 +4087,12 @@ public:
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
+    auto* oldVisitValues = self()->visitValues;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
+      self()->visitValues = oldVisitValues;
+
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
       if (scope->currDelegateTarget.is()) {
@@ -4136,9 +4139,12 @@ public:
   }
   Flow visitTryTable(TryTable* curr) {
     NOTE_ENTER("TryTable");
+    auto* oldVisitValues = self()->visitValues;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
+      self()->visitValues = oldVisitValues;
+
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
