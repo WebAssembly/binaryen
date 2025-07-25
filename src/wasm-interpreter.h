@@ -59,7 +59,7 @@ struct NonconstantException {};
 
 // Utilities
 
-extern Name WASM, RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
+extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -240,6 +240,10 @@ public:
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
+  // We save values from visit() until they are consumed, so that we can pause/
+  // resume. TODO try-catch needs save/restore too
+  std::vector<Literals> valueStack;
+
 public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
@@ -255,7 +259,14 @@ public:
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       hostLimit("interpreter recursion limit");
     }
+
+    // Save and restore the value stack around each call: once the visit
+    // completes, all values have been consumed, and nothing needs to be
+    // saved.
+    auto oldValueStackSize = valueStack.size();
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+    valueStack.resize(oldValueStackSize);
+
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
@@ -268,6 +279,7 @@ public:
 #endif
         assert(Type::isSubType(type, curr->type));
       }
+      valueStack.push_back(ret.values);
     }
     depth--;
     return ret;
