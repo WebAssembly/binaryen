@@ -24,10 +24,11 @@ namespace wasm {
 
 // shared constants
 
-Name WASM("wasm");
+//Name WASM("wasm");
 Name RETURN_FLOW("*return:)*");
 Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
+Name SUSPEND_FLOW("*suspend:)*");
 
 namespace BinaryConsts::CustomSections {
 

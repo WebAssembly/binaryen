@@ -59,7 +59,7 @@ struct NonconstantException {};
 
 // Utilities
 
-extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
+extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -73,9 +73,15 @@ public:
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
   Flow(Name breakTo, Literals&& values)
     : values(std::move(values)), breakTo(breakTo) {}
+  Flow(Name breakTo, Name suspendTag, Literals&& values)
+    : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
+    assert(breakTo == SUSPEND_FLOW);
+  }
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
+  Name suspendTag; // if non-null, breakTo must be SUSPEND_FLOW, and this is the
+                   // tag being suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
