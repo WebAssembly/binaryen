@@ -276,7 +276,10 @@ public:
       // Execute the instruction, which will start with calls to getChild()
       // that read from our VisitValues.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-      assert(visitValues->empty());
+      if (ret.breakTo != NONCONSTANT_FLOW) {
+        // This executed, so the values must have been fully read.
+        assert(visitValues->empty());
+      }
 
       // Restore the parent.
       visitValues = oldVisitValues;
