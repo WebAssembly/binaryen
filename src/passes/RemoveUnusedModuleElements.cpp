@@ -66,28 +66,38 @@ using ModuleElement = std::pair<ModuleElementKind, Name>;
 // Information from an indirect call: the name of the table, and the heap type.
 using IndirectCall = std::pair<Name, HeapType>;
 
-// Visit or walk an expression to find what things are referenced.
-struct ReferenceFinder
-  : public PostWalker<ReferenceFinder,
-                      UnifiedExpressionVisitor<ReferenceFinder>> {
-  // Our findings are placed in these data structures, which the user of this
-  // code can then process. We mark both uses and references, and also note
-  // uses of specific things that require special handling, like refFuncs.
+// Visit or walk an expression to find important things. We note them on data
+// structures that the caller can then process.
+//
+// We could in theory merge this class in with Analyzer, allowing us to
+// directly apply our findings - that is, rather than add to a data structure,
+// then the caller iterates on it and calls a method on them all, we could call
+// that method as we go. However, separating the classes is simpler as we need
+// different handling in different cases (when scanning for references vs when
+// scanning normally, see below).
+//
+// In theory we could parallelize this class, processing all functions in
+// advance, rather than as we go (single-threaded). However, this turns out not
+// to be faster in practice (perhaps because the single-threaded approach uses
+// less memory).
+struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
+  // We mark both uses and references, and also note specific things that
+  // require special handling, like refFuncs.
   std::vector<ModuleElement> used, referenced;
   std::vector<HeapType> callRefTypes;
   std::vector<Name> refFuncs;
   std::vector<StructField> structFields;
   std::vector<IndirectCall> indirectCalls;
 
-  // Add an item to the output data structures.
+  // Note an item on our output data structures.
   void use(ModuleElement element) { used.push_back(element); }
   void reference(ModuleElement element) { referenced.push_back(element); }
-  void useCallRef(HeapType type) { callRefTypes.push_back(type); }
-  void useRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
-  void useStructField(StructField structField) {
+  void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
+  void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
+  void noteStructField(StructField structField) {
     structFields.push_back(structField);
   }
-  void useIndirectCall(Name table, HeapType type) {
+  void noteIndirectCall(Name table, HeapType type) {
     indirectCalls.push_back({table, type});
   }
 
@@ -154,12 +164,12 @@ struct ReferenceFinder
     // We refer to the table, but may not use all parts of it, that depends on
     // the heap type we call with.
     reference({ModuleElementKind::Table, curr->table});
-    useIndirectCall(curr->table, curr->heapType);
+    noteIndirectCall(curr->table, curr->heapType);
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
     // is written into the table we could do better here; we could also see
     // which tables are immutable. TODO
-    useCallRef(curr->heapType);
+    noteCallRef(curr->heapType);
   }
 
   void visitCallRef(CallRef* curr) {
@@ -168,17 +178,17 @@ struct ReferenceFinder
       return;
     }
 
-    useCallRef(curr->target->type.getHeapType());
+    noteCallRef(curr->target->type.getHeapType());
   }
 
-  void visitRefFunc(RefFunc* curr) { useRefFunc(curr->func); }
+  void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
 
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return;
     }
     auto type = curr->ref->type.getHeapType();
-    useStructField(StructField{type, curr->index});
+    noteStructField(StructField{type, curr->index});
   }
 };
 
@@ -276,25 +286,25 @@ struct Analyzer {
 
       // Find references in this expression, and apply them. Anything found here
       // is used.
-      ReferenceFinder finder;
-      finder.setModule(module);
-      finder.visit(curr);
-      for (auto element : finder.used) {
+      Noter noter;
+      noter.setModule(module);
+      noter.visit(curr);
+      for (auto element : noter.used) {
         use(element);
       }
-      for (auto element : finder.referenced) {
+      for (auto element : noter.referenced) {
         reference(element);
       }
-      for (auto type : finder.callRefTypes) {
+      for (auto type : noter.callRefTypes) {
         useCallRefType(type);
       }
-      for (auto func : finder.refFuncs) {
+      for (auto func : noter.refFuncs) {
         useRefFunc(func);
       }
-      for (auto structField : finder.structFields) {
+      for (auto structField : noter.structFields) {
         useStructField(structField);
       }
-      for (auto call : finder.indirectCalls) {
+      for (auto call : noter.indirectCalls) {
         useIndirectCall(call);
       }
 
@@ -604,18 +614,18 @@ struct Analyzer {
   // here).
   void addReferences(Expression* curr) {
     // Find references anywhere in this expression so we can apply them.
-    ReferenceFinder finder;
-    finder.setModule(module);
-    finder.walk(curr);
+    Noter noter;
+    noter.setModule(module);
+    noter.walk(curr);
 
-    for (auto element : finder.used) {
+    for (auto element : noter.used) {
       reference(element);
     }
-    for (auto element : finder.referenced) {
+    for (auto element : noter.referenced) {
       reference(element);
     }
 
-    for (auto func : finder.refFuncs) {
+    for (auto func : noter.refFuncs) {
       // If a function ends up referenced but not used then later down we will
       // empty it out by replacing its body with an unreachable, which always
       // validates. For that reason all we need to do here is mark the function

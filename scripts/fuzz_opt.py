@@ -515,10 +515,10 @@ def compare_between_vms(x, y, context):
         y_line = y_lines[i]
         if x_line != y_line:
             # this is different, but maybe it's a vm difference we can ignore
-            LEI_LOGGING = '[LoggingExternalInterface logging'
-            if x_line.startswith(LEI_LOGGING) and y_line.startswith(LEI_LOGGING):
-                x_val = x_line[len(LEI_LOGGING) + 1:-1]
-                y_val = y_line[len(LEI_LOGGING) + 1:-1]
+            LOGGING_PREFIX = '[LoggingExternalInterface logging'
+            if x_line.startswith(LOGGING_PREFIX) and y_line.startswith(LOGGING_PREFIX):
+                x_val = x_line[len(LOGGING_PREFIX) + 1:-1]
+                y_val = y_line[len(LOGGING_PREFIX) + 1:-1]
                 if numbers_are_close_enough(x_val, y_val):
                     continue
             if x_line.startswith(FUZZ_EXEC_NOTE_RESULT) and y_line.startswith(FUZZ_EXEC_NOTE_RESULT):
@@ -1844,6 +1844,220 @@ class PreserveImportsExports(TestCaseHandler):
         compare(get_relevant_lines(original), get_relevant_lines(processed), 'Preserve')
 
 
+# Test that we preserve branch hints properly. The invariant that we test here
+# is that, given correct branch hints (that is, the input wasm's branch hints
+# are always correct: a branch is taken iff the hint is that it is taken), then
+# the optimizer does not end up with incorrect branch hints. It is fine if the
+# optimizer removes some hints (it may remove entire chunks of code in DCE, for
+# example, and it may find ways to simplify code so fewer things execute), but
+# it should not emit a branch hint that is wrong - if it is not certain, it
+# should remove the branch hint.
+#
+# Note that bugs found by this fuzzer tend to require the following during
+# reducing: BINARYEN_TRUST_GIVEN_WASM=1 in the env, and --text as a parameter.
+class BranchHintPreservation(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        # Generate an instrumented wasm.
+        instrumented = wasm + '.inst.wasm'
+        run([
+            in_bin('wasm-opt'),
+            wasm,
+            '-o', instrumented,
+            # Add random branch hints (so we have something to work with).
+            '--randomize-branch-hints',
+            # Instrument them with logging.
+            '--instrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS)
+
+        # Collect the logging.
+        out = run_bynterp(instrumented, ['--fuzz-exec-before', '-all'])
+
+        # Process the output. We look at the lines like this:
+        #
+        #   [LoggingExternalInterface log-branch 1 0 0]
+        #
+        # where the three integers are: ID, predicted, actual.
+        all_ids = set()
+        bad_ids = set()
+        LOG_BRANCH_PREFIX = '[LoggingExternalInterface log-branch'
+        for line in out.splitlines():
+            if line.startswith(LOG_BRANCH_PREFIX):
+                # (1:-1 strips away the '[', ']' at the edges)
+                _, _, id_, hint, actual = line[1:-1].split(' ')
+                all_ids.add(id_)
+                if hint != actual:
+                    # This hint was misleading.
+                    bad_ids.add(id_)
+
+        # If no good ids remain, there is nothing to test (no hints will remain
+        # later down, after we remove bad ones).
+        if bad_ids == all_ids:
+            note_ignored_vm_run('no good ids')
+            return
+
+        # Generate proper hints for testing: A wasm file with 100% valid branch
+        # hints, and instrumentation to verify that.
+        de_instrumented = wasm + '.de_inst.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            instrumented,
+            '-o', de_instrumented,
+        ]
+        # Remove the bad ids (using the instrumentation to identify them by ID).
+        if bad_ids:
+            args += [
+                '--delete-branch-hints=' + ','.join(bad_ids),
+            ]
+        args += [
+            # Remove all prior instrumentation, so it does not confuse us later
+            # when we log our final hints, and also so it does not inhibit
+            # optimizations.
+            '--deinstrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS
+        run(args)
+
+        # Add optimizations to see if things break.
+        opted = wasm + '.opted.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            de_instrumented,
+            '-o', opted,
+            '-g',
+
+            # Some passes are just skipped, as they do not modify ifs or brs,
+            # but they do break the invariant of not adding bad branch hints.
+            # There are two main issues here:
+            # * Moving code around, possibly causing it to start to execute if
+            #   it previously was not reached due to a trap (a branch hint
+            #   seems to have no effects in the optimizer, so it will do such
+            #   movements). And if it starts to execute and is a wrong hint, we
+            #   get an invalid fuzzer finding.
+            #   * LICM moves code out of loops.
+            '--skip-pass=licm',
+            #   * HeapStoreOptimization moves struct.sets closer to struct.news.
+            '--skip-pass=heap-store-optimization',
+            #   * MergeBlocks moves code out of inner blocks to outer blocks.
+            '--skip-pass=merge-blocks',
+            #   * Monomorphize can subtly reorder code:
+            #
+            #       (call $foo
+            #         (select
+            #           (i32.div_s ..which will trap..)
+            #           (if with branch hint)
+            #     =>
+            #       (call $foo_1
+            #         (if with branch hint)
+            #
+            #     where $foo_1 receives the if's result and uses it in the
+            #     ("reverse-inlined") select. Now the if executes first, when
+            #     previously the trap stopped it.
+            '--skip-pass=monomorphize',
+            '--skip-pass=monomorphize-always',
+            # SimplifyGlobals finds globals that are "read only to be written",
+            # and can remove the ifs that do so:
+            #
+            #         if (foo) { foo = 1 }
+            #     =>
+            #         if (0) {}
+            #
+            # This is valid if the global's value is never read otherwise, but
+            # it does alter the if's behavior.
+            '--skip-pass=simplify-globals',
+            '--skip-pass=simplify-globals-optimizing',
+
+            # * Merging/folding code. When we do so, code identical in content
+            #   but differing in metadata will end up with the metadata from one
+            #   of the copies, which might be wrong (we follow LLVM here, see
+            #   details in the passes).
+            #   * CodeFolding merges code blocks inside functions.
+            '--skip-pass=code-folding',
+            #   * DuplicateFunctionElimination merges functions.
+            '--skip-pass=duplicate-function-elimination',
+
+            # Some passes break the invariant in some cases, but we do not want
+            # to skip them entirely, as they have other things we need to fuzz.
+            # We add pass-args for them:
+            # * Do not fold inside OptimizeInstructions.
+            '--pass-arg=optimize-instructions-never-fold-or-reorder',
+            # * Do not unconditionalize code in RemoveUnusedBrs.
+            '--pass-arg=remove-unused-brs-never-unconditionalize',
+
+        ] + get_random_opts() + FEATURE_OPTS
+        run(args)
+
+        # Add instrumentation, to see if any branch hints are wrong after
+        # optimizations. We must do this in a separate invocation from the
+        # optimizations due to flags like --converge (which would instrument
+        # multiple times).
+        final = wasm + '.final.wasm'
+        args = [
+            in_bin('wasm-opt'),
+            opted,
+            '-o', final,
+            '--instrument-branch-hints',
+            '-g',
+        ] + FEATURE_OPTS
+        run(args)
+
+        # Run the final wasm.
+        out = run_bynterp(final, ['--fuzz-exec-before', '-all'])
+
+        # Preprocess the logging. We must discard all lines from functions that
+        # trap, because we are fuzzing branch hints, which are not an effect,
+        # and so they can be reordered with traps; consider this:
+        #
+        #  (i32.add
+        #    (block
+        #      (if (X) (unreachable)
+        #      (i32.const 10)
+        #    )
+        #    (block
+        #      (@metadata.code.branch_hint "\00")
+        #      (if (Y) (unreachable)
+        #      (i32.const 20)
+        #    )
+        #  )
+        #
+        # It is ok to reorder traps, so the optimizer might flip the arms of
+        # this add (imagine other code inside the arms justified that). That
+        # reordering is fine since the branch hint has no effect that the
+        # optimizer needs to care about. However, after we instrument, there
+        # *is* an effect, the visible logging, so if X is true we trap and do
+        # not log a branch hint, but if we reorder, we do log, then trap.
+        #
+        # Note that this problem is specific to traps, because the optimizer can
+        # reorder them, and does not care about identity.
+        #
+        # To handle this, gather lines for each call, and then see which groups
+        # end in traps. (Initialize the list of groups with an empty group, for
+        # any logging before the first call.)
+        line_groups = [['before calls']]
+        for line in out.splitlines():
+            if line.startswith(FUZZ_EXEC_CALL_PREFIX):
+                line_groups.append([line])
+            else:
+                line_groups[-1].append(line)
+
+        # No bad hints should pop up after optimizations.
+        for group in line_groups:
+            if not group or group[-1] == '[trap unreachable]':
+                continue
+            for line in group:
+                if line.startswith(LOG_BRANCH_PREFIX):
+                    _, _, id_, hint, actual = line[1:-1].split(' ')
+                    hint = int(hint)
+                    actual = int(actual)
+                    assert hint in (0, 1)
+                    # We do not care about the integer value of the condition,
+                    # only if it was 0 or non-zero.
+                    actual = (actual != 0)
+                    assert hint == actual, 'Bad hint after optimizations'
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -1859,6 +2073,7 @@ testcase_handlers = [
     ClusterFuzz(),
     Two(),
     PreserveImportsExports(),
+    BranchHintPreservation(),
 ]
 
 

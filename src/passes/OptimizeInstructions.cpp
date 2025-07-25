@@ -228,11 +228,25 @@ struct OptimizeInstructions
 
   bool fastMath;
 
+  // If set, we never fold/merge code together. This is important when fuzzing
+  // branch hints, as if we allow folding, then we may fold code identical in
+  // all ways but for branch hints, leading to an invalid branch hint executing
+  // later (imagine one arm had the right hint and the other the wrong one; we
+  // leave one of the two arbitrarily, so we might get unlucky).
+  bool neverFold;
+
+  // As neverFold, but for reordering code. If we move a branch hint around code
+  // that might trap, and the trap happens later, the branch hint might start to
+  // execute, and it could be wrong.
+  bool neverReorder;
+
   // In rare cases we make a change to a type, and will do a refinalize.
   bool refinalize = false;
 
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
+    neverFold = neverReorder =
+      hasArgument("optimize-instructions-never-fold-or-reorder");
 
     // First, scan locals.
     {
@@ -312,6 +326,9 @@ struct OptimizeInstructions
   }
 
   bool canReorder(Expression* a, Expression* b) {
+    if (neverReorder) {
+      return false;
+    }
     return EffectAnalyzer::canReorder(getPassOptions(), *getModule(), a, b);
   }
 
@@ -1176,7 +1193,10 @@ struct OptimizeInstructions
           BranchHints::flip(curr, getFunction());
         }
       }
-      if (curr->condition->type != Type::unreachable &&
+      // Note that we do not consider metadata here. Like LLVM, we ignore
+      // metadata when trying to fold code together, preferring certain
+      // optimization over possible benefits of profiling data.
+      if (!neverFold && curr->condition->type != Type::unreachable &&
           ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
         // The sides are identical, so fold. If we can replace the If with one
         // arm and there are no side effects in the condition, replace it. But
@@ -2820,6 +2840,9 @@ private:
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
     assert(shouldCanonicalize(binary));
+    if (neverReorder) {
+      return;
+    }
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
       if (binary->isRelational()) {
@@ -3235,8 +3258,12 @@ private:
       }
     }
     {
-      // Sides are identical, fold
+      // If sides are identical, fold.
       Expression *ifTrue, *ifFalse, *c;
+      // Note we do not compare metadata here: This is a select, so both arms
+      // execute anyhow, and things like branch hints were already being run.
+      // After optimization, we will only run fewer things, and run no risk of
+      // running new bad things.
       if (matches(curr, select(any(&ifTrue), any(&ifFalse), any(&c))) &&
           ExpressionAnalyzer::equal(ifTrue, ifFalse)) {
         auto value = effects(ifTrue);
@@ -5642,7 +5669,7 @@ private:
       }
     }
 
-    {
+    if (!neverFold) {
       // Identical code on both arms can be folded out, e.g.
       //
       //  (select

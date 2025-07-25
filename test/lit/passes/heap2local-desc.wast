@@ -36,11 +36,18 @@
 
   ;; CHECK:      (type $11 (func (param (ref null (exact $super.desc)))))
 
-  ;; CHECK:      (type $12 (func (result (ref null $super.desc))))
+  ;; CHECK:      (type $12 (func (param (ref null (exact $super)))))
 
-  ;; CHECK:      (type $13 (func (param (ref null (exact $super)))))
+  ;; CHECK:      (type $13 (func (result (ref null $super.desc))))
 
   ;; CHECK:      (type $14 (func (param (ref null (exact $chain-descriptor)))))
+
+  ;; CHECK:      (type $15 (func (result (ref (exact $super)))))
+
+  ;; CHECK:      (type $16 (func (result (ref (exact $super.desc)))))
+
+  ;; CHECK:      (import "" "" (func $effect (type $10)))
+  (import "" "" (func $effect))
 
   ;; CHECK:      (global $desc (ref null (exact $descriptor)) (ref.null none))
   (global $desc (ref null (exact $descriptor)) (ref.null none))
@@ -175,7 +182,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-desc (type $12) (result (ref null $super.desc))
+  ;; CHECK:      (func $get-desc (type $13) (result (ref null $super.desc))
   ;; CHECK-NEXT:  (local $0 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
@@ -199,7 +206,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-desc-refinalize (type $12) (result (ref null $super.desc))
+  ;; CHECK:      (func $get-desc-refinalize (type $13) (result (ref null $super.desc))
   ;; CHECK-NEXT:  (local $0 (ref (exact $sub.desc)))
   ;; CHECK-NEXT:  (local $1 (ref (exact $sub.desc)))
   ;; CHECK-NEXT:  (block (result (ref (exact $sub.desc)))
@@ -373,7 +380,7 @@
     )
   )
 
-  ;; CHECK:      (func $cast-desc-fail-param (type $13) (param $ref (ref null (exact $super)))
+  ;; CHECK:      (func $cast-desc-fail-param (type $12) (param $ref (ref null (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
@@ -399,6 +406,111 @@
     )
   )
 
+  ;; CHECK:      (func $cast-desc-fail-param-effect (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (exact $super)))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-fail-param-effect (param $ref (ref null (exact $super)))
+    ;; Same, but with effects we cannot drop.
+    (drop
+      (ref.cast_desc (ref (exact $super))
+        (block (result (ref null (exact $super)))
+          (call $effect)
+          (local.get $ref)
+        )
+        (block (result (ref (exact $super.desc)))
+          (call $effect)
+          (struct.new $super.desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-desc-fail-param-nullable (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK-NEXT:  (local $1 (ref null (exact $super)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast nullref
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-fail-param-nullable (param $ref (ref null (exact $super)))
+    ;; Now the cast admits nulls.
+    (drop
+      (ref.cast_desc (ref null (exact $super))
+        (local.get $ref)
+        (struct.new $super.desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-desc-fail-param-nullable-effect (type $12) (param $ref (ref null (exact $super)))
+  ;; CHECK-NEXT:  (local $1 (ref null (exact $super)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (block (result (ref null (exact $super)))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.cast nullref
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-fail-param-nullable-effect (param $ref (ref null (exact $super)))
+    ;; Now the cast admits nulls and there are effects we cannot remove.
+    (drop
+      (ref.cast_desc (ref null (exact $super))
+        (block (result (ref null (exact $super)))
+          (call $effect)
+          (local.get $ref)
+        )
+        (block (result (ref (exact $super.desc)))
+          (call $effect)
+          (struct.new $super.desc)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $cast-no-desc (type $11) (param $desc (ref null (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -420,6 +532,107 @@
       (ref.cast_desc (ref (exact $super))
         (struct.new $no-desc)
         (local.get $desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-no-desc-effect (type $11) (param $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-no-desc-effect (param $desc (ref null (exact $super.desc)))
+    ;; Same, but with effects we cannot drop.
+    (drop
+      (ref.cast_desc (ref (exact $super))
+        (block (result (ref (exact $no-desc)))
+          (call $effect)
+          (struct.new $no-desc)
+        )
+        (block (result (ref null (exact $super.desc)))
+          (call $effect)
+          (local.get $desc)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-no-desc-nullable (type $11) (param $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-no-desc-nullable (param $desc (ref null (exact $super.desc)))
+    ;; The allocation does not have a descriptor, so we know the cast must fail.
+    ;; Although the cast admits nulls, we know we don't have a null here, so we
+    ;; don't need to preserve a null cast.
+    (drop
+      (ref.cast_desc (ref null (exact $super))
+        (struct.new $no-desc)
+        (local.get $desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-no-desc-nullable-effect (type $11) (param $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:      (call $effect)
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-no-desc-nullable-effect (param $desc (ref null (exact $super.desc)))
+    ;; Same, but with effects we cannot drop.
+    (drop
+      (ref.cast_desc (ref null (exact $super))
+        (block (result (ref (exact $no-desc)))
+          (call $effect)
+          (struct.new $no-desc)
+        )
+        (block (result (ref null (exact $super.desc)))
+          (call $effect)
+          (local.get $desc)
+        )
       )
     )
   )
@@ -470,5 +683,72 @@
         (local.get $middle)
       )
     )
+  )
+
+  ;; CHECK:      (func $cast-desc-stale-parent (type $15) (result (ref (exact $super)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $super.desc))
+  ;; CHECK-NEXT:    (call $effect)
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $cast-desc-stale-parent (result (ref (exact $super)))
+    (ref.cast_desc (ref (exact $super))
+      ;; We will optimize this allocation first, causing the parent
+      ;; ref.cast_desc to be optimized out. The parent map will no longer be up
+      ;; to date when we optimize the second allocation, but we should sill be
+      ;; able to optimize successfully without crashing.
+      (struct.new_default $no-desc)
+      (block (result (ref (exact $super.desc)))
+        (call $effect)
+        (struct.new_default $super.desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-desc-stale-parent-escape (type $16) (result (ref (exact $super.desc)))
+  ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $desc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-stale-parent-escape (result (ref (exact $super.desc)))
+    (local $desc (ref (exact $super.desc)))
+    (drop
+      (ref.cast_desc (ref (exact $super))
+        ;; Same as above, but now the second alloocation escapes. We should still
+        ;; optimize the first allocation and the cast, and we should still not
+        ;; crash.
+        (struct.new_default $no-desc)
+        (local.tee $desc
+          (struct.new_default $super.desc)
+        )
+      )
+    )
+    (local.get $desc)
   )
 )
