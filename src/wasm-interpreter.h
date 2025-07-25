@@ -207,18 +207,17 @@ public: // TODO move/change
   using VisitValues = std::vector<Flow>;
 
   // The current set of visit values, used in getChild.
-  VisitValues* visitValues = nullptr;
+  VisitValues visitValues;
 
   // Get a child value. This returns values in the natural order, the same as in
   // the wat and in wasm.h.
   Flow getChild() {
-    assert(visitValues);
-    assert(!visitValues->empty());
-    auto ret = visitValues->back();
+    assert(!visitValues.empty());
+    auto ret = visitValues.back();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "getting child " << ret << '\n';
 #endif
-    visitValues->pop_back();
+    visitValues.pop_back();
     return ret;
   }
 
@@ -249,16 +248,15 @@ public:
       // General instruction handling: Visit the children and add them to the
       // set of values, handling all control flow ourselves here, and saving
       // the stack of visitValues as we go.
-      auto* oldVisitValues = visitValues;
-      VisitValues currVisitValues;
-      visitValues = &currVisitValues;
+      auto oldSize = visitValues.size();
 
       // Iterate over the children, placing their values in the list of values.
       ChildIterator iter(curr);
       auto num = iter.getNumChildren();
-      currVisitValues.resize(num);
+      auto newSize = oldSize + num;
+      visitValues.resize(newSize);
       // Place the first item at the end, so that getChild() can simply pop.
-      Index i = num - 1;
+      Index i = newSize - 1;
       for (auto* child : iter) {
         Flow flow = visit(child);
         if (flow.breaking()) {
@@ -266,23 +264,19 @@ public:
           std::cout << indent() << "=> breaking: " << flow << '\n';
 #endif
           depth--;
-          visitValues = oldVisitValues;
+          visitValues.resize(oldSize);
           return flow;
         }
-        currVisitValues[i] = flow;
+        visitValues[i] = flow;
         i--;
       }
 
       // Execute the instruction, which will start with calls to getChild()
       // that read from our VisitValues.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-      if (ret.breakTo != NONCONSTANT_FLOW) {
-        // This executed, so the values must have been fully read.
-        assert(visitValues->empty());
-      }
 
       // Restore the parent.
-      visitValues = oldVisitValues;
+      visitValues.resize(oldSize);
     }
 
     if (!ret.breaking()) {
@@ -3890,11 +3884,11 @@ public:
     return {};
   }
   Flow visitTry(Try* curr) {
-    auto* oldVisitValues = self()->visitValues;
+    auto oldVisitValuesSize = self()->visitValues.size();
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
-      self()->visitValues = oldVisitValues;
+      self()->visitValues.resize(oldVisitValuesSize);
 
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
@@ -3941,11 +3935,11 @@ public:
     }
   }
   Flow visitTryTable(TryTable* curr) {
-    auto* oldVisitValues = self()->visitValues;
+    auto oldVisitValuesSize = self()->visitValues.size();
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
-      self()->visitValues = oldVisitValues;
+      self()->visitValues.resize(oldVisitValuesSize);
 
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
