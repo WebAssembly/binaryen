@@ -204,7 +204,7 @@ public: // TODO move/change
   // The values we gather from children in visit(), and then give to the
   // instruction to execute.
   // TODO: Literals here and not Flows
-  using VisitValues = SmallVector<Flow, 3>;
+  using VisitValues = std::vector<Flow>;
 
   // The current set of visit values, used in getChild.
   VisitValues* visitValues = nullptr;
@@ -2981,7 +2981,6 @@ public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
-    typename SubType::VisitValues* visitValues;
     Function* function;
     SubType& parent;
 
@@ -2995,7 +2994,6 @@ public:
       parent.scope = this;
       parent.callDepth++;
       parent.functionStack.push_back(function->name);
-      visitValues = parent.visitValues;
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3025,7 +3023,6 @@ public:
       parent.scope = oldScope;
       parent.callDepth--;
       parent.functionStack.pop_back();
-      parent.visitValues = visitValues;
     }
 
     // The current delegate target, if delegation of an exception is in
