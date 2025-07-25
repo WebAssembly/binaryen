@@ -4650,9 +4650,10 @@ public:
     if (funcFlow.breaking()) {
       return funcFlow;
     }
+    Name func = funcFlow.getSingleValue().getFunc();
     // The initial data is empty, as nothing has executed yet, so we don't
     // need any information about how to resume (we resume by just running).
-    return std::make_shared<ContData>(funcFlow.getSingleValue().getFunc(), {});
+    return Literal(std::make_shared<ContData>(func, Literals{}));
   }
   Flow visitContBind(ContBind* curr) {
     return Flow(NONCONSTANT_FLOW);
