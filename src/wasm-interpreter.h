@@ -209,6 +209,7 @@ protected:
   }
 #endif
 
+public: // TODO move/change
   // The values we gather from children in visit(), and then give to the
   // instruction to execute.
   // TODO: Literals here and not Flows
@@ -258,13 +259,13 @@ public:
       // set of values, handling all control flow ourselves here, and saving
       // the stack of visitValues as we go.
       auto* oldVisitValues = visitValues;
-      VisitValues values;
-      visitValues = &values;
+      VisitValues currVisitValues;
+      visitValues = &currVisitValues;
 
       // Iterate over the children, placing their values in the list of values.
       ChildIterator iter(curr);
       auto num = iter.getNumChildren();
-      values.resize(num);
+      currVisitValues.resize(num);
       // Place the first item at the end, so that getChild() can simply pop.
       Index i = num - 1;
       for (auto* child : iter) {
@@ -277,13 +278,14 @@ public:
           visitValues = oldVisitValues;
           return flow;
         }
-        values[i] = flow;
+        currVisitValues[i] = flow;
         i--;
       }
 
       // Execute the instruction, which will start with calls to getChild()
       // that read from our VisitValues.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+      assert(visitValues->empty());
 
       // Restore the parent.
       visitValues = oldVisitValues;
@@ -3105,6 +3107,7 @@ public:
   class FunctionScope {
   public:
     std::vector<Literals> locals;
+    typename SubType::VisitValues* visitValues;
     Function* function;
     SubType& parent;
 
@@ -3118,6 +3121,7 @@ public:
       parent.scope = this;
       parent.callDepth++;
       parent.functionStack.push_back(function->name);
+      visitValues = parent.visitValues;
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3147,6 +3151,7 @@ public:
       parent.scope = oldScope;
       parent.callDepth--;
       parent.functionStack.pop_back();
+      parent.visitValues = visitValues;
     }
 
     // The current delegate target, if delegation of an exception is in
