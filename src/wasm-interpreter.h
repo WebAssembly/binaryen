@@ -113,6 +113,9 @@ public:
       }
       o << flow.values[i];
     }
+    if (flow.suspendTag) {
+      o << " [suspend:" << flow.suspendTag << ']';
+    }
     o << "})";
     return o;
   }
