@@ -3196,7 +3196,12 @@ public:
     if (!export_ || export_->kind != ExternalKind::Function) {
       externalInterface->trap("callExport not found");
     }
-    return callFunction(*export_->getInternalName(), arguments);
+    auto flow = callFunction(*export_->getInternalName(), arguments);
+    if (flow.suspendTag) {
+      // TODO: allow suspending through exports; return Flow from this func
+      externalInterface->trap("unhandled suspend");
+    }
+    return flow.values;
   }
 
   Literals callExport(Name name) { return callExport(name, Literals()); }
@@ -4639,7 +4644,14 @@ public:
   }
   Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitSuspend(Suspend* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSuspend(Suspend* curr) {
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+    return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
+  }
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
@@ -4692,7 +4704,7 @@ public:
     return value;
   }
 
-  Literals callFunction(Name name, Literals arguments) {
+  Flow callFunction(Name name, Literals arguments) {
     if (callDepth > maxDepth) {
       hostLimit("stack limit");
     }
@@ -4749,7 +4761,7 @@ public:
     }
 
     // cannot still be breaking, it means we missed our stop
-    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
+    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW || flow.breakTo == SUSPEND_FLOW);
     auto type = flow.getType();
     if (!Type::isSubType(type, *resultType)) {
       std::cerr << "calling " << name << " resulted in " << type
@@ -4757,7 +4769,7 @@ public:
       WASM_UNREACHABLE("unexpected result type");
     }
 
-    return flow.values;
+    return flow;
   }
 
   // The maximum call stack depth to evaluate into.

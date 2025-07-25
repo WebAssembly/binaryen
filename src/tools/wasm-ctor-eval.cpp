@@ -350,7 +350,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                                 targetFunc.toString());
     }
     if (!func->imported()) {
-      return instance.callFunction(targetFunc, arguments);
+      auto flow = instance.callFunction(targetFunc, arguments);
+      if (flow.suspendTag) {
+        throw FailToEvalException("unhandled suspend");
+      }
+      return flow.values;
     } else {
       throw FailToEvalException(
         std::string("callTable on imported function: ") +

@@ -254,7 +254,9 @@ public:
     }
 
     // Call the function.
-    return instance->callFunction(func->name, arguments);
+    auto flow = instance->callFunction(func->name, arguments);
+    assert(!flow.suspendTag);
+    return flow.values;
   }
 
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
@@ -471,7 +473,12 @@ struct ExecutionResults {
         }
         arguments.push_back(Literal::makeZero(param));
       }
-      return instance.callFunction(func->name, arguments);
+      auto flow = instance.callFunction(func->name, arguments);
+      if (flow.suspendTag) {
+        std::cout << "[exception thrown: unhandled suspend]" << std::endl;
+        return Exception{};
+      }
+      return flow.values;
     } catch (const TrapException&) {
       return Trap{};
     } catch (const WasmException& e) {

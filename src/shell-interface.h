@@ -191,7 +191,9 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     if (func->imported()) {
       return callImport(func, arguments);
     } else {
-      return instance.callFunction(func->name, arguments);
+      auto flow = instance.callFunction(func->name, arguments);
+      assert(!flow.suspendTag);
+      return flow.values;
     }
   }
 
