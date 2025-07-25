@@ -4650,10 +4650,9 @@ public:
     if (funcFlow.breaking()) {
       return funcFlow;
     }
-    auto* refFunc = funcFlow->getSingleValue()->cast<RefFunc>();
     // The initial data is empty, as nothing has executed yet, so we don't
     // need any information about how to resume (we resume by just running).
-    return std::make_shared<ContData>(refFunc->func, {});
+    return std::make_shared<ContData>(funcFlow.getSingleValue().getFunc(), {});
   }
   Flow visitContBind(ContBind* curr) {
     return Flow(NONCONSTANT_FLOW);
