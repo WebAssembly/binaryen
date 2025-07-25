@@ -812,7 +812,10 @@ struct ContData {
   // that we "replay" into the value and call stacks.
   Literals resumeInfo;
 
-  ContData(Name func, Literals resumeInfo) : func(func), resumeInfo(resumeInfo) {}
+  // The continuation type.
+  HeapType type;
+
+  ContData(Name func, Literals resumeInfo, HeapType type) : func(func), resumeInfo(resumeInfo), type(type) {}
 };
 
 } // namespace wasm

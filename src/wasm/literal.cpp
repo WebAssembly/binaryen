@@ -92,9 +92,7 @@ Literal::Literal(std::shared_ptr<ExnData> exnData)
 }
 
 Literal::Literal(std::shared_ptr<ContData> contData)
-  : contData(contData), type(HeapType::exn, NonNullable) {
-  // The data must not be null.
-  assert(contData);
+  : contData(contData), type(contData->type, NonNullable, Exact) {
 }
 
 Literal::Literal(std::string_view string)

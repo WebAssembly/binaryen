@@ -4653,7 +4653,7 @@ public:
     Name func = funcFlow.getSingleValue().getFunc();
     // The initial data is empty, as nothing has executed yet, so we don't
     // need any information about how to resume (we resume by just running).
-    return Literal(std::make_shared<ContData>(func, Literals{}));
+    return Literal(std::make_shared<ContData>(func, Literals{}, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     return Flow(NONCONSTANT_FLOW);
@@ -4683,6 +4683,8 @@ public:
           // Switch the flow from suspending to branching, and keep sending the
           // same values (which include the tag values + a new continuation at
           // the end, so we have nothing to add here). // TODO: doc on Flow
+          // TODO: callTable is tricky, as table might change, so like in
+          // Asyncify, need to save funcref.
           flow.suspendTag = Name();
           flow.breakTo = curr->handlerBlocks[i];
           return flow;
