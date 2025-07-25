@@ -1,4 +1,4 @@
-#define WASM_INTERPRETER_DEBUG 1
+//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -3478,7 +3478,7 @@ public:
         WASM_UNREACHABLE("invalid op");
     }
     load.finalize();
-    Flow flow = self()->getChild();
+    Flow flow = visitLoad(&load);
     return (flow.getSingleValue().*splat)();
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
