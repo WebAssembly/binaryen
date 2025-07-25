@@ -1,4 +1,4 @@
-#define WASM_INTERPRETER_DEBUG 1
+//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -199,9 +199,6 @@ public:
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
-  // TODO: Literals here and not Flows
-  std::vector<Flow> valueStack;
-
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
     std::string ret;
@@ -212,15 +209,24 @@ protected:
   }
 #endif
 
+  // The values we gather from children in visit(), and then give to the
+  // instruction to execute.
+  // TODO: Literals here and not Flows
+  using VisitValues = SmallVector<Flow, 3>;
+
+  // The current set of visit values, used in getChild.
+  VisitValues* visitValues = nullptr;
+
   // Get a child value. This returns values in the natural order, the same as in
   // the wat and in wasm.h.
   Flow getChild() {
-    assert(!valueStack.empty());
-    auto ret = valueStack.back();
+    assert(visitValues);
+    assert(!visitValues->empty());
+    auto ret = visitValues->back();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "getting child " << ret << '\n';
 #endif
-    valueStack.pop_back();
+    visitValues->pop_back();
     return ret;
   }
 
@@ -242,47 +248,47 @@ public:
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
       hostLimit("interpreter recursion limit");
     }
-    if (!Properties::isControlFlowStructure(curr)) {
-      // Visit the children and add them to the value stack. (Control flow
-      // expressions handle things manually.)
-      auto sizeBefore = valueStack.size();
-      for (auto* child : ChildIterator(curr)) {
+
+    Flow ret;
+    if (Properties::isControlFlowStructure(curr)) {
+      // Handle things manually, each control flow structure has its own logic.
+      ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+    } else {
+      // General instruction handling: Visit the children and add them to the
+      // set of values, handling all control flow ourselves here, and saving
+      // the stack of visitValues as we go.
+      auto* oldVisitValues = visitValues;
+      VisitValues values;
+      visitValues = &values;
+
+      // Iterate over the children, placing their values in the list of values.
+      ChildIterator iter(curr);
+      auto num = iter.getNumChildren();
+      values.resize(num);
+      // Place the first item at the end, so that getChild() can simply pop.
+      Index i = num - 1;
+      for (auto* child : iter) {
         Flow flow = visit(child);
         if (flow.breaking()) {
 #if WASM_INTERPRETER_DEBUG
           std::cout << indent() << "=> breaking: " << flow << '\n';
 #endif
           depth--;
-          // We don't need to add any values on the stack, as the parent will
-          // not read them.
-          valueStack.resize(sizeBefore);
+          visitValues = oldVisitValues;
           return flow;
         }
-        valueStack.push_back(flow);
+        values[i] = flow;
+        i--;
       }
-      // Reverse the children, so that pops written in the natural order in the
-      // visit*() methods pop the right things. That is, if we have
-      //
-      //   (foo
-      //     (bar)
-      //     (quux)
-      //   )
-      //
-      // Then we first process bar, then quux, leaving quux last on the stack.
-      // But we want to write, in visitFoo(),
-      //
-      //   auto bar = getChild();
-      //   auto quux = getChild();
-      //
-      // (otherwise, we could reverse the order in the visit*() methods, but at
-      // the cost of readability).
-      auto sizeAfter = valueStack.size();
-      if (sizeAfter >= sizeBefore + 2) {
-        std::reverse(valueStack.begin() + sizeBefore,
-                     valueStack.begin() + sizeAfter);
-      }
+
+      // Execute the instruction, which will start with calls to getChild()
+      // that read from our VisitValues.
+      ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+
+      // Restore the parent.
+      visitValues = oldVisitValues;
     }
-    auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
