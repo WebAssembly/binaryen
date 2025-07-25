@@ -451,6 +451,7 @@ public:
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicNotify(AtomicNotify* curr);
   void visitAtomicFence(AtomicFence* curr);
+  void visitPause(Pause* curr);
   void visitSIMDExtract(SIMDExtract* curr);
   void visitSIMDReplace(SIMDReplace* curr);
   void visitSIMDShuffle(SIMDShuffle* curr);
@@ -1267,6 +1268,12 @@ void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
                curr,
                "Currently only sequentially consistent atomics are supported, "
                "so AtomicFence's order should be 0");
+}
+
+void FunctionValidator::visitPause(Pause* curr) {
+  shouldBeTrue(getModule()->features.hasSharedEverything(),
+               curr,
+               "pause requires shared-everything [--enable-shared-everything]");
 }
 
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
