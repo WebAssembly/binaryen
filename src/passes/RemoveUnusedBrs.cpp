@@ -15,7 +15,7 @@
  */
 
 //
-// Removes branches for which we go to where they go anyhow
+// Removes branches for which we go to where they go anyhow.
 //
 
 #include "ir/branch-hints.h"
@@ -160,6 +160,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   bool anotherCycle;
+
+  // Whether we are allowed to unconditionalize code, that is, make code run
+  // that previously might not have. Unconditionalizing code is a problem for
+  // fuzzing branch hints: a branch hint that never ran might be wrong, and if
+  // we start to run it, the fuzzer would report a finding.
+  bool neverUnconditionalize;
 
   using Flows = std::vector<Expression**>;
 
@@ -408,7 +414,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // zero (also 3 bytes). The size is unchanged, but the select may
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
-            // Multivalue selects are not supported
+            if (neverUnconditionalize) {
+              // Creating a select, below, would unconditionally run the
+              // select's condition.
+              return;
+            }
+            // Multivalue selects are not supported.
             if (br->value && br->value->type.isTuple()) {
               return;
             }
@@ -447,6 +458,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // further optimizations may be possible on the select.
       if (auto* child = curr->ifTrue->dynCast<If>()) {
         if (child->ifFalse) {
+          return;
+        }
+        if (neverUnconditionalize) {
+          // Creating a select, below, would unconditionally run the inner if's
+          // condition (condition-B, in the comment above).
           return;
         }
         // If running the child's condition unconditionally is too expensive,
@@ -1129,6 +1145,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void doWalkFunction(Function* func) {
+    neverUnconditionalize =
+      hasArgument("remove-unused-brs-never-unconditionalize");
+
     // multiple cycles may be needed
     do {
       anotherCycle = false;
@@ -1252,8 +1271,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     // perform some final optimizations
     struct FinalOptimizer : public PostWalker<FinalOptimizer> {
-      bool shrink;
       PassOptions& passOptions;
+
+      bool shrink;
+      bool neverUnconditionalize;
 
       bool needUniqify = false;
       bool refinalize = false;
@@ -1520,6 +1541,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // must not have side effects.
                   // TODO: we can do this when there *are* other refs to $x,
                   //       with a larger refactoring here.
+                  if (neverUnconditionalize) {
+                    // If we optimize, we'd unconditionally execute the rest of
+                    // the block.
+                    return;
+                  }
 
                   // Test for the conditions with a temporary nop instead of the
                   // br_if.
@@ -1556,6 +1582,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
+        if (neverUnconditionalize) {
+          return nullptr;
+        }
         // Only an if-else can be turned into a select.
         if (!iff->ifFalse) {
           return nullptr;
@@ -2011,6 +2040,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());
     finalOptimizer.shrink = getPassRunner()->options.shrinkLevel > 0;
+    finalOptimizer.neverUnconditionalize = neverUnconditionalize;
+
     finalOptimizer.walkFunction(func);
     if (finalOptimizer.needUniqify) {
       wasm::UniqueNameMapper::uniquify(func->body);

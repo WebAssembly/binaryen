@@ -37,6 +37,8 @@ Pass* createDAEPass();
 Pass* createDAEOptimizingPass();
 Pass* createDataFlowOptsPass();
 Pass* createDeadCodeEliminationPass();
+Pass* createDeInstrumentBranchHintsPass();
+Pass* createDeleteBranchHintsPass();
 Pass* createDeNaNPass();
 Pass* createDeAlignPass();
 Pass* createDebugLocationPropagationPass();

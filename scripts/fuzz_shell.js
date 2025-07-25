@@ -353,6 +353,10 @@ var imports = {
                //       how many time units to wait).
       });
     },
+
+    'log-branch': (id, expected, actual) => {
+      console.log(`[LoggingExternalInterface log-branch ${id} ${expected} ${actual}]`);
+    },
   },
   // Emscripten support.
   'env': {

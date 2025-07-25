@@ -50,6 +50,8 @@ struct RandomizeBranchHints
     }
   }
 
+  // TODO: BrOn
+
   template<typename T> void processCondition(T* curr) {
     auto& likely = getFunction()->codeAnnotations[curr].branchLikely;
     switch (hash % 3) {
