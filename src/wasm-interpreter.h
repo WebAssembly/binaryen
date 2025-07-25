@@ -210,11 +210,22 @@ public: // TODO move/change
 
   // Get a child value. This returns values in the natural order, the same as in
   // the wat and in wasm.h.
-  Flow getChild() {
+  Literals getChild() {
     assert(!visitValues.empty());
     auto ret = visitValues.back();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "getting child " << ret << '\n';
+#endif
+    visitValues.pop_back();
+    return ret;
+  }
+
+  // Get a single child value, returning a Literal rather than Literals.
+  Literal getSingleChild() {
+    assert(!visitValues.empty());
+    auto ret = visitValues.back()[0];
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "getting single child " << ret << '\n';
 #endif
     visitValues.pop_back();
     return ret;
@@ -369,14 +380,12 @@ public:
     }
   }
   Flow visitBreak(Break* curr) {
-    bool condition = true;
     Flow flow;
     if (curr->value) {
       flow = getChild();
     }
     if (curr->condition) {
-      Flow conditionFlow = getChild();
-      condition = conditionFlow.getSingleValue().getInteger() != 0;
+      auto condition = getSingleChild().getInteger() != 0;
       if (!condition) {
         return flow;
       }
@@ -1663,18 +1672,17 @@ public:
       if (curr->isWithDefault()) {
         data[i] = Literal::makeZero(field.type);
       } else {
-        auto value = getChild();
-        data[i] = truncateForPacking(value.getSingleValue(), field);
+        data[i] = truncateForPacking(getSingleChild(), field);
       }
     }
     if (!curr->desc) {
       return makeGCData(std::move(data), curr->type);
     }
-    auto desc = getChild();
-    if (desc.getSingleValue().isNull()) {
+    auto desc = getSingleChild();
+    if (desc.isNull()) {
       trap("null descriptor");
     }
-    return makeGCData(std::move(data), curr->type, desc.getSingleValue());
+    return makeGCData(std::move(data), curr->type, desc);
   }
   Flow visitStructGet(StructGet* curr) {
     Flow ref = getChild();
@@ -1754,18 +1762,18 @@ public:
   static const Index DataLimit = (1 << 30) / sizeof(Literal);
 
   Flow visitArrayNew(ArrayNew* curr) {
-    Flow init;
+    Literal init;
     if (!curr->isWithDefault()) {
-      init = getChild();
+      init = getSingleChild();
     }
-    auto size = getChild();
+    auto size = getSingleChild();
     // If we are unreachable then we cannot proceed to compute the heap type,
     // below, as there isn't one. But if we are unreachable then we should not
     // get here, as the child would break in visit().
     assert(curr->type != Type::unreachable);
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
-    Index num = size.getSingleValue().geti32();
+    Index num = size.geti32();
     if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
@@ -1777,7 +1785,7 @@ public:
       }
     } else {
       auto field = curr->type.getHeapType().getArray().element;
-      auto value = truncateForPacking(init.getSingleValue(), field);
+      auto value = truncateForPacking(init, field);
       for (Index i = 0; i < num; i++) {
         data[i] = value;
       }
@@ -1799,8 +1807,8 @@ public:
     auto field = heapType.getArray().element;
     Literals data(num);
     for (Index i = 0; i < num; i++) {
-      auto value = getChild();
-      data[i] = truncateForPacking(value.getSingleValue(), field);
+      auto value = getSingleChild();
+      data[i] = truncateForPacking(value, field);
     }
     return makeGCData(std::move(data), curr->type);
   }
@@ -2324,14 +2332,12 @@ public:
       // constant value set, if any, and see if there is a value flowing through
       // a tee.
       auto setFlow = self()->getChild();
-      if (!setFlow.breaking()) {
-        setLocalValue(curr->index, setFlow.values);
-        if (curr->type.isConcrete()) {
-          assert(curr->isTee());
-          return setFlow;
-        }
-        return Flow();
+      setLocalValue(curr->index, setFlow);
+      if (curr->type.isConcrete()) {
+        assert(curr->isTee());
+        return setFlow;
       }
+      return Flow();
     }
     return Flow(NONCONSTANT_FLOW);
   }
@@ -2357,10 +2363,8 @@ public:
       // constant value set, if any, for subsequent gets.
       assert(this->module->getGlobal(curr->name)->mutable_);
       auto setFlow = self()->getChild();
-      if (!setFlow.breaking()) {
-        setGlobalValue(curr->name, setFlow.values);
-        return Flow();
-      }
+      setGlobalValue(curr->name, setFlow);
+      return Flow();
     }
     return Flow(NONCONSTANT_FLOW);
   }
@@ -3338,30 +3342,30 @@ public:
   }
 
   Flow visitAtomicRMW(AtomicRMW* curr) {
-    Flow ptr = self()->getChild();
-    auto value = self()->getChild();
+    auto ptr = self()->getSingleChild();
+    auto value = self()->getSingleChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
+      info.instance->getFinalAddress(curr, ptr, memorySize);
     auto loaded = info.instance->doAtomicLoad(
       addr, curr->bytes, curr->type, info.name, memorySize);
-    auto computed = value.getSingleValue();
+    Literal computed;
     switch (curr->op) {
       case RMWAdd:
-        computed = loaded.add(computed);
+        computed = loaded.add(value);
         break;
       case RMWSub:
-        computed = loaded.sub(computed);
+        computed = loaded.sub(value);
         break;
       case RMWAnd:
-        computed = loaded.and_(computed);
+        computed = loaded.and_(value);
         break;
       case RMWOr:
-        computed = loaded.or_(computed);
+        computed = loaded.or_(value);
         break;
       case RMWXor:
-        computed = loaded.xor_(computed);
+        computed = loaded.xor_(value);
         break;
       case RMWXchg:
         break;
@@ -3371,34 +3375,34 @@ public:
     return loaded;
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    Flow ptr = self()->getChild();
-    auto expected = self()->getChild();
-    auto replacement = self()->getChild();
+    auto ptr = self()->getSingleChild();
+    auto expected = self()->getSingleChild();
+    auto replacement = self()->getSingleChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), memorySize);
-    expected = Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
+      info.instance->getFinalAddress(curr, ptr, memorySize);
+    expected = wrapToSmallerSize(expected, curr->bytes);
     auto loaded = info.instance->doAtomicLoad(
       addr, curr->bytes, curr->type, info.name, memorySize);
-    if (loaded == expected.getSingleValue()) {
+    if (loaded == expected) {
       info.instance->doAtomicStore(
-        addr, curr->bytes, replacement.getSingleValue(), info.name, memorySize);
+        addr, curr->bytes, replacement, info.name, memorySize);
     }
     return loaded;
   }
   Flow visitAtomicWait(AtomicWait* curr) {
-    Flow ptr = self()->getChild();
-    auto expected = self()->getChild();
-    auto timeout = self()->getChild();
+    auto ptr = self()->getSingleChild();
+    auto expected = self()->getSingleChild();
+    auto timeout = self()->getSingleChild();
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr = info.instance->getFinalAddress(
-      curr, ptr.getSingleValue(), bytes, memorySize);
+      curr, ptr, bytes, memorySize);
     auto loaded = info.instance->doAtomicLoad(
       addr, bytes, curr->expectedType, info.name, memorySize);
-    if (loaded != expected.getSingleValue()) {
+    if (loaded != expected) {
       return Literal(int32_t(1)); // not equal
     }
     // TODO: Add threads support. For now, report a host limit here, as there
@@ -3406,18 +3410,18 @@ public:
     //       we'd hang if there is no timeout, and even if there is a timeout
     //       then we can hang for a long time if it is in a loop. The only
     //       timeout value we allow here for now is 0.
-    if (timeout.getSingleValue().getInteger() != 0) {
+    if (timeout.getInteger() != 0) {
       hostLimit("threads support");
     }
     return Literal(int32_t(2)); // Timed out
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
-    Flow ptr = self()->getChild();
-    auto count = self()->getChild();
+    auto ptr = self()->getSingleChild();
+    auto count = self()->getSingleChild();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
     auto addr =
-      info.instance->getFinalAddress(curr, ptr.getSingleValue(), 4, memorySize);
+      info.instance->getFinalAddress(curr, ptr, 4, memorySize);
     // Just check TODO actual threads support
     info.instance->checkAtomicAddress(addr, 4, memorySize);
     return Literal(int32_t(0)); // none woken up
@@ -3752,11 +3756,11 @@ public:
     return {};
   }
   Flow visitArrayNewData(ArrayNewData* curr) {
-    auto offsetFlow = self()->getChild();
-    auto sizeFlow = self()->getChild();
+    auto offsetFlow = self()->getSingleChild();
+    auto sizeFlow = self()->getSingleChild();
 
-    uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
-    uint64_t size = sizeFlow.getSingleValue().getUnsigned();
+    uint64_t offset = offsetFlow.getUnsigned();
+    uint64_t size = sizeFlow.getUnsigned();
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
@@ -3786,11 +3790,11 @@ public:
     return self()->makeGCData(std::move(contents), curr->type);
   }
   Flow visitArrayNewElem(ArrayNewElem* curr) {
-    auto offsetFlow = self()->getChild();
-    auto sizeFlow = self()->getChild();
+    auto offsetFlow = self()->getSingleChild();
+    auto sizeFlow = self()->getSingleChild();
 
-    uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
-    uint64_t size = sizeFlow.getSingleValue().getUnsigned();
+    uint64_t offset = offsetFlow.getUnsigned();
+    uint64_t size = sizeFlow.getUnsigned();
 
     Literals contents;
 
