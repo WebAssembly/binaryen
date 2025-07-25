@@ -334,6 +334,11 @@ struct AbstractTypeRefining : public Pass {
         if (!curr->desc || !curr->type.isNull()) {
           return;
         }
+        // Preserve the trap on a null descriptor.
+        if (curr->desc->type.isNullable()) {
+          curr->desc =
+            Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+        }
         Block* replacement =
           ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
             .getChildrenReplacement();
@@ -352,6 +357,11 @@ struct AbstractTypeRefining : public Pass {
           return;
         }
         bool isFail = curr->op == BrOnCastDescFail;
+        // Preserve the trap on a null descriptor.
+        if (curr->desc->type.isNullable()) {
+          curr->desc =
+            Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+        }
         Block* replacement =
           ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
             .getChildrenReplacement();
