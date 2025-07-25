@@ -1469,6 +1469,10 @@ public:
     NOTE_ENTER("AtomicFence");
     return Flow();
   }
+  Flow visitPause(Pause* curr) {
+    NOTE_ENTER("AtomicFence");
+    return Flow();
+  }
   Flow visitTupleMake(TupleMake* curr) {
     NOTE_ENTER("tuple.make");
     Literals arguments;

@@ -2141,6 +2141,11 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
 
     // TODOs
 
+    Ref visitPause(Pause* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+
     Ref visitSIMDExtract(SIMDExtract* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

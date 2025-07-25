@@ -399,6 +399,7 @@ public:
     return notify;
   }
   AtomicFence* makeAtomicFence() { return wasm.allocator.alloc<AtomicFence>(); }
+  Pause* makePause() { return wasm.allocator.alloc<Pause>(); }
   Store* makeStore(unsigned bytes,
                    Address offset,
                    unsigned align,

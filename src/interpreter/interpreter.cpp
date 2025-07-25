@@ -78,6 +78,7 @@ struct ExpressionInterpreter : OverriddenVisitor<ExpressionInterpreter, Flow> {
   Flow visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitAtomicNotify(AtomicNotify* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitAtomicFence(AtomicFence* curr) { WASM_UNREACHABLE("TODO"); }
+  Flow visitPause(Pause* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitSIMDExtract(SIMDExtract* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitSIMDReplace(SIMDReplace* curr) { WASM_UNREACHABLE("TODO"); }
   Flow visitSIMDShuffle(SIMDShuffle* curr) { WASM_UNREACHABLE("TODO"); }

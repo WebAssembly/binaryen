@@ -643,6 +643,11 @@ private:
       parent.writesMemory = true;
       parent.isAtomic = true;
     }
+    void visitPause(Pause* curr) {
+      // It's not much of a problem if pause gets reordered with anything, but
+      // we don't want it to be removed entirely.
+      parent.isAtomic = true;
+    }
     void visitSIMDExtract(SIMDExtract* curr) {}
     void visitSIMDReplace(SIMDReplace* curr) {}
     void visitSIMDShuffle(SIMDShuffle* curr) {}

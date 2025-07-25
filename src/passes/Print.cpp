@@ -689,6 +689,7 @@ struct PrintExpressionContents
     }
   }
   void visitAtomicFence(AtomicFence* curr) { printMedium(o, "atomic.fence"); }
+  void visitPause(Pause* curr) { printMedium(o, "pause"); }
   void visitSIMDExtract(SIMDExtract* curr) {
     prepareColor(o);
     switch (curr->op) {

@@ -3728,6 +3728,8 @@ Result<> WasmBinaryReader::readInst() {
             return Err{"expected 0x00 byte immediate on atomic.fence"};
           }
           return builder.makeAtomicFence();
+        case BinaryConsts::Pause:
+          return builder.makePause();
         case BinaryConsts::StructAtomicGet:
         case BinaryConsts::StructAtomicGetS:
         case BinaryConsts::StructAtomicGetU: {

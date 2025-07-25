@@ -685,6 +685,7 @@ public:
     AtomicWaitId,
     AtomicNotifyId,
     AtomicFenceId,
+    PauseId,
     SIMDExtractId,
     SIMDReplaceId,
     SIMDShuffleId,
@@ -1085,8 +1086,12 @@ public:
   // other orderings may be added in the future. This field is reserved for
   // that, and currently set to 0.
   uint8_t order = 0;
+};
 
-  void finalize();
+class Pause : public SpecificExpression<Expression::PauseId> {
+public:
+  Pause() = default;
+  Pause(MixedArena& allocator) {}
 };
 
 class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
