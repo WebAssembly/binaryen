@@ -133,13 +133,11 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
-  Flow generateArguments(const ExpressionList& operands, Literals& arguments) {
+  void generateArguments(const ExpressionList& operands, Literals& arguments) {
     arguments.reserve(operands.size());
     for (Index i = 0; i < operands.size(); i++) {
-      Flow flow = getChild();
-      arguments.push_back(flow.getSingleValue());
+      arguments.push_back(getSingleChild());
     }
-    return Flow();
   }
 
   // This small function is mainly useful to put all GCData allocations in a
@@ -1414,15 +1412,13 @@ public:
   }
   Flow visitTupleMake(TupleMake* curr) {
     Literals arguments;
-    Flow flow = generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    generateArguments(curr->operands, arguments);
+#ifndef NDEBUG
     for (auto arg : arguments) {
       assert(arg.type.isConcrete());
-      flow.values.push_back(arg);
     }
-    return flow;
+#endif
+    return arguments;
   }
   Flow visitTupleExtract(TupleExtract* curr) {
     Flow flow = getChild();
@@ -1486,10 +1482,7 @@ public:
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     Literals arguments;
-    Flow flow = generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    generateArguments(curr->operands, arguments);
     throwException(WasmException{makeExnData(curr->tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
@@ -3055,10 +3048,7 @@ public:
   Flow visitCall(Call* curr) {
     Name target = curr->target;
     Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    self()->generateArguments(curr->operands, arguments);
     auto* func = wasm.getFunction(curr->target);
     auto funcType = func->type;
     if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
@@ -3086,10 +3076,7 @@ public:
 
   Flow visitCallIndirect(CallIndirect* curr) {
     Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    self()->generateArguments(curr->operands, arguments);
     Flow target = self()->getChild();
 
     auto index = target.getSingleValue().getUnsigned();
@@ -3117,10 +3104,7 @@ public:
 
   Flow visitCallRef(CallRef* curr) {
     Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    self()->generateArguments(curr->operands, arguments);
     Flow target = self()->getChild();
     auto targetRef = target.getSingleValue();
     if (targetRef.isNull()) {
