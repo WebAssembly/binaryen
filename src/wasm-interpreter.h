@@ -203,8 +203,7 @@ protected:
 public: // TODO move/change
   // The values we gather from children in visit(), and then give to the
   // instruction to execute.
-  // TODO: Literals here and not Flows
-  using VisitValues = std::vector<Flow>;
+  using VisitValues = std::vector<Literals>;
 
   // The current set of visit values, used in getChild.
   VisitValues visitValues;
@@ -267,7 +266,7 @@ public:
           visitValues.resize(oldSize);
           return flow;
         }
-        visitValues[i] = flow;
+        visitValues[i] = std::move(flow.values);
         i--;
       }
 
