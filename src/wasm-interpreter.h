@@ -242,13 +242,16 @@ protected:
 
   // We save values from visit() until they are consumed, so that we can pause/
   // resume.
-  std::vector<Literals> valueStack;
+  std::optional<std::vector<Literals>> valueStack;
 
 public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
+    if (module && module->features.hasStackSwitching()) {
+      valueStack.emplace();
+    }
   }
   virtual ~ExpressionRunner() = default;
 
@@ -263,9 +266,14 @@ public:
     // Save and restore the value stack around each call: once the visit
     // completes, all values have been consumed, and nothing needs to be
     // saved.
-    auto oldValueStackSize = valueStack.size();
-    auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-    valueStack.resize(oldValueStackSize);
+    Flow ret;
+    if (valueStack) {
+      auto oldValueStackSize = valueStack->size();
+      ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+      valueStack->resize(oldValueStackSize);
+    } else {
+      ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+    }
 
     if (!ret.breaking()) {
       Type type = ret.getType();
@@ -279,7 +287,9 @@ public:
 #endif
         assert(Type::isSubType(type, curr->type));
       }
-      valueStack.push_back(ret.values);
+      if (valueStack) {
+        valueStack->push_back(ret.values);
+      }
     }
     depth--;
     return ret;
@@ -4523,11 +4533,13 @@ public:
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
     // Unwind the value stack when we jump up the call stack.
-    auto oldValueStackSize = self()->valueStack.size();
+    auto oldValueStackSize = self()->valueStack ? self()->valueStack->size() : 0;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
-      self()->valueStack.resize(oldValueStackSize);
+      if (self()->valueStack) {
+        self()->valueStack->resize(oldValueStackSize);
+      }
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
       if (scope->currDelegateTarget.is()) {
@@ -4575,11 +4587,13 @@ public:
   Flow visitTryTable(TryTable* curr) {
     NOTE_ENTER("TryTable");
     // Unwind the value stack when we jump up the call stack.
-    auto oldValueStackSize = self()->valueStack.size();
+    auto oldValueStackSize = self()->valueStack ? self()->valueStack->size() : 0;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
-      self()->valueStack.resize(oldValueStackSize);
+      if (self()->valueStack) {
+        self()->valueStack->resize(oldValueStackSize);
+      }
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
