@@ -2916,10 +2916,7 @@ public:
     if (!export_ || export_->kind != ExternalKind::Function) {
       externalInterface->trap("callExport not found");
     }
-    auto ret = callFunction(*export_->getInternalName(), arguments);
-    // All values should have been consumed.
-    assert(self()->valueStack.empty());
-    return ret;
+    return callFunction(*export_->getInternalName(), arguments);
   }
 
   Literals callExport(Name name) { return callExport(name, Literals()); }
