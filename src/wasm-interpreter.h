@@ -97,6 +97,8 @@ public:
     return builder.makeConstantExpression(values);
   }
 
+  // Returns true if we are breaking out of normal execution. This can be
+  // because of a break/continue, or a continuation.
   bool breaking() const { return breakTo.is(); }
 
   void clearIf(Name target) {
@@ -4675,6 +4677,9 @@ public:
   }
   Flow visitResume(Resume* curr) {
     auto flow = self()->visit(curr->cont);
+
+// XXX it should RESUME EXECUTION!!!!!!!!
+
     if (flow.suspendTag) {
       // See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
@@ -4690,8 +4695,13 @@ public:
           return flow;
         }
       }
+      // No handler worked out, keep propagating.
+      return flow;
     }
-    return flow;
+    if (flow.breaking()) {
+      return flow;
+    }
+    return Flow();
   }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
