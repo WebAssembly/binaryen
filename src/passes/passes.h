@@ -180,6 +180,7 @@ Pass* createStripEHPass();
 Pass* createStubUnsupportedJSOpsPass();
 Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
+Pass* createTailCallPass();
 Pass* createTable64LoweringPass();
 Pass* createTranslateToExnrefPass();
 Pass* createTrapModeClamp();
