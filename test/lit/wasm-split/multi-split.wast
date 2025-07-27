@@ -5,6 +5,12 @@
 ;; RUN: wasm-dis %t1.wasm | filecheck %s --check-prefix=CHECK-A
 ;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=CHECK-B
 ;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=CHECK-C
+;;
+;; Check if --import-namespace option works.
+;; RUN: wasm-split -all -g --multi-split %s --manifest %s.manifest --out-prefix=%t --import-namespace=custom_env -o %t.wasm
+;; RUN: wasm-dis %t1.wasm | filecheck %s --check-prefix=CHECK-A-NS
+;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=CHECK-B-NS
+;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=CHECK-C-NS
 
 (module
  ;; PRIMARY:      (type $ret-i64 (func (result i64)))
@@ -46,6 +52,38 @@
  ;; CHECK-A-NEXT:  )
  ;; CHECK-A-NEXT:  (i32.const 0)
  ;; CHECK-A-NEXT: )
+ ;; CHECK-A-NS:      (type $0 (func (result i64)))
+
+ ;; CHECK-A-NS:      (type $1 (func (result f32)))
+
+ ;; CHECK-A-NS:      (type $2 (func (result i32)))
+
+ ;; CHECK-A-NS:      (import "custom_env" "c" (table $timport$0 1 funcref))
+
+ ;; CHECK-A-NS:      (import "custom_env" "a" (func $B (result i64)))
+
+ ;; CHECK-A-NS:      (import "custom_env" "b" (func $C (result f32)))
+
+ ;; CHECK-A-NS:      (elem $0 (i32.const 0) $A)
+
+ ;; CHECK-A-NS:      (func $A (result i32)
+ ;; CHECK-A-NS-NEXT:  (drop
+ ;; CHECK-A-NS-NEXT:   (call_ref $2
+ ;; CHECK-A-NS-NEXT:    (ref.func $A)
+ ;; CHECK-A-NS-NEXT:   )
+ ;; CHECK-A-NS-NEXT:  )
+ ;; CHECK-A-NS-NEXT:  (drop
+ ;; CHECK-A-NS-NEXT:   (call_ref $0
+ ;; CHECK-A-NS-NEXT:    (ref.func $B)
+ ;; CHECK-A-NS-NEXT:   )
+ ;; CHECK-A-NS-NEXT:  )
+ ;; CHECK-A-NS-NEXT:  (drop
+ ;; CHECK-A-NS-NEXT:   (call_ref $1
+ ;; CHECK-A-NS-NEXT:    (ref.func $C)
+ ;; CHECK-A-NS-NEXT:   )
+ ;; CHECK-A-NS-NEXT:  )
+ ;; CHECK-A-NS-NEXT:  (i32.const 0)
+ ;; CHECK-A-NS-NEXT: )
  (func $A (type $ret-i32) (result i32)
   (drop
    (call_ref $ret-i32
@@ -96,6 +134,38 @@
  ;; CHECK-B-NEXT:  )
  ;; CHECK-B-NEXT:  (i64.const 0)
  ;; CHECK-B-NEXT: )
+ ;; CHECK-B-NS:      (type $0 (func (result f32)))
+
+ ;; CHECK-B-NS:      (type $1 (func (result i32)))
+
+ ;; CHECK-B-NS:      (type $2 (func (result i64)))
+
+ ;; CHECK-B-NS:      (import "custom_env" "e" (table $timport$0 1 funcref))
+
+ ;; CHECK-B-NS:      (import "custom_env" "b" (func $C (result f32)))
+
+ ;; CHECK-B-NS:      (import "custom_env" "d" (func $fimport$1 (result i32)))
+
+ ;; CHECK-B-NS:      (elem $0 (i32.const 0) $B)
+
+ ;; CHECK-B-NS:      (func $B (result i64)
+ ;; CHECK-B-NS-NEXT:  (drop
+ ;; CHECK-B-NS-NEXT:   (call_ref $1
+ ;; CHECK-B-NS-NEXT:    (ref.func $fimport$1)
+ ;; CHECK-B-NS-NEXT:   )
+ ;; CHECK-B-NS-NEXT:  )
+ ;; CHECK-B-NS-NEXT:  (drop
+ ;; CHECK-B-NS-NEXT:   (call_ref $2
+ ;; CHECK-B-NS-NEXT:    (ref.func $B)
+ ;; CHECK-B-NS-NEXT:   )
+ ;; CHECK-B-NS-NEXT:  )
+ ;; CHECK-B-NS-NEXT:  (drop
+ ;; CHECK-B-NS-NEXT:   (call_ref $0
+ ;; CHECK-B-NS-NEXT:    (ref.func $C)
+ ;; CHECK-B-NS-NEXT:   )
+ ;; CHECK-B-NS-NEXT:  )
+ ;; CHECK-B-NS-NEXT:  (i64.const 0)
+ ;; CHECK-B-NS-NEXT: )
  (func $B (type $ret-i64) (result i64)
   (drop
    (call_ref $ret-i32
@@ -146,6 +216,38 @@
  ;; CHECK-C-NEXT:  )
  ;; CHECK-C-NEXT:  (f32.const 0)
  ;; CHECK-C-NEXT: )
+ ;; CHECK-C-NS:      (type $0 (func (result i32)))
+
+ ;; CHECK-C-NS:      (type $1 (func (result i64)))
+
+ ;; CHECK-C-NS:      (type $2 (func (result f32)))
+
+ ;; CHECK-C-NS:      (import "custom_env" "g" (table $timport$0 1 funcref))
+
+ ;; CHECK-C-NS:      (import "custom_env" "d" (func $fimport$0 (result i32)))
+
+ ;; CHECK-C-NS:      (import "custom_env" "f" (func $fimport$1 (result i64)))
+
+ ;; CHECK-C-NS:      (elem $0 (i32.const 0) $C)
+
+ ;; CHECK-C-NS:      (func $C (result f32)
+ ;; CHECK-C-NS-NEXT:  (drop
+ ;; CHECK-C-NS-NEXT:   (call_ref $0
+ ;; CHECK-C-NS-NEXT:    (ref.func $fimport$0)
+ ;; CHECK-C-NS-NEXT:   )
+ ;; CHECK-C-NS-NEXT:  )
+ ;; CHECK-C-NS-NEXT:  (drop
+ ;; CHECK-C-NS-NEXT:   (call_ref $1
+ ;; CHECK-C-NS-NEXT:    (ref.func $fimport$1)
+ ;; CHECK-C-NS-NEXT:   )
+ ;; CHECK-C-NS-NEXT:  )
+ ;; CHECK-C-NS-NEXT:  (drop
+ ;; CHECK-C-NS-NEXT:   (call_ref $2
+ ;; CHECK-C-NS-NEXT:    (ref.func $C)
+ ;; CHECK-C-NS-NEXT:   )
+ ;; CHECK-C-NS-NEXT:  )
+ ;; CHECK-C-NS-NEXT:  (f32.const 0)
+ ;; CHECK-C-NS-NEXT: )
  (func $C (type $ret-f32) (result f32)
   (drop
    (call_ref $ret-i32
