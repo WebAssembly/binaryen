@@ -231,7 +231,7 @@ WasmSplitOptions::WasmSplitOptions()
          "module into the secondary module. In instrument mode, refers to the "
          "namespace from which to import the secondary memory, if any.",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument},
+         {Mode::Split, Mode::Instrument, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;

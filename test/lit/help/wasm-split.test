@@ -75,13 +75,13 @@
 ;; CHECK-NEXT:   --placeholdermap                     [split] Write a file mapping placeholder
 ;; CHECK-NEXT:                                        indices to the function names.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --import-namespace                   [split, instrument] When provided as an
-;; CHECK-NEXT:                                        option for module splitting, the
-;; CHECK-NEXT:                                        namespace from which to import objects
-;; CHECK-NEXT:                                        from the primary module into the
-;; CHECK-NEXT:                                        secondary module. In instrument mode,
-;; CHECK-NEXT:                                        refers to the namespace from which to
-;; CHECK-NEXT:                                        import the secondary memory, if any.
+;; CHECK-NEXT:   --import-namespace                   [split, instrument, multi-split] When
+;; CHECK-NEXT:                                        provided as an option for module
+;; CHECK-NEXT:                                        splitting, the namespace from which to
+;; CHECK-NEXT:                                        import objects from the primary module
+;; CHECK-NEXT:                                        into the secondary module. In instrument
+;; CHECK-NEXT:                                        mode, refers to the namespace from which
+;; CHECK-NEXT:                                        to import the secondary memory, if any.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --placeholder-namespace              [split] The namespace from which to
 ;; CHECK-NEXT:                                        import placeholder functions into the
