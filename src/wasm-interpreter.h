@@ -4445,30 +4445,40 @@ public:
   }
   Flow visitResume(Resume* curr) {
     auto flow = self()->visit(curr->cont);
+    if (flow.breaking()) {
+      return flow;
+    }
 
-    // XXX it should RESUME EXECUTION!!!!!!!! waka
-
-    if (flow.suspendTag) {
+    // Execute the continuation.
+    auto contData = flow.getSingleValue().getContData();
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "resuming func " << contData->func << '\n';
+#endif
+    auto* func = wasm.getFunction(contData->func);
+    auto funcType = func->type;
+    Flow ret = callFunction(target, {});
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
+#endif
+    if (ret.suspendTag) {
       // See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto handlerTag = curr->handlerTags[i];
-        if (handlerTag == flow.suspendTag) {
+        if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching, and keep sending the
           // same values (which include the tag values + a new continuation at
           // the end, so we have nothing to add here). // TODO: doc on Flow
           // TODO: callTable is tricky, as table might change, so like in
           // Asyncify, need to save funcref.
-          flow.suspendTag = Name();
-          flow.breakTo = curr->handlerBlocks[i];
-          return flow;
+          ret.suspendTag = Name();
+          ret.breakTo = curr->handlerBlocks[i];
+          return ret;
         }
       }
       // No handler worked out, keep propagating.
-      return flow;
+      return ret;
     }
-    if (flow.breaking()) {
-      return flow;
-    }
+    // No suspension; all done.
     return Flow();
   }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
