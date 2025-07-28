@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#include "literal.h"
-
 #include <cassert>
 #include <cmath>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "fp16.h"
 #include "ir/bits.h"
+#include "literal.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
 #include "support/string.h"
 #include "support/utilities.h"
+#include "wasm-interpreter.h"
 
 namespace wasm {
 

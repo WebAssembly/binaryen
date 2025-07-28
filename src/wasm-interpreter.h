@@ -138,8 +138,10 @@ struct ContData {
   Expression* resumeExpr = nullptr;
 
   // Information about how to resume execution, a list of instruction and data
-  // that we "replay" into the value and call stacks.
-  Literals resumeInfo;
+  // that we "replay" into the value and call stacks. For convenience we split
+  // this into separate entries, each one a Literals. Typically an instruction
+  // will emit a single Literals for itself.
+  std::vector<Literals> resumeInfo;
 
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
@@ -330,11 +332,26 @@ public:
       // in the block.
       entry.push_back(Literal(uint32_t(stack.size())));
       entry.push_back(Literal(uint32_t(blockIndex)));
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "suspend block: " << entry << "\n";
+#endif
       assert(currContinuation);
-      currContinuation waka
+      currContinuation->resumeInfo.push_back(entry);
     };
+    Index blockIndex = 0;
     if (resuming) {
-      auto entry
+      assert(currContinuation);
+      assert(!currContinuation->resumeInfo.empty());
+      auto entry = currContinuation->resumeInfo.back();
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "resume block: " << entry << "\n";
+#endif
+      currContinuation->resumeInfo.pop_back();
+      assert(entry.size() == 2);
+      Index stackIndex = entry[0].geti32();
+      blockIndex = entry[1].geti32();
+      assert(stack.size() >= stackIndex);
+      stack.resize(stackIndex);
     }
 
     Flow flow;
@@ -342,16 +359,12 @@ public:
     while (stack.size() > 0) {
       curr = stack.back();
       stack.pop_back();
-      if (flow.suspendTag) {
-        suspend(0);
-        return Flow();
-      }
       if (flow.breaking()) {
         flow.clearIf(curr->name);
         continue;
       }
       auto& list = curr->list;
-      for (size_t i = 0; i < list.size(); i++) {
+      for (size_t i = blockIndex; i < list.size(); i++) {
         if (curr != top && i == 0) {
           // one of the block recursions we already handled
           continue;
@@ -366,6 +379,8 @@ public:
           break;
         }
       }
+      // If there was a value here, we only need it for the top iteration.
+      blockIndex = 0;
     }
     return flow;
   }
@@ -4502,11 +4517,11 @@ public:
     // Generate a continuation to proceed from here, and add it as another
     // value. The name of the function at the bottom of the stack is in
     // currContinuation.
-    if (!currContinuation) {
+    if (!self()->currContinuation) {
       trap("no continuation to suspend");
     }
-    auto old = currContinuation;
-    currContinuation.reset();
+    auto old = self()->currContinuation;
+    self()->currContinuation.reset();
     // Copy the continuation, and add stack info so it can be restored from
     // here.
     auto contData = std::make_shared<ContData>(old->func, Literals{}, old->type);
@@ -4535,8 +4550,8 @@ public:
     }
     contData->executed = true;
     Name func = contData->func;
-    currContinuation = contData;
-    resuming = true;
+    self()->currContinuation = contData;
+    self()->resuming = true;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
