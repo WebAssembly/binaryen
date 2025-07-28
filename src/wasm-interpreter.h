@@ -4462,6 +4462,7 @@ public:
     // here.
     auto cont = Literal(
       std::make_shared<ContData>(old->func, Literals{}, old->type));
+    // TODO: save the call stack!
     // TODO: save the valueStack!
     // TODO: save the locals on the function stacks!
     arguments.push_back(cont);
