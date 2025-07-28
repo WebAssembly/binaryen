@@ -61,8 +61,6 @@ struct NonconstantException {};
 
 extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW;
 
-// TODO: moveContData here?
-
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
 class Flow {
@@ -123,6 +121,32 @@ public:
     o << "})";
     return o;
   }
+};
+
+// Suspend/resume support. The critical data is stored inside a continuation
+// Literal, using this data structure.
+struct ContData {
+  // The function this continuation begins in.
+  // TODO: handle cross-module calls using something other than a Name here.
+  Name func;
+
+  // The continuation type.
+  HeapType type;
+
+  // The expression to resume execution at: where we suspended last, or, if this
+  // is the first execution, nullptr (which means to resume at the very start).
+  Expression* resumeExpr = nullptr;
+
+  // Information about how to resume execution, a list of instruction and data
+  // that we "replay" into the value and call stacks.
+  Literals resumeInfo;
+
+  // Whether we executed. Continuations are one-shot, so they may not be
+  // executed a second time.
+  bool executed = false;
+
+  ContData(Name func, HeapType type)
+    : func(func), type(type) {}
 };
 
 // Execute an expression
@@ -297,11 +321,31 @@ public:
       curr = curr->list[0]->cast<Block>();
       stack.push_back(curr);
     }
+
+    // Suspend/resume support.
+    auto suspend = [&](Index blockIndex) {
+      Literals entry;
+      // To return to the same place when we resume, we add an entry with two
+      // pieces of information: the index in the stack of blocks, and the index
+      // in the block.
+      entry.push_back(Literal(uint32_t(stack.size())));
+      entry.push_back(Literal(uint32_t(blockIndex)));
+      assert(currContinuation);
+      currContinuation waka
+    };
+    if (resuming) {
+      auto entry
+    }
+
     Flow flow;
     auto* top = stack.back();
     while (stack.size() > 0) {
       curr = stack.back();
       stack.pop_back();
+      if (flow.suspendTag) {
+        suspend(0);
+        return Flow();
+      }
       if (flow.breaking()) {
         flow.clearIf(curr->name);
         continue;
@@ -313,6 +357,10 @@ public:
           continue;
         }
         flow = visit(list[i]);
+        if (flow.suspendTag) {
+          suspend(i);
+          return Flow();
+        }
         if (flow.breaking()) {
           flow.clearIf(curr->name);
           break;
