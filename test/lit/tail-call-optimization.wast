@@ -9,6 +9,10 @@
 
   ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (type $3 (func))
+
   ;; CHECK:      (func $f (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
@@ -126,6 +130,47 @@
       call $f
       i32.const 1
       br_if 0
+    end
+  )
+
+  ;; CHECK:      (func $g (param $0 i32)
+  ;; CHECK-NEXT: )
+  (func $g (param i32))
+  ;; CHECK:      (func $return_without_value
+  ;; CHECK-NEXT:  (return_call $g
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return_without_value
+    i32.const 1
+    call $g
+  )
+  ;; CHECK:      (func $return_without_value_through_block (param $0 i32)
+  ;; CHECK-NEXT:  (return_call $g
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return_without_value_through_block (param $0 i32)
+    block
+      local.get 0
+      call $g
+    end
+  )
+  ;; CHECK:      (func $return_without_value_through_if (param $0 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return_call $g
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return_without_value_through_if (param $0 i32)
+    local.get 0
+    if
+      local.get 0
+      call $g
     end
   )
 )
