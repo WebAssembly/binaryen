@@ -4622,8 +4622,9 @@ public:
 
     auto type = flow.getType();
     if (flow.breakTo == SUSPEND_FLOW) {
-      // When suspending, the result is a continuation.
-      assert(type.isContinuation());
+      // When suspending, the last value is a continuation.
+      assert(type.size() > 0);
+      assert(type[type.size() - 1].isContinuation());
     } else {
       // We are normally executing (not suspending), and therefore cannot still
       // be breaking, which would mean we missed our stop.
