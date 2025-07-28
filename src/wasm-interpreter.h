@@ -4421,10 +4421,9 @@ public:
       return funcFlow;
     }
     Name func = funcFlow.getSingleValue().getFunc();
-    // The initial data is empty, as nothing has executed yet, so we don't
-    // need any information about how to resume (we resume by just running).
+    // Create a fresh continuation.
     return Literal(
-      std::make_shared<ContData>(func, Literals{}, curr->type.getHeapType()));
+      std::make_shared<ContData>(func, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     return Flow(NONCONSTANT_FLOW);
@@ -4460,12 +4459,12 @@ public:
     currContinuation.reset();
     // Copy the continuation, and add stack info so it can be restored from
     // here.
-    auto cont = Literal(
-      std::make_shared<ContData>(old->func, Literals{}, old->type));
+    auto contData = std::make_shared<ContData>(old->func, Literals{}, old->type);
+    contData->resumeExpr = curr;
     // TODO: save the call stack!
     // TODO: save the valueStack!
     // TODO: save the locals on the function stacks!
-    arguments.push_back(cont);
+    arguments.push_back(Literal(contData));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
