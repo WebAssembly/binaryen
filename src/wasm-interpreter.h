@@ -4438,7 +4438,7 @@ public:
 
   // TODO where?
   // Stack of currently-running continuations.
-  std::vector<std::shared_ptr<ContData>> continuationEntryStack;
+  std::vector<std::shared_ptr<ContData>> continuationStack;
 
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4449,21 +4449,21 @@ public:
 
     // Generate a continuation to proceed from here, and add it as another
     // value. The name of the function at the bottom of the stack is on
-    // continuationEntryStack.
-    if (continuationEntryStack.empty()) {
+    // continuationStack.
+    if (continuationStack.empty()) {
       trap("no continuation to suspend");
     }
-    auto old = continuationEntryStack.back();
-    continuationEntryStack.pop_back();
+    auto old = continuationStack.back();
+    continuationStack.pop_back();
     // Copy the continuation, and add stack info so it can be restored from
     // here.
     auto cont = Literal(
       std::make_shared<ContData>(old->func, Literals{}, old->type));
+    assert(!cont->executed);
     // TODO: save the stack!!1
     arguments.push_back(cont);
-    // Continuations are one-shot, so make the old one invalid.
-    old->func = Name();
-    old->type = HeapTypes::none;
+    // Continuations are one-shot; mark the old one accordingly.
+    old->executed = true;
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
@@ -4474,11 +4474,11 @@ public:
 
     // Get and execute the continuation.
     auto contData = flow.getSingleValue().getContData();
-    Name func = contData->func;
-    if (!func) {
+    if (contData->executed) {
       trap("continuation already executed");
     }
-    continuationEntryStack.push_back(contData);
+    Name func = contData->func;
+    continuationStack.push_back(contData);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif

@@ -815,6 +815,10 @@ struct ContData {
   // The continuation type.
   HeapType type;
 
+  // Whether we executed. Continuations are one-shot, so they may not be
+  // executed a second time.
+  bool executed = false;
+
   ContData(Name func, Literals resumeInfo, HeapType type)
     : func(func), resumeInfo(resumeInfo), type(type) {}
 };
