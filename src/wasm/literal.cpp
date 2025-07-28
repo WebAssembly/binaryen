@@ -347,7 +347,7 @@ std::shared_ptr<ExnData> Literal::getExnData() const {
 }
 
 std::shared_ptr<ContData> Literal::getContData() const {
-  assert(isExn());
+  assert(isContinuation());
   assert(contData);
   return contData;
 }
