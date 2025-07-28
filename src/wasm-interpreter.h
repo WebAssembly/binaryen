@@ -4507,7 +4507,9 @@ public:
     // No suspension; all done.
     return Flow();
   }
-  Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResumeThrow(ResumeThrow* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { externalInterface->trap(why); }
