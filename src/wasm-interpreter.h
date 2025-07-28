@@ -4435,12 +4435,28 @@ public:
         }
     */
   }
+
+  // TODO where?
+  // Stack of names of the entry function of currently-running continuations.
+  std::vector<Name> continuationEntryStack;
+
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
+
+    // Generate a continuation to proceed from here, and add it as another
+    // value. The name of the function at the bottom of the stack is on
+    // continuationEntryStack.
+    assert(!continuationEntryStack.empty());
+    auto func = continuationEntryStack.back();
+    continuationEntryStack.pop_back();
+    auto cont = Literal(
+      std::make_shared<ContData>(func, Literals{}, curr->type.getHeapType()));
+    // TODO: save the stack!!1
+    arguments.push_back(cont);
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
@@ -4452,6 +4468,7 @@ public:
     // Execute the continuation.
     auto contData = flow.getSingleValue().getContData();
     auto func = contData->func;
+    continuationEntryStack.push_back(func);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
