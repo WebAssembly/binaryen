@@ -685,6 +685,110 @@
     )
   )
 
+  ;; CHECK:      (func $cast-desc-and-ref-nullable (type $14) (param $desc (ref null (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (local $middle (ref null (exact $chain-middle)))
+  ;; CHECK-NEXT:  (local $2 (ref null (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (local $3 (ref null (exact $chain-descriptor)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-and-ref-nullable (param $desc (ref null (exact $chain-descriptor)))
+    ;; Same, but now the cast allows nulls. It should still trap.
+    (local $middle (ref null (exact $chain-middle)))
+    (local.set $middle
+      (struct.new $chain-middle
+        (local.get $desc)
+      )
+    )
+    (drop
+      (ref.cast_desc (ref null (exact $chain-described))
+        (local.get $middle)
+        (local.get $middle)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-desc-and-ref-tee (type $10)
+  ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-and-ref-tee
+    ;; The same allocation flows into both the descriptor and the reference
+    ;; again, but now it uses a tee. The allocation does not have a descriptor.
+    (local $desc (ref null (exact $super.desc)))
+    (drop
+      (ref.cast_desc (ref (exact $super))
+        (local.tee $desc
+          (struct.new $super.desc)
+        )
+        (local.get $desc)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-desc-and-ref-tee-nullable (type $10)
+  ;; CHECK-NEXT:  (local $desc (ref null (exact $super.desc)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc-and-ref-tee-nullable
+    ;; Same, but the cast allows nulls. It should still trap.
+    (local $desc (ref null (exact $super.desc)))
+    (drop
+      (ref.cast_desc (ref null (exact $super))
+        (local.tee $desc
+          (struct.new $super.desc)
+        )
+        (local.get $desc)
+      )
+    )
+  )
+
   ;; CHECK:      (func $cast-desc-stale-parent (type $15) (result (ref (exact $super)))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
