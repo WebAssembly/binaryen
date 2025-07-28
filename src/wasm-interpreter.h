@@ -4450,7 +4450,9 @@ public:
     // Generate a continuation to proceed from here, and add it as another
     // value. The name of the function at the bottom of the stack is on
     // continuationEntryStack.
-    assert(!continuationEntryStack.empty());
+    if (continuationEntryStack.empty()) {
+      trap("no continuation to suspend");
+    }
     auto func = continuationEntryStack.back();
     continuationEntryStack.pop_back();
     auto cont = Literal(
