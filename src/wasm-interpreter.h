@@ -61,6 +61,8 @@ struct NonconstantException {};
 
 extern Name RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW, SUSPEND_FLOW;
 
+// TODO: moveContData here?
+
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
 class Flow {
@@ -215,6 +217,18 @@ protected:
   }
 #endif
 
+  // Suspend/resume support for continuations.
+  // TODO where?
+  // Currently-running continuation. TODO: stack?
+  std::shared_ptr<ContData> currContinuation;
+
+  // Set when we are resuming execution, that is, re-winding the stack.
+  // |currContinuation| must be set when this is true, as that is the
+  // continuation we are resuming. When we finish re-winding and continue normal
+  // execution in the continutation, |currContinuation| remain set while this
+  // will be cleared.
+  bool resuming = true;
+
 public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
@@ -244,6 +258,7 @@ public:
     Flow ret;
     if (valueStack) {
       auto oldValueStackSize = valueStack->size();
+      // if resuming, do something, and compare currContinuation->resumeExpr
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
       valueStack->resize(oldValueStackSize);
     } else {
@@ -4427,20 +4442,7 @@ public:
   }
   Flow visitContBind(ContBind* curr) {
     return Flow(NONCONSTANT_FLOW);
-    /*
-        Literals arguments;
-        Flow flow = self()->generateArguments(curr->operands, arguments);
-        if (flow.breaking()) {
-          return flow;
-        }
-    */
   }
-
-  // TODO where?
-  // Currently-running continuation. TODO: stack?
-  std::shared_ptr<ContData> currContinuation;
-
-  // Resuming
 
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4486,6 +4488,7 @@ public:
     contData->executed = true;
     Name func = contData->func;
     currContinuation = contData;
+    resuming = true;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
