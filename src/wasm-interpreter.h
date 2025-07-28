@@ -4524,7 +4524,7 @@ public:
     self()->currContinuation.reset();
     // Copy the continuation, and add stack info so it can be restored from
     // here.
-    auto contData = std::make_shared<ContData>(old->func, Literals{}, old->type);
+    auto contData = std::make_shared<ContData>(old->func, old->type);
     contData->resumeExpr = curr;
     // TODO: save the call stack!
     // TODO: save the valueStack!
