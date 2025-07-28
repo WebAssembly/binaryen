@@ -126,9 +126,7 @@ public:
 
   // TODO: Use immutability for values
   Flow visitStructNew(StructNew* curr) {
-    return getGCAllocation(curr, [&]() {
-      return Super::visitStructNew(curr);
-    });
+    return getGCAllocation(curr, [&]() { return Super::visitStructNew(curr); });
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) {
@@ -165,14 +163,11 @@ public:
     return Super::visitStructGet(curr);
   }
   Flow visitArrayNew(ArrayNew* curr) {
-    return getGCAllocation(curr, [&]() {
-      return Super::visitArrayNew(curr);
-    });
+    return getGCAllocation(curr, [&]() { return Super::visitArrayNew(curr); });
   }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
-    return getGCAllocation(curr, [&]() {
-      return Super::visitArrayNewFixed(curr);
-    });
+    return getGCAllocation(curr,
+                           [&]() { return Super::visitArrayNewFixed(curr); });
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
@@ -191,7 +186,7 @@ public:
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 
   // Generates heap info for a heap-allocating expression.
-  Flow getGCAllocation(Expression* curr, std::function<Flow ()> visitFunc) {
+  Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
