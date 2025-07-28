@@ -201,7 +201,8 @@ protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
   // We save values from visit() until they are consumed, so that we can pause/
-  // resume.
+  // resume. TODO: move into ModuleRunner, since we need FunctionState anyhow
+  // for locals?
   std::optional<std::vector<Literals>> valueStack;
 
 #if WASM_INTERPRETER_DEBUG
@@ -4437,8 +4438,10 @@ public:
   }
 
   // TODO where?
-  // Stack of currently-running continuations.
-  std::vector<std::shared_ptr<ContData>> continuationStack;
+  // Currently-running continuation. TODO: stack?
+  std::shared_ptr<ContData> currContinuation;
+
+  // Resuming
 
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4448,18 +4451,19 @@ public:
     }
 
     // Generate a continuation to proceed from here, and add it as another
-    // value. The name of the function at the bottom of the stack is on
-    // continuationStack.
-    if (continuationStack.empty()) {
+    // value. The name of the function at the bottom of the stack is in
+    // currContinuation.
+    if (!currContinuation) {
       trap("no continuation to suspend");
     }
-    auto old = continuationStack.back();
-    continuationStack.pop_back();
+    auto old = currContinuation;
+    currContinuation.reset();
     // Copy the continuation, and add stack info so it can be restored from
     // here.
     auto cont = Literal(
       std::make_shared<ContData>(old->func, Literals{}, old->type));
-    // TODO: save the stack!!1
+    // TODO: save the valueStack!
+    // TODO: save the locals on the function stacks!
     arguments.push_back(cont);
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
@@ -4481,7 +4485,7 @@ public:
     }
     contData->executed = true;
     Name func = contData->func;
-    continuationStack.push_back(contData);
+    currContinuation = contData;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
