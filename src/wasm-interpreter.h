@@ -4469,7 +4469,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    auto flow = self()->visit(curr->cont);
+    flow = self()->visit(curr->cont);
     if (flow.breaking()) {
       return flow;
     }
