@@ -351,8 +351,11 @@ MaybeResult<AssertModule> assertModule(Lexer& in) {
 
 // (assert_trap action msg)
 // (assert_trap module msg)
+//
+// Also handles assert_suspension, as for us an unhandled suspension is a trap.
 MaybeResult<Assertion> assertTrap(Lexer& in) {
-  if (!in.takeSExprStart("assert_trap"sv)) {
+  if (!in.takeSExprStart("assert_trap"sv) &&
+      !in.takeSExprStart("assert_suspension"sv)) {
     return {};
   }
   auto pos = in.getPos();
