@@ -1,3 +1,5 @@
+;; A coroutine with only control flow in a single basic block (no locals, no
+;; params, no branching, no value stack).
 (module $state
   (type $f (func))
   (type $k (cont $f))

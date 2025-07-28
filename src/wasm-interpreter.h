@@ -253,7 +253,7 @@ protected:
   // continuation we are resuming. When we finish re-winding and continue normal
   // execution in the continutation, |currContinuation| remain set while this
   // will be cleared.
-  bool resuming = true;
+  bool resuming = false;
 
 public:
   ExpressionRunner(Module* module = nullptr,
