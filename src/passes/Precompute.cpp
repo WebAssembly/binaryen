@@ -126,11 +126,9 @@ public:
 
   // TODO: Use immutability for values
   Flow visitStructNew(StructNew* curr) {
-    auto flow = Super::visitStructNew(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-    return getHeapCreationFlow(flow, curr);
+    return getGCAllocation(curr, [&]() {
+      return Super::visitStructNew(curr);
+    });
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) {
@@ -167,18 +165,14 @@ public:
     return Super::visitStructGet(curr);
   }
   Flow visitArrayNew(ArrayNew* curr) {
-    auto flow = Super::visitArrayNew(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-    return getHeapCreationFlow(flow, curr);
+    return getGCAllocation(curr, [&]() {
+      return Super::visitArrayNew(curr);
+    });
   }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
-    auto flow = Super::visitArrayNewFixed(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-    return getHeapCreationFlow(flow, curr);
+    return getGCAllocation(curr, [&]() {
+      return Super::visitArrayNewFixed(curr);
+    });
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
@@ -197,18 +191,22 @@ public:
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 
   // Generates heap info for a heap-allocating expression.
-  template<typename T> Flow getHeapCreationFlow(Flow flow, T* curr) {
+  Flow getGCAllocation(Expression* curr, std::function<Flow ()> visitFunc) {
     // We must return a literal that refers to the canonical location for this
-    // source expression, so that each time we compute a specific struct.new
+    // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    std::shared_ptr<GCData>& canonical = heapValues[curr];
-    std::shared_ptr<GCData> newGCData = flow.getSingleValue().getGCData();
-    if (!canonical) {
-      canonical = std::make_shared<GCData>(*newGCData);
-    } else {
-      *canonical = *newGCData;
+    auto iter = heapValues.find(curr);
+    if (iter != heapValues.end()) {
+      // Refer to the same canonical GCData that we already created.
+      return Literal(iter->second, curr->type.getHeapType());
     }
-    return Literal(canonical, curr->type.getHeapType());
+    // Only call the visitor function here, so we do it once per allocation.
+    auto flow = visitFunc();
+    if (flow.breaking()) {
+      return flow;
+    }
+    heapValues[curr] = flow.getSingleValue().getGCData();
+    return flow;
   }
 
   Flow visitStringNew(StringNew* curr) {
