@@ -748,7 +748,7 @@
   ;; CHECK-NEXT: )
   (func $cast-desc-and-ref-tee
     ;; The same allocation flows into both the descriptor and the reference
-    ;; again, but now it uses a tee. The allocatoin does not have a descriptor.
+    ;; again, but now it uses a tee. The allocation does not have a descriptor.
     (local $desc (ref null (exact $super.desc)))
     (drop
       (ref.cast_desc (ref (exact $super))
