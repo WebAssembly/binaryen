@@ -808,6 +808,10 @@ struct ContData {
   // TODO: handle cross-module calls using something other than a Name here.
   Name func;
 
+  // The expression to resume execution at: where we suspended last, or, if this
+  // is the first execution, nullptr (which means to resume at the very start).
+  Expression* resumeExpr = nullptr;
+
   // Information about how to resume execution, a list of instruction and data
   // that we "replay" into the value and call stacks.
   Literals resumeInfo;
