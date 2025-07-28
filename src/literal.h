@@ -815,7 +815,8 @@ struct ContData {
   // The continuation type.
   HeapType type;
 
-  ContData(Name func, Literals resumeInfo, HeapType type) : func(func), resumeInfo(resumeInfo), type(type) {}
+  ContData(Name func, Literals resumeInfo, HeapType type)
+    : func(func), resumeInfo(resumeInfo), type(type) {}
 };
 
 } // namespace wasm

@@ -92,8 +92,7 @@ Literal::Literal(std::shared_ptr<ExnData> exnData)
 }
 
 Literal::Literal(std::shared_ptr<ContData> contData)
-  : contData(contData), type(contData->type, NonNullable, Exact) {
-}
+  : contData(contData), type(contData->type, NonNullable, Exact) {}
 
 Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {

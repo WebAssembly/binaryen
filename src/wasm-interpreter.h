@@ -254,8 +254,8 @@ public:
       if (type.isConcrete() || curr->type.isConcrete()) {
         if (!Type::isSubType(type, curr->type)) {
           Fatal() << "expected " << ModuleType(*module, curr->type)
-                    << ", seeing " << ModuleType(*module, type) << " from\n"
-                    << ModuleExpression(*module, curr) << '\n';
+                  << ", seeing " << ModuleType(*module, type) << " from\n"
+                  << ModuleExpression(*module, curr) << '\n';
         }
       }
       if (valueStack) {
@@ -4316,7 +4316,8 @@ public:
   }
   Flow visitTry(Try* curr) {
     // Unwind the value stack when we jump up the call stack.
-    auto oldValueStackSize = self()->valueStack ? self()->valueStack->size() : 0;
+    auto oldValueStackSize =
+      self()->valueStack ? self()->valueStack->size() : 0;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4369,7 +4370,8 @@ public:
   }
   Flow visitTryTable(TryTable* curr) {
     // Unwind the value stack when we jump up the call stack.
-    auto oldValueStackSize = self()->valueStack ? self()->valueStack->size() : 0;
+    auto oldValueStackSize =
+      self()->valueStack ? self()->valueStack->size() : 0;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4420,17 +4422,18 @@ public:
     Name func = funcFlow.getSingleValue().getFunc();
     // The initial data is empty, as nothing has executed yet, so we don't
     // need any information about how to resume (we resume by just running).
-    return Literal(std::make_shared<ContData>(func, Literals{}, curr->type.getHeapType()));
+    return Literal(
+      std::make_shared<ContData>(func, Literals{}, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
     return Flow(NONCONSTANT_FLOW);
-/*
-    Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
-*/
+    /*
+        Literals arguments;
+        Flow flow = self()->generateArguments(curr->operands, arguments);
+        if (flow.breaking()) {
+          return flow;
+        }
+    */
   }
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4443,7 +4446,7 @@ public:
   Flow visitResume(Resume* curr) {
     auto flow = self()->visit(curr->cont);
 
-// XXX it should RESUME EXECUTION!!!!!!!! waka
+    // XXX it should RESUME EXECUTION!!!!!!!! waka
 
     if (flow.suspendTag) {
       // See if a suspension arrived that we support.
@@ -4577,7 +4580,8 @@ public:
     }
 
     // cannot still be breaking, it means we missed our stop
-    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW || flow.breakTo == SUSPEND_FLOW);
+    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW ||
+           flow.breakTo == SUSPEND_FLOW);
     auto type = flow.getType();
     if (!Type::isSubType(type, *resultType)) {
       std::cerr << "calling " << name << " resulted in " << type
