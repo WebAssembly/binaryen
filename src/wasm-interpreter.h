@@ -4451,12 +4451,11 @@ public:
 
     // Execute the continuation.
     auto contData = flow.getSingleValue().getContData();
+    auto func = contData->func;
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "resuming func " << contData->func << '\n';
+    std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
-    auto* func = wasm.getFunction(contData->func);
-    auto funcType = func->type;
-    Flow ret = callFunction(target, {});
+    Flow ret = callFunction(func, {});
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
 #endif
