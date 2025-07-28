@@ -4459,7 +4459,6 @@ public:
     // here.
     auto cont = Literal(
       std::make_shared<ContData>(old->func, Literals{}, old->type));
-    assert(!cont->executed);
     // TODO: save the stack!!1
     arguments.push_back(cont);
     // Continuations are one-shot; mark the old one accordingly.
