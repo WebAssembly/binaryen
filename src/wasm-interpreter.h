@@ -4437,8 +4437,8 @@ public:
   }
 
   // TODO where?
-  // Stack of names of the entry function of currently-running continuations.
-  std::vector<Name> continuationEntryStack;
+  // Stack of currently-running continuations.
+  std::vector<std::shared_ptr<ContData>> continuationEntryStack;
 
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4453,12 +4453,17 @@ public:
     if (continuationEntryStack.empty()) {
       trap("no continuation to suspend");
     }
-    auto func = continuationEntryStack.back();
+    auto old = continuationEntryStack.back();
     continuationEntryStack.pop_back();
+    // Copy the continuation, and add stack info so it can be restored from
+    // here.
     auto cont = Literal(
-      std::make_shared<ContData>(func, Literals{}, curr->type.getHeapType()));
+      std::make_shared<ContData>(old->func, Literals{}, old->type));
     // TODO: save the stack!!1
     arguments.push_back(cont);
+    // Continuations are one-shot, so make the old one invalid.
+    old->func = Name();
+    old->type = HeapTypes::none;
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
@@ -4467,10 +4472,13 @@ public:
       return flow;
     }
 
-    // Execute the continuation.
+    // Get and execute the continuation.
     auto contData = flow.getSingleValue().getContData();
-    auto func = contData->func;
-    continuationEntryStack.push_back(func);
+    Name func = contData->func;
+    if (!func) {
+      trap("continuation already executed");
+    }
+    continuationEntryStack.push_back(contData);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
@@ -4607,14 +4615,20 @@ public:
       throw NonconstantException();
     }
 
-    // cannot still be breaking, it means we missed our stop
-    assert(!flow.breaking() || flow.breakTo == RETURN_FLOW ||
-           flow.breakTo == SUSPEND_FLOW);
     auto type = flow.getType();
-    if (!Type::isSubType(type, *resultType)) {
-      std::cerr << "calling " << name << " resulted in " << type
+    if (flow.breakTo == SUSPEND_FLOW) {
+      // When suspending, the result is a continuation.
+      assert(type.isContinuation());
+    } else {
+      // We are normally executing (not suspending), and therefore cannot still
+      // be breaking, which would mean we missed our stop.
+      assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
+
+      // In normal execution, the result is the expected one.
+      if (!Type::isSubType(type, *resultType)) {
+        Fatal() << "calling " << name << " resulted in " << type
                 << " but the function type is " << *resultType << '\n';
-      WASM_UNREACHABLE("unexpected result type");
+      }
     }
 
     return flow;
