@@ -248,6 +248,17 @@ struct HeapStoreOptimization
       }
     }
 
+    // We also cannot reorder if the struct.new itself has effects (which it can
+    // in the case of a descriptor) that interact with X' (from the comment
+    // above), as e.g. a struct.new trap happens before effects in X', but after
+    // the optimization X' would happen first.
+    ShallowEffectAnalyzer structNewEffects(getPassOptions(),
+                                           *getModule(),
+                                           new_);
+    if (structNewEffects.invalidates(setValueEffects)) {
+      return false;
+    }
+
     // We must also be careful of branches out from the value that skip the
     // local.set, see below.
     if (canSkipLocalSet(set, setValueEffects, localSet)) {
