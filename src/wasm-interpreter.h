@@ -4461,8 +4461,6 @@ public:
       std::make_shared<ContData>(old->func, Literals{}, old->type));
     // TODO: save the stack!!1
     arguments.push_back(cont);
-    // Continuations are one-shot; mark the old one accordingly.
-    old->executed = true;
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
@@ -4476,6 +4474,7 @@ public:
     if (contData->executed) {
       trap("continuation already executed");
     }
+    contData->executed = true;
     Name func = contData->func;
     continuationStack.push_back(contData);
 #if WASM_INTERPRETER_DEBUG
