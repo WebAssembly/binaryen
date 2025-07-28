@@ -4464,6 +4464,11 @@ public:
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
     auto flow = self()->visit(curr->cont);
     if (flow.breaking()) {
       return flow;
@@ -4480,7 +4485,7 @@ public:
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
-    Flow ret = callFunction(func, {});
+    Flow ret = callFunction(func, arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
 #endif
