@@ -709,6 +709,16 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
     } else if (heapType.isSignature()) {
       o << "funcref(" << literal.getFunc() << ")";
+    } else if (heapType.isContinuation()) {
+      auto data = literal.getContData();
+      o << "cont(" << data->func << ' ' << data->type;
+      if (data->resumeExpr) {
+        o << " resumeExpr=" << getExpressionName(data->resumeExpr);
+      }
+      if (!data->resumeInfo.empty()) {
+        o << " |resumeInfo|=" << data->resumeInfo.size();
+      }
+      o << " executed=" << data->executed << ')';
     } else {
       assert(literal.isData());
       auto data = literal.getGCData();
