@@ -252,9 +252,8 @@ struct HeapStoreOptimization
     // in the case of a descriptor) that interact with X' (from the comment
     // above), as e.g. a struct.new trap happens before effects in X', but after
     // the optimization X' would happen first.
-    ShallowEffectAnalyzer structNewEffects(getPassOptions(),
-                                           *getModule(),
-                                           new_);
+    ShallowEffectAnalyzer structNewEffects(
+      getPassOptions(), *getModule(), new_);
     if (structNewEffects.invalidates(setValueEffects)) {
       return false;
     }
