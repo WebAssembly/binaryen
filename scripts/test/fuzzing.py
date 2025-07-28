@@ -132,6 +132,7 @@ unfuzzable = [
     'remove-unused-brs-desc.wast',
     'vacuum-desc.wast',
     'j2cl-merge-itables-desc.wast',
+    'heap-store-optimization-desc.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
