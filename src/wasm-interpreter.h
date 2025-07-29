@@ -1583,7 +1583,7 @@ public:
     // case atomic_fence can be lowered to nothing.
     return Flow();
   }
-  Flow visitPause(Nop* curr) { return Flow(); }
+  Flow visitPause(Pause* curr) { return Flow(); }
   Flow visitTupleMake(TupleMake* curr) {
     Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
