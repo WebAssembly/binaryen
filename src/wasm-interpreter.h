@@ -148,8 +148,7 @@ struct ContData {
   // executed a second time.
   bool executed = false;
 
-  ContData(Name func, HeapType type)
-    : func(func), type(type) {}
+  ContData(Name func, HeapType type) : func(func), type(type) {}
 };
 
 // Execute an expression
@@ -3504,7 +3503,8 @@ public:
     }
 
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "(calling ref " << targetRef.getFunc() << ")\n";
+    std::cout << self()->indent() << "(calling ref " << targetRef.getFunc()
+              << ")\n";
 #endif
     Flow ret = callFunction(targetRef.getFunc(), arguments);
 #if WASM_INTERPRETER_DEBUG
@@ -4535,12 +4535,9 @@ public:
     }
     Name func = funcFlow.getSingleValue().getFunc();
     // Create a fresh continuation.
-    return Literal(
-      std::make_shared<ContData>(func, curr->type.getHeapType()));
+    return Literal(std::make_shared<ContData>(func, curr->type.getHeapType()));
   }
-  Flow visitContBind(ContBind* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
 
   Flow visitSuspend(Suspend* curr) {
     Literals arguments;
@@ -4620,9 +4617,7 @@ public:
     // No suspension; all done.
     return Flow();
   }
-  Flow visitResumeThrow(ResumeThrow* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { externalInterface->trap(why); }
@@ -4710,7 +4705,7 @@ public:
           resumeInfo.pop_back();
           // Must have restored valid data.
           assert(Type::isSubType(scope.locals[l].getType(),
-                 function->getLocalType(l)));
+                                 function->getLocalType(l)));
         }
       }
 
@@ -4718,7 +4713,8 @@ public:
       std::cout << self()->indent() << "entering " << function->name << '\n'
                 << self()->indent() << " with arguments:\n";
       for (unsigned i = 0; i < arguments.size(); ++i) {
-        std::cout << self()->indent() <<"  $" << i << ": " << arguments[i] << '\n';
+        std::cout << self()->indent() << "  $" << i << ": " << arguments[i]
+                  << '\n';
       }
 #endif
 
