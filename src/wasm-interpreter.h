@@ -351,8 +351,8 @@ public:
       assert(entry.size() == 2);
       Index stackIndex = entry[0].geti32();
       blockIndex = entry[1].geti32();
-      assert(stack.size() >= stackIndex);
-      stack.resize(stackIndex);
+      assert(stack.size() > stackIndex);
+      stack.resize(stackIndex + 1);
     }
 
     Flow flow;

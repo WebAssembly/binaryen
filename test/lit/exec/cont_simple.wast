@@ -17,8 +17,8 @@
     (local.set $k
       (cont.new $k (ref.func $f))
     )
+    (call $log (i32.const 100))
     (loop $loop
-      (call $log (i32.const 100))
       (block $on (result (ref $k))
         (resume $k (on $more $on)
           (local.get $k)
