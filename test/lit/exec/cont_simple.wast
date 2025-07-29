@@ -218,6 +218,32 @@
     )
   )
 
-  ;; TODO: suspend in if condition
+  ;; Suspend in the if's condition.
+  (func $if-condition
+    (if
+      (block (result i32)
+        (call $log (i32.const -1))
+        (suspend $more)
+        (call $log (i32.const -2))
+        (i32.const 1)
+      )
+      (then
+        (call $log (i32.const -3))
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-if-condition
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-if-condition (export "run-if-condition")
+    (call $run
+      (cont.new $k (ref.func $if-condition))
+    )
+  )
 )
 
