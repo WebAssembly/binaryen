@@ -107,16 +107,10 @@
 
   ;; CHECK:      [fuzz-exec] calling run-local
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging -4]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging -5]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging -6]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-local (export "run-local")
     (call $run
