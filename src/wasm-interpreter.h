@@ -32,6 +32,7 @@
 #include "fp16.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/properties.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
@@ -283,13 +284,33 @@ public:
     // completes, all values have been consumed, and nothing needs to be
     // saved.
     Flow ret;
-    if (valueStack) {
-      auto oldValueStackSize = valueStack->size();
-      // if resuming, do something, and compare currContinuation->resumeExpr
+    if (!valueStack) {
+      // We cannot suspend/resume. Jus execute normally
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-      valueStack->resize(oldValueStackSize);
     } else {
-      ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+      // We may suspend/resume. To support that, note values on the stack, so we
+      // can save them if we do suspend.
+      auto oldValueStackSize = valueStack->size();
+      if (!resuming) {
+        ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+      } else {
+        // We are resuming code.
+        if (Properties::isControlFlowStructure(curr)) {
+          // Each control flow structure knows how to handle itself.
+          ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+        } else if (curr->is<Suspend>()) {
+          // This is a resume, so we have found our way back to where we
+          // suspended.
+          assert(curr == currContinuation->resumeExpr);
+          // We finished resuming, and will continue from here normally.
+          resuming = false;
+        } else {
+          // Some other instruction. Do not execute it, and only return the
+          // value we stashed for it.
+          assert(0);
+        }
+      }
+      valueStack->resize(oldValueStackSize);
     }
 
     if (!ret.breaking()) {
