@@ -12,6 +12,14 @@
 
   (tag $more)
 
+  ;; CHECK:      [fuzz-exec] calling run
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   (func $run (export "run")
     (local $k (ref $k))
     (local.set $k
