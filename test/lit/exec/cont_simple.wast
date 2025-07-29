@@ -94,5 +94,34 @@
       (cont.new $k (ref.func $block-nested))
     )
   )
+
+  (func $local
+    (local $x i32)
+    (local.set $x (i32.const 42))
+    (suspend $more)
+    (call $log (local.get $x))
+    (local.set $x (i32.const 1337))
+    (suspend $more)
+    (call $log (local.get $x))
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-local
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -4]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -5]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -6]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-local (export "run-local")
+    (call $run
+      (cont.new $k (ref.func $local))
+    )
+  )
 )
 

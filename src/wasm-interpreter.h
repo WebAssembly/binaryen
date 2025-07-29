@@ -423,6 +423,7 @@ public:
     return Flow();
   }
   Flow visitLoop(Loop* curr) {
+    // NB: No special support is need for suspend/resume.
     Index loopCount = 0;
     while (1) {
       Flow flow = visit(curr->body);
@@ -4424,6 +4425,7 @@ public:
     return {};
   }
   Flow visitTry(Try* curr) {
+    assert(!self()->resuming); // TODO
     // Unwind the value stack when we jump up the call stack.
     auto oldValueStackSize =
       self()->valueStack ? self()->valueStack->size() : 0;
@@ -4478,6 +4480,7 @@ public:
     }
   }
   Flow visitTryTable(TryTable* curr) {
+    assert(!self()->resuming); // TODO
     // Unwind the value stack when we jump up the call stack.
     auto oldValueStackSize =
       self()->valueStack ? self()->valueStack->size() : 0;
@@ -4558,7 +4561,6 @@ public:
     new_->resumeExpr = curr;
     // TODO: save the call stack!
     // TODO: save the valueStack!
-    // TODO: save the locals on the function stacks!
     arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
@@ -4695,6 +4697,21 @@ public:
 
       FunctionScope scope(function, arguments, *self());
 
+      if (self()->resuming) {
+        // Restore the local state (see below for the ordering).
+        assert(self()->currContinuation);
+        auto& resumeInfo = self()->currContinuation->resumeInfo;
+        for (Index i = 0; i < scope.locals.size(); i++) {
+          assert(!resumeInfo.empty());
+          auto l = scope.locals.size() - 1 - i;
+          scope.locals[l] = resumeInfo.back();
+          resumeInfo.pop_back();
+          // Must have restored valid data.
+          assert(Type::isSubType(scope.locals[l].type,
+                 function->getParams()[l]));
+        }
+      }
+
 #if WASM_INTERPRETER_DEBUG
       std::cout << self()->indent() << "entering " << function->name << '\n'
                 << self()->indent() << " with arguments:\n";
@@ -4709,6 +4726,14 @@ public:
       std::cout << self()->indent() << "exiting " << function->name << " with "
                 << flow.values << '\n';
 #endif
+
+      if (flow.suspendTag) {
+        // Save the local state.
+        assert(self()->currContinuation);
+        for (auto& local : scope.locals) {
+          self()->currContinuation->resumeInfo.push_back(local);
+        }
+      }
 
       if (flow.breakTo != RETURN_CALL_FLOW) {
         break;
