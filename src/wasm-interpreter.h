@@ -424,25 +424,31 @@ public:
       //   2 - suspended in the ifFalse arm
       pushResumeInfoEntry({Literal(int32_t(resumeIndex))});
     };
-    Index resumeIndex;
+    Index resumeIndex = -1;
     if (resuming) {
       auto entry = popResumeInfoEntry();
       assert(entry.size() == 1);
       resumeIndex = entry[0].geti32();
     }
 
-    Flow flow = visit(curr->condition);
-    if (flow.suspendTag) {
-      suspend(0);
-      return flow;
-    }
-    if (flow.breaking()) {
-      return flow;
-    }
-    auto condition = flow.getSingleValue().geti32();
+    Flow flow;
+    Index condition;
 
-    if (resuming) {
+    if (resuming && resumeIndex > 0) {
+      // We are resuming into one of the arms. Just set the right condition.
       condition = (resumeIndex == 1);
+    } else {
+      // We are executing normally, or we are resuming into the condition.
+      // Either way, enter the condition.
+      flow = visit(curr->condition);
+      if (flow.suspendTag) {
+        suspend(0);
+        return flow;
+      }
+      if (flow.breaking()) {
+        return flow;
+      }
+      condition = flow.getSingleValue().geti32();
     }
 
     if (condition) {
