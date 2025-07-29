@@ -722,11 +722,16 @@ private:
   // (that we can replace the expression with if replaceExpression is set). When
   // |usedHeapValues| is provided, we use those values instead of the normal
   // |heapValues| (that is, we do not use the normal heap value cache).
-  Flow precomputeExpression(Expression* curr, bool replaceExpression = true, HeapValues* usedHeapValues = nullptr) {
+  Flow precomputeExpression(Expression* curr,
+                            bool replaceExpression = true,
+                            HeapValues* usedHeapValues = nullptr) {
     Flow flow;
     try {
-      flow = PrecomputingExpressionRunner(
-               getModule(), getValues, usedHeapValues ? *usedHeapValues : heapValues, replaceExpression)
+      flow = PrecomputingExpressionRunner(getModule(),
+                                          getValues,
+                                          usedHeapValues ? *usedHeapValues
+                                                         : heapValues,
+                                          replaceExpression)
                .visit(curr);
     } catch (NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
