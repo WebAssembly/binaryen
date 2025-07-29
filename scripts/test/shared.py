@@ -405,6 +405,8 @@ SPEC_TESTS_TO_SKIP = [
 
     # Unlinkable module accepted
     'linking.wast',
+    'memory_max.wast',
+    'memory_max_i64.wast',
 
     # Invalid module accepted
     'unreached-invalid.wast',

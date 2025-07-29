@@ -454,6 +454,7 @@ extern const char* FP16Feature;
 extern const char* BulkMemoryOptFeature;
 extern const char* CallIndirectOverlongFeature;
 extern const char* CustomDescriptorsFeature;
+extern const char* CustomPageSizesFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1254,7 +1255,12 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1,
+  Is64 = 1 << 2,
+  HasCustomPageSize = 1 << 3
+};
 
 enum FeaturePrefix { FeatureUsed = '+', FeatureDisallowed = '-' };
 
@@ -1368,8 +1374,13 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(
-    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
+  void writeResizableLimits(Address initial,
+                            Address maximum,
+                            bool hasMaximum,
+                            bool shared,
+                            bool is64,
+                            bool hasPageSize,
+                            Address::address32_t pageSizeLog2);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::CustomSections::Subsection code);
@@ -1624,6 +1635,7 @@ public:
                           Address& max,
                           bool& shared,
                           Type& addressType,
+                          uint8_t& pageSizeLog2,
                           Address defaultIfNoMax);
   void readImports();
 

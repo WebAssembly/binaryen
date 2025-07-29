@@ -293,8 +293,8 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     for (auto& memory : module->memories) {
       if (memory->is64()) {
         memory->addressType = Type::i32;
-        if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
-          memory->max = Memory::kMaxSize32;
+        if (memory->hasMax() && memory->max > memory->maxSize32()) {
+          memory->max = memory->maxSize32();
         }
       }
     }

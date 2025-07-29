@@ -50,7 +50,7 @@ function asmFunc(imports) {
  
  bufferView = HEAPU8;
  function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
+  return buffer.byteLength >> 16;
  }
  
  return {

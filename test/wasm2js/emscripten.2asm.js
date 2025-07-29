@@ -218,7 +218,7 @@ function asmFunc(imports) {
  FUNCTION_TABLE[2] = bar;
  FUNCTION_TABLE[3] = tabled;
  function __wasm_memory_size() {
-  return buffer.byteLength / 65536 | 0;
+  return buffer.byteLength >> 16;
  }
  
  return {
