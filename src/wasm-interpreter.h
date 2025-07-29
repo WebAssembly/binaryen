@@ -91,8 +91,6 @@ public:
     return builder.makeConstantExpression(values);
   }
 
-  // Returns true if we are breaking out of normal execution. This can be
-  // because of a break/continue, or a continuation.
   bool breaking() const { return breakTo.is(); }
 
   void clearIf(Name target) {
@@ -4498,11 +4496,10 @@ public:
       throw NonconstantException();
     }
 
-    auto type = flow.getType();
     // We cannot still be breaking, which would mean we missed our stop.
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
 #ifndef NDEBUG
-    // In normal execution, the result is the expected one.
+    auto type = flow.getType();
     if (!Type::isSubType(type, *resultType)) {
       Fatal() << "calling " << name << " resulted in " << type
               << " but the function type is " << *resultType << '\n';
