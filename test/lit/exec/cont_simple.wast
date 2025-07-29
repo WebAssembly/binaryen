@@ -54,5 +54,45 @@
       (cont.new $k (ref.func $block))
     )
   )
+
+  ;; Nested blocks, so when we suspend/resume we must traverse that stack
+  ;; properly.
+  (func $block-nested
+    (block $a
+      (call $log (i32.const -1))
+      (suspend $more)
+      (block $b
+        (block $c
+          (call $log (i32.const -2))
+          (suspend $more)
+          (call $log (i32.const -3))
+        )
+        (call $log (i32.const -4))
+      )
+      (suspend $more)
+      (call $log (i32.const -5))
+      (suspend $more)
+    )
+    (call $log (i32.const -6))
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-block-nested
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -4]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -5]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -6]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-block-nested (export "run-block-nested")
+    (call $run
+      (cont.new $k (ref.func $block-nested))
+    )
+  )
 )
 
