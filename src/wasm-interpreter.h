@@ -4521,8 +4521,8 @@ public:
     auto new_ = std::make_shared<ContData>(old->func, old->type);
     self()->currContinuation = new_;
     new_->resumeExpr = curr;
-    // TODO: save the call stack!
-    // TODO: save the valueStack!
+    // TODO: save the call stack! (call, call_indirect, call_ref)
+    // TODO: save the valueStack! (suspend from an arm of a binary e.g.)
     arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
