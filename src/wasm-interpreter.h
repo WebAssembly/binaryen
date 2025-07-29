@@ -231,7 +231,23 @@ protected:
   // We save values from visit() until they are consumed, so that we can pause/
   // resume. TODO: move into ModuleRunner, since we need FunctionState anyhow
   // for locals?
-  std::optional<std::vector<Literals>> valueStack;
+  // Each entry here is a scope, and contains all the values from children
+  // that we have seen.
+  std::vector<std::vector<Literals>> valueStack;
+
+  // RAII class that adds noting of stack values in a scope.
+  class StackValueNoter { // StackScope?
+    ExpressionRunner* parent;
+
+    StackValueNoter(ExpressionRunner* parent) : parent(parent) {
+      parent->valueStack.emplace_back();
+    }
+
+    ~StackValueNoter() {
+      assert(!parent->valueStack.empty());
+      parent->valueStack.pop_back();
+    }
+  };
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
@@ -279,9 +295,6 @@ public:
                    Index maxDepth = NO_LIMIT,
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
-    if (module && module->features.hasStackSwitching()) {
-      valueStack.emplace();
-    }
   }
   virtual ~ExpressionRunner() = default;
 
@@ -301,13 +314,14 @@ public:
     // completes, all values have been consumed, and nothing needs to be
     // saved.
     Flow ret;
-    if (!valueStack) {
-      // We cannot suspend/resume. Jus execute normally
+    if (!currContinuation) {
+      // We cannot suspend/resume. Just execute normally
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     } else {
       // We may suspend/resume. To support that, note values on the stack, so we
       // can save them if we do suspend.
-      auto oldValueStackSize = valueStack->size();
+      StackValueNoter noter(*this);
+
       if (!resuming) {
         ret = OverriddenVisitor<SubType, Flow>::visit(curr);
       } else {
@@ -324,27 +338,42 @@ public:
         } else {
           // Some other instruction. Do not execute it, and only return the
           // value we stashed for it. TODO
+          // To resume, get # of items, get the items, then populate a mapp of
+          // expression* to value, and use that right here
           Fatal() << *curr;
         }
       }
-      valueStack->resize(oldValueStackSize);
+
+      if (ret.suspendTag) {
+        assert(currContinuation);
+        // We are suspending a continuation. We have stashed values at the back
+        // of valueStack, and we can save those for when we resume, together
+        // with the number of such values, so we know how many children to
+        // process. We put one entry for each value, plus their number.
+        // TODO: 
+        assert(!valueStack.empty());
+        auto& values = valueStack.back();
+        auto num = values.size();
+        while (!values.empty()) {
+          pushResumeInfoEntry(values.back()); // TODO: std::move?
+          values.pop_back();
+        }
+        pushResumeInfoEntry({Literal(int32_t(num))});        
+      }
     }
 
+#ifndef NDEBUG
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
-#ifndef NDEBUG
         if (!Type::isSubType(type, curr->type)) {
           Fatal() << "expected " << ModuleType(*module, curr->type)
                   << ", seeing " << ModuleType(*module, type) << " from\n"
                   << ModuleExpression(*module, curr) << '\n';
         }
-#endif
-      }
-      if (valueStack) {
-        valueStack->push_back(ret.values);
       }
     }
+#endif
     depth--;
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "=> returning: " << ret << '\n';
@@ -4392,15 +4421,9 @@ public:
   }
   Flow visitTry(Try* curr) {
     assert(!self()->resuming); // TODO
-    // Unwind the value stack when we jump up the call stack.
-    auto oldValueStackSize =
-      self()->valueStack ? self()->valueStack->size() : 0;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
-      if (self()->valueStack) {
-        self()->valueStack->resize(oldValueStackSize);
-      }
       // If delegation is in progress and the current try is not the target of
       // the delegation, don't handle it and just rethrow.
       if (scope->currDelegateTarget.is()) {
@@ -4447,15 +4470,9 @@ public:
   }
   Flow visitTryTable(TryTable* curr) {
     assert(!self()->resuming); // TODO
-    // Unwind the value stack when we jump up the call stack.
-    auto oldValueStackSize =
-      self()->valueStack ? self()->valueStack->size() : 0;
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
-      if (self()->valueStack) {
-        self()->valueStack->resize(oldValueStackSize);
-      }
       auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
@@ -4523,7 +4540,6 @@ public:
     self()->currContinuation = new_;
     new_->resumeExpr = curr;
     // TODO: save the call stack! (call, call_indirect, call_ref)
-    // TODO: save the valueStack! (suspend from an arm of a binary e.g.)
     // TODO: add a suspend/resume fuzzer (plant suspends in code using pass?)
     arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
