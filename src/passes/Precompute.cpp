@@ -672,10 +672,15 @@ struct Precompute
         auto** pointerToSelect =
           getChildPointerInImmediateParent(stack, selectIndex, func);
         *pointerToSelect = select->ifTrue;
-        auto ifTrue = precomputeExpression(parent);
+        // When we perform these speculative precomputations, we must not use
+        // the normal heapValues, as we are testing modified versions of
+        // |parent|. Results here must not be cached for later.
+        HeapValues temp;
+        auto ifTrue = precomputeExpression(parent, true, &temp);
+        temp.clear();
         if (isValidPrecomputation(ifTrue)) {
           *pointerToSelect = select->ifFalse;
-          auto ifFalse = precomputeExpression(parent);
+          auto ifFalse = precomputeExpression(parent, true, &temp);
           if (isValidPrecomputation(ifFalse)) {
             // Wonderful, we can precompute here! The select can now contain the
             // computed values in its arms.
@@ -714,12 +719,14 @@ struct Precompute
 
 private:
   // Precompute an expression, returning a flow, which may be a constant
-  // (that we can replace the expression with if replaceExpression is set).
-  Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+  // (that we can replace the expression with if replaceExpression is set). When
+  // |usedHeapValues| is provided, we use those values instead of the normal
+  // |heapValues| (that is, we do not use the normal heap value cache).
+  Flow precomputeExpression(Expression* curr, bool replaceExpression = true, HeapValues* usedHeapValues = nullptr) {
     Flow flow;
     try {
       flow = PrecomputingExpressionRunner(
-               getModule(), getValues, heapValues, replaceExpression)
+               getModule(), getValues, usedHeapValues ? *usedHeapValues : heapValues, replaceExpression)
                .visit(curr);
     } catch (NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
