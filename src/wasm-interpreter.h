@@ -323,8 +323,8 @@ public:
           resuming = false;
         } else {
           // Some other instruction. Do not execute it, and only return the
-          // value we stashed for it.
-          assert(0);
+          // value we stashed for it. TODO
+          Fatal() << *curr;
         }
       }
       valueStack->resize(oldValueStackSize);

@@ -119,7 +119,7 @@
     )
   )
 
-  ;; This loop should suspend 4 times.
+  ;; This loop should suspend 4 times and log 3, 2, 1, 0.
   (func $loop
     (local $x i32)
     (local.set $x (i32.const 4))
@@ -152,6 +152,70 @@
   (func $run-loop (export "run-loop")
     (call $run
       (cont.new $k (ref.func $loop))
+    )
+  )
+
+  ;; We should log -1, -2, -3, -4
+  (func $if
+    (local $x i32)
+    (if
+      (local.get $x)
+      (then
+        (unreachable)
+      )
+      (else
+        ;; We should get here.
+        (call $log (i32.const -1))
+        (local.set $x (i32.const 1))
+        (suspend $more)
+        ;; A nested if.
+        (if
+          (local.get $x)
+          (then
+            ;; We should get here
+            (suspend $more)
+            (call $log (i32.const -2))
+          )
+          (else
+            (unreachable)
+          )
+        )
+      )
+    )
+    ;; If with one arm.
+    (if
+      (local.get $x)
+      (then
+        ;; We should get here.
+        (call $log (i32.const -3))
+        (suspend $more)
+        (call $log (i32.const -4))
+      )
+    )
+    (if
+      (i32.eqz
+        (local.get $x)
+      )
+      (then
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-if
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-if (export "run-if")
+    (call $run
+      (cont.new $k (ref.func $if))
     )
   )
 )
