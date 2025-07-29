@@ -1583,6 +1583,7 @@ public:
     // case atomic_fence can be lowered to nothing.
     return Flow();
   }
+  Flow visitPause(Nop* curr) { return Flow(); }
   Flow visitTupleMake(TupleMake* curr) {
     Literals arguments;
     Flow flow = generateArguments(curr->operands, arguments);
@@ -4523,6 +4524,7 @@ public:
     new_->resumeExpr = curr;
     // TODO: save the call stack! (call, call_indirect, call_ref)
     // TODO: save the valueStack! (suspend from an arm of a binary e.g.)
+    // TODO: add a suspend/resume fuzzer (plant suspends in code using pass?)
     arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
