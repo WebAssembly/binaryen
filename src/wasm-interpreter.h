@@ -255,6 +255,25 @@ protected:
   // will be cleared.
   bool resuming = false;
 
+  void pushResumeInfoEntry(const Literals& entry) {
+    assert(currContinuation);
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "push resume entry: " << entry << "\n";
+#endif
+    currContinuation->resumeInfo.push_back(entry);
+  }
+
+  Literals popResumeInfoEntry() {
+    assert(currContinuation);
+    assert(!currContinuation->resumeInfo.empty());
+    auto entry = currContinuation->resumeInfo.back();
+    currContinuation->resumeInfo.pop_back();
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "pop resume entry: " << entry << "\n";
+#endif
+    return entry;
+  }
+
 public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
@@ -354,21 +373,11 @@ public:
       // in the block.
       entry.push_back(Literal(uint32_t(stack.size())));
       entry.push_back(Literal(uint32_t(blockIndex)));
-#if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "suspend block: " << entry << "\n";
-#endif
-      assert(currContinuation);
-      currContinuation->resumeInfo.push_back(entry);
+      pushResumeInfoEntry(entry);
     };
     Index blockIndex = 0;
     if (resuming) {
-      assert(currContinuation);
-      assert(!currContinuation->resumeInfo.empty());
-      auto entry = currContinuation->resumeInfo.back();
-#if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "resume block: " << entry << "\n";
-#endif
-      currContinuation->resumeInfo.pop_back();
+      auto entry = popResumeInfoEntry();
       assert(entry.size() == 2);
       Index stackIndex = entry[0].geti32();
       blockIndex = entry[1].geti32();
@@ -411,6 +420,36 @@ public:
     if (flow.breaking()) {
       return flow;
     }
+
+/*
+    // Suspend/resume support.
+    auto suspend = [&](Index index) {
+      // To return to the same place when we resume, we add an entry that tells
+      // us if we were in the ifTrue arm (1) or ifFalse(0).
+      Literals entry = Literal(int32_t(index));
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "suspend if: " << entry << "\n";
+#endif
+      assert(currContinuation);
+      currContinuation->resumeInfo.push_back(entry);
+    };
+    waka
+    if (resuming) {
+      assert(currContinuation);
+      assert(!currContinuation->resumeInfo.empty());
+      auto entry = currContinuation->resumeInfo.back();
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "resume block: " << entry << "\n";
+#endif
+      currContinuation->resumeInfo.pop_back();
+      assert(entry.size() == 2);
+      Index stackIndex = entry[0].geti32();
+      blockIndex = entry[1].geti32();
+      assert(stack.size() > stackIndex);
+      stack.resize(stackIndex + 1);
+    }
+*/
+
     if (flow.getSingleValue().geti32()) {
       Flow flow = visit(curr->ifTrue);
       if (!flow.breaking() && !curr->ifFalse) {
