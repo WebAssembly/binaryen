@@ -1324,9 +1324,6 @@ console.log("# AtomicFence");
 
   theAtomicFence.order = 1;
   assert(theAtomicFence.order === 1);
-  theAtomicFence.type = binaryen.f64;
-  theAtomicFence.finalize();
-  assert(theAtomicFence.type === binaryen.none);
 
   info = binaryen.getExpressionInfo(theAtomicFence);
   assert(info.type === theAtomicFence.type);

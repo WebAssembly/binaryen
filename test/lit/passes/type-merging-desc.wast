@@ -307,6 +307,23 @@
 )
 
 (module
+  ;; We can merge the $B chain into the $A chain, but we cannot merge in the
+  ;; other direction because that would make $B.desc its own subtype.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+    (type $B (sub (descriptor $B.desc (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (global $B.desc (ref null $A.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+)
+
+(module
   ;; CHECK:      (type $public (sub (struct)))
   (type $public (sub (struct)))
 

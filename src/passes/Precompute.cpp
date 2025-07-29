@@ -126,11 +126,7 @@ public:
 
   // TODO: Use immutability for values
   Flow visitStructNew(StructNew* curr) {
-    auto flow = Super::visitStructNew(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-    return getHeapCreationFlow(flow, curr);
+    return getGCAllocation(curr, [&]() { return Super::visitStructNew(curr); });
   }
   Flow visitStructSet(StructSet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStructGet(StructGet* curr) {
@@ -167,18 +163,11 @@ public:
     return Super::visitStructGet(curr);
   }
   Flow visitArrayNew(ArrayNew* curr) {
-    auto flow = Super::visitArrayNew(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-    return getHeapCreationFlow(flow, curr);
+    return getGCAllocation(curr, [&]() { return Super::visitArrayNew(curr); });
   }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
-    auto flow = Super::visitArrayNewFixed(curr);
-    if (flow.breaking()) {
-      return flow;
-    }
-    return getHeapCreationFlow(flow, curr);
+    return getGCAllocation(curr,
+                           [&]() { return Super::visitArrayNewFixed(curr); });
   }
   Flow visitArraySet(ArraySet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) {
@@ -197,18 +186,22 @@ public:
   Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 
   // Generates heap info for a heap-allocating expression.
-  template<typename T> Flow getHeapCreationFlow(Flow flow, T* curr) {
+  Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
     // We must return a literal that refers to the canonical location for this
-    // source expression, so that each time we compute a specific struct.new
+    // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    std::shared_ptr<GCData>& canonical = heapValues[curr];
-    std::shared_ptr<GCData> newGCData = flow.getSingleValue().getGCData();
-    if (!canonical) {
-      canonical = std::make_shared<GCData>(*newGCData);
-    } else {
-      *canonical = *newGCData;
+    auto iter = heapValues.find(curr);
+    if (iter != heapValues.end()) {
+      // Refer to the same canonical GCData that we already created.
+      return Literal(iter->second, curr->type.getHeapType());
     }
-    return Literal(canonical, curr->type.getHeapType());
+    // Only call the visitor function here, so we do it once per allocation.
+    auto flow = visitFunc();
+    if (flow.breaking()) {
+      return flow;
+    }
+    heapValues[curr] = flow.getSingleValue().getGCData();
+    return flow;
   }
 
   Flow visitStringNew(StringNew* curr) {
@@ -679,10 +672,15 @@ struct Precompute
         auto** pointerToSelect =
           getChildPointerInImmediateParent(stack, selectIndex, func);
         *pointerToSelect = select->ifTrue;
-        auto ifTrue = precomputeExpression(parent);
+        // When we perform these speculative precomputations, we must not use
+        // the normal heapValues, as we are testing modified versions of
+        // |parent|. Results here must not be cached for later.
+        HeapValues temp;
+        auto ifTrue = precomputeExpression(parent, true, &temp);
+        temp.clear();
         if (isValidPrecomputation(ifTrue)) {
           *pointerToSelect = select->ifFalse;
-          auto ifFalse = precomputeExpression(parent);
+          auto ifFalse = precomputeExpression(parent, true, &temp);
           if (isValidPrecomputation(ifFalse)) {
             // Wonderful, we can precompute here! The select can now contain the
             // computed values in its arms.
@@ -721,12 +719,19 @@ struct Precompute
 
 private:
   // Precompute an expression, returning a flow, which may be a constant
-  // (that we can replace the expression with if replaceExpression is set).
-  Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+  // (that we can replace the expression with if replaceExpression is set). When
+  // |usedHeapValues| is provided, we use those values instead of the normal
+  // |heapValues| (that is, we do not use the normal heap value cache).
+  Flow precomputeExpression(Expression* curr,
+                            bool replaceExpression = true,
+                            HeapValues* usedHeapValues = nullptr) {
+    if (!usedHeapValues) {
+      usedHeapValues = &heapValues;
+    }
     Flow flow;
     try {
       flow = PrecomputingExpressionRunner(
-               getModule(), getValues, heapValues, replaceExpression)
+               getModule(), getValues, *usedHeapValues, replaceExpression)
                .visit(curr);
     } catch (NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);

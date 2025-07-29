@@ -87,14 +87,18 @@
 
   ;; YESTNH:       (type $2 (func (param anyref (ref null $desc)) (result nullref)))
 
-  ;; YESTNH:      (type $3 (func))
+  ;; YESTNH:       (type $3 (func (param anyref (ref $desc)) (result nullref)))
 
-  ;; YESTNH:      (import "" "" (func $effect (type $3)))
+  ;; YESTNH:      (type $4 (func))
+
+  ;; YESTNH:      (import "" "" (func $effect (type $4)))
   ;; NO_TNH:       (type $2 (func (param anyref (ref null $desc)) (result nullref)))
 
-  ;; NO_TNH:      (type $3 (func))
+  ;; NO_TNH:       (type $3 (func (param anyref (ref $desc)) (result nullref)))
 
-  ;; NO_TNH:      (import "" "" (func $effect (type $3)))
+  ;; NO_TNH:      (type $4 (func))
+
+  ;; NO_TNH:      (import "" "" (func $effect (type $4)))
   (import "" "" (func $effect))
 
   ;; YESTNH:      (global $desc (ref $desc) (struct.new_default $desc))
@@ -107,6 +111,12 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $cast-nullable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc))
+  ;; NO_TNH-NEXT:  (local.set $2
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $desc)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.cast nullref
   ;; NO_TNH-NEXT:   (local.get $ref)
   ;; NO_TNH-NEXT:  )
@@ -124,7 +134,7 @@
 
   ;; YESTNH:      (func $cast-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref $desc))
   ;; YESTNH-NEXT:  (local.set $2
   ;; YESTNH-NEXT:   (block (result anyref)
   ;; YESTNH-NEXT:    (call $effect)
@@ -132,9 +142,11 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (local.set $3
-  ;; YESTNH-NEXT:   (block (result (ref null $desc))
-  ;; YESTNH-NEXT:    (call $effect)
-  ;; YESTNH-NEXT:    (local.get $desc)
+  ;; YESTNH-NEXT:   (ref.as_non_null
+  ;; YESTNH-NEXT:    (block (result (ref null $desc))
+  ;; YESTNH-NEXT:     (call $effect)
+  ;; YESTNH-NEXT:     (local.get $desc)
+  ;; YESTNH-NEXT:    )
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (ref.cast nullref
@@ -143,7 +155,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $cast-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; NO_TNH-NEXT:  (local $2 anyref)
-  ;; NO_TNH-NEXT:  (local $3 (ref null $desc))
+  ;; NO_TNH-NEXT:  (local $3 (ref $desc))
   ;; NO_TNH-NEXT:  (local.set $2
   ;; NO_TNH-NEXT:   (block (result anyref)
   ;; NO_TNH-NEXT:    (call $effect)
@@ -151,9 +163,11 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (local.set $3
-  ;; NO_TNH-NEXT:   (block (result (ref null $desc))
-  ;; NO_TNH-NEXT:    (call $effect)
-  ;; NO_TNH-NEXT:    (local.get $desc)
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (block (result (ref null $desc))
+  ;; NO_TNH-NEXT:     (call $effect)
+  ;; NO_TNH-NEXT:     (local.get $desc)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.cast nullref
@@ -180,6 +194,12 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $cast-non-nullable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc))
+  ;; NO_TNH-NEXT:  (local.set $2
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $desc)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.cast (ref none)
   ;; NO_TNH-NEXT:   (local.get $ref)
   ;; NO_TNH-NEXT:  )
@@ -192,9 +212,27 @@
     )
   )
 
-  ;; YESTNH:      (func $cast-non-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; YESTNH:      (func $cast-non-nullable-desc (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
+  ;; YESTNH-NEXT:  (ref.cast (ref none)
+  ;; YESTNH-NEXT:   (local.get $ref)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $cast-non-nullable-desc (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (ref.cast (ref none)
+  ;; NO_TNH-NEXT:   (local.get $ref)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $cast-non-nullable-desc (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
+    ;; Same, but now the descriptor is additionally non-null.
+    (ref.cast_desc (ref $struct)
+      (local.get $ref)
+      (local.get $desc)
+    )
+  )
+
+  ;; YESTNH:      (func $cast-non-nullable-effect (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref $desc))
   ;; YESTNH-NEXT:  (local.set $2
   ;; YESTNH-NEXT:   (block (result anyref)
   ;; YESTNH-NEXT:    (call $effect)
@@ -202,7 +240,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (local.set $3
-  ;; YESTNH-NEXT:   (block (result (ref null $desc))
+  ;; YESTNH-NEXT:   (block (result (ref $desc))
   ;; YESTNH-NEXT:    (call $effect)
   ;; YESTNH-NEXT:    (local.get $desc)
   ;; YESTNH-NEXT:   )
@@ -211,9 +249,9 @@
   ;; YESTNH-NEXT:   (local.get $2)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $cast-non-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH:      (func $cast-non-nullable-effect (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
   ;; NO_TNH-NEXT:  (local $2 anyref)
-  ;; NO_TNH-NEXT:  (local $3 (ref null $desc))
+  ;; NO_TNH-NEXT:  (local $3 (ref $desc))
   ;; NO_TNH-NEXT:  (local.set $2
   ;; NO_TNH-NEXT:   (block (result anyref)
   ;; NO_TNH-NEXT:    (call $effect)
@@ -221,7 +259,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (local.set $3
-  ;; NO_TNH-NEXT:   (block (result (ref null $desc))
+  ;; NO_TNH-NEXT:   (block (result (ref $desc))
   ;; NO_TNH-NEXT:    (call $effect)
   ;; NO_TNH-NEXT:    (local.get $desc)
   ;; NO_TNH-NEXT:   )
@@ -230,14 +268,14 @@
   ;; NO_TNH-NEXT:   (local.get $2)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $cast-non-nullable-effect (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
+  (func $cast-non-nullable-effect (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
     ;; Same, but with side effects we cannot drop.
     (ref.cast_desc (ref $struct)
       (block (result anyref)
         (call $effect)
         (local.get $ref)
       )
-      (block (result (ref null $desc))
+      (block (result (ref $desc))
         (call $effect)
         (local.get $desc)
       )
@@ -257,9 +295,15 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $branch-nullable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc))
   ;; NO_TNH-NEXT:  (block $block (result nullref)
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (block (result (ref any))
+  ;; NO_TNH-NEXT:     (local.set $2
+  ;; NO_TNH-NEXT:      (ref.as_non_null
+  ;; NO_TNH-NEXT:       (local.get $desc)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (br_on_cast $block anyref nullref
   ;; NO_TNH-NEXT:      (local.get $ref)
   ;; NO_TNH-NEXT:     )
@@ -283,7 +327,7 @@
 
   ;; YESTNH:      (func $branch-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref $desc))
   ;; YESTNH-NEXT:  (block $block (result nullref)
   ;; YESTNH-NEXT:   (drop
   ;; YESTNH-NEXT:    (block (result (ref any))
@@ -294,9 +338,11 @@
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (local.set $3
-  ;; YESTNH-NEXT:      (block (result (ref null $desc))
-  ;; YESTNH-NEXT:       (call $effect)
-  ;; YESTNH-NEXT:       (local.get $desc)
+  ;; YESTNH-NEXT:      (ref.as_non_null
+  ;; YESTNH-NEXT:       (block (result (ref null $desc))
+  ;; YESTNH-NEXT:        (call $effect)
+  ;; YESTNH-NEXT:        (local.get $desc)
+  ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (br_on_cast $block anyref nullref
@@ -309,7 +355,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $branch-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; NO_TNH-NEXT:  (local $2 anyref)
-  ;; NO_TNH-NEXT:  (local $3 (ref null $desc))
+  ;; NO_TNH-NEXT:  (local $3 (ref $desc))
   ;; NO_TNH-NEXT:  (block $block (result nullref)
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (block (result (ref any))
@@ -320,9 +366,11 @@
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (local.set $3
-  ;; NO_TNH-NEXT:      (block (result (ref null $desc))
-  ;; NO_TNH-NEXT:       (call $effect)
-  ;; NO_TNH-NEXT:       (local.get $desc)
+  ;; NO_TNH-NEXT:      (ref.as_non_null
+  ;; NO_TNH-NEXT:       (block (result (ref null $desc))
+  ;; NO_TNH-NEXT:        (call $effect)
+  ;; NO_TNH-NEXT:        (local.get $desc)
+  ;; NO_TNH-NEXT:       )
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (br_on_cast $block anyref nullref
@@ -365,9 +413,15 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $branch-non-nullable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc))
   ;; NO_TNH-NEXT:  (block $block (result (ref none))
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (block (result anyref)
+  ;; NO_TNH-NEXT:     (local.set $2
+  ;; NO_TNH-NEXT:      (ref.as_non_null
+  ;; NO_TNH-NEXT:       (local.get $desc)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (br_on_cast $block anyref (ref none)
   ;; NO_TNH-NEXT:      (local.get $ref)
   ;; NO_TNH-NEXT:     )
@@ -389,9 +443,46 @@
     )
   )
 
-  ;; YESTNH:      (func $branch-non-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+    ;; YESTNH:      (func $branch-non-nullable-desc (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
+    ;; YESTNH-NEXT:  (block $block (result (ref none))
+    ;; YESTNH-NEXT:   (drop
+    ;; YESTNH-NEXT:    (block (result anyref)
+    ;; YESTNH-NEXT:     (br_on_cast $block anyref (ref none)
+    ;; YESTNH-NEXT:      (local.get $ref)
+    ;; YESTNH-NEXT:     )
+    ;; YESTNH-NEXT:    )
+    ;; YESTNH-NEXT:   )
+    ;; YESTNH-NEXT:   (unreachable)
+    ;; YESTNH-NEXT:  )
+    ;; YESTNH-NEXT: )
+    ;; NO_TNH:      (func $branch-non-nullable-desc (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
+    ;; NO_TNH-NEXT:  (block $block (result (ref none))
+    ;; NO_TNH-NEXT:   (drop
+    ;; NO_TNH-NEXT:    (block (result anyref)
+    ;; NO_TNH-NEXT:     (br_on_cast $block anyref (ref none)
+    ;; NO_TNH-NEXT:      (local.get $ref)
+    ;; NO_TNH-NEXT:     )
+    ;; NO_TNH-NEXT:    )
+    ;; NO_TNH-NEXT:   )
+    ;; NO_TNH-NEXT:   (unreachable)
+    ;; NO_TNH-NEXT:  )
+    ;; NO_TNH-NEXT: )
+    (func $branch-non-nullable-desc (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
+    (block $block (result (ref null $struct))
+      (drop
+        ;; Same, but now the descriptor is additionally non-null.
+        (br_on_cast_desc $block anyref (ref $struct)
+          (local.get $ref)
+          (local.get $desc)
+        )
+      )
+      (unreachable)
+    )
+  )
+
+  ;; YESTNH:      (func $branch-non-nullable-effect (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref $desc))
   ;; YESTNH-NEXT:  (block $block (result (ref none))
   ;; YESTNH-NEXT:   (drop
   ;; YESTNH-NEXT:    (block (result anyref)
@@ -402,7 +493,7 @@
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (local.set $3
-  ;; YESTNH-NEXT:      (block (result (ref null $desc))
+  ;; YESTNH-NEXT:      (block (result (ref $desc))
   ;; YESTNH-NEXT:       (call $effect)
   ;; YESTNH-NEXT:       (local.get $desc)
   ;; YESTNH-NEXT:      )
@@ -415,9 +506,9 @@
   ;; YESTNH-NEXT:   (unreachable)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $branch-non-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH:      (func $branch-non-nullable-effect (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
   ;; NO_TNH-NEXT:  (local $2 anyref)
-  ;; NO_TNH-NEXT:  (local $3 (ref null $desc))
+  ;; NO_TNH-NEXT:  (local $3 (ref $desc))
   ;; NO_TNH-NEXT:  (block $block (result (ref none))
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (block (result anyref)
@@ -428,7 +519,7 @@
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (local.set $3
-  ;; NO_TNH-NEXT:      (block (result (ref null $desc))
+  ;; NO_TNH-NEXT:      (block (result (ref $desc))
   ;; NO_TNH-NEXT:       (call $effect)
   ;; NO_TNH-NEXT:       (local.get $desc)
   ;; NO_TNH-NEXT:      )
@@ -441,7 +532,7 @@
   ;; NO_TNH-NEXT:   (unreachable)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $branch-non-nullable-effect (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
+  (func $branch-non-nullable-effect (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
     (block $block (result (ref null $struct))
       (drop
         ;; Same, but with effects we cannot drop.
@@ -450,7 +541,7 @@
             (call $effect)
             (local.get $ref)
           )
-          (block (result (ref null $desc))
+          (block (result (ref $desc))
             (call $effect)
             (local.get $desc)
           )
@@ -475,10 +566,16 @@
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $branch-fail-nullable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result (ref any))
   ;; NO_TNH-NEXT:    (return
   ;; NO_TNH-NEXT:     (block (result nullref)
+  ;; NO_TNH-NEXT:      (local.set $2
+  ;; NO_TNH-NEXT:       (ref.as_non_null
+  ;; NO_TNH-NEXT:        (local.get $desc)
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:      (br_on_cast_fail $block anyref nullref
   ;; NO_TNH-NEXT:       (local.get $ref)
   ;; NO_TNH-NEXT:      )
@@ -505,7 +602,7 @@
 
   ;; YESTNH:      (func $branch-fail-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref $desc))
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block $block (result (ref any))
   ;; YESTNH-NEXT:    (return
@@ -517,9 +614,11 @@
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (local.set $3
-  ;; YESTNH-NEXT:       (block (result (ref null $desc))
-  ;; YESTNH-NEXT:        (call $effect)
-  ;; YESTNH-NEXT:        (local.get $desc)
+  ;; YESTNH-NEXT:       (ref.as_non_null
+  ;; YESTNH-NEXT:        (block (result (ref null $desc))
+  ;; YESTNH-NEXT:         (call $effect)
+  ;; YESTNH-NEXT:         (local.get $desc)
+  ;; YESTNH-NEXT:        )
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (br_on_cast_fail $block anyref nullref
@@ -533,7 +632,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $branch-fail-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; NO_TNH-NEXT:  (local $2 anyref)
-  ;; NO_TNH-NEXT:  (local $3 (ref null $desc))
+  ;; NO_TNH-NEXT:  (local $3 (ref $desc))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result (ref any))
   ;; NO_TNH-NEXT:    (return
@@ -545,9 +644,11 @@
   ;; NO_TNH-NEXT:       )
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:      (local.set $3
-  ;; NO_TNH-NEXT:       (block (result (ref null $desc))
-  ;; NO_TNH-NEXT:        (call $effect)
-  ;; NO_TNH-NEXT:        (local.get $desc)
+  ;; NO_TNH-NEXT:       (ref.as_non_null
+  ;; NO_TNH-NEXT:        (block (result (ref null $desc))
+  ;; NO_TNH-NEXT:         (call $effect)
+  ;; NO_TNH-NEXT:         (local.get $desc)
+  ;; NO_TNH-NEXT:        )
   ;; NO_TNH-NEXT:       )
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:      (br_on_cast_fail $block anyref nullref
@@ -595,10 +696,16 @@
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $branch-fail-non-nullable (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (local $2 (ref $desc))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result anyref)
   ;; NO_TNH-NEXT:    (return
   ;; NO_TNH-NEXT:     (block (result (ref none))
+  ;; NO_TNH-NEXT:      (local.set $2
+  ;; NO_TNH-NEXT:       (ref.as_non_null
+  ;; NO_TNH-NEXT:        (local.get $desc)
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:      (br_on_cast_fail $block anyref (ref none)
   ;; NO_TNH-NEXT:       (local.get $ref)
   ;; NO_TNH-NEXT:      )
@@ -623,9 +730,52 @@
     (unreachable)
   )
 
-  ;; YESTNH:      (func $branch-fail-non-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; YESTNH:      (func $branch-fail-non-nullable-desc (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block $block (result anyref)
+  ;; YESTNH-NEXT:    (return
+  ;; YESTNH-NEXT:     (block (result (ref none))
+  ;; YESTNH-NEXT:      (br_on_cast_fail $block anyref (ref none)
+  ;; YESTNH-NEXT:       (local.get $ref)
+  ;; YESTNH-NEXT:      )
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $branch-fail-non-nullable-desc (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block $block (result anyref)
+  ;; NO_TNH-NEXT:    (return
+  ;; NO_TNH-NEXT:     (block (result (ref none))
+  ;; NO_TNH-NEXT:      (br_on_cast_fail $block anyref (ref none)
+  ;; NO_TNH-NEXT:       (local.get $ref)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $branch-fail-non-nullable-desc (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
+    (drop
+      (block $block (result anyref)
+        (return
+          ;; Same, but now the descriptor is additionally non-null.
+          (br_on_cast_desc_fail $block anyref (ref $struct)
+            (local.get $ref)
+            (local.get $desc)
+          )
+        )
+      )
+    )
+    (unreachable)
+  )
+
+  ;; YESTNH:      (func $branch-fail-non-nullable-effect (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref $desc))
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block $block (result anyref)
   ;; YESTNH-NEXT:    (return
@@ -637,7 +787,7 @@
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (local.set $3
-  ;; YESTNH-NEXT:       (block (result (ref null $desc))
+  ;; YESTNH-NEXT:       (block (result (ref $desc))
   ;; YESTNH-NEXT:        (call $effect)
   ;; YESTNH-NEXT:        (local.get $desc)
   ;; YESTNH-NEXT:       )
@@ -651,9 +801,9 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $branch-fail-non-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
+  ;; NO_TNH:      (func $branch-fail-non-nullable-effect (type $3) (param $ref anyref) (param $desc (ref $desc)) (result nullref)
   ;; NO_TNH-NEXT:  (local $2 anyref)
-  ;; NO_TNH-NEXT:  (local $3 (ref null $desc))
+  ;; NO_TNH-NEXT:  (local $3 (ref $desc))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result anyref)
   ;; NO_TNH-NEXT:    (return
@@ -665,7 +815,7 @@
   ;; NO_TNH-NEXT:       )
   ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:      (local.set $3
-  ;; NO_TNH-NEXT:       (block (result (ref null $desc))
+  ;; NO_TNH-NEXT:       (block (result (ref $desc))
   ;; NO_TNH-NEXT:        (call $effect)
   ;; NO_TNH-NEXT:        (local.get $desc)
   ;; NO_TNH-NEXT:       )
@@ -679,7 +829,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
-  (func $branch-fail-non-nullable-effect (param $ref anyref) (param $desc (ref null $desc)) (result (ref null $struct))
+  (func $branch-fail-non-nullable-effect (param $ref anyref) (param $desc (ref $desc)) (result (ref null $struct))
     (drop
       (block $block (result anyref)
         (return
@@ -689,7 +839,7 @@
               (call $effect)
               (local.get $ref)
             )
-            (block (result (ref null $desc))
+            (block (result (ref $desc))
               (call $effect)
               (local.get $desc)
             )

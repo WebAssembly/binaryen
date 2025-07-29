@@ -45,8 +45,7 @@
 #include "pass.h"
 #include "support/dfa_minimization.h"
 #include "support/small_set.h"
-#include "wasm-builder.h"
-#include "wasm-type-ordering.h"
+#include "support/topological_sort.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -169,13 +168,31 @@ struct TypeMerging : public Pass {
 
   std::vector<HeapType>
   mergeableSupertypesFirst(const std::vector<HeapType>& types) {
-    return HeapTypeOrdering::supertypesFirst(
-      types, [&](HeapType type) -> std::optional<HeapType> {
+    // Topological sort so that supertypes come first. Since we treat descriptor
+    // chains as units represented by their base described types, we must handle
+    // the case where one chain has multiple unrelated chains as supertypes.
+    InsertOrderedMap<HeapType, std::vector<HeapType>> subtypes;
+    for (auto type : types) {
+      // Skip descriptor types, since they will be considered as a unit with
+      // their base described types.
+      if (type.getDescribedType()) {
+        continue;
+      }
+      subtypes.insert({type, {}});
+    }
+    // Find the base described type (`superBase`) for each supertype in the
+    // chain starting at `subBase`.
+    for (auto [subBase, _] : subtypes) {
+      for (auto type : subBase.getDescriptorChain()) {
         if (auto super = type.getDeclaredSuperType()) {
-          return getMerged(*super);
+          auto superBase = getMerged(getBaseDescribedType(*super));
+          if (auto it = subtypes.find(superBase); it != subtypes.end()) {
+            it->second.push_back(subBase);
+          }
         }
-        return std::nullopt;
-      });
+      }
+    }
+    return TopologicalSort::sortOf(subtypes.begin(), subtypes.end());
   }
 
   void run(Module* module_) override;
@@ -354,13 +371,7 @@ bool TypeMerging::merge(MergeKind kind) {
   // For each type, either create a new partition or add to its supertype's
   // partition.
   for (auto type : mergeableSupertypesFirst(mergeable)) {
-    // Skip descriptor types. Since types in descriptor chains all have to be
-    // merged into matching descriptor chains together, only the base described
-    // type in each chain is considered, and its DFA state will include the
-    // shape of its entire descriptor chain.
-    if (type.getDescribedType()) {
-      continue;
-    }
+    assert(!type.getDescribedType());
     // We need partitions for any public children of this type since those
     // children will participate in the DFA we're creating. We use the base
     // described type of the child because that's the type that the DFA state

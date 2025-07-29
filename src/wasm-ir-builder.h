@@ -165,6 +165,7 @@ public:
   Result<> makeAtomicWait(Type type, Address offset, Name mem);
   Result<> makeAtomicNotify(Address offset, Name mem);
   Result<> makeAtomicFence();
+  Result<> makePause();
   Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
   Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
   Result<> makeSIMDShuffle(const std::array<uint8_t, 16>& lanes);
