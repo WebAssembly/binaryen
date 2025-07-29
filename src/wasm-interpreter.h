@@ -1470,9 +1470,7 @@ public:
     flow.breakTo = RETURN_FLOW;
     return flow;
   }
-  Flow visitNop(Nop* curr) {
-    return Flow();
-  }
+  Flow visitNop(Nop* curr) { return Flow(); }
   Flow visitUnreachable(Unreachable* curr) {
     trap("unreachable");
     WASM_UNREACHABLE("unreachable");
@@ -2719,117 +2717,51 @@ public:
     }
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitCall(Call* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitCallRef(CallRef* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableGet(TableGet* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableSet(TableSet* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableSize(TableSize* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableGrow(TableGrow* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableFill(TableFill* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableCopy(TableCopy* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTableInit(TableInit* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitElemDrop(ElemDrop* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitLoad(Load* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStore(Store* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitMemorySize(MemorySize* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitMemoryGrow(MemoryGrow* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitMemoryInit(MemoryInit* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitDataDrop(DataDrop* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitMemoryCopy(MemoryCopy* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitMemoryFill(MemoryFill* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitAtomicRMW(AtomicRMW* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitCall(Call* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitCallIndirect(CallIndirect* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitCallRef(CallRef* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableGet(TableGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableSet(TableSet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableSize(TableSize* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableGrow(TableGrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableFill(TableFill* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableCopy(TableCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTableInit(TableInit* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitElemDrop(ElemDrop* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitLoad(Load* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStore(Store* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemorySize(MemorySize* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryGrow(MemoryGrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitDataDrop(DataDrop* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitAtomicWait(AtomicWait* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitAtomicNotify(AtomicNotify* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitSIMDLoad(SIMDLoad* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitSIMDLoadSplat(SIMDLoad* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitSIMDLoadExtend(SIMDLoad* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitAtomicNotify(AtomicNotify* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSIMDLoadSplat(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSIMDLoadExtend(SIMDLoad* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayNewData(ArrayNewData* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitArrayNewElem(ArrayNewElem* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitArrayCopy(ArrayCopy* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitArrayFill(ArrayFill* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitArrayNewData(ArrayNewData* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayNewElem(ArrayNewElem* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayFill(ArrayFill* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayInitData(ArrayInitData* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitArrayInitElem(ArrayInitElem* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitPop(Pop* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTry(Try* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitTryTable(TryTable* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitRethrow(Rethrow* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitPop(Pop* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTry(Try* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitTryTable(TryTable* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitRethrow(Rethrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitRefAs(RefAs* curr) {
     // TODO: Remove this once interpretation is implemented.
     if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
@@ -2837,24 +2769,12 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
-  Flow visitContNew(ContNew* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitContBind(ContBind* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitSuspend(Suspend* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitResume(Resume* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitResumeThrow(ResumeThrow* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStackSwitch(StackSwitch* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSuspend(Suspend* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
