@@ -373,7 +373,7 @@ public:
         flow = visit(list[i]);
         if (flow.suspendTag) {
           suspend(i);
-          return Flow();
+          return flow;
         }
         if (flow.breaking()) {
           flow.clearIf(curr->name);
