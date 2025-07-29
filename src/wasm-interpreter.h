@@ -416,22 +416,33 @@ public:
     return flow;
   }
   Flow visitIf(If* curr) {
+    // Suspend/resume support.
+    auto suspend = [&](Index resumeIndex) {
+      // To return to the same place when we resume, we stash an index:
+      //   0 - suspended in the condition
+      //   1 - suspended in the ifTrue arm
+      //   2 - suspended in the ifFalse arm
+      pushResumeInfoEntry({Literal(int32_t(resumeIndex))});
+    };
+    Index resumeIndex;
+    if (resuming) {
+      auto entry = popResumeInfoEntry();
+      assert(entry.size() == 1);
+      resumeIndex = entry[0].geti32();
+    }
+
     Flow flow = visit(curr->condition);
+    if (flow.suspendTag) {
+      suspend(0);
+      return flow;
+    }
     if (flow.breaking()) {
       return flow;
     }
     auto condition = flow.getSingleValue().geti32();
 
-    // Suspend/resume support.
-    auto suspend = [&]() {
-      // To return to the same place when we resume, we stash the condition,
-      // then just use it below.
-      pushResumeInfoEntry({Literal(int32_t(condition))});
-    };
     if (resuming) {
-      auto entry = popResumeInfoEntry();
-      assert(entry.size() == 1);
-      condition = entry[0].geti32();
+      condition = (resumeIndex == 1);
     }
 
     if (condition) {
@@ -444,7 +455,7 @@ public:
       }
     }
     if (flow.suspendTag) {
-      suspend();
+      suspend(condition ? 1 : 2);
       return flow;
     }
     return flow;

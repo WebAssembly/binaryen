@@ -218,5 +218,7 @@
       (cont.new $k (ref.func $if))
     )
   )
+
+  ;; TODO: suspend in if condition
 )
 
