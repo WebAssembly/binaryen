@@ -140,10 +140,14 @@
 
   ;; CHECK:      [fuzz-exec] calling run-loop
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 2]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-loop (export "run-loop")
     (call $run
