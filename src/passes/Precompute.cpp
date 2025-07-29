@@ -731,7 +731,7 @@ private:
     Flow flow;
     try {
       flow = PrecomputingExpressionRunner(
-               getModule(), getValues, usedHeapValues, replaceExpression)
+               getModule(), getValues, *usedHeapValues, replaceExpression)
                .visit(curr);
     } catch (NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
