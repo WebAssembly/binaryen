@@ -725,12 +725,14 @@ private:
   Flow precomputeExpression(Expression* curr,
                             bool replaceExpression = true,
                             HeapValues* usedHeapValues = nullptr) {
+    if (!usedHeapValues) {
+      usedHeapValues = &heapValues;
+    }
     Flow flow;
     try {
       flow = PrecomputingExpressionRunner(getModule(),
                                           getValues,
-                                          usedHeapValues ? *usedHeapValues
-                                                         : heapValues,
+                                          usedHeapValues,
                                           replaceExpression)
                .visit(curr);
     } catch (NonconstantException&) {
