@@ -4707,7 +4707,7 @@ public:
           scope.locals[l] = resumeInfo.back();
           resumeInfo.pop_back();
           // Must have restored valid data.
-          assert(Type::isSubType(scope.locals[l].type,
+          assert(Type::isSubType(scope.locals[l].getType(),
                  function->getParams()[l]));
         }
       }
