@@ -95,6 +95,7 @@
     )
   )
 
+  ;; The local's state must be saved and restored.
   (func $local
     (local $x i32)
     (local.set $x (i32.const 42))
@@ -115,6 +116,38 @@
   (func $run-local (export "run-local")
     (call $run
       (cont.new $k (ref.func $local))
+    )
+  )
+
+  ;; This loop should suspend 4 times.
+  (func $loop
+    (local $x i32)
+    (local.set $x (i32.const 4))
+    (loop $loop
+      (local.set $x
+        (i32.sub
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (call $log (local.get $x))
+      (suspend $more)
+      (br_if $loop
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-loop
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-loop (export "run-loop")
+    (call $run
+      (cont.new $k (ref.func $loop))
     )
   )
 )
