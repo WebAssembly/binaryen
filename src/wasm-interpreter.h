@@ -1965,9 +1965,7 @@ public:
       auto field = curr->type.getHeapType().getArray().element;
       auto value = truncateForPacking(init.getSingleValue(), field);
       for (Index i = 0; i < num; i++) {
-        static int count = 0;
         data[i] = value;
-        std::cerr << count++ << "\n";
       }
     }
     return makeGCData(std::move(data), curr->type);
