@@ -180,13 +180,14 @@ struct TypeMerging : public Pass {
       }
       subtypes.insert({type, {}});
     }
-    // Find the base described type for each supertype in the chain.
-    for (auto [base, _] : subtypes) {
-      for (auto type : base.getDescriptorChain()) {
+    // Find the base described type (`superBase`) for each supertype in the
+    // chain starting at `subBase`.
+    for (auto [subBase, _] : subtypes) {
+      for (auto type : subBase.getDescriptorChain()) {
         if (auto super = type.getDeclaredSuperType()) {
           auto superBase = getMerged(getBaseDescribedType(*super));
           if (auto it = subtypes.find(superBase); it != subtypes.end()) {
-            it->second.push_back(base);
+            it->second.push_back(subBase);
           }
         }
       }
