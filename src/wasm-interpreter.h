@@ -30,6 +30,7 @@
 
 #include "fp16.h"
 #include "ir/intrinsics.h"
+#include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "support/bits.h"
@@ -249,6 +250,10 @@ protected:
     }
   };
 
+  // When we resume, we wil this map with children whose values were saved when
+  // we suspended. We apply them as we resume.
+  std::unordered_map<Expression*, Literals> restoredValuesMap;
+
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
     std::string ret;
@@ -335,12 +340,36 @@ public:
           assert(curr == currContinuation->resumeExpr);
           // We finished resuming, and will continue from here normally.
           resuming = false;
+          // We should have consumed all the resumeInfo and all the
+          // restoredValues map.
+          assert(currContinuation->resumeInfo.empty());
+          assert(restoredValuesMap.empty());
         } else {
-          // Some other instruction. Do not execute it, and only return the
-          // value we stashed for it. TODO
-          // To resume, get # of items, get the items, then populate a mapp of
-          // expression* to value, and use that right here
-          Fatal() << *curr;
+          // Some other instruction. Perhaps we have a restored value for it,
+          // which we should then just return.
+          auto iter = restoredValuesMap.find(curr);
+          if (iter != restoredValuesMap.end()) {
+            ret = iter->second;
+            restoredValuesMap.erase(iter);
+          } else {
+            // Some of its children may have executed, and
+            // we have values stashed for them (see below where we suspend). Get
+            // those values, and populate || so that when visit() is called on
+            // them, we can return those values rather than run them.
+            auto numEntry = popResumeInfoEntry();
+            assert(numEntry.size() == 1);
+            auto num = numEntry[0].geti32();
+            for (auto* child : ChildIterator(curr)) {
+              if (num == 0) {
+                // We have restored all the children that executed (any others
+                // were not suspended, and we have no values for them).
+                break;
+              }
+              num--;
+              auto value = popResumeInfoEntry();
+              restoredValuesMap[child] = value;
+            }
+          }
         }
       }
 
