@@ -420,47 +420,34 @@ public:
     if (flow.breaking()) {
       return flow;
     }
+    auto condition = flow.getSingleValue().geti32();
 
-/*
     // Suspend/resume support.
-    auto suspend = [&](Index index) {
-      // To return to the same place when we resume, we add an entry that tells
-      // us if we were in the ifTrue arm (1) or ifFalse(0).
-      Literals entry = Literal(int32_t(index));
-#if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "suspend if: " << entry << "\n";
-#endif
-      assert(currContinuation);
-      currContinuation->resumeInfo.push_back(entry);
+    auto suspend = [&]() {
+      // To return to the same place when we resume, we stash the condition,
+      // then just use it below.
+      pushResumeInfoEntry({Literal(int32_t(condition))});
     };
-    waka
     if (resuming) {
-      assert(currContinuation);
-      assert(!currContinuation->resumeInfo.empty());
-      auto entry = currContinuation->resumeInfo.back();
-#if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "resume block: " << entry << "\n";
-#endif
-      currContinuation->resumeInfo.pop_back();
-      assert(entry.size() == 2);
-      Index stackIndex = entry[0].geti32();
-      blockIndex = entry[1].geti32();
-      assert(stack.size() > stackIndex);
-      stack.resize(stackIndex + 1);
+      auto entry = popResumeInfoEntry();
+      assert(entry.size() == 1);
+      condition = entry[0].geti32();
     }
-*/
 
-    if (flow.getSingleValue().geti32()) {
-      Flow flow = visit(curr->ifTrue);
-      if (!flow.breaking() && !curr->ifFalse) {
-        flow = Flow(); // if_else returns a value, but if does not
+    if (condition) {
+      flow = visit(curr->ifTrue);
+    } else {
+      if (curr->ifFalse) {
+        flow = visit(curr->ifFalse);
+      } else {
+        flow = Flow();
       }
+    }
+    if (flow.suspendTag) {
+      suspend();
       return flow;
     }
-    if (curr->ifFalse) {
-      return visit(curr->ifFalse);
-    }
-    return Flow();
+    return flow;
   }
   Flow visitLoop(Loop* curr) {
     // NB: No special support is need for suspend/resume.
