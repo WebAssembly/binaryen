@@ -4530,16 +4530,16 @@ public:
     if (!self()->currContinuation) {
       trap("no continuation to suspend");
     }
+    // Copy the continuation (the old one cannot be resumed again) and add stack
+    // info so it can be restored from here.
     auto old = self()->currContinuation;
-    self()->currContinuation.reset();
-    // Copy the continuation, and add stack info so it can be restored from
-    // here.
-    auto contData = std::make_shared<ContData>(old->func, old->type);
-    contData->resumeExpr = curr;
+    auto new_ = std::make_shared<ContData>(old->func, old->type);
+    self()->currContinuation = new_;
+    new_->resumeExpr = curr;
     // TODO: save the call stack!
     // TODO: save the valueStack!
     // TODO: save the locals on the function stacks!
-    arguments.push_back(Literal(contData));
+    arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
