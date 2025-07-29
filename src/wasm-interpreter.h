@@ -315,11 +315,13 @@ public:
     if (!ret.breaking()) {
       Type type = ret.getType();
       if (type.isConcrete() || curr->type.isConcrete()) {
+#ifndef NDEBUG
         if (!Type::isSubType(type, curr->type)) {
           Fatal() << "expected " << ModuleType(*module, curr->type)
                   << ", seeing " << ModuleType(*module, type) << " from\n"
                   << ModuleExpression(*module, curr) << '\n';
         }
+#endif
       }
       if (valueStack) {
         valueStack->push_back(ret.values);
@@ -4761,11 +4763,13 @@ public:
       // be breaking, which would mean we missed our stop.
       assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
 
+#ifndef NDEBUG
       // In normal execution, the result is the expected one.
       if (!Type::isSubType(type, *resultType)) {
         Fatal() << "calling " << name << " resulted in " << type
                 << " but the function type is " << *resultType << '\n';
       }
+#endif
     }
 
     return flow;
