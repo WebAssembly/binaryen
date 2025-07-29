@@ -32,7 +32,7 @@ namespace wasm {
 // In general, it is preferable not to use this class and to directly access the
 // children (using e.g. iff->ifTrue etc.), as that is faster. However, in cases
 // where speed does not matter, this can be convenient. TODO: reimplement these
-// to avoid materializing all the chilren at once.
+// to avoid materializing all the children at once.
 //
 //   ChildIterator - Iterates over all children
 //
