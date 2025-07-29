@@ -3410,6 +3410,9 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "(calling " << target << ")\n";
+#endif
     Flow ret = callFunction(target, arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
@@ -3443,6 +3446,9 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "(calling table)\n";
+#endif
     Flow ret = info.interface()->callTable(
       info.name, index, curr->heapType, arguments, curr->type, *self());
 #if WASM_INTERPRETER_DEBUG
@@ -3474,6 +3480,9 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
+#if WASM_INTERPRETER_DEBUG
+    std::cout << self()->indent() << "(calling ref " << targetRef.getFunc() << ")\n";
+#endif
     Flow ret = callFunction(targetRef.getFunc(), arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
@@ -4552,7 +4561,12 @@ public:
     contData->executed = true;
     Name func = contData->func;
     self()->currContinuation = contData;
-    self()->resuming = true;
+    if (contData->resumeExpr) {
+      // There is an expression to resume execution at, so this is not the first
+      // time we run this function. Mark us as resuming, until we reach that
+      // expression.
+      self()->resuming = true;
+    }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
@@ -4572,6 +4586,7 @@ public:
           // Asyncify, need to save funcref.
           ret.suspendTag = Name();
           ret.breakTo = curr->handlerBlocks[i];
+          self()->currContinuation.reset();
           return ret;
         }
       }
@@ -4661,10 +4676,10 @@ public:
       FunctionScope scope(function, arguments, *self());
 
 #if WASM_INTERPRETER_DEBUG
-      std::cout << self()->indent() << "entering " << function->name
-                << "\n  with arguments:\n";
+      std::cout << self()->indent() << "entering " << function->name << '\n'
+                << self()->indent() << " with arguments:\n";
       for (unsigned i = 0; i < arguments.size(); ++i) {
-        std::cout << "    $" << i << ": " << arguments[i] << '\n';
+        std::cout << self()->indent() <<"  $" << i << ": " << arguments[i] << '\n';
       }
 #endif
 
