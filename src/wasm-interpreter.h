@@ -344,9 +344,10 @@ public:
             // every control flow structure handles itself in its visit*().
             if (!isControlFlow) {
               // Some of its children may have executed, and
-              // we have values stashed for them (see below where we suspend). Get
-              // those values, and populate || so that when visit() is called on
-              // them, we can return those values rather than run them.
+              // we have values stashed for them (see below where we suspend).
+              // Get those values, and populate || so that when visit() is
+              // called on them, we can return those values rather than run
+              // them.
               auto numEntry = popResumeInfoEntry();
               assert(numEntry.size() == 1);
               auto num = numEntry[0].geti32();
@@ -360,19 +361,20 @@ public:
                 auto value = popResumeInfoEntry();
                 restoredValuesMap[child] = value;
               }
-              // We are ready to return the right values for the children, and can
-              // visit this instruction.
+              // We are ready to return the right values for the children, and
+              // can visit this instruction.
             }
             ret = OverriddenVisitor<SubType, Flow>::visit(curr);
           }
         }
 
         if (!isControlFlow && ret.suspendTag) {
-          // We are suspending a continuation. We have stashed values at the back
-          // of valueStack, and we can save those for when we resume, together
-          // with the number of such values, so we know how many children to
-          // process. We put one entry for each value, plus their number.
-          // TODO: 
+          // We are suspending a continuation. We have stashed values at the
+          // back of valueStack, and we can save those for when we resume,
+          // together with the number of such values, so we know how many
+          // children to process. We put one entry for each value, plus their
+          // number.
+          // TODO:
           assert(!valueStack.empty());
           auto& values = valueStack.back();
           auto num = values.size();
@@ -380,7 +382,7 @@ public:
             pushResumeInfoEntry(values.back()); // TODO: std::move?
             values.pop_back();
           }
-          pushResumeInfoEntry({Literal(int32_t(num))});        
+          pushResumeInfoEntry({Literal(int32_t(num))});
         }
       }
       // Outside the scope of StackValueNoter, we can handle stashing our own
