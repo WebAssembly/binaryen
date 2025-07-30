@@ -447,14 +447,10 @@ public:
       // value for our parent (whose values are now at the top of |valueStack|).
       // We do so when not suspending (suspending is handled above), and when
       // there is a concrete value.
-      if (!ret.suspendTag) {
-        // We are not suspending. But we might suspend later, so stash our
-        // return value on the valueStack.
-        if (ret.getType().isConcrete()) {
-          assert(!valueStack.empty());
-          auto& values = valueStack.back();
-          values.push_back(ret.values);
-        }
+      if (!ret.suspendTag && ret.getType().isConcrete()) {
+        assert(!valueStack.empty());
+        auto& values = valueStack.back();
+        values.push_back(ret.values);
       }
     }
 
