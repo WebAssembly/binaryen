@@ -383,7 +383,8 @@ public:
         StackValueNoter noter(this); // no need with conrolf low
 
         if (!resuming) {
-          // Normal execution.
+          // Normal execution (but while maintaining |valueStack|, thanks to
+          // the StackValueNoter).
           ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         } else {
           // We are resuming code. Perhaps we have a restored value for it,
