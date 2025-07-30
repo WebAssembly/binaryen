@@ -333,7 +333,8 @@ protected:
   void pushResumeEntry(const Literals& entry, const char* what) {
     assert(currContinuation);
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "push resume entry [" << what << "]: " << entry << "\n";
+    std::cout << indent() << "push resume entry [" << what << "]: " << entry
+              << "\n";
 #endif
     currContinuation->resumeInfo.push_back(entry);
   }
@@ -345,7 +346,8 @@ protected:
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "pop resume entry [" << what << "]: " << entry << "\n";
+    std::cout << indent() << "pop resume entry [" << what << "]: " << entry
+              << "\n";
 #endif
     return entry;
   }
