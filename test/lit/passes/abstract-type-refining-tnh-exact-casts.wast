@@ -710,7 +710,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-on-cast-nullable-desc-fail-effec (type $3) (param $ref anyref) (result anyref)
+  ;; CHECK:      (func $br-on-cast-nullable-desc-fail-effect (type $3) (param $ref anyref) (result anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 (ref null (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:  (block $l (result anyref)
@@ -733,7 +733,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-on-cast-nullable-desc-fail-effec (param $ref anyref) (result anyref)
+  (func $br-on-cast-nullable-desc-fail-effect (param $ref anyref) (result anyref)
     (block $l (result anyref)
       ;; Same, but with side effects we cannot drop.
       (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
