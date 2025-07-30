@@ -4780,14 +4780,10 @@ public:
       FunctionScope scope(function, arguments, *self());
 
       if (self()->resuming) {
-        // Restore the local state (see below for the ordering).
-        assert(self()->currContinuation);
-        auto& resumeInfo = self()->currContinuation->resumeInfo;
+        // Restore the local state (see below for the ordering, we push/pop).
         for (Index i = 0; i < scope.locals.size(); i++) {
-          assert(!resumeInfo.empty());
           auto l = scope.locals.size() - 1 - i;
-          scope.locals[l] = resumeInfo.back();
-          resumeInfo.pop_back();
+          scope.locals[l] = self()->popResumeEntry();
           // Must have restored valid data.
           assert(Type::isSubType(scope.locals[l].getType(),
                                  function->getLocalType(l)));
@@ -4812,9 +4808,8 @@ public:
 
       if (flow.suspendTag) {
         // Save the local state.
-        assert(self()->currContinuation);
         for (auto& local : scope.locals) {
-          self()->currContinuation->resumeInfo.push_back(local);
+          self()->pushResumeEntry(local);
         }
       }
 
