@@ -478,7 +478,6 @@
     )
   )
 
-
   (func $trinary
     ;; Suspend in one of the arms.
     (call $log
@@ -546,6 +545,34 @@
   (func $run-trinary (export "run-trinary")
     (call $run
       (cont.new $k (ref.func $trinary))
+    )
+  )
+
+  (func $multi-locals
+    (local $i32 i32)
+    (local $f64 f64)
+    (local.set $i32 (i32.const 42))
+    (local.set $f64 (f64.const 3.14159))
+    (suspend $more)
+    (call $log
+      (local.get $i32)
+    )
+    (call $log
+      (i32.trunc_f64_s
+        (local.get $f64)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-multi-locals
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-multi-locals (export "run-multi-locals")
+    (call $run
+      (cont.new $k (ref.func $multi-locals))
     )
   )
 )
