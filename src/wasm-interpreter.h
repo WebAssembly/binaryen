@@ -236,6 +236,24 @@ protected:
   // that we have seen.
   std::vector<std::vector<Literals>> valueStack;
 
+  // RAII class that adds noting of stack values in a scope.
+  struct StackValueNoter { // StackScope?
+    ExpressionRunner* parent;
+
+    StackValueNoter(ExpressionRunner* parent) : parent(parent) {
+      parent->valueStack.emplace_back();
+    }
+
+    ~StackValueNoter() {
+      assert(!parent->valueStack.empty());
+      parent->valueStack.pop_back();
+    }
+  };
+
+  // When we resume, we wil this map with children whose values were saved when
+  // we suspended. We apply them as we resume.
+  std::unordered_map<Expression*, Literals> restoredValuesMap;
+
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
     std::string ret;
@@ -276,25 +294,6 @@ protected:
 #endif
     return entry;
   }
-
-public: // where?
-  // RAII class that adds noting of stack values in a scope.
-  class StackValueNoter { // StackScope?
-    ExpressionRunner* parent;
-
-    StackValueNoter(ExpressionRunner* parent) : parent(parent) {
-      parent->valueStack.emplace_back();
-    }
-
-    ~StackValueNoter() {
-      assert(!parent->valueStack.empty());
-      parent->valueStack.pop_back();
-    }
-  };
-
-  // When we resume, we wil this map with children whose values were saved when
-  // we suspended. We apply them as we resume.
-  std::unordered_map<Expression*, Literals> restoredValuesMap;
 
 public:
   ExpressionRunner(Module* module = nullptr,
