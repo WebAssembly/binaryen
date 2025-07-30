@@ -1,3 +1,4 @@
+#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -327,48 +328,49 @@ public:
       // can save them if we do suspend.
       StackValueNoter noter(this);
 
-      if (!resuming) {
+      if (!resuming || Properties::isControlFlowStructure(curr)) {
+        // Normal execution, or resuming but this is a control flow structure
+        // (and every control flow structure handles itself).
         ret = OverriddenVisitor<SubType, Flow>::visit(curr);
       } else {
-        // We are resuming code.
-        if (Properties::isControlFlowStructure(curr)) {
-          // Each control flow structure knows how to handle itself.
-          ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-        } else if (curr->is<Suspend>()) {
-          // This is a resume, so we have found our way back to where we
-          // suspended.
-          assert(curr == currContinuation->resumeExpr);
-          // We finished resuming, and will continue from here normally.
-          resuming = false;
-          // We should have consumed all the resumeInfo and all the
-          // restoredValues map.
-          assert(currContinuation->resumeInfo.empty());
-          assert(restoredValuesMap.empty());
+        // We are resuming code. Perhaps we have a restored value for it,
+        // which we should then just return.
+        auto iter = restoredValuesMap.find(curr);
+        if (iter != restoredValuesMap.end()) {
+          ret = iter->second;
+          restoredValuesMap.erase(iter);
         } else {
-          // Some other instruction. Perhaps we have a restored value for it,
-          // which we should then just return.
-          auto iter = restoredValuesMap.find(curr);
-          if (iter != restoredValuesMap.end()) {
-            ret = iter->second;
-            restoredValuesMap.erase(iter);
-          } else {
-            // Some of its children may have executed, and
-            // we have values stashed for them (see below where we suspend). Get
-            // those values, and populate || so that when visit() is called on
-            // them, we can return those values rather than run them.
-            auto numEntry = popResumeInfoEntry();
-            assert(numEntry.size() == 1);
-            auto num = numEntry[0].geti32();
-            for (auto* child : ChildIterator(curr)) {
-              if (num == 0) {
-                // We have restored all the children that executed (any others
-                // were not suspended, and we have no values for them).
-                break;
-              }
-              num--;
-              auto value = popResumeInfoEntry();
-              restoredValuesMap[child] = value;
+          // Some of its children may have executed, and
+          // we have values stashed for them (see below where we suspend). Get
+          // those values, and populate || so that when visit() is called on
+          // them, we can return those values rather than run them.
+          auto numEntry = popResumeInfoEntry();
+          assert(numEntry.size() == 1);
+          auto num = numEntry[0].geti32();
+          for (auto* child : ChildIterator(curr)) {
+            if (num == 0) {
+              // We have restored all the children that executed (any others
+              // were not suspended, and we have no values for them).
+              break;
             }
+            num--;
+            auto value = popResumeInfoEntry();
+            restoredValuesMap[child] = value;
+          }
+          // We are ready to return the right values for the children, and can
+          // visit this instruction.
+          if (curr->is<Suspend>()) { // TODO move into visitSuspend?
+            // This is a resume, so we have found our way back to where we
+            // suspended.
+            assert(curr == currContinuation->resumeExpr);
+            // We finished resuming, and will continue from here normally.
+            resuming = false;
+            // We should have consumed all the resumeInfo and all the
+            // restoredValues map.
+            assert(currContinuation->resumeInfo.empty());
+            assert(restoredValuesMap.empty());
+          } else {
+            ret = OverriddenVisitor<SubType, Flow>::visit(curr);
           }
         }
       }
