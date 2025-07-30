@@ -369,12 +369,11 @@ public:
       hostLimit("interpreter recursion limit");
     }
 
-    // Save and restore the value stack around each call: once the visit
-    // completes, all values have been consumed, and nothing needs to be
-    // saved.
+    // Execute the instruction.
     Flow ret;
     if (!currContinuation) {
-      // We cannot suspend/resume. Just execute normally
+      // We are not in a continuation, so we cannot suspend/resume. Just execute
+      // normally.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     } else {
       // We may suspend/resume. To support that, note values on the stack, so we
