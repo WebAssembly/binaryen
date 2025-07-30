@@ -376,58 +376,62 @@ public:
       // normally.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     } else {
-      // We may suspend/resume. To support that, note values on the stack, so we
-      // can save them if we do suspend.
-      auto isControlFlow = Properties::isControlFlowStructure(curr);
-      {
+      // We may suspend/resume.
+      bool hasValue = false;
+      if (resuming) {
+        // Perhaps we have a known value to just apply here.
+        auto iter = restoredValuesMap.find(curr);
+        if (iter != restoredValuesMap.end()) {
+          ret = iter->second;
+          restoredValuesMap.erase(iter);
+          hasValue = true;
+        }
+      }
+      if (!hasValue) {
+        // We must execute this instruction - either we are not resuming, or we
+        // are resuming but only some of our children executed). While we run,
+        // note values on the stack, so we can save them if we suspend.
         StackValueNoter noter(this); // no need with conrolf low
 
+        auto isControlFlow = Properties::isControlFlowStructure(curr);
+
         if (!resuming) {
-          // Normal execution (but while maintaining |valueStack|, thanks to
-          // the StackValueNoter).
+          // Normal execution (but while noting values on the stack, as
+          // mentioned above).
           ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         } else {
-          // We are resuming code. Perhaps we have a restored value for it,
-          // which we should then just return.
-          auto iter = restoredValuesMap.find(curr);
-          if (iter != restoredValuesMap.end()) {
-            ret = iter->second;
-            restoredValuesMap.erase(iter);
-          } else {
-            // every control flow structure handles itself in its visit*().
-            if (!isControlFlow) {
-              // Some of its children may have executed, and
-              // we have values stashed for them (see below where we suspend).
-              // Get those values, and populate || so that when visit() is
-              // called on them, we can return those values rather than run
-              // them.
-              auto numEntry = popResumeEntry();
-              assert(numEntry.size() == 1);
-              auto num = numEntry[0].geti32();
-              for (auto* child : ChildIterator(curr)) {
-                if (num == 0) {
-                  // We have restored all the children that executed (any others
-                  // were not suspended, and we have no values for them).
-                  break;
-                }
-                num--;
-                auto value = popResumeEntry();
-                restoredValuesMap[child] = value;
+          // We are resuming. Every control flow structure has its own logic for
+          // that, and here we handle all other instructions.
+          if (!isControlFlow) {
+            // Some children may have executed, and we have values stashed for
+            // them (see below where we suspend). Get those values, and populate
+            // |restoredValuesMap| so that when visit() is called on them, we
+            // can return those values rather than run them.
+            auto numEntry = popResumeEntry();
+            assert(numEntry.size() == 1);
+            auto num = numEntry[0].geti32();
+            for (auto* child : ChildIterator(curr)) {
+              if (num == 0) {
+                // We have restored all the children that executed (any others
+                // were not suspended, and we have no values for them).
+                break;
               }
-              // We are ready to return the right values for the children, and
-              // can visit this instruction.
+              num--;
+              auto value = popResumeEntry();
+              restoredValuesMap[child] = value;
             }
-            ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+            // We are ready to return the right values for the children, and
+            // can visit this instruction.
           }
+          // We can now run the instruction, whether it is control flow or not.
+          ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         }
 
         if (!isControlFlow && ret.suspendTag) {
-          // We are suspending a continuation. We have stashed values at the
-          // back of valueStack, and we can save those for when we resume,
-          // together with the number of such values, so we know how many
-          // children to process. We put one entry for each value, plus their
-          // number.
-          // TODO:
+          // We are suspending a continuation. Control flow structures handled
+          // this already, and we do so here for all other instructions. All we
+          // need to do is stash the values of executed children from the
+          // value stack. We also stash the number of such children.
           assert(!valueStack.empty());
           auto& values = valueStack.back();
           auto num = values.size();
@@ -438,8 +442,11 @@ public:
           pushResumeEntry({Literal(int32_t(num))});
         }
       }
+
       // Outside the scope of StackValueNoter, we can handle stashing our own
-      // value for our parent (whose values are at the top of valueStack.
+      // value for our parent (whose values are now at the top of |valueStack|).
+      // We do so when not suspending (suspending is handled above), and when
+      // there is a concrete value.
       if (!ret.suspendTag) {
         // We are not suspending. But we might suspend later, so stash our
         // return value on the valueStack.
