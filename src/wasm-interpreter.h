@@ -152,8 +152,25 @@ public:
 // are rare, and it is acceptable for them to be less efficient.
 //
 // Key parts of this support:
-//   * ContData is the key data structure that represents continuations. Each
+//   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
+//   * Inside the interpreter itself:
+//     * |currContinuation| is the continuation we are currently executing, if
+//       any.
+//     * |resuming| is set when we are in the special "resuming" mode mentioned
+//       above.
+//     * When we suspend, everything on the stack will save the necessary info
+//       to recreate itself later during resume. That is done by calling
+//       |pushResumeEntry|, which saves info on the continuation, and which is
+//       read during resume using |popResumeEntry|.
+//     * |valueStack| preserves values on the stack, so that we can save them
+//       later if we suspend.
+//     * When we resume, the old |valuesStack| is converted into
+//       |restoredValuesMap|. When a visit() sees that we have a value to
+//       restore, it simply returns it.
+//     * The main suspend/resume logic is in |visit|. That handles everything
+//       except for control flow structure-specific handling, which is done in
+//       |visitIf| etc. (each such structure handles itself).
 // ...
 
 struct ContData {
@@ -305,7 +322,7 @@ protected:
   // will be cleared.
   bool resuming = false;
 
-  void pushResumeInfoEntry(const Literals& entry) {
+  void pushResumeEntry(const Literals& entry) {
     assert(currContinuation);
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push resume entry: " << entry << "\n";
@@ -313,7 +330,7 @@ protected:
     currContinuation->resumeInfo.push_back(entry);
   }
 
-  Literals popResumeInfoEntry() {
+  Literals popResumeEntry() {
     assert(currContinuation);
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
@@ -376,7 +393,7 @@ public:
               // Get those values, and populate || so that when visit() is
               // called on them, we can return those values rather than run
               // them.
-              auto numEntry = popResumeInfoEntry();
+              auto numEntry = popResumeEntry();
               assert(numEntry.size() == 1);
               auto num = numEntry[0].geti32();
               for (auto* child : ChildIterator(curr)) {
@@ -386,7 +403,7 @@ public:
                   break;
                 }
                 num--;
-                auto value = popResumeInfoEntry();
+                auto value = popResumeEntry();
                 restoredValuesMap[child] = value;
               }
               // We are ready to return the right values for the children, and
@@ -407,10 +424,10 @@ public:
           auto& values = valueStack.back();
           auto num = values.size();
           while (!values.empty()) {
-            pushResumeInfoEntry(values.back()); // TODO: std::move?
+            pushResumeEntry(values.back()); // TODO: std::move?
             values.pop_back();
           }
-          pushResumeInfoEntry({Literal(int32_t(num))});
+          pushResumeEntry({Literal(int32_t(num))});
         }
       }
       // Outside the scope of StackValueNoter, we can handle stashing our own
@@ -466,11 +483,11 @@ public:
       // in the block.
       entry.push_back(Literal(uint32_t(stack.size())));
       entry.push_back(Literal(uint32_t(blockIndex)));
-      pushResumeInfoEntry(entry);
+      pushResumeEntry(entry);
     };
     Index blockIndex = 0;
     if (resuming) {
-      auto entry = popResumeInfoEntry();
+      auto entry = popResumeEntry();
       assert(entry.size() == 2);
       Index stackIndex = entry[0].geti32();
       blockIndex = entry[1].geti32();
@@ -515,11 +532,11 @@ public:
       //   0 - suspended in the condition
       //   1 - suspended in the ifTrue arm
       //   2 - suspended in the ifFalse arm
-      pushResumeInfoEntry({Literal(int32_t(resumeIndex))});
+      pushResumeEntry({Literal(int32_t(resumeIndex))});
     };
     Index resumeIndex = -1;
     if (resuming) {
-      auto entry = popResumeInfoEntry();
+      auto entry = popResumeEntry();
       assert(entry.size() == 1);
       resumeIndex = entry[0].geti32();
     }
