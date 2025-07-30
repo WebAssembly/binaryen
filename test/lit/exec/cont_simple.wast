@@ -245,5 +245,40 @@
       (cont.new $k (ref.func $if-condition))
     )
   )
+
+  ;; Check that we properly stash things on the value stack.
+  (func $value-stack
+    ;; Suspend on the left.
+    (call $log
+      (i32.sub
+        (block (result i32)
+          (suspend $more)
+          (i32.const 0)
+        )
+        (i32.const 1)
+      )
+    )
+    ;; On the right.
+    (call $log
+      (i32.sub
+        (i32.const 0)
+        (block (result i32)
+          (suspend $more)
+          (i32.const 2)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-value-stack
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-value-stack (export "run-value-stack")
+    (call $run
+      (cont.new $k (ref.func $value-stack))
+    )
+  )
 )
 
