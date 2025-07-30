@@ -4606,12 +4606,11 @@ public:
     if (funcFlow.breaking()) {
       return funcFlow;
     }
+    // Create a new continuation for the target function.
     Name func = funcFlow.getSingleValue().getFunc();
-    // Create a fresh continuation.
     return Literal(std::make_shared<ContData>(func, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
-
   Flow visitSuspend(Suspend* curr) {
     if (self()->resuming) {
       // This is a resume, so we have found our way back to where we
@@ -4626,26 +4625,28 @@ public:
       return Flow();
     }
 
+    // We were not resuming, so this is a new suspend that we must execute.
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
 
-    // Generate a continuation to proceed from here, and add it as another
-    // value. The name of the function at the bottom of the stack is in
-    // currContinuation.
     if (!self()->currContinuation) {
       trap("no continuation to suspend");
     }
-    // Copy the continuation (the old one cannot be resumed again) and add stack
-    // info so it can be restored from here.
+    // Copy the continuation (the old one cannot be resumed again).
     auto old = self()->currContinuation;
+    assert(old->executed);
     auto new_ = std::make_shared<ContData>(old->func, old->type);
+    // Switch to the new continuation, so that as we unwind, we will save the
+    // information we need to resume it later in the proper place.
     self()->currContinuation = new_;
+    // We will resume from this precise spot, when the new continuation is
+    // resumed.
     new_->resumeExpr = curr;
-    // TODO: save the call stack! (call, call_indirect, call_ref)
-    // TODO: add a suspend/resume fuzzer (plant suspends in code using pass?)
+    // Add the new continuation as a final value, which is the form that Resume
+    // will emit.
     arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
@@ -4687,10 +4688,8 @@ public:
         auto handlerTag = curr->handlerTags[i];
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching, and keep sending the
-          // same values (which include the tag values + a new continuation at
-          // the end, so we have nothing to add here). // TODO: doc on Flow
-          // TODO: callTable is tricky, as table might change, so like in
-          // Asyncify, need to save funcref.
+          // same values (which already includes the values + the continuation,
+          // see Suspend, so we have nothing to add here.
           ret.suspendTag = Name();
           ret.breakTo = curr->handlerBlocks[i];
           self()->currContinuation.reset();
