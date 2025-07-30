@@ -290,9 +290,10 @@ protected:
   // We save the value stack, so that we can stash it if we suspend. Normally,
   // each instruction just calls visit() on its children, so the values are
   // saved in those local stack frames in an efficient manner, but also we
-  // cannot scan those stack frames efficiently. Also saving those values in
-  // this location does not add significant overhead, and it is trivial to use
-  // when suspending.
+  // cannot scan those stack frames efficiently. Saving those values in
+  // this location (in addition to the normal place) does not add significant
+  // overhead (and we skip it entirely when not in a coroutine), and it is
+  // trivial to use when suspending.
   //
   // Each entry here is for an instruction in the stack of executing
   // expressions, and contains all the values from its children that we have
@@ -388,8 +389,8 @@ public:
         }
       }
       if (!hasValue) {
-        // We must execute this instruction - either we are not resuming, or we
-        // are resuming but only some of our children executed). While we run,
+        // We must execute this instruction: Either we are not resuming, or we
+        // are resuming but only some of our children executed. While we run,
         // note values on the stack, so we can save them if we suspend.
         StackValueNoter noter(this); // no need with conrolf low
 
