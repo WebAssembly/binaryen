@@ -359,19 +359,7 @@ public:
           }
           // We are ready to return the right values for the children, and can
           // visit this instruction.
-          if (curr->is<Suspend>()) { // TODO move into visitSuspend?
-            // This is a resume, so we have found our way back to where we
-            // suspended.
-            assert(curr == currContinuation->resumeExpr);
-            // We finished resuming, and will continue from here normally.
-            resuming = false;
-            // We should have consumed all the resumeInfo and all the
-            // restoredValues map.
-            assert(currContinuation->resumeInfo.empty());
-            assert(restoredValuesMap.empty());
-          } else {
-            ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-          }
+          ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         }
       }
 
@@ -4552,6 +4540,19 @@ public:
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
 
   Flow visitSuspend(Suspend* curr) {
+    if (self()->resuming) {
+      // This is a resume, so we have found our way back to where we
+      // suspended.
+      assert(curr == self()->currContinuation->resumeExpr);
+      // We finished resuming, and will continue from here normally.
+      self()->resuming = false;
+      // We should have consumed all the resumeInfo and all the
+      // restoredValues map.
+      assert(self()->currContinuation->resumeInfo.empty());
+      assert(self()->restoredValuesMap.empty());
+      return Flow();
+    }
+
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
