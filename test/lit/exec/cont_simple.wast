@@ -477,8 +477,75 @@
       (cont.new $k (ref.func $nested-binary))
     )
   )
+
+
+  (func $trinary
+    ;; Suspend in one of the arms.
+    (call $log
+      (select
+        (block (result i32)
+          (suspend $more)
+          (i32.const 1)
+        )
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+    (call $log
+      (select
+        (i32.const 4)
+        (block (result i32)
+          (suspend $more)
+          (i32.const 5)
+        )
+        (i32.const 6)
+      )
+    )
+    (call $log
+      (select
+        (i32.const 7)
+        (i32.const 8)
+        (block (result i32)
+          (suspend $more)
+          (i32.const 9)
+        )
+      )
+    )
+    ;; Suspend in them all.
+    (call $log
+      (select
+        (block (result i32)
+          (suspend $more)
+          (i32.const 10)
+        )
+        (block (result i32)
+          (suspend $more)
+          (i32.const 11)
+        )
+        (block (result i32)
+          (suspend $more)
+          (i32.const 12)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-trinary
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 4]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 7]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 10]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-trinary (export "run-trinary")
+    (call $run
+      (cont.new $k (ref.func $trinary))
+    )
+  )
 )
-
-    ;; TODO other test for nested
-    ;; TODO other test for select (trinary
-
