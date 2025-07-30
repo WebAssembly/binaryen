@@ -251,7 +251,7 @@
     ;; Suspend on the left. No value is actually saved on the stack, as we
     ;; resume before we execute the right side.
     (call $log
-      (i32.sub
+      (i32.sub               ;; 1 - 2 => -1
         (block (result i32)
           (suspend $more)
           (i32.const 1)
@@ -259,9 +259,9 @@
         (i32.const 2)
       )
     )
-    ;; On the right. Now
+    ;; On the right. Now we save the 2 when we suspend.
     (call $log
-      (i32.sub
+      (i32.sub               ;; 2 - 4 => -2
         (i32.const 2)
         (block (result i32)
           (suspend $more)
@@ -269,9 +269,9 @@
         )
       )
     )
-    ;; Both sides
+    ;; Both sides suspend.
     (call $log
-      (i32.sub
+      (i32.sub               ;; 3 - 6 => -3
         (block (result i32)
           (suspend $more)
           (i32.const 3)
