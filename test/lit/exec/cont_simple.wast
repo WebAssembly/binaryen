@@ -282,8 +282,6 @@
         )
       )
     )
-    ;; TODO other test for nested
-    ;; TODO other test for select (trinary)
   )
 
   ;; CHECK:      [fuzz-exec] calling run-value-stack
@@ -301,5 +299,62 @@
       (cont.new $k (ref.func $value-stack))
     )
   )
+
+  (func $nested-unary
+    ;; Suspend at the top.
+    (call $log
+      (i32.eqz
+        (i32.eqz
+          (i32.eqz
+            (block (result i32)
+              (suspend $more)
+              (i32.const 1)
+            )
+          )
+        )
+      )
+    )
+    ;; Suspend everywhere.
+    (call $log
+      (block (result i32)
+        (suspend $more)
+        (i32.eqz
+          (block (result i32)
+            (suspend $more)
+            (i32.eqz
+              (block (result i32)
+                (suspend $more)
+                (i32.eqz
+                  (block (result i32)
+                    (suspend $more)
+                    (i32.const 0)
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-nested-unary
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-nested-unary (export "run-nested-unary")
+    (call $run
+      (cont.new $k (ref.func $nested-unary))
+    )
+  )
 )
+
+    ;; TODO other test for nested
+    ;; TODO other test for select (trinary), and unary
 
