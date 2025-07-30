@@ -4835,7 +4835,9 @@ public:
       // We are no longer returning out of that function (but the value
       // remains the same).
       flow.breakTo = Name();
-    } else if (flow.breakTo != SUSPEND_FLOW) {
+    }
+
+    if (flow.breakTo != SUSPEND_FLOW) {
       // We are normally executing (not suspending), and therefore cannot still
       // be breaking, which would mean we missed our stop.
       assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
