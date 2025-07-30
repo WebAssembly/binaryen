@@ -1,4 +1,4 @@
-//#define WASM_INTERPRETER_DEBUG 1
+#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -326,12 +326,12 @@ public:
     } else {
       // We may suspend/resume. To support that, note values on the stack, so we
       // can save them if we do suspend.
-      auto isControlFlow = false;
+      auto isControlFlow = Properties::isControlFlowStructure(curr);
       {
         StackValueNoter noter(this); // no need with conrolf low
 
         if (!resuming) {
-          // Normal execution, or resuming but this is a control flow structure
+          // Normal execution.
           ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         } else {
           // We are resuming code. Perhaps we have a restored value for it,
@@ -341,8 +341,8 @@ public:
             ret = iter->second;
             restoredValuesMap.erase(iter);
           } else {
-            // every control flow structure handles itself
-            if (!Properties::isControlFlowStructure(curr)) {
+            // every control flow structure handles itself in its visit*().
+            if (!isControlFlow) {
               // Some of its children may have executed, and
               // we have values stashed for them (see below where we suspend). Get
               // those values, and populate || so that when visit() is called on
@@ -385,7 +385,7 @@ public:
       }
       // Outside the scope of StackValueNoter, we can handle stashing our own
       // value for our parent (whose values are at the top of valueStack.
-      if (!isControlFlow && !ret.suspendTag) {
+      if (!ret.suspendTag) {
         // We are not suspending. But we might suspend later, so stash our
         // return value on the valueStack.
         if (ret.getType().isConcrete()) {
