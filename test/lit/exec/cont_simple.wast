@@ -404,6 +404,7 @@
   )
 
   (func $nested-binary
+    (local $temp i32)
     ;; Both sides suspend, in different places.
     (call $log ;; (2 + 1) - (4 + 2) => -3
       (i32.sub
@@ -427,27 +428,35 @@
         )
       )
     )
-    ;; Ditto, but with suspensions in other places, and add 1.
+    ;; Ditto, but with suspensions moved in the arms, and others on the
+    ;; outside. Also add 1.
     (call $log
-      (i32.sub
-        (block (result i32)
-          (suspend $more)
-          (i32.add
-            (block (result i32)
-              (i32.const 3)
-            )
-            (i32.const 1)
-          )
-        )
-        (block (result i32)
-          (i32.add
-            (i32.const 4)
+      (block (result i32)
+        (suspend $more)
+        (local.set $temp
+          (i32.sub
             (block (result i32)
               (suspend $more)
-              (i32.const 2)
+              (i32.add
+                (block (result i32)
+                  (i32.const 3)
+                )
+                (i32.const 1)
+              )
+            )
+            (block (result i32)
+              (i32.add
+                (i32.const 4)
+                (block (result i32)
+                  (suspend $more)
+                  (i32.const 2)
+                )
+              )
             )
           )
         )
+        (suspend $more)
+        (local.get $temp)
       )
     )
   )
@@ -457,6 +466,8 @@
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
