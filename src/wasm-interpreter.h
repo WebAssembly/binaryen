@@ -1,4 +1,4 @@
-#define WASM_INTERPRETER_DEBUG 1
+//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -326,13 +326,12 @@ public:
     } else {
       // We may suspend/resume. To support that, note values on the stack, so we
       // can save them if we do suspend.
-      auto isControlFlow = Properties::isControlFlowStructure(curr);
+      auto isControlFlow = false;
       {
-        StackValueNoter noter(this);
+        StackValueNoter noter(this); // no need with conrolf low
 
-        if (!resuming || isControlFlow) {
+        if (!resuming) {
           // Normal execution, or resuming but this is a control flow structure
-          // (and every control flow structure handles itself).
           ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         } else {
           // We are resuming code. Perhaps we have a restored value for it,
@@ -342,25 +341,28 @@ public:
             ret = iter->second;
             restoredValuesMap.erase(iter);
           } else {
-            // Some of its children may have executed, and
-            // we have values stashed for them (see below where we suspend). Get
-            // those values, and populate || so that when visit() is called on
-            // them, we can return those values rather than run them.
-            auto numEntry = popResumeInfoEntry();
-            assert(numEntry.size() == 1);
-            auto num = numEntry[0].geti32();
-            for (auto* child : ChildIterator(curr)) {
-              if (num == 0) {
-                // We have restored all the children that executed (any others
-                // were not suspended, and we have no values for them).
-                break;
+            // every control flow structure handles itself
+            if (!Properties::isControlFlowStructure(curr)) {
+              // Some of its children may have executed, and
+              // we have values stashed for them (see below where we suspend). Get
+              // those values, and populate || so that when visit() is called on
+              // them, we can return those values rather than run them.
+              auto numEntry = popResumeInfoEntry();
+              assert(numEntry.size() == 1);
+              auto num = numEntry[0].geti32();
+              for (auto* child : ChildIterator(curr)) {
+                if (num == 0) {
+                  // We have restored all the children that executed (any others
+                  // were not suspended, and we have no values for them).
+                  break;
+                }
+                num--;
+                auto value = popResumeInfoEntry();
+                restoredValuesMap[child] = value;
               }
-              num--;
-              auto value = popResumeInfoEntry();
-              restoredValuesMap[child] = value;
+              // We are ready to return the right values for the children, and can
+              // visit this instruction.
             }
-            // We are ready to return the right values for the children, and can
-            // visit this instruction.
             ret = OverriddenVisitor<SubType, Flow>::visit(curr);
           }
         }
