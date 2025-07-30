@@ -111,6 +111,7 @@ unfuzzable = [
     'precompute-stack-switching.wast',
     'unsubtyping-stack-switching.wast',
     'vacuum-stack-switching.wast',
+    'cont.wast',
     'cont_simple.wast',
     # TODO: fuzzer support for custom descriptors
     'remove-unused-module-elements-refs-descriptors.wast',
