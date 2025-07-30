@@ -134,7 +134,7 @@
 
   ;; YESTNH:      (func $cast-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
   ;; YESTNH-NEXT:  (local.set $2
   ;; YESTNH-NEXT:   (block (result anyref)
   ;; YESTNH-NEXT:    (call $effect)
@@ -142,11 +142,9 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (local.set $3
-  ;; YESTNH-NEXT:   (ref.as_non_null
-  ;; YESTNH-NEXT:    (block (result (ref null $desc))
-  ;; YESTNH-NEXT:     (call $effect)
-  ;; YESTNH-NEXT:     (local.get $desc)
-  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   (block (result (ref null $desc))
+  ;; YESTNH-NEXT:    (call $effect)
+  ;; YESTNH-NEXT:    (local.get $desc)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (ref.cast nullref
@@ -327,7 +325,7 @@
 
   ;; YESTNH:      (func $branch-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
   ;; YESTNH-NEXT:  (block $block (result nullref)
   ;; YESTNH-NEXT:   (drop
   ;; YESTNH-NEXT:    (block (result (ref any))
@@ -338,11 +336,9 @@
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (local.set $3
-  ;; YESTNH-NEXT:      (ref.as_non_null
-  ;; YESTNH-NEXT:       (block (result (ref null $desc))
-  ;; YESTNH-NEXT:        (call $effect)
-  ;; YESTNH-NEXT:        (local.get $desc)
-  ;; YESTNH-NEXT:       )
+  ;; YESTNH-NEXT:      (block (result (ref null $desc))
+  ;; YESTNH-NEXT:       (call $effect)
+  ;; YESTNH-NEXT:       (local.get $desc)
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (br_on_cast $block anyref nullref
@@ -602,7 +598,7 @@
 
   ;; YESTNH:      (func $branch-fail-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block $block (result (ref any))
   ;; YESTNH-NEXT:    (return
@@ -614,11 +610,9 @@
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (local.set $3
-  ;; YESTNH-NEXT:       (ref.as_non_null
-  ;; YESTNH-NEXT:        (block (result (ref null $desc))
-  ;; YESTNH-NEXT:         (call $effect)
-  ;; YESTNH-NEXT:         (local.get $desc)
-  ;; YESTNH-NEXT:        )
+  ;; YESTNH-NEXT:       (block (result (ref null $desc))
+  ;; YESTNH-NEXT:        (call $effect)
+  ;; YESTNH-NEXT:        (local.get $desc)
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (br_on_cast_fail $block anyref nullref
