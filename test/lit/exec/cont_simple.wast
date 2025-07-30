@@ -402,8 +402,46 @@
       (cont.new $k (ref.func $nested-unary-more))
     )
   )
+
+  (func $nested-binary
+    ;; Both sides suspend, in different places.
+    (call $log ;; (2 + 1) - (4 + 2) => -3
+      (i32.sub
+        (block (result i32)
+          (i32.add
+            (block (result i32)
+              (suspend $more)
+              (i32.const 2)
+            )
+            (i32.const 1)
+          )
+        )
+        (block (result i32)
+          (suspend $more)
+          (i32.add
+            (i32.const 4)
+            (block (result i32)
+              (i32.const 2)
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-nested-binary
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-nested-binary (export "run-nested-binary")
+    (call $run
+      (cont.new $k (ref.func $nested-binary))
+    )
+  )
 )
 
     ;; TODO other test for nested
-    ;; TODO other test for select (trinary), and unary
+    ;; TODO other test for select (trinary
 
