@@ -330,22 +330,22 @@ protected:
 
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
-  void pushResumeEntry(const Literals& entry) {
+  void pushResumeEntry(const Literals& entry, const char* what) {
     assert(currContinuation);
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "push resume entry: " << entry << "\n";
+    std::cout << indent() << "push resume entry [" << what << "]: " << entry << "\n";
 #endif
     currContinuation->resumeInfo.push_back(entry);
   }
 
   // Fetch an entry as we resume. Instructions call this as we rewind.
-  Literals popResumeEntry() {
+  Literals popResumeEntry(const char* what) {
     assert(currContinuation);
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "pop resume entry: " << entry << "\n";
+    std::cout << indent() << "pop resume entry [" << what << "]: " << entry << "\n";
 #endif
     return entry;
   }
@@ -380,7 +380,8 @@ public:
       // We may suspend/resume.
       bool hasValue = false;
       if (resuming) {
-        // Perhaps we have a known value to just apply here.
+        // Perhaps we have a known value to just apply here, without executing
+        // the instruction.
         auto iter = restoredValuesMap.find(curr);
         if (iter != restoredValuesMap.end()) {
           ret = iter->second;
@@ -389,26 +390,24 @@ public:
         }
       }
       if (!hasValue) {
-        // We must execute this instruction: Either we are not resuming, or we
-        // are resuming but only some of our children executed. While we run,
-        // note values on the stack, so we can save them if we suspend.
-        StackValueNoter noter(this); // no need with conrolf low
+        // We must execute this instruction. Set up the logic to note the values
+        // of children (we mainly need this for non-control flow structures,
+        // but even control flow ones must add a scope on the value stack, to
+        // not confuse the others).
+        StackValueNoter noter(this);
 
-        auto isControlFlow = Properties::isControlFlowStructure(curr);
-
-        if (!resuming) {
-          // Normal execution (but while noting values on the stack, as
-          // mentioned above).
+        if (Properties::isControlFlowStructure(curr)) {
+          // Control flow structures have their own logic for suspend/resume.
           ret = OverriddenVisitor<SubType, Flow>::visit(curr);
         } else {
-          // We are resuming. Every control flow structure has its own logic for
-          // that, and here we handle all other instructions.
-          if (!isControlFlow) {
+          // A general non-control-flow instruction, with generic suspend/
+          // resume support implemented here.
+          if (resuming) {
             // Some children may have executed, and we have values stashed for
             // them (see below where we suspend). Get those values, and populate
             // |restoredValuesMap| so that when visit() is called on them, we
             // can return those values rather than run them.
-            auto numEntry = popResumeEntry();
+            auto numEntry = popResumeEntry("num executed children");
             assert(numEntry.size() == 1);
             auto num = numEntry[0].geti32();
             for (auto* child : ChildIterator(curr)) {
@@ -418,29 +417,30 @@ public:
                 break;
               }
               num--;
-              auto value = popResumeEntry();
+              auto value = popResumeEntry("child value");
               restoredValuesMap[child] = value;
             }
-            // We are ready to return the right values for the children, and
-            // can visit this instruction.
           }
-          // We can now run the instruction, whether it is control flow or not.
-          ret = OverriddenVisitor<SubType, Flow>::visit(curr);
-        }
 
-        if (!isControlFlow && ret.suspendTag) {
-          // We are suspending a continuation. Control flow structures handled
-          // this already, and we do so here for all other instructions. All we
-          // need to do is stash the values of executed children from the
-          // value stack. We also stash the number of such children.
-          assert(!valueStack.empty());
-          auto& values = valueStack.back();
-          auto num = values.size();
-          while (!values.empty()) {
-            pushResumeEntry(values.back()); // TODO: std::move?
-            values.pop_back();
+          // We are ready to return the right values for the children, and
+          // can visit this instruction.
+          ret = OverriddenVisitor<SubType, Flow>::visit(curr);
+
+          if (ret.suspendTag) {
+            // We are suspending a continuation. All we need to do for a
+            // general instruction is stash the values of executed children
+            // from the value stack, and their number (as we may have
+            // suspended after executing only some).
+            assert(!valueStack.empty());
+            auto& values = valueStack.back();
+            auto num = values.size();
+            while (!values.empty()) {
+              // TODO: std::move, &elsewhere?
+              pushResumeEntry(values.back(), "child value");
+              values.pop_back();
+            }
+            pushResumeEntry({Literal(int32_t(num))}, "num executed children");
           }
-          pushResumeEntry({Literal(int32_t(num))});
         }
       }
 
@@ -452,6 +452,9 @@ public:
         assert(!valueStack.empty());
         auto& values = valueStack.back();
         values.push_back(ret.values);
+#if WASM_INTERPRETER_DEBUG
+        std::cout << indent() << "added to valueStack: " << ret.values << '\n';
+#endif
       }
     }
 
@@ -495,11 +498,11 @@ public:
       // in the block.
       entry.push_back(Literal(uint32_t(stack.size())));
       entry.push_back(Literal(uint32_t(blockIndex)));
-      pushResumeEntry(entry);
+      pushResumeEntry(entry, "block");
     };
     Index blockIndex = 0;
     if (resuming) {
-      auto entry = popResumeEntry();
+      auto entry = popResumeEntry("block");
       assert(entry.size() == 2);
       Index stackIndex = entry[0].geti32();
       blockIndex = entry[1].geti32();
@@ -544,11 +547,11 @@ public:
       //   0 - suspended in the condition
       //   1 - suspended in the ifTrue arm
       //   2 - suspended in the ifFalse arm
-      pushResumeEntry({Literal(int32_t(resumeIndex))});
+      pushResumeEntry({Literal(int32_t(resumeIndex))}, "if");
     };
     Index resumeIndex = -1;
     if (resuming) {
-      auto entry = popResumeEntry();
+      auto entry = popResumeEntry("if");
       assert(entry.size() == 1);
       resumeIndex = entry[0].geti32();
     }
@@ -4782,7 +4785,7 @@ public:
         // Restore the local state (see below for the ordering, we push/pop).
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
-          scope.locals[l] = self()->popResumeEntry();
+          scope.locals[l] = self()->popResumeEntry("function");
           // Must have restored valid data.
           assert(Type::isSubType(scope.locals[l].getType(),
                                  function->getLocalType(l)));
@@ -4808,7 +4811,7 @@ public:
       if (flow.suspendTag) {
         // Save the local state.
         for (auto& local : scope.locals) {
-          self()->pushResumeEntry(local);
+          self()->pushResumeEntry(local, "function");
         }
       }
 

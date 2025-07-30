@@ -21,7 +21,6 @@
         (call $log (i32.const 300)) ;; stop
         (return)
       )
-      ;; on
       (call $log (i32.const 200)) ;; continue
       (local.set $k)
       (br $loop)
