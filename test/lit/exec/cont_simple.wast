@@ -248,26 +248,42 @@
 
   ;; Check that we properly stash things on the value stack.
   (func $value-stack
-    ;; Suspend on the left.
+    ;; Suspend on the left. No value is actually saved on the stack, as we
+    ;; resume before we execute the right side.
     (call $log
       (i32.sub
         (block (result i32)
           (suspend $more)
-          (i32.const 0)
+          (i32.const 1)
         )
-        (i32.const 1)
+        (i32.const 2)
       )
     )
-    ;; On the right.
+    ;; On the right. Now
     (call $log
       (i32.sub
-        (i32.const 0)
+        (i32.const 2)
         (block (result i32)
           (suspend $more)
-          (i32.const 2)
+          (i32.const 4)
         )
       )
     )
+    ;; Both sides
+    (call $log
+      (i32.sub
+        (block (result i32)
+          (suspend $more)
+          (i32.const 3)
+        )
+        (block (result i32)
+          (suspend $more)
+          (i32.const 6)
+        )
+      )
+    )
+    ;; TODO other test for nested
+    ;; TODO other test for select (trinary)
   )
 
   ;; CHECK:      [fuzz-exec] calling run-value-stack
