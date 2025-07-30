@@ -19,6 +19,9 @@
   ;; CHECK:      (import "" "" (func $effect (type $5)))
   (import "" "" (func $effect))
 
+  ;; CHECK:      (global $nullable-desc (ref null (exact $uninstantiated.desc)) (ref.null none))
+  (global $nullable-desc (ref null (exact $uninstantiated.desc)) (ref.null none))
+
   ;; CHECK:      (global $instantiated (ref $instantiated) (struct.new_default $instantiated
   ;; CHECK-NEXT:  (struct.new_default $instantiated.desc)
   ;; CHECK-NEXT: ))
@@ -197,9 +200,8 @@
     ;; we don't need to add a null check on it.
     (ref.cast_desc (ref (exact $uninstantiated))
       (local.get $ref)
-      (block (result (ref null (exact $uninstantiated.desc)))
-        (struct.new $uninstantiated.desc)
-      )
+      (global.get $nullable-desc)
+
     )
   )
 
@@ -213,9 +215,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (block (result (ref (exact $uninstantiated.desc)))
+  ;; CHECK-NEXT:   (block (result (ref null (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:    (call $effect)
-  ;; CHECK-NEXT:    (struct.new_default $uninstantiated.desc)
+  ;; CHECK-NEXT:    (global.get $nullable-desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.cast (ref none)
@@ -231,7 +233,7 @@
       )
       (block (result (ref null (exact $uninstantiated.desc)))
         (call $effect)
-        (struct.new $uninstantiated.desc)
+        (global.get $nullable-desc)
       )
     )
   )
@@ -449,9 +451,7 @@
       ;; we don't need to add a null check on it.
       (br_on_cast_desc $l anyref (ref (exact $uninstantiated))
         (local.get $ref)
-        (block (result (ref null (exact $uninstantiated.desc)))
-          (struct.new $uninstantiated.desc)
-        )
+        (global.get $nullable-desc)
       )
     )
   )
@@ -468,9 +468,9 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (block (result (ref (exact $uninstantiated.desc)))
+  ;; CHECK-NEXT:     (block (result (ref null (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:      (call $effect)
-  ;; CHECK-NEXT:      (struct.new_default $uninstantiated.desc)
+  ;; CHECK-NEXT:      (global.get $nullable-desc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br_on_cast $l anyref (ref none)
@@ -489,7 +489,7 @@
         )
         (block (result (ref null (exact $uninstantiated.desc)))
           (call $effect)
-          (struct.new $uninstantiated.desc)
+          (global.get $nullable-desc)
         )
       )
     )
@@ -703,9 +703,7 @@
       ;; we don't need to add a null check on it.
       (br_on_cast_desc_fail $l anyref (ref (exact $uninstantiated))
         (local.get $ref)
-        (block (result (ref null (exact $uninstantiated.desc)))
-          (struct.new $uninstantiated.desc)
-        )
+        (global.get $nullable-desc)
       )
     )
   )
@@ -722,9 +720,9 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (block (result (ref (exact $uninstantiated.desc)))
+  ;; CHECK-NEXT:     (block (result (ref null (exact $uninstantiated.desc)))
   ;; CHECK-NEXT:      (call $effect)
-  ;; CHECK-NEXT:      (struct.new_default $uninstantiated.desc)
+  ;; CHECK-NEXT:      (global.get $nullable-desc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (br_on_cast_fail $l anyref (ref none)
@@ -743,7 +741,7 @@
         )
         (block (result (ref null (exact $uninstantiated.desc)))
           (call $effect)
-          (struct.new $uninstantiated.desc)
+          (global.get $nullable-desc)
         )
       )
     )
