@@ -4645,9 +4645,6 @@ public:
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    // Add the new continuation as a final value, which is the form that Resume
-    // will emit.
-    arguments.push_back(Literal(new_));
     return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
@@ -4687,11 +4684,12 @@ public:
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto handlerTag = curr->handlerTags[i];
         if (handlerTag == ret.suspendTag) {
-          // Switch the flow from suspending to branching, and keep sending the
-          // same values (which already includes the values + the continuation,
-          // see Suspend, so we have nothing to add here.
+          // Switch the flow from suspending to branching.
           ret.suspendTag = Name();
           ret.breakTo = curr->handlerBlocks[i];
+          // Add the continuation as the final value being sent.
+          ret.values.push_back(Literal(self()->currContinuation));
+          // We are not longer processing that continuation.
           self()->currContinuation.reset();
           return ret;
         }
@@ -4830,15 +4828,10 @@ public:
     }
 
     auto type = flow.getType();
-    if (flow.breakTo == SUSPEND_FLOW) {
-      // When suspending, the last value is a continuation.
-      assert(type.size() > 0);
-      assert(type[type.size() - 1].isContinuation());
-    } else {
+    if (flow.breakTo != SUSPEND_FLOW) {
       // We are normally executing (not suspending), and therefore cannot still
       // be breaking, which would mean we missed our stop.
       assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
-
 #ifndef NDEBUG
       // In normal execution, the result is the expected one.
       if (!Type::isSubType(type, *resultType)) {
