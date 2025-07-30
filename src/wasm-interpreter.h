@@ -328,7 +328,8 @@ public:
       // can save them if we do suspend.
       StackValueNoter noter(this);
 
-      if (!resuming || Properties::isControlFlowStructure(curr)) {
+      auto isControlFlow = Properties::isControlFlowStructure(curr);
+      if (!resuming || isControlFlow) {
         // Normal execution, or resuming but this is a control flow structure
         // (and every control flow structure handles itself).
         ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -363,7 +364,7 @@ public:
         }
       }
 
-      if (ret.suspendTag) {
+      if (ret.suspendTag && !isControlFlow) {
         assert(currContinuation);
         // We are suspending a continuation. We have stashed values at the back
         // of valueStack, and we can save those for when we resume, together
