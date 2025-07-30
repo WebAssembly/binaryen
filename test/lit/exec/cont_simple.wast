@@ -353,6 +353,55 @@
       (cont.new $k (ref.func $nested-unary))
     )
   )
+
+  (func $nested-unary-more
+    (local $temp i32)
+    ;; Suspend before and after each operation.
+    (call $log
+      (block (result i32)
+        (local.set $temp
+          (i32.eqz
+            (block (result i32)
+              (local.set $temp
+                (i32.eqz
+                  (block (result i32)
+                    (local.set $temp
+                      (i32.eqz
+                        (block (result i32)
+                          (i32.const 0)
+                          (suspend $more)
+                        )
+                      )
+                    )
+                    (suspend $more)
+                    (local.get $temp)
+                  )
+                )
+              )
+              (suspend $more)
+              (local.get $temp)
+            )
+          )
+        )
+        (suspend $more)
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-nested-unary-more
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-nested-unary-more (export "run-nested-unary-more")
+    (call $run
+      (cont.new $k (ref.func $nested-unary-more))
+    )
+  )
 )
 
     ;; TODO other test for nested
