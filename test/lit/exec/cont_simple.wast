@@ -427,6 +427,29 @@
         )
       )
     )
+    ;; Ditto, but with suspensions in other places, and add 1.
+    (call $log
+      (i32.sub
+        (block (result i32)
+          (suspend $more)
+          (i32.add
+            (block (result i32)
+              (i32.const 3)
+            )
+            (i32.const 1)
+          )
+        )
+        (block (result i32)
+          (i32.add
+            (i32.const 4)
+            (block (result i32)
+              (suspend $more)
+              (i32.const 2)
+            )
+          )
+        )
+      )
+    )
   )
 
   ;; CHECK:      [fuzz-exec] calling run-nested-binary
@@ -434,6 +457,9 @@
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-nested-binary (export "run-nested-binary")
     (call $run
