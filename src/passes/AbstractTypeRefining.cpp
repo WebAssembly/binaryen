@@ -436,7 +436,7 @@ struct AbstractTypeRefining : public Pass {
           return;
         }
         auto optimized = getOptimized(curr->desc->type);
-        if (!optimized || optimized->isBottom()) {
+        if (!optimized) {
           return;
         }
         // The descriptor type is not instantiated, so there is no way this

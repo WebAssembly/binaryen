@@ -940,7 +940,8 @@
 
 (module
   ;; Same, but now we're optimizing the descriptor to bottom, so we don't need
-  ;; to do any preoptimization to ensure validity.
+  ;; to do any preoptimization to ensure validity. We optimize anyway because
+  ;; we can.
   (rec
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
@@ -969,10 +970,10 @@
   (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
 
   ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default $struct
-  ;; YESTNH-NEXT:  (global.get $fake-desc)
+  ;; YESTNH-NEXT:  (ref.null none)
   ;; YESTNH-NEXT: ))
   ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default $struct
-  ;; NO_TNH-NEXT:  (global.get $fake-desc)
+  ;; NO_TNH-NEXT:  (ref.null none)
   ;; NO_TNH-NEXT: ))
   (global $impossible (ref $struct)
     (struct.new $struct
@@ -981,14 +982,10 @@
   )
 
   ;; YESTNH:      (func $impossible (type $2) (result (ref $struct))
-  ;; YESTNH-NEXT:  (struct.new_default $struct
-  ;; YESTNH-NEXT:   (global.get $fake-desc)
-  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $impossible (type $2) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (struct.new_default $struct
-  ;; NO_TNH-NEXT:   (global.get $fake-desc)
-  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $impossible (result (ref $struct))
     (struct.new $struct
@@ -997,20 +994,22 @@
   )
 
   ;; YESTNH:      (func $impossible-effect (type $2) (result (ref $struct))
-  ;; YESTNH-NEXT:  (struct.new_default $struct
+  ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block (result nullref)
   ;; YESTNH-NEXT:    (call $effect)
   ;; YESTNH-NEXT:    (global.get $fake-desc)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $impossible-effect (type $2) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (struct.new_default $struct
+  ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block (result nullref)
   ;; NO_TNH-NEXT:    (call $effect)
   ;; NO_TNH-NEXT:    (global.get $fake-desc)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $impossible-effect (result (ref $struct))
     (struct.new $struct
