@@ -1,4 +1,3 @@
-//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -16,9 +15,14 @@
  */
 
 //
-// Simple WebAssembly interpreter. This operates directly on the AST,
-// for simplicity and clarity. A goal is for it to be possible for
-// people to read this code and understand WebAssembly semantics.
+// Simple WebAssembly interpreter. This operates directly (in-place) on our IR,
+// and our IR is a structured form of Wasm, so this is similar to an AST
+// interpreter. Operating directly on our IR makes us efficient in the
+// Precompute pass, which tries to execute every bit of code.
+//
+// As a side benefit, interpreting the IR directly makes the code an easy way to
+// understand WebAssembly semantics (see e.g. visitLoop(), which is basically
+// just a simple loop).
 //
 
 #ifndef wasm_wasm_interpreter_h
@@ -126,8 +130,15 @@ public:
   }
 };
 
-// Suspend/resume support. The critical data is stored inside a continuation
-// Literal, using this data structure.
+// Suspend/resume support.
+//
+// As we are 
+//
+// Key parts of this support:
+//   * ContData is the key data structure that represents continuations. Each
+//     continuation Literal has a reference to one of these.
+// ...
+
 struct ContData {
   // The function this continuation begins in.
   // TODO: handle cross-module calls using something other than a Name here.
