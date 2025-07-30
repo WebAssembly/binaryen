@@ -132,7 +132,24 @@ public:
 
 // Suspend/resume support.
 //
-// As we are 
+// As we operate directly on our structured IR, we do not have a program counter
+// (bytecode offset to execute, or such), nor can we use continuation-passing
+// style. Instead, we implement suspending and resuming code in a parallel way
+// to how Asyncify does so, see src/passes/Asyncify.cpp (as well as
+// https://kripken.github.io/blog/wasm/2019/07/16/asyncify.html). That
+// transformation modifies wasm, while we are an interpreter that executes wasm,
+// but the shared idea is that to resume code we simply need to get to where we
+// were when we suspended, so we have a "resuming" mode in which we walk the IR
+// but do not execute normally. While resuming we basically re-wind the stack,
+// using data we stashed on the side while unwinding. For example, if we unwind
+// an If instruction then we note which arm of the If we unwound from, and then
+// when we re-wind we enter that proper arm, etc.
+//
+// This is not the most efficient way to pause and resume execution (a program
+// counter/goto would be much faster!) but this is very simple to implement in
+// our interpreter, and in a way that does not make the interpreter slower when
+// not pausing/resuming. As with Asyncify, the assumption is that pauses/resumes
+// are rare, and it is acceptable for them to be less efficient.
 //
 // Key parts of this support:
 //   * ContData is the key data structure that represents continuations. Each
