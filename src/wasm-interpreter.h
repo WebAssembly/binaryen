@@ -171,7 +171,6 @@ public:
 //     * The main suspend/resume logic is in |visit|. That handles everything
 //       except for control flow structure-specific handling, which is done in
 //       |visitIf| etc. (each such structure handles itself).
-// ...
 
 struct ContData {
   // The function this continuation begins in.
@@ -181,14 +180,15 @@ struct ContData {
   // The continuation type.
   HeapType type;
 
-  // The expression to resume execution at: where we suspended last, or, if this
-  // is the first execution, nullptr (which means to resume at the very start).
+  // The expression to resume execution at, which is where we suspended. Or, if
+  // we are just starting to execute this continuation, this is nullptr (and we
+  // will resume at the very start).
   Expression* resumeExpr = nullptr;
 
   // Information about how to resume execution, a list of instruction and data
   // that we "replay" into the value and call stacks. For convenience we split
   // this into separate entries, each one a Literals. Typically an instruction
-  // will emit a single Literals for itself.
+  // will emit a single Literals for itself, or possibly a few bundles.
   std::vector<Literals> resumeInfo;
 
   // Whether we executed. Continuations are one-shot, so they may not be
@@ -275,14 +275,20 @@ public:
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
-  // We save values from visit() until they are consumed, so that we can pause/
-  // resume. TODO: move into ModuleRunner, since we need FunctionState anyhow
-  // for locals?
-  // Each entry here is a scope, and contains all the values from children
-  // that we have seen.
+  // We save the value stack, so that we can stash it if we suspend. Normally,
+  // each instruction just calls visit() on its children, so the values are
+  // saved in those local stack frames in an efficient manner, but also we
+  // cannot scan those stack frames efficiently. Also saving those values in
+  // this location does not add significant overhead, and it is trivial to use
+  // when suspending.
+  //
+  // Each entry here is for an instruction in the stack of executing
+  // expressions, and contains all the values from its children that we have
+  // seen thus far.
   std::vector<std::vector<Literals>> valueStack;
 
-  // RAII class that adds noting of stack values in a scope.
+  // RAII helper for |valueStack|: Adds a scope for an instruction, and cleans
+  // it up after.
   struct StackValueNoter { // StackScope?
     ExpressionRunner* parent;
 
