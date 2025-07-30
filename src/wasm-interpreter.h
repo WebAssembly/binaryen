@@ -275,6 +275,18 @@ public:
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
+#if WASM_INTERPRETER_DEBUG
+  std::string indent() {
+    std::string ret;
+    for (Index i = 0; i < depth; i++) {
+      ret += ' ';
+    }
+    return ret;
+  }
+#endif
+
+  // Suspend/resume support.
+
   // We save the value stack, so that we can stash it if we suspend. Normally,
   // each instruction just calls visit() on its children, so the values are
   // saved in those local stack frames in an efficient manner, but also we
@@ -287,9 +299,9 @@ protected:
   // seen thus far.
   std::vector<std::vector<Literals>> valueStack;
 
-  // RAII helper for |valueStack|: Adds a scope for an instruction, and cleans
-  // it up after.
-  struct StackValueNoter { // StackScope?
+  // RAII helper for |valueStack|: Adds a scope for an instruction, where the
+  // values of its children will be saved, and cleans it up later.
+  struct StackValueNoter {
     ExpressionRunner* parent;
 
     StackValueNoter(ExpressionRunner* parent) : parent(parent) {
@@ -302,32 +314,21 @@ protected:
     }
   };
 
-  // When we resume, we wil this map with children whose values were saved when
-  // we suspended. We apply them as we resume.
+  // When we resume, we will apply the saved values from |valueStack| to this
+  // map, so we can "replay" them. Whenever visit() is asked to execute an
+  // expression that is in this map, then it will just return that value.
   std::unordered_map<Expression*, Literals> restoredValuesMap;
 
-#if WASM_INTERPRETER_DEBUG
-  std::string indent() {
-    std::string ret;
-    for (Index i = 0; i < depth; i++) {
-      ret += ' ';
-    }
-    return ret;
-  }
-#endif
-
-  // Suspend/resume support for continuations.
-  // TODO where?
-  // Currently-running continuation. TODO: stack?
+  // The current continuation (this is set when executing it, resuming it, and
+  // suspending it, that is, both when executing normally and when
+  // unwinding/rewinding the stack).
   std::shared_ptr<ContData> currContinuation;
 
   // Set when we are resuming execution, that is, re-winding the stack.
-  // |currContinuation| must be set when this is true, as that is the
-  // continuation we are resuming. When we finish re-winding and continue normal
-  // execution in the continutation, |currContinuation| remain set while this
-  // will be cleared.
   bool resuming = false;
 
+  // Add an entry to help us resume this continuation later. Instructions call
+  // this as we unwind.
   void pushResumeEntry(const Literals& entry) {
     assert(currContinuation);
 #if WASM_INTERPRETER_DEBUG
@@ -336,6 +337,7 @@ protected:
     currContinuation->resumeInfo.push_back(entry);
   }
 
+  // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry() {
     assert(currContinuation);
     assert(!currContinuation->resumeInfo.empty());
