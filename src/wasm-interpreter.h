@@ -302,7 +302,23 @@ protected:
   //
   // Each entry here is for an instruction in the stack of executing
   // expressions, and contains all the values from its children that we have
-  // seen thus far.
+  // seen thus far. In other words, the invariant we preserve is this: when an
+  // instruction executes, the top of the stack contains the values of its
+  // children, e.g.,
+  //
+  //  (i32.add (A) (B))
+  //
+  // After executing A and getting its value, valueStack looks like this:
+  //
+  //  [[..], ..scopes for parents of the add.., [..], [value of A]]
+  //                                                  ^^^^^^^^^^^^
+  //                                                  scope for the
+  //                                                  add, with one
+  //                                                  child so far
+  //
+  // Imagine that B then suspends. Then using the top of valueStack, we know the
+  // value of A, and can stash it. When we resume, we just apply that value, and
+  // proceed to execute B.
   std::vector<std::vector<Literals>> valueStack;
 
   // RAII helper for |valueStack|: Adds a scope for an instruction, where the
@@ -459,10 +475,11 @@ public:
         }
       }
 
-      // Outside the scope of StackValueNoter, we can handle stashing our own
-      // value for our parent (whose values are now at the top of |valueStack|).
-      // We do so when not suspending (suspending is handled above), and when
-      // there is a concrete value.
+      // Outside the scope of StackValueNoter, the scope of our own child values
+      // has been removed (we don't need those values any more). What is now on
+      // the top of |valueStack| is the list of child values of our parent,
+      // which is the place our own value can go, if we have one (and if we are
+      // not suspending - suspending is handled above).
       if (!ret.suspendTag && ret.getType().isConcrete()) {
         assert(!valueStack.empty());
         auto& values = valueStack.back();
