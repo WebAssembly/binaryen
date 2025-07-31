@@ -393,7 +393,8 @@ public:
         if (iter != restoredValuesMap.end()) {
           ret = iter->second;
 #if WASM_INTERPRETER_DEBUG
-          std::cout << indent() << "consume restored value: " << ret.values << '\n';
+          std::cout << indent() << "consume restored value: " << ret.values
+                    << '\n';
 #endif
           restoredValuesMap.erase(iter);
           hasValue = true;
@@ -430,7 +431,8 @@ public:
               auto value = popResumeEntry("child value");
               restoredValuesMap[child] = value;
 #if WASM_INTERPRETER_DEBUG
-              std::cout << indent() << "prepare restored value: " << value << '\n';
+              std::cout << indent() << "prepare restored value: " << value
+                        << '\n';
 #endif
             }
           }
