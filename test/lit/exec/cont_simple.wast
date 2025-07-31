@@ -6,6 +6,9 @@
   (type $f (func))
   (type $k (cont $f))
 
+  (type $f-i32 (func (result i32)))
+  (type $k-i32 (cont $f-i32))
+
   (import "fuzzing-support" "log" (func $log (param i32)))
 
   (tag $more)
@@ -574,45 +577,61 @@
       (cont.new $k (ref.func $multi-locals))
     )
   )
-)
 
-;; As above, but the coroutine returns an i32.
-;; CHECK:      [fuzz-exec] calling run-ret-i32
-;; CHECK-NEXT: [LoggingExternalInterface logging 100]
-;; CHECK-NEXT: [LoggingExternalInterface logging 300]
-;; CHECK-NEXT: [fuzz-exec] note result: run-ret-i32 => 42
-(module $state
-  (type $f (func (result i32)))
-  (type $k (cont $f))
-
-  (import "fuzzing-support" "log" (func $log (param i32)))
-
-  (tag $more)
-
-  (func $run-i32 (param $k (ref $k)) (result i32)
+  (func $run-i32 (param $k-i32 (ref $k-i32)) (result i32)
+    ;; As $run, but the coroutine returns an i32.
     (call $log (i32.const 100)) ;; start
     (loop $loop
-      (block $on (result (ref $k))
-        (resume $k (on $more $on)
-          (local.get $k)
+      (block $on (result (ref $k-i32))
+        (resume $k-i32 (on $more $on)
+          (local.get $k-i32)
         )
         (call $log (i32.const 300)) ;; stop
         (return)
       )
       (call $log (i32.const 200)) ;; continue
-      (local.set $k)
+      (local.set $k-i32)
       (br $loop)
     )
     (unreachable)
   )
 
   (func $ret-i32 (result i32)
+    ;; Just immediately return.
     (i32.const 42)
   )
 
+  ;; CHECK:      [fuzz-exec] calling run-ret-i32
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  ;; CHECK-NEXT: [fuzz-exec] note result: run-ret-i32 => 42
   (func $run-ret-i32 (export "run-ret-i32") (result i32)
     (call $run-i32
-      (cont.new $k (ref.func $ret-i32))
+      (cont.new $k-i32 (ref.func $ret-i32))
+    )
+  )
+
+  (func $pause-i32 (result i32)
+    (local $x i32)
+    ;; Pause before returning.
+    (local.set $x
+      (i32.const 1336)
+    )
+    (suspend $more)
+    (i32.add
+      (local.get $x)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-pause-i32
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  ;; CHECK-NEXT: [fuzz-exec] note result: run-pause-i32 => 1337
+  (func $run-pause-i32 (export "run-pause-i32") (result i32)
+    (call $run-i32
+      (cont.new $k-i32 (ref.func $pause-i32))
     )
   )
 )
