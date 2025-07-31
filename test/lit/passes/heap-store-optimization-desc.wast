@@ -52,22 +52,24 @@
   ;; CHECK:      (func $no-reorder-nested (type $3)
   ;; CHECK-NEXT:  (local $struct (ref $struct))
   ;; CHECK-NEXT:  (local.set $struct
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (block $block (result i32)
-  ;; CHECK-NEXT:     (call $effect)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.new_default $struct
   ;; CHECK-NEXT:    (struct.new_default $desc
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (call $effect)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-reorder-nested
     (local $struct (ref $struct))
     ;; As above, but now it is not the top-level allocation that traps, but
-    ;; rather its descriptor operand. We still cannot optimized.
+    ;; rather its descriptor operand. We still cannot optimize.
     (local.set $struct
       (struct.new_default $struct
         (struct.new $desc
