@@ -681,6 +681,15 @@
     (call $log (suspend $more-i32))
   )
 
+  ;; CHECK:      [fuzz-exec] calling run-param
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 2632]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-param (export "run-param")
     (call $run-get-i32
       (i32.const 42)

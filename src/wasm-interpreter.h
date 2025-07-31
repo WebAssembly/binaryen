@@ -192,6 +192,11 @@ struct ContData {
   // will emit a single Literals for itself, or possibly a few bundles.
   std::vector<Literals> resumeInfo;
 
+  // The arguments sent when resuming (on first execution these appear as
+  // parameters to the function; on later resumes, they are returned from the
+  // suspend).
+  Literals resumeArguments;
+
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
   bool executed = false;
@@ -4629,7 +4634,7 @@ public:
       // restoredValues map.
       assert(self()->currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      return Flow();
+      return self()->currContinuation->resumeArguments;
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
@@ -4671,6 +4676,7 @@ public:
       trap("continuation already executed");
     }
     contData->executed = true;
+    contData->resumeArguments = arguments;
     Name func = contData->func;
     self()->currContinuation = contData;
     if (contData->resumeExpr) {
@@ -4696,7 +4702,7 @@ public:
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
 #endif
     if (!ret.suspendTag) {
-      // No suspention: the coroutine finished normally. Mark it as no longer
+      // No suspension: the coroutine finished normally. Mark it as no longer
       // active.
       self()->currContinuation.reset();
     } else {
