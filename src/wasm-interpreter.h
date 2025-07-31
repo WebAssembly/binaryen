@@ -418,7 +418,7 @@ public:
                 // were not suspended, and we have no values for them).
                 break;
               }
-              num--;
+              --num;
               auto value = popResumeEntry("child value");
               restoredValuesMap[child] = value;
             }
