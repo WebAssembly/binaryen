@@ -4705,7 +4705,7 @@ public:
       return ret;
     }
     // No suspension; all done.
-    return Flow();
+    return ret;
   }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
