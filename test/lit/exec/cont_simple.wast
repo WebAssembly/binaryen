@@ -9,6 +9,9 @@
   (type $f-i32 (func (result i32)))
   (type $k-i32 (cont $f-i32))
 
+  (type $f-get-i32 (func (param i32)))
+  (type $k-get-i32 (cont $f-get-i32))
+
   (import "fuzzing-support" "log" (func $log (param i32)))
 
   (tag $more)
@@ -634,5 +637,42 @@
       (cont.new $k-i32 (ref.func $pause-i32))
     )
   )
-)
 
+  (func $run-get-i32 (param $x i32) (param $k-get-i32 (ref $k-get-i32))
+    ;; As $run, but the coroutine receives an i32.
+    (call $log (i32.const 100)) ;; start
+    (loop $loop
+      (block $on (result (ref $k-get-i32))
+        (resume $k-get-i32 (on $more $on)
+          (local.get $x)
+          (local.get $k-get-i32)
+        )
+        (call $log (i32.const 300)) ;; stop
+        (return)
+      )
+      (call $log (i32.const 200)) ;; continue
+      (local.set $k-get-i32)
+      (br $loop)
+    )
+    (unreachable)
+  )
+
+  (func $param (param $x i32)
+    (suspend $more)
+    (call $log (local.get $x))
+    (suspend $more)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-param
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-param (export "run-param")
+    (call $run-get-i32
+      (i32.const 42)
+      (cont.new $k-get-i32 (ref.func $param))
+    )
+  )
+)
