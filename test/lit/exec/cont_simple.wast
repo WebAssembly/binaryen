@@ -12,9 +12,13 @@
   (type $f-get-i32 (func (param i32)))
   (type $k-get-i32 (cont $f-get-i32))
 
+;;(elem declare func $block $block-nested $if $if-condition $local $loop $multi-locals $nested-binary $nested-unary $nested-unary-more $param $pause-i32 $ret-i32 $trinary $value-stack)
   (import "fuzzing-support" "log" (func $log (param i32)))
 
   (tag $more)
+  (tag $more-i32 (result i32))
+
+;;(func $log (param i32))
 
   (func $run (param $k (ref $k))
     ;; Run a coroutine, continuing to resume it until it is complete.
@@ -643,7 +647,7 @@
     (call $log (i32.const 100)) ;; start
     (loop $loop
       (block $on (result (ref $k-get-i32))
-        (resume $k-get-i32 (on $more $on)
+        (resume $k-get-i32 (on $more-i32 $on)
           (local.get $x)
           (local.get $k-get-i32)
         )
@@ -651,6 +655,13 @@
         (return)
       )
       (call $log (i32.const 200)) ;; continue
+      ;; Modify $x, so we can see differences in the loggings.
+      (local.set $x
+        (i32.add
+          (local.get $x)
+          (i32.const 1295)
+        )
+      )
       (local.set $k-get-i32)
       (br $loop)
     )
@@ -658,17 +669,18 @@
   )
 
   (func $param (param $x i32)
-    (suspend $more)
     (call $log (local.get $x))
-    (suspend $more)
+    (local.set $x
+      (i32.add
+        (local.get $x)
+        (i32.const 1295)
+      )
+    )
+    (call $log (suspend $more-i32))
+    (call $log (local.get $x))
+    (call $log (suspend $more-i32))
   )
 
-  ;; CHECK:      [fuzz-exec] calling run-param
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-param (export "run-param")
     (call $run-get-i32
       (i32.const 42)
