@@ -192,7 +192,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       return callImport(func, arguments);
     } else {
       auto flow = instance.callFunction(func->name, arguments);
-      assert(!flow.suspendTag);
+      assert(!flow.suspendTag); // TODO: support stack switching on calls
       return flow.values;
     }
   }
