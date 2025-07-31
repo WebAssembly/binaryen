@@ -1,3 +1,4 @@
+//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -4681,12 +4682,25 @@ public:
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
-    Flow ret = callFunction(func, arguments);
+    Flow ret;
+    {
+      // Create a stack value scope. This value will never be suspended - it is
+      // the value flowing out - but it is simpler to add this here, than to
+      // special-case in visit() the toplevel expression (i.e., that has no
+      // parent expression to add a stack value scope for it).
+      // TODO rename like FunctionScope, ExprScope?
+      typename ExpressionRunner<SubType>::StackValueNoter noter(this);
+      ret = callFunction(func, arguments);
+    }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
 #endif
-    if (ret.suspendTag) {
-      // See if a suspension arrived that we support.
+    if (!ret.suspendTag) {
+      // No suspention: the coroutine finished normally. Mark it as no longer
+      // active.
+      self()->currContinuation.reset();
+    } else {
+      // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto handlerTag = curr->handlerTags[i];
         if (handlerTag == ret.suspendTag) {
@@ -4701,10 +4715,9 @@ public:
         }
       }
       // No handler worked out, keep propagating.
-      return ret;
     }
     // No suspension; all done.
-    return Flow();
+    return ret;
   }
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }

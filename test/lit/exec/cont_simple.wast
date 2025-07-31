@@ -2,7 +2,7 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --fuzz-exec-before -q -o /dev/null 2>&1 | filecheck %s
 
-(module $state
+(module
   (type $f (func))
   (type $k (cont $f))
 
@@ -575,3 +575,45 @@
     )
   )
 )
+
+;; As above, but the coroutine returns an i32.
+;; CHECK:      [fuzz-exec] calling run-ret-i32
+;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+;; CHECK-NEXT: [fuzz-exec] note result: run-ret-i32 => 42
+(module $state
+  (type $f (func (result i32)))
+  (type $k (cont $f))
+
+  (import "fuzzing-support" "log" (func $log (param i32)))
+
+  (tag $more)
+
+  (func $run-i32 (param $k (ref $k)) (result i32)
+    (call $log (i32.const 100)) ;; start
+    (loop $loop
+      (block $on (result (ref $k))
+        (resume $k (on $more $on)
+          (local.get $k)
+        )
+        (call $log (i32.const 300)) ;; stop
+        (return)
+      )
+      (call $log (i32.const 200)) ;; continue
+      (local.set $k)
+      (br $loop)
+    )
+    (unreachable)
+  )
+
+  (func $ret-i32 (result i32)
+    (i32.const 42)
+  )
+
+  (func $run-ret-i32 (export "run-ret-i32") (result i32)
+    (call $run-i32
+      (cont.new $k (ref.func $ret-i32))
+    )
+  )
+)
+
