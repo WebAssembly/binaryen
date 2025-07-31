@@ -657,9 +657,9 @@
       (call $log (i32.const 200)) ;; continue
       ;; Modify $x, so we can see differences in the loggings.
       (local.set $x
-        (i32.add
+        (i32.sub
           (local.get $x)
-          (i32.const 1295)
+          (i32.const 1)
         )
       )
       (local.set $k-get-i32)
@@ -685,10 +685,10 @@
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 41]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 2632]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 40]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-param (export "run-param")
     (call $run-get-i32
