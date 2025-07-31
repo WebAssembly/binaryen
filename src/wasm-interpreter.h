@@ -1,4 +1,3 @@
-//#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -393,6 +392,9 @@ public:
         auto iter = restoredValuesMap.find(curr);
         if (iter != restoredValuesMap.end()) {
           ret = iter->second;
+#if WASM_INTERPRETER_DEBUG
+          std::cout << indent() << "consume restored value: " << ret.values << '\n';
+#endif
           restoredValuesMap.erase(iter);
           hasValue = true;
         }
@@ -427,6 +429,9 @@ public:
               num--;
               auto value = popResumeEntry("child value");
               restoredValuesMap[child] = value;
+#if WASM_INTERPRETER_DEBUG
+              std::cout << indent() << "prepare restored value: " << value << '\n';
+#endif
             }
           }
 
@@ -4624,6 +4629,15 @@ public:
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
+    // Process the arguments, whether or not we are resuming. If we are resuming
+    // then we don't need these values (we sent them as part of the suspension),
+    // but must still handle them, so we finish re-winding the stack.
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+
     if (self()->resuming) {
       // This is a resume, so we have found our way back to where we
       // suspended.
@@ -4638,11 +4652,6 @@ public:
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
-    Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
 
     if (!self()->currContinuation) {
       trap("no continuation to suspend");
