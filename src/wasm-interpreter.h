@@ -572,6 +572,7 @@ public:
     }
 
     Flow flow;
+    // The value of the if's condition (whether to take the ifTrue arm or not).
     Index condition;
 
     if (resuming && resumeIndex > 0) {
