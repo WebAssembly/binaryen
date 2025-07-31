@@ -474,7 +474,7 @@ struct ExecutionResults {
         arguments.push_back(Literal::makeZero(param));
       }
       auto flow = instance.callFunction(func->name, arguments);
-      if (flow.suspendTag) {
+      if (flow.suspendTag) { // TODO: support stack switching here
         std::cout << "[exception thrown: unhandled suspend]" << std::endl;
         return Exception{};
       }
