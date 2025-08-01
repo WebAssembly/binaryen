@@ -321,18 +321,16 @@ protected:
   // proceed to execute B.
   std::vector<std::vector<Literals>> valueStack;
 
-  // RAII scoping for expressions.
-  //
-  // This maintains |valueStack|, adding a scope for an instruction, where the
+  // RAII helper for |valueStack|: Adds a scope for an instruction, where the
   // values of its children will be saved, and cleans it up later.
-  struct ExpressionScope {
+  struct StackValueNoter {
     ExpressionRunner* parent;
 
-    ExpressionScope(ExpressionRunner* parent) : parent(parent) {
+    StackValueNoter(ExpressionRunner* parent) : parent(parent) {
       parent->valueStack.emplace_back();
     }
 
-    ~ExpressionScope() {
+    ~StackValueNoter() {
       assert(!parent->valueStack.empty());
       parent->valueStack.pop_back();
     }
@@ -423,7 +421,7 @@ public:
         // of children (we mainly need this for non-control flow structures,
         // but even control flow ones must add a scope on the value stack, to
         // not confuse the others).
-        ExpressionScope noter(this);
+        StackValueNoter noter(this);
 
         if (Properties::isControlFlowStructure(curr)) {
           // Control flow structures have their own logic for suspend/resume.
@@ -477,7 +475,7 @@ public:
         }
       }
 
-      // Outside the scope of ExpressionScope, the scope of our own child values
+      // Outside the scope of StackValueNoter, the scope of our own child values
       // has been removed (we don't need those values any more). What is now on
       // the top of |valueStack| is the list of child values of our parent,
       // which is the place our own value can go, if we have one (and if we are
@@ -4720,7 +4718,8 @@ public:
       // the value flowing out - but it is simpler to add this here, than to
       // special-case in visit() the toplevel expression (i.e., that has no
       // parent expression to add a stack value scope for it).
-      typename ExpressionRunner<SubType>::ExpressionScope noter(this);
+      // TODO rename like FunctionScope, ExprScope?
+      typename ExpressionRunner<SubType>::StackValueNoter noter(this);
       ret = callFunction(func, arguments);
     }
 #if WASM_INTERPRETER_DEBUG
@@ -4901,7 +4900,7 @@ public:
   }
 
   // The maximum call stack depth to evaluate into.
-  static const Index maxDepth = 200;
+  static const Index maxDepth = 250;
 
 protected:
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
