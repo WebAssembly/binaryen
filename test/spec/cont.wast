@@ -227,3 +227,55 @@
   (type $c2 (cont $f2))
 )
 
+;; Simple state example
+
+(module $state
+  (tag $get (result i32))
+  (tag $set (param i32) (result i32))
+
+  (type $f (func (param i32) (result i32)))
+  (type $k (cont $f))
+
+  (func $runner (param $s i32) (param $k (ref $k)) (result i32)
+    (loop $loop
+      (block $on_get (result (ref $k))
+        (block $on_set (result i32 (ref $k))
+          (resume $k (on $get $on_get) (on $set $on_set)
+            (local.get $s) (local.get $k)
+          )
+          (return)
+        )
+        ;; on set
+        (local.set $k)
+        (local.set $s)
+        (br $loop)
+      )
+      ;; on get
+      (local.set $k)
+      (br $loop)
+    )
+    (unreachable)
+  )
+
+  (func $f (param i32) (result i32)
+    (drop (suspend $set (i32.const 7)))
+    (i32.add
+      (suspend $get)
+      (i32.mul
+        (i32.const 2)
+        (i32.add
+          (suspend $set (i32.const 3))
+          (suspend $get)
+        )
+      )
+    )
+  )
+
+  (elem declare func $f)
+  (func (export "run") (result i32)
+    (call $runner (i32.const 0) (cont.new $k (ref.func $f)))
+  )
+)
+
+(assert_return (invoke "run") (i32.const 19))
+

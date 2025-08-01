@@ -2,13 +2,20 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --fuzz-exec-before -q -o /dev/null 2>&1 | filecheck %s
 
-(module $state
+(module
   (type $f (func))
   (type $k (cont $f))
+
+  (type $f-i32 (func (result i32)))
+  (type $k-i32 (cont $f-i32))
+
+  (type $f-get-i32 (func (param i32)))
+  (type $k-get-i32 (cont $f-get-i32))
 
   (import "fuzzing-support" "log" (func $log (param i32)))
 
   (tag $more)
+  (tag $more-i32 (result i32))
 
   (func $run (param $k (ref $k))
     ;; Run a coroutine, continuing to resume it until it is complete.
@@ -550,6 +557,118 @@
   (func $run-trinary (export "run-trinary")
     (call $run
       (cont.new $k (ref.func $trinary))
+    )
+  )
+
+  (func $run-i32 (param $k-i32 (ref $k-i32)) (result i32)
+    ;; As $run, but the coroutine returns an i32.
+    (call $log (i32.const 100)) ;; start
+    (loop $loop
+      (block $on (result (ref $k-i32))
+        (resume $k-i32 (on $more $on)
+          (local.get $k-i32)
+        )
+        (call $log (i32.const 300)) ;; stop
+        (return)
+      )
+      (call $log (i32.const 200)) ;; continue
+      (local.set $k-i32)
+      (br $loop)
+    )
+    (unreachable)
+  )
+
+  (func $ret-i32 (result i32)
+    ;; Just immediately return.
+    (i32.const 42)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-ret-i32
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  ;; CHECK-NEXT: [fuzz-exec] note result: run-ret-i32 => 42
+  (func $run-ret-i32 (export "run-ret-i32") (result i32)
+    (call $run-i32
+      (cont.new $k-i32 (ref.func $ret-i32))
+    )
+  )
+
+  (func $pause-i32 (result i32)
+    (local $x i32)
+    ;; Pause before returning.
+    (local.set $x
+      (i32.const 1336)
+    )
+    (suspend $more)
+    (i32.add
+      (local.get $x)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-pause-i32
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  ;; CHECK-NEXT: [fuzz-exec] note result: run-pause-i32 => 1337
+  (func $run-pause-i32 (export "run-pause-i32") (result i32)
+    (call $run-i32
+      (cont.new $k-i32 (ref.func $pause-i32))
+    )
+  )
+
+  (func $run-get-i32 (param $x i32) (param $k-get-i32 (ref $k-get-i32))
+    ;; As $run, but the coroutine receives an i32.
+    (call $log (i32.const 100)) ;; start
+    (loop $loop
+      (block $on (result (ref $k-get-i32))
+        (resume $k-get-i32 (on $more-i32 $on)
+          (local.get $x)
+          (local.get $k-get-i32)
+        )
+        (call $log (i32.const 300)) ;; stop
+        (return)
+      )
+      (call $log (i32.const 200)) ;; continue
+      ;; Modify $x, so we can see differences in the loggings.
+      (local.set $x
+        (i32.sub
+          (local.get $x)
+          (i32.const 1)
+        )
+      )
+      (local.set $k-get-i32)
+      (br $loop)
+    )
+    (unreachable)
+  )
+
+  (func $param (param $x i32)
+    (call $log (local.get $x))
+    (local.set $x
+      (i32.add
+        (local.get $x)
+        (i32.const 1295)
+      )
+    )
+    (call $log (suspend $more-i32))
+    (call $log (local.get $x))
+    (call $log (suspend $more-i32))
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-param
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 41]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 40]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-param (export "run-param")
+    (call $run-get-i32
+      (i32.const 42)
+      (cont.new $k-get-i32 (ref.func $param))
     )
   )
 )
