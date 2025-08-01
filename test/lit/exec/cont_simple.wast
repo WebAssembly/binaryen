@@ -739,20 +739,38 @@
   (func $call_indirect-child
     ;; When we resume the suspend below, the table entry will have null, but we
     ;; should still rewind the stack properly.
+    (call $log (i32.const -10))
+    (call $log
+      (ref.is_null
+        (table.get $table
+          (i32.const 7)
+        )
+      )
+    )
     (table.set $table
       (i32.const 7)
       (ref.null func)
     )
     (suspend $more)
-    (call $log (i32.const -10))
+    (call $log (i32.const -20))
+    (call $log
+      (ref.is_null
+        (table.get $table
+          (i32.const 7)
+        )
+      )
+    )
     (suspend $more)
   )
 
   ;; CHECK:      [fuzz-exec] calling run-call_indirect
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -10]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -20]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
