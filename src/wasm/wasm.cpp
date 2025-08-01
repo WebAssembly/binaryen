@@ -1530,6 +1530,7 @@ void Resume::finalize() {
   if (cont->type.isNull()) {
     // This will never be executed and the instruction will not be emitted.
     // Model this with an uninhabitable cast type.
+    // TODO: This is not quite right yet.
     type = cont->type.with(NonNullable);
     return;
   }
@@ -1551,6 +1552,7 @@ void ResumeThrow::finalize() {
   if (cont->type.isNull()) {
     // This will never be executed and the instruction will not be emitted.
     // Model this with an uninhabitable cast type.
+    // TODO: This is not quite right yet.
     type = cont->type.with(NonNullable);
     return;
   }
@@ -1572,6 +1574,7 @@ void StackSwitch::finalize() {
   if (cont->type.isNull()) {
     // This will never be executed and the instruction will not be emitted.
     // Model this with an uninhabitable cast type.
+    // TODO: This is not quite right yet.
     type = cont->type.with(NonNullable);
     return;
   }
