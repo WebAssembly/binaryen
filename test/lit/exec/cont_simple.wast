@@ -118,6 +118,34 @@
     )
   )
 
+  (func $multi-locals
+    (local $i32 i32)
+    (local $f64 f64)
+    (local.set $i32 (i32.const 42))
+    (local.set $f64 (f64.const 3.14159))
+    (suspend $more)
+    (call $log
+      (local.get $i32)
+    )
+    (call $log
+      (i32.trunc_f64_s
+        (local.get $f64)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-multi-locals
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-multi-locals (export "run-multi-locals")
+    (call $run
+      (cont.new $k (ref.func $multi-locals))
+    )
+  )
+
   ;; This loop should suspend 4 times and log 3, 2, 1, 0.
   (func $loop
     (local $x i32)
@@ -358,32 +386,14 @@
     ;; Suspend before and after each operation.
     (call $log
       (block (result i32)
-        (local.set $temp
-          (i32.eqz
-            (block (result i32)
-              (local.set $temp
-                (i32.eqz
-                  (block (result i32)
-                    (local.set $temp
-                      (i32.eqz
-                        (block (result i32)
-                          (i32.const 0)
-                          (suspend $more)
-                        )
-                      )
-                    )
-                    (suspend $more)
-                    (local.get $temp)
-                  )
-                )
-              )
-              (suspend $more)
-              (local.get $temp)
-            )
-          )
-        )
-        (suspend $more)
-        (local.get $temp)
+        i32.const 0
+        suspend $more
+        i32.eqz
+        suspend $more
+        i32.eqz
+        suspend $more
+        i32.eqz
+        suspend $more
       )
     )
   )
@@ -420,9 +430,7 @@
           (suspend $more)
           (i32.add
             (i32.const 4)
-            (block (result i32)
-              (i32.const 2)
-            )
+            (i32.const 2)
           )
         )
       )
@@ -437,9 +445,7 @@
             (block (result i32)
               (suspend $more)
               (i32.add
-                (block (result i32)
-                  (i32.const 3)
-                )
+                (i32.const 3)
                 (i32.const 1)
               )
             )
@@ -544,34 +550,6 @@
   (func $run-trinary (export "run-trinary")
     (call $run
       (cont.new $k (ref.func $trinary))
-    )
-  )
-
-  (func $multi-locals
-    (local $i32 i32)
-    (local $f64 f64)
-    (local.set $i32 (i32.const 42))
-    (local.set $f64 (f64.const 3.14159))
-    (suspend $more)
-    (call $log
-      (local.get $i32)
-    )
-    (call $log
-      (i32.trunc_f64_s
-        (local.get $f64)
-      )
-    )
-  )
-
-  ;; CHECK:      [fuzz-exec] calling run-multi-locals
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
-  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
-  (func $run-multi-locals (export "run-multi-locals")
-    (call $run
-      (cont.new $k (ref.func $multi-locals))
     )
   )
 )
