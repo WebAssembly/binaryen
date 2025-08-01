@@ -3574,7 +3574,7 @@ public:
     }
 
     auto* func = self()->getModule()->getFunction(funcref.getFunc());
-    if (!HeapType::isSubType(func->type, curr->type)) {
+    if (!HeapType::isSubType(func->type, curr->heapType)) {
       trap("callIndirect: non-subtype");
     }
 
