@@ -4718,7 +4718,6 @@ public:
       // the value flowing out - but it is simpler to add this here, than to
       // special-case in visit() the toplevel expression (i.e., that has no
       // parent expression to add a stack value scope for it).
-      // TODO rename like FunctionScope, ExprScope?
       typename ExpressionRunner<SubType>::StackValueNoter noter(this);
       ret = callFunction(func, arguments);
     }
@@ -4900,7 +4899,7 @@ public:
   }
 
   // The maximum call stack depth to evaluate into.
-  static const Index maxDepth = 250;
+  static const Index maxDepth = 200;
 
 protected:
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
