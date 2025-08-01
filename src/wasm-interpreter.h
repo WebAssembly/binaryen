@@ -174,8 +174,7 @@ public:
 
 struct ContData {
   // The function this continuation begins in.
-  // TODO: handle cross-module calls using something other than a Name here.
-  Name func;
+  Function* func;
 
   // The continuation type.
   HeapType type;
@@ -200,7 +199,7 @@ struct ContData {
   // executed a second time.
   bool executed = false;
 
-  ContData(Name func, HeapType type) : func(func), type(type) {}
+  ContData(Function* func, HeapType type) : func(func), type(type) {}
 };
 
 // Execute an expression
@@ -4667,7 +4666,8 @@ public:
       return funcFlow;
     }
     // Create a new continuation for the target function.
-    Name func = funcFlow.getSingleValue().getFunc();
+    Name funcName = funcFlow.getSingleValue().getFunc();
+    auto* func = self()->getModule()->getFunction(funcName);
     return Literal(std::make_shared<ContData>(func, curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
@@ -4702,7 +4702,7 @@ public:
     auto old = self()->currContinuation;
     assert(!old || old->executed);
     auto oldType = old ? old->type : HeapType::none;
-    auto new_ = std::make_shared<ContData>(old ? old->func : Name(), oldType);
+    auto new_ = std::make_shared<ContData>(old ? old->func : nullptr, oldType);
     if (old) {
       // Update the type.
       auto oldSig = oldType.getContinuation().type.getSignature();
@@ -4736,7 +4736,7 @@ public:
     }
     contData->executed = true;
     contData->resumeArguments = arguments;
-    Name func = contData->func;
+    auto func = contData->func;
     self()->currContinuation = contData;
     if (contData->resumeExpr) {
       // There is an expression to resume execution at, so this is not the first
@@ -4835,6 +4835,10 @@ public:
   }
 
   Flow callFunction(Name name, Literals arguments) {
+    return callFunction(self()->getModule()->getFunction(name), arguments);
+  }
+
+  Flow callFunction(Function* function, Literals arguments) {
     if (callDepth > maxDepth) {
       hostLimit("stack limit");
     }
@@ -4844,9 +4848,6 @@ public:
 
     // We may have to call multiple functions in the event of return calls.
     while (true) {
-      Function* function = wasm.getFunction(name);
-      assert(function);
-
       // Return calls can only make the result type more precise.
       if (resultType) {
         assert(Type::isSubType(function->getResults(), *resultType));
@@ -4901,9 +4902,10 @@ public:
       // There was a return call, so we need to call the next function before
       // returning to the caller. The flow carries the function arguments and a
       // function reference.
-      name = flow.values.back().getFunc();
+      auto nextName = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
+      function = self()->getModule()->getFunction(nextName);
     }
 
     if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
@@ -4924,7 +4926,7 @@ public:
       // In normal execution, the result is the expected one.
       auto type = flow.getType();
       if (!Type::isSubType(type, *resultType)) {
-        Fatal() << "calling " << name << " resulted in " << type
+        Fatal() << "calling " << function->name << " resulted in " << type
                 << " but the function type is " << *resultType << '\n';
       }
 #endif
