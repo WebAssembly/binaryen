@@ -327,7 +327,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     }
 
     // No segment had a value for this.
-    return Literal::null();
+    return Literal::makeNull(HeapTypes::func);
   }
 
   Index tableSize(Name tableName) override {
