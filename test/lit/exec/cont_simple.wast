@@ -671,4 +671,46 @@
       (cont.new $k-get-i32 (ref.func $param))
     )
   )
+
+  (func $calls
+    ;; Suspend before and after calling a child, who also suspends.
+    (suspend $more)
+    (call $calls-child (i32.const 41))
+    (suspend $more)
+    (call $calls-child (i32.const 1336))
+    (suspend $more)
+  )
+
+  (func $calls-child (param $x i32)
+    (suspend $more)
+    (local.set $x
+      (i32.add
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+    (suspend $more)
+    (call $log (local.get $x))
+    (suspend $more)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-calls
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-calls (export "run-calls")
+    (call $run
+      (cont.new $k (ref.func $calls))
+    )
+  )
 )
