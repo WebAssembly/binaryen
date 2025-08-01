@@ -748,6 +748,14 @@
     (suspend $more)
   )
 
+  ;; CHECK:      [fuzz-exec] calling run-call_indirect
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -10]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-call_indirect (export "run-call_indirect")
     (call $run
       (cont.new $k (ref.func $call_indirect))
