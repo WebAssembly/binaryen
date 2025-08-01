@@ -144,7 +144,9 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       std::cout << "exit()\n";
       throw ExitException();
     } else if (auto* inst = getImportInstance(import)) {
-      return inst->callExport(import->base, arguments);
+      auto flow = inst->callExport(import->base, arguments);
+      assert(!flow.suspendTag); // TODO: support stack switching on calls
+      return flow.values;
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;
@@ -191,7 +193,9 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     if (func->imported()) {
       return callImport(func, arguments);
     } else {
-      return instance.callFunction(func->name, arguments);
+      auto flow = instance.callFunction(func->name, arguments);
+      assert(!flow.suspendTag); // TODO: support stack switching on calls
+      return flow.values;
     }
   }
 

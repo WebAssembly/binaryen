@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#include "literal.h"
-
 #include <cassert>
 #include <cmath>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "fp16.h"
 #include "ir/bits.h"
+#include "literal.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
 #include "support/string.h"
 #include "support/utilities.h"
+#include "wasm-interpreter.h"
 
 namespace wasm {
 
@@ -91,6 +91,9 @@ Literal::Literal(std::shared_ptr<ExnData> exnData)
   assert(exnData);
 }
 
+Literal::Literal(std::shared_ptr<ContData> contData)
+  : contData(contData), type(contData->type, NonNullable, Exact) {}
+
 Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
   // TODO: we could in theory internalize strings
@@ -140,6 +143,10 @@ Literal::Literal(const Literal& other) : type(other.type) {
     func = other.func;
     return;
   }
+  if (type.isContinuation()) {
+    new (&contData) std::shared_ptr<ContData>(other.contData);
+    return;
+  }
   switch (heapType.getBasic(Unshared)) {
     case HeapType::i31:
       i32 = other.i32;
@@ -182,6 +189,8 @@ Literal::~Literal() {
     gcData.~shared_ptr();
   } else if (isExn()) {
     exnData.~shared_ptr();
+  } else if (isContinuation()) {
+    contData.~shared_ptr();
   }
 }
 
@@ -335,6 +344,12 @@ std::shared_ptr<ExnData> Literal::getExnData() const {
   assert(isExn());
   assert(exnData);
   return exnData;
+}
+
+std::shared_ptr<ContData> Literal::getContData() const {
+  assert(isContinuation());
+  assert(contData);
+  return contData;
 }
 
 Literal Literal::castToF32() {
@@ -694,6 +709,16 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       }
     } else if (heapType.isSignature()) {
       o << "funcref(" << literal.getFunc() << ")";
+    } else if (heapType.isContinuation()) {
+      auto data = literal.getContData();
+      o << "cont(" << data->func << ' ' << data->type;
+      if (data->resumeExpr) {
+        o << " resumeExpr=" << getExpressionName(data->resumeExpr);
+      }
+      if (!data->resumeInfo.empty()) {
+        o << " |resumeInfo|=" << data->resumeInfo.size();
+      }
+      o << " executed=" << data->executed << ')';
     } else {
       assert(literal.isData());
       auto data = literal.getGCData();

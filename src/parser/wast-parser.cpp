@@ -381,6 +381,25 @@ MaybeResult<Assertion> assertTrap(Lexer& in) {
   return Assertion{AssertModule{ModuleAssertionType::Trap, *mod}};
 }
 
+// (assert_suspension action msg)
+MaybeResult<Assertion> assertSuspension(Lexer& in) {
+  if (!in.takeSExprStart("assert_suspension"sv)) {
+    return {};
+  }
+  if (auto a = maybeAction(in)) {
+    CHECK_ERR(a);
+    auto msg = in.takeString();
+    if (!msg) {
+      return in.err("expected error message");
+    }
+    if (!in.takeRParen()) {
+      return in.err("expected end of assertion");
+    }
+    return Assertion{AssertAction{ActionAssertionType::Suspension, *a}};
+  }
+  return in.err("invalid assert_suspension");
+}
+
 MaybeResult<Assertion> assertion(Lexer& in) {
   if (auto a = assertReturn(in)) {
     CHECK_ERR(a);
@@ -399,6 +418,10 @@ MaybeResult<Assertion> assertion(Lexer& in) {
     return Assertion{*a};
   }
   if (auto a = assertTrap(in)) {
+    CHECK_ERR(a);
+    return *a;
+  }
+  if (auto a = assertSuspension(in)) {
     CHECK_ERR(a);
     return *a;
   }

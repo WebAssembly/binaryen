@@ -78,7 +78,7 @@ struct AssertReturn {
   ExpectedResults expected;
 };
 
-enum class ActionAssertionType { Trap, Exhaustion, Exception };
+enum class ActionAssertionType { Trap, Exhaustion, Exception, Suspension };
 
 struct AssertAction {
   ActionAssertionType type;

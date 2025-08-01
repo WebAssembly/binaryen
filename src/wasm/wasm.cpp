@@ -27,6 +27,7 @@ namespace wasm {
 Name RETURN_FLOW("*return:)*");
 Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
+Name SUSPEND_FLOW("*suspend:)*");
 
 namespace BinaryConsts::CustomSections {
 
@@ -1526,10 +1527,17 @@ void Resume::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
+  if (cont->type.isNull()) {
+    // This will never be executed and the instruction will not be emitted.
+    // Model this with an uninhabitable cast type.
+    // TODO: This is not quite right yet.
+    type = cont->type.with(NonNullable);
+    return;
+  }
 
-  assert(this->cont->type.isContinuation());
+  assert(cont->type.isContinuation());
   const Signature& contSig =
-    this->cont->type.getHeapType().getContinuation().type.getSignature();
+    cont->type.getHeapType().getContinuation().type.getSignature();
   type = contSig.results;
 }
 
@@ -1541,10 +1549,17 @@ void ResumeThrow::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
+  if (cont->type.isNull()) {
+    // This will never be executed and the instruction will not be emitted.
+    // Model this with an uninhabitable cast type.
+    // TODO: This is not quite right yet.
+    type = cont->type.with(NonNullable);
+    return;
+  }
 
-  assert(this->cont->type.isContinuation());
+  assert(cont->type.isContinuation());
   const Signature& contSig =
-    this->cont->type.getHeapType().getContinuation().type.getSignature();
+    cont->type.getHeapType().getContinuation().type.getSignature();
   type = contSig.results;
 }
 
@@ -1556,10 +1571,17 @@ void StackSwitch::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
+  if (cont->type.isNull()) {
+    // This will never be executed and the instruction will not be emitted.
+    // Model this with an uninhabitable cast type.
+    // TODO: This is not quite right yet.
+    type = cont->type.with(NonNullable);
+    return;
+  }
 
-  assert(this->cont->type.isContinuation());
+  assert(cont->type.isContinuation());
   Type params =
-    this->cont->type.getHeapType().getContinuation().type.getSignature().params;
+    cont->type.getHeapType().getContinuation().type.getSignature().params;
   assert(params.size() > 0);
   Type cont = params[params.size() - 1];
   assert(cont.isContinuation());
