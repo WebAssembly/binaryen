@@ -12,13 +12,10 @@
   (type $f-get-i32 (func (param i32)))
   (type $k-get-i32 (cont $f-get-i32))
 
-;;(elem declare func $block $block-nested $if $if-condition $local $loop $multi-locals $nested-binary $nested-unary $nested-unary-more $param $pause-i32 $ret-i32 $trinary $value-stack)
   (import "fuzzing-support" "log" (func $log (param i32)))
 
   (tag $more)
   (tag $more-i32 (result i32))
-
-;;(func $log (param i32))
 
   (func $run (param $k (ref $k))
     ;; Run a coroutine, continuing to resume it until it is complete.
