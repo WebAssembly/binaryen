@@ -3458,6 +3458,13 @@ public:
       parent.scope = this;
       parent.callDepth++;
       parent.functionStack.push_back(function->name);
+      locals.resize(function->getNumLocals());
+
+      if (parent.resuming) {
+        // Nothing more to do here: we are resuming execution, so there is old
+        // locals state that will be restored.
+        return;
+      }
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3465,7 +3472,6 @@ public:
                   << arguments.size() << " arguments." << std::endl;
         WASM_UNREACHABLE("invalid param count");
       }
-      locals.resize(function->getNumLocals());
       Type params = function->getParams();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
@@ -4695,8 +4701,15 @@ public:
     // meaningless (it will error when it reaches the host).
     auto old = self()->currContinuation;
     assert(!old || old->executed);
-    auto new_ = std::make_shared<ContData>(old ? old->func : Name(),
-                                           old ? old->type : HeapType::none);
+    auto oldType = old ? old->type : HeapType::none;
+    auto new_ = std::make_shared<ContData>(old ? old->func : Name(), oldType);
+    if (old) {
+      // Update the type.
+      auto oldSig = oldType.getContinuation().type.getSignature();
+      auto tagSig = self()->getModule()->getTag(curr->tag)->type.getSignature();
+      auto newSig = Signature(tagSig.results, oldSig.results);
+      new_->type = Continuation(HeapType(newSig));
+    }
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
     self()->currContinuation = new_;
