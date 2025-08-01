@@ -86,6 +86,12 @@ public:
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
+
+  Flow visitTableGet(TableGet* curr) {
+    // We support tableLoad, below, so that call_indirect works (it calls it
+    // internally), but we want to disable table.get for now.
+    throw FailToEvalException("TODO: table.get");
+  }
 };
 
 // Build an artificial `env` module based on a module's imports, so that the

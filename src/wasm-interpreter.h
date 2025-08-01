@@ -3569,6 +3569,14 @@ public:
     if (funcref.isNull()) {
       trap("null target in call_indirect");
     }
+    if (!funcref.isFunction()) {
+      trap("non-function target in call_indirect");
+    }
+
+    auto* func = self()->getModule()->getFunction(funcref.getFunc());
+    if (!HeapType::isSubType(func->type, curr->type)) {
+      trap("callIndirect: non-subtype");
+    }
 
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(calling table)\n";
