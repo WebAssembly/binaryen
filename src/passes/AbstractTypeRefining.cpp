@@ -35,6 +35,7 @@
 
 #include <memory>
 
+#include "ir/drop.h"
 #include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -240,12 +241,6 @@ struct AbstractTypeRefining : public Pass {
 
     TypeMapper::TypeUpdates mapping;
 
-    // Track whether we optimize any described types to bottom. If we do, then
-    // we could end up with descriptor casts to nullref, which need to be fixed
-    // up before ReFinalize reintroduces the cast result type that was supposed
-    // to be optimized out.
-    bool optimizedDescribedType = false;
-
     for (auto type : subTypes.types) {
       if (!type.isStruct()) {
         // TODO: support arrays and funcs
@@ -262,9 +257,6 @@ struct AbstractTypeRefining : public Pass {
       // We check this first as it is the most powerful change.
       if (createdTypesOrSubTypes.count(type) == 0) {
         mapping[type] = type.getBottom();
-        if (type.getDescriptorType()) {
-          optimizedDescribedType = true;
-        }
         continue;
       }
 
@@ -277,6 +269,10 @@ struct AbstractTypeRefining : public Pass {
     if (mapping.empty()) {
       return;
     }
+
+    // We may need to apply some preliminary optimizations to ensure we maintain
+    // validity and correctness when we rewrite the types.
+    preoptimize(*module, mapping);
 
     // Rewriting types can usually rewrite subtype relationships. For example,
     // if we have this:
@@ -303,78 +299,165 @@ struct AbstractTypeRefining : public Pass {
 
     AbstractTypeRefiningTypeMapper(*module, mapping).map();
 
-    if (optimizedDescribedType) {
-      // At this point we may have casts like this:
-      //
-      // (ref.cast_desc nullref
-      //   (some struct...)
-      //   (some desc...)
-      // )
-      //
-      // ReFinalize would fix up the cast target to be the struct type described
-      // by the descriptor, but that struct type was supposed to have been
-      // optimized out. Optimize out the cast (which we know must either be a
-      // null check or unconditional trap) before ReFinalize can get to it.
-      fixupDescriptorCasts(*module);
-    }
-
     // Refinalize to propagate the type changes we made. For example, a refined
     // cast may lead to a struct.get reading a more refined type using that
     // type.
     ReFinalize().run(getPassRunner(), module);
   }
 
-  void fixupDescriptorCasts(Module& module) {
-    struct CastFixer : WalkerPass<PostWalker<CastFixer>> {
+  void preoptimize(Module& module, const TypeMapper::TypeUpdates& mapping) {
+    if (!module.features.hasCustomDescriptors()) {
+      // No descriptor casts, exact casts, or allocations with descriptors to
+      // fix up.
+      return;
+    }
+
+    struct Preoptimizer : WalkerPass<PostWalker<Preoptimizer>> {
+      const TypeMapper::TypeUpdates& mapping;
+
+      Preoptimizer(const TypeMapper::TypeUpdates& mapping) : mapping(mapping) {}
+
       bool isFunctionParallel() override { return true; }
+
       std::unique_ptr<Pass> create() override {
-        return std::make_unique<CastFixer>();
+        return std::make_unique<Preoptimizer>(mapping);
       }
+
+      Block* localizeChildren(Expression* curr) {
+        return ChildLocalizer(
+                 curr, getFunction(), *getModule(), getPassOptions())
+          .getChildrenReplacement();
+      }
+
+      std::optional<HeapType> getOptimized(Type type) {
+        if (!type.isRef()) {
+          return std::nullopt;
+        }
+        auto heapType = type.getHeapType();
+        auto it = mapping.find(heapType);
+        if (it == mapping.end()) {
+          return std::nullopt;
+        }
+        assert(it->second != heapType);
+        return it->second;
+      }
+
+      // We may have casts like this:
+      //
+      //   (ref.cast_desc (ref null $optimized-to-bottom)
+      //     (some struct...)
+      //     (some desc...)
+      //   )
+      //
+      // We will optimize the cast target to nullref, but then ReFinalize would
+      // fix up the cast target back to $optimized-to-bottom. Optimize out the
+      // cast (which we know must either be a null check or unconditional trap)
+      // to avoid this reintroduction of the optimized type.
+      //
+      // Separately, we may have exact casts like this:
+      //
+      //   (br_on_cast anyref $l (ref (exact $uninstantiated)) ... )
+      //
+      // We know such casts will fail (or will pass only for null values), but
+      // with traps-never-happen, we might optimize them to this:
+      //
+      //   (br_on_cast anyref $l (ref (exact $instantiated-subtype)) ... )
+      //
+      // This might cause the casts to incorrectly start succeeding. To avoid
+      // that, optimize them out first.
       void visitRefCast(RefCast* curr) {
-        if (!curr->desc || !curr->type.isNull()) {
+        auto optimized = getOptimized(curr->type);
+        if (!optimized) {
           return;
         }
-        // Preserve the trap on a null descriptor.
-        if (curr->desc->type.isNullable()) {
-          curr->desc =
-            Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+        // Exact casts to any optimized type and descriptor casts whose types
+        // will be optimized to bottom either admit null or fail
+        // unconditionally. Optimize to a cast to bottom, reusing curr and
+        // preserving nullability. We may need to move the ref value past the
+        // descriptor value, if any.
+        Builder builder(*getModule());
+        if (curr->type.isExact() || (curr->desc && optimized->isBottom())) {
+          if (curr->desc) {
+            if (curr->desc->type.isNullable() &&
+                !getPassOptions().trapsNeverHappen) {
+              curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
+            }
+            Block* replacement = localizeChildren(curr);
+            curr->desc = nullptr;
+            curr->type = curr->type.with(optimized->getBottom());
+            replacement->list.push_back(curr);
+            replacement->type = curr->type;
+            replaceCurrent(replacement);
+          } else {
+            curr->type = curr->type.with(optimized->getBottom());
+          }
         }
-        Block* replacement =
-          ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
-            .getChildrenReplacement();
-        // Reuse `curr` as the cast to nullref. Leave further optimization of
-        // the cast to OptimizeInstructions.
-        curr->desc = nullptr;
-        replacement->list.push_back(curr);
-        replacement->type = curr->type;
-        replaceCurrent(replacement);
       }
+
       void visitBrOn(BrOn* curr) {
-        if (curr->op != BrOnCastDesc && curr->op != BrOnCastDescFail) {
+        if (curr->op == BrOnNull || curr->op == BrOnNonNull) {
           return;
         }
-        if (!curr->castType.isNull()) {
+        auto optimized = getOptimized(curr->castType);
+        if (!optimized) {
           return;
         }
+        // Optimize the same way we optimize ref.cast*.
+        Builder builder(*getModule());
         bool isFail = curr->op == BrOnCastDescFail;
-        // Preserve the trap on a null descriptor.
-        if (curr->desc->type.isNullable()) {
-          curr->desc =
-            Builder(*getModule()).makeRefAs(RefAsNonNull, curr->desc);
+        if (curr->castType.isExact() || (curr->desc && optimized->isBottom())) {
+          if (curr->desc) {
+            if (curr->desc->type.isNullable() &&
+                !getPassOptions().trapsNeverHappen) {
+              curr->desc = builder.makeRefAs(RefAsNonNull, curr->desc);
+            }
+            Block* replacement = localizeChildren(curr);
+            // Reuse `curr` as a br_on_cast to nullref. Leave further
+            // optimization of the branch to RemoveUnusedBrs.
+            curr->desc = nullptr;
+            curr->castType = curr->castType.with(optimized->getBottom());
+            if (isFail) {
+              curr->op = BrOnCastFail;
+              curr->type = curr->castType;
+            } else {
+              curr->op = BrOnCast;
+            }
+            replacement->list.push_back(curr);
+            replacement->type = curr->type;
+            replaceCurrent(replacement);
+          } else {
+            curr->castType = curr->castType.with(optimized->getBottom());
+          }
         }
-        Block* replacement =
-          ChildLocalizer(curr, getFunction(), *getModule(), getPassOptions())
-            .getChildrenReplacement();
-        // Reuse `curr` as a br_on_cast to nullref. Leave further optimization
-        // of the branch to RemoveUnusedBrs.
-        curr->desc = nullptr;
-        curr->op = isFail ? BrOnCastFail : BrOnCast;
-        replacement->list.push_back(curr);
-        replacement->type = curr->type;
-        replaceCurrent(replacement);
       }
-    } fixer;
-    fixer.run(getPassRunner(), &module);
+
+      void visitStructNew(StructNew* curr) {
+        if (!curr->desc) {
+          return;
+        }
+        auto optimized = getOptimized(curr->desc->type);
+        if (!optimized) {
+          return;
+        }
+        // The descriptor type is not instantiated, so there is no way this
+        // allocation can succeed. We need to remove it to avoid leaving it with
+        // a mismatched descriptor type after type rewriting. If we are in a
+        // function context, replace it with unreachable, taking care to
+        // preserve any side effects. If we're not in a function context, then
+        // we cannot use things like blocks or drops, but there are also no
+        // effects besides traps, so we can just replace the descriptor with a
+        // null.
+        Builder builder(*getModule());
+        if (getFunction()) {
+          replaceCurrent(getDroppedChildrenAndAppend(
+            curr, *getModule(), getPassOptions(), builder.makeUnreachable()));
+        } else {
+          curr->desc = builder.makeRefNull(HeapType::none);
+        }
+      }
+    } preoptimizer(mapping);
+    preoptimizer.run(getPassRunner(), &module);
+    preoptimizer.runOnModuleCode(getPassRunner(), &module);
   }
 };
 

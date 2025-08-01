@@ -131,6 +131,7 @@ unfuzzable = [
     'gto-desc.wast',
     'type-ssa-desc.wast',
     'abstract-type-refining-desc.wast',
+    'abstract-type-refining-tnh-exact-casts.wast',
     'remove-unused-brs-desc.wast',
     'vacuum-desc.wast',
     'j2cl-merge-itables-desc.wast',

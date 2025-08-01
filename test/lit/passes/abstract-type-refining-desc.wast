@@ -134,7 +134,7 @@
 
   ;; YESTNH:      (func $cast-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
   ;; YESTNH-NEXT:  (local.set $2
   ;; YESTNH-NEXT:   (block (result anyref)
   ;; YESTNH-NEXT:    (call $effect)
@@ -142,11 +142,9 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (local.set $3
-  ;; YESTNH-NEXT:   (ref.as_non_null
-  ;; YESTNH-NEXT:    (block (result (ref null $desc))
-  ;; YESTNH-NEXT:     (call $effect)
-  ;; YESTNH-NEXT:     (local.get $desc)
-  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:   (block (result (ref null $desc))
+  ;; YESTNH-NEXT:    (call $effect)
+  ;; YESTNH-NEXT:    (local.get $desc)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (ref.cast nullref
@@ -327,7 +325,7 @@
 
   ;; YESTNH:      (func $branch-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
   ;; YESTNH-NEXT:  (block $block (result nullref)
   ;; YESTNH-NEXT:   (drop
   ;; YESTNH-NEXT:    (block (result (ref any))
@@ -338,11 +336,9 @@
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (local.set $3
-  ;; YESTNH-NEXT:      (ref.as_non_null
-  ;; YESTNH-NEXT:       (block (result (ref null $desc))
-  ;; YESTNH-NEXT:        (call $effect)
-  ;; YESTNH-NEXT:        (local.get $desc)
-  ;; YESTNH-NEXT:       )
+  ;; YESTNH-NEXT:      (block (result (ref null $desc))
+  ;; YESTNH-NEXT:       (call $effect)
+  ;; YESTNH-NEXT:       (local.get $desc)
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:     (br_on_cast $block anyref nullref
@@ -602,7 +598,7 @@
 
   ;; YESTNH:      (func $branch-fail-nullable-effect (type $2) (param $ref anyref) (param $desc (ref null $desc)) (result nullref)
   ;; YESTNH-NEXT:  (local $2 anyref)
-  ;; YESTNH-NEXT:  (local $3 (ref $desc))
+  ;; YESTNH-NEXT:  (local $3 (ref null $desc))
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block $block (result (ref any))
   ;; YESTNH-NEXT:    (return
@@ -614,11 +610,9 @@
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (local.set $3
-  ;; YESTNH-NEXT:       (ref.as_non_null
-  ;; YESTNH-NEXT:        (block (result (ref null $desc))
-  ;; YESTNH-NEXT:         (call $effect)
-  ;; YESTNH-NEXT:         (local.get $desc)
-  ;; YESTNH-NEXT:        )
+  ;; YESTNH-NEXT:       (block (result (ref null $desc))
+  ;; YESTNH-NEXT:        (call $effect)
+  ;; YESTNH-NEXT:        (local.get $desc)
   ;; YESTNH-NEXT:       )
   ;; YESTNH-NEXT:      )
   ;; YESTNH-NEXT:      (br_on_cast_fail $block anyref nullref
@@ -848,5 +842,181 @@
       )
     )
     (unreachable)
+  )
+)
+
+(module
+  ;; We will optimize the descriptor type, so we must take care not to leave
+  ;; invalid allocations of its described type.
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    (type $struct (descriptor $uninstantiated (struct)))
+    ;; YESTNH:       (type $uninstantiated (sub (describes $struct (struct))))
+    ;; NO_TNH:       (type $uninstantiated (sub (describes $struct (struct))))
+    (type $uninstantiated (sub (describes $struct (struct))))
+    ;; YESTNH:       (type $other (descriptor $instantiated (struct)))
+    ;; NO_TNH:       (type $other (descriptor $instantiated (struct)))
+    (type $other (descriptor $instantiated (struct)))
+    ;; YESTNH:       (type $instantiated (sub $uninstantiated (describes $other (struct))))
+    ;; NO_TNH:       (type $instantiated (sub $uninstantiated (describes $other (struct))))
+    (type $instantiated (sub $uninstantiated (describes $other (struct))))
+  )
+
+  ;; YESTNH:       (type $4 (func (result (ref $struct))))
+
+  ;; YESTNH:      (type $5 (func))
+
+  ;; YESTNH:      (import "" "" (func $effect (type $5)))
+  ;; NO_TNH:       (type $4 (func (result (ref $struct))))
+
+  ;; NO_TNH:      (type $5 (func))
+
+  ;; NO_TNH:      (import "" "" (func $effect (type $5)))
+  (import "" "" (func $effect))
+
+  ;; YESTNH:      (global $instantiated (ref $instantiated) (struct.new_default $instantiated))
+  ;; NO_TNH:      (global $instantiated (ref $instantiated) (struct.new_default $instantiated))
+  (global $instantiated (ref $instantiated) (struct.new $instantiated))
+
+  ;; YESTNH:      (global $fake-desc (ref null (exact $instantiated)) (ref.null none))
+  ;; NO_TNH:      (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
+  (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
+
+  ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; YESTNH-NEXT:  (ref.null none)
+  ;; YESTNH-NEXT: ))
+  ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; NO_TNH-NEXT:  (global.get $fake-desc)
+  ;; NO_TNH-NEXT: ))
+  (global $impossible (ref $struct)
+    (struct.new $struct
+      (global.get $fake-desc)
+    )
+  )
+
+  ;; YESTNH:      (func $impossible (type $4) (result (ref $struct))
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $impossible (type $4) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (struct.new_default $struct
+  ;; NO_TNH-NEXT:   (global.get $fake-desc)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $impossible (result (ref $struct))
+    (struct.new $struct
+      (global.get $fake-desc)
+    )
+  )
+
+  ;; YESTNH:      (func $impossible-effect (type $4) (result (ref $struct))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block (result (ref null (exact $instantiated)))
+  ;; YESTNH-NEXT:    (call $effect)
+  ;; YESTNH-NEXT:    (global.get $fake-desc)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $impossible-effect (type $4) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (struct.new_default $struct
+  ;; NO_TNH-NEXT:   (block (result (ref null (exact $uninstantiated)))
+  ;; NO_TNH-NEXT:    (call $effect)
+  ;; NO_TNH-NEXT:    (global.get $fake-desc)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $impossible-effect (result (ref $struct))
+    (struct.new $struct
+      (block (result (ref null (exact $uninstantiated)))
+        (call $effect)
+        (global.get $fake-desc)
+      )
+    )
+  )
+)
+
+(module
+  ;; Same, but now we're optimizing the descriptor to bottom, so we don't need
+  ;; to do any preoptimization to ensure validity. We optimize anyway because
+  ;; we can.
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $struct (descriptor $uninstantiated (struct)))
+    (type $struct (descriptor $uninstantiated (struct)))
+    ;; YESTNH:       (type $uninstantiated (describes $struct (struct)))
+    ;; NO_TNH:       (type $uninstantiated (describes $struct (struct)))
+    (type $uninstantiated (describes $struct (struct)))
+  )
+
+  ;; YESTNH:       (type $2 (func (result (ref $struct))))
+
+  ;; YESTNH:      (type $3 (func))
+
+  ;; YESTNH:      (import "" "" (func $effect (type $3)))
+  ;; NO_TNH:       (type $2 (func (result (ref $struct))))
+
+  ;; NO_TNH:      (type $3 (func))
+
+  ;; NO_TNH:      (import "" "" (func $effect (type $3)))
+  (import "" "" (func $effect))
+
+  ;; YESTNH:      (global $fake-desc nullref (ref.null none))
+  ;; NO_TNH:      (global $fake-desc nullref (ref.null none))
+  (global $fake-desc (ref null (exact $uninstantiated)) (ref.null none))
+
+  ;; YESTNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; YESTNH-NEXT:  (ref.null none)
+  ;; YESTNH-NEXT: ))
+  ;; NO_TNH:      (global $impossible (ref $struct) (struct.new_default $struct
+  ;; NO_TNH-NEXT:  (ref.null none)
+  ;; NO_TNH-NEXT: ))
+  (global $impossible (ref $struct)
+    (struct.new $struct
+      (global.get $fake-desc)
+    )
+  )
+
+  ;; YESTNH:      (func $impossible (type $2) (result (ref $struct))
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $impossible (type $2) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $impossible (result (ref $struct))
+    (struct.new $struct
+      (global.get $fake-desc)
+    )
+  )
+
+  ;; YESTNH:      (func $impossible-effect (type $2) (result (ref $struct))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block (result nullref)
+  ;; YESTNH-NEXT:    (call $effect)
+  ;; YESTNH-NEXT:    (global.get $fake-desc)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (unreachable)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $impossible-effect (type $2) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result nullref)
+  ;; NO_TNH-NEXT:    (call $effect)
+  ;; NO_TNH-NEXT:    (global.get $fake-desc)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $impossible-effect (result (ref $struct))
+    (struct.new $struct
+      (block (result (ref null (exact $uninstantiated)))
+        (call $effect)
+        (global.get $fake-desc)
+      )
+    )
   )
 )
