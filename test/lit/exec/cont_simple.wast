@@ -779,4 +779,32 @@
       (cont.new $k (ref.func $call_indirect))
     )
   )
+
+  (func $call_ref
+    (suspend $more)
+    (call_ref $f
+      (ref.func $call_ref-child)
+    )
+    (suspend $more)
+  )
+
+  (func $call_ref-child
+    (suspend $more)
+    (call $log (i32.const -20))
+    (suspend $more)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-call_ref
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -20]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-call_ref (export "run-call_ref")
+    (call $run
+      (cont.new $k (ref.func $call_ref))
+    )
+  )
 )
