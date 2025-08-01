@@ -22,7 +22,7 @@
   )
  )
  ;; CHECK:      [fuzz-exec] calling call
- ;; CHECK-NEXT: [trap uninitialized table element]
+ ;; CHECK-NEXT: [trap null target in call_indirect]
  (func $call (export "call") (result i32)
   ;; Nothing was written, so this traps.
   (call_indirect $table (type $i32)
