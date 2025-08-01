@@ -152,12 +152,12 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
             << import->name.str;
   }
 
-  Literals callTable(Name tableName,
-                     Address index,
-                     HeapType sig,
-                     Literals& arguments,
-                     Type results,
-                     ModuleRunner& instance) override {
+  Flow callTable(Name tableName,
+                 Address index,
+                 HeapType sig,
+                 Literals& arguments,
+                 Type results,
+                 ModuleRunner& instance) override {
 
     auto it = tables.find(tableName);
     if (it == tables.end()) {
@@ -193,9 +193,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     if (func->imported()) {
       return callImport(func, arguments);
     } else {
-      auto flow = instance.callFunction(func->name, arguments);
-      assert(!flow.suspendTag); // TODO: support stack switching on calls
-      return flow.values;
+      return instance.callFunction(func->name, arguments);
     }
   }
 

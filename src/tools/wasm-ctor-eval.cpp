@@ -289,12 +289,12 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   // We assume the table is not modified FIXME
-  Literals callTable(Name tableName,
-                     Address index,
-                     HeapType sig,
-                     Literals& arguments,
-                     Type result,
-                     EvallingModuleRunner& instance) override {
+  Flow callTable(Name tableName,
+                 Address index,
+                 HeapType sig,
+                 Literals& arguments,
+                 Type result,
+                 EvallingModuleRunner& instance) override {
 
     std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
 
@@ -350,11 +350,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
                                 targetFunc.toString());
     }
     if (!func->imported()) {
-      auto flow = instance.callFunction(targetFunc, arguments);
-      if (flow.suspendTag) {
-        throw FailToEvalException("unhandled suspend");
-      }
-      return flow.values;
+      return instance.callFunction(targetFunc, arguments);
     } else {
       throw FailToEvalException(
         std::string("callTable on imported function: ") +

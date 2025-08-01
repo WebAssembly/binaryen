@@ -17,6 +17,8 @@
   (tag $more)
   (tag $more-i32 (result i32))
 
+  (table $table 10 10 funcref)
+
   (func $run (param $k (ref $k))
     ;; Run a coroutine, continuing to resume it until it is complete.
     (call $log (i32.const 100)) ;; start
@@ -717,6 +719,38 @@
   (func $run-calls (export "run-calls")
     (call $run
       (cont.new $k (ref.func $calls))
+    )
+  )
+
+  (func $call_indirect
+    ;; Test that indirect calls go to the right place, even if we modify the
+    ;; table in between.
+    (table.set $table
+      (i32.const 7)
+      (ref.func $call_indirect-child)
+    )
+    (call $log (i32.const -1))
+    (call_indirect (type $f)
+      (i32.const 7)
+    )
+    (call $log (i32.const -2))
+  )
+
+  (func $call_indirect-child
+    ;; When we resume the suspend below, the table entry will have null, but we
+    ;; should still rewind the stack properly.
+    (table.set $table
+      (i32.const 7)
+      (ref.null func)
+    )
+    (suspend $more)
+    (call $log (i32.const -10))
+    (suspend $more)
+  )
+
+  (func $run-call_indirect (export "run-call_indirect")
+    (call $run
+      (cont.new $k (ref.func $call_indirect))
     )
   )
 )

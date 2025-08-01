@@ -3019,12 +3019,12 @@ public:
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
-    virtual Literals callTable(Name tableName,
-                               Address index,
-                               HeapType sig,
-                               Literals& arguments,
-                               Type result,
-                               SubType& instance) = 0;
+    virtual Flow callTable(Name tableName,
+                           Address index,
+                           HeapType sig,
+                           Literals& arguments,
+                           Type result,
+                           SubType& instance) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
