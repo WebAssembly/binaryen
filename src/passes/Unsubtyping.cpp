@@ -323,7 +323,6 @@ struct Unsubtyping : Pass {
     if (sub == super || sub.isBottom()) {
       return;
     }
-
     work.push_back({sub, super});
   }
 
@@ -377,6 +376,7 @@ struct Unsubtyping : Pass {
         noteSubtype(sub.getHeapType(), super.getHeapType());
       }
       void noteSubtype(HeapType sub, HeapType super) {
+        assert(HeapType::isSubType(sub, super));
         if (sub == super || sub.isBottom()) {
           return;
         }
@@ -481,6 +481,7 @@ struct Unsubtyping : Pass {
   }
 
   void process(HeapType sub, HeapType super) {
+    assert(HeapType::isSubType(sub, super));
     auto oldSuper = types.getSupertype(sub);
     if (oldSuper) {
       // We already had a recorded supertype. The new supertype might be
