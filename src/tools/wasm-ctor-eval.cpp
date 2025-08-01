@@ -303,7 +303,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
     // Look through the segments and find the value. Segments can overlap,
     // so we want the last one.
-    Name value;
+    Expression* value;
     for (auto& segment : wasm->elementSegments) {
       if (segment->table != tableName) {
         continue;
@@ -324,16 +324,18 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       }
       auto end = start + segment->data.size();
       if (start <= index && index < end) {
-        auto* expr = segment->data[index - start];
-        if (!Properties::isConstantExpression(expr)) {
-          throw FailToEvalException("tableLoad of non-literal");
-        }
-        return Properties::getLiteral(expr);
+        value = segment->data[index - start];
       }
     }
 
-    // No segment had a value for this.
-    return Literal::makeNull(HeapTypes::func);
+    if (!value) {
+      // No segment had a value for this.
+      return Literal::makeNull(HeapTypes::func);
+    }
+    if (!Properties::isConstantExpression(value)) {
+      throw FailToEvalException("tableLoad of non-literal");
+    }
+    return Properties::getLiteral(value);
   }
 
   Index tableSize(Name tableName) override {
