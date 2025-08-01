@@ -674,11 +674,16 @@
 
   (func $calls
     ;; Suspend before and after calling a child, who also suspends.
+    (local $x i32)
+    ;; Set a value here to check that we do not get confused between locals in
+    ;; different scopes.
+    (local.set $x (i32.const -1))
     (suspend $more)
     (call $calls-child (i32.const 41))
     (suspend $more)
     (call $calls-child (i32.const 1336))
     (suspend $more)
+    (call $log (local.get $x))
   )
 
   (func $calls-child (param $x i32)
@@ -707,6 +712,7 @@
   ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-calls (export "run-calls")
     (call $run
