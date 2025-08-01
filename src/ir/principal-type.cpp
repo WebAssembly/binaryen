@@ -1050,7 +1050,23 @@ bool PrincipalType::compose(const PrincipalType& next) {
 }
 
 std::optional<Signature> PrincipalType::getSignature() const {
-  WASM_UNREACHABLE("TODO");
+  std::vector<Type> sigParams, sigResults;
+  for (auto it = rparams.rbegin(); it != rparams.rend(); ++it) {
+    auto item = *it;
+    if (auto* type = std::get_if<Type>(&item)) {
+      sigParams.push_back(*type);
+    } else {
+      return {};
+    }
+  }
+  for (auto& result : results) {
+    if (auto* type = std::get_if<Type>(&result)) {
+      sigResults.push_back(*type);
+    } else {
+      return {};
+    }
+  }
+  return Signature(sigParams, sigResults);
 }
 
 std::ostream& operator<<(std::ostream& o, const PrincipalType& type) {

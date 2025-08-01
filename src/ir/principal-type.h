@@ -113,12 +113,29 @@ struct PrincipalType {
     std::reverse(rparams.begin(), rparams.end());
   }
 
+  PrincipalType(Signature sig) {
+    for (auto param : sig.params) {
+      rparams.push_back(param);
+    }
+    std::reverse(rparams.begin(), rparams.end());
+    for (auto result : sig.results) {
+      results.push_back(result);
+    }
+  }
+
   // Update this type to be the composition of this and `next`.
   bool compose(const PrincipalType& next);
 
   // Get the signature represented by this type if it is closed, i.e. has no
   // variables.
   std::optional<Signature> getSignature() const;
+
+  // Flip the params and results.
+  void flip() {
+    std::swap(rparams, results);
+    std::reverse(rparams.begin(), rparams.end());
+    std::reverse(results.begin(), results.end());
+  }
 
   bool operator==(const PrincipalType& other) const {
     return rparams == other.rparams && results == other.results &&
