@@ -60,7 +60,6 @@
 ;; CHECK-NEXT: )
 (module
   ;; Basic return call indirect
-  ;; TODO: Implement `tableLoad` to make this test work.
 
   (import "env" "import" (func $import))
 
@@ -69,10 +68,9 @@
   ;; CHECK:      (global $g1 (mut i32) (i32.const 1))
   (global $g1 (export "g1") (mut i32) (i32.const 0))
 
-  ;; CHECK:      (global $g2 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $g2 (mut i32) (i32.const 2))
   (global $g2 (export "g2") (mut i32) (i32.const 0))
 
-  ;; CHECK:      (table $t 1 1 funcref)
   (table $t funcref (elem $test2))
 
   (func $test (export "test")
@@ -86,19 +84,6 @@
     (call $import)
   )
 
-  ;; CHECK:      (elem $implicit-elem (i32.const 0) $test2)
-
-  ;; CHECK:      (export "g1" (global $g1))
-
-  ;; CHECK:      (export "g2" (global $g2))
-
-  ;; CHECK:      (export "test" (func $test_3))
-
-  ;; CHECK:      (func $test2 (type $0)
-  ;; CHECK-NEXT:  (global.set $g2
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $test2
     (global.set $g2
       (i32.const 2)
@@ -106,10 +91,14 @@
   )
 )
 
+;; CHECK:      (export "g1" (global $g1))
+
+;; CHECK:      (export "g2" (global $g2))
+
+;; CHECK:      (export "test" (func $test_3))
+
 ;; CHECK:      (func $test_3 (type $0)
-;; CHECK-NEXT:  (return_call_indirect $t (type $0)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
   ;; Basic return call ref

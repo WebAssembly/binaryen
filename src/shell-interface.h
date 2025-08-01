@@ -152,51 +152,6 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
             << import->name.str;
   }
 
-  Flow callTable(Name tableName,
-                 Address index,
-                 HeapType sig,
-                 Literals& arguments,
-                 Type results,
-                 ModuleRunner& instance) override {
-
-    auto it = tables.find(tableName);
-    if (it == tables.end()) {
-      trap("callTable on non-existing table");
-    }
-
-    auto& table = it->second;
-    if (index >= table.size()) {
-      trap("callTable overflow");
-    }
-    Function* func = nullptr;
-    if (table[index].isFunction() && !table[index].isNull()) {
-      func = instance.wasm.getFunctionOrNull(table[index].getFunc());
-    }
-    if (!func) {
-      trap("uninitialized table element");
-    }
-    if (sig != func->type) {
-      trap("callIndirect: function types don't match");
-    }
-    if (func->getParams().size() != arguments.size()) {
-      trap("callIndirect: bad # of arguments");
-    }
-    size_t i = 0;
-    for (const auto& param : func->getParams()) {
-      if (!Type::isSubType(arguments[i++].type, param)) {
-        trap("callIndirect: bad argument type");
-      }
-    }
-    if (func->getResults() != results) {
-      trap("callIndirect: bad result type");
-    }
-    if (func->imported()) {
-      return callImport(func, arguments);
-    } else {
-      return instance.callFunction(func->name, arguments);
-    }
-  }
-
   int8_t load8s(Address addr, Name memoryName) override {
     auto it = memories.find(memoryName);
     assert(it != memories.end());
