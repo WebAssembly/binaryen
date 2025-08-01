@@ -303,7 +303,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
 
     // Look through the segments and find the value. Segments can overlap,
     // so we want the last one.
-    Expression* value;
+    Expression* value = nullptr;
     for (auto& segment : wasm->elementSegments) {
       if (segment->table != tableName) {
         continue;
