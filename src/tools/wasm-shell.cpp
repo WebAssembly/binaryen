@@ -186,8 +186,12 @@ struct Shell {
   struct TrapResult {};
   struct HostLimitResult {};
   struct ExceptionResult {};
-  using ActionResult =
-    std::variant<Literals, TrapResult, HostLimitResult, ExceptionResult>;
+  struct SuspensionResult {};
+  using ActionResult = std::variant<Literals,
+                                    TrapResult,
+                                    HostLimitResult,
+                                    ExceptionResult,
+                                    SuspensionResult>;
 
   std::string resultToString(ActionResult& result) {
     if (std::get_if<TrapResult>(&result)) {
@@ -196,6 +200,8 @@ struct Shell {
       return "exceeded host limit";
     } else if (std::get_if<ExceptionResult>(&result)) {
       return "exception";
+    } else if (std::get_if<SuspensionResult>(&result)) {
+      return "suspension";
     } else if (auto* vals = std::get_if<Literals>(&result)) {
       std::stringstream ss;
       ss << *vals;
@@ -213,8 +219,9 @@ struct Shell {
         return TrapResult{};
       }
       auto& instance = it->second;
+      Flow flow;
       try {
-        return instance->callExport(invoke->name, invoke->args);
+        flow = instance->callExport(invoke->name, invoke->args);
       } catch (TrapException&) {
         return TrapResult{};
       } catch (HostLimitException&) {
@@ -224,6 +231,10 @@ struct Shell {
       } catch (...) {
         WASM_UNREACHABLE("unexpected error");
       }
+      if (flow.suspendTag) {
+        return SuspensionResult{};
+      }
+      return flow.values;
     } else if (auto* get = std::get_if<GetAction>(&act)) {
       auto it = instances.find(get->base ? *get->base : lastModule);
       if (it == instances.end()) {
@@ -389,6 +400,12 @@ struct Shell {
           return Ok{};
         }
         err << "expected exception";
+        break;
+      case ActionAssertionType::Suspension:
+        if (std::get_if<SuspensionResult>(&result)) {
+          return Ok{};
+        }
+        err << "expected suspension";
         break;
     }
     err << ", got " << resultToString(result);
