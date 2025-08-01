@@ -3250,20 +3250,15 @@ public:
   }
 
   // call an exported function
-  Literals callExport(Name name, const Literals& arguments) {
+  Flow callExport(Name name, const Literals& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
     if (!export_ || export_->kind != ExternalKind::Function) {
       externalInterface->trap("callExport not found");
     }
-    auto flow = callFunction(*export_->getInternalName(), arguments);
-    if (flow.suspendTag) {
-      // TODO: allow suspending through exports; return Flow from this func
-      externalInterface->trap("unhandled suspend");
-    }
-    return flow.values;
+    return callFunction(*export_->getInternalName(), arguments);
   }
 
-  Literals callExport(Name name) { return callExport(name, Literals()); }
+  Flow callExport(Name name) { return callExport(name, Literals()); }
 
   // get an exported global
   Literals getExport(Name name) {
@@ -4656,13 +4651,13 @@ public:
       return flow;
     }
 
-    if (!self()->currContinuation) {
-      trap("no continuation to suspend");
-    }
-    // Copy the continuation (the old one cannot be resumed again).
+    // Copy the continuation (the old one cannot be resumed again). Note that no
+    // old one may exist, in which case we still emit a continuation, but it is
+    // meaningless (it will error when it reaches the host).
     auto old = self()->currContinuation;
-    assert(old->executed);
-    auto new_ = std::make_shared<ContData>(old->func, old->type);
+    assert(!old || old->executed);
+    auto new_ = std::make_shared<ContData>(old ? old->func : Name(),
+                                           old ? old->type : HeapType::none);
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
     self()->currContinuation = new_;
