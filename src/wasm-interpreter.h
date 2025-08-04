@@ -4904,7 +4904,7 @@ public:
   }
 
   // The maximum call stack depth to evaluate into.
-  static const Index maxDepth = 200;
+  static const Index maxDepth = 150;
 
 protected:
   void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
