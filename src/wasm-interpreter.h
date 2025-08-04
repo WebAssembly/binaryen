@@ -191,6 +191,11 @@ struct ContData {
   // will emit a single Literals for itself, or possibly a few bundles.
   std::vector<Literals> resumeInfo;
 
+  // The arguments sent when resuming (on first execution these appear as
+  // parameters to the function; on later resumes, they are returned from the
+  // suspend).
+  Literals resumeArguments;
+
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
   bool executed = false;
@@ -403,6 +408,10 @@ public:
         auto iter = restoredValuesMap.find(curr);
         if (iter != restoredValuesMap.end()) {
           ret = iter->second;
+#if WASM_INTERPRETER_DEBUG
+          std::cout << indent() << "consume restored value: " << ret.values
+                    << '\n';
+#endif
           restoredValuesMap.erase(iter);
           hasValue = true;
         }
@@ -437,6 +446,10 @@ public:
               --num;
               auto value = popResumeEntry("child value");
               restoredValuesMap[child] = value;
+#if WASM_INTERPRETER_DEBUG
+              std::cout << indent() << "prepare restored value: " << value
+                        << '\n';
+#endif
             }
           }
 
@@ -4636,6 +4649,15 @@ public:
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
+    // Process the arguments, whether or not we are resuming. If we are resuming
+    // then we don't need these values (we sent them as part of the suspension),
+    // but must still handle them, so we finish re-winding the stack.
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+
     if (self()->resuming) {
       // This is a resume, so we have found our way back to where we
       // suspended.
@@ -4646,15 +4668,10 @@ public:
       // restoredValues map.
       assert(self()->currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      return Flow();
+      return self()->currContinuation->resumeArguments;
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
-    Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
 
     // Copy the continuation (the old one cannot be resumed again). Note that no
     // old one may exist, in which case we still emit a continuation, but it is
@@ -4688,6 +4705,7 @@ public:
       trap("continuation already executed");
     }
     contData->executed = true;
+    contData->resumeArguments = arguments;
     Name func = contData->func;
     self()->currContinuation = contData;
     if (contData->resumeExpr) {
@@ -4699,12 +4717,24 @@ public:
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
-    Flow ret = callFunction(func, arguments);
+    Flow ret;
+    {
+      // Create a stack value scope. This ensures that we always have a scope,
+      // and so the code that pushes/pops doesn't need to check if a scope
+      // exists. (We do not need the values in this scope, of course, as no
+      // expression is above them, so we cannot suspend and need these values).
+      typename ExpressionRunner<SubType>::StackValueNoter noter(this);
+      ret = callFunction(func, arguments);
+    }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
 #endif
-    if (ret.suspendTag) {
-      // See if a suspension arrived that we support.
+    if (!ret.suspendTag) {
+      // No suspension: the coroutine finished normally. Mark it as no longer
+      // active.
+      self()->currContinuation.reset();
+    } else {
+      // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto handlerTag = curr->handlerTags[i];
         if (handlerTag == ret.suspendTag) {
@@ -4719,7 +4749,6 @@ public:
         }
       }
       // No handler worked out, keep propagating.
-      return ret;
     }
     // No suspension; all done.
     return ret;
