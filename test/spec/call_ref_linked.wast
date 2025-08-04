@@ -8,6 +8,7 @@
     (i32.const 42)
   )
   (func $func-i32 (result i32)
+    ;; This call must execute in this module, i.e., call the right $inner.
     (call $inner)
   )
   (func (export "get-func-i32") (result (ref $func-i32))
@@ -26,6 +27,11 @@
     (call_ref $func-i32
       (call $imported)
     )
+  )
+
+  (func $inner (result i32)
+    ;; We should not get here.
+    (unreachable)
   )
 )
 

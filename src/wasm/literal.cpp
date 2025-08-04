@@ -77,7 +77,10 @@ Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
   assert(type.isSignature());
 }
 
-Literal::Literal(Name func, HeapType type) : Literal(std::make_shared<FuncData>(func, nullptr), type) {}
+Literal Literal::makeFunc(Name func, HeapType type) {
+  // Provide only the name of the function, without execution info.
+  return Literal(std::make_shared<FuncData>(func), type);
+}
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type,

@@ -91,9 +91,6 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(std::shared_ptr<FuncData> funcData, HeapType type);
-  // Simple way to create a function from the name and type, without a full
-  // FuncData.
-  explicit Literal(Name func, HeapType type);
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   explicit Literal(std::shared_ptr<ExnData> exnData);
   explicit Literal(std::shared_ptr<ContData> contData);
@@ -253,6 +250,9 @@ public:
   static Literal makeNull(HeapType type) {
     return Literal(Type(type.getBottom(), Nullable));
   }
+  // Simple way to create a function from the name and type, without a full
+  // FuncData.
+  static Literal makeFunc(Name func, HeapType type);
   static Literal makeI31(int32_t value, Shareability share) {
     auto lit = Literal(Type(HeapTypes::i31.getBasic(share), NonNullable));
     lit.i32 = value | 0x80000000;

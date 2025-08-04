@@ -140,6 +140,8 @@ struct FuncData {
   // convention is that all interpreters put |this| here. (If this is nullptr,
   // then we all we track is the function name (which is enough to represent a
   // reference to a function, but not to call it).
+  // TODO: this can be to a helper class, which just provides a "callFunc"
+  //       interfacen
   void* self;
 
   FuncData(Name name, void* self=nullptr) : name(name), self(self) {}

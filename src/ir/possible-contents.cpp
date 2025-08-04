@@ -643,7 +643,7 @@ struct InfoCollector
   void visitRefFunc(RefFunc* curr) {
     addRoot(
       curr,
-      PossibleContents::literal(Literal(curr->func, curr->type.getHeapType())));
+      PossibleContents::literal(Literal::makeFunc(curr->func, curr->type.getHeapType())));
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
@@ -1800,7 +1800,7 @@ void TNHOracle::infer() {
         //       lot of other optimizations become possible anyhow.
         auto target = possibleTargets[0]->name;
         info.inferences[call->target] = PossibleContents::literal(
-          Literal(target, wasm.getFunction(target)->type));
+          Literal::makeFunc(target, wasm.getFunction(target)->type));
         continue;
       }
 
