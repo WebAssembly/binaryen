@@ -1405,6 +1405,20 @@ def wasm_has_duplicate_tags(wasm):
     return binary.count(b'jstag') >= 2 or binary.count(b'wasmtag') >= 2
 
 
+# Detect whether there is a trap reported before an export call in the output.
+def traps_in_instantiation(output):
+    trap_index = output.find(TRAP_PREFIX)
+    if trap_index == -1:
+        # In "fixed" output, traps are replaced with *exception*.
+        trap_index = output.find('*exception*')
+        if trap_index == -1:
+            return False
+    call_index = output.find(FUZZ_EXEC_CALL_PREFIX)
+    if call_index == -1:
+        return True
+    return trap_index < call_index
+
+
 # Tests wasm-merge
 class Merge(TestCaseHandler):
     frequency = 0.15
@@ -1455,7 +1469,7 @@ class Merge(TestCaseHandler):
         merged = abspath('merged.wasm')
         run([in_bin('wasm-merge'), wasm, 'first',
             abspath('second.wasm'), 'second', '-o', merged,
-            '--skip-export-conflicts'] + FEATURE_OPTS + ['-all'])
+            '--skip-export-conflicts', '-all'])
 
         if wasm_has_duplicate_tags(merged):
             note_ignored_vm_run('dupe_tags')
@@ -1464,13 +1478,27 @@ class Merge(TestCaseHandler):
         # sometimes also optimize the merged module
         if random.random() < 0.5:
             opts = get_random_opts()
-            run([in_bin('wasm-opt'), merged, '-o', merged, '-all'] + FEATURE_OPTS + opts)
+            run([in_bin('wasm-opt'), merged, '-o', merged, '-all'] + opts)
 
         # verify that merging in the second module did not alter the output.
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
         output = fix_output(output)
+        second_output = run_bynterp(second_wasm, ['--fuzz-exec-before', '-all'])
+        second_output = fix_output(second_output)
         merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
         merged_output = fix_output(merged_output)
+
+        if traps_in_instantiation(second_output) and \
+                not traps_in_instantiation(output):
+            # The merged module should also trap in instantiation, but the
+            # exports will not be called, so there's nothing else to compare.
+            if not traps_in_instantiation(merged_output):
+                raise Exception('expected merged module to trap during ' +
+                                'instantiation because second module traps ' +
+                                'during instantiation')
+            compare(merged_output, second_output, 'Merge: second module traps' +
+                    ' in instantiation')
+            return
 
         # a complication is that the second module's exports are appended, so we
         # have extra output. to handle that, just prune the tail, so that we
