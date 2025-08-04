@@ -14,13 +14,11 @@
 ;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=MOD3-OPTIONS
 
 (module
- ;; PRIMARY:      (type $ret-i64 (func (result i64)))
-
  ;; PRIMARY:      (type $ret-i32 (func (result i32)))
- ;; PRIMARY-OPTIONS:      (type $ret-i64 (func (result i64)))
-
  ;; PRIMARY-OPTIONS:      (type $ret-i32 (func (result i32)))
  (type $ret-i32 (func (result i32)))
+ ;; PRIMARY:      (type $ret-i64 (func (result i64)))
+ ;; PRIMARY-OPTIONS:      (type $ret-i64 (func (result i64)))
  (type $ret-i64 (func (result i64)))
  ;; PRIMARY:      (type $ret-f32 (func (result f32)))
  ;; PRIMARY-OPTIONS:      (type $ret-f32 (func (result f32)))
@@ -206,11 +204,11 @@
 
  ;; MOD3:      (type $2 (func (result f32)))
 
- ;; MOD3:      (import "" "table_6" (table $timport$0 1 funcref))
+ ;; MOD3:      (import "" "table_5" (table $timport$0 1 funcref))
 
  ;; MOD3:      (import "" "trampoline_A" (func $trampoline_A (type $0) (result i32)))
 
- ;; MOD3:      (import "" "trampoline_B" (func $trampoline_B (type $1) (result i64)))
+ ;; MOD3:      (import "" "B" (func $trampoline_B (type $1) (result i64)))
 
  ;; MOD3:      (elem $0 (i32.const 0) $C)
 
@@ -240,11 +238,11 @@
 
  ;; MOD3-OPTIONS:      (type $2 (func (result f32)))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "table_6" (table $timport$0 1 funcref))
+ ;; MOD3-OPTIONS:      (import "custom_env" "table_5" (table $timport$0 1 funcref))
 
  ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_A" (func $trampoline_A (type $0) (result i32)))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_B" (func $trampoline_B (type $1) (result i64)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "B" (func $trampoline_B (type $1) (result i64)))
 
  ;; MOD3-OPTIONS:      (elem $0 (i32.const 0) $C)
 
@@ -289,9 +287,9 @@
 )
 ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $ret-i32) (result i32)))
 
-;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0_5 (type $ret-i64) (result i64)))
+;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0_4 (type $ret-i64) (result i64)))
 
-;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0_6 (type $ret-f32) (result f32)))
+;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0_5 (type $ret-f32) (result f32)))
 
 ;; PRIMARY:      (table $0 1 funcref)
 
@@ -301,13 +299,13 @@
 
 ;; PRIMARY:      (elem $0 (table $0) (i32.const 0) func $placeholder_0)
 
-;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0_5)
+;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0_4)
 
-;; PRIMARY:      (elem $2 (table $2) (i32.const 0) func $placeholder_0_6)
+;; PRIMARY:      (elem $2 (table $2) (i32.const 0) func $placeholder_0_5)
 
-;; PRIMARY:      (export "B" (func $1))
+;; PRIMARY:      (export "B" (func $trampoline_B))
 
-;; PRIMARY:      (export "C" (func $3))
+;; PRIMARY:      (export "C" (func $trampoline_C))
 
 ;; PRIMARY:      (export "table" (table $0))
 
@@ -315,18 +313,10 @@
 
 ;; PRIMARY:      (export "table_4" (table $1))
 
-;; PRIMARY:      (export "trampoline_B" (func $trampoline_B))
-
-;; PRIMARY:      (export "table_6" (table $2))
+;; PRIMARY:      (export "table_5" (table $2))
 
 ;; PRIMARY:      (func $trampoline_A (type $ret-i32) (result i32)
 ;; PRIMARY-NEXT:  (call_indirect $0 (type $ret-i32)
-;; PRIMARY-NEXT:   (i32.const 0)
-;; PRIMARY-NEXT:  )
-;; PRIMARY-NEXT: )
-
-;; PRIMARY:      (func $1 (type $ret-i64) (result i64)
-;; PRIMARY-NEXT:  (call_indirect $1 (type $ret-i64)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
@@ -337,7 +327,7 @@
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $3 (type $ret-f32) (result f32)
+;; PRIMARY:      (func $trampoline_C (type $ret-f32) (result f32)
 ;; PRIMARY-NEXT:  (call_indirect $2 (type $ret-f32)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
@@ -355,9 +345,9 @@
 
 ;; PRIMARY-OPTIONS:      (elem $2 (table $2) (i32.const 0) funcref (item (ref.null nofunc)))
 
-;; PRIMARY-OPTIONS:      (export "B" (func $1))
+;; PRIMARY-OPTIONS:      (export "B" (func $trampoline_B))
 
-;; PRIMARY-OPTIONS:      (export "C" (func $3))
+;; PRIMARY-OPTIONS:      (export "C" (func $trampoline_C))
 
 ;; PRIMARY-OPTIONS:      (export "table" (table $0))
 
@@ -365,18 +355,10 @@
 
 ;; PRIMARY-OPTIONS:      (export "table_4" (table $1))
 
-;; PRIMARY-OPTIONS:      (export "trampoline_B" (func $trampoline_B))
-
-;; PRIMARY-OPTIONS:      (export "table_6" (table $2))
+;; PRIMARY-OPTIONS:      (export "table_5" (table $2))
 
 ;; PRIMARY-OPTIONS:      (func $trampoline_A (type $ret-i32) (result i32)
 ;; PRIMARY-OPTIONS-NEXT:  (call_indirect $0 (type $ret-i32)
-;; PRIMARY-OPTIONS-NEXT:   (i32.const 0)
-;; PRIMARY-OPTIONS-NEXT:  )
-;; PRIMARY-OPTIONS-NEXT: )
-
-;; PRIMARY-OPTIONS:      (func $1 (type $ret-i64) (result i64)
-;; PRIMARY-OPTIONS-NEXT:  (call_indirect $1 (type $ret-i64)
 ;; PRIMARY-OPTIONS-NEXT:   (i32.const 0)
 ;; PRIMARY-OPTIONS-NEXT:  )
 ;; PRIMARY-OPTIONS-NEXT: )
@@ -387,7 +369,7 @@
 ;; PRIMARY-OPTIONS-NEXT:  )
 ;; PRIMARY-OPTIONS-NEXT: )
 
-;; PRIMARY-OPTIONS:      (func $3 (type $ret-f32) (result f32)
+;; PRIMARY-OPTIONS:      (func $trampoline_C (type $ret-f32) (result f32)
 ;; PRIMARY-OPTIONS-NEXT:  (call_indirect $2 (type $ret-f32)
 ;; PRIMARY-OPTIONS-NEXT:   (i32.const 0)
 ;; PRIMARY-OPTIONS-NEXT:  )
