@@ -610,3 +610,45 @@ TEST(PrincipalTypeTest, UnifyVariables) {
           ({refE0Foo, refE0Foo}, {refE0Foo}),
           ({}, {refFoo}));
 }
+
+// Signature interop
+
+// Test that round-tripping works of a signature to a principal type.
+static void testSignatureRoundTrip(const Signature& sig) {
+  SCOPED_TRACE("Testing signature: " + sig.toString());
+
+  PrincipalType pt(sig);
+  std::optional<Signature> maybeSig = pt.getSignature();
+  ASSERT_TRUE(maybeSig.has_value());
+  EXPECT_EQ(*maybeSig, sig);
+}
+
+TEST(PrincipalTypeTest, SignatureRoundTrip) {
+  testSignatureRoundTrip(Signature(Type::none, Type::none));
+  testSignatureRoundTrip(Signature({Type::i32, Type::f64}, Type::none));
+  testSignatureRoundTrip(Signature(Type::none, {Type::i64, Type::f32}));
+  testSignatureRoundTrip(
+    Signature({Type::i32, Type::f32}, {Type::i64, Type::f64}));
+}
+
+TEST(PrincipalTypeTest, GetSignatureFailure) {
+  // Failure due to a type variable (Index) in parameters or results.
+  {
+    PrincipalType pt({0u}, {});
+    EXPECT_FALSE(pt.getSignature().has_value());
+  }
+  {
+    PrincipalType pt({}, {0u});
+    EXPECT_FALSE(pt.getSignature().has_value());
+  }
+
+  // Failure due to a heap type variable (VarRef) in parameters or results.
+  {
+    PrincipalType pt({VarRef{NonNullable, {0u}}}, {});
+    EXPECT_FALSE(pt.getSignature().has_value());
+  }
+  {
+    PrincipalType pt({}, {VarRef{NonNullable, {0u}}});
+    EXPECT_FALSE(pt.getSignature().has_value());
+  }
+}
