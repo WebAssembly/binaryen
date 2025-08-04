@@ -79,6 +79,7 @@ inline FeatureSet get(UnaryOp op) {
     case RelaxedTruncZeroUVecF64x2ToVecI32x4: {
       ret.setSIMD();
       ret.setRelaxedSIMD();
+      break;
     }
     default: {}
   }
