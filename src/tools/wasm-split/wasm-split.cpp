@@ -567,6 +567,8 @@ void printReadableProfile(const WasmSplitOptions& options) {
 int main(int argc, const char* argv[]) {
   WasmSplitOptions options;
   options.parse(argc, argv);
+  // We don't support --print for wasm-split
+  Colors::setEnabled(false);
 
   if (!options.validate()) {
     Fatal() << "Invalid command line arguments";
