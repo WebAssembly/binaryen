@@ -3019,12 +3019,6 @@ public:
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
-    virtual Literals callTable(Name tableName,
-                               Address index,
-                               HeapType sig,
-                               Literals& arguments,
-                               Type result,
-                               SubType& instance) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -3573,11 +3567,11 @@ public:
 
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
+    auto funcref = info.interface()->tableLoad(info.name, index);
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      auto funcref = info.interface()->tableLoad(info.name, index);
       if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
         trap("cast failure in call_indirect");
       }
@@ -3585,11 +3579,22 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
+    if (funcref.isNull()) {
+      trap("null target in call_indirect");
+    }
+    if (!funcref.isFunction()) {
+      trap("non-function target in call_indirect");
+    }
+
+    auto* func = self()->getModule()->getFunction(funcref.getFunc());
+    if (!HeapType::isSubType(func->type, curr->heapType)) {
+      trap("callIndirect: non-subtype");
+    }
+
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(calling table)\n";
 #endif
-    Flow ret = info.interface()->callTable(
-      info.name, index, curr->heapType, arguments, curr->type, *self());
+    Flow ret = callFunction(funcref.getFunc(), arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";

@@ -35,7 +35,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling oob
- ;; CHECK-NEXT: [trap callTable overflow]
+ ;; CHECK-NEXT: [trap out of bounds table access]
  (func $oob (export "oob") (result i32)
   ;; This call traps on oob.
   (call_indirect (type $i32)
@@ -44,7 +44,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling oob-huge
- ;; CHECK-NEXT: [trap callTable overflow]
+ ;; CHECK-NEXT: [trap out of bounds table access]
  (func $oob-huge (export "oob-huge") (result i32)
   ;; This call traps on oob with a value over 32 bits, 2**32 + 1, which if we
   ;; truncated to 32 bits, would seem in bounds, and end up calling a valid
@@ -58,7 +58,7 @@
  )
 
  ;; CHECK:      [fuzz-exec] calling null
- ;; CHECK-NEXT: [trap uninitialized table element]
+ ;; CHECK-NEXT: [trap null target in call_indirect]
  (func $null (export "null") (result i32)
   ;; This call traps on null
   (call_indirect (type $i32)
@@ -74,13 +74,13 @@
 ;; CHECK-NEXT: [fuzz-exec] note result: call-b => 1337
 
 ;; CHECK:      [fuzz-exec] calling oob
-;; CHECK-NEXT: [trap callTable overflow]
+;; CHECK-NEXT: [trap out of bounds table access]
 
 ;; CHECK:      [fuzz-exec] calling oob-huge
-;; CHECK-NEXT: [trap callTable overflow]
+;; CHECK-NEXT: [trap out of bounds table access]
 
 ;; CHECK:      [fuzz-exec] calling null
-;; CHECK-NEXT: [trap uninitialized table element]
+;; CHECK-NEXT: [trap null target in call_indirect]
 ;; CHECK-NEXT: [fuzz-exec] comparing call-a
 ;; CHECK-NEXT: [fuzz-exec] comparing call-b
 ;; CHECK-NEXT: [fuzz-exec] comparing null
