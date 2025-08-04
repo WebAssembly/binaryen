@@ -1854,21 +1854,41 @@
 ;; Regression test for assertion failure on incorrect updating of type tree
 ;; state.
 (module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $0 (sub (struct)))
-    (type $0 (sub (struct)))
-    ;; CHECK:       (type $1 (sub $0 (struct (field (ref null $0)))))
-    (type $1 (sub $0 (struct (field (ref null $0)))))
-    ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $3)))))
-    (type $2 (sub $1 (struct (field (ref null $3)))))
-    ;; CHECK:       (type $3 (sub $0 (struct)))
-    (type $3 (sub $0 (struct)))
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $0 (sub (struct)))
+  (type $0 (sub (struct)))
+  ;; CHECK:       (type $1 (sub $0 (struct (field (ref null $0)))))
+  (type $1 (sub $0 (struct (field (ref null $0)))))
+  ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $3)))))
+  (type $2 (sub $1 (struct (field (ref null $3)))))
+  ;; CHECK:       (type $3 (sub $0 (struct)))
+  (type $3 (sub $0 (struct)))
+ )
+ ;; CHECK:      (global $g (ref struct) (struct.new_default $2))
+ (global $g (ref struct) (struct.new_default $2))
+ ;; CHECK:      (global $g2 (ref null $1) (ref.null none))
+ (global $g2 (ref null $1) (ref.null none))
+ ;; CHECK:      (export "" (global $g2))
+ (export "" (global $g2))
+)
+
+;; Regression for a mishandling of shared i31 with i31.get.
+(module
+ ;; CHECK:      (type $0 (func (result i32)))
+
+ ;; CHECK:      (func $i31-get (type $0) (result i32)
+ ;; CHECK-NEXT:  (i31.get_s
+ ;; CHECK-NEXT:   (ref.i31_shared
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $i31-get (result i32)
+  (i31.get_s
+   (ref.i31_shared
+    (i32.const 0)
    )
-   ;; CHECK:      (global $g (ref struct) (struct.new_default $2))
-   (global $g (ref struct) (struct.new_default $2))
-   ;; CHECK:      (global $g2 (ref null $1) (ref.null none))
-   (global $g2 (ref null $1) (ref.null none))
-   ;; CHECK:      (export "" (global $g2))
-   (export "" (global $g2))
+  )
+ )
 )

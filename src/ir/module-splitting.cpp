@@ -69,7 +69,6 @@
 
 #include "ir/module-splitting.h"
 #include "asmjs/shared-constants.h"
-#include "ir/element-utils.h"
 #include "ir/export-utils.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
@@ -709,33 +708,36 @@ void ModuleSplitter::setupTablePatching() {
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
-  forEachElement(primary, [&](Name, Name, Index index, Expression*& elem) {
-    auto* ref = elem->dynCast<RefFunc>();
-    if (!ref) {
-      return;
-    }
-    if (!secondaryFuncs.count(ref->func)) {
-      return;
-    }
-    placeholderMap[index] = ref->func;
-    auto* secondaryFunc = secondary.getFunction(ref->func);
-    replacedElems[index] = secondaryFunc;
-    if (!config.usePlaceholders) {
-      // TODO: This can create active element segments with lots of nulls. We
-      // should optimize them like we do data segments with zeros.
-      elem = Builder(primary).makeRefNull(HeapType::nofunc);
-      return;
-    }
-    auto placeholder = std::make_unique<Function>();
-    placeholder->module = config.placeholderNamespace;
-    placeholder->base = std::to_string(index);
-    placeholder->name = Names::getValidFunctionName(
-      primary, std::string("placeholder_") + placeholder->base.toString());
-    placeholder->hasExplicitName = true;
-    placeholder->type = secondaryFunc->type;
-    elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
-    primary.addFunction(std::move(placeholder));
-  });
+  forEachElement(
+    primary, [&](Name table, Name, Index index, Expression*& elem) {
+      auto* ref = elem->dynCast<RefFunc>();
+      if (!ref) {
+        return;
+      }
+      if (!secondaryFuncs.count(ref->func)) {
+        return;
+      }
+      assert(table == tableManager.activeTable->name);
+
+      placeholderMap[index] = ref->func;
+      auto* secondaryFunc = secondary.getFunction(ref->func);
+      replacedElems[index] = secondaryFunc;
+      if (!config.usePlaceholders) {
+        // TODO: This can create active element segments with lots of nulls. We
+        // should optimize them like we do data segments with zeros.
+        elem = Builder(primary).makeRefNull(HeapType::nofunc);
+        return;
+      }
+      auto placeholder = std::make_unique<Function>();
+      placeholder->module = config.placeholderNamespace;
+      placeholder->base = std::to_string(index);
+      placeholder->name = Names::getValidFunctionName(
+        primary, std::string("placeholder_") + placeholder->base.toString());
+      placeholder->hasExplicitName = true;
+      placeholder->type = secondaryFunc->type;
+      elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
+      primary.addFunction(std::move(placeholder));
+    });
 
   if (replacedElems.size() == 0) {
     // No placeholders to patch out of the table

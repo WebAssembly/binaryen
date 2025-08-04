@@ -273,7 +273,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitI31Get(I31Get* curr) {
     // This could be |noteNonFlowSubtype| but as there are no subtypes of i31
     // it does not matter.
-    self()->noteSubtype(curr->i31, Type(HeapType::i31, Nullable));
+    // TODO: This should be i31 with a sharedness type variable, but we will
+    // have to refactor this to use principal types to represent that
+    // accurately. For now look at the operand to guess the proper sharedness.
+    auto share = Unshared;
+    if (curr->i31->type.isRef() && curr->i31->type.getHeapType().isShared()) {
+      share = Shared;
+    }
+    self()->noteSubtype(curr->i31,
+                        Type(HeapTypes::i31.getBasic(share), Nullable));
   }
   void visitCallRef(CallRef* curr) {
     // Even if we are unreachable, the target must be valid, and in particular

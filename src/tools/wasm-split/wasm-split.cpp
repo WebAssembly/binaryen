@@ -417,7 +417,11 @@ void multiSplitModule(const WasmSplitOptions& options) {
   ModuleSplitting::Config config;
   config.usePlaceholders = false;
   config.importNamespace = options.importNamespace;
-  config.minimizeNewExportNames = true;
+  config.minimizeNewExportNames = !options.passOptions.debugInfo;
+  if (options.emitModuleNames && !wasm.name) {
+    wasm.name = Path::getBaseName(options.output);
+  }
+
   for (auto& [mod, funcs] : moduleFuncs) {
     if (options.verbose) {
       std::cerr << "Splitting module " << mod << '\n';
@@ -427,9 +431,12 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
     config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
     auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-    // TODO: symbolMap, placeholderMap, emitModuleNames
-    // TODO: Support --emit-text and use .wast in that case.
-    auto moduleName = options.outPrefix + mod + ".wasm";
+    // TODO: symbolMap, placeholderMap
+    auto moduleName =
+      options.outPrefix + mod + (options.emitBinary ? ".wasm" : ".wast");
+    if (options.emitModuleNames) {
+      splitResults.secondary->name = Path::getBaseName(moduleName);
+    }
     writeModule(*splitResults.secondary, moduleName, options);
   }
   writeModule(wasm, options.output, options);
@@ -567,6 +574,8 @@ void printReadableProfile(const WasmSplitOptions& options) {
 int main(int argc, const char* argv[]) {
   WasmSplitOptions options;
   options.parse(argc, argv);
+  // We don't support --print for wasm-split
+  Colors::setEnabled(false);
 
   if (!options.validate()) {
     Fatal() << "Invalid command line arguments";
