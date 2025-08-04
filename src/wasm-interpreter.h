@@ -287,17 +287,6 @@ protected:
     return Literal(allocation);
   }
 
-public: // XXX
-  Literal makeFuncData(Name name, HeapType type) {
-    // Identify the interpreter, but do not provide a way to actually call the
-    // function.
-    auto allocation = std::make_shared<FuncData>(name, this);
-#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
-#endif
-    return Literal(allocation, type);
-  }
-
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -311,6 +300,16 @@ public:
     // Execute relaxed SIMD instructions.
     Execute,
   };
+
+  Literal makeFuncData(Name name, HeapType type) {
+    // Identify the interpreter, but do not provide a way to actually call the
+    // function.
+    auto allocation = std::make_shared<FuncData>(name, this);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
 
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
