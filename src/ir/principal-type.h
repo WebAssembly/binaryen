@@ -130,13 +130,6 @@ struct PrincipalType {
   // variables.
   std::optional<Signature> getSignature() const;
 
-  // Flip the params and results.
-  void flip() {
-    std::swap(rparams, results);
-    std::reverse(rparams.begin(), rparams.end());
-    std::reverse(results.begin(), results.end());
-  }
-
   bool operator==(const PrincipalType& other) const {
     return rparams == other.rparams && results == other.results &&
            unreachable == other.unreachable;
