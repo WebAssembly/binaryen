@@ -130,8 +130,6 @@ public:
   }
 };
 
-class ModuleRunner;
-
 struct FuncData {
   // Name of the function in the module.
   Name name;
@@ -145,6 +143,8 @@ struct FuncData {
   void* self;
 
   FuncData(Name name, void* self=nullptr) : name(name), self(self) {}
+
+  // TODO: operator==, and ignore interpreter internals. void*+name.
 };
 
 // Suspend/resume support.

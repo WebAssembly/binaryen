@@ -730,7 +730,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         }
       }
     } else if (heapType.isSignature()) {
-      o << "funcref(" << literal.getFuncData()->name << ")";
+      o << "funcref(" << literal.getFunc() << ")";
     } else if (heapType.isContinuation()) {
       auto data = literal.getContData();
       o << "cont(" << data->func << ' ' << data->type;
