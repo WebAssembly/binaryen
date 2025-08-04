@@ -3567,7 +3567,16 @@ public:
 
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
-    auto funcref = info.interface()->tableLoad(info.name, index);
+    Literal funcref;
+    if (!self()->resuming) {
+      // Normal execution: Load from the table.
+      funcref = info.interface()->tableLoad(info.name, index);
+    } else {
+      // Use the stashed funcref (see below).
+      auto entry = self()->popResumeEntry("call_indirect");
+      assert(entry.size() == 1);
+      funcref = entry[0];
+    }
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
@@ -3599,6 +3608,14 @@ public:
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
 #endif
+
+    if (ret.suspendTag) {
+      // Save the function reference we are calling, as when we resume we need
+      // to call it - we cannot do another load from the table, which might have
+      // changed.
+      self()->pushResumeEntry({funcref}, "call_indirect");
+    }
+
     return ret;
   }
 
