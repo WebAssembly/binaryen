@@ -35,5 +35,5 @@
   )
 )
 
-(assert_return (invoke "run" (i64.const 42)))
+(assert_return (invoke "run") (i64.const 42))
 

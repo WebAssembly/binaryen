@@ -72,7 +72,7 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
-  : funcData(funcData), type(type, NonNullable) {
+  : funcData(funcData), type(type, NonNullable, Exact) {
   assert(funcData);
   assert(type.isSignature());
 }
