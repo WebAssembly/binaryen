@@ -481,7 +481,7 @@ bool Literal::operator==(const Literal& other) const {
       return true;
     }
     if (type.isFunction()) {
-      return funcData == other.funcData;
+      return *funcData == *other.funcData;
     }
     if (type.isString()) {
       return gcData->values == other.gcData->values;

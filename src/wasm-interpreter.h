@@ -144,7 +144,11 @@ struct FuncData {
 
   FuncData(Name name, void* self=nullptr) : name(name), self(self) {}
 
-  // TODO: operator==, and ignore interpreter internals. void*+name.
+  bool operator==(const FuncData& other) const {
+    // We only compare the name of the function and the interpreter instance it
+    // is in.
+    return name == other.name && self == other.self;
+  }
 };
 
 // Suspend/resume support.
