@@ -46,7 +46,7 @@ class Literal {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
-    // funcref function name.
+    // A reference to Function data.
     std::shared_ptr<FuncData> funcData;
     // A reference to GC data, either a Struct or an Array. For both of those we
     // store the referred data as a Literals object (which is natural for an
