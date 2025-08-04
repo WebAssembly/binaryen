@@ -26,11 +26,11 @@
 
  ;; CHECK-A:      (type $2 (func (result i32)))
 
- ;; CHECK-A:      (import "" "c" (table $timport$0 1 funcref))
+ ;; CHECK-A:      (import "" "table" (table $timport$0 1 funcref))
 
- ;; CHECK-A:      (import "" "a" (func $B (result i64)))
+ ;; CHECK-A:      (import "" "B" (func $B (result i64)))
 
- ;; CHECK-A:      (import "" "b" (func $C (result f32)))
+ ;; CHECK-A:      (import "" "C" (func $C (result f32)))
 
  ;; CHECK-A:      (elem $0 (i32.const 0) $A)
 
@@ -58,11 +58,11 @@
 
  ;; CHECK-A-NS:      (type $2 (func (result i32)))
 
- ;; CHECK-A-NS:      (import "custom_env" "c" (table $timport$0 1 funcref))
+ ;; CHECK-A-NS:      (import "custom_env" "table" (table $timport$0 1 funcref))
 
- ;; CHECK-A-NS:      (import "custom_env" "a" (func $B (result i64)))
+ ;; CHECK-A-NS:      (import "custom_env" "B" (func $B (result i64)))
 
- ;; CHECK-A-NS:      (import "custom_env" "b" (func $C (result f32)))
+ ;; CHECK-A-NS:      (import "custom_env" "C" (func $C (result f32)))
 
  ;; CHECK-A-NS:      (elem $0 (i32.const 0) $A)
 
@@ -108,11 +108,11 @@
 
  ;; CHECK-B:      (type $2 (func (result i64)))
 
- ;; CHECK-B:      (import "" "e" (table $timport$0 1 funcref))
+ ;; CHECK-B:      (import "" "table_4" (table $timport$0 1 funcref))
 
- ;; CHECK-B:      (import "" "b" (func $C (result f32)))
+ ;; CHECK-B:      (import "" "C" (func $C (result f32)))
 
- ;; CHECK-B:      (import "" "d" (func $fimport$1 (result i32)))
+ ;; CHECK-B:      (import "" "trampoline_A" (func $fimport$1 (result i32)))
 
  ;; CHECK-B:      (elem $0 (i32.const 0) $B)
 
@@ -140,11 +140,11 @@
 
  ;; CHECK-B-NS:      (type $2 (func (result i64)))
 
- ;; CHECK-B-NS:      (import "custom_env" "e" (table $timport$0 1 funcref))
+ ;; CHECK-B-NS:      (import "custom_env" "table_4" (table $timport$0 1 funcref))
 
- ;; CHECK-B-NS:      (import "custom_env" "b" (func $C (result f32)))
+ ;; CHECK-B-NS:      (import "custom_env" "C" (func $C (result f32)))
 
- ;; CHECK-B-NS:      (import "custom_env" "d" (func $fimport$1 (result i32)))
+ ;; CHECK-B-NS:      (import "custom_env" "trampoline_A" (func $fimport$1 (result i32)))
 
  ;; CHECK-B-NS:      (elem $0 (i32.const 0) $B)
 
@@ -190,11 +190,11 @@
 
  ;; CHECK-C:      (type $2 (func (result f32)))
 
- ;; CHECK-C:      (import "" "g" (table $timport$0 1 funcref))
+ ;; CHECK-C:      (import "" "table_6" (table $timport$0 1 funcref))
 
- ;; CHECK-C:      (import "" "d" (func $fimport$0 (result i32)))
+ ;; CHECK-C:      (import "" "trampoline_A" (func $fimport$0 (result i32)))
 
- ;; CHECK-C:      (import "" "f" (func $fimport$1 (result i64)))
+ ;; CHECK-C:      (import "" "trampoline_B" (func $fimport$1 (result i64)))
 
  ;; CHECK-C:      (elem $0 (i32.const 0) $C)
 
@@ -222,11 +222,11 @@
 
  ;; CHECK-C-NS:      (type $2 (func (result f32)))
 
- ;; CHECK-C-NS:      (import "custom_env" "g" (table $timport$0 1 funcref))
+ ;; CHECK-C-NS:      (import "custom_env" "table_6" (table $timport$0 1 funcref))
 
- ;; CHECK-C-NS:      (import "custom_env" "d" (func $fimport$0 (result i32)))
+ ;; CHECK-C-NS:      (import "custom_env" "trampoline_A" (func $fimport$0 (result i32)))
 
- ;; CHECK-C-NS:      (import "custom_env" "f" (func $fimport$1 (result i64)))
+ ;; CHECK-C-NS:      (import "custom_env" "trampoline_B" (func $fimport$1 (result i64)))
 
  ;; CHECK-C-NS:      (elem $0 (i32.const 0) $C)
 
@@ -279,19 +279,19 @@
 
 ;; PRIMARY:      (elem $2 (table $2) (i32.const 0) funcref (item (ref.null nofunc)))
 
-;; PRIMARY:      (export "a" (func $1))
+;; PRIMARY:      (export "B" (func $1))
 
-;; PRIMARY:      (export "b" (func $3))
+;; PRIMARY:      (export "C" (func $3))
 
-;; PRIMARY:      (export "c" (table $0))
+;; PRIMARY:      (export "table" (table $0))
 
-;; PRIMARY:      (export "d" (func $0))
+;; PRIMARY:      (export "trampoline_A" (func $0))
 
-;; PRIMARY:      (export "e" (table $1))
+;; PRIMARY:      (export "table_4" (table $1))
 
-;; PRIMARY:      (export "f" (func $2))
+;; PRIMARY:      (export "trampoline_B" (func $2))
 
-;; PRIMARY:      (export "g" (table $2))
+;; PRIMARY:      (export "table_6" (table $2))
 
 ;; PRIMARY:      (func $0 (result i32)
 ;; PRIMARY-NEXT:  (call_indirect (type $ret-i32)
