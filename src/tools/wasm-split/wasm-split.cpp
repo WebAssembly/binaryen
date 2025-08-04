@@ -417,7 +417,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
   ModuleSplitting::Config config;
   config.usePlaceholders = false;
   config.importNamespace = options.importNamespace;
-  config.minimizeNewExportNames = true;
+  config.minimizeNewExportNames = !options.passOptions.debugInfo;
   for (auto& [mod, funcs] : moduleFuncs) {
     if (options.verbose) {
       std::cerr << "Splitting module " << mod << '\n';
@@ -567,6 +567,8 @@ void printReadableProfile(const WasmSplitOptions& options) {
 int main(int argc, const char* argv[]) {
   WasmSplitOptions options;
   options.parse(argc, argv);
+  // We don't support --print for wasm-split
+  Colors::setEnabled(false);
 
   if (!options.validate()) {
     Fatal() << "Invalid command line arguments";

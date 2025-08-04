@@ -4749,10 +4749,10 @@ public:
 #endif
     Flow ret;
     {
-      // Create a stack value scope. This value will never be suspended - it is
-      // the value flowing out - but it is simpler to add this here, than to
-      // special-case in visit() the toplevel expression (i.e., that has no
-      // parent expression to add a stack value scope for it).
+      // Create a stack value scope. This ensures that we always have a scope,
+      // and so the code that pushes/pops doesn't need to check if a scope
+      // exists. (We do not need the values in this scope, of course, as no
+      // expression is above them, so we cannot suspend and need these values).
       typename ExpressionRunner<SubType>::StackValueNoter noter(this);
       ret = callFunction(func, arguments);
     }

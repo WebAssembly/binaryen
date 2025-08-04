@@ -59,6 +59,12 @@ template<typename T> struct InsertOrderedSet {
     return inserted;
   }
 
+  template<typename It> void insert(It begin, It end) {
+    for (; begin != end; ++begin) {
+      insert(*begin);
+    }
+  }
+
   size_t size() const { return Map.size(); }
   bool empty() const { return Map.empty(); }
 
