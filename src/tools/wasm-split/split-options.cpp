@@ -15,6 +15,7 @@
  */
 
 #include "split-options.h"
+#include "support/colors.h"
 #include <fstream>
 
 namespace wasm {
@@ -339,7 +340,10 @@ WasmSplitOptions::WasmSplitOptions()
          WasmSplitOption,
          {Mode::Split, Mode::Instrument},
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { emitBinary = false; })
+         [&](Options* o, const std::string& argument) {
+           emitBinary = false;
+           Colors::setEnabled(false);
+         })
     .add("--debuginfo",
          "-g",
          "Emit names section in wasm binary (or full debuginfo in wast)",
