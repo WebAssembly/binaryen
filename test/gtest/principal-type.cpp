@@ -627,7 +627,8 @@ TEST(PrincipalTypeTest, SignatureRoundTrip) {
   testSignatureRoundTrip(Signature(Type::none, Type::none));
   testSignatureRoundTrip(Signature({Type::i32, Type::f64}, Type::none));
   testSignatureRoundTrip(Signature(Type::none, {Type::i64, Type::f32}));
-  testSignatureRoundTrip(Signature({Type::i32, Type::f32}, {Type::i64, Type::f64}));
+  testSignatureRoundTrip(
+    Signature({Type::i32, Type::f32}, {Type::i64, Type::f64}));
 }
 
 TEST(PrincipalTypeTest, GetSignatureFailure) {
