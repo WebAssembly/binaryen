@@ -130,6 +130,19 @@ public:
   }
 };
 
+class ModuleRunner;
+
+struct FuncData {
+  // Name of the function in the module.
+  Name name;
+  // The module runner instance it is inside. This is nullptr if all we track is
+  // the function name (which is enough to represent a reference to a function,
+  // but not to call it).
+  ModuleRunner* moduleRunner;
+
+  FuncData(Name name, ModuleRunner* moduleRunner=nullptr) : name(name), moduleRunner(moduleRunner) {}
+};
+
 // Suspend/resume support.
 //
 // As we operate directly on our structured IR, we do not have a program counter
@@ -256,6 +269,16 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation);
+  }
+
+  Literal makeFuncData(Name name,
+                       Type type) {
+    // No ModuleRunner, so pass in only the name of the function.
+    auto allocation = std::make_shared<FuncData>(name);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type.getHeapType());
   }
 
 public:
@@ -1788,7 +1811,7 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return Literal::makeFunc(curr->func, curr->type.getHeapType());
+    return makeFuncData(curr->func, curr->type);
   }
   Flow visitRefEq(RefEq* curr) {
     Flow flow = visit(curr->left);
@@ -3511,6 +3534,16 @@ protected:
     return inst->globals[global->name];
   }
 
+  // Overrides the parent and adds the ModuleRunner pointer
+  Literal makeFuncData(Name name,
+                       Type type) {
+    auto allocation = std::make_shared<FuncData>(name, this);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type.getHeapType());
+  }
+
 public:
   Flow visitCall(Call* curr) {
     Name target = curr->target;
@@ -3532,7 +3565,7 @@ public:
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(Literal::makeFunc(target, funcType));
+      arguments.push_back(self()->makeFuncData(target, funcType));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 

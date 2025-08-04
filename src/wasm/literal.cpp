@@ -71,6 +71,14 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
+Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
+  : funcData(funcData), type(type) {
+  assert(funcData);
+  assert(type.isSignature());
+}
+
+Literal::Literal(Name func, HeapType type) : Literal(std::make_shared<FuncData>(func, nullptr)) {}
+
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type,
                          gcData ? NonNullable : Nullable,
@@ -140,7 +148,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     return;
   }
   if (type.isFunction()) {
-    func = other.func;
+    new (&funcData) std::shared_ptr<FuncData>(other.funcData);
     return;
   }
   if (type.isContinuation()) {
@@ -187,6 +195,8 @@ Literal::~Literal() {
   if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext) ||
       type.getHeapType().isMaybeShared(HeapType::any)) {
     gcData.~shared_ptr();
+  } else if (isFunction) {
+    funcData.~shared_ptr();
   } else if (isExn()) {
     exnData.~shared_ptr();
   } else if (isContinuation()) {
@@ -328,11 +338,25 @@ Literal Literal::standardizeNaN(const Literal& input) {
   }
 }
 
+Name Literal::getFunc() const {
+  return getFuncData()->name;
+}
+
+std::shared_ptr<FuncData> Literal::getFuncData() const {
+  assert(isNull() || isFunction());
+  return funcData;
+}
+
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
   memcpy(ret.data(), v128, sizeof(ret));
   return ret;
+}
+
+std::shared_ptr<FuncData> Literal::getFuncData() const {
+  assert(isFunction());
+  return funcData;
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
@@ -458,8 +482,7 @@ bool Literal::operator==(const Literal& other) const {
       return true;
     }
     if (type.isFunction()) {
-      assert(func.is() && other.func.is());
-      return func == other.func;
+      return funcData == other.funcData;
     }
     if (type.isString()) {
       return gcData->values == other.gcData->values;
@@ -708,7 +731,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         }
       }
     } else if (heapType.isSignature()) {
-      o << "funcref(" << literal.getFunc() << ")";
+      o << "funcref(" << literal.getFuncData()->name << ")";
     } else if (heapType.isContinuation()) {
       auto data = literal.getContData();
       o << "cont(" << data->func << ' ' << data->type;
