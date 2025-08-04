@@ -72,12 +72,12 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
-  : funcData(funcData), type(type) {
+  : funcData(funcData), type(type, NonNullable) {
   assert(funcData);
   assert(type.isSignature());
 }
 
-Literal::Literal(Name func, HeapType type) : Literal(std::make_shared<FuncData>(func, nullptr)) {}
+Literal::Literal(Name func, HeapType type) : Literal(std::make_shared<FuncData>(func, nullptr), type) {}
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type,
@@ -195,7 +195,7 @@ Literal::~Literal() {
   if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext) ||
       type.getHeapType().isMaybeShared(HeapType::any)) {
     gcData.~shared_ptr();
-  } else if (isFunction) {
+  } else if (isFunction()) {
     funcData.~shared_ptr();
   } else if (isExn()) {
     exnData.~shared_ptr();
@@ -338,20 +338,16 @@ Literal Literal::standardizeNaN(const Literal& input) {
   }
 }
 
-Name Literal::getFunc() const {
-  return getFuncData()->name;
-}
-
-std::shared_ptr<FuncData> Literal::getFuncData() const {
-  assert(isNull() || isFunction());
-  return funcData;
-}
-
 std::array<uint8_t, 16> Literal::getv128() const {
   assert(type == Type::v128);
   std::array<uint8_t, 16> ret;
   memcpy(ret.data(), v128, sizeof(ret));
   return ret;
+}
+
+Name Literal::getFunc() const {
+  assert(isFunction());
+  return getFuncData()->name;
 }
 
 std::shared_ptr<FuncData> Literal::getFuncData() const {

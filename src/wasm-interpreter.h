@@ -135,12 +135,14 @@ class ModuleRunner;
 struct FuncData {
   // Name of the function in the module.
   Name name;
-  // The module runner instance it is inside. This is nullptr if all we track is
-  // the function name (which is enough to represent a reference to a function,
-  // but not to call it).
-  ModuleRunner* moduleRunner;
+  // The interpreter instance we are in. Rather than template this over that,
+  // which would lead to lots of templating everywhere, use void*. The
+  // convention is that all interpreters put |this| here. (If this is nullptr,
+  // then we all we track is the function name (which is enough to represent a
+  // reference to a function, but not to call it).
+  void* self;
 
-  FuncData(Name name, ModuleRunner* moduleRunner=nullptr) : name(name), moduleRunner(moduleRunner) {}
+  FuncData(Name name, void* self=nullptr) : name(name), self(self) {}
 };
 
 // Suspend/resume support.
@@ -272,13 +274,12 @@ protected:
   }
 
   Literal makeFuncData(Name name,
-                       Type type) {
-    // No ModuleRunner, so pass in only the name of the function.
-    auto allocation = std::make_shared<FuncData>(name);
+                       HeapType type) {
+    auto allocation = std::make_shared<FuncData>(name, this);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
 #endif
-    return Literal(allocation, type.getHeapType());
+    return Literal(allocation, type);
   }
 
 public:
@@ -1811,7 +1812,7 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return makeFuncData(curr->func, curr->type);
+    return makeFuncData(curr->func, curr->type.getHeapType());
   }
   Flow visitRefEq(RefEq* curr) {
     Flow flow = visit(curr->left);
@@ -3532,16 +3533,6 @@ protected:
     }
 
     return inst->globals[global->name];
-  }
-
-  // Overrides the parent and adds the ModuleRunner pointer
-  Literal makeFuncData(Name name,
-                       Type type) {
-    auto allocation = std::make_shared<FuncData>(name, this);
-#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
-    __lsan_ignore_object(allocation.get());
-#endif
-    return Literal(allocation, type.getHeapType());
   }
 
 public:
