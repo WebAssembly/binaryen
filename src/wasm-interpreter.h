@@ -141,10 +141,13 @@ struct FuncData {
   void* self;
 
   // A way to execute this function. We use this when it is called.
-  using Call = std::function<Flow (Literals)>;
+  using Call = std::function<Flow(Literals)>;
   std::optional<Call> call;
 
-  FuncData(Name name, void* self=nullptr, std::optional<Call> call=std::nullopt) : name(name), self(self), call(call) {}
+  FuncData(Name name,
+           void* self = nullptr,
+           std::optional<Call> call = std::nullopt)
+    : name(name), self(self), call(call) {}
 
   bool operator==(const FuncData& other) const {
     return name == other.name && self == other.self;
@@ -285,8 +288,7 @@ protected:
   }
 
 public: // XXX
-  Literal makeFuncData(Name name,
-                       HeapType type) {
+  Literal makeFuncData(Name name, HeapType type) {
     // Identify the interpreter, but do not provide a way to actually call the
     // function.
     auto allocation = std::make_shared<FuncData>(name, this);
@@ -5013,13 +5015,13 @@ public:
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
 
-  Literal makeFuncData(Name name,
-                       HeapType type) {
+  Literal makeFuncData(Name name, HeapType type) {
     // As the super's |makeFuncData|, but here we also provide a way to
     // actually call the function.
-    auto allocation = std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
-      return callFunction(name, arguments);
-    });
+    auto allocation =
+      std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
+        return callFunction(name, arguments);
+      });
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
 #endif

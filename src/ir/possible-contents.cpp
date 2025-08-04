@@ -641,9 +641,9 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitRefFunc(RefFunc* curr) {
-    addRoot(
-      curr,
-      PossibleContents::literal(Literal::makeFunc(curr->func, curr->type.getHeapType())));
+    addRoot(curr,
+            PossibleContents::literal(
+              Literal::makeFunc(curr->func, curr->type.getHeapType())));
 
     // The presence of a RefFunc indicates the function may be called
     // indirectly, so add the relevant connections for this particular function.
