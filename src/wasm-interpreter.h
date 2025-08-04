@@ -133,21 +133,26 @@ public:
 struct FuncData {
   // Name of the function in the module.
   Name name;
-  // The interpreter instance we are in. Rather than template this over that,
-  // which would lead to lots of templating everywhere, use void*. The
-  // convention is that all interpreters put |this| here. (If this is nullptr,
-  // then we all we track is the function name (which is enough to represent a
-  // reference to a function, but not to call it).
-  // TODO: this can be to a helper class, which just provides a "callFunc"
-  //       interfacen
+
+  // The interpreter instance we are in. This is only used for equality
+  // comparisons, as two functions are equal iff they have the same name and are
+  // in the same instance (in particular, we do *not* compare the |call| field
+  // below, which is an execution detail).
   void* self;
 
-  FuncData(Name name, void* self=nullptr) : name(name), self(self) {}
+  // A way to execute this function. We use this when it is called.
+  using Call = std::function<Flow (Literals)>;
+  std::optional<Call> call;
+
+  FuncData(Name name, void* self=nullptr, std::optional<Call> call=std::nullopt) : name(name), self(self), call(call) {}
 
   bool operator==(const FuncData& other) const {
-    // We only compare the name of the function and the interpreter instance it
-    // is in.
     return name == other.name && self == other.self;
+  }
+
+  Flow doCall(Literals arguments) {
+    assert(call);
+    return (*call)(arguments);
   }
 };
 
@@ -279,8 +284,11 @@ protected:
     return Literal(allocation);
   }
 
+public: // XXX
   Literal makeFuncData(Name name,
                        HeapType type) {
+    // Identify the interpreter, but do not provide a way to actually call the
+    // function.
     auto allocation = std::make_shared<FuncData>(name, this);
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     __lsan_ignore_object(allocation.get());
@@ -1818,7 +1826,7 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return makeFuncData(curr->func, curr->type.getHeapType());
+    return self()->makeFuncData(curr->func, curr->type.getHeapType());
   }
   Flow visitRefEq(RefEq* curr) {
     Flow flow = visit(curr->left);
@@ -3640,7 +3648,7 @@ public:
     std::cout << self()->indent() << "(calling ref " << targetRef.getFunc()
               << ")\n";
 #endif
-    Flow ret = callFunction(targetRef.getFunc(), arguments);
+    Flow ret = targetRef.getFuncData()->doCall(arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
@@ -5004,6 +5012,19 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
+
+  Literal makeFuncData(Name name,
+                       HeapType type) {
+    // As the super's |makeFuncData|, but here we also provide a way to
+    // actually call the function.
+    auto allocation = std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
+      return callFunction(name, arguments);
+    });
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
 };
 
 } // namespace wasm
