@@ -1,3 +1,4 @@
+#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -4783,7 +4784,7 @@ public:
       self()->resuming = true;
     }
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "resuming func " << func->name << '\n';
+    std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
 #endif
     Flow ret;
     {
