@@ -86,6 +86,18 @@ public:
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
+
+  // This needs to be duplicated from ModuleRunner, unfortunately.
+  Literal makeFuncData(Name name, HeapType type) {
+    auto allocation =
+      std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
+        return callFunction(name, arguments);
+      });
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
