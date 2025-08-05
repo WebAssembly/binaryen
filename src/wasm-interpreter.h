@@ -4823,6 +4823,7 @@ public:
     assert(old->resumeArguments.empty());
     // The old one is done.
     old->executed = true;
+std::cout << "binding " << arguments << " so " << newData.resumeArguments << " and hence " << Literal(std::make_shared<ContData>(newData)) << '\n';
     return Literal(std::make_shared<ContData>(newData));
   }
   Flow visitSuspend(Suspend* curr) {
@@ -4893,7 +4894,12 @@ public:
       trap("continuation already executed");
     }
     contData->executed = true;
-    contData->resumeArguments = arguments;
+    if (contData->resumeArguments.empty()) {
+      // The continuation has no bound arguments. For now, we just handle the
+      // simple case of binding all of them, so that means we can just use all
+      // the immediate ones here. TODO
+      contData->resumeArguments = arguments;
+    }
     auto func = contData->func;
     self()->pushCurrContinuation(contData);
     self()->executionState->resuming = true;
