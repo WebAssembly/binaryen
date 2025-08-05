@@ -4701,15 +4701,12 @@ public:
     // meaningless (it will error when it reaches the host).
     auto old = self()->currContinuation;
     assert(!old || old->executed);
-    auto oldType = old ? old->type : HeapType::none;
-    auto new_ = std::make_shared<ContData>(old ? old->func : Name(), oldType);
-    if (old) {
-      // Update the type.
-      auto oldSig = oldType.getContinuation().type.getSignature();
-      auto tagSig = self()->getModule()->getTag(curr->tag)->type.getSignature();
-      auto newSig = Signature(tagSig.results, oldSig.results);
-      new_->type = Continuation(HeapType(newSig));
-    }
+    auto new_ = std::make_shared<ContData>(old ? old->func : Name(),
+                                           old ? old->type : HeapType::none);
+    // Note we cannot update the type yet, so it will be wrong in debug
+    // logging. To update it, we must find the block that receives this value,
+    // which means we cannot do it here (we don't even know what that block is).
+
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
     self()->currContinuation = new_;
@@ -4771,8 +4768,30 @@ public:
           // Switch the flow from suspending to branching.
           ret.suspendTag = Name();
           ret.breakTo = curr->handlerBlocks[i];
+          // We can now update the continuation type, which was wrong until now
+          // (see comment in visitSuspend). The type is taken from the block we
+          // branch to (which we find in a quite inefficient manner).
+          struct BlockFinder : public PostWalker<BlockFinder> {
+            Name target;
+            Type type = Type::none;
+            void visitBlock(Block* curr) {
+              if (curr->name == target) {
+                type = curr->type;
+              }
+            }
+          } finder;
+          finder.target = ret.breakTo;
+          // We must be in a function scope.
+          assert(self()->scope->function);
+          finder.walk(self()->scope->function->body);
+          // We must have found the type, and it must be valid.
+          assert(finder.type.isConcrete());
+          assert(finder.type.size() >= 1);
+          // The continuation is the final value/type there.
+          auto cont = self()->currContinuation;
+          cont->type = finder.type[finder.type.size() - 1].getHeapType();
           // Add the continuation as the final value being sent.
-          ret.values.push_back(Literal(self()->currContinuation));
+          ret.values.push_back(Literal(cont));
           // We are not longer processing that continuation.
           self()->currContinuation.reset();
           return ret;
