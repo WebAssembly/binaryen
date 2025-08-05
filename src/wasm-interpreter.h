@@ -4813,16 +4813,17 @@ public:
       return cont;
     }
 
-    // Create a new continuation, copying the old but adding the new arguments.
+    // Create a new continuation, copying the old but with the new type +
+    // arguments.
     auto old = cont.getSingleValue().getContData();
-    auto new_ = std::make_shared<ContData>(*old);
-    new_->resumeArguments = arguments;
-    new_->resumeExpr = curr;
-    // We handle only the simple case of applying all parameters, for now.
+    auto newData = *old;
+    newData.type = curr->type.getHeapType();
+    newData.resumeArguments = arguments;
+    // We handle only the simple case of applying all parameters, for now. TODO
     assert(old->resumeArguments.empty());
     // The old one is done.
     old->executed = true;
-    return Literal(new_);
+    return Literal(std::make_shared<ContData>(newData));
   }
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
