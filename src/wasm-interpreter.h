@@ -241,7 +241,7 @@ struct ExecutionState {
   // continuation is current does not depend on which instance we happen to be
   // inside (we could call an imported function from another module, and that
   // should not alter what happens when we suspend/resume).
-  std::vector<std::shared_ptr<ContData>> continuations; 
+  std::vector<std::shared_ptr<ContData>> continuations;
 
   // Set when we are resuming execution, that is, re-winding the stack.
   bool resuming = false;
@@ -336,7 +336,8 @@ protected:
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
-    std::string ret = '[' + std::to_string(reinterpret_cast<size_t>(this)) + "] ";
+    std::string ret =
+      '[' + std::to_string(reinterpret_cast<size_t>(this)) + "] ";
     for (Index i = 0; i < depth; i++) {
       ret += ' ';
     }
@@ -410,7 +411,8 @@ protected:
     auto cont = getCurrContinuationOrNull();
 #if WASM_INTERPRETER_DEBUG
     if (!cont) {
-      std::cout << indent() << "failed to find continuation for " << why << "\n";
+      std::cout << indent() << "failed to find continuation for " << why
+                << "\n";
     }
 #endif
     assert(cont);
@@ -447,9 +449,7 @@ public:
   }
 
 protected:
-  bool isResuming() {
-    return executionState && executionState->resuming;
-  }
+  bool isResuming() { return executionState && executionState->resuming; }
 
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
@@ -465,7 +465,7 @@ protected:
   // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry(const char* what) {
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "pop resume entry [" << what << "]:\n"; 
+    std::cout << indent() << "pop resume entry [" << what << "]:\n";
 #endif
     auto currContinuation = getCurrContinuation("pop resume");
     assert(!currContinuation->resumeInfo.empty());
@@ -509,7 +509,8 @@ public:
     } else {
       // We may suspend/resume.
 #if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "(continuation stack size: " << executionState->continuations.size() << ")\n";
+      std::cout << indent() << "(continuation stack size: "
+                << executionState->continuations.size() << ")\n";
 #endif
       bool hasValue = false;
       if (isResuming()) {
@@ -592,7 +593,8 @@ public:
       // not suspending - suspending is handled above).
       if (!ret.suspendTag && ret.getType().isConcrete()) {
 #if WASM_INTERPRETER_DEBUG
-        std::cout << indent() << "(exiting with continuation stack size: " << executionState->continuations.size() << ")\n";
+        std::cout << indent() << "(exiting with continuation stack size: "
+                  << executionState->continuations.size() << ")\n";
 #endif
         assert(!valueStack.empty());
         auto& values = valueStack.back();
@@ -3590,7 +3592,8 @@ public:
       parent.functionStack.push_back(function->name);
       locals.resize(function->getNumLocals());
 
-      if (parent.isResuming() && parent.getCurrContinuation("waka")->resumeExpr) {
+      if (parent.isResuming() &&
+          parent.getCurrContinuation("waka")->resumeExpr) {
         // Nothing more to do here: we are resuming execution, so there is old
         // locals state that will be restored. XXX
         return;
@@ -4854,7 +4857,7 @@ public:
     // Copy the continuation (the old one cannot be resumed again). Note that no
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
-    auto old = self()->getCurrContinuationOrNull(); 
+    auto old = self()->getCurrContinuationOrNull();
     if (!old) {
       return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
     }
