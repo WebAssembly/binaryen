@@ -5258,14 +5258,12 @@ void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
         << " was enabled by the user, but disallowed in the features section.";
     }
     if (used) {
-      featuresSectionFeatures.enable(feature);
+      wasm.features.enable(feature);
     }
   }
   if (pos != sectionPos + payloadLen) {
     throwError("bad features section size");
   }
-
-  wasm.features.enable(featuresSectionFeatures);
 }
 
 void WasmBinaryReader::readDylink(size_t payloadLen) {

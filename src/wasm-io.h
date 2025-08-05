@@ -67,16 +67,12 @@ public:
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
 
-  FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
-
 private:
   bool DWARF = false;
 
   IRProfile profile = IRProfile::Normal;
 
   bool skipFunctionBodies = false;
-
-  FeatureSet featuresSectionFeatures = FeatureSet::MVP;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 
