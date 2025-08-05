@@ -5006,6 +5006,11 @@ public:
       hostLimit("stack limit");
     }
 
+    if (self()->isResuming()) {
+      // The arguments are in the continuation data.
+      arguments = getCurrContinuation()->resumeArguments;
+    }
+
     Flow flow;
     std::optional<Type> resultType;
 
