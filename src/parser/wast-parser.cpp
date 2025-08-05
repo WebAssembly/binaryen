@@ -16,6 +16,7 @@
 
 #include "lexer.h"
 #include "literal.h"
+#include "wasm-features.h"
 #include "wat-parser.h"
 
 namespace wasm::WATParser {
@@ -123,6 +124,7 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
     // start and parse it normally.
     in = std::move(reset);
     auto wasm = std::make_shared<Module>();
+    wasm->features = FeatureSet::All;
     CHECK_ERR(parseModule(*wasm, in));
     return wasm;
   }
@@ -479,6 +481,7 @@ Result<WASTScript> wast(Lexer& in) {
       // The entire script might be a single module comprising a sequence of
       // module fields with a top-level `(module ...)`.
       auto wasm = std::make_shared<Module>();
+      wasm->features = FeatureSet::All;
       auto parsed = parseModule(*wasm, in.buffer);
       if (parsed.getErr()) {
         // No, that wasn't the problem. Return the original error.
