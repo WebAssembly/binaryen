@@ -465,14 +465,14 @@ protected:
   // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry(const char* what) {
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "pop resume entry [" << what << "]: ";
+    std::cout << indent() << "pop resume entry [" << what << "]:\n"; 
 #endif
     auto currContinuation = getCurrContinuation("pop resume");
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
 #if WASM_INTERPRETER_DEBUG
-    std::cout << entry << "\n";
+    std::cout << indent() << "                 => " << entry << "\n";
 #endif
     return entry;
   }
@@ -3590,9 +3590,9 @@ public:
       parent.functionStack.push_back(function->name);
       locals.resize(function->getNumLocals());
 
-      if (parent.isResuming()) {
+      if (parent.isResuming() && parent.getCurrContinuation("waka")->resumeExpr) {
         // Nothing more to do here: we are resuming execution, so there is old
-        // locals state that will be restored.
+        // locals state that will be restored. XXX
         return;
       }
 
@@ -4896,12 +4896,7 @@ public:
     contData->resumeArguments = arguments;
     auto func = contData->func;
     self()->pushCurrContinuation(contData);
-    if (contData->resumeExpr) {
-      // There is an expression to resume execution at, so this is not the first
-      // time we run this function. Mark us as resuming, until we reach that
-      // expression.
-      self()->executionState->resuming = true;
-    }
+    self()->executionState->resuming = true;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
 #endif
@@ -5030,7 +5025,17 @@ public:
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
+std::cout << "resuming " << self()->getCurrContinuation("resume func")->func.getFunc() << " with initial args " << arguments << " that are updating to " << self()->getCurrContinuation("resume func")->resumeArguments << '\n';
+
       arguments = self()->getCurrContinuation("resume func")->resumeArguments;
+
+      if (!self()->getCurrContinuation("waka")->resumeExpr) {
+        // This is the first time we resume, that is, there is no suspend which
+        // is the resume expression that we need to execute up to. All we need
+        // to do is just start calling this function (with the arguments we've
+        // set), so resuming is done
+        self()->executionState->resuming = false;
+      }
     }
 
     Flow flow;
