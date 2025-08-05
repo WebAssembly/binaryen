@@ -213,7 +213,7 @@ WasmSplitOptions::WasmSplitOptions()
       "Do not import placeholder functions. Calls to secondary functions will "
       "fail before the secondary module has been instantiated.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { usePlaceholders = false; })
     .add(
