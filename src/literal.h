@@ -31,6 +31,7 @@
 namespace wasm {
 
 class Literals;
+struct FuncData;
 struct GCData;
 struct ExnData;
 struct ContData;
@@ -45,9 +46,8 @@ class Literal {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
-    // funcref function name. `isNull()` indicates a `null` value.
-    // TODO: handle cross-module calls using something other than a Name here.
-    Name func;
+    // A reference to Function data.
+    std::shared_ptr<FuncData> funcData;
     // A reference to GC data, either a Struct or an Array. For both of those we
     // store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
@@ -90,10 +90,7 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func, HeapType type)
-    : func(func), type(type, NonNullable, Exact) {
-    assert(type.isSignature());
-  }
+  explicit Literal(std::shared_ptr<FuncData> funcData, HeapType type);
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
   explicit Literal(std::shared_ptr<ExnData> exnData);
   explicit Literal(std::shared_ptr<ContData> contData);
@@ -253,9 +250,9 @@ public:
   static Literal makeNull(HeapType type) {
     return Literal(Type(type.getBottom(), Nullable));
   }
-  static Literal makeFunc(Name func, HeapType type) {
-    return Literal(func, type);
-  }
+  // Simple way to create a function from the name and type, without a full
+  // FuncData.
+  static Literal makeFunc(Name func, HeapType type);
   static Literal makeI31(int32_t value, Shareability share) {
     auto lit = Literal(Type(HeapTypes::i31.getBasic(share), NonNullable));
     lit.i32 = value | 0x80000000;
@@ -311,10 +308,8 @@ public:
     return bit_cast<double>(i64);
   }
   std::array<uint8_t, 16> getv128() const;
-  Name getFunc() const {
-    assert(type.isFunction() && !func.isNull());
-    return func;
-  }
+  Name getFunc() const;
+  std::shared_ptr<FuncData> getFuncData() const;
   std::shared_ptr<GCData> getGCData() const;
   std::shared_ptr<ExnData> getExnData() const;
   std::shared_ptr<ContData> getContData() const;

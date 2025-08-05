@@ -71,6 +71,17 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
+Literal::Literal(std::shared_ptr<FuncData> funcData, HeapType type)
+  : funcData(funcData), type(type, NonNullable, Exact) {
+  assert(funcData);
+  assert(type.isSignature());
+}
+
+Literal Literal::makeFunc(Name func, HeapType type) {
+  // Provide only the name of the function, without execution info.
+  return Literal(std::make_shared<FuncData>(func), type);
+}
+
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type,
                          gcData ? NonNullable : Nullable,
@@ -140,7 +151,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     return;
   }
   if (type.isFunction()) {
-    func = other.func;
+    new (&funcData) std::shared_ptr<FuncData>(other.funcData);
     return;
   }
   if (type.isContinuation()) {
@@ -187,6 +198,8 @@ Literal::~Literal() {
   if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext) ||
       type.getHeapType().isMaybeShared(HeapType::any)) {
     gcData.~shared_ptr();
+  } else if (isFunction()) {
+    funcData.~shared_ptr();
   } else if (isExn()) {
     exnData.~shared_ptr();
   } else if (isContinuation()) {
@@ -335,6 +348,16 @@ std::array<uint8_t, 16> Literal::getv128() const {
   return ret;
 }
 
+Name Literal::getFunc() const {
+  assert(isFunction());
+  return getFuncData()->name;
+}
+
+std::shared_ptr<FuncData> Literal::getFuncData() const {
+  assert(isFunction());
+  return funcData;
+}
+
 std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isNull() || isData());
   return gcData;
@@ -458,8 +481,7 @@ bool Literal::operator==(const Literal& other) const {
       return true;
     }
     if (type.isFunction()) {
-      assert(func.is() && other.func.is());
-      return func == other.func;
+      return *funcData == *other.funcData;
     }
     if (type.isString()) {
       return gcData->values == other.gcData->values;

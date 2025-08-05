@@ -130,6 +130,35 @@ public:
   }
 };
 
+struct FuncData {
+  // Name of the function in the module.
+  Name name;
+
+  // The interpreter instance we are in. This is only used for equality
+  // comparisons, as two functions are equal iff they have the same name and are
+  // in the same instance (in particular, we do *not* compare the |call| field
+  // below, which is an execution detail).
+  void* self;
+
+  // A way to execute this function. We use this when it is called.
+  using Call = std::function<Flow(Literals)>;
+  std::optional<Call> call;
+
+  FuncData(Name name,
+           void* self = nullptr,
+           std::optional<Call> call = std::nullopt)
+    : name(name), self(self), call(call) {}
+
+  bool operator==(const FuncData& other) const {
+    return name == other.name && self == other.self;
+  }
+
+  Flow doCall(Literals arguments) {
+    assert(call);
+    return (*call)(arguments);
+  }
+};
+
 // Suspend/resume support.
 //
 // As we operate directly on our structured IR, we do not have a program counter
@@ -275,6 +304,16 @@ public:
     // Execute relaxed SIMD instructions.
     Execute,
   };
+
+  Literal makeFuncData(Name name, HeapType type) {
+    // Identify the interpreter, but do not provide a way to actually call the
+    // function.
+    auto allocation = std::make_shared<FuncData>(name, this);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
 
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
@@ -1800,7 +1839,7 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return Literal::makeFunc(curr->func, curr->type.getHeapType());
+    return self()->makeFuncData(curr->func, curr->type.getHeapType());
   }
   Flow visitRefEq(RefEq* curr) {
     Flow flow = visit(curr->left);
@@ -3544,7 +3583,7 @@ public:
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(Literal::makeFunc(target, funcType));
+      arguments.push_back(self()->makeFuncData(target, funcType));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
@@ -3650,7 +3689,7 @@ public:
     std::cout << self()->indent() << "(calling ref " << targetRef.getFunc()
               << ")\n";
 #endif
-    Flow ret = callFunction(targetRef.getFunc(), arguments);
+    Flow ret = targetRef.getFuncData()->doCall(arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
@@ -5040,6 +5079,19 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
+
+  Literal makeFuncData(Name name, HeapType type) {
+    // As the super's |makeFuncData|, but here we also provide a way to
+    // actually call the function.
+    auto allocation =
+      std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
+        return callFunction(name, arguments);
+      });
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
 };
 
 } // namespace wasm
