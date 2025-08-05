@@ -16,7 +16,6 @@
 
 #include "lexer.h"
 #include "literal.h"
-#include "wasm-features.h"
 #include "wat-parser.h"
 
 namespace wasm::WATParser {
@@ -124,7 +123,6 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
     // start and parse it normally.
     in = std::move(reset);
     auto wasm = std::make_shared<Module>();
-    wasm->features = FeatureSet::All;
     CHECK_ERR(parseModule(*wasm, in));
     return wasm;
   }

@@ -48,9 +48,8 @@ struct RoundTrip : public Pass {
     // Write, clear, and read the module
     WasmBinaryWriter(module, buffer, getPassOptions()).write();
     ModuleUtils::clearModule(*module);
-    module->features = features;
     auto input = buffer.getAsChars();
-    WasmBinaryReader parser(*module, input);
+    WasmBinaryReader parser(*module, features, input);
     parser.setDWARF(getPassOptions().debugInfo);
     try {
       parser.read();
