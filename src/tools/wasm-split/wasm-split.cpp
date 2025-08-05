@@ -415,7 +415,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
   }
 
   ModuleSplitting::Config config;
-  config.usePlaceholders = false;
+  config.usePlaceholders = options.usePlaceholders;
   config.importNamespace = options.importNamespace;
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   if (options.emitModuleNames && !wasm.name) {
