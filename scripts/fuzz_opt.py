@@ -1488,6 +1488,10 @@ class Merge(TestCaseHandler):
         merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
         merged_output = fix_output(merged_output)
 
+        # If the second module traps in instantiation, then the merged module
+        # must do so as well, regardless of what the first module does. (In
+        # contrast, if the first module traps in instantiation, then the normal
+        # checks below will ensure the merged module does as well.)
         if traps_in_instantiation(second_output) and \
                 not traps_in_instantiation(output):
             # The merged module should also trap in instantiation, but the
