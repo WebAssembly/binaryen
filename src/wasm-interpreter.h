@@ -321,7 +321,7 @@ protected:
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
-    std::string ret;
+    std::string ret = '[' + std::to_string(reinterpret_cast<size_t>(this)) + "] ";
     for (Index i = 0; i < depth; i++) {
       ret += ' ';
     }
@@ -380,10 +380,17 @@ protected:
   // expression that is in this map, then it will just return that value.
   std::unordered_map<Expression*, Literals> restoredValuesMap;
 
-  // The current continuation (this is set when executing it, resuming it, and
+  // The current continuations (this is set when executing it, resuming it, and
   // suspending it, that is, both when executing normally and when
   // unwinding/rewinding the stack).
-  std::shared_ptr<ContData> currContinuation;
+  std::vector<std::shared_ptr<ContData>> currContinuations;
+
+  std::shared_ptr<ContData> getCurrContinuation() {
+    // There must be a continuation (and non-null).
+    assert(!currContinuations.empty());
+    assert(currContinuations.back());
+    return currContinuations.back();
+  }
 
   // Set when we are resuming execution, that is, re-winding the stack.
   bool resuming = false;
@@ -391,7 +398,7 @@ protected:
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
   void pushResumeEntry(const Literals& entry, const char* what) {
-    assert(currContinuation);
+    auto currContinuation = getCurrContinuation();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push resume entry [" << what << "]: " << entry
               << "\n";
@@ -401,7 +408,7 @@ protected:
 
   // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry(const char* what) {
-    assert(currContinuation);
+    auto currContinuation = getCurrContinuation();
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
@@ -434,7 +441,7 @@ public:
 
     // Execute the instruction.
     Flow ret;
-    if (!currContinuation) {
+    if (currContinuations.empty()) { // TODO measure
       // We are not in a continuation, so we cannot suspend/resume. Just execute
       // normally.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -4725,14 +4732,15 @@ public:
     if (self()->resuming) {
       // This is a resume, so we have found our way back to where we
       // suspended.
-      assert(curr == self()->currContinuation->resumeExpr);
+      auto currContinuation = self()->getCurrContinuation();
+      assert(curr == currContinuation->resumeExpr);
       // We finished resuming, and will continue from here normally.
       self()->resuming = false;
       // We should have consumed all the resumeInfo and all the
       // restoredValues map.
-      assert(self()->currContinuation->resumeInfo.empty());
+      assert(currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      return self()->currContinuation->resumeArguments;
+      return currContinuation->resumeArguments;
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
@@ -4740,7 +4748,11 @@ public:
     // Copy the continuation (the old one cannot be resumed again). Note that no
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
-    auto old = self()->currContinuation;
+    std::shared_ptr<ContData> old;
+    if (!self()->currContinuations.empty()) {
+      old = self()->currContinuations.back();
+      self()->currContinuations.pop_back();
+    }
     assert(!old || old->executed);
     auto new_ = std::make_shared<ContData>(
       old ? old->func : Literal::makeNull(HeapTypes::nofunc),
@@ -4751,7 +4763,7 @@ public:
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
-    self()->currContinuation = new_;
+    self()->currContinuations.push_back(new_);
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
@@ -4776,7 +4788,7 @@ public:
     contData->executed = true;
     contData->resumeArguments = arguments;
     auto func = contData->func;
-    self()->currContinuation = contData;
+    self()->currContinuations.push_back(contData);
     if (contData->resumeExpr) {
       // There is an expression to resume execution at, so this is not the first
       // time we run this function. Mark us as resuming, until we reach that
@@ -4801,7 +4813,7 @@ public:
     if (!ret.suspendTag) {
       // No suspension: the coroutine finished normally. Mark it as no longer
       // active.
-      self()->currContinuation.reset();
+      self()->currContinuations.pop_back();
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
@@ -4830,12 +4842,12 @@ public:
           assert(finder.type.isConcrete());
           assert(finder.type.size() >= 1);
           // The continuation is the final value/type there.
-          auto cont = self()->currContinuation;
+          auto cont = self()->getCurrContinuation();
           cont->type = finder.type[finder.type.size() - 1].getHeapType();
           // Add the continuation as the final value being sent.
           ret.values.push_back(Literal(cont));
           // We are not longer processing that continuation.
-          self()->currContinuation.reset();
+          self()->currContinuations.pop_back();
           return ret;
         }
       }
