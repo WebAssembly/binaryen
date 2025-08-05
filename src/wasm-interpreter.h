@@ -3458,6 +3458,13 @@ public:
       parent.scope = this;
       parent.callDepth++;
       parent.functionStack.push_back(function->name);
+      locals.resize(function->getNumLocals());
+
+      if (parent.resuming) {
+        // Nothing more to do here: we are resuming execution, so there is old
+        // locals state that will be restored.
+        return;
+      }
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3465,7 +3472,6 @@ public:
                   << arguments.size() << " arguments." << std::endl;
         WASM_UNREACHABLE("invalid param count");
       }
-      locals.resize(function->getNumLocals());
       Type params = function->getParams();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
@@ -4697,6 +4703,10 @@ public:
     assert(!old || old->executed);
     auto new_ = std::make_shared<ContData>(old ? old->func : Name(),
                                            old ? old->type : HeapType::none);
+    // Note we cannot update the type yet, so it will be wrong in debug
+    // logging. To update it, we must find the block that receives this value,
+    // which means we cannot do it here (we don't even know what that block is).
+
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
     self()->currContinuation = new_;
@@ -4758,8 +4768,30 @@ public:
           // Switch the flow from suspending to branching.
           ret.suspendTag = Name();
           ret.breakTo = curr->handlerBlocks[i];
+          // We can now update the continuation type, which was wrong until now
+          // (see comment in visitSuspend). The type is taken from the block we
+          // branch to (which we find in a quite inefficient manner).
+          struct BlockFinder : public PostWalker<BlockFinder> {
+            Name target;
+            Type type = Type::none;
+            void visitBlock(Block* curr) {
+              if (curr->name == target) {
+                type = curr->type;
+              }
+            }
+          } finder;
+          finder.target = ret.breakTo;
+          // We must be in a function scope.
+          assert(self()->scope->function);
+          finder.walk(self()->scope->function->body);
+          // We must have found the type, and it must be valid.
+          assert(finder.type.isConcrete());
+          assert(finder.type.size() >= 1);
+          // The continuation is the final value/type there.
+          auto cont = self()->currContinuation;
+          cont->type = finder.type[finder.type.size() - 1].getHeapType();
           // Add the continuation as the final value being sent.
-          ret.values.push_back(Literal(self()->currContinuation));
+          ret.values.push_back(Literal(cont));
           // We are not longer processing that continuation.
           self()->currContinuation.reset();
           return ret;

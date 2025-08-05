@@ -279,3 +279,58 @@
 
 (assert_return (invoke "run") (i32.const 19))
 
+;; Simple generator example
+
+(module $generator
+  (type $gen (func (param i64)))
+  (type $geny (func (param i32)))
+  (type $cont0 (cont $gen))
+  (type $cont (cont $geny))
+
+  (tag $yield (param i64) (result i32))
+
+  ;; Hook for logging purposes
+  (global $hook (export "hook") (mut (ref $gen)) (ref.func $dummy))
+  (func $dummy (param i64))
+
+  (func $gen (export "start") (param $i i64)
+    (loop $l
+      (br_if 1 (suspend $yield (local.get $i)))
+      (call_ref $gen (local.get $i) (global.get $hook))
+      (local.set $i (i64.add (local.get $i) (i64.const 1)))
+      (br $l)
+    )
+  )
+
+  (elem declare func $gen)
+
+  (func (export "sum") (param $i i64) (param $j i64) (result i64)
+    (local $sum i64)
+    (local $n i64)
+    (local $k (ref null $cont))
+    (local.get $i)
+    (cont.new $cont0 (ref.func $gen))
+    (block $on_first_yield (param i64 (ref $cont0)) (result i64 (ref $cont))
+      (resume $cont0 (on $yield $on_first_yield))
+      (unreachable)
+    )
+    (loop $on_yield (param i64) (param (ref $cont))
+      (local.set $k)
+      (local.set $n)
+      (local.set $sum (i64.add (local.get $sum) (local.get $n)))
+      (i64.eq (local.get $n) (local.get $j))
+      (local.get $k)
+      (resume $cont (on $yield $on_yield))
+    )
+    (return (local.get $sum))
+  )
+)
+
+(register "generator")
+
+(assert_return (invoke "sum" (i64.const 0) (i64.const 0)) (i64.const 0))
+(assert_return (invoke "sum" (i64.const 2) (i64.const 2)) (i64.const 2))
+(assert_return (invoke "sum" (i64.const 0) (i64.const 3)) (i64.const 6))
+(assert_return (invoke "sum" (i64.const 1) (i64.const 10)) (i64.const 55))
+(assert_return (invoke "sum" (i64.const 100) (i64.const 2000)) (i64.const 1_996_050))
+
