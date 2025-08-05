@@ -5914,11 +5914,12 @@ BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input,
                                                  size_t inputSize,
                                                  BinaryenFeatures features) {
   auto* wasm = new Module;
+  wasm->features = features;
   std::vector<char> buffer(false);
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryReader parser(*wasm, features, buffer);
+    WasmBinaryReader parser(*wasm, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);

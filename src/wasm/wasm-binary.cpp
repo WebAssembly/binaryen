@@ -1971,14 +1971,10 @@ void WasmBinaryWriter::writeMemoryOrder(MemoryOrder order, bool isRMW) {
 // reader
 
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
-                                   FeatureSet features,
                                    const std::vector<char>& input,
                                    std::vector<char>& sourceMap)
   : wasm(wasm), allocator(wasm.allocator), input(input), builder(wasm),
-    sourceMapReader(sourceMap) {
-  wasm.features = features;
-}
-
+    sourceMapReader(sourceMap) {}
 void WasmBinaryReader::preScan() {
   assert(pos == 0);
   getInt32(); // magic

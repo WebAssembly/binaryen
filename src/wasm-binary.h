@@ -1553,7 +1553,6 @@ class WasmBinaryReader {
 
 public:
   WasmBinaryReader(Module& wasm,
-                   FeatureSet features,
                    const std::vector<char>& input,
                    std::vector<char>& sourceMap = defaultEmptySourceMap);
 

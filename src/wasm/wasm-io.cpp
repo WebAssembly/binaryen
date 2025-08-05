@@ -58,9 +58,7 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
     sourceMapBuffer =
       read_file<std::vector<char>>(sourceMapFilename, Flags::Text);
   }
-  // Assume that the wasm has had its initial features applied, and use those
-  // while parsing.
-  WasmBinaryReader parser(wasm, wasm.features, input, sourceMapBuffer);
+  WasmBinaryReader parser(wasm, input, sourceMapBuffer);
   parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
   parser.setSkipFunctionBodies(skipFunctionBodies);

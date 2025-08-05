@@ -95,6 +95,7 @@ struct Shell {
     std::shared_ptr<Module> wasm;
     if (auto* quoted = std::get_if<QuotedModule>(&mod)) {
       wasm = std::make_shared<Module>();
+      wasm->features = FeatureSet::All;
       switch (quoted->type) {
         case QuotedModuleType::Text: {
           CHECK_ERR(parseModule(*wasm, quoted->module));
@@ -103,7 +104,7 @@ struct Shell {
         case QuotedModuleType::Binary: {
           std::vector<char> buffer(quoted->module.begin(),
                                    quoted->module.end());
-          WasmBinaryReader reader(*wasm, FeatureSet::All, buffer);
+          WasmBinaryReader reader(*wasm, buffer);
           try {
             reader.read();
           } catch (ParseException& p) {
@@ -538,14 +539,12 @@ int main(int argc, const char* argv[]) {
 
   auto input = read_file<std::string>(infile, Flags::Text);
 
-  // Check that we can parse the script correctly with the new parser.
   auto script = WATParser::parseScript(input);
   if (auto* err = script.getErr()) {
     std::cerr << err->msg << '\n';
     exit(1);
   }
 
-  Lexer lexer(input);
   auto result = Shell(options).run(*script);
   if (auto* err = result.getErr()) {
     std::cerr << err->msg << '\n';
