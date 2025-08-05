@@ -184,7 +184,7 @@ struct FuncData {
 // Key parts of this support:
 //   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
-//   * Inside the interpreter itself:
+//   * Inside the interpreter itself: XXX first two are out!
 //     * |currContinuations| is the stack of active continuations.
 //     * |resuming| is set when we are in the special "resuming" mode mentioned
 //       above.
@@ -231,19 +231,21 @@ struct ContData {
   ContData(Literal func, HeapType type) : func(func), type(type) {}
 };
 
-// The current continuations, in a stack. At the top of the stack is the
-// current continuation, i.e., the one either executing right now, or in the
-// process of unwinding or rewinding the stack.
-//
-// We must share this between all interpreter instances, because which
-// continuation is current does not depend on which instance we happen to be
-// inside (we could call an imported function from another module, and that
-// should not alter what happens when we suspend/resume).
-//
-// TODO: Perhaps this could be part of an ExecutionState that is passed to
-//       interpreter instances, for all such shared data (but for now this is
-//       the only thing we need).
-using CurrContinuations = std::vector<std::shared_ptr<ContData>>;
+// Shared execution state of a set of instantiated modules.
+struct ExecutionState {
+  // The current continuations, in a stack. At the top of the stack is the
+  // current continuation, i.e., the one either executing right now, or in the
+  // process of unwinding or rewinding the stack.
+  //
+  // We must share this between all interpreter instances, because which
+  // continuation is current does not depend on which instance we happen to be
+  // inside (we could call an imported function from another module, and that
+  // should not alter what happens when we suspend/resume).
+  std::vector<std::shared_ptr<ContData>> continuations; 
+
+  // Set when we are resuming execution, that is, re-winding the stack.
+  bool resuming = false;
+};
 
 // Execute an expression
 template<typename SubType>
@@ -393,17 +395,24 @@ protected:
   // expression that is in this map, then it will just return that value.
   std::unordered_map<Expression*, Literals> restoredValuesMap;
 
-  std::shared_ptr<CurrContinuations> currContinuations;
+  // Shared execution state for continuations. This can be null if the
+  // instance does not want to ever suspend/resume.
+  std::shared_ptr<ExecutionState> executionState;
 
   std::shared_ptr<ContData> getCurrContinuationOrNull() {
-    if (!currContinuations || currContinuations->empty()) {
+    if (!executionState || executionState->continuations.empty()) {
       return {};
     }
-    return currContinuations->back();
+    return executionState->continuations.back();
   }
 
-  std::shared_ptr<ContData> getCurrContinuation() {
+  std::shared_ptr<ContData> getCurrContinuation(const char* why) {
     auto cont = getCurrContinuationOrNull();
+#if WASM_INTERPRETER_DEBUG
+    if (!cont) {
+      std::cout << indent() << "failed to find continuation for " << why << "\n";
+    }
+#endif
     assert(cont);
     return cont;
   }
@@ -412,53 +421,56 @@ protected:
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push continuation\n";
 #endif
-    assert(currContinuations);
-    return currContinuations->push_back(cont);
+    assert(executionState);
+    return executionState->continuations.push_back(cont);
   }
 
   std::shared_ptr<ContData> popCurrContinuation() {
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "pop continuation\n";
 #endif
-    assert(currContinuations);
-    assert(!currContinuations->empty());
-    auto cont = currContinuations->back();
-    currContinuations->pop_back();
+    assert(executionState);
+    assert(!executionState->continuations.empty());
+    auto cont = executionState->continuations.back();
+    executionState->continuations.pop_back();
     return cont;
   }
 
-  void clearCurrContinuations() {
-    if (currContinuations) {
+  void clearExecutionState() {
+    if (executionState) {
 #if WASM_INTERPRETER_DEBUG
       std::cout << indent() << "clear continuations\n";
 #endif
-      currContinuations->clear();
+      executionState = std::make_shared<ExecutionState>();
     }
   }
 
-  // Set when we are resuming execution, that is, re-winding the stack.
-  bool resuming = false;
+  bool isResuming() {
+    return executionState && executionState->resuming;
+  }
 
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
   void pushResumeEntry(const Literals& entry, const char* what) {
-    auto currContinuation = getCurrContinuation();
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push resume entry [" << what << "]: " << entry
               << "\n";
 #endif
+    auto currContinuation = getCurrContinuation("push resume");
     currContinuation->resumeInfo.push_back(entry);
   }
 
   // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry(const char* what) {
-    auto currContinuation = getCurrContinuation();
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "pop resume entry [" << what << "]: ";
+#endif
+    auto currContinuation = getCurrContinuation("pop resume");
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "pop resume entry [" << what << "]: " << entry
-              << "\n";
+    std::cout << entry << "\n";
 #endif
     return entry;
   }
@@ -495,10 +507,10 @@ public:
     } else {
       // We may suspend/resume.
 #if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "(continuation stack size: " << currContinuations->size() << ")\n";
+      std::cout << indent() << "(continuation stack size: " << executionState->continuations.size() << ")\n";
 #endif
       bool hasValue = false;
-      if (resuming) {
+      if (isResuming()) {
         // Perhaps we have a known value to just apply here, without executing
         // the instruction.
         auto iter = restoredValuesMap.find(curr);
@@ -525,7 +537,7 @@ public:
         } else {
           // A general non-control-flow instruction, with generic suspend/
           // resume support implemented here.
-          if (resuming) {
+          if (isResuming()) {
             // Some children may have executed, and we have values stashed for
             // them (see below where we suspend). Get those values, and populate
             // |restoredValuesMap| so that when visit() is called on them, we
@@ -578,7 +590,7 @@ public:
       // not suspending - suspending is handled above).
       if (!ret.suspendTag && ret.getType().isConcrete()) {
 #if WASM_INTERPRETER_DEBUG
-        std::cout << indent() << "(exiting with continuation stack size: " << currContinuations->size() << ")\n";
+        std::cout << indent() << "(exiting with continuation stack size: " << executionState->continuations.size() << ")\n";
 #endif
         assert(!valueStack.empty());
         auto& values = valueStack.back();
@@ -632,7 +644,7 @@ public:
       pushResumeEntry(entry, "block");
     };
     Index blockIndex = 0;
-    if (resuming) {
+    if (isResuming()) {
       auto entry = popResumeEntry("block");
       assert(entry.size() == 2);
       Index stackIndex = entry[0].geti32();
@@ -681,7 +693,7 @@ public:
       pushResumeEntry({Literal(int32_t(resumeIndex))}, "if");
     };
     Index resumeIndex = -1;
-    if (resuming) {
+    if (isResuming()) {
       auto entry = popResumeEntry("if");
       assert(entry.size() == 1);
       resumeIndex = entry[0].geti32();
@@ -691,7 +703,7 @@ public:
     // The value of the if's condition (whether to take the ifTrue arm or not).
     Index condition;
 
-    if (resuming && resumeIndex > 0) {
+    if (isResuming() && resumeIndex > 0) {
       // We are resuming into one of the arms. Just set the right condition.
       condition = (resumeIndex == 1);
     } else {
@@ -3332,20 +3344,20 @@ public:
       externalInterface(externalInterface), linkedInstances(linkedInstances_) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
-    std::shared_ptr<CurrContinuations> shared;
+    std::shared_ptr<ExecutionState> shared;
     for (auto& [_, instance] : linkedInstances) {
-      if (instance->currContinuations) {
-        shared = instance->currContinuations;
+      if (instance->executionState) {
+        shared = instance->executionState;
         break;
       }
     }
     if (!shared) {
-      shared = std::make_shared<CurrContinuations>();
+      shared = std::make_shared<ExecutionState>();
     }
     for (auto& [_, instance] : linkedInstances) {
-      instance->currContinuations = shared;
+      instance->executionState = shared;
     }
-    self()->currContinuations = shared;
+    self()->executionState = shared;
   }
 
   // Start up this instance. This must be called before doing anything else.
@@ -3576,7 +3588,7 @@ public:
       parent.functionStack.push_back(function->name);
       locals.resize(function->getNumLocals());
 
-      if (parent.resuming) {
+      if (parent.isResuming()) {
         // Nothing more to do here: we are resuming execution, so there is old
         // locals state that will be restored.
         return;
@@ -3690,7 +3702,7 @@ public:
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
     Literal funcref;
-    if (!self()->resuming) {
+    if (!self()->isResuming()) {
       // Normal execution: Load from the table.
       funcref = info.interface()->tableLoad(info.name, index);
     } else {
@@ -4688,7 +4700,7 @@ public:
     return {};
   }
   Flow visitTry(Try* curr) {
-    assert(!self()->resuming); // TODO
+    assert(!self()->isResuming()); // TODO
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4737,7 +4749,7 @@ public:
     }
   }
   Flow visitTryTable(TryTable* curr) {
-    assert(!self()->resuming); // TODO
+    assert(!self()->isResuming()); // TODO
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4799,13 +4811,13 @@ public:
       return flow;
     }
 
-    if (self()->resuming) {
+    if (self()->isResuming()) {
       // This is a resume, so we have found our way back to where we
       // suspended.
-      auto currContinuation = self()->getCurrContinuation();
+      auto currContinuation = self()->getCurrContinuation("finish resume");
       assert(curr == currContinuation->resumeExpr);
       // We finished resuming, and will continue from here normally.
-      self()->resuming = false;
+      self()->executionState->resuming = false;
       // We should have consumed all the resumeInfo and all the
       // restoredValues map.
       assert(currContinuation->resumeInfo.empty());
@@ -4864,7 +4876,7 @@ public:
       // There is an expression to resume execution at, so this is not the first
       // time we run this function. Mark us as resuming, until we reach that
       // expression.
-      self()->resuming = true;
+      self()->executionState->resuming = true;
     }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
@@ -4913,7 +4925,7 @@ public:
           assert(finder.type.isConcrete());
           assert(finder.type.size() >= 1);
           // The continuation is the final value/type there.
-          auto cont = self()->getCurrContinuation();
+          auto cont = self()->getCurrContinuation("handle suspend");
           cont->type = finder.type[finder.type.size() - 1].getHeapType();
           // Add the continuation as the final value being sent.
           ret.values.push_back(Literal(cont));
@@ -4932,12 +4944,12 @@ public:
 
   void trap(const char* why) override {
     // Traps break all current continuations - they will never be resumable.
-    self()->clearCurrContinuations();
+    self()->clearExecutionState();
     externalInterface->trap(why);
   }
 
   void hostLimit(const char* why) override {
-    self()->clearCurrContinuations();
+    self()->clearExecutionState();
     externalInterface->hostLimit(why);
   }
 
@@ -5010,7 +5022,7 @@ public:
 
       FunctionScope scope(function, arguments, *self());
 
-      if (self()->resuming) {
+      if (self()->isResuming()) {
         // Restore the local state (see below for the ordering, we push/pop).
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
