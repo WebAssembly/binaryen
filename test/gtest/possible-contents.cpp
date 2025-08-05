@@ -90,7 +90,7 @@ protected:
     PossibleContents::global("funcGlobal", Type(HeapType::func, NonNullable));
 
   PossibleContents nonNullFunc = PossibleContents::literal(
-    Literal("func", Signature(Type::none, Type::none)));
+    Literal::makeFunc("func", Signature(Type::none, Type::none)));
 
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);
