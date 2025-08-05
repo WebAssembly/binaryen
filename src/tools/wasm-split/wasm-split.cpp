@@ -431,9 +431,13 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
     config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
     auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-    // TODO: symbolMap, placeholderMap
+    // TODO: symbolMap
     auto moduleName =
       options.outPrefix + mod + (options.emitBinary ? ".wasm" : ".wast");
+    if (options.placeholderMap) {
+      writePlaceholderMap(splitResults.placeholderMap,
+                          moduleName + ".placeholders");
+    }
     if (options.emitModuleNames) {
       splitResults.secondary->name = Path::getBaseName(moduleName);
     }
