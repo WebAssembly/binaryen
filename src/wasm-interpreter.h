@@ -4707,7 +4707,8 @@ public:
     // Create a new continuation for the target function.
     Name funcName = funcFlow.getSingleValue().getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
-    return Literal(std::make_shared<ContData>(self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
+    return Literal(std::make_shared<ContData>(
+      self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
@@ -4740,8 +4741,9 @@ public:
     // meaningless (it will error when it reaches the host).
     auto old = self()->currContinuation;
     assert(!old || old->executed);
-    auto new_ = std::make_shared<ContData>(old ? old->func : Literal::makeNull(HeapTypes::nofunc),
-                                           old ? old->type : HeapType::none);
+    auto new_ = std::make_shared<ContData>(
+      old ? old->func : Literal::makeNull(HeapTypes::nofunc),
+      old ? old->type : HeapType::none);
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
     // which means we cannot do it here (we don't even know what that block is).
