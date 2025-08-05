@@ -4793,7 +4793,7 @@ public:
       // exists. (We do not need the values in this scope, of course, as no
       // expression is above them, so we cannot suspend and need these values).
       typename ExpressionRunner<SubType>::StackValueNoter noter(this);
-      ret = self()->doCall(func, arguments);
+      ret = func.getFuncData()->doCall(arguments);
     }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
