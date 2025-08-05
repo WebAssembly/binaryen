@@ -21,6 +21,7 @@
 #include "source-map.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "wasm-features.h"
 #include "wasm-io.h"
 
 #include "tool-options.h"
@@ -66,6 +67,11 @@ int main(int argc, const char* argv[]) {
   }
   Module wasm;
   options.applyOptionsBeforeParse(wasm);
+  // Temporarily apply all features during parsing to avoid any errors. See note
+  // below on skipping validation.
+  auto enabledFeatures = wasm.features;
+  wasm.features = FeatureSet::All;
+
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
@@ -91,6 +97,7 @@ int main(int argc, const char* argv[]) {
   //       better to have an "autodetect" code path that enables used features
   //       eventually.
 
+  wasm.features = enabledFeatures;
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }

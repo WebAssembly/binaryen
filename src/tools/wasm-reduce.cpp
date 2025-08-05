@@ -379,6 +379,9 @@ struct Reducer
 
     toolOptions.applyOptionsBeforeParse(*module);
 
+    // Assume we may need all features.
+    module->features = FeatureSet::All;
+
     ModuleReader reader;
     try {
       reader.read(working, *module);
@@ -390,12 +393,6 @@ struct Reducer
 
     toolOptions.applyOptionsAfterParse(*module);
 
-    // If there is no features section, assume we may need them all (without
-    // this, a module with no features section but that uses e.g. atomics and
-    // bulk memory would not work).
-    if (!module->hasFeaturesSection) {
-      module->features = FeatureSet::All;
-    }
     builder = std::make_unique<Builder>(*module);
     setModule(module.get());
   }
