@@ -4803,8 +4803,26 @@ public:
       self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) {
-    // Just the simple case of applying all parameters XXX
-    abort();
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Flow cont = self()->visit(curr->cont);
+    if (cont.breaking()) {
+      return cont;
+    }
+
+    // Create a new continuation, copying the old but adding the new arguments.
+    auto old = cont.getSingleValue().getContData();
+    auto new_ = std::make_shared<ContData>(*old);
+    new_->resumeArguments = arguments;
+    new_->resumeExpr = curr;
+    // We handle only the simple case of applying all parameters, for now.
+    assert(old->resumeArguments.empty());
+    // The old one is done.
+    old->executed = true;
+    return Literal(new_);
   }
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
@@ -5011,7 +5029,7 @@ public:
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
-      arguments = self()->getCurrContinuation()->resumeArguments;
+      arguments = self()->getCurrContinuation("resume func")->resumeArguments;
     }
 
     Flow flow;
