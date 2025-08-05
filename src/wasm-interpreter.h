@@ -436,6 +436,7 @@ protected:
     return cont;
   }
 
+public:
   void clearExecutionState() {
     if (executionState) {
 #if WASM_INTERPRETER_DEBUG
@@ -445,6 +446,7 @@ protected:
     }
   }
 
+protected:
   bool isResuming() {
     return executionState && executionState->resuming;
   }
@@ -4835,8 +4837,7 @@ public:
       return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
     }
     // An old one exists, so we can create a proper new one.
-    assert(!old || old->executed);
-    self()->popCurrContinuation();
+    assert(old->executed);
     auto new_ = std::make_shared<ContData>(
       old ? old->func : Literal::makeNull(HeapTypes::nofunc),
       old ? old->type : HeapType::none);
@@ -4846,6 +4847,7 @@ public:
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
+    self()->popCurrContinuation();
     self()->pushCurrContinuation(new_);
     // We will resume from this precise spot, when the new continuation is
     // resumed.

@@ -232,6 +232,9 @@ struct Shell {
         WASM_UNREACHABLE("unexpected error");
       }
       if (flow.suspendTag) {
+        // This is an unhandled suspension. Handle it here - clear the
+        // suspension state - so nothing else is affected.
+        instance->clearExecutionState();
         return SuspensionResult{};
       }
       return flow.values;
