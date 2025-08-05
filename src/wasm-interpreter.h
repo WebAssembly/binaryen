@@ -185,8 +185,7 @@ struct FuncData {
 //   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
 //   * Inside the interpreter itself:
-//     * |currContinuation| is the continuation we are currently executing, if
-//       any.
+//     * |currContinuations| is the stack of active continuations.
 //     * |resuming| is set when we are in the special "resuming" mode mentioned
 //       above.
 //     * When we suspend, everything on the stack will save the necessary info
@@ -380,16 +379,44 @@ protected:
   // expression that is in this map, then it will just return that value.
   std::unordered_map<Expression*, Literals> restoredValuesMap;
 
-  // The current continuations (this is set when executing it, resuming it, and
-  // suspending it, that is, both when executing normally and when
-  // unwinding/rewinding the stack).
-  std::vector<std::shared_ptr<ContData>> currContinuations;
+  // The current continuations, in a stack. At the top of the stack is the
+  // current continuation, i.e., the one either executing right now, or in the
+  // process of unwinding or rewinding the stack.
+  //
+  // We must share this between all interpreter instances, because which
+  // continuation is current does not depend on which instance we happen to be
+  // inside (we could call an imported function from another module, and that
+  // should not alter what happens when we suspend/resume).
+public:
+  using CurrContinuations = std::vector<std::shared_ptr<ContData>>;
+
+protected:
+  std::shared_ptr<CurrContinuations> currContinuations;
+
+  std::shared_ptr<ContData> getCurrContinuationOrNull() {
+    if (!currContinuations || currContinuations->empty()) {
+      return {};
+    }
+    return currContinuations->back();
+  }
 
   std::shared_ptr<ContData> getCurrContinuation() {
-    // There must be a continuation (and non-null).
-    assert(!currContinuations.empty());
-    assert(currContinuations.back());
-    return currContinuations.back();
+    auto cont = getCurrContinuationOrNull();
+    assert(cont);
+    return cont;
+  }
+
+  void pushCurrContinuation(std::shared_ptr<ContData> cont) {
+    assert(currContinuations);
+    return currContinuations->push_back(cont);
+  }
+
+  std::shared_ptr<ContData> popCurrContinuation() {
+    assert(currContinuations);
+    assert(!currContinuations->empty());
+    auto cont = currContinuations->back();
+    currContinuations->pop_back();
+    return cont;
   }
 
   // Set when we are resuming execution, that is, re-winding the stack.
@@ -441,7 +468,7 @@ public:
 
     // Execute the instruction.
     Flow ret;
-    if (currContinuations.empty()) { // TODO measure
+    if (!getCurrContinuation()) { // TODO measure
       // We are not in a continuation, so we cannot suspend/resume. Just execute
       // normally.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -3276,7 +3303,23 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
-      externalInterface(externalInterface), linkedInstances(linkedInstances_) {}
+      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
+    // Set up a single shared CurrContinuations for all these linked instances,
+    // reusing one if it exists.
+    std::shared_ptr<CurrContinuations> shared;
+    for (auto& [_, instance] : linkedInstances) {
+      if (instance.currContinuations) {
+        shared = instance.currContinuations;
+        break;
+      }
+    }
+    if (!shared) {
+      shared = std::make_shared<CurrContinuations>();
+    }
+    for (auto& [_, instance] : linkedInstances) {
+      instance.currContinuations = shared;
+    }
+  }
 
   // Start up this instance. This must be called before doing anything else.
   // (This is separate from the constructor so that it does not occur
@@ -4748,10 +4791,9 @@ public:
     // Copy the continuation (the old one cannot be resumed again). Note that no
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
-    std::shared_ptr<ContData> old;
-    if (!self()->currContinuations.empty()) {
-      old = self()->currContinuations.back();
-      self()->currContinuations.pop_back();
+    auto old = self()->getCurrContinuationOrNull(); 
+    if (old) {
+      self()->popCurrContinuation();
     }
     assert(!old || old->executed);
     auto new_ = std::make_shared<ContData>(
@@ -4763,7 +4805,7 @@ public:
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
-    self()->currContinuations.push_back(new_);
+    self()->pushCurrContinuation(new_);
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
@@ -4788,7 +4830,7 @@ public:
     contData->executed = true;
     contData->resumeArguments = arguments;
     auto func = contData->func;
-    self()->currContinuations.push_back(contData);
+    self()->pushCurrContinuation(contData);
     if (contData->resumeExpr) {
       // There is an expression to resume execution at, so this is not the first
       // time we run this function. Mark us as resuming, until we reach that
@@ -4813,7 +4855,7 @@ public:
     if (!ret.suspendTag) {
       // No suspension: the coroutine finished normally. Mark it as no longer
       // active.
-      self()->currContinuations.pop_back();
+      self()->popCurrContinuation();
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
@@ -4847,7 +4889,7 @@ public:
           // Add the continuation as the final value being sent.
           ret.values.push_back(Literal(cont));
           // We are not longer processing that continuation.
-          self()->currContinuations.pop_back();
+          self()->popCurrContinuation();
           return ret;
         }
       }
