@@ -202,8 +202,8 @@ struct FuncData {
 //       |visitIf| etc. (each such structure handles itself).
 
 struct ContData {
-  // The function this continuation begins in.
-  Function* func;
+  // The function we should execute to run this continuation.
+  Literal func;
 
   // The continuation type.
   HeapType type;
@@ -228,7 +228,7 @@ struct ContData {
   // executed a second time.
   bool executed = false;
 
-  ContData(Function* func, HeapType type) : func(func), type(type) {}
+  ContData(Literal func, HeapType type) : func(func), type(type) {}
 };
 
 // Execute an expression
@@ -4707,7 +4707,7 @@ public:
     // Create a new continuation for the target function.
     Name funcName = funcFlow.getSingleValue().getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
-    return Literal(std::make_shared<ContData>(func, curr->type.getHeapType()));
+    return Literal(std::make_shared<ContData>(self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
@@ -4741,7 +4741,7 @@ public:
     auto old = self()->currContinuation;
     assert(!old || old->executed);
     auto oldType = old ? old->type : HeapType::none;
-    auto new_ = std::make_shared<ContData>(old ? old->func : nullptr, oldType);
+    auto new_ = std::make_shared<ContData>(old ? old->func : Literal::makeNull(HeapTypes::nofunc), oldType);
     if (old) {
       // Update the type.
       auto oldSig = oldType.getContinuation().type.getSignature();
@@ -4784,7 +4784,7 @@ public:
       self()->resuming = true;
     }
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "resuming func " << func << '\n';
+    std::cout << self()->indent() << "resuming func " << func->name << '\n';
 #endif
     Flow ret;
     {
@@ -4793,7 +4793,7 @@ public:
       // exists. (We do not need the values in this scope, of course, as no
       // expression is above them, so we cannot suspend and need these values).
       typename ExpressionRunner<SubType>::StackValueNoter noter(this);
-      ret = callFunction(func, arguments);
+      ret = self()->doCall(func, arguments);
     }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
