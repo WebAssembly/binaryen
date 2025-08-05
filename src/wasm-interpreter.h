@@ -409,16 +409,31 @@ protected:
   }
 
   void pushCurrContinuation(std::shared_ptr<ContData> cont) {
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "push continuation\n";
+#endif
     assert(currContinuations);
     return currContinuations->push_back(cont);
   }
 
   std::shared_ptr<ContData> popCurrContinuation() {
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "pop continuation\n";
+#endif
     assert(currContinuations);
     assert(!currContinuations->empty());
     auto cont = currContinuations->back();
     currContinuations->pop_back();
     return cont;
+  }
+
+  void clearCurrContinuations() {
+    if (currContinuations) {
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "clear continuations\n";
+#endif
+      currContinuations->clear();
+    }
   }
 
   // Set when we are resuming execution, that is, re-winding the stack.
@@ -473,9 +488,15 @@ public:
     if (!getCurrContinuationOrNull()) { // TODO measure
       // We are not in a continuation, so we cannot suspend/resume. Just execute
       // normally.
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "(no continuation)\n";
+#endif
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     } else {
       // We may suspend/resume.
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "(continuation stack size: " << currContinuations->size() << ")\n";
+#endif
       bool hasValue = false;
       if (resuming) {
         // Perhaps we have a known value to just apply here, without executing
@@ -556,6 +577,9 @@ public:
       // which is the place our own value can go, if we have one (and if we are
       // not suspending - suspending is handled above).
       if (!ret.suspendTag && ret.getType().isConcrete()) {
+#if WASM_INTERPRETER_DEBUG
+        std::cout << indent() << "(exiting with continuation stack size: " << currContinuations->size() << ")\n";
+#endif
         assert(!valueStack.empty());
         auto& values = valueStack.back();
         values.push_back(ret.values);
@@ -4795,10 +4819,12 @@ public:
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
     auto old = self()->getCurrContinuationOrNull(); 
-    if (old) {
-      self()->popCurrContinuation();
+    if (!old) {
+      return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
     }
+    // An old one exists, so we can create a proper new one.
     assert(!old || old->executed);
+    self()->popCurrContinuation();
     auto new_ = std::make_shared<ContData>(
       old ? old->func : Literal::makeNull(HeapTypes::nofunc),
       old ? old->type : HeapType::none);
@@ -4904,9 +4930,14 @@ public:
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override { externalInterface->trap(why); }
+  void trap(const char* why) override {
+    // Traps break all current continuations - they will never be resumable.
+    self()->clearCurrContinuations();
+    externalInterface->trap(why);
+  }
 
   void hostLimit(const char* why) override {
+    self()->clearCurrContinuations();
     externalInterface->hostLimit(why);
   }
 
