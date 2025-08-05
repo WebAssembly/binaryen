@@ -4823,7 +4823,6 @@ public:
     assert(old->resumeArguments.empty());
     // The old one is done.
     old->executed = true;
-std::cout << "binding " << arguments << " so " << newData.resumeArguments << " and hence " << Literal(std::make_shared<ContData>(newData)) << '\n';
     return Literal(std::make_shared<ContData>(newData));
   }
   Flow visitSuspend(Suspend* curr) {
@@ -5031,8 +5030,6 @@ std::cout << "binding " << arguments << " so " << newData.resumeArguments << " a
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
-std::cout << "resuming " << self()->getCurrContinuation("resume func")->func.getFunc() << " with initial args " << arguments << " that are updating to " << self()->getCurrContinuation("resume func")->resumeArguments << '\n';
-
       arguments = self()->getCurrContinuation("resume func")->resumeArguments;
 
       if (!self()->getCurrContinuation("waka")->resumeExpr) {
