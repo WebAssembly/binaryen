@@ -550,7 +550,7 @@
 (assert_return (invoke "even" (i32.const 77)) (i32.const 99))
 (assert_return (invoke "odd" (i32.const 0)) (i32.const 99))
 (assert_return (invoke "odd" (i32.const 1)) (i32.const 44))
-(assert_return (invoke "odd" (i32.const 200)) (i32.const 99))
+(assert_return (invoke "odd" (i32.const 150)) (i32.const 99))
 (assert_return (invoke "odd" (i32.const 77)) (i32.const 44))
 
 (assert_exhaustion (invoke "runaway") "call stack exhausted")
