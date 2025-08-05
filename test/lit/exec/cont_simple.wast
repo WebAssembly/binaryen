@@ -17,6 +17,8 @@
   (tag $more)
   (tag $more-i32 (result i32))
 
+  (table $table 10 10 funcref)
+
   (func $run (param $k (ref $k))
     ;; Run a coroutine, continuing to resume it until it is complete.
     (call $log (i32.const 100)) ;; start
@@ -669,6 +671,140 @@
     (call $run-get-i32
       (i32.const 42)
       (cont.new $k-get-i32 (ref.func $param))
+    )
+  )
+
+  (func $calls
+    ;; Suspend before and after calling a child, who also suspends.
+    (local $x i32)
+    ;; Set a value here to check that we do not get confused between locals in
+    ;; different scopes.
+    (local.set $x (i32.const -1))
+    (suspend $more)
+    (call $calls-child (i32.const 41))
+    (suspend $more)
+    (call $calls-child (i32.const 1336))
+    (suspend $more)
+    (call $log (local.get $x))
+  )
+
+  (func $calls-child (param $x i32)
+    (suspend $more)
+    (local.set $x
+      (i32.add
+        (local.get $x)
+        (i32.const 1)
+      )
+    )
+    (suspend $more)
+    (call $log (local.get $x))
+    (suspend $more)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-calls
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-calls (export "run-calls")
+    (call $run
+      (cont.new $k (ref.func $calls))
+    )
+  )
+
+  (func $call_indirect
+    ;; Test that indirect calls go to the right place, even if we modify the
+    ;; table in between.
+    (table.set $table
+      (i32.const 7)
+      (ref.func $call_indirect-child)
+    )
+    (call $log (i32.const -1))
+    (call_indirect (type $f)
+      (i32.const 7)
+    )
+    (call $log (i32.const -2))
+  )
+
+  (func $call_indirect-child
+    ;; When we resume the suspend below, the table entry will have null, but we
+    ;; should still rewind the stack properly.
+    (call $log (i32.const -10))
+    (call $log
+      (ref.is_null
+        (table.get $table
+          (i32.const 7)
+        )
+      )
+    )
+    (table.set $table
+      (i32.const 7)
+      (ref.null func)
+    )
+    (suspend $more)
+    (call $log (i32.const -20))
+    (call $log
+      (ref.is_null
+        (table.get $table
+          (i32.const 7)
+        )
+      )
+    )
+    (suspend $more)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-call_indirect
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -10]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -20]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -2]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-call_indirect (export "run-call_indirect")
+    (call $run
+      (cont.new $k (ref.func $call_indirect))
+    )
+  )
+
+  (func $call_ref
+    (suspend $more)
+    (call_ref $f
+      (ref.func $call_ref-child)
+    )
+    (suspend $more)
+  )
+
+  (func $call_ref-child
+    (suspend $more)
+    (call $log (i32.const -20))
+    (suspend $more)
+  )
+
+  ;; CHECK:      [fuzz-exec] calling run-call_ref
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging -20]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+  (func $run-call_ref (export "run-call_ref")
+    (call $run
+      (cont.new $k (ref.func $call_ref))
     )
   )
 )
