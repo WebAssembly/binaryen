@@ -231,6 +231,20 @@ struct ContData {
   ContData(Literal func, HeapType type) : func(func), type(type) {}
 };
 
+// The current continuations, in a stack. At the top of the stack is the
+// current continuation, i.e., the one either executing right now, or in the
+// process of unwinding or rewinding the stack.
+//
+// We must share this between all interpreter instances, because which
+// continuation is current does not depend on which instance we happen to be
+// inside (we could call an imported function from another module, and that
+// should not alter what happens when we suspend/resume).
+//
+// TODO: Perhaps this could be part of an ExecutionState that is passed to
+//       interpreter instances, for all such shared data (but for now this is
+//       the only thing we need).
+using CurrContinuations = std::vector<std::shared_ptr<ContData>>;
+
 // Execute an expression
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
@@ -379,18 +393,6 @@ protected:
   // expression that is in this map, then it will just return that value.
   std::unordered_map<Expression*, Literals> restoredValuesMap;
 
-  // The current continuations, in a stack. At the top of the stack is the
-  // current continuation, i.e., the one either executing right now, or in the
-  // process of unwinding or rewinding the stack.
-  //
-  // We must share this between all interpreter instances, because which
-  // continuation is current does not depend on which instance we happen to be
-  // inside (we could call an imported function from another module, and that
-  // should not alter what happens when we suspend/resume).
-public:
-  using CurrContinuations = std::vector<std::shared_ptr<ContData>>;
-
-protected:
   std::shared_ptr<CurrContinuations> currContinuations;
 
   std::shared_ptr<ContData> getCurrContinuationOrNull() {
@@ -468,7 +470,7 @@ public:
 
     // Execute the instruction.
     Flow ret;
-    if (!getCurrContinuation()) { // TODO measure
+    if (!getCurrContinuationOrNull()) { // TODO measure
       // We are not in a continuation, so we cannot suspend/resume. Just execute
       // normally.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
@@ -3308,8 +3310,8 @@ public:
     // reusing one if it exists.
     std::shared_ptr<CurrContinuations> shared;
     for (auto& [_, instance] : linkedInstances) {
-      if (instance.currContinuations) {
-        shared = instance.currContinuations;
+      if (instance->currContinuations) {
+        shared = instance->currContinuations;
         break;
       }
     }
@@ -3317,8 +3319,9 @@ public:
       shared = std::make_shared<CurrContinuations>();
     }
     for (auto& [_, instance] : linkedInstances) {
-      instance.currContinuations = shared;
+      instance->currContinuations = shared;
     }
+    self()->currContinuations = shared;
   }
 
   // Start up this instance. This must be called before doing anything else.
