@@ -204,7 +204,7 @@ WasmSplitOptions::WasmSplitOptions()
          "",
          "Write a symbol map file for each of the output modules.",
          WasmSplitOption,
-         {Mode::Split},
+         {Mode::Split, Mode::MultiSplit},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { symbolMap = true; })
     .add(
