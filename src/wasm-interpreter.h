@@ -4802,7 +4802,10 @@ public:
     return Literal(std::make_shared<ContData>(
       self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
   }
-  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitContBind(ContBind* curr) {
+    // Just the simple case of applying all parameters XXX
+    abort();
+  }
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
     // then we don't need these values (we sent them as part of the suspension),
@@ -5008,7 +5011,7 @@ public:
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
-      arguments = getCurrContinuation()->resumeArguments;
+      arguments = self()->getCurrContinuation()->resumeArguments;
     }
 
     Flow flow;
