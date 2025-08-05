@@ -87,6 +87,12 @@ public:
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
 
+  Flow visitTableGet(TableGet* curr) {
+    // We support tableLoad, below, so that call_indirect works (it calls it
+    // internally), but we want to disable table.get for now.
+    throw FailToEvalException("TODO: table.get");
+  }
+
   // This needs to be duplicated from ModuleRunner, unfortunately.
   Literal makeFuncData(Name name, HeapType type) {
     auto allocation =
@@ -301,23 +307,15 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   // We assume the table is not modified FIXME
-  Literals callTable(Name tableName,
-                     Address index,
-                     HeapType sig,
-                     Literals& arguments,
-                     Type result,
-                     EvallingModuleRunner& instance) override {
-
-    std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
-
+  Literal tableLoad(Name tableName, Address index) override {
     auto* table = wasm->getTableOrNull(tableName);
     if (!table) {
-      throw FailToEvalException("callTable on non-existing table");
+      throw FailToEvalException("tableLoad on non-existing table");
     }
 
-    // Look through the segments and find the function. Segments can overlap,
+    // Look through the segments and find the value. Segments can overlap,
     // so we want the last one.
-    Name targetFunc;
+    Expression* value = nullptr;
     for (auto& segment : wasm->elementSegments) {
       if (segment->table != tableName) {
         continue;
@@ -338,49 +336,23 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
       }
       auto end = start + segment->data.size();
       if (start <= index && index < end) {
-        auto entry = segment->data[index - start];
-        if (auto* get = entry->dynCast<RefFunc>()) {
-          targetFunc = get->func;
-        } else {
-          throw FailToEvalException(
-            std::string("callTable on uninitialized entry"));
-        }
+        value = segment->data[index - start];
       }
     }
 
-    if (!targetFunc.is()) {
-      throw FailToEvalException(
-        std::string("callTable on index not found in static segments: ") +
-        std::to_string(index));
+    if (!value) {
+      // No segment had a value for this.
+      return Literal::makeNull(HeapTypes::func);
     }
-
-    // If this is one of our functions, we can call it; if it was
-    // imported, fail.
-    auto* func = wasm->getFunction(targetFunc);
-    if (func->type != sig) {
-      throw FailToEvalException(std::string("callTable signature mismatch: ") +
-                                targetFunc.toString());
+    if (!Properties::isConstantExpression(value)) {
+      throw FailToEvalException("tableLoad of non-literal");
     }
-    if (!func->imported()) {
-      auto flow = instance.callFunction(targetFunc, arguments);
-      if (flow.suspendTag) {
-        throw FailToEvalException("unhandled suspend");
-      }
-      return flow.values;
-    } else {
-      throw FailToEvalException(
-        std::string("callTable on imported function: ") +
-        targetFunc.toString());
-    }
+    return Properties::getLiteral(value);
   }
 
   Index tableSize(Name tableName) override {
-    // See callTable above, we assume the table is not modified FIXME
+    // See tableLoad above, we assume the table is not modified FIXME
     return wasm->getTableOrNull(tableName)->initial;
-  }
-
-  Literal tableLoad(Name tableName, Address index) override {
-    throw FailToEvalException("table.get: TODO");
   }
 
   // called during initialization

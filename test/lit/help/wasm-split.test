@@ -67,10 +67,10 @@
 ;; CHECK-NEXT:   --symbolmap                          [split] Write a symbol map file for each
 ;; CHECK-NEXT:                                        of the output modules.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-placeholders                    [split] Do not import placeholder
-;; CHECK-NEXT:                                        functions. Calls to secondary functions
-;; CHECK-NEXT:                                        will fail before the secondary module has
-;; CHECK-NEXT:                                        been instantiated.
+;; CHECK-NEXT:   --no-placeholders                    [split, multi-split] Do not import
+;; CHECK-NEXT:                                        placeholder functions. Calls to secondary
+;; CHECK-NEXT:                                        functions will fail before the secondary
+;; CHECK-NEXT:                                        module has been instantiated.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --placeholdermap                     [split] Write a file mapping placeholder
 ;; CHECK-NEXT:                                        indices to the function names.
@@ -122,12 +122,13 @@
 ;; CHECK-NEXT:                                        memory created to store profile
 ;; CHECK-NEXT:                                        information.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-module-names                  [split, instrument] Emit module names,
-;; CHECK-NEXT:                                        even if not emitting the rest of the
-;; CHECK-NEXT:                                        names section. Can help differentiate the
-;; CHECK-NEXT:                                        modules in stack traces. This option will
-;; CHECK-NEXT:                                        be removed once simpler ways of naming
-;; CHECK-NEXT:                                        modules are widely available. See
+;; CHECK-NEXT:   --emit-module-names                  [split, multi-split, instrument] Emit
+;; CHECK-NEXT:                                        module names, even if not emitting the
+;; CHECK-NEXT:                                        rest of the names section. Can help
+;; CHECK-NEXT:                                        differentiate the modules in stack
+;; CHECK-NEXT:                                        traces. This option will be removed once
+;; CHECK-NEXT:                                        simpler ways of naming modules are widely
+;; CHECK-NEXT:                                        available. See
 ;; CHECK-NEXT:                                        https://bugs.chromium.org/p/v8/issues/detail?id=11808.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --initial-table                      [split, instrument] A hack to ensure the
@@ -137,8 +138,9 @@
 ;; CHECK-NEXT:                                        TODO: Figure out a more elegant solution
 ;; CHECK-NEXT:                                        for that use case and remove this.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-text,-S                       [split, instrument] Emit text instead of
-;; CHECK-NEXT:                                        binary for the output file or files.
+;; CHECK-NEXT:   --emit-text,-S                       [split, multi-split, instrument] Emit
+;; CHECK-NEXT:                                        text instead of binary for the output
+;; CHECK-NEXT:                                        file or files.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --debuginfo,-g                       [split, multi-split, instrument] Emit
 ;; CHECK-NEXT:                                        names section in wasm binary (or full

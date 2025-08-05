@@ -213,7 +213,7 @@ WasmSplitOptions::WasmSplitOptions()
       "Do not import placeholder functions. Calls to secondary functions will "
       "fail before the secondary module has been instantiated.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { usePlaceholders = false; })
     .add(
@@ -318,7 +318,7 @@ WasmSplitOptions::WasmSplitOptions()
       "removed once simpler ways of naming modules are widely available. See "
       "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
       WasmSplitOption,
-      {Mode::Split, Mode::Instrument},
+      {Mode::Split, Mode::MultiSplit, Mode::Instrument},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
     .add("--initial-table",
@@ -337,7 +337,7 @@ WasmSplitOptions::WasmSplitOptions()
          "-S",
          "Emit text instead of binary for the output file or files.",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument},
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",

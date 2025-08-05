@@ -220,6 +220,11 @@ struct ContData {
   // will emit a single Literals for itself, or possibly a few bundles.
   std::vector<Literals> resumeInfo;
 
+  // The arguments sent when resuming (on first execution these appear as
+  // parameters to the function; on later resumes, they are returned from the
+  // suspend).
+  Literals resumeArguments;
+
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
   bool executed = false;
@@ -442,6 +447,10 @@ public:
         auto iter = restoredValuesMap.find(curr);
         if (iter != restoredValuesMap.end()) {
           ret = iter->second;
+#if WASM_INTERPRETER_DEBUG
+          std::cout << indent() << "consume restored value: " << ret.values
+                    << '\n';
+#endif
           restoredValuesMap.erase(iter);
           hasValue = true;
         }
@@ -476,6 +485,10 @@ public:
               --num;
               auto value = popResumeEntry("child value");
               restoredValuesMap[child] = value;
+#if WASM_INTERPRETER_DEBUG
+              std::cout << indent() << "prepare restored value: " << value
+                        << '\n';
+#endif
             }
           }
 
@@ -3045,12 +3058,6 @@ public:
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import,
                                 const Literals& arguments) = 0;
-    virtual Literals callTable(Name tableName,
-                               Address index,
-                               HeapType sig,
-                               Literals& arguments,
-                               Type result,
-                               SubType& instance) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -3599,11 +3606,20 @@ public:
 
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
+    Literal funcref;
+    if (!self()->resuming) {
+      // Normal execution: Load from the table.
+      funcref = info.interface()->tableLoad(info.name, index);
+    } else {
+      // Use the stashed funcref (see below).
+      auto entry = self()->popResumeEntry("call_indirect");
+      assert(entry.size() == 1);
+      funcref = entry[0];
+    }
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      auto funcref = info.interface()->tableLoad(info.name, index);
       if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
         trap("cast failure in call_indirect");
       }
@@ -3611,15 +3627,34 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
+    if (funcref.isNull()) {
+      trap("null target in call_indirect");
+    }
+    if (!funcref.isFunction()) {
+      trap("non-function target in call_indirect");
+    }
+
+    auto* func = self()->getModule()->getFunction(funcref.getFunc());
+    if (!HeapType::isSubType(func->type, curr->heapType)) {
+      trap("callIndirect: non-subtype");
+    }
+
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(calling table)\n";
 #endif
-    Flow ret = info.interface()->callTable(
-      info.name, index, curr->heapType, arguments, curr->type, *self());
+    Flow ret = callFunction(funcref.getFunc(), arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
 #endif
+
+    if (ret.suspendTag) {
+      // Save the function reference we are calling, as when we resume we need
+      // to call it - we cannot do another load from the table, which might have
+      // changed.
+      self()->pushResumeEntry({funcref}, "call_indirect");
+    }
+
     return ret;
   }
 
@@ -4670,6 +4705,15 @@ public:
   }
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitSuspend(Suspend* curr) {
+    // Process the arguments, whether or not we are resuming. If we are resuming
+    // then we don't need these values (we sent them as part of the suspension),
+    // but must still handle them, so we finish re-winding the stack.
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+
     if (self()->resuming) {
       // This is a resume, so we have found our way back to where we
       // suspended.
@@ -4680,15 +4724,10 @@ public:
       // restoredValues map.
       assert(self()->currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      return Flow();
+      return self()->currContinuation->resumeArguments;
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
-    Literals arguments;
-    Flow flow = self()->generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
 
     // Copy the continuation (the old one cannot be resumed again). Note that no
     // old one may exist, in which case we still emit a continuation, but it is
@@ -4722,6 +4761,7 @@ public:
       trap("continuation already executed");
     }
     contData->executed = true;
+    contData->resumeArguments = arguments;
     Name func = contData->func;
     self()->currContinuation = contData;
     if (contData->resumeExpr) {
@@ -4733,12 +4773,24 @@ public:
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
-    Flow ret = callFunction(func, arguments);
+    Flow ret;
+    {
+      // Create a stack value scope. This ensures that we always have a scope,
+      // and so the code that pushes/pops doesn't need to check if a scope
+      // exists. (We do not need the values in this scope, of course, as no
+      // expression is above them, so we cannot suspend and need these values).
+      typename ExpressionRunner<SubType>::StackValueNoter noter(this);
+      ret = callFunction(func, arguments);
+    }
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
 #endif
-    if (ret.suspendTag) {
-      // See if a suspension arrived that we support.
+    if (!ret.suspendTag) {
+      // No suspension: the coroutine finished normally. Mark it as no longer
+      // active.
+      self()->currContinuation.reset();
+    } else {
+      // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
         auto handlerTag = curr->handlerTags[i];
         if (handlerTag == ret.suspendTag) {
@@ -4753,7 +4805,6 @@ public:
         }
       }
       // No handler worked out, keep propagating.
-      return ret;
     }
     // No suspension; all done.
     return ret;
