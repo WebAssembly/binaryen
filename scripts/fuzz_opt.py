@@ -1657,7 +1657,19 @@ class ClusterFuzz(TestCaseHandler):
     # for each iteration (once for each of the wasm files we ignore), which is
     # confusing.
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        # Do not run ClusterFuzz in the first seconds of fuzzing: the first time
+        # it runs is very slow (to build the bundle), which is annoying when you
+        # are just starting the fuzzer and looking for any obvious problems.
+        # Check this here as opposed to in e.g. can_run_on_wasm to avoid
+        # changing the observed sequence of random numbers before and after this
+        # threshold, which could interfere with bug reproduction.
+        seconds = 30
+        if time.time() - start_time < seconds:
+            return
+
         self.ensure()
+
+        # NO RANDOM DATA SHOULD BE USED BELOW THIS POINT
 
         # run.py() should emit these two files. Delete them to make sure they
         # are created by run.py() in the next step.
@@ -1738,13 +1750,6 @@ class ClusterFuzz(TestCaseHandler):
         tar = tarfile.open(bundle, "r:gz")
         tar.extractall(path=self.clusterfuzz_dir)
         tar.close()
-
-    def can_run_on_wasm(self, wasm):
-        # Do not run ClusterFuzz in the first seconds of fuzzing: the first time
-        # it runs is very slow (to build the bundle), which is annoying when you
-        # are just starting the fuzzer and looking for any obvious problems.
-        seconds = 30
-        return time.time() - start_time > seconds
 
 
 # Tests linking two wasm files at runtime, and that optimizations do not break
