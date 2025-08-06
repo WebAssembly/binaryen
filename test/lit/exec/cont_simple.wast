@@ -815,6 +815,12 @@
     (suspend $more)
   )
 
+  ;; CHECK:      [fuzz-exec] calling run-bind
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-bind (export "run-bind")
     (call $run
       (cont.bind $k-get-i32 $k
