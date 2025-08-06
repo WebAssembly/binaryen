@@ -1015,7 +1015,6 @@ void I31Get::finalize() {
 static Type getMaximallyUninhabitable(Type type) {
   if (type.isRef()) {
     // We can make a reference uninhabitable.
-    // TODO: Make this exact.
     return Type(type.getHeapType().getBottom(), NonNullable);
   } else if (type.isTuple()) {
     // We can make a tuple's elements uninhabitable.
