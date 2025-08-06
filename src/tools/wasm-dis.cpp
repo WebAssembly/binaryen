@@ -67,9 +67,6 @@ int main(int argc, const char* argv[]) {
   }
   Module wasm;
   options.applyOptionsBeforeParse(wasm);
-  // Temporarily apply all features during parsing to avoid any errors. See note
-  // below on skipping validation.
-  auto enabledFeatures = wasm.features;
   wasm.features = FeatureSet::All;
 
   try {
@@ -91,13 +88,6 @@ int main(int argc, const char* argv[]) {
 
   options.applyOptionsAfterParse(wasm);
 
-  // TODO: Validation. However, validating would mean that users are forced to
-  //       run with  wasm-dis -all  or such, to enable the features (unless the
-  //       features section is present, but that's rare in general). It would be
-  //       better to have an "autodetect" code path that enables used features
-  //       eventually.
-
-  wasm.features = enabledFeatures;
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }
