@@ -807,4 +807,20 @@
       (cont.new $k (ref.func $call_ref))
     )
   )
+
+  (func $bind (param $x i32)
+    ;; Test that cont.bind works when used on this.
+    (suspend $more)
+    (call $log (local.get $x))
+    (suspend $more)
+  )
+
+  (func $run-bind (export "run-bind")
+    (call $run
+      (cont.bind $k-get-i32 $k
+        (i32.const 42)
+        (cont.new $k-get-i32 (ref.func $bind))
+      )
+    )
+  )
 )
