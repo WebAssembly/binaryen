@@ -5006,10 +5006,6 @@ public:
   }
 
   Flow callFunction(Name name, Literals arguments) {
-    return callFunction(self()->getModule()->getFunction(name), arguments);
-  }
-
-  Flow callFunction(Function* function, Literals arguments) {
     if (callDepth > maxDepth) {
       hostLimit("stack limit");
     }
@@ -5032,6 +5028,9 @@ public:
 
     // We may have to call multiple functions in the event of return calls.
     while (true) {
+      Function* function = wasm.getFunction(name);
+      assert(function);
+
       // Return calls can only make the result type more precise.
       if (resultType) {
         assert(Type::isSubType(function->getResults(), *resultType));
@@ -5086,10 +5085,10 @@ public:
       // There was a return call, so we need to call the next function before
       // returning to the caller. The flow carries the function arguments and a
       // function reference.
-      auto nextName = flow.values.back().getFunc();
+      name = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
-      function = self()->getModule()->getFunction(nextName);
+      function = self()->getModule()->getFunction(name);
     }
 
     if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
