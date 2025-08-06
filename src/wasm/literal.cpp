@@ -740,6 +740,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       if (!data->resumeInfo.empty()) {
         o << " |resumeInfo|=" << data->resumeInfo.size();
       }
+      if (!data->resumeArguments.empty()) {
+        o << " resumeArguments=" << data->resumeArguments;
+      }
       o << " executed=" << data->executed << ')';
     } else {
       assert(literal.isData());

@@ -3499,9 +3499,10 @@ public:
       parent.functionStack.push_back(function->name);
       locals.resize(function->getNumLocals());
 
-      if (parent.resuming) {
-        // Nothing more to do here: we are resuming execution, so there is old
-        // locals state that will be restored.
+      if (parent.resuming && parent.currContinuation->resumeExpr) {
+        // Nothing more to do here: we are resuming execution to some
+        // suspended expression (resumeExpr), so there is old locals state that
+        // will be restored.
         return;
       }
 
@@ -4709,7 +4710,29 @@ public:
     Name func = funcFlow.getSingleValue().getFunc();
     return Literal(std::make_shared<ContData>(func, curr->type.getHeapType()));
   }
-  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitContBind(ContBind* curr) {
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Flow cont = self()->visit(curr->cont);
+    if (cont.breaking()) {
+      return cont;
+    }
+
+    // Create a new continuation, copying the old but with the new type +
+    // arguments.
+    auto old = cont.getSingleValue().getContData();
+    auto newData = *old;
+    newData.type = curr->type.getHeapType();
+    newData.resumeArguments = arguments;
+    // We handle only the simple case of applying all parameters, for now. TODO
+    assert(old->resumeArguments.empty());
+    // The old one is done.
+    old->executed = true;
+    return Literal(std::make_shared<ContData>(newData));
+  }
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
     // then we don't need these values (we sent them as part of the suspension),
@@ -4771,15 +4794,15 @@ public:
       trap("continuation already executed");
     }
     contData->executed = true;
-    contData->resumeArguments = arguments;
+    if (contData->resumeArguments.empty()) {
+      // The continuation has no bound arguments. For now, we just handle the
+      // simple case of binding all of them, so that means we can just use all
+      // the immediate ones here. TODO
+      contData->resumeArguments = arguments;
+    }
     Name func = contData->func;
     self()->currContinuation = contData;
-    if (contData->resumeExpr) {
-      // There is an expression to resume execution at, so this is not the first
-      // time we run this function. Mark us as resuming, until we reach that
-      // expression.
-      self()->resuming = true;
-    }
+    self()->resuming = true;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
@@ -4895,6 +4918,19 @@ public:
   Flow callFunction(Name name, Literals arguments) {
     if (callDepth > maxDepth) {
       hostLimit("stack limit");
+    }
+
+    if (self()->resuming) {
+      // The arguments are in the continuation data.
+      arguments = self()->currContinuation->resumeArguments;
+
+      if (!self()->currContinuation->resumeExpr) {
+        // This is the first time we resume, that is, there is no suspend which
+        // is the resume expression that we need to execute up to. All we need
+        // to do is just start calling this function (with the arguments we've
+        // set), so resuming is done
+        self()->resuming = false;
+      }
     }
 
     Flow flow;
