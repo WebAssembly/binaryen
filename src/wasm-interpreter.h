@@ -3594,8 +3594,9 @@ public:
 
       if (parent.isResuming() &&
           parent.getCurrContinuation("waka")->resumeExpr) {
-        // Nothing more to do here: we are resuming execution, so there is old
-        // locals state that will be restored. XXX
+        // Nothing more to do here: we are resuming execution to some
+        // suspended expression (resumeExpr), so there is old locals state that
+        // will be restored.
         return;
       }
 
