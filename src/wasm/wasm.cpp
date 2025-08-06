@@ -1001,6 +1001,36 @@ void I31Get::finalize() {
   }
 }
 
+// If an instruction depends on a child for its type, for example call_ref
+// whose type should be the return values of the function signature in its
+// target, then we must handle the case of the child being null. In that case,
+// we can't read signature information from the child, but it doesn't matter, as
+// the call will trap anyhow. We could update the type to be unreachable, but
+// that would violate the invariant that non-branch instructions other than
+// `unreachable` can only be unreachable if they have unreachable children. This
+// makes the result type as close to `unreachable` as possible without
+// actually making it unreachable. TODO: consider just making this
+// unreachable instead (and similar in other GC accessors), although this
+// would currently cause the parser to admit more invalid modules.
+static Type getMaximallyUninhabitable(Type type) {
+  if (type.isRef()) {
+    // We can make a reference uninhabitable.
+    // TODO: Make this exact.
+    return Type(type.getHeapType().getBottom(), NonNullable);
+  } else if (type.isTuple()) {
+    // We can make a tuple's elements uninhabitable.
+    Tuple elems;
+    for (auto t : type) {
+      // TODO: Make this exact.
+      elems.push_back(
+        t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
+    }
+    return Type(elems);
+  }
+  // Other things can be left as is.
+  return type;
+}
+
 void CallRef::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
@@ -1015,26 +1045,7 @@ void CallRef::finalize() {
   }
   assert(target->type.isRef());
   if (target->type.isNull()) {
-    // If this call_ref has been optimized to have a null reference, then it
-    // will definitely trap. We could update the type to be unreachable, but
-    // that would violate the invariant that non-branch instructions other than
-    // `unreachable` can only be unreachable if they have unreachable children.
-    // Make the result type as close to `unreachable` as possible without
-    // actually making it unreachable. TODO: consider just making this
-    // unreachable instead (and similar in other GC accessors), although this
-    // would currently cause the parser to admit more invalid modules.
-    if (type.isRef()) {
-      // TODO: Make this exact.
-      type = Type(type.getHeapType().getBottom(), NonNullable);
-    } else if (type.isTuple()) {
-      Tuple elems;
-      for (auto t : type) {
-        // TODO: Make this exact.
-        elems.push_back(
-          t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
-      }
-      type = Type(elems);
-    }
+    type = getMaximallyUninhabitable(type);
     return;
   }
   assert(target->type.getHeapType().isSignature());
@@ -1528,10 +1539,7 @@ void Resume::finalize() {
     return;
   }
   if (cont->type.isNull()) {
-    // This will never be executed and the instruction will not be emitted.
-    // Model this with an uninhabitable cast type.
-    // TODO: This is not quite right yet.
-    type = cont->type.with(NonNullable);
+    type = getMaximallyUninhabitable(type);
     return;
   }
 
@@ -1550,10 +1558,7 @@ void ResumeThrow::finalize() {
     return;
   }
   if (cont->type.isNull()) {
-    // This will never be executed and the instruction will not be emitted.
-    // Model this with an uninhabitable cast type.
-    // TODO: This is not quite right yet.
-    type = cont->type.with(NonNullable);
+    type = getMaximallyUninhabitable(type);
     return;
   }
 
@@ -1572,10 +1577,7 @@ void StackSwitch::finalize() {
     return;
   }
   if (cont->type.isNull()) {
-    // This will never be executed and the instruction will not be emitted.
-    // Model this with an uninhabitable cast type.
-    // TODO: This is not quite right yet.
-    type = cont->type.with(NonNullable);
+    type = getMaximallyUninhabitable(type);
     return;
   }
 
