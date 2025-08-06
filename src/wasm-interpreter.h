@@ -5109,7 +5109,7 @@ public:
       // In normal execution, the result is the expected one.
       auto type = flow.getType();
       if (!Type::isSubType(type, *resultType)) {
-        Fatal() << "calling " << function->name << " resulted in " << type
+        Fatal() << "calling " << name << " resulted in " << type
                 << " but the function type is " << *resultType << '\n';
       }
 #endif
