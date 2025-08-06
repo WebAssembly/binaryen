@@ -4848,9 +4848,7 @@ public:
     }
     // An old one exists, so we can create a proper new one.
     assert(old->executed);
-    auto new_ = std::make_shared<ContData>(
-      old ? old->func : Literal::makeNull(HeapTypes::nofunc),
-      old ? old->type : HeapType::none);
+    auto new_ = std::make_shared<ContData>(old->func, old->type);
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
     // which means we cannot do it here (we don't even know what that block is).
