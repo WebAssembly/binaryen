@@ -1,8 +1,8 @@
 ;; RUN: wasm-split -all --multi-split %s --manifest %S/multi-split.wast.manifest --out-prefix=%t --emit-module-names -o %t.wasm
-;; RUN: wasm-dis %t.wasm | filecheck %s --check-prefix=PRIMARY-WASM
-;; RUN: wasm-dis %t1.wasm | filecheck %s --check-prefix=MOD1-WASM
-;; RUN: wasm-dis %t2.wasm | filecheck %s --check-prefix=MOD2-WASM
-;; RUN: wasm-dis %t3.wasm | filecheck %s --check-prefix=MOD3-WASM
+;; RUN: wasm-dis -all %t.wasm | filecheck %s --check-prefix=PRIMARY-WASM
+;; RUN: wasm-dis -all %t1.wasm | filecheck %s --check-prefix=MOD1-WASM
+;; RUN: wasm-dis -all %t2.wasm | filecheck %s --check-prefix=MOD2-WASM
+;; RUN: wasm-dis -all %t3.wasm | filecheck %s --check-prefix=MOD3-WASM
 
 ;; Check if --emit-text with --emit-module-names works.
 ;; RUN: wasm-split -all --multi-split %s --manifest %S/multi-split.wast.manifest --out-prefix=%t --emit-module-names -S -o %t.wast
