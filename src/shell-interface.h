@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, const Literals& arguments) override {
+  Flow callImport(Function* import, const Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';
@@ -144,9 +144,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
       std::cout << "exit()\n";
       throw ExitException();
     } else if (auto* inst = getImportInstance(import)) {
-      auto flow = inst->callExport(import->base, arguments);
-      assert(!flow.suspendTag); // TODO: support stack switching on calls
-      return flow.values;
+      return inst->callExport(import->base, arguments);
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;

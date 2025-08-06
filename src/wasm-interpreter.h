@@ -3056,8 +3056,8 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import,
-                                const Literals& arguments) = 0;
+    virtual Flow callImport(Function* import,
+                            const Literals& arguments) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
