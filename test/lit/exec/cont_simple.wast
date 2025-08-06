@@ -813,12 +813,27 @@
     (suspend $more)
     (call $log (local.get $x))
     (suspend $more)
+    ;; Test that the bound arguments do not get applied to child calls.
+    (call $bind-child
+      (i32.const 1337)
+    )
+    (suspend $more)
+  )
+
+  (func $bind-child (param $x i32)
+    (suspend $more)
+    (call $log (local.get $x))
+    (suspend $more)
   )
 
   ;; CHECK:      [fuzz-exec] calling run-bind
   ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 1337]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
   ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
   (func $run-bind (export "run-bind")
