@@ -113,6 +113,7 @@ unfuzzable = [
     'vacuum-stack-switching.wast',
     'cont.wast',
     'cont_simple.wast',
+    'tag_linked.wast',
     # TODO: fuzzer support for custom descriptors
     'remove-unused-module-elements-refs-descriptors.wast',
     'custom-descriptors.wast',
