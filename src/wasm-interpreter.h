@@ -4775,7 +4775,9 @@ public:
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    return Flow(SUSPEND_FLOW, self()->getModule()->getTag(curr->tag), std::move(arguments));
+    return Flow(SUSPEND_FLOW,
+                self()->getModule()->getTag(curr->tag),
+                std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
     Literals arguments;
