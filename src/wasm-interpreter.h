@@ -3588,8 +3588,7 @@ public:
       parent.functionStack.push_back(function->name);
       locals.resize(function->getNumLocals());
 
-      if (parent.isResuming() &&
-          parent.getCurrContinuation()->resumeExpr) {
+      if (parent.isResuming() && parent.getCurrContinuation()->resumeExpr) {
         // Nothing more to do here: we are resuming execution to some
         // suspended expression (resumeExpr), so there is old locals state that
         // will be restored.
