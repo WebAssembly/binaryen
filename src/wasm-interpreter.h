@@ -3564,6 +3564,21 @@ protected:
     return inst->globals[global->name];
   }
 
+  // Get a tag object while looking through imports, i.e., this uses the name as
+  // the name of the tag in the current module, and finds the actual canonical
+  // Tag* object for it: the Tag in this module, if not imported, and if
+  // imported, the Tag in the originating module.
+  Tag* getCanonicalTag(Name name) {
+    auto* inst = self();
+    auto* tag = inst->wasm.getTag(name);
+    while (tag->imported()) {
+      inst = inst->linkedInstances.at(tag->module).get();
+      auto* tagExport = inst->wasm.getExport(tag->base);
+      tag = inst->wasm.getTag(*tagExport->getInternalName());
+    }
+    return tag;
+  }
+
 public:
   Flow visitCall(Call* curr) {
     Name target = curr->target;
@@ -4776,7 +4791,7 @@ public:
     // resumed.
     new_->resumeExpr = curr;
     return Flow(SUSPEND_FLOW,
-                self()->getModule()->getTag(curr->tag),
+                self()->getCanonicalTag(curr->tag),
                 std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
@@ -4827,7 +4842,7 @@ public:
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-        auto* handlerTag = self()->getModule()->getTag(curr->handlerTags[i]);
+        auto* handlerTag = self()->getCanonicalTag(curr->handlerTags[i]);
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching.
           ret.suspendTag = nullptr;
