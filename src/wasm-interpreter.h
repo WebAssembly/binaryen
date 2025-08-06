@@ -184,8 +184,8 @@ struct FuncData {
 //   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
 //   * |ExecutionState| is state about the execution of continuations that is
-//     shared between core interpreter (ExpressionRunner/ModuleInstance)
-//     instances:
+//     shared between instances of the core interpreter
+//     (ExpressionRunner/ModuleInstance):
 //     * |continuations| is the stack of active continuations.
 //     * |resuming| is set when we are in the special "resuming" mode mentioned
 //       above.
