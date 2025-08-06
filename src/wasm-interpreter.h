@@ -80,15 +80,15 @@ public:
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
   Flow(Name breakTo, Literals&& values)
     : values(std::move(values)), breakTo(breakTo) {}
-  Flow(Name breakTo, Name suspendTag, Literals&& values)
+  Flow(Name breakTo, Tag* suspendTag, Literals&& values)
     : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
     assert(breakTo == SUSPEND_FLOW);
   }
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
-  Name suspendTag; // if non-null, breakTo must be SUSPEND_FLOW, and this is the
-                   // tag being suspended
+  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
+                             // this is the tag being suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -123,7 +123,7 @@ public:
       o << flow.values[i];
     }
     if (flow.suspendTag) {
-      o << " [suspend:" << flow.suspendTag << ']';
+      o << " [suspend:" << flow.suspendTag->name << ']';
     }
     o << "})";
     return o;
@@ -4775,7 +4775,7 @@ public:
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
+    return Flow(SUSPEND_FLOW, self()->getModule()->getTag(curr->tag), std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
     Literals arguments;
@@ -4825,10 +4825,10 @@ public:
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-        auto handlerTag = curr->handlerTags[i];
+        auto* handlerTag = self()->getModule()->getTag(curr->handlerTags[i]);
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching.
-          ret.suspendTag = Name();
+          ret.suspendTag = nullptr;
           ret.breakTo = curr->handlerBlocks[i];
           // We can now update the continuation type, which was wrong until now
           // (see comment in visitSuspend). The type is taken from the block we
@@ -4978,7 +4978,7 @@ public:
 
 #if WASM_INTERPRETER_DEBUG
       std::cout << self()->indent() << "exiting " << function->name << " with "
-                << flow.values << '\n';
+                << flow << '\n';
 #endif
 
       if (flow.suspendTag) {
