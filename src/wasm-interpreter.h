@@ -183,7 +183,7 @@ struct FuncData {
 // Key parts of this support:
 //   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
-//   * |ExecutionState| is state about the execution of continuations that is
+//   * |ContinuationStore| is state about the execution of continuations that is
 //     shared between instances of the core interpreter
 //     (ExpressionRunner/ModuleInstance):
 //     * |continuations| is the stack of active continuations.
@@ -234,7 +234,7 @@ struct ContData {
 };
 
 // Shared execution state of a set of instantiated modules.
-struct ExecutionState {
+struct ContinuationStore {
   // The current continuations, in a stack. At the top of the stack is the
   // current continuation, i.e., the one either executing right now, or in the
   // process of unwinding or rewinding the stack.
@@ -400,13 +400,13 @@ protected:
 
   // Shared execution state for continuations. This can be null if the
   // instance does not want to ever suspend/resume.
-  std::shared_ptr<ExecutionState> executionState;
+  std::shared_ptr<ContinuationStore> continuationStore;
 
   std::shared_ptr<ContData> getCurrContinuationOrNull() {
-    if (!executionState || executionState->continuations.empty()) {
+    if (!continuationStore || continuationStore->continuations.empty()) {
       return {};
     }
-    return executionState->continuations.back();
+    return continuationStore->continuations.back();
   }
 
   std::shared_ptr<ContData> getCurrContinuation() {
@@ -419,18 +419,18 @@ protected:
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push continuation\n";
 #endif
-    assert(executionState);
-    return executionState->continuations.push_back(cont);
+    assert(continuationStore);
+    return continuationStore->continuations.push_back(cont);
   }
 
   std::shared_ptr<ContData> popCurrContinuation() {
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "pop continuation\n";
 #endif
-    assert(executionState);
-    assert(!executionState->continuations.empty());
-    auto cont = executionState->continuations.back();
-    executionState->continuations.pop_back();
+    assert(continuationStore);
+    assert(!continuationStore->continuations.empty());
+    auto cont = continuationStore->continuations.back();
+    continuationStore->continuations.pop_back();
     return cont;
   }
 
@@ -438,17 +438,17 @@ public:
   // Clear the execution state of continuations. This is done when we trap, for
   // example, as that means all continuations are lost, and later calls to the
   // module should start from a blank slate.
-  void clearExecutionState() {
-    if (executionState) {
+  void clearContinuationStore() {
+    if (continuationStore) {
 #if WASM_INTERPRETER_DEBUG
       std::cout << indent() << "clear continuations\n";
 #endif
-      executionState = std::make_shared<ExecutionState>();
+      continuationStore = std::make_shared<ContinuationStore>();
     }
   }
 
 protected:
-  bool isResuming() { return executionState && executionState->resuming; }
+  bool isResuming() { return continuationStore && continuationStore->resuming; }
 
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
@@ -3336,20 +3336,20 @@ public:
       externalInterface(externalInterface), linkedInstances(linkedInstances_) {
     // Set up a single shared CurrContinuations for all these linked instances,
     // reusing one if it exists.
-    std::shared_ptr<ExecutionState> shared;
+    std::shared_ptr<ContinuationStore> shared;
     for (auto& [_, instance] : linkedInstances) {
-      if (instance->executionState) {
-        shared = instance->executionState;
+      if (instance->continuationStore) {
+        shared = instance->continuationStore;
         break;
       }
     }
     if (!shared) {
-      shared = std::make_shared<ExecutionState>();
+      shared = std::make_shared<ContinuationStore>();
     }
     for (auto& [_, instance] : linkedInstances) {
-      instance->executionState = shared;
+      instance->continuationStore = shared;
     }
-    self()->executionState = shared;
+    self()->continuationStore = shared;
   }
 
   // Start up this instance. This must be called before doing anything else.
@@ -4832,7 +4832,7 @@ public:
       auto currContinuation = self()->getCurrContinuation();
       assert(curr == currContinuation->resumeExpr);
       // We finished resuming, and will continue from here normally.
-      self()->executionState->resuming = false;
+      self()->continuationStore->resuming = false;
       // We should have consumed all the resumeInfo and all the
       // restoredValues map.
       assert(currContinuation->resumeInfo.empty());
@@ -4890,7 +4890,7 @@ public:
     }
     auto func = contData->func;
     self()->pushCurrContinuation(contData);
-    self()->executionState->resuming = true;
+    self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
 #endif
@@ -4957,12 +4957,12 @@ public:
 
   void trap(const char* why) override {
     // Traps break all current continuations - they will never be resumable.
-    self()->clearExecutionState();
+    self()->clearContinuationStore();
     externalInterface->trap(why);
   }
 
   void hostLimit(const char* why) override {
-    self()->clearExecutionState();
+    self()->clearContinuationStore();
     externalInterface->hostLimit(why);
   }
 
@@ -5022,7 +5022,7 @@ public:
         // is the resume expression that we need to execute up to. All we need
         // to do is just start calling this function (with the arguments we've
         // set), so resuming is done
-        self()->executionState->resuming = false;
+        self()->continuationStore->resuming = false;
       }
     }
 
