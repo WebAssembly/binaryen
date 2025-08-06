@@ -46,7 +46,6 @@ set(passes_SOURCES
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
   GUFA.cpp
-  hash-stringify-walker.cpp
   Outlining.cpp
   Heap2Local.cpp
   HeapStoreOptimization.cpp

@@ -446,11 +446,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
-    // TODO: Support custom descriptors.
-    auto features = wasm.features;
-    features.setCustomDescriptors(false);
     auto generator = HeapTypeGenerator::create(
-      random, features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
+      random, wasm.features, upTo(fuzzParams->MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
@@ -3655,7 +3652,11 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
           nester.add(values.size() - 1);
         }
       }
-      return builder.makeStructNew(heapType, values);
+      Expression* descriptor = nullptr;
+      if (auto descType = heapType.getDescriptorType()) {
+        descriptor = make(Type(*descType, Nullable, Exact));
+      }
+      return builder.makeStructNew(heapType, values, descriptor);
     }
     case HeapTypeKind::Array: {
       auto element = heapType.getArray().element;
@@ -5576,9 +5577,11 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     auto subType = Type(heapType, nullability, exactness);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
-    // inhabitable then return that; avoid adding more uninhabitability.
+    // inhabitable then return that; avoid adding more uninhabitability. We can
+    // never add new uninhabitability outside of functions, where we cannot
+    // use casts to generate something valid.
     if (GCTypeUtils::isUninhabitable(subType) &&
-        !GCTypeUtils::isUninhabitable(type) && !oneIn(20)) {
+        !GCTypeUtils::isUninhabitable(type) && (!funcContext || !oneIn(20))) {
       return type;
     }
     return subType;
