@@ -4802,12 +4802,7 @@ public:
     }
     Name func = contData->func;
     self()->currContinuation = contData;
-    if (contData->resumeExpr) {
-      // There is an expression to resume execution at, so this is not the first
-      // time we run this function. Mark us as resuming, until we reach that
-      // expression.
-      self()->resuming = true;
-    }
+    self()->resuming = true;
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "resuming func " << func << '\n';
 #endif
