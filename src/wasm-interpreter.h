@@ -495,19 +495,12 @@ public:
 
     // Execute the instruction.
     Flow ret;
-    if (!getCurrContinuationOrNull()) { // TODO measure
+    if (!getCurrContinuationOrNull()) {
       // We are not in a continuation, so we cannot suspend/resume. Just execute
       // normally.
-#if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "(no continuation)\n";
-#endif
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     } else {
       // We may suspend/resume.
-#if WASM_INTERPRETER_DEBUG
-      std::cout << indent() << "(continuation stack size: "
-                << executionState->continuations.size() << ")\n";
-#endif
       bool hasValue = false;
       if (isResuming()) {
         // Perhaps we have a known value to just apply here, without executing
@@ -588,10 +581,6 @@ public:
       // which is the place our own value can go, if we have one (and if we are
       // not suspending - suspending is handled above).
       if (!ret.suspendTag && ret.getType().isConcrete()) {
-#if WASM_INTERPRETER_DEBUG
-        std::cout << indent() << "(exiting with continuation stack size: "
-                  << executionState->continuations.size() << ")\n";
-#endif
         assert(!valueStack.empty());
         auto& values = valueStack.back();
         values.push_back(ret.values);
@@ -4859,9 +4848,7 @@ public:
     }
     // An old one exists, so we can create a proper new one.
     assert(old->executed);
-    auto new_ = std::make_shared<ContData>(
-      old ? old->func : Literal::makeNull(HeapTypes::nofunc),
-      old ? old->type : HeapType::none);
+    auto new_ = std::make_shared<ContData>(*old);
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
     // which means we cannot do it here (we don't even know what that block is).
