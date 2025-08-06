@@ -1,4 +1,3 @@
-#define WASM_INTERPRETER_DEBUG 1
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -410,14 +409,8 @@ protected:
     return executionState->continuations.back();
   }
 
-  std::shared_ptr<ContData> getCurrContinuation(const char* why) {
+  std::shared_ptr<ContData> getCurrContinuation() {
     auto cont = getCurrContinuationOrNull();
-#if WASM_INTERPRETER_DEBUG
-    if (!cont) {
-      std::cout << indent() << "failed to find continuation for " << why
-                << "\n";
-    }
-#endif
     assert(cont);
     return cont;
   }
@@ -461,7 +454,7 @@ protected:
     std::cout << indent() << "push resume entry [" << what << "]: " << entry
               << "\n";
 #endif
-    auto currContinuation = getCurrContinuation("push resume");
+    auto currContinuation = getCurrContinuation();
     currContinuation->resumeInfo.push_back(entry);
   }
 
@@ -470,7 +463,7 @@ protected:
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "pop resume entry [" << what << "]:\n";
 #endif
-    auto currContinuation = getCurrContinuation("pop resume");
+    auto currContinuation = getCurrContinuation();
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
@@ -3596,7 +3589,7 @@ public:
       locals.resize(function->getNumLocals());
 
       if (parent.isResuming() &&
-          parent.getCurrContinuation("waka")->resumeExpr) {
+          parent.getCurrContinuation()->resumeExpr) {
         // Nothing more to do here: we are resuming execution to some
         // suspended expression (resumeExpr), so there is old locals state that
         // will be restored.
@@ -4845,7 +4838,7 @@ public:
     if (self()->isResuming()) {
       // This is a resume, so we have found our way back to where we
       // suspended.
-      auto currContinuation = self()->getCurrContinuation("finish resume");
+      auto currContinuation = self()->getCurrContinuation();
       assert(curr == currContinuation->resumeExpr);
       // We finished resuming, and will continue from here normally.
       self()->executionState->resuming = false;
@@ -4956,7 +4949,7 @@ public:
           assert(finder.type.isConcrete());
           assert(finder.type.size() >= 1);
           // The continuation is the final value/type there.
-          auto cont = self()->getCurrContinuation("handle suspend");
+          auto cont = self()->getCurrContinuation();
           cont->type = finder.type[finder.type.size() - 1].getHeapType();
           // Add the continuation as the final value being sent.
           ret.values.push_back(Literal(cont));
@@ -5037,9 +5030,9 @@ public:
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
-      arguments = self()->getCurrContinuation("resume func")->resumeArguments;
+      arguments = self()->getCurrContinuation()->resumeArguments;
 
-      if (!self()->getCurrContinuation("waka")->resumeExpr) {
+      if (!self()->getCurrContinuation()->resumeExpr) {
         // This is the first time we resume, that is, there is no suspend which
         // is the resume expression that we need to execute up to. All we need
         // to do is just start calling this function (with the arguments we've
