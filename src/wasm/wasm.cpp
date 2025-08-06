@@ -1022,8 +1022,8 @@ static Type getMaximallyUninhabitable(Type type) {
     Tuple elems;
     for (auto t : type) {
       // TODO: Make this exact.
-      elems.push_back(
-        t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
+      elems.push_back(t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable)
+                                : t);
     }
     return Type(elems);
   }
