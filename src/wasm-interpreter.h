@@ -184,10 +184,13 @@ struct FuncData {
 // Key parts of this support:
 //   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
-//   * Inside the interpreter itself: XXX first two are out!
-//     * |currContinuations| is the stack of active continuations.
+//   * |ExecutionState| is state about the execution of continuations that is
+//     shared between core interpreter (ExpressionRunner/ModuleInstance)
+//     instances:
+//     * |continuations| is the stack of active continuations.
 //     * |resuming| is set when we are in the special "resuming" mode mentioned
 //       above.
+//   * Inside the interpreter (ExpressionRunner/ModuleInstance):
 //     * When we suspend, everything on the stack will save the necessary info
 //       to recreate itself later during resume. That is done by calling
 //       |pushResumeEntry|, which saves info on the continuation, and which is
