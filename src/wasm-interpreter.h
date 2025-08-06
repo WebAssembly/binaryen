@@ -3056,8 +3056,7 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Flow callImport(Function* import,
-                            const Literals& arguments) = 0;
+    virtual Flow callImport(Function* import, const Literals& arguments) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -4790,9 +4789,8 @@ public:
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    return Flow(SUSPEND_FLOW,
-                self()->getCanonicalTag(curr->tag),
-                std::move(arguments));
+    return Flow(
+      SUSPEND_FLOW, self()->getCanonicalTag(curr->tag), std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
     Literals arguments;
