@@ -717,7 +717,7 @@ struct TypeBuilder {
   struct Impl;
   std::unique_ptr<Impl> impl;
 
-  TypeBuilder(size_t n);
+  TypeBuilder(size_t n, FeatureSet features = FeatureSet::All);
   TypeBuilder() : TypeBuilder(0) {}
   ~TypeBuilder();
 
@@ -862,6 +862,8 @@ struct TypeBuilder {
     InvalidUnsharedDescriptor,
     // A non-shared type described by a shared type.
     InvalidUnsharedDescribes,
+    // The custom descriptors feature is missing.
+    RequiresCustomDescriptors,
   };
 
   struct Error {

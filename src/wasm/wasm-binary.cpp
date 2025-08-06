@@ -2009,6 +2009,8 @@ void WasmBinaryReader::preScan() {
       } else if (debugInfo &&
                  sectionName == BinaryConsts::CustomSections::Name) {
         readNames(oldPos, payloadLen);
+      } else if (sectionName == BinaryConsts::CustomSections::TargetFeatures) {
+        readFeatures(oldPos, payloadLen);
       }
       // TODO: We could stop early in some cases, if we've seen enough (e.g.
       //       seeing Code implies no BranchHint will appear, due to ordering).
@@ -2139,11 +2141,11 @@ void WasmBinaryReader::readCustomSection(size_t payloadLen) {
     throwError("bad user section size");
   }
   payloadLen -= read;
-  if (sectionName.equals(BinaryConsts::CustomSections::Name)) {
-    // We already read the name section before anything else.
+  if (sectionName.equals(BinaryConsts::CustomSections::Name) ||
+      sectionName.equals(BinaryConsts::CustomSections::TargetFeatures)) {
+    // We already read the name and target features sections before anything
+    // else.
     pos += payloadLen;
-  } else if (sectionName.equals(BinaryConsts::CustomSections::TargetFeatures)) {
-    readFeatures(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink)) {
     readDylink(payloadLen);
   } else if (sectionName.equals(BinaryConsts::CustomSections::Dylink0)) {
@@ -2550,7 +2552,7 @@ void WasmBinaryReader::readMemories() {
 }
 
 void WasmBinaryReader::readTypes() {
-  TypeBuilder builder(getU32LEB());
+  TypeBuilder builder(getU32LEB(), wasm.features);
 
   auto readHeapType = [&]() -> std::pair<HeapType, Exactness> {
     int64_t htCode = getS64LEB(); // TODO: Actually s33
@@ -2738,7 +2740,7 @@ void WasmBinaryReader::readTypes() {
 
   auto result = builder.build();
   if (auto* err = result.getError()) {
-    Fatal() << "Invalid type: " << err->reason << " at index " << err->index;
+    Fatal() << "invalid type: " << err->reason << " at index " << err->index;
   }
   types = std::move(*result);
 
@@ -5180,10 +5182,9 @@ void WasmBinaryReader::readNames(size_t sectionPos, size_t payloadLen) {
   }
 }
 
-void WasmBinaryReader::readFeatures(size_t payloadLen) {
+void WasmBinaryReader::readFeatures(size_t sectionPos, size_t payloadLen) {
   wasm.hasFeaturesSection = true;
 
-  auto sectionPos = pos;
   size_t numFeatures = getU32LEB();
   for (size_t i = 0; i < numFeatures; ++i) {
     uint8_t prefix = getInt8();

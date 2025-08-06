@@ -1456,6 +1456,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an invalid unshared descriptor";
     case TypeBuilder::ErrorReason::InvalidUnsharedDescribes:
       return os << "Heap type describes an invalid unshared type";
+    case TypeBuilder::ErrorReason::RequiresCustomDescriptors:
+      return os << "custom descriptors required but not enabled";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -2251,11 +2253,14 @@ struct TypeBuilder::Impl {
 
   std::vector<Entry> entries;
 
-  Impl(size_t n) : entries(n) {}
+  // We will validate features as we go.
+  FeatureSet features;
+
+  Impl(size_t n, FeatureSet features) : entries(n), features(features) {}
 };
 
-TypeBuilder::TypeBuilder(size_t n) {
-  impl = std::make_unique<TypeBuilder::Impl>(n);
+TypeBuilder::TypeBuilder(size_t n, FeatureSet features) {
+  impl = std::make_unique<TypeBuilder::Impl>(n, features);
 }
 
 TypeBuilder::~TypeBuilder() = default;
@@ -2403,7 +2408,9 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
 }
 
 std::optional<TypeBuilder::ErrorReason>
-validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
+validateType(HeapTypeInfo& info,
+             std::unordered_set<HeapType>& seenTypes,
+             FeatureSet features) {
   if (auto* super = info.supertype) {
     // The supertype must be canonical (i.e. defined in a previous rec group)
     // or have already been defined in this rec group.
@@ -2416,6 +2423,9 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
     }
   }
   if (auto* desc = info.described) {
+    if (!features.hasCustomDescriptors()) {
+      return TypeBuilder::ErrorReason::RequiresCustomDescriptors;
+    }
     if (info.kind != HeapTypeKind::Struct) {
       return TypeBuilder::ErrorReason::NonStructDescribes;
     }
@@ -2428,6 +2438,9 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
     }
   }
   if (auto* desc = info.descriptor) {
+    if (!features.hasCustomDescriptors()) {
+      return TypeBuilder::ErrorReason::RequiresCustomDescriptors;
+    }
     if (info.kind != HeapTypeKind::Struct) {
       return TypeBuilder::ErrorReason::NonStructDescriptor;
     }
@@ -2544,7 +2557,8 @@ void updateReferencedHeapTypes(
 TypeBuilder::BuildResult
 buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
               std::vector<std::unique_ptr<HeapTypeInfo>>&& typeInfos,
-              std::unordered_map<HeapType, HeapType>& canonicalized) {
+              std::unordered_map<HeapType, HeapType>& canonicalized,
+              FeatureSet features) {
   // First, we need to replace any referenced temporary HeapTypes from
   // previously built groups with their canonicalized versions.
   for (auto& info : typeInfos) {
@@ -2555,7 +2569,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
-    if (auto err = validateType(*info, seenTypes)) {
+    if (auto err = validateType(*info, seenTypes, features)) {
       return {TypeBuilder::Error{i, *err}};
     }
     seenTypes.insert(asHeapType(info));
@@ -2661,8 +2675,10 @@ TypeBuilder::BuildResult TypeBuilder::build() {
       typeInfos.emplace_back(std::move(impl->entries[groupStart + i].info));
     }
 
-    auto built =
-      buildRecGroup(std::move(groupInfo), std::move(typeInfos), canonicalized);
+    auto built = buildRecGroup(std::move(groupInfo),
+                               std::move(typeInfos),
+                               canonicalized,
+                               impl->features);
     if (auto* error = built.getError()) {
       return {TypeBuilder::Error{groupStart + error->index, error->reason}};
     }
