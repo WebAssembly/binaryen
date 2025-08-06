@@ -1020,7 +1020,6 @@ static Type getMaximallyUninhabitable(Type type) {
     // We can make a tuple's elements uninhabitable.
     Tuple elems;
     for (auto t : type) {
-      // TODO: Make this exact.
       elems.push_back(t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable)
                                 : t);
     }
