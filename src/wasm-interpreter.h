@@ -435,6 +435,9 @@ protected:
   }
 
 public:
+  // Clear the execution state of continuations. This is done when we trap, for
+  // example, as that means all continuations are lost, and later calls to the
+  // module should start from a blank slate.
   void clearExecutionState() {
     if (executionState) {
 #if WASM_INTERPRETER_DEBUG
@@ -5088,7 +5091,6 @@ public:
       name = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
-      function = self()->getModule()->getFunction(name);
     }
 
     if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
