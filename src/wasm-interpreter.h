@@ -4926,7 +4926,8 @@ public:
       self()->pushCurrContinuation(contData);
       self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
-      std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
+      std::cout << self()->indent() << "resuming func " << func.getFunc()
+                << '\n';
 #endif
     }
 
@@ -4941,7 +4942,8 @@ public:
     }
 #if WASM_INTERPRETER_DEBUG
     if (!self()->isResuming()) {
-      std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
+      std::cout << self()->indent() << "finished resuming, with " << ret
+                << '\n';
     }
 #endif
     if (!ret.suspendTag) {
