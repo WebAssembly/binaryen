@@ -338,8 +338,14 @@ protected:
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
-    std::string ret =
-      '[' + std::to_string(reinterpret_cast<size_t>(this)) + "] ";
+    std::string id;
+    if (auto* module = getModule()) {
+      id = module->name.toString();
+    }
+    if (id.empty()) {
+      id = std::to_string(reinterpret_cast<size_t>(this));
+    }
+    auto ret = '[' + id + "] ";
     for (Index i = 0; i < depth; i++) {
       ret += ' ';
     }
@@ -583,7 +589,7 @@ public:
       // the top of |valueStack| is the list of child values of our parent,
       // which is the place our own value can go, if we have one (and if we are
       // not suspending - suspending is handled above).
-      if (!ret.suspendTag && ret.getType().isConcrete()) {
+      if (!ret.breaking() && ret.getType().isConcrete()) {
         assert(!valueStack.empty());
         auto& values = valueStack.back();
         values.push_back(ret.values);
@@ -4841,6 +4847,10 @@ public:
     }
 
     if (self()->isResuming()) {
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent()
+                << "returned to suspend; continuing normally\n";
+#endif
       // This is a resume, so we have found our way back to where we
       // suspended.
       auto currContinuation = self()->getCurrContinuation();
@@ -4866,10 +4876,10 @@ public:
     }
     // An old one exists, so we can create a proper new one.
     assert(old->executed);
-    auto new_ = std::make_shared<ContData>(old->func, old->type);
+    auto new_ = std::make_shared<ContData>(old->func, old->type); // XXX this func is wrongg. should be set in visitResume.
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
-    // which means we cannot do it here (we don't even know what that block is).
+    // which means we cannot do it here (we don't even know what that block is). XXX so maybe just update func and type at the hanlind resume? yes, we dunno where to resume fromm!
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
@@ -4893,22 +4903,27 @@ public:
 
     // Get and execute the continuation.
     auto contData = flow.getSingleValue().getContData();
-    if (contData->executed) {
-      trap("continuation already executed");
-    }
-    contData->executed = true;
-    if (contData->resumeArguments.empty()) {
-      // The continuation has no bound arguments. For now, we just handle the
-      // simple case of binding all of them, so that means we can just use all
-      // the immediate ones here. TODO
-      contData->resumeArguments = arguments;
-    }
     auto func = contData->func;
-    self()->pushCurrContinuation(contData);
-    self()->continuationStore->resuming = true;
+
+    // If we are resuming a nested suspend, should just rewind the call stack,
+    // and therefore skip testing if the continuation executed and so forth.
+    if (!self()->isResuming()) {
+      if (contData->executed) {
+        trap("continuation already executed");
+      }
+      contData->executed = true;
+      if (contData->resumeArguments.empty()) {
+        // The continuation has no bound arguments. For now, we just handle the
+        // simple case of binding all of them, so that means we can just use all
+        // the immediate ones here. TODO
+        contData->resumeArguments = arguments;
+      }
+      self()->pushCurrContinuation(contData);
+      self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
+      std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
 #endif
+}
     Flow ret;
     {
       // Create a stack value scope. This ensures that we always have a scope,
@@ -4919,7 +4934,9 @@ public:
       ret = func.getFuncData()->doCall(arguments);
     }
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
+    if (!self()->isResuming()) {
+      std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
+    }
 #endif
     if (!ret.suspendTag) {
       // No suspension: the coroutine finished normally. Mark it as no longer
@@ -4953,16 +4970,21 @@ public:
           assert(finder.type.isConcrete());
           assert(finder.type.size() >= 1);
           // The continuation is the final value/type there.
-          auto cont = self()->getCurrContinuation();
-          cont->type = finder.type[finder.type.size() - 1].getHeapType();
+          auto newCont = self()->getCurrContinuation();
+          newCont->type = finder.type[finder.type.size() - 1].getHeapType();
+          // And we can set the function to be called, to resume it from here
+          // (the same function we called, that led to a suspension).
+          newCont->func = contData->func;
           // Add the continuation as the final value being sent.
-          ret.values.push_back(Literal(cont));
+          ret.values.push_back(Literal(newCont));
           // We are not longer processing that continuation.
           self()->popCurrContinuation();
           return ret;
         }
       }
-      // No handler worked out, keep propagating.
+      // No handler worked out, keep propagating. While doing so, we update the
+      // function to be called to resume, to handle a suspend past a nested
+      // resume. XXX no, that is done above. But we should also add isSuspending logic, like call_indirect
     }
     // No suspension; all done.
     return ret;
