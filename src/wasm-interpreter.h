@@ -80,15 +80,15 @@ public:
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
   Flow(Name breakTo, Literals&& values)
     : values(std::move(values)), breakTo(breakTo) {}
-  Flow(Name breakTo, Name suspendTag, Literals&& values)
+  Flow(Name breakTo, Tag* suspendTag, Literals&& values)
     : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
     assert(breakTo == SUSPEND_FLOW);
   }
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
-  Name suspendTag; // if non-null, breakTo must be SUSPEND_FLOW, and this is the
-                   // tag being suspended
+  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
+                             // this is the tag being suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -123,7 +123,7 @@ public:
       o << flow.values[i];
     }
     if (flow.suspendTag) {
-      o << " [suspend:" << flow.suspendTag << ']';
+      o << " [suspend:" << flow.suspendTag->name << ']';
     }
     o << "})";
     return o;
@@ -3120,8 +3120,7 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import,
-                                const Literals& arguments) = 0;
+    virtual Flow callImport(Function* import, const Literals& arguments) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -3643,6 +3642,21 @@ protected:
     }
 
     return inst->globals[global->name];
+  }
+
+  // Get a tag object while looking through imports, i.e., this uses the name as
+  // the name of the tag in the current module, and finds the actual canonical
+  // Tag* object for it: the Tag in this module, if not imported, and if
+  // imported, the Tag in the originating module.
+  Tag* getCanonicalTag(Name name) {
+    auto* inst = self();
+    auto* tag = inst->wasm.getTag(name);
+    while (tag->imported()) {
+      inst = inst->linkedInstances.at(tag->module).get();
+      auto* tagExport = inst->wasm.getExport(tag->base);
+      tag = inst->wasm.getTag(*tagExport->getInternalName());
+    }
+    return tag;
   }
 
 public:
@@ -4863,7 +4877,8 @@ public:
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
+    return Flow(
+      SUSPEND_FLOW, self()->getCanonicalTag(curr->tag), std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
     Literals arguments;
@@ -4913,10 +4928,10 @@ public:
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-        auto handlerTag = curr->handlerTags[i];
+        auto* handlerTag = self()->getCanonicalTag(curr->handlerTags[i]);
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching.
-          ret.suspendTag = Name();
+          ret.suspendTag = nullptr;
           ret.breakTo = curr->handlerBlocks[i];
           // We can now update the continuation type, which was wrong until now
           // (see comment in visitSuspend). The type is taken from the block we
@@ -5071,7 +5086,7 @@ public:
 
 #if WASM_INTERPRETER_DEBUG
       std::cout << self()->indent() << "exiting " << function->name << " with "
-                << flow.values << '\n';
+                << flow << '\n';
 #endif
 
       if (flow.suspendTag) {

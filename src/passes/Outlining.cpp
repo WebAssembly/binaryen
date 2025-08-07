@@ -15,10 +15,13 @@
  */
 
 #include "ir/names.h"
+#include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/stringify-walker.h"
+#include "support/intervals.h"
 #include "support/suffix_tree.h"
+#include "wasm-ir-builder.h"
 #include "wasm.h"
 
 #define OUTLINING_DEBUG 0
@@ -36,6 +39,327 @@
   }
 
 namespace wasm {
+
+// This custom hasher conforms to std::hash<Key>. Its purpose is to provide
+// a custom hash for if expressions, so the if-condition of the if expression is
+// not included in the hash for the if expression. This is needed because in the
+// binary format, the if-condition comes before and is consumed by the if. To
+// match the binary format, we hash the if condition before and separately from
+// the rest of the if expression.
+struct StringifyHasher {
+  size_t operator()(Expression* curr) const {
+    if (Properties::isControlFlowStructure(curr)) {
+      if (auto* iff = curr->dynCast<If>()) {
+        size_t digest = wasm::hash(iff->_id);
+        rehash(digest, ExpressionAnalyzer::hash(iff->ifTrue));
+        if (iff->ifFalse) {
+          rehash(digest, ExpressionAnalyzer::hash(iff->ifFalse));
+        }
+        return digest;
+      }
+
+      return ExpressionAnalyzer::hash(curr);
+    }
+
+    return ExpressionAnalyzer::shallowHash(curr);
+  }
+};
+
+// This custom equator conforms to std::equal_to<Key>. Similar to
+// StringifyHasher, it's purpose is to not include the if-condition when
+// evaluating the equality of two if expressions.
+struct StringifyEquator {
+  bool operator()(Expression* lhs, Expression* rhs) const {
+    if (Properties::isControlFlowStructure(lhs) &&
+        Properties::isControlFlowStructure(rhs)) {
+      auto* iffl = lhs->dynCast<If>();
+      auto* iffr = rhs->dynCast<If>();
+
+      if (iffl && iffr) {
+        return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) &&
+               ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
+      }
+
+      return ExpressionAnalyzer::equal(lhs, rhs);
+    }
+
+    return ExpressionAnalyzer::shallowEqual(lhs, rhs);
+  }
+};
+
+struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
+  // After calling walkModule, this vector contains the result of encoding a
+  // wasm module as a string of uint32_t values. Each value represents either an
+  // Expression or a separator to mark the end of control flow.
+  std::vector<uint32_t> hashString;
+  // A monotonic counter used to ensure that unique expressions in the
+  // module are assigned a unique value in the hashString.
+  uint32_t nextVal = 0;
+  // A monotonic counter used to ensure that each separator in the
+  // module is assigned a unique value in the hashString.
+  int32_t nextSeparatorVal = -1;
+  // Contains a mapping of expression pointer to value to ensure we
+  // use the same value for matching expressions. A custom hasher and
+  // equator is provided in order to separate out evaluation of the if-condition
+  // when evaluating if expressions.
+  std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
+    exprToCounter;
+  std::vector<Expression*> exprs;
+
+  void addUniqueSymbol(SeparatorReason reason);
+  void visitExpression(Expression* curr);
+  // Converts the idx from relative to the beginning of the program to
+  // relative to its enclosing function, and returns the name of its function.
+  std::pair<uint32_t, Name> makeRelative(uint32_t idx) const;
+
+private:
+  // Contains the indices that mark the start of each function.
+  std::set<uint32_t> funcIndices;
+  // Maps the start idx of each function to the function name.
+  std::map<uint32_t, Name> idxToFuncName;
+};
+
+void HashStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
+  // Use a negative value to distinguish symbols for separators from symbols
+  // for Expressions
+  assert((uint32_t)nextSeparatorVal >= nextVal);
+  if (auto funcStart = reason.getFuncStart()) {
+    idxToFuncName.insert({hashString.size(), funcStart->func->name});
+  }
+  hashString.push_back((uint32_t)nextSeparatorVal);
+  nextSeparatorVal--;
+  exprs.push_back(nullptr);
+}
+
+void HashStringifyWalker::visitExpression(Expression* curr) {
+  auto [it, inserted] = exprToCounter.insert({curr, nextVal});
+  hashString.push_back(it->second);
+  exprs.push_back(curr);
+  if (inserted) {
+    nextVal++;
+  }
+}
+
+std::pair<uint32_t, Name>
+HashStringifyWalker::makeRelative(uint32_t idx) const {
+  // The upper_bound function returns an iterator to the first value in the set
+  // that is true for idx < value. We subtract one from this returned value to
+  // tell us which function actually contains the the idx.
+  auto [funcIdx, func] = *--idxToFuncName.upper_bound(idx);
+  return {idx - funcIdx, func};
+}
+
+using Substrings = std::vector<SuffixTree::RepeatedSubstring>;
+
+// Functions that filter vectors of SuffixTree::RepeatedSubstring
+struct StringifyProcessor {
+  static Substrings repeatSubstrings(std::vector<uint32_t>& hashString);
+  static Substrings dedupe(const Substrings& substrings);
+  static Substrings filterOverlaps(const Substrings& substrings);
+  // Filter is the general purpose function backing subsequent filter functions.
+  // It can be used directly, but generally prefer a wrapper function
+  // to encapsulate your condition and make it available for tests.
+  static Substrings filter(const Substrings& substrings,
+                           const std::vector<Expression*>& exprs,
+                           std::function<bool(const Expression*)> condition);
+  static Substrings filterLocalSets(const Substrings& substrings,
+                                    const std::vector<Expression*>& exprs);
+  static Substrings filterLocalGets(const Substrings& substrings,
+                                    const std::vector<Expression*>& exprs);
+  static Substrings filterBranches(const Substrings& substrings,
+                                   const std::vector<Expression*>& exprs);
+};
+
+std::vector<SuffixTree::RepeatedSubstring>
+StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
+  SuffixTree st(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+  for (auto& substring : substrings) {
+    // Sort by increasing start index to ensure determinism.
+    std::sort(substring.StartIndices.begin(), substring.StartIndices.end());
+  }
+  // Substrings are sorted so that the longest substring that repeats the most
+  // times is ordered first. This is done so that we can assume the most
+  // worthwhile substrings to outline come first.
+  std::sort(
+    substrings.begin(),
+    substrings.end(),
+    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
+      size_t aWeight = a.Length * a.StartIndices.size();
+      size_t bWeight = b.Length * b.StartIndices.size();
+      if (aWeight == bWeight) {
+        return a.StartIndices[0] < b.StartIndices[0];
+      }
+      return aWeight > bWeight;
+    });
+  return substrings;
+}
+
+// Deduplicate substrings by iterating through the list of substrings, keeping
+// only those whose list of end indices is disjoint from the set of end indices
+// for all substrings kept so far. Substrings that are contained within other
+// substrings will always share an end index with those other substrings. Note
+// that this deduplication may be over-aggressive, since it will remove
+// substrings that are contained within any previous substring, even if they
+// have many other occurrences that are not inside other substrings. Part of the
+// reason dedupe can be so aggressive is an assumption 1) that the input
+// substrings have been sorted so that the longest substrings with the most
+// repeats come first and 2) these are more worthwhile to keep than subsequent
+// substrings of substrings, even if they appear more times.
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
+  std::unordered_set<uint32_t> seen;
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  for (auto substring : substrings) {
+    std::vector<uint32_t> idxToInsert;
+    bool seenEndIdx = false;
+    for (auto startIdx : substring.StartIndices) {
+      // We are using the end index to ensure that each repeated substring
+      // reported by the SuffixTree is unique. This is because LLVM's SuffixTree
+      // reports back repeat sequences that are substrings of longer repeat
+      // sequences with the same endIdx, and we generally prefer to outline
+      // longer repeat sequences.
+      uint32_t endIdx = substring.Length + startIdx;
+      if (seen.count(endIdx)) {
+        seenEndIdx = true;
+        break;
+      }
+      idxToInsert.push_back(endIdx);
+    }
+    if (!seenEndIdx) {
+      seen.insert(idxToInsert.begin(), idxToInsert.end());
+      result.push_back(substring);
+    }
+  }
+
+  return result;
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterOverlaps(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
+  // A substring represents a contiguous set of instructions that appear more
+  // than once in a Wasm binary. For each appearance of the substring, an
+  // Interval is created that lacks a connection back to its originating
+  // substring. To fix, upon Interval creation, a second vector is populated
+  // with the index of the corresponding substring.
+  std::vector<Interval> intervals;
+  std::vector<int> substringIdxs;
+
+  // Construct intervals
+  for (Index i = 0; i < substrings.size(); i++) {
+    auto& substring = substrings[i];
+    for (auto startIdx : substring.StartIndices) {
+      intervals.emplace_back(
+        startIdx, startIdx + substring.Length, substring.Length);
+      substringIdxs.push_back(i);
+    }
+  }
+
+  // Get the overlapping intervals
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  std::vector<std::vector<Index>> startIndices(substrings.size());
+  std::vector<int> indices = IntervalProcessor::filterOverlaps(intervals);
+  for (auto i : indices) {
+    // i is the idx of the Interval in the intervals vector
+    // i in substringIdxs returns the idx of the substring that needs to be
+    // included in result
+    auto substringIdx = substringIdxs[i];
+    startIndices[substringIdx].push_back(intervals[i].start);
+  }
+  for (Index i = 0; i < startIndices.size(); i++) {
+    if (startIndices[i].size() > 1) {
+      result.emplace_back(SuffixTree::RepeatedSubstring(
+        {substrings[i].Length, std::move(startIndices[i])}));
+    }
+  }
+
+  return result;
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*>& exprs,
+  std::function<bool(const Expression*)> condition) {
+
+  struct FilterStringifyWalker : public StringifyWalker<FilterStringifyWalker> {
+    bool hasFilterValue = false;
+    std::function<bool(const Expression*)> condition;
+
+    FilterStringifyWalker(std::function<bool(const Expression*)> condition)
+      : condition(condition){};
+
+    void walk(Expression* curr) {
+      hasFilterValue = false;
+      Super::walk(curr);
+      flushControlFlowQueue();
+    }
+
+    void addUniqueSymbol(SeparatorReason reason) {}
+
+    void visitExpression(Expression* curr) {
+      if (condition(curr)) {
+        hasFilterValue = true;
+      }
+    }
+  };
+
+  FilterStringifyWalker walker(condition);
+
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  for (auto substring : substrings) {
+    bool hasFilterValue = false;
+    for (auto idx = substring.StartIndices[0],
+              endIdx = substring.StartIndices[0] + substring.Length;
+         idx < endIdx;
+         idx++) {
+      Expression* curr = exprs[idx];
+      if (Properties::isControlFlowStructure(curr)) {
+        walker.walk(curr);
+        if (walker.hasFilterValue) {
+          hasFilterValue = true;
+          break;
+        }
+      }
+      if (condition(curr)) {
+        hasFilterValue = true;
+        break;
+      }
+    }
+    if (!hasFilterValue) {
+      result.push_back(substring);
+    }
+  }
+
+  return result;
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*>& exprs) {
+  return StringifyProcessor::filter(
+    substrings, exprs, [](const Expression* curr) {
+      return curr->is<LocalSet>();
+    });
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalGets(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*>& exprs) {
+  return StringifyProcessor::filter(
+    substrings, exprs, [](const Expression* curr) {
+      return curr->is<LocalGet>();
+    });
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*>& exprs) {
+  return StringifyProcessor::filter(
+    substrings, exprs, [](const Expression* curr) {
+      return Properties::isBranch(curr) || curr->is<Return>() ||
+             curr->is<TryTable>();
+    });
+}
 
 struct OutliningSequence {
   unsigned startIdx;
