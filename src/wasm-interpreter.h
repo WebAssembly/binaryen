@@ -4910,8 +4910,8 @@ public:
     auto contData = flow.getSingleValue().getContData();
     auto func = contData->func;
 
-    // If we are resuming a nested suspend, should just rewind the call stack,
-    // and therefore do not change or test the state here.
+    // If we are resuming a nested suspend then we should just rewind the call
+    // stack, and therefore do not change or test the state here.
     if (!self()->isResuming()) {
       if (contData->executed) {
         trap("continuation already executed");
