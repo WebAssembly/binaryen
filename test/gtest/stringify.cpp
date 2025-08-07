@@ -333,6 +333,43 @@ TEST(StringifyWalkerTest, NestedBlocks) {
   EXPECT_EQ(walker.visited, expected);
 }
 
+TEST(StringifyWalkerTest, MixedBlock) {
+  Module wasm;
+  Builder builder(wasm);
+
+  // (func $func
+  //   (block $a
+  //     (block $b)
+  //     (nop)
+  //     (block $c)
+  //   )
+  // )
+  auto* nop = builder.makeNop();
+  auto* b = builder.makeBlock();
+  auto* c = builder.makeBlock();
+  auto* a = builder.makeBlock({b, nop, c});
+  auto f = builder.makeFunction("func", Signature(), {}, a);
+  auto* func = f.get();
+
+  wasm.addFunction(std::move(f));
+  TestStringifyWalker walker;
+  walker.walkModule(&wasm);
+
+  std::vector<Visited> expected{Visited{FuncStart{func}},
+                                Visited(a),
+                                Visited(End{nullptr}),
+                                Visited(BlockStart{a}),
+                                Visited(b),
+                                Visited(nop),
+                                Visited(c),
+                                Visited(End{nullptr}),
+                                Visited(BlockStart{b}),
+                                Visited(End{nullptr}),
+                                Visited(BlockStart{c}),
+                                Visited(End{nullptr})};
+  EXPECT_EQ(walker.visited, expected);
+}
+
 TEST(StringifyWalkerTest, AddBlocks) {
   Module wasm;
   Builder builder(wasm);
