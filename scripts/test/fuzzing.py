@@ -105,6 +105,7 @@ unfuzzable = [
     'vacuum-desc.wast',
     'br_on_cast_desc.wast',
     # TODO: fuzzer support for stack switching
+    'tag_linked.wast',
     'stack_switching.wast',
     'stack_switching_contnew.wast',
     'stack_switching_contbind.wast',
