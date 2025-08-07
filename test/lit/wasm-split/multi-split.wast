@@ -123,16 +123,16 @@
 
  ;; MOD2:      (import "" "C" (func $C (type $0) (result f32)))
 
- ;; MOD2:      (import "" "trampoline_A" (func $fimport$1 (type $1) (result i32)))
+ ;; MOD2:      (import "" "trampoline_A" (func $trampoline_A (type $1) (result i32)))
 
  ;; MOD2:      (elem $0 (i32.const 0) $B)
 
- ;; MOD2:      (elem declare func $C $fimport$1)
+ ;; MOD2:      (elem declare func $C $trampoline_A)
 
  ;; MOD2:      (func $B (type $2) (result i64)
  ;; MOD2-NEXT:  (drop
  ;; MOD2-NEXT:   (call_ref $1
- ;; MOD2-NEXT:    (ref.func $fimport$1)
+ ;; MOD2-NEXT:    (ref.func $trampoline_A)
  ;; MOD2-NEXT:   )
  ;; MOD2-NEXT:  )
  ;; MOD2-NEXT:  (drop
@@ -157,16 +157,16 @@
 
  ;; MOD2-OPTIONS:      (import "custom_env" "C" (func $C (type $0) (result f32)))
 
- ;; MOD2-OPTIONS:      (import "custom_env" "trampoline_A" (func $fimport$1 (type $1) (result i32)))
+ ;; MOD2-OPTIONS:      (import "custom_env" "trampoline_A" (func $trampoline_A (type $1) (result i32)))
 
  ;; MOD2-OPTIONS:      (elem $0 (i32.const 0) $B)
 
- ;; MOD2-OPTIONS:      (elem declare func $C $fimport$1)
+ ;; MOD2-OPTIONS:      (elem declare func $C $trampoline_A)
 
  ;; MOD2-OPTIONS:      (func $B (type $2) (result i64)
  ;; MOD2-OPTIONS-NEXT:  (drop
  ;; MOD2-OPTIONS-NEXT:   (call_ref $1
- ;; MOD2-OPTIONS-NEXT:    (ref.func $fimport$1)
+ ;; MOD2-OPTIONS-NEXT:    (ref.func $trampoline_A)
  ;; MOD2-OPTIONS-NEXT:   )
  ;; MOD2-OPTIONS-NEXT:  )
  ;; MOD2-OPTIONS-NEXT:  (drop
@@ -208,23 +208,23 @@
 
  ;; MOD3:      (import "" "table_6" (table $timport$0 1 funcref))
 
- ;; MOD3:      (import "" "trampoline_A" (func $fimport$0 (type $0) (result i32)))
+ ;; MOD3:      (import "" "trampoline_A" (func $trampoline_A (type $0) (result i32)))
 
- ;; MOD3:      (import "" "trampoline_B" (func $fimport$1 (type $1) (result i64)))
+ ;; MOD3:      (import "" "trampoline_B" (func $trampoline_B (type $1) (result i64)))
 
  ;; MOD3:      (elem $0 (i32.const 0) $C)
 
- ;; MOD3:      (elem declare func $fimport$0 $fimport$1)
+ ;; MOD3:      (elem declare func $trampoline_A $trampoline_B)
 
  ;; MOD3:      (func $C (type $2) (result f32)
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $0
- ;; MOD3-NEXT:    (ref.func $fimport$0)
+ ;; MOD3-NEXT:    (ref.func $trampoline_A)
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
  ;; MOD3-NEXT:   (call_ref $1
- ;; MOD3-NEXT:    (ref.func $fimport$1)
+ ;; MOD3-NEXT:    (ref.func $trampoline_B)
  ;; MOD3-NEXT:   )
  ;; MOD3-NEXT:  )
  ;; MOD3-NEXT:  (drop
@@ -242,23 +242,23 @@
 
  ;; MOD3-OPTIONS:      (import "custom_env" "table_6" (table $timport$0 1 funcref))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_A" (func $fimport$0 (type $0) (result i32)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_A" (func $trampoline_A (type $0) (result i32)))
 
- ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_B" (func $fimport$1 (type $1) (result i64)))
+ ;; MOD3-OPTIONS:      (import "custom_env" "trampoline_B" (func $trampoline_B (type $1) (result i64)))
 
  ;; MOD3-OPTIONS:      (elem $0 (i32.const 0) $C)
 
- ;; MOD3-OPTIONS:      (elem declare func $fimport$0 $fimport$1)
+ ;; MOD3-OPTIONS:      (elem declare func $trampoline_A $trampoline_B)
 
  ;; MOD3-OPTIONS:      (func $C (type $2) (result f32)
  ;; MOD3-OPTIONS-NEXT:  (drop
  ;; MOD3-OPTIONS-NEXT:   (call_ref $0
- ;; MOD3-OPTIONS-NEXT:    (ref.func $fimport$0)
+ ;; MOD3-OPTIONS-NEXT:    (ref.func $trampoline_A)
  ;; MOD3-OPTIONS-NEXT:   )
  ;; MOD3-OPTIONS-NEXT:  )
  ;; MOD3-OPTIONS-NEXT:  (drop
  ;; MOD3-OPTIONS-NEXT:   (call_ref $1
- ;; MOD3-OPTIONS-NEXT:    (ref.func $fimport$1)
+ ;; MOD3-OPTIONS-NEXT:    (ref.func $trampoline_B)
  ;; MOD3-OPTIONS-NEXT:   )
  ;; MOD3-OPTIONS-NEXT:  )
  ;; MOD3-OPTIONS-NEXT:  (drop
@@ -311,15 +311,15 @@
 
 ;; PRIMARY:      (export "table" (table $0))
 
-;; PRIMARY:      (export "trampoline_A" (func $0))
+;; PRIMARY:      (export "trampoline_A" (func $trampoline_A))
 
 ;; PRIMARY:      (export "table_4" (table $1))
 
-;; PRIMARY:      (export "trampoline_B" (func $2))
+;; PRIMARY:      (export "trampoline_B" (func $trampoline_B))
 
 ;; PRIMARY:      (export "table_6" (table $2))
 
-;; PRIMARY:      (func $0 (type $ret-i32) (result i32)
+;; PRIMARY:      (func $trampoline_A (type $ret-i32) (result i32)
 ;; PRIMARY-NEXT:  (call_indirect $0 (type $ret-i32)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
@@ -331,7 +331,7 @@
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $2 (type $ret-i64) (result i64)
+;; PRIMARY:      (func $trampoline_B (type $ret-i64) (result i64)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $ret-i64)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
@@ -361,15 +361,15 @@
 
 ;; PRIMARY-OPTIONS:      (export "table" (table $0))
 
-;; PRIMARY-OPTIONS:      (export "trampoline_A" (func $0))
+;; PRIMARY-OPTIONS:      (export "trampoline_A" (func $trampoline_A))
 
 ;; PRIMARY-OPTIONS:      (export "table_4" (table $1))
 
-;; PRIMARY-OPTIONS:      (export "trampoline_B" (func $2))
+;; PRIMARY-OPTIONS:      (export "trampoline_B" (func $trampoline_B))
 
 ;; PRIMARY-OPTIONS:      (export "table_6" (table $2))
 
-;; PRIMARY-OPTIONS:      (func $0 (type $ret-i32) (result i32)
+;; PRIMARY-OPTIONS:      (func $trampoline_A (type $ret-i32) (result i32)
 ;; PRIMARY-OPTIONS-NEXT:  (call_indirect $0 (type $ret-i32)
 ;; PRIMARY-OPTIONS-NEXT:   (i32.const 0)
 ;; PRIMARY-OPTIONS-NEXT:  )
@@ -381,7 +381,7 @@
 ;; PRIMARY-OPTIONS-NEXT:  )
 ;; PRIMARY-OPTIONS-NEXT: )
 
-;; PRIMARY-OPTIONS:      (func $2 (type $ret-i64) (result i64)
+;; PRIMARY-OPTIONS:      (func $trampoline_B (type $ret-i64) (result i64)
 ;; PRIMARY-OPTIONS-NEXT:  (call_indirect $1 (type $ret-i64)
 ;; PRIMARY-OPTIONS-NEXT:   (i32.const 0)
 ;; PRIMARY-OPTIONS-NEXT:  )

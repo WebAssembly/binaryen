@@ -16,7 +16,7 @@
 
  ;; PRIMARY:      (table $1 1 funcref)
 
- ;; PRIMARY:      (elem $passive func $in-table $1)
+ ;; PRIMARY:      (elem $passive func $in-table $trampoline_second-in-table)
  (elem $passive func $in-table $second-in-table)
 
  ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0)
@@ -45,7 +45,7 @@
   ;; handle it by adding a trampoline from the segment as a new function "$1".
  )
 )
-;; PRIMARY:      (func $1 (type $0)
+;; PRIMARY:      (func $trampoline_second-in-table (type $0)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
