@@ -230,6 +230,7 @@ struct ContData {
   // executed a second time.
   bool executed = false;
 
+  ContData() {}
   ContData(Literal func, HeapType type) : func(func), type(type) {}
 };
 
@@ -587,8 +588,9 @@ public:
       // Outside the scope of StackValueNoter, the scope of our own child values
       // has been removed (we don't need those values any more). What is now on
       // the top of |valueStack| is the list of child values of our parent,
-      // which is the place our own value can go, if we have one (and if we are
-      // not suspending - suspending is handled above).
+      // which is the place our own value can go, if we have one (we only save
+      // values on the stack, not values sent on a break/suspend; suspending is
+      // handled above).
       if (!ret.breaking() && ret.getType().isConcrete()) {
         assert(!valueStack.empty());
         auto& values = valueStack.back();
@@ -4874,12 +4876,15 @@ public:
     if (!old) {
       return Flow(SUSPEND_FLOW, tag, std::move(arguments));
     }
-    // An old one exists, so we can create a proper new one.
     assert(old->executed);
-    auto new_ = std::make_shared<ContData>(old->func, old->type); // XXX this func is wrongg. should be set in visitResume.
+    // An old one exists, so we can create a proper new one. It starts out
+    // empty here, and as we unwind, info will be added to it (and the function
+    // to resume as well, once we find the right resume handler).
+    //
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
-    // which means we cannot do it here (we don't even know what that block is). XXX so maybe just update func and type at the hanlind resume? yes, we dunno where to resume fromm!
+    // which means we cannot do it here (we don't even know what that block is).
+    auto new_ = std::make_shared<ContData>();
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
@@ -4906,7 +4911,7 @@ public:
     auto func = contData->func;
 
     // If we are resuming a nested suspend, should just rewind the call stack,
-    // and therefore skip testing if the continuation executed and so forth.
+    // and therefore do not change or test the state here.
     if (!self()->isResuming()) {
       if (contData->executed) {
         trap("continuation already executed");
@@ -4923,7 +4928,8 @@ public:
 #if WASM_INTERPRETER_DEBUG
       std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
 #endif
-}
+    }
+
     Flow ret;
     {
       // Create a stack value scope. This ensures that we always have a scope,
@@ -4977,14 +4983,12 @@ public:
           newCont->func = contData->func;
           // Add the continuation as the final value being sent.
           ret.values.push_back(Literal(newCont));
-          // We are not longer processing that continuation.
+          // We are no longer processing that continuation.
           self()->popCurrContinuation();
           return ret;
         }
       }
-      // No handler worked out, keep propagating. While doing so, we update the
-      // function to be called to resume, to handle a suspend past a nested
-      // resume. XXX no, that is done above. But we should also add isSuspending logic, like call_indirect
+      // No handler worked out, keep propagating.
     }
     // No suspension; all done.
     return ret;
