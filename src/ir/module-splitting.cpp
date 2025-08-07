@@ -625,9 +625,9 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     }
     auto* call = builder.makeCall(name, args, oldFunc->getResults());
 
-    auto func = builder.makeFunction(newName, oldFunc->type, {}, call);
-    func->hasExplicitName = oldFunc->hasExplicitName;
-    primary.addFunction(std::move(func));
+    auto trampoline = builder.makeFunction(newName, oldFunc->type, {}, call);
+    trampoline ->hasExplicitName = oldFunc->hasExplicitName;
+    primary.addFunction(std::move(trampoline));
 
     // Update RefFuncs to refer to it.
     for (auto* refFunc : relevantRefFuncs) {
