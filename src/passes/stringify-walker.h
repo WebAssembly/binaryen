@@ -241,14 +241,14 @@ template<typename SubType>
 inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (Properties::isControlFlowStructure(curr)) {
-    self->controlFlowQueue.push(curr);
     self->pushTask(doVisitExpression, currp);
     // The if-condition is a value child consumed by the if control flow, which
     // makes the if-condition a true sibling rather than part of its contents in
     // the binary format
     for (auto*& child : ValueChildIterator(curr)) {
-      Super::scan(self, &child);
+      scan(self, &child);
     }
+    self->controlFlowQueue.push(curr);
   } else {
     Super::scan(self, currp);
   }
@@ -285,7 +285,7 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
     }
     case Expression::Id::TryId: {
       auto* tryy = curr->cast<Try>();
-
+      assert(!tryy->isDelegate() && "TODO: try-delegate");
       addUniqueSymbol(SeparatorReason::makeTryStart(tryy));
       Super::walk(tryy->body);
       for (size_t i = 0; i < tryy->catchBodies.size(); i++) {
