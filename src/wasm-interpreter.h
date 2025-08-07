@@ -4860,8 +4860,9 @@ public:
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
     auto old = self()->getCurrContinuationOrNull();
+    auto* tag = self()->getCanonicalTag(curr->tag);
     if (!old) {
-      return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
+      return Flow(SUSPEND_FLOW, tag, std::move(arguments));
     }
     // An old one exists, so we can create a proper new one.
     assert(old->executed);
@@ -4878,7 +4879,7 @@ public:
     // resumed.
     new_->resumeExpr = curr;
     return Flow(
-      SUSPEND_FLOW, self()->getCanonicalTag(curr->tag), std::move(arguments));
+      SUSPEND_FLOW, tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
     Literals arguments;
