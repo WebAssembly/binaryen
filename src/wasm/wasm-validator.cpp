@@ -3958,7 +3958,7 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                "cont.bind requires stack-switching [--enable-stack-switching]");
 
   if (curr->cont->type.isRef() &&
-       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
     return;
   }
 
@@ -4007,7 +4007,7 @@ void FunctionValidator::visitResume(Resume* curr) {
     "sentTypes cache in resume instruction has not been initialized");
 
   if (curr->cont->type.isRef() &&
-       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
     return;
   }
 
@@ -4039,7 +4039,7 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
   }
 
   if (curr->cont->type.isRef() &&
-       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
     return;
   }
 
@@ -4063,7 +4063,7 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
   }
 
   if (curr->cont->type.isRef() &&
-       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
     return;
   }
 
