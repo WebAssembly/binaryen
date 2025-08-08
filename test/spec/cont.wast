@@ -564,3 +564,80 @@
 
 (assert_return (invoke "sum" (i64.const 10) (i64.const 20)) (i64.const 165))
 
+;; Subtyping
+(module
+  (type $ft1 (func (param i32)))
+  (type $ct1 (sub (cont $ft1)))
+
+  (type $ft0 (func))
+  (type $ct0 (sub (cont $ft0)))
+
+  (func $test (param $x (ref $ct1))
+    (i32.const 123)
+    (local.get $x)
+    (cont.bind $ct1 $ct0)
+    (drop)
+  )
+)
+
+(module
+    (type $f1 (sub (func (result anyref))))
+    (type $f2 (sub $f1 (func (result eqref))))
+    (type $c1 (sub (cont $f1)))
+    (type $c2 (sub $c1 (cont $f2)))
+)
+
+;; Globals
+(module
+  (type $ft (func))
+  (type $ct (cont $ft))
+
+  (global $k (mut (ref null $ct)) (ref.null $ct))
+  (global $g (ref null $ct) (ref.null $ct))
+
+  (func $f)
+  (elem declare func $f)
+
+  (func (export "set-global")
+    (global.set $k (cont.new $ct (ref.func $f))))
+)
+(assert_return (invoke "set-global"))
+
+(assert_invalid
+  (module
+    (rec
+      (type $ft (func (param (ref null $ct))))
+      (type $ct (cont $ft)))
+    (type $ft2 (func))
+    (type $ct2 (cont $ft2))
+
+    (tag $swap)
+    (func $f (type $ft)
+      (switch $ct $swap (cont.new $ct2 (ref.null $ft2)))
+      (drop)))
+   "type mismatch")
+
+(module
+  (rec
+    (type $ft (func (param (ref null $ct))))
+    (type $ct (cont $ft)))
+
+  (tag $t)
+
+  (func
+    (cont.new $ct (ref.null $ft))
+    (unreachable))
+  (func
+    (cont.bind $ct $ct (ref.null $ct))
+    (unreachable))
+  (func
+    (resume $ct (ref.null $ct) (ref.null $ct))
+    (unreachable))
+  (func
+    (resume_throw $ct $t (ref.null $ct))
+    (unreachable))
+  (func
+    (switch $ct $t (ref.null $ct))
+    (unreachable))
+)
+

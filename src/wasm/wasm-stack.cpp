@@ -2770,14 +2770,20 @@ void BinaryInstWriter::visitSuspend(Suspend* curr) {
 }
 
 void BinaryInstWriter::visitContBind(ContBind* curr) {
-  assert(curr->cont->type.isContinuation() && curr->type.isContinuation());
+  if (curr->cont->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::ContBind);
   parent.writeIndexedHeapType(curr->cont->type.getHeapType());
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitResume(Resume* curr) {
-  assert(curr->cont->type.isContinuation());
+  if (curr->cont->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::Resume);
   parent.writeIndexedHeapType(curr->cont->type.getHeapType());
 
@@ -2798,7 +2804,10 @@ void BinaryInstWriter::visitResume(Resume* curr) {
 }
 
 void BinaryInstWriter::visitResumeThrow(ResumeThrow* curr) {
-  assert(curr->cont->type.isContinuation());
+  if (curr->cont->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::ResumeThrow);
   parent.writeIndexedHeapType(curr->cont->type.getHeapType());
   o << U32LEB(parent.getTagIndex(curr->tag));
@@ -2820,7 +2829,10 @@ void BinaryInstWriter::visitResumeThrow(ResumeThrow* curr) {
 }
 
 void BinaryInstWriter::visitStackSwitch(StackSwitch* curr) {
-  assert(curr->cont->type.isContinuation());
+  if (curr->cont->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::Switch);
   parent.writeIndexedHeapType(curr->cont->type.getHeapType());
   o << U32LEB(parent.getTagIndex(curr->tag));
