@@ -4058,7 +4058,7 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
                "switch requires stack-switching [--enable-stack-switching]");
 
   auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "switch must be annotated with a tag")) {
+  if (!shouldBeTrue(!!tag, curr, "switch tag must exist")) {
     return;
   }
 
