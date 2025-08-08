@@ -226,6 +226,9 @@ struct ContData {
   // suspend).
   Literals resumeArguments;
 
+  // If set, this is the exception to be thrown at the resume point.
+  Tag* exceptionTag = nullptr;
+
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
   bool executed = false;
@@ -4863,6 +4866,11 @@ public:
       // restoredValues map.
       assert(currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
+      // Throw, if we were resumed by resume_throw;
+      if (auto* tag = currContinuation->exceptionTag) {
+        // XXX tag->name lacks cross-module support
+        throwException(WasmException{self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+      }
       return currContinuation->resumeArguments;
     }
 
@@ -4895,7 +4903,8 @@ public:
     new_->resumeExpr = curr;
     return Flow(SUSPEND_FLOW, tag, std::move(arguments));
   }
-  Flow visitResume(Resume* curr) {
+  template<typename T>
+  Flow doResume(T* curr, Tag* exceptionTag=nullptr) {
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
@@ -4923,6 +4932,7 @@ public:
         // the immediate ones here. TODO
         contData->resumeArguments = arguments;
       }
+      contData->exceptionTag = exceptionTag;
       self()->pushCurrContinuation(contData);
       self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
@@ -4995,7 +5005,13 @@ public:
     // No suspension; all done.
     return ret;
   }
-  Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResume(Resume* curr) {
+    return doResume(curr);
+  }
+  Flow visitResumeThrow(ResumeThrow* curr) {
+    // TODO: should the Resume and ResumeThrow classes be merged?
+    return doResume(curr, self()->getModule()->getTag(curr->tag));
+  }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override {
@@ -5066,6 +5082,7 @@ public:
         // to do is just start calling this function (with the arguments we've
         // set), so resuming is done
         self()->continuationStore->resuming = false;
+        assert(!self()->getCurrContinuation()->exceptionTag); // TODO
       }
     }
 

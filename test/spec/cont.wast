@@ -124,8 +124,8 @@
 (assert_return (invoke "handled"))
 
 (assert_exception (invoke "uncaught-1"))
-;; TODO: resume_throw (assert_exception (invoke "uncaught-2"))
-;; TODO: resume_throw (assert_exception (invoke "uncaught-3"))
+(assert_exception (invoke "uncaught-2"))
+(assert_exception (invoke "uncaught-3"))
 
 (assert_trap (invoke "non-linear-1") "continuation already consumed")
 (assert_trap (invoke "non-linear-2") "continuation already consumed")
