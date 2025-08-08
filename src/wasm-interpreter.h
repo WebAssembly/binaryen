@@ -5095,9 +5095,17 @@ public:
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
           scope.locals[l] = self()->popResumeEntry("function");
-          // Must have restored valid data.
-          assert(Type::isSubType(scope.locals[l].getType(),
-                                 function->getLocalType(l)));
+#ifndef NDEBUG
+          // Must have restored valid data. The type must match the local's
+          // type, except for the case of a non-nullable local that has not yet
+          // been accessed: that will contain a null (but the wasm type system
+          // ensures it will not be read by code, until a non-null value is
+          // assigned).
+          auto value = scope.locals[l];
+          auto localType = function->getLocalType(l);
+          assert(Type::isSubType(value.getType(), localType) ||
+                 value == Literal::makeZeros(localType));
+#endif
         }
       }
 
