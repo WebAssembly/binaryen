@@ -230,6 +230,7 @@ struct ContData {
   // executed a second time.
   bool executed = false;
 
+  ContData() {}
   ContData(Literal func, HeapType type) : func(func), type(type) {}
 };
 
@@ -338,8 +339,14 @@ protected:
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
-    std::string ret =
-      '[' + std::to_string(reinterpret_cast<size_t>(this)) + "] ";
+    std::string id;
+    if (auto* module = getModule()) {
+      id = module->name.toString();
+    }
+    if (id.empty()) {
+      id = std::to_string(reinterpret_cast<size_t>(this));
+    }
+    auto ret = '[' + id + "] ";
     for (Index i = 0; i < depth; i++) {
       ret += ' ';
     }
@@ -581,9 +588,10 @@ public:
       // Outside the scope of StackValueNoter, the scope of our own child values
       // has been removed (we don't need those values any more). What is now on
       // the top of |valueStack| is the list of child values of our parent,
-      // which is the place our own value can go, if we have one (and if we are
-      // not suspending - suspending is handled above).
-      if (!ret.suspendTag && ret.getType().isConcrete()) {
+      // which is the place our own value can go, if we have one (we only save
+      // values on the stack, not values sent on a break/suspend; suspending is
+      // handled above).
+      if (!ret.breaking() && ret.getType().isConcrete()) {
         assert(!valueStack.empty());
         auto& values = valueStack.back();
         values.push_back(ret.values);
@@ -4841,6 +4849,10 @@ public:
     }
 
     if (self()->isResuming()) {
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent()
+                << "returned to suspend; continuing normally\n";
+#endif
       // This is a resume, so we have found our way back to where we
       // suspended.
       auto currContinuation = self()->getCurrContinuation();
@@ -4864,12 +4876,15 @@ public:
     if (!old) {
       return Flow(SUSPEND_FLOW, tag, std::move(arguments));
     }
-    // An old one exists, so we can create a proper new one.
     assert(old->executed);
-    auto new_ = std::make_shared<ContData>(old->func, old->type);
+    // An old one exists, so we can create a proper new one. It starts out
+    // empty here, and as we unwind, info will be added to it (and the function
+    // to resume as well, once we find the right resume handler).
+    //
     // Note we cannot update the type yet, so it will be wrong in debug
     // logging. To update it, we must find the block that receives this value,
     // which means we cannot do it here (we don't even know what that block is).
+    auto new_ = std::make_shared<ContData>();
 
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
@@ -4893,22 +4908,29 @@ public:
 
     // Get and execute the continuation.
     auto contData = flow.getSingleValue().getContData();
-    if (contData->executed) {
-      trap("continuation already executed");
-    }
-    contData->executed = true;
-    if (contData->resumeArguments.empty()) {
-      // The continuation has no bound arguments. For now, we just handle the
-      // simple case of binding all of them, so that means we can just use all
-      // the immediate ones here. TODO
-      contData->resumeArguments = arguments;
-    }
     auto func = contData->func;
-    self()->pushCurrContinuation(contData);
-    self()->continuationStore->resuming = true;
+
+    // If we are resuming a nested suspend then we should just rewind the call
+    // stack, and therefore do not change or test the state here.
+    if (!self()->isResuming()) {
+      if (contData->executed) {
+        trap("continuation already executed");
+      }
+      contData->executed = true;
+      if (contData->resumeArguments.empty()) {
+        // The continuation has no bound arguments. For now, we just handle the
+        // simple case of binding all of them, so that means we can just use all
+        // the immediate ones here. TODO
+        contData->resumeArguments = arguments;
+      }
+      self()->pushCurrContinuation(contData);
+      self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "resuming func " << func.getFunc() << '\n';
+      std::cout << self()->indent() << "resuming func " << func.getFunc()
+                << '\n';
 #endif
+    }
+
     Flow ret;
     {
       // Create a stack value scope. This ensures that we always have a scope,
@@ -4919,7 +4941,10 @@ public:
       ret = func.getFuncData()->doCall(arguments);
     }
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
+    if (!self()->isResuming()) {
+      std::cout << self()->indent() << "finished resuming, with " << ret
+                << '\n';
+    }
 #endif
     if (!ret.suspendTag) {
       // No suspension: the coroutine finished normally. Mark it as no longer
@@ -4953,11 +4978,14 @@ public:
           assert(finder.type.isConcrete());
           assert(finder.type.size() >= 1);
           // The continuation is the final value/type there.
-          auto cont = self()->getCurrContinuation();
-          cont->type = finder.type[finder.type.size() - 1].getHeapType();
+          auto newCont = self()->getCurrContinuation();
+          newCont->type = finder.type[finder.type.size() - 1].getHeapType();
+          // And we can set the function to be called, to resume it from here
+          // (the same function we called, that led to a suspension).
+          newCont->func = contData->func;
           // Add the continuation as the final value being sent.
-          ret.values.push_back(Literal(cont));
-          // We are not longer processing that continuation.
+          ret.values.push_back(Literal(newCont));
+          // We are no longer processing that continuation.
           self()->popCurrContinuation();
           return ret;
         }
@@ -5067,9 +5095,17 @@ public:
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
           scope.locals[l] = self()->popResumeEntry("function");
-          // Must have restored valid data.
-          assert(Type::isSubType(scope.locals[l].getType(),
-                                 function->getLocalType(l)));
+#ifndef NDEBUG
+          // Must have restored valid data. The type must match the local's
+          // type, except for the case of a non-nullable local that has not yet
+          // been accessed: that will contain a null (but the wasm type system
+          // ensures it will not be read by code, until a non-null value is
+          // assigned).
+          auto value = scope.locals[l];
+          auto localType = function->getLocalType(l);
+          assert(Type::isSubType(value.getType(), localType) ||
+                 value == Literal::makeZeros(localType));
+#endif
         }
       }
 

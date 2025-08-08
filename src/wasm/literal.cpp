@@ -735,7 +735,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       auto data = literal.getContData();
       o << "cont(" << data->func << ' ' << data->type;
       if (data->resumeExpr) {
-        o << " resumeExpr=" << getExpressionName(data->resumeExpr);
+        o << " resumeExpr=" << reinterpret_cast<size_t>(data->resumeExpr);
       }
       if (!data->resumeInfo.empty()) {
         o << " |resumeInfo|=" << data->resumeInfo.size();

@@ -508,3 +508,59 @@
 (assert_return (invoke "run" (i32.const 1) (i32.const 1)))
 (assert_return (invoke "run" (i32.const 3) (i32.const 4)))
 
+;; Nested example: generator in a thread
+
+(module $concurrent-generator
+  (func $log (import "spectest" "print_i64") (param i64))
+
+  (tag $syield (import "scheduler" "yield"))
+  (tag $spawn (import "scheduler" "spawn") (param (ref $cont)))
+  (func $scheduler (import "scheduler" "scheduler") (param $main (ref $cont)))
+
+  (type $ghook (func (param i64)))
+  (func $gsum (import "generator" "sum") (param i64 i64) (result i64))
+  (global $ghook (import "generator" "hook") (mut (ref $ghook)))
+
+  (global $result (mut i64) (i64.const 0))
+  (global $done (mut i32) (i32.const 0))
+
+  (elem declare func $main $bg-thread $syield)
+
+  (func $syield (param $i i64)
+    (call $log (local.get $i))
+    (suspend $syield)
+  )
+
+  (func $bg-thread
+    (call $log (i64.const -10))
+    (loop $l
+      (call $log (i64.const -11))
+      (suspend $syield)
+      (br_if $l (i32.eqz (global.get $done)))
+    )
+    (call $log (i64.const -12))
+  )
+
+  (func $main (param $i i64) (param $j i64)
+    (suspend $spawn (cont.new $cont (ref.func $bg-thread)))
+    (global.set $ghook (ref.func $syield))
+    (global.set $result (call $gsum (local.get $i) (local.get $j)))
+    (global.set $done (i32.const 1))
+  )
+
+  (type $proc (func))
+  (type $pproc (func (param i64 i64)))
+  (type $cont (cont $proc))
+  (type $pcont (cont $pproc))
+  (func (export "sum") (param $i i64) (param $j i64) (result i64)
+    (call $log (i64.const -1))
+    (call $scheduler
+      (cont.bind $pcont $cont (local.get $i) (local.get $j) (cont.new $pcont (ref.func $main)))
+    )
+    (call $log (i64.const -2))
+    (global.get $result)
+  )
+)
+
+(assert_return (invoke "sum" (i64.const 10) (i64.const 20)) (i64.const 165))
+
