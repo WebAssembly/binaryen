@@ -309,7 +309,7 @@ struct ModuleSplitter {
   Name internalLoadSecondaryModule;
 
   // Map from original secondary function name to its trampoline
-  std::map<Name, Name> trampolineMap;
+  std::unordered_map<Name, Name> trampolineMap;
 
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
