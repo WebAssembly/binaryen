@@ -103,18 +103,6 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     self().noteAnyTupleType(childp, arity);
   }
 
-  // Used only for string.new_lossy_utf8_array to work around a missing type
-  // annotation in the stringref spec.
-  void noteAnyI8ArrayReferenceType(Expression** childp) {
-    self().noteAnyI8ArrayReferenceType(childp);
-  }
-
-  // Used only for string.new_wtf16_array to work around a missing type
-  // annotation in the stringref spec.
-  void noteAnyI16ArrayReferenceType(Expression** childp) {
-    self().noteAnyI16ArrayReferenceType(childp);
-  }
-
   Type getLabelType(Name label) { return self().getLabelType(label); }
 
   bool skipUnreachable() { return false; }
@@ -1180,16 +1168,18 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
-      case StringNewLossyUTF8Array:
-        noteAnyI8ArrayReferenceType(&curr->ref);
+      case StringNewLossyUTF8Array: {
+        note(&curr->ref, Type(HeapTypes::getMutI8Array(), Nullable));
         note(&curr->start, Type::i32);
         note(&curr->end, Type::i32);
         return;
-      case StringNewWTF16Array:
-        noteAnyI16ArrayReferenceType(&curr->ref);
+      }
+      case StringNewWTF16Array: {
+        note(&curr->ref, Type(HeapTypes::getMutI16Array(), Nullable));
         note(&curr->start, Type::i32);
         note(&curr->end, Type::i32);
         return;
+      }
       case StringNewFromCodePoint:
         note(&curr->ref, Type::i32);
         return;
@@ -1203,16 +1193,18 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->ref, Type(HeapType::string, Nullable));
   }
 
-  void visitStringEncode(StringEncode* curr,
-                         std::optional<HeapType> ht = std::nullopt) {
-    if (!ht) {
-      if (self().skipUnreachable() && !curr->array->type.isRef()) {
-        return;
-      }
-      ht = curr->array->type.getHeapType();
-    }
+  void visitStringEncode(StringEncode* curr) {
     note(&curr->str, Type(HeapType::string, Nullable));
-    note(&curr->array, Type(*ht, Nullable));
+    switch (curr->op) {
+      case StringEncodeLossyUTF8Array: {
+        note(&curr->array, Type(HeapTypes::getMutI8Array(), Nullable));
+        break;
+      }
+      case StringEncodeWTF16Array: {
+        note(&curr->array, Type(HeapTypes::getMutI16Array(), Nullable));
+        break;
+      }
+    }
     note(&curr->start, Type::i32);
   }
 

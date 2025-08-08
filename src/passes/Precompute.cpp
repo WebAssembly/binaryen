@@ -206,23 +206,25 @@ public:
 
   Flow visitStringNew(StringNew* curr) {
     if (curr->op != StringNewWTF16Array) {
-      // TODO: handle other string ops. For now we focus on JS-like strings.
+      // TOOD: handle other string ops. For now we focus on JS-like strings.
       return Flow(NONCONSTANT_FLOW);
     }
 
     // string.encode_wtf16_array is effectively an Array read operation, so
-    // just like ArrayGet above we must check for immutability.
+    // we cannot optimize mutable arrays. Unfortunately, it is only valid with
+    // mutable arrays, so we cannot generally precompute it. As a special
+    // exception, we can precompute if the child is an array allocation because
+    // then we know the allocation will not escape anywhere else.
     auto refType = curr->ref->type;
-    if (refType.isRef()) {
+    if (refType.isRef() &&
+        (curr->ref->is<ArrayNew>() || curr->ref->is<ArrayNewData>() ||
+         curr->ref->is<ArrayNewFixed>())) {
       auto heapType = refType.getHeapType();
-      if (heapType.isArray()) {
-        if (heapType.getArray().element.mutable_ == Immutable) {
-          return Super::visitStringNew(curr);
-        }
-      }
+      assert(heapType.isArray());
+      return Super::visitStringNew(curr);
     }
 
-    // Otherwise, this is mutable or unreachable or otherwise uninteresting.
+    // TODO: Handle more general cases as well.
     return Flow(NONCONSTANT_FLOW);
   }
 
