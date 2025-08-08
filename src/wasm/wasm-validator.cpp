@@ -3957,6 +3957,11 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                curr,
                "cont.bind requires stack-switching [--enable-stack-switching]");
 
+  if (curr->cont->type.isRef() &&
+       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
@@ -4001,6 +4006,11 @@ void FunctionValidator::visitResume(Resume* curr) {
     curr,
     "sentTypes cache in resume instruction has not been initialized");
 
+  if (curr->cont->type.isRef() &&
+       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
@@ -4023,17 +4033,22 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "sentTypes cache in resume_throw instruction has not been initialized");
 
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "resume_throw must be annotated with a tag")) {
+    return;
+  }
+
+  if (curr->cont->type.isRef() &&
+       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
       curr->type == Type::unreachable,
     curr,
     "resume_throw must be annotated with a continuation type");
-
-  auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "resume_throw must be annotated with a tag")) {
-    return;
-  }
 }
 
 void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
@@ -4042,17 +4057,22 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
                curr,
                "switch requires stack-switching [--enable-stack-switching]");
 
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "switch must be annotated with a tag")) {
+    return;
+  }
+
+  if (curr->cont->type.isRef() &&
+       curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
       curr->type == Type::unreachable,
     curr,
     "switch must be annotated with a continuation type");
-
-  auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "switch must be annotated with a tag")) {
-    return;
-  }
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
