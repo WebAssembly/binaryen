@@ -1243,7 +1243,7 @@
   (local $3 (ref $array-i32))
   ;; This dropped expression has several local operations that lead to
   ;; propagateLocals doing several passes. While doing so, it will try to
-  ;; precompute the value of local the outer $array.new. That contains a nested
+  ;; precompute the value of the outer $array.new. That contains a nested
   ;; tee, so we cannot replace it with the value we compute, but we do know its
   ;; value (the canonical allocation for that array.new location). We ignore the
   ;; local.tee's effect when computing that, but we should not cache the result
