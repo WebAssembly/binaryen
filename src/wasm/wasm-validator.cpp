@@ -4034,7 +4034,7 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     "sentTypes cache in resume_throw instruction has not been initialized");
 
   auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "resume_throw must be annotated with a tag")) {
+  if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
     return;
   }
 
