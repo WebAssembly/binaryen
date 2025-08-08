@@ -4869,7 +4869,8 @@ public:
       // Throw, if we were resumed by resume_throw;
       if (auto* tag = currContinuation->exceptionTag) {
         // XXX tag->name lacks cross-module support
-        throwException(WasmException{self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+        throwException(WasmException{
+          self()->makeExnData(tag->name, currContinuation->resumeArguments)});
       }
       return currContinuation->resumeArguments;
     }
@@ -4903,8 +4904,7 @@ public:
     new_->resumeExpr = curr;
     return Flow(SUSPEND_FLOW, tag, std::move(arguments));
   }
-  template<typename T>
-  Flow doResume(T* curr, Tag* exceptionTag=nullptr) {
+  template<typename T> Flow doResume(T* curr, Tag* exceptionTag = nullptr) {
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
@@ -5005,9 +5005,7 @@ public:
     // No suspension; all done.
     return ret;
   }
-  Flow visitResume(Resume* curr) {
-    return doResume(curr);
-  }
+  Flow visitResume(Resume* curr) { return doResume(curr); }
   Flow visitResumeThrow(ResumeThrow* curr) {
     // TODO: should the Resume and ResumeThrow classes be merged?
     return doResume(curr, self()->getModule()->getTag(curr->tag));
