@@ -96,14 +96,6 @@ unfuzzable = [
     # it removes unknown imports
     'string-lifting.wast',
     'string-lifting-custom-module.wast',
-    # TODO: V8 still has bugs in br_on_cast_desc
-    'custom-descriptors.wast',
-    'abstract-type-refining-desc.wast',
-    'abstract-type-refining-tnh-exact-casts.wast',
-    'precompute-desc.wast',
-    'remove-unused-brs-desc.wast',
-    'vacuum-desc.wast',
-    'br_on_cast_desc.wast',
     # TODO: fuzzer support for stack switching
     'tag_linked.wast',
     'stack_switching.wast',
