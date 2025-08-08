@@ -200,7 +200,14 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    heapValues[curr] = flow.getSingleValue().getGCData();
+    // If we preserve side effects then we can cache the results, but if we
+    // ignore them then the result we compute does not contain them, and later
+    // reads from the cache that do care about side effects would be wrong.
+    // TODO: use a separate cache for the two modes, but the other mode is
+    //       only used in propagateLocals, which is far less used
+    if (flags & FlagValues::PRESERVE_SIDEEFFECTS) {
+      heapValues[curr] = flow.getSingleValue().getGCData();
+    }
     return flow;
   }
 
