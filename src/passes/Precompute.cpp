@@ -226,8 +226,6 @@ public:
     if (refType.isRef() &&
         (curr->ref->is<ArrayNew>() || curr->ref->is<ArrayNewData>() ||
          curr->ref->is<ArrayNewFixed>())) {
-      auto heapType = refType.getHeapType();
-      assert(heapType.isArray());
       return Super::visitStringNew(curr);
     }
 
