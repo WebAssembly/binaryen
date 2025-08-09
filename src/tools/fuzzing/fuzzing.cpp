@@ -3677,7 +3677,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {
-  auto* array = makeTrappingRefUse(getArrayTypeForString());
+  auto* array = makeTrappingRefUse(HeapTypes::getMutI16Array());
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringNew(StringNewWTF16Array, array, start, end);
@@ -5161,7 +5161,7 @@ Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
   assert(type == Type::i32);
 
   auto* ref = makeTrappingRefUse(HeapType::string);
-  auto* array = makeTrappingRefUse(getArrayTypeForString());
+  auto* array = makeTrappingRefUse(HeapTypes::getMutI16Array());
   auto* start = make(Type::i32);
 
   // Only rarely emit without a bounds check, which might trap. See related
@@ -5623,12 +5623,6 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
     superType = Type(heapType, Nullable);
   }
   return superType;
-}
-
-HeapType TranslateToFuzzReader::getArrayTypeForString() {
-  // Emit an array that can be used with JS-style strings, containing 16-bit
-  // elements. For now, this must be a mutable type as that is all V8 accepts.
-  return HeapType(Array(Field(Field::PackedType::i16, Mutable)));
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {

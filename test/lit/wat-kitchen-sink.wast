@@ -42,15 +42,15 @@
 
  (rec)
 
+ ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
+
  ;; CHECK:      (type $packed-i8 (array (mut i8)))
 
- ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
+ ;; CHECK:      (type $packed-i16 (array (mut i16)))
 
  ;; CHECK:      (type $a0 (array i32))
 
- ;; CHECK:      (type $18 (func (param i32)))
-
- ;; CHECK:      (type $packed-i16 (array (mut i16)))
+ ;; CHECK:      (type $19 (func (param i32)))
 
  ;; CHECK:      (type $any-array (array (mut anyref)))
 
@@ -214,7 +214,7 @@
 
  ;; CHECK:      (type $87 (func (param stringref)))
 
- ;; CHECK:      (type $88 (func (param stringref (ref $packed-i8) i32) (result i32)))
+ ;; CHECK:      (type $88 (func (param stringref (ref $packed-i16) i32) (result i32)))
 
  ;; CHECK:      (type $89 (func (param stringref stringref) (result (ref string))))
 
@@ -418,7 +418,7 @@
  ;; CHECK:      (tag $empty (type $0))
  (tag $empty)
 
- ;; CHECK:      (tag $tag-i32 (type $18) (param i32))
+ ;; CHECK:      (tag $tag-i32 (type $19) (param i32))
  (tag $tag-i32 (param $x i32))
 
  ;; CHECK:      (tag $tag-pair (type $7) (param i32 i64))
@@ -477,10 +477,10 @@
  ;; CHECK:      (func $2 (type $0)
  ;; CHECK-NEXT: )
 
- ;; CHECK:      (func $f1 (type $18) (param $0 i32)
+ ;; CHECK:      (func $f1 (type $19) (param $0 i32)
  ;; CHECK-NEXT: )
  (func $f1 (param i32))
- ;; CHECK:      (func $f2 (type $18) (param $x i32)
+ ;; CHECK:      (func $f2 (type $19) (param $x i32)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
  ;; CHECK:      (func $f3 (type $1) (result i32)
@@ -4580,14 +4580,14 @@
   drop
  )
 
- ;; CHECK:      (func $string-encode-gc (type $88) (param $0 stringref) (param $1 (ref $packed-i8)) (param $2 i32) (result i32)
+ ;; CHECK:      (func $string-encode-gc (type $88) (param $0 stringref) (param $1 (ref $packed-i16)) (param $2 i32) (result i32)
  ;; CHECK-NEXT:  (string.encode_wtf16_array
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $string-encode-gc (param stringref (ref $packed-i8) i32) (result i32)
+ (func $string-encode-gc (param stringref (ref $packed-i16) i32) (result i32)
   local.get 0
   local.get 1
   local.get 2

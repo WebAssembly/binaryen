@@ -5,10 +5,10 @@
 (module
   (memory 10 10)
 
-  ;; CHECK:      (type $array (sub (array (mut i8))))
-  (type $array (sub (array (mut i8))))
-  ;; CHECK:      (type $array16 (sub (array (mut i16))))
-  (type $array16 (sub (array (mut i16))))
+  ;; CHECK:      (type $array (array (mut i8)))
+  (type $array (array (mut i8)))
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array (mut i16)))
 
   ;; CHECK:      (func $no-new-past-store (type $2) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $temp stringref)

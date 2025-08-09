@@ -2721,21 +2721,27 @@ void TypeBuilder::dump() {
 }
 
 std::unordered_set<HeapType> getIgnorablePublicTypes() {
-  auto array8 = Array(Field(Field::i8, Mutable));
-  auto array16 = Array(Field(Field::i16, Mutable));
-  TypeBuilder builder(2);
-  builder[0] = array8;
-  builder[1] = array16;
-  auto result = builder.build();
-  assert(result);
-  std::unordered_set<HeapType> ret;
-  for (auto type : *result) {
-    ret.insert(type);
-  }
-  return ret;
+  std::unordered_set<HeapType> set;
+  set.insert(HeapTypes::getMutI8Array());
+  set.insert(HeapTypes::getMutI16Array());
+  return set;
 }
 
 } // namespace wasm
+
+namespace wasm::HeapTypes {
+
+HeapType getMutI8Array() {
+  static HeapType i8Array = Array(Field(Field::i8, Mutable));
+  return i8Array;
+}
+
+HeapType getMutI16Array() {
+  static HeapType i16Array = Array(Field(Field::i16, Mutable));
+  return i16Array;
+}
+
+} // namespace wasm::HeapTypes
 
 namespace std {
 
