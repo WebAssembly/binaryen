@@ -294,6 +294,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $string.new-mutable-indirect (result externref)
+  ;; Now the allocation is not the immediate child, so we do not precompute.
+  ;; TODO: be smarter and optimize this.
   (string.new_wtf16_array
    (block (result (ref $array16))
     (array.new_fixed $array16 4

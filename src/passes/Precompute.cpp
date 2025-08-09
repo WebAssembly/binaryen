@@ -213,11 +213,11 @@ public:
 
   Flow visitStringNew(StringNew* curr) {
     if (curr->op != StringNewWTF16Array) {
-      // TOOD: handle other string ops. For now we focus on JS-like strings.
+      // TODO: handle other string ops. For now we focus on JS-like strings.
       return Flow(NONCONSTANT_FLOW);
     }
 
-    // string.encode_wtf16_array is effectively an Array read operation, so
+    // string.new_wtf16_array is effectively an Array read operation, so
     // we cannot optimize mutable arrays. Unfortunately, it is only valid with
     // mutable arrays, so we cannot generally precompute it. As a special
     // exception, we can precompute if the child is an array allocation because
