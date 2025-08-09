@@ -80,15 +80,15 @@ public:
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
   Flow(Name breakTo, Literals&& values)
     : values(std::move(values)), breakTo(breakTo) {}
-  Flow(Name breakTo, Name suspendTag, Literals&& values)
+  Flow(Name breakTo, Tag* suspendTag, Literals&& values)
     : values(std::move(values)), breakTo(breakTo), suspendTag(suspendTag) {
     assert(breakTo == SUSPEND_FLOW);
   }
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
-  Name suspendTag; // if non-null, breakTo must be SUSPEND_FLOW, and this is the
-                   // tag being suspended
+  Tag* suspendTag = nullptr; // if non-null, breakTo must be SUSPEND_FLOW, and
+                             // this is the tag being suspended
 
   // A helper function for the common case where there is only one value
   const Literal& getSingleValue() {
@@ -123,10 +123,39 @@ public:
       o << flow.values[i];
     }
     if (flow.suspendTag) {
-      o << " [suspend:" << flow.suspendTag << ']';
+      o << " [suspend:" << flow.suspendTag->name << ']';
     }
     o << "})";
     return o;
+  }
+};
+
+struct FuncData {
+  // Name of the function in the module.
+  Name name;
+
+  // The interpreter instance we are in. This is only used for equality
+  // comparisons, as two functions are equal iff they have the same name and are
+  // in the same instance (in particular, we do *not* compare the |call| field
+  // below, which is an execution detail).
+  void* self;
+
+  // A way to execute this function. We use this when it is called.
+  using Call = std::function<Flow(Literals)>;
+  std::optional<Call> call;
+
+  FuncData(Name name,
+           void* self = nullptr,
+           std::optional<Call> call = std::nullopt)
+    : name(name), self(self), call(call) {}
+
+  bool operator==(const FuncData& other) const {
+    return name == other.name && self == other.self;
+  }
+
+  Flow doCall(Literals arguments) {
+    assert(call);
+    return (*call)(arguments);
   }
 };
 
@@ -154,11 +183,13 @@ public:
 // Key parts of this support:
 //   * |ContData| is the key data structure that represents continuations. Each
 //     continuation Literal has a reference to one of these.
-//   * Inside the interpreter itself:
-//     * |currContinuation| is the continuation we are currently executing, if
-//       any.
+//   * |ContinuationStore| is state about the execution of continuations that is
+//     shared between instances of the core interpreter
+//     (ExpressionRunner/ModuleInstance):
+//     * |continuations| is the stack of active continuations.
 //     * |resuming| is set when we are in the special "resuming" mode mentioned
 //       above.
+//   * Inside the interpreter (ExpressionRunner/ModuleInstance):
 //     * When we suspend, everything on the stack will save the necessary info
 //       to recreate itself later during resume. That is done by calling
 //       |pushResumeEntry|, which saves info on the continuation, and which is
@@ -173,9 +204,8 @@ public:
 //       |visitIf| etc. (each such structure handles itself).
 
 struct ContData {
-  // The function this continuation begins in.
-  // TODO: handle cross-module calls using something other than a Name here.
-  Name func;
+  // The function we should execute to run this continuation.
+  Literal func;
 
   // The continuation type.
   HeapType type;
@@ -200,7 +230,24 @@ struct ContData {
   // executed a second time.
   bool executed = false;
 
-  ContData(Name func, HeapType type) : func(func), type(type) {}
+  ContData() {}
+  ContData(Literal func, HeapType type) : func(func), type(type) {}
+};
+
+// Shared execution state of a set of instantiated modules.
+struct ContinuationStore {
+  // The current continuations, in a stack. At the top of the stack is the
+  // current continuation, i.e., the one either executing right now, or in the
+  // process of unwinding or rewinding the stack.
+  //
+  // We must share this between all interpreter instances, because which
+  // continuation is current does not depend on which instance we happen to be
+  // inside (we could call an imported function from another module, and that
+  // should not alter what happens when we suspend/resume).
+  std::vector<std::shared_ptr<ContData>> continuations;
+
+  // Set when we are resuming execution, that is, re-winding the stack.
+  bool resuming = false;
 };
 
 // Execute an expression
@@ -277,12 +324,29 @@ public:
     Execute,
   };
 
+  Literal makeFuncData(Name name, HeapType type) {
+    // Identify the interpreter, but do not provide a way to actually call the
+    // function.
+    auto allocation = std::make_shared<FuncData>(name, this);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
+
 protected:
   RelaxedBehavior relaxedBehavior = RelaxedBehavior::NonConstant;
 
 #if WASM_INTERPRETER_DEBUG
   std::string indent() {
-    std::string ret;
+    std::string id;
+    if (auto* module = getModule()) {
+      id = module->name.toString();
+    }
+    if (id.empty()) {
+      id = std::to_string(reinterpret_cast<size_t>(this));
+    }
+    auto ret = '[' + id + "] ";
     for (Index i = 0; i < depth; i++) {
       ret += ' ';
     }
@@ -341,34 +405,80 @@ protected:
   // expression that is in this map, then it will just return that value.
   std::unordered_map<Expression*, Literals> restoredValuesMap;
 
-  // The current continuation (this is set when executing it, resuming it, and
-  // suspending it, that is, both when executing normally and when
-  // unwinding/rewinding the stack).
-  std::shared_ptr<ContData> currContinuation;
+  // Shared execution state for continuations. This can be null if the
+  // instance does not want to ever suspend/resume.
+  std::shared_ptr<ContinuationStore> continuationStore;
 
-  // Set when we are resuming execution, that is, re-winding the stack.
-  bool resuming = false;
+  std::shared_ptr<ContData> getCurrContinuationOrNull() {
+    if (!continuationStore || continuationStore->continuations.empty()) {
+      return {};
+    }
+    return continuationStore->continuations.back();
+  }
+
+  std::shared_ptr<ContData> getCurrContinuation() {
+    auto cont = getCurrContinuationOrNull();
+    assert(cont);
+    return cont;
+  }
+
+  void pushCurrContinuation(std::shared_ptr<ContData> cont) {
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "push continuation\n";
+#endif
+    assert(continuationStore);
+    return continuationStore->continuations.push_back(cont);
+  }
+
+  std::shared_ptr<ContData> popCurrContinuation() {
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "pop continuation\n";
+#endif
+    assert(continuationStore);
+    assert(!continuationStore->continuations.empty());
+    auto cont = continuationStore->continuations.back();
+    continuationStore->continuations.pop_back();
+    return cont;
+  }
+
+public:
+  // Clear the execution state of continuations. This is done when we trap, for
+  // example, as that means all continuations are lost, and later calls to the
+  // module should start from a blank slate.
+  void clearContinuationStore() {
+    if (continuationStore) {
+#if WASM_INTERPRETER_DEBUG
+      std::cout << indent() << "clear continuations\n";
+#endif
+      continuationStore = std::make_shared<ContinuationStore>();
+    }
+  }
+
+protected:
+  bool isResuming() { return continuationStore && continuationStore->resuming; }
 
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
   void pushResumeEntry(const Literals& entry, const char* what) {
-    assert(currContinuation);
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push resume entry [" << what << "]: " << entry
               << "\n";
 #endif
+    auto currContinuation = getCurrContinuation();
     currContinuation->resumeInfo.push_back(entry);
   }
 
   // Fetch an entry as we resume. Instructions call this as we rewind.
   Literals popResumeEntry(const char* what) {
-    assert(currContinuation);
+#if WASM_INTERPRETER_DEBUG
+    std::cout << indent() << "pop resume entry [" << what << "]:\n";
+#endif
+    auto currContinuation = getCurrContinuation();
     assert(!currContinuation->resumeInfo.empty());
     auto entry = currContinuation->resumeInfo.back();
     currContinuation->resumeInfo.pop_back();
 #if WASM_INTERPRETER_DEBUG
-    std::cout << indent() << "pop resume entry [" << what << "]: " << entry
-              << "\n";
+    std::cout << indent() << "                 => " << entry << "\n";
 #endif
     return entry;
   }
@@ -395,14 +505,14 @@ public:
 
     // Execute the instruction.
     Flow ret;
-    if (!currContinuation) {
+    if (!getCurrContinuationOrNull()) {
       // We are not in a continuation, so we cannot suspend/resume. Just execute
       // normally.
       ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     } else {
       // We may suspend/resume.
       bool hasValue = false;
-      if (resuming) {
+      if (isResuming()) {
         // Perhaps we have a known value to just apply here, without executing
         // the instruction.
         auto iter = restoredValuesMap.find(curr);
@@ -429,7 +539,7 @@ public:
         } else {
           // A general non-control-flow instruction, with generic suspend/
           // resume support implemented here.
-          if (resuming) {
+          if (isResuming()) {
             // Some children may have executed, and we have values stashed for
             // them (see below where we suspend). Get those values, and populate
             // |restoredValuesMap| so that when visit() is called on them, we
@@ -478,9 +588,10 @@ public:
       // Outside the scope of StackValueNoter, the scope of our own child values
       // has been removed (we don't need those values any more). What is now on
       // the top of |valueStack| is the list of child values of our parent,
-      // which is the place our own value can go, if we have one (and if we are
-      // not suspending - suspending is handled above).
-      if (!ret.suspendTag && ret.getType().isConcrete()) {
+      // which is the place our own value can go, if we have one (we only save
+      // values on the stack, not values sent on a break/suspend; suspending is
+      // handled above).
+      if (!ret.breaking() && ret.getType().isConcrete()) {
         assert(!valueStack.empty());
         auto& values = valueStack.back();
         values.push_back(ret.values);
@@ -533,7 +644,7 @@ public:
       pushResumeEntry(entry, "block");
     };
     Index blockIndex = 0;
-    if (resuming) {
+    if (isResuming()) {
       auto entry = popResumeEntry("block");
       assert(entry.size() == 2);
       Index stackIndex = entry[0].geti32();
@@ -582,7 +693,7 @@ public:
       pushResumeEntry({Literal(int32_t(resumeIndex))}, "if");
     };
     Index resumeIndex = -1;
-    if (resuming) {
+    if (isResuming()) {
       auto entry = popResumeEntry("if");
       assert(entry.size() == 1);
       resumeIndex = entry[0].geti32();
@@ -592,7 +703,7 @@ public:
     // The value of the if's condition (whether to take the ifTrue arm or not).
     Index condition;
 
-    if (resuming && resumeIndex > 0) {
+    if (isResuming() && resumeIndex > 0) {
       // We are resuming into one of the arms. Just set the right condition.
       condition = (resumeIndex == 1);
     } else {
@@ -1801,7 +1912,7 @@ public:
     return Literal(int32_t(value.isNull()));
   }
   Flow visitRefFunc(RefFunc* curr) {
-    return Literal::makeFunc(curr->func, curr->type.getHeapType());
+    return self()->makeFuncData(curr->func, curr->type.getHeapType());
   }
   Flow visitRefEq(RefEq* curr) {
     Flow flow = visit(curr->left);
@@ -3017,8 +3128,7 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import,
-                                const Literals& arguments) = 0;
+    virtual Flow callImport(Function* import, const Literals& arguments) = 0;
     virtual bool growMemory(Name name, Address oldSize, Address newSize) = 0;
     virtual bool growTable(Name name,
                            const Literal& value,
@@ -3230,7 +3340,24 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<SubType>> linkedInstances_ = {})
     : ExpressionRunner<SubType>(&wasm), wasm(wasm),
-      externalInterface(externalInterface), linkedInstances(linkedInstances_) {}
+      externalInterface(externalInterface), linkedInstances(linkedInstances_) {
+    // Set up a single shared CurrContinuations for all these linked instances,
+    // reusing one if it exists.
+    std::shared_ptr<ContinuationStore> shared;
+    for (auto& [_, instance] : linkedInstances) {
+      if (instance->continuationStore) {
+        shared = instance->continuationStore;
+        break;
+      }
+    }
+    if (!shared) {
+      shared = std::make_shared<ContinuationStore>();
+    }
+    for (auto& [_, instance] : linkedInstances) {
+      instance->continuationStore = shared;
+    }
+    self()->continuationStore = shared;
+  }
 
   // Start up this instance. This must be called before doing anything else.
   // (This is separate from the constructor so that it does not occur
@@ -3458,6 +3585,14 @@ public:
       parent.scope = this;
       parent.callDepth++;
       parent.functionStack.push_back(function->name);
+      locals.resize(function->getNumLocals());
+
+      if (parent.isResuming() && parent.getCurrContinuation()->resumeExpr) {
+        // Nothing more to do here: we are resuming execution to some
+        // suspended expression (resumeExpr), so there is old locals state that
+        // will be restored.
+        return;
+      }
 
       if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
@@ -3465,7 +3600,6 @@ public:
                   << arguments.size() << " arguments." << std::endl;
         WASM_UNREACHABLE("invalid param count");
       }
-      locals.resize(function->getNumLocals());
       Type params = function->getParams();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
@@ -3518,6 +3652,21 @@ protected:
     return inst->globals[global->name];
   }
 
+  // Get a tag object while looking through imports, i.e., this uses the name as
+  // the name of the tag in the current module, and finds the actual canonical
+  // Tag* object for it: the Tag in this module, if not imported, and if
+  // imported, the Tag in the originating module.
+  Tag* getCanonicalTag(Name name) {
+    auto* inst = self();
+    auto* tag = inst->wasm.getTag(name);
+    while (tag->imported()) {
+      inst = inst->linkedInstances.at(tag->module).get();
+      auto* tagExport = inst->wasm.getExport(tag->base);
+      tag = inst->wasm.getTag(*tagExport->getInternalName());
+    }
+    return tag;
+  }
+
 public:
   Flow visitCall(Call* curr) {
     Name target = curr->target;
@@ -3539,7 +3688,7 @@ public:
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      arguments.push_back(Literal::makeFunc(target, funcType));
+      arguments.push_back(self()->makeFuncData(target, funcType));
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
@@ -3568,7 +3717,7 @@ public:
     auto index = target.getSingleValue().getUnsigned();
     auto info = getTableInstanceInfo(curr->table);
     Literal funcref;
-    if (!self()->resuming) {
+    if (!self()->isResuming()) {
       // Normal execution: Load from the table.
       funcref = info.interface()->tableLoad(info.name, index);
     } else {
@@ -3645,7 +3794,7 @@ public:
     std::cout << self()->indent() << "(calling ref " << targetRef.getFunc()
               << ")\n";
 #endif
-    Flow ret = callFunction(targetRef.getFunc(), arguments);
+    Flow ret = targetRef.getFuncData()->doCall(arguments);
 #if WASM_INTERPRETER_DEBUG
     std::cout << self()->indent() << "(returned to " << scope->function->name
               << ")\n";
@@ -4566,7 +4715,7 @@ public:
     return {};
   }
   Flow visitTry(Try* curr) {
-    assert(!self()->resuming); // TODO
+    assert(!self()->isResuming()); // TODO
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4615,7 +4764,7 @@ public:
     }
   }
   Flow visitTryTable(TryTable* curr) {
-    assert(!self()->resuming); // TODO
+    assert(!self()->isResuming()); // TODO
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
@@ -4661,10 +4810,34 @@ public:
       return funcFlow;
     }
     // Create a new continuation for the target function.
-    Name func = funcFlow.getSingleValue().getFunc();
-    return Literal(std::make_shared<ContData>(func, curr->type.getHeapType()));
+    Name funcName = funcFlow.getSingleValue().getFunc();
+    auto* func = self()->getModule()->getFunction(funcName);
+    return Literal(std::make_shared<ContData>(
+      self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
   }
-  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitContBind(ContBind* curr) {
+    Literals arguments;
+    Flow flow = self()->generateArguments(curr->operands, arguments);
+    if (flow.breaking()) {
+      return flow;
+    }
+    Flow cont = self()->visit(curr->cont);
+    if (cont.breaking()) {
+      return cont;
+    }
+
+    // Create a new continuation, copying the old but with the new type +
+    // arguments.
+    auto old = cont.getSingleValue().getContData();
+    auto newData = *old;
+    newData.type = curr->type.getHeapType();
+    newData.resumeArguments = arguments;
+    // We handle only the simple case of applying all parameters, for now. TODO
+    assert(old->resumeArguments.empty());
+    // The old one is done.
+    old->executed = true;
+    return Literal(std::make_shared<ContData>(newData));
+  }
   Flow visitSuspend(Suspend* curr) {
     // Process the arguments, whether or not we are resuming. If we are resuming
     // then we don't need these values (we sent them as part of the suspension),
@@ -4675,17 +4848,22 @@ public:
       return flow;
     }
 
-    if (self()->resuming) {
+    if (self()->isResuming()) {
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent()
+                << "returned to suspend; continuing normally\n";
+#endif
       // This is a resume, so we have found our way back to where we
       // suspended.
-      assert(curr == self()->currContinuation->resumeExpr);
+      auto currContinuation = self()->getCurrContinuation();
+      assert(curr == currContinuation->resumeExpr);
       // We finished resuming, and will continue from here normally.
-      self()->resuming = false;
+      self()->continuationStore->resuming = false;
       // We should have consumed all the resumeInfo and all the
       // restoredValues map.
-      assert(self()->currContinuation->resumeInfo.empty());
+      assert(currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
-      return self()->currContinuation->resumeArguments;
+      return currContinuation->resumeArguments;
     }
 
     // We were not resuming, so this is a new suspend that we must execute.
@@ -4693,17 +4871,29 @@ public:
     // Copy the continuation (the old one cannot be resumed again). Note that no
     // old one may exist, in which case we still emit a continuation, but it is
     // meaningless (it will error when it reaches the host).
-    auto old = self()->currContinuation;
-    assert(!old || old->executed);
-    auto new_ = std::make_shared<ContData>(old ? old->func : Name(),
-                                           old ? old->type : HeapType::none);
+    auto old = self()->getCurrContinuationOrNull();
+    auto* tag = self()->getCanonicalTag(curr->tag);
+    if (!old) {
+      return Flow(SUSPEND_FLOW, tag, std::move(arguments));
+    }
+    assert(old->executed);
+    // An old one exists, so we can create a proper new one. It starts out
+    // empty here, and as we unwind, info will be added to it (and the function
+    // to resume as well, once we find the right resume handler).
+    //
+    // Note we cannot update the type yet, so it will be wrong in debug
+    // logging. To update it, we must find the block that receives this value,
+    // which means we cannot do it here (we don't even know what that block is).
+    auto new_ = std::make_shared<ContData>();
+
     // Switch to the new continuation, so that as we unwind, we will save the
     // information we need to resume it later in the proper place.
-    self()->currContinuation = new_;
+    self()->popCurrContinuation();
+    self()->pushCurrContinuation(new_);
     // We will resume from this precise spot, when the new continuation is
     // resumed.
     new_->resumeExpr = curr;
-    return Flow(SUSPEND_FLOW, curr->tag, std::move(arguments));
+    return Flow(SUSPEND_FLOW, tag, std::move(arguments));
   }
   Flow visitResume(Resume* curr) {
     Literals arguments;
@@ -4718,22 +4908,29 @@ public:
 
     // Get and execute the continuation.
     auto contData = flow.getSingleValue().getContData();
-    if (contData->executed) {
-      trap("continuation already executed");
-    }
-    contData->executed = true;
-    contData->resumeArguments = arguments;
-    Name func = contData->func;
-    self()->currContinuation = contData;
-    if (contData->resumeExpr) {
-      // There is an expression to resume execution at, so this is not the first
-      // time we run this function. Mark us as resuming, until we reach that
-      // expression.
-      self()->resuming = true;
-    }
+    auto func = contData->func;
+
+    // If we are resuming a nested suspend then we should just rewind the call
+    // stack, and therefore do not change or test the state here.
+    if (!self()->isResuming()) {
+      if (contData->executed) {
+        trap("continuation already executed");
+      }
+      contData->executed = true;
+      if (contData->resumeArguments.empty()) {
+        // The continuation has no bound arguments. For now, we just handle the
+        // simple case of binding all of them, so that means we can just use all
+        // the immediate ones here. TODO
+        contData->resumeArguments = arguments;
+      }
+      self()->pushCurrContinuation(contData);
+      self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "resuming func " << func << '\n';
+      std::cout << self()->indent() << "resuming func " << func.getFunc()
+                << '\n';
 #endif
+    }
+
     Flow ret;
     {
       // Create a stack value scope. This ensures that we always have a scope,
@@ -4741,27 +4938,55 @@ public:
       // exists. (We do not need the values in this scope, of course, as no
       // expression is above them, so we cannot suspend and need these values).
       typename ExpressionRunner<SubType>::StackValueNoter noter(this);
-      ret = callFunction(func, arguments);
+      ret = func.getFuncData()->doCall(arguments);
     }
 #if WASM_INTERPRETER_DEBUG
-    std::cout << self()->indent() << "finished resuming, with " << ret << '\n';
+    if (!self()->isResuming()) {
+      std::cout << self()->indent() << "finished resuming, with " << ret
+                << '\n';
+    }
 #endif
     if (!ret.suspendTag) {
       // No suspension: the coroutine finished normally. Mark it as no longer
       // active.
-      self()->currContinuation.reset();
+      self()->popCurrContinuation();
     } else {
       // We are suspending. See if a suspension arrived that we support.
       for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-        auto handlerTag = curr->handlerTags[i];
+        auto* handlerTag = self()->getCanonicalTag(curr->handlerTags[i]);
         if (handlerTag == ret.suspendTag) {
           // Switch the flow from suspending to branching.
-          ret.suspendTag = Name();
+          ret.suspendTag = nullptr;
           ret.breakTo = curr->handlerBlocks[i];
+          // We can now update the continuation type, which was wrong until now
+          // (see comment in visitSuspend). The type is taken from the block we
+          // branch to (which we find in a quite inefficient manner).
+          struct BlockFinder : public PostWalker<BlockFinder> {
+            Name target;
+            Type type = Type::none;
+            void visitBlock(Block* curr) {
+              if (curr->name == target) {
+                type = curr->type;
+              }
+            }
+          } finder;
+          finder.target = ret.breakTo;
+          // We must be in a function scope.
+          assert(self()->scope->function);
+          finder.walk(self()->scope->function->body);
+          // We must have found the type, and it must be valid.
+          assert(finder.type.isConcrete());
+          assert(finder.type.size() >= 1);
+          // The continuation is the final value/type there.
+          auto newCont = self()->getCurrContinuation();
+          newCont->type = finder.type[finder.type.size() - 1].getHeapType();
+          // And we can set the function to be called, to resume it from here
+          // (the same function we called, that led to a suspension).
+          newCont->func = contData->func;
           // Add the continuation as the final value being sent.
-          ret.values.push_back(Literal(self()->currContinuation));
-          // We are not longer processing that continuation.
-          self()->currContinuation.reset();
+          ret.values.push_back(Literal(newCont));
+          // We are no longer processing that continuation.
+          self()->popCurrContinuation();
           return ret;
         }
       }
@@ -4773,9 +4998,14 @@ public:
   Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
-  void trap(const char* why) override { externalInterface->trap(why); }
+  void trap(const char* why) override {
+    // Traps break all current continuations - they will never be resumable.
+    self()->clearContinuationStore();
+    externalInterface->trap(why);
+  }
 
   void hostLimit(const char* why) override {
+    self()->clearContinuationStore();
     externalInterface->hostLimit(why);
   }
 
@@ -4826,6 +5056,19 @@ public:
       hostLimit("stack limit");
     }
 
+    if (self()->isResuming()) {
+      // The arguments are in the continuation data.
+      arguments = self()->getCurrContinuation()->resumeArguments;
+
+      if (!self()->getCurrContinuation()->resumeExpr) {
+        // This is the first time we resume, that is, there is no suspend which
+        // is the resume expression that we need to execute up to. All we need
+        // to do is just start calling this function (with the arguments we've
+        // set), so resuming is done
+        self()->continuationStore->resuming = false;
+      }
+    }
+
     Flow flow;
     std::optional<Type> resultType;
 
@@ -4847,14 +5090,22 @@ public:
 
       FunctionScope scope(function, arguments, *self());
 
-      if (self()->resuming) {
+      if (self()->isResuming()) {
         // Restore the local state (see below for the ordering, we push/pop).
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
           scope.locals[l] = self()->popResumeEntry("function");
-          // Must have restored valid data.
-          assert(Type::isSubType(scope.locals[l].getType(),
-                                 function->getLocalType(l)));
+#ifndef NDEBUG
+          // Must have restored valid data. The type must match the local's
+          // type, except for the case of a non-nullable local that has not yet
+          // been accessed: that will contain a null (but the wasm type system
+          // ensures it will not be read by code, until a non-null value is
+          // assigned).
+          auto value = scope.locals[l];
+          auto localType = function->getLocalType(l);
+          assert(Type::isSubType(value.getType(), localType) ||
+                 value == Literal::makeZeros(localType));
+#endif
         }
       }
 
@@ -4871,7 +5122,7 @@ public:
 
 #if WASM_INTERPRETER_DEBUG
       std::cout << self()->indent() << "exiting " << function->name << " with "
-                << flow.values << '\n';
+                << flow << '\n';
 #endif
 
       if (flow.suspendTag) {
@@ -5025,6 +5276,19 @@ public:
     ExternalInterface* externalInterface,
     std::map<Name, std::shared_ptr<ModuleRunner>> linkedInstances = {})
     : ModuleRunnerBase(wasm, externalInterface, linkedInstances) {}
+
+  Literal makeFuncData(Name name, HeapType type) {
+    // As the super's |makeFuncData|, but here we also provide a way to
+    // actually call the function.
+    auto allocation =
+      std::make_shared<FuncData>(name, this, [this, name](Literals arguments) {
+        return callFunction(name, arguments);
+      });
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type);
+  }
 };
 
 } // namespace wasm

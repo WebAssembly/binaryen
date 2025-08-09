@@ -21,6 +21,7 @@
 #include "source-map.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "wasm-features.h"
 #include "wasm-io.h"
 
 #include "tool-options.h"
@@ -66,6 +67,8 @@ int main(int argc, const char* argv[]) {
   }
   Module wasm;
   options.applyOptionsBeforeParse(wasm);
+  wasm.features = FeatureSet::All;
+
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
@@ -84,12 +87,6 @@ int main(int argc, const char* argv[]) {
   }
 
   options.applyOptionsAfterParse(wasm);
-
-  // TODO: Validation. However, validating would mean that users are forced to
-  //       run with  wasm-dis -all  or such, to enable the features (unless the
-  //       features section is present, but that's rare in general). It would be
-  //       better to have an "autodetect" code path that enables used features
-  //       eventually.
 
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;

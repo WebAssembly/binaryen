@@ -788,6 +788,7 @@ private:
     ret->body = body;
     ret->catchTags.set(catchTags);
     ret->catchBodies.set(catchBodies);
+    ret->delegateTarget = delegateTarget;
     ret->finalize(type);
     return ret;
   }
