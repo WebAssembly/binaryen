@@ -522,7 +522,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
 }
 
 Name ModuleSplitter::getTrampoline(Name funcName) {
-  auto [it, inserted] = trampolineMap.insert({funcName, ""});
+  auto [it, inserted] = trampolineMap.insert({funcName, Name()});
   if (!inserted) {
     return it->second;
   }
