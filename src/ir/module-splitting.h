@@ -41,7 +41,6 @@
 #define wasm_ir_module_splitting_h
 
 #include "wasm.h"
-#include <unordered_map>
 
 namespace wasm::ModuleSplitting {
 
