@@ -1,13 +1,14 @@
 ;; RUN: wasm-split -all --multi-split %s --manifest %S/multi-split.wast.manifest --out-prefix=%t --placeholdermap -o %t.wasm
-;; RUN: filecheck %s --check-prefix MOD1-MAP < %t1.wasm.placeholders
-;; RUN: filecheck %s --check-prefix MOD2-MAP < %t2.wasm.placeholders
-;; RUN: filecheck %s --check-prefix MOD3-MAP < %t3.wasm.placeholders
+;; RUN: filecheck %s --check-prefix MAP < %t.wasm.placeholders
 
-;; MOD1-MAP: 0:A
-
-;; MOD2-MAP: 0:B
-
-;; MOD3-MAP: 0:C
+;; MAP:      table 0 (0)
+;; MAP-NEXT: 0:A
+;; MAP-NEXT:
+;; MAP-NEXT: table 1 (0_1)
+;; MAP-NEXT: 0:B
+;; MAP-NEXT:
+;; MAP-NEXT: table 2 (0_2)
+;; MAP-NEXT: 0:C
 
 (module
  (type $ret-i32 (func (result i32)))
