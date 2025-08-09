@@ -308,6 +308,9 @@ struct ModuleSplitter {
   // Internal name of the LOAD_SECONDARY_MODULE function.
   Name internalLoadSecondaryModule;
 
+  // Map from original secondary function name to its trampoline
+  std::unordered_map<Name, Name> trampolineMap;
+
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
@@ -317,6 +320,7 @@ struct ModuleSplitter {
   // Other helpers
   void exportImportFunction(Name func);
   Expression* maybeLoadSecondary(Builder& builder, Expression* callIndirect);
+  Name getTrampoline(Name funcName);
 
   // Main splitting steps
   void setupJSPI();
@@ -517,6 +521,31 @@ void ModuleSplitter::moveSecondaryFunctions() {
   }
 }
 
+Name ModuleSplitter::getTrampoline(Name funcName) {
+  auto [it, inserted] = trampolineMap.insert({funcName, Name()});
+  if (!inserted) {
+    return it->second;
+  }
+
+  Builder builder(primary);
+  auto* oldFunc = secondary.getFunction(funcName);
+  auto trampoline = Names::getValidFunctionName(
+    primary, std::string("trampoline_") + funcName.toString());
+  it->second = trampoline;
+
+  // Generate the call and the function.
+  std::vector<Expression*> args;
+  for (Index i = 0; i < oldFunc->getNumParams(); i++) {
+    args.push_back(builder.makeLocalGet(i, oldFunc->getLocalType(i)));
+  }
+  auto* call = builder.makeCall(funcName, args, oldFunc->getResults());
+
+  auto func = builder.makeFunction(trampoline, oldFunc->type, {}, call);
+  func->hasExplicitName = oldFunc->hasExplicitName;
+  primary.addFunction(std::move(func));
+  return trampoline;
+}
+
 void ModuleSplitter::thunkExportedSecondaryFunctions() {
   // Update exports of secondary functions in the primary module to export
   // wrapper functions that indirectly call the secondary functions. We are
@@ -529,21 +558,8 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
         !secondaryFuncs.count(*ex->getInternalName())) {
       continue;
     }
-    Name secondaryFunc = *ex->getInternalName();
-    if (primary.getFunctionOrNull(secondaryFunc)) {
-      // We've already created a thunk for this function
-      continue;
-    }
-    auto* func = primary.addFunction(Builder::makeFunction(
-      secondaryFunc, secondary.getFunction(secondaryFunc)->type, {}));
-    std::vector<Expression*> args;
-    Type params = func->getParams();
-    for (size_t i = 0, size = params.size(); i < size; ++i) {
-      args.push_back(builder.makeLocalGet(i, params[i]));
-    }
-    auto tableSlot = tableManager.getSlot(secondaryFunc, func->type);
-    func->body = builder.makeCallIndirect(
-      tableSlot.tableName, tableSlot.makeExpr(primary), args, func->type);
+    Name trampoline = getTrampoline(*ex->getInternalName());
+    ex->setInternalName(trampoline);
   }
 }
 
@@ -614,24 +630,10 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       continue;
     }
 
-    auto* oldFunc = secondary.getFunction(name);
-    auto newName = Names::getValidFunctionName(
-      primary, std::string("trampoline_") + name.toString());
-
-    // Generate the call and the function.
-    std::vector<Expression*> args;
-    for (Index i = 0; i < oldFunc->getNumParams(); i++) {
-      args.push_back(builder.makeLocalGet(i, oldFunc->getLocalType(i)));
-    }
-    auto* call = builder.makeCall(name, args, oldFunc->getResults());
-
-    auto trampoline = builder.makeFunction(newName, oldFunc->type, {}, call);
-    trampoline->hasExplicitName = oldFunc->hasExplicitName;
-    primary.addFunction(std::move(trampoline));
-
+    Name trampoline = getTrampoline(name);
     // Update RefFuncs to refer to it.
     for (auto* refFunc : relevantRefFuncs) {
-      refFunc->func = newName;
+      refFunc->func = trampoline;
     }
   }
 }
