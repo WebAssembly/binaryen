@@ -522,16 +522,16 @@ void ModuleSplitter::moveSecondaryFunctions() {
 }
 
 Name ModuleSplitter::getTrampoline(Name funcName) {
-  auto trampolineIt = trampolineMap.find(funcName);
-  if (trampolineIt != trampolineMap.end()) {
-    return trampolineIt->second;
+  auto [it, inserted] = trampolineMap.insert({funcName, ""});
+  if (!inserted) {
+    return it->second;
   }
 
   Builder builder(primary);
   auto* oldFunc = secondary.getFunction(funcName);
   auto trampoline = Names::getValidFunctionName(
     primary, std::string("trampoline_") + funcName.toString());
-  trampolineMap[funcName] = trampoline;
+  it->second = trampoline;
 
   // Generate the call and the function.
   std::vector<Expression*> args;
