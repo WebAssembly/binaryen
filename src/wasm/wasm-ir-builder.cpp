@@ -401,6 +401,11 @@ struct IRBuilder::ChildPopper
       // condition.
       children.push_back({&curr->condition, {Subtype{Type::i32}}});
     }
+
+    // It is a bug if we ever have insufficient type information.
+    void noteUnknown() {
+      WASM_UNREACHABLE("unexpected insufficient type information");
+    }
   };
 
   IRBuilder& builder;
