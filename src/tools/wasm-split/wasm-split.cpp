@@ -215,9 +215,9 @@ void writePlaceholderMap(
       for (auto& [index, func] : it->second) {
         o << index << ':' << func << '\n';
       }
-    }
-    if (i < wasm.tables.size() - 1) {
-      o << "\n";
+      if (i < wasm.tables.size() - 1) {
+        o << "\n";
+      }
     }
   }
 }
