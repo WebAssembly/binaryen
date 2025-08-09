@@ -72,8 +72,9 @@
 ;; CHECK-NEXT:                                        functions will fail before the secondary
 ;; CHECK-NEXT:                                        module has been instantiated.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --placeholdermap                     [split] Write a file mapping placeholder
-;; CHECK-NEXT:                                        indices to the function names.
+;; CHECK-NEXT:   --placeholdermap                     [split, multi-split] Write a file mapping
+;; CHECK-NEXT:                                        placeholder indices to the function
+;; CHECK-NEXT:                                        names.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --import-namespace                   [split, instrument, multi-split] When
 ;; CHECK-NEXT:                                        provided as an option for module

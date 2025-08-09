@@ -17,10 +17,11 @@ Current Trunk
 
  - `wasm-split`'s `--multi-split` mode now supports more options:
    `--no-placeholders`, `--import-namespace`, `--emit-module-names`,
-   `--emit-text`, and `--symbolmap`. Because `--no-placeholders` is false by
-   default and until now `--multi-split` didn't use placeholders at all, this is
-   a breaking change. If you want to continue to do multi-split without
-   placeholders, you need to explicitly specify `--no-placeholders`.
+   `--emit-text`, `--symbolmap`, and `--placeholdermap`. Because
+   `--no-placeholders` is false by default and until now `--multi-split` didn't
+   use placeholders at all, this is a breaking change. If you want to continue
+   to do multi-split without placeholders, you need to explicitly specify
+   `--no-placeholders`.
  - Add a `--string-lifting` pass that raises imported string operations and
    constants into stringref in Binaryen IR (which can then be fully optimized,
    and typically lowered back down with `--string-lowering`).
