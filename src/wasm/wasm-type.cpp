@@ -2731,14 +2731,23 @@ std::unordered_set<HeapType> getIgnorablePublicTypes() {
 
 namespace wasm::HeapTypes {
 
+// We could get laziness for free by making these local statics, but that would
+// come with unnecessary implicity synchronization overhead.
+static std::optional<HeapType> theMutI8Array;
+static std::optional<HeapType> theMutI16Array;
+
 HeapType getMutI8Array() {
-  static HeapType i8Array = Array(Field(Field::i8, Mutable));
-  return i8Array;
+  if (!theMutI8Array) {
+    theMutI8Array = Array(Field(Field::i8, Mutable));
+  }
+  return *theMutI8Array;
 }
 
 HeapType getMutI16Array() {
-  static HeapType i16Array = Array(Field(Field::i16, Mutable));
-  return i16Array;
+  if (!theMutI16Array) {
+    theMutI16Array = Array(Field(Field::i16, Mutable));
+  }
+  return *theMutI16Array;
 }
 
 } // namespace wasm::HeapTypes
