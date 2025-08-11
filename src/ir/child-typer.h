@@ -893,6 +893,8 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     switch (curr->op) {
       case BrOnNull:
       case BrOnNonNull:
+        // br_on(_non)_null is polymorphic over reference types and does not
+        // take a type immediate.
         assert(!target);
         noteAnyReference(&curr->ref);
         return;
