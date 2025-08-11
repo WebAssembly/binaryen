@@ -3962,23 +3962,21 @@ void FunctionValidator::visitContBind(ContBind* curr) {
     return;
   }
 
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+
   shouldBeTrue(
-    (curr->cont->type.isContinuation() &&
-     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->cont->type == Type::unreachable,
+    curr->cont->type.isContinuation() &&
+     curr->cont->type.getHeapType().getContinuation().type.isSignature(),
     curr,
     "the first type annotation on cont.bind must be a continuation type");
 
   shouldBeTrue(
-    (curr->type.isContinuation() &&
-     curr->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->type == Type::unreachable,
+    curr->type.isContinuation() &&
+    curr->type.getHeapType().getContinuation().type.isSignature(),
     curr,
     "the second type annotation on cont.bind must be a continuation type");
-
-  if (curr->type == Type::unreachable) {
-    return;
-  }
 
   if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
