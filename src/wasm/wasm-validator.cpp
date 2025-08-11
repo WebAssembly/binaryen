@@ -31,6 +31,7 @@
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 
@@ -3851,11 +3852,19 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
             refType.isRef(), curr, "string.new input must have array type")) {
         return;
       }
-      auto heapType = refType.getHeapType();
-      if (!shouldBeTrue(heapType.isBottom() || heapType.isArray(),
-                        curr,
-                        "string.new input must have array type")) {
-        return;
+      if (curr->op == StringNewLossyUTF8Array) {
+        shouldBeSubType(
+          refType,
+          Type(HeapTypes::getMutI8Array(), Nullable),
+          curr,
+          "string.new_lossy_utf8_array input must have proper i8 array type");
+      } else {
+        assert(curr->op == StringNewWTF16Array);
+        shouldBeSubType(
+          refType,
+          Type(HeapTypes::getMutI16Array(), Nullable),
+          curr,
+          "string.new_wtf16_array input must have proper i16 array type");
       }
       shouldBeEqualOrFirstIsUnreachable(curr->start->type,
                                         Type(Type::i32),
@@ -3896,6 +3905,31 @@ void FunctionValidator::visitStringEncode(StringEncode* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require strings [--enable-strings]");
+  shouldBeSubTypeIgnoringShared(curr->str->type,
+                                Type(HeapType::ext, Nullable),
+                                curr,
+                                "string.encode input should be an externref");
+  switch (curr->op) {
+    case StringEncodeLossyUTF8Array:
+      shouldBeSubType(
+        curr->array->type,
+        Type(HeapTypes::getMutI8Array(), Nullable),
+        curr,
+        "string.encode_lossy_utf8_array should have mutable i8 array");
+      break;
+    case StringEncodeWTF16Array: {
+      shouldBeSubType(
+        curr->array->type,
+        Type(HeapTypes::getMutI16Array(), Nullable),
+        curr,
+        "string.encode_wtf16_array should have mutable i16 array");
+      break;
+    }
+  }
+  shouldBeSubType(curr->start->type,
+                  Type(Type::i32),
+                  curr,
+                  "string.encode start should be an i32");
 }
 
 void FunctionValidator::visitStringConcat(StringConcat* curr) {
@@ -3957,23 +3991,26 @@ void FunctionValidator::visitContBind(ContBind* curr) {
                curr,
                "cont.bind requires stack-switching [--enable-stack-switching]");
 
-  shouldBeTrue(
-    (curr->cont->type.isContinuation() &&
-     curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->cont->type == Type::unreachable,
-    curr,
-    "the first type annotation on cont.bind must be a continuation type");
-
-  shouldBeTrue(
-    (curr->type.isContinuation() &&
-     curr->type.getHeapType().getContinuation().type.isSignature()) ||
-      curr->type == Type::unreachable,
-    curr,
-    "the second type annotation on cont.bind must be a continuation type");
+  if (curr->cont->type.isRef() &&
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
 
   if (curr->type == Type::unreachable) {
     return;
   }
+
+  shouldBeTrue(
+    curr->cont->type.isContinuation() &&
+      curr->cont->type.getHeapType().getContinuation().type.isSignature(),
+    curr,
+    "the first type annotation on cont.bind must be a continuation type");
+
+  shouldBeTrue(
+    curr->type.isContinuation() &&
+      curr->type.getHeapType().getContinuation().type.isSignature(),
+    curr,
+    "the second type annotation on cont.bind must be a continuation type");
 
   if (!shouldBeTrue(curr->type.isNonNullable(),
                     curr,
@@ -4001,6 +4038,11 @@ void FunctionValidator::visitResume(Resume* curr) {
     curr,
     "sentTypes cache in resume instruction has not been initialized");
 
+  if (curr->cont->type.isRef() &&
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
@@ -4023,17 +4065,22 @@ void FunctionValidator::visitResumeThrow(ResumeThrow* curr) {
     curr,
     "sentTypes cache in resume_throw instruction has not been initialized");
 
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "resume_throw exception tag must exist")) {
+    return;
+  }
+
+  if (curr->cont->type.isRef() &&
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
       curr->type == Type::unreachable,
     curr,
     "resume_throw must be annotated with a continuation type");
-
-  auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "resume_throw must be annotated with a tag")) {
-    return;
-  }
 }
 
 void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
@@ -4042,17 +4089,22 @@ void FunctionValidator::visitStackSwitch(StackSwitch* curr) {
                curr,
                "switch requires stack-switching [--enable-stack-switching]");
 
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "switch tag must exist")) {
+    return;
+  }
+
+  if (curr->cont->type.isRef() &&
+      curr->cont->type.getHeapType().isMaybeShared(HeapType::nocont)) {
+    return;
+  }
+
   shouldBeTrue(
     (curr->cont->type.isContinuation() &&
      curr->cont->type.getHeapType().getContinuation().type.isSignature()) ||
       curr->type == Type::unreachable,
     curr,
     "switch must be annotated with a continuation type");
-
-  auto* tag = getModule()->getTagOrNull(curr->tag);
-  if (!shouldBeTrue(!!tag, curr, "switch must be annotated with a tag")) {
-    return;
-  }
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

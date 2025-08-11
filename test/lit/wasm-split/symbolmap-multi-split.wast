@@ -5,12 +5,11 @@
 ;; RUN: filecheck %s --check-prefix MOD3-MAP < %t3.wasm.symbols
 
 ;; PRIMARY-MAP: 0:placeholder_0
-;; PRIMARY-MAP: 1:placeholder_0_5
-;; PRIMARY-MAP: 2:placeholder_0_6
+;; PRIMARY-MAP: 1:placeholder_0_4
+;; PRIMARY-MAP: 2:placeholder_0_5
 ;; PRIMARY-MAP: 3:trampoline_A
-;; PRIMARY-MAP: 4:B
-;; PRIMARY-MAP: 5:trampoline_B
-;; PRIMARY-MAP: 6:C
+;; PRIMARY-MAP: 4:trampoline_B
+;; PRIMARY-MAP: 5:trampoline_C
 
 ;; MOD1-MAP: 0:B
 ;; MOD1-MAP: 1:C

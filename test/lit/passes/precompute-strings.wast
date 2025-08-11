@@ -263,20 +263,10 @@
 
 
  ;; CHECK:      (func $string.new-mutable (type $3) (result externref)
- ;; CHECK-NEXT:  (string.new_wtf16_array
- ;; CHECK-NEXT:   (array.new_fixed $array16 4
- ;; CHECK-NEXT:    (i32.const 65)
- ;; CHECK-NEXT:    (i32.const 66)
- ;; CHECK-NEXT:    (i32.const 67)
- ;; CHECK-NEXT:    (i32.const 68)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 4)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (string.const "ABCD")
  ;; CHECK-NEXT: )
  (func $string.new-mutable (result externref)
-  ;; We do not precompute this because the array is mutable, and we do not yet
-  ;; do an analysis to see that it does not "escape" into places that modify it.
+  ;; We can precompute this only because the allocation is the immediate child.
   (string.new_wtf16_array
    (array.new_fixed $array16 4
     (i32.const 65)
@@ -289,17 +279,31 @@
   )
  )
 
- ;; CHECK:      (func $string.new-immutable (type $3) (result externref)
- ;; CHECK-NEXT:  (string.const "ABCD")
+ ;; CHECK:      (func $string.new-mutable-indirect (type $3) (result externref)
+ ;; CHECK-NEXT:  (string.new_wtf16_array
+ ;; CHECK-NEXT:   (block (result (ref (exact $array16)))
+ ;; CHECK-NEXT:    (array.new_fixed $array16 4
+ ;; CHECK-NEXT:     (i32.const 65)
+ ;; CHECK-NEXT:     (i32.const 66)
+ ;; CHECK-NEXT:     (i32.const 67)
+ ;; CHECK-NEXT:     (i32.const 68)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $string.new-immutable (result externref)
-  ;; This array is immutable and we can optimize here.
+ (func $string.new-mutable-indirect (result externref)
+  ;; Now the allocation is not the immediate child, so we do not precompute.
+  ;; TODO: be smarter and optimize this.
   (string.new_wtf16_array
-   (array.new_fixed $array16-imm 4
-    (i32.const 65)
-    (i32.const 66)
-    (i32.const 67)
-    (i32.const 68)
+   (block (result (ref $array16))
+    (array.new_fixed $array16 4
+     (i32.const 65)
+     (i32.const 66)
+     (i32.const 67)
+     (i32.const 68)
+    )
    )
    (i32.const 0)
    (i32.const 4)
