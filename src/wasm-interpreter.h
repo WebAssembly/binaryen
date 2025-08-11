@@ -601,7 +601,8 @@ public:
           auto& values = valueStack.back();
           values.push_back(ret.values);
 #if WASM_INTERPRETER_DEBUG
-          std::cout << indent() << "added to valueStack: " << ret.values << '\n';
+          std::cout << indent() << "added to valueStack: " << ret.values
+                    << '\n';
 #endif
         }
       }
