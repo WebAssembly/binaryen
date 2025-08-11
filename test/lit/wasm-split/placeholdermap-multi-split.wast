@@ -1,13 +1,13 @@
 ;; RUN: wasm-split -all --multi-split %s --manifest %S/multi-split.wast.manifest --out-prefix=%t --placeholdermap -o %t.wasm
 ;; RUN: filecheck %s --check-prefix MAP < %t.wasm.placeholders
 
-;; MAP:      table 0 (0)
+;; MAP:      table 0
 ;; MAP-NEXT: 0:A
 ;; MAP-NEXT:
-;; MAP-NEXT: table 1 (0_1)
+;; MAP-NEXT: table 1
 ;; MAP-NEXT: 0:B
 ;; MAP-NEXT:
-;; MAP-NEXT: table 2 (0_2)
+;; MAP-NEXT: table 2
 ;; MAP-NEXT: 0:C
 
 (module

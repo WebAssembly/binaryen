@@ -203,7 +203,7 @@ void writeSymbolMap(Module& wasm, std::string filename) {
 
 void writePlaceholderMap(
   Module& wasm,
-  const std::unordered_map<Name, std::map<size_t, Name>> placeholderMap,
+  const std::unordered_map<Name, std::map<size_t, Name>>& placeholderMap,
   std::string filename) {
   Output output(filename, Flags::Text);
   auto& o = output.getStream();
@@ -211,7 +211,7 @@ void writePlaceholderMap(
     const auto& table = wasm.tables[i];
     auto it = placeholderMap.find(table->name);
     if (it != placeholderMap.end()) {
-      o << "table " << i << " ($" << table->name << ")" << "\n";
+      o << "table " << i << "\n";
       for (auto& [index, func] : it->second) {
         o << index << ':' << func << '\n';
       }
