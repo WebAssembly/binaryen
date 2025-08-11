@@ -2066,12 +2066,13 @@ Expression* TranslateToFuzzReader::make(Type type) {
       nesting >= 5 * fuzzParams->NESTING_LIMIT || // hard limit
       (nesting >= fuzzParams->NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
-      if (oneIn(2)) {
+      if (!funcContext || oneIn(2)) {
         return makeConst(type);
       } else {
         return makeLocalGet(type);
       }
     } else if (type == Type::none) {
+      assert(funcContext);
       if (oneIn(2)) {
         return makeNop(type);
       } else {
