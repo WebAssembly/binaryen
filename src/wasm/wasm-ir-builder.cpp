@@ -518,24 +518,6 @@ private:
           if (!Type::isSubType(type, *bound)) {
             return true;
           }
-        } else if (constraint.isAnyI8ArrayReference()) {
-          bool isI8Array =
-            type.isRef() && type.getHeapType().isArray() &&
-            type.getHeapType().getArray().element.packedType == Field::i8;
-          bool isNone =
-            type.isRef() && type.getHeapType().isMaybeShared(HeapType::none);
-          if (!isI8Array && !isNone && type != Type::unreachable) {
-            return true;
-          }
-        } else if (constraint.isAnyI16ArrayReference()) {
-          bool isI16Array =
-            type.isRef() && type.getHeapType().isArray() &&
-            type.getHeapType().getArray().element.packedType == Field::i16;
-          bool isNone =
-            type.isRef() && type.getHeapType().isMaybeShared(HeapType::none);
-          if (!isI16Array && !isNone && type != Type::unreachable) {
-            return true;
-          }
         } else {
           WASM_UNREACHABLE("unexpected constraint");
         }
@@ -683,13 +665,6 @@ public:
                              std::optional<HeapType> ht = std::nullopt) {
     std::vector<Child> children;
     ConstraintCollector{builder, children}.visitArrayCmpxchg(curr, ht);
-    return popConstrainedChildren(children);
-  }
-
-  Result<> visitStringEncode(StringEncode* curr,
-                             std::optional<HeapType> ht = std::nullopt) {
-    std::vector<Child> children;
-    ConstraintCollector{builder, children}.visitStringEncode(curr, ht);
     return popConstrainedChildren(children);
   }
 
@@ -2488,11 +2463,7 @@ Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
 Result<> IRBuilder::makeStringEncode(StringEncodeOp op) {
   StringEncode curr;
   curr.op = op;
-  // There's no type annotation on these instructions due to a bug in the
-  // stringref proposal, so we just fudge it and pass `array` instead of a
-  // defined heap type. This will allow us to pop a child with an invalid
-  // array type, but that's just too bad.
-  CHECK_ERR(ChildPopper{*this}.visitStringEncode(&curr, HeapType::array));
+  CHECK_ERR(visitStringEncode(&curr));
   push(builder.makeStringEncode(op, curr.str, curr.array, curr.start));
   return Ok{};
 }
