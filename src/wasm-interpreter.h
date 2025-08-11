@@ -5068,15 +5068,20 @@ public:
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
-      arguments = self()->getCurrContinuation()->resumeArguments;
+      auto currContinuation = self()->getCurrContinuation();
+      arguments = currContinuation->resumeArguments;
 
-      if (!self()->getCurrContinuation()->resumeExpr) {
+      if (!currContinuation->resumeExpr) {
         // This is the first time we resume, that is, there is no suspend which
         // is the resume expression that we need to execute up to. All we need
         // to do is just start calling this function (with the arguments we've
-        // set), so resuming is done
+        // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
-        assert(!self()->getCurrContinuation()->exceptionTag); // TODO
+        if (auto* tag = currContinuation->exceptionTag) {
+          // XXX tag->name lacks cross-module support
+          throwException(WasmException{
+            self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+        }
       }
     }
 
