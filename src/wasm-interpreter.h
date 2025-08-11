@@ -595,12 +595,15 @@ public:
       // values on the stack, not values sent on a break/suspend; suspending is
       // handled above).
       if (!ret.breaking() && ret.getType().isConcrete()) {
-        assert(!valueStack.empty());
-        auto& values = valueStack.back();
-        values.push_back(ret.values);
+        // The value stack may be empty, if we lack a parent that needs our
+        // value. That is the case when we are the toplevel expression, etc.
+        if (!valueStack.empty()) {
+          auto& values = valueStack.back();
+          values.push_back(ret.values);
 #if WASM_INTERPRETER_DEBUG
-        std::cout << indent() << "added to valueStack: " << ret.values << '\n';
+          std::cout << indent() << "added to valueStack: " << ret.values << '\n';
 #endif
+        }
       }
     }
 
@@ -4941,15 +4944,8 @@ public:
 #endif
     }
 
-    Flow ret;
-    {
-      // Create a stack value scope. This ensures that we always have a scope,
-      // and so the code that pushes/pops doesn't need to check if a scope
-      // exists. (We do not need the values in this scope, of course, as no
-      // expression is above them, so we cannot suspend and need these values).
-      typename ExpressionRunner<SubType>::StackValueNoter noter(this);
-      ret = func.getFuncData()->doCall(arguments);
-    }
+    Flow ret = func.getFuncData()->doCall(arguments);
+
 #if WASM_INTERPRETER_DEBUG
     if (!self()->isResuming()) {
       std::cout << self()->indent() << "finished resuming, with " << ret
