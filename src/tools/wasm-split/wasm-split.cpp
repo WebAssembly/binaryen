@@ -211,7 +211,7 @@ void writePlaceholderMap(
     const auto& table = wasm.tables[i];
     auto it = placeholderMap.find(table->name);
     if (it != placeholderMap.end()) {
-      o << "table " << i << " (" << table->name << ")" << "\n";
+      o << "table " << i << " ($" << table->name << ")" << "\n";
       for (auto& [index, func] : it->second) {
         o << index << ':' << func << '\n';
       }
