@@ -37,13 +37,13 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "passes/string-utils.h"
 #include "support/string.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -283,7 +283,7 @@ struct StringLowering : public StringGathering {
   }
 
   // Common types used in imports.
-  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nullArray16 = Type(HeapTypes::getMutI16Array(), Nullable);
   Type nullExt = Type(HeapType::ext, Nullable);
   Type nnExt = Type(HeapType::ext, NonNullable);
 
@@ -336,22 +336,6 @@ struct StringLowering : public StringGathering {
 
     // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
-
-    // The module may have its own array16 type inside a big rec group, but
-    // imported strings expects that type in its own rec group as part of the
-    // ABI. Fix that up here. (This is valid to do as this type has no sub- or
-    // super-types anyhow; it is "plain old data" for communicating with the
-    // outside.)
-    auto allTypes = ModuleUtils::collectHeapTypes(*module);
-    auto array16 = nullArray16.getHeapType();
-    auto array16Element = array16.getArray().element;
-    for (auto type : allTypes) {
-      // Match an array type with no super and that is closed.
-      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen() &&
-          type.getArray().element == array16Element) {
-        updates[type] = array16;
-      }
-    }
 
     TypeMapper(*module, updates).map();
   }

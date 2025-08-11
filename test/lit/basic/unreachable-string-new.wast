@@ -3,14 +3,14 @@
 ;; RUN: wasm-opt -all --preserve-type-order %s -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $array8 (array i8))
-  (type $array8 (array i8))
-  ;; CHECK:      (type $array16 (array i16))
-  (type $array16 (array i16))
-  ;; CHECK:      (type $shared-array8 (shared (array i8)))
-  (type $shared-array8 (shared (array i8)))
-  ;; CHECK:      (type $shared-array16 (shared (array i16)))
-  (type $shared-array16 (shared (array i16)))
+  ;; CHECK:      (type $array8 (array (mut i8)))
+  (type $array8 (array (mut i8)))
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array (mut i16)))
+  ;; CHECK:      (type $shared-array8 (shared (array (mut i8))))
+  (type $shared-array8 (shared (array (mut i8))))
+  ;; CHECK:      (type $shared-array16 (shared (array (mut i16))))
+  (type $shared-array16 (shared (array (mut i16))))
 
   ;; CHECK:      (func $i8-bad-array (type $4) (result (ref string))
   ;; CHECK-NEXT:  (drop
@@ -73,8 +73,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $i8-ok (result (ref string))
-    ;; Now we have a valid type, so it can be popped as the first child of the
-    ;; string.new.
+    ;; Now we have the correct type, so it can be popped as the first child of
+    ;; the string.new.
     block (result (ref $array8))
       unreachable
     end
@@ -102,18 +102,23 @@
     string.new_lossy_utf8_array
   )
 
-  ;; CHECK:      (func $i8-ok-shared (type $4) (result (ref string))
-  ;; CHECK-NEXT:  (string.new_lossy_utf8_array
+  ;; CHECK:      (func $i8-bad-shared (type $4) (result (ref string))
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $shared-array8))
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (string.new_lossy_utf8_array
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $i8-ok-shared (result (ref string))
-    ;; Shared arrays work as well. TODO: Should the result be shared in this
-    ;; case?
+  (func $i8-bad-shared (result (ref string))
+    ;; Shared arrays do not work as well. TODO: find a good way to support them.
     block (result (ref $shared-array8))
       unreachable
     end
@@ -122,17 +127,23 @@
     string.new_lossy_utf8_array
   )
 
-  ;; CHECK:      (func $i8-ok-shared-none (type $4) (result (ref string))
-  ;; CHECK-NEXT:  (string.new_lossy_utf8_array
+  ;; CHECK:      (func $i8-bad-shared-none (type $4) (result (ref string))
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (shared none)))
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (string.new_lossy_utf8_array
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $i8-ok-shared-none (result (ref string))
-    ;; Shared bottom references are also ok.
+  (func $i8-bad-shared-none (result (ref string))
+    ;; Shared bottom references also do not work.
     block (result (ref (shared none)))
       unreachable
     end
@@ -225,16 +236,22 @@
     string.new_wtf16_array
   )
 
-  ;; CHECK:      (func $i16-ok-shared (type $4) (result (ref string))
-  ;; CHECK-NEXT:  (string.new_wtf16_array
+  ;; CHECK:      (func $i16-bad-shared (type $4) (result (ref string))
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $shared-array16))
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (string.new_wtf16_array
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $i16-ok-shared (result (ref string))
+  (func $i16-bad-shared (result (ref string))
     block (result (ref $shared-array16))
       unreachable
     end
@@ -243,16 +260,22 @@
     string.new_wtf16_array
   )
 
-  ;; CHECK:      (func $i16-ok-shared-none (type $4) (result (ref string))
-  ;; CHECK-NEXT:  (string.new_wtf16_array
+  ;; CHECK:      (func $i16-bad-shared-none (type $4) (result (ref string))
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (shared none)))
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (string.new_wtf16_array
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $i16-ok-shared-none (result (ref string))
+  (func $i16-bad-shared-none (result (ref string))
     block (result (ref (shared none)))
       unreachable
     end
