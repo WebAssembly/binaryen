@@ -531,9 +531,8 @@ public:
       }
       if (!hasValue) {
         // We must execute this instruction. Set up the logic to note the values
-        // of children (we mainly need this for non-control flow structures,
-        // but even control flow ones must add a scope on the value stack, to
-        // not confuse the others).
+        // of children. TODO: as an optimization, we could avoid this for
+        // control flow structures, at the cost of more complexity
         StackValueNoter noter(this);
 
         if (Properties::isControlFlowStructure(curr)) {
