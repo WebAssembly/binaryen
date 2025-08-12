@@ -3671,8 +3671,10 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
         builder.makeConst(int32_t(upTo(fuzzParams->MAX_ARRAY_SIZE)));
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
-    case HeapTypeKind::Cont:
-      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Cont: {
+      auto funcType = Type(heapType.getContinuation().type, NonNullable);
+      return builder.makeContNew(heapType, makeRefFuncConst(funcType));
+    }
     case HeapTypeKind::Basic:
       break;
   }
