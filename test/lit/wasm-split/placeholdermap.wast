@@ -2,7 +2,8 @@
 ;; RUN: filecheck %s --check-prefix MAP < %t.1.wasm.placeholders
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 
-;; MAP:      0:foo
+;; MAP:      table 0
+;; MAP-NEXT: 0:foo
 ;; MAP-NEXT: 2:baz
 ;; MAP-NOT: bar
 

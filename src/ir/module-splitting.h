@@ -77,7 +77,7 @@ struct Config {
 
 struct Results {
   std::unique_ptr<Module> secondary;
-  std::map<size_t, Name> placeholderMap;
+  std::unordered_map<Name, std::map<size_t, Name>> placeholderMap;
 };
 
 // Returns the new secondary module and modifies the `primary` module in place.

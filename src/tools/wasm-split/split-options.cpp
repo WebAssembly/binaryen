@@ -221,7 +221,7 @@ WasmSplitOptions::WasmSplitOptions()
       "",
       "Write a file mapping placeholder indices to the function names.",
       WasmSplitOption,
-      {Mode::Split},
+      {Mode::Split, Mode::MultiSplit},
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",

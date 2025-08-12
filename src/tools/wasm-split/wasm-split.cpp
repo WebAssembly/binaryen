@@ -20,13 +20,11 @@
 #include <fstream>
 
 #include "ir/module-splitting.h"
-#include "ir/names.h"
 #include "support/file.h"
 #include "support/name.h"
 #include "support/path.h"
 #include "support/utilities.h"
 #include "wasm-binary.h"
-#include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
 
@@ -203,12 +201,24 @@ void writeSymbolMap(Module& wasm, std::string filename) {
   runner.run();
 }
 
-void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
-                         std::string filename) {
+void writePlaceholderMap(
+  Module& wasm,
+  const std::unordered_map<Name, std::map<size_t, Name>>& placeholderMap,
+  std::string filename) {
   Output output(filename, Flags::Text);
   auto& o = output.getStream();
-  for (auto& [index, func] : placeholderMap) {
-    o << index << ':' << func << '\n';
+  for (Index i = 0; i < wasm.tables.size(); i++) {
+    const auto& table = wasm.tables[i];
+    auto it = placeholderMap.find(table->name);
+    if (it != placeholderMap.end()) {
+      o << "table " << i << "\n";
+      for (auto& [index, func] : it->second) {
+        o << index << ':' << func << '\n';
+      }
+      if (i < wasm.tables.size() - 1) {
+        o << "\n";
+      }
+    }
   }
 }
 
@@ -344,7 +354,8 @@ void splitModule(const WasmSplitOptions& options) {
   }
 
   if (options.placeholderMap) {
-    writePlaceholderMap(splitResults.placeholderMap,
+    writePlaceholderMap(wasm,
+                        splitResults.placeholderMap,
                         options.primaryOutput + ".placeholders");
   }
 
@@ -422,6 +433,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
     wasm.name = Path::getBaseName(options.output);
   }
 
+  std::unordered_map<Name, std::map<size_t, Name>> placeholderMap;
   for (auto& [mod, funcs] : moduleFuncs) {
     if (options.verbose) {
       std::cerr << "Splitting module " << mod << '\n';
@@ -431,11 +443,13 @@ void multiSplitModule(const WasmSplitOptions& options) {
     }
     config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
     auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-    // TODO: placeholderMap
     auto moduleName =
       options.outPrefix + mod + (options.emitBinary ? ".wasm" : ".wast");
     if (options.symbolMap) {
       writeSymbolMap(*splitResults.secondary, moduleName + ".symbols");
+    }
+    if (options.placeholderMap) {
+      placeholderMap.merge(splitResults.placeholderMap);
     }
     if (options.emitModuleNames) {
       splitResults.secondary->name = Path::getBaseName(moduleName);
@@ -445,7 +459,9 @@ void multiSplitModule(const WasmSplitOptions& options) {
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.output + ".symbols");
   }
-
+  if (options.placeholderMap) {
+    writePlaceholderMap(wasm, placeholderMap, options.output + ".placeholders");
+  }
   writeModule(wasm, options.output, options);
 }
 

@@ -302,8 +302,9 @@ struct ModuleSplitter {
   // names.
   std::map<Name, Name> exportedPrimaryFuncs;
 
-  // Map placeholder indices to the names of the functions they replace.
-  std::map<size_t, Name> placeholderMap;
+  // For each table, map placeholder indices to the names of the functions they
+  // replace.
+  std::unordered_map<Name, std::map<size_t, Name>> placeholderMap;
 
   // Internal name of the LOAD_SECONDARY_MODULE function.
   Name internalLoadSecondaryModule;
@@ -723,7 +724,7 @@ void ModuleSplitter::setupTablePatching() {
       }
       assert(table == tableManager.activeTable->name);
 
-      placeholderMap[index] = ref->func;
+      placeholderMap[table][index] = ref->func;
       auto* secondaryFunc = secondary.getFunction(ref->func);
       replacedElems[index] = secondaryFunc;
       if (!config.usePlaceholders) {
