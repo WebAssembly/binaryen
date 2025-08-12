@@ -675,7 +675,8 @@ void TranslateToFuzzReader::setupGlobals() {
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
     if (type.isContinuation()) {
-      // There is no way to make a continuation in a global.
+      // There is no way to make a continuation in a global. TODO: We could
+      // allow null ones, at least, that are always set to null.
       ++index;
       continue;
     }
@@ -716,6 +717,9 @@ void TranslateToFuzzReader::setupTags() {
     if (tag->imported() && !preserveImportsAndExports) {
       tag->module = tag->base = Name();
     }
+    if (tag->results() != Type::none) {
+      exceptionTags.push_back(tag.get());
+    }
   }
 
   // Add some random tags.
@@ -744,7 +748,8 @@ void TranslateToFuzzReader::setupTags() {
 void TranslateToFuzzReader::addTag() {
   auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
                              Signature(getControlFlowType(), Type::none));
-  wasm.addTag(std::move(tag));
+  auto* tagg = wasm.addTag(std::move(tag));
+  exceptionTags.push_back(tagg);
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
@@ -2436,10 +2441,10 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
   auto numTags = upTo(fuzzParams->MAX_TRY_CATCHES);
   std::unordered_set<Tag*> usedTags;
   for (Index i = 0; i < numTags; i++) {
-    if (wasm.tags.empty()) {
+    if (exceptionTags.empty()) {
       addTag();
     }
-    auto* tag = pick(wasm.tags).get();
+    auto* tag = pick(exceptionTags).get();
     if (usedTags.count(tag)) {
       continue;
     }
@@ -2486,7 +2491,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     return builder.makeTryTable(body, {}, {}, {});
   }
 
-  if (wasm.tags.empty()) {
+  if (exceptionTags.empty()) {
     addTag();
   }
 
@@ -2501,7 +2506,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     Type tagType;
     if (i < numCatches) {
       // Look for a specific tag.
-      auto& tag = pick(wasm.tags);
+      auto* tag = pick(exceptionTags);
       tagName = tag->name;
       tagType = tag->params();
     } else {
@@ -5228,10 +5233,10 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     }
   } else {
     // Get a random tag, adding a random one if necessary.
-    if (wasm.tags.empty()) {
+    if (exceptionTags.empty()) {
       addTag();
     }
-    tag = pick(wasm.tags).get();
+    tag = pick(exceptionTags);
   }
   auto tagType = tag->params();
   std::vector<Expression*> operands;
