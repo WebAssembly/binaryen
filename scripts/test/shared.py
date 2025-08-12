@@ -258,6 +258,7 @@ V8_OPTS = [
     '--experimental-wasm-stringref',
     '--experimental-wasm-fp16',
     '--experimental-wasm-custom-descriptors',
+    '--experimental-wasm-wasmfx',
 ]
 
 # external tools
