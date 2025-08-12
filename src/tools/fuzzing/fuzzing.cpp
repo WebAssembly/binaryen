@@ -2472,7 +2472,11 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   auto* body = make(type);
 
-  if (!funcContext || funcContext->breakableStack.empty()) {
+  if (!funcContext) {
+    return makeTrivial(type);
+  }
+
+  if (funcContext->breakableStack.empty()) {
     // Nothing to break to, emit a trivial TryTable.
     // TODO: Perhaps generate a block wrapping us?
     return builder.makeTryTable(body, {}, {}, {});
@@ -4340,7 +4344,10 @@ Expression* TranslateToFuzzReader::makeSelect(Type type) {
 
 Expression* TranslateToFuzzReader::makeSwitch(Type type) {
   assert(type == Type::unreachable);
-  if (!funcContext || funcContext->breakableStack.empty()) {
+  if (!funcContext) {
+    return makeTrivial(type);
+  }
+  if (funcContext->breakableStack.empty()) {
     return make(type);
   }
   // we need to find proper targets to break to; try a bunch
