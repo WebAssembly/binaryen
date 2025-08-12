@@ -2471,11 +2471,9 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
 
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   auto* body = make(type);
-
   if (!funcContext) {
     return makeTrivial(type);
   }
-
   if (funcContext->breakableStack.empty()) {
     // Nothing to break to, emit a trivial TryTable.
     // TODO: Perhaps generate a block wrapping us?
