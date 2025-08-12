@@ -226,6 +226,9 @@ struct ContData {
   // suspend).
   Literals resumeArguments;
 
+  // If set, this is the exception to be thrown at the resume point.
+  Tag* exceptionTag = nullptr;
+
   // Whether we executed. Continuations are one-shot, so they may not be
   // executed a second time.
   bool executed = false;
@@ -528,9 +531,8 @@ public:
       }
       if (!hasValue) {
         // We must execute this instruction. Set up the logic to note the values
-        // of children (we mainly need this for non-control flow structures,
-        // but even control flow ones must add a scope on the value stack, to
-        // not confuse the others).
+        // of children. TODO: as an optimization, we could avoid this for
+        // control flow structures, at the cost of more complexity
         StackValueNoter noter(this);
 
         if (Properties::isControlFlowStructure(curr)) {
@@ -592,12 +594,16 @@ public:
       // values on the stack, not values sent on a break/suspend; suspending is
       // handled above).
       if (!ret.breaking() && ret.getType().isConcrete()) {
-        assert(!valueStack.empty());
-        auto& values = valueStack.back();
-        values.push_back(ret.values);
+        // The value stack may be empty, if we lack a parent that needs our
+        // value. That is the case when we are the toplevel expression, etc.
+        if (!valueStack.empty()) {
+          auto& values = valueStack.back();
+          values.push_back(ret.values);
 #if WASM_INTERPRETER_DEBUG
-        std::cout << indent() << "added to valueStack: " << ret.values << '\n';
+          std::cout << indent() << "added to valueStack: " << ret.values
+                    << '\n';
 #endif
+        }
       }
     }
 
@@ -4863,6 +4869,12 @@ public:
       // restoredValues map.
       assert(currContinuation->resumeInfo.empty());
       assert(self()->restoredValuesMap.empty());
+      // Throw, if we were resumed by resume_throw;
+      if (auto* tag = currContinuation->exceptionTag) {
+        // XXX tag->name lacks cross-module support
+        throwException(WasmException{
+          self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+      }
       return currContinuation->resumeArguments;
     }
 
@@ -4895,7 +4907,7 @@ public:
     new_->resumeExpr = curr;
     return Flow(SUSPEND_FLOW, tag, std::move(arguments));
   }
-  Flow visitResume(Resume* curr) {
+  template<typename T> Flow doResume(T* curr, Tag* exceptionTag = nullptr) {
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
@@ -4923,6 +4935,7 @@ public:
         // the immediate ones here. TODO
         contData->resumeArguments = arguments;
       }
+      contData->exceptionTag = exceptionTag;
       self()->pushCurrContinuation(contData);
       self()->continuationStore->resuming = true;
 #if WASM_INTERPRETER_DEBUG
@@ -4931,15 +4944,8 @@ public:
 #endif
     }
 
-    Flow ret;
-    {
-      // Create a stack value scope. This ensures that we always have a scope,
-      // and so the code that pushes/pops doesn't need to check if a scope
-      // exists. (We do not need the values in this scope, of course, as no
-      // expression is above them, so we cannot suspend and need these values).
-      typename ExpressionRunner<SubType>::StackValueNoter noter(this);
-      ret = func.getFuncData()->doCall(arguments);
-    }
+    Flow ret = func.getFuncData()->doCall(arguments);
+
 #if WASM_INTERPRETER_DEBUG
     if (!self()->isResuming()) {
       std::cout << self()->indent() << "finished resuming, with " << ret
@@ -4995,7 +5001,11 @@ public:
     // No suspension; all done.
     return ret;
   }
-  Flow visitResumeThrow(ResumeThrow* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResume(Resume* curr) { return doResume(curr); }
+  Flow visitResumeThrow(ResumeThrow* curr) {
+    // TODO: should the Resume and ResumeThrow classes be merged?
+    return doResume(curr, self()->getModule()->getTag(curr->tag));
+  }
   Flow visitStackSwitch(StackSwitch* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override {
@@ -5058,14 +5068,20 @@ public:
 
     if (self()->isResuming()) {
       // The arguments are in the continuation data.
-      arguments = self()->getCurrContinuation()->resumeArguments;
+      auto currContinuation = self()->getCurrContinuation();
+      arguments = currContinuation->resumeArguments;
 
-      if (!self()->getCurrContinuation()->resumeExpr) {
+      if (!currContinuation->resumeExpr) {
         // This is the first time we resume, that is, there is no suspend which
         // is the resume expression that we need to execute up to. All we need
         // to do is just start calling this function (with the arguments we've
-        // set), so resuming is done
+        // set), so resuming is done. (And throw, if resume_throw.)
         self()->continuationStore->resuming = false;
+        if (auto* tag = currContinuation->exceptionTag) {
+          // XXX tag->name lacks cross-module support
+          throwException(WasmException{
+            self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+        }
       }
     }
 
