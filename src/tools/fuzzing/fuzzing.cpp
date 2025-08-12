@@ -677,7 +677,6 @@ void TranslateToFuzzReader::setupGlobals() {
     if (type.isContinuation()) {
       // There is no way to make a continuation in a global. TODO: We could
       // allow null ones, at least, that are always set to null.
-      ++index;
       continue;
     }
 
