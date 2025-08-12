@@ -491,6 +491,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
     auto eq = HeapTypes::eq.getBasic(share);
     auto any = HeapTypes::any.getBasic(share);
     auto func = HeapTypes::func.getBasic(share);
+    auto cont = HeapTypes::cont.getBasic(share);
     switch (type.getKind()) {
       case HeapTypeKind::Func:
         interestingHeapSubTypes[func].push_back(type);
@@ -517,7 +518,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
         }
         break;
       case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+        interestingHeapSubTypes[cont].push_back(type);
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
