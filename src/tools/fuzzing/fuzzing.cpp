@@ -674,6 +674,12 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
+    if (type.isContinuation()) {
+      // There is no way to make a continuation in a global.
+      ++index;
+      continue;
+    }
+
     // Prefer immutable ones as they can be used in global.gets in other
     // globals, for more interesting patterns.
     auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
