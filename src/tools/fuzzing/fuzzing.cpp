@@ -717,7 +717,7 @@ void TranslateToFuzzReader::setupTags() {
     if (tag->imported() && !preserveImportsAndExports) {
       tag->module = tag->base = Name();
     }
-    if (tag->results() != Type::none) {
+    if (tag->results() == Type::none) {
       exceptionTags.push_back(tag.get());
     }
   }
