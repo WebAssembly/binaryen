@@ -19,6 +19,7 @@
 #include "ir/child-typer.h"
 #include "ir/eh-utils.h"
 #include "ir/names.h"
+#include "ir/principal-type.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
@@ -293,71 +294,13 @@ void IRBuilder::dump() {
 
 struct IRBuilder::ChildPopper
   : UnifiedExpressionVisitor<ChildPopper, Result<>> {
-  struct Subtype {
-    Type bound;
-  };
 
-  struct AnyType {};
-
-  struct AnyReference {};
-
-  struct AnyTuple {
-    size_t arity;
-  };
-
-  struct AnyI8ArrayReference {};
-
-  struct AnyI16ArrayReference {};
-
-  struct Constraint : std::variant<Subtype,
-                                   AnyType,
-                                   AnyReference,
-                                   AnyTuple,
-                                   AnyI8ArrayReference,
-                                   AnyI16ArrayReference> {
-    std::optional<Type> getSubtype() const {
-      if (auto* subtype = std::get_if<Subtype>(this)) {
-        return subtype->bound;
-      }
-      return std::nullopt;
-    }
-    bool isAnyType() const { return std::get_if<AnyType>(this); }
-    bool isAnyReference() const { return std::get_if<AnyReference>(this); }
-    bool isAnyI8ArrayReference() const {
-      return std::get_if<AnyI8ArrayReference>(this);
-    }
-    bool isAnyI16ArrayReference() const {
-      return std::get_if<AnyI16ArrayReference>(this);
-    }
-    std::optional<size_t> getAnyTuple() const {
-      if (auto* tuple = std::get_if<AnyTuple>(this)) {
-        return tuple->arity;
-      }
-      return std::nullopt;
-    }
-    size_t size() const {
-      if (auto type = getSubtype()) {
-        return type->size();
-      }
-      if (auto arity = getAnyTuple()) {
-        return *arity;
-      }
-      return 1;
-    }
-    Constraint operator[](size_t i) const {
-      if (auto type = getSubtype()) {
-        return {Subtype{(*type)[i]}};
-      }
-      if (getAnyTuple()) {
-        return {AnyType{}};
-      }
-      return *this;
-    }
-  };
+  struct ConstraintCollector;
+  using Constraints = ChildTyper<ConstraintCollector>::Constraints;
 
   struct Child {
     Expression** childp;
-    Constraint constraint;
+    Constraints constraint;
   };
 
   struct ConstraintCollector : ChildTyper<ConstraintCollector> {
@@ -368,28 +311,8 @@ struct IRBuilder::ChildPopper
       : ChildTyper(builder.wasm, builder.func), builder(builder),
         children(children) {}
 
-    void noteSubtype(Expression** childp, Type type) {
-      children.push_back({childp, {Subtype{type}}});
-    }
-
-    void noteAnyType(Expression** childp) {
-      children.push_back({childp, {AnyType{}}});
-    }
-
-    void noteAnyReferenceType(Expression** childp) {
-      children.push_back({childp, {AnyReference{}}});
-    }
-
-    void noteAnyTupleType(Expression** childp, size_t arity) {
-      children.push_back({childp, {AnyTuple{arity}}});
-    }
-
-    void noteAnyI8ArrayReferenceType(Expression** childp) {
-      children.push_back({childp, {AnyI8ArrayReference{}}});
-    }
-
-    void noteAnyI16ArrayReferenceType(Expression** childp) {
-      children.push_back({childp, {AnyI16ArrayReference{}}});
+    void note(Expression** childp, Constraints type) {
+      children.push_back({childp, type});
     }
 
     Type getLabelType(Name label) {
@@ -399,7 +322,7 @@ struct IRBuilder::ChildPopper
     void visitIf(If* curr) {
       // Skip the control flow children because we only want to pop the
       // condition.
-      children.push_back({&curr->condition, {Subtype{Type::i32}}});
+      children.push_back({&curr->condition, {Type(Type::i32)}});
     }
 
     // It is a bug if we ever have insufficient type information.
@@ -513,18 +436,8 @@ private:
       auto type = scope.exprStack[stackIndex]->type[stackTupleIndex];
       if (unreachableIndex) {
         auto constraint = children[childIndex].constraint[childTupleIndex];
-        if (constraint.isAnyType()) {
-          // Always succeeds.
-        } else if (constraint.isAnyReference()) {
-          if (!type.isRef() && type != Type::unreachable) {
-            return true;
-          }
-        } else if (auto bound = constraint.getSubtype()) {
-          if (!Type::isSubType(type, *bound)) {
-            return true;
-          }
-        } else {
-          WASM_UNREACHABLE("unexpected constraint");
+        if (!PrincipalType::matches(type, constraint)) {
+          return true;
         }
       }
 
