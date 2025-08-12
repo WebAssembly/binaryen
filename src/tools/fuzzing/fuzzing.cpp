@@ -4342,11 +4342,8 @@ Expression* TranslateToFuzzReader::makeSelect(Type type) {
 
 Expression* TranslateToFuzzReader::makeSwitch(Type type) {
   assert(type == Type::unreachable);
-  if (!funcContext) {
+  if (!funcContext || funcContext->breakableStack.empty()) {
     return makeTrivial(type);
-  }
-  if (funcContext->breakableStack.empty()) {
-    return make(type);
   }
   // we need to find proper targets to break to; try a bunch
   int tries = fuzzParams->TRIES;
