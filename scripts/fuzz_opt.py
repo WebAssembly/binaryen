@@ -1627,7 +1627,7 @@ class Split(TestCaseHandler):
             return False
 
         # see D8.can_run
-        return all_disallowed(['shared-everything', 'strings'])
+        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
 
 # Check that the text format round-trips without error.
@@ -1835,7 +1835,7 @@ class Two(TestCaseHandler):
             return False
         if NANS:
             return False
-        return all_disallowed(['shared-everything', 'strings'])
+        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.
