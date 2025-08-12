@@ -28,12 +28,13 @@ namespace wasm {
 //
 //   note(Expression** childp, SmallVector<VarType, 1> type)
 //
-// Multiple VarTypes if and only if the child must be a tuple. In that case,
-// each vartype gives the constraint on a single element of the tuple.
+// Multiple VarTypes are provided if and only if the child must be a tuple. In
+// that case, each vartype gives the constraint on a single element of the
+// tuple.
 //
 // Subclasses must additionally implement a callback for getting the type of a
 // branch target. This callback will only be used when a the label type is not
-// passed directly as an argumnet to the branch visitor method (see below).
+// passed directly as an argument to the branch visitor method (see below).
 //
 //   Type getLabelType(Name label)
 //
