@@ -2444,7 +2444,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     if (exceptionTags.empty()) {
       addTag();
     }
-    auto* tag = pick(exceptionTags).get();
+    auto* tag = pick(exceptionTags);
     if (usedTags.count(tag)) {
       continue;
     }
