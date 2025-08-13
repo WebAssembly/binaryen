@@ -864,4 +864,14 @@
     ;; This will be reached.
     (call $log (i32.const 42))
   )
+
+  ;; CHECK:      [fuzz-exec] calling suspend-unhandled-block
+  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
+  (func $suspend-unhandled-block (export "suspend-unhandled-block")
+    ;; The nop here means that we are inside a block. The block will try to save
+    ;; resume data, but we should skip that without erroring, and just report an
+    ;; unhandled suspend.
+    (suspend $more)
+    (nop)
+  )
 )
