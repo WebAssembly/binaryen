@@ -1312,8 +1312,10 @@ struct InfoCollector
         }
       }
 
-      // Add the continuation.
-      auto location = getRootLocation(Type(HeapType::cont, NonNullable));
+      // Add the continuation. Its type is determined by the block we break to.
+      auto targetType = findBreakTarget(target)->type;
+      auto contType = targetType[targetType.size() - 1];
+      auto location = getRootLocation(contType);
       info.links.push_back(
         {location, getBreakTargetLocation(target, params.size())});
     }
