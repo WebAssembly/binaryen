@@ -1501,21 +1501,13 @@ struct Inlining : public Pass {
   }
 
   // Checks if the combined size of the code after inlining is under the
-  // absolute size limit. We have an absolute limit in order to avoid
-  // extremely-large sizes after inlining, as they may hit limits in VMs and/or
-  // slow down startup (measurements there indicate something like ~1 second to
-  // optimize a 100K function). See e.g.
-  // https://github.com/WebAssembly/binaryen/pull/3730#issuecomment-867939138
-  // https://github.com/emscripten-core/emscripten/issues/13899#issuecomment-825073344
+  // absolute size limit.
   bool isUnderSizeLimit(Name target, Name source) {
     // Estimate the combined binary size from the number of instructions.
     auto combinedSize = infos[target].size + infos[source].size;
     auto estimatedBinarySize = Measurer::BytesPerExpr * combinedSize;
-    // The limit is arbitrary, but based on the links above. It is a very high
-    // value that should appear very rarely in practice (for example, it does
-    // not occur on the Emscripten benchmark suite of real-world codebases).
-    const Index MaxCombinedBinarySize = 400 * 1024;
-    return estimatedBinarySize < MaxCombinedBinarySize;
+    auto& options = getPassRunner()->options;
+    return estimatedBinarySize < options.inlining.maxCombinedBinarySize;
   }
 };
 
