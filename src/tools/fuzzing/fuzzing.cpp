@@ -3457,7 +3457,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return makeRefFuncConst(type);
     }
     case HeapType::cont: {
-      WASM_UNREACHABLE("not implemented");
+      if (type.isNullable() || oneIn(4)) {
+        return builder.makeRefNull(HeapTypes::cont.getBasic(share));
+      }
+      // Emit the simplest possible continuation.
+      auto funcType = Type(Type::none, Type::none).as(share);
+      return builder.makeContNew(heapType, makeRefFuncConst(funcType));
     }
     case HeapType::any: {
       // Choose a subtype we can materialize a constant for. We cannot
