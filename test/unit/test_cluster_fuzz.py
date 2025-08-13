@@ -232,7 +232,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('struct.news are distributed as ~ mean 15, stddev 24, median 10')
+        print('struct.news are distributed can vary a lot, but should be ~10')
         # Given that, with 100 samples we are incredibly likely to see an
         # interesting number at least once. It is also incredibly unlikely for
         # the stdev to be zero.
@@ -244,7 +244,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('sizes are distributed as ~ mean 2933, stddev 2011, median 2510')
+        print('sizes are distributed as ~ mean 3600, stddev 2500, median 2800')
         print(f'mean sizes:   {statistics.mean(seen_sizes)}')
         print(f'stdev sizes:  {statistics.stdev(seen_sizes)}')
         print(f'median sizes: {statistics.median(seen_sizes)}')
@@ -253,7 +253,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('exports are distributed as ~ mean 9, stddev 6, median 8')
+        print('exports are distributed as ~ mean 16, stddev 13, median 13')
         print(f'mean exports:   {statistics.mean(seen_exports)}')
         print(f'stdev exports:  {statistics.stdev(seen_exports)}')
         print(f'median exports: {statistics.median(seen_exports)}')
@@ -427,7 +427,11 @@ class ClusterFuzz(utils.BinaryenTestCase):
                        '--experimental-wasm-custom-descriptors',
                        '--fuzzing',
                        fuzz_file]
-                proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+                # Capture stderr even though we will not read it. It may
+                # contain warnings like us passing v8 experimental flags.
+                proc = subprocess.run(cmd,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
 
                 # An execution is valid if we exited without error, and if we
                 # managed to run some code before exiting (modules with no
