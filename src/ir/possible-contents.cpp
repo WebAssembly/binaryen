@@ -1291,14 +1291,40 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitResume(Resume* curr) {
+
+  template<typename T> void handleResume(T* curr) {
     // TODO: optimize when possible
     addRoot(curr);
+
+    // Connect handled tags with their branch targets, and materialize non-null
+    // continuation values.
+    auto numTags = curr->handlerTags.size();
+    for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
+      auto tag = curr->handlerTags[tagIndex];
+      auto target = curr->handlerBlocks[tagIndex];
+      auto params = getModule()->getTag(tag)->params();
+
+      // Add the values from the tag.
+      for (Index i = 0; i < params.size(); i++) {
+        if (isRelevant(params[i])) {
+          info.links.push_back(
+            {TagLocation{tag, i}, getBreakTargetLocation(target, i)});
+        }
+      }
+
+      // Add the continuation. Its type is determined by the block we break to,
+      // as the last result.
+      auto targetType = findBreakTarget(target)->type;
+      assert(targetType.size() >= 1);
+      auto contType = targetType[targetType.size() - 1];
+      auto location = getRootLocation(contType);
+      info.links.push_back(
+        {location, getBreakTargetLocation(target, params.size())});
+    }
   }
-  void visitResumeThrow(ResumeThrow* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
+
+  void visitResume(Resume* curr) { handleResume(curr); }
+  void visitResumeThrow(ResumeThrow* curr) { handleResume(curr); }
   void visitStackSwitch(StackSwitch* curr) {
     // TODO: optimize when possible
     addRoot(curr);
