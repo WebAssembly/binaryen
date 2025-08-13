@@ -500,20 +500,17 @@ struct TagLocation {
   }
 };
 
-// The location of an exnref materialized by a catch_ref or catch_all_ref clause
-// of a try_table. No data is stored here. exnrefs contain a tag and a payload
-// at run-time, as well as potential metadata such as stack traces, but we don't
-// track that. So this is the same as NullLocation in a way: we just need *a*
-// source of contents for places that receive an exnref.
-struct CaughtExnRefLocation {
-  bool operator==(const CaughtExnRefLocation& other) const { return true; }
-};
-
-// A null value. This is used as the location of the default value of a var in a
-// function, a null written to a struct field in struct.new_with_default, etc.
-struct NullLocation {
+// A root value. This is used as the location of the default value of a var in a
+// function, a null written to a struct field in struct.new_with_default, an
+// exnref from a catch etc. - in all these cases, we know
+//
+//  1. The value (which might be a null, or "anything of this type").
+//  2. That the value will never change; we can learn nothing more here.
+//  3. That all roots of this type can share the same location.
+//
+struct RootLocation {
   Type type;
-  bool operator==(const NullLocation& other) const {
+  bool operator==(const RootLocation& other) const {
     return type == other.type;
   }
 };
@@ -555,8 +552,7 @@ using Location = std::variant<ExpressionLocation,
                               SignatureResultLocation,
                               DataLocation,
                               TagLocation,
-                              CaughtExnRefLocation,
-                              NullLocation,
+                              RootLocation,
                               ConeReadLocation>;
 
 } // namespace wasm
@@ -637,14 +633,8 @@ template<> struct hash<wasm::TagLocation> {
   }
 };
 
-template<> struct hash<wasm::CaughtExnRefLocation> {
-  size_t operator()(const wasm::CaughtExnRefLocation& loc) const {
-    return std::hash<const void*>()("caught-exnref-location");
-  }
-};
-
-template<> struct hash<wasm::NullLocation> {
-  size_t operator()(const wasm::NullLocation& loc) const {
+template<> struct hash<wasm::RootLocation> {
+  size_t operator()(const wasm::RootLocation& loc) const {
     return std::hash<wasm::Type>{}(loc.type);
   }
 };
