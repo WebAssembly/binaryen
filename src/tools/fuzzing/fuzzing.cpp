@@ -3461,9 +3461,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         return builder.makeRefNull(HeapTypes::cont.getBasic(share));
       }
       // Emit the simplest possible continuation.
-      auto funcType = Type(Signature(Type::none, Type::none), NonNullable);
-      heapType = Continuation(funcType);
-      return builder.makeContNew(heapType, makeRefFuncConst(funcType));
+      auto funcSig = Signature(Type::none, Type::none);
+      auto funcType = Type(funcSig, NonNullable);
+      auto contType = Continuation(funcSig);
+      return builder.makeContNew(contType, makeRefFuncConst(funcType));
     }
     case HeapType::any: {
       // Choose a subtype we can materialize a constant for. We cannot
