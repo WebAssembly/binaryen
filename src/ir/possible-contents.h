@@ -548,7 +548,6 @@ using Location = std::variant<ExpressionLocation,
                               SignatureResultLocation,
                               DataLocation,
                               TagLocation,
-                              CaughtExnRefLocation,
                               RootLocation,
                               ConeReadLocation>;
 
