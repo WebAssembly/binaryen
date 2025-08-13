@@ -8,15 +8,36 @@
  ;; CHECK:      (type $cont (cont $func))
  (type $cont (cont $func))
 
- ;; CHECK:      (elem declare func $cont)
+ ;; CHECK:      (type $func-i32 (func (result i32)))
+ (type $func-i32 (func (result i32)))
+ ;; CHECK:      (type $cont-i32 (cont $func-i32))
+ (type $cont-i32 (cont $func-i32))
+
+ ;; CHECK:      (type $4 (func (result i32 (ref $cont))))
+
+ ;; CHECK:      (elem declare func $cont $cont-i32)
 
  ;; CHECK:      (tag $tag (type $func))
  (tag $tag (type $func))
 
- ;; CHECK:      (export "run_invoker" (func $main))
- (export "run_invoker" (func $main))
+ ;; CHECK:      (tag $tag-i32 (type $func-i32) (result i32))
+ (tag $tag-i32 (type $func-i32))
 
- ;; CHECK:      (func $main (type $func)
+ ;; CHECK:      (export "resume" (func $resume))
+
+ ;; CHECK:      (export "resume_throw" (func $resume_throw))
+
+ ;; CHECK:      (export "resume-i32" (func $resume-i32))
+
+ ;; CHECK:      (func $cont (type $func)
+ ;; CHECK-NEXT:  (suspend $tag)
+ ;; CHECK-NEXT: )
+ (func $cont
+  ;; Helper for below.
+  (suspend $tag)
+ )
+
+ ;; CHECK:      (func $resume (type $func)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref $cont))
  ;; CHECK-NEXT:    (resume $cont (on $tag $block)
@@ -28,7 +49,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $main
+ (func $resume (export "resume")
   ;; A continuation is created, it suspends, and we handle that. There is
   ;; nothing to optimize or change here.
   (drop
@@ -43,11 +64,69 @@
   )
  )
 
- ;; CHECK:      (func $cont (type $func)
- ;; CHECK-NEXT:  (suspend $tag)
+ ;; CHECK:      (func $resume_throw (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref $cont))
+ ;; CHECK-NEXT:    (resume_throw $cont $tag (on $tag $block)
+ ;; CHECK-NEXT:     (cont.new $cont
+ ;; CHECK-NEXT:      (ref.func $cont)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cont
+ (func $resume_throw (export "resume_throw")
+  ;; As above, but with resume_throw.
+  (drop
+   (block $block (result (ref $cont))
+    (resume_throw $cont $tag (on $tag $block)
+     (cont.new $cont
+      (ref.func $cont)
+     )
+    )
+    (return)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $cont-i32 (type $func-i32) (result i32)
+ ;; CHECK-NEXT:  (suspend $tag)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $cont-i32 (result i32)
+  ;; Helper for below.
   (suspend $tag)
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $resume-i32 (type $func)
+ ;; CHECK-NEXT:  (tuple.drop 2
+ ;; CHECK-NEXT:   (block $block (type $4) (result i32 (ref $cont))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (resume $cont-i32 (on $tag-i32 $block)
+ ;; CHECK-NEXT:      (cont.new $cont-i32
+ ;; CHECK-NEXT:       (ref.func $cont-i32)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume-i32 (export "resume-i32")
+  ;; As above, but with more values sent than just the continuation.
+  (tuple.drop 2
+   (block $block (result i32 (ref $cont))
+    (resume $cont-i32 (on $tag-i32 $block)
+     (cont.new $cont-i32
+      (ref.func $cont-i32)
+     )
+    )
+    (return)
+   )
+  )
  )
 )
 

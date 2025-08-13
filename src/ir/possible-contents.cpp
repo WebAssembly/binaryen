@@ -1297,7 +1297,7 @@ struct InfoCollector
     addRoot(curr);
 
     // Connect handled tags with their branch targets, and materialize non-null
-    // exnref values.
+    // continuation values.
     auto numTags = curr->handlerTags.size();
     for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
       auto tag = curr->handlerTags[tagIndex];
@@ -1312,8 +1312,12 @@ struct InfoCollector
         }
       }
 
-      // Add the continuation.
-      auto location = getRootLocation(Type(HeapType::cont, NonNullable));
+      // Add the continuation. Its type is determined by the block we break to,
+      // as the last result.
+      auto targetType = findBreakTarget(target)->type;
+      assert(targetType.size() >= 1);
+      auto contType = targetType[targetType.size() - 1];
+      auto location = getRootLocation(contType);
       info.links.push_back(
         {location, getBreakTargetLocation(target, params.size())});
     }
