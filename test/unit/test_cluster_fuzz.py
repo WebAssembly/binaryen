@@ -232,7 +232,7 @@ class ClusterFuzz(utils.BinaryenTestCase):
 
         print()
 
-        print('struct.news are distributed can vary a lot, but should be ~10')
+        print('struct.news can vary a lot, but should be ~10')
         # Given that, with 100 samples we are incredibly likely to see an
         # interesting number at least once. It is also incredibly unlikely for
         # the stdev to be zero.
