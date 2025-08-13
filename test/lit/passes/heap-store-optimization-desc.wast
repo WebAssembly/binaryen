@@ -5,12 +5,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field (mut i32)))))
-    (type $struct (descriptor $desc (struct (field (mut i32)))))
-    ;; CHECK:       (type $desc (describes $struct (descriptor $meta (struct))))
-    (type $desc (describes $struct (descriptor $meta (struct))))
-    ;; CHECK:       (type $meta (describes $desc (struct)))
-    (type $meta (describes $desc (struct)))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct (field (mut i32))))
+    (type $struct (descriptor $desc) (struct (field (mut i32))))
+    ;; CHECK:       (type $desc (describes $struct) (descriptor $meta) (struct))
+    (type $desc (describes $struct) (descriptor $meta) (struct))
+    ;; CHECK:       (type $meta (describes $desc) (struct))
+    (type $meta (describes $desc) (struct))
   )
 
   ;; CHECK:      (import "" "" (func $effect (type $3)))

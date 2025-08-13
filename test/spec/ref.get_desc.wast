@@ -1,7 +1,7 @@
 (module
   (rec
-    (type $struct (descriptor $desc (struct)))
-    (type $desc (describes $struct (struct)))
+    (type $struct (descriptor $desc) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   (global $desc1 (ref (exact $desc)) (struct.new $desc))
@@ -51,8 +51,8 @@
 (assert_invalid
   (module
     (rec
-      (type $struct (descriptor $desc (struct)))
-      (type $desc (describes $struct (struct)))
+      (type $struct (descriptor $desc) (struct))
+      (type $desc (describes $struct) (struct))
     )
     (func (param $struct (ref null $struct)) (result (ref (exact $desc)))
       ;; The result is not exact if the input is not exact.

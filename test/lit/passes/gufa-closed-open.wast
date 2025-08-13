@@ -134,13 +134,13 @@
 (module
  (rec
   ;; OPEND:      (rec
-  ;; OPEND-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+  ;; OPEND-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
   ;; CLOSE:      (rec
-  ;; CLOSE-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
-  (type $A (sub (descriptor $A.desc (struct))))
-  ;; OPEND:       (type $A.desc (sub (describes $A (struct))))
-  ;; CLOSE:       (type $A.desc (sub (describes $A (struct))))
-  (type $A.desc (sub (describes $A (struct))))
+  ;; CLOSE-NEXT:  (type $A (sub (descriptor $A.desc) (struct)))
+  (type $A (sub (descriptor $A.desc) (struct)))
+  ;; OPEND:       (type $A.desc (sub (describes $A) (struct)))
+  ;; CLOSE:       (type $A.desc (sub (describes $A) (struct)))
+  (type $A.desc (sub (describes $A) (struct)))
  )
 
  ;; OPEND:      (type $2 (func (result anyref)))

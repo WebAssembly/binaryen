@@ -1,7 +1,7 @@
 (module
   (rec
-    (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-    (type $pair.desc (describes $pair (struct)))
+    (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+    (type $pair.desc (describes $pair) (struct))
   )
   (func $struct.new (param $desc (ref null (exact $pair.desc))) (result (ref (exact $pair)))
     (struct.new $pair
@@ -47,8 +47,8 @@
 (assert_invalid
   (module
     (rec
-      (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-      (type $pair.desc (describes $pair (struct)))
+      (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+      (type $pair.desc (describes $pair) (struct))
     )
     (func (result (ref (exact $pair)))
       ;; The descriptor operand is missing.
@@ -64,8 +64,8 @@
 (assert_invalid
   (module
     (rec
-      (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-      (type $pair.desc (describes $pair (struct)))
+      (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+      (type $pair.desc (describes $pair) (struct))
     )
     (func (result (ref (exact $pair)))
        The descriptor operand is missing.
@@ -78,8 +78,8 @@
 (assert_invalid
   (module
     (rec
-      (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-      (type $pair.desc (describes $pair (struct)))
+      (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+      (type $pair.desc (describes $pair) (struct))
     )
     (func (result (ref (exact $pair)))
       ;; The descriptor needs to be exact.
@@ -97,8 +97,8 @@
 (assert_invalid
   (module
     (rec
-      (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-      (type $pair.desc (describes $pair (struct)))
+      (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+      (type $pair.desc (describes $pair) (struct))
     )
     (func (result (ref (exact $pair)))
       ;; The descriptor needs to be exact.
@@ -114,8 +114,8 @@
 (assert_invalid
   (module
     (rec
-      (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-      (type $pair.desc (describes $pair (struct)))
+      (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+      (type $pair.desc (describes $pair) (struct))
       (type $other (struct))
     )
     (func (result (ref (exact $pair)))
@@ -133,8 +133,8 @@
 (assert_invalid
   (module
     (rec
-      (type $pair (descriptor $pair.desc (struct (field i32 i64))))
-      (type $pair.desc (describes $pair (struct)))
+      (type $pair (descriptor $pair.desc) (struct (field i32 i64)))
+      (type $pair.desc (describes $pair) (struct))
       (type $other (struct))
     )
     (func (result (ref (exact $pair)))

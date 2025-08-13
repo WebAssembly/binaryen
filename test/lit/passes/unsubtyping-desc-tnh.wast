@@ -8,9 +8,9 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (sub (struct)))
-    (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc) (struct)))
     ;; CHECK:       (type $A.desc (sub (struct)))
-    (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A) (struct)))
   )
 
   ;; CHECK:      (global $A.desc (ref null (exact $A.desc)) (struct.new_default $A.desc))
@@ -25,9 +25,9 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (sub (struct)))
-    (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc) (struct)))
     ;; CHECK:       (type $A.desc (sub (struct)))
-    (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A) (struct)))
   )
 
   ;; CHECK:       (type $2 (func (param (ref null (exact $A.desc)))))
@@ -53,9 +53,9 @@
 (module
   (rec
     ;; CHECK:      (type $struct (sub (struct)))
-    (type $struct (sub (descriptor $desc (struct))))
-    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
-    (type $meta (sub (describes $desc (struct))))
+    (type $struct (sub (descriptor $desc) (struct)))
+    (type $desc (sub (describes $struct) (descriptor $meta) (struct)))
+    (type $meta (sub (describes $desc) (struct)))
   )
 
   ;; CHECK:      (global $g (ref $struct) (struct.new_default $struct))
@@ -69,9 +69,9 @@
     ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $struct)))))
     (type $A (sub (struct (field (ref $struct)))))
     ;; CHECK:       (type $struct (sub (struct)))
-    (type $struct (sub (descriptor $desc (struct))))
-    (type $desc (sub (describes $struct (descriptor $meta (struct)))))
-    (type $meta (sub (describes $desc (struct))))
+    (type $struct (sub (descriptor $desc) (struct)))
+    (type $desc (sub (describes $struct) (descriptor $meta) (struct)))
+    (type $meta (sub (describes $desc) (struct)))
   )
 
   ;; CHECK:      (global $g (ref $A) (struct.new $A

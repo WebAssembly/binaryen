@@ -7,16 +7,16 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct)))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc) (struct))
     ;; CKIIT:      (rec
-    ;; CKIIT-NEXT:  (type $struct (descriptor $desc (struct)))
+    ;; CKIIT-NEXT:  (type $struct (descriptor $desc) (struct))
     ;; CKTNH:      (rec
-    ;; CKTNH-NEXT:  (type $struct (descriptor $desc (struct)))
-    (type $struct (descriptor $desc (struct)))
-    ;; CHECK:       (type $desc (describes $struct (struct)))
-    ;; CKIIT:       (type $desc (describes $struct (struct)))
-    ;; CKTNH:       (type $desc (describes $struct (struct)))
-    (type $desc (describes $struct (struct)))
+    ;; CKTNH-NEXT:  (type $struct (descriptor $desc) (struct))
+    (type $struct (descriptor $desc) (struct))
+    ;; CHECK:       (type $desc (describes $struct) (struct))
+    ;; CKIIT:       (type $desc (describes $struct) (struct))
+    ;; CKTNH:       (type $desc (describes $struct) (struct))
+    (type $desc (describes $struct) (struct))
   )
 
   ;; CHECK:      (func $new-null-desc (type $5) (param $desc nullref)

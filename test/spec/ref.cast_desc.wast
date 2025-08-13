@@ -1,10 +1,10 @@
 (module
   (rec
-    (type $super (sub (descriptor $super.desc (struct))))
-    (type $super.desc (sub (describes $super (struct))))
+    (type $super (sub (descriptor $super.desc) (struct)))
+    (type $super.desc (sub (describes $super) (struct)))
 
-    (type $sub (sub $super (descriptor $sub.desc (struct))))
-    (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    (type $sub (sub $super (descriptor $sub.desc) (struct)))
+    (type $sub.desc (sub $super.desc (describes $sub) (struct)))
   )
 
   (global $super.desc1 (ref (exact $super.desc)) (struct.new $super.desc))
@@ -222,11 +222,11 @@
 (assert_invalid
   (module
     (rec
-      (type $super (sub (descriptor $super.desc (struct))))
-      (type $super.desc (sub (describes $super (struct))))
+      (type $super (sub (descriptor $super.desc) (struct)))
+      (type $super.desc (sub (describes $super) (struct)))
 
-      (type $sub (sub $super (descriptor $sub.desc (struct))))
-      (type $sub.desc (sub $super.desc (describes $sub (struct))))
+      (type $sub (sub $super (descriptor $sub.desc) (struct)))
+      (type $sub.desc (sub $super.desc (describes $sub) (struct)))
     )
     (func (param $super.desc (ref null $super.desc)) (result anyref)
       (ref.cast_desc (ref null $sub)
@@ -242,11 +242,11 @@
 (assert_invalid
   (module
     (rec
-      (type $super (sub (descriptor $super.desc (struct))))
-      (type $super.desc (sub (describes $super (struct))))
+      (type $super (sub (descriptor $super.desc) (struct)))
+      (type $super.desc (sub (describes $super) (struct)))
 
-      (type $sub (sub $super (descriptor $sub.desc (struct))))
-      (type $sub.desc (sub $super.desc (describes $sub (struct))))
+      (type $sub (sub $super (descriptor $sub.desc) (struct)))
+      (type $sub.desc (sub $super.desc (describes $sub) (struct)))
     )
     (func (param $super.desc (ref null $super.desc)) (result anyref)
       (ref.cast_desc (ref $sub)
@@ -262,8 +262,8 @@
 (assert_invalid
   (module
     (rec
-      (type $struct (descriptor $desc (struct)))
-      (type $desc (describes $struct (struct)))
+      (type $struct (descriptor $desc) (struct))
+      (type $desc (describes $struct) (struct))
     )
     (func (param $any anyref) (param $desc (ref null $desc)) (result anyref)
       ;; The cast type cannot be exact because the descriptor is not exact.
@@ -279,8 +279,8 @@
 (assert_invalid
   (module
     (rec
-      (type $struct (descriptor $desc (struct)))
-      (type $desc (describes $struct (struct)))
+      (type $struct (descriptor $desc) (struct))
+      (type $desc (describes $struct) (struct))
     )
     (func (param $any anyref) (param $desc (ref null $desc)) (result anyref)
       ;; The cast type cannot be exact because the descriptor is not exact.
