@@ -463,11 +463,19 @@ protected:
   // Add an entry to help us resume this continuation later. Instructions call
   // this as we unwind.
   void pushResumeEntry(const Literals& entry, const char* what) {
+    auto currContinuation = getCurrContinuationOrNull();
+    if (!currContinuation) {
+      // We are suspending outside of a continuation. This will trap as an
+      // unhandled suspension when we reach the host, so we don't need to save
+      // any resume entries (it would be simpler to just trap when we suspend in
+      // such a situation, but spec tests want to differentiate traps from
+      // suspends).
+      return;
+    }
 #if WASM_INTERPRETER_DEBUG
     std::cout << indent() << "push resume entry [" << what << "]: " << entry
               << "\n";
 #endif
-    auto currContinuation = getCurrContinuation();
     currContinuation->resumeInfo.push_back(entry);
   }
 
