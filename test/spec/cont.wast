@@ -726,3 +726,143 @@
 )
 (assert_return (invoke "main") (i32.const 10))
 
+;; Syntax: check unfolded forms
+(module
+  (type $ft (func))
+  (type $ct (cont $ft))
+  (rec
+    (type $ft2 (func (param (ref null $ct2))))
+    (type $ct2 (cont $ft2)))
+
+  (tag $yield (param i32))
+  (tag $swap)
+
+  ;; Check cont.new
+  (func (result (ref $ct))
+    ref.null $ft
+    block (param (ref null $ft)) (result (ref $ct))
+      cont.new $ct
+    end
+  )
+  ;; Check cont.bind
+  (func (param (ref $ct)) (result (ref $ct))
+    local.get 0
+    block (param (ref $ct)) (result (ref $ct))
+      cont.bind $ct $ct
+    end
+  )
+  ;; Check suspend
+  (func
+    block
+      suspend $swap
+    end
+  )
+  ;; Check resume
+  (func (param $k (ref $ct)) (result i32)
+    (local.get $k)
+    block $on_yield (param (ref $ct)) (result i32 (ref $ct))
+      resume $ct (on $yield $on_yield)
+      i32.const 42
+      return
+    end
+    local.set $k
+  )
+  ;; Check resume_throw
+  (func (param $k (ref $ct)) (result i32)
+    block $on_yield (result i32 (ref $ct))
+      i32.const 42
+      local.get $k
+      resume_throw $ct $yield
+      i32.const 42
+      return
+    end
+    local.set $k
+  )
+  ;; Check switch
+  (func (param $k (ref $ct2))
+    local.get $k
+    block (param (ref $ct2)) (result (ref null $ct2))
+      switch $ct2 $swap
+    end
+    drop
+  )
+)
+
+;; Syntax: check instructions in tail position in unfolded form
+(module
+  (type $ft (func))
+  (type $ct (cont $ft))
+  (rec
+    (type $ft2 (func (param (ref null $ct2))))
+    (type $ct2 (cont $ft2)))
+
+  (tag $yield (param i32))
+  (tag $swap)
+
+  ;; Check cont.new
+  (func (result (ref $ct))
+    ref.null $ft
+    cont.new $ct
+  )
+  ;; Check cont.bind
+  (func (param (ref $ct)) (result (ref $ct))
+    local.get 0
+    cont.bind $ct $ct
+  )
+
+  ;; Check resume
+  (func (;2;) (param $k (ref $ct))
+    local.get $k
+    resume $ct
+  )
+  ;; Check resume_throw
+  (func (param $k (ref $ct))
+    i32.const 42
+    local.get $k
+    resume_throw $ct $yield
+  )
+  ;; Check switch
+  (func (param $k (ref $ct2)) (result (ref null $ct2))
+    local.get $k
+    switch $ct2 $swap
+  )
+  ;; Check suspend
+  (func
+    suspend $swap
+  )
+)
+
+(module
+  (type $ft0 (func))
+  (type $ct0 (cont $ft0))
+
+  (type $ft1 (func (param (ref $ct0))))
+  (type $ct1 (cont $ft1))
+
+  (tag $t)
+
+  (func $f
+    (cont.new $ct1 (ref.func $g))
+    (switch $ct1 $t)
+  )
+  (elem declare func $f)
+
+  (func $g (param (ref $ct0)))
+  (elem declare func $g)
+
+  (func $entry
+    (cont.new $ct0 (ref.func $f))
+    (resume $ct0 (on $t switch))
+  )
+)
+
+(assert_invalid
+  (module
+    (rec
+      (type $ft (func (param (ref $ct))))
+      (type $ct (cont $ft)))
+    (tag $t (param i32))
+
+    (func (param $k (ref $ct))
+      (switch $ct $t)))
+  "type mismatch in switch tag")
