@@ -138,6 +138,7 @@ struct GUFAOptimizer
     if (contents.getType() == Type::unreachable) {
       // This cannot contain any possible value at all. It must be unreachable
       // code.
+std::cout << "no value yo " << *curr << "\n";
       replaceCurrent(getDroppedChildrenAndAppend(
         curr, wasm, options, builder.makeUnreachable()));
       optimized = true;
@@ -177,6 +178,7 @@ struct GUFAOptimizer
         // The type is not compatible and this is a simple constant expression
         // like a ref.func. That means this code must be unreachable. (See below
         // for the case of a non-constant.)
+std::cout << "not compatible man\n";
         replaceCurrent(getDroppedChildrenAndAppend(
           curr, wasm, options, builder.makeUnreachable()));
         optimized = true;
