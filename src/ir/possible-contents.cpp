@@ -1297,7 +1297,7 @@ struct InfoCollector
     addRoot(curr);
 
     // Connect handled tags with their branch targets, and materialize non-null
-    // exnref values.
+    // continuation values.
     auto numTags = curr->handlerTags.size();
     for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
       auto tag = curr->handlerTags[tagIndex];
