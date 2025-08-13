@@ -139,21 +139,28 @@ public:
         tableStore(exportedTable, index, arguments[1]);
         return {};
       } else if (import->base == "call-export") {
-        callExportAsJS(arguments[0].geti32());
         // The second argument determines if we should catch and rethrow
         // exceptions. There is no observable difference in those two modes in
         // the binaryen interpreter, so we don't need to do anything.
-
+        auto flow = callExportAsJS(arguments[0].geti32());
         // Return nothing. If we wanted to return a value we'd need to have
-        // multiple such functions, one for each signature.
+        // multiple such functions, one for each signature. However, we do need
+        // to trap on suspensions (suspending through JS is not valid).
+        if (flow.suspendTag) {
+          throwJSException();
+        }
         return {};
       } else if (import->base == "call-export-catch") {
+        Flow flow;
         try {
-          callExportAsJS(arguments[0].geti32());
-          return {Literal(int32_t(0))};
+          flow = callExportAsJS(arguments[0].geti32());
         } catch (const WasmException& e) {
           return {Literal(int32_t(1))};
         }
+        if (flow.suspendTag) {
+          throwJSException();
+        }
+        return {Literal(int32_t(0))};
       } else if (import->base == "call-ref") {
         // Similar to call-export*, but with a ref.
         callRefAsJS(arguments[0]);
@@ -203,7 +210,7 @@ public:
     throwException(WasmException{Literal(payload)});
   }
 
-  Literals callExportAsJS(Index index) {
+  Flow callExportAsJS(Index index) {
     if (index >= wasm.exports.size()) {
       // No export.
       throwJSException();
@@ -216,7 +223,7 @@ public:
     return callFunctionAsJS(*exp->getInternalName());
   }
 
-  Literals callRefAsJS(Literal ref) {
+  Flow callRefAsJS(Literal ref) {
     if (!ref.isFunction()) {
       // Not a callable ref.
       throwJSException();
@@ -226,7 +233,7 @@ public:
 
   // Call a function in a "JS-ey" manner, adding arguments as needed, and
   // throwing if necessary, the same way JS does.
-  Literals callFunctionAsJS(Name name) {
+  Flow callFunctionAsJS(Name name) {
     auto* func = wasm.getFunction(name);
 
     // Send default values as arguments, or error if we need anything else.
@@ -254,9 +261,7 @@ public:
     }
 
     // Call the function.
-    auto flow = instance->callFunction(func->name, arguments);
-    assert(!flow.suspendTag);
-    return flow.values;
+    return instance->callFunction(func->name, arguments);
   }
 
   void setModuleRunner(ModuleRunner* instance_) { instance = instance_; }
