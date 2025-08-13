@@ -13,10 +13,11 @@
  ;; CHECK:      (tag $tag (type $func))
  (tag $tag (type $func))
 
- ;; CHECK:      (export "run_invoker" (func $main))
- (export "run_invoker" (func $main))
+ ;; CHECK:      (export "resume" (func $resume))
 
- ;; CHECK:      (func $main (type $func)
+ ;; CHECK:      (export "resume_throw" (func $resume_throw))
+
+ ;; CHECK:      (func $resume (type $func)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $block (result (ref $cont))
  ;; CHECK-NEXT:    (resume $cont (on $tag $block)
@@ -28,12 +29,38 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $main
+ (func $resume (export "resume")
   ;; A continuation is created, it suspends, and we handle that. There is
   ;; nothing to optimize or change here.
   (drop
    (block $block (result (ref $cont))
     (resume $cont (on $tag $block)
+     (cont.new $cont
+      (ref.func $cont)
+     )
+    )
+    (return)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $resume_throw (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref $cont))
+ ;; CHECK-NEXT:    (resume_throw $cont $tag (on $tag $block)
+ ;; CHECK-NEXT:     (cont.new $cont
+ ;; CHECK-NEXT:      (ref.func $cont)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $resume_throw (export "resume_throw")
+  ;; As above, but with resume_throw.
+  (drop
+   (block $block (result (ref $cont))
+    (resume_throw $cont $tag (on $tag $block)
      (cont.new $cont
       (ref.func $cont)
      )
