@@ -893,10 +893,21 @@ struct InfoCollector
 
   // Creates a location for a root of a particular type, creating a RootLocation
   // and marking it as a root.
-  Location getRootLocation(Type type) {
+  Location getRootLocation(Type type, PossibleContents rootValue) {
     auto location = RootLocation{type};
-    addRoot(location, PossibleContents::literal(Literal::makeZero(type)));
+    addRoot(location, rootValue);
     return location;
+  }
+
+  // Creates a root location, settings its value by the type.
+  Location getRootLocation(Type type) {
+    return getRootLocation(type, PossibleContents::fromType(type));
+  }
+
+  // Makes a root location containing a null.
+  Location getNullLocation(Type type) {
+    return getRootLocation(type,
+                           PossibleContents::literal(Literal::makeZero(type)));
   }
 
   // Iterates over a list of children and adds links from them. The target of
@@ -927,7 +938,7 @@ struct InfoCollector
       auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         info.links.push_back(
-          {getRootLocation(fields[i].type), DataLocation{type, i}});
+          {getNullLocation(fields[i].type), DataLocation{type, i}});
       }
     } else {
       // Link the operands to the struct's fields.
@@ -947,7 +958,7 @@ struct InfoCollector
         {ExpressionLocation{curr->init, 0}, DataLocation{type, 0}});
     } else {
       info.links.push_back(
-        {getRootLocation(type.getArray().element.type), DataLocation{type, 0}});
+        {getNullLocation(type.getArray().element.type), DataLocation{type, 0}});
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
@@ -1356,7 +1367,7 @@ struct InfoCollector
             source = ParamLocation{getFunction(), index};
           } else {
             // This is the default value from the function entry, a null.
-            source = getRootLocation(type[i]);
+            source = getNullLocation(type[i]);
           }
           info.links.push_back({source, ExpressionLocation{get, i}});
         }
