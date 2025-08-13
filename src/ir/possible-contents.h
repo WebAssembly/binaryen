@@ -502,8 +502,8 @@ struct TagLocation {
 
 // A root value. This is used as the location of the default value of a var in a
 // function, a null written to a struct field in struct.new_with_default, an
-// exnref from a catch etc. - in all these cases, all we know is the type and
-// nothing more, so these are simple typed roots in the graph.
+// exnref from a catch etc. - in all these cases, we know the value, and that it
+// will never change.
 struct RootLocation {
   Type type;
   bool operator==(const RootLocation& other) const {
