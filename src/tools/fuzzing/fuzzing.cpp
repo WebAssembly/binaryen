@@ -3462,6 +3462,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       // Emit the simplest possible continuation.
       auto funcType = Type(Signature(Type::none, Type::none), NonNullable);
+      heapType = Continuation(funcType);
       return builder.makeContNew(heapType, makeRefFuncConst(funcType));
     }
     case HeapType::any: {
