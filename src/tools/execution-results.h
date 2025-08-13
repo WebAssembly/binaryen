@@ -476,6 +476,7 @@ struct ExecutionResults {
       auto flow = instance.callFunction(func->name, arguments);
       if (flow.suspendTag) { // TODO: support stack switching here
         std::cout << "[exception thrown: unhandled suspend]" << std::endl;
+        instance.clearContinuationStore();
         return Exception{};
       }
       return flow.values;
