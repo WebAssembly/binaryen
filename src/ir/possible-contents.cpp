@@ -891,13 +891,23 @@ struct InfoCollector
     handleIndirectCall(curr, curr->target->type);
   }
 
-  // Creates a location for a null of a particular type and adds a root for it.
-  // Such roots are where the default value of an i32 local comes from, or the
-  // value in a ref.null.
-  Location getNullLocation(Type type) {
-    auto location = NullLocation{type};
-    addRoot(location, PossibleContents::literal(Literal::makeZero(type)));
+  // Creates a location for a root of a particular type, creating a RootLocation
+  // and marking it as a root.
+  Location getRootLocation(Type type, PossibleContents rootValue) {
+    auto location = RootLocation{type};
+    addRoot(location, rootValue);
     return location;
+  }
+
+  // Creates a root location, settings its value by the type.
+  Location getRootLocation(Type type) {
+    return getRootLocation(type, PossibleContents::fromType(type));
+  }
+
+  // Makes a root location containing a null.
+  Location getNullLocation(Type type) {
+    return getRootLocation(type,
+                           PossibleContents::literal(Literal::makeZero(type)));
   }
 
   // Iterates over a list of children and adds links from them. The target of
@@ -1220,9 +1230,7 @@ struct InfoCollector
       }
 
       if (curr->catchRefs[tagIndex]) {
-        auto location = CaughtExnRefLocation{};
-        addRoot(location,
-                PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
+        auto location = getRootLocation(Type(HeapType::exn, NonNullable));
         info.links.push_back(
           {location, getBreakTargetLocation(target, exnrefIndex)});
       }
@@ -1283,14 +1291,36 @@ struct InfoCollector
     // TODO: optimize when possible
     addRoot(curr);
   }
-  void visitResume(Resume* curr) {
+
+  template<typename T> void handleResume(T* curr) {
     // TODO: optimize when possible
     addRoot(curr);
+
+    // Connect handled tags with their branch targets, and materialize non-null
+    // exnref values.
+    auto numTags = curr->handlerTags.size();
+    for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
+      auto tag = curr->handlerTags[tagIndex];
+      auto target = curr->handlerBlocks[tagIndex];
+      auto params = getModule()->getTag(tag)->params();
+
+      // Add the values from the tag.
+      for (Index i = 0; i < params.size(); i++) {
+        if (isRelevant(params[i])) {
+          info.links.push_back(
+            {TagLocation{tag, i}, getBreakTargetLocation(target, i)});
+        }
+      }
+
+      // Add the continuation.
+      auto location = getRootLocation(Type(HeapType::cont, NonNullable));
+      info.links.push_back(
+        {location, getBreakTargetLocation(target, params.size())});
+    }
   }
-  void visitResumeThrow(ResumeThrow* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
+
+  void visitResume(Resume* curr) { handleResume(curr); }
+  void visitResumeThrow(ResumeThrow* curr) { handleResume(curr); }
   void visitStackSwitch(StackSwitch* curr) {
     // TODO: optimize when possible
     addRoot(curr);
@@ -3062,8 +3092,8 @@ void Flower::dump(Location location) {
     std::cout << "  sigparamloc " << '\n';
   } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
     std::cout << "  sigresultloc " << loc->type << " : " << loc->index << '\n';
-  } else if (auto* loc = std::get_if<NullLocation>(&location)) {
-    std::cout << "  Nullloc " << loc->type << '\n';
+  } else if (auto* loc = std::get_if<RootLocation>(&location)) {
+    std::cout << "  rootloc " << loc->type << '\n';
   } else {
     std::cout << "  (other)\n";
   }
