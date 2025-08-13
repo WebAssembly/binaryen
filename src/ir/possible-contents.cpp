@@ -1281,8 +1281,7 @@ struct InfoCollector
     addRoot(curr);
   }
 
-  template<typename T>
-  void handleResume(T* curr) {
+  template<typename T> void handleResume(T* curr) {
     // TODO: optimize when possible
     addRoot(curr);
 
@@ -1309,12 +1308,8 @@ struct InfoCollector
     }
   }
 
-  void visitResume(Resume* curr) {
-    handleResume(curr);
-  }
-  void visitResumeThrow(ResumeThrow* curr) {
-    handleResume(curr);
-  }
+  void visitResume(Resume* curr) { handleResume(curr); }
+  void visitResumeThrow(ResumeThrow* curr) { handleResume(curr); }
   void visitStackSwitch(StackSwitch* curr) {
     // TODO: optimize when possible
     addRoot(curr);
