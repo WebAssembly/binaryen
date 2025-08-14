@@ -5238,7 +5238,7 @@ Expression* TranslateToFuzzReader::makeI31Get(Type type) {
 Expression* TranslateToFuzzReader::makeThrow(Type type) {
   assert(type == Type::unreachable);
   Tag* tag;
-  if (trivialNesting) {
+  if (trivialNesting || random.finished()) {
     // We are nested under a makeTrivial call, so only emit something trivial.
     // Get (or create) a trivial tag, so we have no operands (and will not call
     // make(), below). Otherwise, we might recurse very deeply if we threw a
