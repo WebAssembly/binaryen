@@ -4,12 +4,21 @@
 ;; without GC. This verifies we can emit continuation types properly even when
 ;; GC is disabled
 
-;; RUN: wasm-opt %s --enable-stack-switching --roundtrip -S -o - | filecheck %s
+;; RUN: wasm-opt %s --enable-stack-switching --enable-reference-types --roundtrip -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $proc (func))
  (type $proc (func))
+ ;; CHECK:      (type $cont (cont $proc))
  (type $cont (cont $proc))
 
+ ;; CHECK:      (func $main
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $main)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $main
   (drop
    (cont.new $cont
