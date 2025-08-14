@@ -1863,7 +1863,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
   if (!wasm->features.hasCustomDescriptors()) {
     exactness = Inexact;
   }
-  if (!wasm->features.hasGC()) {
+  // GC can refer to full heap types for many things; Stack Switching can do so
+  // for functions (continuation types refer to function types).
+  if (!wasm->features.hasGC() && !wasm->features.hasStackSwitching()) {
     type = type.getTop();
   }
   assert(!type.isBasic() || exactness == Inexact);
