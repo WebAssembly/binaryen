@@ -19,6 +19,8 @@
  (export "handled" (func $handle))
  (export "suspend_invoker" (func $suspend))
 
+ ;; CHECK:      [fuzz-exec] calling suspend
+ ;; CHECK-NEXT: [exception thrown: unhandled suspend]
  (func $suspend
   (suspend $tag)
  )
