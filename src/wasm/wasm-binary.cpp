@@ -310,7 +310,7 @@ void WasmBinaryWriter::writeTypes() {
         break;
       case HeapTypeKind::Cont:
         o << uint8_t(BinaryConsts::EncodedType::Cont);
-        writeHeapType(type.getContinuation().type, Inexact);
+        writeIndexedHeapType(type.getContinuation().type);
         break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
@@ -1863,9 +1863,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type, Exactness exactness) {
   if (!wasm->features.hasCustomDescriptors()) {
     exactness = Inexact;
   }
-  // GC can refer to full heap types for many things; Stack Switching can do so
-  // for functions (continuation types refer to function types).
-  if (!wasm->features.hasGC() && !wasm->features.hasStackSwitching()) {
+  if (!wasm->features.hasGC()) {
     type = type.getTop();
   }
   assert(!type.isBasic() || exactness == Inexact);
