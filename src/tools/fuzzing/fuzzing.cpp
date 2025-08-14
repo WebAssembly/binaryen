@@ -616,6 +616,17 @@ void TranslateToFuzzReader::setupTables() {
   }
 }
 
+static bool canCreateContentWithoutFunctionScope(Type type) {
+  for (auto t : type) {
+    if (t.isContinuation()) {
+      // There is no way to make a continuation in a global. TODO: We could
+      // allow null ones, at least, that are always set to null.
+      return false;
+    }
+  }
+  return true;
+}
+
 void TranslateToFuzzReader::setupGlobals() {
   // If there were initial wasm contents, there may be imported globals. That
   // would be a problem in the fuzzer harness as we'd error if we do not
@@ -674,16 +685,7 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    auto skip = false;
-    for (auto t : type) {
-      if (t.isContinuation()) {
-        // There is no way to make a continuation in a global. TODO: We could
-        // allow null ones, at least, that are always set to null.
-        skip = true;
-        break;
-      }
-    }
-    if (skip) {
+    if (!canCreateContentWithoutFunctionScope(type)) {
       continue;
     }
 
@@ -735,7 +737,7 @@ void TranslateToFuzzReader::setupTags() {
   }
 
   // Add the fuzzing support tags manually sometimes.
-  if (!preserveImportsAndExports && oneIn(2)) {
+  if (!preserveImportsAndExports && oneIn(2) && !random.finished()) {
     auto wasmTag = builder.makeTag(Names::getValidTagName(wasm, "wasmtag"),
                                    Signature(Type::i32, Type::none));
     wasmTag->module = "fuzzing-support";
@@ -878,7 +880,7 @@ void TranslateToFuzzReader::shuffleExports() {
   // find more things). But we also keep a good chance for the natural order
   // here, as it may help some initial content. Note we cannot do this if we are
   // preserving the exports, as their order is something we must maintain.
-  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2)) {
+  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2) || random.finished()) {
     return;
   }
 
@@ -912,6 +914,9 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 }
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
+  if (random.finished()) {
+    return;
+  }
   for (auto type : loggableTypes) {
     auto func = std::make_unique<Function>();
     Name baseName = std::string("log-") + type.toString();
@@ -931,7 +936,7 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
-  if (preserveImportsAndExports) {
+  if (preserveImportsAndExports || random.finished()) {
     return;
   }
 
@@ -1024,6 +1029,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 }
 
 void TranslateToFuzzReader::addImportThrowingSupport() {
+  if (random.finished()) {
+    return;
+  }
   // Throw some kind of exception from JS. If we send 0 then a pure JS
   // exception is thrown, and any other value is the value in a wasm tag.
   throwImportName = Names::getValidFunctionName(wasm, "throw");
@@ -1045,7 +1053,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
   // for them. For simplicity, use the funcref table we use internally, though
   // we could pick one at random, support non-funcref ones, and even export
   // multiple ones TODO
-  if (!funcrefTableName) {
+  if (!funcrefTableName || random.finished()) {
     return;
   }
 
@@ -1087,7 +1095,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
 void TranslateToFuzzReader::addImportSleepSupport() {
   // Fuzz this somewhat rarely, as it may be slow, and only when we can add
   // imports.
-  if (preserveImportsAndExports || !oneIn(4)) {
+  if (preserveImportsAndExports || !oneIn(4) || random.finished()) {
     return;
   }
 
@@ -1105,7 +1113,7 @@ void TranslateToFuzzReader::addImportSleepSupport() {
 
 void TranslateToFuzzReader::addHashMemorySupport() {
   // Don't always add this.
-  if (oneIn(2)) {
+  if (oneIn(2) || random.finished()) {
     return;
   }
 
