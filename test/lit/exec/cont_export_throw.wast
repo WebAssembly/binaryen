@@ -15,17 +15,15 @@
 
  (tag $tag (type $none))
 
- (export "suspend" (func $suspend))
- (export "handled" (func $handle))
- (export "suspend_invoker" (func $suspend))
-
  ;; CHECK:      [fuzz-exec] calling suspend
  ;; CHECK-NEXT: [exception thrown: unhandled suspend]
- (func $suspend
+ (func $suspend (export "suspend")
   (suspend $tag)
  )
 
- (func $handle
+ ;; CHECK:      [fuzz-exec] calling handled
+ ;; CHECK-NEXT: [exception thrown: __private externref]
+ (func $handled (export "handled")
   (drop
    (block $block (result (ref $cont))
     (resume $cont (on $tag $block)
@@ -36,6 +34,12 @@
     (unreachable)
    )
   )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling suspend2
+ ;; CHECK-NEXT: [exception thrown: unhandled suspend]
+ (func $suspend2 (export "suspend2")
+  (suspend $tag)
  )
 
  (func $cont
