@@ -255,7 +255,10 @@ public:
 
     // Call the function.
     auto flow = instance->callFunction(func->name, arguments);
-    assert(!flow.suspendTag);
+    // Suspending through JS is not valid.
+    if (flow.suspendTag) {
+      throwJSException();
+    }
     return flow.values;
   }
 

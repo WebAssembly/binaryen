@@ -116,6 +116,7 @@ unfuzzable = [
     'cont_simple.wast',
     'gufa-cont.wast',
     'cont_many_unhandled.wast',
+    'cont_export.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
