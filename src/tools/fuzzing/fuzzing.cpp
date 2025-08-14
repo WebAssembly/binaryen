@@ -674,9 +674,16 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    if (type.isContinuation()) {
-      // There is no way to make a continuation in a global. TODO: We could
-      // allow null ones, at least, that are always set to null.
+    auto skip = false;
+    for (auto t : type) {
+      if (t.isContinuation()) {
+        // There is no way to make a continuation in a global. TODO: We could
+        // allow null ones, at least, that are always set to null.
+        skip = true;
+        break;
+      }
+    }
+    if (skip) {
       continue;
     }
 
