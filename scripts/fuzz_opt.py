@@ -2403,7 +2403,7 @@ print('FEATURE_DISABLE_FLAGS:', FEATURE_DISABLE_FLAGS)
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
     '--disable-reference-types': ['--disable-gc', '--disable-exception-handling', '--disable-strings'],
-    '--disable-gc': ['--disable-strings'],
+    '--disable-gc': ['--disable-strings', '--disable-stack-switching'],
 }
 
 print('''
