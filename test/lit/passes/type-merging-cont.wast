@@ -24,8 +24,8 @@
   (rec
     ;; CHECK:       (type $A1 (struct (field (ref $k))))
     (type $A1 (struct (ref $k)))
-    ;; CHECK:       (type $A2 (struct (field (ref $k-i32))))
     (type $A2 (struct (ref $k)))
+    ;; CHECK:       (type $B1 (struct (field (ref $k-i32))))
     (type $B1 (struct (ref $k-i32)))
     (type $B2 (struct (ref $k-i32)))
   )
@@ -34,9 +34,9 @@
   ;; CHECK-NEXT:  (local $k (ref $k))
   ;; CHECK-NEXT:  (local $k-i32 (ref $k-i32))
   ;; CHECK-NEXT:  (local $a1 (ref $A1))
-  ;; CHECK-NEXT:  (local $a2 (ref $A2))
-  ;; CHECK-NEXT:  (local $b1 (ref $A1))
-  ;; CHECK-NEXT:  (local $b2 (ref $A2))
+  ;; CHECK-NEXT:  (local $a2 (ref $A1))
+  ;; CHECK-NEXT:  (local $b1 (ref $B1))
+  ;; CHECK-NEXT:  (local $b2 (ref $B1))
   ;; CHECK-NEXT: )
   (func $test
     (local $k (ref $k))
