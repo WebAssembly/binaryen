@@ -894,9 +894,6 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 }
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
-  if (random.finished()) {
-    return;
-  }
   for (auto type : loggableTypes) {
     auto func = std::make_unique<Function>();
     Name baseName = std::string("log-") + type.toString();
@@ -916,7 +913,7 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
-  if (preserveImportsAndExports || random.finished()) {
+  if (preserveImportsAndExports) {
     return;
   }
 
@@ -941,7 +938,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
   // its own exports, and to care about the indexes of the exports).
-  if (oneIn(2)) {
+  if (oneIn(2) || random.finished()) {
     return;
   }
 
