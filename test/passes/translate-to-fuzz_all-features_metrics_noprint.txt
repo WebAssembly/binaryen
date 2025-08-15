@@ -1,7 +1,7 @@
 Metrics
 total
- [exports]      : 16      
- [funcs]        : 21      
+ [exports]      : 14      
+ [funcs]        : 20      
  [globals]      : 26      
  [imports]      : 12      
  [memories]     : 1       
@@ -9,42 +9,42 @@ total
  [table-data]   : 6       
  [tables]       : 2       
  [tags]         : 1       
- [total]        : 887     
- [vars]         : 47      
- ArrayNewFixed  : 6       
+ [total]        : 734     
+ [vars]         : 45      
+ ArrayNewFixed  : 5       
  AtomicCmpxchg  : 1       
  AtomicFence    : 1       
  AtomicNotify   : 2       
  AtomicRMW      : 1       
- Binary         : 93      
- Block          : 116     
+ Binary         : 43      
+ Block          : 115     
  BrOn           : 1       
  Break          : 11      
  Call           : 27      
  CallRef        : 2       
- Const          : 178     
+ Const          : 144     
  Drop           : 15      
  GlobalGet      : 66      
  GlobalSet      : 50      
  If             : 32      
- Load           : 21      
- LocalGet       : 54      
- LocalSet       : 29      
+ Load           : 5       
+ LocalGet       : 20      
+ LocalSet       : 11      
  Loop           : 5       
  MemoryCopy     : 1       
  MemoryFill     : 1       
  MemoryInit     : 1       
- Nop            : 14      
+ Nop            : 13      
  RefEq          : 3       
  RefFunc        : 11      
- RefI31         : 11      
+ RefI31         : 12      
  RefNull        : 11      
  RefTest        : 1       
  Return         : 6       
  SIMDExtract    : 2       
  Select         : 3       
  Store          : 3       
- StringConst    : 12      
+ StringConst    : 13      
  StringEq       : 2       
  StringWTF16Get : 1       
  StructNew      : 14      
