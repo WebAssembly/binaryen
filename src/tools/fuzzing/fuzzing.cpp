@@ -962,7 +962,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
   // its own exports, and to care about the indexes of the exports).
-  if (oneIn(2)) {
+  if (oneIn(2) || random.finished()) {
     return;
   }
 

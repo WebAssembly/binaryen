@@ -26,10 +26,11 @@ Random::Random(std::vector<char>&& bytes_, FeatureSet features)
   if (bytes.empty()) {
     bytes.push_back(0);
   }
-  if (auto* maxBytes = getenv("BINARYEN_MAX_BYTES")) {
+  if (auto* maxBytes = getenv("BINARYEN_FUZZER_MAX_BYTES")) {
     unsigned max = atoi(maxBytes);
     if (max < bytes.size()) {
-      std::cerr << "resizing from " << bytes.size() << " to " << max << '\n';
+      std::cerr << "fuzzer: resizing from " << bytes.size() << " to " << max
+                << '\n';
       bytes.resize(max);
     }
   }
