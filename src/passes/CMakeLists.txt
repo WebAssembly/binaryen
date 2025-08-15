@@ -63,6 +63,7 @@ set(passes_SOURCES
   LLVMMemoryCopyFillLowering.cpp
   LocalCSE.cpp
   LocalSubtyping.cpp
+  LocalizeChildren.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
   Memory64Lowering.cpp
