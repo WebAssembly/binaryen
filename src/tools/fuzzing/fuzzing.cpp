@@ -934,7 +934,7 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
 }
 
 void TranslateToFuzzReader::addImportCallingSupport() {
-  if (preserveImportsAndExports || random.finished()) {
+  if (preserveImportsAndExports) {
     return;
   }
 
