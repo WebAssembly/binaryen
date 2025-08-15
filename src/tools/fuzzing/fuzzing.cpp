@@ -859,7 +859,8 @@ void TranslateToFuzzReader::shuffleExports() {
   // find more things). But we also keep a good chance for the natural order
   // here, as it may help some initial content. Note we cannot do this if we are
   // preserving the exports, as their order is something we must maintain.
-  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2) || random.finished()) {
+  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2) ||
+      random.finished()) {
     return;
   }
 
