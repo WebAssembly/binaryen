@@ -152,11 +152,13 @@ def randomize_feature_opts():
         # The shared-everything feature is new and we want to fuzz it, but it
         # also currently disables fuzzing V8, so disable it most of the time.
         # Same with strings. Relaxed SIMD's nondeterminism disables much but not
-        # all of our V8 fuzzing, so avoid it too.
+        # all of our V8 fuzzing, so avoid it too. Stack Switching, as well, is
+        # not yet ready in V8.
         if random.random() < 0.9:
             FEATURE_OPTS.append('--disable-shared-everything')
             FEATURE_OPTS.append('--disable-strings')
             FEATURE_OPTS.append('--disable-relaxed-simd')
+            FEATURE_OPTS.append('--disable-stack-switching')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -824,8 +826,9 @@ class CompareVMs(TestCaseHandler):
             def can_run(self, wasm):
                 # V8 does not support shared memories when running with
                 # shared-everything enabled, so do not fuzz shared-everything
-                # for now. It also does not yet support strings.
-                return all_disallowed(['shared-everything', 'strings'])
+                # for now. It also does not yet support strings, nor stack
+                # switching
+                return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
@@ -1624,7 +1627,7 @@ class Split(TestCaseHandler):
             return False
 
         # see D8.can_run
-        return all_disallowed(['shared-everything', 'strings'])
+        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
 
 # Check that the text format round-trips without error.
@@ -1832,7 +1835,7 @@ class Two(TestCaseHandler):
             return False
         if NANS:
             return False
-        return all_disallowed(['shared-everything', 'strings'])
+        return all_disallowed(['shared-everything', 'strings', 'stack-switching'])
 
 
 # Test --fuzz-preserve-imports-exports, which never modifies imports or exports.

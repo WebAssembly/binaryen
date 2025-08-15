@@ -491,6 +491,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
     auto eq = HeapTypes::eq.getBasic(share);
     auto any = HeapTypes::any.getBasic(share);
     auto func = HeapTypes::func.getBasic(share);
+    auto cont = HeapTypes::cont.getBasic(share);
     switch (type.getKind()) {
       case HeapTypeKind::Func:
         interestingHeapSubTypes[func].push_back(type);
@@ -517,7 +518,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
         }
         break;
       case HeapTypeKind::Cont:
-        WASM_UNREACHABLE("TODO: cont");
+        interestingHeapSubTypes[cont].push_back(type);
+        break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }
@@ -614,6 +616,17 @@ void TranslateToFuzzReader::setupTables() {
   }
 }
 
+static bool canCreateContentWithoutFunctionScope(Type type) {
+  for (auto t : type) {
+    if (t.isContinuation()) {
+      // There is no way to make a continuation in a global. TODO: We could
+      // allow null ones, at least, that are always set to null.
+      return false;
+    }
+  }
+  return true;
+}
+
 void TranslateToFuzzReader::setupGlobals() {
   // If there were initial wasm contents, there may be imported globals. That
   // would be a problem in the fuzzer harness as we'd error if we do not
@@ -672,6 +685,10 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
+    if (!canCreateContentWithoutFunctionScope(type)) {
+      continue;
+    }
+
     // Prefer immutable ones as they can be used in global.gets in other
     // globals, for more interesting patterns.
     auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
@@ -708,6 +725,9 @@ void TranslateToFuzzReader::setupTags() {
     if (tag->imported() && !preserveImportsAndExports) {
       tag->module = tag->base = Name();
     }
+    if (tag->results() == Type::none) {
+      exceptionTags.push_back(tag.get());
+    }
   }
 
   // Add some random tags.
@@ -736,7 +756,8 @@ void TranslateToFuzzReader::setupTags() {
 void TranslateToFuzzReader::addTag() {
   auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
                              Signature(getControlFlowType(), Type::none));
-  wasm.addTag(std::move(tag));
+  auto* tagg = wasm.addTag(std::move(tag));
+  exceptionTags.push_back(tagg);
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
@@ -2432,10 +2453,10 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
   auto numTags = upTo(fuzzParams->MAX_TRY_CATCHES);
   std::unordered_set<Tag*> usedTags;
   for (Index i = 0; i < numTags; i++) {
-    if (wasm.tags.empty()) {
+    if (exceptionTags.empty()) {
       addTag();
     }
-    auto* tag = pick(wasm.tags).get();
+    auto* tag = pick(exceptionTags);
     if (usedTags.count(tag)) {
       continue;
     }
@@ -2482,7 +2503,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     return builder.makeTryTable(body, {}, {}, {});
   }
 
-  if (wasm.tags.empty()) {
+  if (exceptionTags.empty()) {
     addTag();
   }
 
@@ -2497,7 +2518,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     Type tagType;
     if (i < numCatches) {
       // Look for a specific tag.
-      auto& tag = pick(wasm.tags);
+      auto* tag = pick(exceptionTags);
       tagName = tag->name;
       tagType = tag->params();
     } else {
@@ -3449,7 +3470,14 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return makeRefFuncConst(type);
     }
     case HeapType::cont: {
-      WASM_UNREACHABLE("not implemented");
+      if (type.isNullable() || oneIn(4)) {
+        return builder.makeRefNull(HeapTypes::cont.getBasic(share));
+      }
+      // Emit the simplest possible continuation.
+      auto funcSig = Signature(Type::none, Type::none);
+      auto funcType = Type(funcSig, NonNullable);
+      auto contType = Continuation(funcSig);
+      return builder.makeContNew(contType, makeRefFuncConst(funcType));
     }
     case HeapType::any: {
       // Choose a subtype we can materialize a constant for. We cannot
@@ -3673,8 +3701,10 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
         builder.makeConst(int32_t(upTo(fuzzParams->MAX_ARRAY_SIZE)));
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
-    case HeapTypeKind::Cont:
-      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Cont: {
+      auto funcType = heapType.getContinuation().type;
+      return builder.makeContNew(heapType, makeTrappingRefUse(funcType));
+    }
     case HeapTypeKind::Basic:
       break;
   }
@@ -5222,10 +5252,10 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
     }
   } else {
     // Get a random tag, adding a random one if necessary.
-    if (wasm.tags.empty()) {
+    if (exceptionTags.empty()) {
       addTag();
     }
-    tag = pick(wasm.tags).get();
+    tag = pick(exceptionTags);
   }
   auto tagType = tag->params();
   std::vector<Expression*> operands;
