@@ -116,6 +116,12 @@
   (func (export "non-linear-4")
     (call $nl4 (cont.new $k1 (ref.func $r1)))
   )
+
+  (func (export "null")
+    (resume $k1
+      (ref.null $k1)
+    )
+  )
 )
 
 (assert_suspension (invoke "unhandled-1") "unhandled")
@@ -131,6 +137,8 @@
 (assert_trap (invoke "non-linear-2") "continuation already consumed")
 (assert_trap (invoke "non-linear-3") "continuation already consumed")
 (assert_trap (invoke "non-linear-4") "continuation already consumed")
+
+(assert_trap (invoke "null") "null continuation reference")
 
 (assert_invalid
   (module

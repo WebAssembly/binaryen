@@ -4927,7 +4927,11 @@ public:
     }
 
     // Get and execute the continuation.
-    auto contData = flow.getSingleValue().getContData();
+    auto cont = flow.getSingleValue();
+    if (cont.isNull()) {
+      trap("null ref");
+    }
+    auto contData = cont.getContData();
     auto func = contData->func;
 
     // If we are resuming a nested suspend then we should just rewind the call
