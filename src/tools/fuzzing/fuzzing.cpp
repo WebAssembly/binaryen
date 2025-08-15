@@ -717,7 +717,7 @@ void TranslateToFuzzReader::setupTags() {
   }
 
   // Add the fuzzing support tags manually sometimes.
-  if (!preserveImportsAndExports && oneIn(2)) {
+  if (!preserveImportsAndExports && oneIn(2) && !random.finished()) {
     auto wasmTag = builder.makeTag(Names::getValidTagName(wasm, "wasmtag"),
                                    Signature(Type::i32, Type::none));
     wasmTag->module = "fuzzing-support";
@@ -859,7 +859,8 @@ void TranslateToFuzzReader::shuffleExports() {
   // find more things). But we also keep a good chance for the natural order
   // here, as it may help some initial content. Note we cannot do this if we are
   // preserving the exports, as their order is something we must maintain.
-  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2)) {
+  if (wasm.exports.empty() || preserveImportsAndExports || oneIn(2) ||
+      random.finished()) {
     return;
   }
 
@@ -937,7 +938,7 @@ void TranslateToFuzzReader::addImportCallingSupport() {
   // Only add these some of the time, as they inhibit some fuzzing (things like
   // wasm-ctor-eval and wasm-merge are sensitive to the wasm being able to call
   // its own exports, and to care about the indexes of the exports).
-  if (oneIn(2)) {
+  if (oneIn(2) || random.finished()) {
     return;
   }
 
@@ -1005,6 +1006,9 @@ void TranslateToFuzzReader::addImportCallingSupport() {
 }
 
 void TranslateToFuzzReader::addImportThrowingSupport() {
+  if (random.finished()) {
+    return;
+  }
   // Throw some kind of exception from JS. If we send 0 then a pure JS
   // exception is thrown, and any other value is the value in a wasm tag.
   throwImportName = Names::getValidFunctionName(wasm, "throw");
@@ -1026,7 +1030,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
   // for them. For simplicity, use the funcref table we use internally, though
   // we could pick one at random, support non-funcref ones, and even export
   // multiple ones TODO
-  if (!funcrefTableName) {
+  if (!funcrefTableName || random.finished()) {
     return;
   }
 
@@ -1068,7 +1072,7 @@ void TranslateToFuzzReader::addImportTableSupport() {
 void TranslateToFuzzReader::addImportSleepSupport() {
   // Fuzz this somewhat rarely, as it may be slow, and only when we can add
   // imports.
-  if (preserveImportsAndExports || !oneIn(4)) {
+  if (preserveImportsAndExports || !oneIn(4) || random.finished()) {
     return;
   }
 
@@ -1086,7 +1090,7 @@ void TranslateToFuzzReader::addImportSleepSupport() {
 
 void TranslateToFuzzReader::addHashMemorySupport() {
   // Don't always add this.
-  if (oneIn(2)) {
+  if (oneIn(2) || random.finished()) {
     return;
   }
 
@@ -5202,7 +5206,7 @@ Expression* TranslateToFuzzReader::makeI31Get(Type type) {
 Expression* TranslateToFuzzReader::makeThrow(Type type) {
   assert(type == Type::unreachable);
   Tag* tag;
-  if (trivialNesting) {
+  if (trivialNesting || random.finished()) {
     // We are nested under a makeTrivial call, so only emit something trivial.
     // Get (or create) a trivial tag, so we have no operands (and will not call
     // make(), below). Otherwise, we might recurse very deeply if we threw a
