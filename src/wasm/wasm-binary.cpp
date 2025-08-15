@@ -310,7 +310,7 @@ void WasmBinaryWriter::writeTypes() {
         break;
       case HeapTypeKind::Cont:
         o << uint8_t(BinaryConsts::EncodedType::Cont);
-        writeIndexedHeapType(type.getContinuation().type);
+        writeHeapType(type.getContinuation().type, Inexact);
         break;
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
