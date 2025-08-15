@@ -1,5 +1,5 @@
 ;; The imported js string method here has the correct signature, but the wrong
-;; type. We shoudl error.
+;; type. We should error.
 
 (module
   (type $array16 (array (mut i16)))
