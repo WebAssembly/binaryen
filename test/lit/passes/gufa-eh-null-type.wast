@@ -3,17 +3,60 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 ;; The function here will use a NullLocation for (ref exn) as well as a
-;; TypeLocation for that very same type. We should not get confused and end up
-;; optimizing anything here.
+;; TypeLocation for that very same type. We should not get confused by that (see
+;; below).
 
 (module
+ ;; CHECK:      (type $func (func))
  (type $func (func))
 
+ ;; CHECK:      (tag $tag (type $func))
  (tag $tag (type $func))
 
+ ;; CHECK:      (export "func" (func $func))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (local $1 (ref exn))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref exn))
+ ;; CHECK-NEXT:    (try_table (catch_all_ref $block)
+ ;; CHECK-NEXT:     (throw $tag)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $tag
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (block $block0 (result (ref noexn))
+ ;; CHECK-NEXT:        (local.tee $1
+ ;; CHECK-NEXT:         (unreachable)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (br_on_non_null $block0
+ ;; CHECK-NEXT:         (ref.null noexn)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (drop
+ ;; CHECK-NEXT:         (unreachable)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $func (export "func")
   (local $1 (ref exn))
   ;; This part ends up generating a TypeLocation for (ref exn).
+  ;;
+  ;; This code should not be mis-optimized. In particular, it should not trap.
   (drop
    (block $block (result (ref exn))
     (try_table (catch_all_ref $block)
@@ -30,6 +73,9 @@
     (drop
      (block $block (result (ref exn))
       ;; This part ends up generating a NullLocation for (ref exn).
+      ;;
+      ;; Due to the unreachable here, we will end up modifying this code to add
+      ;; more unreachables.
       (br_on_non_null $block
        (local.tee $1
         (unreachable)
