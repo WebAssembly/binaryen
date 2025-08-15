@@ -891,23 +891,16 @@ struct InfoCollector
     handleIndirectCall(curr, curr->target->type);
   }
 
-  // Creates a location for a root of a particular type, creating a RootLocation
-  // and marking it as a root.
-  Location getRootLocation(Type type, PossibleContents rootValue) {
-    auto location = RootLocation{type};
-    addRoot(location, rootValue);
+  Location getTypeLocation(Type type) {
+    auto location = TypeLocation{type};
+    addRoot(location, PossibleContents::fromType(type));
     return location;
   }
 
-  // Creates a root location, settings its value by the type.
-  Location getRootLocation(Type type) {
-    return getRootLocation(type, PossibleContents::fromType(type));
-  }
-
-  // Makes a root location containing a null.
   Location getNullLocation(Type type) {
-    return getRootLocation(type,
-                           PossibleContents::literal(Literal::makeZero(type)));
+    auto location = NullLocation{type};
+    addRoot(location, PossibleContents::literal(Literal::makeZero(type)));
+    return location;
   }
 
   // Iterates over a list of children and adds links from them. The target of
@@ -1230,7 +1223,7 @@ struct InfoCollector
       }
 
       if (curr->catchRefs[tagIndex]) {
-        auto location = getRootLocation(Type(HeapType::exn, NonNullable));
+        auto location = getTypeLocation(Type(HeapType::exn, NonNullable));
         info.links.push_back(
           {location, getBreakTargetLocation(target, exnrefIndex)});
       }
@@ -1317,7 +1310,7 @@ struct InfoCollector
       auto targetType = findBreakTarget(target)->type;
       assert(targetType.size() >= 1);
       auto contType = targetType[targetType.size() - 1];
-      auto location = getRootLocation(contType);
+      auto location = getTypeLocation(contType);
       info.links.push_back(
         {location, getBreakTargetLocation(target, params.size())});
     }

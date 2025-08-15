@@ -500,17 +500,22 @@ struct TagLocation {
   }
 };
 
-// A root value. This is used as the location of the default value of a var in a
-// function, a null written to a struct field in struct.new_with_default, an
-// exnref from a catch etc. - in all these cases, we know
-//
-//  1. The value (which might be a null, or "anything of this type").
-//  2. That the value will never change; we can learn nothing more here.
-//  3. That all roots of this type can share the same location.
-//
-struct RootLocation {
+// A null value of a particular type. For example, a nullable local reads from
+// the corresponding NullLocation, for its default value.
+struct NullLocation {
   Type type;
-  bool operator==(const RootLocation& other) const {
+  bool operator==(const NullLocation& other) const {
+    return type == other.type;
+  }
+};
+
+// A location that contains anything of a particular type. This is used as a
+// root of the graph, a source of values we will never learn anything about, and
+// must assume they can be anything of that type (e.g., the return of a call to
+// an import).
+struct TypeLocation {
+  Type type;
+  bool operator==(const TypeLocation& other) const {
     return type == other.type;
   }
 };
@@ -552,7 +557,8 @@ using Location = std::variant<ExpressionLocation,
                               SignatureResultLocation,
                               DataLocation,
                               TagLocation,
-                              RootLocation,
+                              NullLocation,
+                              TypeLocation,
                               ConeReadLocation>;
 
 } // namespace wasm
@@ -633,8 +639,14 @@ template<> struct hash<wasm::TagLocation> {
   }
 };
 
-template<> struct hash<wasm::RootLocation> {
-  size_t operator()(const wasm::RootLocation& loc) const {
+template<> struct hash<wasm::NullLocation> {
+  size_t operator()(const wasm::NullLocation& loc) const {
+    return std::hash<wasm::Type>{}(loc.type);
+  }
+};
+
+template<> struct hash<wasm::TypeLocation> {
+  size_t operator()(const wasm::TypeLocation& loc) const {
     return std::hash<wasm::Type>{}(loc.type);
   }
 };
