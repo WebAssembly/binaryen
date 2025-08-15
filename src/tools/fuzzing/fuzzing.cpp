@@ -915,9 +915,6 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 }
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
-  if (random.finished()) {
-    return;
-  }
   for (auto type : loggableTypes) {
     auto func = std::make_unique<Function>();
     Name baseName = std::string("log-") + type.toString();
