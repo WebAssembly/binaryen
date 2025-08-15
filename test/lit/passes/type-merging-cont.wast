@@ -25,8 +25,8 @@
     ;; CHECK:       (type $A1 (struct (field (ref $k))))
     (type $A1 (struct (ref $k)))
     ;; CHECK:       (type $A2 (struct (field (ref $k-i32))))
-    (type $A2 (struct (ref $k-i32)))
-    (type $B1 (struct (ref $k)))
+    (type $A2 (struct (ref $k)))
+    (type $B1 (struct (ref $k-i32)))
     (type $B2 (struct (ref $k-i32)))
   )
 
