@@ -3702,8 +3702,8 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       return builder.makeArrayNew(type.getHeapType(), count, init);
     }
     case HeapTypeKind::Cont: {
-      auto funcType = Type(heapType.getContinuation().type, NonNullable);
-      return builder.makeContNew(heapType, makeRefFuncConst(funcType));
+      auto funcType = heapType.getContinuation().type;
+      return builder.makeContNew(heapType, makeTrappingRefUse(funcType));
     }
     case HeapTypeKind::Basic:
       break;
