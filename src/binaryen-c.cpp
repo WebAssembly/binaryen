@@ -5754,6 +5754,14 @@ void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size) {
   globalPassOptions.inlining.flexibleInlineMaxSize = size;
 }
 
+BinaryenIndex BinaryenGetMaxCombinedBinarySize(void) {
+  return globalPassOptions.inlining.maxCombinedBinarySize;
+}
+
+void BinaryenSetMaxCombinedBinarySize(BinaryenIndex size) {
+  globalPassOptions.inlining.maxCombinedBinarySize = size;
+}
+
 BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void) {
   return globalPassOptions.inlining.oneCallerInlineMaxSize;
 }

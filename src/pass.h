@@ -89,6 +89,17 @@ struct InliningOptions {
   // This is checked after alwaysInlineMaxSize and oneCallerInlineMaxSize, but
   // the order normally won't matter.
   Index flexibleInlineMaxSize = 20;
+  // The limit for the combined size of the code after inlining.
+  // We have an absolute limit in order to avoid extremely-large sizes after
+  // inlining, as they may hit limits in VMs and/or slow down startup
+  // (measurements there indicate something like ~1 second to optimize a 100K
+  // function). See e.g.
+  // https://github.com/WebAssembly/binaryen/pull/3730#issuecomment-867939138
+  // https://github.com/emscripten-core/emscripten/issues/13899#issuecomment-825073344
+  // The limit is arbitrary, but based on the links above. It is a very high
+  // value that should appear very rarely in practice (for example, it does
+  // not occur on the Emscripten benchmark suite of real-world codebases).
+  Index maxCombinedBinarySize = 400 * 1024;
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;
