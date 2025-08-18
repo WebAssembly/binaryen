@@ -194,7 +194,6 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
   void visitContNew(ContNew* curr) {
     // The function reference that is passed in here will be called, just as if
     // we were a call_ref, except at a potentially later time.
-    // Ignore unreachable code.
     if (!curr->func->type.isRef()) {
       return;
     }
