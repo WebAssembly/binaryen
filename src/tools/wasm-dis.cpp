@@ -66,11 +66,11 @@ int main(int argc, const char* argv[]) {
     std::cerr << "parsing binary..." << std::endl;
   }
   Module wasm;
-  options.applyOptionsBeforeParse(wasm);
   wasm.features = FeatureSet::All;
 
+  auto moduleReader = ModuleReader();
   try {
-    ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
+    moduleReader.readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
@@ -88,6 +88,9 @@ int main(int argc, const char* argv[]) {
 
   options.applyOptionsAfterParse(wasm);
 
+  // Restore features section's features so the features section comment in the
+  // the text format will be consistent with the input
+  wasm.features = moduleReader.getFeaturesSectionFeatures();
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }
