@@ -28,7 +28,7 @@
 
   ;; CHECK:      (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call_indirect (type $0)
+  ;; CHECK-NEXT:   (call_indirect $0 (type $0)
   ;; CHECK-NEXT:    (i64.extend_i32_u
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -67,7 +67,7 @@
     )
   )
   ;; CHECK:      (func $b (param $x i32) (param $y i32) (result i64)
-  ;; CHECK-NEXT:  (call_indirect (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $0)
   ;; CHECK-NEXT:   (i64.extend_i32_u
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -101,7 +101,7 @@
   ;; CHECK:      (func $c (param $x i64) (param $y i64) (result f32)
   ;; CHECK-NEXT:  (f32.reinterpret_i32
   ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (call_indirect (type $0)
+  ;; CHECK-NEXT:    (call_indirect $0 (type $0)
   ;; CHECK-NEXT:     (i64.const 1)
   ;; CHECK-NEXT:     (i64.const 2)
   ;; CHECK-NEXT:     (i64.const 0)
@@ -132,7 +132,7 @@
   )
   ;; CHECK:      (func $d (param $x f32) (param $y f32) (result f64)
   ;; CHECK-NEXT:  (f64.reinterpret_i64
-  ;; CHECK-NEXT:   (call_indirect (type $0)
+  ;; CHECK-NEXT:   (call_indirect $0 (type $0)
   ;; CHECK-NEXT:    (i64.extend_i32_u
   ;; CHECK-NEXT:     (i32.reinterpret_f32
   ;; CHECK-NEXT:      (f32.const 1)
@@ -170,7 +170,7 @@
   )
   ;; CHECK:      (func $e (param $x f64) (param $y f64) (result i32)
   ;; CHECK-NEXT:  (i32.wrap_i64
-  ;; CHECK-NEXT:   (call_indirect (type $0)
+  ;; CHECK-NEXT:   (call_indirect $0 (type $0)
   ;; CHECK-NEXT:    (i64.reinterpret_f64
   ;; CHECK-NEXT:     (f64.const 1)
   ;; CHECK-NEXT:    )
@@ -312,7 +312,7 @@
  ;; CHECK-NEXT:    (global.set $global$0
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call_indirect (type $2)
+ ;; CHECK-NEXT:    (call_indirect $0 (type $2)
  ;; CHECK-NEXT:     (br $label$1
  ;; CHECK-NEXT:      (i64.const 4294967295)
  ;; CHECK-NEXT:     )

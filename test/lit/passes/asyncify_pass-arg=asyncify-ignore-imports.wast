@@ -164,7 +164,7 @@
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (then
-  ;; CHECK-NEXT:         (call_indirect (type $f)
+  ;; CHECK-NEXT:         (call_indirect $0 (type $f)
   ;; CHECK-NEXT:          (local.get $1)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (if

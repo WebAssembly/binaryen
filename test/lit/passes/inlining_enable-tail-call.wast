@@ -377,7 +377,7 @@
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (block $__inlined_func$1
- ;; CHECK-NEXT:   (call_indirect (type $T)
+ ;; CHECK-NEXT:   (call_indirect $0 (type $T)
  ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:     (then
@@ -1241,7 +1241,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $__inlined_func$callee (result i32)
  ;; CHECK-NEXT:    (br $__inlined_func$callee
- ;; CHECK-NEXT:     (call_indirect (type $T)
+ ;; CHECK-NEXT:     (call_indirect $0 (type $T)
  ;; CHECK-NEXT:      (i32.const 42)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
@@ -1273,7 +1273,7 @@
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (call_indirect (type $T)
+ ;; CHECK-NEXT:     (call_indirect $0 (type $T)
  ;; CHECK-NEXT:      (i32.const 42)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
@@ -1308,7 +1308,7 @@
  ;; CHECK:      (func $caller
  ;; CHECK-NEXT:  (block $__inlined_func$callee
  ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (call_indirect (type $T)
+ ;; CHECK-NEXT:    (call_indirect $0 (type $T)
  ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
@@ -1336,7 +1336,7 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $__inlined_func$callee-2$1)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call_indirect (type $T)
+ ;; CHECK-NEXT:    (call_indirect $0 (type $T)
  ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )

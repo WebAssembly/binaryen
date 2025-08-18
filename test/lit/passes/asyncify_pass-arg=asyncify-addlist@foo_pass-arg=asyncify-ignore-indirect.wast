@@ -99,7 +99,7 @@
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (then
-  ;; CHECK-NEXT:         (call_indirect (type $t)
+  ;; CHECK-NEXT:         (call_indirect $0 (type $t)
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (if
@@ -146,7 +146,7 @@
   )
   ;; CHECK:      (func $bar
   ;; CHECK-NEXT:  (call $nothing)
-  ;; CHECK-NEXT:  (call_indirect (type $t)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $t)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

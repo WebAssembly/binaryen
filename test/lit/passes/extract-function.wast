@@ -71,7 +71,7 @@
   (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo
-  ;; CHECK-NEXT:  (call_indirect (type $none)
+  ;; CHECK-NEXT:  (call_indirect $t (type $none)
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

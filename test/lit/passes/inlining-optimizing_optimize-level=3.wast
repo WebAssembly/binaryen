@@ -543,7 +543,7 @@
  ;; CHECK-NEXT:        (local.get $10)
  ;; CHECK-NEXT:        (then
  ;; CHECK-NEXT:         (drop
- ;; CHECK-NEXT:          (call_indirect (type $FUNCSIG$iiii)
+ ;; CHECK-NEXT:          (call_indirect $timport$0 (type $FUNCSIG$iiii)
  ;; CHECK-NEXT:           (local.get $0)
  ;; CHECK-NEXT:           (i32.const 0)
  ;; CHECK-NEXT:           (i32.const 0)
@@ -2834,7 +2834,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (local.set $3
- ;; CHECK-NEXT:      (call_indirect (type $FUNCSIG$iiii)
+ ;; CHECK-NEXT:      (call_indirect $timport$0 (type $FUNCSIG$iiii)
  ;; CHECK-NEXT:       (local.get $2)
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:       (local.get $1)
@@ -2899,7 +2899,7 @@
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (br_if $label$break$L5
  ;; CHECK-NEXT:        (i32.lt_u
- ;; CHECK-NEXT:         (call_indirect (type $FUNCSIG$iiii)
+ ;; CHECK-NEXT:         (call_indirect $timport$0 (type $FUNCSIG$iiii)
  ;; CHECK-NEXT:          (local.get $2)
  ;; CHECK-NEXT:          (local.get $0)
  ;; CHECK-NEXT:          (local.get $3)
@@ -3949,7 +3949,7 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (call_indirect (type $FUNCSIG$iiii)
+ ;; CHECK-NEXT:      (call_indirect $timport$0 (type $FUNCSIG$iiii)
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:       (i32.const 0)
@@ -3998,7 +3998,7 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (call_indirect (type $FUNCSIG$iiii)
+ ;; CHECK-NEXT:       (call_indirect $timport$0 (type $FUNCSIG$iiii)
  ;; CHECK-NEXT:        (local.get $0)
  ;; CHECK-NEXT:        (i32.sub
  ;; CHECK-NEXT:         (local.get $4)
@@ -32739,7 +32739,7 @@
   )
  )
  ;; CHECK:      (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
- ;; CHECK-NEXT:  (call_indirect (type $FUNCSIG$ii)
+ ;; CHECK-NEXT:  (call_indirect $timport$0 (type $FUNCSIG$ii)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (i32.and
  ;; CHECK-NEXT:    (local.get $0)
@@ -32757,7 +32757,7 @@
   )
  )
  ;; CHECK:      (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
- ;; CHECK-NEXT:  (call_indirect (type $FUNCSIG$iiii)
+ ;; CHECK-NEXT:  (call_indirect $timport$0 (type $FUNCSIG$iiii)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:   (local.get $3)
@@ -32785,7 +32785,7 @@
   )
  )
  ;; CHECK:      (func $dynCall_vi (param $0 i32) (param $1 i32)
- ;; CHECK-NEXT:  (call_indirect (type $FUNCSIG$vi)
+ ;; CHECK-NEXT:  (call_indirect $timport$0 (type $FUNCSIG$vi)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (i32.and
