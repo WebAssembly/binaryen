@@ -503,7 +503,13 @@ struct PrintExpressionContents
       printMedium(o, "call_indirect ");
     }
 
-    if (features.hasReferenceTypes()) {
+    // Even if reference-types is not enabled because the features section or
+    // the matching command-line flags are not present, , if the table index is
+    // greater than 0, we print the table because otherwise the results will be
+    // incorrect.
+    if (features.hasReferenceTypes() ||
+        (wasm && !wasm->tables.empty() &&
+         wasm->tables[0]->name != curr->table)) {
       curr->table.print(o);
       o << ' ';
     }
