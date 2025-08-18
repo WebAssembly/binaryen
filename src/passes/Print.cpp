@@ -503,10 +503,14 @@ struct PrintExpressionContents
       printMedium(o, "call_indirect ");
     }
 
-    if (features.hasReferenceTypes()) {
-      curr->table.print(o);
-      o << ' ';
-    }
+    // Even though the table reference in call_indirect is a reference-types
+    // feature, we print this unconditionally. Omitting this can emit incorrect
+    // wat files when features section is stripped or
+    // `--enable-reference-types` is not provided, because without a table
+    // reference all instruction will be considered to refer to the table index
+    // 0.
+    curr->table.print(o);
+    o << ' ';
 
     o << '(';
     printMinor(o, "type ");

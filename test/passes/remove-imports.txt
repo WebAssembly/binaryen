@@ -13,7 +13,7 @@
   (drop
    (f64.const 0)
   )
-  (call_indirect (type $FUNCSIG$v)
+  (call_indirect $table (type $FUNCSIG$v)
    (i32.const 0)
   )
  )

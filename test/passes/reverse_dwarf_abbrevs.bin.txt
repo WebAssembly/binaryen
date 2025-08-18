@@ -1443,7 +1443,7 @@ file_names[  1]:
      ;; code offset: 0x447
      (return
       ;; code offset: 0x444
-      (call_indirect (type $1)
+      (call_indirect $timport$0 (type $1)
        ;; code offset: 0x439
        (local.get $2)
        ;; code offset: 0x43b
@@ -1526,7 +1526,7 @@ file_names[  1]:
       ;; code offset: 0x483
       (local.tee $4
        ;; code offset: 0x480
-       (call_indirect (type $1)
+       (call_indirect $timport$0 (type $1)
         ;; code offset: 0x475
         (local.get $2)
         ;; code offset: 0x477
@@ -1895,7 +1895,7 @@ file_names[  1]:
     ;; code offset: 0x5b6
     (i32.ne
      ;; code offset: 0x5b1
-     (call_indirect (type $1)
+     (call_indirect $timport$0 (type $1)
       ;; code offset: 0x5a3
       (local.get $0)
       ;; code offset: 0x5a9
@@ -2319,7 +2319,7 @@ file_names[  1]:
  )
  (func $21 (param $0 i32) (param $1 i32) (param $2 i64) (param $3 i32) (result i64)
   ;; code offset: 0x709
-  (call_indirect (type $6)
+  (call_indirect $timport$0 (type $6)
    ;; code offset: 0x701
    (local.get $1)
    ;; code offset: 0x703

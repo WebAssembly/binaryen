@@ -96,7 +96,7 @@ total
    (then
     (block $block
      (br_if $block
-      (call_indirect (type $0)
+      (call_indirect $timport$0 (type $0)
        (local.get $1)
        (i32.const 10888)
        (local.get $0)
@@ -140,7 +140,7 @@ total
       (i32.const 0)
      )
      (else
-      (call_indirect (type $1)
+      (call_indirect $timport$0 (type $1)
        (local.get $0)
        (i32.const 10)
        (i32.add
@@ -194,7 +194,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $0)
+   (call_indirect $timport$0 (type $0)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -215,7 +215,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect (type $0)
+   (call_indirect $timport$0 (type $0)
     (i32.const 0)
     (local.get $1)
     (local.get $2)
@@ -328,7 +328,7 @@ total
    (then
     (block $block
      (br_if $block
-      (call_indirect (type $0)
+      (call_indirect $timport$0 (type $0)
        (local.get $1)
        (i32.const 10888)
        (local.get $0)
@@ -372,7 +372,7 @@ total
       (i32.const 0)
      )
      (else
-      (call_indirect (type $1)
+      (call_indirect $timport$0 (type $1)
        (local.get $0)
        (i32.const 10)
        (i32.add
@@ -421,7 +421,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $0)
+   (call_indirect $timport$0 (type $0)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -442,7 +442,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect (type $0)
+   (call_indirect $timport$0 (type $0)
     (i32.const 0)
     (local.get $1)
     (local.get $2)
@@ -555,7 +555,7 @@ total
    (then
     (block $block
      (br_if $block
-      (call_indirect (type $0)
+      (call_indirect $timport$0 (type $0)
        (local.get $1)
        (i32.const 10888)
        (local.get $0)
@@ -599,7 +599,7 @@ total
       (i32.const 0)
      )
      (else
-      (call_indirect (type $1)
+      (call_indirect $timport$0 (type $1)
        (local.get $0)
        (i32.const 10)
        (i32.add
@@ -648,7 +648,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $0)
+   (call_indirect $timport$0 (type $0)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -669,7 +669,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect (type $0)
+   (call_indirect $timport$0 (type $0)
     (i32.const 0)
     (local.get $1)
     (local.get $2)

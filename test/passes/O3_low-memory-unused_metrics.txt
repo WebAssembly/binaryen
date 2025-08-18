@@ -2459,7 +2459,7 @@ total
              )
             )
            )
-           (call_indirect (type $2)
+           (call_indirect $timport$109 (type $2)
             (local.get $2)
             (local.get $1)
             (i32.load
