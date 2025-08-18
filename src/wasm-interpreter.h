@@ -4824,7 +4824,11 @@ public:
       return funcFlow;
     }
     // Create a new continuation for the target function.
-    Name funcName = funcFlow.getSingleValue().getFunc();
+    auto funcValue = funcFlow.getSingleValue();
+    if (funcValue.isNull()) {
+      trap("null ref");
+    }
+    auto funcName = funcValue.getFunc();
     auto* func = self()->getModule()->getFunction(funcName);
     return Literal(std::make_shared<ContData>(
       self()->makeFuncData(func->name, func->type), curr->type.getHeapType()));
