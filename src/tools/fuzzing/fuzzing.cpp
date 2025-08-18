@@ -616,17 +616,6 @@ void TranslateToFuzzReader::setupTables() {
   }
 }
 
-static bool canCreateContentWithoutFunctionScope(Type type) {
-  for (auto t : type) {
-    if (t.isContinuation()) {
-      // There is no way to make a continuation in a global. TODO: We could
-      // allow null ones, at least, that are always set to null.
-      return false;
-    }
-  }
-  return true;
-}
-
 void TranslateToFuzzReader::setupGlobals() {
   // If there were initial wasm contents, there may be imported globals. That
   // would be a problem in the fuzzer harness as we'd error if we do not
@@ -685,9 +674,6 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(fuzzParams->MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    if (!canCreateContentWithoutFunctionScope(type)) {
-      continue;
-    }
 
     // Prefer immutable ones as they can be used in global.gets in other
     // globals, for more interesting patterns.
@@ -697,12 +683,16 @@ void TranslateToFuzzReader::setupGlobals() {
     // initializer.
     auto* init = makeTrivial(type);
 
-    if (!FindAll<RefAs>(init).list.empty()) {
+    if (!FindAll<RefAs>(init).list.empty() ||
+        !FindAll<ContNew>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
       // means we had to stop in the middle of an overly-nested struct or array,
       // which we can break out of using ref.as_non_null of a nullable ref. That
       // traps in normal code, which is bad enough, but it does not even
       // validate in a global. Switch to something safe instead.
+      //
+      // Likewise, if we see cont.new, we must switch as well. That can happen
+      // if a nested struct we create has a continuation field, for example.
       type = getMVPType();
       init = makeConst(type);
     } else if (type.isTuple() && !init->is<TupleMake>()) {
