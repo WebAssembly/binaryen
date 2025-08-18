@@ -36,7 +36,7 @@
  (func $func
   ;; This function is only ever referred to by a ref.func that is passed into
   ;; a cont.new. We should not modify this to unreachable, which we would do if
-  ;; we didn't realize it will execute.
+  ;; we didn't realize it will execute (in closed world).
   (nop)
  )
 
