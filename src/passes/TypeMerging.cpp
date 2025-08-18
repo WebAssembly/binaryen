@@ -246,6 +246,30 @@ struct ShapeHash {
   size_t operator()(const HeapType& type) const { return shapeHash(type); }
 };
 
+// The supertypes of each type in a descriptor chain. Hash and equality-compare
+// them using real identity to identify siblings chains that share the same
+// supertypes.
+using ChainSupers = std::vector<std::optional<HeapType>>;
+
+struct ChainSupersEq {
+  bool operator()(const ChainSupers& a, const ChainSupers& b) const {
+    return a == b;
+  }
+};
+
+struct ChainSupersHash {
+  size_t operator()(const ChainSupers& supers) const {
+    auto digest = wasm::hash(supers.size());
+    for (auto& super : supers) {
+      wasm::rehash(digest, !!super);
+      if (super) {
+        wasm::rehash(digest, *super);
+      }
+    }
+    return digest;
+  }
+};
+
 void TypeMerging::run(Module* module_) {
   module = module_;
 
@@ -337,8 +361,10 @@ bool TypeMerging::merge(MergeKind kind) {
   // that siblings that refine the supertype in the same way can be assigned to
   // the same partition and potentially merged.
   std::unordered_map<
-    std::optional<HeapType>,
-    std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>>
+    std::vector<std::optional<HeapType>>,
+    std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>,
+    ChainSupersHash,
+    ChainSupersEq>
     shapePartitions;
 
   // Ensure the type has a partition and return a reference to it. Since we
@@ -356,12 +382,16 @@ bool TypeMerging::merge(MergeKind kind) {
   // Similar to the above, but look up or create a partition associated with the
   // type's supertype and top-level shape rather than its identity.
   auto ensureShapePartition = [&](HeapType type) -> Partitions::iterator {
-    auto super = type.getDeclaredSuperType();
-    if (super) {
-      super = getMerged(*super);
+    ChainSupers supers;
+    for (auto t : type.getDescriptorChain()) {
+      auto super = t.getDeclaredSuperType();
+      if (super) {
+        super = getMerged(*super);
+      }
+      supers.push_back(super);
     }
     auto [it, inserted] =
-      shapePartitions[super].insert({type, partitions.end()});
+      shapePartitions[supers].insert({type, partitions.end()});
     if (inserted) {
       it->second = partitions.insert(partitions.end(), Partition{});
     }
