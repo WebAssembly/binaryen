@@ -3470,7 +3470,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return makeRefFuncConst(type);
     }
     case HeapType::cont: {
-      if (type.isNullable() || oneIn(4)) {
+      // Most of the time, avoid null continuations, as they will trap.
+      if (type.isNullable() && oneIn(4)) {
         return builder.makeRefNull(HeapTypes::cont.getBasic(share));
       }
       // Emit the simplest possible continuation.
