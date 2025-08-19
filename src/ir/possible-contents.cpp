@@ -1296,8 +1296,7 @@ struct InfoCollector
         // Send anything of the proper type to all functions of this signature,
         // since they are all callable.
         info.links.push_back(
-          {getTypeLocation(param),
-           SignatureParamLocation{targetType, i}});
+          {getTypeLocation(param), SignatureParamLocation{targetType, i}});
       }
       i++;
     }
