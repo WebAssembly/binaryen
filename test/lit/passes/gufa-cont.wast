@@ -217,7 +217,7 @@
 
  ;; CHECK:      (func $func (type $func) (param $x i32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; OPEN_WORLD:      (export "run" (func $run))
