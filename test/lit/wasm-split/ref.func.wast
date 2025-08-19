@@ -10,9 +10,9 @@
 (module
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
+ ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0))
 
- ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (type $0)))
+ ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1))
 
  ;; PRIMARY:      (global $glob1 (ref func) (ref.func $prime))
 
@@ -32,8 +32,6 @@
 
  ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0 $placeholder_1)
 
- ;; PRIMARY:      (elem declare func $prime $trampoline_second)
-
  ;; PRIMARY:      (export "prime" (func $prime))
 
  ;; PRIMARY:      (export "table" (table $table))
@@ -44,7 +42,7 @@
 
  ;; PRIMARY:      (export "global_4" (global $glob2))
 
- ;; PRIMARY:      (func $prime (type $0)
+ ;; PRIMARY:      (func $prime
  ;; PRIMARY-NEXT:  (drop
  ;; PRIMARY-NEXT:   (ref.func $prime)
  ;; PRIMARY-NEXT:  )
@@ -65,13 +63,11 @@
 
  ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 2 funcref))
 
- ;; SECONDARY:      (import "primary" "prime" (func $prime (type $0)))
+ ;; SECONDARY:      (import "primary" "prime" (func $prime))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $second $second-in-table)
 
- ;; SECONDARY:      (elem declare func $prime)
-
- ;; SECONDARY:      (func $second (type $0)
+ ;; SECONDARY:      (func $second
  ;; SECONDARY-NEXT:  (drop
  ;; SECONDARY-NEXT:   (ref.func $prime)
  ;; SECONDARY-NEXT:  )
@@ -88,7 +84,7 @@
   )
  )
 
- ;; PRIMARY:      (func $in-table (type $0)
+ ;; PRIMARY:      (func $in-table
  ;; PRIMARY-NEXT: )
  (func $in-table
   ;; This empty function is in the table. Just being present in the table is not
@@ -96,20 +92,20 @@
   ;; table is a list of ref.funcs.
  )
 
- ;; SECONDARY:      (func $second-in-table (type $0)
+ ;; SECONDARY:      (func $second-in-table
  ;; SECONDARY-NEXT: )
  (func $second-in-table
   ;; As above, but in the secondary module. We still don't need a trampoline
   ;; (but we will get a placeholder, as all split-out functions do).
  )
 )
-;; PRIMARY:      (func $trampoline_second (type $0)
+;; PRIMARY:      (func $trampoline_second
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $trampoline_second-in-table (type $0)
+;; PRIMARY:      (func $trampoline_second-in-table
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 1)
 ;; PRIMARY-NEXT:  )

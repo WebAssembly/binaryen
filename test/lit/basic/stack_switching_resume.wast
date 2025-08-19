@@ -60,7 +60,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $go (type $3) (param $x (ref $ct)) (result i32)
+ ;; CHECK-BIN:      (func $go (param $x (ref $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $scratch (tuple i32 (ref $ct)))
  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
  ;; CHECK-BIN-NEXT:  (local.set $scratch_2
@@ -131,7 +131,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0) (param i32) (result i32))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 (ref $1)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $scratch_2

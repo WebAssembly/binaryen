@@ -1013,7 +1013,7 @@ digraph call {
      )
     )
     (drop
-     (call_indirect $timport$0 (type $FUNCSIG$iiii)
+     (call_indirect (type $FUNCSIG$iiii)
       (local.get $0)
       (i32.const 0)
       (i32.const 0)
@@ -1062,7 +1062,7 @@ digraph call {
     )
     (then
      (drop
-      (call_indirect $timport$0 (type $FUNCSIG$iiii)
+      (call_indirect (type $FUNCSIG$iiii)
        (local.get $0)
        (i32.sub
         (local.get $4)
@@ -1128,7 +1128,7 @@ digraph call {
       (call $__ZSt15get_new_handlerv)
      )
      (then
-      (call_indirect $timport$0 (type $FUNCSIG$v)
+      (call_indirect (type $FUNCSIG$v)
        (i32.add
         (i32.and
          (local.get $0)
@@ -1462,7 +1462,7 @@ digraph call {
   (i32.const 0)
  )
  (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect $timport$0 (type $FUNCSIG$ii)
+  (call_indirect (type $FUNCSIG$ii)
    (local.get $1)
    (i32.add
     (i32.and
@@ -1474,7 +1474,7 @@ digraph call {
   )
  )
  (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (call_indirect $timport$0 (type $FUNCSIG$iiii)
+  (call_indirect (type $FUNCSIG$iiii)
    (local.get $1)
    (local.get $2)
    (local.get $3)
@@ -1488,7 +1488,7 @@ digraph call {
   )
  )
  (func $dynCall_vi (param $0 i32) (param $1 i32)
-  (call_indirect $timport$0 (type $FUNCSIG$vi)
+  (call_indirect (type $FUNCSIG$vi)
    (local.get $1)
    (i32.add
     (i32.and
@@ -1500,7 +1500,7 @@ digraph call {
   )
  )
  (func $dynCall_v (param $0 i32)
-  (call_indirect $timport$0 (type $FUNCSIG$v)
+  (call_indirect (type $FUNCSIG$v)
    (i32.add
     (i32.and
      (local.get $0)

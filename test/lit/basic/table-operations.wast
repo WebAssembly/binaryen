@@ -57,7 +57,7 @@
   ;; CHECK-TEXT:      (func $foo (type $0)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $foo (type $0)
+  ;; CHECK-BIN:      (func $foo
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo
@@ -76,7 +76,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $bar (type $0)
+  ;; CHECK-BIN:      (func $bar
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (table.get $table-1
   ;; CHECK-BIN-NEXT:    (i32.const 0)
@@ -112,7 +112,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $set-get (type $0)
+  ;; CHECK-BIN:      (func $set-get
   ;; CHECK-BIN-NEXT:  (table.set $table-1
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:   (ref.func $foo)
@@ -138,7 +138,7 @@
   ;; CHECK-TEXT:      (func $get-table-size (type $2) (result i32)
   ;; CHECK-TEXT-NEXT:  (table.size $table-1)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $get-table-size (type $2) (result i32)
+  ;; CHECK-BIN:      (func $get-table-size (result i32)
   ;; CHECK-BIN-NEXT:  (table.size $table-1)
   ;; CHECK-BIN-NEXT: )
   (func $get-table-size (result i32)
@@ -151,7 +151,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $sz)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $table-grow (type $3) (param $sz i32) (result i32)
+  ;; CHECK-BIN:      (func $table-grow (param $sz i32) (result i32)
   ;; CHECK-BIN-NEXT:  (table.grow $table-1
   ;; CHECK-BIN-NEXT:   (ref.null nofunc)
   ;; CHECK-BIN-NEXT:   (local.get $sz)
@@ -168,7 +168,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $size)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $table-fill (type $4) (param $dest i32) (param $value funcref) (param $size i32)
+  ;; CHECK-BIN:      (func $table-fill (param $dest i32) (param $value funcref) (param $size i32)
   ;; CHECK-BIN-NEXT:  (table.fill $table-1
   ;; CHECK-BIN-NEXT:   (local.get $dest)
   ;; CHECK-BIN-NEXT:   (local.get $value)
@@ -190,7 +190,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $size)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $table-copy (type $1) (param $dest i32) (param $source i32) (param $size i32)
+  ;; CHECK-BIN:      (func $table-copy (param $dest i32) (param $source i32) (param $size i32)
   ;; CHECK-BIN-NEXT:  (table.copy $table-1 $table-2
   ;; CHECK-BIN-NEXT:   (local.get $dest)
   ;; CHECK-BIN-NEXT:   (local.get $source)
@@ -212,7 +212,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $size)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $table-init (type $1) (param $dest i32) (param $offset i32) (param $size i32)
+  ;; CHECK-BIN:      (func $table-init (param $dest i32) (param $offset i32) (param $size i32)
   ;; CHECK-BIN-NEXT:  (table.init $table-1 $elem
   ;; CHECK-BIN-NEXT:   (local.get $dest)
   ;; CHECK-BIN-NEXT:   (local.get $offset)
@@ -247,11 +247,11 @@
 
 ;; CHECK-BIN-NODEBUG:      (elem $2 func)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $1
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (table.get $0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
@@ -264,7 +264,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $2
 ;; CHECK-BIN-NODEBUG-NEXT:  (table.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $0)
@@ -276,18 +276,18 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $2) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $3 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (table.size $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $3) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $4 (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (table.grow $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $4) (param $0 i32) (param $1 funcref) (param $2 i32)
+;; CHECK-BIN-NODEBUG:      (func $5 (param $0 i32) (param $1 funcref) (param $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (table.fill $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -295,7 +295,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CHECK-BIN-NODEBUG:      (func $6 (param $0 i32) (param $1 i32) (param $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (table.copy $0 $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -303,7 +303,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CHECK-BIN-NODEBUG:      (func $7 (param $0 i32) (param $1 i32) (param $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (table.init $0 $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)

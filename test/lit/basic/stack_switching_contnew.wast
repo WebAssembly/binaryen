@@ -35,9 +35,7 @@
 
  ;; CHECK-BIN:      (type $3 (func (result (ref cont))))
 
- ;; CHECK-BIN:      (elem declare func $g)
-
- ;; CHECK-BIN:      (func $f (type $2) (result (ref $ct))
+ ;; CHECK-BIN:      (func $f (result (ref $ct))
  ;; CHECK-BIN-NEXT:  (unreachable)
  ;; CHECK-BIN-NEXT: )
  (func $f (result (ref $ct))
@@ -46,21 +44,12 @@
  ;; CHECK-TEXT:      (func $g (type $ft) (param $0 i32) (result i32)
  ;; CHECK-TEXT-NEXT:  (i32.const 123)
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $g (type $ft) (param $0 i32) (result i32)
+ ;; CHECK-BIN:      (func $g (param $0 i32) (result i32)
  ;; CHECK-BIN-NEXT:  (i32.const 123)
  ;; CHECK-BIN-NEXT: )
  (func $g (param i32) (result i32)
    (i32.const 123)
  )
- ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i32)))
-
- ;; CHECK-BIN-NODEBUG:      (type $1 (cont $0))
-
- ;; CHECK-BIN-NODEBUG:      (type $2 (func (result (ref $1))))
-
- ;; CHECK-BIN-NODEBUG:      (type $3 (func (result (ref cont))))
-
- ;; CHECK-BIN-NODEBUG:      (elem declare func $1)
  (elem declare func $g)
 
  ;; CHECK-TEXT:      (func $h (type $2) (result (ref $ct))
@@ -68,7 +57,7 @@
  ;; CHECK-TEXT-NEXT:   (ref.func $g)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $h (type $2) (result (ref $ct))
+ ;; CHECK-BIN:      (func $h (result (ref $ct))
  ;; CHECK-BIN-NEXT:  (cont.new $ct
  ;; CHECK-BIN-NEXT:   (ref.func $g)
  ;; CHECK-BIN-NEXT:  )
@@ -82,7 +71,7 @@
  ;; CHECK-TEXT-NEXT:   (ref.null nofunc)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $k (type $3) (result (ref cont))
+ ;; CHECK-BIN:      (func $k (result (ref cont))
  ;; CHECK-BIN-NEXT:  (cont.new $ct
  ;; CHECK-BIN-NEXT:   (ref.null nofunc)
  ;; CHECK-BIN-NEXT:  )
@@ -91,21 +80,29 @@
    (cont.new $ct (ref.null nofunc)))
 
 )
-;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $1 (cont $0))
+
+;; CHECK-BIN-NODEBUG:      (type $2 (func (result (ref $1))))
+
+;; CHECK-BIN-NODEBUG:      (type $3 (func (result (ref cont))))
+
+;; CHECK-BIN-NODEBUG:      (func $0 (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $1 (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $2 (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $3) (result (ref cont))
+;; CHECK-BIN-NODEBUG:      (func $3 (result (ref cont))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

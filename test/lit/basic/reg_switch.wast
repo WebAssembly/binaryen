@@ -31,7 +31,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $0 (type $0)
+  ;; CHECK-BIN:      (func $0
   ;; CHECK-BIN-NEXT:  (if
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:   (then
@@ -43,7 +43,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+  ;; CHECK-BIN-NODEBUG:      (func $0
   ;; CHECK-BIN-NODEBUG-NEXT:  (if
   ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NODEBUG-NEXT:   (then

@@ -2450,7 +2450,7 @@ BinaryenFeatureAll: 4194303
  (type $0 (func (result i32)))
  (type $1 (func (result i64)))
  (func $unreachable-fn (result i32)
-  (call_indirect $invalid-table (type $1)
+  (call_indirect (type $1)
    (unreachable)
   )
  )

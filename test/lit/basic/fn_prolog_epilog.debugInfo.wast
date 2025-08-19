@@ -43,7 +43,7 @@
 
 ;; CHECK-BIN:      (type $0 (func))
 
-;; CHECK-BIN:      (func $0 (type $0)
+;; CHECK-BIN:      (func $0
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  (block
 ;; CHECK-BIN-NEXT:   (block $block
@@ -55,7 +55,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block

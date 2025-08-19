@@ -32,7 +32,7 @@
  (elem (i32.const 0) $f1 $f2)
 )
 ;; CHECK:      (func $dynCall_ji (param $fptr i32) (param $0 i32) (result i64)
-;; CHECK-NEXT:  (call_indirect $0 (type $0)
+;; CHECK-NEXT:  (call_indirect (type $0)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (local.get $fptr)
 ;; CHECK-NEXT:  )

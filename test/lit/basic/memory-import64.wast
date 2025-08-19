@@ -23,7 +23,7 @@
   ;; CHECK-TEXT-NEXT:   (i64.const 37)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $foo (type $0) (result i32)
+  ;; CHECK-BIN:      (func $foo (result i32)
   ;; CHECK-BIN-NEXT:  (i32.load offset=13
   ;; CHECK-BIN-NEXT:   (i64.const 37)
   ;; CHECK-BIN-NEXT:  )
@@ -36,7 +36,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 i64 1 1))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.load offset=13
 ;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 37)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

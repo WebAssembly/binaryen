@@ -1209,7 +1209,7 @@
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (then
-  ;; CHECK-NEXT:         (call_indirect $0 (type $f)
+  ;; CHECK-NEXT:         (call_indirect (type $f)
   ;; CHECK-NEXT:          (local.get $2)
   ;; CHECK-NEXT:          (local.get $3)
   ;; CHECK-NEXT:         )

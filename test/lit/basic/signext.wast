@@ -44,7 +44,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $signext (type $0)
+ ;; CHECK-BIN:      (func $signext
  ;; CHECK-BIN-NEXT:  (local $0 i32)
  ;; CHECK-BIN-NEXT:  (local $1 i64)
  ;; CHECK-BIN-NEXT:  (drop
@@ -83,7 +83,7 @@
   (drop (i64.extend32_s (local.get $1)))
  )
 )
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop

@@ -16,7 +16,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (type $0 (func))
 
-  ;; CHECK-BIN:      (func $foo\20\28.bar\29 (type $0)
+  ;; CHECK-BIN:      (func $foo\20\28.bar\29
   ;; CHECK-BIN-NEXT: )
   (func $foo\20\28.bar\29)
 
@@ -25,15 +25,15 @@
   ;; CHECK-TEXT-NEXT: )
   (func $"zoo (.bar)" (call $foo\20\28.bar\29))
 )
-;; CHECK-BIN:      (func $zoo\20\28.bar\29 (type $0)
+;; CHECK-BIN:      (func $zoo\20\28.bar\29
 ;; CHECK-BIN-NEXT:  (call $foo\20\28.bar\29)
 ;; CHECK-BIN-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $1
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )

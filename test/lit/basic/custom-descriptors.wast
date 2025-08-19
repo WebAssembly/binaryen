@@ -104,7 +104,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-get-desc (type $12) (param $described (ref null $described)) (param $middle-exact (ref null (exact $middle)))
+  ;; CHECK-BIN:      (func $ref-get-desc (param $described (ref null $described)) (param $middle-exact (ref null (exact $middle)))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block (result (ref $middle))
   ;; CHECK-BIN-NEXT:    (ref.get_desc $described
@@ -147,7 +147,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-get-desc-null (type $13)
+  ;; CHECK-BIN:      (func $ref-get-desc-null
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:  )
@@ -176,7 +176,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br-on-cast-desc (type $6) (param $any anyref) (param $descriptor (ref null $describing))
+  ;; CHECK-BIN:      (func $br-on-cast-desc (param $any anyref) (param $descriptor (ref null $describing))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref null $middle))
   ;; CHECK-BIN-NEXT:    (drop
@@ -211,7 +211,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br-on-cast-desc-fail (type $6) (param $any anyref) (param $descriptor (ref null $describing))
+  ;; CHECK-BIN:      (func $br-on-cast-desc-fail (param $any anyref) (param $descriptor (ref null $describing))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result anyref)
   ;; CHECK-BIN-NEXT:    (br_on_cast_desc_fail $block anyref (ref null $middle)
@@ -245,7 +245,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br-on-cast-desc-null (type $3) (param $0 anyref) (result anyref)
+  ;; CHECK-BIN:      (func $br-on-cast-desc-null (param $0 anyref) (result anyref)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:  )
@@ -274,7 +274,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br-on-cast-desc-fail-null (type $3) (param $0 anyref) (result anyref)
+  ;; CHECK-BIN:      (func $br-on-cast-desc-fail-null (param $0 anyref) (result anyref)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:  )
@@ -301,7 +301,7 @@
   ;; CHECK-TEXT-NEXT:   (unreachable)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-null-unreachable (type $7) (result anyref)
+  ;; CHECK-BIN:      (func $ref-cast-desc-null-unreachable (result anyref)
   ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $ref-cast-desc-null-unreachable (result anyref)
@@ -320,7 +320,7 @@
   ;; CHECK-TEXT-NEXT:   (unreachable)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-null-null (type $3) (param $0 anyref) (result anyref)
+  ;; CHECK-BIN:      (func $ref-cast-desc-null-null (param $0 anyref) (result anyref)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:  )
@@ -342,7 +342,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $middle)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-null-exact (type $8) (param $any anyref) (param $middle (ref null (exact $middle))) (result (ref null (exact $described)))
+  ;; CHECK-BIN:      (func $ref-cast-desc-null-exact (param $any anyref) (param $middle (ref null (exact $middle))) (result (ref null (exact $described)))
   ;; CHECK-BIN-NEXT:  (ref.cast_desc (ref null (exact $described))
   ;; CHECK-BIN-NEXT:   (local.get $any)
   ;; CHECK-BIN-NEXT:   (local.get $middle)
@@ -367,7 +367,7 @@
   ;; CHECK-TEXT-NEXT:   (unreachable)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-nn-unreachable (type $7) (result anyref)
+  ;; CHECK-BIN:      (func $ref-cast-desc-nn-unreachable (result anyref)
   ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $ref-cast-desc-nn-unreachable (result anyref)
@@ -386,7 +386,7 @@
   ;; CHECK-TEXT-NEXT:   (unreachable)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-nn-null (type $3) (param $0 anyref) (result anyref)
+  ;; CHECK-BIN:      (func $ref-cast-desc-nn-null (param $0 anyref) (result anyref)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:  )
@@ -408,7 +408,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $middle)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-nn-exact (type $8) (param $any anyref) (param $middle (ref null (exact $middle))) (result (ref null (exact $described)))
+  ;; CHECK-BIN:      (func $ref-cast-desc-nn-exact (param $any anyref) (param $middle (ref null (exact $middle))) (result (ref null (exact $described)))
   ;; CHECK-BIN-NEXT:  (ref.cast_desc (ref (exact $described))
   ;; CHECK-BIN-NEXT:   (local.get $any)
   ;; CHECK-BIN-NEXT:   (local.get $middle)
@@ -428,7 +428,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $middle)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-cast-desc-nn-to-null (type $14) (param $any-nn (ref any)) (param $middle (ref null $middle)) (result (ref null $described))
+  ;; CHECK-BIN:      (func $ref-cast-desc-nn-to-null (param $any-nn (ref any)) (param $middle (ref null $middle)) (result (ref null $described))
   ;; CHECK-BIN-NEXT:  (ref.cast_desc (ref $described)
   ;; CHECK-BIN-NEXT:   (local.get $any-nn)
   ;; CHECK-BIN-NEXT:   (local.get $middle)
@@ -448,7 +448,7 @@
   ;; CHECK-TEXT-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $struct-new (type $9) (result (ref (exact $pair)))
+  ;; CHECK-BIN:      (func $struct-new (result (ref (exact $pair)))
   ;; CHECK-BIN-NEXT:  (struct.new $pair
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:   (i64.const 1)
@@ -468,7 +468,7 @@
   ;; CHECK-TEXT-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $struct-new-default (type $9) (result (ref (exact $pair)))
+  ;; CHECK-BIN:      (func $struct-new-default (result (ref (exact $pair)))
   ;; CHECK-BIN-NEXT:  (struct.new_default $pair
   ;; CHECK-BIN-NEXT:   (struct.new_default $pair.desc)
   ;; CHECK-BIN-NEXT:  )
@@ -517,7 +517,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (global $global$1 (ref null $11) (ref.null (shared none)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $12) (param $0 (ref null $0)) (param $1 (ref null (exact $1)))
+;; CHECK-BIN-NODEBUG:      (func $0 (param $0 (ref null $0)) (param $1 (ref null (exact $1)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.get_desc $0
@@ -534,7 +534,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $13)
+;; CHECK-BIN-NODEBUG:      (func $1
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -543,7 +543,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $6) (param $0 anyref) (param $1 (ref null $2))
+;; CHECK-BIN-NODEBUG:      (func $2 (param $0 anyref) (param $1 (ref null $2))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref null $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
@@ -557,7 +557,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $6) (param $0 anyref) (param $1 (ref null $2))
+;; CHECK-BIN-NODEBUG:      (func $3 (param $0 anyref) (param $1 (ref null $2))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (br_on_cast_desc_fail $block anyref (ref null $1)
@@ -568,7 +568,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $3) (param $0 anyref) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $4 (param $0 anyref) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -578,7 +578,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $3) (param $0 anyref) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $5 (param $0 anyref) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -588,11 +588,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $7) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $6 (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $3) (param $0 anyref) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $7 (param $0 anyref) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -602,18 +602,18 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $8) (param $0 anyref) (param $1 (ref null (exact $1))) (result (ref null (exact $0)))
+;; CHECK-BIN-NODEBUG:      (func $8 (param $0 anyref) (param $1 (ref null (exact $1))) (result (ref null (exact $0)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.cast_desc (ref null (exact $0))
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $7) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $9 (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $3) (param $0 anyref) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $10 (param $0 anyref) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -623,21 +623,21 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (type $8) (param $0 anyref) (param $1 (ref null (exact $1))) (result (ref null (exact $0)))
+;; CHECK-BIN-NODEBUG:      (func $11 (param $0 anyref) (param $1 (ref null (exact $1))) (result (ref null (exact $0)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.cast_desc (ref (exact $0))
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $12 (type $14) (param $0 (ref any)) (param $1 (ref null $1)) (result (ref null $0))
+;; CHECK-BIN-NODEBUG:      (func $12 (param $0 (ref any)) (param $1 (ref null $1)) (result (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.cast_desc (ref $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $13 (type $9) (result (ref (exact $4)))
+;; CHECK-BIN-NODEBUG:      (func $13 (result (ref (exact $4)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (struct.new $4
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 1)
@@ -645,7 +645,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $14 (type $9) (result (ref (exact $4)))
+;; CHECK-BIN-NODEBUG:      (func $14 (result (ref (exact $4)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (struct.new_default $4
 ;; CHECK-BIN-NODEBUG-NEXT:   (struct.new_default $5)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

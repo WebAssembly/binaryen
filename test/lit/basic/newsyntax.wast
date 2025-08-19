@@ -40,15 +40,15 @@
 
   ;; CHECK-BIN:      (export "call_indirect" (func $call_indirect))
 
-  ;; CHECK-BIN:      (func $call_indirect (type $0)
+  ;; CHECK-BIN:      (func $call_indirect
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (call_indirect $timport$0 (type $1)
+  ;; CHECK-BIN-NEXT:   (call_indirect (type $1)
   ;; CHECK-BIN-NEXT:    (i32.const 10)
   ;; CHECK-BIN-NEXT:    (f64.const 20)
   ;; CHECK-BIN-NEXT:    (i32.const 30)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $timport$0 (type $0)
+  ;; CHECK-BIN-NEXT:  (call_indirect (type $0)
   ;; CHECK-BIN-NEXT:   (i32.const 1)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -67,15 +67,15 @@
 
 ;; CHECK-BIN-NODEBUG:      (export "call_indirect" (func $0))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (call_indirect $timport$0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:   (call_indirect (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 10)
 ;; CHECK-BIN-NODEBUG-NEXT:    (f64.const 20)
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 30)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $timport$0 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

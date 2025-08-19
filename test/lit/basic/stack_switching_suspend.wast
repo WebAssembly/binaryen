@@ -27,7 +27,7 @@
  ;; CHECK-TEXT-NEXT:   (i32.const 123)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $f (type $1) (result i64)
+ ;; CHECK-BIN:      (func $f (result i64)
  ;; CHECK-BIN-NEXT:  (suspend $t
  ;; CHECK-BIN-NEXT:   (i32.const 123)
  ;; CHECK-BIN-NEXT:  )
@@ -42,7 +42,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0) (param i32) (result i64))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $1) (result i64)
+;; CHECK-BIN-NODEBUG:      (func $0 (result i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (suspend $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

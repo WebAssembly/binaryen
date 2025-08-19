@@ -44,7 +44,7 @@
 
  ;; CHECK-BIN:      (type $6 (func (result (ref $ct1))))
 
- ;; CHECK-BIN:      (func $f (type $4) (param $x (ref $ct1)) (result (ref $ct2))
+ ;; CHECK-BIN:      (func $f (param $x (ref $ct1)) (result (ref $ct2))
  ;; CHECK-BIN-NEXT:  (cont.bind $ct1 $ct2
  ;; CHECK-BIN-NEXT:   (i32.const 123)
  ;; CHECK-BIN-NEXT:   (i64.const 456)
@@ -64,7 +64,7 @@
  ;; CHECK-TEXT-NEXT:   (local.get $x)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $g (type $5) (param $x (ref $ct1)) (result (ref $ct1))
+ ;; CHECK-BIN:      (func $g (param $x (ref $ct1)) (result (ref $ct1))
  ;; CHECK-BIN-NEXT:  (cont.bind $ct1 $ct1
  ;; CHECK-BIN-NEXT:   (local.get $x)
  ;; CHECK-BIN-NEXT:  )
@@ -83,7 +83,7 @@
  ;; CHECK-TEXT-NEXT:   (unreachable)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $k (type $6) (result (ref $ct1))
+ ;; CHECK-BIN:      (func $k (result (ref $ct1))
  ;; CHECK-BIN-NEXT:  (unreachable)
  ;; CHECK-BIN-NEXT: )
  (func $k (result (ref $ct1))
@@ -106,7 +106,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $6 (func (result (ref $1))))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $4) (param $0 (ref $1)) (result (ref $3))
+;; CHECK-BIN-NODEBUG:      (func $0 (param $0 (ref $1)) (result (ref $3))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.bind $1 $3
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 456)
@@ -114,12 +114,12 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $5) (param $0 (ref $1)) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $1 (param $0 (ref $1)) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.bind $1 $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $6) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $2 (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )

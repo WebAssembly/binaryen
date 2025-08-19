@@ -94,8 +94,6 @@
 
  ;; CHECK-BIN:      (global $gglo (ref null $k1) (ref.null nocont))
 
- ;; CHECK-BIN:      (elem declare func $f1 $f2 $f3 $fglo $r0 $r1)
-
  ;; CHECK-BIN:      (tag $exn (type $f1))
 
  ;; CHECK-BIN:      (tag $e1 (type $f1))
@@ -124,7 +122,7 @@
 
  ;; CHECK-BIN:      (export "non-linear-4" (func $non-linear-4))
 
- ;; CHECK-BIN:      (func $id (type $7) (param $x (ref $ct)) (result (ref $ct))
+ ;; CHECK-BIN:      (func $id (param $x (ref $ct)) (result (ref $ct))
  ;; CHECK-BIN-NEXT:  (local.get $x)
  ;; CHECK-BIN-NEXT: )
  (func $id (param $x (ref $ct)) (result (ref $ct))
@@ -134,7 +132,7 @@
   ;; CHECK-TEXT:      (func $id2 (type $8) (param $w contref) (param $x nullcontref) (param $y (ref cont)) (param $z (ref nocont)) (result contref)
   ;; CHECK-TEXT-NEXT:  (local.get $z)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $id2 (type $8) (param $w contref) (param $x nullcontref) (param $y (ref cont)) (param $z (ref nocont)) (result contref)
+  ;; CHECK-BIN:      (func $id2 (param $w contref) (param $x nullcontref) (param $y (ref cont)) (param $z (ref nocont)) (result contref)
   ;; CHECK-BIN-NEXT:  (local.get $z)
   ;; CHECK-BIN-NEXT: )
   (func $id2
@@ -179,36 +177,9 @@
 
   ;; CHECK-TEXT:      (func $fglo (type $f1)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $fglo (type $f1)
+  ;; CHECK-BIN:      (func $fglo
   ;; CHECK-BIN-NEXT: )
   (func $fglo)
-  ;; CHECK-BIN-NODEBUG:      (type $0 (func))
-
-  ;; CHECK-BIN-NODEBUG:      (type $1 (cont $0))
-
-  ;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref $1))))
-
-  ;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32)))
-
-  ;; CHECK-BIN-NODEBUG:      (type $4 (sub (cont $3)))
-
-  ;; CHECK-BIN-NODEBUG:      (type $5 (func (param i32) (result i32)))
-
-  ;; CHECK-BIN-NODEBUG:      (type $6 (cont $5))
-
-  ;; CHECK-BIN-NODEBUG:      (type $7 (func (param (ref $6)) (result (ref $6))))
-
-  ;; CHECK-BIN-NODEBUG:      (type $8 (func (param contref nullcontref (ref cont) (ref nocont)) (result contref)))
-
-  ;; CHECK-BIN-NODEBUG:      (type $9 (func (param (ref $4))))
-
-  ;; CHECK-BIN-NODEBUG:      (type $10 (sub (cont $0)))
-
-  ;; CHECK-BIN-NODEBUG:      (global $global$0 (mut (ref null $1)) (ref.null nocont))
-
-  ;; CHECK-BIN-NODEBUG:      (global $global$1 (ref null $1) (ref.null nocont))
-
-  ;; CHECK-BIN-NODEBUG:      (elem declare func $12 $15 $16 $2 $5 $9)
   (elem declare func $fglo)
 
   (func
@@ -241,7 +212,7 @@
   ;; CHECK-TEXT:      (func $f1 (type $f1)
   ;; CHECK-TEXT-NEXT:  (suspend $e1)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $3 (type $f1)
+  ;; CHECK-BIN:      (func $3
   ;; CHECK-BIN-NEXT:  (global.set $kglo
   ;; CHECK-BIN-NEXT:   (cont.new $k1
   ;; CHECK-BIN-NEXT:    (ref.func $fglo)
@@ -249,7 +220,7 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
 
-  ;; CHECK-BIN:      (func $4 (type $9) (param $x (ref $ct1))
+  ;; CHECK-BIN:      (func $4 (param $x (ref $ct1))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (cont.bind $ct1 $ct0
   ;; CHECK-BIN-NEXT:    (i32.const 123)
@@ -258,7 +229,7 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
 
-  ;; CHECK-BIN:      (func $f1 (type $f1)
+  ;; CHECK-BIN:      (func $f1
   ;; CHECK-BIN-NEXT:  (suspend $e1)
   ;; CHECK-BIN-NEXT: )
   (func $f1 (export "unhandled-1")
@@ -272,7 +243,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $unhandled-2 (type $f1)
+  ;; CHECK-BIN:      (func $unhandled-2
   ;; CHECK-BIN-NEXT:  (resume $k1
   ;; CHECK-BIN-NEXT:   (cont.new $k1
   ;; CHECK-BIN-NEXT:    (ref.func $f1)
@@ -295,7 +266,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $unhandled-3 (type $f1)
+  ;; CHECK-BIN:      (func $unhandled-3
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e2 $block)
@@ -327,7 +298,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $handled (type $f1)
+  ;; CHECK-BIN:      (func $handled
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -351,7 +322,7 @@
   ;; CHECK-TEXT:      (func $f2 (type $f1)
   ;; CHECK-TEXT-NEXT:  (throw $exn)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $f2 (type $f1)
+  ;; CHECK-BIN:      (func $f2
   ;; CHECK-BIN-NEXT:  (throw $exn)
   ;; CHECK-BIN-NEXT: )
   (func $f2
@@ -370,7 +341,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $uncaught-1 (type $f1)
+  ;; CHECK-BIN:      (func $uncaught-1
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -402,7 +373,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $uncaught-2 (type $f1)
+  ;; CHECK-BIN:      (func $uncaught-2
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -426,7 +397,7 @@
   ;; CHECK-TEXT:      (func $f3 (type $f1)
   ;; CHECK-TEXT-NEXT:  (call $f4)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $f3 (type $f1)
+  ;; CHECK-BIN:      (func $f3
   ;; CHECK-BIN-NEXT:  (call $f4)
   ;; CHECK-BIN-NEXT: )
   (func $f3
@@ -435,7 +406,7 @@
   ;; CHECK-TEXT:      (func $f4 (type $f1)
   ;; CHECK-TEXT-NEXT:  (suspend $e1)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $f4 (type $f1)
+  ;; CHECK-BIN:      (func $f4
   ;; CHECK-BIN-NEXT:  (suspend $e1)
   ;; CHECK-BIN-NEXT: )
   (func $f4
@@ -454,7 +425,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $uncaught-3 (type $f1)
+  ;; CHECK-BIN:      (func $uncaught-3
   ;; CHECK-BIN-NEXT:  (resume_throw $k1 $exn
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -477,7 +448,7 @@
   (elem declare func $r0 $r1)
   ;; CHECK-TEXT:      (func $r0 (type $f1)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $r0 (type $f1)
+  ;; CHECK-BIN:      (func $r0
   ;; CHECK-BIN-NEXT: )
   (func $r0)
 
@@ -485,7 +456,7 @@
   ;; CHECK-TEXT-NEXT:  (suspend $e1)
   ;; CHECK-TEXT-NEXT:  (suspend $e1)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $r1 (type $f1)
+  ;; CHECK-BIN:      (func $r1
   ;; CHECK-BIN-NEXT:  (suspend $e1)
   ;; CHECK-BIN-NEXT:  (suspend $e1)
   ;; CHECK-BIN-NEXT: )
@@ -499,7 +470,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $k)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $nl1 (type $2) (param $k (ref $k1))
+  ;; CHECK-BIN:      (func $nl1 (param $k (ref $k1))
   ;; CHECK-BIN-NEXT:  (resume $k1
   ;; CHECK-BIN-NEXT:   (local.get $k)
   ;; CHECK-BIN-NEXT:  )
@@ -525,7 +496,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $nl2 (type $2) (param $k (ref $k1))
+  ;; CHECK-BIN:      (func $nl2 (param $k (ref $k1))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
   ;; CHECK-BIN-NEXT:    (resume $k1 (on $e1 $block)
@@ -570,7 +541,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (unreachable)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $nl3 (type $2) (param $k (ref $k1))
+  ;; CHECK-BIN:      (func $nl3 (param $k (ref $k1))
   ;; CHECK-BIN-NEXT:  (local $k' (ref null $k1))
   ;; CHECK-BIN-NEXT:  (local.set $k'
   ;; CHECK-BIN-NEXT:   (block $block (result (ref $k1))
@@ -617,7 +588,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $k)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $nl4 (type $2) (param $k (ref $k1))
+  ;; CHECK-BIN:      (func $nl4 (param $k (ref $k1))
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (cont.bind $k1 $k1
   ;; CHECK-BIN-NEXT:    (local.get $k)
@@ -639,7 +610,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $non-linear-1 (type $f1)
+  ;; CHECK-BIN:      (func $non-linear-1
   ;; CHECK-BIN-NEXT:  (call $nl1
   ;; CHECK-BIN-NEXT:   (cont.new $k1
   ;; CHECK-BIN-NEXT:    (ref.func $r0)
@@ -656,7 +627,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $non-linear-2 (type $f1)
+  ;; CHECK-BIN:      (func $non-linear-2
   ;; CHECK-BIN-NEXT:  (call $nl2
   ;; CHECK-BIN-NEXT:   (cont.new $k1
   ;; CHECK-BIN-NEXT:    (ref.func $r1)
@@ -673,7 +644,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $non-linear-3 (type $f1)
+  ;; CHECK-BIN:      (func $non-linear-3
   ;; CHECK-BIN-NEXT:  (call $nl3
   ;; CHECK-BIN-NEXT:   (cont.new $k1
   ;; CHECK-BIN-NEXT:    (ref.func $r1)
@@ -690,7 +661,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $non-linear-4 (type $f1)
+  ;; CHECK-BIN:      (func $non-linear-4
   ;; CHECK-BIN-NEXT:  (call $nl4
   ;; CHECK-BIN-NEXT:   (cont.new $k1
   ;; CHECK-BIN-NEXT:    (ref.func $r1)
@@ -702,6 +673,32 @@
   )
 
 )
+;; CHECK-BIN-NODEBUG:      (type $0 (func))
+
+;; CHECK-BIN-NODEBUG:      (type $1 (cont $0))
+
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref $1))))
+
+;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $4 (sub (cont $3)))
+
+;; CHECK-BIN-NODEBUG:      (type $5 (func (param i32) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $6 (cont $5))
+
+;; CHECK-BIN-NODEBUG:      (type $7 (func (param (ref $6)) (result (ref $6))))
+
+;; CHECK-BIN-NODEBUG:      (type $8 (func (param contref nullcontref (ref cont) (ref nocont)) (result contref)))
+
+;; CHECK-BIN-NODEBUG:      (type $9 (func (param (ref $4))))
+
+;; CHECK-BIN-NODEBUG:      (type $10 (sub (cont $0)))
+
+;; CHECK-BIN-NODEBUG:      (global $global$0 (mut (ref null $1)) (ref.null nocont))
+
+;; CHECK-BIN-NODEBUG:      (global $global$1 (ref null $1) (ref.null nocont))
+
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $0))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $0))
@@ -730,18 +727,18 @@
 
 ;; CHECK-BIN-NODEBUG:      (export "non-linear-4" (func $24))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $7) (param $0 (ref $6)) (result (ref $6))
+;; CHECK-BIN-NODEBUG:      (func $0 (param $0 (ref $6)) (result (ref $6))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $8) (param $0 contref) (param $1 nullcontref) (param $2 (ref cont)) (param $3 (ref nocont)) (result contref)
+;; CHECK-BIN-NODEBUG:      (func $1 (param $0 contref) (param $1 nullcontref) (param $2 (ref cont)) (param $3 (ref nocont)) (result contref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $3)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $2
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $3
 ;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$0
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $2)
@@ -749,7 +746,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $9) (param $0 (ref $4))
+;; CHECK-BIN-NODEBUG:      (func $4 (param $0 (ref $4))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.bind $4 $10
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 123)
@@ -758,11 +755,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $5
 ;; CHECK-BIN-NODEBUG-NEXT:  (suspend $tag$1)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $6
 ;; CHECK-BIN-NODEBUG-NEXT:  (resume $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $5)
@@ -770,7 +767,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $7
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (resume $1 (on $tag$2 $block)
@@ -783,7 +780,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $8
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (resume $1 (on $tag$1 $block)
@@ -796,11 +793,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $9
 ;; CHECK-BIN-NODEBUG-NEXT:  (throw $tag$0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $10
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (resume $1 (on $tag$1 $block)
@@ -813,7 +810,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $11
 ;; CHECK-BIN-NODEBUG-NEXT:  (resume_throw $1 $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (resume $1 (on $tag$1 $block)
@@ -826,15 +823,15 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $12 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $12
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $13)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $13 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $13
 ;; CHECK-BIN-NODEBUG-NEXT:  (suspend $tag$1)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $14 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $14
 ;; CHECK-BIN-NODEBUG-NEXT:  (resume_throw $1 $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (resume $1 (on $tag$1 $block)
@@ -847,15 +844,15 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $15 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $15
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $16 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $16
 ;; CHECK-BIN-NODEBUG-NEXT:  (suspend $tag$1)
 ;; CHECK-BIN-NODEBUG-NEXT:  (suspend $tag$1)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $17 (type $2) (param $0 (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $17 (param $0 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (resume $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -864,7 +861,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $18 (type $2) (param $0 (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $18 (param $0 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (resume $1 (on $tag$1 $block)
@@ -879,7 +876,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $19 (type $2) (param $0 (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $19 (param $0 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 (ref null $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $block (result (ref $1))
@@ -903,7 +900,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $20 (type $2) (param $0 (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $20 (param $0 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.bind $1 $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
@@ -914,7 +911,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $21 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $21
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $17
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $15)
@@ -922,7 +919,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $22 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $22
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $18
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $16)
@@ -930,7 +927,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $23 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $23
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $19
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $16)
@@ -938,7 +935,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $24 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $24
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $20
 ;; CHECK-BIN-NODEBUG-NEXT:   (cont.new $1
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $16)

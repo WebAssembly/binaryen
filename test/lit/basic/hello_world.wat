@@ -28,7 +28,7 @@
  ;; CHECK-TEXT-NEXT:   (local.get $y)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $add (type $i32_i32_=>_i32) (param $x i32) (param $y i32) (result i32)
+ ;; CHECK-BIN:      (func $add (param $x i32) (param $y i32) (result i32)
  ;; CHECK-BIN-NEXT:  (i32.add
  ;; CHECK-BIN-NEXT:   (local.get $x)
  ;; CHECK-BIN-NEXT:   (local.get $y)
@@ -43,7 +43,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (export "add" (func $0))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32) (param $1 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.add
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)

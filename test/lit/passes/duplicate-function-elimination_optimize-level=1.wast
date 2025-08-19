@@ -842,7 +842,7 @@
   ;; CHECK:      (elem $0 (i32.const 0) $erase $erase)
 
   ;; CHECK:      (func $erase
-  ;; CHECK-NEXT:  (call_indirect $0 (type $T)
+  ;; CHECK-NEXT:  (call_indirect (type $T)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -870,7 +870,7 @@
   ;; CHECK:      (elem $0 (i32.const 0) $keep2 $other)
 
   ;; CHECK:      (func $keep2
-  ;; CHECK-NEXT:  (call_indirect $0 (type $T)
+  ;; CHECK-NEXT:  (call_indirect (type $T)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -880,7 +880,7 @@
     )
   )
   ;; CHECK:      (func $other
-  ;; CHECK-NEXT:  (call_indirect $0 (type $T)
+  ;; CHECK-NEXT:  (call_indirect (type $T)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -904,7 +904,7 @@
   ;; CHECK:      (elem $0 (i32.const 0) $keep2 $keep2)
 
   ;; CHECK:      (func $keep2
-  ;; CHECK-NEXT:  (call_indirect $0 (type $T)
+  ;; CHECK-NEXT:  (call_indirect (type $T)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

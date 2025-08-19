@@ -29,7 +29,7 @@
 
   ;; CHECK-BIN:      (elem $a (i32.const 0) $f)
 
-  ;; CHECK-BIN:      (func $f (type $0)
+  ;; CHECK-BIN:      (func $f
   ;; CHECK-BIN-NEXT: )
   (func $f)
   (elem $p funcref (ref.func $f))
@@ -38,7 +38,7 @@
   ;; CHECK-TEXT:      (func $drop_passive (type $0)
   ;; CHECK-TEXT-NEXT:  (elem.drop $p)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $drop_passive (type $0)
+  ;; CHECK-BIN:      (func $drop_passive
   ;; CHECK-BIN-NEXT:  (elem.drop $p)
   ;; CHECK-BIN-NEXT: )
   (func $drop_passive (elem.drop $p))
@@ -46,7 +46,7 @@
   ;; CHECK-TEXT:      (func $drop_active (type $0)
   ;; CHECK-TEXT-NEXT:  (elem.drop $a)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $drop_active (type $0)
+  ;; CHECK-BIN:      (func $drop_active
   ;; CHECK-BIN-NEXT:  (elem.drop $a)
   ;; CHECK-BIN-NEXT: )
   (func $drop_active (elem.drop $a))
@@ -59,13 +59,13 @@
 
 ;; CHECK-BIN-NODEBUG:      (elem $1 (i32.const 0) $0)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $1
 ;; CHECK-BIN-NODEBUG-NEXT:  (elem.drop $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $2
 ;; CHECK-BIN-NODEBUG-NEXT:  (elem.drop $1)
 ;; CHECK-BIN-NODEBUG-NEXT: )

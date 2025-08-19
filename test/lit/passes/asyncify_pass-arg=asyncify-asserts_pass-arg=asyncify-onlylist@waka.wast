@@ -132,7 +132,7 @@
   ;; CHECK-NEXT:   (global.get $__asyncify_state)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (call_indirect $0 (type $f)
+  ;; CHECK-NEXT:   (call_indirect (type $f)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if

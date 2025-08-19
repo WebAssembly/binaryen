@@ -155,7 +155,7 @@
  ;; CHECK-TEXT-NEXT:   (local.get $1)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $atomic-loadstore (type $0)
+ ;; CHECK-BIN:      (func $atomic-loadstore
  ;; CHECK-BIN-NEXT:  (local $0 i64)
  ;; CHECK-BIN-NEXT:  (local $1 i64)
  ;; CHECK-BIN-NEXT:  (local $2 i32)
@@ -483,7 +483,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $atomic-rmw (type $0)
+ ;; CHECK-BIN:      (func $atomic-rmw
  ;; CHECK-BIN-NEXT:  (local $0 i64)
  ;; CHECK-BIN-NEXT:  (local $1 i64)
  ;; CHECK-BIN-NEXT:  (local $2 i32)
@@ -675,7 +675,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $atomic-cmpxchg (type $0)
+ ;; CHECK-BIN:      (func $atomic-cmpxchg
  ;; CHECK-BIN-NEXT:  (local $0 i64)
  ;; CHECK-BIN-NEXT:  (local $1 i64)
  ;; CHECK-BIN-NEXT:  (local $2 i32)
@@ -883,7 +883,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $atomic-wait-notify (type $0)
+ ;; CHECK-BIN:      (func $atomic-wait-notify
  ;; CHECK-BIN-NEXT:  (local $0 i64)
  ;; CHECK-BIN-NEXT:  (local $1 i64)
  ;; CHECK-BIN-NEXT:  (local $2 i32)
@@ -1057,7 +1057,7 @@
  ;; CHECK-TEXT:      (func $atomic-fence (type $0)
  ;; CHECK-TEXT-NEXT:  (atomic.fence)
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $atomic-fence (type $0)
+ ;; CHECK-BIN:      (func $atomic-fence
  ;; CHECK-BIN-NEXT:  (atomic.fence)
  ;; CHECK-BIN-NEXT: )
  (func $atomic-fence
@@ -1070,7 +1070,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (memory $2 i64 23 256 shared)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -1202,7 +1202,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $1
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -1268,7 +1268,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $2
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -1330,7 +1330,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $3
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -1416,6 +1416,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $4
 ;; CHECK-BIN-NODEBUG-NEXT:  (atomic.fence)
 ;; CHECK-BIN-NODEBUG-NEXT: )

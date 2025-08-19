@@ -726,7 +726,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (data $0 (i32.const 1026) "\14\00")
 
-  ;; CHECK-BIN:      (func $kitchensink (type $0) (result i32)
+  ;; CHECK-BIN:      (func $kitchensink (result i32)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (i32.add
   ;; CHECK-BIN-NEXT:    (i32.const 10)
@@ -2131,7 +2131,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 1026) "\14\00")
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.add
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 10)

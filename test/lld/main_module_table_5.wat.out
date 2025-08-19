@@ -17,7 +17,7 @@
  (func $stuff
  )
  (func $dynCall_v (param $fptr i32)
-  (call_indirect $timport$9 (type $0)
+  (call_indirect (type $0)
    (local.get $fptr)
   )
  )

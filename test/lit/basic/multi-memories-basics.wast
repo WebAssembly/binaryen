@@ -41,7 +41,7 @@
  ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (data $0 (i32.const 0) "abcd")
 
- ;; CHECK-BIN:      (func $memory.fill (type $none_=>_none)
+ ;; CHECK-BIN:      (func $memory.fill
  ;; CHECK-BIN-NEXT:  (memory.fill $memory2
  ;; CHECK-BIN-NEXT:   (i32.const 0)
  ;; CHECK-BIN-NEXT:   (i32.const 1)
@@ -63,7 +63,7 @@
  ;; CHECK-TEXT-NEXT:   (i32.const 12)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $memory.copy (type $none_=>_none)
+ ;; CHECK-BIN:      (func $memory.copy
  ;; CHECK-BIN-NEXT:  (memory.copy $memory2 $memory3
  ;; CHECK-BIN-NEXT:   (i32.const 512)
  ;; CHECK-BIN-NEXT:   (i32.const 0)
@@ -85,7 +85,7 @@
  ;; CHECK-TEXT-NEXT:   (i32.const 45)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $memory.init (type $none_=>_none)
+ ;; CHECK-BIN:      (func $memory.init
  ;; CHECK-BIN-NEXT:  (memory.init $memory1 $0
  ;; CHECK-BIN-NEXT:   (i32.const 0)
  ;; CHECK-BIN-NEXT:   (i32.const 0)
@@ -105,7 +105,7 @@
  ;; CHECK-TEXT-NEXT:   (i32.const 10)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $memory.grow (type $none_=>_i32) (result i32)
+ ;; CHECK-BIN:      (func $memory.grow (result i32)
  ;; CHECK-BIN-NEXT:  (memory.grow $memory3
  ;; CHECK-BIN-NEXT:   (i32.const 10)
  ;; CHECK-BIN-NEXT:  )
@@ -119,7 +119,7 @@
  ;; CHECK-TEXT:      (func $memory.size (type $none_=>_i32) (result i32)
  ;; CHECK-TEXT-NEXT:  (memory.size $memory3)
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $memory.size (type $none_=>_i32) (result i32)
+ ;; CHECK-BIN:      (func $memory.size (result i32)
  ;; CHECK-BIN-NEXT:  (memory.size $memory3)
  ;; CHECK-BIN-NEXT: )
  (func $memory.size (result i32)
@@ -178,7 +178,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $loads (type $none_=>_none)
+ ;; CHECK-BIN:      (func $loads
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (i32.load $memory1
  ;; CHECK-BIN-NEXT:    (i32.const 12)
@@ -309,7 +309,7 @@
  ;; CHECK-TEXT-NEXT:   (i32.const 120)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $stores (type $none_=>_none)
+ ;; CHECK-BIN:      (func $stores
  ;; CHECK-BIN-NEXT:  (i32.store $memory1
  ;; CHECK-BIN-NEXT:   (i32.const 12)
  ;; CHECK-BIN-NEXT:   (i32.const 115)
@@ -376,7 +376,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 0) "abcd")
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $0
 ;; CHECK-BIN-NODEBUG-NEXT:  (memory.fill $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
@@ -384,7 +384,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $1
 ;; CHECK-BIN-NODEBUG-NEXT:  (memory.copy $1 $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 512)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
@@ -392,7 +392,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $2
 ;; CHECK-BIN-NODEBUG-NEXT:  (memory.init $0 $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
@@ -400,17 +400,17 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $3 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (memory.grow $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 10)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $4 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (memory.size $2)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $5
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.load $0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
@@ -463,7 +463,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $6
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.store $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 115)

@@ -142,7 +142,7 @@
   (unreachable)
  )
  (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
-  (call_indirect $timport$0 (type $i32_i32_=>_none)
+  (call_indirect (type $i32_i32_=>_none)
    (local.get $0)
    (local.get $1)
    (local.get $fptr)
