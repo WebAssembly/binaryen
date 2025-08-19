@@ -39,7 +39,7 @@
 #include "support/hash.h"
 #include "support/path.h"
 #include "support/timing.h"
-#include "tool-options.h"
+#include "tools/tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -793,8 +793,7 @@ struct Reducer
     bool shrank = false;
     shrank = shrinkByReduction(curr, 2);
     // the "opposite" of shrinking: copy a 'zero' element
-    reduceByZeroing(
-      curr, 0, [](char item) { return item == 0; }, 2, shrank);
+    reduceByZeroing(curr, 0, [](char item) { return item == 0; }, 2, shrank);
   }
 
   template<typename T, typename U, typename C>
