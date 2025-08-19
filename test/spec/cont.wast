@@ -117,9 +117,15 @@
     (call $nl4 (cont.new $k1 (ref.func $r1)))
   )
 
-  (func (export "null")
+  (func (export "null-resume")
     (resume $k1
       (ref.null $k1)
+    )
+  )
+
+  (func (export "null-new") (result (ref null $k1))
+    (cont.new $k1
+      (ref.null $f1)
     )
   )
 )
@@ -138,7 +144,8 @@
 (assert_trap (invoke "non-linear-3") "continuation already consumed")
 (assert_trap (invoke "non-linear-4") "continuation already consumed")
 
-(assert_trap (invoke "null") "null continuation reference")
+(assert_trap (invoke "null-resume") "null continuation reference")
+(assert_trap (invoke "null-new") "null function reference")
 
 (assert_invalid
   (module

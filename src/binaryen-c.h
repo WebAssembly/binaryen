@@ -3148,6 +3148,14 @@ BINARYEN_API BinaryenIndex BinaryenGetFlexibleInlineMaxSize(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetFlexibleInlineMaxSize(BinaryenIndex size);
 
+// Gets the limit for the combined size of the code after inlining.
+// Applies to all modules, globally.
+BINARYEN_API BinaryenIndex BinaryenGetMaxCombinedBinarySize(void);
+
+// Sets the limit for the combined size of the code after inlining.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetMaxCombinedBinarySize(BinaryenIndex size);
+
 // Gets the function size which we inline when there is only one caller.
 // Applies to all modules, globally.
 BINARYEN_API BinaryenIndex BinaryenGetOneCallerInlineMaxSize(void);

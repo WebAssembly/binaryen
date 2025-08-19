@@ -25,6 +25,13 @@ if(BUILD_MIMALLOC)
   set(MI_BUILD_OBJECT OFF)
   set(MI_BUILD_TESTS OFF)
   set(MI_INSTALL_TOPLEVEL ON)
+  # Without this flag the resulting arm64 binary won't run on arm8-a devices
+  # such as the Raspberry Pi 4.
+  # This should probably be `MI_OPT_ARCH OFF` but that doesn't currently seem to
+  # work. See: https://github.com/microsoft/mimalloc/issues/1095
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|armv[89].?|ARM64)$")
+    set(MI_NO_OPT_ARCH ON)
+  endif()
   # Do not show debug and warning messages of the allocator by default.
   # (They can still be enabled via MIMALLOC_VERBOSE=1 wasm-opt ...)
   add_compile_definitions(MI_DEBUG=0)

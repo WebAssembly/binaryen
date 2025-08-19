@@ -634,6 +634,9 @@
 ;; CHECK-NEXT:                                                 caller (default -1, which means
 ;; CHECK-NEXT:                                                 all such functions are inlined)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --inline-max-combined-binary-size,-imcbs      Max size of combined functions
+;; CHECK-NEXT:                                                 after inlining. Default: 409600
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --inline-functions-with-loops,-ifwl           Allow inlining functions with
 ;; CHECK-NEXT:                                                 loops
 ;; CHECK-NEXT:

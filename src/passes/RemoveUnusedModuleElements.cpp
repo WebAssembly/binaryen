@@ -190,6 +190,16 @@ struct Noter : public PostWalker<Noter, UnifiedExpressionVisitor<Noter>> {
     auto type = curr->ref->type.getHeapType();
     noteStructField(StructField{type, curr->index});
   }
+
+  void visitContNew(ContNew* curr) {
+    // The function reference that is passed in here will be called, just as if
+    // we were a call_ref, except at a potentially later time.
+    if (!curr->func->type.isRef()) {
+      return;
+    }
+
+    noteCallRef(curr->func->type.getHeapType());
+  }
 };
 
 // Analyze a module to find what things are referenced and what things are used.
