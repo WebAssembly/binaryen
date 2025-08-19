@@ -490,13 +490,14 @@ void fuseImportsAndExports(const PassOptions& options) {
         if (export_->type != import->type) {
           reportTypeMismatch(valid, "table", import);
           std::cerr << "export type " << export_->type
-                    << " is different from import type " << import->type << ".\n";
+                    << " is different from import type " << import->type
+                    << ".\n";
         }
       }
     });
     ModuleUtils::iterImportedMemories(merged, [&](Memory* import) {
-      auto internalName =
-        kindModuleExportMaps[ExternalKind::Memory][import->module][import->base];
+      auto internalName = kindModuleExportMaps[ExternalKind::Memory]
+                                              [import->module][import->base];
       if (internalName.is()) {
         auto* export_ = merged.getMemory(internalName);
         if (export_->is64() != import->is64()) {
@@ -507,8 +508,8 @@ void fuseImportsAndExports(const PassOptions& options) {
       }
     });
     ModuleUtils::iterImportedGlobals(merged, [&](Global* import) {
-      auto internalName =
-        kindModuleExportMaps[ExternalKind::Global][import->module][import->base];
+      auto internalName = kindModuleExportMaps[ExternalKind::Global]
+                                              [import->module][import->base];
       if (internalName.is()) {
         auto* export_ = merged.getGlobal(internalName);
         if (export_->mutable_ != import->mutable_) {
@@ -518,9 +519,11 @@ void fuseImportsAndExports(const PassOptions& options) {
         if (export_->mutable_ && export_->type != import->type) {
           reportTypeMismatch(valid, "global", import);
           std::cerr << "export type " << export_->type
-                    << " is different from import type " << import->type << ".\n";
+                    << " is different from import type " << import->type
+                    << ".\n";
         }
-        if (!export_->mutable_ && !Type::isSubType(export_->type, import->type)) {
+        if (!export_->mutable_ &&
+            !Type::isSubType(export_->type, import->type)) {
           reportTypeMismatch(valid, "global", import);
           std::cerr << "type " << export_->type << " is not a subtype of "
                     << import->type << ".\n";
@@ -535,7 +538,8 @@ void fuseImportsAndExports(const PassOptions& options) {
         if (export_->type != import->type) {
           reportTypeMismatch(valid, "tag", import);
           std::cerr << "export type " << export_->type
-                    << " is different from import type " << import->type << ".\n";
+                    << " is different from import type " << import->type
+                    << ".\n";
         }
       }
     });
