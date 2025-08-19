@@ -1275,6 +1275,31 @@ struct InfoCollector
   void visitContNew(ContNew* curr) {
     // TODO: optimize when possible
     addRoot(curr);
+
+    // The function reference that is passed in here will be called, just as if
+    // we were a call_ref, except at a potentially later time.
+    if (!curr->func->type.isRef()) {
+      return;
+    }
+    auto targetType = curr->func->type.getHeapType();
+    if (!targetType.isSignature()) {
+      assert(targetType.isBottom());
+      return;
+    }
+    // Unlike call_ref, we do not have the call operands here. Assume any
+    // value for the signature for now, but we could track them from cont.bind
+    // and resume TODO (it is simpler for now to do it here, where we have the
+    // original funcref that is called, before cont.bind alters the signature)
+    Index i = 0;
+    for (auto param : targetType.getSignature().params) {
+      if (isRelevant(param)) {
+        // Send anything of the proper type to all functions of this signature,
+        // since they are all callable.
+        info.links.push_back(
+          {getTypeLocation(param), SignatureParamLocation{targetType, i}});
+      }
+      i++;
+    }
   }
   void visitContBind(ContBind* curr) {
     // TODO: optimize when possible
