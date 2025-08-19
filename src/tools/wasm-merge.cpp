@@ -91,6 +91,11 @@
 // merged, and at the end we traverse the entire merged module once to fuse
 // imports and exports.
 //
+// Debugging: Set BINARYEN_PASS_DEBUG=1 in the env to get validation after each
+// merging of a module (like pass-debug mode for the pass runner, this does
+// expensive work after each incremental operation). This can take quadratic
+// time, so we do not do it by default.
+//
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -736,13 +741,24 @@ Input source maps can be specified by adding an -ism option right after the modu
       // This is a later module: do a full merge.
       mergeInto(*currModule, inputFileName);
 
-      if (options.passOptions.validate) {
-        if (!WasmValidator().validate(merged)) {
+      // Validate after each merged module, when we are in pass-debug mode
+      // (this can be quadratic time).
+      if (PassRunner::getPassDebug()) {
+        std::cerr << "[WasmMerge]   merged : " << inputFile << '\n';
+        if (options.passOptions.validate && !WasmValidator().validate(merged)) {
           std::cout << merged << '\n';
-          Fatal() << "error in validating merged after: " << inputFile;
+          Fatal() << "error in validating after: " << inputFile;
         }
       }
     }
+  }
+
+  // If we didn't validate after each merged module, validate once at the very
+  // end. This won't catch problems at the earliest point, but is still useful.
+  if (!PassRunner::getPassDebug() && options.passOptions.validate &&
+      !WasmValidator().validate(merged)) {
+    std::cout << merged << '\n';
+    Fatal() << "error in validating final merged";
   }
 
   // Fuse imports and exports now that everything is all together in the merged
