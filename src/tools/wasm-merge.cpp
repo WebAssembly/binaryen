@@ -418,7 +418,7 @@ void checkLimit(bool& valid, const char* kind, T* export_, T* import) {
 
 // Find pairs of matching imports and exports, and make uses of the import refer
 // to the exported item (which has been merged into the module).
-void fuseImportsAndExports() {
+void fuseImportsAndExports(const PassOptions& options) {
   // First, scan the exports and build a map. We build a map of [module name] to
   // [export name => internal name]. For example, consider this module:
   //
@@ -466,80 +466,82 @@ void fuseImportsAndExports() {
     }
   });
 
-  // Make sure that the export types match the import types.
-  bool valid = true;
-  ModuleUtils::iterImportedFunctions(merged, [&](Function* import) {
-    auto internalName = kindModuleExportMaps[ExternalKind::Function]
-                                            [import->module][import->base];
-    if (internalName.is()) {
-      auto* export_ = merged.getFunction(internalName);
-      if (!HeapType::isSubType(export_->type, import->type)) {
-        reportTypeMismatch(valid, "function", import);
-        std::cerr << "type " << export_->type << " is not a subtype of "
-                  << import->type << ".\n";
+  if (options.validate) {
+    // Make sure that the export types match the import types.
+    bool valid = true;
+    ModuleUtils::iterImportedFunctions(merged, [&](Function* import) {
+      auto internalName = kindModuleExportMaps[ExternalKind::Function]
+                                              [import->module][import->base];
+      if (internalName.is()) {
+        auto* export_ = merged.getFunction(internalName);
+        if (!HeapType::isSubType(export_->type, import->type)) {
+          reportTypeMismatch(valid, "function", import);
+          std::cerr << "type " << export_->type << " is not a subtype of "
+                    << import->type << ".\n";
+        }
       }
+    });
+    ModuleUtils::iterImportedTables(merged, [&](Table* import) {
+      auto internalName =
+        kindModuleExportMaps[ExternalKind::Table][import->module][import->base];
+      if (internalName.is()) {
+        auto* export_ = merged.getTable(internalName);
+        checkLimit(valid, "table", export_, import);
+        if (export_->type != import->type) {
+          reportTypeMismatch(valid, "table", import);
+          std::cerr << "export type " << export_->type
+                    << " is different from import type " << import->type << ".\n";
+        }
+      }
+    });
+    ModuleUtils::iterImportedMemories(merged, [&](Memory* import) {
+      auto internalName =
+        kindModuleExportMaps[ExternalKind::Memory][import->module][import->base];
+      if (internalName.is()) {
+        auto* export_ = merged.getMemory(internalName);
+        if (export_->is64() != import->is64()) {
+          reportTypeMismatch(valid, "memory", import);
+          std::cerr << "index type should match.\n";
+        }
+        checkLimit(valid, "memory", export_, import);
+      }
+    });
+    ModuleUtils::iterImportedGlobals(merged, [&](Global* import) {
+      auto internalName =
+        kindModuleExportMaps[ExternalKind::Global][import->module][import->base];
+      if (internalName.is()) {
+        auto* export_ = merged.getGlobal(internalName);
+        if (export_->mutable_ != import->mutable_) {
+          reportTypeMismatch(valid, "global", import);
+          std::cerr << "mutability should match.\n";
+        }
+        if (export_->mutable_ && export_->type != import->type) {
+          reportTypeMismatch(valid, "global", import);
+          std::cerr << "export type " << export_->type
+                    << " is different from import type " << import->type << ".\n";
+        }
+        if (!export_->mutable_ && !Type::isSubType(export_->type, import->type)) {
+          reportTypeMismatch(valid, "global", import);
+          std::cerr << "type " << export_->type << " is not a subtype of "
+                    << import->type << ".\n";
+        }
+      }
+    });
+    ModuleUtils::iterImportedTags(merged, [&](Tag* import) {
+      auto internalName =
+        kindModuleExportMaps[ExternalKind::Tag][import->module][import->base];
+      if (internalName.is()) {
+        auto* export_ = merged.getTag(internalName);
+        if (export_->type != import->type) {
+          reportTypeMismatch(valid, "tag", import);
+          std::cerr << "export type " << export_->type
+                    << " is different from import type " << import->type << ".\n";
+        }
+      }
+    });
+    if (!valid) {
+      Fatal() << "import/export mismatches";
     }
-  });
-  ModuleUtils::iterImportedTables(merged, [&](Table* import) {
-    auto internalName =
-      kindModuleExportMaps[ExternalKind::Table][import->module][import->base];
-    if (internalName.is()) {
-      auto* export_ = merged.getTable(internalName);
-      checkLimit(valid, "table", export_, import);
-      if (export_->type != import->type) {
-        reportTypeMismatch(valid, "table", import);
-        std::cerr << "export type " << export_->type
-                  << " is different from import type " << import->type << ".\n";
-      }
-    }
-  });
-  ModuleUtils::iterImportedMemories(merged, [&](Memory* import) {
-    auto internalName =
-      kindModuleExportMaps[ExternalKind::Memory][import->module][import->base];
-    if (internalName.is()) {
-      auto* export_ = merged.getMemory(internalName);
-      if (export_->is64() != import->is64()) {
-        reportTypeMismatch(valid, "memory", import);
-        std::cerr << "index type should match.\n";
-      }
-      checkLimit(valid, "memory", export_, import);
-    }
-  });
-  ModuleUtils::iterImportedGlobals(merged, [&](Global* import) {
-    auto internalName =
-      kindModuleExportMaps[ExternalKind::Global][import->module][import->base];
-    if (internalName.is()) {
-      auto* export_ = merged.getGlobal(internalName);
-      if (export_->mutable_ != import->mutable_) {
-        reportTypeMismatch(valid, "global", import);
-        std::cerr << "mutability should match.\n";
-      }
-      if (export_->mutable_ && export_->type != import->type) {
-        reportTypeMismatch(valid, "global", import);
-        std::cerr << "export type " << export_->type
-                  << " is different from import type " << import->type << ".\n";
-      }
-      if (!export_->mutable_ && !Type::isSubType(export_->type, import->type)) {
-        reportTypeMismatch(valid, "global", import);
-        std::cerr << "type " << export_->type << " is not a subtype of "
-                  << import->type << ".\n";
-      }
-    }
-  });
-  ModuleUtils::iterImportedTags(merged, [&](Tag* import) {
-    auto internalName =
-      kindModuleExportMaps[ExternalKind::Tag][import->module][import->base];
-    if (internalName.is()) {
-      auto* export_ = merged.getTag(internalName);
-      if (export_->type != import->type) {
-        reportTypeMismatch(valid, "tag", import);
-        std::cerr << "export type " << export_->type
-                  << " is different from import type " << import->type << ".\n";
-      }
-    }
-  });
-  if (!valid) {
-    Fatal() << "import/export mismatches";
   }
 
   // Update the things we found.
@@ -741,7 +743,7 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Fuse imports and exports now that everything is all together in the merged
   // module.
-  fuseImportsAndExports();
+  fuseImportsAndExports(options.passOptions);
 
   {
     PassRunner passRunner(&merged);
