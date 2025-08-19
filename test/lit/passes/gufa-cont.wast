@@ -195,23 +195,26 @@
 
 (module
  ;; CHECK:      (type $func (func (param i32)))
- ;; OPEN_WORLD:      (type $func (func (param i32)))
- (type $func (func (param i32)))
- ;; CHECK:      (type $cont (cont $func))
- ;; OPEN_WORLD:      (type $cont (cont $func))
- (type $cont (cont $func))
 
- ;; CHECK:      (type $2 (func))
+ ;; CHECK:      (type $cont (cont $func))
+
+ ;; CHECK:      (type $none (func))
+ ;; OPEN_WORLD:      (type $func (func (param i32)))
+
+ ;; OPEN_WORLD:      (type $cont (cont $func))
+
+ ;; OPEN_WORLD:      (type $none (func))
+ (type $none (func))
+ (type $func (func (param i32)))
+ (type $cont (cont $func))
 
  ;; CHECK:      (elem declare func $func)
 
- ;; CHECK:      (tag $tag (type $func) (param i32))
- ;; OPEN_WORLD:      (type $2 (func))
-
+ ;; CHECK:      (tag $tag (type $none))
  ;; OPEN_WORLD:      (elem declare func $func)
 
- ;; OPEN_WORLD:      (tag $tag (type $func) (param i32))
- (tag $tag (type $func))
+ ;; OPEN_WORLD:      (tag $tag (type $none))
+ (tag $tag (type $none))
 
  ;; CHECK:      (export "run" (func $run))
 
@@ -231,45 +234,36 @@
   ;; This function is only ever referred to by a ref.func that is passed into
   ;; a cont.new, and that is the only source of values for this local. We should
   ;; not modify this to unreachable, which we would do if we didn't realize it
-  ;; will be reached.
+  ;; can be reached. (The only possible value is 42, from the caller below, but
+  ;; we do not infer that yet TODO)
   (drop
    (local.get $x)
   )
  )
 
- ;; CHECK:      (func $run (type $2)
+ ;; CHECK:      (func $run (type $none)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $block (result (ref $cont))
- ;; CHECK-NEXT:      (resume $cont (on $tag $block)
- ;; CHECK-NEXT:       (i32.const 42)
- ;; CHECK-NEXT:       (cont.new $cont
- ;; CHECK-NEXT:        (ref.func $func)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (return)
+ ;; CHECK-NEXT:   (block $block (result (ref $cont))
+ ;; CHECK-NEXT:    (resume $cont (on $tag $block)
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:     (cont.new $cont
+ ;; CHECK-NEXT:      (ref.func $func)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (return)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; OPEN_WORLD:      (func $run (type $2)
+ ;; OPEN_WORLD:      (func $run (type $none)
  ;; OPEN_WORLD-NEXT:  (drop
- ;; OPEN_WORLD-NEXT:   (block
- ;; OPEN_WORLD-NEXT:    (drop
- ;; OPEN_WORLD-NEXT:     (block $block (result (ref $cont))
- ;; OPEN_WORLD-NEXT:      (resume $cont (on $tag $block)
- ;; OPEN_WORLD-NEXT:       (i32.const 42)
- ;; OPEN_WORLD-NEXT:       (cont.new $cont
- ;; OPEN_WORLD-NEXT:        (ref.func $func)
- ;; OPEN_WORLD-NEXT:       )
- ;; OPEN_WORLD-NEXT:      )
- ;; OPEN_WORLD-NEXT:      (return)
+ ;; OPEN_WORLD-NEXT:   (block $block (result (ref $cont))
+ ;; OPEN_WORLD-NEXT:    (resume $cont (on $tag $block)
+ ;; OPEN_WORLD-NEXT:     (i32.const 42)
+ ;; OPEN_WORLD-NEXT:     (cont.new $cont
+ ;; OPEN_WORLD-NEXT:      (ref.func $func)
  ;; OPEN_WORLD-NEXT:     )
  ;; OPEN_WORLD-NEXT:    )
- ;; OPEN_WORLD-NEXT:    (unreachable)
+ ;; OPEN_WORLD-NEXT:    (return)
  ;; OPEN_WORLD-NEXT:   )
  ;; OPEN_WORLD-NEXT:  )
  ;; OPEN_WORLD-NEXT: )
