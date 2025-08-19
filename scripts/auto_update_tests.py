@@ -169,7 +169,7 @@ TEST_SUITES = OrderedDict([
     ('example', update_example_tests),
     ('ctor-eval', update_ctor_eval_tests),
     ('wasm-metadce', update_metadce_tests),
-#    ('wasm-reduce', update_reduce_tests),
+    ('wasm-reduce', update_reduce_tests),
     ('spec', update_spec_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
