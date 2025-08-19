@@ -504,7 +504,7 @@ struct PrintExpressionContents
     }
 
     // Even if reference-types is not enabled because the features section or
-    // the matching command-line flags are not present, , if the table index is
+    // the matching command-line flags are not present, if the table index is
     // greater than 0, we print the table because otherwise the results will be
     // incorrect.
     if (features.hasReferenceTypes() ||
