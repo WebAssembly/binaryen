@@ -8,15 +8,30 @@
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $cont (cont $func))
+
+  ;; CHECK:       (type $func (func))
   (type $func (func))
   (type $cont (cont $func))
 
   (type $uncreated (struct))
  )
 
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT: )
  (func $func (type $func)
  )
 
+ ;; CHECK:      (func $test (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $test (type $func)
   (drop
    (cont.new $cont
