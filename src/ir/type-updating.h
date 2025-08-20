@@ -404,6 +404,7 @@ public:
   // so that they can use a proper temp type of the TypeBuilder while modifying
   // things.
   Type getTempType(Type type);
+  HeapType getTempHeapType(HeapType type);
   Type getTempTupleType(Tuple tuple);
 
   using SignatureUpdates = std::unordered_map<HeapType, Signature>;
@@ -496,7 +497,7 @@ public:
     if (iter != mapping.end()) {
       return iter->second;
     }
-    return type;
+    return getTempHeapType(type);
   }
 
   Type getNewType(Type type) {
