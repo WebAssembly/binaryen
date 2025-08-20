@@ -780,10 +780,7 @@ public:
     bool condition = true;
     Flow flow;
     if (curr->value) {
-      flow = visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
+      VISIT_REUSE(flow, curr->value);
     }
     if (curr->condition) {
       VISIT(conditionFlow, curr->condition)
@@ -799,16 +796,10 @@ public:
     Flow flow;
     Literals values;
     if (curr->value) {
-      flow = visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
+      VISIT_REUSE(flow, curr->value);
       values = flow.values;
     }
-    flow = visit(curr->condition);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->condition);
     int64_t index = flow.getSingleValue().getInteger();
     Name target = curr->default_;
     if (index >= 0 && (size_t)index < curr->targets.size()) {
@@ -1107,10 +1098,7 @@ public:
   Flow visitBinary(Binary* curr) {
     VISIT(flow, curr->left)
     Literal left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->right)
     Literal right = flow.getSingleValue();
     assert(curr->left->type.isConcrete() ? left.type == curr->left->type
                                          : true);
@@ -1620,10 +1608,7 @@ public:
   Flow visitSIMDReplace(SIMDReplace* curr) {
     VISIT(flow, curr->vec)
     Literal vec = flow.getSingleValue();
-    flow = self()->visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->value);
     Literal value = flow.getSingleValue();
     switch (curr->op) {
       case ReplaceLaneVecI8x16:
@@ -1646,25 +1631,16 @@ public:
   Flow visitSIMDShuffle(SIMDShuffle* curr) {
     VISIT(flow, curr->left)
     Literal left = flow.getSingleValue();
-    flow = self()->visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->right);
     Literal right = flow.getSingleValue();
     return left.shuffleV8x16(right, curr->mask);
   }
   Flow visitSIMDTernary(SIMDTernary* curr) {
     VISIT(flow, curr->a)
     Literal a = flow.getSingleValue();
-    flow = self()->visit(curr->b);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->b);
     Literal b = flow.getSingleValue();
-    flow = self()->visit(curr->c);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->c);
     Literal c = flow.getSingleValue();
     switch (curr->op) {
       case Bitselect:
@@ -1715,10 +1691,7 @@ public:
   Flow visitSIMDShift(SIMDShift* curr) {
     VISIT(flow, curr->vec)
     Literal vec = flow.getSingleValue();
-    flow = self()->visit(curr->shift);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->shift);
     Literal shift = flow.getSingleValue();
     switch (curr->op) {
       case ShlVecI8x16:
@@ -1761,10 +1734,7 @@ public:
   Flow visitReturn(Return* curr) {
     Flow flow;
     if (curr->value) {
-      flow = visit(curr->value);
-      if (flow.breaking()) {
-        return flow;
-      }
+      VISIT_REUSE(flow, curr->value);
     }
     flow.breakTo = RETURN_FLOW;
     return flow;
@@ -1895,10 +1865,7 @@ public:
   Flow visitRefEq(RefEq* curr) {
     VISIT(flow, curr->left)
     auto left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->right);
     auto right = flow.getSingleValue();
     return Literal(int32_t(left == right));
   }
@@ -2206,10 +2173,7 @@ public:
   Flow visitArrayNew(ArrayNew* curr) {
     Flow init;
     if (!curr->isWithDefault()) {
-      init = self()->visit(curr->init);
-      if (init.breaking()) {
-        return init;
-      }
+      VISIT_REUSE(init, curr->init);
     }
     VISIT(size, curr->size)
     if (curr->type == Type::unreachable) {
@@ -2492,10 +2456,7 @@ public:
   Flow visitStringConcat(StringConcat* curr) {
     VISIT(flow, curr->left)
     auto left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->right);
     auto right = flow.getSingleValue();
     auto leftData = left.getGCData();
     auto rightData = right.getGCData();
@@ -2552,10 +2513,7 @@ public:
   Flow visitStringEq(StringEq* curr) {
     VISIT(flow, curr->left)
     auto left = flow.getSingleValue();
-    flow = visit(curr->right);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->right);
     auto right = flow.getSingleValue();
     auto leftData = left.getGCData();
     auto rightData = right.getGCData();
@@ -4514,10 +4472,7 @@ public:
   template<typename T> Flow doResume(T* curr, Tag* exceptionTag = nullptr) {
     Literals arguments;
     VISIT_ARGUMENTS(flow, curr->operands, arguments)
-    flow = self()->visit(curr->cont);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_REUSE(flow, curr->cont);
 
     // Get and execute the continuation.
     auto cont = flow.getSingleValue();
