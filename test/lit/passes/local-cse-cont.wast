@@ -43,5 +43,36 @@
    )
   )
  )
+
+ ;; CHECK:      (func $cont.bind (type $4) (param $cont-i32 (ref $cont-i32))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (cont.bind $cont-i32 $cont
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:    (local.get $cont-i32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (cont.bind $cont-i32 $cont
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:    (local.get $cont-i32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $cont.bind (param $cont-i32 (ref $cont-i32))
+  ;; We cannot optimize here: Each of these has a side effect of modifying the
+  ;; continuation they were given (it will trap if resumed).
+  (drop
+   (cont.bind $cont-i32 $cont
+    (i32.const 42)
+    (local.get $cont-i32)
+   )
+  )
+  (drop
+   (cont.bind $cont-i32 $cont
+    (i32.const 42)
+    (local.get $cont-i32)
+   )
+  )
+ )
 )
 
