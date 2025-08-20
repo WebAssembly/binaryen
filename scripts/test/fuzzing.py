@@ -109,6 +109,7 @@ unfuzzable = [
     'O3_stack-switching.wast',
     'coalesce-locals-stack-switching.wast',
     'dce-stack-switching.wast',
+    'local-cse-cont.wast',
     'precompute-stack-switching.wast',
     'unsubtyping-stack-switching.wast',
     'vacuum-stack-switching.wast',
