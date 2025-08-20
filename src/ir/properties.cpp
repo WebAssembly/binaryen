@@ -39,7 +39,6 @@ struct GenerativityScanner : public PostWalker<GenerativityScanner> {
   void visitArrayNewElem(ArrayNewElem* curr) { generative = true; }
   void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }
   void visitContNew(ContNew* curr) { generative = true; }
-  void visitContBind(ContBind* curr) { generative = true; }
 };
 
 } // anonymous namespace
