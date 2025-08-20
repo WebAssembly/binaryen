@@ -60,7 +60,8 @@
  ;; CHECK-NEXT: )
  (func $cont.bind (param $cont-i32 (ref $cont-i32))
   ;; We cannot optimize here: Each of these has a side effect of modifying the
-  ;; continuation they were given (it will trap if resumed).
+  ;; continuation they were given, as it will trap if resumed, and in fact the
+  ;; second cont.bind here should trap, which we should not remove.
   (drop
    (cont.bind $cont-i32 $cont
     (i32.const 42)
