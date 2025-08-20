@@ -848,6 +848,15 @@ static bool doesCall(Expression* curr) {
   return curr->is<Call>() || curr->is<CallIndirect>();
 }
 
+// Flat IR exception: local set with a block, we need to handle this separately
+static bool isLocalSetWithBlock(Expression* curr) {
+  if (auto* set = curr->dynCast<LocalSet>()) {
+    curr = set->value;
+    return curr->is<Block>();
+  }
+  return false;
+}
+
 class AsyncifyBuilder : public Builder {
 public:
   Module& wasm;
@@ -1072,6 +1081,7 @@ private:
             i--;
           }
         }
+        block->finalize(block->type);
         results.push_back(block);
         continue;
       } else if (auto* iff = curr->dynCast<If>()) {
@@ -1132,6 +1142,40 @@ private:
         loop->body = results.back();
         results.pop_back();
         results.push_back(loop);
+        continue;
+      } else if (auto* try_ = curr->dynCast<TryTable>()) {
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          work.push_back(Work{try_->body, Work::Scan});
+          continue;
+        }
+        try_->body = results.back();
+        results.pop_back();
+        results.push_back(try_);
+        continue;
+      } else if (isLocalSetWithBlock(curr)) { // relaxed flat IR
+        auto* set = curr->dynCast<LocalSet>();
+
+        if (item.phase == Work::Scan) {
+          work.push_back(Work{curr, Work::Finish});
+          work.push_back(Work{set->value, Work::Scan});
+          continue;
+        }
+
+        auto* blockValue = results.back()->cast<Block>();
+        results.pop_back();
+        // If the block has a type, we need to ensure that when rewinding,
+        // we still produce a value of that type.
+        if (blockValue->type.isConcrete()) {
+          auto type = blockValue->type;
+          blockValue->list.push_back(
+            builder->makeLocalGet(set->index, type));
+
+          blockValue->finalize(type);
+        }
+        set->value = blockValue;
+
+        results.push_back(set);
         continue;
       } else if (doesCall(curr)) {
         // We reach here only in Scan phase, but we in effect "Finish" calls
@@ -1731,7 +1775,7 @@ struct Asyncify : public Pass {
     // anything else.
     {
       PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
-      runner.add("flatten");
+      runner.add("flatten-relaxed");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
       // unreachable code here.
