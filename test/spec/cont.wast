@@ -242,6 +242,26 @@
   (type $c2 (cont $f2))
 )
 
+(assert_invalid
+  (module
+    (rec
+      (type $fA (func))
+      (type $fB (func))
+      (type $cont (cont $fA))
+    )
+    (elem declare func $b)
+    (func $a
+      (drop
+        (cont.new $cont ;; expects a ref of $fA, not $fB
+          (ref.func $b)
+        )
+      )
+    )
+    (func $b (type $fB)
+    )
+  )
+  "type mismatch")
+
 ;; Simple state example
 
 (module $state
