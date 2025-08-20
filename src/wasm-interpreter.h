@@ -3468,6 +3468,7 @@ protected:
 public:
   Flow visitCall(Call* curr) {
     Name target = curr->target;
+    Literals arguments;
     VISIT(flow, self()->generateArguments(curr->operands, arguments))
     auto* func = wasm.getFunction(curr->target);
     auto funcType = func->type;
@@ -4663,6 +4664,144 @@ public:
       }
     }
     return value;
+  }
+
+  Flow callFunction(Name name, Literals arguments) {
+    if (callDepth > maxDepth) {
+      hostLimit("stack limit");
+    }
+
+    if (self()->isResuming()) {
+      // The arguments are in the continuation data.
+      auto currContinuation = self()->getCurrContinuation();
+      arguments = currContinuation->resumeArguments;
+
+      if (!currContinuation->resumeExpr) {
+        // This is the first time we resume, that is, there is no suspend which
+        // is the resume expression that we need to execute up to. All we need
+        // to do is just start calling this function (with the arguments we've
+        // set), so resuming is done. (And throw, if resume_throw.)
+        self()->continuationStore->resuming = false;
+        if (auto* tag = currContinuation->exceptionTag) {
+          // XXX tag->name lacks cross-module support
+          throwException(WasmException{
+            self()->makeExnData(tag->name, currContinuation->resumeArguments)});
+        }
+      }
+    }
+
+    Flow flow;
+    std::optional<Type> resultType;
+
+    // We may have to call multiple functions in the event of return calls.
+    while (true) {
+      Function* function = wasm.getFunction(name);
+      assert(function);
+
+      // Return calls can only make the result type more precise.
+      if (resultType) {
+        assert(Type::isSubType(function->getResults(), *resultType));
+      }
+      resultType = function->getResults();
+
+      if (function->imported()) {
+        // TODO: Allow imported functions to tail call as well.
+        return externalInterface->callImport(function, arguments);
+      }
+
+      FunctionScope scope(function, arguments, *self());
+
+      if (self()->isResuming()) {
+        // Restore the local state (see below for the ordering, we push/pop).
+        for (Index i = 0; i < scope.locals.size(); i++) {
+          auto l = scope.locals.size() - 1 - i;
+          scope.locals[l] = self()->popResumeEntry("function");
+#ifndef NDEBUG
+          // Must have restored valid data. The type must match the local's
+          // type, except for the case of a non-nullable local that has not yet
+          // been accessed: that will contain a null (but the wasm type system
+          // ensures it will not be read by code, until a non-null value is
+          // assigned).
+          auto value = scope.locals[l];
+          auto localType = function->getLocalType(l);
+          assert(Type::isSubType(value.getType(), localType) ||
+                 value == Literal::makeZeros(localType));
+#endif
+        }
+      }
+
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent() << "entering " << function->name << '\n'
+                << self()->indent() << " with arguments:\n";
+      for (unsigned i = 0; i < arguments.size(); ++i) {
+        std::cout << self()->indent() << "  $" << i << ": " << arguments[i]
+                  << '\n';
+      }
+#endif
+
+      flow = self()->visit(function->body);
+
+#if WASM_INTERPRETER_DEBUG
+      std::cout << self()->indent() << "exiting " << function->name << " with "
+                << flow << '\n';
+#endif
+
+      if (flow.suspendTag) {
+        // Save the local state.
+        for (auto& local : scope.locals) {
+          self()->pushResumeEntry(local, "function");
+        }
+      }
+
+      if (flow.breakTo != RETURN_CALL_FLOW) {
+        break;
+      }
+
+      // There was a return call, so we need to call the next function before
+      // returning to the caller. The flow carries the function arguments and a
+      // function reference.
+      name = flow.values.back().getFunc();
+      flow.values.pop_back();
+      arguments = flow.values;
+    }
+
+    if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
+      throw NonconstantException();
+    }
+
+    if (flow.breakTo == RETURN_FLOW) {
+      // We are no longer returning out of that function (but the value
+      // remains the same).
+      flow.breakTo = Name();
+    }
+
+    if (flow.breakTo != SUSPEND_FLOW) {
+      // We are normally executing (not suspending), and therefore cannot still
+      // be breaking, which would mean we missed our stop.
+      assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
+#ifndef NDEBUG
+      // In normal execution, the result is the expected one.
+      auto type = flow.getType();
+      if (!Type::isSubType(type, *resultType)) {
+        Fatal() << "calling " << name << " resulted in " << type
+                << " but the function type is " << *resultType << '\n';
+      }
+#endif
+    }
+
+    return flow;
+  }
+
+  // The maximum call stack depth to evaluate into.
+  static const Index maxDepth = 200;
+
+protected:
+  void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
+    if (lhs > rhs) {
+      std::stringstream ss;
+      ss << msg << ": " << lhs << " > " << rhs;
+      externalInterface->trap(ss.str().c_str());
+    }
   }
 
   template<class LS>
