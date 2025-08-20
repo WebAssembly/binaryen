@@ -10,15 +10,12 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $f (func))
   (type $f (func))
-  ;; CHECK:       (type $f_0 (func))
-
-  ;; CHECK:       (type $k (cont $f_0))
+  ;; CHECK:       (type $k (cont $f))
   (type $k (cont $f))
 
+  ;; CHECK:       (type $f-i32 (func (result i32)))
   (type $f-i32 (func (result i32)))
-  ;; CHECK:       (type $f-i32_0 (func (result i32)))
-
-  ;; CHECK:       (type $k-i32 (cont $f-i32_0))
+  ;; CHECK:       (type $k-i32 (cont $f-i32))
   (type $k-i32 (cont $f-i32))
 
   (rec
