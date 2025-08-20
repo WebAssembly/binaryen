@@ -9,13 +9,6 @@
  ;; CHECK:      (type $cont (cont $func))
  (type $cont (cont $func))
 
-  ;; CHECK:      (type $func-i32 (func (param i32)))
-  (type $func-i32 (func (param i32)))
-  ;; CHECK:      (type $cont-i32 (cont $func-i32))
-  (type $cont-i32 (cont $func-i32))
-
- ;; CHECK:      (type $4 (func (param (ref $cont-i32))))
-
  ;; CHECK:      (elem declare func $cont.new)
 
  ;; CHECK:      (func $cont.new (type $func)
