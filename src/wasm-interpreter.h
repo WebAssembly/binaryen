@@ -270,8 +270,16 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
+  // Helper for visiting: Visit and handle breaking.
 #define VISIT(flow, expr)                                                      \
   Flow flow = self()->visit(expr);                                             \
+  if (flow.breaking()) {                                                       \
+    return flow;                                                               \
+  }
+
+  // As above, but reuse an existing |flow|.
+#define VISIT_REUSE(flow, expr)                                                      \
+  flow = self()->visit(expr);                                             \
   if (flow.breaking()) {                                                       \
     return flow;                                                               \
   }
@@ -285,6 +293,7 @@ protected:
     return Flow();
   }
 
+  // As above, but for generateArguments.
 #define VISIT_ARGUMENTS(flow, operands, arguments)                             \
   Flow flow = self()->generateArguments(operands, arguments);                  \
   if (flow.breaking()) {                                                       \
