@@ -3979,16 +3979,14 @@ void FunctionValidator::visitContNew(ContNew* curr) {
   }
   shouldBeTrue(curr->type.isExact(), curr, "cont.new should be exact");
 
-  if (!curr->type.isContinuation()) {
-    return;
-  }
-
-  auto cont = curr->type.getHeapType().getContinuation();
-  if (!shouldBeTrue(cont.type.isSignature(),
+  if (!shouldBeTrue(curr->type.isContinuation(),
                     curr,
                     "cont.new must be annotated with a continuation type")) {
     return;
   }
+
+  auto cont = curr->type.getHeapType().getContinuation();
+  assert(cont.type.isSignature());
 
   shouldBeTrue(HeapType::isSubType(curr->func->type.getHeapType(), cont.type),
                curr,
