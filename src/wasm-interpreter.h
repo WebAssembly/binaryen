@@ -278,8 +278,8 @@ protected:
   }
 
   // As above, but reuse an existing |flow|.
-#define VISIT_REUSE(flow, expr)                                                      \
-  flow = self()->visit(expr);                                             \
+#define VISIT_REUSE(flow, expr)                                                \
+  flow = self()->visit(expr);                                                  \
   if (flow.breaking()) {                                                       \
     return flow;                                                               \
   }
