@@ -3979,10 +3979,21 @@ void FunctionValidator::visitContNew(ContNew* curr) {
   }
   shouldBeTrue(curr->type.isExact(), curr, "cont.new should be exact");
 
-  shouldBeTrue(curr->type.isContinuation() &&
-                 curr->type.getHeapType().getContinuation().type.isSignature(),
+  if (!curr->type.isContinuation()) {
+    return;
+  }
+
+  auto cont = curr->type.getHeapType().getContinuation();
+  if (!shouldBeTrue(cont.type.isSignature(),
+                    curr,
+                    "cont.new must be annotated with a continuation type")) {
+    return;
+  }
+
+  shouldBeTrue(HeapType::isSubType(curr->func->type.getHeapType(),
+                                   cont.type),
                curr,
-               "cont.new must be annotated with a continuation type");
+               "cont.new function reference must be a subtype");
 }
 
 void FunctionValidator::visitContBind(ContBind* curr) {
