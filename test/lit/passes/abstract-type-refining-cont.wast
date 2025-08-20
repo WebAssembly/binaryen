@@ -2,14 +2,15 @@
 
 ;; RUN: foreach %s %t wasm-opt --abstract-type-refining -all --closed-world -S -o - | filecheck %s
 
+;; $uncreated is never created, so we optimize and rebuild types. While doing
+;; so we should not get confused as we copy the continuation type, which
+;; should end up referring properly to the corresponding func type.
+
 (module
  (rec
   (type $func (func))
   (type $cont (cont $func))
 
-  ;; This type is never created, so we optimize and rebuild types. While doing
-  ;; so we should not get confused as we copy the continuation type, which
-  ;; should end up referring properly to the corresponding func type.
   (type $uncreated (struct))
  )
 
