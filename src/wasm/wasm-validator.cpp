@@ -3990,8 +3990,7 @@ void FunctionValidator::visitContNew(ContNew* curr) {
     return;
   }
 
-  shouldBeTrue(HeapType::isSubType(curr->func->type.getHeapType(),
-                                   cont.type),
+  shouldBeTrue(HeapType::isSubType(curr->func->type.getHeapType(), cont.type),
                curr,
                "cont.new function reference must be a subtype");
 }
