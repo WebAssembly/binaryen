@@ -1107,6 +1107,12 @@ private:
     void visitContBind(ContBind* curr) {
       // traps when curr->cont is null ref.
       parent.implicitTrap = true;
+
+      // The input continuation is modified, as it will trap if resumed. This is
+      // a globally-noticeable effect, which we model as a call for now, but we
+      // could in theory use something more refined here (|modifiesContinuation|
+      // perhaps, to parallel |writesMemory| etc.).
+      parent.calls = true;
     }
     void visitSuspend(Suspend* curr) {
       // Similar to resume/call: Suspending means that we execute arbitrary
