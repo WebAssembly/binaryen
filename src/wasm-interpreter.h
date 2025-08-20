@@ -285,6 +285,12 @@ protected:
     return Flow();
   }
 
+#define VISIT_ARGUMENTS(flow, operands, arguments)                             \
+  Flow flow = self()->generateArguments(operands, arguments);                  \
+  if (flow.breaking()) {                                                       \
+    return flow;                                                               \
+  }
+
   // This small function is mainly useful to put all GCData allocations in a
   // single place. We need that because LSan reports leaks on cycles in this
   // data, as we don't have a cycle collector. Those leaks are not a serious
@@ -1836,10 +1842,7 @@ public:
   Flow visitPause(Pause* curr) { return Flow(); }
   Flow visitTupleMake(TupleMake* curr) {
     Literals arguments;
-    Flow flow = generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
     for (auto arg : arguments) {
       assert(arg.type.isConcrete());
       flow.values.push_back(arg);
@@ -1911,10 +1914,7 @@ public:
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     Literals arguments;
-    Flow flow = generateArguments(curr->operands, arguments);
-    if (flow.breaking()) {
-      return flow;
-    }
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
     throwException(WasmException{makeExnData(curr->tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
@@ -3469,7 +3469,7 @@ public:
   Flow visitCall(Call* curr) {
     Name target = curr->target;
     Literals arguments;
-    VISIT(flow, self()->generateArguments(curr->operands, arguments))
+    VISIT_ARGUMENTS(flow, curr->operands, arguments);
     auto* func = wasm.getFunction(curr->target);
     auto funcType = func->type;
     if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
@@ -3500,7 +3500,7 @@ public:
 
   Flow visitCallIndirect(CallIndirect* curr) {
     Literals arguments;
-    VISIT(flow, self()->generateArguments(curr->operands, arguments))
+    VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT(target, curr->target)
 
     auto index = target.getSingleValue().getUnsigned();
@@ -3559,7 +3559,7 @@ public:
 
   Flow visitCallRef(CallRef* curr) {
     Literals arguments;
-    VISIT(flow, self()->generateArguments(curr->operands, arguments))
+    VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT(target, curr->target)
     auto targetRef = target.getSingleValue();
     if (targetRef.isNull()) {
@@ -4436,7 +4436,7 @@ public:
   }
   Flow visitContBind(ContBind* curr) {
     Literals arguments;
-    VISIT(flow, self()->generateArguments(curr->operands, arguments))
+    VISIT_ARGUMENTS(flow, curr->operands, arguments)
     VISIT(cont, curr->cont)
 
     // Create a new continuation, copying the old but with the new type +
@@ -4456,7 +4456,7 @@ public:
     // then we don't need these values (we sent them as part of the suspension),
     // but must still handle them, so we finish re-winding the stack.
     Literals arguments;
-    VISIT(flow, self()->generateArguments(curr->operands, arguments))
+    VISIT_ARGUMENTS(flow, curr->operands, arguments)
 
     if (self()->isResuming()) {
 #if WASM_INTERPRETER_DEBUG
@@ -4513,7 +4513,7 @@ public:
   }
   template<typename T> Flow doResume(T* curr, Tag* exceptionTag = nullptr) {
     Literals arguments;
-    VISIT(flow, self()->generateArguments(curr->operands, arguments))
+    VISIT_ARGUMENTS(flow, curr->operands, arguments)
     flow = self()->visit(curr->cont);
     if (flow.breaking()) {
       return flow;
