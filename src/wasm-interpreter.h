@@ -270,10 +270,10 @@ protected:
   // Maximum iterations before giving up on a loop.
   Index maxLoopIterations;
 
-#define VISIT(flow, expr) \
-  Flow flow = self()->visit(expr); \
-  if (flow.breaking()) { \
-    return flow; \
+#define VISIT(flow, expr)                                                      \
+  Flow flow = self()->visit(expr);                                             \
+  if (flow.breaking()) {                                                       \
+    return flow;                                                               \
   }
 
   Flow generateArguments(const ExpressionList& operands, Literals& arguments) {
@@ -4915,4 +4915,3 @@ public:
 } // namespace wasm
 
 #endif // wasm_wasm_interpreter_h
-
