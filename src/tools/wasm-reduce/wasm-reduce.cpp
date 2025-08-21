@@ -34,7 +34,7 @@
 #include "tools/tool-options.h"
 #include "wasm-io.h"
 
-#include "reducer.h"
+#include "tools/wasm-reduce/reducer.h"
 
 namespace wasm {
 
