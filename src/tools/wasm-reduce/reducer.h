@@ -20,7 +20,6 @@
 #include <string>
 
 #include "tools/tool-options.h"
-#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -83,21 +82,14 @@ extern std::unordered_set<Name> functionsWeTriedToRemove;
 
 extern size_t workingFileIndex;
 
-struct Reducer
-  : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
+struct Reducer {
+  Module wasm;
   std::string command, test, working;
   bool binary, deNan, verbose, debugInfo;
   ToolOptions& toolOptions;
 
-  // Destructive reduction state
-  size_t reduced;
-  Expression* beforeReduction;
-  std::unique_ptr<Module> module;
-  std::unique_ptr<Builder> builder;
-  Index funcsSeen;
-  int factor;
-
   size_t decisionCounter = 0;
+  int factor;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
@@ -130,110 +122,11 @@ struct Reducer
 
   void loadWorking();
 
-  bool shouldTryToReduce(size_t bonus = 1);
-
   // Returns a random number in the range [0, max). This is deterministic given
   // all the previous work done in the reducer.
   size_t deterministicRandom(size_t max);
 
-  bool isOkReplacement(Expression* with);
-
-  bool tryToReplaceCurrent(Expression* with);
-
-  void noteReduction(size_t amount = 1);
-
-  bool tryToReplaceChild(Expression*& child, Expression* with);
-
-  std::string getLocation();
-
-  void visitExpression(Expression* curr);
-
-  void visitFunction(Function* curr);
-
-  void visitDataSegment(DataSegment* curr);
-
-  void shrinkElementSegments();
-
-  void visitModule([[maybe_unused]] Module* curr);
-
-  // Reduces entire functions at a time. Returns whether we did a significant
-  // amount of reduction that justifies doing even more.
-  bool reduceFunctions();
-
-  // Try to empty out the bodies of some functions.
-  bool tryToEmptyFunctions(std::vector<Name> names);
-
-  // Try to actually remove functions. If they are somehow referred to, we will
-  // get a validation error and undo it.
-  bool tryToRemoveFunctions(std::vector<Name> names);
-
-  // helpers
-
-  // try to replace condition with always true and always false
-  void handleCondition(Expression*& condition);
-
-  bool tryToReduceCurrentToNop();
-
-  bool tryToReduceCurrentToConst();
-
-  bool tryToReduceCurrentToUnreachable();
-
-  template<typename T, typename U, typename C>
-  void
-  reduceByZeroing(T* segment, U zero, C isZero, size_t bonus, bool shrank) {
-    for (auto& item : segment->data) {
-      if (!shouldTryToReduce(bonus) || isZero(item)) {
-        continue;
-      }
-      auto save = item;
-      item = zero;
-      if (writeAndTestReduction()) {
-        std::cerr << "|      zeroed elem segment\n";
-        noteReduction();
-      } else {
-        item = save;
-      }
-      if (shrank) {
-        // zeroing is fairly inefficient. if we are managing to shrink
-        // (which we do exponentially), just zero one per segment at most
-        break;
-      }
-    }
-  }
-
-  template<typename T> bool shrinkByReduction(T* segment, size_t bonus) {
-    // try to reduce to first function. first, shrink segment elements.
-    // while we are shrinking successfully, keep going exponentially.
-    bool justShrank = false;
-
-    auto& data = segment->data;
-    // when we succeed, try to shrink by more and more, similar to bisection
-    size_t skip = 1;
-    for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-      if (justShrank || shouldTryToReduce(bonus)) {
-        auto save = data;
-        for (size_t j = 0; j < skip; j++) {
-          if (data.empty()) {
-            break;
-          } else {
-            data.pop_back();
-          }
-        }
-        justShrank = writeAndTestReduction();
-        if (justShrank) {
-          std::cerr << "|      shrank segment from " << save.size() << " => "
-                    << data.size() << " (skip: " << skip << ")\n";
-          noteReduction();
-          skip = std::min(size_t(factor), 2 * skip);
-        } else {
-          data = std::move(save);
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
+  bool shouldTryToReduce(size_t bonus = 1);
 };
 
 } // namespace wasm
