@@ -682,7 +682,8 @@ void Reducer::visitDataSegment(DataSegment* curr) {
   bool shrank = false;
   shrank = shrinkByReduction(curr, 2);
   // the "opposite" of shrinking: copy a 'zero' element
-  reduceByZeroing(curr, 0, [](char item) { return item == 0; }, 2, shrank);
+  reduceByZeroing(
+    curr, 0, [](char item) { return item == 0; }, 2, shrank);
 }
 
 void Reducer::shrinkElementSegments() {
