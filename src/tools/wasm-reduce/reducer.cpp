@@ -266,7 +266,7 @@ size_t Reducer::reduceDestructively(int factor) {
               << result << '\n';
   }
   // destroy!
-  DestructiveReducer destructiveReducer(*this, factor);
+  DestructiveReducer destructiveReducer(*this);
   destructiveReducer.walkModule(&wasm);
   return destructiveReducer.reduced;
 }

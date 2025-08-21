@@ -31,7 +31,7 @@ struct DestructiveReducer
   Expression* beforeReduction = nullptr;
   Index funcsSeen = 0;
 
-  DestructiveReducer(Reducer& reducer, int factor)
+  DestructiveReducer(Reducer& reducer)
     : reducer(reducer), factor(reducer.factor) {}
 
   void noteReduction(size_t amount = 1);
