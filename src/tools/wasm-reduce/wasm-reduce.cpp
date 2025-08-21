@@ -39,7 +39,7 @@
 #include "support/hash.h"
 #include "support/path.h"
 #include "support/timing.h"
-#include "tool-options.h"
+#include "tools/tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
