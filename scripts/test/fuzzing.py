@@ -95,6 +95,9 @@ unfuzzable = [
     'cont.wast',
     'precompute-stack-switching.wast',
     'coalesce-locals-stack-switching.wast',
+    'stack_switching_switch_2.wast',
+    'stack_switching_switch.wast',
+    'unsubtyping-stack-switching.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
