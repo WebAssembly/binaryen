@@ -217,6 +217,8 @@ void DestructiveReducer::visitExpression(Expression* curr) {
         }
       }
     }
+  } else if (curr->is<RefEq>()) {
+    handleCondition(*getCurrentPointer());
   }
   // Finally, try to replace with a child.
   for (auto* child : ChildIterator(curr)) {

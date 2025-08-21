@@ -19,6 +19,7 @@
 #include "support/file.h"
 #include "support/path.h"
 #include "support/timing.h"
+#include "tools/wasm-reduce/type-reducer.h"
 #include "wasm-io.h"
 
 namespace {
@@ -268,7 +269,9 @@ size_t Reducer::reduceDestructively(int factor) {
   // destroy!
   DestructiveReducer destructiveReducer(*this);
   destructiveReducer.walkModule(&wasm);
-  return destructiveReducer.reduced;
+
+  TypeReducer typeReducer(*this);
+  return destructiveReducer.reduced + typeReducer.reduce();
 }
 
 bool Reducer::writeAndTestReduction() {

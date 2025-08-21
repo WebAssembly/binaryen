@@ -2,6 +2,7 @@ FILE(GLOB wasm_reduce_HEADERS *h)
 set(wasm_reduce_SOURCES
   destructive-reducer.cpp
   reducer.cpp
+  type-reducer.cpp
   wasm-reduce.cpp
   ${wasm_reduce_HEADERS}
 )
