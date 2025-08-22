@@ -79,7 +79,8 @@ struct HeapValues {
   // precomputed), and we do not want to mix results between the two modes (if
   // we did, we might cache a result when we ignore effects that we later use
   // when not ignoring them, which would forget the effects).
-  std::unordered_map<Expression*, std::shared_ptr<GCData>> withEffects, withoutEffects;
+  std::unordered_map<Expression*, std::shared_ptr<GCData>> withEffects,
+    withoutEffects;
 
   void clear() {
     withEffects.clear();
@@ -201,7 +202,9 @@ public:
 
   // Generates heap info for a heap-allocating expression.
   Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
-    auto& heapValuesMap = (flags & FlagValues::PRESERVE_SIDEEFFECTS) ? heapValues.withEffects : heapValues.withoutEffects;
+    auto& heapValuesMap = (flags & FlagValues::PRESERVE_SIDEEFFECTS)
+                            ? heapValues.withEffects
+                            : heapValues.withoutEffects;
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
