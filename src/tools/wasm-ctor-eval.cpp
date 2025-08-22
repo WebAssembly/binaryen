@@ -1167,7 +1167,7 @@ start_eval:
           // it. TODO: We could support the case of the calling function
           // handling it.
           if (!quiet) {
-            std::cout << "  ...stopping in block due to unhandled suspend\n";
+            std::cout << "  ...stopping due to unhandled suspend\n";
           }
           return EvalCtorOutcome();
         }
