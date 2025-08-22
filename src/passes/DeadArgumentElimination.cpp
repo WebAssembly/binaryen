@@ -313,14 +313,14 @@ struct DAE : public Pass {
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (Index index = 0; index < numFunctions; index++) {
-      auto& calls = allCalls[index];
-      // We can only optimize if we see all the calls and can modify them.
-      auto name = names[index];
-      if (hasUnseenCalls[index]) {
+      auto* func = module->functions[index].get();
+      if (func->imported()) {
         continue;
       }
-      auto* func = module->getFunction(name); // index!
-      if (func->imported()) {
+      auto& calls = allCalls[index];
+      // We can only optimize if we see all the calls and can modify them.
+      auto name = func->name;
+      if (hasUnseenCalls[index]) {
         continue;
       }
       // Refine argument types before doing anything else. This does not
@@ -333,7 +333,7 @@ struct DAE : public Pass {
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
-        markStale(func->name);
+        markStale(name);
         markCallersStale(calls);
       }
       auto optimizedIndexes =
@@ -355,13 +355,13 @@ struct DAE : public Pass {
     }
     // We now know which parameters are unused, and can potentially remove them.
     for (Index index = 0; index < numFunctions; index++) {
-      auto& calls = allCalls[index];
-      auto name = names[index];
-      if (hasUnseenCalls[index]) {
+      auto* func = module->functions[index].get();
+      if (func->imported()) {
         continue;
       }
-      auto* func = module->getFunction(name);
-      if (func->imported()) {
+      auto& calls = allCalls[index];
+      auto name = func->name;
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto numParams = func->getNumParams();
@@ -373,7 +373,7 @@ struct DAE : public Pass {
       if (!removedIndexes.empty()) {
         // Success!
         worthOptimizing.insert(func);
-        markStale(func->name);
+        markStale(name);
         markCallersStale(calls);
       }
       if (outcome == ParamUtils::RemovalOutcome::Failure) {
@@ -385,7 +385,8 @@ struct DAE : public Pass {
     // modified allCalls (we can't modify a call site twice in one iteration,
     // once to remove a param, once to drop the return value).
     if (worthOptimizing.empty()) {
-      for (auto& func : module->functions) {
+      for (Index index = 0; index < numFunctions; index++) {
+        auto& func = module->functions[index];
         if (func->imported()) { // XXX why not before?
           continue;
         }
@@ -393,7 +394,6 @@ struct DAE : public Pass {
           continue;
         }
         auto name = func->name;
-        auto index = indexes[name];
         if (hasUnseenCalls[index]) {
           continue;
         }
@@ -423,7 +423,7 @@ struct DAE : public Pass {
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
         worthOptimizing.insert(func.get());
-        markStale(func->name);
+        markStale(name);
         markCallersStale(calls);
       }
     }
