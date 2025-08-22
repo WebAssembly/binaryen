@@ -247,8 +247,8 @@ struct DAE : public Pass {
 
     // TODO: vectors!
     std::vector<std::vector<Call*>> allCalls(numFunctions);
-    std::vector<bool> tailCallees(numFunctions);
-    std::vector<bool> hasUnseenCalls(numFunctions);
+    std::unordered_set<Index> tailCallees;
+    std::unordered_set<Index> hasUnseenCalls;
     // Track the function in which relevant expressions exist. When we modify
     // those expressions we will need to mark the function's info as stale.
     std::unordered_map<Expression*, Name> expressionFuncs;
@@ -261,19 +261,19 @@ struct DAE : public Pass {
         }
       }
       for (auto& callee : info.tailCallees) {
-        tailCallees[indexes[callee]] = true;
+        tailCallees.insert(indexes[callee]);
       }
       for (auto& [call, dropp] : info.droppedCalls) {
         allDroppedCalls[call] = dropp;
       }
       for (auto& name : info.hasUnseenCalls) {
-        hasUnseenCalls[indexes[name]] = true;
+        hasUnseenCalls.insert(indexes[name]);
       }
     }
     // Exports are considered unseen calls.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
+        hasUnseenCalls.insert(indexes[*curr->getInternalName()]);
       }
     }
 
@@ -316,10 +316,13 @@ struct DAE : public Pass {
       auto& calls = allCalls[index];
       // We can only optimize if we see all the calls and can modify them.
       auto name = names[index];
-      if (hasUnseenCalls[index]) {
+      if (hasUnseenCalls.count(index)) {
         continue;
       }
-      auto* func = module->getFunction(name);
+      auto* func = module->getFunction(name); // index!
+      if (func->imported()) {
+        continue;
+      }
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
@@ -354,10 +357,13 @@ struct DAE : public Pass {
     for (Index index = 0; index < numFunctions; index++) {
       auto& calls = allCalls[index];
       auto name = names[index];
-      if (hasUnseenCalls[index]) {
+      if (hasUnseenCalls.count(index)) {
         continue;
       }
       auto* func = module->getFunction(name);
+      if (func->imported()) {
+        continue;
+      }
       auto numParams = func->getNumParams();
       if (numParams == 0) {
         continue;
@@ -380,18 +386,21 @@ struct DAE : public Pass {
     // once to remove a param, once to drop the return value).
     if (worthOptimizing.empty()) {
       for (auto& func : module->functions) {
+        if (func->imported()) { // XXX why not before?
+          continue;
+        }
         if (func->getResults() == Type::none) {
           continue;
         }
         auto name = func->name;
         auto index = indexes[name];
-        if (hasUnseenCalls[index]) {
+        if (hasUnseenCalls.count(index)) {
           continue;
         }
         if (infoMap[name].hasTailCalls) {
           continue;
         }
-        if (tailCallees[index]) {
+        if (tailCallees.count(index)) {
           continue;
         }
         auto& calls = allCalls[index];
