@@ -71,7 +71,22 @@ using GetValues = std::unordered_map<LocalGet*, Literals>;
 // representation, the merge will cause a local.get of $x to have more
 // possible input values than that struct.new, which means we will not infer
 // a value for it, and not attempt to say anything about comparisons of $x.
-using HeapValues = std::unordered_map<Expression*, std::shared_ptr<GCData>>;
+struct HeapValues {
+  // Store two maps, one for effects and one without. The one with effects is
+  // used when PRESERVE_SIDEEFFECTS is on, and the other when not. This is
+  // necessary because when we preserve effects then nested effects in a GC
+  // allocation can cause us to end up as nonconstant (nothing can be
+  // precomputed), and we do not want to mix results between the two modes (if
+  // we did, we might cache a result when we ignore effects that we later use
+  // when not ignoring them, which would forget the effects).
+  std::unordered_map<Expression*, std::shared_ptr<GCData>> withEffects,
+    withoutEffects;
+
+  void clear() {
+    withEffects.clear();
+    withoutEffects.clear();
+  }
+};
 
 // Precomputes an expression. Errors if we hit anything that can't be
 // precomputed. Inherits most of its functionality from
@@ -187,11 +202,14 @@ public:
 
   // Generates heap info for a heap-allocating expression.
   Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
+    auto& heapValuesMap = (flags & FlagValues::PRESERVE_SIDEEFFECTS)
+                            ? heapValues.withEffects
+                            : heapValues.withoutEffects;
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    auto iter = heapValues.find(curr);
-    if (iter != heapValues.end()) {
+    auto iter = heapValuesMap.find(curr);
+    if (iter != heapValuesMap.end()) {
       // Refer to the same canonical GCData that we already created.
       return Literal(iter->second, curr->type.getHeapType());
     }
@@ -200,14 +218,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    // If we preserve side effects then we can cache the results, but if we
-    // ignore them then the result we compute does not contain them, and later
-    // reads from the cache that do care about side effects would be wrong.
-    // TODO: use a separate cache for the two modes, but the other mode is
-    //       only used in propagateLocals, which is far less used
-    if (flags & FlagValues::PRESERVE_SIDEEFFECTS) {
-      heapValues[curr] = flow.getSingleValue().getGCData();
-    }
+    heapValuesMap[curr] = flow.getSingleValue().getGCData();
     return flow;
   }
 
