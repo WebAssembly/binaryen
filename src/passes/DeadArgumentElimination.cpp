@@ -233,34 +233,47 @@ struct DAE : public Pass {
       Call* call;
       Function* func;
     };
-    std::map<Name, std::vector<Call*>> allCalls;
-    std::unordered_set<Name> tailCallees;
-    std::unordered_set<Name> hasUnseenCalls;
+
+    // Maps function names to indexes. This lets us use indexes below for speed.
+    std::unordered_map<Name, Index> indexes;
+    // Reverse mapping for convenience.
+    auto numFunctions = module->functions.size();
+    std::vector<Name> names(numFunctions);
+    for (Index i = 0; i < module->functions.size(); i++) {
+      auto name = module->functions[i]->name;
+      indexes[name] = i;
+      names[i] = name;
+    }
+
+    // TODO: vectors!
+    std::vector<std::vector<Call*>> allCalls(numFunctions);
+    std::vector<bool> tailCallees(numFunctions);
+    std::vector<bool> hasUnseenCalls(numFunctions);
     // Track the function in which relevant expressions exist. When we modify
     // those expressions we will need to mark the function's info as stale.
     std::unordered_map<Expression*, Name> expressionFuncs;
     for (auto& [func, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
-        auto& allCallsToName = allCalls[name];
+        auto& allCallsToName = allCalls[indexes[name]];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
         for (auto* call : calls) {
           expressionFuncs[call] = func;
         }
       }
       for (auto& callee : info.tailCallees) {
-        tailCallees.insert(callee);
+        tailCallees[indexes[callee]] = true;
       }
       for (auto& [call, dropp] : info.droppedCalls) {
         allDroppedCalls[call] = dropp;
       }
       for (auto& name : info.hasUnseenCalls) {
-        hasUnseenCalls.insert(name);
+        hasUnseenCalls[indexes[name]] = true;
       }
     }
     // Exports are considered unseen calls.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        hasUnseenCalls.insert(*curr->getInternalName());
+        hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
       }
     }
 
@@ -299,9 +312,11 @@ struct DAE : public Pass {
 
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
-    for (auto& [name, calls] : allCalls) {
+    for (Index index = 0; index < numFunctions; index++) {
+      auto& calls = allCalls[index];
       // We can only optimize if we see all the calls and can modify them.
-      if (hasUnseenCalls.count(name)) {
+      auto name = names[index];
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto* func = module->getFunction(name);
@@ -336,8 +351,10 @@ struct DAE : public Pass {
       ReFinalize().run(getPassRunner(), module);
     }
     // We now know which parameters are unused, and can potentially remove them.
-    for (auto& [name, calls] : allCalls) {
-      if (hasUnseenCalls.count(name)) {
+    for (Index index = 0; index < numFunctions; index++) {
+      auto& calls = allCalls[index];
+      auto name = names[index];
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto* func = module->getFunction(name);
@@ -367,20 +384,20 @@ struct DAE : public Pass {
           continue;
         }
         auto name = func->name;
-        if (hasUnseenCalls.count(name)) {
+        auto index = indexes[name];
+        if (hasUnseenCalls[index]) {
           continue;
         }
         if (infoMap[name].hasTailCalls) {
           continue;
         }
-        if (tailCallees.count(name)) {
+        if (tailCallees[index]) {
           continue;
         }
-        auto iter = allCalls.find(name);
-        if (iter == allCalls.end()) {
+        auto& calls = allCalls[index];
+        if (calls.empty()) {
           continue;
         }
-        auto& calls = iter->second;
         bool allDropped =
           std::all_of(calls.begin(), calls.end(), [&](Call* call) {
             return allDroppedCalls.count(call);
