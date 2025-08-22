@@ -247,8 +247,8 @@ struct DAE : public Pass {
 
     // TODO: vectors!
     std::vector<std::vector<Call*>> allCalls(numFunctions);
-    std::unordered_set<Index> tailCallees;
-    std::unordered_set<Index> hasUnseenCalls;
+    std::vector<bool> tailCallees(numFunctions);
+    std::vector<bool> hasUnseenCalls(numFunctions);
     // Track the function in which relevant expressions exist. When we modify
     // those expressions we will need to mark the function's info as stale.
     std::unordered_map<Expression*, Name> expressionFuncs;
@@ -261,19 +261,19 @@ struct DAE : public Pass {
         }
       }
       for (auto& callee : info.tailCallees) {
-        tailCallees.insert(indexes[callee]);
+        tailCallees[indexes[callee]] = true;
       }
       for (auto& [call, dropp] : info.droppedCalls) {
         allDroppedCalls[call] = dropp;
       }
       for (auto& name : info.hasUnseenCalls) {
-        hasUnseenCalls.insert(indexes[name]);
+        hasUnseenCalls[indexes[name]] = true;
       }
     }
     // Exports are considered unseen calls.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        hasUnseenCalls.insert(indexes[*curr->getInternalName()]);
+        hasUnseenCalls[indexes[*curr->getInternalName()]] = true;
       }
     }
 
@@ -316,7 +316,7 @@ struct DAE : public Pass {
       auto& calls = allCalls[index];
       // We can only optimize if we see all the calls and can modify them.
       auto name = names[index];
-      if (hasUnseenCalls.count(index)) {
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto* func = module->getFunction(name); // index!
@@ -357,7 +357,7 @@ struct DAE : public Pass {
     for (Index index = 0; index < numFunctions; index++) {
       auto& calls = allCalls[index];
       auto name = names[index];
-      if (hasUnseenCalls.count(index)) {
+      if (hasUnseenCalls[index]) {
         continue;
       }
       auto* func = module->getFunction(name);
@@ -394,13 +394,13 @@ struct DAE : public Pass {
         }
         auto name = func->name;
         auto index = indexes[name];
-        if (hasUnseenCalls.count(index)) {
+        if (hasUnseenCalls[index]) {
           continue;
         }
         if (infoMap[name].hasTailCalls) {
           continue;
         }
-        if (tailCallees.count(index)) {
+        if (tailCallees[index]) {
           continue;
         }
         auto& calls = allCalls[index];
