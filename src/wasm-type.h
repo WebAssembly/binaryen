@@ -805,9 +805,12 @@ struct TypeBuilder {
         setHeapType(i, wasm::Array(elem));
         return;
       }
-      case HeapTypeKind::Cont:
-        setHeapType(i, Continuation(map(type.getContinuation().type)));
+      case HeapTypeKind::Cont: {
+        auto cont = type.getContinuation();
+        cont.type = map(cont.type);
+        setHeapType(i, cont);
         return;
+      }
       case HeapTypeKind::Basic:
         WASM_UNREACHABLE("unexpected kind");
     }

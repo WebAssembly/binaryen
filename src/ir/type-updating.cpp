@@ -359,9 +359,10 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   }
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
+    auto tempHeapType = getTempHeapType(heapType);
+    if (tempHeapType != heapType) {
       return typeBuilder.getTempRefType(
-        typeBuilder[it->second], type.getNullability(), type.getExactness());
+        tempHeapType, type.getNullability(), type.getExactness());
     }
     // This type is not one that is eligible for optimizing. That is fine; just
     // use it unmodified.
@@ -375,6 +376,13 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     return typeBuilder.getTempTupleType(newTuple);
   }
   WASM_UNREACHABLE("bad type");
+}
+
+HeapType GlobalTypeRewriter::getTempHeapType(HeapType type) {
+  if (auto it = typeIndices.find(type); it != typeIndices.end()) {
+    return typeBuilder[it->second];
+  }
+  return type;
 }
 
 Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {

@@ -109,6 +109,7 @@ unfuzzable = [
     'O3_stack-switching.wast',
     'coalesce-locals-stack-switching.wast',
     'dce-stack-switching.wast',
+    'local-cse-cont.wast',
     'precompute-stack-switching.wast',
     'unsubtyping-stack-switching.wast',
     'vacuum-stack-switching.wast',
@@ -120,6 +121,7 @@ unfuzzable = [
     'cont_export_throw.wast',
     'type-merging-cont.wast',
     'remove-unused-module-elements-cont.wast',
+    'abstract-type-refining-cont.wast',
     # TODO: fix split_wast() on tricky escaping situations like a string ending
     #       in \\" (the " is not escaped - there is an escaped \ before it)
     'string-lifting-section.wast',
