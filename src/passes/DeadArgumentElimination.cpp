@@ -415,8 +415,7 @@ struct DAE : public Pass {
         if (removeReturnValue(func.get(), calls, module)) {
           // We should optimize the callers.
           for (auto* call : calls) {
-            worthOptimizing.insert(
-              module->getFunction(expressionFuncs[call]));
+            worthOptimizing.insert(module->getFunction(expressionFuncs[call]));
           }
         }
         // TODO Removing a drop may also open optimization opportunities in the
