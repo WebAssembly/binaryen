@@ -274,7 +274,7 @@ struct DAE : public Pass {
     }
 
     // Track which functions we changed that are worth re-optimizing at the end.
-    std::unordered_set<Function*> worthOptimizing;
+    std::vector<Function*> worthOptimizing;
 
     // If we refine return types then we will need to do more type updating
     // at the end.
@@ -323,7 +323,7 @@ struct DAE : public Pass {
       // affect whether an argument is used or not, it just refines the type
       // where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
-        worthOptimizing.insert(func);
+        worthOptimizing.push_back(func);
         markStale(func->name);
       }
       // Refine return types as well.
@@ -368,7 +368,7 @@ struct DAE : public Pass {
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
         // Success!
-        worthOptimizing.insert(func);
+        worthOptimizing.push_back(func);
         markStale(name);
         markCallersStale(calls);
       }
@@ -413,12 +413,12 @@ struct DAE : public Pass {
         if (removeReturnValue(func.get(), calls, module)) {
           // We should optimize the callers.
           for (auto* call : calls) {
-            worthOptimizing.insert(module->getFunction(expressionFuncs[call]));
+            worthOptimizing.push_back(module->getFunction(expressionFuncs[call]));
           }
         }
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
-        worthOptimizing.insert(func.get());
+        worthOptimizing.push_back(func.get());
         markStale(name);
         markCallersStale(calls);
       }
@@ -430,7 +430,8 @@ struct DAE : public Pass {
         });
     }
     if (optimize && !worthOptimizing.empty()) {
-      OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
+      std::unordered_set<Function*> worthOptimizingSet(worthOptimizing.begin(), worthOptimizing.end());
+      OptUtils::optimizeAfterInlining(worthOptimizingSet, module, getPassRunner());
     }
 
     return !worthOptimizing.empty() || refinedReturnTypes ||
