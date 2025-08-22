@@ -236,13 +236,9 @@ struct DAE : public Pass {
 
     // Maps function names to indexes. This lets us use indexes below for speed.
     std::unordered_map<Name, Index> indexes;
-    // Reverse mapping for convenience.
     auto numFunctions = module->functions.size();
-    std::vector<Name> names(numFunctions);
     for (Index i = 0; i < module->functions.size(); i++) {
-      auto name = module->functions[i]->name;
-      indexes[name] = i;
-      names[i] = name;
+      indexes[module->functions[i]->name] = i;
     }
 
     // TODO: vectors!
