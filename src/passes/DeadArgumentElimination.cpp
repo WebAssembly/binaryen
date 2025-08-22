@@ -413,7 +413,8 @@ struct DAE : public Pass {
         if (removeReturnValue(func.get(), calls, module)) {
           // We should optimize the callers.
           for (auto* call : calls) {
-            worthOptimizing.push_back(module->getFunction(expressionFuncs[call]));
+            worthOptimizing.push_back(
+              module->getFunction(expressionFuncs[call]));
           }
         }
         // TODO Removing a drop may also open optimization opportunities in the
@@ -430,8 +431,10 @@ struct DAE : public Pass {
         });
     }
     if (optimize && !worthOptimizing.empty()) {
-      std::unordered_set<Function*> worthOptimizingSet(worthOptimizing.begin(), worthOptimizing.end());
-      OptUtils::optimizeAfterInlining(worthOptimizingSet, module, getPassRunner());
+      std::unordered_set<Function*> worthOptimizingSet(worthOptimizing.begin(),
+                                                       worthOptimizing.end());
+      OptUtils::optimizeAfterInlining(
+        worthOptimizingSet, module, getPassRunner());
     }
 
     return !worthOptimizing.empty() || refinedReturnTypes ||
