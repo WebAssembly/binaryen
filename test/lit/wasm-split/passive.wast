@@ -9,7 +9,7 @@
 
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0))
+ ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
 
  ;; PRIMARY:      (table $table 3 funcref)
  (table $table 3 funcref)
@@ -25,7 +25,7 @@
 
  ;; PRIMARY:      (export "table_1" (table $1))
 
- ;; PRIMARY:      (func $in-table
+ ;; PRIMARY:      (func $in-table (type $0)
  ;; PRIMARY-NEXT: )
  (func $in-table
   ;; This is in a passive segment, but it is in the main module so we need no
@@ -38,14 +38,14 @@
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $second-in-table)
 
- ;; SECONDARY:      (func $second-in-table
+ ;; SECONDARY:      (func $second-in-table (type $0)
  ;; SECONDARY-NEXT: )
  (func $second-in-table
   ;; This is in a passive segment, and it is in the secondary module, so we will
   ;; handle it by adding a trampoline from the segment as a new function "$1".
  )
 )
-;; PRIMARY:      (func $trampoline_second-in-table
+;; PRIMARY:      (func $trampoline_second-in-table (type $0)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )

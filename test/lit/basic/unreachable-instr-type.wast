@@ -43,7 +43,7 @@
 
   ;; CHECK-BIN:      (memory $0 1 1 shared)
 
-  ;; CHECK-BIN:      (func $test
+  ;; CHECK-BIN:      (func $test (type $0)
   ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $test
@@ -76,6 +76,6 @@
 
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 1 shared)
 
-;; CHECK-BIN-NODEBUG:      (func $0
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )

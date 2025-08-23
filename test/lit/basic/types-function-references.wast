@@ -63,7 +63,9 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (type $10 (func (param (ref null $mixed_results))))
 
-  ;; CHECK-BIN:      (func $call-ref
+  ;; CHECK-BIN:      (elem declare func $call-ref $call-ref-more)
+
+  ;; CHECK-BIN:      (func $call-ref (type $void)
   ;; CHECK-BIN-NEXT:  (call_ref $void
   ;; CHECK-BIN-NEXT:   (ref.func $call-ref)
   ;; CHECK-BIN-NEXT:  )
@@ -77,7 +79,7 @@
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $return-call-ref
+  ;; CHECK-BIN:      (func $return-call-ref (type $void)
   ;; CHECK-BIN-NEXT:  (return_call_ref $void
   ;; CHECK-BIN-NEXT:   (ref.func $call-ref)
   ;; CHECK-BIN-NEXT:  )
@@ -92,7 +94,7 @@
   ;; CHECK-TEXT-NEXT:   (ref.func $call-ref-more)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $call-ref-more (param $0 i32) (result i32)
+  ;; CHECK-BIN:      (func $call-ref-more (type $i32-i32) (param $0 i32) (result i32)
   ;; CHECK-BIN-NEXT:  (call_ref $i32-i32
   ;; CHECK-BIN-NEXT:   (i32.const 42)
   ;; CHECK-BIN-NEXT:   (ref.func $call-ref-more)
@@ -108,7 +110,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $call_from-param (param $f (ref $i32-i32)) (result i32)
+  ;; CHECK-BIN:      (func $call_from-param (type $5) (param $f (ref $i32-i32)) (result i32)
   ;; CHECK-BIN-NEXT:  (call_ref $i32-i32
   ;; CHECK-BIN-NEXT:   (i32.const 42)
   ;; CHECK-BIN-NEXT:   (local.get $f)
@@ -124,7 +126,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $call_from-param-null (param $f (ref null $i32-i32)) (result i32)
+  ;; CHECK-BIN:      (func $call_from-param-null (type $6) (param $f (ref null $i32-i32)) (result i32)
   ;; CHECK-BIN-NEXT:  (call_ref $i32-i32
   ;; CHECK-BIN-NEXT:   (i32.const 42)
   ;; CHECK-BIN-NEXT:   (local.get $f)
@@ -144,7 +146,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $f)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $call_from-local-null (result i32)
+  ;; CHECK-BIN:      (func $call_from-local-null (type $7) (result i32)
   ;; CHECK-BIN-NEXT:  (local $f (ref null $i32-i32))
   ;; CHECK-BIN-NEXT:  (local.set $f
   ;; CHECK-BIN-NEXT:   (ref.func $call-ref-more)
@@ -163,7 +165,7 @@
   ;; CHECK-TEXT:      (func $ref-in-sig (type $f64_=>_ref_null<_->_eqref>) (param $0 f64) (result (ref null $_=>_eqref))
   ;; CHECK-TEXT-NEXT:  (ref.null nofunc)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-in-sig (param $0 f64) (result (ref null $_=>_eqref))
+  ;; CHECK-BIN:      (func $ref-in-sig (type $f64_=>_ref_null<_->_eqref>) (param $0 f64) (result (ref null $_=>_eqref))
   ;; CHECK-BIN-NEXT:  (ref.null nofunc)
   ;; CHECK-BIN-NEXT: )
   (func $ref-in-sig (param $0 f64) (result (ref null $=>eqref))
@@ -173,7 +175,7 @@
   ;; CHECK-TEXT:      (func $type-only-in-tuple-local (type $void)
   ;; CHECK-TEXT-NEXT:  (local $x (tuple i32 (ref null $=>anyref) f64))
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $type-only-in-tuple-local
+  ;; CHECK-BIN:      (func $type-only-in-tuple-local (type $void)
   ;; CHECK-BIN-NEXT:  (local $x i32)
   ;; CHECK-BIN-NEXT:  (local $1 f64)
   ;; CHECK-BIN-NEXT:  (local $2 (ref null $=>anyref))
@@ -189,7 +191,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $type-only-in-tuple-block
+  ;; CHECK-BIN:      (func $type-only-in-tuple-block (type $void)
   ;; CHECK-BIN-NEXT:  (local $scratch (tuple i32 (ref null $mixed_results) f64))
   ;; CHECK-BIN-NEXT:  (local $scratch_1 (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
@@ -242,7 +244,7 @@
   ;; CHECK-TEXT-NEXT:  (local $r5 anyref)
   ;; CHECK-TEXT-NEXT:  (local $r6 funcref)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-types-first
+  ;; CHECK-BIN:      (func $ref-types-first (type $void)
   ;; CHECK-BIN-NEXT:  (local $r1 (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:  (local $r2 (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:  (local $r3 anyref)
@@ -280,7 +282,7 @@
   ;; CHECK-TEXT-NEXT:  (local $r5 anyref)
   ;; CHECK-TEXT-NEXT:  (local $r6 funcref)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $mvp-types-first
+  ;; CHECK-BIN:      (func $mvp-types-first (type $void)
   ;; CHECK-BIN-NEXT:  (local $i1 i32)
   ;; CHECK-BIN-NEXT:  (local $i2 i64)
   ;; CHECK-BIN-NEXT:  (local $i3 i64)
@@ -316,7 +318,7 @@
   ;; CHECK-TEXT-NEXT:  (local $r5 anyref)
   ;; CHECK-TEXT-NEXT:  (local $r6 funcref)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $mvp-types-first-param (param $r0 (ref null $mixed_results))
+  ;; CHECK-BIN:      (func $mvp-types-first-param (type $10) (param $r0 (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:  (local $i1 i32)
   ;; CHECK-BIN-NEXT:  (local $i2 i64)
   ;; CHECK-BIN-NEXT:  (local $i3 i64)
@@ -363,40 +365,42 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $10 (func (param (ref null $0))))
 
-;; CHECK-BIN-NODEBUG:      (func $0
+;; CHECK-BIN-NODEBUG:      (elem declare func $0 $2)
+
+;; CHECK-BIN-NODEBUG:      (func $0 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (call_ref $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1
+;; CHECK-BIN-NODEBUG:      (func $1 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (return_call_ref $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $2 (type $1) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (call_ref $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $3 (type $5) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (call_ref $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $4 (type $6) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (call_ref $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (result i32)
+;; CHECK-BIN-NODEBUG:      (func $5 (type $7) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (ref null $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $2)
@@ -407,17 +411,17 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (param $0 f64) (result (ref null $4))
+;; CHECK-BIN-NODEBUG:      (func $6 (type $8) (param $0 f64) (result (ref null $4))
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7
+;; CHECK-BIN-NODEBUG:      (func $7 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (ref null $9))
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8
+;; CHECK-BIN-NODEBUG:      (func $8 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 (ref null $0) f64))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_1 (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_2 i32)
@@ -452,7 +456,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9
+;; CHECK-BIN-NODEBUG:      (func $9 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 anyref)
@@ -464,7 +468,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $8 i64)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10
+;; CHECK-BIN-NODEBUG:      (func $10 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i64)
@@ -476,7 +480,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $8 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (param $0 (ref null $0))
+;; CHECK-BIN-NODEBUG:      (func $11 (type $10) (param $0 (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $3 i64)

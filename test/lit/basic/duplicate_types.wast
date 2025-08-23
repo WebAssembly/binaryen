@@ -28,14 +28,14 @@
  ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (type $1 (func (param i32) (result i32)))
 
- ;; CHECK-BIN:      (func $f0 (param $0 i32)
+ ;; CHECK-BIN:      (func $f0 (type $0) (param $0 i32)
  ;; CHECK-BIN-NEXT: )
  (func $f0 (param i32))
 
  ;; CHECK-TEXT:      (func $f1 (type $1) (param $0 i32) (result i32)
  ;; CHECK-TEXT-NEXT:  (i32.const 0)
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $f1 (param $0 i32) (result i32)
+ ;; CHECK-BIN:      (func $f1 (type $1) (param $0 i32) (result i32)
  ;; CHECK-BIN-NEXT:  (i32.const 0)
  ;; CHECK-BIN-NEXT: )
  (func $f1 (param i32) (result i32)
@@ -44,9 +44,9 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (param $0 i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $1 (type $1) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT: )

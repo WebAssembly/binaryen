@@ -60,7 +60,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $swap (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN:      (func $swap (type $2) (param $k (ref null $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $scratch i32)
  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
  ;; CHECK-BIN-NEXT:  (local $3 (ref null $ct))
@@ -109,7 +109,7 @@
  ;; CHECK-TEXT-NEXT:   (local.get $x)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $go (param $x (ref $ct)) (result i32)
+ ;; CHECK-BIN:      (func $go (type $4) (param $x (ref $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (resume $ct (on $t switch)
  ;; CHECK-BIN-NEXT:   (i32.const 123)
  ;; CHECK-BIN-NEXT:   (ref.null nocont)
@@ -140,7 +140,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $unreachable (param $k (ref null $ct)) (result i32)
+ ;; CHECK-BIN:      (func $unreachable (type $2) (param $k (ref null $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (i32.const 42)
  ;; CHECK-BIN-NEXT:  )
@@ -167,7 +167,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (type $3) (result i32))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $3 (ref null $1))
@@ -203,7 +203,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $1 (type $4) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (resume $1 (on $tag$0 switch)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nocont)
@@ -211,7 +211,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (param $0 (ref null $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 (ref null $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 42)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

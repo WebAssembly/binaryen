@@ -30,7 +30,7 @@
  ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (type $0 (func (result f32)))
 
- ;; CHECK-BIN:      (func $binaryify-untaken-br_if (result f32)
+ ;; CHECK-BIN:      (func $binaryify-untaken-br_if (type $0) (result f32)
  ;; CHECK-BIN-NEXT:  (if (result f32)
  ;; CHECK-BIN-NEXT:   (i32.const 1)
  ;; CHECK-BIN-NEXT:   (then
@@ -63,7 +63,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (result f32)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (result f32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (then

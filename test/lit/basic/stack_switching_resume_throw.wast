@@ -52,7 +52,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $go (param $x (ref $ct)) (result i32)
+ ;; CHECK-BIN:      (func $go (type $4) (param $x (ref $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $scratch (tuple i32 (ref $ct)))
  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
  ;; CHECK-BIN-NEXT:  (local.set $scratch_2
@@ -101,7 +101,7 @@
  ;; CHECK-TEXT-NEXT:   (unreachable)
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $unreachable (result i32)
+ ;; CHECK-BIN:      (func $unreachable (type $5) (result i32)
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (i64.const 123)
  ;; CHECK-BIN-NEXT:  )
@@ -130,7 +130,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$1 (type $3) (param i64))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $4) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 (ref $1)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $scratch_2
@@ -155,7 +155,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $scratch_2)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (result i32)
+;; CHECK-BIN-NODEBUG:      (func $1 (type $5) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

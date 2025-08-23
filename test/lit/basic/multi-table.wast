@@ -89,7 +89,7 @@
   ;; CHECK-TEXT-NEXT:   (ref.func $h)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $f
+  ;; CHECK-BIN:      (func $f (type $none_=>_none)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.func $h)
   ;; CHECK-BIN-NEXT:  )
@@ -98,13 +98,13 @@
 
   ;; CHECK-TEXT:      (func $g (type $none_=>_none)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $g
+  ;; CHECK-BIN:      (func $g (type $none_=>_none)
   ;; CHECK-BIN-NEXT: )
   (func $g)
 
   ;; CHECK-TEXT:      (func $h (type $none_=>_none)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $h
+  ;; CHECK-BIN:      (func $h (type $none_=>_none)
   ;; CHECK-BIN-NEXT: )
   (func $h)
 )
@@ -144,14 +144,14 @@
 
 ;; CHECK-BIN-NODEBUG:      (elem $9 (table $3) (i32.const 0) (ref null $0) (item (ref.func $0)) (item (ref.func $2)))
 
-;; CHECK-BIN-NODEBUG:      (func $0
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1
+;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2
+;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -11,7 +11,7 @@
   ;; CHECK:      (type $f (func))
   (type $f (func))
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (type $f)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result funcref)
   ;; CHECK-NEXT:    (br $block

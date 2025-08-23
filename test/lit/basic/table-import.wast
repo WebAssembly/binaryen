@@ -48,7 +48,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (elem $0 (table $timport$0) (i32.const 0) func $foo)
 
-  ;; CHECK-BIN:      (func $foo
+  ;; CHECK-BIN:      (func $foo (type $0)
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo (type $0)
@@ -58,6 +58,6 @@
 )
 ;; CHECK-BIN-NODEBUG:      (elem $0 (table $timport$0) (i32.const 0) func $0)
 
-;; CHECK-BIN-NODEBUG:      (func $0
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -17,7 +17,7 @@
  ;; CHECK-TEXT-NEXT: )
  ;; CHECK-BIN:      (type $0 (func))
 
- ;; CHECK-BIN:      (func $pause
+ ;; CHECK-BIN:      (func $pause (type $0)
  ;; CHECK-BIN-NEXT:  (pause)
  ;; CHECK-BIN-NEXT: )
  (func $pause
@@ -27,6 +27,6 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (func $0
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (pause)
 ;; CHECK-BIN-NODEBUG-NEXT: )

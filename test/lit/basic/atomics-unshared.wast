@@ -30,7 +30,7 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $foo
+ ;; CHECK-BIN:      (func $foo (type $0)
  ;; CHECK-BIN-NEXT:  (drop
  ;; CHECK-BIN-NEXT:   (i32.atomic.rmw.cmpxchg
  ;; CHECK-BIN-NEXT:    (i32.const 0)
@@ -47,7 +47,7 @@
   ))
  )
 )
-;; CHECK-BIN-NODEBUG:      (func $0
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.cmpxchg
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
