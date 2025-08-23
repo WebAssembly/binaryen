@@ -30,6 +30,7 @@
 #include "parsing.h"
 #include "source-map.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
 #include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-validator.h"
@@ -1730,11 +1731,18 @@ public:
     throw ParseException(text, 0, pos);
   }
 
+  // Allow users to query the target features section features after parsing.
+  FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
+
 private:
   // In certain modes we need to note the locations of expressions, to match
   // them against sections like DWARF or custom annotations. As this incurs
   // overhead, we only note locations when we actually need to.
   bool needCodeLocations = false;
+
+  // The features enabled by the target features section, which may be a subset
+  // of the features enabled for the module.
+  FeatureSet featuresSectionFeatures;
 
   // Scans ahead in the binary to check certain conditions like
   // needCodeLocations.

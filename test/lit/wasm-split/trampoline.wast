@@ -6,7 +6,7 @@
 (module
  ;; PRIMARY:      (type $0 (func (param i32) (result i32)))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
  (table $table 1 1 funcref)
@@ -26,7 +26,7 @@
 
  ;; PRIMARY:      (export "table_3" (table $1))
 
- ;; PRIMARY:      (func $foo (type $0) (param $0 i32) (result i32)
+ ;; PRIMARY:      (func $foo (param $0 i32) (result i32)
  ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
  ;; PRIMARY-NEXT:   (i32.const 555)
  ;; PRIMARY-NEXT:   (i32.const 0)
@@ -39,11 +39,11 @@
 
  ;; SECONDARY:      (import "primary" "table_3" (table $timport$0 1 funcref))
 
- ;; SECONDARY:      (import "primary" "foo" (func $foo (type $0) (param i32) (result i32)))
+ ;; SECONDARY:      (import "primary" "foo" (func $foo (param i32) (result i32)))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar)
 
- ;; SECONDARY:      (func $bar (type $0) (param $0 i32) (result i32)
+ ;; SECONDARY:      (func $bar (param $0 i32) (result i32)
  ;; SECONDARY-NEXT:  (call $foo
  ;; SECONDARY-NEXT:   (i32.const 777)
  ;; SECONDARY-NEXT:  )
@@ -52,7 +52,7 @@
   (call $foo (i32.const 777))
  )
 )
-;; PRIMARY:      (func $trampoline_bar (type $0) (param $0 i32) (result i32)
+;; PRIMARY:      (func $trampoline_bar (param $0 i32) (result i32)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (local.get $0)
 ;; PRIMARY-NEXT:   (i32.const 0)

@@ -40,13 +40,13 @@
 
 ;; CHECK-BIN:      (export "g" (func $1))
 
-;; CHECK-BIN:      (func $0 (type $0)
+;; CHECK-BIN:      (func $0
 ;; CHECK-BIN-NEXT:  ;;@ a:3:4:myFunction
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  ;;@ a:5:6
 ;; CHECK-BIN-NEXT: )
 
-;; CHECK-BIN:      (func $1 (type $0)
+;; CHECK-BIN:      (func $1
 ;; CHECK-BIN-NEXT:  ;;@ b:9:10:MyClass::g
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  ;;@ b:11:12
