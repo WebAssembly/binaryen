@@ -290,6 +290,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
                      std::function<void(Function*)> onChange) {
   struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
     bool isFunctionParallel() override { return true; }
+    bool requiresNonNullableLocalFixups() override { return false; }
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<LocalizerPass>(callTargets, onChange);
@@ -335,6 +336,7 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
                      PassRunner* runner) {
   struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
     bool isFunctionParallel() override { return true; }
+    bool requiresNonNullableLocalFixups() override { return false; }
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<LocalizerPass>(callTargets);
