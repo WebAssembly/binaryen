@@ -2486,7 +2486,9 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
 
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   auto* body = make(type);
-
+  if (!funcContext) {
+    return makeTrivial(type);
+  }
   if (funcContext->breakableStack.empty()) {
     // Nothing to break to, emit a trivial TryTable.
     // TODO: Perhaps generate a block wrapping us?
@@ -2550,7 +2552,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeBreak(Type type) {
-  if (funcContext->breakableStack.empty()) {
+  if (!funcContext || funcContext->breakableStack.empty()) {
     return makeTrivial(type);
   }
   Expression* condition = nullptr;
@@ -4365,8 +4367,8 @@ Expression* TranslateToFuzzReader::makeSelect(Type type) {
 
 Expression* TranslateToFuzzReader::makeSwitch(Type type) {
   assert(type == Type::unreachable);
-  if (funcContext->breakableStack.empty()) {
-    return make(type);
+  if (!funcContext || funcContext->breakableStack.empty()) {
+    return makeTrivial(type);
   }
   // we need to find proper targets to break to; try a bunch
   int tries = fuzzParams->TRIES;
@@ -4880,7 +4882,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeBrOn(Type type) {
-  if (funcContext->breakableStack.empty()) {
+  if (!funcContext || funcContext->breakableStack.empty()) {
     return makeTrivial(type);
   }
   // We need to find a proper target to break to; try a few times. Finding the
