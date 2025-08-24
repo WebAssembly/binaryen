@@ -409,7 +409,19 @@ struct OptimizationOptions : public ToolOptions {
       passRunner.clear();
     };
 
-    for (auto& pass : passes) {
+    // Find the first and last default opt passes, so we can tell them they are
+    // first/last.
+    Index firstDefault = passes.size();
+    Index lastDefault = passes.size();
+    for (Index i = 0; i < passes.size(); i++) {
+      if (passes[i].name == DEFAULT_OPT_PASSES) {
+        firstDefault = std::min(firstDefault, i);
+        lastDefault = i;
+      }
+    }
+
+    for (Index i = 0; i < passes.size(); i++) {
+      auto& pass = passes[i];
       if (pass.name == DEFAULT_OPT_PASSES) {
         // This is something like -O3 or -Oz. We must run this now, in order to
         // set the proper opt and shrink levels. To do that, first reset the
@@ -427,8 +439,13 @@ struct OptimizationOptions : public ToolOptions {
         passRunner.options.optimizeLevel = *pass.optimizeLevel;
         passRunner.options.shrinkLevel = *pass.shrinkLevel;
 
+        // Note the ordering of these default passes.
+        PassRunner::Ordering ordering;
+        ordering.first = (i == firstDefault);
+        ordering.last = (i == lastDefault);
+
         // Run our optimizations now with the custom levels.
-        passRunner.addDefaultOptimizationPasses();
+        passRunner.addDefaultOptimizationPasses(ordering);
         flush();
 
         // Restore the default optimize/shrinkLevels.

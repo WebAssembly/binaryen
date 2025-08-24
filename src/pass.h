@@ -335,18 +335,30 @@ struct PassRunner {
   // warning.
   void addIfNoDWARFIssues(std::string passName);
 
-  // Adds the default set of optimization passes; this is
-  // what -O does.
-  void addDefaultOptimizationPasses();
+  // By default, we do not know if we are running first in the ordering of
+  // optimization passes, or last - we could be anywhere.
+  struct Ordering {
+    bool first;
+    bool last;
+  };
+  static constexpr Ordering UnknownOrdering = {false, false};
+
+  // Adds the default set of optimization passes; this is what -O does.
+  //
+  // The ordering indicates our position relative to other default
+  // optimizations, that is, if ordering.first then we are first.
+  void addDefaultOptimizationPasses(Ordering ordering = UnknownOrdering);
 
   // Adds the default optimization passes that work on
   // individual functions.
-  void addDefaultFunctionOptimizationPasses();
+  void
+  addDefaultFunctionOptimizationPasses(Ordering ordering = UnknownOrdering);
 
   // Adds the default optimization passes that work on
   // entire modules as a whole, and make sense to
   // run before function passes.
-  void addDefaultGlobalOptimizationPrePasses();
+  void
+  addDefaultGlobalOptimizationPrePasses(Ordering ordering = UnknownOrdering);
 
   // Adds the default optimization passes that work on
   // entire modules as a whole, and make sense to
@@ -354,7 +366,8 @@ struct PassRunner {
   // This is run at the very end of the optimization
   // process - you can assume no other opts will be run
   // afterwards.
-  void addDefaultGlobalOptimizationPostPasses();
+  void
+  addDefaultGlobalOptimizationPostPasses(Ordering ordering = UnknownOrdering);
 
   // Run the passes on the module
   void run();
