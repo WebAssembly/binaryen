@@ -27,6 +27,8 @@
 // looked at.
 //
 
+#include "ir/drop.h"
+#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
@@ -301,42 +303,6 @@ struct Precompute
     // unlikely chance, we leave such things for later.
   }
 
-  template<typename T> void reuseConstantNode(T* curr, Flow flow) {
-    if (flow.values.isConcrete()) {
-      // reuse a const / ref.null / ref.func node if there is one
-      if (curr->value && flow.values.size() == 1) {
-        Literal singleValue = flow.getSingleValue();
-        if (singleValue.type.isNumber()) {
-          if (auto* c = curr->value->template dynCast<Const>()) {
-            c->value = singleValue;
-            c->finalize();
-            curr->finalize();
-            return;
-          }
-        } else if (singleValue.isNull()) {
-          if (auto* n = curr->value->template dynCast<RefNull>()) {
-            n->finalize(singleValue.type);
-            curr->finalize();
-            return;
-          }
-        } else if (singleValue.type.isRef() &&
-                   singleValue.type.getHeapType().isSignature()) {
-          if (auto* r = curr->value->template dynCast<RefFunc>()) {
-            r->func = singleValue.getFunc();
-            auto heapType = getModule()->getFunction(r->func)->type;
-            r->finalize(heapType);
-            curr->finalize();
-            return;
-          }
-        }
-      }
-      curr->value = flow.getConstExpression(*getModule());
-    } else {
-      curr->value = nullptr;
-    }
-    curr->finalize();
-  }
-
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
@@ -344,9 +310,21 @@ struct Precompute
       return;
     }
     // try to evaluate this into a const
-    Flow flow = precomputeExpression(curr);
+    Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (!canEmitConstantFor(flow.values)) {
       return;
+    }
+    if (ShallowEffectAnalyzer(getPassOptions(), *getModule(), curr).hasUnremovableSideEffects()) {
+      // We have the keep the parent around anyhow. Emitting it plus a suffix
+      // of the value we computed might help other passes, but it might not. To
+      // avoid increasing size, do nothing.
+      return;
+    }
+    // Find the value this is precomputed into.
+    Builder builder(*getModule());
+    Expression* value = nullptr;
+    if (flow.values.isConcrete()) {
+      value = flow.getConstExpression(*getModule());
     }
     if (flow.breaking()) {
       if (flow.breakTo == NONCONSTANT_FLOW) {
@@ -355,40 +333,29 @@ struct Precompute
         considerPartiallyPrecomputing(curr);
         return;
       }
-      if (flow.breakTo == RETURN_FLOW) {
-        // this expression causes a return. if it's already a return, reuse the
-        // node
-        if (auto* ret = curr->dynCast<Return>()) {
-          reuseConstantNode(ret, flow);
-        } else {
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeReturn(
-            flow.values.isConcrete() ? flow.getConstExpression(*getModule())
-                                     : nullptr));
-        }
+      if (flow.suspendTag) {
         return;
       }
-      // this expression causes a break, emit it directly. if it's already a br,
-      // reuse the node.
-      if (auto* br = curr->dynCast<Break>()) {
-        br->name = flow.breakTo;
-        br->condition = nullptr;
-        reuseConstantNode(br, flow);
+      if (flow.breakTo == RETURN_FLOW) {
+        assert(curr->is<Return>()); // the effects from before should stop us from doing pointless work
+        value = builder.makeReturn(value);
       } else {
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeBreak(
-          flow.breakTo,
-          flow.values.isConcrete() ? flow.getConstExpression(*getModule())
-                                   : nullptr));
+        // this expression causes a break, emit it directly. if it's already a br,
+        // reuse the node.
+        value = builder.makeBreak(flow.breakTo, value);
       }
-      return;
+    } else {
+      // This is not breaking, and is precomputed into a value or a nop.
+      if (!value) {
+        value = Builder(*getModule()).makeNop(); // TODO: reuse curr if possible
+      }
     }
     // this was precomputed
-    if (flow.values.isConcrete()) {
-      replaceCurrent(flow.getConstExpression(*getModule()));
-    } else {
-      ExpressionManipulator::nop(curr);
-    }
+    auto* rep = getDroppedChildrenAndAppend(curr,
+                                            *getModule(),
+                                            getPassOptions(),
+                                            value);
+    replaceCurrent(rep);
   }
 
   void visitBlock(Block* curr) {
