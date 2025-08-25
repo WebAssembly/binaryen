@@ -337,9 +337,10 @@ struct Precompute
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
-        assert(curr->is<Return>()); // the effects from before should stop us from doing pointless work
+        assert(!curr->is<Return>()); // the effects from before should stop us from doing pointless work
         value = builder.makeReturn(value);
       } else {
+        assert(!curr->is<Break>()); // the effects from before should stop us from doing pointless work
         // this expression causes a break, emit it directly. if it's already a br,
         // reuse the node.
         value = builder.makeBreak(flow.breakTo, value);
@@ -351,10 +352,13 @@ struct Precompute
       }
     }
     // this was precomputed
+    // WE know that the children precompute ok, no trapping happens. but gDCAA does not...
     auto* rep = getDroppedChildrenAndAppend(curr,
                                             *getModule(),
                                             getPassOptions(),
-                                            value);
+                                            value,
+                                            DropMode::NoticeParentEffects,
+                                            ChildDropMode::NoticeChildTraps);
     replaceCurrent(rep);
   }
 

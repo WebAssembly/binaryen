@@ -27,7 +27,8 @@ Expression* getDroppedChildrenAndAppend(Expression* parent,
                                         Module& wasm,
                                         const PassOptions& options,
                                         Expression* last,
-                                        DropMode mode) {
+                                        DropMode mode,
+                                        ChildDropMode childMode) {
   // We check for shallow effects here, since we may be able to remove |parent|
   // itself but keep its children around - we don't want effects in the children
   // to stop us from improving the code. Note that there are cases where the
@@ -65,7 +66,11 @@ Expression* getDroppedChildrenAndAppend(Expression* parent,
 
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(parent)) {
-    if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
+    EffectAnalyzer effects(options, wasm, child);
+    if (childMode == ChildDropMode::NoticeChildTraps) {
+      effects.trap = false;
+    }
+    if (!effects.hasUnremovableSideEffects()) {
       continue;
     }
     // See above.
