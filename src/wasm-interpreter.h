@@ -4651,11 +4651,24 @@ public:
           throwException(WasmException{
             self()->makeExnData(tag->name, currContinuation->resumeArguments)});
         }
+      } else {
+        // We are actually resuming execution into this function. First,
+        // see which function we should actually call: If we suspended during a
+        // return_call then the original frame was unwound, and we should not
+        // resume into it. Instead, the proper target was noted as we unwound.
+        auto entry = self()->popResumeEntry("function-target");
+        assert(entry.size() == 1);
+        auto func = entry[0];
+        if (!func.isNull()) {
+          // This is an actual return_call. Do it now.
+          return func.getFuncData()->doCall(arguments);
+        }
       }
     }
 
     Flow flow;
     std::optional<Type> resultType;
+    auto returnCalled = false;
 
     // We may have to call multiple functions in the event of return calls.
     while (true) {
@@ -4679,7 +4692,7 @@ public:
         // Restore the local state (see below for the ordering, we push/pop).
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
-          scope.locals[l] = self()->popResumeEntry("function");
+          scope.locals[l] = self()->popResumeEntry("function-local");
 #ifndef NDEBUG
           // Must have restored valid data. The type must match the local's
           // type, except for the case of a non-nullable local that has not yet
@@ -4713,7 +4726,17 @@ public:
       if (flow.suspendTag) {
         // Save the local state.
         for (auto& local : scope.locals) {
-          self()->pushResumeEntry(local, "function");
+          self()->pushResumeEntry(local, "function-local");
+        }
+
+        // Push a final function-target of null, indicating we have no more
+        // return_call redirects to execute.
+        self()->pushResumeEntry({Literal::makeNull(HeapType::func)}, "function-target");
+        if (returnCalled) {
+          // This call was a return_call. When we resume, we should just back
+          // into it, so provide that target.
+          auto target = self()->makeFuncData(name, function->type);
+          self()->pushResumeEntry({target}, "function-target");
         }
       }
 
@@ -4727,6 +4750,7 @@ public:
       name = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
+      returnCalled = true;
     }
 
     if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
