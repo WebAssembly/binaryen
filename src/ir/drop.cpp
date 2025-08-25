@@ -40,7 +40,8 @@ Expression* getDroppedChildrenAndAppend(Expression* parent,
   if (mode == DropMode::NoticeParentEffects) {
     ShallowEffectAnalyzer effects(options, wasm, parent);
     // Ignore a trap, as the unreachable replacement would trap too.
-    if (last->is<Unreachable>()) {
+    if (last->is<Unreachable>() ||
+        childMode == ChildDropMode::IgnoreChildTraps) { // XXX rename to TrapMode
       effects.trap = false;
     }
     keepParent = effects.hasUnremovableSideEffects();
@@ -67,7 +68,7 @@ Expression* getDroppedChildrenAndAppend(Expression* parent,
   std::vector<Expression*> contents;
   for (auto* child : ChildIterator(parent)) {
     EffectAnalyzer effects(options, wasm, child);
-    if (childMode == ChildDropMode::NoticeChildTraps) {
+    if (childMode == ChildDropMode::IgnoreChildTraps) {
       effects.trap = false;
     }
     if (!effects.hasUnremovableSideEffects()) {

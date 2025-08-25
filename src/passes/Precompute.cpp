@@ -309,6 +309,13 @@ struct Precompute
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
+    if (auto* block = curr->dynCast<Block>()) {
+      if (!block->name) {
+        // All we can precompute this to is to the final element, which other
+        // passes do already.
+        return;
+      }
+    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (!canEmitConstantFor(flow.values)) {
@@ -352,13 +359,15 @@ struct Precompute
       }
     }
     // this was precomputed
+    // ignore traps, as we know this precomputes without actually trapping.
+    //  TODO: careful with if, children that do not always execute!
     // WE know that the children precompute ok, no trapping happens. but gDCAA does not...
     auto* rep = getDroppedChildrenAndAppend(curr,
                                             *getModule(),
                                             getPassOptions(),
                                             value,
                                             DropMode::NoticeParentEffects,
-                                            ChildDropMode::NoticeChildTraps);
+                                            ChildDropMode::IgnoreChildTraps);
     replaceCurrent(rep);
   }
 
