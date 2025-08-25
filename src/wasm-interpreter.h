@@ -4660,22 +4660,27 @@ public:
     // We may have to call multiple functions in the event of return calls.
     while (true) {
       if (self()->isResuming()) {
-        // See which function to call, as return_call may have ..
+        // See which function to call. Re-winding the stack, we are calling the
+        // function that the parent called, but the target that was called may
+        // have return-called. In that case, the original target function should
+        // not be called, as it was unwound, and we noted the proper target
+        // during unwinding.
         auto entry = self()->popResumeEntry("function-target");
         assert(entry.size() == 1);
         auto func = entry[0];
-        if (!func.isNull()) {
-          // This is an actual return_call. Do it now.
-          auto data = func.getFuncData();
-          name = data->name;
-          // We must be in the right module to do the call using that name.
-          if (data->self != self()) {
-            // Return the entry, as the other module's callFunction() will read
-            // it.
-            self()->pushResumeEntry(entry, "function-target");
-            return data->doCall(arguments);
-          }
+        auto data = func.getFuncData();
+        // We must be in the right module to do the call using that name.
+        if (data->self != self()) {
+          // Restore the entry to the resume stack, as the other module's
+          // callFunction() will read it. Then call into the other module. This
+          // sets this up as if we called into the proper module in the first
+          // place.
+          self()->pushResumeEntry(entry, "function-target");
+          return data->doCall(arguments);
         }
+
+        // We are in the right place, and can just call the given function.
+        name = data->name;
       }
 
       Function* function = wasm.getFunction(name);
@@ -4735,6 +4740,9 @@ public:
           self()->pushResumeEntry(local, "function-local");
         }
 
+        // Save the function we called (in the case of a return call, this is
+        // not the original function that was called, and the original has been
+        // unwound already; we should call the last return_called function).
         auto target = self()->makeFuncData(name, function->type);
         self()->pushResumeEntry({target}, "function-target");
       }
