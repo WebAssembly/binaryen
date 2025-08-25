@@ -4651,27 +4651,33 @@ public:
           throwException(WasmException{
             self()->makeExnData(tag->name, currContinuation->resumeArguments)});
         }
-      } else {
-        // We are actually resuming execution into this function. First,
-        // see which function we should actually call: If we suspended during a
-        // return_call then the original frame was unwound, and we should not
-        // resume into it. Instead, the proper target was noted as we unwound.
-        auto entry = self()->popResumeEntry("function-target");
-        assert(entry.size() == 1);
-        auto func = entry[0];
-        if (!func.isNull()) {
-          // This is an actual return_call. Do it now.
-          return func.getFuncData()->doCall(arguments);
-        }
       }
     }
 
     Flow flow;
     std::optional<Type> resultType;
-    auto returnCalled = false;
 
     // We may have to call multiple functions in the event of return calls.
     while (true) {
+      if (self()->isResuming()) {
+        // See which function to call, as return_call may have ..
+        auto entry = self()->popResumeEntry("function-target");
+        assert(entry.size() == 1);
+        auto func = entry[0];
+        if (!func.isNull()) {
+          // This is an actual return_call. Do it now.
+          auto data = func.getFuncData();
+          name = data->name;
+          // We must be in the right module to do the call using that name.
+          if (data->self != self()) {
+            // Return the entry, as the other module's callFunction() will read
+            // it.
+            self()->pushResumeEntry(entry, "function-target");
+            return data->doCall(arguments);
+          }
+        }
+      }
+
       Function* function = wasm.getFunction(name);
       assert(function);
 
@@ -4729,15 +4735,8 @@ public:
           self()->pushResumeEntry(local, "function-local");
         }
 
-        // Push a final function-target of null, indicating we have no more
-        // return_call redirects to execute.
-        self()->pushResumeEntry({Literal::makeNull(HeapType::func)}, "function-target");
-        if (returnCalled) {
-          // This call was a return_call. When we resume, we should just back
-          // into it, so provide that target.
-          auto target = self()->makeFuncData(name, function->type);
-          self()->pushResumeEntry({target}, "function-target");
-        }
+        auto target = self()->makeFuncData(name, function->type);
+        self()->pushResumeEntry({target}, "function-target");
       }
 
       if (flow.breakTo != RETURN_CALL_FLOW) {
@@ -4750,7 +4749,6 @@ public:
       name = flow.values.back().getFunc();
       flow.values.pop_back();
       arguments = flow.values;
-      returnCalled = true;
     }
 
     if (flow.breaking() && flow.breakTo == NONCONSTANT_FLOW) {
