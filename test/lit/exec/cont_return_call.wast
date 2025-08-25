@@ -22,6 +22,7 @@
  ;; CHECK-NEXT: [trap unreachable]
  (func $main (export "main")
   (local $c (ref $cont))
+  ;; Create a continuation and keep resuming it while it suspends.
   (local.set $c
    (cont.new $cont
     (ref.func $cont)
