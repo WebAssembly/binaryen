@@ -4,6 +4,9 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (global $g (mut i32) (i32.const 10))
+ (global $g (mut i32) (i32.const 10))
+
  ;; CHECK:      (func $loop (type $0)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (local.set $temp
@@ -43,6 +46,18 @@
    (local.tee $temp
     (i32.const 20)
    )
+  )
+ )
+
+ ;; CHECK:      (func $global.set (type $0)
+ ;; CHECK-NEXT:  (global.set $g
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global.set
+  ;; We should not try to precompute a global set.
+  (global.set $g
+   (i32.const 20)
   )
  )
 )
