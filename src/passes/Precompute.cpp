@@ -378,6 +378,21 @@ struct Precompute
         // and we can't just keep them all, so give up.
         return;
       }
+#if 0
+      if (flow.breaking()) {
+        // This precomputes into a break, but we can't just replace it with a
+        // break because of effects. So we might end up with
+        //
+        //   { effect, br } => { { effect, br }, br }
+        //
+        // if we were to append a new br. That is not helpful.
+        return;
+      }
+      // TODO: same issue as breaking with a constant..? maybe avoid a trivial
+      // XXX no - no to both of them. we delete |curr| each time, so there *is*
+      //  progress
+#endif
+      // block with result?
       SmallVector<Expression*, 10> kept;
       for (auto* child : ChildIterator(curr)) {
         EffectAnalyzer effects(getPassOptions(), *getModule(), child);
