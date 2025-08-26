@@ -13,11 +13,35 @@
  (func $loop
   (local $temp i32)
   ;; We should not try to precompute this loop. If we attempted to replace it
-  ;; with its children, we'd need to handle them properly, which we do not do in
-  ;; this pass.
+  ;; with its children, we'd need to handle the effects of chidren properly,
+  ;; which we do not do in this pass.
   (loop
    (local.set $temp
     (i32.const 10)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $local.set (type $0)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $temp
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $local.set
+  (local $temp i32)
+  ;; We should not try to precompute a set or tee.
+  (local.set $temp
+   (i32.const 10)
+  )
+  (drop
+   (local.tee $temp
+    (i32.const 20)
    )
   )
  )
