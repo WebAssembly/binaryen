@@ -73,7 +73,21 @@ using GetValues = std::unordered_map<LocalGet*, Literals>;
 // representation, the merge will cause a local.get of $x to have more
 // possible input values than that struct.new, which means we will not infer
 // a value for it, and not attempt to say anything about comparisons of $x.
-using HeapValues = std::unordered_map<Expression*, std::shared_ptr<GCData>>;
+struct HeapValues {
+  struct Entry {
+    // The GC data for an expression.
+    std::shared_ptr<GCData> data;
+    // Whether the expression has effects. If it does then we must recompute it
+    // each time we see it, even though we return |data| to represent it.
+    // (Recomputing will apply those effects each time, so we don't forget them
+    // when we read from the cache. This recomputing is rare, and doesn't happen
+    // e.g. in global GC objects, where most of the work happens, so this cache
+    // still saves a lot.)
+    bool hasEffects;
+  };
+  
+  std::unordered_map<Expression*, Entry> map;
+};
 
 // Precomputes an expression. Errors if we hit anything that can't be
 // precomputed. Inherits most of its functionality from
@@ -192,17 +206,25 @@ public:
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    auto iter = heapValues.find(curr);
-    if (iter != heapValues.end()) {
+    auto iter = heapValues.map.find(curr);
+    if (iter != heapValues.map.end()) {
+      auto [data, hasEffects] = iter->second;
+      if (hasEffects) {
+        // Visit, so we recompute the effects. (This is rare, see comment
+        // above.)
+        visitFunc();
+      }
       // Refer to the same canonical GCData that we already created.
-      return Literal(iter->second, curr->type.getHeapType());
+      return Literal(data, curr->type.getHeapType());
     }
-    // Only call the visitor function here, so we do it once per allocation.
+    // Only call the visitor function here, so we do it once per allocation. See
+    // if we have effects while doing so.
     auto flow = visitFunc();
     if (flow.breaking()) {
       return flow;
     }
-    heapValues[curr] = flow.getSingleValue().getGCData();
+    heapValues.map[curr] = HeapValues::Entry{flow.getSingleValue().getGCData(),
+                                             hasEffectfulSets()};
     return flow;
   }
 
@@ -680,7 +702,7 @@ struct Precompute
         // |parent|. Results here must not be cached for later.
         HeapValues temp;
         auto ifTrue = precomputeExpression(parent, true, &temp);
-        temp.clear();
+        temp.map.clear();
         if (isValidPrecomputation(ifTrue)) {
           *pointerToSelect = select->ifFalse;
           auto ifFalse = precomputeExpression(parent, true, &temp);
