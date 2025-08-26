@@ -85,7 +85,7 @@ struct HeapValues {
     // still saves a lot.)
     bool hasEffects;
   };
-  
+
   std::unordered_map<Expression*, Entry> map;
 };
 
@@ -223,8 +223,8 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    heapValues.map[curr] = HeapValues::Entry{flow.getSingleValue().getGCData(),
-                                             hasEffectfulSets()};
+    heapValues.map[curr] =
+      HeapValues::Entry{flow.getSingleValue().getGCData(), hasEffectfulSets()};
     return flow;
   }
 
@@ -310,7 +310,9 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() || curr->is<LocalSet>() || curr->is<GlobalSet>() || curr->is<Return>() || curr->is<Loop>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
+        curr->is<LocalSet>() || curr->is<GlobalSet>() || curr->is<Return>() ||
+        curr->is<Loop>()) {
       return;
     }
     // Ignore trivial breaks, but ones with conditions we can optimize away.
@@ -322,7 +324,8 @@ struct Precompute
 
     // See if we can precompute the value that flows out.
     Flow flow;
-    PrecomputingExpressionRunner runner(getModule(), getValues, heapValues, false /* replaceExpression */);
+    PrecomputingExpressionRunner runner(
+      getModule(), getValues, heapValues, false /* replaceExpression */);
     try {
       flow = runner.visit(curr);
     } catch (NonconstantException&) {
@@ -354,11 +357,12 @@ struct Precompute
     }
     if (flow.breaking()) {
       if (flow.breakTo == RETURN_FLOW) {
-        assert(!curr->is<Return>()); // the effects from before should stop us from doing pointless work
+        assert(!curr->is<Return>()); // the effects from before should stop us
+                                     // from doing pointless work
         value = builder.makeReturn(value);
       } else {
-        // this expression causes a break, emit it directly. if it's already a br,
-        // reuse the node.
+        // this expression causes a break, emit it directly. if it's already a
+        // br, reuse the node.
         value = builder.makeBreak(flow.breakTo, value);
       }
     }
