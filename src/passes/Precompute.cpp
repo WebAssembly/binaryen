@@ -310,7 +310,7 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() || curr->is<LocalSet>() || curr->is<Return>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() || curr->is<LocalSet>() || curr->is<GlobalSet>() || curr->is<Return>()) {
       return;
     }
     // Ignore trivial breaks, but ones with conditions we can optimize away.
