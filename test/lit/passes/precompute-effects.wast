@@ -60,6 +60,26 @@
    (i32.const 20)
   )
  )
+
+ ;; CHECK:      (func $binary-tee (type $1) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $temp
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 20)
+ ;; CHECK-NEXT: )
+ (func $binary-tee (result i32)
+  (local $temp i32)
+  ;; We can precompute this and remove the add, but must keep the tee.
+  (i32.add
+   (local.tee $temp
+    (i32.const 10)
+   )
+   (local.get $temp)
+  )
+ )
 )
 
 ;; TODO: more from current PR
