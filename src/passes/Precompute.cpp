@@ -309,19 +309,19 @@ struct Precompute
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
-    if (auto* block = curr->dynCast<Block>()) {
-      if (!block->name) {
-        // All we can precompute this to is to the final element, which other
-        // passes do already.
-        return;
-      }
+    if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) {
+      // Unneeded/conditional children/etc.
+      return;
     }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
-    if (ShallowEffectAnalyzer(getPassOptions(), *getModule(), curr).hasUnremovableSideEffects()) {
+    ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
+    effects.trap = false; // we saw it did not actually trap
+    // TODO: remove all others? only localsWritten can happen without NONCONSTNAT...
+    if (effects.hasUnremovableSideEffects()) {
       // We have the keep the parent around anyhow. Emitting it plus a suffix
       // of the value we computed might help other passes, but it might not. To
       // avoid increasing size, do nothing.
