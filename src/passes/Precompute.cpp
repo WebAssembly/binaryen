@@ -353,19 +353,22 @@ struct Precompute
     // expression, we verified it has no effects that cause problems - no traps
     // or exceptions etc., as those things would lead to NONCONSTANT_FLOW. We
     // can therefore replace this with what flows out of it. The only exception
-    // are tees: we *did* allow them (by not setting PRESERVE_SIDEEFFECTS in the
-    // interpreter instance) so that we can optimize small code fragments with a
-    // tee that is immediately used. To handle that, we just need to check for
-    // tees, and keep them around.
-    SmallVector<Expression*, 10> kept;
-    for (auto* child : ChildIterator(curr)) {
-      if (!FindAll<LocalSet>(child).list.empty()) {
-        kept.push_back(builder.makeDrop(child));
+    // is that we set replaceExpression to false, above, which means we run the
+    // interpreter without PRESERVE_SIDEEFFECTS. That allows local and global
+    // sets to happen (to help optimize small code fragments with sets and
+    // gets). To handle that, keep relevant children if we have such sets.
+    if (runner.hasEffectfulSets()) {
+      SmallVector<Expression*, 10> kept;
+      for (auto* child : ChildIterator(curr)) {
+        EffectAnalyzer effects(getPassOptions(), *getModule(), child);
+        if (!effects.localsWritten.empty() || !effects.globalsWritten.empty()) {
+          kept.push_back(builder.makeDrop(child));
+        }
       }
-    }
-    if (!kept.empty()) {
-      kept.push_back(value);
-      value = builder.makeBlock(kept);
+      if (!kept.empty()) {
+        kept.push_back(value);
+        value = builder.makeBlock(kept);
+      }
     }
     replaceCurrent(value);
   }

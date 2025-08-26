@@ -2741,6 +2741,11 @@ public:
     globalValues[name] = values;
   }
 
+  // Returns true if we set a local or a global.
+  bool hasEffectfulSets() const {
+    return !localValues.empty() || !globalValues.empty();
+  }
+
   Flow visitLocalGet(LocalGet* curr) {
     // Check if a constant value has been set in the context of this runner.
     auto iter = localValues.find(curr->index);
