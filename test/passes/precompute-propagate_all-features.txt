@@ -251,10 +251,13 @@
  )
  (func $through-tee-more (type $2) (param $x i32) (param $y i32) (result i32)
   (local.set $x
-   (i32.eqz
-    (local.tee $y
-     (i32.const 7)
+   (block (result i32)
+    (drop
+     (local.tee $y
+      (i32.const 7)
+     )
     )
+    (i32.const 0)
    )
   )
   (return
