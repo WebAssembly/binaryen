@@ -7,7 +7,7 @@
  ;; CHECK:      (global $g (mut i32) (i32.const 10))
  (global $g (mut i32) (i32.const 10))
 
- ;; CHECK:      (func $loop (type $0)
+ ;; CHECK:      (func $loop (type $1)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (i32.const 10)
@@ -25,7 +25,7 @@
   )
  )
 
- ;; CHECK:      (func $local.set (type $0)
+ ;; CHECK:      (func $local.set (type $1)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (i32.const 10)
@@ -49,7 +49,7 @@
   )
  )
 
- ;; CHECK:      (func $global.set (type $0)
+ ;; CHECK:      (func $global.set (type $1)
  ;; CHECK-NEXT:  (global.set $g
  ;; CHECK-NEXT:   (i32.const 20)
  ;; CHECK-NEXT:  )
@@ -61,7 +61,7 @@
   )
  )
 
- ;; CHECK:      (func $binary-tee (type $1) (result i32)
+ ;; CHECK:      (func $binary-tee (type $0) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $temp
@@ -81,7 +81,7 @@
   )
  )
 
- ;; CHECK:      (func $binary-both (type $1) (result i32)
+ ;; CHECK:      (func $binary-both (type $0) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $temp
@@ -108,7 +108,7 @@
   )
  )
 
- ;; CHECK:      (func $nested-global (type $1) (result i32)
+ ;; CHECK:      (func $nested-global (type $0) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
@@ -146,7 +146,58 @@
    )
   )
  )
+ ;; CHECK:      (func $ordering (type $0) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (block $out (result i32)
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $temp
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $out
+ ;; CHECK-NEXT:     (i32.const 10)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (global.set $g
+ ;; CHECK-NEXT:      (i32.const 30)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 40)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ordering (result i32)
+  (local $temp i32)
+  ;; Nested effects inside arms. The br in the middle arm will execute, so we
+  ;; want to precompute the entire select into a br, but we must keep alive the
+  ;; children before and after. While doing so, we must not *reorder* the middle
+  ;; child against them: if we just remove the middle child (and add a br at the
+  ;; end) then we are changing the order of execution, as the global.set would
+  ;; happen, when before it did not.
+  (block $out (result i32)
+   (select
+    (block (result i32)
+     (local.set $temp
+      (i32.const 0)
+     )
+     (i32.const 20)
+    )
+    (block (result i32)
+     (br $out
+      (i32.const 10)
+     )
+     (i32.const 20)
+    )
+    (block (result i32)
+     (global.set $g
+      (i32.const 30)
+     )
+     (i32.const 40)
+    )
+   )
+  )
+ )
 )
-
-;; TODO: more from current PR
 

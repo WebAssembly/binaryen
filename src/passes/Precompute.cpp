@@ -388,6 +388,42 @@ struct Precompute
         return;
       }
 
+      // To keep things simple, stop here if we are precomputing to a break/
+      // return. Handling that case requires ordering considerations:
+      //
+      //  (foo
+      //    (br)
+      //    (call)
+      //  )
+      //
+      // Here we know we need to keep the call, and can remove foo, but this
+      // would be wrong:
+      //
+      //  (block
+      //    ;; removed br
+      //    (call)
+      //    (br) ;; the value we precompute to, added at the end
+      //  )
+      //
+      // Instead we must keep the br, leaving this for later opts to improve:
+      //
+      //  (block
+      //    (br)
+      //    (call)
+      //    (br)
+      //  )
+      //
+      // That is, we cannot remove unneeded children easily in this case, where
+      // control flow might transfer, so we need to keep all children when we
+      // remove foo. In that case, it's not clear we are helping much, and other
+      // passes can do better with the break/return anyhow. After dismissing
+      // this situation, we know no transfer of control flow needs to be handled
+      // in the code below (because we executed the code, and found it did not
+      // do so).
+      if (flow.breaking()) {
+        return;
+      }
+
       // Find the necessary children that we must keep.
       SmallVector<Expression*, 10> kept;
       for (auto* child : ChildIterator(curr)) {
