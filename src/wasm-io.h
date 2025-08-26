@@ -21,7 +21,6 @@
 #ifndef wasm_wasm_io_h
 #define wasm_wasm_io_h
 
-#include "parsing.h"
 #include "pass.h"
 #include "support/file.h"
 #include "wasm.h"
@@ -67,12 +66,16 @@ public:
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
 
+  FeatureSet getFeaturesSectionFeatures() { return featuresSectionFeatures; }
+
 private:
   bool DWARF = false;
 
   IRProfile profile = IRProfile::Normal;
 
   bool skipFunctionBodies = false;
+
+  FeatureSet featuresSectionFeatures = FeatureSet::MVP;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 
