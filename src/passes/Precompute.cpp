@@ -28,7 +28,7 @@
 //
 
 #include "ir/drop.h"
-#include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
@@ -306,10 +306,10 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() || curr->is<LocalSet>() || curr->is<Break>() || curr->is<Return>()) {
       return;
     }
-    if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) {
+    if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) { // XXX
       // Unneeded/conditional children/etc.
       return;
     }
@@ -318,31 +318,25 @@ struct Precompute
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
-    ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
-    effects.trap = false; // we saw it did not actually trap
-    // TODO: remove all others? only localsWritten can happen without NONCONSTNAT...
-    if (effects.hasUnremovableSideEffects()) {
-      // We have the keep the parent around anyhow. Emitting it plus a suffix
-      // of the value we computed might help other passes, but it might not. To
-      // avoid increasing size, do nothing.
+    if (flow.breakTo == NONCONSTANT_FLOW) {
+      // This cannot be turned into a constant, but perhaps we can partially
+      // precompute it.
+      considerPartiallyPrecomputing(curr);
       return;
     }
-    // Find the value this is precomputed into.
+    // TODO: Handle suspends somehow?
+    if (flow.suspendTag) {
+      return;
+    }
+    // This looks like a promising precomputation: We have found that its value,
+    // if any, can be emitted as a constant (or there is no value, and it is a
+    // nop or break etc.). Build that value, so we can replace it with it.
     Builder builder(*getModule());
     Expression* value = nullptr;
     if (flow.values.isConcrete()) {
       value = flow.getConstExpression(*getModule());
     }
     if (flow.breaking()) {
-      if (flow.breakTo == NONCONSTANT_FLOW) {
-        // This cannot be turned into a constant, but perhaps we can partially
-        // precompute it.
-        considerPartiallyPrecomputing(curr);
-        return;
-      }
-      if (flow.suspendTag) {
-        return;
-      }
       if (flow.breakTo == RETURN_FLOW) {
         assert(!curr->is<Return>()); // the effects from before should stop us from doing pointless work
         value = builder.makeReturn(value);
@@ -355,20 +349,29 @@ struct Precompute
     } else {
       // This is not breaking, and is precomputed into a value or a nop.
       if (!value) {
-        value = Builder(*getModule()).makeNop(); // TODO: reuse curr if possible
+        value = builder.makeNop(); // TODO: reuse curr if possible
       }
     }
-    // this was precomputed
-    // ignore traps, as we know this precomputes without actually trapping.
-    //  TODO: careful with if, children that do not always execute!
-    // WE know that the children precompute ok, no trapping happens. but gDCAA does not...
-    auto* rep = getDroppedChildrenAndAppend(curr,
-                                            *getModule(),
-                                            getPassOptions(),
-                                            value,
-                                            DropMode::NoticeParentEffects,
-                                            ChildDropMode::IgnoreChildTraps);
-    replaceCurrent(rep);
+
+    // We have a value that can replace the expression. While precomputing the
+    // expression, we verified it has no effects that cause problems - no traps
+    // or exceptions etc., as those things would lead to NONCONSTANT_FLOW. We
+    // can therefore replace this with what flows out of it. The only exception
+    // are tees: we *did* allow them (by not setting PRESERVE_SIDEEFFECTS in the
+    // interpreter instance) so that we can optimize small code fragments with a
+    // tee that is immediately used. To handle that, we just need to check for
+    // tees, and keep them around.
+    SmallVector<Expression*, 10> kept;
+    for (auto* child : ChildIterator(curr)) {
+      if (!FindAll<LocalSet>(child).list.empty()) {
+        kept.push_back(builder.makeDrop(child));
+      }
+    }
+    if (!kept.empty()) {
+      kept.push_back(value);
+      value = builder.makeBlock(kept);
+    }
+    replaceCurrent(value);
   }
 
   void visitBlock(Block* curr) {
