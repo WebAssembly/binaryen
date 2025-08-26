@@ -74,19 +74,10 @@ using GetValues = std::unordered_map<LocalGet*, Literals>;
 // possible input values than that struct.new, which means we will not infer
 // a value for it, and not attempt to say anything about comparisons of $x.
 struct HeapValues {
-  // Store two maps, one for effects and one without. The one with effects is
-  // used when PRESERVE_SIDEEFFECTS is on, and the other when not. This is
-  // necessary because when we preserve effects then nested effects in a GC
-  // allocation can cause us to end up as nonconstant (nothing can be
-  // precomputed), and we do not want to mix results between the two modes (if
-  // we did, we might cache a result when we ignore effects that we later use
-  // when not ignoring them, which would forget the effects).
-  std::unordered_map<Expression*, std::shared_ptr<GCData>> withEffects,
-    withoutEffects;
+  std::unordered_map<Expression*, std::shared_ptr<GCData>> map;
 
   void clear() {
-    withEffects.clear();
-    withoutEffects.clear();
+    map.clear();
   }
 };
 
@@ -204,14 +195,11 @@ public:
 
   // Generates heap info for a heap-allocating expression.
   Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
-    auto& heapValuesMap = (flags & FlagValues::PRESERVE_SIDEEFFECTS)
-                            ? heapValues.withEffects
-                            : heapValues.withoutEffects;
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    auto iter = heapValuesMap.find(curr);
-    if (iter != heapValuesMap.end()) {
+    auto iter = heapValues.map.find(curr);
+    if (iter != heapValues.map.end()) {
       // Refer to the same canonical GCData that we already created.
       return Literal(iter->second, curr->type.getHeapType());
     }
@@ -220,7 +208,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    heapValuesMap[curr] = flow.getSingleValue().getGCData();
+    heapValues.map[curr] = flow.getSingleValue().getGCData();
     return flow;
   }
 
@@ -313,7 +301,7 @@ struct Precompute
       // Unneeded/conditional children/etc.
       return;
     }
-    // try to evaluate this into a const
+    // See if we can precompute the value that flows out.
     Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (!canEmitConstantFor(flow.values)) {
       return;
