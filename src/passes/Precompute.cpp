@@ -73,13 +73,7 @@ using GetValues = std::unordered_map<LocalGet*, Literals>;
 // representation, the merge will cause a local.get of $x to have more
 // possible input values than that struct.new, which means we will not infer
 // a value for it, and not attempt to say anything about comparisons of $x.
-struct HeapValues {
-  std::unordered_map<Expression*, std::shared_ptr<GCData>> map;
-
-  void clear() {
-    map.clear();
-  }
-};
+using HeapValues = std::unordered_map<Expression*, std::shared_ptr<GCData>>;
 
 // Precomputes an expression. Errors if we hit anything that can't be
 // precomputed. Inherits most of its functionality from
@@ -198,8 +192,8 @@ public:
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    auto iter = heapValues.map.find(curr);
-    if (iter != heapValues.map.end()) {
+    auto iter = heapValues.find(curr);
+    if (iter != heapValues.end()) {
       // Refer to the same canonical GCData that we already created.
       return Literal(iter->second, curr->type.getHeapType());
     }
@@ -208,7 +202,7 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    heapValues.map[curr] = flow.getSingleValue().getGCData();
+    heapValues[curr] = flow.getSingleValue().getGCData();
     return flow;
   }
 
@@ -294,15 +288,30 @@ struct Precompute
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() || curr->is<LocalSet>() || curr->is<Break>() || curr->is<Return>()) {
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() || curr->is<LocalSet>() || curr->is<Return>()) {
       return;
+    }
+    // Ignore trivial breaks, but ones with conditions we can optimize away.
+    if (auto* br = curr->dynCast<Break>()) {
+      if (!br->condition) {
+        return;
+      }
     }
     if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) { // XXX
       // Unneeded/conditional children/etc.
       return;
     }
     // See if we can precompute the value that flows out.
-    Flow flow = precomputeExpression(curr, false /* replaceExpression */);
+
+    Flow flow;
+    PrecomputingExpressionRunner runner(getModule(), getValues, heapValues, false /* replaceExpression */);
+    try {
+      flow = runner.visit(curr);
+    } catch (NonconstantException&) {
+      return;
+    }
+    // If we are replacing the expression, then the resulting value must be of
+    // a type we can emit a constant for.
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
@@ -329,7 +338,6 @@ struct Precompute
         assert(!curr->is<Return>()); // the effects from before should stop us from doing pointless work
         value = builder.makeReturn(value);
       } else {
-        assert(!curr->is<Break>()); // the effects from before should stop us from doing pointless work
         // this expression causes a break, emit it directly. if it's already a br,
         // reuse the node.
         value = builder.makeBreak(flow.breakTo, value);
