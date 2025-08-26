@@ -80,6 +80,33 @@
    (local.get $temp)
   )
  )
+
+ ;; CHECK:      (func $binary-both (type $1) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $temp
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $temp
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 30)
+ ;; CHECK-NEXT: )
+ (func $binary-both (result i32)
+  (local $temp i32)
+  ;; Now we must keep both tees.
+  (i32.add
+   (local.tee $temp
+    (i32.const 10)
+   )
+   (local.tee $temp
+    (i32.const 20)
+   )
+  )
+ )
 )
 
 ;; TODO: more from current PR
