@@ -107,6 +107,45 @@
    )
   )
  )
+
+ ;; CHECK:      (func $nested-global (type $1) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (i32.const 10)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (global.set $g
+ ;; CHECK-NEXT:     (i32.const 30)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 40)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 60)
+ ;; CHECK-NEXT: )
+ (func $nested-global (result i32)
+  (local $temp i32)
+  ;; Nested effects inside arms, and one is a global effect.
+  (i32.add
+   (block (result i32)
+    (local.set $temp
+     (i32.const 10)
+    )
+    (i32.const 20)
+   )
+   (block (result i32)
+    (global.set $g
+     (i32.const 30)
+    )
+    (i32.const 40)
+   )
+  )
+ )
 )
 
 ;; TODO: more from current PR
