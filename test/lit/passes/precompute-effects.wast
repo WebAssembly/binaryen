@@ -4,6 +4,12 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (func $loop (type $0)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $loop
   (local $temp i32)
   ;; We should not try to precompute this loop. If we attempted to replace it
