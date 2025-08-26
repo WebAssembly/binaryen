@@ -361,11 +361,6 @@ struct Precompute
         // reuse the node.
         value = builder.makeBreak(flow.breakTo, value);
       }
-    } else {
-      // This is not breaking, and is precomputed into a value or a nop.
-      if (!value) {
-        value = builder.makeNop(); // TODO: reuse curr if possible
-      }
     }
 
     // We have a value that can replace the expression. While precomputing the
@@ -391,9 +386,21 @@ struct Precompute
         }
       }
       if (!kept.empty()) {
-        kept.push_back(value);
-        value = builder.makeBlock(kept);
+        if (value) {
+          kept.push_back(value);
+        }
+        if (kept.size() == 1) {
+          value = kept[0];
+        } else {
+          value = builder.makeBlock(kept);
+        }
       }
+    }
+    if (!value) {
+      // We don't need to replace this with anything: there is no value or other
+      // code that we need. Just nop it.
+      ExpressionManipulator::nop(curr);
+      return;
     }
     replaceCurrent(value);
   }
