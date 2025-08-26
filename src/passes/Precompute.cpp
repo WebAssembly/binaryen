@@ -27,8 +27,6 @@
 // looked at.
 //
 
-#include "ir/drop.h"
-#include "ir/find_all.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
