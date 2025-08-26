@@ -297,12 +297,8 @@ struct Precompute
         return;
       }
     }
-    if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) { // XXX
-      // Unneeded/conditional children/etc.
-      return;
-    }
-    // See if we can precompute the value that flows out.
 
+    // See if we can precompute the value that flows out.
     Flow flow;
     PrecomputingExpressionRunner runner(getModule(), getValues, heapValues, false /* replaceExpression */);
     try {
@@ -325,6 +321,7 @@ struct Precompute
     if (flow.suspendTag) {
       return;
     }
+
     // This looks like a promising precomputation: We have found that its value,
     // if any, can be emitted as a constant (or there is no value, and it is a
     // nop or break etc.). Build that value, so we can replace it with it.
@@ -358,6 +355,12 @@ struct Precompute
     // sets to happen (to help optimize small code fragments with sets and
     // gets). To handle that, keep relevant children if we have such sets.
     if (runner.hasEffectfulSets()) {
+      if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) {
+        // These control flow structures have children that might not execute.
+        // We know that some of the children have effectful sets, but not which,
+        // and we can't just keep them all, so give up.
+        return;
+      }
       SmallVector<Expression*, 10> kept;
       for (auto* child : ChildIterator(curr)) {
         EffectAnalyzer effects(getPassOptions(), *getModule(), child);
