@@ -175,7 +175,7 @@
   ;; children before and after. While doing so, we must not *reorder* the middle
   ;; child against them: if we just remove the middle child (and add a br at the
   ;; end) then we are changing the order of execution, as the global.set would
-  ;; happen, when before it did not.
+  ;; happen, when before it did not. For simplicity, we do not optimize here.
   (block $out (result i32)
    (select
     (block (result i32)
