@@ -106,7 +106,9 @@
    (call $ret)
    (then
     (return
-     (i32.const 1)
+     (return
+      (i32.const 1)
+     )
     )
    )
   )
@@ -179,20 +181,25 @@
   (drop
    (block $label$0 (result i64)
     (block
-     (select
-      (i64.const 1)
+     (drop
       (block
-       (global.set $global-mut
-        (i32.const 1)
+       (drop
+        (block
+         (global.set $global-mut
+          (i32.const 1)
+         )
+         (br $label$0
+          (i64.const -22)
+         )
+        )
        )
        (br $label$0
         (i64.const -22)
        )
       )
-      (i32.const 0)
      )
-     (drop
-      (i32.const 1)
+     (br $label$0
+      (i64.const -22)
      )
     )
    )
@@ -272,14 +279,19 @@
  (func $br_reuse_node (type $1)
   (drop
    (block $l0 (result f32)
-    (drop
-     (block $l1
-      (global.set $global-mut
-       (i32.const 1)
+    (block
+     (drop
+      (block $l1
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br $l0
+        (f32.const 3.5)
+       )
       )
-      (br $l0
-       (f32.const 3.5)
-      )
+     )
+     (br $l0
+      (f32.const 3.5)
      )
     )
     (f32.const 0)
@@ -287,14 +299,19 @@
   )
   (drop
    (block $l2 (result nullexternref)
-    (drop
-     (block $l3
-      (global.set $global-mut
-       (i32.const 1)
+    (block
+     (drop
+      (block $l3
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br $l2
+        (ref.null noextern)
+       )
       )
-      (br $l2
-       (ref.null noextern)
-      )
+     )
+     (br $l2
+      (ref.null noextern)
      )
     )
     (ref.null noextern)
@@ -302,14 +319,19 @@
   )
   (drop
    (block $l4 (result (ref null (exact $1)))
-    (drop
-     (block $l5
-      (global.set $global-mut
-       (i32.const 1)
+    (block
+     (drop
+      (block $l5
+       (global.set $global-mut
+        (i32.const 1)
+       )
+       (br $l4
+        (ref.func $dummy)
+       )
       )
-      (br $l4
-       (ref.func $dummy)
-      )
+     )
+     (br $l4
+      (ref.func $dummy)
      )
     )
     (ref.null nofunc)
