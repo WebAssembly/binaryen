@@ -13,10 +13,10 @@
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
 
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
-
  ;; CHECK:      (type $referrer (struct (field (mut (ref null $empty)))))
  (type $referrer (struct (field (mut (ref null $empty)))))
+
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (type $array-i32 (array (mut i32)))
 
@@ -1351,9 +1351,7 @@
 
  ;; CHECK:      (func $nested-struct-ref.eq-tee (type $2)
  ;; CHECK-NEXT:  (local $A (ref $referrer))
- ;; CHECK-NEXT:  (local $B (ref $empty))
- ;; CHECK-NEXT:  (local $temp i32)
- ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (local.tee $A
@@ -1365,7 +1363,27 @@
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT: )
+ (func $nested-struct-ref.eq-tee
+  (local $A (ref $referrer))
+  ;; As above, but immediately ref.eq the tee'd value with a get of itself. This
+  ;; can be computed to 1, but we must keep the tee effect.
+  (drop
+   (ref.eq
+    (local.tee $A
+     (struct.new $referrer
+      (struct.new_default $empty)
+     )
+    )
+    (local.get $A)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nested-struct-ref.eq-tee-2 (type $2)
+ ;; CHECK-NEXT:  (local $A (ref $referrer))
+ ;; CHECK-NEXT:  (local $B (ref $empty))
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (local.tee $A
@@ -1380,24 +1398,12 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $nested-struct-ref.eq-tee
+ (func $nested-struct-ref.eq-tee-2
   (local $A (ref $referrer))
   (local $B (ref $empty))
-  (local $temp i32)
-  ;; As above, but immediately ref.eq the tee'd value with a get of itself. This
-  ;; can be computed to 1, but we must keep the tee effect.
-  (local.set $temp
-   (ref.eq
-    (local.tee $A
-     (struct.new $referrer
-      (struct.new_default $empty)
-     )
-    )
-    (local.get $A)
-   )
-  )
-  ;; Ditto, with a nested tee. We can optimize in the same way.
-  (local.set $temp
+  ;; As above but with an extra nested tee, causing more cache usage. We can
+  ;; optimize in the same way.
+  (drop
    (ref.eq
     (local.tee $A
      (struct.new $referrer
@@ -1408,6 +1414,64 @@
     )
     (local.get $A)
    )
+  )
+ )
+
+ ;; CHECK:      (func $nested-struct-ref.eq-tee-3 (type $func-return-i32) (result i32)
+ ;; CHECK-NEXT:  (local $A (ref $referrer))
+ ;; CHECK-NEXT:  (local $A2 (ref $referrer))
+ ;; CHECK-NEXT:  (local $B (ref $empty))
+ ;; CHECK-NEXT:  (local $B2 (ref $empty))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $A
+ ;; CHECK-NEXT:      (struct.new $referrer
+ ;; CHECK-NEXT:       (local.tee $B
+ ;; CHECK-NEXT:        (local.tee $B
+ ;; CHECK-NEXT:         (struct.new_default $empty)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.tee $A2
+ ;; CHECK-NEXT:      (local.get $A)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT: )
+ (func $nested-struct-ref.eq-tee-3 (result i32)
+  (local $A (ref $referrer))
+  (local $A2 (ref $referrer))
+  (local $B (ref $empty))
+  (local $B2 (ref $empty))
+  ;; As above but with yet more nested tees, causing more cache usage.
+  ;; We can optimize in the same way.
+  (drop
+   (ref.eq
+    (local.tee $A
+     (struct.new $referrer
+      (local.tee $B
+       (local.tee $B
+        (struct.new_default $empty)
+       )
+      )
+     )
+    )
+    (local.tee $A2
+     (local.get $A)
+    )
+   )
+  )
+  ;; Use the extra tee. We can optimize to 1 here.
+  (ref.eq
+   (local.get $A)
+   (local.get $A2)
   )
  )
 )
