@@ -306,21 +306,27 @@ struct Precompute
   }
 
   void visitExpression(Expression* curr) {
-    // TODO: if local.get, only replace with a constant if we don't care about
-    // size...?
+    // Ignore trivial things like constants, nops, local/global.set (which have
+    // an effect we cannot remove, and it is simpler to ignore them here than
+    // later below), return (which we cannot improve), and loop (which it is
+    // simpler to leave for other passes).
     if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
         curr->is<LocalSet>() || curr->is<GlobalSet>() || curr->is<Return>() ||
         curr->is<Loop>()) {
       return;
     }
-    // Ignore trivial breaks, but ones with conditions we can optimize away.
+    // Breaks with conditions can be simplified, but unconditional ones are like
+    // returns, and we cannot improve.
     if (auto* br = curr->dynCast<Break>()) {
       if (!br->condition) {
         return;
       }
     }
 
-    // See if we can precompute the value that flows out.
+    // See if we can precompute the value that flows out. We set
+    // |replaceExpression| to false because we do not necessarily want to
+    // replace it entirely, see below - we may keep parts, in some cases, if we
+    // can still simplify it to a precomputed value.
     Flow flow;
     PrecomputingExpressionRunner runner(
       getModule(), getValues, heapValues, false /* replaceExpression */);
@@ -329,8 +335,8 @@ struct Precompute
     } catch (NonconstantException&) {
       return;
     }
-    // If we are replacing the expression, then the resulting value must be of
-    // a type we can emit a constant for.
+    // The resulting value must be of a type we can emit a constant for (or
+    // there must be no value at all, for whom the value is a nop).
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
@@ -355,17 +361,16 @@ struct Precompute
     }
     if (flow.breaking()) {
       if (flow.breakTo == RETURN_FLOW) {
-        assert(!curr->is<Return>()); // the effects from before should stop us
-                                     // from doing pointless work
+        // We avoided trivial returns earlier (by doing so, we avoid wasted
+        // work replacing a return with itself).
+        assert(!curr->is<Return>());
         value = builder.makeReturn(value);
       } else {
-        // this expression causes a break, emit it directly. if it's already a
-        // br, reuse the node.
         value = builder.makeBreak(flow.breakTo, value);
       }
     }
 
-    // We have a value that can replace the expression. While precomputing the
+    // We have something to replace the expression. While precomputing the
     // expression, we verified it has no effects that cause problems - no traps
     // or exceptions etc., as those things would lead to NONCONSTANT_FLOW. We
     // can therefore replace this with what flows out of it. The only exception
@@ -378,23 +383,12 @@ struct Precompute
         // These control flow structures have children that might not execute.
         // We know that some of the children have effectful sets, but not which,
         // and we can't just keep them all, so give up.
+        // TODO: Check if this would be useful to improve, but other passes
+        //       might do enough already.
         return;
       }
-#if 0
-      if (flow.breaking()) {
-        // This precomputes into a break, but we can't just replace it with a
-        // break because of effects. So we might end up with
-        //
-        //   { effect, br } => { { effect, br }, br }
-        //
-        // if we were to append a new br. That is not helpful.
-        return;
-      }
-      // TODO: same issue as breaking with a constant..? maybe avoid a trivial
-      // XXX no - no to both of them. we delete |curr| each time, so there *is*
-      //  progress
-#endif
-      // block with result?
+
+      // Find the necessary children that we must keep.
       SmallVector<Expression*, 10> kept;
       for (auto* child : ChildIterator(curr)) {
         EffectAnalyzer effects(getPassOptions(), *getModule(), child);
@@ -402,6 +396,7 @@ struct Precompute
           kept.push_back(builder.makeDrop(child));
         }
       }
+      // Find all the things we must keep, which might include |value|.
       if (!kept.empty()) {
         if (value) {
           kept.push_back(value);
@@ -409,6 +404,20 @@ struct Precompute
         if (kept.size() == 1) {
           value = kept[0];
         } else {
+          // We are returning a block with some kept children + some value. This
+          // may seem to increase code size in some cases, but it cannot do so
+          // monotonically: while doing all this we are definitely removing
+          // |curr| itself, so we are making progress, even if we emit a new
+          // constant that we weren't before. That is, we are not in this
+          // situation:
+          //
+          //   (foo A B) => (block (foo A B) (value))
+          //
+          // We are in this one:
+          //
+          //   (foo A B) => (block A B (value))
+          //
+          // where foo vanishes.
           value = builder.makeBlock(kept);
         }
       }
