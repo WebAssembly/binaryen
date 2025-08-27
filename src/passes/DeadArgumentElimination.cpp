@@ -394,7 +394,7 @@ struct DAE : public Pass {
     if (worthOptimizing.empty()) {
       for (Index index = 0; index < numFunctions; index++) {
         auto& func = module->functions[index];
-        if (func->imported()) { // XXX why not before?
+        if (func->imported()) {
           continue;
         }
         if (func->getResults() == Type::none) {
