@@ -133,8 +133,6 @@
 ;; descriptor, while the subtype does.
 (module
   (rec
-    ;; CHECK:      (type $0 (func))
-
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i32) (field i32))))
     (type $parent (sub (struct (field i32) (field i32) (field i32))))
@@ -151,6 +149,8 @@
     (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
   )
 
+
+  ;; CHECK:      (type $5 (func))
 
   ;; CHECK:      (type $6 (func (result i32)))
 
@@ -185,6 +185,13 @@
     (global.get $desc)
   ))
 
+  ;; CHECK:      (global $subdesc (ref (exact $subdesc)) (struct.new $subdesc
+  ;; CHECK-NEXT:  (ref.func $func)
+  ;; CHECK-NEXT: ))
+  (global $subdesc (ref (exact $subdesc)) (struct.new $subdesc
+    (ref.func $func) ;; agrees with parent
+  ))
+
   ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (export "desc" (func $desc))
@@ -202,7 +209,7 @@
     (i32.const -1)
   )
 
-  ;; CHECK:      (func $desc (type $0)
+  ;; CHECK:      (func $desc (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.get_desc $struct
   ;; CHECK-NEXT:    (global.get $struct)
@@ -237,7 +244,7 @@
     )
   )
 
-  ;; CHECK:      (func $parent (type $0)
+  ;; CHECK:      (func $parent (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (global.get $parent)
@@ -272,21 +279,24 @@
     )
   )
 
-  ;; CHECK:      (func $sub (type $0)
+  ;; CHECK:      (func $sub (type $5)
   ;; CHECK-NEXT:  (local $temp (ref $sub))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (struct.new $sub
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:    (i32.const 200)
   ;; CHECK-NEXT:    (i32.const 333)
-  ;; CHECK-NEXT:    (struct.new $subdesc
-  ;; CHECK-NEXT:     (ref.func $func)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $subdesc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.get_desc $sub
-  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   (block (result (ref (exact $subdesc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.get_desc $sub
+  ;; CHECK-NEXT:      (local.get $temp)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $subdesc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -307,12 +317,10 @@
         (i32.const 100) ;; agrees with parent
         (i32.const 200) ;; agrees with parent
         (i32.const 333) ;; disagrees with parent
-        (struct.new $subdesc
-          (ref.func $func) ;; agrees with parent
-        )
+        (global.get $subdesc)
       )
     )
-    ;; We can infer the descriptor. XXX
+    ;; We can infer the descriptor.
     (drop
       (ref.get_desc $sub
         (local.get $temp)
@@ -336,7 +344,7 @@
     )
   )
 
-  ;; CHECK:      (func $struct (type $0)
+  ;; CHECK:      (func $struct (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
