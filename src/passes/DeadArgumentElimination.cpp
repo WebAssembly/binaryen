@@ -317,10 +317,14 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      auto& calls = allCalls[index];
       // We can only optimize if we see all the calls and can modify them.
       auto name = func->name;
       if (hasUnseenCalls[index]) {
+        continue;
+      }
+      auto& calls = allCalls[index];
+      if (calls.empty()) {
+        // Nothing calls this, so it is not worth optimizing.
         continue;
       }
       // Refine argument types before doing anything else. This does not
@@ -359,13 +363,16 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      auto& calls = allCalls[index];
       auto name = func->name;
       if (hasUnseenCalls[index]) {
         continue;
       }
       auto numParams = func->getNumParams();
       if (numParams == 0) {
+        continue;
+      }
+      auto& calls = allCalls[index];
+      if (calls.empty()) {
         continue;
       }
       auto [removedIndexes, outcome] = ParamUtils::removeParameters(
@@ -433,7 +440,7 @@ struct DAE : public Pass {
           markStale(func->name);
         });
     }
-    if (optimize && !worthOptimizing.empty()) {
+    if (optimize && !worthOptimizing.empty())  {
       OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
     }
 
