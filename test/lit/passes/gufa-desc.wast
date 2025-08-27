@@ -145,6 +145,7 @@
 
     ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
     (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
+
     ;; CHECK:       (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
     (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
   )
@@ -372,6 +373,162 @@
     (drop
       (struct.get $struct 2
         (global.get $struct)
+      )
+    )
+  )
+)
+
+;; As above, but now the descriptor's funcref fields do not agree, so we cannot
+;; infer the value there.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (sub (descriptor $desc (struct (field i32) (field i32) (field i32)))))
+    (type $struct (sub (descriptor $desc (struct (field i32) (field i32) (field i32)))))
+
+    ;; CHECK:       (type $desc (sub (describes $struct (struct (field funcref)))))
+    (type $desc (sub (describes $struct (struct (field funcref)))))
+
+    ;; CHECK:       (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
+    (type $sub (sub $struct (descriptor $subdesc (struct (field i32) (field i32) (field i32)))))
+
+    ;; CHECK:       (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
+    (type $subdesc (sub $desc (describes $sub (struct (field funcref)))))
+  )
+
+  ;; CHECK:      (type $4 (func (result i32)))
+
+  ;; CHECK:      (type $5 (func))
+
+  ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new $desc
+  ;; CHECK-NEXT:  (ref.func $func)
+  ;; CHECK-NEXT: ))
+  (global $desc (ref (exact $desc)) (struct.new $desc
+    (ref.func $func)
+  ))
+
+  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT:  (i32.const 200)
+  ;; CHECK-NEXT:  (i32.const 300)
+  ;; CHECK-NEXT:  (global.get $desc)
+  ;; CHECK-NEXT: ))
+  (global $struct (ref $struct) (struct.new $struct
+    (i32.const 100)
+    (i32.const 200)
+    (i32.const 300)
+    (global.get $desc)
+  ))
+
+  ;; CHECK:      (global $subdesc (ref (exact $subdesc)) (struct.new $subdesc
+  ;; CHECK-NEXT:  (ref.func $test)
+  ;; CHECK-NEXT: ))
+  (global $subdesc (ref (exact $subdesc)) (struct.new $subdesc
+    (ref.func $test) ;; disagrees with parent
+  ))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $func (type $4) (result i32)
+  ;; CHECK-NEXT:  (i32.const -1)
+  ;; CHECK-NEXT: )
+  (func $func (result i32)
+    (i32.const -1)
+  )
+
+  ;; CHECK:      (func $test (type $5)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $sub
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:    (i32.const 200)
+  ;; CHECK-NEXT:    (i32.const 333)
+  ;; CHECK-NEXT:    (global.get $subdesc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $struct
+  ;; CHECK-NEXT:    (global.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.get_desc $struct
+  ;; CHECK-NEXT:      (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:       (global.get $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $desc 0
+  ;; CHECK-NEXT:    (ref.get_desc $struct
+  ;; CHECK-NEXT:     (global.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $4)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.get_desc $struct
+  ;; CHECK-NEXT:        (ref.cast (ref (exact $struct))
+  ;; CHECK-NEXT:         (global.get $struct)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (global.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test")
+    (drop
+      (struct.new $sub
+        (i32.const 100) ;; agrees with parent
+        (i32.const 200) ;; agrees with parent
+        (i32.const 333) ;; disagrees with parent
+        (global.get $subdesc)
+      )
+    )
+    ;; We cannot infer the descriptor due to the subtype.
+    (drop
+      (ref.get_desc $struct
+        (global.get $struct)
+      )
+    )
+    ;; Using an exact $struct, we can.
+    (drop
+      (ref.get_desc $struct
+        (ref.cast (ref (exact $struct))
+          (global.get $struct)
+        )
+      )
+    )
+    ;; We cannot infer from the descriptor due to the different descriptor
+    ;; subtypes.
+    (drop
+      (struct.get $desc 0
+        (ref.get_desc $struct
+          (global.get $struct)
+        )
+      )
+    )
+    ;; Using an exact $struct, we can.
+    (drop
+      (struct.get $desc 0
+        (ref.get_desc $struct
+          (ref.cast (ref (exact $struct))
+            (global.get $struct)
+          )
+        )
       )
     )
   )
