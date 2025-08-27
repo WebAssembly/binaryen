@@ -188,6 +188,11 @@ struct DAE : public Pass {
 
   bool optimize = false;
 
+  Index numFunctions;
+
+  // Map of function names to indexes. This lets us use indexes below for speed.
+  std::unordered_map<Name, Index> indexes;
+
   void run(Module* module) override {
     DAEFunctionInfoMap infoMap;
     // Ensure all entries exist so the parallel threads don't modify the data
@@ -197,6 +202,13 @@ struct DAE : public Pass {
     }
     // The null name represents module-level code (not in a function).
     infoMap[Name()];
+
+    numFunctions = module->functions.size();
+
+    std::unordered_map<Name, Index> indexes;
+    for (Index i = 0; i < numFunctions; i++) {
+      indexes[module->functions[i]->name] = i;
+    }
 
     // Iterate to convergence.
     while (1) {
@@ -233,13 +245,6 @@ struct DAE : public Pass {
       Call* call;
       Function* func;
     };
-
-    // Maps function names to indexes. This lets us use indexes below for speed.
-    std::unordered_map<Name, Index> indexes;
-    auto numFunctions = module->functions.size();
-    for (Index i = 0; i < module->functions.size(); i++) {
-      indexes[module->functions[i]->name] = i;
-    }
 
     // TODO: vectors!
     std::vector<std::vector<Call*>> allCalls(numFunctions);
