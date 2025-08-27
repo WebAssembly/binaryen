@@ -400,10 +400,10 @@ struct DAE : public Pass {
         if (func->getResults() == Type::none) {
           continue;
         }
-        auto name = func->name;
         if (hasUnseenCalls[index]) {
           continue;
         }
+        auto name = func->name;
         if (infoMap[name].hasTailCalls) {
           continue;
         }
