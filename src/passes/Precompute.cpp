@@ -206,7 +206,7 @@ public:
     // we get the same identity.
     auto iter = heapValues.map.find(curr);
     if (iter != heapValues.map.end()) {
-      auto [data, hasEffects] = iter->second;
+      auto& [data, hasEffects] = iter->second;
       if (hasEffects) {
         // Visit, so we recompute the effects. (This is rare, see comment
         // above.)
@@ -353,7 +353,8 @@ struct Precompute
 
     // This looks like a promising precomputation: We have found that its value,
     // if any, can be emitted as a constant (or there is no value, and it is a
-    // nop or break etc.). Build that value, so we can replace the expression with it.
+    // nop or break etc.). Build that value, so we can replace the expression
+    // with it.
     Builder builder(*getModule());
     Expression* value = nullptr;
     if (flow.values.isConcrete()) {
@@ -368,6 +369,8 @@ struct Precompute
       } else {
         value = builder.makeBreak(flow.breakTo, value);
       }
+      // Note we don't need to handle RETURN_CALL_FLOW, as the call there has
+      // effects that would stop us earlier.
     }
 
     // We have something to replace the expression. While precomputing the

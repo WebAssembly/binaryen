@@ -1417,7 +1417,7 @@
   )
  )
 
- ;; CHECK:      (func $nested-struct-ref.eq-tee-3 (type $func-return-i32) (result i32)
+ ;; CHECK:      (func $nested-struct-ref.eq-tee-3 (type $2)
  ;; CHECK-NEXT:  (local $A (ref $referrer))
  ;; CHECK-NEXT:  (local $A2 (ref $referrer))
  ;; CHECK-NEXT:  (local $B (ref $empty))
@@ -1443,9 +1443,17 @@
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $nested-struct-ref.eq-tee-3 (result i32)
+ (func $nested-struct-ref.eq-tee-3
   (local $A (ref $referrer))
   (local $A2 (ref $referrer))
   (local $B (ref $empty))
@@ -1469,9 +1477,25 @@
    )
   )
   ;; Use the extra tee. We can optimize to 1 here.
-  (ref.eq
-   (local.get $A)
-   (local.get $A2)
+  (call $log
+   (ref.eq
+    (local.get $A)
+    (local.get $A2)
+   )
+  )
+  ;; This evaluates to 0.
+  (call $log
+   (ref.eq
+    (local.get $A)
+    (local.get $B)
+   )
+  )
+  ;; And this to 1.
+  (call $log
+   (ref.eq
+    (local.get $B)
+    (local.get $B)
+   )
   )
  )
 )

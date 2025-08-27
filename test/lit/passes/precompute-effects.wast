@@ -81,6 +81,26 @@
   )
  )
 
+ ;; CHECK:      (func $binary-tee-2 (type $0) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $temp
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 10)
+ ;; CHECK-NEXT: )
+ (func $binary-tee-2 (result i32)
+  (local $temp i32)
+  ;; A tee on the other side.
+  (i32.add
+   (local.get $temp)
+   (local.tee $temp
+    (i32.const 10)
+   )
+  )
+ )
+
  ;; CHECK:      (func $binary-both (type $0) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
@@ -146,6 +166,77 @@
    )
   )
  )
+
+ ;; CHECK:      (func $if (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.const 2)
+ ;; CHECK-NEXT: )
+ (func $if (result i32)
+  ;; We precompute simple ifs.
+  (if (result i32)
+   (i32.const 1)
+   (then
+    (i32.const 2)
+   )
+   (else
+    (i32.const 3)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-no (type $0) (result i32)
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (global.set $g
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-no (result i32)
+  ;; We do not precompute ifs with effects.
+  (if (result i32)
+   (i32.const 1)
+   (then
+    (block (result i32)
+     (global.set $g
+      (i32.const 20)
+     )
+     (i32.const 2)
+    )
+   )
+   (else
+    (i32.const 3)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $try (type $0) (result i32)
+ ;; CHECK-NEXT:  (try (result i32)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch_all
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try (result i32)
+  ;; We don't precompute trys.
+  (try (result i32)
+   (do
+    (i32.const 1)
+   )
+   (catch_all
+    (i32.const 2)
+   )
+  )
+ )
+
  ;; CHECK:      (func $ordering (type $0) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (block $out (result i32)
