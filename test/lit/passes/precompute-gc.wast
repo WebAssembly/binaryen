@@ -361,7 +361,7 @@
  (func $propagate-equal (result i32)
   (local $tempresult i32)
   (local $tempref (ref null $empty))
-  ;; We can compute a 1 here, as the ref.eq compres a struct to itself. We must
+  ;; We can compute a 1 here, as the ref.eq compares a struct to itself. We must
   ;; keep the tee around, however.
   (local.set $tempresult
    (ref.eq
