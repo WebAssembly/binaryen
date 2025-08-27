@@ -353,7 +353,7 @@ struct Precompute
 
     // This looks like a promising precomputation: We have found that its value,
     // if any, can be emitted as a constant (or there is no value, and it is a
-    // nop or break etc.). Build that value, so we can replace it with it.
+    // nop or break etc.). Build that value, so we can replace the expression with it.
     Builder builder(*getModule());
     Expression* value = nullptr;
     if (flow.values.isConcrete()) {
