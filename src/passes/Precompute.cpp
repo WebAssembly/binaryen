@@ -336,7 +336,7 @@ struct Precompute
       return;
     }
     // The resulting value must be of a type we can emit a constant for (or
-    // there must be no value at all, for whom the value is a nop).
+    // there must be no value at all, in which case the value is a nop).
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
