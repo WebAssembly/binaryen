@@ -2853,6 +2853,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
   if (dataLoc.index == DataLocation::DescriptorIndex) {
+    // Nothing to filter (packing is not relevant for a descriptor).
     return;
   }
   auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
