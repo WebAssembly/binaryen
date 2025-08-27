@@ -106,7 +106,9 @@
    (call $ret)
    (then
     (return
-     (i32.const 1)
+     (return
+      (i32.const 1)
+     )
     )
    )
   )
