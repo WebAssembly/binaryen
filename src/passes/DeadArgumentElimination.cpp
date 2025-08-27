@@ -205,7 +205,6 @@ struct DAE : public Pass {
 
     numFunctions = module->functions.size();
 
-    std::unordered_map<Name, Index> indexes;
     for (Index i = 0; i < numFunctions; i++) {
       indexes[module->functions[i]->name] = i;
     }
