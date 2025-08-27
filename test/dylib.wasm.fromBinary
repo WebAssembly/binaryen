@@ -5,10 +5,10 @@
  (type $3 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (import "env" "__memory_base" (global $gimport$0 i32))
- (import "env" "g$waka_mine" (func $fimport$0 (type $0) (result i32)))
- (import "env" "g$waka_others" (func $fimport$1 (type $0) (result i32)))
- (import "env" "fp$_Z16waka_func_theirsi$ii" (func $fimport$2 (type $0) (result i32)))
- (import "env" "fp$_Z14waka_func_minei$ii" (func $fimport$3 (type $0) (result i32)))
+ (import "env" "g$waka_mine" (func $fimport$0 (result i32)))
+ (import "env" "g$waka_others" (func $fimport$1 (result i32)))
+ (import "env" "fp$_Z16waka_func_theirsi$ii" (func $fimport$2 (result i32)))
+ (import "env" "fp$_Z14waka_func_minei$ii" (func $fimport$3 (result i32)))
  (global $global$0 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
  (global $global$2 (mut i32) (i32.const 0))
@@ -23,16 +23,16 @@
  (export "main" (func $3))
  (export "__dso_handle" (global $global$5))
  (export "__post_instantiate" (func $4))
- (func $0 (type $1)
+ (func $0
   (nop)
  )
- (func $1 (type $2) (param $0 i32) (result i32)
+ (func $1 (param $0 i32) (result i32)
   (i32.add
    (local.get $0)
    (i32.const 1)
   )
  )
- (func $2 (type $0) (result i32)
+ (func $2 (result i32)
   (i32.add
    (i32.load
     (global.get $global$3)
@@ -48,7 +48,7 @@
    )
   )
  )
- (func $3 (type $3) (param $0 i32) (param $1 i32) (result i32)
+ (func $3 (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (i32.load
     (global.get $global$3)
@@ -64,7 +64,7 @@
    )
   )
  )
- (func $4 (type $1)
+ (func $4
   (global.set $global$2
    (call $fimport$0)
   )
