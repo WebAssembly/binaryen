@@ -94,6 +94,7 @@ using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
 struct DAEScanner
   : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
   bool isFunctionParallel() override { return true; }
+  bool modifiesBinaryenIR() override { return false; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<DAEScanner>(infoMap);
