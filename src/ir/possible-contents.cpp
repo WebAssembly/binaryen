@@ -704,8 +704,12 @@ struct InfoCollector
   void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitRefGetDesc(RefGetDesc* curr) {
-    // TODO: Do something more similar to struct.get here
-    addRoot(curr);
+    // Parallel to StructGet.
+    if (!isRelevant(curr->ref)) {
+      addRoot(curr);
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
@@ -937,6 +941,12 @@ struct InfoCollector
       // Link the operands to the struct's fields.
       linkChildList(curr->operands, [&](Index i) {
         return DataLocation{type, i};
+      });
+    }
+    if (curr->desc) {
+      info.links.push_back({
+        ExpressionLocation{curr->desc, 0},
+        DataLocation{type, DataLocation::DescriptorIndex}
       });
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
@@ -1692,6 +1702,10 @@ void TNHOracle::scan(Function* func,
     }
     void visitArrayRMW(ArrayRMW* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCmpxchg(ArrayCmpxchg* curr) { notePossibleTrap(curr->ref); }
+
+    void visitRefGetDesc(RefGetDesc* curr) {
+      notePossibleTrap(curr->ref);
+    }
 
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned
@@ -2679,6 +2693,10 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
+    } else if (auto* get = parent->dynCast<RefGetDesc>()) {
+      // Similar to struct.get.
+      assert(get->ref == child);
+      readFromData(get->ref->type, DataLocation::DescriptorIndex, contents, get);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
