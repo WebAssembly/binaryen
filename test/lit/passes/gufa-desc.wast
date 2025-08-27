@@ -10,7 +10,6 @@
     (type $desc (describes $struct (struct (field funcref))))
   )
 
-
   ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (type $3 (func))
@@ -68,6 +67,9 @@
   ;; CHECK-NEXT:    (ref.func $func)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (export "test")
     ;; Show we can infer the descriptor.
@@ -82,6 +84,12 @@
         (ref.get_desc $struct
           (global.get $struct)
         )
+      )
+    )
+    ;; Show we don't disrupt normal struct field inference.
+    (drop
+      (struct.get $struct 0
+        (global.get $struct)
       )
     )
   )
