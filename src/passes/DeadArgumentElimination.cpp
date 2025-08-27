@@ -246,10 +246,10 @@ struct DAE : public Pass {
       Function* func;
     };
 
-    // TODO: vectors!
     std::vector<std::vector<Call*>> allCalls(numFunctions);
     std::vector<bool> tailCallees(numFunctions);
     std::vector<bool> hasUnseenCalls(numFunctions);
+
     // Track the function in which relevant expressions exist. When we modify
     // those expressions we will need to mark the function's info as stale.
     std::unordered_map<Expression*, Name> expressionFuncs;
@@ -279,8 +279,6 @@ struct DAE : public Pass {
     }
 
     // Track which functions we changed that are worth re-optimizing at the end.
-    // For efficiency we use a vector here, which may sometimes contain
-    // duplicates
     std::unordered_set<Function*> worthOptimizing;
 
     // If we refine return types then we will need to do more type updating
