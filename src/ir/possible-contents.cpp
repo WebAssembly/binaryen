@@ -944,10 +944,8 @@ struct InfoCollector
       });
     }
     if (curr->desc) {
-      info.links.push_back({
-        ExpressionLocation{curr->desc, 0},
-        DataLocation{type, DataLocation::DescriptorIndex}
-      });
+      info.links.push_back({ExpressionLocation{curr->desc, 0},
+                            DataLocation{type, DataLocation::DescriptorIndex}});
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
@@ -1703,9 +1701,7 @@ void TNHOracle::scan(Function* func,
     void visitArrayRMW(ArrayRMW* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCmpxchg(ArrayCmpxchg* curr) { notePossibleTrap(curr->ref); }
 
-    void visitRefGetDesc(RefGetDesc* curr) {
-      notePossibleTrap(curr->ref);
-    }
+    void visitRefGetDesc(RefGetDesc* curr) { notePossibleTrap(curr->ref); }
 
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned
@@ -2696,7 +2692,8 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* get = parent->dynCast<RefGetDesc>()) {
       // Similar to struct.get.
       assert(get->ref == child);
-      readFromData(get->ref->type, DataLocation::DescriptorIndex, contents, get);
+      readFromData(
+        get->ref->type, DataLocation::DescriptorIndex, contents, get);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
