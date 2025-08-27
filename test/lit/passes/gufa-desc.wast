@@ -6,33 +6,61 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32))))
     (type $struct (descriptor $desc (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $struct (struct)))
+    ;; CHECK:       (type $desc (describes $struct (struct (field funcref))))
     (type $desc (describes $struct (struct (field funcref))))
   )
 
+  ;; CHECK:      (type $2 (func (result i32)))
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (global $desc_nofunc (ref (exact $desc)) (struct.new_default $desc))
   (global $desc_nofunc (ref (exact $desc)) (struct.new_default $desc))
 
+  ;; CHECK:      (global $desc_func (ref (exact $desc)) (struct.new $desc
+  ;; CHECK-NEXT:  (ref.func $func)
+  ;; CHECK-NEXT: ))
   (global $desc_func (ref (exact $desc)) (struct.new $desc
     (ref.func $func)
   ))
 
+  ;; CHECK:      (global $struct_nofunc (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT:  (global.get $desc_nofunc)
+  ;; CHECK-NEXT: ))
   (global $struct_nofunc (ref $struct) (struct.new $struct
     (i32.const 100)
     (global.get $desc_nofunc)
   ))
 
+  ;; CHECK:      (global $struct_func (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 200)
+  ;; CHECK-NEXT:  (global.get $desc_func)
+  ;; CHECK-NEXT: ))
   (global $struct_func (ref $struct) (struct.new $struct
     (i32.const 200)
     (global.get $desc_func)
   ))
 
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $func (type $2) (result i32)
+  ;; CHECK-NEXT:  (i32.const -1)
+  ;; CHECK-NEXT: )
   (func $func (result i32)
     (i32.const -1)
   )
 
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $struct
+  ;; CHECK-NEXT:    (global.get $struct_nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test (export "test")
     (drop
-      (struct.get_desc $struct
+      (ref.get_desc $struct
         (global.get $struct_nofunc)
       )
     )
