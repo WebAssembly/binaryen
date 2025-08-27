@@ -10,37 +10,28 @@
     (type $desc (describes $struct (struct (field funcref))))
   )
 
+
   ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (global $desc_nofunc (ref (exact $desc)) (struct.new_default $desc))
-  (global $desc_nofunc (ref (exact $desc)) (struct.new_default $desc))
-
-  ;; CHECK:      (global $desc_func (ref (exact $desc)) (struct.new $desc
+  ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new $desc
   ;; CHECK-NEXT:  (ref.func $func)
   ;; CHECK-NEXT: ))
-  (global $desc_func (ref (exact $desc)) (struct.new $desc
+  (global $desc (ref (exact $desc)) (struct.new $desc
     (ref.func $func)
   ))
 
-  ;; CHECK:      (global $struct_nofunc (ref $struct) (struct.new $struct
+  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 100)
-  ;; CHECK-NEXT:  (global.get $desc_nofunc)
+  ;; CHECK-NEXT:  (global.get $desc)
   ;; CHECK-NEXT: ))
-  (global $struct_nofunc (ref $struct) (struct.new $struct
+  (global $struct (ref $struct) (struct.new $struct
     (i32.const 100)
-    (global.get $desc_nofunc)
+    (global.get $desc)
   ))
 
-  ;; CHECK:      (global $struct_func (ref $struct) (struct.new $struct
-  ;; CHECK-NEXT:  (i32.const 200)
-  ;; CHECK-NEXT:  (global.get $desc_func)
-  ;; CHECK-NEXT: ))
-  (global $struct_func (ref $struct) (struct.new $struct
-    (i32.const 200)
-    (global.get $desc_func)
-  ))
+  ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (export "test" (func $test))
 
@@ -53,15 +44,44 @@
 
   ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.get_desc $struct
-  ;; CHECK-NEXT:    (global.get $struct_nofunc)
+  ;; CHECK-NEXT:   (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.get_desc $struct
+  ;; CHECK-NEXT:      (global.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $2)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref (exact $desc)))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.get_desc $struct
+  ;; CHECK-NEXT:        (global.get $struct)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (global.get $desc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $func)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (export "test")
+    ;; Show we can infer the descriptor.
     (drop
       (ref.get_desc $struct
-        (global.get $struct_nofunc)
+        (global.get $struct)
+      )
+    )
+    ;; Show we can read from the descriptor.
+    (drop
+      (struct.get $desc 0
+        (ref.get_desc $struct
+          (global.get $struct)
+        )
       )
     )
   )
