@@ -2,17 +2,31 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa --closed-world -S -o - | filecheck %s
 
 (module
+  ;; $struct is our main test class. $parent is a superclass *without* a
+  ;; descriptor. $desc is $struct's descriptor.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32) (field i32))))
-    (type $struct (descriptor $desc (struct (field i32) (field i32))))
+    ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i32))))
+    (type $parent (sub (struct (field i32) (field i32))))
+    ;; CHECK:       (type $struct (sub $parent (descriptor $desc (struct (field i32) (field i32)))))
+    (type $struct (sub $parent (descriptor $desc (struct (field i32) (field i32)))))
     ;; CHECK:       (type $desc (describes $struct (struct (field funcref))))
     (type $desc (describes $struct (struct (field funcref))))
   )
 
-  ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (result i32)))
+
+  ;; CHECK:      (global $parent (ref $parent) (struct.new $parent
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT:  (i32.const 200)
+  ;; CHECK-NEXT: ))
+  (global $parent (ref $parent) (struct.new $parent
+    (i32.const 10)  ;; disagrees with the child
+    (i32.const 200) ;; agrees with the child
+  ))
 
   ;; CHECK:      (global $desc (ref (exact $desc)) (struct.new $desc
   ;; CHECK-NEXT:  (ref.func $func)
@@ -34,16 +48,20 @@
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (export "test" (func $test))
+  ;; CHECK:      (export "desc" (func $desc))
 
-  ;; CHECK:      (func $func (type $2) (result i32)
+  ;; CHECK:      (export "struct" (func $struct))
+
+  ;; CHECK:      (export "parent" (func $parent))
+
+  ;; CHECK:      (func $func (type $4) (result i32)
   ;; CHECK-NEXT:  (i32.const -1)
   ;; CHECK-NEXT: )
   (func $func (result i32)
     (i32.const -1)
   )
 
-  ;; CHECK:      (func $test (type $3)
+  ;; CHECK:      (func $desc (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref (exact $desc)))
   ;; CHECK-NEXT:    (drop
@@ -55,7 +73,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref (exact $2)))
+  ;; CHECK-NEXT:   (block (result (ref (exact $4)))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result (ref (exact $desc)))
   ;; CHECK-NEXT:      (drop
@@ -69,14 +87,8 @@
   ;; CHECK-NEXT:    (ref.func $func)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 100)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 200)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (export "test")
+  (func $desc (export "desc")
     ;; Show we can infer the descriptor.
     (drop
       (ref.get_desc $struct
@@ -91,6 +103,17 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $struct (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 200)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct (export "struct")
     ;; Show we don't disrupt normal struct field inference. Field 1 is
     ;; particuarly interesting as we represent descriptors as field -1
     ;; internally.
@@ -102,6 +125,31 @@
     (drop
       (struct.get $struct 1
         (global.get $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $parent (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (global.get $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 200)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $parent (export "parent")
+    ;; Show we don't disrupt the parent's inference. We can infer field 1, which
+    ;; is in agreement among all possible subtypes.
+    (drop
+      (struct.get $parent 0
+        (global.get $parent)
+      )
+    )
+    (drop
+      (struct.get $parent 1
+        (global.get $parent)
       )
     )
   )
