@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (tag $tag$0 (type $0))
- (func $0 (type $0)
+ (func $0
   (try $label
    (do
     (try
@@ -14,7 +14,7 @@
    )
   )
  )
- (func $1 (type $0)
+ (func $1
   (try $label
    (do
     (try
