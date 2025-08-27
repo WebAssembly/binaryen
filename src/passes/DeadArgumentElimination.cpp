@@ -440,7 +440,7 @@ struct DAE : public Pass {
           markStale(func->name);
         });
     }
-    if (optimize && !worthOptimizing.empty())  {
+    if (optimize && !worthOptimizing.empty()) {
       OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
     }
 
