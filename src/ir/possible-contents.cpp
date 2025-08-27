@@ -2854,6 +2854,9 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
+  if (dataLoc.index == DataLocation::DescriptorIndex) {
+    return;
+  }
   auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
   if (!field) {
     // This is a bottom type; nothing will be written here.

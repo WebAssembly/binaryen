@@ -483,7 +483,7 @@ struct DataLocation {
   // The index of the field in a struct, or 0 for an array (where we do not
   // attempt to differentiate by index). A special index is used for the
   // descriptor field.
-  using DescriptorIndex = -1;
+  static const Index DescriptorIndex = -1;
   Index index;
   bool operator==(const DataLocation& other) const {
     return type == other.type && index == other.index;
