@@ -533,3 +533,83 @@
     )
   )
 )
+
+;; Descriptor chain.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct (field i32))))
+    (type $A (descriptor $B (struct (field i32))))
+
+    ;; CHECK:       (type $B (describes $A (descriptor $C (struct (field i32)))))
+    (type $B (describes $A (descriptor $C (struct (field i32)))))
+
+    ;; CHECK:       (type $C (describes $B (struct (field i32))))
+    (type $C (describes $B (struct (field i32))))
+  )
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (global $C (ref (exact $C)) (struct.new $C
+  ;; CHECK-NEXT:  (i32.const 10)
+  ;; CHECK-NEXT: ))
+  (global $C (ref (exact $C)) (struct.new $C
+    (i32.const 10)
+  ))
+
+  ;; CHECK:      (global $B (ref (exact $B)) (struct.new $B
+  ;; CHECK-NEXT:  (i32.const 20)
+  ;; CHECK-NEXT:  (global.get $C)
+  ;; CHECK-NEXT: ))
+  (global $B (ref (exact $B)) (struct.new $B
+    (i32.const 20)
+    (global.get $C)
+  ))
+
+  ;; CHECK:      (global $A (ref (exact $A)) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 30)
+  ;; CHECK-NEXT:  (global.get $B)
+  ;; CHECK-NEXT: ))
+  (global $A (ref (exact $A)) (struct.new $A
+    (i32.const 30)
+    (global.get $B)
+  ))
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $B)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.get_desc $A
+  ;; CHECK-NEXT:      (global.get $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $C)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.get_desc $B
+  ;; CHECK-NEXT:      (global.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (export "test")
+    ;; We can infer these.
+    (drop
+      (ref.get_desc $A
+        (global.get $A)
+      )
+    )
+    (drop
+      (ref.get_desc $B
+        (global.get $B)
+      )
+    )
+  )
+)
