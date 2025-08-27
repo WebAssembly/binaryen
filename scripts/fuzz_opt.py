@@ -1485,11 +1485,17 @@ class Merge(TestCaseHandler):
 
         # verify that merging in the second module did not alter the output.
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
+        if output == IGNORE:
+            return
         output = fix_output(output)
         second_output = run_bynterp(second_wasm, ['--fuzz-exec-before', '-all'])
         second_output = fix_output(second_output)
+        if second_output == IGNORE:
+            return
         merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
         merged_output = fix_output(merged_output)
+        if merged_output == IGNORE:
+            return
 
         # If the second module traps in instantiation, then the merged module
         # must do so as well, regardless of what the first module does. (In
