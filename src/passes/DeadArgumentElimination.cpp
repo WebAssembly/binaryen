@@ -318,7 +318,6 @@ struct DAE : public Pass {
         continue;
       }
       // We can only optimize if we see all the calls and can modify them.
-      auto name = func->name;
       if (hasUnseenCalls[index]) {
         continue;
       }
@@ -330,6 +329,7 @@ struct DAE : public Pass {
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
+      auto name = func->name;
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         worthOptimizing.insert(func);
         markStale(func->name);
@@ -363,7 +363,6 @@ struct DAE : public Pass {
       if (func->imported()) {
         continue;
       }
-      auto name = func->name;
       if (hasUnseenCalls[index]) {
         continue;
       }
@@ -375,6 +374,7 @@ struct DAE : public Pass {
       if (calls.empty()) {
         continue;
       }
+      auto name = func->name;
       auto [removedIndexes, outcome] = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
