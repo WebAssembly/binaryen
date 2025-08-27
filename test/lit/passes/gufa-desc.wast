@@ -4,8 +4,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32))))
-    (type $struct (descriptor $desc (struct (field i32))))
+    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32) (field i32))))
+    (type $struct (descriptor $desc (struct (field i32) (field i32))))
     ;; CHECK:       (type $desc (describes $struct (struct (field funcref))))
     (type $desc (describes $struct (struct (field funcref))))
   )
@@ -23,10 +23,12 @@
 
   ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT:  (i32.const 200)
   ;; CHECK-NEXT:  (global.get $desc)
   ;; CHECK-NEXT: ))
   (global $struct (ref $struct) (struct.new $struct
     (i32.const 100)
+    (i32.const 200)
     (global.get $desc)
   ))
 
@@ -70,6 +72,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 200)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (export "test")
     ;; Show we can infer the descriptor.
@@ -86,9 +91,16 @@
         )
       )
     )
-    ;; Show we don't disrupt normal struct field inference.
+    ;; Show we don't disrupt normal struct field inference. Field 1 is
+    ;; particuarly interesting as we represent descriptors as field -1
+    ;; internally.
     (drop
       (struct.get $struct 0
+        (global.get $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 1
         (global.get $struct)
       )
     )
