@@ -595,6 +595,28 @@
   ;; CHECK-NEXT:    (global.get $C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref (exact $C)))
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (ref.get_desc $B
+  ;; CHECK-NEXT:        (block (result (ref (exact $B)))
+  ;; CHECK-NEXT:         (drop
+  ;; CHECK-NEXT:          (ref.get_desc $A
+  ;; CHECK-NEXT:           (global.get $A)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (global.get $B)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (global.get $C)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (export "test")
     ;; We can infer these.
@@ -606,6 +628,16 @@
     (drop
       (ref.get_desc $B
         (global.get $B)
+      )
+    )
+    ;; We can do so all at once too.
+    (drop
+      (struct.get $C 0
+        (ref.get_desc $B
+          (ref.get_desc $A
+            (global.get $A)
+          )
+        )
       )
     )
   )
