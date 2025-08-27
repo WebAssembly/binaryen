@@ -1701,8 +1701,6 @@ void TNHOracle::scan(Function* func,
     void visitArrayRMW(ArrayRMW* curr) { notePossibleTrap(curr->ref); }
     void visitArrayCmpxchg(ArrayCmpxchg* curr) { notePossibleTrap(curr->ref); }
 
-    void visitRefGetDesc(RefGetDesc* curr) { notePossibleTrap(curr->ref); }
-
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned
       // into a singleton unreachable instruction, so it is enough to check
