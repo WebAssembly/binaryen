@@ -5,9 +5,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32))))
+    ;; CHECK-NEXT:  (type $struct (struct (field i32)))
     (type $struct (descriptor $desc (struct (field i32))))
-    ;; CHECK:       (type $desc (describes $struct (struct)))
+    ;; CHECK:       (type $desc (struct))
     (type $desc (describes $struct (struct)))
     ;; CHECK:       (type $pair (struct))
     (type $pair (struct (field (ref $struct)) (field (ref $struct))))
@@ -16,6 +16,8 @@
   )
 
   ;; CHECK:       (type $4 (func (param (ref $struct) (ref $used-pair))))
+
+  ;; CHECK:       (type $5 (func (param (ref $struct))))
 
   ;; CHECK:      (global $nullable-desc (ref null (exact $desc)) (struct.new_default $desc))
   (global $nullable-desc (ref null (exact $desc)) (struct.new $desc))
@@ -59,11 +61,9 @@
   ;; CHECK:      (global $used-traps (ref $used-pair) (struct.new $used-pair
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 5)
-  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $used-traps (ref $used-pair)
@@ -80,16 +80,6 @@
       )
     )
   )
-
-  ;; CHECK:      (global $gto-removed-0 (ref (exact $struct)) (struct.new $struct
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT:  (ref.null none)
-  ;; CHECK-NEXT: ))
-
-  ;; CHECK:      (global $gto-removed-1_6 (ref (exact $struct)) (struct.new $struct
-  ;; CHECK-NEXT:  (i32.const 2)
-  ;; CHECK-NEXT:  (global.get $nullable-desc)
-  ;; CHECK-NEXT: ))
 
   ;; CHECK:      (func $use-struct-fields (type $4) (param $0 (ref $struct)) (param $1 (ref $used-pair))
   ;; CHECK-NEXT:  (drop
@@ -127,15 +117,43 @@
       )
     )
   )
+
+  ;; CHECK:      (func $use-desc (type $5) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $struct
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $use-desc (param $struct (ref $struct))
+    ;; Use the descriptors, so this test is not trivial.
+    (drop
+      (ref.get_desc $struct
+        (local.get $struct)
+      )
+    )
+  )
 )
 
 ;; The descriptor here is not needed.
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
     (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
     (type $B (describes $A (struct)))
   )
 
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test
     (local $A (ref $A))
     (local $B (ref $B))
@@ -152,15 +170,36 @@
 ;; Both descriptors in this chain are unneeded.
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
     (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
     (type $B (describes $A (descriptor $C (struct))))
+    ;; CHECK:       (type $C (struct))
     (type $C (describes $B (struct)))
   )
 
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test
     (local $A (ref $A))
     (local $B (ref $B))
     (local $C (ref $C))
+    (drop
+      (struct.new $A
+        (struct.new $B
+          (struct.new $C)
+        )
+      )
+    )
   )
 )
 
