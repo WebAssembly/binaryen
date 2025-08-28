@@ -19,6 +19,8 @@
  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 400]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 500]
  ;; CHECK-NEXT: [trap unreachable]
  (func $main (export "main")
   (local $c (ref $cont))
@@ -44,14 +46,22 @@
  )
 
  (func $cont (type $i32) (result i32)
-  (call $log (i32.const 100))
+  (call $log (i32.const 100)) ;; only reached once
   (return_call $sub)
+  (call $log (i32.const -100)) ;; never reached
  )
 
  (func $sub (result i32)
   (call $log (i32.const 200))
   (suspend $tag)
   (call $log (i32.const 300))
+  (return_call $subsub)
+ )
+
+ (func $subsub (result i32)
+  (call $log (i32.const 400))
+  (suspend $tag)
+  (call $log (i32.const 500))
   (i32.const 0)
  )
 )
