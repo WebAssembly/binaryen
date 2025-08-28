@@ -322,8 +322,109 @@
   )
 )
 
-;; visitRefCast.desc
-;; br on desc
+;; br_on_cast_desc keeps the descriptor.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (struct.new_default $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_cast_desc $l (ref $A) (ref (exact $A))
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local.set $A
+      (struct.new $A
+        (struct.new $B)
+      )
+    )
+    (drop
+      (block $l (result (ref null $A))
+        (br_on_cast_desc $l anyref (ref null $A)
+          (local.get $A)
+          (struct.new $B)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+;; br_on_cast_desc_fail keeps the descriptor.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (struct.new_default $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_cast_desc_fail $l (ref $A) (ref (exact $A))
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local.set $A
+      (struct.new $A
+        (struct.new $B)
+      )
+    )
+    (drop
+      (block $l (result (ref null $A))
+        (br_on_cast_desc_fail $l anyref (ref null $A)
+          (local.get $A)
+          (struct.new $B)
+        )
+        (unreachable)
+      )
+    )
+  )
+)
 
 ;; effects in dropped desc
 ;; test index removals amd also desc
