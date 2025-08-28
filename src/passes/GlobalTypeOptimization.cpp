@@ -370,7 +370,7 @@ struct GlobalTypeOptimization : public Pass {
       }
 
       // Process the descriptor.
-      if (type.getDescriptor()) {
+      if (type.getDescriptorType()) {
         // Parallel to our handling of field removals, above, but simpler as
         // descriptors are immutable and non-optional in struct creation: if we
         // and our supers do not read the descriptor, we do not need it.
