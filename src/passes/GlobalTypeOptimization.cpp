@@ -94,6 +94,7 @@ struct FieldInfoScanner
   }
 
   void noteRead(HeapType type, Index index, FieldInfo& info) {
+std::cout << "note read " << type << " : " << index << '\n';
     info.noteRead();
   }
 
@@ -373,6 +374,7 @@ struct GlobalTypeOptimization : public Pass {
 
       // Process the descriptor.
       if (auto desc = type.getDescriptorType()) {
+std::cout << "type " << type << " with desc " << *desc << " and data from supers " << dataFromSupers.desc.hasRead << '\n';
         // Parallel to our handling of field removals, above, but simpler as
         // descriptors are immutable and non-optional in struct creation: if we
         // and our supers do not read the descriptor, we do not need it.

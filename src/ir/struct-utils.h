@@ -72,6 +72,7 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
       for (Index i = 0; i < info.size(); i++) {
         combinedInfos[type][i].combine(info[i]);
       }
+      combinedInfos[type].desc.combine(info.desc);
     }
   }
 
