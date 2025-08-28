@@ -4,8 +4,6 @@
 
 (module
   (rec
-    ;; CHECK:      (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1))))
-
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32))))
     (type $struct (descriptor $desc (struct (field i32))))
@@ -549,6 +547,86 @@
       )
     )
     ;; Also mutate the field in the descriptor, which should not bother us.
+    (struct.set $B 0
+      (local.get $B)
+      (i32.const 9999)
+    )
+  )
+)
+
+;; As above, but with struct.new_default.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field i32)))
+    (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct (field (mut i32)))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref (exact $B)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $B)))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.tee $B
+  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref (exact $B)))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 9999)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref (exact $B)))
+    (local.set $A
+      (struct.new_default $A
+        (local.tee $B
+          (struct.new $B
+            (i32.const 1337)
+          )
+        )
+      )
+    )
+    (struct.set $A 1
+      (local.get $A)
+      (i32.const 42)
+    )
+    (drop
+      (struct.get $A 2
+        (local.get $A)
+      )
+    )
     (struct.set $B 0
       (local.get $B)
       (i32.const 9999)
