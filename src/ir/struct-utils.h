@@ -44,6 +44,9 @@ template<typename T> struct StructValues : public std::vector<T> {
     assert(index < this->size());
     return std::vector<T>::operator[](index);
   }
+
+  // Store the descriptor as another field.
+  T desc;
 };
 
 // Maps heap types to a StructValues for that heap type.
@@ -80,6 +83,8 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
         x.dump(o);
         o << " ";
       };
+      o << " desc: ";
+      vec.desc.dump(o);
       o << '\n';
     }
   }
@@ -129,9 +134,17 @@ struct FunctionStructValuesMap
 //
 //   void noteCopy(HeapType type, Index index, T& info);
 //
-// * Note a read
+// * Note a read.
 //
 //   void noteRead(HeapType type, Index index, T& info);
+//
+// * Note an expression written to the descriptor.
+//
+//   void noteDescExpression(Expression* expr, HeapType type, T& info);
+//
+// * Note a use of the descriptor.
+//
+//   void noteDescRead(HeapType type, T& info);
 //
 // We track information from struct.new and struct.set/struct.get separately,
 // because in struct.new we know more about the type - we know the actual exact
@@ -167,6 +180,10 @@ struct StructScanner
       } else {
         noteExpressionOrCopy(curr->operands[i], heapType, i, infos[i]);
       }
+    }
+
+    if (curr->desc) {
+      noteDescExpression(curr->desc, heapType, infos.desc);
     }
   }
 
@@ -234,6 +251,33 @@ struct StructScanner
     // A cmpxchg is like a read and conditional write.
     self().noteRead(heapType, index, info);
     noteExpressionOrCopy(curr->replacement, heapType, index, info);
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (curr->desc) {
+      handleDescRead(curr->ref);
+    }
+  }
+
+  void visitRefGetDesc(RefGetDesc* curr) {
+    handleDescRead(curr->ref);
+  }
+
+  void visitBrOn(BrOn* curr) {
+    if (curr->desc && (curr->op == BrOnCastDesc || curr->op ==  BrOnCastDescFail)) {
+      handleDescRead(curr->ref);
+    }
+  }
+
+  void handleDescRead(Expression* ref) {
+    auto type = ref->type;
+    if (type == Type::unreachable || type.isNull()) {
+      return;
+    }
+
+    auto heapType = type.getHeapType();
+    self().noteDescRead(heapType,
+                    functionSetGetInfos[this->getFunction()][heapType].desc);
   }
 
   void
