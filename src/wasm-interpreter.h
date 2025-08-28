@@ -4742,7 +4742,7 @@ public:
 
         // Save the function we called (in the case of a return call, this is
         // not the original function that was called, and the original has been
-        // unwound already; we should call the last return_called function).
+        // returned from already; we should call the last return_called function).
         auto target = self()->makeFuncData(name, function->type);
         self()->pushResumeEntry({target}, "function-target");
       }
