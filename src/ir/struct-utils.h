@@ -183,7 +183,7 @@ struct StructScanner
     }
 
     if (curr->desc) {
-      noteDescExpression(curr->desc, heapType, infos.desc);
+      self().noteDescExpression(curr->desc, heapType, infos.desc);
     }
   }
 
