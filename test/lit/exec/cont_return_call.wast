@@ -17,10 +17,13 @@
 
  ;; CHECK:      [fuzz-exec] calling main
  ;; CHECK-NEXT: [LoggingExternalInterface logging 50]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 400]
+ ;; CHECK-NEXT: [LoggingExternalInterface logging -1]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 500]
  ;; CHECK-NEXT: [trap unreachable]
  (func $main (export "main")
@@ -42,6 +45,7 @@
      (unreachable)
     )
    )
+   (call $log (i32.const -1)) ;; logged each time we suspend
    (br $label)
   )
  )
