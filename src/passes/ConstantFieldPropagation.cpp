@@ -462,14 +462,6 @@ struct PCVScanner
     info.noteUnknown();
   }
 
-  void noteDescExpression(Expression* expr, HeapType type, PossibleConstantValues& info) {
-    // TODO
-  }
-
-  void noteDescRead(HeapType type, PossibleConstantValues& info) {
-    // TODO
-  }
-
   BoolFunctionStructValuesMap& functionCopyInfos;
 };
 

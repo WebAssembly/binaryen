@@ -138,18 +138,13 @@ struct FunctionStructValuesMap
 //
 //   void noteRead(HeapType type, Index index, T& info);
 //
-// * Note an expression written to the descriptor.
-//
-//   void noteDescExpression(Expression* expr, HeapType type, T& info);
-//
-// * Note a use of the descriptor.
-//
-//   void noteDescRead(HeapType type, T& info);
-//
 // We track information from struct.new and struct.set/struct.get separately,
 // because in struct.new we know more about the type - we know the actual exact
 // type being written to, and not just that it is of a subtype of the
 // instruction's type, which helps later.
+//
+// Descriptors are treated as fields in that we call the above functions on
+// them. We pass DescriptorIndex for their index as a fake value.
 template<typename T, typename SubType>
 struct StructScanner
   : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
@@ -158,6 +153,8 @@ struct StructScanner
   bool modifiesBinaryenIR() override { return false; }
 
   SubType& self() { return *static_cast<SubType*>(this); }
+
+  static const Index DescriptorIndex = -1;
 
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
                 FunctionStructValuesMap<T>& functionSetGetInfos)
@@ -183,7 +180,7 @@ struct StructScanner
     }
 
     if (curr->desc) {
-      self().noteDescExpression(curr->desc, heapType, infos.desc);
+      self().noteExpression(curr->desc, heapType, DescriptorIndex, infos.desc);
     }
   }
 
@@ -276,7 +273,8 @@ struct StructScanner
     }
 
     auto heapType = type.getHeapType();
-    self().noteDescRead(heapType,
+    self().noteRead(heapType,
+                    DescriptorIndex,
                     functionSetGetInfos[this->getFunction()][heapType].desc);
   }
 
