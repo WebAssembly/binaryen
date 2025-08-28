@@ -16,6 +16,7 @@
  (tag $tag (type $none))
 
  ;; CHECK:      [fuzz-exec] calling main
+ ;; CHECK-NEXT: [LoggingExternalInterface logging 50]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 100]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 200]
  ;; CHECK-NEXT: [LoggingExternalInterface logging 300]
@@ -46,6 +47,8 @@
  )
 
  (func $cont (type $i32) (result i32)
+  (call $log (i32.const 50)) ;; only reached once
+  (suspend $tag)
   (call $log (i32.const 100)) ;; only reached once
   (return_call $sub)
   (call $log (i32.const -100)) ;; never reached
