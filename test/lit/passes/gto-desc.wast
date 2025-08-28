@@ -157,8 +157,32 @@
   (func $test
     (local $A (ref $A))
     (local $B (ref $B))
-    ;; Even creating the type does not force us to keep the descriptor, if it is
-    ;; never used.
+  )
+)
+
+;; As above, but even creating the type does not force us to keep the
+;; descriptor, if it is never used.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
     (drop
       (struct.new $A
         (struct.new $B)
@@ -198,6 +222,41 @@
         (struct.new $B
           (struct.new $C)
         )
+      )
+    )
+  )
+)
+
+;; ref.get_desc keeps the descriptor.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (drop
+      (struct.new $A
+        (struct.new $B)
+      )
+    )
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
       )
     )
   )
