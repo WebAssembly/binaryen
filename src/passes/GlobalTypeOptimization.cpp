@@ -377,7 +377,6 @@ struct GlobalTypeOptimization : public Pass {
         // descriptors are immutable and non-optional in struct creation: if we
         // and our supers do not read the descriptor, we do not need it.
         if (!dataFromSupers.desc.hasRead) {
-std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself must no longer describe?
           haveUnneededDescriptors.insert(type);
           haveUnneededDescribings.insert(*desc);
         }
@@ -466,7 +465,6 @@ std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself mus
 
       void
       modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
-std::cout << "modTBE " << i << " : " << oldType << '\n';
         if (!oldType.isStruct()) {
           return;
         }
@@ -474,13 +472,11 @@ std::cout << "modTBE " << i << " : " << oldType << '\n';
         // Remove an unneeded descriptor.
         // TODO: check for CD here and above
         if (parent.haveUnneededDescriptors.count(oldType)) {
-std::cout << "clear descript\n";
           typeBuilder.setDescriptor(i, std::nullopt);
         }
 
         // Remove an unneeded describes.
         if (parent.haveUnneededDescribings.count(oldType)) {
-std::cout << "clear describd\n";
           typeBuilder.setDescribed(i, std::nullopt);
         }
       }
@@ -519,14 +515,19 @@ std::cout << "clear describd\n";
           return;
         }
 
-        auto iter = parent.indexesAfterRemovals.find(curr->type.getHeapType());
-        if (iter == parent.indexesAfterRemovals.end()) {
-          return;
+        auto type = curr->type.getHeapType();
+        auto removeDesc = parent.haveUnneededDescriptors.count(type);
+
+        // There may be no indexes to remove, if we are only removing the
+        // descriptor.
+        std::vector<Index>* indexesAfterRemoval = nullptr;
+        auto iter = parent.indexesAfterRemovals.find(type);
+        if (iter != parent.indexesAfterRemovals.end()) {
+          indexesAfterRemoval = &iter->second;
         }
-        auto& indexesAfterRemoval = iter->second;
 
         auto& operands = curr->operands;
-        assert(indexesAfterRemoval.size() == operands.size());
+        assert(indexesAfterRemoval->size() == operands.size());
 
         // Ensure any children with non-trivial effects are replaced with
         // local.gets, so that we can remove/reorder to our hearts' content.
@@ -541,29 +542,37 @@ std::cout << "clear describd\n";
           needEHFixups = true;
         }
 
-        // Remove and reorder operands.
-        Index removed = 0;
-        std::vector<Expression*> old(operands.begin(), operands.end());
-        for (Index i = 0; i < operands.size(); ++i) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex != RemovedField) {
-            assert(newIndex < operands.size());
-            operands[newIndex] = old[i];
-          } else {
-            ++removed;
-            if (!func &&
-                EffectAnalyzer(getPassOptions(), *getModule(), old[i]).trap) {
-              removedTrappingInits.push_back(old[i]);
+        if (indexesAfterRemoval) {
+          // Remove and reorder operands.
+          Index removed = 0;
+          std::vector<Expression*> old(operands.begin(), operands.end());
+          for (Index i = 0; i < operands.size(); ++i) {
+            auto newIndex = (*indexesAfterRemoval)[i];
+            if (newIndex != RemovedField) {
+              assert(newIndex < operands.size());
+              operands[newIndex] = old[i];
+            } else {
+              ++removed;
+              if (!func &&
+                  EffectAnalyzer(getPassOptions(), *getModule(), old[i]).trap) {
+                removedTrappingInits.push_back(old[i]);
+              }
             }
           }
+          if (removed) {
+            operands.resize(operands.size() - removed);
+          } else {
+            // If we didn't remove anything then we must have reordered (or else
+            // we have done pointless work).
+            assert(*indexesAfterRemoval !=
+                   makeIdentity(indexesAfterRemoval->size()));
+          }
         }
-        if (removed) {
-          operands.resize(operands.size() - removed);
-        } else {
-          // If we didn't remove anything then we must have reordered (or else
-          // we have done pointless work).
-          assert(indexesAfterRemoval !=
-                 makeIdentity(indexesAfterRemoval.size()));
+
+        // Removing the descriptor is trivial, after the ChildLocalizer we ran
+        // earlier.
+        if (removeDesc) {
+          curr->desc = nullptr;
         }
       }
 

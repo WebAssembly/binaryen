@@ -163,3 +163,7 @@
     (local $C (ref $C))
   )
 )
+
+;; effects in dropped desc
+;; test index removals amd also desc
+
