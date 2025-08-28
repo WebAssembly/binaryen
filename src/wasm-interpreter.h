@@ -4668,8 +4668,8 @@ public:
         // See which function to call. Re-winding the stack, we are calling the
         // function that the parent called, but the target that was called may
         // have return-called. In that case, the original target function should
-        // not be called, as it was returned from, and we noted the proper target
-        // during that return.
+        // not be called, as it was returned from, and we noted the proper
+        // target during that return.
         auto entry = self()->popResumeEntry("function-target");
         assert(entry.size() == 1);
         auto func = entry[0];
@@ -4747,7 +4747,8 @@ public:
 
         // Save the function we called (in the case of a return call, this is
         // not the original function that was called, and the original has been
-        // returned from already; we should call the last return_called function).
+        // returned from already; we should call the last return_called
+        // function).
         auto target = self()->makeFuncData(name, function->type);
         self()->pushResumeEntry({target}, "function-target");
       }
