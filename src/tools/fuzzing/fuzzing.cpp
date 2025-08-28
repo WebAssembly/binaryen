@@ -683,6 +683,13 @@ void TranslateToFuzzReader::setupGlobals() {
     // initializer.
     auto* init = makeTrivial(type);
 
+    if (type.isTuple() && !init->is<TupleMake>()) {
+      // For now we disallow anything but tuple.make at the top level of tuple
+      // globals (see details in wasm-binary.cpp). In the future we may allow
+      // global.get or other things here.
+      init = makeConst(type);
+      assert(init->is<TupleMake>());
+    }
     if (!FindAll<RefAs>(init).list.empty() ||
         !FindAll<ContNew>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
@@ -695,12 +702,6 @@ void TranslateToFuzzReader::setupGlobals() {
       // if a nested struct we create has a continuation field, for example.
       type = getMVPType();
       init = makeConst(type);
-    } else if (type.isTuple() && !init->is<TupleMake>()) {
-      // For now we disallow anything but tuple.make at the top level of tuple
-      // globals (see details in wasm-binary.cpp). In the future we may allow
-      // global.get or other things here.
-      init = makeConst(type);
-      assert(init->is<TupleMake>());
     }
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
@@ -3445,7 +3446,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // TODO: support actual non-nullable externrefs via imported globals or
       // similar.
       if (!type.isNullable()) {
-        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
