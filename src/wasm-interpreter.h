@@ -4663,8 +4663,8 @@ public:
         // See which function to call. Re-winding the stack, we are calling the
         // function that the parent called, but the target that was called may
         // have return-called. In that case, the original target function should
-        // not be called, as it was unwound, and we noted the proper target
-        // during unwinding.
+        // not be called, as it was returned from, and we noted the proper target
+        // during that return.
         auto entry = self()->popResumeEntry("function-target");
         assert(entry.size() == 1);
         auto func = entry[0];
