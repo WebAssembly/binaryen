@@ -444,9 +444,14 @@ struct ExecutionResults {
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
   FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
-    // Clear the continuation state before each run of an export. This is
-    // simpler than doing so in all the exceptional circumstances below.
-    instance.clearContinuationStore();
+    // Clear the continuation state after each run of an export.
+    struct CleanUp {
+      ModuleRunner& instance;
+      CleanUp(ModuleRunner& instance) : instance(instance) {}
+      ~CleanUp() {
+        instance.clearContinuationStore();
+      }
+    } cleanUp(instance);
 
     try {
       // call the method
