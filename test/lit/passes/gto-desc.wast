@@ -468,7 +468,94 @@
   )
 )
 
-;; test index removals amd also desc
+;; Test removing indexes /immutability as well as removing a descriptor.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field i32)))
+    (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct (field (mut i32)))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref (exact $B)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $B)))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.tee $B
+  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $A
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (block (result (ref (exact $B)))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 9999)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref (exact $B)))
+    (local.set $A
+      (struct.new $A
+        (i32.const 10)
+        (i32.const 20)
+        (i32.const 30)
+        (local.tee $B
+          (struct.new $B
+            (i32.const 1337)
+          )
+        )
+      )
+    )
+    ;; Write only the middle field (we can remove it as write-only).
+    (struct.set $A 1
+      (local.get $A)
+      (i32.const 42)
+    )
+    ;; Read only the last field. We can make it immutable.
+    (drop
+      (struct.get $A 2
+        (local.get $A)
+      )
+    )
+    ;; Also mutate the field in the descriptor, which should not bother us.
+    (struct.set $B 0
+      (local.get $B)
+      (i32.const 9999)
+    )
+  )
+)
+
 ;; test struct new default and not new defualt
 
 ;; test multipledescriptors in one module, only one removfd
