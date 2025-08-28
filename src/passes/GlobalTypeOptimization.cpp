@@ -101,6 +101,14 @@ struct FieldInfoScanner
     info.noteRead();
     info.noteWrite();
   }
+
+  void noteDescExpression(Expression* expr, HeapType type, FieldInfo& info) {
+    // TODO
+  }
+
+  void noteDescRead(HeapType type, FieldInfo& info) {
+    // TODO
+  }
 };
 
 struct GlobalTypeOptimization : public Pass {

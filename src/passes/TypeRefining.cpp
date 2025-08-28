@@ -95,6 +95,14 @@ struct FieldInfoScanner
     info.note(expr->type);
   }
 
+  void noteDescExpression(Expression* expr, HeapType type, FieldInfo& info) {
+    // TODO
+  }
+
+  void noteDescRead(HeapType type, FieldInfo& info) {
+    // TODO
+  }
+
   Properties::FallthroughBehavior getFallthroughBehavior() {
     // Looking at fallthrough values may be dangerous here, because it ignores
     // intermediate steps. Consider this:
