@@ -122,8 +122,10 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
-  // The types that no longer need a descriptor.
-  std::unordered_set<HeapType> unneededDescriptors;
+  // The types that no longer need a descriptor, and that no longer need to
+  // describe.
+  std::unordered_set<HeapType> haveUnneededDescriptors;
+  std::unordered_set<HeapType> haveUnneededDescribings;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -370,13 +372,14 @@ struct GlobalTypeOptimization : public Pass {
       }
 
       // Process the descriptor.
-      if (type.getDescriptorType()) {
+      if (auto desc = type.getDescriptorType()) {
         // Parallel to our handling of field removals, above, but simpler as
         // descriptors are immutable and non-optional in struct creation: if we
         // and our supers do not read the descriptor, we do not need it.
         if (!dataFromSupers.desc.hasRead) {
 std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself must no longer describe?
-          unneededDescriptors.insert(type);
+          haveUnneededDescriptors.insert(type);
+          haveUnneededDescribings.insert(*desc);
         }
       }
     }
@@ -453,6 +456,24 @@ std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself mus
               }
             }
           }
+        }
+      }
+
+      void
+      modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
+        if (!oldType.isStruct()) {
+          return;
+        }
+
+        // Remove an unneeded descriptor.
+        // TODO: check for CD here and above
+        if (parent.haveUnneededDescriptors.count(oldType)) {
+          typeBuilder.setDescriptor(i, std::nullopt);
+        }
+
+        // Remove an unneeded describes.
+        if (parent.haveUnneededDescribings.count(oldType)) {
+          typeBuilder.setDescribed(i, std::nullopt);
         }
       }
     };
