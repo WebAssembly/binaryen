@@ -383,17 +383,17 @@ struct GlobalTypeOptimization : public Pass {
       }
     }
 
-    // If we found fields that can be removed, remove them from instructions.
-    // (Note that we must do this first, while we still have the old heap types
-    // that we can identify, and only after this should we update all the types
-    // throughout the module.)
-    if (!indexesAfterRemovals.empty()) {
-      removeFieldsInInstructions(*module);
-    }
-
     // Descriptor/describings are in pairs, so the size of these sets is equal,
     // and we only need to check one below.
     assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
+
+    // If we found things that can be removed, remove them from instructions.
+    // (Note that we must do this first, while we still have the old heap types
+    // that we can identify, and only after this should we update all the types
+    // throughout the module.)
+    if (!indexesAfterRemovals.empty() || !haveUnneededDescriptors.empty()) {
+      updateInstructions(*module);
+    }
 
     // Update the types in the entire module.
     if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty() ||
@@ -487,7 +487,7 @@ struct GlobalTypeOptimization : public Pass {
 
   // After updating the types to remove certain fields, we must also remove
   // them from struct instructions.
-  void removeFieldsInInstructions(Module& wasm) {
+  void updateInstructions(Module& wasm) {
     struct FieldRemover : public WalkerPass<PostWalker<FieldRemover>> {
       bool isFunctionParallel() override { return true; }
 
@@ -510,10 +510,6 @@ struct GlobalTypeOptimization : public Pass {
         if (curr->type == Type::unreachable) {
           return;
         }
-        if (curr->isWithDefault()) {
-          // Nothing to do, a default was written and will no longer be.
-          return;
-        }
 
         auto type = curr->type.getHeapType();
         auto removeDesc = parent.haveUnneededDescriptors.count(type);
@@ -521,13 +517,13 @@ struct GlobalTypeOptimization : public Pass {
         // There may be no indexes to remove, if we are only removing the
         // descriptor.
         std::vector<Index>* indexesAfterRemoval = nullptr;
-        auto iter = parent.indexesAfterRemovals.find(type);
-        if (iter != parent.indexesAfterRemovals.end()) {
-          indexesAfterRemoval = &iter->second;
+        // There are also no indexes to remove if we only write default values.
+        if (!curr->isWithDefault()) {
+          auto iter = parent.indexesAfterRemovals.find(type);
+          if (iter != parent.indexesAfterRemovals.end()) {
+            indexesAfterRemoval = &iter->second;
+          }
         }
-
-        auto& operands = curr->operands;
-        assert(indexesAfterRemoval->size() == operands.size());
 
         // Ensure any children with non-trivial effects are replaced with
         // local.gets, so that we can remove/reorder to our hearts' content.
@@ -544,6 +540,9 @@ struct GlobalTypeOptimization : public Pass {
 
         if (indexesAfterRemoval) {
           // Remove and reorder operands.
+          auto& operands = curr->operands;
+          assert(indexesAfterRemoval->size() == operands.size());
+
           Index removed = 0;
           std::vector<Expression*> old(operands.begin(), operands.end());
           for (Index i = 0; i < operands.size(); ++i) {

@@ -166,4 +166,4 @@
 
 ;; effects in dropped desc
 ;; test index removals amd also desc
-
+;; test struct new default and not new defualt
