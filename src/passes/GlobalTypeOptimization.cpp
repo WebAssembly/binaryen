@@ -122,6 +122,9 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
+  // The types that no longer need a descriptor.
+  std::unordered_set<HeapType> unneededDescriptors;
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -363,6 +366,17 @@ struct GlobalTypeOptimization : public Pass {
         // avoid wasting memory and also time later.
         if (indexesAfterRemoval != makeIdentity(indexesAfterRemoval.size())) {
           indexesAfterRemovals[type] = indexesAfterRemoval;
+        }
+      }
+
+      // Process the descriptor.
+      if (type.getDescriptor()) {
+        // Parallel to our handling of field removals, above, but simpler as
+        // descriptors are immutable and non-optional in struct creation: if we
+        // and our supers do not read the descriptor, we do not need it.
+        if (!dataFromSupers.desc.hasRead) {
+std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself must no longer describe?
+          unneededDescriptors.insert(type);
         }
       }
     }
