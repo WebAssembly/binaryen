@@ -129,10 +129,37 @@
   )
 )
 
+;; The descriptor here is not needed.
 (module
   (rec
-    (type $A (struct))
-    (type $B (descriptor $C (struct)))
+    (type $A (descriptor $B (struct)))
+    (type $B (describes $A (struct)))
+  )
+
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+    ;; Even creating the type does not force us to keep the descriptor, if it is
+    ;; never used.
+    (drop
+      (struct.new $A
+        (struct.new $B)
+      )
+    )
+  )
+)
+
+;; Both descriptors in this chain are unneeded.
+(module
+  (rec
+    (type $A (descriptor $B (struct)))
+    (type $B (describes $A (descriptor $C (struct))))
     (type $C (describes $B (struct)))
+  )
+
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
   )
 )
