@@ -72,20 +72,19 @@ using GetValues = std::unordered_map<LocalGet*, Literals>;
 // possible input values than that struct.new, which means we will not infer
 // a value for it, and not attempt to say anything about comparisons of $x.
 struct HeapValues {
-  // Store two maps, one for effects and one without. The one with effects is
-  // used when PRESERVE_SIDEEFFECTS is on, and the other when not. This is
-  // necessary because when we preserve effects then nested effects in a GC
-  // allocation can cause us to end up as nonconstant (nothing can be
-  // precomputed), and we do not want to mix results between the two modes (if
-  // we did, we might cache a result when we ignore effects that we later use
-  // when not ignoring them, which would forget the effects).
-  std::unordered_map<Expression*, std::shared_ptr<GCData>> withEffects,
-    withoutEffects;
+  struct Entry {
+    // The GC data for an expression.
+    std::shared_ptr<GCData> data;
+    // Whether the expression has effects. If it does then we must recompute it
+    // each time we see it, even though we return |data| to represent it.
+    // (Recomputing will apply those effects each time, so we don't forget them
+    // when we read from the cache. This recomputing is rare, and doesn't happen
+    // e.g. in global GC objects, where most of the work happens, so this cache
+    // still saves a lot.)
+    bool hasEffects;
+  };
 
-  void clear() {
-    withEffects.clear();
-    withoutEffects.clear();
-  }
+  std::unordered_map<Expression*, Entry> map;
 };
 
 // Precomputes an expression. Errors if we hit anything that can't be
@@ -202,23 +201,28 @@ public:
 
   // Generates heap info for a heap-allocating expression.
   Flow getGCAllocation(Expression* curr, std::function<Flow()> visitFunc) {
-    auto& heapValuesMap = (flags & FlagValues::PRESERVE_SIDEEFFECTS)
-                            ? heapValues.withEffects
-                            : heapValues.withoutEffects;
     // We must return a literal that refers to the canonical location for this
     // source expression, so that each time we compute a specific *.new then
     // we get the same identity.
-    auto iter = heapValuesMap.find(curr);
-    if (iter != heapValuesMap.end()) {
+    auto iter = heapValues.map.find(curr);
+    if (iter != heapValues.map.end()) {
+      auto& [data, hasEffects] = iter->second;
+      if (hasEffects) {
+        // Visit, so we recompute the effects. (This is rare, see comment
+        // above.)
+        visitFunc();
+      }
       // Refer to the same canonical GCData that we already created.
-      return Literal(iter->second, curr->type.getHeapType());
+      return Literal(data, curr->type.getHeapType());
     }
-    // Only call the visitor function here, so we do it once per allocation.
+    // Only call the visitor function here, so we do it once per allocation. See
+    // if we have effects while doing so.
     auto flow = visitFunc();
     if (flow.breaking()) {
       return flow;
     }
-    heapValuesMap[curr] = flow.getSingleValue().getGCData();
+    heapValues.map[curr] =
+      HeapValues::Entry{flow.getSingleValue().getGCData(), hasEffectfulSets()};
     return flow;
   }
 
@@ -301,94 +305,169 @@ struct Precompute
     // unlikely chance, we leave such things for later.
   }
 
-  template<typename T> void reuseConstantNode(T* curr, Flow flow) {
-    if (flow.values.isConcrete()) {
-      // reuse a const / ref.null / ref.func node if there is one
-      if (curr->value && flow.values.size() == 1) {
-        Literal singleValue = flow.getSingleValue();
-        if (singleValue.type.isNumber()) {
-          if (auto* c = curr->value->template dynCast<Const>()) {
-            c->value = singleValue;
-            c->finalize();
-            curr->finalize();
-            return;
-          }
-        } else if (singleValue.isNull()) {
-          if (auto* n = curr->value->template dynCast<RefNull>()) {
-            n->finalize(singleValue.type);
-            curr->finalize();
-            return;
-          }
-        } else if (singleValue.type.isRef() &&
-                   singleValue.type.getHeapType().isSignature()) {
-          if (auto* r = curr->value->template dynCast<RefFunc>()) {
-            r->func = singleValue.getFunc();
-            auto heapType = getModule()->getFunction(r->func)->type;
-            r->finalize(heapType);
-            curr->finalize();
-            return;
-          }
-        }
-      }
-      curr->value = flow.getConstExpression(*getModule());
-    } else {
-      curr->value = nullptr;
-    }
-    curr->finalize();
-  }
-
   void visitExpression(Expression* curr) {
-    // TODO: if local.get, only replace with a constant if we don't care about
-    // size...?
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
+    // Ignore trivial things like constants, nops, local/global.set (which have
+    // an effect we cannot remove, and it is simpler to ignore them here than
+    // later below), return (which we cannot improve), and loop (which it is
+    // simpler to leave for other passes).
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
+        curr->is<LocalSet>() || curr->is<GlobalSet>() || curr->is<Return>() ||
+        curr->is<Loop>()) {
       return;
     }
-    // try to evaluate this into a const
-    Flow flow = precomputeExpression(curr);
+    // Breaks with conditions can be simplified, but unconditional ones are like
+    // returns, and we cannot improve.
+    if (auto* br = curr->dynCast<Break>()) {
+      if (!br->condition) {
+        return;
+      }
+    }
+
+    // See if we can precompute the value that flows out. We set
+    // |replaceExpression| to false because we do not necessarily want to
+    // replace it entirely, see below - we may keep parts, in some cases, if we
+    // can still simplify it to a precomputed value.
+    Flow flow;
+    PrecomputingExpressionRunner runner(
+      getModule(), getValues, heapValues, false /* replaceExpression */);
+    try {
+      flow = runner.visit(curr);
+    } catch (NonconstantException&) {
+      return;
+    }
+    // The resulting value must be of a type we can emit a constant for (or
+    // there must be no value at all, in which case the value is a nop).
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
-    if (flow.breaking()) {
-      if (flow.breakTo == NONCONSTANT_FLOW) {
-        // This cannot be turned into a constant, but perhaps we can partially
-        // precompute it.
-        considerPartiallyPrecomputing(curr);
-        return;
-      }
-      if (flow.breakTo == RETURN_FLOW) {
-        // this expression causes a return. if it's already a return, reuse the
-        // node
-        if (auto* ret = curr->dynCast<Return>()) {
-          reuseConstantNode(ret, flow);
-        } else {
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeReturn(
-            flow.values.isConcrete() ? flow.getConstExpression(*getModule())
-                                     : nullptr));
-        }
-        return;
-      }
-      // this expression causes a break, emit it directly. if it's already a br,
-      // reuse the node.
-      if (auto* br = curr->dynCast<Break>()) {
-        br->name = flow.breakTo;
-        br->condition = nullptr;
-        reuseConstantNode(br, flow);
-      } else {
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeBreak(
-          flow.breakTo,
-          flow.values.isConcrete() ? flow.getConstExpression(*getModule())
-                                   : nullptr));
-      }
+    if (flow.breakTo == NONCONSTANT_FLOW) {
+      // This cannot be turned into a constant, but perhaps we can partially
+      // precompute it.
+      considerPartiallyPrecomputing(curr);
       return;
     }
-    // this was precomputed
-    if (flow.values.isConcrete()) {
-      replaceCurrent(flow.getConstExpression(*getModule()));
-    } else {
-      ExpressionManipulator::nop(curr);
+    // TODO: Handle suspends somehow?
+    if (flow.suspendTag) {
+      return;
     }
+
+    // This looks like a promising precomputation: We have found that its value,
+    // if any, can be emitted as a constant (or there is no value, and it is a
+    // nop or break etc.). Build that value, so we can replace the expression
+    // with it.
+    Builder builder(*getModule());
+    Expression* value = nullptr;
+    if (flow.values.isConcrete()) {
+      value = flow.getConstExpression(*getModule());
+    }
+    if (flow.breaking()) {
+      if (flow.breakTo == RETURN_FLOW) {
+        // We avoided trivial returns earlier (by doing so, we avoid wasted
+        // work replacing a return with itself).
+        assert(!curr->is<Return>());
+        value = builder.makeReturn(value);
+      } else {
+        value = builder.makeBreak(flow.breakTo, value);
+      }
+      // Note we don't need to handle RETURN_CALL_FLOW, as the call there has
+      // effects that would stop us earlier.
+    }
+
+    // We have something to replace the expression. While precomputing the
+    // expression, we verified it has no effects that cause problems - no traps
+    // or exceptions etc., as those things would lead to NONCONSTANT_FLOW. We
+    // can therefore replace this with what flows out of it. The only exception
+    // is that we set replaceExpression to false, above, which means we run the
+    // interpreter without PRESERVE_SIDEEFFECTS. That allows local and global
+    // sets to happen (to help optimize small code fragments with sets and
+    // gets). To handle that, keep relevant children if we have such sets.
+    if (runner.hasEffectfulSets()) {
+      if (curr->is<Block>() || curr->is<If>() || curr->is<Try>()) {
+        // These control flow structures have children that might not execute.
+        // We know that some of the children have effectful sets, but not which,
+        // and we can't just keep them all, so give up.
+        // TODO: Check if this would be useful to improve, but other passes
+        //       might do enough already.
+        return;
+      }
+
+      // To keep things simple, stop here if we are precomputing to a break/
+      // return. Handling that case requires ordering considerations:
+      //
+      //  (foo
+      //    (br)
+      //    (call)
+      //  )
+      //
+      // Here we know we need to keep the call, and can remove foo, but this
+      // would be wrong:
+      //
+      //  (block
+      //    ;; removed br
+      //    (call)
+      //    (br) ;; the value we precompute to, added at the end
+      //  )
+      //
+      // Instead we must keep the br, leaving this for later opts to improve:
+      //
+      //  (block
+      //    (br)
+      //    (call)
+      //    (br)
+      //  )
+      //
+      // That is, we cannot remove unneeded children easily in this case, where
+      // control flow might transfer, so we need to keep all children when we
+      // remove foo. In that case, it's not clear we are helping much, and other
+      // passes can do better with the break/return anyhow. After dismissing
+      // this situation, we know no transfer of control flow needs to be handled
+      // in the code below (because we executed the code, and found it did not
+      // do so).
+      if (flow.breaking()) {
+        return;
+      }
+
+      // Find the necessary children that we must keep.
+      SmallVector<Expression*, 10> kept;
+      for (auto* child : ChildIterator(curr)) {
+        EffectAnalyzer effects(getPassOptions(), *getModule(), child);
+        if (!effects.localsWritten.empty() || !effects.globalsWritten.empty()) {
+          kept.push_back(builder.makeDrop(child));
+        }
+      }
+      // Find all the things we must keep, which might include |value|.
+      if (!kept.empty()) {
+        if (value) {
+          kept.push_back(value);
+        }
+        if (kept.size() == 1) {
+          value = kept[0];
+        } else {
+          // We are returning a block with some kept children + some value. This
+          // may seem to increase code size in some cases, but it cannot do so
+          // monotonically: while doing all this we are definitely removing
+          // |curr| itself, so we are making progress, even if we emit a new
+          // constant that we weren't before. That is, we are not in this
+          // situation:
+          //
+          //   (foo A B) => (block (foo A B) (value))
+          //
+          // We are in this one:
+          //
+          //   (foo A B) => (block A B (value))
+          //
+          // where foo vanishes.
+          value = builder.makeBlock(kept);
+        }
+      }
+    }
+    if (!value) {
+      // We don't need to replace this with anything: there is no value or other
+      // code that we need. Just nop it.
+      ExpressionManipulator::nop(curr);
+      return;
+    }
+    replaceCurrent(value);
   }
 
   void visitBlock(Block* curr) {
@@ -695,7 +774,7 @@ struct Precompute
         // |parent|. Results here must not be cached for later.
         HeapValues temp;
         auto ifTrue = precomputeExpression(parent, true, &temp);
-        temp.clear();
+        temp.map.clear();
         if (isValidPrecomputation(ifTrue)) {
           *pointerToSelect = select->ifFalse;
           auto ifFalse = precomputeExpression(parent, true, &temp);
