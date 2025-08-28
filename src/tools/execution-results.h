@@ -448,9 +448,7 @@ struct ExecutionResults {
     struct CleanUp {
       ModuleRunner& instance;
       CleanUp(ModuleRunner& instance) : instance(instance) {}
-      ~CleanUp() {
-        instance.clearContinuationStore();
-      }
+      ~CleanUp() { instance.clearContinuationStore(); }
     } cleanUp(instance);
 
     try {
