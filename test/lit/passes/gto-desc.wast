@@ -4,6 +4,8 @@
 
 (module
   (rec
+    ;; CHECK:      (type $struct.0 (struct (field (ref $struct.1)) (field (ref $struct.1))))
+
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (descriptor $desc (struct (field i32))))
     (type $struct (descriptor $desc (struct (field i32))))
@@ -426,7 +428,46 @@
   )
 )
 
-;; effects in dropped desc
+;; The descriptor can be removed, but its effects must be preserved.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct)))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref (exact $B)))
+  ;; CHECK-NEXT:  (local $2 (ref (exact $B)))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $A)))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.tee $B
+  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref (exact $B)))
+    (drop
+      (struct.new $A
+        (local.tee $B
+          (struct.new $B)
+        )
+      )
+    )
+  )
+)
+
 ;; test index removals amd also desc
 ;; test struct new default and not new defualt
 
