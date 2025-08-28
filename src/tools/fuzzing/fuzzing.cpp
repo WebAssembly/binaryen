@@ -2164,7 +2164,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     }
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                &Self::makeRefEq,
+                // Prioritize ref.eq heavily as it is the one instruction that
+                // tests reference identity.
+                {&Self::makeRefEq, VeryImportant},
                 &Self::makeRefTest,
                 &Self::makeI31Get);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
