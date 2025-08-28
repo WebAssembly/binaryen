@@ -138,7 +138,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $use-desc (param $struct (ref $struct))
-    ;; Use the descriptors, so this test is not trivial.
+    ;; Use the descriptor, so this test is not trivial.
     (drop
       (ref.get_desc $struct
         (local.get $struct)
@@ -277,6 +277,9 @@
     )
   )
 )
+
+;; visitRefCast.desc
+;; br on desc
 
 ;; effects in dropped desc
 ;; test index removals amd also desc
