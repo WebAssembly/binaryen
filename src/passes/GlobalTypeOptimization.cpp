@@ -392,8 +392,13 @@ std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself mus
       removeFieldsInInstructions(*module);
     }
 
+    // Descriptor/describings are in pairs, so the size of these sets is equal,
+    // and we only need to check one below.
+    assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
+
     // Update the types in the entire module.
-    if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty()) {
+    if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty() ||
+        !haveUnneededDescriptors.empty()) {
       updateTypes(*module);
     }
   }
@@ -461,6 +466,7 @@ std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself mus
 
       void
       modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
+std::cout << "modTBE " << i << " : " << oldType << '\n';
         if (!oldType.isStruct()) {
           return;
         }
@@ -468,11 +474,13 @@ std::cout << "no need for desc " << type << '\n'; // TODO: desctiptor itself mus
         // Remove an unneeded descriptor.
         // TODO: check for CD here and above
         if (parent.haveUnneededDescriptors.count(oldType)) {
+std::cout << "clear descript\n";
           typeBuilder.setDescriptor(i, std::nullopt);
         }
 
         // Remove an unneeded describes.
         if (parent.haveUnneededDescribings.count(oldType)) {
+std::cout << "clear describd\n";
           typeBuilder.setDescribed(i, std::nullopt);
         }
       }
