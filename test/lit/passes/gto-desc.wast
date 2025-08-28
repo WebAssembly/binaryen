@@ -249,7 +249,7 @@
   (func $test
     (local $A (ref $A))
     (local $B (ref $B))
-    (drop
+    (local.set $A
       (struct.new $A
         (struct.new $B)
       )
