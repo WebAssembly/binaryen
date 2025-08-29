@@ -136,7 +136,7 @@ struct GlobalTypeOptimization : public Pass {
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
   // The types that no longer need a descriptor.
-  std::unordered_set<HeapType> haveUnneededDescriptors;
+  std::unordered_map<HeapType, std::optional<HeapType>> haveUnneededDescriptors;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -408,9 +408,9 @@ struct GlobalTypeOptimization : public Pass {
         // could trap, we'd have no easy way to remove it in a global scope.
         // TODO: We could check and handle the global scope specifically, but
         //       the trapsNeverHappen flag avoids this problem entirely anyhow.
-        if (!dataFromSubsAndSupers.desc.hasRead &&
-            (!dataFromSubsAndSupers.desc.hasWrite || trapsNeverHappen)) {
-          haveUnneededDescriptors.insert(type);
+        if (!dataFromSupers.desc.hasRead &&
+            (!dataFromSupers.desc.hasWrite || trapsNeverHappen)) {
+          haveUnneededDescriptors[type] = std::nullopt;
         }
       }
     }
@@ -422,12 +422,12 @@ struct GlobalTypeOptimization : public Pass {
     //   B -> B.desc
     //
     // Here the descriptors subtype, but *not* the describees. We cannot
-    // remove A's descriptor without also removing $B's, so we need to propagate
-    // that "must remain a descriptor" property among descriptors.
+    // remove A's descriptor by itself, not without also removing B's, so we
+    // need to do something more (see below).
     if (!haveUnneededDescriptors.empty()) {
-
+      // To find problem situations, we'll progagate the property of a
+      // descriptor being needed because of descriptor subtyping.
       struct DescriptorInfo {
-        // Whether this descriptor is needed - it must keep describing.
         bool needed = false;
 
         bool combine(const DescriptorInfo& other) {
@@ -457,12 +457,24 @@ struct GlobalTypeOptimization : public Pass {
       // Propagate.
       descPropagator.propagateToSuperAndSubTypes(map);
 
-      // Remove optimization opportunities that the propagation ruled out.
+      // Find optimization opportunities that the propagation ruled out.
       for (auto& [type, info] : map) {
         if (info.needed) {
           auto described = type.getDescribedType();
           assert(described);
-          haveUnneededDescriptors.erase(*described);
+          if (haveUnneededDescriptors.count(*described)) {
+            // We are in a situation like on the left:
+            //
+            //         A -> A.desc              A    A.desc <- A2
+            //              ^           =>           ^
+            //         B -> B.desc              B -> B.desc
+            //
+            // We want to remove A's descriptor, but cannot remove B's. To do
+            // that, we add a new type A2 for A.desc to describe, which keeps
+            // the property that A.desc and B.desc are a parent/child pair of
+            // descriptors, which is necessary for validation.
+            haveUnneededDescriptors[*described] = HeapType(described->getStruct());
+          }
         }
       }
     }
@@ -555,10 +567,15 @@ struct GlobalTypeOptimization : public Pass {
           typeBuilder.setDescriptor(i, std::nullopt);
         }
 
-        // Remove an unneeded describes.
+        // Remove or replace describings.
         if (auto described = oldType.getDescribedType()) {
-          if (parent.haveUnneededDescriptors.count(*described)) {
-            typeBuilder.setDescribed(i, std::nullopt);
+          auto iter = parent.haveUnneededDescriptors.find(*described);
+          if (iter != parent.haveUnneededDescriptors.end()) {
+            auto value = iter->second;
+            if (value) {
+              value = getTempHeapType(*value);
+            }
+            typeBuilder.setDescribed(i, value);
           }
         }
       }
