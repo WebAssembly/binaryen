@@ -80,6 +80,17 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
+    if (index == DescriptorIndex) {
+      // Descriptors are immutable, so normal writes do not concern us. However,
+      // we need to handle the case of a trapping null descriptor, which means
+      // we cannot remove a descriptor as easily as a normal field. To handle
+      // that, mark a descriptor as written if we write a nullable value to it,
+      // basically repurposing the |hasWrite| field to track this effect, in the
+      // sense of "has a dangerous (trappable) write".
+      if (!expr->type.isNullable()) {
+        return;
+      }
+    }
     info.noteWrite();
   }
 
@@ -134,6 +145,8 @@ struct GlobalTypeOptimization : public Pass {
     if (!getPassOptions().closedWorld) {
       Fatal() << "GTO requires --closed-world";
     }
+
+    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
@@ -373,8 +386,13 @@ struct GlobalTypeOptimization : public Pass {
       // Process the descriptor.
       if (auto desc = type.getDescriptorType()) {
         // To remove a descriptor, it must not be used in either subtypes or
-        // supertypes, to not break validation.
-        if (!dataFromSubsAndSupers.desc.hasRead) {
+        // supertypes, to not break validation. It must also have no write (see
+        // above, we note only dangerous writes which might trap), as if it
+        // could trap, we'd have no easy way to remove it in a global scope.
+        // TODO: We could check and handle the global scope specifically, but
+        //       the trapsNeverHappen flag avoids this problem entirely anyhow.
+        if (!dataFromSubsAndSupers.desc.hasRead &&
+            (!dataFromSubsAndSupers.desc.hasWrite || trapsNeverHappen)) {
           haveUnneededDescriptors.insert(type);
           haveUnneededDescribings.insert(*desc);
         }
@@ -566,8 +584,6 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        // Removing the descriptor is trivial, after the ChildLocalizer we ran
-        // earlier.
         if (removeDesc) {
           curr->desc = nullptr;
         }

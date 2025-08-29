@@ -200,6 +200,29 @@
   )
 )
 
+;; As above, with the creation in the global scope.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct)))
+  )
+
+
+  ;; CHECK:      (global $g anyref (struct.new_default $A))
+  (global $g anyref (struct.new $A
+    (struct.new $B)
+    )
+  ))
+
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+  )
+)
+
 ;; Both descriptors in this chain are unneeded.
 (module
   (rec
