@@ -427,7 +427,6 @@ private:
 
       if (toSubTypes) {
         // Propagate shared fields to the subtypes.
-        auto numFields = type.getStruct().fields.size();
         for (auto subType : subTypes.getImmediateSubTypes(type)) {
           auto& subInfo = combinedInfos[subType];
           if (subInfo.combine(info)) {

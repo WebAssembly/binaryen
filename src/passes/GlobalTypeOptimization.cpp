@@ -444,13 +444,13 @@ struct GlobalTypeOptimization : public Pass {
         }
       };
 
-      TypeHierarchyPropagator<DescriptorInfo> descPropagator(subTypes);
+      StructUtils::TypeHierarchyPropagator<DescriptorInfo> descPropagator(subTypes);
 
-      // Populate the initial data: Anything we did not see was unneeded, is
-      // needed.
-      TypeHierarchyPropagator<DescriptorInfo>::StructMap map;
+      // Populate the initial data: Any descriptor we did not see was unneeded,
+      // is needed.
+      StructUtils::TypeHierarchyPropagator<DescriptorInfo>::StructMap map;
       for (auto type : subTypes.types) {
-        if (type.isStruct() && !haveUnneededDescribings.count(type)) {
+        if (type.getDescribedType() && !haveUnneededDescribings.count(type)) {
           // This descriptor type is needed.
           map[type].needed = true;
         }
@@ -462,7 +462,11 @@ struct GlobalTypeOptimization : public Pass {
       // Remove optimization opportunities that the propagation ruled out.
       for (auto& [type, info] : map) {
         if (info.needed) {
-          ehh
+          if (haveUnneededDescribings.erase(type)) {
+            auto described = type.getDescribedType();
+            assert(described);
+            haveUnneededDescriptors.erase(*described);
+          }
         }
       }
 
