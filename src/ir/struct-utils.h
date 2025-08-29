@@ -45,7 +45,14 @@ template<typename T> struct StructValues : public std::vector<T> {
     return std::vector<T>::operator[](index);
   }
 
-  // Store the descriptor as another field.
+  // Store the descriptor as another field. (This could be a std::optional to
+  // indicate that the descriptor's existence depends on the type, but that
+  // would add overhead & code clutter (type checks). If there is no descriptor,
+  // this will just hang around with the default values, not harming anything
+  // except perhaps for looking a little odd during debugging. And whenever we
+  // combine() a non-existent descriptor, we are doing unneeded work, but the
+  // data here is typically just a few bools, so it is simpler and likely
+  // faster to just copy those rather than check if the type has a descriptor.)
   T desc;
 };
 
