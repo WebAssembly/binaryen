@@ -372,9 +372,8 @@ struct GlobalTypeOptimization : public Pass {
 
       // Process the descriptor.
       if (auto desc = type.getDescriptorType()) {
-        // Parallel to our handling of field removals, above, but simpler as
-        // descriptors are immutable and non-optional in struct creation: if we
-        // and our supers do not read the descriptor, we do not need it.
+        // To remove a descriptor, it must not be used in either subtypes or
+        // supertypes, to not break validation.
         if (!dataFromSubsAndSupers.desc.hasRead) {
           haveUnneededDescriptors.insert(type);
           haveUnneededDescribings.insert(*desc);
