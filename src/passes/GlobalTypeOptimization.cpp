@@ -170,7 +170,15 @@ struct GlobalTypeOptimization : public Pass {
       // cause fields to remain mutable, unlike struct.set writes).
       for (auto& [func, infos] : functionNewInfos) {
         for (auto& [type, info] : infos) {
-          combinedSetGetInfos[type].desc.combine(info.desc);
+          if (info.desc.hasWrite) {
+            combinedSetGetInfos[type].noteWrite();
+
+            // We must also propagate these dangerous writes to describees.
+            // Imagine that $A, $A.desc are a pair of describee/descriptor, and
+            // $B, $B.desc as well with subtyping only between the descriptors, and *not* $A and $B.
+            // We still cannot remove the descriptor from either, if one has a
+            // dangerous write.
+          }
         }
       }
     }

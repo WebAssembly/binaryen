@@ -88,3 +88,27 @@
   )
 )
 
+;; $A and $B have descriptors, and the descriptors also subtype.
+;;
+;; $B is written a null descriptor, so we cannot optimize it when traps are
+;; possible. This also prevents optimizations on $A: we cannot remove that
+;; descriptor either, or its subtype would break.
+;;
+;; This tests subtyping of descriptors *without* subtyping of describees.
+(module
+  (rec
+    (type $A (sub (descriptor $A.desc (struct))))
+    (type $A.desc (sub (describes $A (struct ))))
+
+    (type $B (sub (descriptor $B.desc (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  (func $test
+    (drop
+      (struct.new_default $B
+        (ref.null none)
+      )
+    )
+  )
+)
