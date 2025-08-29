@@ -211,12 +211,17 @@
   )
 
 
+  ;; CHECK:       (type $2 (func))
+
   ;; CHECK:      (global $g anyref (struct.new_default $A))
   (global $g anyref (struct.new $A
     (struct.new $B)
-    )
   ))
 
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT: )
   (func $test
     (local $A (ref $A))
     (local $B (ref $B))
@@ -493,7 +498,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field i32)))
+    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
     (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
     ;; CHECK:       (type $B (struct))
     (type $B (describes $A (struct (field (mut i32)))))
@@ -581,7 +586,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field i32)))
+    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
     (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
     ;; CHECK:       (type $B (struct))
     (type $B (describes $A (struct (field (mut i32)))))

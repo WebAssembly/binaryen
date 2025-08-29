@@ -43,6 +43,10 @@ namespace {
 
 // Information about usage of a field.
 struct FieldInfo {
+  // This represents a normal write for normal fields. For a descriptor, we only
+  // note "dangerous" writes, specifically ones which might trap (when the
+  // descriptor in a struct.new is nullable), which is a special situation we
+  // must avoid.
   bool hasWrite = false;
   bool hasRead = false;
 
@@ -60,6 +64,10 @@ struct FieldInfo {
       changed = true;
     }
     return changed;
+  }
+
+  void dump(std::ostream& o) {
+    o << "[write: " << hasWrite << " hasRead: " << hasRead << ']';
   }
 };
 
@@ -81,12 +89,6 @@ struct FieldInfoScanner
                       Index index,
                       FieldInfo& info) {
     if (index == DescriptorIndex) {
-      // Descriptors are immutable, so normal writes do not concern us. However,
-      // we need to handle the case of a trapping null descriptor, which means
-      // we cannot remove a descriptor as easily as a normal field. To handle
-      // that, mark a descriptor as written if we write a nullable value to it,
-      // basically repurposing the |hasWrite| field to track this effect, in the
-      // sense of "has a dangerous (trappable) write".
       if (!expr->type.isNullable()) {
         return;
       }
@@ -146,8 +148,6 @@ struct GlobalTypeOptimization : public Pass {
       Fatal() << "GTO requires --closed-world";
     }
 
-    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
-
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
@@ -157,8 +157,14 @@ struct GlobalTypeOptimization : public Pass {
 
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
-    // TODO: combine newInfos as well, once we have a need for that (we will
-    //       when we do things like subtyping).
+
+    // We need info from struct.news in only one situation, so far: custom
+    // descriptors, where setting a nullable descriptor is a dangerous write,
+    // one with effects, that we must track. (Otherwise, nothing in a struct.new
+    // can prevent removing fields or making them immutable.)
+    if (module->features.hasCustomDescriptors()) {
+      functionNewInfos.combineInto(combinedSetGetInfos);
+    }
 
     // Propagate information to super and subtypes on set/get infos:
     //
@@ -196,6 +202,8 @@ struct GlobalTypeOptimization : public Pass {
     auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
     std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
                                                 publicTypes.end());
+
+    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Process the propagated info. We look at supertypes first, as the order of
     // fields in a supertype is a constraint on what subtypes can do. That is,
@@ -585,6 +593,8 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         if (removeDesc) {
+          // We already handled the case of a possible trap here, so we can just
+          // remove the descriptor.
           curr->desc = nullptr;
         }
       }
