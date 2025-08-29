@@ -97,13 +97,39 @@
 ;; This tests subtyping of descriptors *without* subtyping of describees.
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; T_N_H:      (rec
+    ;; T_N_H-NEXT:  (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    ;; T_N_H:       (type $A.desc (sub (struct)))
     (type $A.desc (sub (describes $A (struct ))))
 
+    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
+    ;; T_N_H:       (type $B (sub (struct)))
     (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; T_N_H:       (type $B.desc (sub $A.desc (struct)))
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
+  ;; CHECK:      (type $4 (func))
+
+  ;; CHECK:      (func $test (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; T_N_H:       (type $4 (func))
+
+  ;; T_N_H:      (func $test (type $4)
+  ;; T_N_H-NEXT:  (drop
+  ;; T_N_H-NEXT:   (struct.new_default $B)
+  ;; T_N_H-NEXT:  )
+  ;; T_N_H-NEXT: )
   (func $test
     (drop
       (struct.new_default $B
