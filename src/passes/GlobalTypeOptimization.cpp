@@ -469,7 +469,6 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         // Remove an unneeded descriptor.
-        // TODO: check for CD here and above
         if (parent.haveUnneededDescriptors.count(oldType)) {
           typeBuilder.setDescriptor(i, std::nullopt);
         }
