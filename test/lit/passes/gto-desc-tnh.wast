@@ -88,7 +88,11 @@
   )
 )
 
-;; $A and $B have descriptors, and the descriptors also subtype.
+;; $A and $B have descriptors, and the descriptors also subtype:
+;;
+;;   A -> A.desc
+;;        ^
+;;   B -> B.desc
 ;;
 ;; $B is written a null descriptor, so we cannot optimize it when traps are
 ;; possible. This also prevents optimizations on $A: we cannot remove that

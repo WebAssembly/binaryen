@@ -349,9 +349,7 @@ public:
   void propagateToSuperTypes(StructMap& infos) {
     propagate(infos, false, true);
   }
-  void propagateToSubTypes(StructMap& infos) {
-    propagate(infos, true, false);
-  }
+  void propagateToSubTypes(StructMap& infos) { propagate(infos, true, false); }
   void propagateToSuperAndSubTypes(StructMap& infos) {
     propagate(infos, true, true);
   }
@@ -404,9 +402,7 @@ private:
     }
   }
 
-  void propagate(StructMap& combinedInfos,
-                 bool toSubTypes,
-                 bool toSuperTypes) {
+  void propagate(StructMap& combinedInfos, bool toSubTypes, bool toSuperTypes) {
     UniqueDeferredQueue<HeapType> work;
     for (auto& [type, _] : combinedInfos) {
       work.push(type);

@@ -444,7 +444,8 @@ struct GlobalTypeOptimization : public Pass {
         }
       };
 
-      StructUtils::TypeHierarchyPropagator<DescriptorInfo> descPropagator(subTypes);
+      StructUtils::TypeHierarchyPropagator<DescriptorInfo> descPropagator(
+        subTypes);
 
       // Populate the initial data: Any descriptor we did not see was unneeded,
       // is needed.
