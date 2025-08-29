@@ -690,5 +690,67 @@
   )
 )
 
-;; subtyping
+;; Subtyping. All these descriptors can be optimized away.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (struct)))
+    (type $A.desc (sub (describes $A (struct))))
+
+    ;; CHECK:       (type $B (sub $A (struct)))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (struct)))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+
+    ;; CHECK:       (type $C (sub $B (struct)))
+    (type $C (sub $B (descriptor $C.desc (struct))))
+    ;; CHECK:       (type $C.desc (sub $B.desc (struct)))
+    (type $C.desc (sub $B.desc (describes $C (struct))))
+  )
+
+  ;; CHECK:       (type $6 (func))
+
+  ;; CHECK:      (func $test (type $6)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $A.desc (ref $A.desc))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $B.desc (ref $B.desc))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local $C.desc (ref $C.desc))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $B
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $C
+  ;; CHECK-NEXT:   (struct.new_default $C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $A.desc (ref $A.desc))
+    (local $B (ref $B))
+    (local $B.desc (ref $B.desc))
+    (local $C (ref $C))
+    (local $C.desc (ref $C.desc))
+    (local.set $A
+      (struct.new $A
+        (struct.new $A.desc)
+      )
+    )
+    (local.set $B
+      (struct.new $B
+        (struct.new $B.desc)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (struct.new $C.desc)
+      )
+    )
+  )
+)
 
