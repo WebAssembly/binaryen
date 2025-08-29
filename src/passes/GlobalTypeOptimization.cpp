@@ -160,10 +160,17 @@ struct GlobalTypeOptimization : public Pass {
 
     // We need info from struct.news in only one situation, so far: custom
     // descriptors, where setting a nullable descriptor is a dangerous write,
-    // one with effects, that we must track. (Otherwise, nothing in a struct.new
-    // can prevent removing fields or making them immutable.)
+    // one with effects, that we must track.
     if (module->features.hasCustomDescriptors()) {
-      functionNewInfos.combineInto(combinedSetGetInfos);
+      // Otherwise, nothing in a struct.new can prevent removing fields or
+      // making them immutable, so we must only copy over descriptor fields here
+      // (that is, other writes from a struct.new are skipped here; they do not
+      // cause fields to remain mutable, like struct.set writes).
+      for (auto& [func, infos] : functionNewInfos) {
+        for (auto& [type, info] : infos) {
+          combinedSetGetInfos[type].desc.combine(info.desc);
+        }
+      }
     }
 
     // Propagate information to super and subtypes on set/get infos:

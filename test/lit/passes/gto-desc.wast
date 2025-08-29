@@ -498,7 +498,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
+    ;; CHECK-NEXT:  (type $A (struct (field i32)))
     (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
     ;; CHECK:       (type $B (struct))
     (type $B (describes $A (struct (field (mut i32)))))
@@ -586,7 +586,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
+    ;; CHECK-NEXT:  (type $A (struct (field i32)))
     (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
     ;; CHECK:       (type $B (struct))
     (type $B (describes $A (struct (field (mut i32)))))
