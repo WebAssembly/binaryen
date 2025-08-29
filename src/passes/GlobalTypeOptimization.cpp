@@ -653,8 +653,13 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         if (removeDesc) {
-          // We already handled the case of a possible trap here, so we can just
-          // remove the descriptor.
+          // We already handled the case of a possible trap here, so we can
+          // remove the descriptor, but must be careful of nested effects (our
+          // descriptor may be ok to remove, but a nested struct.new may not).
+          if (!func &&
+              EffectAnalyzer(getPassOptions(), *getModule(), curr->desc).trap) {
+            removedTrappingInits.push_back(curr->desc);
+          }
           curr->desc = nullptr;
         }
       }

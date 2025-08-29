@@ -204,3 +204,55 @@
   )
 )
 
+;; A chain of descriptors, where we can remove the outer one, but must be
+;; careful not to remove nested children.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    ;; T_N_H:      (rec
+    ;; T_N_H-NEXT:  (type $A (struct))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (descriptor $C (struct)))
+    ;; T_N_H:       (type $B (struct))
+    (type $B (describes $A (descriptor $C (struct))))
+    ;; CHECK:       (type $C (describes $B (struct)))
+    ;; T_N_H:       (type $C (struct))
+    (type $C (describes $B (struct)))
+  )
+
+  ;; CHECK:       (type $3 (func))
+
+  ;; CHECK:      (global $g anyref (struct.new_default $A))
+  ;; T_N_H:       (type $3 (func))
+
+  ;; T_N_H:      (global $g anyref (struct.new_default $A))
+  (global $g anyref
+    (struct.new $A     ;; The outer struct.new $A is ok to remove,
+      (struct.new $B   ;; but the inner struct.new $B is not, due
+        (ref.null $C)  ;; to its null descriptor. We keep the inner
+      )                ;; one around as a new global later (but not
+    )                  ;; if traps cannot happen).
+  )
+
+  ;; CHECK:      (global $gto-removed-0 (ref (exact $B)) (struct.new_default $B
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (func $test (type $3)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT: )
+  ;; T_N_H:      (func $test (type $3)
+  ;; T_N_H-NEXT:  (local $A (ref $A))
+  ;; T_N_H-NEXT:  (local $B (ref $B))
+  ;; T_N_H-NEXT:  (local $C (ref $C))
+  ;; T_N_H-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+  )
+)
+
