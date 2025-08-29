@@ -62,6 +62,7 @@ struct FieldInfoScanner
                       Index index,
                       FieldInfo& info) {
     if (index == DescriptorIndex) {
+      // We cannot continue on below, where we index into the vector of values.
       return;
     }
 
