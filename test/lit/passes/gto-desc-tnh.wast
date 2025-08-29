@@ -138,3 +138,65 @@
     )
   )
 )
+
+;; A similar situation, but now the thing that stops optimizing $B is not a
+;; null descriptor but a use. We cannot optimize even without traps.
+;; Subtyping of descriptors *without* subtyping of describees.
+;;
+;; $B's descriptor seems removable, but the subtyping of the descriptors
+;; prevents this.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; T_N_H:      (rec
+    ;; T_N_H-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    ;; T_N_H:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct ))))
+
+    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
+    ;; T_N_H:       (type $B (sub (descriptor $B.desc (struct))))
+    (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; T_N_H:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (type $4 (func))
+
+  ;; CHECK:      (func $test (type $4)
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (struct.new_default $A
+  ;; CHECK-NEXT:     (struct.new_default $A.desc)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; T_N_H:      (type $4 (func))
+
+  ;; T_N_H:      (func $test (type $4)
+  ;; T_N_H-NEXT:  (local $B (ref $B))
+  ;; T_N_H-NEXT:  (drop
+  ;; T_N_H-NEXT:   (ref.get_desc $A
+  ;; T_N_H-NEXT:    (struct.new_default $A
+  ;; T_N_H-NEXT:     (struct.new_default $A.desc)
+  ;; T_N_H-NEXT:    )
+  ;; T_N_H-NEXT:   )
+  ;; T_N_H-NEXT:  )
+  ;; T_N_H-NEXT: )
+  (func $test
+    (local $B (ref $B)) ;; keep $B alive
+    (drop
+      (ref.get_desc $A
+        (struct.new $A
+          (struct.new $A.desc)
+        )
+      )
+    )
+  )
+)
+
