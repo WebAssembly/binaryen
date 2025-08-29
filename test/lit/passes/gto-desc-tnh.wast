@@ -8,22 +8,36 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct))
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    ;; T_N_H:      (rec
+    ;; T_N_H-NEXT:  (type $A (struct))
     (type $A (descriptor $B (struct)))
-    ;; CHECK:       (type $B (struct))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    ;; T_N_H:       (type $B (struct))
     (type $B (describes $A (struct)))
   )
 
-  ;; CHECK:       (type $2 (func))
+  ;; CHECK:      (type $2 (func (param (ref null (exact $B)))))
 
-  ;; CHECK:      (func $test (type $2)
+  ;; CHECK:      (func $test (type $2) (param $nullable (ref null (exact $B)))
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (local $B (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (local.get $nullable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $nullable (ref null $B))
+  ;; T_N_H:       (type $2 (func (param (ref null (exact $B)))))
+
+  ;; T_N_H:      (func $test (type $2) (param $nullable (ref null (exact $B)))
+  ;; T_N_H-NEXT:  (local $A (ref $A))
+  ;; T_N_H-NEXT:  (local $B (ref $B))
+  ;; T_N_H-NEXT:  (drop
+  ;; T_N_H-NEXT:   (struct.new_default $A)
+  ;; T_N_H-NEXT:  )
+  ;; T_N_H-NEXT: )
+  (func $test (param $nullable (ref null (exact $B)))
     (local $A (ref $A))
     (local $B (ref $B))
     (drop
@@ -38,26 +52,37 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct))
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    ;; T_N_H:      (rec
+    ;; T_N_H-NEXT:  (type $A (struct))
     (type $A (descriptor $B (struct)))
-    ;; CHECK:       (type $B (struct))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    ;; T_N_H:       (type $B (struct))
     (type $B (describes $A (struct)))
   )
 
-  ;; CHECK:       (type $2 (func))
 
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (global $g anyref (struct.new_default $A
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
+  ;; T_N_H:       (type $2 (func))
+
+  ;; T_N_H:      (global $g anyref (struct.new_default $A))
   (global $g anyref (struct.new $A
-    (struct.new $B)
+    (ref.null $B)
   ))
 
   ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (local $B (ref $B))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $A)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $nullable (ref null $B))
+  ;; T_N_H:      (func $test (type $2)
+  ;; T_N_H-NEXT:  (local $A (ref $A))
+  ;; T_N_H-NEXT:  (local $B (ref $B))
+  ;; T_N_H-NEXT: )
+  (func $test
     (local $A (ref $A))
     (local $B (ref $B))
   )
