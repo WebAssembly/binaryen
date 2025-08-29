@@ -28,7 +28,6 @@
 #include "ir/names.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
-#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -376,48 +375,16 @@ struct GlobalTypeOptimization : public Pass {
         // Parallel to our handling of field removals, above, but simpler as
         // descriptors are immutable and non-optional in struct creation: if we
         // and our supers do not read the descriptor, we do not need it.
-        //
-        // This is only the initial processing, see below.
-        if (!dataFromSupers.desc.hasRead) {
+        if (!dataFromSubsAndSupers.desc.hasRead) {
           haveUnneededDescriptors.insert(type);
+          haveUnneededDescribings.insert(*desc);
         }
       }
     }
 
-    // After finding unneeded descriptors, apply the subtyping rule that a
-    // descriptor's subtypes and supertypes must also have descriptors. That
-    // means we can only remove entire subtyping chains at once, not parts of
-    // them.
-    if (!haveUnneededDescriptors.empty()) {
-      SubTypes subTypes(*module);
-      // TODO: but not quadratic
-      std::unordered_set<HeapType> haveUnneededDescriptorsCopy = std::move(haveUnneededDescriptors);
-      for (auto type : haveUnneededDescriptorsCopy) {
-        // Check the super.
-        if (auto super = type.getSuperType()) {
-          if (!haveUnneededDescriptorsCopy.count(*super)) {
-            continue;
-          }
-        }
-        // Check the subs.
-        for (auto sub : subTypes.getImmediateSubTypes(type)) {
-          if (!haveUnneededDescriptorsCopy.count(sub)) {
-            continue;
-          }
-        }
-        // No problems: Optimize.
-        haveUnneededDescriptors.insert(type);
-      }
-
-      // Now that we know which we can optimize, mark their paired elements for
-      // the processing below.
-      for (auto type : haveUnneededDescriptors) {
-        auto desc = type.getDescriptorType();
-        assert(desc);
-        haveUnneededDescribings.insert(*desc);
-      }
-      assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
-    }
+    // Descriptor/describings are in pairs, so the size of these sets is equal,
+    // and we only need to check one below.
+    assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
 
     // If we found things that can be removed, remove them from instructions.
     // (Note that we must do this first, while we still have the old heap types

@@ -363,6 +363,10 @@ private:
               work.push(*superType);
             }
           }
+          // Propagate the descriptor.
+          if (superInfos.desc.combine(infos.desc)) {
+            work.push(*superType);
+          }
         }
       }
 
@@ -375,6 +379,10 @@ private:
             if (subInfos[i].combine(infos[i])) {
               work.push(subType);
             }
+          }
+          // Propagate the descriptor.
+          if (subInfos.desc.combine(infos.desc)) {
+            work.push(subType);
           }
         }
       }
