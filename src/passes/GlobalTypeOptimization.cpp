@@ -402,14 +402,16 @@ struct GlobalTypeOptimization : public Pass {
 
       // Process the descriptor.
       if (auto desc = type.getDescriptorType()) {
-        // To remove a descriptor, it must not be used in either subtypes or
-        // supertypes, to not break validation. It must also have no write (see
-        // above, we note only dangerous writes which might trap), as if it
-        // could trap, we'd have no easy way to remove it in a global scope.
+        // To remove a descriptor, it must not be used in subtypes. It must also
+        // have no write (see above, we note only dangerous writes which might
+        // trap), as if it could trap, we'd have no easy way to remove it in a
+        // global scope.
         // TODO: We could check and handle the global scope specifically, but
         //       the trapsNeverHappen flag avoids this problem entirely anyhow.
-        if (!dataFromSubsAndSupers.desc.hasRead &&
-            (!dataFromSubsAndSupers.desc.hasWrite || trapsNeverHappen)) {
+        //
+        // This does not handle descriptor subtyping, see below.
+        if (!dataFromSupers.desc.hasRead &&
+            (!dataFromSupers.desc.hasWrite || trapsNeverHappen)) {
           haveUnneededDescriptors.insert(type);
         }
       }

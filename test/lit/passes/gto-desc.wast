@@ -1026,3 +1026,41 @@
   )
 )
 
+;; Sibling types $A and $B. The supertype that connects them should not stop us
+;; from optimizing $B here, even though $A cannot be.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+
+    ;; CHECK:       (type $A (sub $super (descriptor $A.desc (struct))))
+    (type $A (sub $super (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (describes $A (struct)))
+    (type $A.desc (describes $A (struct)))
+
+    ;; CHECK:       (type $B (sub $super (struct)))
+    (type $B (sub $super (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (struct))
+    (type $B.desc (describes $B (struct)))
+  )
+
+  ;; CHECK:       (type $5 (func (param (ref $A))))
+
+  ;; CHECK:      (func $test (type $5) (param $A (ref $A))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $A (ref $A))
+    (local $B (ref $B))
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+  )
+)
