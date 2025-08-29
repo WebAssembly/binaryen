@@ -498,8 +498,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field i32)))
-    (type $A (descriptor $B (struct (field (mut i32)) (field (mut i32)) (field (mut i32)))))
+    ;; CHECK-NEXT:  (type $A (struct (field $c i32)))
+    (type $A (descriptor $B (struct (field $a (mut i32)) (field $b (mut i32)) (field $c (mut i32)))))
     ;; CHECK:       (type $B (struct))
     (type $B (describes $A (struct (field (mut i32)))))
   )
@@ -533,7 +533,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:   (struct.get $A $c
   ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -564,13 +564,13 @@
       )
     )
     ;; Write only the middle field (we can remove it as write-only).
-    (struct.set $A 1
+    (struct.set $A $b
       (local.get $A)
       (i32.const 42)
     )
     ;; Read only the last field. We can make it immutable.
     (drop
-      (struct.get $A 2
+      (struct.get $A $c
         (local.get $A)
       )
     )
