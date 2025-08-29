@@ -634,6 +634,61 @@
   )
 )
 
-;; test struct new default and not new defualt
+;; Multiple types with descriptors, only one of whom can be removed.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (struct))
+    (type $B (describes $A (struct)))
 
-;; test multipledescriptors in one module, only one removfd
+    ;; CHECK:       (type $C (descriptor $D (struct)))
+    (type $C (descriptor $D (struct)))
+    ;; CHECK:       (type $D (describes $C (struct)))
+    (type $D (describes $C (struct)))
+  )
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (func $test (type $4)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (local $C (ref $C))
+  ;; CHECK-NEXT:  (local.set $A
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $C
+  ;; CHECK-NEXT:   (struct.new_default $C
+  ;; CHECK-NEXT:    (struct.new_default $D)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $C
+  ;; CHECK-NEXT:    (local.get $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $A (ref $A))
+    (local $C (ref $C))
+    (local.set $A
+      (struct.new $A
+        (struct.new $B)
+      )
+    )
+    (local.set $C
+      (struct.new $C
+        (struct.new $D)
+      )
+    )
+    ;; Use the descriptor in $C but not $A.
+    (drop
+      (ref.get_desc $C
+        (local.get $C)
+      )
+    )
+  )
+)
+
+;; subtyping
+
