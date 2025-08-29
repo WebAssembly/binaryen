@@ -135,10 +135,8 @@ struct GlobalTypeOptimization : public Pass {
   static const Index RemovedField = Index(-1);
   std::unordered_map<HeapType, std::vector<Index>> indexesAfterRemovals;
 
-  // The types that no longer need a descriptor, and that no longer need to
-  // describe.
+  // The types that no longer need a descriptor.
   std::unordered_set<HeapType> haveUnneededDescriptors;
-  std::unordered_set<HeapType> haveUnneededDescribings;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
@@ -413,7 +411,6 @@ struct GlobalTypeOptimization : public Pass {
         if (!dataFromSubsAndSupers.desc.hasRead &&
             (!dataFromSubsAndSupers.desc.hasWrite || trapsNeverHappen)) {
           haveUnneededDescriptors.insert(type);
-          haveUnneededDescribings.insert(*desc);
         }
       }
     }
@@ -428,8 +425,6 @@ struct GlobalTypeOptimization : public Pass {
     // remove A's descriptor without also removing $B's, so we need to propagate
     // that "must remain a descriptor" property among descriptors.
     if (!haveUnneededDescriptors.empty()) {
-      // Descriptor/describings are in pairs.
-      assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
 
       struct DescriptorInfo {
         // Whether this descriptor is needed - it must keep describing.
@@ -451,9 +446,11 @@ struct GlobalTypeOptimization : public Pass {
       // is needed.
       StructUtils::TypeHierarchyPropagator<DescriptorInfo>::StructMap map;
       for (auto type : subTypes.types) {
-        if (type.getDescribedType() && !haveUnneededDescribings.count(type)) {
-          // This descriptor type is needed.
-          map[type].needed = true;
+        if (auto desc = type.getDescriptorType()) {
+          if (!haveUnneededDescriptors.count(type)) {
+            // This descriptor type is needed.
+            map[*desc].needed = true;
+          }
         }
       }
 
@@ -463,16 +460,11 @@ struct GlobalTypeOptimization : public Pass {
       // Remove optimization opportunities that the propagation ruled out.
       for (auto& [type, info] : map) {
         if (info.needed) {
-          if (haveUnneededDescribings.erase(type)) {
-            auto described = type.getDescribedType();
-            assert(described);
-            haveUnneededDescriptors.erase(*described);
-          }
+          auto described = type.getDescribedType();
+          assert(described);
+          haveUnneededDescriptors.erase(*described);
         }
       }
-
-      // Descriptor/describings should still be in pairs.
-      assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
     }
 
     // If we found things that can be removed, remove them from instructions.
@@ -564,8 +556,10 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         // Remove an unneeded describes.
-        if (parent.haveUnneededDescribings.count(oldType)) {
-          typeBuilder.setDescribed(i, std::nullopt);
+        if (auto described = oldType.getDescribedType()) {
+          if (parent.haveUnneededDescriptors.count(*described)) {
+            typeBuilder.setDescribed(i, std::nullopt);
+          }
         }
       }
     };
