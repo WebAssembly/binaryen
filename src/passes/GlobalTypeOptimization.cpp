@@ -28,6 +28,7 @@
 #include "ir/names.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -148,6 +149,8 @@ struct GlobalTypeOptimization : public Pass {
       Fatal() << "GTO requires --closed-world";
     }
 
+    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
+
     // Find and analyze struct operations inside each function.
     StructUtils::FunctionStructValuesMap<FieldInfo> functionNewInfos(*module),
       functionSetGetInfos(*module);
@@ -158,26 +161,18 @@ struct GlobalTypeOptimization : public Pass {
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
-    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
-
-    // We need info from struct.news in only one situation, so far: custom
-    // descriptors, where setting a nullable descriptor is a dangerous write (it
-    // might trap). We only need this if we care about traps.
+    // Custom descriptor handling: We need to look at struct.news, which
+    // normally we ignore (nothing in a struct.new can cause fields to remain
+    // mutable, or force the field to stay around. We cannot ignore them with CD
+    // because struct.news can now trap, and removing the descriptor could
+    // change things, so we must be careful. (Without traps, though, this is
+    // unnecessary.)
     if (module->features.hasCustomDescriptors() && !trapsNeverHappen) {
-      // Otherwise, nothing in a struct.new can prevent removing fields or
-      // making them immutable, so we must only copy over descriptor fields here
-      // (that is, other writes from a struct.new are skipped here; they do not
-      // cause fields to remain mutable, unlike struct.set writes).
       for (auto& [func, infos] : functionNewInfos) {
         for (auto& [type, info] : infos) {
           if (info.desc.hasWrite) {
-            combinedSetGetInfos[type].noteWrite();
-
-            // We must also propagate these dangerous writes to describees.
-            // Imagine that $A, $A.desc are a pair of describee/descriptor, and
-            // $B, $B.desc as well with subtyping only between the descriptors, and *not* $A and $B.
-            // We still cannot remove the descriptor from either, if one has a
-            // dangerous write.
+            // Copy the descriptor write to the info we will propagate below.
+            combinedSetGetInfos[type].desc.noteWrite();
           }
         }
       }
@@ -209,7 +204,8 @@ struct GlobalTypeOptimization : public Pass {
     //    subtypes (as wasm only allows the type to differ if the fields are
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
-    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
+    SubTypes subTypes(*module);
+    StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(subTypes);
     auto dataFromSubsAndSupersMap = combinedSetGetInfos;
     propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
     auto dataFromSupersMap = std::move(combinedSetGetInfos);
@@ -422,9 +418,57 @@ struct GlobalTypeOptimization : public Pass {
       }
     }
 
-    // Descriptor/describings are in pairs, so the size of these sets is equal,
-    // and we only need to check one below.
-    assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
+    // Handle descriptor subtyping:
+    //
+    //   A -> A.desc
+    //        ^
+    //   B -> B.desc
+    //
+    // Here the descriptors subtype, but *not* the describees. We cannot
+    // remove A's descriptor without also removing $B's, so we need to propagate
+    // that "must remain a descriptor" property among descriptors.
+    if (!haveUnneededDescriptors.empty()) {
+      // Descriptor/describings are in pairs.
+      assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
+
+      struct DescriptorInfo {
+        // Whether this descriptor is needed - it must keep describing.
+        bool needed = false;
+
+        bool combine(const DescriptorInfo& other) {
+          if (!needed && other.needed) {
+            needed = true;
+            return true;
+          }
+          return false;
+        }
+      };
+
+      TypeHierarchyPropagator<DescriptorInfo> descPropagator(subTypes);
+
+      // Populate the initial data: Anything we did not see was unneeded, is
+      // needed.
+      TypeHierarchyPropagator<DescriptorInfo>::StructMap map;
+      for (auto type : subTypes.types) {
+        if (type.isStruct() && !haveUnneededDescribings.count(type)) {
+          // This descriptor type is needed.
+          map[type].needed = true;
+        }
+      }
+
+      // Propagate.
+      descPropagator.propagateToSuperAndSubTypes(map);
+
+      // Remove optimization opportunities that the propagation ruled out.
+      for (auto& [type, info] : map) {
+        if (info.needed) {
+          ehh
+        }
+      }
+
+      // Descriptor/describings should still be in pairs.
+      assert(haveUnneededDescriptors.size() == haveUnneededDescribings.size());
+    }
 
     // If we found things that can be removed, remove them from instructions.
     // (Note that we must do this first, while we still have the old heap types

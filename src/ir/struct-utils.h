@@ -310,8 +310,8 @@ struct StructScanner
   FunctionStructValuesMap<T>& functionSetGetInfos;
 };
 
-// Helper class to propagate information about fields to sub- and/or super-
-// classes in the type hierarchy. While propagating it calls a method
+// Helper class to propagate information to sub- and/or super- classes in the
+// type hierarchy. While propagating it calls a method
 //
 //  to.combine(from)
 //
@@ -328,15 +328,31 @@ public:
 
   SubTypes subTypes;
 
+  // Propagate given a StructValuesMap, which means we need to take into
+  // account fields.
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
     propagate(infos, false, true);
   }
-
   void propagateToSubTypes(StructValuesMap<T>& infos) {
     propagate(infos, true, false);
   }
-
   void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
+    propagate(infos, true, true);
+  }
+
+  // Propagate on a simpler map of structs and infos (that is, not using
+  // separate values for the fields, as StructValuesMap does). This is useful
+  // when not tracking individual fields, but something more general about
+  // types.
+  using StructMap = std::unordered_map<HeapType, T>;
+
+  void propagateToSuperTypes(StructMap& infos) {
+    propagate(infos, false, true);
+  }
+  void propagateToSubTypes(StructMap& infos) {
+    propagate(infos, true, false);
+  }
+  void propagateToSuperAndSubTypes(StructMap& infos) {
     propagate(infos, true, true);
   }
 
@@ -381,6 +397,40 @@ private:
           }
           // Propagate the descriptor.
           if (subInfos.desc.combine(infos.desc)) {
+            work.push(subType);
+          }
+        }
+      }
+    }
+  }
+
+  void propagate(StructMap& combinedInfos,
+                 bool toSubTypes,
+                 bool toSuperTypes) {
+    UniqueDeferredQueue<HeapType> work;
+    for (auto& [type, _] : combinedInfos) {
+      work.push(type);
+    }
+    while (!work.empty()) {
+      auto type = work.pop();
+      auto& info = combinedInfos[type];
+
+      if (toSuperTypes) {
+        // Propagate to the supertype.
+        if (auto superType = type.getDeclaredSuperType()) {
+          auto& superInfo = combinedInfos[*superType];
+          if (superInfo.combine(info)) {
+            work.push(*superType);
+          }
+        }
+      }
+
+      if (toSubTypes) {
+        // Propagate shared fields to the subtypes.
+        auto numFields = type.getStruct().fields.size();
+        for (auto subType : subTypes.getImmediateSubTypes(type)) {
+          auto& subInfo = combinedInfos[subType];
+          if (subInfo.combine(info)) {
             work.push(subType);
           }
         }
