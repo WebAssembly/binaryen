@@ -88,10 +88,10 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    if (index == DescriptorIndex) {
-      if (!expr->type.isNullable()) {
-        return;
-      }
+    if (index == DescriptorIndex && expr->type.isNonNullable()) {
+      // A non-dangerous write to a descriptor, which as mentioned above, we do
+      // not track.
+      return;
     }
     info.noteWrite();
   }
@@ -158,14 +158,16 @@ struct GlobalTypeOptimization : public Pass {
     // Combine the data from the functions.
     functionSetGetInfos.combineInto(combinedSetGetInfos);
 
+    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
+
     // We need info from struct.news in only one situation, so far: custom
-    // descriptors, where setting a nullable descriptor is a dangerous write,
-    // one with effects, that we must track.
-    if (module->features.hasCustomDescriptors()) {
+    // descriptors, where setting a nullable descriptor is a dangerous write (it
+    // might trap). We only need this if we care about traps.
+    if (module->features.hasCustomDescriptors() && !trapsNeverHappen) {
       // Otherwise, nothing in a struct.new can prevent removing fields or
       // making them immutable, so we must only copy over descriptor fields here
       // (that is, other writes from a struct.new are skipped here; they do not
-      // cause fields to remain mutable, like struct.set writes).
+      // cause fields to remain mutable, unlike struct.set writes).
       for (auto& [func, infos] : functionNewInfos) {
         for (auto& [type, info] : infos) {
           combinedSetGetInfos[type].desc.combine(info.desc);
@@ -209,8 +211,6 @@ struct GlobalTypeOptimization : public Pass {
     auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
     std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
                                                 publicTypes.end());
-
-    auto trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     // Process the propagated info. We look at supertypes first, as the order of
     // fields in a supertype is a constraint on what subtypes can do. That is,
