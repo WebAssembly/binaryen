@@ -257,12 +257,11 @@ struct StructScanner
     }
   }
 
-  void visitRefGetDesc(RefGetDesc* curr) {
-    handleDescRead(curr->ref);
-  }
+  void visitRefGetDesc(RefGetDesc* curr) { handleDescRead(curr->ref); }
 
   void visitBrOn(BrOn* curr) {
-    if (curr->desc && (curr->op == BrOnCastDesc || curr->op ==  BrOnCastDescFail)) {
+    if (curr->desc &&
+        (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail)) {
       handleDescRead(curr->ref);
     }
   }

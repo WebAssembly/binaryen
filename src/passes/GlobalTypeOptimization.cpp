@@ -461,8 +461,9 @@ struct GlobalTypeOptimization : public Pass {
         }
       }
 
-      void
-      modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
+      void modifyTypeBuilderEntry(TypeBuilder& typeBuilder,
+                                  Index i,
+                                  HeapType oldType) override {
         if (!oldType.isStruct()) {
           return;
         }
