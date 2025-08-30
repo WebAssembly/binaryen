@@ -17,7 +17,7 @@
 ;; PRIMARY-NEXT:     (nop)
 ;; PRIMARY-NEXT:   )
 ;; PRIMARY-NEXT:   (func $2
-;; PRIMARY-NEXT:     (call_indirect $0 (type $0)
+;; PRIMARY-NEXT:     (call_indirect (type $0)
 ;; PRIMARY-NEXT:       (i32.const 0)
 ;; PRIMARY-NEXT:     )
 ;; PRIMARY-NEXT:   )
@@ -26,8 +26,8 @@
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:   (type $0 (func))
 ;; SECONDARY-NEXT:   (import "primary" "%c" (table $timport$0 1 funcref))
-;; SECONDARY-NEXT:   (import "primary" "%a" (func $fimport$0 (type $0)))
-;; SECONDARY-NEXT:   (import "primary" "%b" (func $fimport$1 (type $0)))
+;; SECONDARY-NEXT:   (import "primary" "%a" (func $fimport$0))
+;; SECONDARY-NEXT:   (import "primary" "%b" (func $fimport$1))
 ;; SECONDARY-NEXT:   (elem $0 (i32.const 0) $0)
 ;; SECONDARY-NEXT:   (func $0
 ;; SECONDARY-NEXT:     (call $fimport$1)
