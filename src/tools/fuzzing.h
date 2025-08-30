@@ -211,6 +211,9 @@ private:
   // All arrays that are mutable.
   std::vector<HeapType> mutableArrays;
 
+  // All tags that are valid as exception tags (which cannot have results).
+  std::vector<Tag*> exceptionTags;
+
   Index numAddedFunctions = 0;
 
   // The name of an empty tag.

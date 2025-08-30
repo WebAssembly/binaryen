@@ -437,44 +437,25 @@
 ;; CHECK-NEXT: )
 (module
   ;; Return call to self with different params, then stop evaluating.
-  ;; CHECK:      (type $0 (func (param i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (import "env" "import" (func $import (type $1)))
+  ;; CHECK:      (import "env" "import" (func $import (type $0)))
   (import "env" "import" (func $import))
 
-  ;; CHECK:      (global $g (mut i32) (i32.const 42))
   (global $g (mut i32) (i32.const 0))
 
-  ;; CHECK:      (export "test" (func $test_2))
-
-  ;; CHECK:      (func $test (type $0) (param $0 i32)
-  ;; CHECK-NEXT:  (global.set $g
-  ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.eq
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (call $import)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (else
-  ;; CHECK-NEXT:    (return_call $test
-  ;; CHECK-NEXT:     (i32.add
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $test (export "test") (param i32)
     (global.set $g
       (local.get 0)
     )
+    ;; When first called, the param is 0 and we do the return call, sending it
+    ;; a parameter of 1. That does another return call, and so forth, until the
+    ;; incrementing counter in the param reaches 42 and the if condition is
+    ;; true. We then call the import. The final precomputed code after all this
+    ;; is just to set the local to 42 (which other optimizations can remove),
+    ;; and to call the import.
     (if
       (i32.eq
         (local.get 0)
@@ -495,24 +476,11 @@
   )
 )
 
-;; CHECK:      (func $test_2 (type $0) (param $0 i32)
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (i32.eq
-;; CHECK-NEXT:    (local.tee $0
-;; CHECK-NEXT:     (i32.const 42)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 42)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (then
-;; CHECK-NEXT:    (call $import)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (else
-;; CHECK-NEXT:    (return_call $test
-;; CHECK-NEXT:     (i32.add
-;; CHECK-NEXT:      (local.get $0)
-;; CHECK-NEXT:      (i32.const 1)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
+;; CHECK:      (export "test" (func $test_2))
+
+;; CHECK:      (func $test_2 (type $1) (param $0 i32)
+;; CHECK-NEXT:  (local.set $0
+;; CHECK-NEXT:   (i32.const 42)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT: )

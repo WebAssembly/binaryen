@@ -2741,6 +2741,11 @@ public:
     globalValues[name] = values;
   }
 
+  // Returns true if we set a local or a global.
+  bool hasEffectfulSets() const {
+    return !localValues.empty() || !globalValues.empty();
+  }
+
   Flow visitLocalGet(LocalGet* curr) {
     // Check if a constant value has been set in the context of this runner.
     auto iter = localValues.find(curr->index);
@@ -4659,6 +4664,30 @@ public:
 
     // We may have to call multiple functions in the event of return calls.
     while (true) {
+      if (self()->isResuming()) {
+        // See which function to call. Re-winding the stack, we are calling the
+        // function that the parent called, but the target that was called may
+        // have return-called. In that case, the original target function should
+        // not be called, as it was returned from, and we noted the proper
+        // target during that return.
+        auto entry = self()->popResumeEntry("function-target");
+        assert(entry.size() == 1);
+        auto func = entry[0];
+        auto data = func.getFuncData();
+        // We must be in the right module to do the call using that name.
+        if (data->self != self()) {
+          // Restore the entry to the resume stack, as the other module's
+          // callFunction() will read it. Then call into the other module. This
+          // sets this up as if we called into the proper module in the first
+          // place.
+          self()->pushResumeEntry(entry, "function-target");
+          return data->doCall(arguments);
+        }
+
+        // We are in the right place, and can just call the given function.
+        name = data->name;
+      }
+
       Function* function = wasm.getFunction(name);
       assert(function);
 
@@ -4679,7 +4708,7 @@ public:
         // Restore the local state (see below for the ordering, we push/pop).
         for (Index i = 0; i < scope.locals.size(); i++) {
           auto l = scope.locals.size() - 1 - i;
-          scope.locals[l] = self()->popResumeEntry("function");
+          scope.locals[l] = self()->popResumeEntry("function-local");
 #ifndef NDEBUG
           // Must have restored valid data. The type must match the local's
           // type, except for the case of a non-nullable local that has not yet
@@ -4713,8 +4742,15 @@ public:
       if (flow.suspendTag) {
         // Save the local state.
         for (auto& local : scope.locals) {
-          self()->pushResumeEntry(local, "function");
+          self()->pushResumeEntry(local, "function-local");
         }
+
+        // Save the function we called (in the case of a return call, this is
+        // not the original function that was called, and the original has been
+        // returned from already; we should call the last return_called
+        // function).
+        auto target = self()->makeFuncData(name, function->type);
+        self()->pushResumeEntry({target}, "function-target");
       }
 
       if (flow.breakTo != RETURN_CALL_FLOW) {
