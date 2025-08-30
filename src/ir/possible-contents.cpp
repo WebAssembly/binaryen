@@ -704,8 +704,12 @@ struct InfoCollector
   void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitRefGetDesc(RefGetDesc* curr) {
-    // TODO: Do something more similar to struct.get here
-    addRoot(curr);
+    // Parallel to StructGet.
+    if (!isRelevant(curr->ref)) {
+      addRoot(curr);
+      return;
+    }
+    addChildParentLink(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
@@ -938,6 +942,10 @@ struct InfoCollector
       linkChildList(curr->operands, [&](Index i) {
         return DataLocation{type, i};
       });
+    }
+    if (curr->desc) {
+      info.links.push_back({ExpressionLocation{curr->desc, 0},
+                            DataLocation{type, DataLocation::DescriptorIndex}});
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
@@ -2679,6 +2687,11 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
+    } else if (auto* get = parent->dynCast<RefGetDesc>()) {
+      // Similar to struct.get.
+      assert(get->ref == child);
+      readFromData(
+        get->ref->type, DataLocation::DescriptorIndex, contents, get);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -2839,6 +2852,10 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
+  if (dataLoc.index == DataLocation::DescriptorIndex) {
+    // Nothing to filter (packing is not relevant for a descriptor).
+    return;
+  }
   auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
   if (!field) {
     // This is a bottom type; nothing will be written here.

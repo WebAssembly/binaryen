@@ -443,27 +443,14 @@ struct ExecutionResults {
 
   bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
-  FunctionResult run(Function* func, Module& wasm) {
-    LoggingExternalInterface interface(loggings, wasm);
-    try {
-      ModuleRunner instance(wasm, &interface);
-      instance.setRelaxedBehavior(ModuleRunner::RelaxedBehavior::Execute);
-      instance.instantiate();
-      interface.setModuleRunner(&instance);
-      return run(func, wasm, instance);
-    } catch (const TrapException&) {
-      // May throw in instance creation (init of offsets).
-      return {};
-    } catch (const HostLimitException&) {
-      // May throw in instance creation (e.g. array.new of huge size).
-      // This should be ignored and not compared with, as optimizations can
-      // change whether a host limit is reached.
-      ignore = true;
-      return {};
-    }
-  }
-
   FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
+    // Clear the continuation state after each run of an export.
+    struct CleanUp {
+      ModuleRunner& instance;
+      CleanUp(ModuleRunner& instance) : instance(instance) {}
+      ~CleanUp() { instance.clearContinuationStore(); }
+    } cleanUp(instance);
+
     try {
       // call the method
       Literals arguments;
@@ -472,7 +459,6 @@ struct ExecutionResults {
         if (!param.isDefaultable()) {
           std::cout << "[trap fuzzer can only send defaultable parameters to "
                        "exports]\n";
-          instance.clearContinuationStore();
           return Trap{};
         }
         arguments.push_back(Literal::makeZero(param));
@@ -480,22 +466,18 @@ struct ExecutionResults {
       auto flow = instance.callFunction(func->name, arguments);
       if (flow.suspendTag) {
         std::cout << "[exception thrown: unhandled suspend]" << std::endl;
-        instance.clearContinuationStore();
         return Exception{};
       }
       return flow.values;
     } catch (const TrapException&) {
-      instance.clearContinuationStore();
       return Trap{};
     } catch (const WasmException& e) {
-      instance.clearContinuationStore();
       std::cout << "[exception thrown: " << e << "]" << std::endl;
       return Exception{};
     } catch (const HostLimitException&) {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
-      instance.clearContinuationStore();
       return {};
     }
   }
