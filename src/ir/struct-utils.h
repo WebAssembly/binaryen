@@ -275,11 +275,13 @@ struct StructScanner
 
   void handleDescRead(Expression* ref) {
     auto type = ref->type;
-    if (type == Type::unreachable || type.isNull()) {
+    if (type == Type::unreachable) {
       return;
     }
-
     auto heapType = type.getHeapType();
+    if (!heapType.isStruct()) {
+      return;
+    }
     self().noteRead(heapType,
                     DescriptorIndex,
                     functionSetGetInfos[this->getFunction()][heapType].desc);
