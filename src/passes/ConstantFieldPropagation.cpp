@@ -71,8 +71,8 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
-using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
-using BoolFunctionStructValuesMap = StructUtils::FunctionStructValuesMap<Bool>;
+using BoolStructValuesMap = StructUtils::StructValuesMap<CombinableBool>;
+using BoolFunctionStructValuesMap = StructUtils::FunctionStructValuesMap<CombinableBool>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
