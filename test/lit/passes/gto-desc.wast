@@ -1027,7 +1027,7 @@
 )
 
 ;; Sibling types $A and $B. The supertype that connects them should not stop us
-;; from optimizing $B here, even though $A cannot be.
+;; from optimizing $B here, even though $A cannot be optimized.
 (module
   (rec
     ;; CHECK:      (rec
