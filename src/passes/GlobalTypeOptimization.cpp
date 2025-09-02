@@ -427,12 +427,13 @@ struct GlobalTypeOptimization : public Pass {
     // remove A's descriptor without also removing $B's, so we need to propagate
     // that "must remain a descriptor" property among descriptors.
     if (!haveUnneededDescriptors.empty()) {
-      StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool> descPropagator(
-        subTypes);
+      StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
+        descPropagator(subTypes);
 
       // Populate the initial data: Any descriptor we did not see was unneeded,
       // is needed.
-      StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>::StructMap map;
+      StructUtils::TypeHierarchyPropagator<
+        StructUtils::CombinableBool>::StructMap map;
       for (auto type : subTypes.types) {
         if (auto desc = type.getDescriptorType()) {
           if (!haveUnneededDescriptors.count(type)) {

@@ -71,7 +71,8 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
-using BoolStructValuesMap = StructUtils::StructValuesMap<StructUtils::CombinableBool>;
+using BoolStructValuesMap =
+  StructUtils::StructValuesMap<StructUtils::CombinableBool>;
 using BoolFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<StructUtils::CombinableBool>;
 
@@ -548,7 +549,8 @@ struct ConstantFieldPropagation : public Pass {
     // of subtypes must be taken into account (that is, A or a subtype is being
     // copied, so we want to do the same thing for B and C as well as A, since
     // a copy of A means it could be a copy of B or C).
-    StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool> boolPropagator(subTypes);
+    StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
+      boolPropagator(subTypes);
     boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
