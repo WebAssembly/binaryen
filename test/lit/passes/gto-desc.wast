@@ -1064,3 +1064,40 @@
     )
   )
 )
+
+;; ref.cast_desc on a basic supertype.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+
+    ;; CHECK:       (type $B (sub (struct)))
+    (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub (struct)))
+    (type $B.desc (sub (describes $B (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func (param anyref (ref (exact $A.desc))) (result (ref (exact $A)))))
+
+  ;; CHECK:      (func $cast_anyref (type $4) (param $ref anyref) (param $desc (ref (exact $A.desc))) (result (ref (exact $A)))
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (ref.cast_desc (ref (exact $A))
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (local.get $desc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast_anyref (param $ref anyref) (param $desc (ref (exact $A.desc))) (result (ref (exact $A)))
+    (local $B (ref $B))
+    ;; The cast input is anyref. That means any struct could be sent in, but we
+    ;; only need to prevent optimization of $A, who is the cast output. $B can
+    ;; still be optimized.
+    (ref.cast_desc (ref (exact $A))
+      (local.get $ref)
+      (local.get $desc)
+    )
+  )
+)
+

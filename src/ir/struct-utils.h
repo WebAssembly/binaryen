@@ -260,31 +260,38 @@ struct StructScanner
 
   void visitRefCast(RefCast* curr) {
     if (curr->desc) {
-      handleDescRead(curr->ref);
+      // We may try to read a descriptor from anything arriving in |curr->ref|,
+      // but the only things that matter are the things we cast to: other types
+      // can lack a descriptor, and are skipped anyhow. So the only effective
+      // read is of the cast type.
+      handleDescRead(curr->getCastType());
     }
   }
-
-  void visitRefGetDesc(RefGetDesc* curr) { handleDescRead(curr->ref); }
 
   void visitBrOn(BrOn* curr) {
     if (curr->desc &&
         (curr->op == BrOnCastDesc || curr->op == BrOnCastDescFail)) {
-      handleDescRead(curr->ref);
+      handleDescRead(curr->getCastType());
     }
   }
 
-  void handleDescRead(Expression* ref) {
-    auto type = ref->type;
+  void visitRefGetDesc(RefGetDesc* curr) {
+    // Unlike a cast, any thing in |curr->ref| may be read from.
+    handleDescRead(curr->ref->type);
+  }
+
+  void handleDescRead(Type type) {
     if (type == Type::unreachable) {
       return;
     }
     auto heapType = type.getHeapType();
-    if (!heapType.isStruct()) {
+    if (heapType.isStruct()) {
+      // Any subtype of the reference here may be read from.
+      self().noteRead(heapType,
+                      DescriptorIndex,
+                      functionSetGetInfos[this->getFunction()][heapType].desc);
       return;
     }
-    self().noteRead(heapType,
-                    DescriptorIndex,
-                    functionSetGetInfos[this->getFunction()][heapType].desc);
   }
 
   void
