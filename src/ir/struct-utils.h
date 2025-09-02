@@ -276,7 +276,7 @@ struct StructScanner
   }
 
   void visitRefGetDesc(RefGetDesc* curr) {
-    // Unlike a cast, any thing in |curr->ref| may be read from.
+    // Unlike a cast, anything in |curr->ref| may be read from.
     handleDescRead(curr->ref->type);
   }
 
