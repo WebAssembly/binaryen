@@ -125,26 +125,27 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   // Given information about a constant value, and the struct type and
   // StructGet/RMW/Cmpxchg that reads it, create an expression for that value.
-  Expression*
-  makeExpression(const PossibleConstantValues& info, HeapType type, Expression* curr) {
+  Expression* makeExpression(const PossibleConstantValues& info,
+                             HeapType type,
+                             Expression* curr) {
     auto* value = info.makeExpression(*getModule());
     if (auto* structGet = curr->dynCast<StructGet>()) {
       auto field = GCTypeUtils::getField(type, structGet->index);
       assert(field);
       // Apply packing, if needed.
-      value =
-        Bits::makePackedFieldGet(value, *field, structGet->signed_, *getModule());
+      value = Bits::makePackedFieldGet(
+        value, *field, structGet->signed_, *getModule());
       // Check if the value makes sense. The analysis below flows values around
-      // without considering where they are placed, that is, when we see a parent
-      // type can contain a value in a field then we assume a child may as well
-      // (which in general it can, e.g., using a reference to the parent, we can
-      // write that value to it, but the reference might actually point to a
-      // child instance). If we tracked the types of fields then we might avoid
-      // flowing values into places they cannot reside, like when a child field is
-      // a subtype, and so we could ignore things not refined enough for it (GUFA
-      // does a better job at this). For here, just check we do not break
-      // validation, and if we do, then we've inferred the only possible value is
-      // an impossible one, making the code unreachable.
+      // without considering where they are placed, that is, when we see a
+      // parent type can contain a value in a field then we assume a child may
+      // as well (which in general it can, e.g., using a reference to the
+      // parent, we can write that value to it, but the reference might actually
+      // point to a child instance). If we tracked the types of fields then we
+      // might avoid flowing values into places they cannot reside, like when a
+      // child field is a subtype, and so we could ignore things not refined
+      // enough for it (GUFA does a better job at this). For here, just check we
+      // do not break validation, and if we do, then we've inferred the only
+      // possible value is an impossible one, making the code unreachable.
       if (!Type::isSubType(value->type, field->type)) {
         Builder builder(*getModule());
         value = builder.makeSequence(builder.makeDrop(value),
@@ -162,7 +163,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     optimizeRead(curr, curr->ref, StructUtils::DescriptorIndex);
   }
 
-  void optimizeRead(Expression* curr, Expression* ref, Index index, std::optional<MemoryOrder> order=std::nullopt) {
+  void optimizeRead(Expression* curr,
+                    Expression* ref,
+                    Index index,
+                    std::optional<MemoryOrder> order = std::nullopt) {
     auto type = getRelevantHeapType(ref);
     if (!type) {
       return;
@@ -186,8 +190,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // reference, so keep it around). We also do not need to care about
       // synchronization since trapping accesses do not synchronize with other
       // accesses.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(ref),
-                                          builder.makeUnreachable()));
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(ref), builder.makeUnreachable()));
       changed = true;
       return;
     }
@@ -217,8 +221,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     auto* value = makeExpression(info, heapType, curr);
-    auto* replacement = builder.blockify(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)));
+    auto* replacement =
+      builder.blockify(builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)));
     replacement->list.push_back(value);
     replacement->type = value->type;
     replaceCurrent(replacement);
