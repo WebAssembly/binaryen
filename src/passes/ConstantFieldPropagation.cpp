@@ -125,18 +125,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   // Given information about a constant value, and the struct type and
   // StructGet/RMW/Cmpxchg that reads it, create an expression for that value.
-  template<typename T>
   Expression*
-  makeExpression(const PossibleConstantValues& info, HeapType type, T* curr) {
+  makeExpression(const PossibleConstantValues& info, HeapType type, Expression* curr) {
     auto* value = info.makeExpression(*getModule());
-    if (auto* structGet = curr->template dynCast<StructGet>()) {
+    if (auto* structGet = curr->dynCast<StructGet>()) {
       auto field = GCTypeUtils::getField(type, structGet->index);
       assert(field);
       // Apply packing, if needed.
-      if constexpr (std::is_same_v<T, StructGet>) {
-        value =
-          Bits::makePackedFieldGet(value, *field, structGet->signed_, *getModule());
-      }
+      value =
+        Bits::makePackedFieldGet(value, *field, structGet->signed_, *getModule());
       // Check if the value makes sense. The analysis below flows values around
       // without considering where they are placed, that is, when we see a parent
       // type can contain a value in a field then we assume a child may as well
