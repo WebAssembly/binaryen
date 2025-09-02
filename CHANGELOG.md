@@ -15,16 +15,31 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v124
+----
+
+ - Add Custom Descriptors support. (Fuzzing: #7796)
+ - Add Stack Switching support. (Fuzzing: #7834)
+ - Add Compilation Hints + Branch Hinting support. (Fuzzing #7704)
+ - Build mimalloc with `MI_NO_OPT_ARCH` to fix Raspberry Pi 4 on Arm64. (#7837)
  - `wasm-split`'s `--multi-split` mode now supports more options:
    `--no-placeholders`, `--import-namespace`, `--emit-module-names`,
    `--emit-text`, `--symbolmap`, and `--placeholdermap`. Because
    `--no-placeholders` is false by default and until now `--multi-split` didn't
    use placeholders at all, this is a breaking change. If you want to continue
    to do multi-split without placeholders, you need to explicitly specify
-   `--no-placeholders`.
+   `--no-placeholders`. (#7781, #7789, #7792)
+ - InstrumentMemory: Allow filtering by instruction, and instrument memory.grow.
+   (#7388)
+ - Add support for more source map fields, "sourcesContent", "file", and
+   "sourceRoot". (#7473)
+ - [GC] Add a TypeRefiningGUFA pass. (#7433)
+ - [C/JS APIs] Allow JS and C to read the start function of a module (#7424)
  - Add a `--string-lifting` pass that raises imported string operations and
    constants into stringref in Binaryen IR (which can then be fully optimized,
-   and typically lowered back down with `--string-lowering`).
+   and typically lowered back down with `--string-lowering`). (#7389)
+ - Fuzzer: Improve handling of small inputs and their debugging using a new
+   `BINARYEN_FUZZER_MAX_BYTES` env var. (#7832)
 
 v123
 ----
