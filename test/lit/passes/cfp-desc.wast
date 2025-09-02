@@ -330,3 +330,76 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:      (type $4 (func (param (ref null $A) (ref null $B))))
+
+  ;; CHECK:      (global $B.desc (ref (exact $B.desc)) (struct.new_default $B.desc))
+  (global $B.desc (ref (exact $B.desc)) (struct.new $B.desc))
+
+  ;; CHECK:      (func $test (type $4) (param $A (ref null $A)) (param $B (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (struct.new_default $A.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:    (global.get $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $B.desc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $A (ref null $A)) (param $B (ref null $B))
+    ;; As above, but the roles of $A and $B are reversed: now the subtype $B
+    ;; can be optimized but not the supertype. The problem with $A does not stop
+    ;; $B from being optimized.
+    (drop
+      (struct.new $A
+        (struct.new $A.desc)
+      )
+    )
+    (drop
+      (struct.new $B
+        (global.get $B.desc)
+      )
+    )
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+    (drop
+      (ref.get_desc $B
+        (local.get $B)
+      )
+    )
+  )
+)
+
