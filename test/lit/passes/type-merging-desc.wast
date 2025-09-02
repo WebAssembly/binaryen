@@ -244,6 +244,49 @@
 )
 
 (module
+  ;; These chains could be merged except for the cast to the descriptor in the
+  ;; subtype chain.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:       (type $4 (func))
+
+  ;; CHECK:      (global $A (ref null $A) (ref.null none))
+  (global $A (ref null $A) (ref.null none))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
+  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $B (ref null $B) (ref.null none))
+  (global $B (ref null $B) (ref.null none))
+  ;; CHECK:      (global $B.desc (ref null $B.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+
+  ;; CHECK:      (func $cast-desc (type $4)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref (exact $B.desc))
+  ;; CHECK-NEXT:    (struct.new_default $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc
+    (drop
+      (ref.test (ref $B.desc)
+        (struct.new $B.desc)
+      )
+    )
+  )
+)
+
+
+(module
   ;; These chains could be merged except for the exact cast to the descriptor in
   ;; the supertype chain.
   (rec
@@ -280,6 +323,46 @@
     (drop
       (ref.test (ref (exact $A.desc))
         (struct.new $A.desc)
+      )
+    )
+  )
+)
+
+(module
+  ;; Like above, but now the cast to the supertype descriptor is not exact, so
+  ;; we can still merge.
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+    (type $B (sub $A (descriptor $B.desc (struct))))
+    (type $B.desc (sub $A.desc (describes $B (struct))))
+  )
+
+  ;; CHECK:       (type $2 (func (param anyref)))
+
+  ;; CHECK:      (global $A (ref null $A) (ref.null none))
+  (global $A (ref null $A) (ref.null none))
+  ;; CHECK:      (global $A.desc (ref null $A.desc) (ref.null none))
+  (global $A.desc (ref null $A.desc) (ref.null none))
+  ;; CHECK:      (global $B (ref null $A) (ref.null none))
+  (global $B (ref null $B) (ref.null none))
+  ;; CHECK:      (global $B.desc (ref null $A.desc) (ref.null none))
+  (global $B.desc (ref null $B.desc) (ref.null none))
+
+  ;; CHECK:      (func $cast-desc (type $2) (param $0 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref $A.desc)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-desc (param anyref)
+    (drop
+      (ref.test (ref $A.desc)
+        (local.get 0)
       )
     )
   )
