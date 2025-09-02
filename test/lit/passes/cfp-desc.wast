@@ -193,3 +193,74 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    (type $A.desc (sub (describes $A (struct))))
+
+    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
+    (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (sub (describes $B (struct))))
+    (type $B.desc (sub (describes $B (struct))))
+  )
+
+  ;; CHECK:      (type $4 (func (param (ref null $A) (ref null $B))))
+
+  ;; CHECK:      (global $A.desc (ref (exact $A.desc)) (struct.new_default $A.desc))
+  (global $A.desc (ref (exact $A.desc)) (struct.new $A.desc))
+
+  ;; CHECK:      (func $test (type $4) (param $A (ref null $A)) (param $B (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (global.get $A.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $B
+  ;; CHECK-NEXT:    (struct.new_default $B.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref (exact $A.desc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $A.desc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $B
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $A (ref null $A)) (param $B (ref null $B))
+    ;; We can optimize $A's read below, but not $B's.
+    (drop
+      (struct.new $A
+        (global.get $A.desc)
+      )
+    )
+    (drop
+      (struct.new $B
+        (struct.new $B.desc)
+      )
+    )
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+    (drop
+      (ref.get_desc $B
+        (local.get $B)
+      )
+    )
+  )
+)
+
