@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v124
+----
+
  - Add Custom Descriptors support. (Fuzzing: #7796)
  - Add Stack Switching support. (Fuzzing: #7834)
  - Add Compilation Hints + Branch Hinting support. (Fuzzing #7704)
