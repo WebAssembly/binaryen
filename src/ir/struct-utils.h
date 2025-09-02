@@ -39,7 +39,7 @@ struct CombinableBool {
 
   operator bool() const { return value; }
 
-  bool combine(const DescriptorInfo& other) {
+  bool combine(const CombinableBool& other) {
     if (!value && other.value) {
       value = true;
       return true;
