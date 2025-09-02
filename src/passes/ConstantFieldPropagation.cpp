@@ -71,19 +71,6 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
-// A wrapper for a boolean value that provides a combine() method as is used in
-// the StructUtils propagation logic.
-struct Bool {
-  bool value = false;
-
-  Bool() {}
-  Bool(bool value) : value(value) {}
-
-  operator bool() const { return value; }
-
-  bool combine(bool other) { return value = value || other; }
-};
-
 using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
 using BoolFunctionStructValuesMap = StructUtils::FunctionStructValuesMap<Bool>;
 

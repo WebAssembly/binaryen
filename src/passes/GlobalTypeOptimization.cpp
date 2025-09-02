@@ -427,31 +427,17 @@ struct GlobalTypeOptimization : public Pass {
     // remove A's descriptor without also removing $B's, so we need to propagate
     // that "must remain a descriptor" property among descriptors.
     if (!haveUnneededDescriptors.empty()) {
-
-      struct DescriptorInfo {
-        // Whether this descriptor is needed - it must keep describing.
-        bool needed = false;
-
-        bool combine(const DescriptorInfo& other) {
-          if (!needed && other.needed) {
-            needed = true;
-            return true;
-          }
-          return false;
-        }
-      };
-
-      StructUtils::TypeHierarchyPropagator<DescriptorInfo> descPropagator(
+      StructUtils::TypeHierarchyPropagator<CombinableBool> descPropagator(
         subTypes);
 
       // Populate the initial data: Any descriptor we did not see was unneeded,
       // is needed.
-      StructUtils::TypeHierarchyPropagator<DescriptorInfo>::StructMap map;
+      StructUtils::TypeHierarchyPropagator<CombinableBool>::StructMap map;
       for (auto type : subTypes.types) {
         if (auto desc = type.getDescriptorType()) {
           if (!haveUnneededDescriptors.count(type)) {
             // This descriptor type is needed.
-            map[*desc].needed = true;
+            map[*desc].value = true;
           }
         }
       }
@@ -471,7 +457,7 @@ struct GlobalTypeOptimization : public Pass {
       // keep subtyping working for the descriptors, and later passes could
       // remove the unused A2.
       for (auto& [type, info] : map) {
-        if (info.needed) {
+        if (info.value) {
           auto described = type.getDescribedType();
           assert(described);
           haveUnneededDescriptors.erase(*described);
