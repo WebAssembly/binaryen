@@ -392,8 +392,9 @@ private:
               work.push(*superType);
             }
           }
-          // Propagate the descriptor.
-          if (superInfos.desc.combine(infos.desc)) {
+          // Propagate the descriptor to the super, if the super has one.
+          if (superType->getDescriptorType() &&
+              superInfos.desc.combine(infos.desc)) {
             work.push(*superType);
           }
         }
