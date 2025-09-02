@@ -443,6 +443,11 @@ struct PCVScanner
   }
 
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
+    if (index == DescriptorIndex) {
+      // We cannot continue on below, where we index into the vector of values.
+      return;
+    }
+
     // Note copies, as they must be considered later. See the comment on the
     // propagation of values below.
     functionCopyInfos[getFunction()][type][index] = true;
