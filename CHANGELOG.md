@@ -25,12 +25,12 @@ Current Trunk
    `--no-placeholders` is false by default and until now `--multi-split` didn't
    use placeholders at all, this is a breaking change. If you want to continue
    to do multi-split without placeholders, you need to explicitly specify
-   `--no-placeholders`. (#7781) (#7789) (#7792)
- - InstrumentMemory: Allow filtering by instruction, and instrument memory.grow
+   `--no-placeholders`. (#7781, #7789, #7792)
+ - InstrumentMemory: Allow filtering by instruction, and instrument memory.grow.
    (#7388)
  - Add support for more source map fields, "sourcesContent", "file", and
-   "sourceRoot" (#7473)
- - [GC] Add a TypeRefiningGUFA pass (#7433)
+   "sourceRoot". (#7473)
+ - [GC] Add a TypeRefiningGUFA pass. (#7433)
  - [C/JS APIs] Allow JS and C to read the start function of a module (#7424)
  - Add a `--string-lifting` pass that raises imported string operations and
    constants into stringref in Binaryen IR (which can then be fully optimized,
