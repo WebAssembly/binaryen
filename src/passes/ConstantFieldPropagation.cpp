@@ -102,8 +102,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     : propagatedInfos(propagatedInfos), subTypes(subTypes),
       rawNewInfos(rawNewInfos), refTest(refTest) {}
 
-  template<typename T> std::optional<HeapType> getRelevantHeapType(T* curr) {
-    auto type = curr->ref->type;
+  template<typename T> std::optional<HeapType> getRelevantHeapType(T* ref) {
+    auto type = ref->type;
     if (type == Type::unreachable) {
       return std::nullopt;
     }
@@ -117,7 +117,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   PossibleConstantValues getInfo(HeapType type, Index index) {
     if (auto it = propagatedInfos.find(type); it != propagatedInfos.end()) {
       // There is information on this type, fetch it.
-      return it->second[index];
+      auto& entry = it->second;
+      return index != StructUtils::DescriptorIndex ? entry[index] : entry.desc;
     }
     return PossibleConstantValues{};
   }
@@ -128,42 +129,44 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   Expression*
   makeExpression(const PossibleConstantValues& info, HeapType type, T* curr) {
     auto* value = info.makeExpression(*getModule());
-    auto field = GCTypeUtils::getField(type, curr->index);
-    assert(field);
-    // Apply packing, if needed.
-    if constexpr (std::is_same_v<T, StructGet>) {
-      value =
-        Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
-    }
-    // Check if the value makes sense. The analysis below flows values around
-    // without considering where they are placed, that is, when we see a parent
-    // type can contain a value in a field then we assume a child may as well
-    // (which in general it can, e.g., using a reference to the parent, we can
-    // write that value to it, but the reference might actually point to a
-    // child instance). If we tracked the types of fields then we might avoid
-    // flowing values into places they cannot reside, like when a child field is
-    // a subtype, and so we could ignore things not refined enough for it (GUFA
-    // does a better job at this). For here, just check we do not break
-    // validation, and if we do, then we've inferred the only possible value is
-    // an impossible one, making the code unreachable.
-    if (!Type::isSubType(value->type, field->type)) {
-      Builder builder(*getModule());
-      value = builder.makeSequence(builder.makeDrop(value),
-                                   builder.makeUnreachable());
+    if (auto* structGet = curr->template dynCast<StructGet>()) {
+      auto field = GCTypeUtils::getField(type, structGet->index);
+      assert(field);
+      // Apply packing, if needed.
+      if constexpr (std::is_same_v<T, StructGet>) {
+        value =
+          Bits::makePackedFieldGet(value, *field, structGet->signed_, *getModule());
+      }
+      // Check if the value makes sense. The analysis below flows values around
+      // without considering where they are placed, that is, when we see a parent
+      // type can contain a value in a field then we assume a child may as well
+      // (which in general it can, e.g., using a reference to the parent, we can
+      // write that value to it, but the reference might actually point to a
+      // child instance). If we tracked the types of fields then we might avoid
+      // flowing values into places they cannot reside, like when a child field is
+      // a subtype, and so we could ignore things not refined enough for it (GUFA
+      // does a better job at this). For here, just check we do not break
+      // validation, and if we do, then we've inferred the only possible value is
+      // an impossible one, making the code unreachable.
+      if (!Type::isSubType(value->type, field->type)) {
+        Builder builder(*getModule());
+        value = builder.makeSequence(builder.makeDrop(value),
+                                     builder.makeUnreachable());
+      }
     }
     return value;
   }
 
   void visitStructGet(StructGet* curr) {
-    optimizeRead(curr, curr->ref, curr->index);
+    optimizeRead(curr, curr->ref, curr->index, curr->order);
   }
 
   void visitRefGetDesc(RefGetDesc* curr) {
     optimizeRead(curr, curr->ref, StructUtils::DescriptorIndex);
   }
 
-  void optimizeRead(Expression* curr, Expression* ref, Index index) {
-    auto type = getRelevantHeapType(curr);
+  void optimizeRead(Expression* curr, Expression* ref, Index index, std::optional<MemoryOrder> order=std::nullopt) {
+    auto type = getRelevantHeapType(ref);
     if (!type) {
       return;
     }
@@ -192,7 +195,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    if (curr->order != MemoryOrder::Unordered) {
+    if (order && *order != MemoryOrder::Unordered) {
       // The analysis we're basing the optimization on is not precise enough to
       // rule out the field being used to synchronize between a write of the
       // constant value and a subsequent read on another thread. This
@@ -240,7 +243,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // reason the field must be immutable, so that it is valid to only look at
     // the struct.news. (A more complex flow analysis could do better here, but
     // would be far beyond the scope of this pass.)
-    if (index != DescriptorIndex && GCTypeUtils::getField(refType, index)->mutable_ == Mutable) {
+    if (index != StructUtils::DescriptorIndex &&
+        GCTypeUtils::getField(refType, index)->mutable_ == Mutable) {
       return;
     }
 
@@ -440,7 +444,7 @@ struct PCVScanner
   }
 
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
-    if (index == DescriptorIndex) {
+    if (index == StructUtils::DescriptorIndex) {
       // We cannot continue on below, where we index into the vector of values.
       return;
     }
