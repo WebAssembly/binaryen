@@ -1065,7 +1065,45 @@
   )
 )
 
-;; ref.cast_desc on a basic supertype.
+;; As above, but now with a cast of the supertype. We can still optimize $B but
+;; not $A.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $super (sub (struct)))
+    (type $super (sub (struct)))
+
+    ;; CHECK:       (type $A (sub $super (descriptor $A.desc (struct))))
+    (type $A (sub $super (descriptor $A.desc (struct))))
+    ;; CHECK:       (type $A.desc (describes $A (struct)))
+    (type $A.desc (describes $A (struct)))
+
+    ;; CHECK:       (type $B (sub $super (struct)))
+    (type $B (sub $super (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B.desc (struct))
+    (type $B.desc (describes $B (struct)))
+  )
+
+  ;; CHECK:       (type $5 (func (param (ref $super) (ref (exact $A.desc))) (result anyref)))
+
+  ;; CHECK:      (func $test (type $5) (param $ref (ref $super)) (param $desc (ref (exact $A.desc))) (result anyref)
+  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK-NEXT:  (ref.cast_desc (ref (exact $A))
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (local.get $desc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $ref (ref $super)) (param $desc (ref (exact $A.desc))) (result anyref)
+    (local $B (ref $B))
+    (ref.cast_desc (ref (exact $A))
+      (local.get $ref)
+      (local.get $desc)
+    )
+  )
+)
+
+;; As above, but now with a cast of a basic type. We can still optimize $B but
+;; not $A.
 (module
   (rec
     ;; CHECK:      (rec
