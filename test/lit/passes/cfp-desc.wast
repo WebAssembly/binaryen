@@ -83,3 +83,56 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (descriptor $B (struct)))
+    (type $A (descriptor $B (struct)))
+    ;; CHECK:       (type $B (describes $A (struct)))
+    (type $B (describes $A (struct)))
+  )
+
+
+  ;; CHECK:      (type $2 (func (param (ref null $A))))
+
+  ;; CHECK:      (global $B (ref (exact $B)) (struct.new_default $B))
+  (global $B (ref (exact $B)) (struct.new $B))
+
+  ;; CHECK:      (func $test (type $2) (param $A (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (global.get $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $A
+  ;; CHECK-NEXT:    (struct.new_default $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $A
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $A (ref null $A))
+    ;; As above, but with another struct.new here, with another value, so we
+    ;; cannot infer.
+    (drop
+      (struct.new $A
+        (global.get $B)
+      )
+    )
+    (drop
+      (struct.new $A
+        (struct.new $B)
+      )
+    )
+    (drop
+      (ref.get_desc $A
+        (local.get $A)
+      )
+    )
+  )
+)
+
