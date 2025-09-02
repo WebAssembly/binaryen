@@ -460,6 +460,16 @@ struct GlobalTypeOptimization : public Pass {
       descPropagator.propagateToSuperAndSubTypes(map);
 
       // Remove optimization opportunities that the propagation ruled out.
+      // TODO: We could do better here,
+      //
+      //         A -> A.desc              A    A.desc <- A2
+      //              ^           =>           ^
+      //         B -> B.desc              B -> B.desc
+      //
+      // Starting from the left, we can remove A's descriptor *but keep A.desc
+      // as being a descriptor*, by making it describe a new type A2. That would
+      // keep subtyping working for the descriptors, and later passes could
+      // remove the unused A2.
       for (auto& [type, info] : map) {
         if (info.needed) {
           auto described = type.getDescribedType();
