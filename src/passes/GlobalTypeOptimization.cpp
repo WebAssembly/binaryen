@@ -89,7 +89,7 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    if (index == DescriptorIndex && expr->type.isNonNullable()) {
+    if (index == StructUtils::DescriptorIndex && expr->type.isNonNullable()) {
       // A non-dangerous write to a descriptor, which as mentioned above, we do
       // not track.
       return;

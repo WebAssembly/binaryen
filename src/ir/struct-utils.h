@@ -172,6 +172,8 @@ struct FunctionStructValuesMap
 //
 // Descriptors are treated as fields in that we call the above functions on
 // them. We pass DescriptorIndex for their index as a fake value.
+static const Index DescriptorIndex = -1;
+
 template<typename T, typename SubType>
 struct StructScanner
   : public WalkerPass<PostWalker<StructScanner<T, SubType>>> {
@@ -180,8 +182,6 @@ struct StructScanner
   bool modifiesBinaryenIR() override { return false; }
 
   SubType& self() { return *static_cast<SubType*>(this); }
-
-  static const Index DescriptorIndex = -1;
 
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
                 FunctionStructValuesMap<T>& functionSetGetInfos)

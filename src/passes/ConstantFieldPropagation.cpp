@@ -155,6 +155,14 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
   void visitStructGet(StructGet* curr) {
+    optimizeRead(curr, curr->ref, curr->index);
+  }
+
+  void visitRefGetDesc(RefGetDesc* curr) {
+    optimizeRead(curr, curr->ref, StructUtils::DescriptorIndex);
+  }
+
+  void optimizeRead(Expression* curr, Expression* ref, Index index) {
     auto type = getRelevantHeapType(curr);
     if (!type) {
       return;
@@ -166,7 +174,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // Find the info for this field, and see if we can optimize. First, see if
     // there is any information for this heap type at all. If there isn't, it is
     // as if nothing was ever noted for that field.
-    PossibleConstantValues info = getInfo(heapType, curr->index);
+    PossibleConstantValues info = getInfo(heapType, index);
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -178,7 +186,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // reference, so keep it around). We also do not need to care about
       // synchronization since trapping accesses do not synchronize with other
       // accesses.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+      replaceCurrent(builder.makeSequence(builder.makeDrop(ref),
                                           builder.makeUnreachable()));
       changed = true;
       return;
@@ -199,7 +207,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // that is allowed.
     if (!info.isConstant()) {
       if (refTest) {
-        optimizeUsingRefTest(curr);
+        optimizeUsingRefTest(curr, ref, index);
       }
       return;
     }
@@ -210,15 +218,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.)
     auto* value = makeExpression(info, heapType, curr);
     auto* replacement = builder.blockify(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)));
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)));
     replacement->list.push_back(value);
     replacement->type = value->type;
     replaceCurrent(replacement);
     changed = true;
   }
 
-  void optimizeUsingRefTest(StructGet* curr) {
-    auto refType = curr->ref->type;
+  void optimizeUsingRefTest(Expression* curr, Expression* ref, Index index) {
+    auto refType = ref->type;
     auto refHeapType = refType.getHeapType();
 
     // We only handle immutable fields in this function, as we will be looking
@@ -232,7 +240,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // reason the field must be immutable, so that it is valid to only look at
     // the struct.news. (A more complex flow analysis could do better here, but
     // would be far beyond the scope of this pass.)
-    if (GCTypeUtils::getField(refType, curr->index)->mutable_ == Mutable) {
+    if (index != DescriptorIndex && GCTypeUtils::getField(refType, index)->mutable_ == Mutable) {
       return;
     }
 
@@ -276,7 +284,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         return;
       }
 
-      auto value = iter->second[curr->index];
+      auto value = iter->second[index];
       if (!value.isConstant()) {
         // The value here is not constant, so give up entirely.
         fail = true;
@@ -374,7 +382,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     assert(testIndexTypes.size() == 1);
     auto testType = testIndexTypes[0];
 
-    auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
+    auto* nnRef = builder.makeRefAs(RefAsNonNull, ref);
 
     replaceCurrent(builder.makeSelect(
       builder.makeRefTest(nnRef, Type(testType, NonNullable)),
