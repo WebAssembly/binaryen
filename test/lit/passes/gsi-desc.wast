@@ -4,60 +4,140 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super (sub (struct)))
-    (type $super (sub (struct)))
+    ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc (struct))))
+    (type $super (sub (descriptor $super.desc (struct))))
+    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
+    (type $super.desc (sub (describes $super (struct))))
 
     ;; CHECK:       (type $A (sub $super (descriptor $A.desc (struct))))
     (type $A (sub $super (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (describes $A (struct)))
-    (type $A.desc (describes $A (struct)))
+    ;; CHECK:       (type $A.desc (sub $super.desc (describes $A (struct))))
+    (type $A.desc (sub $super.desc (describes $A (struct))))
 
-    ;; CHECK:       (type $B (sub $super (struct)))
+    ;; CHECK:       (type $B (sub $super (descriptor $B.desc (struct))))
     (type $B (sub $super (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (struct))
-    (type $B.desc (describes $B (struct)))
+    ;; CHECK:       (type $B.desc (sub $super.desc (describes $B (struct))))
+    (type $B.desc (sub $super.desc (describes $B (struct))))
 
-    ;; CHECK:       (type $B (sub $super (struct)))
-    (type $other (sub (descriptor $other.desc (struct))))
-    ;; CHECK:       (type $B.desc (struct))
-    (type $other.desc (describes $other (struct)))
+    ;; CHECK:       (type $two (sub (descriptor $two.desc (struct))))
+    (type $two (sub (descriptor $two.desc (struct))))
+    ;; CHECK:       (type $two.desc (sub (describes $two (struct))))
+    (type $two.desc (sub (describes $two (struct))))
+
+    ;; CHECK:       (type $three (sub (descriptor $three.desc (struct))))
+    (type $three (sub (descriptor $three.desc (struct))))
+    ;; CHECK:       (type $three.desc (sub (describes $three (struct))))
+    (type $three.desc (sub (describes $three (struct))))
   )
 
+  ;; CHECK:      (type $10 (func (param (ref $super) (ref $A) (ref $B))))
+
+  ;; CHECK:      (type $11 (func (param (ref $two) (ref $three))))
+
+  ;; CHECK:      (global $A.unnested.4294967295 (ref (exact $A.desc)) (struct.new_default $A.desc))
+
+  ;; CHECK:      (global $A (ref $A) (struct.new_default $A
+  ;; CHECK-NEXT:  (global.get $A.unnested.4294967295)
+  ;; CHECK-NEXT: ))
   (global $A (ref $A) (struct.new $A
     (struct.new $A.desc)
   ))
 
+  ;; CHECK:      (global $B.unnested.4294967295 (ref (exact $B.desc)) (struct.new_default $B.desc))
+
+  ;; CHECK:      (global $two.unnested.4294967295 (ref (exact $two.desc)) (struct.new_default $two.desc))
+
+  ;; CHECK:      (global $two2.unnested.4294967295 (ref (exact $two.desc)) (struct.new_default $two.desc))
+
+  ;; CHECK:      (global $B (ref $B) (struct.new_default $B
+  ;; CHECK-NEXT:  (global.get $B.unnested.4294967295)
+  ;; CHECK-NEXT: ))
   (global $B (ref $B) (struct.new $B
     (struct.new $B.desc)
   ))
 
-  (global $other (ref $other) (struct.new $other
-    (struct.new $other.desc)
+  ;; CHECK:      (global $two (ref $two) (struct.new_default $two
+  ;; CHECK-NEXT:  (global.get $two.unnested.4294967295)
+  ;; CHECK-NEXT: ))
+  (global $two (ref $two) (struct.new $two
+    (struct.new $two.desc)
   ))
 
-  (global $other2 (ref $other) (struct.new $other
-    (struct.new $other.desc)
+  ;; CHECK:      (global $two2 (ref $two) (struct.new_default $two
+  ;; CHECK-NEXT:  (global.get $two2.unnested.4294967295)
+  ;; CHECK-NEXT: ))
+  (global $two2 (ref $two) (struct.new $two
+    (struct.new $two.desc)
   ))
 
+  ;; CHECK:      (global $three (ref $three) (struct.new_default $three
+  ;; CHECK-NEXT:  (struct.new_default $three.desc)
+  ;; CHECK-NEXT: ))
+  (global $three (ref $three) (struct.new $three
+    (struct.new $three.desc)
+  ))
 
-  ;; CHECK:       (type $5 (func (param (ref $A))))
+  ;; CHECK:      (global $three2 (ref $three) (struct.new_default $three
+  ;; CHECK-NEXT:  (struct.new_default $three.desc)
+  ;; CHECK-NEXT: ))
+  (global $three2 (ref $three) (struct.new $three
+    (struct.new $three.desc)
+  ))
 
-  ;; CHECK:      (func $test (type $5) (param $A (ref $A))
-  ;; CHECK-NEXT:  (local $B (ref $B))
+  ;; CHECK:      (global $three3 (ref $three) (struct.new_default $three
+  ;; CHECK-NEXT:  (struct.new_default $three.desc)
+  ;; CHECK-NEXT: ))
+  (global $three3 (ref $three) (struct.new $three
+    (struct.new $three.desc)
+  ))
+
+  ;; CHECK:      (func $family (type $10) (param $super (ref $super)) (param $A (ref $A)) (param $B (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select (result (ref $super.desc))
+  ;; CHECK-NEXT:    (global.get $A.unnested.4294967295)
+  ;; CHECK-NEXT:    (global.get $B.unnested.4294967295)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $super)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.get_desc $A
-  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:    (block (result (ref $A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $B
+  ;; CHECK-NEXT:    (block (result (ref $B))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $B)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $B)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (param $super (ref $super)) (param $A (ref $A)) (param $B (ref $B)) (param $other (ref $other))
-    ;; We can optimize the super with a select.
+  (func $family (param $super (ref $super)) (param $A (ref $A)) (param $B (ref $B))
+    ;; We can optimize the super with a select, as the value must be from one of
+    ;; $A and $B.
     (drop
       (ref.get_desc $super
         (local.get $super)
       )
     )
-    ;; We can optimize the siblings directly..
+    ;; We can optimize the refs of the siblings.
     (drop
       (ref.get_desc $A
         (local.get $A)
@@ -68,10 +148,39 @@
         (local.get $B)
       )
     )
-    ;; We cannot optimize $other, which has two values.
+  )
+
+  ;; CHECK:      (func $others (type $11) (param $two (ref $two)) (param $three (ref $three))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select (result (ref (exact $two.desc)))
+  ;; CHECK-NEXT:    (global.get $two.unnested.4294967295)
+  ;; CHECK-NEXT:    (global.get $two2.unnested.4294967295)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $two)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $two)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.get_desc $three
+  ;; CHECK-NEXT:    (local.get $three)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $others (param $two (ref $two)) (param $three (ref $three))
+    ;; We optimize $two, which has two values.
     (drop
-      (ref.get_desc $other
-        (local.get $other)
+      (ref.get_desc $two
+        (local.get $two)
+      )
+    )
+    ;; $three has three, which we do not optimize (it would take multiple
+    ;; comparisons).
+    (drop
+      (ref.get_desc $three
+        (local.get $three)
       )
     )
   )
