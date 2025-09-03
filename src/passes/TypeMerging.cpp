@@ -418,7 +418,7 @@ bool TypeMerging::merge(MergeKind kind) {
     auto chain = type.getDescriptorChain();
     bool hasCast =
       std::any_of(chain.begin(), chain.end(), [&](HeapType t) -> bool {
-        return castTypes.count(type);
+        return castTypes.count(t);
       });
     if (hasCast || !privateTypes.count(type)) {
       ensurePartition(type);
