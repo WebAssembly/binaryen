@@ -66,6 +66,8 @@ namespace wasm {
 
 namespace {
 
+static const Index DescriptorIndex = -1;
+
 struct GlobalStructInference : public Pass {
   // Only modifies struct.get operations.
   bool requiresNonNullableLocalFixups() override { return false; }
@@ -309,7 +311,17 @@ struct GlobalStructInference : public Pass {
       bool refinalize = false;
 
       void visitStructGet(StructGet* curr) {
-        auto type = curr->ref->type;
+        optimize(curr, curr->ref, curr->index);
+      }
+
+      void visitRefGetDesc(RefGetDesc* curr) {
+        optimize(curr, curr->ref, DescriptorIndex);
+      }
+
+      // Optimize an expression |curr| that reads from a reference |ref|, and a
+      // particular field index (which might be DescriptorIndex);
+      void optimize(Expression* curr, Expression*& ref, Index fieldIndex) {
+        auto type = ref->type;
         if (type == Type::unreachable) {
           return;
         }
@@ -329,10 +341,12 @@ struct GlobalStructInference : public Pass {
         assert(heapType.isStruct());
 
         // The field must be immutable.
-        auto fieldIndex = curr->index;
-        auto& field = heapType.getStruct().fields[fieldIndex];
-        if (field.mutable_ == Mutable) {
-          return;
+        std::optional<Field> field;
+        if (fieldIndex != DescriptorIndex) {
+          field = heapType.getStruct().fields[fieldIndex];
+          if (field->mutable_ == Mutable) {
+            return;
+          }
         }
 
         const auto& globals = iter->second;
@@ -350,7 +364,7 @@ struct GlobalStructInference : public Pass {
           // is null, so add RefAsNonNull here.
           auto global = globals[0];
           auto globalType = wasm.getGlobal(global)->type;
-          if (globalType != curr->ref->type) {
+          if (globalType != ref->type) {
             // The struct.get will now read from something of the type of the
             // global, which is different, so the field being read might be
             // refined, which could change the struct.get's type.
@@ -361,8 +375,8 @@ struct GlobalStructInference : public Pass {
           // (including synchronization) that were previously present. The
           // memory location is immutable anyway, so there cannot be any writes
           // to synchronize with in the first place.
-          curr->ref = builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+          ref = builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
             builder.makeGlobalGet(global, globalType));
           return;
         }
@@ -371,7 +385,6 @@ struct GlobalStructInference : public Pass {
         std::vector<Value> values;
 
         // Scan the relevant struct.new operands.
-        auto fieldType = field.type;
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
@@ -380,11 +393,16 @@ struct GlobalStructInference : public Pass {
 
           // Find the value read from the struct and represent it as a Value.
           PossibleConstantValues constant;
-          if (structNew->isWithDefault()) {
-            constant.note(Literal::makeZero(fieldType));
+          if (field && structNew->isWithDefault()) {
+            constant.note(Literal::makeZero(field->type));
             value.content = constant;
           } else {
-            Expression* operand = structNew->operands[fieldIndex];
+            Expression* operand;
+            if (field) {
+              operand = structNew->operands[fieldIndex];
+            } else {
+              operand = structNew->desc;
+            }
             constant.note(operand, wasm);
             if (constant.isConstant()) {
               value.content = constant;
@@ -425,8 +443,11 @@ struct GlobalStructInference : public Pass {
           if (value.isConstant()) {
             // This is known to be a constant, so simply emit an expression for
             // that constant, and handle if the field is packed.
-            auto* expr = value.getConstant().makeExpression(wasm);
-            ret = Bits::makePackedFieldGet(expr, field, curr->signed_, wasm);
+            ret = value.getConstant().makeExpression(wasm);
+            if (field) {
+              ret = Bits::makePackedFieldGet(
+                ret, *field, curr->cast<StructGet>()->signed_, wasm);
+            }
           } else {
             // Otherwise, this is non-constant, so we are in the situation where
             // we want to un-nest the value out of the struct.new it is in. Note
@@ -470,7 +491,7 @@ struct GlobalStructInference : public Pass {
           // cannot have been any writes to it we must synchonize with, so we do
           // not need a fence.
           replaceCurrent(builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)),
             getReadValue(values[0])));
           return;
         }
@@ -502,8 +523,7 @@ struct GlobalStructInference : public Pass {
         Expression* getGlobal =
           builder.makeGlobalGet(checkGlobal, wasm.getGlobal(checkGlobal)->type);
         replaceCurrent(builder.makeSelect(
-          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
-                            getGlobal),
+          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
           left,
           right));
       }
@@ -536,8 +556,9 @@ struct GlobalStructInference : public Pass {
       for (auto& [globalName, index, get] : optimization.map[func.get()]) {
         auto* global = module->getGlobal(globalName);
         auto* structNew = global->init->cast<StructNew>();
-        assert(index < structNew->operands.size());
-        auto*& operand = structNew->operands[index];
+        assert(index < structNew->operands.size() || index == DescriptorIndex);
+        auto*& operand = index != DescriptorIndex ? structNew->operands[index]
+                                                  : structNew->desc;
 
         // If we already un-nested this then we don't need to repeat that work.
         if (auto* nestedGet = operand->dynCast<GlobalGet>()) {
@@ -547,9 +568,10 @@ struct GlobalStructInference : public Pass {
           assert(get->type == nestedGet->type);
         } else {
           // Add a new global, initialized to the operand.
+          std::string indexName =
+            index != DescriptorIndex ? std::to_string(index) : "desc";
           auto newName = Names::getValidGlobalName(
-            *module,
-            global->name.toString() + ".unnested." + std::to_string(index));
+            *module, global->name.toString() + ".unnested." + indexName);
           module->addGlobal(builder.makeGlobal(
             newName, get->type, operand, Builder::Immutable));
           // Replace the operand with a get of that new global, and update the
