@@ -55,3 +55,71 @@
  )
 )
 
+;; As above, but there is another use of $test.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; NOKEEP:      (type $func (func))
+ (type $func (func))
+ ;; CHECK:      (type $cont (cont $func))
+ ;; NOKEEP:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (type $2 (func (result (ref $cont))))
+
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (export "test" (func $test))
+ (export "test" (func $test))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (type $2 (func (result (ref $cont))))
+
+ ;; NOKEEP:      (elem declare func $func)
+
+ ;; NOKEEP:      (export "export" (func $export))
+
+ ;; NOKEEP:      (func $func (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $func
+ )
+
+ ;; CHECK:      (func $test (type $2) (result (ref $cont))
+ ;; CHECK-NEXT:  (cont.new $cont
+ ;; CHECK-NEXT:   (ref.func $func)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $test (type $2) (result (ref $cont))
+ ;; NOKEEP-NEXT:  (cont.new $cont
+ ;; NOKEEP-NEXT:   (ref.func $func)
+ ;; NOKEEP-NEXT:  )
+ ;; NOKEEP-NEXT: )
+ (func $test (result (ref $cont))
+  (cont.new $cont
+   (ref.func $func)
+  )
+ )
+
+ ;; CHECK:      (func $export (type $func)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $test)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $export (type $func)
+ ;; NOKEEP-NEXT:  (drop
+ ;; NOKEEP-NEXT:   (call $test)
+ ;; NOKEEP-NEXT:  )
+ ;; NOKEEP-NEXT: )
+ (func $export (export "export")
+  ;; Call $test internally. This keeps $test alive in NOKEEP as well (but not
+  ;; the export "test").
+  (drop
+   (call $test)
+  )
+ )
+)
+
