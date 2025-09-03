@@ -445,7 +445,8 @@ struct GlobalStructInference : public Pass {
             // that constant, and handle if the field is packed.
             ret = value.getConstant().makeExpression(wasm);
             if (field) {
-              ret = Bits::makePackedFieldGet(ret, *field, curr->cast<StructGet>()->signed_, wasm);
+              ret = Bits::makePackedFieldGet(
+                ret, *field, curr->cast<StructGet>()->signed_, wasm);
             }
           } else {
             // Otherwise, this is non-constant, so we are in the situation where
@@ -522,8 +523,7 @@ struct GlobalStructInference : public Pass {
         Expression* getGlobal =
           builder.makeGlobalGet(checkGlobal, wasm.getGlobal(checkGlobal)->type);
         replaceCurrent(builder.makeSelect(
-          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref),
-                            getGlobal),
+          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, ref), getGlobal),
           left,
           right));
       }
@@ -557,7 +557,8 @@ struct GlobalStructInference : public Pass {
         auto* global = module->getGlobal(globalName);
         auto* structNew = global->init->cast<StructNew>();
         assert(index < structNew->operands.size() || index == DescriptorIndex);
-        auto*& operand = index != DescriptorIndex ? structNew->operands[index] : structNew->desc;
+        auto*& operand = index != DescriptorIndex ? structNew->operands[index]
+                                                  : structNew->desc;
 
         // If we already un-nested this then we don't need to repeat that work.
         if (auto* nestedGet = operand->dynCast<GlobalGet>()) {
