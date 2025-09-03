@@ -61,6 +61,11 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
+    if (index == StructUtils::DescriptorIndex) {
+      // We cannot continue on below, where we index into the vector of values.
+      return;
+    }
+
     auto noted = expr->type;
     // Do not introduce new exact fields that might requires invalid
     // casts. Keep any existing exact fields, though.
