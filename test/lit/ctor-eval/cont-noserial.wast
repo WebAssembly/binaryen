@@ -123,3 +123,73 @@
  )
 )
 
+;; As the original testcase, but the serialization problem happens in a local.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; NOKEEP:      (type $func (func))
+ (type $func (func))
+ ;; CHECK:      (type $cont (cont $func))
+ ;; NOKEEP:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (export "test" (func $test))
+ ;; NOKEEP:      (elem declare func $func)
+
+ ;; NOKEEP:      (export "export" (func $export))
+
+ ;; NOKEEP:      (export "test" (func $test))
+ (export "test" (func $test))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $func (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $func
+ )
+
+ ;; CHECK:      (func $test (type $func)
+ ;; CHECK-NEXT:  (local $cont (ref $cont))
+ ;; CHECK-NEXT:  (local.set $cont
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $test (type $func)
+ ;; NOKEEP-NEXT:  (local $cont (ref $cont))
+ ;; NOKEEP-NEXT:  (local.set $cont
+ ;; NOKEEP-NEXT:   (cont.new $cont
+ ;; NOKEEP-NEXT:    (ref.func $func)
+ ;; NOKEEP-NEXT:   )
+ ;; NOKEEP-NEXT:  )
+ ;; NOKEEP-NEXT:  (unreachable)
+ ;; NOKEEP-NEXT: )
+ (func $test
+  (local $cont (ref $cont))
+  (local.set $cont
+   (cont.new $cont
+    (ref.func $func)
+   )
+  )
+  ;; An effect, so the function cannot be fully precomputed - we precompute up
+  ;; to here, and try to stash in locals, but fail.
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $export (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $export (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $export (export "export")
+ )
+)
+
