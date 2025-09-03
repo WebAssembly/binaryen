@@ -34,37 +34,37 @@
 
   ;; CHECK:      (type $11 (func (param (ref $two) (ref $three))))
 
-  ;; CHECK:      (global $A.unnested.4294967295 (ref (exact $A.desc)) (struct.new_default $A.desc))
+  ;; CHECK:      (global $A.unnested.desc (ref (exact $A.desc)) (struct.new_default $A.desc))
 
   ;; CHECK:      (global $A (ref $A) (struct.new_default $A
-  ;; CHECK-NEXT:  (global.get $A.unnested.4294967295)
+  ;; CHECK-NEXT:  (global.get $A.unnested.desc)
   ;; CHECK-NEXT: ))
   (global $A (ref $A) (struct.new $A
     (struct.new $A.desc)
   ))
 
-  ;; CHECK:      (global $B.unnested.4294967295 (ref (exact $B.desc)) (struct.new_default $B.desc))
+  ;; CHECK:      (global $B.unnested.desc (ref (exact $B.desc)) (struct.new_default $B.desc))
 
-  ;; CHECK:      (global $two.unnested.4294967295 (ref (exact $two.desc)) (struct.new_default $two.desc))
+  ;; CHECK:      (global $two.unnested.desc (ref (exact $two.desc)) (struct.new_default $two.desc))
 
-  ;; CHECK:      (global $two2.unnested.4294967295 (ref (exact $two.desc)) (struct.new_default $two.desc))
+  ;; CHECK:      (global $two2.unnested.desc (ref (exact $two.desc)) (struct.new_default $two.desc))
 
   ;; CHECK:      (global $B (ref $B) (struct.new_default $B
-  ;; CHECK-NEXT:  (global.get $B.unnested.4294967295)
+  ;; CHECK-NEXT:  (global.get $B.unnested.desc)
   ;; CHECK-NEXT: ))
   (global $B (ref $B) (struct.new $B
     (struct.new $B.desc)
   ))
 
   ;; CHECK:      (global $two (ref $two) (struct.new_default $two
-  ;; CHECK-NEXT:  (global.get $two.unnested.4294967295)
+  ;; CHECK-NEXT:  (global.get $two.unnested.desc)
   ;; CHECK-NEXT: ))
   (global $two (ref $two) (struct.new $two
     (struct.new $two.desc)
   ))
 
   ;; CHECK:      (global $two2 (ref $two) (struct.new_default $two
-  ;; CHECK-NEXT:  (global.get $two2.unnested.4294967295)
+  ;; CHECK-NEXT:  (global.get $two2.unnested.desc)
   ;; CHECK-NEXT: ))
   (global $two2 (ref $two) (struct.new $two
     (struct.new $two.desc)
@@ -94,8 +94,8 @@
   ;; CHECK:      (func $family (type $10) (param $super (ref $super)) (param $A (ref $A)) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select (result (ref $super.desc))
-  ;; CHECK-NEXT:    (global.get $A.unnested.4294967295)
-  ;; CHECK-NEXT:    (global.get $B.unnested.4294967295)
+  ;; CHECK-NEXT:    (global.get $A.unnested.desc)
+  ;; CHECK-NEXT:    (global.get $B.unnested.desc)
   ;; CHECK-NEXT:    (ref.eq
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $super)
@@ -153,8 +153,8 @@
   ;; CHECK:      (func $others (type $11) (param $two (ref $two)) (param $three (ref $three))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select (result (ref (exact $two.desc)))
-  ;; CHECK-NEXT:    (global.get $two.unnested.4294967295)
-  ;; CHECK-NEXT:    (global.get $two2.unnested.4294967295)
+  ;; CHECK-NEXT:    (global.get $two.unnested.desc)
+  ;; CHECK-NEXT:    (global.get $two2.unnested.desc)
   ;; CHECK-NEXT:    (ref.eq
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $two)

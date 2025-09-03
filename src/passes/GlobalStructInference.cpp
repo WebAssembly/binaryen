@@ -568,9 +568,10 @@ struct GlobalStructInference : public Pass {
           assert(get->type == nestedGet->type);
         } else {
           // Add a new global, initialized to the operand.
+          std::string indexName =
+            index != DescriptorIndex ? std::to_string(index) : "desc";
           auto newName = Names::getValidGlobalName(
-            *module,
-            global->name.toString() + ".unnested." + std::to_string(index));
+            *module, global->name.toString() + ".unnested." + indexName);
           module->addGlobal(builder.makeGlobal(
             newName, get->type, operand, Builder::Immutable));
           // Replace the operand with a get of that new global, and update the
