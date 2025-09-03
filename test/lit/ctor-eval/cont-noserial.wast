@@ -284,3 +284,56 @@
  )
 )
 
+;; As the original testcase, but the problem happens in a nested GC value.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; NOKEEP:      (type $func (func))
+ (type $func (func))
+ ;; CHECK:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (type $2 (func (result anyref)))
+
+ ;; CHECK:      (type $struct (struct (field $cont (ref $cont))))
+ (type $struct (struct (field $cont (ref $cont))))
+
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (export "test" (func $test))
+ (export "test" (func $test))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $func
+ )
+
+ ;; CHECK:      (func $test (type $2) (result anyref)
+ ;; CHECK-NEXT:  (struct.new $struct
+ ;; CHECK-NEXT:   (cont.new $cont
+ ;; CHECK-NEXT:    (ref.func $func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (result anyref)
+  (struct.new $struct
+   (cont.new $cont
+    (ref.func $func)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $export (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (export "export" (func $export))
+
+ ;; NOKEEP:      (func $export (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $export (export "export")
+ )
+)
+
