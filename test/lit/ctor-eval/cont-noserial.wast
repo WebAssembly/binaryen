@@ -193,3 +193,94 @@
  )
 )
 
+;; As the original testcase, but the serialization problem happens in a
+;; return_call param.
+(module
+ ;; CHECK:      (type $func (func))
+ ;; NOKEEP:      (type $func (func))
+ (type $func (func))
+ ;; CHECK:      (type $1 (func (param contref)))
+
+ ;; CHECK:      (type $cont (cont $func))
+ ;; NOKEEP:      (type $1 (func (param contref)))
+
+ ;; NOKEEP:      (type $cont (cont $func))
+ (type $cont (cont $func))
+
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (export "test" (func $test))
+ ;; NOKEEP:      (elem declare func $func)
+
+ ;; NOKEEP:      (export "export" (func $export))
+
+ ;; NOKEEP:      (export "test" (func $test))
+ (export "test" (func $test))
+
+ ;; CHECK:      (func $func (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $func (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $func
+ )
+
+ ;; CHECK:      (func $test (type $1) (param $cont contref)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.is_null
+ ;; CHECK-NEXT:    (local.get $cont)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (return_call $test
+ ;; CHECK-NEXT:     (cont.new $cont
+ ;; CHECK-NEXT:      (ref.func $func)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $test (type $1) (param $cont contref)
+ ;; NOKEEP-NEXT:  (if
+ ;; NOKEEP-NEXT:   (ref.is_null
+ ;; NOKEEP-NEXT:    (local.get $cont)
+ ;; NOKEEP-NEXT:   )
+ ;; NOKEEP-NEXT:   (then
+ ;; NOKEEP-NEXT:    (return_call $test
+ ;; NOKEEP-NEXT:     (cont.new $cont
+ ;; NOKEEP-NEXT:      (ref.func $func)
+ ;; NOKEEP-NEXT:     )
+ ;; NOKEEP-NEXT:    )
+ ;; NOKEEP-NEXT:   )
+ ;; NOKEEP-NEXT:  )
+ ;; NOKEEP-NEXT:  (unreachable)
+ ;; NOKEEP-NEXT: )
+ (func $test (param $cont (ref null cont))
+  (if
+   (ref.is_null
+    (local.get $cont)
+   )
+   (then
+    (return_call $test
+     (cont.new $cont
+      (ref.func $func)
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $export (type $func)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; NOKEEP:      (func $export (type $func)
+ ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP-NEXT: )
+ (func $export (export "export")
+ )
+)
+
