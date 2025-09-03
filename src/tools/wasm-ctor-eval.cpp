@@ -798,8 +798,14 @@ public:
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
   // if the other conditions are suitable.
+  //
+  // Returns nullptr if we cannot serialize.
   Expression* getSerialization(Literal value,
                                Name possibleDefiningGlobal = Name()) {
+    if (value.isContinuation()) {
+      return nullptr;
+    }
+
     Builder builder(*wasm);
 
     // If this is externalized then we want to inspect the inner data, handle
@@ -861,12 +867,19 @@ public:
       }
 
       for (auto& value : values) {
-        args.push_back(getSerialization(value));
+        auto* serialized = getSerialization(value);
+        if (!serialized) {
+          return nullptr;
+        }
+        args.push_back(serialized);
       }
 
       Expression* desc = nullptr;
       if (data->desc.getGCData()) {
         desc = getSerialization(data->desc);
+        if (!desc) {
+          return nullptr;
+        }
       }
 
       Expression* init;
@@ -913,7 +926,11 @@ public:
       assert(possibleDefiningGlobal.isNull());
       std::vector<Expression*> children;
       for (const auto& value : values) {
-        children.push_back(getSerialization(value));
+        auto* serialized = getSerialization(value);
+        if (!serialized) {
+          return nullptr;
+        }
+        children.push_back(serialized);
       }
       return Builder(*wasm).makeTupleMake(children);
     }
@@ -1132,7 +1149,17 @@ start_eval:
         // state in case we fail to eval the new function.
         localExprs.clear();
         for (auto& param : params) {
-          localExprs.push_back(interface.getSerialization(param));
+          auto* serialized = interface.getSerialization(param);
+          if (!serialized) {
+            break;
+          }
+          localExprs.push_back(serialized);
+        }
+        if (localExprs.size() < params.size()) {
+          if (!quiet) {
+            std::cout << "  ...stopping due to non-serializable param\n";
+          }
+          break;
         }
         interface.applyToModule();
         goto start_eval;
@@ -1152,7 +1179,17 @@ start_eval:
       // serialization sets from scratch each time here, for all locals.
       localExprs.clear();
       for (Index i = 0; i < func->getNumLocals(); i++) {
-        localExprs.push_back(interface.getSerialization(scope.locals[i]));
+        auto* serialized = interface.getSerialization(scope.locals[i]);
+        if (!serialized) {
+          break;
+        }
+        localExprs.push_back(serialized);
+      }
+      if (localExprs.size() < func->getNumLocals()) {
+        if (!quiet) {
+          std::cout << "  ...stopping due to non-serializable local\n";
+        }
+        break;
       }
       interface.applyToModule();
       successes++;
@@ -1341,12 +1378,21 @@ void evalCtors(Module& wasm,
                                         ? *exp->getInternalName()
                                         : Name());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
-        auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
+        auto copyFunc = ModuleUtils::copyFunctionWithoutAdd(func,
+                                                            wasm,
+                                                            copyName);
         if (func->getResults() == Type::none) {
           copyFunc->body = Builder(wasm).makeNop();
         } else {
           copyFunc->body = interface.getSerialization(*outcome);
+          if (!copyFunc->body) {
+            if (!quiet) {
+              std::cout << "  ...stopping due to non-serializable body\n";
+            }
+            return;
+          }
         }
+        wasm.addFunction(std::move(copyFunc));
         *wasm.getExport(exp->name)->getInternalName() = copyName;
       }
     }
