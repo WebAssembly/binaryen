@@ -71,21 +71,10 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
-// A wrapper for a boolean value that provides a combine() method as is used in
-// the StructUtils propagation logic.
-struct Bool {
-  bool value = false;
-
-  Bool() {}
-  Bool(bool value) : value(value) {}
-
-  operator bool() const { return value; }
-
-  bool combine(bool other) { return value = value || other; }
-};
-
-using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
-using BoolFunctionStructValuesMap = StructUtils::FunctionStructValuesMap<Bool>;
+using BoolStructValuesMap =
+  StructUtils::StructValuesMap<StructUtils::CombinableBool>;
+using BoolFunctionStructValuesMap =
+  StructUtils::FunctionStructValuesMap<StructUtils::CombinableBool>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -560,7 +549,8 @@ struct ConstantFieldPropagation : public Pass {
     // of subtypes must be taken into account (that is, A or a subtype is being
     // copied, so we want to do the same thing for B and C as well as A, since
     // a copy of A means it could be a copy of B or C).
-    StructUtils::TypeHierarchyPropagator<Bool> boolPropagator(subTypes);
+    StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
+      boolPropagator(subTypes);
     boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {

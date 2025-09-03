@@ -29,6 +29,25 @@ using StructField = std::pair<HeapType, Index>;
 
 namespace StructUtils {
 
+// A value that has a single bool, and implements combine() so it can be used in
+// StructValues.
+struct CombinableBool {
+  bool value = false;
+
+  CombinableBool() {}
+  CombinableBool(bool value) : value(value) {}
+
+  operator bool() const { return value; }
+
+  bool combine(const CombinableBool& other) {
+    if (!value && other.value) {
+      value = true;
+      return true;
+    }
+    return false;
+  }
+};
+
 // A vector of a template type's values. One such vector will be used per struct
 // type, where each element in the vector represents a field. We always assume
 // that the vectors are pre-initialized to the right length before accessing any
