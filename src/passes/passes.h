@@ -131,7 +131,6 @@ Pass* createPrecomputePropagatePass();
 Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
-Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRandomizeBranchHintsPass();
 Pass* createRemoveNonJSOpsPass();
