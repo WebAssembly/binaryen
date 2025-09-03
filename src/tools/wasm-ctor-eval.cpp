@@ -1378,9 +1378,8 @@ void evalCtors(Module& wasm,
                                         ? *exp->getInternalName()
                                         : Name());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
-        auto copyFunc = ModuleUtils::copyFunctionWithoutAdd(func,
-                                                            wasm,
-                                                            copyName);
+        auto copyFunc =
+          ModuleUtils::copyFunctionWithoutAdd(func, wasm, copyName);
         if (func->getResults() == Type::none) {
           copyFunc->body = Builder(wasm).makeNop();
         } else {
