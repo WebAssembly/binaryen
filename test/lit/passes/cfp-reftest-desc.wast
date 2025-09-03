@@ -35,7 +35,7 @@
   ;; CHECK:      (func $test (type $6) (param $super (ref null $super)) (param $A (ref null $A)) (param $B (ref null $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $A
-  ;; CHECK-NEXT:    (struct.new_default $A.desc)
+  ;; CHECK-NEXT:    (global.get $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -44,13 +44,24 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.get_desc $super
-  ;; CHECK-NEXT:    (local.get $super)
+  ;; CHECK-NEXT:   (select (result (ref $super.desc))
+  ;; CHECK-NEXT:    (global.get $A.desc)
+  ;; CHECK-NEXT:    (global.get $B.desc)
+  ;; CHECK-NEXT:    (ref.test (ref $A)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $super)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.get_desc $A
-  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   (block (result (ref (exact $A.desc)))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $A.desc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -65,10 +76,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $super (ref null $super)) (param $A (ref null $A)) (param $B (ref null $B))
-    ;; We can
     (drop
       (struct.new $A
-        (struct.new $A.desc)
+        (global.get $A.desc)
       )
     )
     (drop
@@ -76,11 +86,13 @@
         (global.get $B.desc)
       )
     )
+    ;; We can optimize the read from the super here, using a ref.test.
     (drop
       (ref.get_desc $super
         (local.get $super)
       )
     )
+    ;; These are optimizable even without ref.test.
     (drop
       (ref.get_desc $A
         (local.get $A)
