@@ -241,6 +241,19 @@ Result<> ParseDeclsCtx::addElem(
   return Ok{};
 }
 
+Result<> ParseDeclsCtx::addDeclareElem(Name name, ElemListT&&, Index) {
+  auto e = std::make_unique<ElementSegment>();
+  if (name) {
+    e->setExplicitName(name);
+  } else {
+    name = std::to_string(elemCounter++);
+    name = Names::getValidElementSegmentName(wasm, name);
+    e->name = name;
+  }
+  wasm.addElementSegment(std::move(e));
+  return Ok{};
+}
+
 Result<> ParseDeclsCtx::addData(Name name,
                                 MemoryIdxT*,
                                 std::optional<ExprT>,
