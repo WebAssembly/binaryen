@@ -117,8 +117,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   PossibleConstantValues getInfo(HeapType type, Index index) {
     if (auto it = propagatedInfos.find(type); it != propagatedInfos.end()) {
       // There is information on this type, fetch it.
-      auto& entry = it->second;
-      return index != StructUtils::DescriptorIndex ? entry[index] : entry.desc;
+      return it->second[index];
     }
     return PossibleConstantValues{};
   }
