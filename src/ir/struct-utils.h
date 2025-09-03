@@ -48,6 +48,8 @@ struct CombinableBool {
   }
 };
 
+static const Index DescriptorIndex = -1;
+
 // A vector of a template type's values. One such vector will be used per struct
 // type, where each element in the vector represents a field. We always assume
 // that the vectors are pre-initialized to the right length before accessing any
@@ -55,11 +57,17 @@ struct CombinableBool {
 // StructValuesMap.
 template<typename T> struct StructValues : public std::vector<T> {
   T& operator[](size_t index) {
+    if (index == DescriptorIndex) {
+      return desc;
+    }
     assert(index < this->size());
     return std::vector<T>::operator[](index);
   }
 
   const T& operator[](size_t index) const {
+    if (index == DescriptorIndex) {
+      return desc;
+    }
     assert(index < this->size());
     return std::vector<T>::operator[](index);
   }
@@ -180,8 +188,6 @@ struct StructScanner
   bool modifiesBinaryenIR() override { return false; }
 
   SubType& self() { return *static_cast<SubType*>(this); }
-
-  static const Index DescriptorIndex = -1;
 
   StructScanner(FunctionStructValuesMap<T>& functionNewInfos,
                 FunctionStructValuesMap<T>& functionSetGetInfos)
