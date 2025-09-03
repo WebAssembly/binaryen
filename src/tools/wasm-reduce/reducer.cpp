@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "reducer.h"
+#include "tools/wasm-reduce/reducer.h"
 #include "destructive-reducer.h"
 #include "support/file.h"
 #include "support/path.h"
