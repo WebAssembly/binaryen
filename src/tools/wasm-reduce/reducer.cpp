@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "reducer.h"
+#include "tools/wasm-reduce/reducer.h"
 #include "ir/branch-utils.h"
 #include "ir/utils.h"
 #include "support/file.h"
