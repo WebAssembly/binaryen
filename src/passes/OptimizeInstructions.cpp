@@ -2473,8 +2473,11 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->desc && trapOnNull(curr, curr->desc)) {
-      return;
+    if (curr->desc) {
+      skipNonNullCast(curr->desc, curr);
+      if (trapOnNull(curr, curr->desc)) {
+        return;
+      }
     }
 
     Builder builder(*getModule());
@@ -2603,6 +2606,13 @@ struct OptimizeInstructions
     }
   }
 
+  void visitBrOn(BrOn* curr) {
+    if (curr->desc) {
+      skipNonNullCast(curr->desc, curr);
+      trapOnNull(curr, curr->desc);
+    }
+  }
+
   void visitRefIsNull(RefIsNull* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -2690,6 +2700,11 @@ struct OptimizeInstructions
       cast->type = cast->type.with(NonNullable);
       replaceCurrent(cast);
     }
+  }
+
+  void visitRefGetDesc(RefGetDesc* curr) {
+    skipNonNullCast(curr->ref, curr);
+    trapOnNull(curr, curr->ref);
   }
 
   void visitTupleExtract(TupleExtract* curr) {
