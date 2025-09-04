@@ -63,13 +63,14 @@
  )
 )
 
-;; As above, but there is another use of $test.
 ;; CHECK:      (func $test_3 (type $3) (result (ref $cont))
 ;; CHECK-NEXT:  (cont.new $cont
 ;; CHECK-NEXT:   (ref.func $func)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
+ ;; As above, but there is another use of $test.
+
  ;; CHECK:      (type $func (func))
  ;; NOKEEP:      (type $func (func))
  (type $func (func))
