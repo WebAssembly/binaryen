@@ -2473,8 +2473,11 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->desc && trapOnNull(curr, curr->desc)) {
-      return;
+    if (curr->desc) {
+      skipNonNullCast(curr->desc, curr);
+      if (trapOnNull(curr, curr->desc)) {
+        return;
+      }
     }
 
     Builder builder(*getModule());
