@@ -2609,7 +2609,7 @@ struct OptimizeInstructions
   void visitBrOn(BrOn* curr) {
     if (curr->desc) {
       skipNonNullCast(curr->desc, curr);
-      //trapOnNull(curr, curr->desc);
+      trapOnNull(curr, curr->desc);
     }
   }
 
