@@ -1108,4 +1108,27 @@
       )
     )
   )
+
+  ;; CHECK:      (func $skip-non-null (type $20) (param $ref (ref null $struct)) (result anyref)
+  ;; CHECK-NEXT:  (ref.get_desc $struct
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NTRAP:      (func $skip-non-null (type $20) (param $ref (ref null $struct)) (result anyref)
+  ;; NTRAP-NEXT:  (ref.get_desc $struct
+  ;; NTRAP-NEXT:   (ref.as_non_null
+  ;; NTRAP-NEXT:    (local.get $ref)
+  ;; NTRAP-NEXT:   )
+  ;; NTRAP-NEXT:  )
+  ;; NTRAP-NEXT: )
+  (func $skip-non-null (param $ref (ref null $struct)) (result anyref)
+    (ref.get_desc $struct
+      ;; This is not needed, as the parent traps on null anyhow.
+      (ref.as_non_null
+        (local.get $ref)
+      )
+    )
+  )
 )
