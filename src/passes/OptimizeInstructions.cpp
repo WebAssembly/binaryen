@@ -2694,7 +2694,7 @@ struct OptimizeInstructions
 
   void visitRefGetDesc(RefGetDesc* curr) {
     skipNonNullCast(curr->ref, curr);
-    //trapOnNull(curr, curr->ref);
+    trapOnNull(curr, curr->ref);
   }
 
   void visitTupleExtract(TupleExtract* curr) {
