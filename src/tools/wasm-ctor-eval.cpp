@@ -1386,8 +1386,9 @@ void evalCtors(Module& wasm,
       if (!keeping) {
         instance.allowContNew = true;
       } else {
-        // Any reference type might refer to a continuation, so disallow refs
-        // too.
+        // Any reference type might refer to a continuation (indirectly, that
+        // is, it might refer to something with a continuation field), so
+        // disallow refs too.
         auto features = func->getResults().getFeatures();
         instance.allowContNew =
           !features.hasStackSwitching() && !features.hasReferenceTypes();
