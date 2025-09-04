@@ -23,6 +23,7 @@
 #include <unordered_set>
 #endif
 
+#include "ir/module-utils.h"
 #include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"

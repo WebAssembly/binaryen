@@ -147,6 +147,8 @@ Pass* createReorderFunctionsPass();
 Pass* createReorderGlobalsPass();
 Pass* createReorderGlobalsAlwaysPass();
 Pass* createReorderLocalsPass();
+Pass* createReorderTypesPass();
+Pass* createReorderTypesForTestingPass();
 Pass* createReReloopPass();
 Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
