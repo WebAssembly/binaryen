@@ -43,7 +43,7 @@ struct ReorderingTypeRewriter : GlobalTypeRewriter {
   // contribution from successors, then pick the best result.
   static constexpr float minFactor = 0.0;
   static constexpr float maxFactor = 1.0;
-  static constexpr Index buckets = 21;
+  static constexpr Index numFactors = 21;
 
   ReorderingTypeRewriter(Module& wasm, InfoMap& typeInfo, bool forTesting)
     : GlobalTypeRewriter(wasm), typeInfo(typeInfo), forTesting(forTesting) {}
@@ -68,35 +68,35 @@ struct ReorderingTypeRewriter : GlobalTypeRewriter {
       }
     }
 
-    // Accumulate weights. Start with the use counts for each type, then add the
-    // adjusted weight for each successor to the weights of its predecessors.
-    std::vector<float> weights(numTypes * buckets);
-    for (Index i = 0; i < numTypes; ++i) {
-      for (Index j = 0; j < buckets; ++j) {
-        weights[i * buckets + j] = counts[i];
-      }
-    }
+    // A successors-first order used to propagate weights from successors to
+    // predecessors.
     auto succsFirst = TopologicalSort::sort(succs);
     std::reverse(succsFirst.begin(), succsFirst.end());
-    for (Index pred : succsFirst) {
-      for (Index i = 0; i < buckets; ++i) {
-        float factor = getFactor(i);
-        for (Index succ : succs[pred]) {
-          weights[pred * buckets + i] += weights[succ * buckets + i] * factor;
-        }
-      }
-    }
 
-    // Try the various sorts, keeping only the best.
+    // Try each factor in turn, keeping the best results.
     std::vector<Index> bestSort;
     Index bestCost = 0;
-    for (Index i = 0; i < buckets; ++i) {
-      auto curr = TopologicalSort::minSort(succs, [&](Index a, Index b) {
-        return weights[a * buckets + i] > weights[b * buckets + i];
-      });
-      auto cost = getCost(curr, counts);
-      if (i == 0 || cost < bestCost) {
-        bestSort = std::move(curr);
+    for (Index factorIndex = 0; factorIndex < numFactors; ++factorIndex) {
+      float factor = getFactor(factorIndex);
+
+      // Accumulate weights. Start with the use counts for each type, then add
+      // the adjusted weight for each successor to the weights of its
+      // predecessors.
+      std::vector<float> weights(numTypes);
+      for (Index i = 0; i < numTypes; ++i) {
+        weights[i] = counts[i];
+      }
+      for (Index pred : succsFirst) {
+        for (Index succ : succs[pred]) {
+          weights[pred] += weights[succ] * factor;
+        }
+      }
+
+      auto sort = TopologicalSort::minSort(
+        succs, [&](Index a, Index b) { return weights[a] > weights[b]; });
+      auto cost = getCost(sort, counts);
+      if (factorIndex == 0 || cost < bestCost) {
+        bestSort = std::move(sort);
         bestCost = cost;
       }
     }
@@ -111,7 +111,7 @@ struct ReorderingTypeRewriter : GlobalTypeRewriter {
   }
 
   float getFactor(Index i) {
-    return minFactor + (maxFactor - minFactor) * i / (buckets - 1);
+    return minFactor + (maxFactor - minFactor) * i / (numFactors - 1);
   }
 
   Index getCost(const std::vector<Index>& order,
