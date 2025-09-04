@@ -379,8 +379,8 @@ public:
 
   // Given the predecessor graph of the types to be rebuilt, return a list of
   // the types in the order in which they will be rebuilt. Users can override
-  // this to inject placeholders for extra types ore use custom logic to sort
-  // the types.
+  // this to inject placeholders for extra types or use custom logic to sort the
+  // types.
   virtual std::vector<HeapType> getSortedTypes(PredecessorGraph preds);
 
   // Subclasses can implement these methods to modify the new set of types that
