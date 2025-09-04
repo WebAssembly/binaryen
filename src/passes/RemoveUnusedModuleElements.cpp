@@ -561,8 +561,27 @@ struct Analyzer {
 
     auto* new_ = curr->cast<StructNew>();
 
-    // Use the descriptor right now, normally. (We only have special
-    // optimization for struct.new operands, below.)
+    // Use the descriptor right now, normally. We only have special
+    // optimization for struct.new operands, below, because this is not needed
+    // for descriptors: descriptors always have a struct "in the middle", so
+    // optimizing normal struct fields is enough. That is, imagine we have a
+    // struct with a descriptor:
+    //
+    //  (struct.new $A
+    //    (ref.func $c)
+    //    (struct.new $A.desc
+    //      (ref.func $d)
+    //    )
+    //  )
+    //
+    // The struct has a ref.func on it, and the descriptor does as well. Say we
+    // never field 0 from $A, then we can avoid marking $c as reached; this is
+    // the usual struct optimization we do, below. Now, say we never read the
+    // descriptor, then we also never read field 0 from $A.desc, that is, the
+    // usual struct optimization on the descriptor class is enough for us to
+    // avoid marking $d as reached. Put another way, a descriptor must be a
+    // struct; if it could be a function, then we'd need to optimize descriptors
+    // as we do normal fields.
     if (new_->desc) {
       use(new_->desc);
     }

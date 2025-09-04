@@ -127,3 +127,73 @@
  (elem $no-trap-get anyref (item (struct.new $struct (global.get $desc))))
 )
 
+(module
+ ;; CHECK:      (type $void (func))
+ (type $void (func))
+
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $vtable (sub (descriptor $vtable.desc (struct (field (ref $void))))))
+  (type $vtable (sub (descriptor $vtable.desc (struct (field (ref $void))))))
+  ;; CHECK:       (type $vtable.desc (sub (describes $vtable (struct (field (ref $void))))))
+  (type $vtable.desc (sub (describes $vtable (struct (field (ref $void))))))
+ )
+
+ ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
+ ;; CHECK-NEXT:  (ref.func $a)
+ ;; CHECK-NEXT:  (struct.new $vtable.desc
+ ;; CHECK-NEXT:   (ref.func $b)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: ))
+ (global $vtable (ref $vtable) (struct.new $vtable
+  (ref.func $a)
+  (struct.new $vtable.desc
+   (ref.func $b)
+  )
+ ))
+
+ ;; CHECK:      (export "export" (func $export))
+
+ ;; CHECK:      (func $export (type $void)
+ ;; CHECK-NEXT:  (call_ref $void
+ ;; CHECK-NEXT:   (struct.get $vtable 0
+ ;; CHECK-NEXT:    (global.get $vtable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $export (export "export")
+  ;; Read $a and call it. $b, in the descriptor, should not be callable.
+  (call_ref $void
+   (struct.get $vtable 0
+    (global.get $vtable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $a (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $a (type $void)
+  ;; This is reached from above.
+  (drop (i32.const 42))
+ )
+
+ ;; CHECK:      (func $b (type $void)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $b (type $void)
+  ;; This is not reached: We never read the descriptor, so we never read field 0
+  ;; in it, leaving this as dead (in closed world). That it itself seems to read
+  ;; the descriptor should not confuse us.
+  (call_ref $void
+   (struct.get $vtable.desc 0
+    (ref.get_desc $vtable
+     (global.get $vtable)
+    )
+   )
+  )
+ )
+)
+
