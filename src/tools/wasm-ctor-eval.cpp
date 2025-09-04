@@ -1389,7 +1389,8 @@ void evalCtors(Module& wasm,
         // Any reference type might refer to a continuation, so disallow refs
         // too.
         auto features = func->getResults().getFeatures();
-        instance.allowContNew = !features.hasStackSwitching() && !features.hasReferenceTypes();
+        instance.allowContNew =
+          !features.hasStackSwitching() && !features.hasReferenceTypes();
       }
 
       auto outcome = evalCtor(instance, interface, func->name, ctor);
