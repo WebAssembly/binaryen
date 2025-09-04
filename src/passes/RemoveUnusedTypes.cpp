@@ -20,7 +20,6 @@
 // optimize.
 //
 
-#include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
 

@@ -451,6 +451,9 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-locals",
                "sorts locals by access frequency",
                createReorderLocalsPass);
+  registerPass("reorder-types",
+               "sorts private types by access frequency",
+               createReorderTypesPass);
   registerPass("rereloop",
                "re-optimize control flow using the relooper algorithm",
                createReReloopPass);
@@ -608,6 +611,10 @@ void PassRegistry::registerPasses() {
   registerTestPass("reorder-globals-always",
                    "sorts globals by access frequency (even if there are few)",
                    createReorderGlobalsAlwaysPass);
+  registerTestPass(
+    "reorder-types-for-testing",
+    "sorts types by access frequency with an exaggerated cost function",
+    createReorderTypesForTestingPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
