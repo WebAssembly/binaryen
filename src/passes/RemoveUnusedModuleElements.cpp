@@ -561,8 +561,26 @@ struct Analyzer {
 
     auto* new_ = curr->cast<StructNew>();
 
-    // Use the descriptor right now, normally. (We only have special
-    // optimization for struct.new operands, below.)
+    // Use the descriptor right now, normally. We only have special
+    // optimization for struct.new operands, below, because this is not needed
+    // for descriptors: a descriptor must be a struct, and our "lazy reading"
+    // optimization operates on it (if it could be a function, then we'd need to
+    // do more here). In other words, descriptor reads always have a struct "in
+    // the middle", that we can optimize, like here:
+    //
+    //  (struct.new $A
+    //    (ref.func $c)
+    //    (struct.new $A.desc
+    //      (ref.func $d)
+    //    )
+    //  )
+    //
+    // The struct has a ref.func on it, and the descriptor as well. Say we never
+    // read field 0 from $A, then we can avoid marking $c as reached; this is
+    // the usual struct optimization we do, below. Now, say we never read the
+    // descriptor, then we also never read field 0 from $A.desc, that is, the
+    // usual struct optimization on the descriptor class is enough for us to
+    // avoid marking $d as reached.
     if (new_->desc) {
       use(new_->desc);
     }
