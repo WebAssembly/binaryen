@@ -10,19 +10,28 @@
 
 (module
  ;; CHECK:      (type $func (func))
- ;; NOKEEP:      (type $func (func))
  (type $func (func))
  ;; CHECK:      (type $cont (cont $func))
  (type $cont (cont $func))
 
- ;; CHECK:      (type $2 (func (result (ref $cont))))
+
+ ;; CHECK:      (type $2 (func (result i32)))
+
+ ;; CHECK:      (type $3 (func (result (ref $cont))))
+
+ ;; CHECK:      (global $global (mut i32) (i32.const 1))
+ ;; NOKEEP:      (type $0 (func (result i32)))
+
+ ;; NOKEEP:      (global $global (mut i32) (i32.const 1))
+ (global $global (mut i32) (i32.const 0))
+
+ (export "test" (func $test))
 
  ;; CHECK:      (elem declare func $func)
 
- ;; CHECK:      (export "export" (func $export))
+ ;; CHECK:      (export "read" (func $read))
 
- ;; CHECK:      (export "test" (func $test))
- (export "test" (func $test))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (func $func (type $func)
  ;; CHECK-NEXT:  (nop)
@@ -30,32 +39,36 @@
  (func $func
  )
 
- ;; CHECK:      (func $test (type $2) (result (ref $cont))
- ;; CHECK-NEXT:  (cont.new $cont
- ;; CHECK-NEXT:   (ref.func $func)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $test (result (ref $cont))
+  ;; An effect before the cont.new. We can precompute it and remove it from
+  ;; here, applying the 1 to the global.
+  (global.set $global
+   (i32.const 1)
+  )
   (cont.new $cont
    (ref.func $func)
   )
  )
 
- ;; CHECK:      (func $export (type $func)
- ;; CHECK-NEXT:  (nop)
+ ;; CHECK:      (func $read (type $2) (result i32)
+ ;; CHECK-NEXT:  (global.get $global)
  ;; CHECK-NEXT: )
- ;; NOKEEP:      (export "export" (func $export))
+ ;; NOKEEP:      (export "read" (func $read))
 
- ;; NOKEEP:      (func $export (type $func)
- ;; NOKEEP-NEXT:  (nop)
+ ;; NOKEEP:      (func $read (type $0) (result i32)
+ ;; NOKEEP-NEXT:  (global.get $global)
  ;; NOKEEP-NEXT: )
- (func $export (export "export")
-  ;; A dummy export, just to avoid the NOKEEP case ending up with a blank
-  ;; module and no CHECKs.
+ (func $read (export "read") (result i32)
+  (global.get $global)
  )
 )
 
 ;; As above, but there is another use of $test.
+;; CHECK:      (func $test_3 (type $3) (result (ref $cont))
+;; CHECK-NEXT:  (cont.new $cont
+;; CHECK-NEXT:   (ref.func $func)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
 (module
  ;; CHECK:      (type $func (func))
  ;; NOKEEP:      (type $func (func))
@@ -190,6 +203,7 @@
  ;; NOKEEP-NEXT:  (nop)
  ;; NOKEEP-NEXT: )
  (func $export (export "export")
+  ;; Keep the testcase from being trivial in the NOKEEP case.
  )
 )
 
