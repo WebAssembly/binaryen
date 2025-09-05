@@ -93,6 +93,15 @@ public:
     throw FailToEvalException("TODO: table.get");
   }
 
+  bool allowContNew = true;
+
+  Flow visitContNew(ContNew* curr) {
+    if (!allowContNew) {
+      throw FailToEvalException("cont.new disallowed");
+    }
+    return ModuleRunnerBase<EvallingModuleRunner>::visitContNew(curr);
+  }
+
   // This needs to be duplicated from ModuleRunner, unfortunately.
   Literal makeFuncData(Name name, HeapType type) {
     auto allocation =
@@ -1353,8 +1362,39 @@ void evalCtors(Module& wasm,
       if (!ex || ex->kind != ExternalKind::Function) {
         Fatal() << "export not found: " << ctor;
       }
-      auto funcName = *ex->getInternalName();
-      auto outcome = evalCtor(instance, interface, funcName, ctor);
+
+      auto* func = wasm.getFunction(*ex->getInternalName());
+
+      // Disallow cont.new when we are keeping the export. The problem is that
+      // we may end up with a serialization problem later:
+      //
+      //  (func $foo (export "foo") (result (ref $cont))
+      //    (global.set ..) ;; side effect
+      //    (cont.new ..)
+      //  )
+      //
+      // We will fail to serialize the result of the function here. But
+      // noticing that when we handle keeping of the export is too late, as we
+      // will have already applied global effects to the module (in the example
+      // above, the global.set will have run). That means we cannot just keep
+      // the export by serializing the result and using that as the body (or
+      // part of the body), as serialization fails. We would need to go back in
+      // time and undo any side effects here. Instead, if we will need the
+      // export, disallow things that can block serialization, if we may end up
+      // needing to serialize.
+      bool keeping = keptExportsSet.count(ctor);
+      if (!keeping) {
+        instance.allowContNew = true;
+      } else {
+        // Any reference type might refer to a continuation (indirectly, that
+        // is, it might refer to something with a continuation field), so
+        // disallow refs too.
+        auto features = func->getResults().getFeatures();
+        instance.allowContNew =
+          !features.hasStackSwitching() && !features.hasReferenceTypes();
+      }
+
+      auto outcome = evalCtor(instance, interface, func->name, ctor);
       if (!outcome) {
         if (!quiet) {
           std::cout << "  ...stopping\n";
@@ -1369,14 +1409,11 @@ void evalCtors(Module& wasm,
 
       // Remove the export if we should.
       auto* exp = wasm.getExport(ctor);
-      if (!keptExportsSet.count(ctor)) {
+      if (!keeping) {
         wasm.removeExport(exp->name);
       } else {
         // We are keeping around the export, which should now refer to an
         // empty function since calling the export should do nothing.
-        auto* func = wasm.getFunction((exp->kind == ExternalKind::Function)
-                                        ? *exp->getInternalName()
-                                        : Name());
         auto copyName = Names::getValidFunctionName(wasm, func->name);
         auto copyFunc =
           ModuleUtils::copyFunctionWithoutAdd(func, wasm, copyName);
@@ -1384,12 +1421,8 @@ void evalCtors(Module& wasm,
           copyFunc->body = Builder(wasm).makeNop();
         } else {
           copyFunc->body = interface.getSerialization(*outcome);
-          if (!copyFunc->body) {
-            if (!quiet) {
-              std::cout << "  ...stopping due to non-serializable body\n";
-            }
-            return;
-          }
+          // We have ruled out serialization problems earlier.
+          assert(copyFunc->body);
         }
         wasm.addFunction(std::move(copyFunc));
         *wasm.getExport(exp->name)->getInternalName() = copyName;
