@@ -170,6 +170,10 @@ void PassRegistry::registerPasses() {
                createExtractFunctionIndexPass);
   registerPass(
     "flatten", "flattens out code, removing nesting", createFlattenPass);
+  registerPass(
+    "flatten-relaxed",
+               "flattens out code, removing nesting, and supports EH with try_table",
+               createFlattenRelaxedPass);
   registerPass("fpcast-emu",
                "emulates function pointer casts, allowing incorrect indirect "
                "calls to (sometimes) work",
