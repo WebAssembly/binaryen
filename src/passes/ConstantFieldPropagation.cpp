@@ -219,7 +219,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    auto* value = makeExpression(info, heapType, curr);
+    optimizeSingleValue(info, heapType, curr, ref);
+  }
+
+  void optimizeSingleValue(const PossibleConstantValues& info,
+                           HeapType type,
+                           Expression* curr,
+                           Expression* ref) {
+    auto* value = makeExpression(info, type, curr);
+    Builder builder(*getModule());
     auto* replacement =
       builder.blockify(builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)));
     replacement->list.push_back(value);
@@ -282,6 +290,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         return;
       }
 
+      if (refType.isExact() && depth > 0) {
+        // We do not need to handle subtypes, and this is a subtype.
+        return;
+      }
+
       auto iter = rawNewInfos.find(type);
       if (iter == rawNewInfos.end()) {
         // This type has no struct.news, so we can ignore it: it is abstract.
@@ -331,8 +344,14 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     assert(values[0].used() || !values[1].used());
 
     if (!values[1].used()) {
-      // We did not see two constant values (we might have seen just one, or
-      // even no constant values at all).
+      // We did not see two constant values, so this is a simple case that does
+      // not need a ref.test.
+      if (values[0].used()) {
+        // We found exactly one value. This can happen because we consider
+        // subtyping more carefully than the non-reftest logic (specifically, we
+        // notice exact types). Optimize to the single possible value.
+        optimizeSingleValue(values[0].constant, refHeapType, curr, ref);
+      }
       return;
     }
 
