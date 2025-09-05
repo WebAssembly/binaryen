@@ -279,7 +279,7 @@ struct Reducer
       "--dce",
       "--duplicate-function-elimination",
       "--enclose-world",
-      "--gto",
+      "--gto --closed-world",
       "--inlining",
       "--inlining-optimizing",
       "--optimize-level=3 --inlining-optimizing",
