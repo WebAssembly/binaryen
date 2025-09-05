@@ -2100,7 +2100,10 @@ Expression* TranslateToFuzzReader::make(Type type) {
   }
   nesting++;
   Expression* ret = nullptr;
-  if (type.isConcrete()) {
+  if (!funcContext) {
+    // We are in a global init or similar, and can only emit constants.
+    ret = makeConst(type);
+  } else if (type.isConcrete()) {
     ret = _makeConcrete(type);
   } else if (type == Type::none) {
     ret = _makenone();
