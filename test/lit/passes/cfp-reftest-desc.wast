@@ -111,33 +111,25 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super (sub (descriptor $super.desc (struct))))
     (type $super (sub (descriptor $super.desc (struct))))
-    ;; CHECK:       (type $super.desc (sub (describes $super (struct (field (ref (exact $func)))))))
-    (type $super.desc (sub (describes $super (struct (field (ref (exact $func)))))))
+    ;; CHECK:       (type $super.desc (sub (describes $super (struct))))
+    (type $super.desc (sub (describes $super (struct))))
 
     ;; CHECK:       (type $func (func (param i32) (result i32)))
     (type $func (func (param i32) (result i32)))
 
     ;; CHECK:       (type $sub (sub $super (descriptor $sub.desc (struct))))
     (type $sub (sub $super (descriptor $sub.desc (struct))))
-    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct (field (ref (exact $func)))))))
-    (type $sub.desc (sub $super.desc (describes $sub (struct (field (ref (exact $func)))))))
+    ;; CHECK:       (type $sub.desc (sub $super.desc (describes $sub (struct))))
+    (type $sub.desc (sub $super.desc (describes $sub (struct))))
   )
 
   ;; CHECK:      (type $5 (func (result (ref (exact $super.desc)))))
 
-  ;; CHECK:      (global $A (ref (exact $super.desc)) (struct.new $super.desc
-  ;; CHECK-NEXT:  (ref.func $func)
-  ;; CHECK-NEXT: ))
-  (global $A (ref (exact $super.desc)) (struct.new $super.desc
-    (ref.func $func)
-  ))
+  ;; CHECK:      (global $A (ref (exact $super.desc)) (struct.new_default $super.desc))
+  (global $A (ref (exact $super.desc)) (struct.new $super.desc))
 
-  ;; CHECK:      (global $B (ref (exact $sub.desc)) (struct.new $sub.desc
-  ;; CHECK-NEXT:  (ref.func $func)
-  ;; CHECK-NEXT: ))
-  (global $B (ref (exact $sub.desc)) (struct.new $sub.desc
-    (ref.func $func)
-  ))
+  ;; CHECK:      (global $B (ref (exact $sub.desc)) (struct.new_default $sub.desc))
+  (global $B (ref (exact $sub.desc)) (struct.new $sub.desc))
 
   ;; CHECK:      (func $test (type $5) (result (ref (exact $super.desc)))
   ;; CHECK-NEXT:  (drop
