@@ -30,7 +30,6 @@
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
-#include "ir/utils.h"
 #include "pass.h"
 #include "support/permutations.h"
 #include "wasm-builder.h"
@@ -205,9 +204,9 @@ struct GlobalTypeOptimization : public Pass {
     SubTypes subTypes(*module);
     StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(subTypes);
     auto dataFromSubsAndSupersMap = combinedSetGetInfos;
-    propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
+    propagator.propagateToSuperAndSubTypesWithExact(dataFromSubsAndSupersMap);
     auto dataFromSupersMap = std::move(combinedSetGetInfos);
-    propagator.propagateToSubTypes(dataFromSupersMap);
+    propagator.propagateToSubTypesWithExact(dataFromSupersMap);
 
     // Find the public types, which we must not modify.
     auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
@@ -224,8 +223,9 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[type];
-      auto& dataFromSupers = dataFromSupersMap[type];
+      auto ht = std::make_pair(type, Exact);
+      auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[ht];
+      auto& dataFromSupers = dataFromSupersMap[ht];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
