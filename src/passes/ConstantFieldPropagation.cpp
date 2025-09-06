@@ -53,7 +53,6 @@
 
 #include "ir/bits.h"
 #include "ir/gc-type-utils.h"
-#include "ir/module-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
@@ -114,8 +113,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     return heapType;
   }
 
-  PossibleConstantValues getInfo(HeapType type, Index index) {
-    if (auto it = propagatedInfos.find(type); it != propagatedInfos.end()) {
+  PossibleConstantValues
+  getInfo(HeapType type, Exactness exactness, Index index) {
+    if (auto it = propagatedInfos.find({type, exactness});
+        it != propagatedInfos.end()) {
       // There is information on this type, fetch it.
       return it->second[index];
     }
@@ -177,7 +178,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // Find the info for this field, and see if we can optimize. First, see if
     // there is any information for this heap type at all. If there isn't, it is
     // as if nothing was ever noted for that field.
-    PossibleConstantValues info = getInfo(heapType, index);
+    PossibleConstantValues info =
+      getInfo(heapType, ref->type.getExactness(), index);
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -282,7 +284,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         return;
       }
 
-      auto iter = rawNewInfos.find(type);
+      auto iter = rawNewInfos.find({type, Exact});
       if (iter == rawNewInfos.end()) {
         // This type has no struct.news, so we can ignore it: it is abstract.
         return;
@@ -446,7 +448,8 @@ struct PCVScanner
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
     // Note copies, as they must be considered later. See the comment on the
     // propagation of values below.
-    functionCopyInfos[getFunction()][type][index] = true;
+    // TODO: Take into account exactness here.
+    functionCopyInfos[getFunction()][{type, Inexact}][index] = true;
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
@@ -558,7 +561,7 @@ struct ConstantFieldPropagation : public Pass {
     // a copy of A means it could be a copy of B or C).
     StructUtils::TypeHierarchyPropagator<StructUtils::CombinableBool>
       boolPropagator(subTypes);
-    boolPropagator.propagateToSubTypes(combinedCopyInfos);
+    boolPropagator.propagateToSubTypesWithExact(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
         if (copied[i]) {
@@ -570,7 +573,7 @@ struct ConstantFieldPropagation : public Pass {
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
       subTypes);
     propagator.propagateToSuperTypes(combinedNewInfos);
-    propagator.propagateToSuperAndSubTypes(combinedSetInfos);
+    propagator.propagateToSuperAndSubTypesWithExact(combinedSetInfos);
 
     // Combine both sources of information to the final information that gets
     // care about.

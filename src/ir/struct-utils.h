@@ -19,6 +19,7 @@
 
 #include "ir/properties.h"
 #include "ir/subtypes.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -88,17 +89,22 @@ template<typename T> struct StructValues : public std::vector<T> {
 // Also provides a combineInto() helper that combines one map into another. This
 // depends on the underlying T defining a combine() method.
 template<typename T>
-struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
+struct StructValuesMap
+  : public std::unordered_map<std::pair<HeapType, Exactness>, StructValues<T>> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length for that type.
-  StructValues<T>& operator[](HeapType type) {
-    assert(type.isStruct());
+  StructValues<T>& operator[](std::pair<HeapType, Exactness> type) {
+    assert(type.first.isStruct());
     auto inserted = this->insert({type, {}});
     auto& values = inserted.first->second;
     if (inserted.second) {
-      values.resize(type.getStruct().fields.size());
+      values.resize(type.first.getStruct().fields.size());
     }
     return values;
+  }
+
+  StructValues<T>& operator[](HeapType type) {
+    return (*this)[{type, Inexact}];
   }
 
   void combineInto(StructValuesMap<T>& combinedInfos) const {
@@ -113,7 +119,8 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues<T>> {
   void dump(std::ostream& o) {
     o << "dump " << this << '\n';
     for (auto& [type, vec] : (*this)) {
-      o << "dump " << type << " " << &vec << ' ';
+      o << "dump " << type.first << (type.second == Exact ? " exact " : " ")
+        << &vec << ' ';
       for (auto x : vec) {
         x.dump(o);
         o << " ";
@@ -203,7 +210,8 @@ struct StructScanner
     // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
     auto& fields = heapType.getStruct().fields;
-    auto& infos = functionNewInfos[this->getFunction()][heapType];
+    auto ht = std::make_pair(heapType, Exact);
+    auto& infos = functionNewInfos[this->getFunction()][ht];
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
         self().noteDefault(fields[i].type, heapType, i, infos[i]);
@@ -224,11 +232,12 @@ struct StructScanner
     }
 
     // Note a write to this field of the struct.
-    noteExpressionOrCopy(curr->value,
-                         type.getHeapType(),
-                         curr->index,
-                         functionSetGetInfos[this->getFunction()]
-                                            [type.getHeapType()][curr->index]);
+    auto ht = std::make_pair(type.getHeapType(), type.getExactness());
+    noteExpressionOrCopy(
+      curr->value,
+      type.getHeapType(),
+      curr->index,
+      functionSetGetInfos[this->getFunction()][ht][curr->index]);
   }
 
   void visitStructGet(StructGet* curr) {
@@ -237,11 +246,11 @@ struct StructScanner
       return;
     }
 
-    auto heapType = type.getHeapType();
+    auto ht = std::make_pair(type.getHeapType(), type.getExactness());
     auto index = curr->index;
-    self().noteRead(heapType,
+    self().noteRead(type.getHeapType(),
                     index,
-                    functionSetGetInfos[this->getFunction()][heapType][index]);
+                    functionSetGetInfos[this->getFunction()][ht][index]);
   }
 
   void visitStructRMW(StructRMW* curr) {
@@ -251,9 +260,9 @@ struct StructScanner
     }
 
     auto heapType = type.getHeapType();
+    auto ht = std::make_pair(heapType, type.getExactness());
     auto index = curr->index;
-    auto& info =
-      functionSetGetInfos[this->getFunction()][type.getHeapType()][index];
+    auto& info = functionSetGetInfos[this->getFunction()][ht][index];
 
     if (curr->op == RMWXchg) {
       // An xchg is really like a read and write combined.
@@ -274,9 +283,9 @@ struct StructScanner
     }
 
     auto heapType = type.getHeapType();
+    auto ht = std::make_pair(heapType, type.getExactness());
     auto index = curr->index;
-    auto& info =
-      functionSetGetInfos[this->getFunction()][type.getHeapType()][curr->index];
+    auto& info = functionSetGetInfos[this->getFunction()][ht][index];
 
     // A cmpxchg is like a read and conditional write.
     self().noteRead(heapType, index, info);
@@ -310,11 +319,12 @@ struct StructScanner
       return;
     }
     auto heapType = type.getHeapType();
+    auto ht = std::make_pair(heapType, type.getExactness());
     if (heapType.isStruct()) {
       // Any subtype of the reference here may be read from.
       self().noteRead(heapType,
                       DescriptorIndex,
-                      functionSetGetInfos[this->getFunction()][heapType].desc);
+                      functionSetGetInfos[this->getFunction()][ht].desc);
       return;
     }
   }
@@ -372,13 +382,19 @@ public:
   // Propagate given a StructValuesMap, which means we need to take into
   // account fields.
   void propagateToSuperTypes(StructValuesMap<T>& infos) {
-    propagate(infos, false, true);
+    propagate(infos, false, true, true);
   }
   void propagateToSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true, false);
+    propagate(infos, true, false, false);
+  }
+  void propagateToSubTypesWithExact(StructValuesMap<T>& infos) {
+    propagate(infos, true, false, true);
   }
   void propagateToSuperAndSubTypes(StructValuesMap<T>& infos) {
-    propagate(infos, true, true);
+    propagate(infos, true, true, false);
+  }
+  void propagateToSuperAndSubTypesWithExact(StructValuesMap<T>& infos) {
+    propagate(infos, true, true, true);
   }
 
   // Propagate on a simpler map of structs and infos (that is, not using
@@ -398,46 +414,63 @@ public:
 private:
   void propagate(StructValuesMap<T>& combinedInfos,
                  bool toSubTypes,
-                 bool toSuperTypes) {
-    UniqueDeferredQueue<HeapType> work;
-    for (auto& [type, _] : combinedInfos) {
-      work.push(type);
+                 bool toSuperTypes,
+                 bool includeExact) {
+    UniqueDeferredQueue<std::pair<HeapType, Exactness>> work;
+    for (auto& [ht, _] : combinedInfos) {
+      work.push(ht);
     }
     while (!work.empty()) {
-      auto type = work.pop();
-      auto& infos = combinedInfos[type];
+      auto [type, exactness] = work.pop();
+      auto& infos = combinedInfos[{type, exactness}];
 
       if (toSuperTypes) {
-        // Propagate shared fields to the supertype.
-        if (auto superType = type.getDeclaredSuperType()) {
-          auto& superInfos = combinedInfos[*superType];
-          auto& superFields = superType->getStruct().fields;
-          for (Index i = 0; i < superFields.size(); i++) {
+        // Propagate shared fields to the supertype, which may be the inexact
+        // version of the same type.
+        std::optional<std::pair<HeapType, Exactness>> super;
+        if (exactness == Exact) {
+          super = {type, Inexact};
+        } else if (auto superType = type.getDeclaredSuperType()) {
+          super = {*superType, Inexact};
+        }
+        if (super) {
+          auto& superInfos = combinedInfos[*super];
+          const auto& superFields = &super->first.getStruct().fields;
+          for (Index i = 0; i < superFields->size(); i++) {
             if (superInfos[i].combine(infos[i])) {
-              work.push(*superType);
+              work.push(*super);
             }
           }
           // Propagate the descriptor to the super, if the super has one.
-          if (superType->getDescriptorType() &&
+          if (super->first.getDescriptorType() &&
               superInfos.desc.combine(infos.desc)) {
-            work.push(*superType);
+            work.push(*super);
           }
         }
       }
 
       if (toSubTypes) {
-        // Propagate shared fields to the subtypes.
+        // Propagate shared fields to the subtypes, which may just be the exact
+        // version of the same type.
         auto numFields = type.getStruct().fields.size();
-        for (auto subType : subTypes.getImmediateSubTypes(type)) {
-          auto& subInfos = combinedInfos[subType];
+        std::vector<std::pair<HeapType, Exactness>> subs;
+        if (includeExact && exactness == Inexact) {
+          subs = {{type, Exact}};
+        } else {
+          for (auto subType : subTypes.getImmediateSubTypes(type)) {
+            subs.emplace_back(subType, Inexact);
+          }
+        }
+        for (auto sub : subs) {
+          auto& subInfos = combinedInfos[sub];
           for (Index i = 0; i < numFields; i++) {
             if (subInfos[i].combine(infos[i])) {
-              work.push(subType);
+              work.push(sub);
             }
           }
           // Propagate the descriptor.
           if (subInfos.desc.combine(infos.desc)) {
-            work.push(subType);
+            work.push(sub);
           }
         }
       }
