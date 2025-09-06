@@ -2329,10 +2329,10 @@
   ;; CHECK:      (func $test (type $2) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (local $B (ref $B))
-  ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (select (result (ref null $A))
+  ;; CHECK-NEXT:  (struct.set $B 0
+  ;; CHECK-NEXT:   (select (result (ref null $B))
   ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (block (result (ref null $A))
+  ;; CHECK-NEXT:    (block (result (ref $B))
   ;; CHECK-NEXT:     (local.tee $B
   ;; CHECK-NEXT:      (struct.new $B
   ;; CHECK-NEXT:       (i32.const 20)
@@ -2341,10 +2341,15 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (struct.new $A
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A
+  ;; CHECK-NEXT:       (i32.const 10)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.get $B 0

@@ -114,8 +114,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     return heapType;
   }
 
-  PossibleConstantValues getInfo(HeapType type, Index index) {
-    if (auto it = propagatedInfos.find(type); it != propagatedInfos.end()) {
+  PossibleConstantValues getInfo(HeapType type, Index index, Exactness exact) {
+    // If the reference is inexact, we must consider subtypes, who we
+    // propagated for that purpose.
+    auto& infos = exact == Inexact ? propagatedInfos : rawNewInfos;
+    if (auto it = infos.find(type); it != infos.end()) {
       // There is information on this type, fetch it.
       return it->second[index];
     }
@@ -177,7 +180,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // Find the info for this field, and see if we can optimize. First, see if
     // there is any information for this heap type at all. If there isn't, it is
     // as if nothing was ever noted for that field.
-    PossibleConstantValues info = getInfo(heapType, index);
+    PossibleConstantValues info =
+      getInfo(heapType, index, ref->type.getExactness());
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -219,15 +223,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    optimizeSingleValue(info, heapType, curr, ref);
-  }
-
-  void optimizeSingleValue(const PossibleConstantValues& info,
-                           HeapType type,
-                           Expression* curr,
-                           Expression* ref) {
-    auto* value = makeExpression(info, type, curr);
-    Builder builder(*getModule());
+    auto* value = makeExpression(info, heapType, curr);
     auto* replacement =
       builder.blockify(builder.makeDrop(builder.makeRefAs(RefAsNonNull, ref)));
     replacement->list.push_back(value);
@@ -290,11 +286,6 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         return;
       }
 
-      if (refType.isExact() && depth > 0) {
-        // We do not need to handle subtypes, and this is a subtype.
-        return;
-      }
-
       auto iter = rawNewInfos.find(type);
       if (iter == rawNewInfos.end()) {
         // This type has no struct.news, so we can ignore it: it is abstract.
@@ -344,14 +335,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     assert(values[0].used() || !values[1].used());
 
     if (!values[1].used()) {
-      // We did not see two constant values, so this is a simple case that does
-      // not need a ref.test.
-      if (values[0].used()) {
-        // We found exactly one value. This can happen because we consider
-        // subtyping more carefully than the non-reftest logic (specifically, we
-        // notice exact types). Optimize to the single possible value.
-        optimizeSingleValue(values[0].constant, refHeapType, curr, ref);
-      }
+      // We did not see two constant values (we might have seen just one, or
+      // even no constant values at all).
       return;
     }
 
@@ -518,12 +503,9 @@ struct ConstantFieldPropagation : public Pass {
     // Prepare data we will need later.
     SubTypes subTypes(*module);
 
-    PCVStructValuesMap rawNewInfos;
-    if (refTest) {
-      // The refTest optimizations require the raw new infos (see above), but we
-      // can skip copying here if we'll never read this.
-      rawNewInfos = combinedNewInfos;
-    }
+    // Copy the unpropagated data before we propagate. We use this in precise
+    // lookups.
+    auto rawNewInfos = combinedNewInfos;
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
