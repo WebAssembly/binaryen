@@ -95,18 +95,21 @@
 ;;   B -> B.desc
 ;;
 ;; $B is written a null descriptor, so we cannot optimize it when traps are
-;; possible. This also prevents optimizations on $A: we cannot remove that
-;; descriptor either, or its subtype would break.
+;; possible. This means $A.desc must remain a descriptor even as we optimize $A,
+;; so we give $A.desc a placeholder describee. With TNH, we can optimize without
+;; the placeholder.
 ;;
 ;; This tests subtyping of descriptors *without* subtyping of describees.
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK-NEXT:  (type $0 (descriptor $A.desc (struct)))
+
+    ;; CHECK:       (type $A (sub (struct)))
     ;; T_N_H:      (rec
     ;; T_N_H-NEXT:  (type $A (sub (struct)))
     (type $A (sub (descriptor $A.desc (struct))))
-    ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
+    ;; CHECK:       (type $A.desc (sub (describes $0 (struct))))
     ;; T_N_H:       (type $A.desc (sub (struct)))
     (type $A.desc (sub (describes $A (struct ))))
 
@@ -118,9 +121,9 @@
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:       (type $5 (func))
 
-  ;; CHECK:      (func $test (type $4)
+  ;; CHECK:      (func $test (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $B
   ;; CHECK-NEXT:    (ref.null none)
@@ -147,30 +150,34 @@
 ;; null descriptor but a use. We cannot optimize even without traps.
 ;; Subtyping of descriptors *without* subtyping of describees.
 ;;
-;; $B's descriptor seems removable, but the subtyping of the descriptors
-;; prevents this.
+;; $A's descriptor can be removed, but $A.desc needs to be given a placeholder
+;; describee.
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; CHECK-NEXT:  (type $0 (descriptor $B.desc (struct)))
+
+    ;; CHECK:       (type $A (sub (descriptor $A.desc (struct))))
     ;; T_N_H:      (rec
-    ;; T_N_H-NEXT:  (type $A (sub (descriptor $A.desc (struct))))
+    ;; T_N_H-NEXT:  (type $0 (descriptor $B.desc (struct)))
+
+    ;; T_N_H:       (type $A (sub (descriptor $A.desc (struct))))
     (type $A (sub (descriptor $A.desc (struct))))
     ;; CHECK:       (type $A.desc (sub (describes $A (struct))))
     ;; T_N_H:       (type $A.desc (sub (describes $A (struct))))
     (type $A.desc (sub (describes $A (struct ))))
 
-    ;; CHECK:       (type $B (sub (descriptor $B.desc (struct))))
-    ;; T_N_H:       (type $B (sub (descriptor $B.desc (struct))))
+    ;; CHECK:       (type $B (sub (struct)))
+    ;; T_N_H:       (type $B (sub (struct)))
     (type $B (sub (descriptor $B.desc (struct))))
-    ;; CHECK:       (type $B.desc (sub $A.desc (describes $B (struct))))
-    ;; T_N_H:       (type $B.desc (sub $A.desc (describes $B (struct))))
+    ;; CHECK:       (type $B.desc (sub $A.desc (describes $0 (struct))))
+    ;; T_N_H:       (type $B.desc (sub $A.desc (describes $0 (struct))))
     (type $B.desc (sub $A.desc (describes $B (struct))))
   )
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:       (type $5 (func))
 
-  ;; CHECK:      (func $test (type $4)
+  ;; CHECK:      (func $test (type $5)
   ;; CHECK-NEXT:  (local $B (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.get_desc $A
@@ -180,9 +187,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; T_N_H:      (type $4 (func))
+  ;; T_N_H:       (type $5 (func))
 
-  ;; T_N_H:      (func $test (type $4)
+  ;; T_N_H:      (func $test (type $5)
   ;; T_N_H-NEXT:  (local $B (ref $B))
   ;; T_N_H-NEXT:  (drop
   ;; T_N_H-NEXT:   (ref.get_desc $A

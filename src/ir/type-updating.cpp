@@ -127,16 +127,15 @@ GlobalTypeRewriter::getSortedTypes(PredecessorGraph preds) {
 
 GlobalTypeRewriter::TypeMap
 GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
-  Index i = 0;
-  for (auto type : types) {
-    typeIndices[type] = i++;
+  for (Index i = 0; i < types.size(); ++i) {
+    typeIndices[types[i]] = i;
   }
 
   if (typeIndices.size() == 0) {
     return {};
   }
 
-  typeBuilder.grow(typeIndices.size());
+  typeBuilder.grow(types.size());
 
   // All the input types are distinct, so we need to make sure the output
   // types are distinct as well. Further, the new types may have more
@@ -146,14 +145,14 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
   typeBuilder.createRecGroup(0, typeBuilder.size());
 
   // Create the temporary heap types.
-  i = 0;
   auto map = [&](HeapType type) -> HeapType {
     if (auto it = typeIndices.find(type); it != typeIndices.end()) {
       return typeBuilder[it->second];
     }
     return type;
   };
-  for (auto [type, _] : typeIndices) {
+  for (Index i = 0; i < types.size(); ++i) {
+    auto type = types[i];
     typeBuilder[i].copy(type, map);
     switch (type.getKind()) {
       case HeapTypeKind::Func: {
@@ -191,7 +190,6 @@ GlobalTypeRewriter::rebuildTypes(std::vector<HeapType> types) {
     }
 
     modifyTypeBuilderEntry(typeBuilder, i, type);
-    ++i;
   }
 
   auto buildResults = typeBuilder.build();
