@@ -1,5 +1,6 @@
 (module
   (rec
+    ;; The funcref field can be optimized away with --gto.
     (type $A (struct (field (mut i32)) (field funcref)))
     ;; This type can be optimized away.
     (type $unused (struct))
